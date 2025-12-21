@@ -917,7 +917,7 @@ class TestConcurrentOperations:
         for t in threads:
             t.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert len(handles) == 10
         assert len(set(handles)) == 10
 
@@ -952,7 +952,7 @@ class TestConcurrentOperations:
             for t in threads:
                 t.join()
 
-            assert len(errors) == 0
+            assert not errors
             assert len(responses) == 5
         finally:
             flexlm.stop_server()
@@ -1070,7 +1070,7 @@ class TestErrorHandling:
 
             db.close()
 
-            assert duplicate_handled is True
+            assert duplicate_handled
         finally:
             if os.path.exists(db_path):
                 os.remove(db_path)

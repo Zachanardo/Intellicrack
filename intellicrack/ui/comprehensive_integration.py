@@ -243,7 +243,7 @@ class ComprehensiveR2Integration:
             if not hasattr(main_app, "tab_widget") and hasattr(main_app, "__dict__"):
                 tab_widget_obj = QTabWidget()
                 main_app.tab_widget = tab_widget_obj
-            
+
                 # Try to add to layout if it exists
                 if hasattr(main_app, "layout"):
                     layout = getattr(main_app, "layout", None)
@@ -360,9 +360,7 @@ class ComprehensiveR2Integration:
         try:
             # Connect analysis completion to main app
             if self.ui_manager and hasattr(main_app, "update_analysis_results"):
-                if update_analysis_results := getattr(
-                    main_app, "update_analysis_results", None
-                ):
+                if update_analysis_results := getattr(main_app, "update_analysis_results", None):
                     self.ui_manager.analysis_completed.connect(
                         lambda results: update_analysis_results.emit(str(results)),
                     )

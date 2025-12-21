@@ -546,7 +546,8 @@ class TestRDTSCTimingCheck(unittest.TestCase):
             self.assertGreater(exec_time, 100)  # At least 100 nanoseconds
 
         # Most results should be consistent under normal conditions
-        true_count = sum(1 for r in results if r)
+        true_count = sum(bool(r)
+                     for r in results)
         self.assertGreaterEqual(true_count, 3)  # At least 3 out of 5 should be True
 
     def test_rdtsc_timing_check_error_handling(self):
@@ -765,27 +766,26 @@ class TestPrivateHelperMethods(unittest.TestCase):
 
     def test_quick_debugger_check_linux(self):
         """Test debugger detection on Linux."""
-        if platform.system() == "Linux":
+        if platform.system() != "Linux":
+            return
             # Test real /proc/self/status reading
-            try:
-                with open('/proc/self/status') as f:
-                    status_content = f.read()
+        try:
+            status_content = Path('/proc/self/status').read_text()
+            # Should be able to read status file
+            self.assertIn('TracerPid:', status_content)
 
-                # Should be able to read status file
-                self.assertIn('TracerPid:', status_content)
+            # Call the debugger check
+            result = self.defense._quick_debugger_check()
 
-                # Call the debugger check
-                result = self.defense._quick_debugger_check()
+            # Should return boolean result
+            self.assertIsInstance(result, bool)
 
-                # Should return boolean result
-                self.assertIsInstance(result, bool)
-
-                # Under normal test conditions, should be False (no debugger)
-                self.assertFalse(result)
-            except (OSError, PermissionError):
-                # If can't read /proc/self/status, test error handling
-                result = self.defense._quick_debugger_check()
-                self.assertIsInstance(result, bool)
+            # Under normal test conditions, should be False (no debugger)
+            self.assertFalse(result)
+        except OSError:
+            # If can't read /proc/self/status, test error handling
+            result = self.defense._quick_debugger_check()
+            self.assertIsInstance(result, bool)
 
     def test_quick_debugger_check_error_handling(self):
         """Test debugger check error handling."""
@@ -929,12 +929,10 @@ class TestEdgeCasesAndErrorHandling(unittest.TestCase):
                 time.sleep(0.01)  # Just 10ms for testing
                 return True
             else:
-                # For normal durations, call original method if available
                 if original_secure_sleep and duration <= 1.0:
                     return original_secure_sleep(duration, callback)
-                else:
-                    time.sleep(duration)
-                    return True
+                time.sleep(duration)
+                return True
 
         try:
             # Replace with quick version for testing large durations
@@ -1085,7 +1083,7 @@ class TestIntegrationScenarios(unittest.TestCase):
             self.defense.execution_delay(check_environment=True)
 
             # Should have performed stalling when acceleration detected
-            if original_stall and len(stall_calls) > 0:
+            if original_stall and stall_calls:
                 # Verify stalling was called in response to analysis conditions
                 pass
         finally:

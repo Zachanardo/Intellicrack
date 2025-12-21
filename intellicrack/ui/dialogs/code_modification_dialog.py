@@ -526,7 +526,9 @@ class CodeModificationDialog(QDialog):
             return
 
         requirements: list[str] = [req.strip() for req in self.requirements_edit.toPlainText().split("\n") if req.strip()]
-        constraints: list[str] = [constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n") if constraint.strip()]
+        constraints: list[str] = [
+            constraint.strip() for constraint in self.constraints_edit.toPlainText().split("\n") if constraint.strip()
+        ]
 
         request: ModificationRequest = self.modifier.create_modification_request(
             description=description,

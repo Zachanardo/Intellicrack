@@ -32,17 +32,30 @@ from collections import defaultdict
 from datetime import UTC, datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TYPE_CHECKING, Any, Protocol, TypedDict
 
 from ...utils.logger import get_logger
 
 
 logger = get_logger(__name__)
 
-_secrets_manager_module: object = None
+
+class SecretsManagerProtocol(Protocol):
+    """Protocol for secrets manager module."""
+
+    def get_secret(self, key: str) -> str | None:
+        """Get a secret by key."""
+        pass
+
+    def set_secret(self, key: str, value: str) -> None:
+        """Set a secret by key."""
+        pass
 
 
-def _get_secrets_manager() -> object:
+_secrets_manager_module: Any = None
+
+
+def _get_secrets_manager() -> SecretsManagerProtocol:
     """Lazy import secrets_manager to prevent circular imports.
 
     Returns:
@@ -54,10 +67,10 @@ def _get_secrets_manager() -> object:
         from ...utils import secrets_manager as _imported_secrets_manager
 
         _secrets_manager_module = _imported_secrets_manager
-    return _secrets_manager_module
+    return _secrets_manager_module  # type: ignore[no-any-return]
 
 
-def get_secret(key: str) -> object:
+def get_secret(key: str) -> str | None:
     """Lazy wrapper for get_secret.
 
     Args:
@@ -67,10 +80,11 @@ def get_secret(key: str) -> object:
         The secret value associated with the key.
 
     """
-    return _get_secrets_manager().get_secret(key)
+    manager = _get_secrets_manager()
+    return manager.get_secret(key)
 
 
-def set_secret(key: str, value: object) -> object:
+def set_secret(key: str, value: str) -> None:
     """Lazy wrapper for set_secret.
 
     Args:
@@ -81,7 +95,8 @@ def set_secret(key: str, value: object) -> object:
         The result of the set_secret operation.
 
     """
-    return _get_secrets_manager().set_secret(key, value)
+    manager = _get_secrets_manager()
+    manager.set_secret(key, value)
 
 
 class AuditEventType(Enum):
@@ -283,17 +298,16 @@ class AuditLogger:
         self._lock = threading.RLock()
 
         # Current log file
-        self._current_file = None
+        self._current_file: Path | None = None
         self._current_size = 0
 
         # Hash chain for tamper detection
         self._last_hash = self._load_last_hash()
 
         # Initialize encryption if enabled
+        self._cipher: Any = None
         if self.enable_encryption:
             self._init_encryption()
-        else:
-            self._cipher = None
 
         # Log system start
         self.log_event(
@@ -340,14 +354,14 @@ class AuditLogger:
             key = get_secret("AUDIT_LOG_ENCRYPTION_KEY")
             if not key:
                 # Generate new key
-                key = Fernet.generate_key().decode()
-                set_secret("AUDIT_LOG_ENCRYPTION_KEY", key)
+                new_key = Fernet.generate_key().decode()
+                set_secret("AUDIT_LOG_ENCRYPTION_KEY", new_key)
                 logger.info("Generated new audit log encryption key")
+                key = new_key
 
             self._cipher = Fernet(key.encode())
         except ImportError:
             logger.warning("Cryptography not available - audit logs will not be encrypted")
-            self._cipher = None
 
     def _load_last_hash(self) -> str | None:
         """Load the last hash from the hash chain file.
@@ -499,7 +513,7 @@ class AuditLogger:
                 if event.severity == AuditSeverity.CRITICAL:
                     logger.critical(log_msg)
                 elif event.severity == AuditSeverity.HIGH:
-                    logger.exception(log_msg)
+                    logger.error(log_msg)
                 elif event.severity == AuditSeverity.MEDIUM:
                     logger.warning(log_msg)
                 else:
@@ -597,7 +611,7 @@ class AuditLogger:
             error: Optional error message if operation failed.
 
         """
-        event_map = {
+        event_map: dict[str, AuditEventType] = {
             "start": AuditEventType.VM_START,
             "stop": AuditEventType.VM_STOP,
             "snapshot": AuditEventType.VM_SNAPSHOT,
@@ -606,7 +620,7 @@ class AuditLogger:
         event_type = event_map.get(operation, AuditEventType.TOOL_EXECUTION)
         severity = AuditSeverity.INFO if success else AuditSeverity.MEDIUM
 
-        details = {"success": success}
+        details: dict[str, Any] = {"success": success}
         if error:
             details["error"] = str(error)
 
@@ -625,7 +639,7 @@ class AuditLogger:
         credential_type: str,
         purpose: str,
         success: bool = True,
-        severity: AuditSeverity = None,
+        severity: AuditSeverity | None = None,
     ) -> None:
         """Log credential access attempts.
 
@@ -637,23 +651,26 @@ class AuditLogger:
 
         """
         # Determine appropriate severity level based on context
+        resolved_severity: AuditSeverity
         if severity is None:
             # Lower severity for routine system initialization operations
             if any(init_term in purpose.lower() for init_term in ["initialization", "setup", "startup", "generation"]):
-                severity = AuditSeverity.LOW
+                resolved_severity = AuditSeverity.LOW
             # Medium severity for operational credential access
             elif any(op_term in purpose.lower() for op_term in ["retrieval", "access", "usage"]):
-                severity = AuditSeverity.LOW  # Changed from MEDIUM to LOW for routine operations
+                resolved_severity = AuditSeverity.LOW  # Changed from MEDIUM to LOW for routine operations
             # High severity for suspicious or failure cases
             elif not success or any(warn_term in purpose.lower() for warn_term in ["failed", "unauthorized", "invalid"]):
-                severity = AuditSeverity.HIGH
+                resolved_severity = AuditSeverity.HIGH
             else:
-                severity = AuditSeverity.MEDIUM
+                resolved_severity = AuditSeverity.MEDIUM
+        else:
+            resolved_severity = severity
 
         self.log_event(
             AuditEvent(
                 event_type=AuditEventType.CREDENTIAL_ACCESS,
-                severity=severity,
+                severity=resolved_severity,
                 description=f"Credential access: {credential_type} for {purpose}",
                 details={
                     "credential_type": credential_type,
@@ -724,7 +741,7 @@ class AuditLogger:
 
         """
         try:
-            previous_hash = None
+            previous_hash: str | None = None
 
             with open(log_file, encoding="utf-8") as f:
                 for line_num, line in enumerate(f, 1):
@@ -736,6 +753,7 @@ class AuditLogger:
                         entry = json.loads(line)
 
                         # Handle encrypted entries
+                        event_data: dict[str, Any]
                         if entry.get("encrypted") and self._cipher:
                             decrypted = self._cipher.decrypt(entry["data"].encode())
                             event_data = json.loads(decrypted)
@@ -746,7 +764,7 @@ class AuditLogger:
                         if previous_hash:
                             stored_prev = event_data.get("details", {}).get("previous_hash")
                             if stored_prev != previous_hash:
-                                logger.exception("Hash chain broken at line %d", line_num)
+                                logger.error("Hash chain broken at line %d", line_num)
                                 return False
 
                         if stored_hash := event_data.get("details", {}).get("hash"):
@@ -762,16 +780,16 @@ class AuditLogger:
                             ).hexdigest()
 
                             if calculated_hash != stored_hash:
-                                logger.exception("Hash mismatch at line %d", line_num)
+                                logger.error("Hash mismatch at line %d", line_num)
                                 return False
 
                             previous_hash = stored_hash
 
                     except json.JSONDecodeError:
-                        logger.exception("Invalid JSON at line %d", line_num)
+                        logger.error("Invalid JSON at line %d", line_num)
                         return False
                     except Exception as e:
-                        logger.exception("Error verifying line %d: %s", line_num, e)
+                        logger.error("Error verifying line %d: %s", line_num, e)
                         return False
 
             logger.info("Log file %s integrity verified", log_file)
@@ -808,7 +826,7 @@ class AuditLogger:
             List of event dictionaries matching the search criteria.
 
         """
-        results = []
+        results: list[dict[str, Any]] = []
 
         # Get all log files in time range
         log_files = sorted(self.log_dir.glob("audit_*.log*"))
@@ -824,6 +842,7 @@ class AuditLogger:
                             entry = json.loads(line)
 
                             # Decrypt if needed
+                            event_data: dict[str, Any]
                             if entry.get("encrypted") and self._cipher:
                                 decrypted = self._cipher.decrypt(entry["data"].encode())
                                 event_data = json.loads(decrypted)
@@ -860,7 +879,7 @@ class AuditLogger:
                             logger.debug("Error parsing log entry: %s", e)
 
             except Exception as e:
-                logger.exception("Error reading log file %s: %s", log_file, e)
+                logger.error("Error reading log file %s: %s", log_file, e)
 
         return results
 
@@ -883,9 +902,9 @@ class AuditLogger:
         events = self.search_events(start_time=start_time, end_time=end_time)
 
         # Group by event type
-        by_type = {}
-        by_severity = {}
-        by_user = {}
+        by_type: dict[str, int] = {}
+        by_severity: dict[str, int] = {}
+        by_user: dict[str, int] = {}
 
         for event in events:
             # By type
@@ -893,8 +912,8 @@ class AuditLogger:
             by_type[event_type] = by_type.get(event_type, 0) + 1
 
             # By severity
-            severity = event["severity"]
-            by_severity[severity] = by_severity.get(severity, 0) + 1
+            severity_val = event["severity"]
+            by_severity[severity_val] = by_severity.get(severity_val, 0) + 1
 
             # By user
             user = event.get("user", "unknown")
@@ -948,10 +967,10 @@ class PerformanceMonitor:
 
     def __init__(self) -> None:
         """Initialize performance metrics monitor."""
-        self.metrics = {}
-        self.start_times = {}
-        self.counters = defaultdict(int)
-        self.histograms = defaultdict(list)
+        self.metrics: dict[str, dict[str, Any]] = {}
+        self.start_times: dict[str, float] = {}
+        self.counters: defaultdict[str, int] = defaultdict(int)
+        self.histograms: defaultdict[str, list[float]] = defaultdict(list)
         self._lock = threading.RLock()
 
     def start_timer(self, operation: str) -> str:
@@ -1175,10 +1194,10 @@ class TelemetryCollector:
         """
         self.export_interval = export_interval
         self.performance_monitor = PerformanceMonitor()
-        self.audit_logger = None
-        self.telemetry_data = []
+        self.audit_logger: AuditLogger | None = None
+        self.telemetry_data: list[dict[str, Any]] = []
         self._lock = threading.RLock()
-        self._export_thread = None
+        self._export_thread: threading.Thread | None = None
         self._running = False
 
     def set_audit_logger(self, audit_logger: AuditLogger) -> None:
@@ -1210,8 +1229,9 @@ class TelemetryCollector:
             return
 
         self._running = True
-        self._export_thread = threading.Thread(target=self._export_loop, daemon=True)
-        self._export_thread.start()
+        export_thread = threading.Thread(target=self._export_loop, daemon=True)
+        export_thread.start()
+        self._export_thread = export_thread
         logger.info("Telemetry collection started")
 
     def stop_collection(self) -> None:
@@ -1222,8 +1242,9 @@ class TelemetryCollector:
 
         """
         self._running = False
-        if self._export_thread:
-            self._export_thread.join(timeout=5)
+        export_thread = self._export_thread
+        if export_thread is not None:
+            export_thread.join(timeout=5)
         logger.info("Telemetry collection stopped")
 
     def _export_loop(self) -> None:
@@ -1391,7 +1412,7 @@ class TelemetryCollector:
 class ContextualLogger:
     """Logger with contextual information and structured logging."""
 
-    def __init__(self, name: str, audit_logger: AuditLogger = None) -> None:
+    def __init__(self, name: str, audit_logger: AuditLogger | None = None) -> None:
         """Initialize contextual logger.
 
         Args:
@@ -1401,7 +1422,7 @@ class ContextualLogger:
         """
         self.logger = logging.getLogger(name)
         self.audit_logger = audit_logger
-        self.context = {}
+        self.context: dict[str, object] = {}
 
     def set_context(self, **kwargs: object) -> None:
         """Set contextual information.
@@ -1482,11 +1503,13 @@ class ContextualLogger:
         # Also audit log errors
         if self.audit_logger:
             try:
-                self.audit_logger.log_security_event(
-                    event_type="error",
-                    severity=AuditSeverity.HIGH,
-                    message=message,
-                    metadata={**self.context, **kwargs},
+                self.audit_logger.log_event(
+                    AuditEvent(
+                        event_type=AuditEventType.ERROR,
+                        severity=AuditSeverity.HIGH,
+                        description=message,
+                        details={**self.context, **kwargs},
+                    )
                 )
             except Exception as e:
                 # Don't fail on audit logging errors, but log for debugging
@@ -1507,11 +1530,13 @@ class ContextualLogger:
         # Also audit log critical errors
         if self.audit_logger:
             try:
-                self.audit_logger.log_security_event(
-                    event_type="critical_error",
-                    severity=AuditSeverity.CRITICAL,
-                    message=message,
-                    metadata={**self.context, **kwargs},
+                self.audit_logger.log_event(
+                    AuditEvent(
+                        event_type=AuditEventType.ERROR,
+                        severity=AuditSeverity.CRITICAL,
+                        description=message,
+                        details={**self.context, **kwargs},
+                    )
                 )
             except Exception as e:
                 # Don't fail on audit logging errors, but log for debugging
@@ -1614,16 +1639,24 @@ def get_audit_logger() -> AuditLogger:
     return _audit_logger
 
 
-def log_exploit_attempt(target: str, exploit_type: str, **kwargs: object) -> None:
+def log_exploit_attempt(
+    target: str,
+    exploit_type: str,
+    payload: str | None = None,
+    success: bool = False,
+    error: str | None = None,
+) -> None:
     """Log exploit attempts.
 
     Args:
         target: Target of the exploit attempt.
         exploit_type: Type of exploit attempted.
-        **kwargs: Additional context for the exploit attempt.
+        payload: Optional payload data.
+        success: Whether the exploit succeeded.
+        error: Optional error message.
 
     """
-    get_audit_logger().log_exploit_attempt(target, exploit_type, **kwargs)
+    get_audit_logger().log_exploit_attempt(target, exploit_type, payload=payload, success=success, error=error)
 
 
 def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], vulnerabilities: list[str]) -> None:
@@ -1639,37 +1672,57 @@ def log_binary_analysis(file_path: str, file_hash: str, protections: list[str], 
     get_audit_logger().log_binary_analysis(file_path, file_hash, protections, vulnerabilities)
 
 
-def log_vm_operation(operation: str, vm_name: str, **kwargs: object) -> None:
+def log_vm_operation(
+    operation: str,
+    vm_name: str,
+    success: bool = True,
+    error: str | None = None,
+) -> None:
     """Log VM operations.
 
     Args:
         operation: Type of VM operation (start, stop, snapshot, etc.).
         vm_name: Name of the virtual machine.
-        **kwargs: Additional context for the VM operation.
+        success: Whether the operation succeeded.
+        error: Optional error message.
 
     """
-    get_audit_logger().log_vm_operation(operation, vm_name, **kwargs)
+    get_audit_logger().log_vm_operation(operation, vm_name, success=success, error=error)
 
 
-def log_credential_access(credential_type: str, purpose: str, **kwargs: object) -> None:
+def log_credential_access(
+    credential_type: str,
+    purpose: str,
+    success: bool = True,
+    severity: AuditSeverity | None = None,
+) -> None:
     """Log credential access.
 
     Args:
         credential_type: Type of credential being accessed.
         purpose: Purpose for the credential access.
-        **kwargs: Additional context for the credential access event.
+        success: Whether the access succeeded.
+        severity: Optional severity override.
 
     """
-    get_audit_logger().log_credential_access(credential_type, purpose, **kwargs)
+    get_audit_logger().log_credential_access(credential_type, purpose, success=success, severity=severity)
 
 
-def log_tool_execution(tool_name: str, command: str, **kwargs: object) -> None:
+def log_tool_execution(
+    tool_name: str,
+    command: str,
+    success: bool = True,
+    output: str | None = None,
+    error: str | None = None,
+) -> None:
     """Log tool execution.
 
     Args:
         tool_name: Name of the tool being executed.
         command: Command line used to execute the tool.
-        **kwargs: Additional context for the tool execution.
+        success: Whether the execution succeeded.
+        output: Optional command output.
+        error: Optional error message.
 
     """
-    get_audit_logger().log_tool_execution(tool_name, command, **kwargs)
+    get_audit_logger().log_tool_execution(tool_name, command, success=success, output=output, error=error)

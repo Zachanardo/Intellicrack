@@ -46,7 +46,7 @@ def sample_binary_with_vm_detection(tmp_path: Path) -> Path:
 
     vm_detection_code = bytearray(4096)
 
-    vm_detection_code[0:2] = b"\x4D\x5A"
+    vm_detection_code[:2] = b"\x4D\x5A"
 
     vm_detection_code[100:102] = b"\x0f\xa2"
     vm_detection_code[150:152] = b"\x0f\x31"
@@ -80,7 +80,7 @@ def sample_binary_no_vm_detection(tmp_path: Path) -> Path:
     binary_path = tmp_path / "clean.exe"
 
     clean_code = bytearray(2048)
-    clean_code[0:2] = b"\x4D\x5A"
+    clean_code[:2] = b"\x4D\x5A"
     clean_code[100:150] = b"\x90" * 50
 
     binary_path.write_bytes(bytes(clean_code))
@@ -312,8 +312,14 @@ class TestVirtualizationDetectionBypass:
             assert len(bypass.hooks) > initial_hook_count
             assert any("Timing Functions" in hook.get("target", "") for hook in bypass.hooks)
 
-            timing_hook = next((hook for hook in bypass.hooks if "Timing Functions" in hook.get("target", "")), None)
-            if timing_hook:
+            if timing_hook := next(
+                (
+                    hook
+                    for hook in bypass.hooks
+                    if "Timing Functions" in hook.get("target", "")
+                ),
+                None,
+            ):
                 script_content = timing_hook["script"]
                 assert "GetTickCount" in script_content or "QueryPerformanceCounter" in script_content
                 assert "RDTSC" in script_content or "rdtsc" in script_content.lower()
@@ -711,7 +717,7 @@ class TestVMDetectionPatterns:
         binary_path = tmp_path / "cpuid_check.exe"
 
         code = bytearray(1024)
-        code[0:2] = b"\x4D\x5A"
+        code[:2] = b"\x4D\x5A"
         code[100:108] = b"\x0f\xa2\xf7\xc1\x00\x00\x00\x80"
 
         binary_path.write_bytes(bytes(code))
@@ -723,7 +729,7 @@ class TestVMDetectionPatterns:
         binary_path = tmp_path / "rdtsc_check.exe"
 
         code = bytearray(1024)
-        code[0:2] = b"\x4D\x5A"
+        code[:2] = b"\x4D\x5A"
         code[100:102] = b"\x0f\x31"
         code[150:152] = b"\x0f\x31"
 
@@ -736,7 +742,7 @@ class TestVMDetectionPatterns:
         binary_path = tmp_path / "port_io_check.exe"
 
         code = bytearray(1024)
-        code[0:2] = b"\x4D\x5A"
+        code[:2] = b"\x4D\x5A"
         code[100:102] = b"\xe5\x10"
 
         binary_path.write_bytes(bytes(code))
@@ -792,10 +798,7 @@ class TestBypassEffectiveness:
         bypass._patch_vm_detection()
 
         if len(bypass.patches) > 0:
-            patch_bytes = set()
-            for patch in bypass.patches:
-                patch_bytes.add(patch["original"])
-
+            patch_bytes = {patch["original"] for patch in bypass.patches}
             expected_patterns = [
                 b"\x0f\xa2",
                 b"\x0f\x31",
@@ -810,18 +813,18 @@ class TestBypassEffectiveness:
 
         result = bypass.bypass_vm_detection()
 
-        strategy_categories = {
-            "api_hooks": "API Hooking" in result["methods_applied"],
-            "binary_patches": "Binary Patching" in result["methods_applied"],
-            "registry": "Registry Manipulation" in result["methods_applied"],
-            "timing": "Timing Attack Mitigation" in result["methods_applied"],
-            "artifacts": "VM Artifact Hiding" in result["methods_applied"],
-            "system_info": "System Info Modification" in result["methods_applied"],
-        }
-
-        applied_categories = sum(strategy_categories.values())
-
         if result["success"]:
+            strategy_categories = {
+                "api_hooks": "API Hooking" in result["methods_applied"],
+                "binary_patches": "Binary Patching" in result["methods_applied"],
+                "registry": "Registry Manipulation" in result["methods_applied"],
+                "timing": "Timing Attack Mitigation" in result["methods_applied"],
+                "artifacts": "VM Artifact Hiding" in result["methods_applied"],
+                "system_info": "System Info Modification" in result["methods_applied"],
+            }
+
+            applied_categories = sum(strategy_categories.values())
+
             assert applied_categories > 0
 
 
@@ -849,7 +852,7 @@ class TestEdgeCases:
         large_binary = tmp_path / "large.exe"
 
         large_data = bytearray(10 * 1024 * 1024)
-        large_data[0:2] = b"\x4D\x5A"
+        large_data[:2] = b"\x4D\x5A"
         large_data[5000000:5000002] = b"\x0f\xa2"
 
         large_binary.write_bytes(bytes(large_data))
@@ -916,7 +919,7 @@ class TestRealWorldScenarios:
         binary_path = tmp_path / "vmware_protected.exe"
 
         code = bytearray(8192)
-        code[0:2] = b"\x4D\x5A"
+        code[:2] = b"\x4D\x5A"
 
         code[100:102] = b"\x0f\xa2"
         code[200:203] = b"\x0f\x00\xc8"
@@ -936,7 +939,7 @@ class TestRealWorldScenarios:
         binary_path = tmp_path / "vbox_protected.exe"
 
         code = bytearray(8192)
-        code[0:2] = b"\x4D\x5A"
+        code[:2] = b"\x4D\x5A"
 
         code[100:102] = b"\x0f\xa2"
         code[200:202] = b"\x0f\x31"
@@ -995,7 +998,7 @@ class TestRealWorldScenarios:
         binary_path = tmp_path / "multilayer.exe"
 
         code = bytearray(16384)
-        code[0:2] = b"\x4D\x5A"
+        code[:2] = b"\x4D\x5A"
 
         code[100:102] = b"\x0f\xa2"
         code[200:202] = b"\x0f\x31"

@@ -32,7 +32,7 @@ class TestUPXPackerDetection:
         pe_path = tmp_path / "upx_packed.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
@@ -40,7 +40,7 @@ class TestUPXPackerDetection:
         coff_header = struct.pack("<HHIIIHH", 0x014C, 3, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x3000)
         struct.pack_into("<I", optional_header, 20, 0x1000)
         struct.pack_into("<I", optional_header, 28, 0x400000)
@@ -48,7 +48,7 @@ class TestUPXPackerDetection:
         struct.pack_into("<I", optional_header, 36, 0x200)
 
         upx0_section = bytearray(40)
-        upx0_section[0:8] = b"UPX0\x00\x00\x00\x00"
+        upx0_section[:8] = b"UPX0\x00\x00\x00\x00"
         struct.pack_into("<I", upx0_section, 8, 16384)
         struct.pack_into("<I", upx0_section, 12, 0x1000)
         struct.pack_into("<I", upx0_section, 16, 0)
@@ -56,7 +56,7 @@ class TestUPXPackerDetection:
         struct.pack_into("<I", upx0_section, 36, 0x80000000)
 
         upx1_section = bytearray(40)
-        upx1_section[0:8] = b"UPX1\x00\x00\x00\x00"
+        upx1_section[:8] = b"UPX1\x00\x00\x00\x00"
         struct.pack_into("<I", upx1_section, 8, 8192)
         struct.pack_into("<I", upx1_section, 12, 0x5000)
         struct.pack_into("<I", upx1_section, 16, 8192)
@@ -64,7 +64,7 @@ class TestUPXPackerDetection:
         struct.pack_into("<I", upx1_section, 36, 0xE0000060)
 
         upx2_section = bytearray(40)
-        upx2_section[0:8] = b".rsrc\x00\x00\x00"
+        upx2_section[:8] = b".rsrc\x00\x00\x00"
         struct.pack_into("<I", upx2_section, 8, 2048)
         struct.pack_into("<I", upx2_section, 12, 0x7000)
         struct.pack_into("<I", upx2_section, 16, 2048)
@@ -117,10 +117,10 @@ class TestUPXPackerDetection:
         signatures = extractor.extract_signatures(str(upx_packed_binary))
 
         packer_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PACKER]
-        assert len(packer_sigs) > 0
+        assert packer_sigs
 
         upx_section_sigs = [sig for sig in packer_sigs if "upx" in sig.context.lower()]
-        assert len(upx_section_sigs) > 0
+        assert upx_section_sigs
 
     def test_upx_entry_point_pattern_detection(self, upx_packed_binary: Path) -> None:
         """UPX packer detected through characteristic entry point code."""
@@ -134,14 +134,15 @@ class TestUPXPackerDetection:
             b"\x83\xCD\xFF",
         ]
 
-        found_patterns = sum(1 for pattern in upx_ep_patterns if pattern in binary_data)
+        found_patterns = sum(bool(pattern in binary_data)
+                         for pattern in upx_ep_patterns)
         assert found_patterns >= 2
 
         extractor = DynamicSignatureExtractor()
         signatures = extractor.extract_signatures(str(upx_packed_binary))
 
         code_sigs = [sig for sig in signatures if len(sig.pattern_bytes) >= 8]
-        assert len(code_sigs) > 0
+        assert code_sigs
 
     def test_upx_high_entropy_detection(self, upx_packed_binary: Path) -> None:
         """UPX packed sections exhibit high entropy."""
@@ -150,12 +151,11 @@ class TestUPXPackerDetection:
 
         entropy_sigs = [sig for sig in signatures if "entropy" in sig.context.lower()]
 
-        if len(entropy_sigs) == 0:
+        if not entropy_sigs:
             all_sigs = [sig for sig in signatures if sig.metadata.get("entropy")]
-            assert len(all_sigs) > 0
+            assert all_sigs
         else:
             high_entropy_sigs = [sig for sig in entropy_sigs if sig.metadata.get("entropy", 0) > 6.5]
-            assert len(high_entropy_sigs) >= 0
 
 
 class TestVMProtectDetection:
@@ -167,19 +167,19 @@ class TestVMProtectDetection:
         pe_path = tmp_path / "vmprotect_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 4, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
         struct.pack_into("<I", optional_header, 28, 0x400000)
 
         vmp0_section = bytearray(40)
-        vmp0_section[0:8] = b".vmp0\x00\x00\x00"
+        vmp0_section[:8] = b".vmp0\x00\x00\x00"
         struct.pack_into("<I", vmp0_section, 8, 8192)
         struct.pack_into("<I", vmp0_section, 12, 0x1000)
         struct.pack_into("<I", vmp0_section, 16, 8192)
@@ -187,7 +187,7 @@ class TestVMProtectDetection:
         struct.pack_into("<I", vmp0_section, 36, 0xE0000020)
 
         vmp1_section = bytearray(40)
-        vmp1_section[0:8] = b".vmp1\x00\x00\x00"
+        vmp1_section[:8] = b".vmp1\x00\x00\x00"
         struct.pack_into("<I", vmp1_section, 8, 16384)
         struct.pack_into("<I", vmp1_section, 12, 0x3000)
         struct.pack_into("<I", vmp1_section, 16, 16384)
@@ -195,7 +195,7 @@ class TestVMProtectDetection:
         struct.pack_into("<I", vmp1_section, 36, 0xE0000060)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x7000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -266,14 +266,16 @@ class TestVMProtectDetection:
         extractor = DynamicSignatureExtractor()
         signatures = extractor.extract_signatures(str(vmprotect_protected_binary))
 
-        protector_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PROTECTOR]
-
-        if len(protector_sigs) == 0:
-            all_sigs = [sig for sig in signatures if ".vmp" in sig.context.lower()]
-            assert len(all_sigs) > 0 or results["confidence_scores"].get("protector", 0) > 0
-        else:
+        if protector_sigs := [
+            sig
+            for sig in signatures
+            if sig.category == ProtectionCategory.PROTECTOR
+        ]:
             vmp_section_sigs = [sig for sig in protector_sigs if ".vmp" in sig.context.lower()]
-            assert len(vmp_section_sigs) > 0
+            assert vmp_section_sigs
+        else:
+            all_sigs = [sig for sig in signatures if ".vmp" in sig.context.lower()]
+            assert all_sigs or results["confidence_scores"].get("protector", 0) > 0
 
     def test_vmprotect_virtualized_code_patterns(self, vmprotect_protected_binary: Path) -> None:
         """VMProtect detected through virtualized code patterns."""
@@ -286,14 +288,15 @@ class TestVMProtectDetection:
             b"\x8B\x40\x0C\x8B\x70\x14",
         ]
 
-        found_patterns = sum(1 for pattern in vmp_patterns if pattern in binary_data)
+        found_patterns = sum(bool(pattern in binary_data)
+                         for pattern in vmp_patterns)
         assert found_patterns >= 1
 
         extractor = DynamicSignatureExtractor()
         signatures = extractor.extract_signatures(str(vmprotect_protected_binary))
 
         code_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PROTECTOR]
-        assert len(code_sigs) > 0
+        assert code_sigs
 
     def test_vmprotect_high_section_entropy(self, vmprotect_protected_binary: Path) -> None:
         """VMProtect sections exhibit high entropy due to virtualization."""
@@ -301,7 +304,7 @@ class TestVMProtectDetection:
         signatures = extractor.extract_signatures(str(vmprotect_protected_binary))
 
         entropy_sigs = [sig for sig in signatures if "entropy" in sig.context.lower()]
-        assert len(entropy_sigs) > 0
+        assert entropy_sigs
 
 
 class TestThemidaDetection:
@@ -313,18 +316,18 @@ class TestThemidaDetection:
         pe_path = tmp_path / "themida_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 3, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         themida_section = bytearray(40)
-        themida_section[0:8] = b".themida"
+        themida_section[:8] = b".themida"
         struct.pack_into("<I", themida_section, 8, 32768)
         struct.pack_into("<I", themida_section, 12, 0x1000)
         struct.pack_into("<I", themida_section, 16, 32768)
@@ -332,7 +335,7 @@ class TestThemidaDetection:
         struct.pack_into("<I", themida_section, 36, 0xE0000060)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x9000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -340,7 +343,7 @@ class TestThemidaDetection:
         struct.pack_into("<I", text_section, 36, 0x60000020)
 
         data_section = bytearray(40)
-        data_section[0:8] = b".data\x00\x00\x00"
+        data_section[:8] = b".data\x00\x00\x00"
         struct.pack_into("<I", data_section, 8, 2048)
         struct.pack_into("<I", data_section, 12, 0xA000)
         struct.pack_into("<I", data_section, 16, 2048)
@@ -394,10 +397,10 @@ class TestThemidaDetection:
         signatures = extractor.extract_signatures(str(themida_protected_binary))
 
         protector_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PROTECTOR]
-        assert len(protector_sigs) > 0
+        assert protector_sigs
 
         themida_sigs = [sig for sig in protector_sigs if "themida" in sig.context.lower()]
-        assert len(themida_sigs) > 0
+        assert themida_sigs
 
     def test_themida_obfuscation_patterns(self, themida_protected_binary: Path) -> None:
         """Themida detected through characteristic obfuscation patterns."""
@@ -410,14 +413,15 @@ class TestThemidaDetection:
             b"\x0F\x31",
         ]
 
-        found_patterns = sum(1 for pattern in themida_patterns if pattern in binary_data)
+        found_patterns = sum(bool(pattern in binary_data)
+                         for pattern in themida_patterns)
         assert found_patterns >= 2
 
         extractor = DynamicSignatureExtractor()
         signatures = extractor.extract_signatures(str(themida_protected_binary))
 
         obf_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.OBFUSCATION]
-        assert len(obf_sigs) > 0
+        assert obf_sigs
 
 
 class TestASPackDetection:
@@ -429,18 +433,18 @@ class TestASPackDetection:
         pe_path = tmp_path / "aspack_packed.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         aspack_section = bytearray(40)
-        aspack_section[0:8] = b".aspack\x00"
+        aspack_section[:8] = b".aspack\x00"
         struct.pack_into("<I", aspack_section, 8, 16384)
         struct.pack_into("<I", aspack_section, 12, 0x1000)
         struct.pack_into("<I", aspack_section, 16, 16384)
@@ -448,7 +452,7 @@ class TestASPackDetection:
         struct.pack_into("<I", aspack_section, 36, 0xE0000060)
 
         adata_section = bytearray(40)
-        adata_section[0:8] = b".adata\x00\x00"
+        adata_section[:8] = b".adata\x00\x00"
         struct.pack_into("<I", adata_section, 8, 4096)
         struct.pack_into("<I", adata_section, 12, 0x5000)
         struct.pack_into("<I", adata_section, 16, 4096)
@@ -458,11 +462,11 @@ class TestASPackDetection:
         padding = bytearray(0x400 - 64 - len(pe_signature) - len(coff_header) - len(optional_header) - 80)
 
         aspack_code = bytearray(16384)
-        aspack_code[0:64] = (
-            b"\x60\xE8\x03\x00\x00\x00\xE9\xEB\x04\x5D\x45\x55\xC3\xE8\x01\x00"
-            b"\x00\x00\xEB\x5D\xBB\xED\xFF\xFF\xFF\x03\xDD\x81\xEB\x00\x00\x00"
-            b"\x00\x80\xBD\x00\x00\x00\x00\x00\x74\x7C\x8B\x85\x00\x00\x00\x00"
-            b"\x03\x85\x00\x00\x00\x00\x89\x85\x00\x00\x00\x00\x8B\x85\x00\x00"
+        aspack_code[:64] = (
+            b"\x60\xe8\x03\x00\x00\x00\xe9\xeb\x04\x5d\x45\x55\xc3\xe8\x01\x00"
+            b"\x00\x00\xeb\x5d\xbb\xed\xff\xff\xff\x03\xdd\x81\xeb\x00\x00\x00"
+            b"\x00\x80\xbd\x00\x00\x00\x00\x00\x74\x7c\x8b\x85\x00\x00\x00\x00"
+            b"\x03\x85\x00\x00\x00\x00\x89\x85\x00\x00\x00\x00\x8b\x85\x00\x00"
         )
 
         aspack_code[100:116] = b"aPLib v0.45 -"
@@ -494,10 +498,10 @@ class TestASPackDetection:
         signatures = extractor.extract_signatures(str(aspack_packed_binary))
 
         packer_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PACKER]
-        assert len(packer_sigs) > 0
+        assert packer_sigs
 
         aspack_sigs = [sig for sig in packer_sigs if "aspack" in sig.context.lower() or "adata" in sig.context.lower()]
-        assert len(aspack_sigs) > 0
+        assert aspack_sigs
 
     def test_aspack_signature_string_detection(self, aspack_packed_binary: Path) -> None:
         """ASPack detected through signature string."""
@@ -510,7 +514,7 @@ class TestASPackDetection:
         signatures = extractor.extract_signatures(str(aspack_packed_binary))
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
-        assert len(string_sigs) > 0
+        assert string_sigs
 
 
 class TestPECompactDetection:
@@ -522,18 +526,18 @@ class TestPECompactDetection:
         pe_path = tmp_path / "pecompact_packed.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         pec1_section = bytearray(40)
-        pec1_section[0:8] = b"PEC2\x00\x00\x00\x00"
+        pec1_section[:8] = b"PEC2\x00\x00\x00\x00"
         struct.pack_into("<I", pec1_section, 8, 12288)
         struct.pack_into("<I", pec1_section, 12, 0x1000)
         struct.pack_into("<I", pec1_section, 16, 12288)
@@ -541,7 +545,7 @@ class TestPECompactDetection:
         struct.pack_into("<I", pec1_section, 36, 0xE0000060)
 
         pec2_section = bytearray(40)
-        pec2_section[0:8] = b"PEC2TO\x00\x00"
+        pec2_section[:8] = b"PEC2TO\x00\x00"
         struct.pack_into("<I", pec2_section, 8, 4096)
         struct.pack_into("<I", pec2_section, 12, 0x4000)
         struct.pack_into("<I", pec2_section, 16, 4096)
@@ -551,10 +555,10 @@ class TestPECompactDetection:
         padding = bytearray(0x400 - 64 - len(pe_signature) - len(coff_header) - len(optional_header) - 80)
 
         pec_code = bytearray(12288)
-        pec_code[0:48] = (
-            b"\xB8\x00\x00\x00\x00\x50\x64\xFF\x35\x00\x00\x00\x00\x64\x89\x25"
-            b"\x00\x00\x00\x00\x33\xC0\x89\x08\x50\x45\x43\x4F\x4D\x50\x41\x43"
-            b"\x54\x32\x00\x00\xBB\x00\x00\x00\x00\x8B\xC3\x83\xC0\x04\x90\x8B"
+        pec_code[:48] = (
+            b"\xb8\x00\x00\x00\x00\x50\x64\xff\x35\x00\x00\x00\x00\x64\x89\x25"
+            b"\x00\x00\x00\x00\x33\xc0\x89\x08\x50\x45\x43\x4f\x4d\x50\x41\x43"
+            b"\x54\x32\x00\x00\xbb\x00\x00\x00\x00\x8b\xc3\x83\xc0\x04\x90\x8b"
         )
 
         pec_code[60:76] = b"PECOMPACT2\x00\x00\x00\x00\x00\x00"
@@ -586,12 +590,11 @@ class TestPECompactDetection:
 
         packer_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PACKER]
 
-        if len(packer_sigs) == 0:
+        if not packer_sigs:
             all_sigs = [sig for sig in signatures if "pec2" in sig.context.lower()]
-            assert len(all_sigs) > 0 or len(signatures) > 0
+            assert all_sigs or len(signatures) > 0
         else:
             pec_sigs = [sig for sig in packer_sigs if "pec2" in sig.context.lower()]
-            assert len(pec_sigs) >= 0
 
     def test_pecompact_signature_string_detection(self, pecompact_packed_binary: Path) -> None:
         """PECompact detected through signature string."""
@@ -604,7 +607,7 @@ class TestPECompactDetection:
         signatures = extractor.extract_signatures(str(pecompact_packed_binary))
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
-        assert len(string_sigs) > 0
+        assert string_sigs
 
 
 class TestObsidiumDetection:
@@ -616,18 +619,18 @@ class TestObsidiumDetection:
         pe_path = tmp_path / "obsidium_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         obsidium_section = bytearray(40)
-        obsidium_section[0:8] = b".obsidum"
+        obsidium_section[:8] = b".obsidum"
         struct.pack_into("<I", obsidium_section, 8, 20480)
         struct.pack_into("<I", obsidium_section, 12, 0x1000)
         struct.pack_into("<I", obsidium_section, 16, 20480)
@@ -635,7 +638,7 @@ class TestObsidiumDetection:
         struct.pack_into("<I", obsidium_section, 36, 0xE0000060)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x6000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -645,11 +648,11 @@ class TestObsidiumDetection:
         padding = bytearray(0x400 - 64 - len(pe_signature) - len(coff_header) - len(optional_header) - 80)
 
         obsidium_code = bytearray(20480)
-        obsidium_code[0:64] = (
-            b"\xEB\x02\x00\x00\x5B\xEB\x02\x00\x00\x81\xEB\x00\x00\x00\x00\xEB"
-            b"\x02\x00\x00\x8D\x83\x00\x00\x00\x00\xEB\x02\x00\x00\x50\xEB\x02"
-            b"\x00\x00\xC3\xEB\x02\x00\x00\x90\x90\xEB\x02\x00\x00\xE8\x00\x00"
-            b"\x00\x00\xEB\x02\x00\x00\x5D\x81\xED\x00\x00\x00\x00\xEB\x02\x00"
+        obsidium_code[:64] = (
+            b"\xeb\x02\x00\x00\x5b\xeb\x02\x00\x00\x81\xeb\x00\x00\x00\x00\xeb"
+            b"\x02\x00\x00\x8d\x83\x00\x00\x00\x00\xeb\x02\x00\x00\x50\xeb\x02"
+            b"\x00\x00\xc3\xeb\x02\x00\x00\x90\x90\xeb\x02\x00\x00\xe8\x00\x00"
+            b"\x00\x00\xeb\x02\x00\x00\x5d\x81\xed\x00\x00\x00\x00\xeb\x02\x00"
         )
 
         obsidium_code[100:132] = (
@@ -688,7 +691,7 @@ class TestObsidiumDetection:
             for sig in signatures
             if sig.category in [ProtectionCategory.PROTECTOR, ProtectionCategory.OBFUSCATION]
         ]
-        assert len(protector_sigs) > 0
+        assert protector_sigs
 
     def test_obsidium_junk_code_patterns(self, obsidium_protected_binary: Path) -> None:
         """Obsidium detected through characteristic junk code patterns."""
@@ -697,7 +700,8 @@ class TestObsidiumDetection:
 
         obsidium_patterns = [b"\xEB\x02\x00\x00", b"\x81\xEB\x00\x00\x00\x00", b"\x81\xED\x00\x00\x00\x00"]
 
-        found_patterns = sum(1 for pattern in obsidium_patterns if pattern in binary_data)
+        found_patterns = sum(bool(pattern in binary_data)
+                         for pattern in obsidium_patterns)
         assert found_patterns >= 2
 
 
@@ -710,18 +714,18 @@ class TestEnigmaProtectorDetection:
         pe_path = tmp_path / "enigma_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 3, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         enigma1_section = bytearray(40)
-        enigma1_section[0:8] = b".enigma1"
+        enigma1_section[:8] = b".enigma1"
         struct.pack_into("<I", enigma1_section, 8, 16384)
         struct.pack_into("<I", enigma1_section, 12, 0x1000)
         struct.pack_into("<I", enigma1_section, 16, 16384)
@@ -729,7 +733,7 @@ class TestEnigmaProtectorDetection:
         struct.pack_into("<I", enigma1_section, 36, 0xE0000060)
 
         enigma2_section = bytearray(40)
-        enigma2_section[0:8] = b".enigma2"
+        enigma2_section[:8] = b".enigma2"
         struct.pack_into("<I", enigma2_section, 8, 8192)
         struct.pack_into("<I", enigma2_section, 12, 0x5000)
         struct.pack_into("<I", enigma2_section, 16, 8192)
@@ -737,7 +741,7 @@ class TestEnigmaProtectorDetection:
         struct.pack_into("<I", enigma2_section, 36, 0xC0000040)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x7000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -791,10 +795,10 @@ class TestEnigmaProtectorDetection:
         signatures = extractor.extract_signatures(str(enigma_protected_binary))
 
         protector_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PROTECTOR]
-        assert len(protector_sigs) > 0
+        assert protector_sigs
 
         enigma_sigs = [sig for sig in protector_sigs if "enigma" in sig.context.lower()]
-        assert len(enigma_sigs) > 0
+        assert enigma_sigs
 
     def test_enigma_signature_string_detection(self, enigma_protected_binary: Path) -> None:
         """Enigma Protector detected through signature string."""
@@ -807,7 +811,7 @@ class TestEnigmaProtectorDetection:
         signatures = extractor.extract_signatures(str(enigma_protected_binary))
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
-        assert len(string_sigs) > 0
+        assert string_sigs
 
 
 class TestArmadilloDetection:
@@ -819,18 +823,18 @@ class TestArmadilloDetection:
         pe_path = tmp_path / "armadillo_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         arma_section = bytearray(40)
-        arma_section[0:8] = b".arma\x00\x00\x00"
+        arma_section[:8] = b".arma\x00\x00\x00"
         struct.pack_into("<I", arma_section, 8, 12288)
         struct.pack_into("<I", arma_section, 12, 0x1000)
         struct.pack_into("<I", arma_section, 16, 12288)
@@ -838,7 +842,7 @@ class TestArmadilloDetection:
         struct.pack_into("<I", arma_section, 36, 0xE0000060)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x4000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -848,10 +852,10 @@ class TestArmadilloDetection:
         padding = bytearray(0x400 - 64 - len(pe_signature) - len(coff_header) - len(optional_header) - 80)
 
         arma_code = bytearray(12288)
-        arma_code[0:48] = (
-            b"\x55\x8B\xEC\x6A\xFF\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x64"
-            b"\xA1\x00\x00\x00\x00\x50\x64\x89\x25\x00\x00\x00\x00\x83\xEC\x58"
-            b"\x53\x56\x57\x89\x65\xE8\xFF\x15\x00\x00\x00\x00\x33\xD2\x8A\xD4"
+        arma_code[:48] = (
+            b"\x55\x8b\xec\x6a\xff\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x64"
+            b"\xa1\x00\x00\x00\x00\x50\x64\x89\x25\x00\x00\x00\x00\x83\xec\x58"
+            b"\x53\x56\x57\x89\x65\xe8\xff\x15\x00\x00\x00\x00\x33\xd2\x8a\xd4"
         )
 
         arma_code[100:132] = (
@@ -887,7 +891,7 @@ class TestArmadilloDetection:
         signatures = extractor.extract_signatures(str(armadillo_protected_binary))
 
         protector_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.PROTECTOR]
-        assert len(protector_sigs) > 0
+        assert protector_sigs
 
     def test_armadillo_signature_string_detection(self, armadillo_protected_binary: Path) -> None:
         """Armadillo detected through signature string."""
@@ -900,7 +904,7 @@ class TestArmadilloDetection:
         signatures = extractor.extract_signatures(str(armadillo_protected_binary))
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
-        assert len(string_sigs) > 0
+        assert string_sigs
 
 
 class TestDotNetObfuscatorDetection:
@@ -912,20 +916,20 @@ class TestDotNetObfuscatorDetection:
         pe_path = tmp_path / "dotfuscator_obfuscated.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x2000)
         struct.pack_into("<I", optional_header, 200, 2048)
         struct.pack_into("<I", optional_header, 204, 0x1000)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 8192)
         struct.pack_into("<I", text_section, 12, 0x2000)
         struct.pack_into("<I", text_section, 16, 8192)
@@ -942,7 +946,7 @@ class TestDotNetObfuscatorDetection:
         struct.pack_into("<I", clr_header, 12, 0x1000)
 
         text_code = bytearray(8192)
-        text_code[0:72] = clr_header
+        text_code[:72] = clr_header
 
         text_code[200:232] = (
             b"DotfuscatorAttribute"
@@ -966,20 +970,20 @@ class TestDotNetObfuscatorDetection:
         pe_path = tmp_path / "confuserex_obfuscated.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x2000)
         struct.pack_into("<I", optional_header, 200, 2048)
         struct.pack_into("<I", optional_header, 204, 0x1000)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 10240)
         struct.pack_into("<I", text_section, 12, 0x2000)
         struct.pack_into("<I", text_section, 16, 10240)
@@ -994,7 +998,7 @@ class TestDotNetObfuscatorDetection:
         struct.pack_into("<H", clr_header, 6, 5)
 
         text_code = bytearray(10240)
-        text_code[0:72] = clr_header
+        text_code[:72] = clr_header
 
         text_code[200:232] = b"ConfusedByAttribute\x00\x00\x00\x00\x00\x8B\x45\x08\x8B\x4D\x0C\x8B"
 
@@ -1021,7 +1025,6 @@ class TestDotNetObfuscatorDetection:
         signatures = extractor.extract_signatures(str(dotfuscator_obfuscated_binary))
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
-        assert len(string_sigs) >= 0
         assert len(signatures) > 0
 
     def test_confuserex_signature_detection(self, confuserex_obfuscated_binary: Path) -> None:
@@ -1035,7 +1038,6 @@ class TestDotNetObfuscatorDetection:
         signatures = extractor.extract_signatures(str(confuserex_obfuscated_binary))
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
-        assert len(string_sigs) >= 0
         assert len(signatures) > 0
 
     def test_dotnet_obfuscated_name_patterns(self, confuserex_obfuscated_binary: Path) -> None:
@@ -1045,7 +1047,8 @@ class TestDotNetObfuscatorDetection:
 
         obfuscated_patterns = [b"<>c__DisplayClass", b"<Module>", b"<PrivateImplementationDetails>", b"ConfuserEx", b"ConfusedBy"]
 
-        found_patterns = sum(1 for pattern in obfuscated_patterns if pattern in binary_data)
+        found_patterns = sum(bool(pattern in binary_data)
+                         for pattern in obfuscated_patterns)
         assert found_patterns >= 1
 
 
@@ -1058,18 +1061,18 @@ class TestGenericPackerHeuristics:
         pe_path = tmp_path / "high_entropy.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         packed_section = bytearray(40)
-        packed_section[0:8] = b".packed\x00"
+        packed_section[:8] = b".packed\x00"
         struct.pack_into("<I", packed_section, 8, 16384)
         struct.pack_into("<I", packed_section, 12, 0x1000)
         struct.pack_into("<I", packed_section, 16, 16384)
@@ -1091,10 +1094,10 @@ class TestGenericPackerHeuristics:
         signatures = extractor.extract_signatures(str(high_entropy_binary))
 
         entropy_sigs = [sig for sig in signatures if "entropy" in sig.context.lower()]
-        assert len(entropy_sigs) > 0
+        assert entropy_sigs
 
         high_entropy_sigs = [sig for sig in entropy_sigs if sig.metadata.get("entropy", 0) > 7.5]
-        assert len(high_entropy_sigs) > 0
+        assert high_entropy_sigs
 
     def test_executable_writable_section_detection(self) -> None:
         """Generic packer detected through executable+writable sections."""
@@ -1102,17 +1105,17 @@ class TestGenericPackerHeuristics:
             pe_path = Path(f.name)
 
             dos_header = bytearray(64)
-            dos_header[0:2] = b"MZ"
+            dos_header[:2] = b"MZ"
             dos_header[60:64] = struct.pack("<I", 64)
 
             pe_signature = b"PE\x00\x00"
             coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x010F)
 
             optional_header = bytearray(224)
-            optional_header[0:2] = struct.pack("<H", 0x010B)
+            optional_header[:2] = struct.pack("<H", 0x010B)
 
             rwx_section = bytearray(40)
-            rwx_section[0:8] = b".rwx\x00\x00\x00\x00"
+            rwx_section[:8] = b".rwx\x00\x00\x00\x00"
             struct.pack_into("<I", rwx_section, 8, 4096)
             struct.pack_into("<I", rwx_section, 12, 0x1000)
             struct.pack_into("<I", rwx_section, 16, 4096)
@@ -1134,10 +1137,10 @@ class TestGenericPackerHeuristics:
             signatures = extractor.extract_signatures(str(pe_path))
 
             section_sigs = [sig for sig in signatures if "section" in sig.context.lower()]
-            assert len(section_sigs) > 0
+            assert section_sigs
 
             rwx_metadata = [sig for sig in section_sigs if sig.metadata.get("characteristics", 0) & 0xE0000000]
-            assert len(rwx_metadata) > 0
+            assert rwx_metadata
         finally:
             if pe_path.exists():
                 os.unlink(pe_path)
@@ -1152,19 +1155,19 @@ class TestEntryPointAnalysis:
         pe_path = tmp_path / "unusual_ep.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x5000)
         struct.pack_into("<I", optional_header, 20, 0x1000)
 
         data_section = bytearray(40)
-        data_section[0:8] = b".data\x00\x00\x00"
+        data_section[:8] = b".data\x00\x00\x00"
         struct.pack_into("<I", data_section, 8, 4096)
         struct.pack_into("<I", data_section, 12, 0x1000)
         struct.pack_into("<I", data_section, 16, 4096)
@@ -1172,7 +1175,7 @@ class TestEntryPointAnalysis:
         struct.pack_into("<I", data_section, 36, 0xC0000040)
 
         packed_section = bytearray(40)
-        packed_section[0:8] = b".packed\x00"
+        packed_section[:8] = b".packed\x00"
         struct.pack_into("<I", packed_section, 8, 8192)
         struct.pack_into("<I", packed_section, 12, 0x5000)
         struct.pack_into("<I", packed_section, 16, 8192)
@@ -1184,9 +1187,9 @@ class TestEntryPointAnalysis:
         data_bytes = bytearray(4096)
 
         packed_code = bytearray(8192)
-        packed_code[0:32] = (
-            b"\x60\xE8\x00\x00\x00\x00\x5D\x81\xED\x00\x00\x00\x00\x8D\xBD\x00"
-            b"\x00\x00\x00\x8D\xB5\x00\x00\x00\x00\xB9\x00\x00\x00\x00\xF3\xA4"
+        packed_code[:32] = (
+            b"\x60\xe8\x00\x00\x00\x00\x5d\x81\xed\x00\x00\x00\x00\x8d\xbd\x00"
+            b"\x00\x00\x00\x8d\xb5\x00\x00\x00\x00\xb9\x00\x00\x00\x00\xf3\xa4"
         )
 
         for i in range(100, 8000, 128):
@@ -1213,10 +1216,10 @@ class TestEntryPointAnalysis:
         signatures = extractor.extract_signatures(str(unusual_entry_point_binary))
 
         section_sigs = [sig for sig in signatures if "section" in sig.context.lower()]
-        assert len(section_sigs) > 0
+        assert section_sigs
 
         packed_section_sigs = [sig for sig in section_sigs if "packed" in sig.context.lower()]
-        assert len(packed_section_sigs) > 0
+        assert packed_section_sigs
 
 
 class TestMultiplePackerLayerDetection:
@@ -1228,18 +1231,18 @@ class TestMultiplePackerLayerDetection:
         pe_path = tmp_path / "multi_layer.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 3, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         upx1_section = bytearray(40)
-        upx1_section[0:8] = b"UPX1\x00\x00\x00\x00"
+        upx1_section[:8] = b"UPX1\x00\x00\x00\x00"
         struct.pack_into("<I", upx1_section, 8, 8192)
         struct.pack_into("<I", upx1_section, 12, 0x1000)
         struct.pack_into("<I", upx1_section, 16, 8192)
@@ -1247,7 +1250,7 @@ class TestMultiplePackerLayerDetection:
         struct.pack_into("<I", upx1_section, 36, 0xE0000060)
 
         vmp0_section = bytearray(40)
-        vmp0_section[0:8] = b".vmp0\x00\x00\x00"
+        vmp0_section[:8] = b".vmp0\x00\x00\x00"
         struct.pack_into("<I", vmp0_section, 8, 12288)
         struct.pack_into("<I", vmp0_section, 12, 0x3000)
         struct.pack_into("<I", vmp0_section, 16, 12288)
@@ -1255,7 +1258,7 @@ class TestMultiplePackerLayerDetection:
         struct.pack_into("<I", vmp0_section, 36, 0xE0000020)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x6000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -1363,17 +1366,17 @@ class TestRealWindowsBinaryAnalysis:
         large_binary_path = tmp_path / "large_binary.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x010F)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 1048576)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 1048576)

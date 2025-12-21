@@ -547,7 +547,7 @@ class TestHardwareDongleEmulator:
         usb.register_bulk_handler(0x81, test_handler)
 
         response = usb.bulk_transfer(0x81, b'TEST')
-        assert handler_called is True
+        assert handler_called
         assert response == b'RESPONSE'
 
     def test_hasp_login_invalid_vendor(self):

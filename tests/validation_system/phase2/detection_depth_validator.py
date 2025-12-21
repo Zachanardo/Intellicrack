@@ -303,17 +303,21 @@ class DetectionDepthValidator:
             # Standard protection analysis
             protection_results = self.protection_analyzer.analyze_protections(binary_path)
 
-            # Enhanced detection with additional methods
-            enhanced_results = {
-                'detected_protections': protection_results.get('detected_protections', []),
-                'confidence_scores': protection_results.get('confidence_scores', {}),
+            return {
+                'detected_protections': protection_results.get(
+                    'detected_protections', []
+                ),
+                'confidence_scores': protection_results.get(
+                    'confidence_scores', {}
+                ),
                 'analysis_metadata': protection_results.get('metadata', {}),
-                'enhanced_signatures': await self._detect_enhanced_signatures(binary_path),
-                'structural_analysis': await self._perform_structural_analysis(binary_path)
+                'enhanced_signatures': await self._detect_enhanced_signatures(
+                    binary_path
+                ),
+                'structural_analysis': await self._perform_structural_analysis(
+                    binary_path
+                ),
             }
-
-            return enhanced_results
-
         except Exception as e:
             self.logger.error(f"Enhanced protection detection failed: {str(e)}")
             return {'detected_protections': [], 'error': str(e)}
@@ -344,13 +348,13 @@ class DetectionDepthValidator:
                 # Method 4: Entropy and structural analysis
                 structural_version = await self._detect_version_from_structure(binary_path, protection_name)
 
-                # Combine version detection results
-                version_info = self._combine_version_detection_results(
-                    protection_name, version_strings, signature_version,
-                    feature_version, structural_version
-                )
-
-                if version_info:
+                if version_info := self._combine_version_detection_results(
+                    protection_name,
+                    version_strings,
+                    signature_version,
+                    feature_version,
+                    structural_version,
+                ):
                     protection_versions.append(version_info)
 
             return protection_versions
@@ -386,14 +390,15 @@ class DetectionDepthValidator:
 
                     for pattern in version_patterns:
                         matches = re.finditer(pattern, string_value, re.IGNORECASE)
-                        for match in matches:
-                            version_strings.append({
+                        version_strings.extend(
+                            {
                                 'version': match.group(1),
                                 'full_string': string_value,
                                 'pattern_used': pattern,
-                                'address': string_info.get('vaddr', 0)
-                            })
-
+                                'address': string_info.get('vaddr', 0),
+                            }
+                            for match in matches
+                        )
                 version_data['strings'] = version_strings
                 version_data['confidence'] = min(1.0, len(version_strings) * 0.3)
 
@@ -460,8 +465,9 @@ class DetectionDepthValidator:
 
             # Determine version from feature combination
             if all_features:
-                version_mapping = self._map_features_to_version(protection_name, all_features)
-                if version_mapping:
+                if version_mapping := self._map_features_to_version(
+                    protection_name, all_features
+                ):
                     feature_data['version'] = version_mapping['version']
                     feature_data['confidence'] = version_mapping['confidence']
 
@@ -495,8 +501,9 @@ class DetectionDepthValidator:
 
             # Map structural indicators to version
             if all_indicators:
-                version_mapping = self._map_structure_to_version(protection_name, all_indicators)
-                if version_mapping:
+                if version_mapping := self._map_structure_to_version(
+                    protection_name, all_indicators
+                ):
                     structural_data['version'] = version_mapping['version']
                     structural_data['confidence'] = version_mapping['confidence']
 
@@ -510,17 +517,15 @@ class DetectionDepthValidator:
                                          structural_version: dict[str, Any]) -> ProtectionVersionInfo | None:
         """Combine multiple version detection results into final version information."""
         try:
-            # Collect all version candidates with confidence scores
-            version_candidates = []
-
-            # String-based versions
-            for string_info in version_strings.get('strings', []):
-                version_candidates.append({
+            version_candidates = [
+                {
                     'version': string_info['version'],
-                    'confidence': version_strings.get('confidence', 0.0) * 0.6,  # Lower weight for strings
-                    'method': 'string_analysis'
-                })
-
+                    'confidence': version_strings.get('confidence', 0.0)
+                    * 0.6,  # Lower weight for strings
+                    'method': 'string_analysis',
+                }
+                for string_info in version_strings.get('strings', [])
+            ]
             # Signature-based version
             if signature_version.get('version'):
                 version_candidates.append({
@@ -725,9 +730,10 @@ class DetectionDepthValidator:
                             rb'\d{1,2}[-/]\d{1,2}[-/]\d{2,4}'  # M-D-YY or MM/DD/YYYY variants
                         ]
                         for date_pattern in date_patterns:
-                            date_match = re.search(date_pattern, context)
-                            if date_match:
-                                config_settings['expiration_date'] = date_match.group(0).decode('ascii', errors='ignore')
+                            if date_match := re.search(date_pattern, context):
+                                config_settings['expiration_date'] = date_match[
+                                    0
+                                ].decode('ascii', errors='ignore')
                                 break
 
             # Determine license type based on scores
@@ -742,9 +748,9 @@ class DetectionDepthValidator:
                 config_settings['feature_set'] = 'partial'
             else:
                 # No clear indicators, try protection-specific detection
-                config_settings.update(await self._detect_protection_specific_config(
+                config_settings |= await self._detect_protection_specific_config(
                     binary_data, protection_name, version
-                ))
+                )
 
             # Protection-specific configuration analysis
             protection_lower = protection_name.lower()
@@ -755,11 +761,11 @@ class DetectionDepthValidator:
                     config_settings['floating_license'] = True
                 if b'FEATURE_VERSION' in binary_data:
                     config_settings['feature_versioning'] = True
-                # Look for concurrent user limits
-                concurrent_pattern = re.search(rb'MAX_USERS[=\s]*(\d+)', binary_data, re.IGNORECASE)
-                if concurrent_pattern:
+                if concurrent_pattern := re.search(
+                    rb'MAX_USERS[=\s]*(\d+)', binary_data, re.IGNORECASE
+                ):
                     try:
-                        config_settings['concurrent_users'] = int(concurrent_pattern.group(1))
+                        config_settings['concurrent_users'] = int(concurrent_pattern[1])
                     except ValueError:
                         pass
                         # Parsing may fail, continue with other configuration detection
@@ -780,11 +786,11 @@ class DetectionDepthValidator:
                 if b'ACTIVATION_REQUIRED' in binary_data:
                     config_settings['activation_required'] = True
                 if b'TRIAL_DAYS' in binary_data:
-                    # Try to extract trial days
-                    trial_match = re.search(rb'TRIAL_DAYS[=\s]*(\d+)', binary_data, re.IGNORECASE)
-                    if trial_match:
+                    if trial_match := re.search(
+                        rb'TRIAL_DAYS[=\s]*(\d+)', binary_data, re.IGNORECASE
+                    ):
                         try:
-                            config_settings['trial_days'] = int(trial_match.group(1))
+                            config_settings['trial_days'] = int(trial_match[1])
                         except ValueError:
                             pass
 
@@ -853,7 +859,8 @@ class DetectionDepthValidator:
                 b'NtSetInformationThread', b'anti-debug', b'anti_debug'
             ]
 
-            debug_count = sum(1 for pattern in anti_debug_patterns if pattern in binary_data)
+            debug_count = sum(bool(pattern in binary_data)
+                          for pattern in anti_debug_patterns)
             if debug_count > 0:
                 protection_params['anti_debug'] = True
                 protection_params['debug_detection_methods'] = debug_count
@@ -1145,53 +1152,53 @@ class DetectionDepthValidator:
             if 'flexlm' in protection_lower:
                 # FlexLM specific detection
                 if b'DEMO_VERSION' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'demo',
                         'demo_mode': True,
-                        'feature_set': 'limited'
-                    })
+                        'feature_set': 'limited',
+                    }
                 elif b'EVAL_LICENSE' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'trial',
                         'trial_mode': True,
-                        'time_limited': True
-                    })
+                        'time_limited': True,
+                    }
                 elif b'PERMANENT_LICENSE' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'full',
                         'full_licensed': True,
-                        'feature_set': 'complete'
-                    })
+                        'feature_set': 'complete',
+                    }
 
             elif 'adobe' in protection_lower:
                 # Adobe Creative Cloud detection
                 if b'TRIAL_MODE' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'trial',
                         'trial_mode': True,
-                        'subscription_trial': True
-                    })
+                        'subscription_trial': True,
+                    }
                 elif b'SUBSCRIPTION_ACTIVE' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'full',
                         'subscription_model': True,
-                        'full_licensed': True
-                    })
+                        'full_licensed': True,
+                    }
 
             elif 'hasp' in protection_lower or 'sentinel' in protection_lower:
                 # HASP/Sentinel detection
                 if b'DEMO_KEY' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'demo',
                         'demo_mode': True,
-                        'hardware_demo_key': True
-                    })
+                        'hardware_demo_key': True,
+                    }
                 elif b'TEMP_LICENSE' in binary_data:
-                    config_updates.update({
+                    config_updates |= {
                         'license_type': 'trial',
                         'time_limited': True,
-                        'temporary_license': True
-                    })
+                        'temporary_license': True,
+                    }
 
         except Exception as e:
             self.logger.warning(f"Protection-specific config detection failed: {e}")
@@ -1225,7 +1232,7 @@ class DetectionDepthValidator:
                     if os.path.exists(path):
                         config_settings['license_files_present'] = True
                         break
-                except (OSError, PermissionError):
+                except OSError:
                     continue
 
             # Check registry (simplified check)
@@ -1234,7 +1241,7 @@ class DetectionDepthValidator:
                     with winreg.OpenKey(hkey, subkey):
                         config_settings['registry_entries_present'] = True
                         break
-                except (OSError, PermissionError, FileNotFoundError):
+                except OSError:
                     continue
 
         except Exception as e:
@@ -1261,19 +1268,19 @@ class DetectionDepthValidator:
                 binary_data = f.read()
 
                 for db_name, signatures in signature_databases.items():
-                    matches = []
-
-                    for signature in signatures:
-                        if self._check_signature_match(binary_data, signature):
-                            matches.append({
-                                'signature_id': signature.get('id', 'unknown'),
-                                'signature_name': signature.get('name', 'unnamed'),
-                                'confidence': signature.get('confidence', 0.8),
-                                'match_offset': self._find_signature_offset(binary_data, signature),
-                                'signature_type': signature.get('type', 'binary')
-                            })
-
-                    if matches:
+                    if matches := [
+                        {
+                            'signature_id': signature.get('id', 'unknown'),
+                            'signature_name': signature.get('name', 'unnamed'),
+                            'confidence': signature.get('confidence', 0.8),
+                            'match_offset': self._find_signature_offset(
+                                binary_data, signature
+                            ),
+                            'signature_type': signature.get('type', 'binary'),
+                        }
+                        for signature in signatures
+                        if self._check_signature_match(binary_data, signature)
+                    ]:
                         signature_analysis['signature_matches'][db_name] = matches
                         signature_analysis['total_signatures_checked'] += len(signatures)
 
@@ -1358,10 +1365,9 @@ class DetectionDepthValidator:
             if outermost_packer:
                 packer_layers.append(outermost_packer)
 
-            # Layer 2+: Detect nested packers (requires unpacking)
-            if outermost_packer and self.config.deep_analysis_enabled:
-                nested_layers = await self._detect_nested_packers(binary_path, outermost_packer)
-                packer_layers.extend(nested_layers)
+                if self.config.deep_analysis_enabled:
+                    nested_layers = await self._detect_nested_packers(binary_path, outermost_packer)
+                    packer_layers.extend(nested_layers)
 
             # Analyze packer characteristics
             for layer in packer_layers:
@@ -1379,17 +1385,15 @@ class DetectionDepthValidator:
             return {'techniques': [], 'anti_analysis': []}
 
         try:
+            # Detect code obfuscation
+            code_obfuscation = await self._detect_code_obfuscation(binary_path)
             obfuscation_analysis = {
                 'techniques': [],
                 'anti_analysis': [],
-                'code_obfuscation': [],
                 'data_obfuscation': [],
-                'control_flow_obfuscation': []
+                'control_flow_obfuscation': [],
+                'code_obfuscation': code_obfuscation,
             }
-
-            # Detect code obfuscation
-            code_obfuscation = await self._detect_code_obfuscation(binary_path)
-            obfuscation_analysis['code_obfuscation'] = code_obfuscation
             obfuscation_analysis['techniques'].extend(code_obfuscation)
 
             # Detect data obfuscation
@@ -1434,12 +1438,10 @@ class DetectionDepthValidator:
                 version_confidences = [pv.detection_confidence for pv in protection_versions]
                 metrics['version_accuracy'] = sum(version_confidences) / len(version_confidences)
 
-            # Configuration completeness
-            config_completeness_scores = []
-            for _protection_name, config_data in configuration_analysis.items():
-                config_completeness_scores.append(config_data.get('configuration_completeness', 0.0))
-
-            if config_completeness_scores:
+            if config_completeness_scores := [
+                config_data.get('configuration_completeness', 0.0)
+                for config_data in configuration_analysis.values()
+            ]:
                 metrics['configuration_completeness'] = sum(config_completeness_scores) / len(config_completeness_scores)
 
             # Calculate overall depth score
@@ -1682,7 +1684,8 @@ class DetectionDepthValidator:
                 'file_size': file_size,
                 'entropy': self._calculate_section_entropy(binary_data[:min(8192, len(binary_data))]),
                 'null_byte_ratio': binary_data.count(b'\x00') / len(binary_data) if binary_data else 0,
-                'printable_ratio': sum(1 for b in binary_data[:8192] if 32 <= b <= 126) / min(8192, len(binary_data))
+                'printable_ratio': sum(bool(32 <= b <= 126)
+                                   for b in binary_data[:8192]) / min(8192, len(binary_data))
             }
 
             # PE structure analysis if applicable
@@ -1751,14 +1754,24 @@ class DetectionDepthValidator:
                             if hasattr(resource_type, 'directory'):
                                 for resource_id in resource_type.directory.entries:
                                     if hasattr(resource_id, 'directory'):
-                                        for resource_lang in resource_id.directory.entries:
-                                            resources.append({
-                                                'type': resource_type.name or str(resource_type.id),
-                                                'id': resource_id.name or str(resource_id.id),
-                                                'lang': resource_lang.name or str(resource_lang.id),
-                                                'size': resource_lang.data.struct.Size if hasattr(resource_lang, 'data') else 0
-                                            })
-
+                                        resources.extend(
+                                            {
+                                                'type': resource_type.name
+                                                or str(resource_type.id),
+                                                'id': resource_id.name
+                                                or str(resource_id.id),
+                                                'lang': resource_lang.name
+                                                or str(resource_lang.id),
+                                                'size': (
+                                                    resource_lang.data.struct.Size
+                                                    if hasattr(
+                                                        resource_lang, 'data'
+                                                    )
+                                                    else 0
+                                                ),
+                                            }
+                                            for resource_lang in resource_id.directory.entries
+                                        )
                         structural_analysis['resource_analysis'] = {
                             'resource_count': len(resources),
                             'resources': resources,
@@ -2072,36 +2085,36 @@ class DetectionDepthValidator:
         protection_name = protection_name.lower()
 
         if 'flexlm' in protection_name or 'hasp' in protection_name:
-            patterns.update({
-                'license_init_call': b'\xE8\x00\x00\x00\x00\x90',  # Call instruction pattern
-                'license_check_jump': b'\x74\x05\x90\x90\x90',      # Conditional jump pattern
-                'flexlm_signature': b'\x46\x4C\x45\x58',           # "FLEX" signature
-                'hasp_signature': b'\x48\x41\x53\x50'              # "HASP" signature
-            })
+            patterns |= {
+                'license_init_call': b'\xe8\x00\x00\x00\x00\x90',  # Call instruction pattern
+                'license_check_jump': b'\x74\x05\x90\x90\x90',  # Conditional jump pattern
+                'flexlm_signature': b'\x46\x4c\x45\x58',  # "FLEX" signature
+                'hasp_signature': b'\x48\x41\x53\x50',  # "HASP" signature
+            }
         elif 'armadillo' in protection_name:
-            patterns.update({
-                'armadillo_prolog': b'\x55\x8B\xEC\x6A\xFF',       # Standard function prolog
-                'armadillo_call': b'\xE8\x00\x00\x00\x00\x58',     # Call+pop pattern
-                'armadillo_decrypt': b'\x80\x34\x07'               # XOR decryption pattern
-            })
+            patterns |= {
+                'armadillo_prolog': b'\x55\x8b\xec\x6a\xff',  # Standard function prolog
+                'armadillo_call': b'\xe8\x00\x00\x00\x00\x58',  # Call+pop pattern
+                'armadillo_decrypt': b'\x80\x34\x07',  # XOR decryption pattern
+            }
         elif 'themida' in protection_name or 'vmprotect' in protection_name:
-            patterns.update({
-                'vm_entry': b'\x68\x00\x00\x00\x00\xE8',          # Push+call VM entry
-                'vm_handler': b'\x8B\x85\x00\x00\x00\x00',        # MOV from VM context
-                'anti_debug': b'\x64\xA1\x30\x00\x00\x00'         # PEB access pattern
-            })
+            patterns |= {
+                'vm_entry': b'\x68\x00\x00\x00\x00\xe8',  # Push+call VM entry
+                'vm_handler': b'\x8b\x85\x00\x00\x00\x00',  # MOV from VM context
+                'anti_debug': b'\x64\xa1\x30\x00\x00\x00',  # PEB access pattern
+            }
         elif 'upx' in protection_name:
-            patterns.update({
-                'upx_stub': b'\x60\xBE\x00\x10\x40\x00',          # UPX unpacker stub
-                'upx_signature': b'\x55\x50\x58\x21'               # UPX! signature
-            })
+            patterns |= {
+                'upx_stub': b'\x60\xbe\x00\x10\x40\x00',  # UPX unpacker stub
+                'upx_signature': b'\x55\x50\x58\x21',  # UPX! signature
+            }
 
         # Generic protection patterns
-        patterns.update({
-            'debug_check': b'\x64\xA1\x18\x00\x00\x00',           # TEB access
-            'time_check': b'\xFF\x15\x00\x00\x00\x00',            # GetTickCount call
-            'crypto_init': b'\x6A\x00\x6A\x00\x6A\x00\x6A\x01'   # Crypto API parameters
-        })
+        patterns |= {
+            'debug_check': b'\x64\xa1\x18\x00\x00\x00',  # TEB access
+            'time_check': b'\xff\x15\x00\x00\x00\x00',  # GetTickCount call
+            'crypto_init': b'\x6a\x00\x6a\x00\x6a\x00\x6a\x01',  # Crypto API parameters
+        }
 
         return patterns
 
@@ -2189,9 +2202,7 @@ class DetectionDepthValidator:
             import r2pipe
 
             with r2pipe.open(str(binary_path)) as r2:
-                # Get function list
-                functions_info = r2.cmd('aflj')
-                if functions_info:
+                if functions_info := r2.cmd('aflj'):
                     import json
                     functions = json.loads(functions_info) if functions_info else []
 
@@ -2233,16 +2244,14 @@ class DetectionDepthValidator:
                                 'category': 'initialization'
                             })
 
-                # Get imports for additional function identification
-                imports_info = r2.cmd('iij')
-                if imports_info:
+                if imports_info := r2.cmd('iij'):
                     imports = json.loads(imports_info) if imports_info else []
 
                     for imp in imports:
                         imp_name = imp.get('name', '').lower()
 
                         # Protection-specific critical imports
-                        if protection_name in ['flexlm', 'hasp', 'sentinel']:
+                        if protection_name in {'flexlm', 'hasp', 'sentinel'}:
                             if any(api in imp_name for api in [
                                 'lm_checkout', 'lm_checkin', 'hasp_login', 'hasp_encrypt'
                             ]):
@@ -2251,7 +2260,7 @@ class DetectionDepthValidator:
                                     'type': 'import',
                                     'category': 'licensing'
                                 })
-                        elif protection_name in ['wibu', 'codemeter']:
+                        elif protection_name in {'wibu', 'codemeter'}:
                             if any(api in imp_name for api in [
                                 'cmaccess', 'cmgetboxes', 'wibugetchallenge'
                             ]):
@@ -2287,16 +2296,14 @@ class DetectionDepthValidator:
 
     def _categorize_critical_functions(self, identified_functions: dict[str, Any]) -> dict[str, list[str]]:
         """Categorize identified critical functions by protection and type."""
-        categories = {}
-
-        for protection_key, functions in identified_functions.items():
-            categories[protection_key] = []
-
-            for category, function_list in functions.items():
-                if function_list:  # Non-empty category
-                    categories[protection_key].append(category.replace('_functions', ''))
-
-        return categories
+        return {
+            protection_key: [
+                category.replace('_functions', '')
+                for category, function_list in functions.items()
+                if function_list
+            ]
+            for protection_key, functions in identified_functions.items()
+        }
 
     async def _analyze_api_call_patterns(self, binary_path: Path,
                                         protection_versions: list[ProtectionVersionInfo]) -> dict[str, Any]:
@@ -2366,14 +2373,14 @@ class DetectionDepthValidator:
                 protection = entry_point.get('protection', '').lower()
                 ep_section = entry_point.get('section', '')
 
-                # Find corresponding critical functions for this protection
-                protection_functions = None
-                for key, functions in critical_functions.items():
-                    if protection in key.lower():
-                        protection_functions = functions
-                        break
-
-                if protection_functions:
+                if protection_functions := next(
+                    (
+                        functions
+                        for key, functions in critical_functions.items()
+                        if protection in key.lower()
+                    ),
+                    None,
+                ):
                     # Check if licensing functions are present for protection entry point
                     has_licensing = len(protection_functions.get('licensing_functions', [])) > 0
                     has_crypto = len(protection_functions.get('cryptographic_functions', [])) > 0
@@ -2445,9 +2452,10 @@ class DetectionDepthValidator:
             entry_points = entry_point_results.get('entry_points_identified', [])
             details.append(f"Entry Points Identified: {len(entry_points)}")
 
-            for ep in entry_points[:5]:  # First 5 entry points
-                details.append(f"  - {ep.get('protection', 'unknown')} at RVA {ep.get('rva', 'unknown')}")
-
+            details.extend(
+                f"  - {ep.get('protection', 'unknown')} at RVA {ep.get('rva', 'unknown')}"
+                for ep in entry_points[:5]
+            )
             # Critical function validation details
             critical_functions = critical_function_results.get('critical_functions_identified', {})
             total_functions = sum(
@@ -2460,15 +2468,19 @@ class DetectionDepthValidator:
             ep_criteria = entry_point_results.get('validation_criteria_met', {})
             func_criteria = critical_function_results.get('validation_criteria_met', {})
 
-            details.append(f"Entry Point Criteria Met: {sum(ep_criteria.values())}/{len(ep_criteria)}")
-            details.append(f"Critical Function Criteria Met: {sum(func_criteria.values())}/{len(func_criteria)}")
-
+            details.extend(
+                (
+                    f"Entry Point Criteria Met: {sum(ep_criteria.values())}/{len(ep_criteria)}",
+                    f"Critical Function Criteria Met: {sum(func_criteria.values())}/{len(func_criteria)}",
+                )
+            )
             # Cross-validation summary
             consistency_score = cross_validation_results.get('consistency_score', 0.0)
             details.append(f"Cross-Validation Consistency: {consistency_score:.2f}")
 
-            validation_issues = cross_validation_results.get('validation_issues', [])
-            if validation_issues:
+            if validation_issues := cross_validation_results.get(
+                'validation_issues', []
+            ):
                 details.append(f"Validation Issues: {len(validation_issues)}")
 
             return details
@@ -2507,7 +2519,7 @@ class DetectionDepthValidator:
             mask = signature.get('mask', '')
             # size = signature.get('size', len(pattern) // 2)  # Not currently used
 
-            if not pattern or len(binary_data) == 0:
+            if not pattern or not binary_data:
                 return False
 
             # Convert hex pattern to bytes with wildcard support
@@ -2562,10 +2574,9 @@ class DetectionDepthValidator:
                         match_found = False
                         break
 
-                    if mask_byte != 0:  # 0 means wildcard, skip comparison
-                        if (binary_data[pos + i] & mask_byte) != (pattern_byte & mask_byte):
-                            match_found = False
-                            break
+                    if mask_byte != 0 and (binary_data[pos + i] & mask_byte) != (pattern_byte & mask_byte):
+                        match_found = False
+                        break
 
                 if match_found:
                     return True
@@ -2594,11 +2605,10 @@ class DetectionDepthValidator:
                 if pos + i >= len(binary_data):
                     break
 
-                if mask_byte != 0:  # Skip wildcards
-                    if (binary_data[pos + i] & mask_byte) != (pattern_byte & mask_byte):
-                        mismatches += 1
-                        if mismatches > max_mismatches:
-                            break
+                if mask_byte != 0 and (binary_data[pos + i] & mask_byte) != (pattern_byte & mask_byte):
+                    mismatches += 1
+                    if mismatches > max_mismatches:
+                        break
 
             if mismatches <= max_mismatches:
                 return True
@@ -2613,14 +2623,12 @@ class DetectionDepthValidator:
             import r2pipe
 
             with r2pipe.open(str(binary_path)) as r2:
-                # Get all imports
-                imports_info = r2.cmd('iij')
-                if imports_info:
+                if imports_info := r2.cmd('iij'):
                     import json
                     imports = json.loads(imports_info) if imports_info else []
 
                     # Protection-specific import analysis
-                    if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+                    if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                         # FlexLM/HASP/Sentinel specific imports
                         version_indicators = [
                             'lm_checkout', 'lm_checkin', 'lm_heartbeat',  # FlexLM core
@@ -2643,7 +2651,7 @@ class DetectionDepthValidator:
                             if any(pattern in imp_name for pattern in dll_patterns):
                                 version_specific_imports.append(imp_name)
 
-                    elif protection_name.lower() in ['wibu', 'codemeter']:
+                    elif protection_name.lower() in {'wibu', 'codemeter'}:
                         # Wibu/CodeMeter specific imports
                         version_indicators = [
                             'CmAccess2', 'CmGetBoxes', 'CmGetVersion',    # CodeMeter core
@@ -2658,7 +2666,11 @@ class DetectionDepthValidator:
                             if any(indicator in imp_name for indicator in version_indicators):
                                 version_specific_imports.append(imp_name)
 
-                    elif protection_name.lower() in ['armadillo', 'themida', 'vmprotect']:
+                    elif protection_name.lower() in {
+                        'armadillo',
+                        'themida',
+                        'vmprotect',
+                    }:
                         # Code protection/obfuscation specific imports
                         version_indicators = [
                             'GetVersion', 'IsDebuggerPresent',            # Anti-debug
@@ -2731,14 +2743,12 @@ class DetectionDepthValidator:
             import r2pipe
 
             with r2pipe.open(str(binary_path)) as r2:
-                # Get disassembly for pattern analysis
-                functions_info = r2.cmd('aflj')
-                if functions_info:
+                if functions_info := r2.cmd('aflj'):
                     import json
                     functions = json.loads(functions_info) if functions_info else []
 
                     # Protection-specific pattern analysis
-                    if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+                    if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                         # License validation patterns
                         license_patterns = [
                             'license check', 'validation', 'expiry',
@@ -2751,16 +2761,14 @@ class DetectionDepthValidator:
                             if any(pattern in func_name for pattern in license_patterns):
                                 version_patterns.append(f'LICENSE_PATTERN_{func_name}')
 
-                        # Check for version-specific strings
-                        strings_info = r2.cmd('izj')
-                        if strings_info:
+                        if strings_info := r2.cmd('izj'):
                             strings = json.loads(strings_info) if strings_info else []
                             for string_entry in strings:
                                 string_val = string_entry.get('string', '').lower()
                                 if any(pattern in string_val for pattern in license_patterns):
                                     version_patterns.append(f'STRING_PATTERN_{string_val[:20]}')
 
-                    elif protection_name.lower() in ['wibu', 'codemeter']:
+                    elif protection_name.lower() in {'wibu', 'codemeter'}:
                         # Hardware dongle patterns
                         dongle_patterns = [
                             'dongle', 'hardware', 'usb', 'device',
@@ -2777,7 +2785,11 @@ class DetectionDepthValidator:
                         if hardware_calls:
                             version_patterns.append('HARDWARE_INTERACTION_DETECTED')
 
-                    elif protection_name.lower() in ['armadillo', 'themida', 'vmprotect']:
+                    elif protection_name.lower() in {
+                        'armadillo',
+                        'themida',
+                        'vmprotect',
+                    }:
                         # Obfuscation patterns
                         obfuscation_patterns = [
                             'virtual', 'mutation', 'obfuscate', 'protect',
@@ -2931,7 +2943,7 @@ class DetectionDepthValidator:
                                         version_resources.append(f'EMBEDDED_SIGNATURE_{signature.decode()}')
 
             # Protection-specific resource analysis
-            if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+            if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                 # Look for license server configuration resources
                 license_indicators = [b'license.dat', b'server', b'port', b'vendor', b'feature']
                 for indicator in license_indicators:
@@ -2968,9 +2980,7 @@ class DetectionDepthValidator:
             try:
                 import r2pipe
                 with r2pipe.open(str(binary_path)) as r2:
-                    # Get basic resource information
-                    resources_info = r2.cmd('iRj')
-                    if resources_info:
+                    if resources_info := r2.cmd('iRj'):
                         import json
                         resources = json.loads(resources_info) if resources_info else []
                         for resource in resources:
@@ -2990,9 +3000,8 @@ class DetectionDepthValidator:
                 section_data = section.get_data()
                 if pattern in section_data:
                     return True
-        except:
+        except Exception:
             pass
-            # Feature detection may fail for various reasons, return False
         return False
 
     def _map_features_to_version(self, protection_name: str, features: list[str]) -> dict[str, Any] | None:
@@ -3010,7 +3019,7 @@ class DetectionDepthValidator:
 
         try:
             # Protection-specific version mapping
-            if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+            if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                 # FlexLM version mapping based on features
                 if 'network_licensing' in features:
                     version_mapping['feature_analysis']['network_support'] = True
@@ -3037,7 +3046,7 @@ class DetectionDepthValidator:
                 elif 'full_features' in features:
                     version_mapping['license_type'] = 'full'
 
-            elif protection_name.lower() in ['wibu', 'codemeter']:
+            elif protection_name.lower() in {'wibu', 'codemeter'}:
                 # CodeMeter/Wibu version mapping
                 if 'usb_dongle_required' in features:
                     version_mapping['hardware_requirement'] = 'usb_dongle'
@@ -3047,9 +3056,9 @@ class DetectionDepthValidator:
                     version_mapping['feature_analysis']['memory_protection'] = True
                     version_mapping['confidence'] = 0.7
 
-                # Encryption level indicates version capabilities
-                encryption_features = [f for f in features if 'encryption' in f]
-                if encryption_features:
+                if encryption_features := [
+                    f for f in features if 'encryption' in f
+                ]:
                     version_mapping['encryption_level'] = encryption_features[0].replace('_encryption', '')
                     if 'military_grade_encryption' in features:
                         version_mapping['version_estimate'] = 'v6.x_or_newer'
@@ -3061,7 +3070,7 @@ class DetectionDepthValidator:
                         version_mapping['version_estimate'] = 'v2.x_to_v4.x'
                         version_mapping['confidence'] = 0.6
 
-            elif protection_name.lower() in ['armadillo', 'themida', 'vmprotect']:
+            elif protection_name.lower() in {'armadillo', 'themida', 'vmprotect'}:
                 # Code protection version mapping
                 if 'code_virtualization' in features:
                     version_mapping['feature_analysis']['virtualization'] = True
@@ -3083,7 +3092,8 @@ class DetectionDepthValidator:
 
             # Modern feature analysis
             modern_features = ['cloud_integration', 'blockchain_support', 'quantum_resistant']
-            modern_count = sum(1 for f in modern_features if f in features)
+            modern_count = sum(bool(f in features)
+                           for f in modern_features)
             if modern_count > 0:
                 version_mapping['modern_features'] = modern_count
                 version_mapping['version_estimate'] = 'latest_generation'
@@ -3173,7 +3183,7 @@ class DetectionDepthValidator:
                 section_characteristics = section.Characteristics
 
                 # Protection-specific section analysis
-                if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+                if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                     # FlexLM/HASP/Sentinel sections
                     if any(keyword in section_name.lower() for keyword in ['lic', 'hasp', 'sent', 'flx', 'lmgr']):
                         section_indicators.append(f'LICENSE_SECTION_{section_name}')
@@ -3229,10 +3239,8 @@ class DetectionDepthValidator:
                     if section_size > 1024 * 1024:  # > 1MB executable section
                         section_indicators.append(f'LARGE_EXEC_{section_name}')
 
-                # Data sections with encryption indicators
-                if section_characteristics & 0x40000000:  # IMAGE_SCN_MEM_READ
-                    if section_entropy > 7.5 and section_size > 4096:
-                        section_indicators.append(f'ENCRYPTED_DATA_{section_name}')
+                if section_characteristics & 0x40000000 and (section_entropy > 7.5 and section_size > 4096):
+                    section_indicators.append(f'ENCRYPTED_DATA_{section_name}')
 
                 # Version-specific size patterns
                 if section_size > 10 * 1024 * 1024:  # > 10MB
@@ -3277,7 +3285,7 @@ class DetectionDepthValidator:
                 for section in pe.sections:
                     section_name = section.Name.decode('utf-8', errors='ignore').rstrip('\x00')
                     section_indicators.append(f'BASIC_SECTION_{section_name}')
-            except:
+            except Exception:
                 section_indicators.append('SECTION_ANALYSIS_FAILED')
 
         return sorted(list(set(section_indicators)))
@@ -3552,7 +3560,8 @@ class DetectionDepthValidator:
                     for byte in overlay_data[:1024]:  # Sample first 1KB
                         byte_counts[byte] += 1
 
-                    non_zero_bytes = sum(1 for count in byte_counts if count > 0)
+                    non_zero_bytes = sum(bool(count > 0)
+                                     for count in byte_counts)
                     if non_zero_bytes > 200:  # Very diverse byte distribution
                         indicators.append("overlay_encrypted_data")
 
@@ -3690,13 +3699,8 @@ class DetectionDepthValidator:
                 optional_indicators = pattern_info['optional_indicators']
                 base_confidence = pattern_info['confidence_weight']
 
-                # Check required indicators
-                required_matches = 0
-                for required in required_indicators:
-                    # Flexible matching - check if any indicator contains the required pattern
-                    if any(required in indicator for indicator in indicators):
-                        required_matches += 1
-
+                required_matches = sum(bool(any(required in indicator for indicator in indicators))
+                                   for required in required_indicators)
                 # Must have at least 50% of required indicators
                 if required_matches < len(required_indicators) * 0.5:
                     continue
@@ -3704,12 +3708,8 @@ class DetectionDepthValidator:
                 # Calculate confidence score
                 required_score = required_matches / len(required_indicators)
 
-                # Check optional indicators
-                optional_matches = 0
-                for optional in optional_indicators:
-                    if any(optional in indicator for indicator in indicators):
-                        optional_matches += 1
-
+                optional_matches = sum(bool(any(optional in indicator for indicator in indicators))
+                                   for optional in optional_indicators)
                 optional_score = optional_matches / len(optional_indicators) if optional_indicators else 0.0
 
                 # Combine scores with weighting
@@ -3743,11 +3743,7 @@ class DetectionDepthValidator:
                     }
 
             # Apply minimum confidence threshold
-            if best_match and best_match['confidence'] < 0.3:
-                return None
-
-            return best_match
-
+            return None if best_match and best_match['confidence'] < 0.3 else best_match
         except Exception as e:
             self.logger.error(f"Structure to version mapping error: {e}")
             return None
@@ -3770,17 +3766,21 @@ class DetectionDepthValidator:
             protection_lower = protection_name.lower()
 
             if 'flexlm' in protection_lower:
-                config.update({
+                config |= {
                     'license_model': 'floating',
                     'encryption_level': 'symmetric',
-                    'features': ['network_licensing', 'concurrent_users', 'feature_versioning'],
+                    'features': [
+                        'network_licensing',
+                        'concurrent_users',
+                        'feature_versioning',
+                    ],
                     'capabilities': {
                         'supports_network': True,
                         'supports_floating': True,
                         'supports_node_locked': True,
-                        'max_checkout_time': 86400
-                    }
-                })
+                        'max_checkout_time': 86400,
+                    },
+                }
 
                 # Version-specific FlexLM features
                 if version and version.startswith('11.'):
@@ -3788,40 +3788,52 @@ class DetectionDepthValidator:
                     config['encryption_level'] = 'aes_128'
 
             elif 'hasp' in protection_lower or 'sentinel' in protection_lower:
-                config.update({
+                config |= {
                     'license_model': 'hardware_key',
                     'encryption_level': 'hardware',
-                    'features': ['dongle_protection', 'hardware_fingerprint', 'secure_storage'],
+                    'features': [
+                        'dongle_protection',
+                        'hardware_fingerprint',
+                        'secure_storage',
+                    ],
                     'capabilities': {
                         'supports_hardware_key': True,
                         'supports_software_key': True,
-                        'supports_cloud_licensing': False
-                    }
-                })
+                        'supports_cloud_licensing': False,
+                    },
+                }
 
             elif 'adobe' in protection_lower:
-                config.update({
+                config |= {
                     'license_model': 'subscription',
                     'encryption_level': 'rsa_2048',
-                    'features': ['cloud_activation', 'subscription_check', 'creative_cloud_integration'],
+                    'features': [
+                        'cloud_activation',
+                        'subscription_check',
+                        'creative_cloud_integration',
+                    ],
                     'capabilities': {
                         'supports_offline': False,
                         'requires_internet': True,
-                        'supports_trial': True
-                    }
-                })
+                        'supports_trial': True,
+                    },
+                }
 
             elif 'vmprotect' in protection_lower or 'themida' in protection_lower:
-                config.update({
+                config |= {
                     'license_model': 'code_protection',
                     'encryption_level': 'vm_based',
-                    'features': ['code_virtualization', 'anti_debugging', 'mutation_engine'],
+                    'features': [
+                        'code_virtualization',
+                        'anti_debugging',
+                        'mutation_engine',
+                    ],
                     'capabilities': {
                         'supports_packing': True,
                         'supports_virtualization': True,
-                        'supports_mutation': True
-                    }
-                })
+                        'supports_mutation': True,
+                    },
+                }
 
             # Add version-specific configuration adjustments
             if version:
@@ -3870,17 +3882,14 @@ class DetectionDepthValidator:
                     version = str(signature_version['version'])
                     build_patterns = [r'build[\s\.](\d{3,})', r'b(\d{3,})', r'\.(\d{4,})']
                     for pattern in build_patterns:
-                        match = re.search(pattern, version.lower())
-                        if match:
-                            return match.group(1)
+                        if match := re.search(pattern, version.lower()):
+                            return match[1]
 
             # Priority 3: Extract from raw version string analysis
             if isinstance(version_strings, dict) and 'version' in version_strings:
                 version = str(version_strings['version'])
-                # Try to find build numbers in various formats
-                build_match = re.search(r'(\d{4,})', version)
-                if build_match:
-                    return build_match.group(1)
+                if build_match := re.search(r'(\d{4,})', version):
+                    return build_match[1]
 
             return None
 
@@ -3958,10 +3967,8 @@ class DetectionDepthValidator:
 
             # Heuristic date estimation based on version numbering patterns
             if version:
-                # Try to extract year from version if it's formatted like 2021.x.x
-                year_match = re.match(r'^(20\d{2})[\.\-_]', version)
-                if year_match:
-                    year = int(year_match.group(1))
+                if year_match := re.match(r'^(20\d{2})[\.\-_]', version):
+                    year = int(year_match[1])
                     if 2000 <= year <= 2025:
                         return f"{year}-01-01"  # Estimated start of year
 
@@ -4005,7 +4012,7 @@ class DetectionDepthValidator:
                 enabled_features.extend(feature_version['active_features'])
 
             # Protection-specific feature detection
-            if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+            if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                 # Network licensing detection
                 if feature_version.get('network_capable', False):
                     enabled_features.append('network_licensing')
@@ -4023,14 +4030,14 @@ class DetectionDepthValidator:
 
                 # Feature set based on license type
                 license_type = feature_version.get('license_type', 'unknown')
-                if license_type == 'full':
+                if license_type == 'demo':
+                    enabled_features.extend(['demo_features', 'feature_limited'])
+
+                elif license_type == 'full':
                     enabled_features.extend(['full_features', 'commercial_use', 'unlimited_time'])
                 elif license_type == 'trial':
                     enabled_features.extend(['trial_features', 'time_limited'])
-                elif license_type == 'demo':
-                    enabled_features.extend(['demo_features', 'feature_limited'])
-
-            elif protection_name.lower() in ['wibu', 'codemeter']:
+            elif protection_name.lower() in {'wibu', 'codemeter'}:
                 # Hardware dongle features
                 if feature_version.get('requires_dongle', False):
                     enabled_features.append('usb_dongle_required')
@@ -4118,7 +4125,7 @@ class DetectionDepthValidator:
             ])
 
             # Protection-specific feature analysis
-            if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+            if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                 # Network licensing features
                 if 'network_licensing' in available_features and 'network_licensing' not in enabled_features:
                     disabled_features.append('network_licensing')
@@ -4133,7 +4140,7 @@ class DetectionDepthValidator:
                     remaining_features = [f for f in available_features if f not in enabled_features]
                     disabled_features.extend(remaining_features)
 
-            elif protection_name.lower() in ['wibu', 'codemeter']:
+            elif protection_name.lower() in {'wibu', 'codemeter'}:
                 # Hardware dongle specific features
                 if 'usb_dongle' not in enabled_features and 'usb_dongle' in available_features:
                     disabled_features.append('usb_dongle')
@@ -4229,9 +4236,7 @@ class DetectionDepthValidator:
             import r2pipe
 
             with r2pipe.open(str(binary_path)) as r2:
-                # Analyze PE sections for configuration data
-                sections_info = r2.cmd('iSj')
-                if sections_info:
+                if sections_info := r2.cmd('iSj'):
                     import json
                     sections = json.loads(sections_info) if sections_info else []
                     config_data['pe_sections'] = len(sections)
@@ -4244,9 +4249,7 @@ class DetectionDepthValidator:
                     ]
                     config_data['protection_sections'] = len(protection_sections)
 
-                # Analyze imports for protection-related APIs
-                imports_info = r2.cmd('iij')
-                if imports_info:
+                if imports_info := r2.cmd('iij'):
                     imports = json.loads(imports_info) if imports_info else []
                     protection_imports = [
                         imp for imp in imports
@@ -4255,9 +4258,7 @@ class DetectionDepthValidator:
                     ]
                     config_data['protection_imports'] = len(protection_imports)
 
-                # Check for embedded certificates/keys
-                strings_info = r2.cmd('izj')
-                if strings_info:
+                if strings_info := r2.cmd('izj'):
                     strings = json.loads(strings_info) if strings_info else []
                     cert_indicators = [
                         s for s in strings
@@ -4267,7 +4268,7 @@ class DetectionDepthValidator:
                     config_data['certificate_indicators'] = len(cert_indicators)
 
                 # Protection-specific configuration detection
-                if protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+                if protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                     # Check for network licensing configuration
                     network_indicators = [
                         s for s in strings
@@ -4276,7 +4277,7 @@ class DetectionDepthValidator:
                     ]
                     config_data['network_license_config'] = len(network_indicators) > 0
 
-                elif protection_name.lower() in ['wibu', 'codemeter']:
+                elif protection_name.lower() in {'wibu', 'codemeter'}:
                     # Check for dongle-specific configuration
                     dongle_indicators = [
                         s for s in strings
@@ -4313,71 +4314,88 @@ class DetectionDepthValidator:
 
             # FlexLM parameter analysis
             if 'flexlm' in protection_lower:
-                parameters.update({
+                parameters |= {
                     'algorithm_type': 'symmetric_license',
-                    'key_size': 128 if version and version.startswith('11.') else 64,
-                    'encryption_method': 'des_cbc' if not version or version < '11' else 'aes_128',
+                    'key_size': (
+                        128 if version and version.startswith('11.') else 64
+                    ),
+                    'encryption_method': (
+                        'des_cbc' if not version or version < '11' else 'aes_128'
+                    ),
                     'hash_algorithm': 'md5',
                     'signature_type': 'vendor_signature',
                     'license_format': 'flexlm_binary',
-                    'security_features': ['server_validation', 'concurrent_limits', 'feature_versioning'],
+                    'security_features': [
+                        'server_validation',
+                        'concurrent_limits',
+                        'feature_versioning',
+                    ],
                     'configuration_flags': {
                         'supports_redundant_servers': True,
                         'supports_grace_period': True,
-                        'supports_borrowing': version and version >= '11.0'
-                    }
-                })
+                        'supports_borrowing': version and version >= '11.0',
+                    },
+                }
 
-            # HASP/Sentinel parameter analysis
             elif 'hasp' in protection_lower or 'sentinel' in protection_lower:
-                parameters.update({
+                parameters |= {
                     'algorithm_type': 'hardware_key',
                     'key_size': 256,
                     'encryption_method': 'aes_256',
                     'hash_algorithm': 'sha256',
                     'signature_type': 'hardware_signature',
                     'license_format': 'binary_blob',
-                    'security_features': ['hardware_binding', 'secure_storage', 'tamper_detection'],
+                    'security_features': [
+                        'hardware_binding',
+                        'secure_storage',
+                        'tamper_detection',
+                    ],
                     'configuration_flags': {
                         'requires_dongle': True,
                         'supports_remote_update': True,
-                        'supports_time_based_limits': True
-                    }
-                })
+                        'supports_time_based_limits': True,
+                    },
+                }
 
-            # Adobe Licensing parameter analysis
             elif 'adobe' in protection_lower:
-                parameters.update({
+                parameters |= {
                     'algorithm_type': 'subscription_based',
                     'key_size': 2048,
                     'encryption_method': 'rsa_2048',
                     'hash_algorithm': 'sha256',
                     'signature_type': 'adobe_signature',
                     'license_format': 'xml_signed',
-                    'security_features': ['cloud_validation', 'subscription_check', 'device_activation'],
+                    'security_features': [
+                        'cloud_validation',
+                        'subscription_check',
+                        'device_activation',
+                    ],
                     'configuration_flags': {
                         'requires_internet': True,
                         'supports_offline_grace': True,
-                        'max_activations': 2
-                    }
-                })
+                        'max_activations': 2,
+                    },
+                }
 
-            # VMProtect parameter analysis
             elif 'vmprotect' in protection_lower:
-                parameters.update({
+                parameters |= {
                     'algorithm_type': 'vm_protection',
                     'key_size': 1024,
                     'encryption_method': 'custom_vm',
                     'hash_algorithm': 'crc32',
                     'signature_type': 'vm_signature',
                     'license_format': 'embedded_key',
-                    'security_features': ['code_virtualization', 'mutation_engine', 'anti_debugging'],
+                    'security_features': [
+                        'code_virtualization',
+                        'mutation_engine',
+                        'anti_debugging',
+                    ],
                     'configuration_flags': {
                         'mutation_enabled': True,
                         'vm_protection_level': 'high',
-                        'supports_licensing': False
-                    }
-                })
+                        'supports_licensing': False,
+                    },
+                }
 
             # Try to extract additional parameters from binary analysis
             if binary_path.exists():
@@ -4420,7 +4438,7 @@ class DetectionDepthValidator:
             # FlexLM encryption analysis
             if 'flexlm' in protection_lower:
                 if version and version.startswith('11.'):
-                    encryption_config.update({
+                    encryption_config |= {
                         'primary_algorithm': 'aes',
                         'key_derivation': 'pbkdf2',
                         'block_size': 128,
@@ -4428,15 +4446,19 @@ class DetectionDepthValidator:
                         'padding_scheme': 'pkcs7',
                         'cipher_mode': 'cbc',
                         'key_strength': 'medium',
-                        'entropy_sources': ['system_time', 'mac_address', 'hostname'],
+                        'entropy_sources': [
+                            'system_time',
+                            'mac_address',
+                            'hostname',
+                        ],
                         'implementation_details': {
                             'supports_key_rotation': True,
                             'uses_salt': True,
-                            'iteration_count': 1000
-                        }
-                    })
+                            'iteration_count': 1000,
+                        },
+                    }
                 else:
-                    encryption_config.update({
+                    encryption_config |= {
                         'primary_algorithm': 'des',
                         'key_derivation': 'simple_hash',
                         'block_size': 64,
@@ -4447,13 +4469,12 @@ class DetectionDepthValidator:
                         'entropy_sources': ['system_time'],
                         'implementation_details': {
                             'supports_key_rotation': False,
-                            'uses_salt': False
-                        }
-                    })
+                            'uses_salt': False,
+                        },
+                    }
 
-            # HASP/Sentinel encryption analysis
             elif 'hasp' in protection_lower or 'sentinel' in protection_lower:
-                encryption_config.update({
+                encryption_config |= {
                     'primary_algorithm': 'aes',
                     'key_derivation': 'hardware_derived',
                     'block_size': 256,
@@ -4461,17 +4482,20 @@ class DetectionDepthValidator:
                     'padding_scheme': 'pkcs7',
                     'cipher_mode': 'gcm',
                     'key_strength': 'strong',
-                    'entropy_sources': ['hardware_rng', 'dongle_id', 'device_fingerprint'],
+                    'entropy_sources': [
+                        'hardware_rng',
+                        'dongle_id',
+                        'device_fingerprint',
+                    ],
                     'implementation_details': {
                         'hardware_accelerated': True,
                         'tamper_resistant': True,
-                        'supports_secure_boot': True
-                    }
-                })
+                        'supports_secure_boot': True,
+                    },
+                }
 
-            # Adobe encryption analysis
             elif 'adobe' in protection_lower:
-                encryption_config.update({
+                encryption_config |= {
                     'primary_algorithm': 'rsa',
                     'key_derivation': 'certificate_based',
                     'block_size': 2048,
@@ -4479,17 +4503,20 @@ class DetectionDepthValidator:
                     'padding_scheme': 'oaep',
                     'cipher_mode': 'hybrid_rsa_aes',
                     'key_strength': 'strong',
-                    'entropy_sources': ['adobe_servers', 'device_id', 'user_credentials'],
+                    'entropy_sources': [
+                        'adobe_servers',
+                        'device_id',
+                        'user_credentials',
+                    ],
                     'implementation_details': {
                         'uses_certificates': True,
                         'supports_revocation': True,
-                        'cloud_validated': True
-                    }
-                })
+                        'cloud_validated': True,
+                    },
+                }
 
-            # VMProtect encryption analysis
             elif 'vmprotect' in protection_lower:
-                encryption_config.update({
+                encryption_config |= {
                     'primary_algorithm': 'custom_vm',
                     'key_derivation': 'vm_based',
                     'block_size': 128,
@@ -4497,13 +4524,17 @@ class DetectionDepthValidator:
                     'padding_scheme': 'custom',
                     'cipher_mode': 'stream_cipher',
                     'key_strength': 'medium',
-                    'entropy_sources': ['execution_context', 'memory_layout', 'instruction_flow'],
+                    'entropy_sources': [
+                        'execution_context',
+                        'memory_layout',
+                        'instruction_flow',
+                    ],
                     'implementation_details': {
                         'vm_protected': True,
                         'mutation_enabled': True,
-                        'anti_analysis': True
-                    }
-                })
+                        'anti_analysis': True,
+                    },
+                }
 
             # Analyze binary for encryption indicators
             if binary_path.exists():
@@ -4636,22 +4667,14 @@ class DetectionDepthValidator:
                 max_score += 0.25
 
             # Calculate final completeness percentage
-            if max_score > 0:
-                completeness = total_score / max_score
-            else:
-                completeness = 0.0
-
+            completeness = total_score / max_score if max_score > 0 else 0.0
             # Apply bonus for cryptographic constants found
             if (encryption_config and
                 encryption_config.get('cryptographic_constants') and
                 len(encryption_config['cryptographic_constants']) > 0):
                 completeness += 0.1  # 10% bonus for crypto evidence
 
-            # Cap at 1.0
-            completeness = min(completeness, 1.0)
-
-            return completeness
-
+            return min(completeness, 1.0)
         except Exception as e:
             self.logger.error(f"Configuration completeness calculation failed: {str(e)}")
             return 0.0
@@ -4669,35 +4692,33 @@ class DetectionDepthValidator:
 
             # Handle different pattern formats
             if isinstance(pattern, str):
-                # Hex string pattern
-                if pattern.startswith('0x') or all(c in '0123456789abcdefABCDEF ' for c in pattern):
-                    try:
-                        # Convert hex string to bytes
-                        hex_clean = pattern.replace('0x', '').replace(' ', '')
-                        pattern_bytes = bytes.fromhex(hex_clean)
-                        return pattern_bytes in binary_data
-                    except ValueError:
-                        # If hex conversion fails, try as string
-                        return pattern.encode() in binary_data
-                else:
+                if not pattern.startswith('0x') and any(
+                    c not in '0123456789abcdefABCDEF ' for c in pattern
+                ):
                     # Regular string pattern
                     return pattern.encode() in binary_data
 
+                try:
+                    # Convert hex string to bytes
+                    hex_clean = pattern.replace('0x', '').replace(' ', '')
+                    pattern_bytes = bytes.fromhex(hex_clean)
+                    return pattern_bytes in binary_data
+                except ValueError:
+                    # If hex conversion fails, try as string
+                    return pattern.encode() in binary_data
             elif isinstance(pattern, bytes):
                 # Direct byte pattern
                 return pattern in binary_data
 
             elif isinstance(pattern, list):
-                # Multiple patterns - all must match
-                for sub_pattern in pattern:
-                    if isinstance(sub_pattern, str):
-                        if sub_pattern.encode() not in binary_data:
-                            return False
-                    elif isinstance(sub_pattern, bytes):
-                        if sub_pattern not in binary_data:
-                            return False
-                return True
-
+                return not any(
+                    isinstance(sub_pattern, str)
+                    and sub_pattern.encode() not in binary_data
+                    or not isinstance(sub_pattern, str)
+                    and isinstance(sub_pattern, bytes)
+                    and sub_pattern not in binary_data
+                    for sub_pattern in pattern
+                )
             # Check for wildcard patterns (simple implementation)
             if 'wildcard_pattern' in signature:
                 wildcard = signature['wildcard_pattern']
@@ -4741,20 +4762,20 @@ class DetectionDepthValidator:
 
             # Handle different pattern formats
             if isinstance(pattern, str):
-                # Hex string pattern
-                if pattern.startswith('0x') or all(c in '0123456789abcdefABCDEF ' for c in pattern):
-                    try:
-                        # Convert hex string to bytes
-                        hex_clean = pattern.replace('0x', '').replace(' ', '')
-                        pattern_bytes = bytes.fromhex(hex_clean)
-                        return binary_data.find(pattern_bytes)
-                    except ValueError:
-                        # If hex conversion fails, try as string
-                        return binary_data.find(pattern.encode())
-                else:
+                if not pattern.startswith('0x') and any(
+                    c not in '0123456789abcdefABCDEF ' for c in pattern
+                ):
                     # Regular string pattern
                     return binary_data.find(pattern.encode())
 
+                try:
+                    # Convert hex string to bytes
+                    hex_clean = pattern.replace('0x', '').replace(' ', '')
+                    pattern_bytes = bytes.fromhex(hex_clean)
+                    return binary_data.find(pattern_bytes)
+                except ValueError:
+                    # If hex conversion fails, try as string
+                    return binary_data.find(pattern.encode())
             elif isinstance(pattern, bytes):
                 # Direct byte pattern
                 return binary_data.find(pattern)
@@ -4844,28 +4865,22 @@ class DetectionDepthValidator:
                 # Check for presence of multiple strings
                 strings = pattern.get('strings', [])
                 min_matches = pattern.get('min_matches', 1)
-                matches = 0
-
-                for string_pattern in strings:
-                    if isinstance(string_pattern, str):
-                        if string_pattern.encode() in binary_data:
-                            matches += 1
-                    elif isinstance(string_pattern, bytes):
-                        if string_pattern in binary_data:
-                            matches += 1
-
+                matches = sum(bool(isinstance(string_pattern, str)
+                                              and string_pattern.encode() in binary_data
+                                              or not isinstance(string_pattern, str)
+                                              and isinstance(string_pattern, bytes)
+                                              and string_pattern in binary_data)
+                          for string_pattern in strings)
                 return matches >= min_matches
 
             elif pattern_type == 'structural':
                 # Check for structural patterns (PE sections, etc.)
                 structure_type = pattern.get('structure', 'pe')
-                if structure_type == 'pe':
-                    # Simple PE header check
-                    if len(binary_data) > 0x40:
-                        pe_offset = int.from_bytes(binary_data[0x3c:0x40], 'little')
-                        if pe_offset < len(binary_data) - 4:
-                            pe_signature = binary_data[pe_offset:pe_offset + 2]
-                            return pe_signature == b'PE'
+                if structure_type == 'pe' and len(binary_data) > 0x40:
+                    pe_offset = int.from_bytes(binary_data[0x3c:0x40], 'little')
+                    if pe_offset < len(binary_data) - 4:
+                        pe_signature = binary_data[pe_offset:pe_offset + 2]
+                        return pe_signature == b'PE'
 
             return False
 
@@ -4896,10 +4911,11 @@ class DetectionDepthValidator:
                 b'QueryPerformanceCounter'
             ]
 
-            for api in anti_debug_apis:
-                if api in binary_data:
-                    features.append(f'api_check_{api.decode(errors="ignore")}')
-
+            features.extend(
+                f'api_check_{api.decode(errors="ignore")}'
+                for api in anti_debug_apis
+                if api in binary_data
+            )
             # Common anti-debugging techniques patterns
             # PEB BeingDebugged flag check
             peb_patterns = [
@@ -4932,10 +4948,11 @@ class DetectionDepthValidator:
                 b'process hacker'
             ]
 
-            for debug_str in debugger_strings:
-                if debug_str.lower() in binary_data.lower():
-                    features.append(f'debugger_name_check_{debug_str.decode(errors="ignore")}')
-
+            features.extend(
+                f'debugger_name_check_{debug_str.decode(errors="ignore")}'
+                for debug_str in debugger_strings
+                if debug_str.lower() in binary_data.lower()
+            )
             # Protection-specific anti-debugging features
             protection_lower = protection_name.lower()
 
@@ -4996,30 +5013,33 @@ class DetectionDepthValidator:
                 b'ZwQueryInformationProcess', b'NtSetInformationThread'
             ]
 
-            for api in anti_disassembly_apis:
-                if api in binary_data:
-                    features.append(f'anti_disassembly_{api.decode("utf-8", errors="ignore").lower()}')
-
+            features.extend(
+                f'anti_disassembly_{api.decode("utf-8", errors="ignore").lower()}'
+                for api in anti_disassembly_apis
+                if api in binary_data
+            )
             # Dynamic analysis detection
             vm_indicators = [
                 b'VMware', b'VirtualBox', b'QEMU', b'Xen',
                 b'Parallels', b'Hyper-V', b'KVM', b'Bochs'
             ]
 
-            for indicator in vm_indicators:
-                if indicator in binary_data:
-                    features.append(f'vm_detection_{indicator.decode("utf-8", errors="ignore").lower()}')
-
+            features.extend(
+                f'vm_detection_{indicator.decode("utf-8", errors="ignore").lower()}'
+                for indicator in vm_indicators
+                if indicator in binary_data
+            )
             # Sandox detection patterns
             sandbox_indicators = [
                 b'Sandboxie', b'CuckooSandbox', b'JoeBox', b'Anubis',
                 b'ThreatAnalyzer', b'GFI', b'Comodo', b'sample', b'malware'
             ]
 
-            for indicator in sandbox_indicators:
-                if indicator in binary_data:
-                    features.append(f'sandbox_detection_{indicator.decode("utf-8", errors="ignore").lower()}')
-
+            features.extend(
+                f'sandbox_detection_{indicator.decode("utf-8", errors="ignore").lower()}'
+                for indicator in sandbox_indicators
+                if indicator in binary_data
+            )
             # Anti-emulation techniques
             emulation_detection = [
                 # CPU instruction timing checks
@@ -5041,12 +5061,13 @@ class DetectionDepthValidator:
                 b'MapViewOfFile', b'UnmapViewOfFile'
             ]
 
-            memory_count = sum(1 for api in memory_evasion if api in binary_data)
+            memory_count = sum(bool(api in binary_data)
+                           for api in memory_evasion)
             if memory_count >= 3:
                 features.append('memory_analysis_evasion')
 
             # Protection-specific anti-analysis features
-            if protection_name.lower() in ['vmprotect', 'themida', 'obsidium']:
+            if protection_name.lower() in {'vmprotect', 'themida', 'obsidium'}:
                 # Code virtualization indicators
                 if b'vm_enter' in binary_data or b'vm_exit' in binary_data:
                     features.append('code_virtualization')
@@ -5055,7 +5076,7 @@ class DetectionDepthValidator:
                 if b'mutate' in binary_data or b'morph' in binary_data:
                     features.append('mutation_engine')
 
-            elif protection_name.lower() in ['armadillo', 'asprotect', 'upx']:
+            elif protection_name.lower() in {'armadillo', 'asprotect', 'upx'}:
                 # Anti-dump techniques
                 if b'ImageBase' in binary_data and b'VirtualProtect' in binary_data:
                     features.append('anti_dump_protection')
@@ -5066,7 +5087,8 @@ class DetectionDepthValidator:
                 b'ReadFile', b'SetFilePointer', b'CloseHandle'
             ]
 
-            fs_count = sum(1 for api in fs_monitoring if api in binary_data)
+            fs_count = sum(bool(api in binary_data)
+                       for api in fs_monitoring)
             if fs_count >= 4:
                 features.append('filesystem_monitoring_evasion')
 
@@ -5076,7 +5098,8 @@ class DetectionDepthValidator:
                 b'InternetOpenA', b'InternetConnectA', b'HttpOpenRequestA'
             ]
 
-            network_count = sum(1 for api in network_apis if api in binary_data)
+            network_count = sum(bool(api in binary_data)
+                            for api in network_apis)
             if network_count >= 3:
                 features.append('network_analysis_evasion')
 
@@ -5160,7 +5183,7 @@ class DetectionDepthValidator:
                 features.append('medium_entropy_sections')
 
             # Protection-specific encryption features
-            if protection_name.lower() in ['vmprotect', 'themida']:
+            if protection_name.lower() in {'vmprotect', 'themida'}:
                 # Virtual machine encryption
                 vm_crypto_indicators = [
                     b'vm_encrypt', b'vm_decrypt', b'virtual_encrypt',
@@ -5172,7 +5195,7 @@ class DetectionDepthValidator:
                         features.append('vm_encryption')
                         break
 
-            elif protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+            elif protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                 # License encryption
                 license_crypto = [
                     b'license_encrypt', b'key_encrypt', b'dongle_decrypt',
@@ -5184,7 +5207,7 @@ class DetectionDepthValidator:
                         features.append('license_encryption')
                         break
 
-            elif protection_name.lower() in ['armadillo', 'asprotect']:
+            elif protection_name.lower() in {'armadillo', 'asprotect'}:
                 # String encryption
                 string_crypto = [
                     b'string_decrypt', b'encrypt_string', b'decode_string',
@@ -5202,7 +5225,8 @@ class DetectionDepthValidator:
                 b'encrypt_data', b'decrypt_data', b'cipher_key'
             ]
 
-            custom_count = sum(1 for pattern in custom_crypto_patterns if pattern in binary_data)
+            custom_count = sum(bool(pattern in binary_data)
+                           for pattern in custom_crypto_patterns)
             if custom_count >= 2:
                 features.append('custom_encryption_scheme')
 
@@ -5246,10 +5270,11 @@ class DetectionDepthValidator:
                 b'MapFileAndCheckSum', b'CheckSumMappedFile'
             ]
 
-            for api in integrity_apis:
-                if api in binary_data:
-                    features.append(f'integrity_api_{api.decode("utf-8", errors="ignore").lower()}')
-
+            features.extend(
+                f'integrity_api_{api.decode("utf-8", errors="ignore").lower()}'
+                for api in integrity_apis
+                if api in binary_data
+            )
             # CRC calculation patterns
             crc_patterns = [
                 b'\x04\xC1\x1D\xB7',  # CRC32 polynomial
@@ -5268,7 +5293,8 @@ class DetectionDepthValidator:
                 b'FlushInstructionCache', b'ZwFlushInstructionCache'
             ]
 
-            self_mod_count = sum(1 for indicator in self_mod_indicators if indicator in binary_data)
+            self_mod_count = sum(bool(indicator in binary_data)
+                             for indicator in self_mod_indicators)
             if self_mod_count >= 2:
                 features.append('anti_modification_protection')
 
@@ -5278,7 +5304,8 @@ class DetectionDepthValidator:
                 b'CheckImageHeader', b'ValidatePEHeader'
             ]
 
-            pe_count = sum(1 for pattern in pe_validation if pattern in binary_data)
+            pe_count = sum(bool(pattern in binary_data)
+                       for pattern in pe_validation)
             if pe_count >= 2:
                 features.append('pe_header_validation')
 
@@ -5294,7 +5321,7 @@ class DetectionDepthValidator:
                     break
 
             # Protection-specific integrity features
-            if protection_name.lower() in ['vmprotect', 'themida']:
+            if protection_name.lower() in {'vmprotect', 'themida'}:
                 # Virtual machine integrity
                 vm_integrity = [
                     b'vm_validate', b'vm_checksum', b'bytecode_verify',
@@ -5306,7 +5333,7 @@ class DetectionDepthValidator:
                         features.append('vm_integrity_check')
                         break
 
-            elif protection_name.lower() in ['armadillo', 'asprotect']:
+            elif protection_name.lower() in {'armadillo', 'asprotect'}:
                 # Anti-patching mechanisms
                 anti_patch = [
                     b'patch_detect', b'modification_check', b'original_bytes',
@@ -5318,7 +5345,7 @@ class DetectionDepthValidator:
                         features.append('anti_patching_mechanism')
                         break
 
-            elif protection_name.lower() in ['flexlm', 'hasp', 'sentinel']:
+            elif protection_name.lower() in {'flexlm', 'hasp', 'sentinel'}:
                 # License integrity
                 license_integrity = [
                     b'license_verify', b'signature_check', b'validate_license',
@@ -5336,17 +5363,19 @@ class DetectionDepthValidator:
                 b'AuthenticodeVerify', b'CheckCertificate'
             ]
 
-            for sig_api in signature_apis:
-                if sig_api in binary_data:
-                    features.append(f'digital_signature_{sig_api.decode("utf-8", errors="ignore").lower()}')
-
+            features.extend(
+                f'digital_signature_{sig_api.decode("utf-8", errors="ignore").lower()}'
+                for sig_api in signature_apis
+                if sig_api in binary_data
+            )
             # Runtime integrity monitoring
             runtime_monitoring = [
                 b'SetWindowsHook', b'VectoredExceptionHandler', b'UnhandledExceptionFilter',
                 b'AddVectoredExceptionHandler', b'SetUnhandledExceptionFilter'
             ]
 
-            runtime_count = sum(1 for api in runtime_monitoring if api in binary_data)
+            runtime_count = sum(bool(api in binary_data)
+                            for api in runtime_monitoring)
             if runtime_count >= 2:
                 features.append('runtime_integrity_monitoring')
 
@@ -5356,7 +5385,8 @@ class DetectionDepthValidator:
                 b'PAGE_GUARD', b'PAGE_EXECUTE_READWRITE'
             ]
 
-            protection_count = sum(1 for pattern in memory_protection if pattern in binary_data)
+            protection_count = sum(bool(pattern in binary_data)
+                               for pattern in memory_protection)
             if protection_count >= 3:
                 features.append('memory_protection_integrity')
 
@@ -5401,7 +5431,8 @@ class DetectionDepthValidator:
                 b'cpuid', b'rdtsc', b'sidt', b'sgdt', b'sldt'
             ]
 
-            vm_api_count = sum(1 for api in vm_detection_apis if api in binary_data)
+            vm_api_count = sum(bool(api in binary_data)
+                           for api in vm_detection_apis)
             if vm_api_count >= 3:
                 features.append('vm_detection_mechanisms')
 
@@ -5413,10 +5444,11 @@ class DetectionDepthValidator:
                 b'innotek GmbH', b'VBOX'
             ]
 
-            for indicator in hypervisor_indicators:
-                if indicator in binary_data:
-                    features.append(f'hypervisor_detection_{indicator.decode("utf-8", errors="ignore").lower().replace(" ", "_")}')
-
+            features.extend(
+                f'hypervisor_detection_{indicator.decode("utf-8", errors="ignore").lower().replace(" ", "_")}'
+                for indicator in hypervisor_indicators
+                if indicator in binary_data
+            )
             # Hardware virtualization instructions
             virtualization_instructions = [
                 b'\x0F\x01\xC1',  # VMCALL
@@ -5434,7 +5466,7 @@ class DetectionDepthValidator:
                     break
 
             # Protection-specific virtualization features
-            if protection_name.lower() in ['vmprotect']:
+            if protection_name.lower() in {'vmprotect'}:
                 # VMProtect specific patterns
                 vmprotect_patterns = [
                     b'vm_enter', b'vm_exit', b'vm_handler', b'vm_context',
@@ -5442,11 +5474,12 @@ class DetectionDepthValidator:
                     b'vm_registers', b'vm_opcodes'
                 ]
 
-                vmprotect_count = sum(1 for pattern in vmprotect_patterns if pattern in binary_data)
+                vmprotect_count = sum(bool(pattern in binary_data)
+                                  for pattern in vmprotect_patterns)
                 if vmprotect_count >= 2:
                     features.append('vmprotect_virtualization')
 
-            elif protection_name.lower() in ['themida', 'winlicense']:
+            elif protection_name.lower() in {'themida', 'winlicense'}:
                 # Themida/WinLicense virtualization
                 themida_patterns = [
                     b'code_virtualization', b'virtual_cpu', b'vm_emulation',
@@ -5458,7 +5491,7 @@ class DetectionDepthValidator:
                         features.append('themida_virtualization')
                         break
 
-            elif protection_name.lower() in ['obsidium']:
+            elif protection_name.lower() in {'obsidium'}:
                 # Obsidium virtualization
                 obsidium_patterns = [
                     b'virtual_machine', b'code_morphing', b'vm_protection',
@@ -5476,10 +5509,11 @@ class DetectionDepthValidator:
                 b'SLAT', b'EPT', b'NPT', b'IOMMU'
             ]
 
-            for feature in cpu_features:
-                if feature in binary_data:
-                    features.append(f'cpu_virtualization_{feature.decode("utf-8", errors="ignore").lower().replace("-", "_")}')
-
+            features.extend(
+                f'cpu_virtualization_{feature.decode("utf-8", errors="ignore").lower().replace("-", "_")}'
+                for feature in cpu_features
+                if feature in binary_data
+            )
             # Virtual environment artifacts
             vm_artifacts = [
                 b'C:\\Windows\\System32\\drivers\\VBoxMouse.sys',
@@ -5489,7 +5523,8 @@ class DetectionDepthValidator:
                 b'HKEY_LOCAL_MACHINE\\SOFTWARE\\Oracle\\VirtualBox'
             ]
 
-            artifact_count = sum(1 for artifact in vm_artifacts if artifact in binary_data)
+            artifact_count = sum(bool(artifact in binary_data)
+                             for artifact in vm_artifacts)
             if artifact_count > 0:
                 features.append('vm_artifact_detection')
 
@@ -5500,7 +5535,8 @@ class DetectionDepthValidator:
                 b'analysis', b'sample', b'malware'
             ]
 
-            sandbox_count = sum(1 for pattern in sandbox_patterns if pattern in binary_data)
+            sandbox_count = sum(bool(pattern in binary_data)
+                            for pattern in sandbox_patterns)
             if sandbox_count >= 2:
                 features.append('sandbox_detection_mechanisms')
 
@@ -5511,7 +5547,8 @@ class DetectionDepthValidator:
                 b'GlobalMemoryStatus'
             ]
 
-            memory_count = sum(1 for pattern in memory_patterns if pattern in binary_data)
+            memory_count = sum(bool(pattern in binary_data)
+                           for pattern in memory_patterns)
             if memory_count >= 4:
                 features.append('memory_layout_analysis')
 
@@ -5521,7 +5558,8 @@ class DetectionDepthValidator:
                 b'NtQuerySystemTime', b'rdtsc', b'timing_check'
             ]
 
-            timing_count = sum(1 for pattern in timing_patterns if pattern in binary_data)
+            timing_count = sum(bool(pattern in binary_data)
+                           for pattern in timing_patterns)
             if timing_count >= 3:
                 features.append('timing_based_vm_detection')
 
@@ -5688,7 +5726,7 @@ class DetectionDepthValidator:
                 }
             }
 
-            for _category, deps in dependency_rules.items():
+            for deps in dependency_rules.values():
                 for main_feature, required_features in deps.items():
                     main_matches = [f for f in unique_features if main_feature.lower() in f.lower()]
 
@@ -5715,17 +5753,18 @@ class DetectionDepthValidator:
                         # Simple correlation based on feature name similarity and category co-occurrence
                         correlation = 0.0
 
-                        # Name similarity correlation
-                        common_words = set(feature1.lower().split('_')) & set(feature2.lower().split('_'))
-                        if common_words:
+                        if common_words := set(feature1.lower().split('_')) & set(
+                            feature2.lower().split('_')
+                        ):
                             correlation += 0.3 * (len(common_words) / max(len(feature1.split('_')), len(feature2.split('_'))))
 
                         # Category co-occurrence
                         feature1_categories = [cat for cat, features in feature_categories.items() if feature1 in features]
                         feature2_categories = [cat for cat, features in feature_categories.items() if feature2 in features]
 
-                        common_categories = set(feature1_categories) & set(feature2_categories)
-                        if common_categories:
+                        if common_categories := set(feature1_categories) & set(
+                            feature2_categories
+                        ):
                             correlation += 0.5 * len(common_categories)
 
                         interactions['feature_correlation_matrix'][feature1][feature2] = min(correlation, 1.0)
@@ -5937,7 +5976,8 @@ class DetectionDepthValidator:
                 }
 
             # Check if generic packer indicators suggest packing
-            generic_score = sum(1 for indicator, detected in generic_packer_indicators.items() if detected)
+            generic_score = sum(bool(detected)
+                            for indicator, detected in generic_packer_indicators.items())
             if generic_score >= 2:
                 return {
                     'packer_name': 'UNKNOWN_PACKER',
@@ -5987,11 +6027,9 @@ class DetectionDepthValidator:
 
             # Check for multiple entry points (indication of nested packers)
             entry_point_patterns = [b'\x60\xBE', b'\x68\x00\x00\x00\x00', b'\x8B\x85']
-            entry_points_found = 0
-
-            for pattern in entry_point_patterns:
-                entry_points_found += binary_data.count(pattern)
-
+            entry_points_found = sum(
+                binary_data.count(pattern) for pattern in entry_point_patterns
+            )
             if entry_points_found > 1:
                 nested_layers.append({
                     'layer_name': 'MULTIPLE_ENTRY_POINTS',
@@ -6225,7 +6263,8 @@ class DetectionDepthValidator:
 
             # DLL injection
             injection_apis = [b'CreateRemoteThread', b'WriteProcessMemory', b'VirtualAllocEx']
-            injection_count = sum(1 for api in injection_apis if api in binary_data)
+            injection_count = sum(bool(api in binary_data)
+                              for api in injection_apis)
             if injection_count >= 2:
                 techniques.append('dll_injection')
 
@@ -6262,11 +6301,8 @@ class DetectionDepthValidator:
                 pe_offset = int.from_bytes(binary_data[60:64], 'little')
                 if pe_offset < len(binary_data) - 4:
                     pe_signature = binary_data[pe_offset:pe_offset+4]
-                    if pe_signature == b'PE\x00\x00':
-                        # PE structure looks valid
-                        # Check for common header modifications
-                        if b'\x00\x00\x00\x00' * 4 in binary_data[pe_offset:pe_offset+256]:
-                            modifications['pe_header_modifications'].append('zeroed_fields')
+                    if pe_signature == b'PE\x00\x00' and b'\x00\x00\x00\x00' * 4 in binary_data[pe_offset:pe_offset+256]:
+                        modifications['pe_header_modifications'].append('zeroed_fields')
 
             # Check for overlay data (data after PE sections)
             try:
@@ -6277,7 +6313,7 @@ class DetectionDepthValidator:
                     expected_end = last_section.PointerToRawData + last_section.SizeOfRawData
                     if len(binary_data) > expected_end + 1024:  # Significant overlay
                         modifications['overlay_data'] = True
-            except:
+            except Exception:
                 pass
 
             # Check digital signature

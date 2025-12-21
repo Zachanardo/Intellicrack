@@ -110,7 +110,7 @@ class TestRateLimiter:
         for thread in threads:
             thread.join()
 
-        assert len(allowed_events) > 0
+        assert allowed_events
         assert len(allowed_events) <= 110
 
 

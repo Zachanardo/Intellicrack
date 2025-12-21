@@ -58,7 +58,7 @@ class TestBufferOverflowDetection:
         result = check_buffer_overflow(str(binary_path))
 
         format_patterns = [p for p in result["unsafe_patterns"] if "format" in p["pattern"].lower()]
-        assert len(format_patterns) > 0
+        assert format_patterns
         assert format_patterns[0]["count"] > 0
         assert format_patterns[0]["risk"] == "medium"
 
@@ -92,8 +92,9 @@ class TestBufferOverflowDetection:
 
         result = check_buffer_overflow(str(binary_path))
 
-        rop_patterns = [p for p in result["unsafe_patterns"] if "ROP" in p["pattern"]]
-        if rop_patterns:
+        if rop_patterns := [
+            p for p in result["unsafe_patterns"] if "ROP" in p["pattern"]
+        ]:
             assert rop_patterns[0]["count"] > 10
             assert rop_patterns[0]["risk"] == "high"
 
@@ -130,7 +131,7 @@ class TestBufferOverflowDetection:
         result = check_buffer_overflow(str(binary_path))
 
         int_patterns = [p for p in result["unsafe_patterns"] if "multiplication" in p["pattern"].lower()]
-        assert len(int_patterns) > 0
+        assert int_patterns
 
     def _create_pe_with_unsafe_imports(self, tmp_path: Path, import_names: list[str]) -> Path:
         """Create minimal PE with specific imports."""

@@ -327,7 +327,7 @@ class TestR2DecompilationEngineCore:
         # Should identify license-related patterns in decompiled code
         license_indicators = ['compare', 'validate', 'check', 'key', 'license']
         found_indicators = [ind for ind in license_indicators if ind.lower() in decompiled_code.lower()]
-        assert len(found_indicators) >= 1, "Failed to identify license validation logic"
+        assert found_indicators, "Failed to identify license validation logic"
 
     def test_decompile_function_with_invalid_address(self, engine):
         """Test decompilation with invalid function address."""
@@ -347,14 +347,12 @@ class TestR2DecompilationEngineCore:
         assert isinstance(results, (list, dict))
 
         if isinstance(results, list):
-            assert len(results) > 0, "No functions discovered in binary"
             # Validate each function result
             for function_result in results:
                 assert isinstance(function_result, dict)
                 assert 'address' in function_result
                 assert 'decompiled_code' in function_result
-        else:
-            assert len(results) > 0, "No functions discovered in binary"
+        assert len(results) > 0, "No functions discovered in binary"
 
     def test_decompile_all_functions_performance_and_caching(self, engine):
         """Test performance optimization and caching in batch decompilation."""
@@ -633,9 +631,6 @@ class TestR2DecompilationEngineLicenseAnalysis:
             # Should intelligently filter based on function characteristics
             if 'license' in func['name'].lower() or 'check' in func['name'].lower():
                 assert should_analyze == True, f"Should analyze license-related function: {func['name']}"
-            elif func['size'] < 20:
-                # May skip very small functions
-                pass  # Implementation decision
 
     def test_get_confidence_reason_explanatory(self, engine):
         """Test confidence reasoning explanations."""
@@ -658,9 +653,7 @@ class TestR2DecompilationEngineReporting:
 
     @pytest.fixture
     def engine_with_analysis(self, test_binaries, mock_radare2_available):
-        engine = R2DecompilationEngine(test_binaries["simple_pe"])
-        # Simulate analysis has been performed
-        return engine
+        return R2DecompilationEngine(test_binaries["simple_pe"])
 
     def test_export_analysis_report_comprehensive_formats(self, engine_with_analysis):
         """Test comprehensive analysis report export in multiple formats."""
@@ -722,11 +715,7 @@ class TestR2DecompilationEngineReporting:
         assert report is not None
 
         # Should respect custom options
-        if isinstance(report, str):
-            report_data = json.loads(report)
-        else:
-            report_data = report
-
+        report_data = json.loads(report) if isinstance(report, str) else report
         # Should include detailed sections based on options
         if custom_options['include_decompiled_code']:
             assert 'decompiled_code' in str(report).lower()
@@ -838,7 +827,7 @@ class TestR2DecompilationEngineIntegration:
             # Some correlation should exist
             overlapping_addresses = set(function_addresses) & set(pattern_locations)
             # Allow for different address formats or ranges
-            assert len(function_addresses) > 0 or len(pattern_locations) > 0
+            assert function_addresses or pattern_locations
 
     def test_performance_with_real_world_complexity(self, engine):
         """Test performance characteristics with realistic complexity."""

@@ -98,8 +98,7 @@ class ComprehensiveE2BTester:
 
             try:
                 module = __import__(module_name, fromlist=[class_name])
-                cls = getattr(module, class_name, None)
-                if cls:
+                if cls := getattr(module, class_name, None):
                     test.result = TestResult.PASS
                     test.details = f"Successfully loaded {class_name}"
                     self.modules_tested.add(module_name)
@@ -207,9 +206,7 @@ class ComprehensiveE2BTester:
                     )
 
                     try:
-                        # Test pattern compilation (internal method)
-                        compiled = analyzer._compile_pattern(pattern.hex())
-                        if compiled:
+                        if compiled := analyzer._compile_pattern(pattern.hex()):
                             test.result = TestResult.PASS
                             test.details = f"Pattern compiled: {pattern.hex()}"
                             print(f"OK {description} pattern compiled")
@@ -429,7 +426,7 @@ class ComprehensiveE2BTester:
                         "scan_process_memory": "scan_process_with_analyzer",
                         "generate_rule_from_pattern": "convert_pattern_to_yara",
                     }
-                    alt_name = alt_names.get(feature, None)
+                    alt_name = alt_names.get(feature)
                     if alt_name and hasattr(scanner, alt_name):
                         test.result = TestResult.PASS
                         test.details = f"{feature} available as {alt_name}"
@@ -610,46 +607,49 @@ class ComprehensiveE2BTester:
 
             try:
                 # Test that modules can work together
-                if module1 == "process_manipulation" and module2 == "yara_scanner":
-                    if self.is_windows:
-                        from intellicrack.core.process_manipulation import LicenseAnalyzer
-                        from intellicrack.core.analysis.yara_scanner import YaraScanner
-                        analyzer = LicenseAnalyzer()
-                        scanner = YaraScanner()
-                        # Check if scanner can work with analyzer
-                        if hasattr(scanner, 'scan_process_with_analyzer'):
-                            test.result = TestResult.PASS
-                            test.details = "Integration method found"
-                            print(f"OK {integration_name} integration verified")
-                        else:
-                            test.result = TestResult.FAIL
-                            test.details = "No integration method"
-                            print(f"FAIL {integration_name} integration missing")
+                if (
+                    module1 == "process_manipulation"
+                    and module2 == "yara_scanner"
+                    and self.is_windows
+                ):
+                    from intellicrack.core.process_manipulation import LicenseAnalyzer
+                    from intellicrack.core.analysis.yara_scanner import YaraScanner
+                    analyzer = LicenseAnalyzer()
+                    scanner = YaraScanner()
+                    # Check if scanner can work with analyzer
+                    if hasattr(scanner, 'scan_process_with_analyzer'):
+                        test.result = TestResult.PASS
+                        test.details = "Integration method found"
+                        print(f"OK {integration_name} integration verified")
                     else:
-                        test.result = TestResult.SKIP
-                        test.details = "Non-Windows platform"
-                        print(f"⊙ {integration_name} skipped")
+                        test.result = TestResult.FAIL
+                        test.details = "No integration method"
+                        print(f"FAIL {integration_name} integration missing")
+                elif (
+                    module1 == "process_manipulation"
+                    and module2 == "yara_scanner"
+                    or module1 == "debugging_engine"
+                    and module2 == "yara_scanner"
+                    and not self.is_windows
+                ):
+                    test.result = TestResult.SKIP
+                    test.details = "Non-Windows platform"
+                    print(f"⊙ {integration_name} skipped")
 
                 elif module1 == "debugging_engine" and module2 == "yara_scanner":
-                    if self.is_windows:
-                        from intellicrack.core.debugging_engine import LicenseDebugger
-                        from intellicrack.core.analysis.yara_scanner import YaraScanner
-                        debugger = LicenseDebugger()
-                        scanner = YaraScanner()
-                        # Check if scanner can connect to debugger
-                        if hasattr(scanner, 'connect_to_debugger'):
-                            test.result = TestResult.PASS
-                            test.details = "Integration method found"
-                            print(f"OK {integration_name} integration verified")
-                        else:
-                            test.result = TestResult.FAIL
-                            test.details = "No integration method"
-                            print(f"FAIL {integration_name} integration missing")
+                    from intellicrack.core.debugging_engine import LicenseDebugger
+                    from intellicrack.core.analysis.yara_scanner import YaraScanner
+                    debugger = LicenseDebugger()
+                    scanner = YaraScanner()
+                    # Check if scanner can connect to debugger
+                    if hasattr(scanner, 'connect_to_debugger'):
+                        test.result = TestResult.PASS
+                        test.details = "Integration method found"
+                        print(f"OK {integration_name} integration verified")
                     else:
-                        test.result = TestResult.SKIP
-                        test.details = "Non-Windows platform"
-                        print(f"⊙ {integration_name} skipped")
-
+                        test.result = TestResult.FAIL
+                        test.details = "No integration method"
+                        print(f"FAIL {integration_name} integration missing")
                 else:
                     # Check if modules can be imported together
                     module1_imported = False
@@ -658,7 +658,7 @@ class ComprehensiveE2BTester:
                     try:
                         __import__(f"intellicrack.core.{module1}")
                         module1_imported = True
-                    except:
+                    except Exception:
                         pass
 
                     try:
@@ -667,7 +667,7 @@ class ComprehensiveE2BTester:
                         else:
                             __import__(f"intellicrack.core.{module2}")
                         module2_imported = True
-                    except:
+                    except Exception:
                         pass
 
                     if module1_imported and module2_imported:
@@ -694,10 +694,14 @@ class ComprehensiveE2BTester:
 
         # Count results by type
         total_tests = len(self.results)
-        passed = sum(1 for r in self.results if r.result == TestResult.PASS)
-        failed = sum(1 for r in self.results if r.result == TestResult.FAIL)
-        skipped = sum(1 for r in self.results if r.result == TestResult.SKIP)
-        errors = sum(1 for r in self.results if r.result == TestResult.ERROR)
+        passed = sum(bool(r.result == TestResult.PASS)
+                 for r in self.results)
+        failed = sum(bool(r.result == TestResult.FAIL)
+                 for r in self.results)
+        skipped = sum(bool(r.result == TestResult.SKIP)
+                  for r in self.results)
+        errors = sum(bool(r.result == TestResult.ERROR)
+                 for r in self.results)
 
         # Calculate scores
         success_rate = (passed / total_tests * 100) if total_tests > 0 else 0
@@ -717,7 +721,8 @@ class ComprehensiveE2BTester:
             "debug_hide_debugger",
         ]
 
-        capabilities_present = sum(1 for cap in core_capabilities if cap in self.capabilities_verified)
+        capabilities_present = sum(bool(cap in self.capabilities_verified)
+                               for cap in core_capabilities)
 
         report = {
             "total_tests": total_tests,

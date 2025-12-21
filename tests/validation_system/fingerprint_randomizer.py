@@ -108,16 +108,15 @@ class SystemFingerprinter:
             }
             break
 
-        # Disk information
-        hardware['disks'] = []
-        for disk in self.wmi_client.Win32_DiskDrive():
-            hardware['disks'].append({
+        hardware['disks'] = [
+            {
                 'model': disk.Model,
                 'serial_number': disk.SerialNumber,
                 'size': disk.Size,
-                'interface_type': disk.InterfaceType
-            })
-
+                'interface_type': disk.InterfaceType,
+            }
+            for disk in self.wmi_client.Win32_DiskDrive()
+        ]
         # Memory information
         hardware['memory'] = {
             'total_physical': psutil.virtual_memory().total,
@@ -197,10 +196,8 @@ class SystemFingerprinter:
 
     def _collect_network_fingerprint(self) -> dict[str, Any]:
         """Collect network-based fingerprints."""
-        network = {}
+        network = {'adapters': []}
 
-        # Network adapters
-        network['adapters'] = []
         for adapter in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True):
             network['adapters'].append({
                 'mac_address': adapter.MACAddress,
@@ -231,12 +228,9 @@ class SystemFingerprinter:
 
     def _collect_behavioral_fingerprint(self) -> dict[str, Any]:
         """Collect behavioral fingerprints."""
-        behavior = {}
-
         # Process count and top processes
         processes = list(psutil.process_iter(['name', 'cpu_percent', 'memory_percent']))
-        behavior['process_count'] = len(processes)
-
+        behavior = {'process_count': len(processes)}
         # Get top CPU consuming processes
         top_cpu = sorted(processes, key=lambda p: p.info.get('cpu_percent', 0), reverse=True)[:5]
         behavior['top_cpu_processes'] = [p.info['name'] for p in top_cpu]
@@ -265,14 +259,9 @@ class SystemFingerprinter:
 
     def _collect_timing_fingerprint(self) -> dict[str, Any]:
         """Collect timing-based fingerprints."""
-        timing = {}
-
         # CPU timing characteristics
         start = time.perf_counter()
-        for _ in range(1000000):
-            pass
-        timing['cpu_loop_time'] = time.perf_counter() - start
-
+        timing = {'cpu_loop_time': time.perf_counter() - start}
         # Memory access timing
         data = bytearray(1024 * 1024)  # 1MB
         start = time.perf_counter()
@@ -306,14 +295,9 @@ class SystemFingerprinter:
 
     def _get_timer_resolution(self) -> float:
         """Get system timer resolution."""
-        times = []
-        for _ in range(100):
-            times.append(time.perf_counter())
-
+        times = [time.perf_counter() for _ in range(100)]
         diffs = [times[i+1] - times[i] for i in range(len(times)-1)]
-        min_diff = min(d for d in diffs if d > 0) if any(d > 0 for d in diffs) else 0.0
-
-        return min_diff
+        return min(d for d in diffs if d > 0) if any(d > 0 for d in diffs) else 0.0
 
 
 class FingerprintRandomizer:
@@ -418,15 +402,11 @@ class FingerprintRandomizer:
             changes.append(change)
             self.changes.append(change)
 
-        # Randomize Windows Product ID
-        product_id_change = self._randomize_product_id()
-        if product_id_change:
+        if product_id_change := self._randomize_product_id():
             changes.append(product_id_change)
             self.changes.append(product_id_change)
 
-        # Randomize timezone
-        timezone_change = self._randomize_timezone()
-        if timezone_change:
+        if timezone_change := self._randomize_timezone():
             changes.append(timezone_change)
             self.changes.append(timezone_change)
 
@@ -451,9 +431,7 @@ class FingerprintRandomizer:
             changes.append(change)
             self.changes.append(change)
 
-        # Randomize DNS cache
-        dns_change = self._randomize_dns_cache()
-        if dns_change:
+        if dns_change := self._randomize_dns_cache():
             changes.append(dns_change)
             self.changes.append(dns_change)
 
@@ -463,9 +441,7 @@ class FingerprintRandomizer:
         """Randomize behavioral fingerprints."""
         changes = []
 
-        # Randomize screen resolution (temporary)
-        resolution_change = self._randomize_screen_resolution()
-        if resolution_change:
+        if resolution_change := self._randomize_screen_resolution():
             changes.append(resolution_change)
             self.changes.append(resolution_change)
 
@@ -477,8 +453,6 @@ class FingerprintRandomizer:
 
     def randomize_timing_fingerprint(self) -> list[FingerprintChange]:
         """Randomize timing-based fingerprints."""
-        changes = []
-
         # Add random delays to timing operations
         timing_change = FingerprintChange(
             category='timing',
@@ -490,7 +464,7 @@ class FingerprintRandomizer:
             reversible=True
         )
 
-        changes.append(timing_change)
+        changes = [timing_change]
         self.changes.append(timing_change)
 
         return changes
@@ -683,11 +657,12 @@ class FingerprintRandomizer:
             if result.returncode == 0:
                 for line in result.stdout.split('\n'):
                     if 'DNS Suffix' in line and ':' in line:
-                        suffix = line.split(':')[1].strip()
-                        if suffix:
+                        if suffix := line.split(':')[1].strip():
                             # Generate valid subdomains for actual network suffix
-                            for subdomain in ['ws', 'srv', 'node']:
-                                network_domains.append(f"{subdomain}{secrets.randbelow(900)+100}.{suffix}")
+                            network_domains.extend(
+                                f"{subdomain}{secrets.randbelow(900) + 100}.{suffix}"
+                                for subdomain in ['ws', 'srv', 'node']
+                            )
                             break
 
             # If no domain suffix found, use machine's actual FQDN components
@@ -747,28 +722,26 @@ class FingerprintRandomizer:
 
     def _add_decoy_processes(self) -> list[FingerprintChange]:
         """Add decoy processes to confuse fingerprinting."""
-        changes = []
-
         # List of benign process names to mimic
         decoy_names = [
             'svchost.exe', 'chrome.exe', 'firefox.exe',
             'notepad.exe', 'explorer.exe', 'taskmgr.exe'
         ]
 
-        # This would spawn actual decoy processes
-        # For now just record the intent
-        for name in secrets.SystemRandom().sample(decoy_names, min(3, len(decoy_names))):
-            changes.append(FingerprintChange(
+        return [
+            FingerprintChange(
                 category='behavior',
                 item=f'DecoyProcess_{name}',
                 original_value='absent',
                 new_value='present',
                 apply_method='process_spawn',
                 revert_method='process_kill',
-                reversible=True
-            ))
-
-        return changes
+                reversible=True,
+            )
+            for name in secrets.SystemRandom().sample(
+                decoy_names, min(3, len(decoy_names))
+            )
+        ]
 
     def revert_all_changes(self) -> dict[str, Any]:
         """
@@ -921,7 +894,8 @@ class FingerprintRandomizer:
         if not str1 or not str2:
             return 0.0
 
-        matches = sum(1 for c1, c2 in zip(str1, str2, strict=False) if c1 == c2)
+        matches = sum(bool(c1 == c2)
+                  for c1, c2 in zip(str1, str2, strict=False))
         max_len = max(len(str1), len(str2))
 
         return matches / max_len if max_len > 0 else 0.0

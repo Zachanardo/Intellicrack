@@ -60,9 +60,9 @@ def dongle_memory() -> DongleMemory:
     memory = DongleMemory()
     memory.protected_areas = [(0, 1024)]
     memory.read_only_areas = [(0, 512)]
-    memory.rom[0:8] = b"DONGLEROM"[:8]
-    memory.ram[0:8] = b"DONGLERAM"[:8]
-    memory.eeprom[0:8] = b"DONGLEEE"[:8]
+    memory.rom[:8] = b"DONGLEROM"[:8]
+    memory.ram[:8] = b"DONGLERAM"[:8]
+    memory.eeprom[:8] = b"DONGLEEE"[:8]
     return memory
 
 
@@ -477,7 +477,7 @@ class TestUSBEmulator:
         usb_emulator.register_control_handler(0x40, 0x01, test_handler)
         response = usb_emulator.control_transfer(0x40, 0x01, 123, 456, b"TEST")
 
-        assert handler_called is True
+        assert handler_called
         assert handler_args[0] == 123
         assert handler_args[1] == 456
         assert handler_args[2] == b"TEST"
@@ -497,7 +497,7 @@ class TestUSBEmulator:
         usb_emulator.register_bulk_handler(0x02, test_handler)
         response = usb_emulator.bulk_transfer(0x02, b"BULK_DATA")
 
-        assert handler_called is True
+        assert handler_called
         assert handler_data == b"BULK_DATA"
         assert response == b"BULK_RESPONSE"
 
@@ -528,9 +528,9 @@ class TestHASPDongle:
 
     def test_hasp_dongle_rsa_key_generated(self) -> None:
         """HASP dongle generates RSA key if crypto available."""
-        dongle = HASPDongle()
-
         if CRYPTO_AVAILABLE:
+            dongle = HASPDongle()
+
             assert dongle.rsa_key is not None
             assert dongle.rsa_key.size_in_bits() == 2048
 
@@ -981,7 +981,7 @@ class TestHardwareDongleEmulator:
             elif b"\x83\xf8\x00\x74" in patch["original"]:
                 patterns_found.add("CMP_JZ")
 
-        assert len(patterns_found) > 0
+        assert patterns_found
 
     def test_generate_emulation_script_returns_frida_code(self, dongle_emulator: HardwareDongleEmulator) -> None:
         """Generate emulation script returns Frida JavaScript code."""

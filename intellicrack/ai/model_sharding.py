@@ -62,7 +62,7 @@ try:
         GPU_AUTOLOADER_AVAILABLE = False
 
 except ImportError:
-    torch = None
+    torch = None  # type: ignore[assignment]
     HAS_TORCH = False
     GPU_AUTOLOADER_AVAILABLE = False
 
@@ -87,9 +87,9 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.exception("Import error in model_sharding: %s", e)
-    AutoConfig = None
-    AutoModel = None
-    AutoModelForCausalLM = None
+    AutoConfig = None  # type: ignore[assignment,misc]
+    AutoModel = None  # type: ignore[assignment,misc]
+    AutoModelForCausalLM = None  # type: ignore[assignment,misc]
     HAS_TRANSFORMERS = False
 
 
@@ -112,8 +112,14 @@ class ModelShardingManager:
         """Initialize GPU device information."""
         if GPU_AUTOLOADER_AVAILABLE:
             gpu_info = get_gpu_info()
-            self.device_count = gpu_info["info"].get("device_count", 0) if gpu_info["available"] else 0
-            self.gpu_type = gpu_info["type"]
+            info_dict = gpu_info.get("info")
+            if isinstance(info_dict, dict):
+                device_count_val = info_dict.get("device_count", 0)
+                self.device_count = device_count_val if isinstance(device_count_val, int) else 0
+            else:
+                self.device_count = 0 if gpu_info.get("available") else 0
+            gpu_type_val = gpu_info.get("type")
+            self.gpu_type = gpu_type_val if isinstance(gpu_type_val, str) else "cpu"
             self.unified_device = get_device()
         else:
             if HAS_TORCH and torch is not None and hasattr(torch, "cuda"):
@@ -263,20 +269,20 @@ class ModelShardingManager:
 
             with init_empty_weights():
                 if HAS_TRANSFORMERS and AutoModelForCausalLM is not None:
-                    model = AutoModelForCausalLM.from_config(config)
+                    model = AutoModelForCausalLM.from_config(config)  # type: ignore[no-untyped-call]
                 else:
                     logger.warning("Transformers not available")
                     return self._create_simple_device_map()
 
-                device_map = infer_auto_device_map(
+                device_map_result = infer_auto_device_map(
                     model,
                     max_memory=max_memory,
                     no_split_module_classes=no_split_module_classes,
                     dtype=dtype,
                 )
 
-            logger.info("Created device map: %s", device_map)
-            return device_map
+            logger.info("Created device map: %s", device_map_result)
+            return device_map_result if isinstance(device_map_result, dict) else self._create_simple_device_map()
 
         except Exception as e:
             logger.exception("Failed to create device map: %s", e)
@@ -354,31 +360,33 @@ class ModelShardingManager:
         """Shard model without accelerate library."""
         logger.warning("Accelerate not available, model not sharded")
         if GPU_AUTOLOADER_AVAILABLE:
-            if optimize_for_gpu:
+            if optimize_for_gpu is not None:
                 optimized = optimize_for_gpu(model)
                 if optimized is not None:
                     model = optimized
                     logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
-            return to_device(model)
+            device_result = to_device(model)
+            return device_result if device_result is not None else model
         return model
 
     def _shard_model_single_device(self, model: TorchModel) -> TorchModel:
         """Shard model for single device."""
         logger.info("Single GPU - no sharding needed")
         if GPU_AUTOLOADER_AVAILABLE:
-            if optimize_for_gpu:
+            if optimize_for_gpu is not None:
                 optimized = optimize_for_gpu(model)
                 if optimized is not None:
                     model = optimized
                     logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
-            return to_device(model)
+            device_result = to_device(model)
+            return device_result if device_result is not None else model
         if self.device_count == 1 and torch is not None and hasattr(torch, "cuda"):
             return model.to(0) if torch.cuda.is_available() else model
         return model
 
     def _apply_pre_sharding_optimizations(self, model: TorchModel) -> TorchModel:
         """Apply optimizations before sharding."""
-        if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu:
+        if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu is not None:
             try:
                 optimized = optimize_for_gpu(model)
                 if optimized is not None:
@@ -417,9 +425,9 @@ class ModelShardingManager:
 
     def _apply_post_sharding_optimizations(self, model: TorchModel) -> TorchModel:
         """Apply optimizations after sharding."""
-        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None:
             try:
-                optimized = gpu_autoloader(model)
+                optimized = gpu_autoloader(model)  # type: ignore[operator]
                 if optimized is not None:
                     model = optimized
                     logger.info("Applied autoloader optimizations after sharding")
@@ -502,7 +510,7 @@ class ModelShardingManager:
 
     def _apply_gpu_optimizations(self, model: TorchModel) -> TorchModel:
         """Apply GPU optimizations to the model."""
-        if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu:
+        if GPU_AUTOLOADER_AVAILABLE and optimize_for_gpu is not None:
             try:
                 optimized = optimize_for_gpu(model)
                 if optimized is not None:
@@ -510,13 +518,16 @@ class ModelShardingManager:
                     logger.info(APPLIED_GPU_OPTIMIZATIONS_MSG)
             except Exception as e:
                 logger.debug("Could not optimize model: %s", e)
-        return to_device(model) if GPU_AUTOLOADER_AVAILABLE else model
+        if GPU_AUTOLOADER_AVAILABLE:
+            device_result = to_device(model)
+            return device_result if device_result is not None else model
+        return model
 
     def _apply_autoloader_optimizations(self, model: TorchModel) -> TorchModel:
         """Apply autoloader optimizations after sharding."""
-        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader:
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None:
             try:
-                optimized = gpu_autoloader(model)
+                optimized = gpu_autoloader(model)  # type: ignore[operator]
                 if optimized is not None:
                     model = optimized
                     logger.info("Applied autoloader optimizations to sharded checkpoint")
@@ -590,10 +601,14 @@ class ModelShardingManager:
 
         fits_in_memory = False
         if device_distribution:
-            fits_in_memory = all(
-                isinstance(d.get("usage_percent"), (int, float)) and d["usage_percent"] < 90
-                for d in device_distribution.values()
-            )
+            usage_checks: list[bool] = []
+            for d in device_distribution.values():
+                usage_val = d.get("usage_percent")
+                if isinstance(usage_val, (int, float)):
+                    usage_checks.append(float(usage_val) < 90)
+                else:
+                    usage_checks.append(False)
+            fits_in_memory = all(usage_checks)
 
         return {
             "param_count": param_count,
@@ -625,12 +640,13 @@ class ModelShardingManager:
             return device_map
 
         # Get layer configuration
-        num_layers = model_config.get("num_hidden_layers", 32)
+        num_layers_obj = model_config.get("num_hidden_layers", 32)
+        num_layers = num_layers_obj if isinstance(num_layers_obj, int) else 32
         layers_per_device = num_layers // self.device_count
         remainder = num_layers % self.device_count
 
         # Create optimized map
-        optimized_map = {
+        optimized_map: dict[str, object] = {
             "embeddings": 0,
             "encoder": {},
             "decoder": {},
@@ -644,8 +660,12 @@ class ModelShardingManager:
                 device_layers += 1
 
             for layer in range(current_layer, current_layer + device_layers):
-                optimized_map["encoder"][f"layer.{layer}"] = device
-                optimized_map["decoder"][f"layer.{layer}"] = device
+                encoder_dict = optimized_map["encoder"]
+                decoder_dict = optimized_map["decoder"]
+                if isinstance(encoder_dict, dict):
+                    encoder_dict[f"layer.{layer}"] = device
+                if isinstance(decoder_dict, dict):
+                    decoder_dict[f"layer.{layer}"] = device
 
             current_layer += device_layers
 
@@ -659,7 +679,7 @@ class ModelShardingManager:
 
     def monitor_memory_usage(self) -> dict[int, dict[str, object]]:
         """Monitor memory usage across all devices."""
-        memory_info = {}
+        memory_info: dict[int, dict[str, object]] = {}
 
         if not HAS_TORCH or self.device_count == 0:
             return memory_info
@@ -748,7 +768,7 @@ class ModelShardingManager:
             return 1.0
 
         # Count modules per device
-        device_counts = {}
+        device_counts: dict[int, int] = {}
         for device in device_map.values():
             if isinstance(device, int):
                 device_counts[device] = device_counts.get(device, 0) + 1
@@ -910,7 +930,7 @@ class ModelShardingManager:
 
     def _measure_forward_pass(self, model: TorchModel, inputs: Any) -> float:
         """Measure forward pass execution time."""
-        if torch is None:
+        if not HAS_TORCH or torch is None:
             return 0.0
 
         self._synchronize_devices()

@@ -686,8 +686,6 @@ class TestSimProcedureInstallation:
 
             install_license_simprocedures(angr_project)
 
-            assert mock_hook.called or True
-
 
 class TestEnhancedSimulationManager:
     """Test enhanced simulation manager creation with optimizations."""

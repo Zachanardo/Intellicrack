@@ -121,9 +121,7 @@ def create_enhanced_item_view(parent: QWidget | None = None) -> Any:
     view.setAlternatingRowColors(True)
     view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
     view.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
-    view.setEditTriggers(
-        QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
-    )
+    view.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed)
 
     return view
 
@@ -521,9 +519,7 @@ class ModelManagerDialog(BaseDialog):
             download_btn = QPushButton("Download")
             url_val = str(model["url"])
             name_val = str(model["name"])
-            download_btn.clicked.connect(
-                lambda checked=False, url=url_val, name=name_val: self.download_model(url, name)
-            )
+            download_btn.clicked.connect(lambda checked=False, url=url_val, name=name_val: self.download_model(url, name))
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
     def refresh_models(self) -> None:

@@ -229,9 +229,7 @@ class TestPerformanceMetricsCollection:
 
         collector: DataCollector = DataCollector()
 
-        data_points: list[DataPoint] = collector._collect_performance_metrics()
-
-        if len(data_points) > 0:
+        if data_points := collector._collect_performance_metrics():
             labels: list[str] = [point.label for point in data_points]
             assert any("health" in label.lower() or "score" in label.lower() or "time" in label.lower() for label in labels), "Must include health or performance metrics"
 
@@ -248,7 +246,7 @@ class TestResourceUsageMetricsCollection:
         data_points: list[DataPoint] = collector._collect_resource_usage_metrics()
 
         assert isinstance(data_points, list), "Must return list"
-        assert len(data_points) > 0, "Must have at least some metrics"
+        assert data_points, "Must have at least some metrics"
 
         categories: set[str] = {point.category for point in data_points}
         assert "cpu" in categories or "memory" in categories, "Must include CPU or memory metrics"
@@ -273,7 +271,7 @@ class TestResourceUsageMetricsCollection:
 
         data_points: list[DataPoint] = collector._collect_resource_usage_metrics()
 
-        assert len(data_points) > 0, "Must return fallback metrics even without psutil"
+        assert data_points, "Must return fallback metrics even without psutil"
 
 
 class TestErrorRateMetricsCollection:
@@ -289,7 +287,7 @@ class TestErrorRateMetricsCollection:
 
         assert isinstance(data_points, list), "Must return list"
 
-        if len(data_points) > 0:
+        if data_points:
             assert data_points[0].label == "Error Rate", "Must label as Error Rate"
             assert data_points[0].category == "errors", "Category must be errors"
             assert 0 <= data_points[0].value <= 100, "Error rate must be reasonable percentage"
@@ -568,4 +566,4 @@ class TestIntegratedDataCollection:
         for thread in threads:
             thread.join(timeout=5.0)
 
-        assert len(results) > 0, "Threads must complete metric collection"
+        assert results, "Threads must complete metric collection"

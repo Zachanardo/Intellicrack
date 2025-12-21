@@ -43,7 +43,7 @@ def create_test_binary_with_patterns(
         Path to created binary
     """
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     pe_signature = b"PE\x00\x00"

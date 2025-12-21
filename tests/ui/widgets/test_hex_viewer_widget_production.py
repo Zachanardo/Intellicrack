@@ -139,7 +139,7 @@ class TestHexViewerThread:
         assert len(loaded_data) == 1
         assert len(loaded_data[0]) > 0
         assert loaded_data[0][:2] == b"MZ"
-        assert len(progress_values) > 0
+        assert progress_values
         assert progress_values[-1] == 100
 
     def test_large_file_chunked_loading(
@@ -195,7 +195,7 @@ class TestHexViewerThread:
         thread.error_occurred.connect(lambda msg: error_messages.append(msg))
         thread.run()
 
-        assert len(error_messages) > 0
+        assert error_messages
 
     def test_maximum_size_limit(
         self, qapp: Any, temp_binary_file_large: Path
@@ -310,11 +310,10 @@ class TestHexViewerWidget:
             widget.load_file(str(temp_binary_file_small))
             QTest.qWait(500)
 
-        search_pattern = b"MZ"
-
         if hasattr(widget, "search_pattern"):
-            results = widget.search_pattern(search_pattern)
-            if results:
+            search_pattern = b"MZ"
+
+            if results := widget.search_pattern(search_pattern):
                 assert len(results) > 0
 
         widget.close()

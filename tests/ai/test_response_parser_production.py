@@ -67,7 +67,7 @@ class TestParseAIResponseSections:
 
         result = parse_ai_response_sections(response, section_keywords)
 
-        assert all(key in result for key in section_keywords.keys())
+        assert all(key in result for key in section_keywords)
         assert len(result["vulnerabilities"]) > 0
 
     def test_parse_sections_with_empty_response(self) -> None:

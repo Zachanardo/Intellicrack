@@ -94,7 +94,7 @@ class TestShannonEntropyCalculation:
             b"A",
             b"AB" * 50,
             bytes(range(256)),
-            bytes([random.randint(0, 255) for _ in range(10000)]),
+            bytes(random.randint(0, 255) for _ in range(10000)),
         ]
 
         for data in test_cases:
@@ -111,7 +111,7 @@ class TestShannonEntropyCalculation:
     def test_encrypted_style_random_data_high_entropy(self, analyzer: EntropyAnalyzer) -> None:
         """Simulated encrypted data must show very high entropy (>7.5)."""
         random.seed(12345)
-        encrypted_data = bytes([random.randint(0, 255) for _ in range(4096)])
+        encrypted_data = bytes(random.randint(0, 255) for _ in range(4096))
         entropy = analyzer.calculate_entropy(encrypted_data)
         assert entropy > 7.5, f"Encrypted-style data MUST have very high entropy (>7.5), got {entropy}"
 
@@ -132,7 +132,7 @@ class TestShannonEntropyCalculation:
         """XOR-encrypted data must exhibit elevated entropy."""
         plaintext = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ" * 100
         xor_key = 0x5A
-        encrypted = bytes([b ^ xor_key for b in plaintext])
+        encrypted = bytes(b ^ xor_key for b in plaintext)
 
         plain_entropy = analyzer.calculate_entropy(plaintext)
         encrypted_entropy = analyzer.calculate_entropy(encrypted)
@@ -171,7 +171,7 @@ class TestHighEntropyRegionDetection:
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tf:
             pe_header = b"MZ" + b"\x00" * 100
             random.seed(9999)
-            encrypted_vm_code = bytes([random.randint(0, 255) for _ in range(8192)])
+            encrypted_vm_code = bytes(random.randint(0, 255) for _ in range(8192))
 
             vmprotect_binary = pe_header + encrypted_vm_code
             tf.write(vmprotect_binary)
@@ -188,7 +188,7 @@ class TestHighEntropyRegionDetection:
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tf:
             themida_marker = b"THEMIDA_PROTECTED" + b"\x00" * 15
             random.seed(54321)
-            virtualized_code = bytes([random.randint(0, 255) for _ in range(16384)])
+            virtualized_code = bytes(random.randint(0, 255) for _ in range(16384))
 
             themida_binary = themida_marker + virtualized_code
             tf.write(themida_binary)
@@ -412,7 +412,7 @@ class TestBinaryFileAnalysis:
         chunk_size = 1024 * 1024
 
         random.seed(42)
-        large_data = bytes([random.randint(0, 255) for _ in range(chunk_size * 5)])
+        large_data = bytes(random.randint(0, 255) for _ in range(chunk_size * 5))
         large_file.write_bytes(large_data)
 
         result = analyzer.analyze_entropy(large_file)
@@ -434,7 +434,7 @@ class TestObfuscationDetection:
         """XOR-obfuscated code must show elevated entropy vs plaintext."""
         plaintext_code = b"mov eax, [ebp+8]\npush ebx\ncall verify_license\ntest eax, eax\n" * 100
         xor_key = 0x7F
-        obfuscated_code = bytes([b ^ xor_key for b in plaintext_code])
+        obfuscated_code = bytes(b ^ xor_key for b in plaintext_code)
 
         plain_entropy = analyzer.calculate_entropy(plaintext_code)
         obfuscated_entropy = analyzer.calculate_entropy(obfuscated_code)
@@ -451,7 +451,7 @@ class TestObfuscationDetection:
 
         for _ in range(500):
             polymorphic_code.extend(base_instructions)
-            random_junk = bytes([random.randint(0, 255) for _ in range(4)])
+            random_junk = bytes(random.randint(0, 255) for _ in range(4))
             polymorphic_code.extend(random_junk)
 
         entropy = analyzer.calculate_entropy(bytes(polymorphic_code))
@@ -465,7 +465,7 @@ class TestObfuscationDetection:
         random.seed(3333)
         for i in range(0, len(normal_flow), 11):
             obfuscated_flow.extend(normal_flow[i:i+11])
-            junk = bytes([random.randint(0, 255) for _ in range(8)])
+            junk = bytes(random.randint(0, 255) for _ in range(8))
             obfuscated_flow.extend(junk)
 
         normal_entropy = analyzer.calculate_entropy(normal_flow)
@@ -489,7 +489,7 @@ class TestLicenseProtectionScenarios:
 
             license_section_marker = b".lic\x00\x00\x00\x00"
             random.seed(11111)
-            encrypted_keys = bytes([random.randint(0, 255) for _ in range(2048)])
+            encrypted_keys = bytes(random.randint(0, 255) for _ in range(2048))
 
             normal_code = b"\x55\x8B\xEC\x5D\xC3" * 400
 
@@ -507,7 +507,7 @@ class TestLicenseProtectionScenarios:
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tf:
             hwid_check_code = b"HWID_CHECK_START" + b"\x00" * 16
 
-            encrypted_hwid_table = bytes([i ^ 0xAA for i in range(512)])
+            encrypted_hwid_table = bytes(i ^ 0xAA for i in range(512))
 
             validation_logic = b"\x8B\x45\x08\x33\xC1\x74\x08" * 100
 
@@ -526,7 +526,7 @@ class TestLicenseProtectionScenarios:
             trial_marker = b"TRIAL_DATA_ENCRYPTED"
 
             random.seed(99999)
-            encrypted_trial_info = bytes([random.randint(0, 255) for _ in range(256)])
+            encrypted_trial_info = bytes(random.randint(0, 255) for _ in range(256))
 
             checksum = struct.pack("<I", 0xDEADBEEF)
 
@@ -544,7 +544,7 @@ class TestLicenseProtectionScenarios:
         activation_header = b"ACT_REQ\x00"
 
         random.seed(55555)
-        encrypted_payload = bytes([random.randint(0, 255) for _ in range(1024)])
+        encrypted_payload = bytes(random.randint(0, 255) for _ in range(1024))
 
         signature = struct.pack("<Q", 0xCAFEBABEDEADBEEF)
 
@@ -569,7 +569,7 @@ class TestErrorHandlingAndEdgeCases:
 
     def test_very_large_data_processing(self, analyzer: EntropyAnalyzer) -> None:
         """Very large data sets must be processed correctly."""
-        large_data = bytes([i % 256 for i in range(10_000_000)])
+        large_data = bytes(i % 256 for i in range(10_000_000))
         entropy = analyzer.calculate_entropy(large_data)
         assert 7.99 <= entropy <= 8.0, "Large uniform distribution MUST yield ~8.0 entropy"
 
@@ -624,7 +624,7 @@ class TestPerformanceRequirements:
     def test_entropy_calculation_speed_1kb(self, analyzer: EntropyAnalyzer) -> None:
         """1KB entropy calculation must complete in <1ms."""
         import time
-        data = bytes([i % 256 for i in range(1024)])
+        data = bytes(i % 256 for i in range(1024))
 
         start = time.perf_counter()
         entropy = analyzer.calculate_entropy(data)
@@ -636,7 +636,7 @@ class TestPerformanceRequirements:
     def test_entropy_calculation_speed_100kb(self, analyzer: EntropyAnalyzer) -> None:
         """100KB entropy calculation must complete in <10ms."""
         import time
-        data = bytes([i % 256 for i in range(100 * 1024)])
+        data = bytes(i % 256 for i in range(100 * 1024))
 
         start = time.perf_counter()
         entropy = analyzer.calculate_entropy(data)
@@ -649,7 +649,7 @@ class TestPerformanceRequirements:
         """1MB file analysis must complete in <100ms."""
         import time
         with tempfile.NamedTemporaryFile(delete=False) as tf:
-            data = bytes([i % 256 for i in range(1024 * 1024)])
+            data = bytes(i % 256 for i in range(1024 * 1024))
             tf.write(data)
             tf.flush()
 
@@ -668,7 +668,7 @@ class TestPerformanceRequirements:
 
         with tempfile.NamedTemporaryFile(delete=False) as tf:
             random.seed(12345)
-            data = bytes([random.randint(0, 255) for _ in range(10 * 1024 * 1024)])
+            data = bytes(random.randint(0, 255) for _ in range(10 * 1024 * 1024))
             tf.write(data)
             tf.flush()
 
@@ -732,7 +732,7 @@ class TestRealWorldPackerSignatures:
         """VMProtect virtualization shows very high entropy (7.5-8.0)."""
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tf:
             random.seed(77777)
-            virtualized_instructions = bytes([random.randint(0, 255) for _ in range(8192)])
+            virtualized_instructions = bytes(random.randint(0, 255) for _ in range(8192))
 
             vmprotect_binary = b"VMProtect" + b"\x00" * 7 + virtualized_instructions
             tf.write(vmprotect_binary)
@@ -749,7 +749,7 @@ class TestRealWorldPackerSignatures:
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as tf:
             themida_marker = b"Themida"
             random.seed(88888)
-            vm_code = bytes([random.randint(0, 255) for _ in range(12288)])
+            vm_code = bytes(random.randint(0, 255) for _ in range(12288))
 
             themida_binary = themida_marker + vm_code
             tf.write(themida_binary)
@@ -772,7 +772,9 @@ class TestRealWorldPackerSignatures:
 
         with tempfile.NamedTemporaryFile(suffix=".exe", delete=False) as protected:
             random.seed(12121)
-            protected_pe = b"MZ\x90\x00" + bytes([random.randint(0, 255) for _ in range(5000)])
+            protected_pe = b"MZ\x90\x00" + bytes(
+                random.randint(0, 255) for _ in range(5000)
+            )
             protected.write(protected_pe)
             protected.flush()
             protected_result = analyzer.analyze_entropy(protected.name)
@@ -854,7 +856,7 @@ class TestProductionValidation:
             ) * 50
 
             random.seed(33333)
-            encrypted_license_table = bytes([random.randint(0, 255) for _ in range(1024)])
+            encrypted_license_table = bytes(random.randint(0, 255) for _ in range(1024))
 
             trial_check_routine = b"\x74\x08\xEB\x06" * 100
 

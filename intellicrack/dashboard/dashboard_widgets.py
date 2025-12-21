@@ -22,9 +22,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import logging
 import math
 from collections import deque
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any, cast
 
 
 try:
@@ -100,7 +102,10 @@ class DashboardWidget:
         """
         self.config = config
         self.logger = logger
-        self.data_history: deque[WidgetData] = deque(maxlen=config.options.get("history_size", 100))
+        history_size = config.options.get("history_size", 100)
+        if not isinstance(history_size, int):
+            history_size = 100
+        self.data_history: deque[WidgetData] = deque(maxlen=history_size)
         self.last_update: datetime = datetime.now()
         self.render_cache: object | None = None
 
@@ -159,7 +164,7 @@ class DashboardWidget:
 class LineChartWidget(DashboardWidget):
     """Line chart widget for time series data."""
 
-    def render(self, format: str = "json") -> dict[str, object] | object | None:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render line chart.
 
         Args:
@@ -182,8 +187,8 @@ class LineChartWidget(DashboardWidget):
 
     def _render_json(self) -> dict[str, object]:
         """Render as JSON data."""
-        x_data = []
-        y_data = {}
+        x_data: list[str] = []
+        y_data: dict[str, list[object]] = {}
 
         for data in self.data_history:
             x_data.append(data.timestamp.isoformat())
@@ -199,19 +204,18 @@ class LineChartWidget(DashboardWidget):
             "series": [{"name": key, "data": values} for key, values in y_data.items()],
         }
 
-    def _render_plotly(self) -> object:
+    def _render_plotly(self) -> dict[str, object]:
         """Render using Plotly.
 
         Returns:
-            Plotly Figure object
+            Plotly Figure object as dict
 
         """
         fig = go.Figure()
 
         x_data = [data.timestamp for data in self.data_history]
 
-        # Collect all series
-        series_data = {}
+        series_data: dict[str, list[object]] = {}
         for data in self.data_history:
             for key, value in data.values.items():
                 if key not in series_data:
@@ -230,25 +234,34 @@ class LineChartWidget(DashboardWidget):
             height=self.config.height,
         )
 
-        return fig
+        return cast(dict[str, object], fig.to_dict())
 
-    def _render_matplotlib(self) -> Figure:
+    def _render_matplotlib(self) -> dict[str, object]:
         """Render using Matplotlib.
 
         Returns:
-            Matplotlib Figure object
+            Matplotlib Figure data as dict
 
         """
         fig = Figure(figsize=(self.config.width / 100, self.config.height / 100))
-        FigureCanvasAgg(fig)  # Use FigureCanvasAgg that was imported
+        FigureCanvasAgg(fig)
         ax = fig.add_subplot(111)
 
-        x_data = [data.timestamp for data in self.data_history]
+        x_data = list(range(len(self.data_history)))
 
-        # Collect all series
+        all_keys: set[str] = set()
         for data in self.data_history:
-            for key in data.values:
-                ax.plot(x_data, [d.values.get(key, 0) for d in self.data_history], label=key)
+            all_keys.update(data.values.keys())
+
+        for key in all_keys:
+            y_values: list[float] = []
+            for d in self.data_history:
+                val = d.values.get(key, 0)
+                if isinstance(val, (int, float)):
+                    y_values.append(float(val))
+                else:
+                    y_values.append(0.0)
+            ax.plot(x_data, y_values, label=str(key))
 
         ax.set_title(self.config.title)
         ax.set_xlabel("Time")
@@ -256,13 +269,13 @@ class LineChartWidget(DashboardWidget):
         ax.legend()
         ax.grid(True)
 
-        return fig
+        return {"type": "matplotlib", "figure": fig}
 
 
 class GaugeWidget(DashboardWidget):
     """Gauge widget for single metric display."""
 
-    def render(self, format: str = "json") -> dict[str, object] | object | None:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render gauge.
 
         Args:
@@ -277,8 +290,10 @@ class GaugeWidget(DashboardWidget):
             return None
 
         value = next(iter(current.values.values())) if current.values else 0
-        min_val = self.config.options.get("min", 0)
-        max_val = self.config.options.get("max", 100)
+        min_val_obj = self.config.options.get("min", 0)
+        max_val_obj = self.config.options.get("max", 100)
+        min_val = float(min_val_obj) if isinstance(min_val_obj, (int, float)) else 0.0
+        max_val = float(max_val_obj) if isinstance(max_val_obj, (int, float)) else 100.0
 
         if format == "json":
             return {
@@ -291,6 +306,8 @@ class GaugeWidget(DashboardWidget):
                 "thresholds": self.config.options.get("thresholds", []),
             }
         if format == "plotly" and HAS_PLOTLY:
+            threshold_val = self.config.options.get("threshold", max_val * 0.9)
+            threshold = float(threshold_val) if isinstance(threshold_val, (int, float)) else max_val * 0.9
             fig = go.Figure(
                 go.Indicator(
                     mode="gauge+number",
@@ -304,14 +321,15 @@ class GaugeWidget(DashboardWidget):
                         "threshold": {
                             "line": {"color": "red", "width": 4},
                             "thickness": 0.75,
-                            "value": self.config.options.get("threshold", max_val * 0.9),
+                            "value": threshold,
                         },
                     },
                 ),
             )
             fig.update_layout(width=self.config.width, height=self.config.height)
-            return fig
-        return self.render("json")
+            return cast(dict[str, object], fig.to_dict())
+        json_result = self.render("json")
+        return json_result if json_result is not None else None
 
     def _get_gauge_steps(self) -> list[dict[str, object]]:
         """Get gauge color steps.
@@ -320,24 +338,29 @@ class GaugeWidget(DashboardWidget):
             List of gauge threshold steps with color ranges
 
         """
-        thresholds = self.config.options.get("thresholds", [])
+        thresholds_obj = self.config.options.get("thresholds", [])
+        if not isinstance(thresholds_obj, list):
+            return []
+        thresholds: list[Any] = thresholds_obj
         if not thresholds:
             return []
 
         colors = ["green", "yellow", "orange", "red"]
-        return [
-            {
-                "range": [threshold.get("min", 0), threshold.get("max", 100)],
-                "color": colors[min(i, len(colors) - 1)],
-            }
-            for i, threshold in enumerate(thresholds)
-        ]
+        result: list[dict[str, object]] = []
+        for i, threshold_item in enumerate(thresholds):
+            if isinstance(threshold_item, dict):
+                threshold: dict[str, Any] = threshold_item
+                result.append({
+                    "range": [threshold.get("min", 0), threshold.get("max", 100)],
+                    "color": colors[min(i, len(colors) - 1)],
+                })
+        return result
 
 
 class TableWidget(DashboardWidget):
     """Table widget for structured data display."""
 
-    def render(self, format: str = "json") -> dict[str, object] | str | None:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render table.
 
         Args:
@@ -364,8 +387,10 @@ class TableWidget(DashboardWidget):
                 "filterable": self.config.options.get("filterable", True),
             }
         if format == "html":
-            return self._render_html_table(current)
-        return self.render("json")
+            html_table = self._render_html_table(current)
+            return {"type": "html", "content": html_table}
+        json_result = self.render("json")
+        return json_result if json_result is not None else None
 
     def _render_html_table(self, data: WidgetData) -> str:
         """Render as HTML table.
@@ -377,26 +402,33 @@ class TableWidget(DashboardWidget):
             HTML string representation of table
 
         """
-        rows = data.values.get("rows", [])
-        columns = data.values.get("columns", [])
+        rows_obj = data.values.get("rows", [])
+        columns_obj = data.values.get("columns", [])
+
+        if not isinstance(rows_obj, list):
+            rows_obj = []
+        if not isinstance(columns_obj, list):
+            columns_obj = []
+
+        rows: list[Any] = rows_obj
+        columns: list[Any] = columns_obj
 
         html = f"<table class='dashboard-table' id='{self.config.widget_id}'>"
         html += f"<caption>{self.config.title}</caption>"
 
-        # Header
         html += "<thead><tr>"
         for col in columns:
             html += f"<th>{col}</th>"
         html += "</tr></thead>"
 
-        # Body
         html += "<tbody>"
         for row in rows:
-            html += "<tr>"
-            for col in columns:
-                value = row.get(col, "")
-                html += f"<td>{value}</td>"
-            html += "</tr>"
+            if isinstance(row, dict):
+                html += "<tr>"
+                for col in columns:
+                    value = row.get(str(col), "")
+                    html += f"<td>{value}</td>"
+                html += "</tr>"
         html += "</tbody>"
 
         html += "</table>"
@@ -406,7 +438,7 @@ class TableWidget(DashboardWidget):
 class HeatmapWidget(DashboardWidget):
     """Heatmap widget for 2D data visualization."""
 
-    def render(self, format: str = "json") -> dict[str, object] | object | None:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render heatmap.
 
         Args:
@@ -443,14 +475,15 @@ class HeatmapWidget(DashboardWidget):
                 )
             )
             fig.update_layout(title=self.config.title, width=self.config.width, height=self.config.height)
-            return fig
-        return self.render("json")
+            return cast(dict[str, object], fig.to_dict())
+        json_result = self.render("json")
+        return json_result if json_result is not None else None
 
 
 class NetworkGraphWidget(DashboardWidget):
     """Network graph widget for relationship visualization."""
 
-    def render(self, format: str = "json") -> dict[str, object] | object | None:
+    def render(self, format: str = "json") -> dict[str, object] | None:
         """Render network graph.
 
         Args:
@@ -464,8 +497,16 @@ class NetworkGraphWidget(DashboardWidget):
         if not current:
             return None
 
-        nodes = current.values.get("nodes", [])
-        edges = current.values.get("edges", [])
+        nodes_obj = current.values.get("nodes", [])
+        edges_obj = current.values.get("edges", [])
+
+        if not isinstance(nodes_obj, list):
+            nodes_obj = []
+        if not isinstance(edges_obj, list):
+            edges_obj = []
+
+        nodes: list[dict[str, object]] = cast(list[dict[str, object]], nodes_obj)
+        edges: list[dict[str, object]] = cast(list[dict[str, object]], edges_obj)
 
         if format == "json":
             return {
@@ -478,9 +519,10 @@ class NetworkGraphWidget(DashboardWidget):
             }
         if format == "plotly" and HAS_PLOTLY:
             return self._render_plotly_network(nodes, edges)
-        return self.render("json")
+        json_result = self.render("json")
+        return json_result if json_result is not None else None
 
-    def _render_plotly_network(self, nodes: list[dict[str, object]], edges: list[dict[str, object]]) -> object:
+    def _render_plotly_network(self, nodes: list[dict[str, object]], edges: list[dict[str, object]]) -> dict[str, object]:
         """Render network using Plotly.
 
         Args:
@@ -488,40 +530,54 @@ class NetworkGraphWidget(DashboardWidget):
             edges: List of edge dictionaries with source and target node IDs
 
         Returns:
-            Plotly Figure object with network graph visualization
+            Plotly Figure as dict with network graph visualization
 
         """
-        # Calculate node positions (simple circular layout)
         n = len(nodes)
-        node_positions = {}
+        node_positions: dict[object, tuple[float, float]] = {}
         for i, node in enumerate(nodes):
-            angle = 2 * math.pi * i / n
+            angle = 2 * math.pi * i / n if n > 0 else 0
             x = math.cos(angle)
             y = math.sin(angle)
-            node_positions[node["id"]] = (x, y)
+            node_id = node.get("id", i)
+            node_positions[node_id] = (x, y)
 
-        # Create edge traces
-        edge_trace = go.Scatter(x=[], y=[], line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines")
+        edge_x: list[float | None] = []
+        edge_y: list[float | None] = []
 
         for edge in edges:
-            x0, y0 = node_positions.get(edge["source"], (0, 0))
-            x1, y1 = node_positions.get(edge["target"], (0, 0))
-            edge_trace["x"] += (x0, x1, None)
-            edge_trace["y"] += (y0, y1, None)
+            source_id = edge.get("source")
+            target_id = edge.get("target")
+            x0, y0 = node_positions.get(source_id, (0.0, 0.0))
+            x1, y1 = node_positions.get(target_id, (0.0, 0.0))
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
 
-        # Create node trace
+        edge_trace = go.Scatter(x=edge_x, y=edge_y, line={"width": 0.5, "color": "#888"}, hoverinfo="none", mode="lines")
+
+        node_x = [pos[0] for pos in node_positions.values()]
+        node_y = [pos[1] for pos in node_positions.values()]
+        node_text = [str(node.get("label", node.get("id", ""))) for node in nodes]
+
+        node_adjacencies: list[int] = []
+        for node in nodes:
+            node_id = node.get("id")
+            adjacencies = sum(bool(edge.get("source") == node_id or edge.get("target") == node_id)
+                          for edge in edges)
+            node_adjacencies.append(adjacencies)
+
         node_trace = go.Scatter(
-            x=[pos[0] for pos in node_positions.values()],
-            y=[pos[1] for pos in node_positions.values()],
+            x=node_x,
+            y=node_y,
             mode="markers+text",
             hoverinfo="text",
-            text=[node.get("label", node["id"]) for node in nodes],
+            text=node_text,
             textposition="top center",
             marker={
                 "showscale": True,
                 "colorscale": "YlGnBu",
                 "size": 10,
-                "color": [],
+                "color": node_adjacencies,
                 "colorbar": {
                     "thickness": 15,
                     "title": "Node Connections",
@@ -532,29 +588,15 @@ class NetworkGraphWidget(DashboardWidget):
             },
         )
 
-        # Color nodes by connections
-        node_adjacencies = []
-        for node in nodes:
-            adjacencies = sum(
-                edge["source"] == node["id"] or edge["target"] == node["id"]
-                for edge in edges
-            )
-            node_adjacencies.append(adjacencies)
-
-        node_trace.marker.color = node_adjacencies
-
-        # Use make_subplots to create the network visualization
         fig = make_subplots(
             rows=1,
             cols=1,
             subplot_titles=[self.config.title],
         )
 
-        # Add traces to subplots
         fig.add_trace(edge_trace, row=1, col=1)
         fig.add_trace(node_trace, row=1, col=1)
 
-        # Update layout properties
         fig.update_layout(
             showlegend=False,
             hovermode="closest",
@@ -565,7 +607,7 @@ class NetworkGraphWidget(DashboardWidget):
             height=self.config.height,
         )
 
-        return fig
+        return cast(dict[str, object], fig.to_dict())
 
 
 class TimelineWidget(DashboardWidget):
@@ -584,18 +626,20 @@ class TimelineWidget(DashboardWidget):
         if not self.data_history:
             return None
 
-        events = []
+        events: list[dict[str, object]] = []
         for data in self.data_history:
-            events.extend(
-                {
-                    "timestamp": data.timestamp.isoformat(),
-                    "title": event.get("title", ""),
-                    "description": event.get("description", ""),
-                    "type": event.get("type", "info"),
-                    "tool": event.get("tool", "unknown"),
-                }
-                for event in data.values.get("events", [])
-            )
+            events_obj = data.values.get("events", [])
+            if isinstance(events_obj, list):
+                for event_item in events_obj:
+                    if isinstance(event_item, dict):
+                        event: dict[str, Any] = event_item
+                        events.append({
+                            "timestamp": data.timestamp.isoformat(),
+                            "title": event.get("title", ""),
+                            "description": event.get("description", ""),
+                            "type": event.get("type", "info"),
+                            "tool": event.get("tool", "unknown"),
+                        })
         if format == "json":
             return {
                 "type": "timeline",
@@ -603,7 +647,8 @@ class TimelineWidget(DashboardWidget):
                 "events": events,
                 "groupBy": self.config.options.get("groupBy", "tool"),
             }
-        return self.render("json")
+        json_result = self.render("json")
+        return json_result if json_result is not None else None
 
 
 class ProgressWidget(DashboardWidget):
@@ -623,11 +668,14 @@ class ProgressWidget(DashboardWidget):
         if not current:
             return None
 
-        value = current.values.get("value", 0)
-        total = current.values.get("total", 100)
-        percentage = (value / total * 100) if total > 0 else 0
+        value_obj = current.values.get("value", 0)
+        total_obj = current.values.get("total", 100)
 
+        value = float(value_obj) if isinstance(value_obj, (int, float)) else 0.0
+        total = float(total_obj) if isinstance(total_obj, (int, float)) else 100.0
         if format == "json":
+            percentage = (value / total * 100) if total > 0 else 0.0
+
             return {
                 "type": "progress",
                 "title": self.config.title,
@@ -637,7 +685,8 @@ class ProgressWidget(DashboardWidget):
                 "label": current.values.get("label", ""),
                 "color": self._get_progress_color(percentage),
             }
-        return self.render("json")
+        json_result = self.render("json")
+        return json_result if json_result is not None else None
 
     def _get_progress_color(self, percentage: float) -> str:
         """Get progress bar color based on percentage.
@@ -688,7 +737,7 @@ class WidgetFactory:
         return widget_class(config)
 
 
-def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs: object) -> DashboardWidget:
+def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs: Any) -> DashboardWidget:
     """Create a widget.
 
     Args:
@@ -701,5 +750,31 @@ def create_widget(widget_id: str, widget_type: WidgetType, title: str, **kwargs:
         Dashboard widget instance
 
     """
-    config = WidgetConfig(widget_id=widget_id, widget_type=widget_type, title=title, **kwargs)
+    width = kwargs.get("width", 400)
+    height = kwargs.get("height", 300)
+    refresh_interval = kwargs.get("refresh_interval", 5.0)
+    data_source = kwargs.get("data_source", None)
+    options = kwargs.get("options", {})
+
+    if not isinstance(width, int):
+        width = 400
+    if not isinstance(height, int):
+        height = 300
+    if not isinstance(refresh_interval, (int, float)):
+        refresh_interval = 5.0
+    if not isinstance(data_source, str) and data_source is not None:
+        data_source = None
+    if not isinstance(options, dict):
+        options = {}
+
+    config = WidgetConfig(
+        widget_id=widget_id,
+        widget_type=widget_type,
+        title=title,
+        width=width,
+        height=height,
+        refresh_interval=float(refresh_interval),
+        data_source=data_source,
+        options=cast(dict[str, object], options)
+    )
     return WidgetFactory.create_widget(config)

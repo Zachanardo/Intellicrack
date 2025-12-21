@@ -366,10 +366,10 @@ class TestUIHelpersIntegration:
             "protected_app.exe": tmp_path / "protected_app.exe",
         }
 
-        for name, path in targets.items():
+        for path in targets.values():
             path.write_bytes(b"MZ" + b"\x00" * 50)
 
-        for name, path in targets.items():
+        for path in targets.values():
             payload = generate_exploit_payload_common("License Bypass", str(path))
 
             assert payload["target"] == str(path)

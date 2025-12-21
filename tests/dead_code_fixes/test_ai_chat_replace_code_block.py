@@ -4,6 +4,7 @@ This tests that the replace_code_block function is properly used with
 re.finditer to process code blocks in AI responses.
 """
 
+
 from __future__ import annotations
 
 import re
@@ -11,9 +12,6 @@ from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock, patch
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestReplaceCodeBlockUsage:

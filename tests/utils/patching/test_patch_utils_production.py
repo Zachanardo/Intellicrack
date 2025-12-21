@@ -276,7 +276,7 @@ class TestApplyPatch:
         assert success is True
 
         backups = list(temp_binary.parent.glob(f"{temp_binary.name}.backup_*"))
-        assert len(backups) > 0
+        assert backups
 
         backup_data = backups[0].read_bytes()
         assert backup_data == original_data
@@ -290,7 +290,7 @@ class TestApplyPatch:
         assert success is True
 
         backups = list(temp_binary.parent.glob(f"{temp_binary.name}.backup_*"))
-        assert len(backups) == 0
+        assert not backups
 
     def test_apply_patch_nonexistent_file(self, tmp_path: Path) -> None:
         """Return error when file doesn't exist."""

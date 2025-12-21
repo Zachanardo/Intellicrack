@@ -338,7 +338,7 @@ class TestLazyModelWrapper:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert all(b is not None for b in backends)
         assert all(b is backends[0] for b in backends)
 
@@ -647,7 +647,7 @@ class TestThreadSafety:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert len(backends) == 20
         assert all(backend is backends[0] for backend in backends)
 
@@ -671,7 +671,7 @@ class TestThreadSafety:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert len(manager.models) == 10
 
 

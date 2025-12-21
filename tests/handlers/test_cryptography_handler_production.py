@@ -208,7 +208,7 @@ class TestHMACFunctions:
         key = os.urandom(32)
 
         signature = hmac_module.new(key, data, hashlib.sha256).digest()
-        tampered_signature = bytes([b ^ 0xFF for b in signature])
+        tampered_signature = bytes(b ^ 0xFF for b in signature)
 
         assert signature != tampered_signature
 

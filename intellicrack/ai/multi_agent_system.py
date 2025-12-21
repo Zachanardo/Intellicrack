@@ -2107,6 +2107,7 @@ class DynamicAnalysisAgent(BaseAgent):
             if sys.platform == "win32":
                 with contextlib.suppress(ImportError):
                     import ctypes
+
                     creation_flags = 0x00000004  # CREATE_SUSPENDED constant
             process = await asyncio.to_thread(
                 subprocess.Popen,
@@ -2361,7 +2362,9 @@ class DynamicAnalysisAgent(BaseAgent):
                     permanent = wintypes.BOOL()
 
                     if handle := kernel32.OpenProcess(0x0400, False, process_id):
-                        if isinstance(result["memory_protection"], dict) and kernel32.GetProcessDEPPolicy(handle, ctypes.byref(flags), ctypes.byref(permanent)):
+                        if isinstance(result["memory_protection"], dict) and kernel32.GetProcessDEPPolicy(
+                            handle, ctypes.byref(flags), ctypes.byref(permanent)
+                        ):
                             result["memory_protection"]["dep_enabled"] = bool(flags.value & 0x00000001)
 
                         kernel32.CloseHandle(handle)
@@ -2631,7 +2634,10 @@ class DynamicAnalysisAgent(BaseAgent):
                     elif payload.get("type") == "suspicious":
                         suspicious_apis.append({"function": payload.get("function", "unknown"), "reason": payload.get("reason", "unknown")})
                     elif payload.get("type") == "bypass":
-                        protection_bypasses.append({"type": payload.get("bypass_type", "unknown"), "detected": payload.get("detected", False)})
+                        protection_bypasses.append({
+                            "type": payload.get("bypass_type", "unknown"),
+                            "detected": payload.get("detected", False),
+                        })
 
             script.on("message", on_message)
             script.load()
@@ -2962,10 +2968,7 @@ class ReverseEngineeringAgent(BaseAgent):
                 elif (
                     binary_data[offset] != 0xE8
                     and binary_data[offset] != 0xE9
-                    and (
-                        binary_data[offset] not in [0x74, 0x75]
-                        or offset + 1 < len(binary_data)
-                    )
+                    and (binary_data[offset] not in [0x74, 0x75] or offset + 1 < len(binary_data))
                     and binary_data[offset] in [0x74, 0x75]
                 ):
                     rel = binary_data[offset + 1]

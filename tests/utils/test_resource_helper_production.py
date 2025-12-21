@@ -197,7 +197,7 @@ class TestEdgeCases:
 
         assert os.path.isabs(resource_path)
         path_obj = Path(resource_path)
-        assert len(str(path_obj)) > 0
+        assert str(path_obj) != ""
 
     def test_get_resource_path_with_spaces(self) -> None:
         """Resource path handles spaces in directory and file names."""
@@ -239,7 +239,7 @@ class TestPackageStructureIntegrity:
 
         path_obj = Path(resource_path)
         parent_dirs = [p for p in path_obj.parts if "intellicrack" in p]
-        assert len(parent_dirs) > 0
+        assert parent_dirs
 
     def test_get_resource_path_maintains_relative_structure(self) -> None:
         """Resource path maintains relative directory structure from package root."""
@@ -249,12 +249,9 @@ class TestPackageStructureIntegrity:
         assert "analysis" in resource_path
         path_obj = Path(resource_path)
 
-        core_idx = -1
-        for i, part in enumerate(path_obj.parts):
-            if part == "core":
-                core_idx = i
-                break
-
+        core_idx = next(
+            (i for i, part in enumerate(path_obj.parts) if part == "core"), -1
+        )
         if core_idx >= 0 and core_idx + 1 < len(path_obj.parts):
             assert path_obj.parts[core_idx + 1] == "analysis"
 

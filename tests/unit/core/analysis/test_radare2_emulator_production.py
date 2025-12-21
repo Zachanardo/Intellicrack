@@ -420,9 +420,9 @@ class TestExploitGeneration:
         emulator = Radare2Emulator(str(vulnerable_x86_binary))
         emulator.open()
 
-        exploit = emulator.generate_exploit(ExploitType.BUFFER_OVERFLOW, 0x8048054)
-
-        if exploit:
+        if exploit := emulator.generate_exploit(
+            ExploitType.BUFFER_OVERFLOW, 0x8048054
+        ):
             assert isinstance(exploit, ExploitPrimitive)
             assert exploit.type == ExploitType.BUFFER_OVERFLOW
             assert len(exploit.trigger_input) > 0
@@ -439,9 +439,9 @@ class TestExploitGeneration:
         emulator = Radare2Emulator("/bin/ls")
         emulator.open()
 
-        exploit = emulator.generate_exploit(ExploitType.FORMAT_STRING, 0x400000)
-
-        if exploit:
+        if exploit := emulator.generate_exploit(
+            ExploitType.FORMAT_STRING, 0x400000
+        ):
             assert isinstance(exploit, ExploitPrimitive)
             assert exploit.type == ExploitType.FORMAT_STRING
             assert b"%p" in exploit.trigger_input or b"%s" in exploit.trigger_input
@@ -454,9 +454,9 @@ class TestExploitGeneration:
         emulator = Radare2Emulator("/bin/ls")
         emulator.open()
 
-        exploit = emulator.generate_exploit(ExploitType.INTEGER_OVERFLOW, 0x400000)
-
-        if exploit:
+        if exploit := emulator.generate_exploit(
+            ExploitType.INTEGER_OVERFLOW, 0x400000
+        ):
             assert isinstance(exploit, ExploitPrimitive)
             assert exploit.type == ExploitType.INTEGER_OVERFLOW
             assert len(exploit.trigger_input) > 0
@@ -469,9 +469,9 @@ class TestExploitGeneration:
         emulator = Radare2Emulator("/bin/ls")
         emulator.open()
 
-        exploit = emulator.generate_exploit(ExploitType.USE_AFTER_FREE, 0x400000)
-
-        if exploit:
+        if exploit := emulator.generate_exploit(
+            ExploitType.USE_AFTER_FREE, 0x400000
+        ):
             assert isinstance(exploit, ExploitPrimitive)
             assert exploit.type == ExploitType.USE_AFTER_FREE
             assert len(exploit.payload) > 0
@@ -484,9 +484,9 @@ class TestExploitGeneration:
         emulator = Radare2Emulator("/bin/ls")
         emulator.open()
 
-        exploit = emulator.generate_exploit(ExploitType.BUFFER_OVERFLOW, 0x400000)
-
-        if exploit:
+        if exploit := emulator.generate_exploit(
+            ExploitType.BUFFER_OVERFLOW, 0x400000
+        ):
             report = emulator.generate_exploit_report([exploit])
 
             assert isinstance(report, str)

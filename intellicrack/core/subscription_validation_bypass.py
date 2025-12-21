@@ -1169,10 +1169,11 @@ class SubscriptionValidationBypass:
                 Path.home() / ".local/share",
             ])
 
-        matched_vendor: str | None = next(
-            (vendor for vendor in token_patterns if vendor in product_lower), None
-        )
-        patterns_to_check = (token_patterns.get(matched_vendor, []) if matched_vendor else []) or [f"*{product_name}*/*", f"*{product_lower}*/*"]
+        matched_vendor: str | None = next((vendor for vendor in token_patterns if vendor in product_lower), None)
+        patterns_to_check = (token_patterns.get(matched_vendor, []) if matched_vendor else []) or [
+            f"*{product_name}*/*",
+            f"*{product_lower}*/*",
+        ]
 
         token_file_names = ["token", "auth", "session", "credentials", "oauth", "jwt"]
 

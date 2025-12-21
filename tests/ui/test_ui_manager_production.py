@@ -85,7 +85,7 @@ class TestUIManagerLayoutCreation:
 
         ui_manager_with_mocked_tabs.create_main_layout()
 
-        assert len(toolbar_created) > 0
+        assert toolbar_created
 
 
 class TestUIManagerTabsSetup:
@@ -321,4 +321,4 @@ class TestUIManagerRealWorldScenarios:
         ui_manager_with_mocked_tabs.theme_manager.set_theme("light")
 
         current_theme = ui_manager_with_mocked_tabs.theme_manager.get_current_theme()
-        assert current_theme in ["dark", "light"] or current_theme == initial_theme
+        assert current_theme in ["dark", "light", initial_theme]

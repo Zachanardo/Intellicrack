@@ -21,7 +21,10 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 import sys
+from collections.abc import Mapping, Sequence
 from pathlib import Path
+from types import ModuleType
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -39,24 +42,28 @@ def mitigate_future_vulnerability() -> None:
 
         original_import = builtins.__import__
 
-        def secure_import(name: str, *args: object, **kwargs: object) -> object:
+        def secure_import(
+            name: str,
+            globals: Mapping[str, object] | None = None,
+            locals: Mapping[str, object] | None = None,
+            fromlist: Sequence[str] | None = (),
+            level: int = 0,
+        ) -> ModuleType:
             """Prevent automatic import of test.py by future package."""
-            if name == "test" and args and args[0] is not None:
-                args[2] if len(args) > 2 else kwargs.get("fromlist", ())
-                args[3] if len(args) > 3 else kwargs.get("level", 0)
+            if name == "test" and globals is not None:
+                if isinstance(globals, dict) and "__name__" in globals:
+                    caller_module_raw = globals["__name__"]
+                    if isinstance(caller_module_raw, str):
+                        caller_module: str = caller_module_raw
 
-                caller_globals = args[0]
-                if caller_globals and "__name__" in caller_globals:
-                    caller_module = caller_globals["__name__"]
+                        if "future" in caller_module or "nampa" in caller_module:
+                            logger.warning(
+                                "Blocked potential exploitation attempt: future/nampa tried to import 'test' module from %s",
+                                caller_module,
+                            )
+                            return ModuleType("test")
 
-                    if "future" in caller_module or "nampa" in caller_module:
-                        logger.warning(
-                            "Blocked potential exploitation attempt: future/nampa tried to import 'test' module from %s",
-                            caller_module,
-                        )
-                        return type(sys)("test")
-
-            return original_import(name, *args, **kwargs)
+            return original_import(name, globals, locals, fromlist, level)
 
         builtins.__import__ = secure_import
         logger.info("Future package vulnerability mitigation applied (GHSA-xqrq-4mgf-ff32)")
@@ -182,7 +189,7 @@ def _is_safe_to_remove(file_path: Path) -> bool:
     return False
 
 
-def apply_all_mitigations() -> dict[str, bool]:
+def apply_all_mitigations() -> dict[str, bool | int]:
     """Apply all available security mitigations.
 
     Returns:
@@ -190,7 +197,7 @@ def apply_all_mitigations() -> dict[str, bool]:
 
     """
     mitigate_future_vulnerability()
-    results = {"future_vulnerability_mitigation": True}
+    results: dict[str, bool | int] = {"future_vulnerability_mitigation": True}
     if suspicious_files := scan_for_malicious_test_files():
         removed = remove_malicious_test_files(suspicious_files)
         results["malicious_test_files_removed"] = removed

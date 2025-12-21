@@ -471,7 +471,6 @@ class TestInitializeSafeImports:
             with patch("intellicrack.utils.dependency_fallbacks.np") as mock_numpy:
                 mock_numpy.array.side_effect = Exception("numpy broken")
                 initialize_safe_imports()
-                assert mock_replacer.replace_module.called or True
 
     def test_initialize_safe_imports_tests_pandas(self) -> None:
         """initialize_safe_imports tests pandas availability."""
@@ -479,7 +478,6 @@ class TestInitializeSafeImports:
             with patch("intellicrack.utils.dependency_fallbacks.pd") as mock_pandas:
                 mock_pandas.DataFrame.side_effect = Exception("pandas broken")
                 initialize_safe_imports()
-                assert True
 
 
 class TestNumpyFallbackEdgeCases:

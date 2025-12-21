@@ -214,9 +214,8 @@ class TestCycleDetection:
             path.add(node_id)
 
             for edge in graph.edges:
-                if edge.source == node_id:
-                    if has_cycle_dfs(edge.target, path.copy()):
-                        return True
+                if edge.source == node_id and has_cycle_dfs(edge.target, path.copy()):
+                    return True
 
             return False
 
@@ -348,7 +347,7 @@ class TestGraphConsistency:
         graph = generator.generate_control_flow_graph("entry0")
 
         self_loops = [e for e in graph.edges if e.source == e.target]
-        assert len(self_loops) == 0 or all(e.type == "loop" for e in self_loops)
+        assert not self_loops or all(e.type == "loop" for e in self_loops)
 
 
 class TestPerformance:

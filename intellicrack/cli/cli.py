@@ -336,9 +336,7 @@ def strings(binary_path: str, min_length: int, output: str | None, filter_patter
 
         cli_analyzer = AnalysisCLI()
 
-        if extracted_strings := cli_analyzer._extract_strings(
-            binary_path, min_length=min_length
-        ):
+        if extracted_strings := cli_analyzer._extract_strings(binary_path, min_length=min_length):
             # Apply filter if provided
             if filter_pattern:
                 import re

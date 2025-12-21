@@ -49,7 +49,7 @@ class TestProcessMemoryScanning:
 
             assert isinstance(matches, list)
 
-        except (PermissionError, OSError) as e:
+        except OSError as e:
             pytest.skip(f"Process scanning requires elevated permissions: {e}")
 
     def test_scan_process_with_filter(self, yara_scanner: YaraScanner) -> None:
@@ -67,7 +67,7 @@ class TestProcessMemoryScanning:
 
             assert isinstance(matches, list)
 
-        except (PermissionError, OSError, AttributeError, TypeError) as e:
+        except (OSError, AttributeError, TypeError) as e:
             pytest.skip(f"Process scanning with filter requires platform support: {e}")
 
     def test_scan_process_invalid_pid_handles_error(self, yara_scanner: YaraScanner) -> None:
@@ -104,7 +104,7 @@ class TestProcessScanningWithAnalyzer:
 
             assert isinstance(matches, list)
 
-        except (PermissionError, OSError, AttributeError):
+        except (OSError, AttributeError):
             pytest.skip("Process scanning requires platform support")
 
     def test_scan_process_with_analyzer_filters_license_regions(
@@ -126,7 +126,7 @@ class TestProcessScanningWithAnalyzer:
 
             assert isinstance(matches, list)
 
-        except (PermissionError, OSError, AttributeError):
+        except (OSError, AttributeError):
             pytest.skip("Process scanning requires platform support")
 
     def test_scan_process_with_analyzer_dll_region_detection(
@@ -192,7 +192,7 @@ class TestConcurrentMemoryScanning:
 
             assert isinstance(concurrent_matches, list)
 
-        except (PermissionError, OSError, AttributeError):
+        except (OSError, AttributeError):
             pytest.skip("Concurrent scanning requires platform support")
 
     def test_scan_memory_concurrent_thread_safety(self, yara_scanner: YaraScanner) -> None:
@@ -202,7 +202,7 @@ class TestConcurrentMemoryScanning:
         def concurrent_scan() -> list[YaraMatch]:
             try:
                 return yara_scanner.scan_memory_concurrent(current_pid, max_workers=2)
-            except (PermissionError, OSError, AttributeError):
+            except (OSError, AttributeError):
                 return []
 
         with ThreadPoolExecutor(max_workers=4) as executor:
@@ -226,7 +226,7 @@ class TestConcurrentMemoryScanning:
 
             assert isinstance(matches, list)
 
-        except (PermissionError, OSError, AttributeError):
+        except (OSError, AttributeError):
             pytest.skip("Concurrent scanning requires platform support")
 
 
@@ -368,9 +368,7 @@ rule Offset_Test {
         base_address = 0x400000
         matches = yara_scanner._scan_memory_region(test_data, base_address, None)
 
-        pattern_matches = [m for m in matches if "Offset_Test" in m.rule_name]
-
-        if len(pattern_matches) > 0:
+        if pattern_matches := [m for m in matches if "Offset_Test" in m.rule_name]:
             assert pattern_matches[0].offset == base_address + 1000
 
 
@@ -431,8 +429,6 @@ class TestPatchingWorkflow:
             assert backup_path.exists()
 
             patched_data = binary_path.read_bytes()
-            if patched_data[0x10:0x14] == b"\x90\x90\x90\x90":
-                assert True
 
     def test_rollback_patch_restores_original(
         self, yara_scanner: YaraScanner, temp_binary_dir: Path
@@ -454,9 +450,9 @@ class TestPatchingWorkflow:
             "risk_level": "medium",
         }
 
-        apply_result = yara_scanner.apply_patch(patch_data, binary_path, backup=True)
-
-        if apply_result:
+        if apply_result := yara_scanner.apply_patch(
+            patch_data, binary_path, backup=True
+        ):
             rollback_result = yara_scanner.rollback_patch(binary_path)
 
             assert isinstance(rollback_result, bool)
@@ -639,7 +635,7 @@ class TestPerformanceOptimizations:
             assert isinstance(single_worker_matches, list)
             assert isinstance(multi_worker_matches, list)
 
-        except (PermissionError, OSError, AttributeError):
+        except (OSError, AttributeError):
             pytest.skip("Concurrent scanning requires platform support")
 
 
@@ -705,8 +701,7 @@ class TestDebuggerIntegrationAdvanced:
 def yara_scanner() -> YaraScanner:
     """Provide YaraScanner instance with built-in rules."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        scanner = YaraScanner(rules_dir=Path(tmpdir))
-        return scanner
+        return YaraScanner(rules_dir=Path(tmpdir))
 
 
 @pytest.fixture

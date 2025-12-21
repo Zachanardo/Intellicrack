@@ -65,7 +65,7 @@ class TestBinaryAnalysisPerformance:
 
             # Add 10MB of varied section data
             for i in range(10240):  # 10MB in 1KB chunks
-                chunk_data = bytes([(i + j) % 256 for j in range(1024)])
+                chunk_data = bytes((i + j) % 256 for j in range(1024))
                 temp_file.write(chunk_data)
 
             temp_file_path = temp_file.name
@@ -339,7 +339,7 @@ class TestBinaryAnalysisPerformance:
         if isinstance(result, dict):
             hash_types = ['md5', 'sha1', 'sha256']
             found_hashes = [h for h in hash_types if h in result]
-            assert len(found_hashes) > 0
+            assert found_hashes
 
         # Hash calculation should be reasonably fast
         assert benchmark.stats.mean < 0.1, "Hash calculation should be under 100ms"

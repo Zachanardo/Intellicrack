@@ -40,6 +40,6 @@ class TestWidgetCreation:
             from intellicrack.ui.widgets import pe_structure_model_widget
             module_attrs = dir(pe_structure_model_widget)
             has_widget = any("Widget" in attr for attr in module_attrs)
-            assert has_widget or len(module_attrs) > 0
+            assert has_widget or module_attrs
         except ImportError:
             pytest.skip("Widget module not available")

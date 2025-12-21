@@ -80,7 +80,7 @@ class TestModelFormatConverterInitialization:
 
         if converter.gpu_info:
             assert isinstance(converter.gpu_info, dict), "GPU info must be dict"
-            assert len(str(converter.gpu_info)) > 0, "GPU info must have content"
+            assert str(converter.gpu_info) != "", "GPU info must have content"
 
 
 class TestFormatDetection:

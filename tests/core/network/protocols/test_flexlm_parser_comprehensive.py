@@ -997,7 +997,7 @@ def test_serialize_response_basic(parser: FlexLMProtocolParser) -> None:
     assert isinstance(serialized, bytes)
     assert len(serialized) > 0
 
-    magic = struct.unpack(">I", serialized[0:4])[0]
+    magic = struct.unpack(">I", serialized[:4])[0]
     assert magic == 0x464C4558
 
     status = struct.unpack(">H", serialized[4:6])[0]

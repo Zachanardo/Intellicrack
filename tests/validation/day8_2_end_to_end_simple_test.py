@@ -106,9 +106,7 @@ def test_complete_workflow():
 
         try:
             analyzer = CommercialLicenseAnalyzer(binary_path)
-            license_info = analyzer.analyze()
-
-            if license_info:
+            if license_info := analyzer.analyze():
                 logger.info("OK Commercial license analysis completed")
                 results["passed"] += 1
             else:
@@ -246,7 +244,7 @@ def test_complete_workflow():
         tracemalloc.start()
 
         # Process multiple binaries
-        for i in range(3):
+        for _ in range(3):
             test_binary = create_test_binary("CodeMeter", temp_dir)
             orch = AnalysisOrchestrator()
             orch.analyze_binary(test_binary, phases=[AnalysisPhase.PREPARATION])

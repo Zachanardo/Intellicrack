@@ -67,8 +67,7 @@ def temp_installation_folder(tmp_path: Path, temp_exe_file: Path) -> Path:
 @pytest.fixture
 def program_selector_dialog(qapp: QApplication) -> ProgramSelectorDialog:
     """Create ProgramSelectorDialog for testing."""
-    dialog = ProgramSelectorDialog()
-    return dialog
+    return ProgramSelectorDialog()
 
 
 @pytest.fixture
@@ -242,9 +241,10 @@ class TestAnalysisPage:
     def test_page_has_licensing_tree(self, analysis_page: AnalysisPage) -> None:
         """Page has licensing files tree widget."""
         assert analysis_page.licensing_tree is not None
-        headers = []
-        for i in range(analysis_page.licensing_tree.columnCount()):
-            headers.append(analysis_page.licensing_tree.headerItem().text(i))
+        headers = [
+            analysis_page.licensing_tree.headerItem().text(i)
+            for i in range(analysis_page.licensing_tree.columnCount())
+        ]
         assert "File" in headers
         assert "Type" in headers
 
@@ -285,7 +285,7 @@ class TestAnalysisPage:
         licensing_files = analysis_page.get_licensing_files()
 
         eula_files = [f for f in licensing_files if "EULA" in f["name"]]
-        assert len(eula_files) > 0
+        assert eula_files
 
     def test_analyze_installation_folder_detects_copyright(
         self, analysis_page: AnalysisPage, temp_installation_folder: Path
@@ -295,7 +295,7 @@ class TestAnalysisPage:
         licensing_files = analysis_page.get_licensing_files()
 
         copyright_files = [f for f in licensing_files if "COPYRIGHT" in f["name"]]
-        assert len(copyright_files) > 0
+        assert copyright_files
 
     def test_analyze_installation_folder_assigns_priority(
         self, analysis_page: AnalysisPage, temp_installation_folder: Path
@@ -325,7 +325,7 @@ class TestAnalysisPage:
 
         file_paths = [f["path"] for f in licensing_files]
         subdoc_files = [p for p in file_paths if "docs" in p]
-        assert len(subdoc_files) > 0
+        assert subdoc_files
 
     def test_initialize_page_updates_program_info(
         self,
@@ -476,7 +476,7 @@ class TestAnalysisPageLicensingFileDetection:
         licensing_files = analysis_page.get_licensing_files()
 
         readme_files = [f for f in licensing_files if "README" in f["name"]]
-        assert len(readme_files) > 0
+        assert readme_files
         assert readme_files[0]["type"] == "Documentation"
 
     def test_assigns_correct_priority_to_license(

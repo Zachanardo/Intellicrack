@@ -147,9 +147,7 @@ class TestAnalysisTab:
 
     def test_progress_tracking_real_updates(self, qtbot):
         """Test REAL progress tracking during analysis."""
-        progress_bars = self.tab.findChildren(QProgressBar)
-
-        if progress_bars:
+        if progress_bars := self.tab.findChildren(QProgressBar):
             progress_bar = progress_bars[0]
 
             # Test progress updates
@@ -165,22 +163,20 @@ class TestAnalysisTab:
 
     def test_results_display_real_analysis_output(self, qtbot):
         """Test REAL analysis results display."""
-        results_displays = self.tab.findChildren(QTextEdit)
-
-        if results_displays:
-            results_display = results_displays[0]
-
-            # Test displaying analysis results
-            test_results = {
-                "file_type": "PE32 executable",
-                "sections": [".text", ".data", ".rsrc"],
-                "imports": ["kernel32.dll", "user32.dll"],
-                "entropy": 6.2
-            }
-
+        if results_displays := self.tab.findChildren(QTextEdit):
             if hasattr(self.tab, 'display_results'):
+                # Test displaying analysis results
+                test_results = {
+                    "file_type": "PE32 executable",
+                    "sections": [".text", ".data", ".rsrc"],
+                    "imports": ["kernel32.dll", "user32.dll"],
+                    "entropy": 6.2
+                }
+
                 self.tab.display_results(test_results)
                 qtbot.wait(100)
+
+                results_display = results_displays[0]
 
                 # Check if results are displayed
                 displayed_text = results_display.toPlainText()
@@ -268,17 +264,15 @@ class TestAnalysisTab:
             entropy_viz = self.tab.entropy_visualizer
             assert entropy_viz is not None
 
-            # Test data visualization
-            test_entropy_data = [0.1, 0.5, 0.8, 0.3, 0.9, 0.2, 0.7, 0.4]
             if hasattr(entropy_viz, 'update_data'):
+                # Test data visualization
+                test_entropy_data = [0.1, 0.5, 0.8, 0.3, 0.9, 0.2, 0.7, 0.4]
                 entropy_viz.update_data(test_entropy_data)
                 qtbot.wait(100)
 
     def test_sub_tabs_real_analysis_categories(self, qtbot):
         """Test REAL sub-tabs for different analysis categories."""
-        tab_widgets = self.tab.findChildren(QTabWidget)
-
-        if tab_widgets:
+        if tab_widgets := self.tab.findChildren(QTabWidget):
             analysis_tabs = tab_widgets[0]
             tab_count = analysis_tabs.count()
 
@@ -311,10 +305,10 @@ class TestAnalysisTab:
 
     def test_error_handling_real_analysis_failures(self, qtbot):
         """Test REAL error handling during analysis failures."""
-        # Test invalid file handling
-        invalid_file = "/nonexistent/file.exe"
-
         if hasattr(self.tab, 'load_file'):
+            # Test invalid file handling
+            invalid_file = "/nonexistent/file.exe"
+
             try:
                 self.tab.load_file(invalid_file)
                 qtbot.wait(100)

@@ -466,7 +466,7 @@ class TestInteractiveActivation:
         with patch.object(windows_activator, "check_prerequisites", return_value=(True, [])):
             result = windows_activator.activate_windows_interactive(output_callback=callback)
 
-            assert len(output_lines) > 0
+            assert output_lines
 
     def test_activate_windows_interactive_returns_complete_result(self, windows_activator: WindowsActivator, mock_activation_script: Path) -> None:
         """activate_windows_interactive returns complete result structure."""

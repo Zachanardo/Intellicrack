@@ -37,15 +37,13 @@ def qapp(qapp: QApplication) -> QApplication:
 @pytest.fixture
 def console_widget(qapp: QApplication) -> ConsoleWidget:
     """Create basic ConsoleWidget for testing."""
-    widget = ConsoleWidget(parent=None, enable_input=False)
-    return widget
+    return ConsoleWidget(parent=None, enable_input=False)
 
 
 @pytest.fixture
 def console_widget_with_input(qapp: QApplication) -> ConsoleWidget:
     """Create ConsoleWidget with command input enabled."""
-    widget = ConsoleWidget(parent=None, enable_input=True)
-    return widget
+    return ConsoleWidget(parent=None, enable_input=True)
 
 
 @pytest.fixture
@@ -54,8 +52,7 @@ def highlighter(qapp: QApplication) -> ConsoleSyntaxHighlighter:
     from PyQt6.QtGui import QTextDocument
 
     doc = QTextDocument()
-    highlighter = ConsoleSyntaxHighlighter(doc)
-    return highlighter
+    return ConsoleSyntaxHighlighter(doc)
 
 
 class TestConsoleSyntaxHighlighterInitialization:

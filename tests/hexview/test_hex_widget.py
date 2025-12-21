@@ -152,7 +152,7 @@ class TestFileLoading:
     def test_load_valid_binary_file(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         result: bool = hex_viewer.load_file(str(temp_binary_file), read_only=True)
 
-        assert result is True
+        assert result
         assert hex_viewer.file_handler is not None
         assert hex_viewer.file_path == str(temp_binary_file)
         assert hex_viewer.file_handler.get_file_size() == 1024
@@ -160,20 +160,20 @@ class TestFileLoading:
     def test_load_nonexistent_file(self, hex_viewer: Any) -> None:
         result: bool = hex_viewer.load_file("nonexistent_file.bin", read_only=True)
 
-        assert result is False
+        assert not result
         assert hex_viewer.file_handler is None
 
     def test_load_empty_file(self, hex_viewer: Any, empty_binary_file: Path) -> None:
         result: bool = hex_viewer.load_file(str(empty_binary_file), read_only=True)
 
-        assert result is True
+        assert result
         assert hex_viewer.file_handler is not None
         assert hex_viewer.file_handler.get_file_size() == 0
 
     def test_load_large_file(self, hex_viewer: Any, large_binary_file: Path) -> None:
         result: bool = hex_viewer.load_file(str(large_binary_file), read_only=True)
 
-        assert result is True
+        assert result
         assert hex_viewer.file_handler is not None
         assert hex_viewer.file_handler.get_file_size() == 256 * 4096
 
@@ -181,14 +181,14 @@ class TestFileLoading:
         test_data: bytes = b"Hello, World!\x00\xFF\xAB\xCD"
         result: bool = hex_viewer.load_data(test_data, name="Test Buffer")
 
-        assert result is True
+        assert result
         assert hex_viewer.file_handler is not None
         assert hex_viewer.file_path == "Test Buffer"
 
     def test_load_empty_data(self, hex_viewer: Any) -> None:
         result: bool = hex_viewer.load_data(b"", name="Empty Buffer")
 
-        assert result is False
+        assert not result
 
     def test_close_file(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
@@ -339,7 +339,7 @@ class TestJumpToOffset:
         hex_viewer.offset_changed.connect(on_offset_changed)
         hex_viewer.jump_to_offset(256)
 
-        assert len(signals_received) > 0
+        assert signals_received
 
 
 class TestSelection:
@@ -362,7 +362,7 @@ class TestSelection:
         hex_viewer.selection_changed.connect(on_selection_changed)
         hex_viewer.select_range(10, 20)
 
-        assert len(signals_received) > 0
+        assert signals_received
         assert signals_received[-1] == (10, 20)
 
     def test_clear_selection(self, hex_viewer: Any, temp_binary_file: Path) -> None:
@@ -455,40 +455,40 @@ class TestDataEditing:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         result: bool = hex_viewer.edit_byte(10, 0xFF)
 
-        assert result is False
+        assert not result
 
     def test_edit_byte_writable(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
         result: bool = hex_viewer.edit_byte(10, 0xFF)
 
-        assert result is True
+        assert result
 
     def test_edit_byte_out_of_bounds(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
         file_size: int = hex_viewer.file_handler.get_file_size()
         result: bool = hex_viewer.edit_byte(file_size + 10, 0xFF)
 
-        assert result is False
+        assert not result
 
     def test_edit_byte_negative_offset(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
         result: bool = hex_viewer.edit_byte(-10, 0xFF)
 
-        assert result is False
+        assert not result
 
     def test_edit_selection_read_only(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.select_range(10, 20)
         result: bool = hex_viewer.edit_selection(b"\xFF" * 10)
 
-        assert result is False
+        assert not result
 
     def test_edit_selection_writable(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
         hex_viewer.select_range(10, 20)
         result: bool = hex_viewer.edit_selection(b"\xFF" * 10)
 
-        assert result is True
+        assert result
 
     def test_edit_selection_size_mismatch(
         self, hex_viewer: Any, temp_binary_file: Path
@@ -497,7 +497,7 @@ class TestDataEditing:
         hex_viewer.select_range(10, 20)
         result: bool = hex_viewer.edit_selection(b"\xFF" * 5)
 
-        assert result is False
+        assert not result
 
     def test_edit_byte_signal_emission(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
@@ -516,21 +516,19 @@ class TestDataEditing:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         result: bool = hex_viewer.apply_edits()
 
-        assert result is False
+        assert not result
 
     def test_apply_edits_writable(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
         hex_viewer.edit_byte(10, 0xFF)
         result: bool = hex_viewer.apply_edits()
 
-        assert result is True or result is False
+        assert result or not result
 
     def test_discard_edits(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=False)
         hex_viewer.edit_byte(10, 0xFF)
         hex_viewer.discard_edits()
-
-        assert True
 
 
 class TestHighlighting:
@@ -626,8 +624,6 @@ class TestMouseInteraction:
         click_pos: QPoint = QPoint(200, 100)
         QTest.mouseClick(hex_viewer.viewport(), Qt.MouseButton.LeftButton, pos=click_pos)
 
-        assert True
-
     def test_get_offset_from_position(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.resize(800, 600)
@@ -645,23 +641,17 @@ class TestKeyboardNavigation:
 
         QTest.keyClick(hex_viewer, Qt.Key.Key_Home)
 
-        assert True
-
     def test_keyboard_navigation_end(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(0)
 
         QTest.keyClick(hex_viewer, Qt.Key.Key_End)
 
-        assert True
-
     def test_keyboard_navigation_page_up(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
         hex_viewer.jump_to_offset(500)
 
         QTest.keyClick(hex_viewer, Qt.Key.Key_PageUp)
-
-        assert True
 
     def test_keyboard_navigation_page_down(
         self, hex_viewer: Any, temp_binary_file: Path
@@ -670,8 +660,6 @@ class TestKeyboardNavigation:
         hex_viewer.jump_to_offset(0)
 
         QTest.keyClick(hex_viewer, Qt.Key.Key_PageDown)
-
-        assert True
 
     def test_keyboard_navigation_arrows(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
@@ -682,14 +670,10 @@ class TestKeyboardNavigation:
         QTest.keyClick(hex_viewer, Qt.Key.Key_Up)
         QTest.keyClick(hex_viewer, Qt.Key.Key_Down)
 
-        assert True
-
     def test_keyboard_shortcut_jump(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
 
         QTest.keyClick(hex_viewer, Qt.Key.Key_G, Qt.KeyboardModifier.ControlModifier)
-
-        assert True
 
 
 class TestCopyOperations:
@@ -702,7 +686,7 @@ class TestCopyOperations:
         text: str = clipboard.text()
 
         assert text is not None
-        assert len(text) > 0
+        assert text != ""
 
     def test_copy_selection_as_text(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
@@ -760,7 +744,7 @@ class TestCopyOperations:
         text: str = clipboard.text()
 
         assert text is not None
-        assert len(text) > 0
+        assert text != ""
 
     def test_copy_selection_as_data_uri(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
@@ -791,16 +775,14 @@ class TestPerformanceMonitoring:
         hex_viewer.load_file(str(large_binary_file), read_only=True)
         hex_viewer.optimize_for_large_files()
 
-        assert True
-
 
 class TestEdgeCases:
     def test_multiple_file_loads(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         result1: bool = hex_viewer.load_file(str(temp_binary_file), read_only=True)
         result2: bool = hex_viewer.load_file(str(temp_binary_file), read_only=True)
 
-        assert result1 is True
-        assert result2 is True
+        assert result1
+        assert result2
 
     def test_operations_without_file(self, hex_viewer: Any) -> None:
         hex_viewer.jump_to_offset(100)
@@ -828,15 +810,11 @@ class TestEdgeCases:
     def test_viewport_paint_without_file(self, hex_viewer: Any) -> None:
         hex_viewer.viewport().update()
 
-        assert True
-
     def test_calculate_scroll_range_method(self, hex_viewer: Any, temp_binary_file: Path) -> None:
         hex_viewer.load_file(str(temp_binary_file), read_only=True)
 
         if hasattr(hex_viewer, "calculate_scroll_range"):
             hex_viewer.calculate_scroll_range()
-
-        assert True
 
 
 class TestRealWorldScenarios:
@@ -844,7 +822,7 @@ class TestRealWorldScenarios:
         pe_header: bytes = b"MZ\x90\x00\x03\x00\x00\x00\x04\x00\x00\x00\xff\xff\x00\x00"
         result: bool = hex_viewer.load_data(pe_header, "PE Header")
 
-        assert result is True
+        assert result
         hex_viewer.select_range(0, 2)
         data: bytes = hex_viewer.get_selected_data()
         assert data == b"MZ"

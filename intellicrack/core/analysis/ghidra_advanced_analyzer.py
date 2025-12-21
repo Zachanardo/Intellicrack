@@ -119,19 +119,17 @@ class GhidraAdvancedAnalyzer:
             if self.binary_path.suffix.lower() in [".exe", ".dll", ".sys"]:
                 self.pe = pefile.PE(str(self.binary_path))
 
-            parsed_binary = lief.parse(str(self.binary_path))
-            if parsed_binary:
+            if parsed_binary := lief.parse(str(self.binary_path)):
                 self.lief_binary = parsed_binary
 
             if self.lief_binary and isinstance(self.lief_binary, lief.ELF.Binary):
-                if hasattr(self.lief_binary.header, 'machine_type'):
+                if hasattr(self.lief_binary.header, "machine_type") and hasattr(lief.ELF, "ARCH"):
+                    arch_type = lief.ELF.ARCH
                     machine_type = self.lief_binary.header.machine_type
-                    if hasattr(lief.ELF, 'ARCH'):
-                        arch_type = lief.ELF.ARCH
-                        if hasattr(arch_type, 'x86_64') and machine_type == arch_type.x86_64:
-                            self.md = Cs(CS_ARCH_X86, CS_MODE_64)
-                        elif hasattr(arch_type, 'i386') and machine_type == arch_type.i386:
-                            self.md = Cs(CS_ARCH_X86, CS_MODE_32)
+                    if hasattr(arch_type, "x86_64") and machine_type == arch_type.x86_64:
+                        self.md = Cs(CS_ARCH_X86, CS_MODE_64)
+                    elif hasattr(arch_type, "i386") and machine_type == arch_type.i386:
+                        self.md = Cs(CS_ARCH_X86, CS_MODE_32)
             elif self.pe:
                 if self.pe.FILE_HEADER.Machine == 0x8664:
                     self.md = Cs(CS_ARCH_X86, CS_MODE_64)

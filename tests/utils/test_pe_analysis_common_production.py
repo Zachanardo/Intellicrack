@@ -111,7 +111,7 @@ class TestAnalyzePEImports:
         result = analyze_pe_imports(pe, target_apis)
 
         assert isinstance(result, dict)
-        assert all(category in result for category in target_apis.keys())
+        assert all(category in result for category in target_apis)
 
     def test_analyze_empty_target_apis(self, legitimate_pe: Path) -> None:
         """Analyze with empty target API list."""
@@ -171,7 +171,7 @@ class TestGetPESectionsInfo:
         assert len(sections) > 0
 
         section_names = [s["name"] for s in sections]
-        assert any(name for name in section_names)
+        assert any(section_names)
 
     def test_section_characteristics(self, legitimate_pe: Path) -> None:
         """Verify section characteristics are extracted correctly."""
@@ -197,7 +197,7 @@ class TestGetPESectionsInfo:
         common_sections = [".text", ".data", ".rdata", ".bss", ".rsrc", ".idata"]
         found_sections = [s for s in common_sections if s in section_names]
 
-        assert len(found_sections) > 0
+        assert found_sections
 
 
 @pytest.mark.skipif(not PIL_AVAILABLE, reason="PIL not available")
@@ -478,7 +478,7 @@ class TestPEAnalysisIntegration:
 
         binaries = list(legitimate_binaries_dir.glob("*.exe"))
 
-        if len(binaries) == 0:
+        if not binaries:
             pytest.skip("No binaries found in legitimate binaries directory")
 
         results = []
@@ -488,7 +488,7 @@ class TestPEAnalysisIntegration:
                 result = analyzer.analyze(str(binary))
                 results.append(result)
 
-        assert len(results) > 0
+        assert results
 
         for result in results:
             assert isinstance(result, dict)

@@ -512,9 +512,12 @@ class TestCLIConfiguration(unittest.TestCase):
             t.join(timeout=5.0)
 
         # Check results
-        set_count = sum(1 for r in results if r[0] == "set" and r[2] == "success")
-        get_count = sum(1 for r in results if r[0] == "get")
-        profile_count = sum(1 for r in results if r[0] == "profile" and r[2] == "success")
+        set_count = sum(bool(r[0] == "set" and r[2] == "success")
+                    for r in results)
+        get_count = sum(bool(r[0] == "get")
+                    for r in results)
+        profile_count = sum(bool(r[0] == "profile" and r[2] == "success")
+                        for r in results)
 
         self.assertEqual(set_count, 10, f"All sets should succeed. Errors: {errors}")
         self.assertEqual(get_count, 10, f"All gets should complete. Errors: {errors}")

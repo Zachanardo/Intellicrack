@@ -79,7 +79,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     )
 
     optional_header = bytearray(240)
-    optional_header[0:2] = struct.pack("<H", 0x020B)
+    optional_header[:2] = struct.pack("<H", 0x020B)
     optional_header[2] = 14
     optional_header[3] = 0
 
@@ -99,7 +99,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     struct.pack_into("<I", optional_header, 92, 2)
 
     text_section = bytearray(40)
-    text_section[0:6] = b".text\x00"
+    text_section[:6] = b".text\x00"
     struct.pack_into("<I", text_section, 8, 0x200)
     struct.pack_into("<I", text_section, 12, 0x1000)
     struct.pack_into("<I", text_section, 16, 0x200)
@@ -107,7 +107,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     struct.pack_into("<I", text_section, 36, 0x60000020)
 
     data_section = bytearray(40)
-    data_section[0:6] = b".data\x00"
+    data_section[:6] = b".data\x00"
     struct.pack_into("<I", data_section, 8, 0x200)
     struct.pack_into("<I", data_section, 12, 0x2000)
     struct.pack_into("<I", data_section, 16, 0x200)
@@ -115,7 +115,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     struct.pack_into("<I", data_section, 36, 0xC0000040)
 
     rdata_section = bytearray(40)
-    rdata_section[0:7] = b".rdata\x00"
+    rdata_section[:7] = b".rdata\x00"
     struct.pack_into("<I", rdata_section, 8, 0x200)
     struct.pack_into("<I", rdata_section, 12, 0x3000)
     struct.pack_into("<I", rdata_section, 16, 0x200)
@@ -123,7 +123,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     struct.pack_into("<I", rdata_section, 36, 0x40000040)
 
     text_data = bytearray(0x200)
-    text_data[0:3] = b"\x48\x31\xC0"
+    text_data[:3] = b"\x48\x31\xC0"
     text_data[3:5] = b"\xC3\x90"
 
     text_data[0x10:0x13] = b"\x48\x89\xE5"
@@ -217,7 +217,7 @@ def license_validation_binary(tmp_path: Path) -> Path:
     )
 
     optional_header = bytearray(240)
-    optional_header[0:2] = struct.pack("<H", 0x020B)
+    optional_header[:2] = struct.pack("<H", 0x020B)
     struct.pack_into("<I", optional_header, 16, 0x2000)
     struct.pack_into("<Q", optional_header, 24, 0x400000)
     struct.pack_into("<I", optional_header, 32, 0x1000)
@@ -227,7 +227,7 @@ def license_validation_binary(tmp_path: Path) -> Path:
     struct.pack_into("<H", optional_header, 68, 0x0140)
 
     text_section = bytearray(40)
-    text_section[0:6] = b".text\x00"
+    text_section[:6] = b".text\x00"
     struct.pack_into("<I", text_section, 8, 0x400)
     struct.pack_into("<I", text_section, 12, 0x1000)
     struct.pack_into("<I", text_section, 16, 0x400)
@@ -235,7 +235,7 @@ def license_validation_binary(tmp_path: Path) -> Path:
     struct.pack_into("<I", text_section, 36, 0x60000020)
 
     rdata_section = bytearray(40)
-    rdata_section[0:7] = b".rdata\x00"
+    rdata_section[:7] = b".rdata\x00"
     struct.pack_into("<I", rdata_section, 8, 0x400)
     struct.pack_into("<I", rdata_section, 12, 0x2000)
     struct.pack_into("<I", rdata_section, 16, 0x400)
@@ -243,7 +243,7 @@ def license_validation_binary(tmp_path: Path) -> Path:
     struct.pack_into("<I", rdata_section, 36, 0x40000040)
 
     text_data = bytearray(0x400)
-    text_data[0:10] = b"\x48\x83\xEC\x28\xE8\x10\x00\x00\x00\xC3"
+    text_data[:10] = b"\x48\x83\xEC\x28\xE8\x10\x00\x00\x00\xC3"
     text_data[0x20:0x30] = b"\x55\x48\x89\xE5\x48\x83\xEC\x40\xB8\x01\x00\x00\x00\xC9\xC3\x90"
     text_data[0x40:0x50] = b"\x55\x48\x89\xE5\x48\x83\xEC\x50\x31\xC0\xC9\xC3\x90\x90\x90\x90"
 
@@ -298,10 +298,7 @@ class TestBinaryNinjaAnalyzerInitialization:
 
     def test_binaryninja_availability_detection(self, analyzer: BinaryNinjaAnalyzer) -> None:
         """Analyzer correctly detects Binary Ninja availability."""
-        if BINARYNINJA_AVAILABLE:
-            assert analyzer.logger is not None
-        else:
-            assert analyzer.logger is not None
+        assert analyzer.logger is not None
 
     def test_license_validation_keywords_defined(self, analyzer: BinaryNinjaAnalyzer) -> None:
         """Analyzer has comprehensive license validation keyword list."""
@@ -1045,4 +1042,4 @@ class TestComprehensiveAnalysis:
         }
 
         assert isinstance(serialized, dict)
-        assert all(isinstance(key, str) for key in serialized.keys())
+        assert all(isinstance(key, str) for key in serialized)

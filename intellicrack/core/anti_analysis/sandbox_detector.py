@@ -1784,8 +1784,7 @@ class SandboxDetector(BaseDetector):
                     return True, 0.6, details
 
                 direction_changes = sum(
-                    movements[i]["dx"] * movements[i - 1]["dx"] < 0
-                    or movements[i]["dy"] * movements[i - 1]["dy"] < 0
+                    movements[i]["dx"] * movements[i - 1]["dx"] < 0 or movements[i]["dy"] * movements[i - 1]["dy"] < 0
                     for i in range(1, len(movements))
                 )
                 if direction_changes == 0 and len(movements) > 5:
@@ -1852,10 +1851,7 @@ class SandboxDetector(BaseDetector):
 
                 # Check for sandbox signatures
                 for sandbox_type, sigs in self.sandbox_signatures.items():
-                    score = sum(
-                        artifact.lower() in details_str
-                        for artifact in sigs.get("artifacts", [])
-                    )
+                    score = sum(artifact.lower() in details_str for artifact in sigs.get("artifacts", []))
                     # Check processes
                     for process in sigs.get("processes", []):
                         if process.lower() in details_str:

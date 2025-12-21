@@ -311,7 +311,7 @@ Java.perform(function() {
             for invalid_key in invalid_keys:
                 try:
                     result = self.tab.validate_api_key(invalid_key)
-                    assert result == False or result == True  # Valid response
+                    assert result in [False, True]
                 except (ValueError, TypeError):
                     pass  # Expected for invalid keys
 

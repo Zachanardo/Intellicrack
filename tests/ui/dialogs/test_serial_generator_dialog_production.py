@@ -127,10 +127,7 @@ class TestSerialGeneratorDialogInitialization:
 
             assert dialog.tabs.count() == 6
 
-            tab_names = []
-            for i in range(dialog.tabs.count()):
-                tab_names.append(dialog.tabs.tabText(i))
-
+            tab_names = [dialog.tabs.tabText(i) for i in range(dialog.tabs.count())]
             assert "Generate" in tab_names
             assert "Analyze" in tab_names
             assert "Batch" in tab_names
@@ -276,7 +273,7 @@ class TestBatchGeneration:
 
             worker.run()
 
-            assert len(progress_messages) > 0
+            assert progress_messages
             assert any("Generating serial" in msg for msg in progress_messages)
 
     def test_export_batch_serials(self, qapp: Any, mock_generator: Mock, temp_serial_dir: Path) -> None:
@@ -311,13 +308,13 @@ class TestSerialAnalysis:
         with patch("intellicrack.ui.dialogs.serial_generator_dialog.SerialNumberGenerator", return_value=mock_generator):
             dialog = SerialGeneratorDialog()
 
-            sample_serials = [
-                "ABCD-1234-EFGH-5678-9012",
-                "ABCD-2345-EFGH-6789-0123",
-                "ABCD-3456-EFGH-7890-1234"
-            ]
-
             if hasattr(dialog, "sample_serials_input"):
+                sample_serials = [
+                    "ABCD-1234-EFGH-5678-9012",
+                    "ABCD-2345-EFGH-6789-0123",
+                    "ABCD-3456-EFGH-7890-1234"
+                ]
+
                 dialog.sample_serials_input.setPlainText("\n".join(sample_serials))
 
             if hasattr(dialog, "analyze_patterns"):
@@ -584,16 +581,16 @@ class TestPresetManagement:
             dialog = SerialGeneratorDialog()
 
             if hasattr(dialog, "apply_preset"):
-                preset = {
-                    "name": "Windows Product Key",
-                    "format": "alphanumeric",
-                    "length": 25,
-                    "groups": 5,
-                    "separator": "-",
-                    "checksum": "mod7"
-                }
-
                 if hasattr(dialog, "presets"):
+                    preset = {
+                        "name": "Windows Product Key",
+                        "format": "alphanumeric",
+                        "length": 25,
+                        "groups": 5,
+                        "separator": "-",
+                        "checksum": "mod7"
+                    }
+
                     dialog.presets = {"Windows Product Key": preset}
 
                 dialog.apply_preset("Windows Product Key")

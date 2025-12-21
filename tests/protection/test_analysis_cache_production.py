@@ -67,7 +67,7 @@ class TestCacheStorage:
         with tempfile.TemporaryDirectory() as tmpdir:
             cache = AnalysisCache(cache_dir=tmpdir)
 
-            result = {"data": [i for i in range(10000)]}
+            result = {"data": list(range(10000))}
 
             cache.store("large_binary.exe", "detailed_scan", result)
 

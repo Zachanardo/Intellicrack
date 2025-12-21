@@ -282,8 +282,8 @@ class TestModelCache:
         for t in threads:
             t.join()
 
-        assert len(errors) == 0
-        assert len(results) > 0
+        assert not errors
+        assert results
 
 
 class TestPyTorchBackend:
@@ -983,7 +983,7 @@ class TestRealWorldScenarios:
         for t in threads:
             t.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert len(results) == 10
 
     def test_memory_efficient_batch_processing(self, temp_models_dir: Path, sample_sklearn_model: tuple[object, Path]) -> None:

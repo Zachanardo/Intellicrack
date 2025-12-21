@@ -185,7 +185,7 @@ from pathlib import Path, PurePath
         imports = ImportValidator.get_import_nodes(code)
 
         from_imports = [imp for imp in imports if imp["type"] == "from_import"]
-        assert len(from_imports) >= 1
+        assert from_imports
         assert any(imp["module"] == "pathlib" for imp in from_imports)
 
     def test_extracts_import_line_numbers(self) -> None:
@@ -207,8 +207,9 @@ import numpy as np
 """
         imports = ImportValidator.get_import_nodes(code)
 
-        numpy_import = next((imp for imp in imports if imp.get("module") == "numpy"), None)
-        if numpy_import:
+        if numpy_import := next(
+            (imp for imp in imports if imp.get("module") == "numpy"), None
+        ):
             assert numpy_import.get("alias") == "np"
 
     def test_extracts_from_import_names(self) -> None:

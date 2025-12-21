@@ -23,19 +23,19 @@ from intellicrack.core.analysis.radare2_signature_detector import (
 def simple_pe_binary() -> bytes:
     """Create a minimal valid PE binary for testing."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = (128).to_bytes(4, "little")
 
     pe_header = b"PE\x00\x00"
 
     coff_header = bytearray(20)
-    coff_header[0:2] = (0x14C).to_bytes(2, "little")
+    coff_header[:2] = (0x14C).to_bytes(2, "little")
     coff_header[2:4] = (1).to_bytes(2, "little")
     coff_header[16:18] = (224).to_bytes(2, "little")
     coff_header[18:20] = (0x0002).to_bytes(2, "little")
 
     optional_header = bytearray(224)
-    optional_header[0:2] = (0x10B).to_bytes(2, "little")
+    optional_header[:2] = (0x10B).to_bytes(2, "little")
     optional_header[16:20] = (0x1000).to_bytes(4, "little")
     optional_header[20:24] = (0x1000).to_bytes(4, "little")
     optional_header[24:28] = (0x2000).to_bytes(4, "little")
@@ -47,7 +47,7 @@ def simple_pe_binary() -> bytes:
     optional_header[92:96] = (16).to_bytes(4, "little")
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = (0x1000).to_bytes(4, "little")
     section_header[12:16] = (0x1000).to_bytes(4, "little")
     section_header[16:20] = (0x200).to_bytes(4, "little")
@@ -55,7 +55,7 @@ def simple_pe_binary() -> bytes:
     section_header[36:40] = (0x60000020).to_bytes(4, "little")
 
     section_data = bytearray(512)
-    section_data[0:3] = b"\x90\x90\xc3"
+    section_data[:3] = b"\x90\x90\xc3"
 
     binary = dos_header + bytearray(64) + pe_header + coff_header + optional_header + section_header + section_data
     return bytes(binary)
@@ -155,7 +155,7 @@ def test_yara_scan_detects_vmprotect_signature() -> None:
 
         assert len(matches) > 0
         vmprotect_matches = [m for m in matches if "VMProtect" in m.name]
-        assert len(vmprotect_matches) > 0
+        assert vmprotect_matches
 
         for match in vmprotect_matches:
             assert match.signature_type == SignatureType.YARA
@@ -180,7 +180,7 @@ def test_yara_scan_detects_themida_signature() -> None:
 
         assert len(matches) > 0
         themida_matches = [m for m in matches if "Themida" in m.name]
-        assert len(themida_matches) > 0
+        assert themida_matches
 
         for match in themida_matches:
             assert match.signature_type == SignatureType.YARA
@@ -219,7 +219,7 @@ rule TestRule {
 
         matches = detector.scan_with_yara()
         test_matches = [m for m in matches if "TestRule" in m.name]
-        assert len(test_matches) > 0
+        assert test_matches
 
     finally:
         rules_path.unlink(missing_ok=True)

@@ -25,7 +25,7 @@ def test_binary_file(tmp_path: Path) -> Path:
     """Create test binary file with license protection patterns."""
     file_path = tmp_path / "protected.exe"
     data = bytearray(2048)
-    data[0:2] = b"MZ"
+    data[:2] = b"MZ"
     data[100:120] = b"License Key Required"
     data[200:210] = b"Trial Mode"
     data[300:320] = b"\x74\x10" + b"\x90" * 18
@@ -357,7 +357,7 @@ class TestCompleteWorkflows:
         assert "strings" in context
 
         trial_strings = [s for s in context["strings"] if "Trial" in s.get("value", "")]
-        assert len(trial_strings) > 0
+        assert trial_strings
 
         trial_offset = trial_strings[0]["offset"]
         nearby_data = api.read_hex_region(str(test_binary_file), trial_offset - 50, 100)
@@ -423,15 +423,15 @@ class TestCompleteWorkflows:
         je_pattern = b"\x74"
         jne_pattern = b"\x75"
 
-        jump_offsets = []
-        for i in range(len(file_data) - 1):
-            if file_data[i:i+1] in (je_pattern, jne_pattern):
-                jump_offsets.append(i)
+        jump_offsets = [
+            i
+            for i in range(len(file_data) - 1)
+            if file_data[i : i + 1] in (je_pattern, jne_pattern)
+        ]
+        assert jump_offsets
 
-        assert len(jump_offsets) > 0
-
+        nop_bytes = b"\x90\x90"
         for offset in jump_offsets:
-            nop_bytes = b"\x90\x90"
             result = api.write_hex_region(str(test_binary_file), offset, nop_bytes)
             assert result is True
 

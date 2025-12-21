@@ -139,10 +139,10 @@ class TestFridaBypassWizardDialogInitialization:
 
             assert dialog.tab_widget.count() == 5
 
-            tab_names = []
-            for i in range(dialog.tab_widget.count()):
-                tab_names.append(dialog.tab_widget.tabText(i))
-
+            tab_names = [
+                dialog.tab_widget.tabText(i)
+                for i in range(dialog.tab_widget.count())
+            ]
             assert "Process Control" in tab_names
             assert "Bypass Configuration" in tab_names
             assert "Scripts & Templates" in tab_names
@@ -157,10 +157,10 @@ class TestFridaBypassWizardDialogInitialization:
             assert dialog.process_table is not None
             assert dialog.process_table.columnCount() == 4
 
-            headers = []
-            for i in range(dialog.process_table.columnCount()):
-                headers.append(dialog.process_table.horizontalHeaderItem(i).text())
-
+            headers = [
+                dialog.process_table.horizontalHeaderItem(i).text()
+                for i in range(dialog.process_table.columnCount())
+            ]
             assert "PID" in headers
             assert "Name" in headers
             assert "Path" in headers
@@ -581,7 +581,7 @@ class TestErrorHandling:
 
         worker.run()
 
-        assert len(errors) > 0
+        assert errors
 
     def test_worker_thread_handles_empty_script_path(self, qapp: Any, mock_wizard: Mock) -> None:
         """Worker thread handles empty script path in manual mode."""

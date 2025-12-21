@@ -60,13 +60,12 @@ def sample_file() -> Generator[Path, None, None]:
 def cache_instance(temp_cache_dir: Path) -> AnalysisCache:
     """Create AnalysisCache instance with temporary directory."""
     os.environ["INTELLICRACK_TESTING"] = "1"
-    cache = AnalysisCache(
+    yield AnalysisCache(
         cache_dir=str(temp_cache_dir),
         max_entries=10,
         max_size_mb=1,
         auto_save=False,
     )
-    yield cache
     del os.environ["INTELLICRACK_TESTING"]
 
 
@@ -488,7 +487,7 @@ class TestCacheRemovalAndClear:
     ) -> None:
         """Cache clear removes all entries."""
         cache_instance.put(str(sample_file), "data1")
-        cache_instance.put(str(sample_file) + "2", "data2")
+        cache_instance.put(f"{str(sample_file)}2", "data2")
 
         cache_instance.clear()
 

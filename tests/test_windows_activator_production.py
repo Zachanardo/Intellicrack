@@ -192,8 +192,12 @@ class TestWindowsActivatorPrerequisites:
         success, issues = activator.check_prerequisites()
 
         if not success:
-            admin_issues = [issue for issue in issues if "administrator" in issue.lower() or "privileges" in issue.lower()]
-            if admin_issues:
+            if admin_issues := [
+                issue
+                for issue in issues
+                if "administrator" in issue.lower()
+                or "privileges" in issue.lower()
+            ]:
                 assert "administrator" in admin_issues[0].lower() or "privileges" in admin_issues[0].lower()
 
     @WINDOWS_ONLY
@@ -615,9 +619,7 @@ class TestOfficeDetection:
     def test_detect_office_version_returns_known_version_or_empty(self) -> None:
         """_detect_office_version returns known Office version or empty string."""
         activator = WindowsActivator()
-        version = activator._detect_office_version()
-
-        if version:
+        if version := activator._detect_office_version():
             assert version in ["2010", "2013", "2016", "2019", "2021", "365"]
 
     @WINDOWS_ONLY
@@ -632,9 +634,6 @@ class TestOfficeDetection:
         ]
 
         has_office = any(os.path.exists(path) for path in office_paths)
-
-        if has_office and not version:
-            pass
 
 
 class TestOfficeActivation:

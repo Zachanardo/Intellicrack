@@ -271,7 +271,7 @@ class TestChunkAnalysis:
         """analyze_chunk correctly processes high entropy data."""
         test_file = temp_workspace / "high_entropy.bin"
         random.seed(42)
-        data = bytes([random.randint(0, 255) for _ in range(10000)])
+        data = bytes(random.randint(0, 255) for _ in range(10000))
         test_file.write_bytes(data)
 
         analyzer.initialize_analysis(test_file)
@@ -429,7 +429,7 @@ class TestChunkAnalysis:
 
         printable = b"ABCDEFGHIJ" * 50
         nulls = b"\x00" * 200
-        high_bytes = bytes([200 + i for i in range(56)]) * 10
+        high_bytes = bytes(200 + i for i in range(56)) * 10
 
         data = printable + nulls + high_bytes
         test_file.write_bytes(data)
@@ -960,7 +960,7 @@ class TestEndToEndStreamingAnalysis:
         )
 
         assert results["status"] == "completed"
-        assert len(progress_updates) > 0
+        assert progress_updates
 
         for processed, total in progress_updates:
             assert processed <= total
@@ -1124,7 +1124,7 @@ class TestMemoryEfficiency:
 
         chunks = list(manager.read_chunks(binary_path))
 
-        assert len(chunks) > 0
+        assert chunks
 
         total_data_size = sum(chunk.size for chunk in chunks)
         assert total_data_size == len(data)

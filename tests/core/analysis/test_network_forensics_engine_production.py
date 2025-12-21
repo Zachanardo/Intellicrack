@@ -41,22 +41,14 @@ def create_pcap_file(path: Path, include_http: bool = False, include_dns: bool =
     if include_http:
         packet_data = b"GET /index.html HTTP/1.1\r\nHost: example.com\r\n\r\n"
         packet_header = struct.pack(
-            "<IIII",
-            int(1640000000),
-            0,
-            len(packet_data),
-            len(packet_data),
+            "<IIII", 1640000000, 0, len(packet_data), len(packet_data)
         )
         pcap_data.extend(packet_header + packet_data)
 
     if include_dns:
         dns_data = b"\x00\x35" + b"\x00" * 50
         packet_header = struct.pack(
-            "<IIII",
-            int(1640000001),
-            0,
-            len(dns_data),
-            len(dns_data),
+            "<IIII", 1640000001, 0, len(dns_data), len(dns_data)
         )
         pcap_data.extend(packet_header + dns_data)
 
@@ -129,9 +121,7 @@ class TestPCAPAnalysis:
         assert result is not None
         assert "protocols_detected" in result
 
-        if "HTTP" in result["protocols_detected"]:
-            assert True
-        else:
+        if "HTTP" not in result["protocols_detected"]:
             assert len(result["protocols_detected"]) >= 0
 
     def test_analyze_dns_traffic(self, dns_pcap: Path) -> None:

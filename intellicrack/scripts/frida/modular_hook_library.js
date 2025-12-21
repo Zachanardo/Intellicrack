@@ -1208,35 +1208,35 @@ const modularHookLibrary = {
 
     createModuleInstance: (moduleDefinition, options) => {
         return {
-                    id: moduleDefinition.id,
-                    name: moduleDefinition.name,
-                    version: moduleDefinition.version,
-                    category: moduleDefinition.category,
-                    dependencies: moduleDefinition.dependencies || [],
-                    hooks: moduleDefinition.hooks || {},
-                    status: 'loaded',
-                    loadedAt: Date.now(),
-                    options: options,
-        
-                    // Copy methods from definition
-                    install: moduleDefinition.install || (() => true),
-                    uninstall: moduleDefinition.uninstall || (() => true),
-                    enable: moduleDefinition.enable || (() => true),
-                    disable: moduleDefinition.disable || (() => true),
-        
-                    // Add management methods
-                    getHooks: function () {
-                        return Object.keys(this.hooks);
-                    },
-        
-                    isInstalled: function () {
-                        return this.status === 'installed';
-                    },
-        
-                    isEnabled: function () {
-                        return this.status === 'enabled';
-                    },
-                };
+            id: moduleDefinition.id,
+            name: moduleDefinition.name,
+            version: moduleDefinition.version,
+            category: moduleDefinition.category,
+            dependencies: moduleDefinition.dependencies || [],
+            hooks: moduleDefinition.hooks || {},
+            status: 'loaded',
+            loadedAt: Date.now(),
+            options: options,
+
+            // Copy methods from definition
+            install: moduleDefinition.install || (() => true),
+            uninstall: moduleDefinition.uninstall || (() => true),
+            enable: moduleDefinition.enable || (() => true),
+            disable: moduleDefinition.disable || (() => true),
+
+            // Add management methods
+            getHooks: function () {
+                return Object.keys(this.hooks);
+            },
+
+            isInstalled: function () {
+                return this.status === 'installed';
+            },
+
+            isEnabled: function () {
+                return this.status === 'enabled';
+            },
+        };
     },
 
     unloadModule: function (moduleId) {
@@ -1364,7 +1364,7 @@ const modularHookLibrary = {
     },
 
     createFridaHook: function (hookDefinition) {
-        const {strategy} = hookDefinition;
+        const { strategy } = hookDefinition;
         const target = hookDefinition.target || hookDefinition.module;
 
         if (!target) {
@@ -2318,12 +2318,12 @@ const modularHookLibrary = {
             const interceptor = Interceptor.attach(target, {
                 onEnter: function (args) {
                     if ((this.threadId === tid || tid === 0) && callbacks.onEnter) {
-                          callbacks.onEnter.call(this, args);
+                        callbacks.onEnter.call(this, args);
                     }
                 },
                 onLeave: function (retval) {
                     if ((this.threadId === tid || tid === 0) && callbacks.onLeave) {
-                          callbacks.onLeave.call(this, retval);
+                        callbacks.onLeave.call(this, retval);
                     }
                 },
             });

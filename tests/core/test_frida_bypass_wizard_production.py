@@ -46,7 +46,7 @@ class SimpleFridaManager:
 
     def load_script(self, script: str) -> bool:
         """Simulate script loading."""
-        return len(script) > 0
+        return script != ""
 
 
 class SimpleDetector:

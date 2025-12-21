@@ -128,10 +128,7 @@ class TestRealStringAndValidation:
 
             except UnicodeError:
                 # Some encodings may not support all characters
-                if encoding == 'ascii':
-                    # ASCII limitation is expected for unicode string
-                    pass
-                else:
+                if encoding != 'ascii':
                     raise
 
         # Test base64 operations
@@ -265,8 +262,7 @@ class TestRealStringAndValidation:
 
         # Test pattern matching
         for pattern_name, pattern in patterns.items():
-            test_string = test_strings.get(f'{pattern_name}_like', '')
-            if test_string:
+            if test_string := test_strings.get(f'{pattern_name}_like', ''):
                 match_result = string_utils.match_pattern(test_string, pattern)
                 assert match_result is not None, f"Pattern {pattern_name} should match"
                 assert match_result['matched'], f"Pattern {pattern_name} should match test string"
@@ -348,8 +344,7 @@ class TestRealStringAndValidation:
         dangerous_imports = ['subprocess', 'eval', 'exec', '__import__']
 
         for module_name in dangerous_imports:
-            result = validator.validate_import(module_name)
-            if result:  # Some may not be testable
+            if result := validator.validate_import(module_name):
                 assert not result.get('safe', True), f"{module_name} should be flagged as unsafe"
 
         # Test import path validation
@@ -361,10 +356,9 @@ class TestRealStringAndValidation:
         ]
 
         for import_path, should_be_safe in import_paths:
-            result = validator.validate_import_path(import_path)
-            if result:
+            if result := validator.validate_import_path(import_path):
                 assert result['safe'] == should_be_safe, \
-                    f"Import path validation failed for {import_path}"
+                        f"Import path validation failed for {import_path}"
 
     def test_real_text_analysis(self, test_strings, app_context):
         """Test REAL text analysis operations."""
@@ -405,9 +399,8 @@ class TestRealStringAndValidation:
             'mixed': 'Hello 世界 Bonjour monde'
         }
 
-        for lang, text in multilingual_texts.items():
-            lang_result = string_utils.detect_language(text)
-            if lang_result:  # Language detection may not work for all cases
+        for text in multilingual_texts.values():
+            if lang_result := string_utils.detect_language(text):
                 assert 'detected_language' in lang_result, "Must detect language"
                 assert 'confidence' in lang_result, "Must have confidence score"
 

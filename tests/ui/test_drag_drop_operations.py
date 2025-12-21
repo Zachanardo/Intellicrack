@@ -444,7 +444,7 @@ class TestDragDropIntegration:
     ) -> None:
         """File drops from browser to hex viewer widget."""
         binary_file = temp_workspace / "sample.bin"
-        binary_file.write_bytes(bytes([i % 256 for i in range(1000)]))
+        binary_file.write_bytes(bytes(i % 256 for i in range(1000)))
 
         hex_viewer = DropLabel("Hex Viewer")
 
@@ -511,7 +511,7 @@ class TestDragDropIntegration:
 
         assert len(drop_zone.dropped_files) == 10
 
-        for i, dropped_file in enumerate(drop_zone.dropped_files):
+        for dropped_file in drop_zone.dropped_files:
             file_path = Path(dropped_file)
             assert file_path.exists()
             content = file_path.read_bytes()

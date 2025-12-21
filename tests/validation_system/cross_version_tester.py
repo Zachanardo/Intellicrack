@@ -112,16 +112,16 @@ except ImportError:
                     b"lm_checkout"
                 ]
 
-                for pattern in flexlm_patterns:
-                    if pattern in data:
-                        protections.append({
-                            "name": "FlexLM",
-                            "pattern": pattern.decode('ascii', errors='ignore'),
-                            "type": "license_manager",
-                            "confidence": 0.9
-                        })
-
-            # Adobe Licensing detection
+                protections.extend(
+                    {
+                        "name": "FlexLM",
+                        "pattern": pattern.decode('ascii', errors='ignore'),
+                        "type": "license_manager",
+                        "confidence": 0.9,
+                    }
+                    for pattern in flexlm_patterns
+                    if pattern in data
+                )
             elif "adobe" in protection_name.lower():
                 adobe_patterns = [
                     b"Adobe Systems",
@@ -131,16 +131,16 @@ except ImportError:
                     b"AMT"  # Adobe Media Encoder
                 ]
 
-                for pattern in adobe_patterns:
-                    if pattern in data:
-                        protections.append({
-                            "name": "Adobe Licensing",
-                            "pattern": pattern.decode('ascii', errors='ignore'),
-                            "type": "proprietary_license",
-                            "confidence": 0.85
-                        })
-
-            # Sentinel HASP detection
+                protections.extend(
+                    {
+                        "name": "Adobe Licensing",
+                        "pattern": pattern.decode('ascii', errors='ignore'),
+                        "type": "proprietary_license",
+                        "confidence": 0.85,
+                    }
+                    for pattern in adobe_patterns
+                    if pattern in data
+                )
             elif "sentinel" in protection_name.lower() or "hasp" in protection_name.lower():
                 hasp_patterns = [
                     b"SENTINEL",
@@ -150,15 +150,16 @@ except ImportError:
                     b"hasplm"
                 ]
 
-                for pattern in hasp_patterns:
-                    if pattern in data:
-                        protections.append({
-                            "name": "Sentinel HASP",
-                            "pattern": pattern.decode('ascii', errors='ignore'),
-                            "type": "hardware_key",
-                            "confidence": 0.88
-                        })
-
+                protections.extend(
+                    {
+                        "name": "Sentinel HASP",
+                        "pattern": pattern.decode('ascii', errors='ignore'),
+                        "type": "hardware_key",
+                        "confidence": 0.88,
+                    }
+                    for pattern in hasp_patterns
+                    if pattern in data
+                )
             # Generic protection indicators
             generic_patterns = [
                 (b"IsDebuggerPresent", "anti_debug"),
@@ -171,15 +172,16 @@ except ImportError:
                 (b"SHA", "integrity_check")
             ]
 
-            for pattern, ptype in generic_patterns:
-                if pattern in data:
-                    protections.append({
-                        "name": "Generic Protection",
-                        "pattern": pattern.decode('ascii', errors='ignore'),
-                        "type": ptype,
-                        "confidence": 0.7
-                    })
-
+            protections.extend(
+                {
+                    "name": "Generic Protection",
+                    "pattern": pattern.decode('ascii', errors='ignore'),
+                    "type": ptype,
+                    "confidence": 0.7,
+                }
+                for pattern, ptype in generic_patterns
+                if pattern in data
+            )
             return protections
 
 logger = logging.getLogger(__name__)
@@ -250,24 +252,23 @@ class CrossVersionTester:
         Find all versioned binaries for a specific software and protection.
         Scans the commercial binaries directory for versioned binaries.
         """
-        versioned_binaries = []
-
         # Scan actual binary repositories for versioned binaries
         binaries = self.binary_manager.list_acquired_binaries()
 
-        for binary in binaries:
-            # Match software name and protection name
-            if (software_name.lower() in binary.get("software_name", "").lower() and
-                protection_name.lower() in binary.get("protection", "").lower()):
-                versioned_binaries.append({
-                    "software_name": binary.get("software_name"),
-                    "protection_name": binary.get("protection"),
-                    "version": binary.get("version", "unknown"),
-                    "binary_path": binary.get("file_path"),
-                    "binary_hash": binary.get("sha256")
-                })
-
-        return versioned_binaries
+        return [
+            {
+                "software_name": binary.get("software_name"),
+                "protection_name": binary.get("protection"),
+                "version": binary.get("version", "unknown"),
+                "binary_path": binary.get("file_path"),
+                "binary_hash": binary.get("sha256"),
+            }
+            for binary in binaries
+            if (
+                software_name.lower() in binary.get("software_name", "").lower()
+                and protection_name.lower() in binary.get("protection", "").lower()
+            )
+        ]
 
     def _get_versioned_binary(self, software_name: str, protection_name: str, version: str) -> dict[str, Any]:
         """
@@ -460,7 +461,8 @@ class CrossVersionTester:
             results.append(result)
 
         # Calculate success rate
-        successful_tests = sum(1 for r in results if r.success)
+        successful_tests = sum(bool(r.success)
+                           for r in results)
         success_rate = successful_tests / len(results) if results else 0.0
 
         # Perform comprehensive version difference analysis
@@ -523,17 +525,15 @@ class CrossVersionTester:
             except Exception as e:
                 logger.error(f"Failed to generate detailed comparison report: {e}")
 
-        report = CrossVersionTestReport(
+        return CrossVersionTestReport(
             software_name=software_name,
             protection_name=protection_name,
             versions_tested=versions,
             results=results,
             success_rate=success_rate,
             version_differences=version_differences,
-            overall_success=success_rate >= 0.9
+            overall_success=success_rate >= 0.9,
         )
-
-        return report
 
     def generate_comprehensive_report(self) -> str:
         """
@@ -559,9 +559,7 @@ class CrossVersionTester:
 
         # Report for each software
         for software_name, results in software_results.items():
-            report_lines.append(f"Software: {software_name}")
-            report_lines.append("-" * 30)
-
+            report_lines.extend((f"Software: {software_name}", "-" * 30))
             # Group by protection
             protection_results = {}
             for result in results:
@@ -569,13 +567,16 @@ class CrossVersionTester:
                 protection_results[key] = result
 
             for key, result in protection_results.items():
-                report_lines.append(f"  {key}:")
-                report_lines.append(f"    Success: {result.success}")
+                report_lines.extend((f"  {key}:", f"    Success: {result.success}"))
                 if result.success:
                     confidence = result.detection_result.get("confidence_score", 0)
                     protections = len(result.detection_result.get("protections", []))
-                    report_lines.append(f"    Confidence: {confidence:.2f}")
-                    report_lines.append(f"    Protections Found: {protections}")
+                    report_lines.extend(
+                        (
+                            f"    Confidence: {confidence:.2f}",
+                            f"    Protections Found: {protections}",
+                        )
+                    )
                 else:
                     report_lines.append(f"    Error: {result.error_message}")
                 report_lines.append("")
@@ -754,8 +755,9 @@ class CrossVersionTester:
             for result in explicitly_unsupported:
                 report_lines.append(f"  - {result.version}: EXPLICITLY INCOMPATIBLE")
                 report_lines.append(f"    Reason: {result.detection_result.get('incompatibility_reason', 'No reason provided')}")
-                supported_versions = result.detection_result.get('supported_versions', [])
-                if supported_versions:
+                if supported_versions := result.detection_result.get(
+                    'supported_versions', []
+                ):
                     report_lines.append(f"    Supported Alternatives: {', '.join(supported_versions)}")
                 action = result.detection_result.get('recommended_action', 'No recommendation')
                 report_lines.append(f"    Recommended Action: {action}")
@@ -763,15 +765,21 @@ class CrossVersionTester:
         if unknown_compatibility:
             report_lines.append(f"❓ UNKNOWN COMPATIBILITY ({len(unknown_compatibility)}):")
             for result in unknown_compatibility:
-                report_lines.append(f"  - {result.version}: COMPATIBILITY UNKNOWN")
-                report_lines.append("    Status: Requires explicit handling")
-
+                report_lines.extend(
+                    (
+                        f"  - {result.version}: COMPATIBILITY UNKNOWN",
+                        "    Status: Requires explicit handling",
+                    )
+                )
         if error_cases:
             report_lines.append(f"💥 ERROR CASES ({len(error_cases)}):")
             for result in error_cases:
-                report_lines.append(f"  - {result.version}: ERROR")
-                report_lines.append(f"    Error: {result.error_message}")
-
+                report_lines.extend(
+                    (
+                        f"  - {result.version}: ERROR",
+                        f"    Error: {result.error_message}",
+                    )
+                )
         report_lines.append("")
 
         # Recommendations for compliance
@@ -781,13 +789,19 @@ class CrossVersionTester:
             ])
 
             if unknown_compatibility:
-                report_lines.append(" Implement explicit compatibility checking for unknown versions")
-                report_lines.append(" Add clear incompatibility messages for unsupported versions")
-
+                report_lines.extend(
+                    (
+                        " Implement explicit compatibility checking for unknown versions",
+                        " Add clear incompatibility messages for unsupported versions",
+                    )
+                )
             if error_cases:
-                report_lines.append(" Enhance error handling to provide explicit incompatibility reports")
-                report_lines.append(" Ensure no silent failures - all errors should include compatibility guidance")
-
+                report_lines.extend(
+                    (
+                        " Enhance error handling to provide explicit incompatibility reports",
+                        " Ensure no silent failures - all errors should include compatibility guidance",
+                    )
+                )
             report_lines.append("")
 
         # Final assessment
@@ -884,17 +898,14 @@ class CrossVersionTester:
         except Exception as e:
             logger.error(f"Failed to generate success rate verification report: {e}")
 
-            # Return error report
-            error_summary = {
+            return {
                 "phase": "2.5.2.4",
                 "software": software_name,
                 "protection": protection_name,
                 "compliance_status": "ANALYSIS_ERROR",
                 "error": str(e),
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-
-            return error_summary
 
     def save_report(self, report: CrossVersionTestReport, filename: str | None = None) -> str:
         """
@@ -927,9 +938,7 @@ if __name__ == "__main__":
 
     # Test with real binaries if available
     try:
-        # Test FlexLM versions with AutoCAD if available
-        binaries = tester.binary_manager.list_acquired_binaries()
-        if binaries:
+        if binaries := tester.binary_manager.list_acquired_binaries():
             print(f"\nFound {len(binaries)} acquired binaries:")
             for binary in binaries:
                 print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
@@ -952,11 +961,16 @@ if __name__ == "__main__":
 
                 # Generate detailed version difference analysis
                 print("\nGenerating version difference analysis...")
-                version_diff_report = tester.generate_version_difference_report(software_name, protection_name)
-                if version_diff_report:
+                if version_diff_report := tester.generate_version_difference_report(
+                    software_name, protection_name
+                ):
                     print("Version difference analysis completed successfully!")
                     print("First 500 characters of analysis:")
-                    print(version_diff_report[:500] + "..." if len(version_diff_report) > 500 else version_diff_report)
+                    print(
+                        f"{version_diff_report[:500]}..."
+                        if len(version_diff_report) > 500
+                        else version_diff_report
+                    )
                 else:
                     print("Version difference analysis could not be generated.")
         else:

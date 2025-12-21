@@ -171,7 +171,7 @@ log_level=DEBUG"""
 
         # Verify backup of old files exists
         backup_files = list(self.backup_dir.glob("*"))
-        assert len(backup_files) > 0, "Backups should be created before cleanup"
+        assert backup_files, "Backups should be created before cleanup"
 
     def test_20_1_4_cleanup_preserves_failed_migrations(self):
         """Test that cleanup doesn't remove files from failed migrations."""
@@ -351,12 +351,11 @@ log_level=DEBUG"""
                 for file in files:
                     file_lower = file.lower()
                     # Check if file matches config patterns
-                    if any(pattern in file_lower for pattern in config_patterns):
-                        if any(file.endswith(ext) for ext in config_extensions):
-                            file_path = Path(root) / file
-                            # Skip if it's the current config
-                            if file_path != self.test_config_dir / "config.json":
-                                orphaned.append(file_path)
+                    if any(pattern in file_lower for pattern in config_patterns) and any(file.endswith(ext) for ext in config_extensions):
+                        file_path = Path(root) / file
+                        # Skip if it's the current config
+                        if file_path != self.test_config_dir / "config.json":
+                            orphaned.append(file_path)
 
             return orphaned
 

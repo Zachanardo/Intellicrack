@@ -273,7 +273,6 @@ class TestGenericProtocolHandlerTCPProxy:
         client.settimeout(5.0)
         try:
             client.connect(("127.0.0.1", port))
-            assert True
         finally:
             client.close()
             handler.stop_proxy()
@@ -496,7 +495,7 @@ class TestGenericProtocolHandlerTCPProxy:
             client.settimeout(1.0)
             client.connect(("127.0.0.1", port))
             client.close()
-        except (ConnectionRefusedError, OSError):
+        except OSError:
             connection_refused = True
 
         assert connection_refused
@@ -721,7 +720,7 @@ class TestGenericProtocolHandlerUDPProxy:
         try:
             client.sendto(b"ping", ("127.0.0.1", port))
             client.recvfrom(1024)
-        except (socket.timeout, ConnectionResetError, OSError):
+        except (socket.timeout, OSError):
             no_response = True
         finally:
             client.close()
@@ -751,7 +750,7 @@ class TestGenericProtocolHandlerDataManagement:
 
         handler.clear_data()
 
-        assert handler.captured_requests == []
+        assert not handler.captured_requests
 
     def test_clear_data_removes_captured_responses(self) -> None:
         """clear_data removes all captured response data."""
@@ -763,7 +762,7 @@ class TestGenericProtocolHandlerDataManagement:
 
         handler.clear_data()
 
-        assert handler.captured_responses == []
+        assert not handler.captured_responses
 
     def test_clear_data_removes_active_connections(self) -> None:
         """clear_data removes all active connection tracking."""
@@ -775,7 +774,7 @@ class TestGenericProtocolHandlerDataManagement:
 
         handler.clear_data()
 
-        assert handler.active_connections == {}
+        assert not handler.active_connections
 
     def test_start_proxy_clears_previous_data(self) -> None:
         """Starting proxy clears previously captured data."""
@@ -787,8 +786,8 @@ class TestGenericProtocolHandlerDataManagement:
         handler.start_proxy(port)
 
         time.sleep(0.1)
-        assert handler.captured_requests == []
-        assert handler.captured_responses == []
+        assert not handler.captured_requests
+        assert not handler.captured_responses
 
         handler.stop_proxy()
 
@@ -1004,7 +1003,7 @@ class TestGenericProtocolHandlerConnectionHandling:
             try:
                 client.send(b"status")
                 response = client.recv(1024)
-            except (BrokenPipeError, ConnectionResetError, OSError):
+            except OSError:
                 pass
         finally:
             client.close()
@@ -1097,7 +1096,6 @@ class TestGenericProtocolHandlerEdgeCases:
         client.settimeout(5.0)
         try:
             client.connect(("127.0.0.1", port))
-            assert True
         finally:
             client.close()
             handler.stop_proxy()
@@ -1156,7 +1154,7 @@ class TestGenericProtocolHandlerEdgeCases:
         handler.start_proxy(port)
         time.sleep(0.2)
 
-        for i in range(10):
+        for _ in range(10):
             client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client.settimeout(5.0)
             try:
@@ -1179,7 +1177,7 @@ class TestGenericProtocolHandlerEdgeCases:
         handler = GenericProtocolHandler({"protocol": "tcp"})
         port = self._get_free_port()
 
-        for cycle in range(3):
+        for _ in range(3):
             handler.start_proxy(port)
             time.sleep(0.2)
 

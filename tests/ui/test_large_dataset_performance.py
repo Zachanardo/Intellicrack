@@ -74,8 +74,8 @@ def large_binary_file(temp_workspace: Path) -> Path:
     total_chunks = 10
 
     with open(binary_path, "wb") as f:
-        for i in range(total_chunks):
-            chunk = bytes([random.randint(0, 255) for _ in range(chunk_size)])
+        for _ in range(total_chunks):
+            chunk = bytes(random.randint(0, 255) for _ in range(chunk_size))
             f.write(chunk)
 
     return binary_path
@@ -94,7 +94,7 @@ def massive_binary_file(temp_workspace: Path) -> Path:
             if i % 10 == 0:
                 chunk = b"LICENSE-KEY-" + bytes([i]) * (chunk_size - 12)
             else:
-                chunk = bytes([random.randint(0, 255) for _ in range(chunk_size)])
+                chunk = bytes(random.randint(0, 255) for _ in range(chunk_size))
             f.write(chunk)
 
     return binary_path

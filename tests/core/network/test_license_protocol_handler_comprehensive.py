@@ -987,7 +987,7 @@ class TestProtocolHandlerConcurrency:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert len(handler.captured_requests) == 500
 
 

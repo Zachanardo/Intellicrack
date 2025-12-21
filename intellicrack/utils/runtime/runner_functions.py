@@ -1889,9 +1889,7 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
                 try:
                     traffic_recorder = getattr(app_instance, "traffic_recorder", None)
                     if traffic_recorder is not None and hasattr(traffic_recorder, "get_traffic_summary"):
-                        if (
-                            traffic_summary := traffic_recorder.get_traffic_summary()
-                        ):
+                        if traffic_summary := traffic_recorder.get_traffic_summary():
                             dynamic_analysis["traffic_summary"] = traffic_summary
 
                             protocols = traffic_summary.get("protocols", {})
@@ -2009,51 +2007,75 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
 
         if returncode != 0:
             error_msg = f"[Ghidra Analysis] Ghidra process failed with exit code {returncode}."
-            if app:
-                app.update_output.emit(log_message(error_msg))
-                app.update_status.emit(f"Error: Ghidra failed (Code {returncode})")
+            if app and hasattr(app, "update_output") and hasattr(app, "update_status"):
+                update_output = getattr(app, "update_output")
+                update_status = getattr(app, "update_status")
+                if hasattr(update_output, "emit"):
+                    update_output.emit(log_message(error_msg))
+                if hasattr(update_status, "emit"):
+                    update_status.emit(f"Error: Ghidra failed (Code {returncode})")
             if stderr:
                 # Clean up stderr output for better logging
                 clean_stderr = "\n".join(line for line in (stderr.splitlines() if stderr is not None else []) if line and line.strip())
-                if clean_stderr and app:
-                    app.update_output.emit(log_message(f"[Ghidra Error Output]\n{clean_stderr}"))
+                if clean_stderr and app and hasattr(app, "update_output"):
+                    update_output = getattr(app, "update_output")
+                    if hasattr(update_output, "emit"):
+                        update_output.emit(log_message(f"[Ghidra Error Output]\n{clean_stderr}"))
             # Stop further processing if Ghidra failed
             return
 
         # Process stdout if successful
-        if stdout and isinstance(stdout, (str, bytes)) and app:
+        if stdout and isinstance(stdout, (str, bytes)) and app and hasattr(app, "update_output"):
+            update_output = getattr(app, "update_output")
             for line in stdout.splitlines() if stdout is not None else []:
                 if line and line.strip() and ("INFO" not in line or "Decompiling" in line or "Analysis results written" in line):
-                    app.update_output.emit(log_message(f"[Ghidra] {line.strip()}"))
+                    if hasattr(update_output, "emit"):
+                        update_output.emit(log_message(f"[Ghidra] {line.strip()}"))
 
         # Log stderr even on success, might contain warnings
-        if stderr and isinstance(stderr, (str, bytes)) and app:
+        if stderr and isinstance(stderr, (str, bytes)) and app and hasattr(app, "update_output"):
+            update_output = getattr(app, "update_output")
             if clean_stderr := "\n".join(line for line in stderr.splitlines() if line and line.strip() and "INFO" not in line):
-                app.update_output.emit(log_message(f"[Ghidra Warnings/Output]\n{clean_stderr}"))
+                if hasattr(update_output, "emit"):
+                    update_output.emit(log_message(f"[Ghidra Warnings/Output]\n{clean_stderr}"))
 
         # Check for output JSON file (only if process succeeded)
         json_path = os.path.join(str(Path.cwd()), "analysis_results.json")
-        if os.path.exists(json_path) and app:
-            app.update_output.emit(log_message(f"[Ghidra Analysis] Results file found: {json_path}"))
+        if os.path.exists(json_path) and app and hasattr(app, "update_output") and hasattr(app, "update_status"):
+            update_output = getattr(app, "update_output")
+            update_status = getattr(app, "update_status")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message(f"[Ghidra Analysis] Results file found: {json_path}"))
             try:
                 # Process the results file
                 process_ghidra_analysis_results(app, json_path)
                 # Set status after processing
-                app.update_status.emit("Ghidra analysis complete")
+                if hasattr(update_status, "emit"):
+                    update_status.emit("Ghidra analysis complete")
             except Exception as json_proc_err:
                 logger.exception("Exception in runner_functions: %s", json_proc_err)
-                app.update_output.emit(log_message(f"[Ghidra Analysis] Error processing results file '{json_path}': {json_proc_err}"))
-                app.update_status.emit("Error processing Ghidra results")
-        elif app:
-            app.update_output.emit(log_message("[Ghidra Analysis] No results file found. Script may have failed."))
-            app.update_status.emit("Ghidra analysis completed (no results)")
+                if hasattr(update_output, "emit"):
+                    update_output.emit(log_message(f"[Ghidra Analysis] Error processing results file '{json_path}': {json_proc_err}"))
+                if hasattr(update_status, "emit"):
+                    update_status.emit("Error processing Ghidra results")
+        elif app and hasattr(app, "update_output") and hasattr(app, "update_status"):
+            update_output = getattr(app, "update_output")
+            update_status = getattr(app, "update_status")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message("[Ghidra Analysis] No results file found. Script may have failed."))
+            if hasattr(update_status, "emit"):
+                update_status.emit("Ghidra analysis completed (no results)")
 
     except (OSError, ValueError, RuntimeError) as e:
         error_msg = f"[Ghidra Analysis] Exception during Ghidra execution: {e}"
         logger.exception(error_msg)
-        if app:
-            app.update_output.emit(log_message(error_msg))
-            app.update_status.emit("Error: Ghidra execution failed")
+        if app and hasattr(app, "update_output") and hasattr(app, "update_status"):
+            update_output = getattr(app, "update_output")
+            update_status = getattr(app, "update_status")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message(error_msg))
+            if hasattr(update_status, "emit"):
+                update_status.emit("Error: Ghidra execution failed")
 
     finally:
         # Cleanup temp directory
@@ -2167,8 +2189,10 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
 
         logger.info("Starting Frida analysis on %s", binary_path)
 
-        if app_instance:
-            app_instance.update_output.emit(log_message("[Frida Analysis] Starting dynamic instrumentation..."))
+        if app_instance and hasattr(app_instance, "update_output"):
+            update_output = getattr(app_instance, "update_output")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message("[Frida Analysis] Starting dynamic instrumentation..."))
             if hasattr(app_instance, "analyze_status"):
                 app_instance.analyze_status.setText("Running Frida analysis...")
 
@@ -2322,8 +2346,10 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
         logger.exception("Error running Frida analysis: %s", e)
         error_msg = f"Frida analysis failed: {e!s}"
 
-        if app_instance:
-            app_instance.update_output.emit(log_message(f"[Frida Analysis] ERROR: {error_msg}"))
+        if app_instance and hasattr(app_instance, "update_output"):
+            update_output = getattr(app_instance, "update_output")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message(f"[Frida Analysis] ERROR: {error_msg}"))
 
         return {"status": "error", "message": error_msg}
 
@@ -2350,11 +2376,14 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
 
         logger.info("Starting dynamic instrumentation on %s", binary_path)
 
-        if app_instance:
-            app_instance.update_output.emit(log_message("[Dynamic Instrumentation] Starting Frida instrumentation..."))
+        if app_instance and hasattr(app_instance, "update_output"):
+            update_output = getattr(app_instance, "update_output")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message("[Dynamic Instrumentation] Starting Frida instrumentation..."))
 
         # Get script path from kwargs
-        script_path = kwargs.get("script_path")
+        script_path_obj = kwargs.get("script_path")
+        script_path: str | None = str(script_path_obj) if script_path_obj is not None else None
         if not script_path:
             # Default to registry monitor script
             script_candidates = [
@@ -2373,13 +2402,15 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
                 "message": f"Frida script not found: {script_path}",
             }
 
-        if app_instance:
-            app_instance.update_output.emit(log_message(f"[Dynamic Instrumentation] Using script: {script_path}"))
+        if app_instance and hasattr(app_instance, "update_output"):
+            update_output = getattr(app_instance, "update_output")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message(f"[Dynamic Instrumentation] Using script: {script_path}"))
 
         # Use the wrapper function for consistent execution
         from ..tool_wrappers import wrapper_run_frida_script
 
-        result = wrapper_run_frida_script(
+        result: dict[str, Any] = wrapper_run_frida_script(
             app_instance,
             {
                 "script_path": script_path,
@@ -2388,24 +2419,28 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
         )
 
         if result.get("status") == "success":
-            if app_instance:
-                app_instance.update_output.emit(log_message("[Dynamic Instrumentation] Instrumentation completed successfully"))
+            if app_instance and hasattr(app_instance, "update_output"):
+                update_output = getattr(app_instance, "update_output")
+                if hasattr(update_output, "emit"):
+                    update_output.emit(log_message("[Dynamic Instrumentation] Instrumentation completed successfully"))
 
             return {
                 "status": "success",
                 "message": "Dynamic instrumentation completed",
                 "script_path": script_path,
                 "binary_path": binary_path,
-                "execution_result": result,
+                "execution_result": cast(object, result),
             }
-        return result
+        return cast(dict[str, object], result)
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error running dynamic instrumentation: %s", e)
         error_msg = f"Dynamic instrumentation failed: {e!s}"
 
-        if app_instance:
-            app_instance.update_output.emit(log_message(f"[Dynamic Instrumentation] ERROR: {error_msg}"))
+        if app_instance and hasattr(app_instance, "update_output"):
+            update_output = getattr(app_instance, "update_output")
+            if hasattr(update_output, "emit"):
+                update_output.emit(log_message(f"[Dynamic Instrumentation] ERROR: {error_msg}"))
 
         return {"status": "error", "message": error_msg}
 
@@ -2862,17 +2897,18 @@ def run_autonomous_patching(app_instance: object | None = None, **kwargs: object
 
 def _autonomous_analyze_binary(target_binary: str) -> dict[str, Any]:
     """Analyze binary for autonomous patching."""
-    result = {"success": False, "findings": [], "vulnerability_count": 0}
+    findings: list[str] = []
+    result: dict[str, Any] = {"success": False, "findings": findings, "vulnerability_count": 0}
 
     try:
         if not os.path.exists(target_binary):
-            result["findings"].append("Target binary not found")
+            findings.append("Target binary not found")
             return result
 
         # Basic binary analysis
         file_size = os.path.getsize(target_binary)
         result["file_size"] = file_size
-        result["findings"].append(f"Binary size: {file_size} bytes")
+        findings.append(f"Binary size: {file_size} bytes")
 
         # Detect binary format
         with open(target_binary, "rb") as f:
@@ -2880,19 +2916,19 @@ def _autonomous_analyze_binary(target_binary: str) -> dict[str, Any]:
 
         if header.startswith(b"MZ"):
             result["format"] = "PE"
-            result["findings"].append("Windows PE executable detected")
+            findings.append("Windows PE executable detected")
         elif header.startswith(b"\x7fELF"):
             result["format"] = "ELF"
-            result["findings"].append("Linux ELF executable detected")
+            findings.append("Linux ELF executable detected")
         else:
             result["format"] = "Unknown"
-            result["findings"].append("Unknown binary format")
+            findings.append("Unknown binary format")
 
         result["success"] = True
 
     except Exception as e:
         logger.exception("Exception in runner_functions: %s", e)
-        result["findings"].append(f"Analysis error: {e}")
+        findings.append(f"Analysis error: {e}")
 
     return result
 
@@ -2900,7 +2936,10 @@ def _autonomous_analyze_binary(target_binary: str) -> dict[str, Any]:
 def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, Any]) -> dict[str, Any]:
     """Detect patching targets (license checks, vulnerabilities)."""
     logger.debug("Detecting targets for %s with analysis result keys: %s", target_binary, list(analysis_result.keys()))
-    result = {"targets_found": [], "license_checks": [], "vulnerabilities": []}
+    targets_found: list[str] = []
+    license_checks: list[str] = []
+    vulnerabilities: list[dict[str, Any]] = []
+    result: dict[str, Any] = {"targets_found": targets_found, "license_checks": license_checks, "vulnerabilities": vulnerabilities}
 
     try:
         # Use existing vulnerability detection
@@ -2909,8 +2948,9 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, An
         vuln_engine = VulnerabilityEngine()
         vulns = vuln_engine.scan_binary(target_binary)
 
-        result["vulnerabilities"] = vulns if isinstance(vulns, list) else []
-        result["targets_found"].extend([f"Vulnerability: {v.get('type', 'unknown')}" for v in result["vulnerabilities"]])
+        if isinstance(vulns, list):
+            vulnerabilities.extend(vulns)
+        targets_found.extend([f"Vulnerability: {v.get('type', 'unknown')}" for v in vulnerabilities])
 
         # Detect license check patterns
         try:
@@ -2920,8 +2960,8 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, An
             license_strings = [b"license", b"trial", b"demo", b"activation", b"serial"]
             for string in license_strings:
                 if string in binary_data:
-                    result["license_checks"].append(f"Found license string: {string.decode()}")
-                    result["targets_found"].append(f"License check: {string.decode()}")
+                    license_checks.append(f"Found license string: {string.decode()}")
+                    targets_found.append(f"License check: {string.decode()}")
 
         except Exception as e:
             logger.debug("License detection error: %s", e)
@@ -3031,17 +3071,23 @@ def _autonomous_backup_original(target_binary: str) -> dict[str, Any]:
 
 def _autonomous_apply_patches(target_binary: str, patches: list[dict[str, Any]], strategy: str) -> dict[str, Any]:
     """Apply generated patches to binary."""
-    result = {"applied_count": 0, "failed_count": 0, "results": []}
+    results: list[dict[str, Any]] = []
+    applied_count = 0
+    failed_count = 0
+    result: dict[str, Any] = {"applied_count": applied_count, "failed_count": failed_count, "results": results}
 
     try:
         for patch in patches:
             patch_result = _apply_single_patch(target_binary, patch, strategy)
-            result["results"].append(patch_result)
+            results.append(patch_result)
 
             if patch_result.get("success", False):
-                result["applied_count"] += 1
+                applied_count += 1
             else:
-                result["failed_count"] += 1
+                failed_count += 1
+
+        result["applied_count"] = applied_count
+        result["failed_count"] = failed_count
 
     except Exception as e:
         logger.exception("Patch application error: %s", e)

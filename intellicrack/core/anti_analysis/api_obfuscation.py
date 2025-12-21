@@ -153,9 +153,7 @@ class APIObfuscator:
 
             kernel32 = ctypes.windll.kernel32
 
-            if h_module := kernel32.GetModuleHandleW(
-                dll_name
-            ) or kernel32.LoadLibraryW(dll_name):
+            if h_module := kernel32.GetModuleHandleW(dll_name) or kernel32.LoadLibraryW(dll_name):
                 return kernel32.GetProcAddress(h_module, api_name.encode())
         except Exception as e:
             self.logger.debug("Normal resolution failed: %s", e)

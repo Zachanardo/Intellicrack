@@ -321,12 +321,12 @@ class TestOperationStatistics:
         """Operation statistics grouped by name."""
         performance_monitor.start_session("stats_session")
 
-        for i in range(3):
+        for _ in range(3):
             op = performance_monitor.start_operation("read_op")
             time.sleep(0.01)
             performance_monitor.end_operation(op, success=True)
 
-        for i in range(2):
+        for _ in range(2):
             op = performance_monitor.start_operation("write_op")
             time.sleep(0.02)
             performance_monitor.end_operation(op, success=True)
@@ -428,7 +428,6 @@ class TestThresholdWarnings:
         performance_monitor.end_operation(op, success=True)
 
         warning_found = any("exceeded warning duration" in record.message for record in caplog.records)
-        assert warning_found or True
 
     def test_duration_critical_threshold(self, performance_monitor: R2PerformanceMonitor, caplog) -> None:
         """Critical warning logged for very slow operations."""
@@ -440,7 +439,6 @@ class TestThresholdWarnings:
         performance_monitor.end_operation(op, success=True)
 
         critical_found = any("exceeded critical duration" in record.message for record in caplog.records)
-        assert critical_found or True
 
     def test_memory_warning_threshold(self, performance_monitor: R2PerformanceMonitor) -> None:
         """Memory usage thresholds configured correctly."""
@@ -493,8 +491,6 @@ class TestRealTimeMonitoring:
 
         performance_monitor.end_operation(op, success=True)
         performance_monitor.end_session()
-
-        assert timeout_warning or True
 
 
 class TestThreadSafety:

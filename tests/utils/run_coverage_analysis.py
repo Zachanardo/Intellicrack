@@ -188,12 +188,8 @@ def analyze_test_coverage_manually():
         return
 
     try:
-        with open(test_file) as f:
-            test_content = f.read()
-
-        with open(source_file) as f:
-            source_content = f.read()
-
+        test_content = Path(test_file).read_text()
+        source_content = Path(source_file).read_text()
         # Count test methods
         test_methods = [line for line in test_content.split('\n') if 'def test_' in line]
         print(f" Test Methods Found: {len(test_methods)}")
@@ -217,11 +213,7 @@ def analyze_test_coverage_manually():
             '_parse_ghidra_output'
         ]
 
-        covered_methods = []
-        for method in key_methods:
-            if method in test_content:
-                covered_methods.append(method)
-
+        covered_methods = [method for method in key_methods if method in test_content]
         coverage_percentage = (len(covered_methods) / len(key_methods)) * 100
 
         print(f" Key Method Coverage: {coverage_percentage:.1f}% ({len(covered_methods)}/{len(key_methods)})")
@@ -230,8 +222,7 @@ def analyze_test_coverage_manually():
         for method in covered_methods:
             print(f"  - {method}")
 
-        uncovered_methods = set(key_methods) - set(covered_methods)
-        if uncovered_methods:
+        if uncovered_methods := set(key_methods) - set(covered_methods):
             print("\nFAIL Uncovered Methods:")
             for method in uncovered_methods:
                 print(f"  - {method}")

@@ -199,11 +199,7 @@ except ImportError as e:
                                             if neighbor is not None:
                                                 self._nodes[neighbor] = True
                                                 self._edges[node].add(neighbor)
-                                                if edge_attrs := {
-                                                    k: v
-                                                    for k, v in neighbor_info.items()
-                                                    if k not in ("id", "node")
-                                                }:
+                                                if edge_attrs := {k: v for k, v in neighbor_info.items() if k not in ("id", "node")}:
                                                     self._edge_attrs[node, neighbor] = edge_attrs
                                         else:
                                             self._nodes[neighbor_info] = True
@@ -269,9 +265,7 @@ except ImportError as e:
                 if data:
                     edges_with_data: list[tuple[object, object, dict[str, object]]] = []
                     for u, neighbors in self._edges.items():
-                        edges_with_data.extend(
-                            (u, v, self._edge_attrs.get((u, v), {})) for v in neighbors
-                        )
+                        edges_with_data.extend((u, v, self._edge_attrs.get((u, v), {})) for v in neighbors)
                     return edges_with_data
                 else:
                     edges_no_data: list[tuple[object, object]] = []
@@ -1030,24 +1024,10 @@ class CFGExplorer:
             has_return = any("ret" in op.get("disasm", "") for op in block_ops)
 
             # Analyze for security-relevant instructions
-            crypto_ops = sum(
-                any(
-                    (
-                        kw in op.get("disasm", "").lower()
-                        for kw in ["aes", "crypt", "hash", "rsa"]
-                    )
-                )
-                for op in block_ops
-            )
+            crypto_ops = sum(any((kw in op.get("disasm", "").lower() for kw in ["aes", "crypt", "hash", "rsa"])) for op in block_ops)
 
             license_ops = sum(
-                any(
-                    (
-                        kw in op.get("disasm", "").lower()
-                        for kw in ["license", "valid", "check", "trial", "serial"]
-                    )
-                )
-                for op in block_ops
+                any((kw in op.get("disasm", "").lower() for kw in ["license", "valid", "check", "trial", "serial"])) for op in block_ops
             )
 
             # Add enhanced node with comprehensive metadata

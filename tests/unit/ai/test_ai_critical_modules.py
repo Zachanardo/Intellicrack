@@ -223,7 +223,7 @@ class TestAILearningDatabase:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0, f"Concurrent access errors: {errors}"
+        assert not errors, f"Concurrent access errors: {errors}"
 
         all_records = db.get_learning_records(limit=100)
         assert len(all_records) >= 50
@@ -672,7 +672,7 @@ class TestMultiAgentSystem:
         assignments = balancer.balance_load(tasks, agents)
 
         assert assignments is not None
-        assert isinstance(assignments, dict) or isinstance(assignments, list)
+        assert isinstance(assignments, (dict, list))
 
     def test_knowledge_manager_initialization(self) -> None:
         """Test knowledge manager initialization."""
@@ -737,7 +737,7 @@ class TestMultiAgentSystem:
             )
 
             assert result is not None
-            assert isinstance(result, CollaborationResult) or isinstance(result, dict)
+            assert isinstance(result, (CollaborationResult, dict))
         except Exception:
             pass
 
@@ -781,7 +781,7 @@ class TestIntegration:
             learning_engine.record_experience(
                 task_type="protection_detection",
                 input_data=f"sample_{i}".encode(),
-                output_data=f"vmprotect_v3".encode(),
+                output_data="vmprotect_v3".encode(),
                 success=True,
                 confidence=0.92,
                 execution_time=1.5,

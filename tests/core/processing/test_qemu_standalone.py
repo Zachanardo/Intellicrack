@@ -29,7 +29,6 @@ def test_qemu_binary_available() -> None:
 
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
         print(f"QEMU not found: {e}")
-        assert True
 
 
 def test_kvm_support_detection() -> None:

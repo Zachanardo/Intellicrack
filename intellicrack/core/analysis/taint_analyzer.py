@@ -1527,12 +1527,8 @@ class TaintAnalysisEngine:
                 "total_sinks_reached": len(sinks_reached),
                 "total_flows": len(taint_flows),
                 "vulnerabilities_found": len(vulnerabilities),
-                "critical_vulnerabilities": sum(
-                    v["severity"] == "critical" for v in vulnerabilities
-                ),
-                "high_vulnerabilities": sum(
-                    v["severity"] == "high" for v in vulnerabilities
-                ),
+                "critical_vulnerabilities": sum(v["severity"] == "critical" for v in vulnerabilities),
+                "high_vulnerabilities": sum(v["severity"] == "high" for v in vulnerabilities),
             },
         }
 

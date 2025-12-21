@@ -461,7 +461,7 @@ class TestCloudLicenseHookerProduction:
         hooker_thread.start()
         time.sleep(1.0)
 
-        assert len(hooker_started) > 0, "Hooker function must be called"
+        assert hooker_started, "Hooker function must be called"
 
     def test_trial_license_response_fields(self, hooker: CloudLicenseResponseGenerator) -> None:
         """Trial license template has appropriate trial restrictions."""

@@ -258,7 +258,6 @@ class TestPatternDetection:
             import re
             for pattern in test_patterns:
                 if re.match(pattern, example_serial):
-                    assert True
                     break
             else:
                 pytest.fail("No serial key pattern matched example serial")
@@ -287,7 +286,6 @@ class TestPatternDetection:
             for pattern in email_patterns:
                 for email in test_emails:
                     if re.match(pattern, email):
-                        assert True
                         break
                 else:
                     continue
@@ -318,7 +316,6 @@ class TestPatternDetection:
             import re
             for pattern in hwid_patterns:
                 if re.match(pattern, test_hwid):
-                    assert True
                     break
             else:
                 pytest.fail("No HWID pattern matched test HWID")
@@ -379,7 +376,7 @@ class TestEventEmission:
 
             monitor._handle_pattern_found(payload)
 
-            assert event_emitted is True
+            assert event_emitted
             assert received_event is not None
             assert received_event.source == EventSource.MEMORY
             assert received_event.event_type == EventType.SCAN
@@ -581,7 +578,7 @@ class TestFridaMessageHandling:
 
             monitor._on_frida_message(message, b"")
 
-            assert event_received is True
+            assert event_received
 
         finally:
             try:

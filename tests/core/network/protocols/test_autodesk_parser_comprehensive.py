@@ -65,19 +65,7 @@ def create_autodesk_activation_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"POST /api/auth/authenticate HTTP/1.1\r\n"
-        f"Host: licensing.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"Authorization: Bearer {auth_token}\r\n"
-        f"User-Agent: AutoCAD/2024.1 Windows/10.0\r\n"
-        f"X-Autodesk-Version: 1.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"POST /api/auth/authenticate HTTP/1.1\r\nHost: licensing.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nAuthorization: Bearer {auth_token}\r\nUser-Agent: AutoCAD/2024.1 Windows/10.0\r\nX-Autodesk-Version: 1.0\r\n\r\n{body_json}"
 
 
 def create_autodesk_validation_request(
@@ -104,17 +92,7 @@ def create_autodesk_validation_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"POST /api/license/validate HTTP/1.1\r\n"
-        f"Host: licensing.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"User-Agent: Maya/2024.0 macOS/13.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"POST /api/license/validate HTTP/1.1\r\nHost: licensing.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nUser-Agent: Maya/2024.0 macOS/13.0\r\n\r\n{body_json}"
 
 
 def create_autodesk_entitlement_request(
@@ -140,18 +118,7 @@ def create_autodesk_entitlement_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"GET /api/entitlements HTTP/1.1\r\n"
-        f"Host: licensing.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"Authorization: Bearer {auth_token}\r\n"
-        f"User-Agent: Revit/2024.0 Windows/11.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"GET /api/entitlements HTTP/1.1\r\nHost: licensing.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nAuthorization: Bearer {auth_token}\r\nUser-Agent: Revit/2024.0 Windows/11.0\r\n\r\n{body_json}"
 
 
 def create_autodesk_heartbeat_request(
@@ -178,17 +145,7 @@ def create_autodesk_heartbeat_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"POST /heartbeat HTTP/1.1\r\n"
-        f"Host: licensing.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"User-Agent: Inventor/2024.0 Windows/10.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"POST /heartbeat HTTP/1.1\r\nHost: licensing.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nUser-Agent: Inventor/2024.0 Windows/10.0\r\n\r\n{body_json}"
 
 
 def create_autodesk_network_license_request(
@@ -215,17 +172,7 @@ def create_autodesk_network_license_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"POST /network HTTP/1.1\r\n"
-        f"Host: nlm.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"User-Agent: 3dsMax/2024.0 Windows/10.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"POST /network HTTP/1.1\r\nHost: nlm.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nUser-Agent: 3dsMax/2024.0 Windows/10.0\r\n\r\n{body_json}"
 
 
 def create_autodesk_offline_activation_request(
@@ -252,17 +199,7 @@ def create_autodesk_offline_activation_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"POST /offline HTTP/1.1\r\n"
-        f"Host: licensing.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"User-Agent: Civil3D/2024.0 Windows/10.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"POST /offline HTTP/1.1\r\nHost: licensing.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nUser-Agent: Civil3D/2024.0 Windows/10.0\r\n\r\n{body_json}"
 
 
 def create_autodesk_subscription_request(
@@ -285,18 +222,7 @@ def create_autodesk_subscription_request(
 
     body_json = json.dumps(request_body)
 
-    request = (
-        f"GET /subscription HTTP/1.1\r\n"
-        f"Host: licensing.autodesk.com\r\n"
-        f"Content-Type: application/json\r\n"
-        f"Content-Length: {len(body_json)}\r\n"
-        f"Authorization: Bearer {auth_token}\r\n"
-        f"User-Agent: Fusion360/2.0 macOS/13.0\r\n"
-        f"\r\n"
-        f"{body_json}"
-    )
-
-    return request
+    return f"GET /subscription HTTP/1.1\r\nHost: licensing.autodesk.com\r\nContent-Type: application/json\r\nContent-Length: {len(body_json)}\r\nAuthorization: Bearer {auth_token}\r\nUser-Agent: Fusion360/2.0 macOS/13.0\r\n\r\n{body_json}"
 
 
 class TestAutodeskRequestParsing:

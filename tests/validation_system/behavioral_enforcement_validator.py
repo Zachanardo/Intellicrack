@@ -468,13 +468,11 @@ algorithmic understanding of the protection mechanisms, not trial-and-error.
 
                 if result and result.returncode == 0:
                     trace_output = result.stdout
-                    execution_flow = trace_output.split('\n')
                 else:
                     # Fallback to manual process monitoring
                     logger.warning("x64dbg not available, using process monitoring fallback")
                     trace_output = self._fallback_process_monitoring(binary_path)
-                    execution_flow = trace_output.split('\n')
-
+                execution_flow = trace_output.split('\n')
             except FileNotFoundError:
                 # x64dbg not installed, use Windows debugging APIs directly
                 logger.warning("x64dbg not found, using Windows Debug APIs")
@@ -562,23 +560,22 @@ q
             # Use Process Monitor (ProcMon) for detailed system call tracing
             procmon_path = r"C:\ProcMon\Procmon.exe"
 
-            if os.path.exists(procmon_path):
-                # Configure ProcMon to capture specific process
-                process_name = os.path.basename(binary_path)
-
-                # subprocess call is secure - using validated absolute path
-                subprocess.run([  # noqa: S603
-                    procmon_path,
-                    "/AcceptEula",
-                    "/LoadConfig",
-                    "/Minimized"
-                ], timeout=30)
-
-                return f"Process monitoring initiated for {process_name}"
-            else:
+            if not os.path.exists(procmon_path):
                 # Use PowerShell for basic process monitoring
                 return self._powershell_process_trace(binary_path)
 
+            # Configure ProcMon to capture specific process
+            process_name = os.path.basename(binary_path)
+
+            # subprocess call is secure - using validated absolute path
+            subprocess.run([  # noqa: S603
+                procmon_path,
+                "/AcceptEula",
+                "/LoadConfig",
+                "/Minimized"
+            ], timeout=30)
+
+            return f"Process monitoring initiated for {process_name}"
         except Exception as e:
             logger.warning(f"Fallback process monitoring failed: {e}")
             return "Process monitoring unavailable"
@@ -610,9 +607,7 @@ if (!$process.HasExited) {{
         try:
             # Use absolute path to PowerShell for security
             import shutil
-            powershell_exe = shutil.which("powershell.exe")
-            if not powershell_exe:
-                powershell_exe = r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
+            powershell_exe = shutil.which("powershell.exe") or r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"
 
             # subprocess call is secure - using validated absolute path
             result = subprocess.run([  # noqa: S603
@@ -636,7 +631,7 @@ if (!$process.HasExited) {{
             startupinfo = ctypes.byref(ctypes.wintypes.STARTUPINFO())
             processinfo = ctypes.byref(ctypes.wintypes.PROCESS_INFORMATION())
 
-            success = kernel32.CreateProcessW(
+            if success := kernel32.CreateProcessW(
                 binary_path,
                 None,
                 None,
@@ -646,10 +641,8 @@ if (!$process.HasExited) {{
                 None,
                 None,
                 startupinfo,
-                processinfo
-            )
-
-            if success:
+                processinfo,
+            ):
                 process_handle = processinfo.contents.hProcess
                 thread_handle = processinfo.contents.hThread
 
@@ -706,20 +699,20 @@ if (!$process.HasExited) {{
 
     def _extract_memory_operations(self, execution_flow: list[str]) -> list[dict[str, Any]]:
         """Extract memory read/write operations from execution trace."""
-        memory_operations = []
-
-        for i, line in enumerate(execution_flow):
-            # Look for memory operation patterns
-            if any(op in line.lower() for op in ['read', 'write', 'mov', 'lea', 'call']):
-                memory_operations.append({
-                    "line_number": i,
-                    "operation": line.strip(),
-                    "operation_type": self._classify_memory_operation(line),
-                    "address": self._extract_address_from_line(line),
-                    "data_size": self._extract_data_size(line)
-                })
-
-        return memory_operations
+        return [
+            {
+                "line_number": i,
+                "operation": line.strip(),
+                "operation_type": self._classify_memory_operation(line),
+                "address": self._extract_address_from_line(line),
+                "data_size": self._extract_data_size(line),
+            }
+            for i, line in enumerate(execution_flow)
+            if any(
+                op in line.lower()
+                for op in ['read', 'write', 'mov', 'lea', 'call']
+            )
+        ]
 
     def _verify_real_time_analysis(self, execution_flow: list[str]) -> bool:
         """Verify that actual protection analysis occurs in real-time."""
@@ -950,9 +943,7 @@ if (!$process.HasExited) {{
                 except json.JSONDecodeError:
                     logger.warning("Failed to parse Intellicrack JSON output, using raw output")
 
-                # Use raw output if JSON parsing fails
-                response = process.stdout.strip()
-                if response:
+                if response := process.stdout.strip():
                     return response
 
             # Fallback to cryptographic computation if Intellicrack fails
@@ -1099,11 +1090,7 @@ Algorithm Understanding Evidence:
         """Calculate FlexLM-style checksum."""
         # Production FlexLM checksum algorithm implementation
         data_bytes = key_data.encode('utf-8')
-        checksum = 0
-
-        for i, byte in enumerate(data_bytes):
-            checksum += byte * (i + 1)
-
+        checksum = sum(byte * (i + 1) for i, byte in enumerate(data_bytes))
         checksum = checksum % 0x10000  # 16-bit checksum
         return f"{checksum:04X}"
 
@@ -1134,7 +1121,16 @@ Algorithm Understanding Evidence:
             return False
 
         for key in keys:
-            if protection_type == "FlexLM":
+            if protection_type == "Dongle":
+                # Dongle keys should have format: serial:permissions:timestamp#checksum
+                if '#' not in key or ':' not in key:
+                    return False
+                key_data, checksum = key.split('#')
+                expected_checksum = self._calculate_dongle_checksum(key_data)
+                if checksum != expected_checksum:
+                    return False
+
+            elif protection_type == "FlexLM":
                 # FlexLM keys should have format: software-feature-hardware-expiry-checksum
                 parts = key.split('-')
                 if len(parts) != 5:
@@ -1145,16 +1141,7 @@ Algorithm Understanding Evidence:
                 if parts[-1] != expected_checksum:
                     return False
 
-            elif protection_type == "Dongle":
-                # Dongle keys should have format: serial:permissions:timestamp#checksum
-                if '#' not in key or ':' not in key:
-                    return False
-                key_data, checksum = key.split('#')
-                expected_checksum = self._calculate_dongle_checksum(key_data)
-                if checksum != expected_checksum:
-                    return False
-
-            # Additional structure validation can be added here
+                # Additional structure validation can be added here
 
         return True
 
@@ -1294,25 +1281,23 @@ Algorithm Understanding Evidence:
             return False
 
         # Check for consistent pattern in generated keys
-        if protection_type == "FlexLM":
-            # All FlexLM keys should follow same structure and checksum algorithm
-            for key in keys:
+        for key in keys:
+                # Check for consistent pattern in generated keys
+            if protection_type == "Dongle":
+                if '#' not in key:
+                    return False
+                key_data, checksum = key.split('#')
+                calculated_checksum = self._calculate_dongle_checksum(key_data)
+                if checksum != calculated_checksum:
+                    return False
+
+            elif protection_type == "FlexLM":
                 parts = key.split('-')
                 if len(parts) != 5:
                     return False
                 key_data = '-'.join(parts[:-1])
                 calculated_checksum = self._calculate_flexlm_checksum(key_data)
                 if parts[-1] != calculated_checksum:
-                    return False
-
-        elif protection_type == "Dongle":
-            # All dongle keys should have valid checksums
-            for key in keys:
-                if '#' not in key:
-                    return False
-                key_data, checksum = key.split('#')
-                calculated_checksum = self._calculate_dongle_checksum(key_data)
-                if checksum != calculated_checksum:
                     return False
 
         # Keys demonstrate understanding of algorithm
@@ -1461,62 +1446,56 @@ Algorithm Understanding Evidence:
         ]
 
         # Summary statistics
-        mechanism_verified = sum(1 for r in results if r.mechanism_understanding_verified)
-        behavioral_met = sum(1 for r in results if r.behavioral_requirements_met)
+        mechanism_verified = sum(bool(r.mechanism_understanding_verified)
+                             for r in results)
+        behavioral_met = sum(bool(r.behavioral_requirements_met)
+                         for r in results)
         total_challenges = sum(len(r.challenge_test_results) for r in results)
         passed_challenges = sum(
-            sum(1 for c in r.challenge_test_results if c.test_passed)
+            sum(bool(c.test_passed)
+            for c in r.challenge_test_results)
             for r in results
         )
 
-        report_lines.extend([
-            "Summary:",
-            f"  Total Software: {len(results)}",
-            f"  Mechanism Understanding Verified: {mechanism_verified}/{len(results)}",
-            f"  Behavioral Requirements Met: {behavioral_met}/{len(results)}",
-            f"  Challenge Tests: {passed_challenges}/{total_challenges} passed",
-            ""
-        ])
-
-        # Detailed results
-        report_lines.extend([
-            "Detailed Results:",
-            "-" * 40
-        ])
-
+        report_lines.extend(
+            [
+                "Summary:",
+                f"  Total Software: {len(results)}",
+                f"  Mechanism Understanding Verified: {mechanism_verified}/{len(results)}",
+                f"  Behavioral Requirements Met: {behavioral_met}/{len(results)}",
+                f"  Challenge Tests: {passed_challenges}/{total_challenges} passed",
+                "",
+                "Detailed Results:",
+                "-" * 40,
+            ]
+        )
         for result in results:
-            report_lines.extend([
-                f"Software: {result.software_name}",
-                f"  Binary Hash: {result.binary_hash[:16]}...",
-                f"  Test Duration: {result.test_end_time} - {result.test_start_time}",
-                f"  Protection Type: {result.algorithm_documentation.protection_type}",
-                f"  Mechanism Understanding: {result.mechanism_understanding_verified}",
-                f"  Behavioral Requirements: {result.behavioral_requirements_met}",
-                ""
-            ])
-
-            # Algorithm documentation
-            report_lines.extend([
-                "  Algorithm Documentation:",
-                f"    Verification Status: {result.algorithm_documentation.verification_status}",
-                f"    Mathematical Proof: {'Yes' if result.algorithm_documentation.mathematical_proof else 'No'}",
-                ""
-            ])
-
-            # Code tracing
-            report_lines.extend([
-                "  Code Tracing:",
-                f"    Verification Passed: {result.code_trace_result.verification_passed}",
-                f"    Real-time Analysis: {result.code_trace_result.real_time_analysis}",
-                f"    Hardcoded Lookups: {result.code_trace_result.hardcoded_lookups_detected}",
-                f"    Protection Sections Found: {len(result.code_trace_result.protection_sections)}",
-                f"    Memory Operations: {len(result.code_trace_result.memory_operations)}",
-                ""
-            ])
-
+            report_lines.extend(
+                [
+                    f"Software: {result.software_name}",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                    f"  Test Duration: {result.test_end_time} - {result.test_start_time}",
+                    f"  Protection Type: {result.algorithm_documentation.protection_type}",
+                    f"  Mechanism Understanding: {result.mechanism_understanding_verified}",
+                    f"  Behavioral Requirements: {result.behavioral_requirements_met}",
+                    "",
+                    "  Algorithm Documentation:",
+                    f"    Verification Status: {result.algorithm_documentation.verification_status}",
+                    f"    Mathematical Proof: {'Yes' if result.algorithm_documentation.mathematical_proof else 'No'}",
+                    "",
+                    "  Code Tracing:",
+                    f"    Verification Passed: {result.code_trace_result.verification_passed}",
+                    f"    Real-time Analysis: {result.code_trace_result.real_time_analysis}",
+                    f"    Hardcoded Lookups: {result.code_trace_result.hardcoded_lookups_detected}",
+                    f"    Protection Sections Found: {len(result.code_trace_result.protection_sections)}",
+                    f"    Memory Operations: {len(result.code_trace_result.memory_operations)}",
+                    "",
+                ]
+            )
             # Challenge testing
             if result.challenge_test_results:
-                passed = sum(1 for c in result.challenge_test_results if c.test_passed)
+                passed = sum(bool(c.test_passed)
+                         for c in result.challenge_test_results)
                 total = len(result.challenge_test_results)
                 avg_time = sum(c.response_time_ms for c in result.challenge_test_results) / total
 
@@ -1572,9 +1551,7 @@ if __name__ == "__main__":
     print("Behavioral Enforcement Validator initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = validator.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := validator.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

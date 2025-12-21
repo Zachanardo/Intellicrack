@@ -253,9 +253,7 @@ else:
 
                 def sort_key(x: tuple[Any, ...]) -> Any:
                     val = x[col_idx] if col_idx < len(x) else None
-                    if val is None:
-                        return ""
-                    return val
+                    return "" if val is None else val
 
                 result_rows.sort(key=sort_key, reverse=reverse)
 
@@ -337,15 +335,15 @@ else:
             row_value = row.get(col_name)
 
             if operator == "=":
-                return bool(row_value == value)
+                return row_value == value
             elif operator == "!=":
-                return bool(row_value != value)
+                return row_value != value
             elif operator == ">":
-                return bool(row_value > value if row_value is not None else False)
+                return row_value > value if row_value is not None else False
             elif operator == "<":
-                return bool(row_value < value if row_value is not None else False)
+                return row_value < value if row_value is not None else False
             elif operator == ">=":
-                return bool(row_value >= value if row_value is not None else False)
+                return row_value >= value if row_value is not None else False
             elif operator == "<=":
                 return bool(row_value <= value if row_value is not None else False)
             elif operator == "LIKE":

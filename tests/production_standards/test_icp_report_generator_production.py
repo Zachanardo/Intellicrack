@@ -58,7 +58,7 @@ def sample_unified_result() -> UnifiedProtectionResult:
         },
     )
 
-    result = UnifiedProtectionResult(
+    return UnifiedProtectionResult(
         file_path="D:/test/sample_protected.exe",
         file_type="PE32",
         architecture="x86",
@@ -129,8 +129,6 @@ def sample_unified_result() -> UnifiedProtectionResult:
         icp_analysis=icp_analysis,
         protection_analysis=None,
     )
-
-    return result
 
 
 @pytest.fixture

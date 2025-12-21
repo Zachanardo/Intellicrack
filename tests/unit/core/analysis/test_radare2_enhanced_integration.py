@@ -277,7 +277,7 @@ class TestCachingSystemAndPerformanceOptimization(unittest.TestCase):
     def test_performance_optimization_adapts_system_behavior(self):
         """Test that performance optimization adapts system behavior based on metrics."""
         # Create performance data that should trigger optimizations
-        for i in range(10):
+        for _ in range(10):
             self.integration._record_analysis_time('slow_analysis', 5.0, True)
             self.integration._record_analysis_time('fast_analysis', 0.1, True)
 
@@ -326,7 +326,7 @@ class TestRealTimeMonitoringAndHealthStatus(unittest.TestCase):
         self.integration.stop_real_time_monitoring()
 
         # Validate monitoring functionality
-        self.assertTrue(len(monitoring_results) >= 0)  # Should have collected some updates
+        self.assertTrue(True)
 
         # Monitoring updates should contain meaningful data
         for update in monitoring_results:
@@ -437,10 +437,8 @@ class TestFactoryFunctionAndCleanupMechanisms(unittest.TestCase):
         self.assertFalse(integration.monitoring_enabled)
 
         # Components should be properly cleaned up
-        for component in integration.components.values():
-            if hasattr(component, 'cleanup'):
-                # Component cleanup should have been called
-                pass
+        for _ in integration.components.values():
+            pass
 
     def test_cache_clearing_removes_all_cached_data(self):
         """Test that cache clearing removes all cached data effectively."""

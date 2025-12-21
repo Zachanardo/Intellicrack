@@ -83,8 +83,9 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
                 hasp_responses.append(response)
 
         # Validate HASP protocol understanding
-        assert len([r for r in hasp_responses if r is not None]) > 0, \
-               "Must handle real HASP protocol communications"
+        assert [
+            r for r in hasp_responses if r is not None
+        ], "Must handle real HASP protocol communications"
 
     def test_adobe_license_capture_analysis(self, protocol_handler, network_captures_path):
         """Validate analysis of Adobe licensing protocol captures."""
@@ -103,8 +104,7 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
         adobe_analyses = []
         for message in adobe_messages:
             if len(message) >= 8:  # Minimum meaningful message size
-                response = protocol_handler.generate_response(message)
-                if response:
+                if response := protocol_handler.generate_response(message):
                     adobe_analyses.append(len(response))
 
         # Validate Adobe protocol analysis capability
@@ -243,11 +243,9 @@ class TestGenericProtocolHandlerRealNetworkCaptures:
             return True
 
         # Check for high byte values
-        high_bytes = sum(1 for b in data if b > 127)
-        if high_bytes > len(data) * 0.3:  # More than 30% high bytes
-            return True
-
-        return False
+        high_bytes = sum(bool(b > 127)
+                     for b in data)
+        return high_bytes > len(data) * 0.3
 
     def _is_binary_protocol(self, message: bytes) -> bool:
         """Determine if a message uses binary protocol."""
@@ -335,13 +333,13 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
                 })
 
         # Validate protocol reconstruction capability
-        assert len(communication_patterns) > 0, "Must simulate license protocol communications"
+        assert communication_patterns, "Must simulate license protocol communications"
 
         # Verify response quality
         for pattern in communication_patterns:
             assert pattern['response_size'] > 0, "Must generate responses to license requests"
             assert pattern['response_size'] >= pattern['request_size'] * 0.5, \
-                   "Responses must be substantial relative to requests"
+                       "Responses must be substantial relative to requests"
 
     def test_enterprise_license_server_simulation(self, protocol_handler, protected_binaries_path):
         """Test simulation of enterprise license server communications."""
@@ -385,8 +383,7 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
 
         fingerprint_analyses = []
         for request in fingerprint_requests:
-            response = protocol_handler.generate_response(request)
-            if response:
+            if response := protocol_handler.generate_response(request):
                 analysis = {
                     'request_type': self._identify_fingerprint_type(request),
                     'response_valid': self._validate_fingerprint_response(response),
@@ -395,8 +392,9 @@ class TestGenericProtocolHandlerRealBinaryAnalysis:
                 fingerprint_analyses.append(analysis)
 
         # Validate hardware fingerprint protocol handling
-        assert len(fingerprint_analyses) > 0, "Must analyze hardware fingerprint protocols"
-        manipulation_count = sum(1 for a in fingerprint_analyses if a['manipulation_detected'])
+        assert fingerprint_analyses, "Must analyze hardware fingerprint protocols"
+        manipulation_count = sum(bool(a['manipulation_detected'])
+                             for a in fingerprint_analyses)
         assert manipulation_count > 0, "Must demonstrate fingerprint manipulation capability"
 
     def _generate_license_request_for_binary(self, binary_file: str) -> bytes:

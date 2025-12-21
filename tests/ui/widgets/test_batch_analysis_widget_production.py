@@ -590,7 +590,7 @@ class TestPerformanceAndStability:
         """Widget handles multiple consecutive batch analyses."""
         widget = BatchAnalysisWidget()
 
-        for batch_num in range(3):
+        for _ in range(3):
             widget.selected_files = [
                 str(temp_test_files / f"test{i}.exe") for i in range(1, 3)
             ]

@@ -152,9 +152,10 @@ class TestCFGExplorer(IntellicrackTestBase):
 
         cfg_explorer = CFGExplorer()
 
-        # Test buffer overflow detection
-        buffer_overflow_binary = next((b for b in self.vulnerable_binaries if "buffer_overflow" in str(b)), None)
-        if buffer_overflow_binary:
+        if buffer_overflow_binary := next(
+            (b for b in self.vulnerable_binaries if "buffer_overflow" in str(b)),
+            None,
+        ):
             cfg_explorer.load_binary(str(buffer_overflow_binary))
             patterns = cfg_explorer.get_vulnerability_patterns()
 
@@ -188,11 +189,8 @@ class TestCFGExplorer(IntellicrackTestBase):
 
         # Should contain meaningful analysis categories
         expected_categories = ["license_checks", "validation_functions", "bypass_opportunities", "protection_strength"]
-        found_categories = 0
-        for category in expected_categories:
-            if any(category in key.lower() for key in license_analysis):
-                found_categories += 1
-
+        found_categories = sum(bool(any(category in key.lower() for key in license_analysis))
+                           for category in expected_categories)
         assert found_categories >= 2, f"Should identify at least 2 license analysis categories, found {found_categories}"
 
     def test_code_complexity_analysis(self):
@@ -273,18 +271,18 @@ class TestCFGExplorer(IntellicrackTestBase):
         assert isinstance(xref_analysis, dict), "Cross-reference analysis should be structured"
         assert len(xref_analysis) > 0, "Should identify cross-references"
 
-        # Should contain meaningful reference types
-        reference_types = []
-        for ref_data in xref_analysis.values():
-            if isinstance(ref_data, dict) and "type" in ref_data:
-                reference_types.append(ref_data["type"])
-
-        assert len(reference_types) > 0, "Should identify reference types"
+        reference_types = [
+            ref_data["type"]
+            for ref_data in xref_analysis.values()
+            if isinstance(ref_data, dict) and "type" in ref_data
+        ]
+        assert reference_types, "Should identify reference types"
 
         # Should find different types of references
         expected_types = ["call", "data", "jump", "string"]
         found_types = {t.lower() for t in reference_types}
-        type_matches = sum(1 for expected in expected_types if any(expected in found for found in found_types))
+        type_matches = sum(bool(any(expected in found for found in found_types))
+                       for expected in expected_types)
         assert type_matches >= 2, f"Should identify at least 2 reference types, found {found_types}"
 
     def test_function_similarity_analysis(self):
@@ -310,11 +308,10 @@ class TestCFGExplorer(IntellicrackTestBase):
 
             # Check similarity data structure
             for sim_data in similarities.values():
-                if isinstance(sim_data, dict):
-                    if "similarity_score" in sim_data:
-                        score = sim_data["similarity_score"]
-                        assert isinstance(score, (int, float)), "Similarity score should be numeric"
-                        assert 0 <= score <= 1, "Similarity score should be between 0 and 1"
+                if isinstance(sim_data, dict) and "similarity_score" in sim_data:
+                    score = sim_data["similarity_score"]
+                    assert isinstance(score, (int, float)), "Similarity score should be numeric"
+                    assert 0 <= score <= 1, "Similarity score should be between 0 and 1"
 
     def test_advanced_analysis_capabilities(self):
         """Test advanced analysis features for professional security research."""
@@ -335,11 +332,11 @@ class TestCFGExplorer(IntellicrackTestBase):
 
         # Should contain sophisticated analysis categories
         expected_categories = ["control_flow_analysis", "data_flow_analysis", "security_analysis", "code_patterns", "optimization_analysis"]
-        found_categories = 0
-        for category in expected_categories:
-            if any(category.replace("_", "") in key.lower().replace("_", "") for key in advanced_results):
-                found_categories += 1
-
+        found_categories = sum(bool(any(
+                                           category.replace("_", "") in key.lower().replace("_", "")
+                                           for key in advanced_results
+                                       ))
+                           for category in expected_categories)
         assert found_categories >= 2, f"Should provide at least 2 advanced analysis categories, found {found_categories}"
 
     def test_complexity_metrics_calculation(self):
@@ -366,7 +363,8 @@ class TestCFGExplorer(IntellicrackTestBase):
 
         # Should include other sophisticated metrics
         expected_metrics = ["average_complexity", "max_complexity", "total_functions", "complex_functions"]
-        found_metrics = sum(1 for metric in expected_metrics if metric in complexity_metrics)
+        found_metrics = sum(bool(metric in complexity_metrics)
+                        for metric in expected_metrics)
         assert found_metrics >= 2, f"Should provide at least 2 complexity metrics, found {found_metrics}"
 
     def test_visualization_and_export_capabilities(self):
@@ -398,9 +396,7 @@ class TestCFGExplorer(IntellicrackTestBase):
                 assert isinstance(node, dict), "Node should be structured data"
                 assert "id" in node, "Node should have ID"
 
-        # Test layout generation
-        layout = cfg_explorer.get_graph_layout()
-        if layout:
+        if layout := cfg_explorer.get_graph_layout():
             self.assert_real_output(layout, "Graph layout appears to be placeholder")
 
     def test_export_functionality(self):
@@ -480,12 +476,11 @@ class TestCFGExplorer(IntellicrackTestBase):
 
     def test_performance_with_large_binary(self):
         """Test performance and stability with larger binaries."""
-        # Look for larger test binaries
-        large_binaries = []
-        for binary in self.legitimate_binaries:
-            if binary.exists() and binary.stat().st_size > 1024 * 1024:  # > 1MB
-                large_binaries.append(binary)
-
+        large_binaries = [
+            binary
+            for binary in self.legitimate_binaries
+            if binary.exists() and binary.stat().st_size > 1024 * 1024
+        ]
         if not large_binaries:
             pytest.skip("No large binaries available for performance testing")
 
@@ -559,4 +554,6 @@ class TestCFGUtilityFunctions(IntellicrackTestBase):
                 # This is acceptable as long as it's not a placeholder error
                 error_msg = str(e).lower()
                 placeholder_errors = ["not implemented", "todo", "placeholder"]
-                assert not any(err in error_msg for err in placeholder_errors), f"Should not have placeholder error: {e}"
+                assert all(
+                    err not in error_msg for err in placeholder_errors
+                ), f"Should not have placeholder error: {e}"

@@ -510,7 +510,7 @@ class TestFileTransferOperations:
                 manager._upload_file_to_vm(sample_snapshot, "test content", "/tmp/test/file.txt")
 
                 mkdir_calls = [call for call in mock_exec.call_args_list if "mkdir" in str(call)]
-                assert len(mkdir_calls) > 0
+                assert mkdir_calls
 
     def test_upload_binary_sets_executable_permissions(
         self, qemu_manager_with_mocked_config: QEMUManager, sample_snapshot: QEMUSnapshot, tmp_path: Path

@@ -136,7 +136,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             ("${TEST_VAR}", "test_value"),
             ("${TEST_VAR:default}", "test_value"),
             ("${NONEXISTENT:default_val}", "default_val"),
-            ("${INTELLICRACK_HOME}/subdir", str(self.temp_dir) + "/subdir"),
+            ("${INTELLICRACK_HOME}/subdir", f"{str(self.temp_dir)}/subdir"),
             ("prefix_${TEST_VAR}_suffix", "prefix_test_value_suffix"),
         ]
 
@@ -150,7 +150,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
 
         expanded = config.expand_environment_variables(test_dict)
         self.assert_real_output(expanded)
-        assert expanded["path"] == str(self.temp_dir) + "/config"
+        assert expanded["path"] == f"{str(self.temp_dir)}/config"
         assert expanded["nested"]["value"] == "test_value"
 
         # Cleanup
@@ -221,7 +221,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         backup_dir = self.test_config_dir / "backups"
         assert backup_dir.exists(), "Backup directory should be created"
         backup_files = list(backup_dir.glob("config_*.json"))
-        assert len(backup_files) > 0, "Backup file should be created"
+        assert backup_files, "Backup file should be created"
 
         # Verify backup content is valid
         with open(backup_files[0], encoding="utf-8") as f:
@@ -461,7 +461,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
             thread.join()
 
         # Verify no errors occurred
-        assert len(errors) == 0, f"Thread safety errors: {errors}"
+        assert not errors, f"Thread safety errors: {errors}"
 
         # Verify all thread operations succeeded
         final_ui_config = config.get_ui_config()
@@ -491,7 +491,7 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         # Verify backup exists
         backup_dir = self.test_config_dir / "backups"
         backup_files = list(backup_dir.glob("config_*.json"))
-        assert len(backup_files) > 0, "Should have backup files"
+        assert backup_files, "Should have backup files"
 
         # Corrupt current config
         with open(self.test_config_file, "w") as f:
@@ -529,7 +529,9 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         os.environ["TEST_HOME"] = str(self.temp_dir)
         config.set_section_value("directories", "test_path", "${TEST_HOME}/test")
         test_path = config.get_section_value("directories", "test_path")
-        assert test_path == str(self.temp_dir) + "/test", "Should expand environment variables"
+        assert (
+            test_path == f"{str(self.temp_dir)}/test"
+        ), "Should expand environment variables"
 
         # Test 3: Schema validation during updates
         try:
@@ -547,13 +549,13 @@ class TestIntellicrackConfig(IntellicrackTestBase):
         config.update_section("ui", {"theme": "light"})
         time.sleep(0.1)  # Wait for async notification
 
-        assert len(notifications) > 0, "Should receive change notifications"
+        assert notifications, "Should receive change notifications"
 
         # Test 5: Atomic saves and backups
         config.save_config_atomic()
         backup_dir = self.test_config_dir / "backups"
         backups = list(backup_dir.glob("config_*.json"))
-        assert len(backups) > 0, "Should create backup files"
+        assert backups, "Should create backup files"
 
         # Test 6: Version management
         config.set_config_version("3.5.0")
@@ -785,7 +787,7 @@ class TestConfigManagerSingleton(IntellicrackTestBase):
             thread.join()
 
         # Verify no errors
-        assert len(errors) == 0, f"Singleton creation errors: {errors}"
+        assert not errors, f"Singleton creation errors: {errors}"
 
         # Verify all instances are the same (singleton pattern)
         assert len(instances) == 10, "Should have 10 instances created"

@@ -4,15 +4,13 @@ This tests that the memory_load_data is properly created and used to
 calculate test_load_size_bytes for benchmarking memory optimization.
 """
 
+
 from __future__ import annotations
 
 import gc
 from typing import TYPE_CHECKING, Any
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestMemoryLoadDataUsage:

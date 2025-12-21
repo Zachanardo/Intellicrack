@@ -363,9 +363,9 @@ class TestFallbackChain:
     ) -> None:
         """Test circuit breaker closes on successful request."""
         with patch(
-            "intellicrack.ai.llm_fallback_chains.get_llm_manager",
-            return_value=mock_llm_manager,
-        ):
+                "intellicrack.ai.llm_fallback_chains.get_llm_manager",
+                return_value=mock_llm_manager,
+            ):
             chain = FallbackChain("test", test_configs)
 
             health = chain.health_stats["model-1"]
@@ -374,7 +374,7 @@ class TestFallbackChain:
 
             chain._update_health_stats("model-1", True, response_time=0.3)
 
-            assert health.is_circuit_open is False
+            assert not health.is_circuit_open
             assert health.circuit_opened_at is None
 
     def test_get_ordered_models_no_adaptive(
@@ -946,7 +946,7 @@ class TestRealWorldScenarios:
             else:
                 chain._update_health_stats("model-1", True, response_time=0.5)
 
-        for i in range(8):
+        for _ in range(8):
             chain._update_health_stats("model-2", True, response_time=0.3)
 
         report = chain.get_health_report()

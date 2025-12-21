@@ -301,17 +301,17 @@ class ProductionReadinessCheckpoint7:
                     )
                     return False
             except Exception as e:
-                # If radare2 fails, check that the engine at least has the integration
-                if "Connection failed" in str(e) or "Process terminated" in str(e):
-                    # Radare2 not available, but check integration exists
-                    if not hasattr(engine2, '_analyze_commercial_licenses'):
-                        self.checkpoint_results["critical_failures"].append(
-                            "Commercial license analysis method missing from engine"
-                        )
-                        return False
-                else:
+                if "Connection failed" not in str(
+                    e
+                ) and "Process terminated" not in str(e):
                     raise
 
+                # Radare2 not available, but check integration exists
+                if not hasattr(engine2, '_analyze_commercial_licenses'):
+                    self.checkpoint_results["critical_failures"].append(
+                        "Commercial license analysis method missing from engine"
+                    )
+                    return False
             print("    OK Radare2 integration tests passed")
             return True
 
@@ -490,7 +490,9 @@ Generated: {self.checkpoint_results['timestamp']}
 
         report += f"""
 ### Overall Status
-Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len(self.checkpoint_results['tests'])} ({sum(1 for v in self.checkpoint_results['tests'].values() if v) / len(self.checkpoint_results['tests']) * 100:.1f}%)
+Pass Rate: {sum(bool(v)
+            for v in self.checkpoint_results['tests'].values())}/{len(self.checkpoint_results['tests'])} ({sum(bool(v)
+                                                                                                                      for v in self.checkpoint_results['tests'].values()) / len(self.checkpoint_results['tests']) * 100:.1f}%)
 {'OK CHECKPOINT PASSED' if passed else 'FAIL CHECKPOINT FAILED'}
 
 ## Certification Statement
@@ -534,9 +536,7 @@ Pass Rate: {sum(1 for v in self.checkpoint_results['tests'].values() if v)}/{len
 def main():
     """Main checkpoint validation"""
     checkpoint = ProductionReadinessCheckpoint7()
-    passed = checkpoint.run_all_tests()
-
-    if passed:
+    if passed := checkpoint.run_all_tests():
         print("\n" + "=" * 60)
         print("OK CHECKPOINT 7 PASSED - READY FOR DAY 8")
         print("=" * 60)

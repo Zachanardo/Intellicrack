@@ -173,9 +173,9 @@ class TestPatchPointSelector:
             patched_bytes=b"\x90" * len(code),
         )
 
-        patch_points = selector.select_optimal_patch_points(check, instructions)
-
-        if patch_points:
+        if patch_points := selector.select_optimal_patch_points(
+            check, instructions
+        ):
             assert patch_points[0].safety_score >= patch_points[-1].safety_score
 
 
@@ -258,9 +258,7 @@ class TestIntelligentPatching:
             binary_path = self.create_test_binary(tmp_path)
 
             remover = LicenseCheckRemover(binary_path)
-            checks = remover.analyze()
-
-            if checks:
+            if checks := remover.analyze():
                 for check in checks:
                     if check.patch_points:
                         assert len(check.patch_points) > 0
@@ -283,7 +281,7 @@ class TestIntelligentPatching:
                 result = remover.apply_intelligent_patches(checks)
                 assert isinstance(result, bool)
 
-                backup_path = Path(binary_path + ".bak")
+                backup_path = Path(f"{binary_path}.bak")
                 assert backup_path.exists()
 
         except Exception as e:

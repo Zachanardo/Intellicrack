@@ -94,8 +94,7 @@ class TestAdvancedCryptoAnalysis:
 
         try:
             with r2_session(str(aes_binary)) as r2:
-                functions = r2.get_functions()
-                if functions:
+                if functions := r2.get_functions():
                     func_addr = functions[0].get("offset", 0x401000)
 
                     iterations = generator._analyze_loop_iterations(r2, func_addr)
@@ -112,8 +111,7 @@ class TestAdvancedCryptoAnalysis:
 
         try:
             with r2_session(str(aes_binary)) as r2:
-                functions = r2.get_functions()
-                if functions:
+                if functions := r2.get_functions():
                     func_addr = functions[0].get("offset", 0x401000)
 
                     key_expansion = generator._find_key_expansion(r2, func_addr)
@@ -129,8 +127,7 @@ class TestAdvancedCryptoAnalysis:
 
         try:
             with r2_session(str(aes_binary)) as r2:
-                functions = r2.get_functions()
-                if functions:
+                if functions := r2.get_functions():
                     func_addr = functions[0].get("offset", 0x401000)
 
                     ivs = generator._find_ivs(r2, func_addr)
@@ -146,8 +143,7 @@ class TestAdvancedCryptoAnalysis:
 
         try:
             with r2_session(str(aes_binary)) as r2:
-                functions = r2.get_functions()
-                if functions:
+                if functions := r2.get_functions():
                     func_addr = functions[0].get("offset", 0x401000)
 
                     salts = generator._find_salts(r2, func_addr)
@@ -682,16 +678,14 @@ class TestAdvancedPatchGeneration:
             assert isinstance(patch_bytes, str)
             assert len(patch_bytes) > 0
 
-            clean_bytes = patch_bytes.replace("\\x", "").replace(" ", "")
-            if clean_bytes:
+            if clean_bytes := patch_bytes.replace("\\x", "").replace(" ", ""):
                 assert all(c in "0123456789abcdefABCDEF" for c in clean_bytes)
 
     def test_get_original_bytes_extracts_binary_data(self, generator: R2BypassGenerator) -> None:
         """Original bytes extraction retrieves actual binary data."""
         try:
             with r2_session(generator.binary_path) as r2:
-                functions = r2.get_functions()
-                if functions:
+                if functions := r2.get_functions():
                     func_addr = functions[0].get("offset", 0x401000)
 
                     original_bytes = generator._get_original_bytes(r2, func_addr)
@@ -818,8 +812,7 @@ class TestCFGAdvancedMethods:
         """Entry validation check finding identifies validation at function entry."""
         try:
             with r2_session(generator_with_cfg.binary_path) as r2:
-                functions = r2.get_functions()
-                if functions:
+                if functions := r2.get_functions():
                     func_addr = functions[0].get("offset", 0x401000)
 
                     entry_checks = generator_with_cfg._find_entry_validation_checks(r2, func_addr)

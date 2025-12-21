@@ -177,7 +177,7 @@ class TestAuditLogger:
         audit_logger.log_event(event)
 
         log_files = list(audit_logger.log_dir.glob("audit_*.log"))
-        assert len(log_files) > 0
+        assert log_files
 
         with open(log_files[0]) as f:
             content = f.read()
@@ -199,7 +199,7 @@ class TestAuditLogger:
             audit_logger.log_event(event)
 
         log_files = list(audit_logger.log_dir.glob("audit_*.log"))
-        assert len(log_files) > 0
+        assert log_files
 
         with open(log_files[0]) as f:
             content = f.read()
@@ -242,9 +242,7 @@ class TestAuditLogger:
         log_files = list(audit_logger.log_dir.glob("audit_*.log"))
         log_file = log_files[0]
 
-        with open(log_file) as f:
-            original_content = f.read()
-
+        original_content = Path(log_file).read_text()
         tampered_content = original_content.replace("Original event", "Tampered event")
 
         with open(log_file, "w") as f:
@@ -380,7 +378,7 @@ class TestEncryptedLogging:
         encrypted_audit_logger.log_event(event)
 
         log_files = list(encrypted_audit_logger.log_dir.glob("audit_*.log"))
-        assert len(log_files) > 0
+        assert log_files
 
         with open(log_files[0], "rb") as f:
             content = f.read()
@@ -507,7 +505,7 @@ class TestEdgeCases:
         audit_logger.log_event(event)
 
         log_files = list(audit_logger.log_dir.glob("audit_*.log"))
-        assert len(log_files) > 0
+        assert log_files
 
     def test_log_event_with_none_details(self, audit_logger: AuditLogger) -> None:
         """Log event with None details."""
@@ -521,7 +519,7 @@ class TestEdgeCases:
         audit_logger.log_event(event)
 
         log_files = list(audit_logger.log_dir.glob("audit_*.log"))
-        assert len(log_files) > 0
+        assert log_files
 
     def test_log_event_with_large_details(self, audit_logger: AuditLogger) -> None:
         """Log event with very large details object."""
@@ -537,7 +535,7 @@ class TestEdgeCases:
         audit_logger.log_event(event)
 
         log_files = list(audit_logger.log_dir.glob("audit_*.log*"))
-        assert len(log_files) > 0
+        assert log_files
 
     def test_read_corrupted_log_file_handles_gracefully(self, audit_logger: AuditLogger, temp_log_dir: Path) -> None:
         """Reading corrupted log file handles errors gracefully."""

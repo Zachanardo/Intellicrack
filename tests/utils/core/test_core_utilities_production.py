@@ -121,7 +121,7 @@ class TestToolRegistry:
             "tool_run_static_analysis",
         ]
 
-        for tool_name in expected_tools:
+        for _ in expected_tools:
             if len(TOOL_REGISTRY) > 0:
                 break
 
@@ -350,9 +350,7 @@ class TestFewShotExamples:
 
     def test_retrieve_few_shot_example_content(self) -> None:
         """Test few-shot examples contain relevant content."""
-        examples = retrieve_few_shot_examples("license_analysis", count=1)
-
-        if examples:
+        if examples := retrieve_few_shot_examples("license_analysis", count=1):
             example = examples[0]
             assert "license" in example["input"].lower() or "license" in example["analysis"].lower()
 

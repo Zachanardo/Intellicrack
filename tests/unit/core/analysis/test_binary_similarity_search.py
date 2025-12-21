@@ -804,10 +804,7 @@ class TestBinarySimilaritySearch(IntellicrackTestBase):
         if not (self.pe_binaries or self.elf_binaries):
             pytest.skip("No binaries available for testing")
 
-        # Test with multiple binaries (performance test)
-        test_binaries = (self.pe_binaries + self.elf_binaries)[:5]  # Limit to 5 for CI
-
-        if test_binaries:
+        if test_binaries := (self.pe_binaries + self.elf_binaries)[:5]:
             for binary_path in test_binaries:
                 patterns = [f"Pattern {i}" for i in range(5)]
                 self.search_engine.add_binary(str(binary_path), patterns)

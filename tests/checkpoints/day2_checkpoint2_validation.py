@@ -139,7 +139,7 @@ def validate_production_readiness_checkpoint2():
                 print("FAIL CRITICAL FAILURE: Could not find _generate_bof_payload method")
                 return False
 
-            bof_method_code = bof_method_match.group(0)
+            bof_method_code = bof_method_match[0]
 
             # Check for forbidden placeholder patterns
             forbidden_patterns = [
@@ -167,15 +167,16 @@ def validate_production_readiness_checkpoint2():
                 "return {"
             ]
 
-            indicators_found = sum(1 for indicator in real_implementation_indicators if indicator in bof_method_code)
+            indicators_found = sum(bool(indicator in bof_method_code)
+                               for indicator in real_implementation_indicators)
 
             if indicators_found < 3:
                 validation_results["critical_failures"].append(f"BOF method shows insufficient real implementation patterns ({indicators_found}/5)")
                 print(f"FAIL CRITICAL FAILURE: BOF method shows insufficient real implementation patterns ({indicators_found}/5)")
                 return False
 
-            print(f"OK BOF method source code validation passed")
-            print(f"OK ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
+            print("OK BOF method source code validation passed")
+            print("OK ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
             print(f"OK Real implementation indicators: {indicators_found}/5")
 
         except Exception as e:
@@ -273,7 +274,7 @@ def validate_production_readiness_checkpoint2():
                 print("FAIL CRITICAL FAILURE: Could not find _generate_format_string_payload method")
                 return False
 
-            fmt_method_code = fmt_method_match.group(0)
+            fmt_method_code = fmt_method_match[0]
 
             # Check for forbidden patterns
             for pattern in forbidden_patterns:
@@ -291,15 +292,16 @@ def validate_production_readiness_checkpoint2():
                 "bytes"
             ]
 
-            format_indicators_found = sum(1 for indicator in format_indicators if indicator in fmt_method_code)
+            format_indicators_found = sum(bool(indicator in fmt_method_code)
+                                      for indicator in format_indicators)
 
             if format_indicators_found < 3:
                 validation_results["critical_failures"].append(f"Format string method shows insufficient implementation patterns ({format_indicators_found}/5)")
                 print(f"FAIL CRITICAL FAILURE: Format string method shows insufficient implementation patterns ({format_indicators_found}/5)")
                 return False
 
-            print(f"OK Format string method source code validation passed")
-            print(f"OK ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
+            print("OK Format string method source code validation passed")
+            print("OK ZERO PLACEHOLDER RULE: PASSED - No forbidden patterns detected")
             print(f"OK Format string implementation indicators: {format_indicators_found}/5")
 
         except Exception as e:
@@ -428,7 +430,7 @@ def validate_production_readiness_checkpoint2():
     for proof in validation_results["functional_proofs"]:
         print(f"   {proof['method']}: {proof.get('shellcode_size', proof.get('payload_size', 0))} bytes functional output")
     print()
-    print(f"OK Results saved to: day2_checkpoint2_results.json")
+    print("OK Results saved to: day2_checkpoint2_results.json")
     print("OK AUTHORIZED TO PROCEED TO DAY 3.1")
 
     return True

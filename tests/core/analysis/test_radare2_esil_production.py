@@ -79,7 +79,7 @@ class TestESILVMInitialization:
 
             registers: Dict[str, Any] = r2.get_esil_registers()
             assert registers is not None, "Failed to get ESIL registers"
-            assert len(registers) > 0, "No registers available in ESIL VM"
+            assert registers, "No registers available in ESIL VM"
 
     def test_esil_vm_stack_configuration(self, kernel32_binary: str) -> None:
         """ESIL VM configures stack properly for analysis."""
@@ -91,7 +91,7 @@ class TestESILVMInitialization:
 
             stack_info: str = r2._execute_command("dr?SP")
             assert stack_info is not None, "Stack pointer not set"
-            assert len(stack_info.strip()) > 0, "Stack pointer value empty"
+            assert stack_info.strip() != "", "Stack pointer value empty"
 
     def test_esil_vm_register_state_access(self, notepad_binary: str) -> None:
         """ESIL VM provides access to register state."""
@@ -106,7 +106,7 @@ class TestESILVMInitialization:
             x86_registers: List[str] = ["eax", "ebx", "ecx", "edx", "esi", "edi", "esp", "ebp"]
 
             register_found: bool = any(
-                reg.lower() in [str(k).lower() for k in registers.keys()]
+                reg.lower() in [str(k).lower() for k in registers]
                 for reg in common_registers + x86_registers
             )
 
@@ -166,8 +166,7 @@ class TestFunctionEmulation:
         assert result["steps_executed"] > 0, "No steps executed"
         assert result["steps_executed"] <= 30, "Exceeded max steps"
 
-        trace: List[Dict[str, Any]] = result["execution_trace"]
-        if trace:
+        if trace := result["execution_trace"]:
             assert all("step" in entry for entry in trace), "Missing step numbers"
             assert all("address" in entry for entry in trace), "Missing addresses"
 
@@ -185,7 +184,7 @@ class TestFunctionEmulation:
         result: Dict[str, Any] = engine.emulate_function_execution(func_addr, max_steps=50)
 
         register_states: List[Dict[str, Any]] = result["register_states"]
-        assert len(register_states) > 0, "No register states recorded"
+        assert register_states, "No register states recorded"
 
         initial_state: Dict[str, Any] = register_states[0]
         assert "step" in initial_state, "Missing step in register state"
@@ -314,8 +313,7 @@ class TestFunctionEmulation:
                 func["offset"], max_steps=100
             )
 
-            trace: List[Dict[str, Any]] = result.get("execution_trace", [])
-            if trace:
+            if trace := result.get("execution_trace", []):
                 last_instruction: str = trace[-1].get("instruction", "").lower()
                 if "ret" in last_instruction:
                     assert result["steps_executed"] < 100, "Should stop at return"
@@ -390,8 +388,7 @@ class TestLicenseCheckDetection:
             )
 
             if "license_validation_patterns" in result:
-                patterns: List[Dict[str, Any]] = result["license_validation_patterns"]
-                if patterns:
+                if patterns := result["license_validation_patterns"]:
                     assert all("type" in pattern for pattern in patterns), "Missing pattern type"
                     assert all("start_step" in pattern for pattern in patterns), "Missing start step"
 
@@ -410,11 +407,11 @@ class TestLicenseCheckDetection:
             )
 
             patterns: List[Dict[str, Any]] = result.get("license_validation_patterns", [])
-            string_comparison_patterns: List[Dict[str, Any]] = [
-                p for p in patterns if p.get("type") == "string_comparison_validation"
-            ]
-
-            if string_comparison_patterns:
+            if string_comparison_patterns := [
+                p
+                for p in patterns
+                if p.get("type") == "string_comparison_validation"
+            ]:
                 assert "start_step" in string_comparison_patterns[0], "Missing start step"
                 assert "end_step" in string_comparison_patterns[0], "Missing end step"
 
@@ -433,11 +430,11 @@ class TestLicenseCheckDetection:
             )
 
             patterns: List[Dict[str, Any]] = result.get("license_validation_patterns", [])
-            complex_patterns: List[Dict[str, Any]] = [
-                p for p in patterns if p.get("type") == "complex_validation_routine"
-            ]
-
-            if complex_patterns:
+            if complex_patterns := [
+                p
+                for p in patterns
+                if p.get("type") == "complex_validation_routine"
+            ]:
                 pattern: Dict[str, Any] = complex_patterns[0]
                 assert "comparison_count" in pattern, "Missing comparison count"
                 assert pattern["comparison_count"] >= 3, "Not complex enough"
@@ -541,11 +538,9 @@ class TestAntiAnalysisDetection:
             )
 
             anti_analysis: List[Dict[str, Any]] = result.get("anti_analysis_techniques", [])
-            debugger_checks: List[Dict[str, Any]] = [
+            if debugger_checks := [
                 a for a in anti_analysis if a.get("type") == "debugger_detection"
-            ]
-
-            if debugger_checks:
+            ]:
                 check: Dict[str, Any] = debugger_checks[0]
                 assert "step" in check, "Missing step"
                 assert "instruction" in check, "Missing instruction"
@@ -566,11 +561,9 @@ class TestAntiAnalysisDetection:
             )
 
             anti_analysis: List[Dict[str, Any]] = result.get("anti_analysis_techniques", [])
-            timing_checks: List[Dict[str, Any]] = [
+            if timing_checks := [
                 a for a in anti_analysis if a.get("type") == "timing_check"
-            ]
-
-            if timing_checks:
+            ]:
                 check: Dict[str, Any] = timing_checks[0]
                 assert "step" in check, "Missing step"
                 assert "severity" in check, "Missing severity"
@@ -590,11 +583,9 @@ class TestAntiAnalysisDetection:
             )
 
             anti_analysis: List[Dict[str, Any]] = result.get("anti_analysis_techniques", [])
-            vm_detection: List[Dict[str, Any]] = [
+            if vm_detection := [
                 a for a in anti_analysis if a.get("type") == "vm_detection"
-            ]
-
-            if vm_detection:
+            ]:
                 check: Dict[str, Any] = vm_detection[0]
                 assert "step" in check, "Missing step"
                 assert "instruction" in check, "Missing instruction"
@@ -617,8 +608,7 @@ class TestVulnerabilityDetection:
                 func["offset"], max_steps=50
             )
 
-            vulnerabilities: List[Dict[str, Any]] = result.get("vulnerabilities_detected", [])
-            if vulnerabilities:
+            if vulnerabilities := result.get("vulnerabilities_detected", []):
                 vuln: Dict[str, Any] = vulnerabilities[0]
                 assert "step" in vuln, "Missing step"
                 assert "address" in vuln, "Missing address"
@@ -873,7 +863,7 @@ class TestAPICallSequenceAnalysis:
         esil_engine._analyze_api_call_sequences(result)
 
         sequences: List[List[Dict[str, Any]]] = result.get("api_call_sequences", [])
-        assert len(sequences) > 0, "No sequences identified"
+        assert sequences, "No sequences identified"
 
     def test_handles_no_api_calls(self, esil_engine: ESILAnalysisEngine) -> None:
         """API call sequence analysis handles absence of API calls."""

@@ -180,7 +180,7 @@ class ProtocolToolCoverageAnalyzer:
             ]
 
             for method in method_patterns:
-                if method in line and ('.' + method or method + '(') in line:
+                if method in line and (f'.{method}' or f'{method}(') in line:
                     methods_tested.add(method)
 
             # Identify test scenarios
@@ -345,14 +345,14 @@ class ProtocolToolCoverageAnalyzer:
             status = 'OK' if cls['name'] in test_analysis.get('classes_tested', set()) else 'FAIL'
             report += f"- {status} **{cls['name']}** ({len(cls['methods'])} methods)\n"
 
-        report += f"""
+        report += """
 ### Identified Functions
 """
         for func in source_analysis.get('functions', []):
             status = 'OK' if func['name'] in test_analysis.get('functions_tested', set()) else 'FAIL'
             report += f"- {status} **{func['name']}()** (line {func['line_number']})\n"
 
-        report += f"""
+        report += """
 
 ## TEST COVERAGE ANALYSIS
 
@@ -362,7 +362,7 @@ class ProtocolToolCoverageAnalyzer:
             exists = 'OK' if test_file.exists() else 'FAIL'
             report += f"- {exists} {test_file.name}\n"
 
-        report += f"""
+        report += """
 
 ### Coverage Gaps
 """
@@ -383,7 +383,7 @@ class ProtocolToolCoverageAnalyzer:
             if len(coverage_gaps['uncovered_methods']) > 10:
                 report += f"- ... and {len(coverage_gaps['uncovered_methods']) - 10} more\n"
 
-        report += f"""
+        report += """
 
 ## RECOMMENDATIONS
 
@@ -392,7 +392,7 @@ class ProtocolToolCoverageAnalyzer:
         for rec in coverage_gaps.get('recommendations', []):
             report += f"1. {rec}\n"
 
-        report += f"""
+        report += """
 
 ### Test Quality Assessment
 """
@@ -447,7 +447,7 @@ class ProtocolToolCoverageAnalyzer:
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(report)
 
-        return str(output_path)
+        return output_path
 
 
 def main():

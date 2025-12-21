@@ -395,9 +395,7 @@ class TestNetworkRequestCapture:
 
     def test_get_captured_requests_contains_metadata(self) -> None:
         """Get captured requests contains required metadata."""
-        requests = get_captured_requests(limit=1)
-
-        if requests:
+        if requests := get_captured_requests(limit=1):
             request = requests[0]
             assert "timestamp" in request or "source" in request
 

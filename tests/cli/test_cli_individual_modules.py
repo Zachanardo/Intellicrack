@@ -616,7 +616,7 @@ class TestAIChatInterface:
 
         chat._clear_history()
 
-        assert len(chat.conversation_history) == 0
+        assert not chat.conversation_history
 
     def test_chat_handles_save_conversation(self, tmp_path: Path) -> None:
         """Chat interface saves conversation to file."""

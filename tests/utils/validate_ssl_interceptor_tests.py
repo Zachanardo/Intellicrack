@@ -44,12 +44,9 @@ def validate_ssl_interceptor_tests():
             'import pytest'
         ]
 
-        missing_imports = []
-        for imp in required_imports:
-            if imp not in content:
-                missing_imports.append(imp)
-
-        if missing_imports:
+        if missing_imports := [
+            imp for imp in required_imports if imp not in content
+        ]:
             print("FAIL Missing required imports:")
             for imp in missing_imports:
                 print(f"   - {imp}")
@@ -73,11 +70,7 @@ def validate_ssl_interceptor_tests():
             'test_production_ssl_interception_workflow'
         ]
 
-        missing_tests = []
-        for test in key_test_areas:
-            if test not in content:
-                missing_tests.append(test)
-
+        missing_tests = [test for test in key_test_areas if test not in content]
         if missing_tests:
             print("FAIL Missing key test areas:")
             for test in missing_tests:
@@ -97,11 +90,11 @@ def validate_ssl_interceptor_tests():
             'license_response_modification'  # Traffic modification
         ]
 
-        missing_features = []
-        for feature in production_features:
-            if feature not in content:
-                missing_features.append(feature)
-
+        missing_features = [
+            feature
+            for feature in production_features
+            if feature not in content
+        ]
         if missing_features:
             print("WARNING  Missing production features:")
             for feature in missing_features:

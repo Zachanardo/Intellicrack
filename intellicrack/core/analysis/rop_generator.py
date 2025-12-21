@@ -282,7 +282,12 @@ class ROPChainGenerator:
                         binary = lief.parse(list(binary_data))
                         if binary is not None:
                             for section in binary.sections:
-                                if hasattr(section, "characteristics") and hasattr(section, "virtual_address") and section.characteristics & 0x20000000 and hasattr(binary, "optional_header"):
+                                if (
+                                    hasattr(section, "characteristics")
+                                    and hasattr(section, "virtual_address")
+                                    and section.characteristics & 0x20000000
+                                    and hasattr(binary, "optional_header")
+                                ):
                                     section_data = bytes(section.content)
                                     sections.append(
                                         (
@@ -1657,7 +1662,8 @@ class ROPChainGenerator:
         if len(gadget_list) > max_length:
             self.logger.warning(
                 "Generated chain exceeds max_length (%d > %d), consider optimizing or increasing max_length",
-                len(gadget_list), max_length,
+                len(gadget_list),
+                max_length,
             )
 
         # Add chain to our collection
@@ -1666,7 +1672,9 @@ class ROPChainGenerator:
         # Log chain summary
         self.logger.info(
             "Generated ROP chain: %d gadgets, type: %s, success probability: %.2f%%",
-            len(gadget_list), chain_type, chain_data.get('success_probability', 0) * 100,
+            len(gadget_list),
+            chain_type,
+            chain_data.get("success_probability", 0) * 100,
         )
 
         # Return the gadget list

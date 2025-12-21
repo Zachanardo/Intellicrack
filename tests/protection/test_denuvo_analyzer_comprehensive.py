@@ -601,7 +601,7 @@ class TestEncryptedSectionDetection:
         result: DenuvoAnalysisResult = analyzer.analyze(str(clean_binary))
 
         high_entropy = [s for s in result.encrypted_sections if s["entropy"] > 7.2]
-        assert len(high_entropy) == 0, "Clean binary should have no encrypted sections"
+        assert not high_entropy, "Clean binary should have no encrypted sections"
 
 
 class TestVMProtectionDetection:
@@ -782,7 +782,7 @@ class TestBypassRecommendations:
 
         if result.version and result.version.major >= 7:
             recommendations_text = " ".join(result.bypass_recommendations).lower()
-            assert len(recommendations_text) > 0, "Should provide recommendations for v7"
+            assert recommendations_text != "", "Should provide recommendations for v7"
 
     def test_recommends_trigger_bypass(self, denuvo_v7_binary: Path) -> None:
         """Bypass recommendations based on detection results."""

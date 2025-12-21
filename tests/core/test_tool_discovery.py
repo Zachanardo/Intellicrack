@@ -199,9 +199,7 @@ class TestAdvancedToolDiscovery:
             discovery = AdvancedToolDiscovery()
 
             executables = ["python3", "python"]
-            result = discovery._search_in_path(executables)
-
-            if result:
+            if result := discovery._search_in_path(executables):
                 assert os.path.exists(result)
                 assert os.access(result, os.X_OK)
 

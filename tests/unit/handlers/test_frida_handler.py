@@ -116,8 +116,7 @@ class TestFallbackDeviceEnumeration:
         device.enumerate_processes()
 
         if sys.platform == "win32":
-            process = device.get_process("System")
-            if process:
+            if process := device.get_process("System"):
                 assert process.pid > 0
                 assert "System" in process.name or process.name == "System"
 
@@ -283,7 +282,7 @@ class TestFallbackScriptInjection:
         script.on("message", on_message)
         script.load()
 
-        assert len(messages_received) > 0
+        assert messages_received
         assert any(
             msg.get("payload", {}).get("type") == "ready" for msg in messages_received
         ), "Should receive ready message after load"
@@ -309,7 +308,7 @@ class TestFallbackScriptInjection:
 
         script.post({"type": "ping"})
 
-        assert len(messages_received) > 0
+        assert messages_received
         assert any(
             msg.get("payload", {}).get("type") == "pong" for msg in messages_received
         ), "Should receive pong response to ping"
@@ -552,9 +551,7 @@ class TestRealProcessDetection:
         processes = device.enumerate_processes()
 
         own_pid = os.getpid()
-        python_proc = next((p for p in processes if p.pid == own_pid), None)
-
-        if python_proc:
+        if python_proc := next((p for p in processes if p.pid == own_pid), None):
             assert python_proc.pid == own_pid
             assert "python" in python_proc.name.lower() or "pytest" in python_proc.name.lower()
 
@@ -574,10 +571,7 @@ class TestWindowsProcessEnumeration:
         assert len(processes) > 10, "Should find multiple processes on Windows"
 
         common_windows_processes = ["System", "svchost.exe", "explorer.exe"]
-        found_count = sum(
-            1
-            for proc in processes
-            if any(common in proc.name for common in common_windows_processes)
-        )
+        found_count = sum(bool(any(common in proc.name for common in common_windows_processes))
+                      for proc in processes)
 
         assert found_count > 0, "Should find common Windows system processes"

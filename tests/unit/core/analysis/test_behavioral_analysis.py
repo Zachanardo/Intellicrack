@@ -85,7 +85,7 @@ class TestAntiAnalysisDetector:
         result = detector.detect_anti_debug(binary_data)
 
         assert result is not None
-        assert isinstance(result, dict) or isinstance(result, list)
+        assert isinstance(result, (dict, list))
 
     def test_detect_vm_checks_on_real_binary(self, calc_path: str) -> None:
         """Test VM detection check scanning on real binary."""
@@ -304,8 +304,6 @@ class TestBehavioralAnalyzer:
 
         analyzer.cleanup()
 
-        assert True
-
     def test_api_monitoring_on_real_process(self, notepad_path: str) -> None:
         """Test API call monitoring on real process."""
         if sys.platform != "win32":
@@ -317,7 +315,7 @@ class TestBehavioralAnalyzer:
 
         if "api_calls" in result:
             api_calls = result["api_calls"]
-            assert isinstance(api_calls, list) or isinstance(api_calls, dict)
+            assert isinstance(api_calls, (list, dict))
 
         analyzer.cleanup()
 
@@ -329,9 +327,6 @@ class TestBehavioralAnalyzer:
         analyzer = BehavioralAnalyzer(binary_path=calc_path)
 
         result = analyzer.run_analysis(timeout=3)
-
-        if "patterns" in result or "behaviors" in result:
-            assert True
 
         analyzer.cleanup()
 
@@ -404,7 +399,7 @@ class TestRealWorldScenarios:
 
             analyzer.cleanup()
 
-        assert len(results) > 0
+        assert results
 
         for binary_path, result in results:
             assert result is not None
@@ -441,7 +436,7 @@ class TestRealWorldScenarios:
         for thread in threads:
             thread.join(timeout=15)
 
-        assert len(errors) == 0, f"Concurrent analysis errors: {errors}"
+        assert not errors, f"Concurrent analysis errors: {errors}"
 
     def test_analysis_with_short_timeout(self, notepad_path: str) -> None:
         """Test analysis behavior with very short timeout."""
@@ -466,12 +461,9 @@ class TestRealWorldScenarios:
 
             assert result is not None
 
-            if "error" in result or "errors" in result:
-                assert True
-
             analyzer.cleanup()
         except FileNotFoundError:
-            assert True
+            pass
         except Exception as e:
             assert "not found" in str(e).lower() or "nonexistent" in str(e).lower()
 
@@ -504,7 +496,6 @@ class TestIntegrationWithOtherModules:
 
         try:
             import frida
-            assert True
         except ImportError:
             pytest.skip("Frida not available")
 

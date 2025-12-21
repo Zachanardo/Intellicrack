@@ -2312,9 +2312,7 @@ class ICPBackend:
                         logger.debug("Running YARA pattern analysis")
                         yara_result = yara_engine.scan_file(file_path, timeout=30)
                         if not yara_result.error:
-                            if yara_supplemental := yara_engine.generate_icp_supplemental_data(
-                                yara_result
-                            ):
+                            if yara_supplemental := yara_engine.generate_icp_supplemental_data(yara_result):
                                 supplemental_data |= yara_supplemental
                                 supplemental_data["engines_used"].append("yara")
                                 supplemental_data["analysis_summary"]["yara_available"] = True
@@ -2343,9 +2341,7 @@ class ICPBackend:
                             ),
                         )
                         if not firmware_result.error:
-                            if firmware_supplemental := firmware_analyzer.generate_icp_supplemental_data(
-                                firmware_result
-                            ):
+                            if firmware_supplemental := firmware_analyzer.generate_icp_supplemental_data(firmware_result):
                                 supplemental_data.update(firmware_supplemental)
                                 supplemental_data["engines_used"].append("binwalk")
                                 supplemental_data["analysis_summary"]["binwalk_available"] = True
@@ -2366,10 +2362,7 @@ class ICPBackend:
 
                     if is_memory_dump := (
                         file_size > 100 * 1024 * 1024  # > 100MB
-                        or any(
-                            keyword in filename
-                            for keyword in ["dump", "mem", "vmem", "raw", "dmp"]
-                        )
+                        or any(keyword in filename for keyword in ["dump", "mem", "vmem", "raw", "dmp"])
                         or filename.endswith((".vmem", ".raw", ".dmp", ".mem"))
                     ):
                         if memory_engine := get_memory_forensics_engine():
@@ -2384,9 +2377,7 @@ class ICPBackend:
                                 ),
                             )
                             if not memory_result.error:
-                                if memory_supplemental := memory_engine.generate_icp_supplemental_data(
-                                    memory_result
-                                ):
+                                if memory_supplemental := memory_engine.generate_icp_supplemental_data(memory_result):
                                     supplemental_data.update(memory_supplemental)
                                     supplemental_data["engines_used"].append("volatility3")
                                     supplemental_data["analysis_summary"]["volatility_available"] = True

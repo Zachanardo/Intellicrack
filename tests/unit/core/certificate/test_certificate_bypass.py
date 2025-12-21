@@ -222,7 +222,7 @@ class TestBypassOrchestrator:
         )
 
         assert result is not None
-        assert isinstance(result, BypassResult) or isinstance(result, dict)
+        assert isinstance(result, (BypassResult, dict))
 
     def test_orchestrator_with_multiple_strategies(self) -> None:
         """Test orchestrator trying multiple bypass strategies."""
@@ -244,7 +244,7 @@ class TestBypassOrchestrator:
         status = orchestrator.get_bypass_status()
 
         assert status is not None
-        assert isinstance(status, dict) or isinstance(status, list)
+        assert isinstance(status, (dict, list))
 
 
 class TestBypassStrategy:
@@ -345,8 +345,6 @@ class TestMultiLayerBypass:
 
         bypass.add_layer(layer=layer1)
         bypass.add_layer(layer=layer2)
-
-        assert len(bypass.layers) >= 2 or True
 
     def test_execute_layered_bypass(self, notepad_path: str) -> None:
         """Test executing multi-layer bypass."""
@@ -458,7 +456,6 @@ class TestFridaStealth:
 
         for technique in techniques:
             result = manager.apply_technique(technique=technique)
-            assert result is not None or True
 
     def test_bypass_frida_detection(self) -> None:
         """Test bypassing Frida detection mechanisms."""
@@ -499,7 +496,7 @@ class TestBinaryScanner:
         result = scanner.scan(binary_path=crypt32_path)
 
         assert result is not None
-        assert isinstance(result, dict) or isinstance(result, list)
+        assert isinstance(result, (dict, list))
 
     def test_factory_function_scan_for_pinning(self, notepad_path: str) -> None:
         """Test factory function for SSL pinning scan."""
@@ -592,8 +589,6 @@ class TestCertificatePatcher:
             binary_path=notepad_path, output_path=output_path, operation="remove"
         )
 
-        assert result is not None or True
-
 
 class TestPatchGenerators:
     """Test platform-specific patch generators."""
@@ -673,7 +668,7 @@ class TestLayerDetector:
         layers = detector.detect_layers(binary_path=notepad_path)
 
         assert layers is not None
-        assert isinstance(layers, list) or isinstance(layers, dict)
+        assert isinstance(layers, (list, dict))
 
     def test_factory_function_detect_layers(self, notepad_path: str) -> None:
         """Test factory function for layer detection."""
@@ -755,8 +750,6 @@ class TestAPKAnalyzer:
         """Test factory function for APK certificate analysis."""
         result = analyze_apk_certificates(apk_path="test.apk")
 
-        assert result is not None or True
-
 
 class TestAPISignatureDetector:
     """Test SSL API signature detection."""
@@ -821,8 +814,6 @@ class TestIntegration:
 
         bypass.add_layer(layer)
 
-        assert len(bypass.layers) > 0 or True
-
     def test_stealth_with_certificate_bypass(self, notepad_path: str) -> None:
         """Test stealth mode integration with certificate bypass."""
         stealth = FridaStealthManager()
@@ -831,5 +822,3 @@ class TestIntegration:
         stealth.enable_stealth(mode=StealthMode.HIGH)
 
         result = orchestrator.execute_bypass(target=notepad_path)
-
-        assert result is not None or True

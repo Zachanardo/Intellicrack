@@ -58,7 +58,11 @@ def is_domain_in_string(domain: str, text: str) -> bool:
 
     if len(parts) >= len(domain_parts):
         for i in range(len(parts) - len(domain_parts) + 1):
-            if parts[i : i + len(domain_parts)] == domain_parts and (i == 0 or parts[i - 1] in ("", " ", "\t", "\n")) and (i + len(domain_parts) == len(parts) or parts[i + len(domain_parts)] in ("", " ", "\t", "\n", ":")):
+            if (
+                parts[i : i + len(domain_parts)] == domain_parts
+                and (i == 0 or parts[i - 1] in ("", " ", "\t", "\n"))
+                and (i + len(domain_parts) == len(parts) or parts[i + len(domain_parts)] in ("", " ", "\t", "\n", ":"))
+            ):
                 return True
 
     return False

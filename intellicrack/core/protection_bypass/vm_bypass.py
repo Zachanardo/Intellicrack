@@ -813,9 +813,7 @@ class VMDetector:
             if platform.system() == "Windows":
                 result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
                 indicators.extend(
-                    f"VM MAC prefix detected: {prefix}"
-                    for prefix in vm_mac_prefixes
-                    if prefix.lower() in result.stdout.lower()
+                    f"VM MAC prefix detected: {prefix}" for prefix in vm_mac_prefixes if prefix.lower() in result.stdout.lower()
                 )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.debug("MAC address check failed: %s", e)

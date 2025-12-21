@@ -808,11 +808,7 @@ class BinaryPatternDetector:
                     for insn in cs.disasm(data[i : i + 15], i):
                         if insn.group(CS_GRP_JUMP) or insn.group(CS_GRP_CALL):
                             # Check if target is our offset
-                            xrefs.extend(
-                                insn.address
-                                for op in insn.operands
-                                if op.type == X86_OP_IMM and op.imm == offset
-                            )
+                            xrefs.extend(insn.address for op in insn.operands if op.type == X86_OP_IMM and op.imm == offset)
                         break  # Only check first instruction
                 except Exception as e:
                     # Log the exception with details for debugging

@@ -303,9 +303,10 @@ class TestUserFeedbackGeneration:
         feedback = DependencyFeedback()
 
         results = feedback.check_all_dependencies()
-        all_missing = results["critical_missing"] + results["optional_missing"]
-
-        if all_missing:
+        if (
+            all_missing := results["critical_missing"]
+            + results["optional_missing"]
+        ):
             report = feedback.generate_missing_dependency_report(all_missing)
 
             assert "MISSING DEPENDENCY REPORT" in report
@@ -468,10 +469,9 @@ class TestDependencyCategories:
         """Dependencies properly grouped by category in reports."""
         feedback = DependencyFeedback()
 
-        categories_found = set()
-        for dep_info in feedback.DEPENDENCY_INFO.values():
-            categories_found.add(dep_info["category"])
-
+        categories_found = {
+            dep_info["category"] for dep_info in feedback.DEPENDENCY_INFO.values()
+        }
         assert len(categories_found) >= 5
 
 
@@ -486,9 +486,10 @@ class TestRealWorldScenarios:
 
         assert "summary" in results
 
-        all_missing = results["critical_missing"] + results["optional_missing"]
-
-        if all_missing:
+        if (
+            all_missing := results["critical_missing"]
+            + results["optional_missing"]
+        ):
             report = feedback.generate_missing_dependency_report(all_missing)
             assert len(report) > 0
             assert "DEPENDENCY REPORT" in report

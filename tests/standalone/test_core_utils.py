@@ -45,7 +45,7 @@ def run_test_pe_utils():
         chars = get_section_characteristics(0x60000020)  # CODE|EXECUTE|READ
         assert 'CODE' in chars, "Failed to detect CODE characteristic"
         assert 'EXECUTE' in chars, "Failed to detect EXECUTE characteristic"
-        print(f"Section characteristics decoded correctly")
+        print("Section characteristics decoded correctly")
 
         print("OK Test PASSED!")
         return True
@@ -438,7 +438,7 @@ def main():
             failed += 1
 
     print(f"\n{'='*50}")
-    print(f"Core Utility Test Results:")
+    print("Core Utility Test Results:")
     print(f"  Passed: {passed}")
     print(f"  Failed: {failed}")
     print(f"  Total: {len(tests)}")

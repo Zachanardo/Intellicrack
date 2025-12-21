@@ -988,11 +988,7 @@ class MemoryForensicsEngine:
                 full_analysis = self.analyze_memory_dump(dump_path, deep_analysis=False)
 
                 if target_process := next(
-                    (
-                        process
-                        for process in full_analysis.processes
-                        if process.pid == process_id
-                    ),
+                    (process for process in full_analysis.processes if process.pid == process_id),
                     None,
                 ):
                     return {
@@ -1375,10 +1371,7 @@ class MemoryForensicsEngine:
                 logger.debug("Error parsing network connections: %s", e)
 
             injected_regions = [
-                region["address"]
-                for region in memory_regions
-                if not region.get("pathname")
-                and "x" in region.get("permissions", "")
+                region["address"] for region in memory_regions if not region.get("pathname") and "x" in region.get("permissions", "")
             ]
             return {
                 "process_id": process_id,

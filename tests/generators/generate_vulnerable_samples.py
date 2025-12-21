@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
         ],
         [
             "cl",
-            "/Fe:" + str(output_path),
+            f"/Fe:{str(output_path)}",
             str(src_path),
             "/GS-",
             "/link",
@@ -126,7 +126,7 @@ int main(int argc, char *argv[]) {
     # Try to compile
     compile_commands = [
         ["gcc", "-o", str(output_path), str(src_path), "-Wno-format-security"],
-        ["cl", "/Fe:" + str(output_path), str(src_path)],
+        ["cl", f"/Fe:{str(output_path)}", str(src_path)],
     ]
 
     compiled = False
@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
     # Compile
     compile_commands = [
         ["gcc", "-o", str(output_path), str(src_path)],
-        ["cl", "/Fe:" + str(output_path), str(src_path)],
+        ["cl", f"/Fe:{str(output_path)}", str(src_path)],
     ]
 
     compiled = False
@@ -280,7 +280,7 @@ int main(int argc, char *argv[]) {
     # Compile
     compile_commands = [
         ["gcc", "-o", str(output_path), str(src_path), "-fno-stack-protector"],
-        ["cl", "/Fe:" + str(output_path), str(src_path), "/GS-"],
+        ["cl", f"/Fe:{str(output_path)}", str(src_path), "/GS-"],
     ]
 
     compiled = False
@@ -357,7 +357,7 @@ int main(int argc, char *argv[]) {
     # Compile
     compile_commands = [
         ["gcc", "-o", str(output_path), str(src_path)],
-        ["cl", "/Fe:" + str(output_path), str(src_path)],
+        ["cl", f"/Fe:{str(output_path)}", str(src_path)],
     ]
 
     compiled = False
@@ -384,7 +384,7 @@ def create_precompiled_vulnerable_binary(output_path: Path, vuln_type: str) -> N
     pe_data = bytearray(8192)
 
     # DOS Header
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
 
     # PE Signature

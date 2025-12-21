@@ -412,16 +412,12 @@ class AIAssistant:
         question_lower = question.lower()
         if "license" in question_lower or "activation" in question_lower:
             if hasattr(vuln_engine, "analyze_license_patterns"):
-                if result := vuln_engine.analyze_license_patterns(
-                    question, context
-                ):
+                if result := vuln_engine.analyze_license_patterns(question, context):
                     return str(result)
             return "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
         if "protection" in question_lower or "security" in question_lower:
             if hasattr(vuln_engine, "analyze_protection_mechanisms"):
-                if result := vuln_engine.analyze_protection_mechanisms(
-                    question, context
-                ):
+                if result := vuln_engine.analyze_protection_mechanisms(question, context):
                     return str(result)
             return "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
         if "vulnerability" in question_lower or "exploit" in question_lower:
@@ -431,9 +427,7 @@ class AIAssistant:
             return "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
         if "network" in question_lower or "communication" in question_lower:
             if hasattr(vuln_engine, "analyze_network_behavior"):
-                if result := vuln_engine.analyze_network_behavior(
-                    question, context
-                ):
+                if result := vuln_engine.analyze_network_behavior(question, context):
                     return str(result)
             return "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
         return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
@@ -795,7 +789,11 @@ class CodeAnalyzer:
         """Analyze PE sections for security issues."""
         if hasattr(pe, "sections"):
             for section in pe.sections:
-                if hasattr(section, "Characteristics") and hasattr(section, "Name") and (section.Characteristics & 0x20000000 and section.Characteristics & 0x80000000):
+                if (
+                    hasattr(section, "Characteristics")
+                    and hasattr(section, "Name")
+                    and (section.Characteristics & 0x20000000 and section.Characteristics & 0x80000000)
+                ):
                     section_name = section.Name
                     if isinstance(section_name, bytes):
                         section_name = section_name.decode("utf-8", errors="ignore").strip("\x00")

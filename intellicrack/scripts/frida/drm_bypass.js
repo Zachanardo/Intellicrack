@@ -222,7 +222,7 @@ const DrmBypass = {
             if (hdcpFunc) {
                 Interceptor.attach(hdcpFunc, {
                     onLeave: function (retval) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.hdcp.enabled) {
                             // Make HDCP operations always succeed
                             retval.replace(0); // S_OK / SUCCESS
@@ -352,7 +352,7 @@ const DrmBypass = {
 
                     onLeave: function (retval) {
                         if (this.isHdcpCrypto && retval.toInt32() !== 0) {
-                            const {config} = this.parent.parent;
+                            const { config } = this.parent.parent;
                             if (config.hdcp.forceEncryptionBypass) {
                                 send({
                                     type: 'bypass',
@@ -435,7 +435,7 @@ const DrmBypass = {
                 onEnter: function (args) {
                     const requestDetails = this.getRequestDetails(args);
                     if (this.isHdcpRevocationRequest(requestDetails)) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.hdcp.bypassRevocationList) {
                             send({
                                 type: 'bypass',
@@ -755,7 +755,7 @@ const DrmBypass = {
                         // Store comprehensive license analysis
                         this.storePlayReadyLicenseAnalysis(licenseAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.playready.bypassLicenseAcquisition) {
                             send({
                                 type: 'info',
@@ -869,7 +869,7 @@ const DrmBypass = {
                     },
 
                     onLeave: function (retval) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.decryption.enabled && retval.toInt32() === 0) {
                             send({
                                 type: 'bypass',
@@ -968,7 +968,7 @@ const DrmBypass = {
             if (secFunc) {
                 Interceptor.attach(secFunc, {
                     onLeave: function (retval) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
 
                         if (functionName.includes('GetSecurityLevel')) {
                             // Spoof maximum security level
@@ -1270,7 +1270,7 @@ const DrmBypass = {
                         // Store comprehensive provisioning analysis
                         this.storeWidevineProvisioningAnalysis(provisioningAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.widevine.bypassProvisioningCheck) {
                             this.bypassProvisioning = true;
                             this.provisioningAnalysisData = provisioningAnalysis;
@@ -1455,7 +1455,7 @@ const DrmBypass = {
                         // Store comprehensive license request analysis
                         this.storeWidevineLicenseRequestAnalysis(licenseRequestAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.widevine.bypassLicenseRequest) {
                             send({
                                 type: 'bypass',
@@ -1572,7 +1572,7 @@ const DrmBypass = {
                     },
 
                     onLeave: function (retval) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.decryption.enabled && retval.toInt32() === 0) {
                             send({
                                 type: 'bypass',
@@ -1718,7 +1718,7 @@ const DrmBypass = {
                     timeBypassAnalysis.exploitation_vectors =
                         this.assessTemporalExploitationVectors(timeAnalysis);
 
-                    const {config} = this.parent.parent;
+                    const { config } = this.parent.parent;
                     if (config.streaming.bypassTimeBasedProtection) {
                         // Implement comprehensive time value manipulation for bypass
                         const manipulatedValue = this.manipulateTimeValue(
@@ -1768,7 +1768,7 @@ const DrmBypass = {
             if (geoFunc) {
                 Interceptor.attach(geoFunc, {
                     onLeave: function (retval) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.streaming.spoofGeoLocation && functionName === 'GetUserGeoID') {
                             retval.replace(244); // US geo ID
                             send({
@@ -1799,7 +1799,7 @@ const DrmBypass = {
                 onEnter: function (args) {
                     const requestDetails = this.getRequestDetails(args);
                     if (this.isDomainRestrictedRequest(requestDetails)) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.streaming.bypassDomainRestrictions) {
                             this.spoofHeaders = true;
                             send({
@@ -1898,8 +1898,8 @@ const DrmBypass = {
                 },
 
                 isDomainRestrictedRequest: function (details) {
-                    const {config} = this.parent.parent;
-                    const {allowedDomains} = config.streaming;
+                    const { config } = this.parent.parent;
+                    const { allowedDomains } = config.streaming;
 
                     // Check if request is to streaming services
                     return allowedDomains.some(domain =>
@@ -1942,7 +1942,7 @@ const DrmBypass = {
         if (func) {
             Interceptor.attach(func, {
                 onEnter: function (args) {
-                    const {config} = this.parent.parent;
+                    const { config } = this.parent.parent;
                     if (config.streaming.blockTelemetry) {
                         const requestDetails = this.analyzeTelemetryRequest(args);
                         if (requestDetails.isTelemetry) {
@@ -2118,7 +2118,7 @@ const DrmBypass = {
             if (tpmFunc) {
                 Interceptor.attach(tpmFunc, {
                     onLeave: function (retval) {
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.hardware.spoofTpmCredentials) {
                             // Make TPM operations succeed
                             retval.replace(0); // TBS_SUCCESS
@@ -2158,7 +2158,7 @@ const DrmBypass = {
                 if (teeFunc) {
                     Interceptor.attach(teeFunc, {
                         onLeave: function (retval) {
-                            const {config} = this.parent.parent;
+                            const { config } = this.parent.parent;
                             if (config.hardware.bypassTrustedExecutionEnvironment) {
                                 retval.replace(0); // SUCCESS
                                 send({
@@ -2197,7 +2197,7 @@ const DrmBypass = {
                 },
 
                 onLeave: function (retval) {
-                    const {config} = this.parent.parent;
+                    const { config } = this.parent.parent;
                     if (config.hardware.spoofCpuSecurityFeatures) {
                         // Security-related processor features
                         const securityFeatures = [
@@ -2317,7 +2317,7 @@ const DrmBypass = {
                         emeBypassAnalysis.bypass_techniques =
                             this.identifyEmeBypassTechniques(emeAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
 
                         if (functionName === 'RequestMediaKeySystemAccess') {
                             if (config.eme.spoofMediaKeySystemAccess) {
@@ -2470,7 +2470,7 @@ const DrmBypass = {
                         keySessionAnalysis.bypass_techniques =
                             this.identifySessionBypassTechniques(sessionAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.eme.bypassKeySessionLimits) {
                             // Comprehensive key session manipulation
                             const manipulatedSessionValue = this.manipulateKeySessionRetval(
@@ -2638,7 +2638,7 @@ const DrmBypass = {
                             decryptionAnalysis.bypass_techniques =
                                 this.identifyDecryptionBypassTechniques(decryptAnalysis);
 
-                            const {config} = this.parent.parent;
+                            const { config } = this.parent.parent;
                             if (config.decryption.interceptEncryptedContent) {
                                 // Comprehensive decryption manipulation
                                 const manipulatedDecryptValue = this.manipulateDecryptionRetval(
@@ -2729,9 +2729,11 @@ const DrmBypass = {
                         this.storeDrmDecryptionAnalysis(decryptionAnalysis);
 
                         // Return genuine DRM decryption detection based on comprehensive analysis
-                        return decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
-                                                    decryptionAnalysis.key_material_identified.length > 0 ||
-                                                    decryptionAnalysis.content_protection_indicators.length > 1;
+                        return (
+                            decryptionAnalysis.encryption_algorithms_detected.length > 0 ||
+                            decryptionAnalysis.key_material_identified.length > 0 ||
+                            decryptionAnalysis.content_protection_indicators.length > 1
+                        );
                     },
                 });
 
@@ -2784,7 +2786,7 @@ const DrmBypass = {
                         kdfAnalysis.bypass_techniques =
                             this.identifyKdfBypassTechniques(kdfRetvalAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.decryption.spoofDecryptionKeys) {
                             // Comprehensive key derivation manipulation
                             const manipulatedKdfValue = this.manipulateKdfRetval(
@@ -2903,7 +2905,7 @@ const DrmBypass = {
                         // Store comprehensive key session analysis
                         this.storeWindowsKeySessionAnalysis(keySessionAnalysis);
 
-                        const {config} = this.parent.parent;
+                        const { config } = this.parent.parent;
                         if (config.decryption.allowKeyExport) {
                             this.allowKeyOperation = true;
                             this.keySessionAnalysisData = keySessionAnalysis;
@@ -3531,7 +3533,7 @@ const DrmBypass = {
             }
 
             const activeSystems = [];
-            const {config} = this;
+            const { config } = this;
             if (config.hdcp.enabled) {
                 activeSystems.push({
                     name: 'HDCP Bypass',

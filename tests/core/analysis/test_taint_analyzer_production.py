@@ -380,8 +380,7 @@ class TestControlFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             assert isinstance(cfg, dict)
             assert len(cfg) > 0
@@ -391,8 +390,7 @@ class TestControlFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             for addr, successors in cfg.items():
                 assert isinstance(addr, int)
@@ -416,11 +414,11 @@ class TestControlFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
-            jump_instructions = [i for i in instructions if i["mnemonic"].lower().startswith("j")]
-            if jump_instructions:
+            if jump_instructions := [
+                i for i in instructions if i["mnemonic"].lower().startswith("j")
+            ]:
                 found_branch = False
                 for instr in jump_instructions[:10]:
                     addr = instr["address"]
@@ -434,11 +432,11 @@ class TestControlFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
-            ret_instructions = [i for i in instructions if i["mnemonic"].lower() in ["ret", "retn"]]
-            if ret_instructions:
+            if ret_instructions := [
+                i for i in instructions if i["mnemonic"].lower() in ["ret", "retn"]
+            ]:
                 ret_addr = ret_instructions[0]["address"]
                 if ret_addr in cfg:
                     assert len(cfg[ret_addr]) == 0, "Return instructions should have no successors"
@@ -461,8 +459,7 @@ class TestDataFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             dfg = engine._build_data_flow_graph(instructions, cfg)
             assert isinstance(dfg, dict)
@@ -473,8 +470,7 @@ class TestDataFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             dfg = engine._build_data_flow_graph(instructions, cfg)
             for addr, flow_info in dfg.items():
@@ -486,8 +482,7 @@ class TestDataFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             dfg = engine._build_data_flow_graph(instructions, cfg)
             for addr, flow_info in dfg.items():
@@ -498,8 +493,7 @@ class TestDataFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             dfg = engine._build_data_flow_graph(instructions, cfg)
             for addr, flow_info in dfg.items():
@@ -514,12 +508,12 @@ class TestDataFlowGraphConstruction:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             cfg = engine._build_control_flow_graph(instructions)
             dfg = engine._build_data_flow_graph(instructions, cfg)
-            xor_instructions = [i for i in instructions if i["mnemonic"].lower() == "xor"]
-            if xor_instructions:
+            if xor_instructions := [
+                i for i in instructions if i["mnemonic"].lower() == "xor"
+            ]:
                 for instr in xor_instructions[:5]:
                     addr = instr["address"]
                     if addr in dfg:
@@ -543,8 +537,7 @@ class TestRegisterStateTracking:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             states = engine._initialize_register_states(instructions)
             assert isinstance(states, dict)
             assert len(states) == len(instructions)
@@ -554,8 +547,7 @@ class TestRegisterStateTracking:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             states = engine._initialize_register_states(instructions)
             first_addr = instructions[0]["address"]
             if first_addr in states:
@@ -568,8 +560,7 @@ class TestRegisterStateTracking:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             states = engine._initialize_register_states(instructions)
             first_addr = instructions[0]["address"]
             if first_addr in states:
@@ -581,8 +572,7 @@ class TestRegisterStateTracking:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             states = engine._initialize_register_states(instructions)
             first_addr = instructions[0]["address"]
             if first_addr in states:
@@ -606,8 +596,7 @@ class TestTaintSourceIdentification:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             sources = engine._find_source_instructions(instructions)
             assert isinstance(sources, list)
 
@@ -616,10 +605,8 @@ class TestTaintSourceIdentification:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
-            sources = engine._find_source_instructions(instructions)
-            if sources:
+        if instructions := engine._disassemble_binary():
+            if sources := engine._find_source_instructions(instructions):
                 source = sources[0]
                 assert "address" in source
                 assert "mnemonic" in source
@@ -632,10 +619,8 @@ class TestTaintSourceIdentification:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
-            sources = engine._find_source_instructions(instructions)
-            if sources:
+        if instructions := engine._disassemble_binary():
+            if sources := engine._find_source_instructions(instructions):
                 valid_types = ["file_io", "registry", "network", "hardware_id"]
                 for source in sources:
                     assert source["source_type"] in valid_types
@@ -658,8 +643,7 @@ class TestTaintSinkIdentification:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             sinks = engine._find_sink_instructions(instructions)
             assert isinstance(sinks, list)
             assert len(sinks) > 0, "Real binaries must have comparison instructions"
@@ -669,21 +653,18 @@ class TestTaintSinkIdentification:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             sinks = engine._find_sink_instructions(instructions)
             conditional_sinks = [s for s in sinks if s["sink_type"] == "conditional"]
-            assert len(conditional_sinks) > 0, "Real binaries must have conditional jumps"
+            assert conditional_sinks, "Real binaries must have conditional jumps"
 
     def test_identified_sinks_have_required_fields(self, engine: TaintAnalysisEngine) -> None:
         """Identified sinks must have address, mnemonic, sink_type."""
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
-            sinks = engine._find_sink_instructions(instructions)
-            if sinks:
+        if instructions := engine._disassemble_binary():
+            if sinks := engine._find_sink_instructions(instructions):
                 sink = sinks[0]
                 assert "address" in sink
                 assert "mnemonic" in sink
@@ -696,8 +677,7 @@ class TestTaintSinkIdentification:
         if not engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        instructions = engine._disassemble_binary()
-        if instructions:
+        if instructions := engine._disassemble_binary():
             sinks = engine._find_sink_instructions(instructions)
             valid_types = ["comparison", "conditional", "string_compare", "crypto"]
             for sink in sinks:
@@ -938,7 +918,7 @@ class TestTaintAnalysisExecution:
         engine.run_analysis()
 
         sources = [s for s in engine.taint_sources if s["location"] == "CreateFileW"]
-        assert len(sources) > 0
+        assert sources
 
     def test_analysis_handles_custom_sinks(self, engine: TaintAnalysisEngine) -> None:
         """Analysis must respect custom taint sinks."""
@@ -949,7 +929,7 @@ class TestTaintAnalysisExecution:
         engine.run_analysis()
 
         sinks = [s for s in engine.taint_sinks if s["location"] == "test"]
-        assert len(sinks) > 0
+        assert sinks
 
 
 class TestResultsRetrieval:
@@ -1036,8 +1016,7 @@ class TestStatisticsGeneration:
         if not analyzed_engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        stats = analyzed_engine.get_statistics()
-        if stats:
+        if stats := analyzed_engine.get_statistics():
             assert "sources_by_type" in stats
             assert isinstance(stats["sources_by_type"], dict)
 
@@ -1046,8 +1025,7 @@ class TestStatisticsGeneration:
         if not analyzed_engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        stats = analyzed_engine.get_statistics()
-        if stats:
+        if stats := analyzed_engine.get_statistics():
             assert "sinks_by_type" in stats
             assert isinstance(stats["sinks_by_type"], dict)
 
@@ -1212,8 +1190,7 @@ class TestReportGeneration:
         if not analyzed_engine.binary_path:
             pytest.skip("notepad.exe not available")
 
-        html = analyzed_engine.generate_report()
-        if html:
+        if html := analyzed_engine.generate_report():
             assert "Total Taint Sources" in html or "total_sources" in html
             assert "Total Taint Sinks" in html or "total_sinks" in html
 
@@ -1248,8 +1225,7 @@ class TestIntegrationRealWorldLicenseValidation:
     @pytest.fixture
     def engine(self) -> TaintAnalysisEngine:
         """Provide engine for integration tests."""
-        engine = TaintAnalysisEngine()
-        return engine
+        return TaintAnalysisEngine()
 
     def test_track_license_file_to_comparison(self, engine: TaintAnalysisEngine) -> None:
         """Simulate tracking license file read to comparison sink."""
@@ -1384,6 +1360,5 @@ class TestPerformanceOnLargeBinaries:
         if not large_binary_engine.binary_path:
             pytest.skip("kernel32.dll not available")
 
-        instructions = large_binary_engine._disassemble_binary()
-        if instructions:
+        if instructions := large_binary_engine._disassemble_binary():
             assert len(instructions) <= 10000, "Instruction limit prevents excessive memory use"

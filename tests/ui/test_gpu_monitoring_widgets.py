@@ -48,7 +48,7 @@ def is_wmi_available() -> bool:
         c = wmi.WMI()
         gpus = list(c.Win32_VideoController())
         return len(gpus) > 0
-    except (ImportError, Exception):
+    except Exception:
         return False
 
 
@@ -58,7 +58,7 @@ def is_gputil_available() -> bool:
         import GPUtil
         gpus = GPUtil.getGPUs()
         return len(gpus) > 0
-    except (ImportError, Exception):
+    except Exception:
         return False
 
 

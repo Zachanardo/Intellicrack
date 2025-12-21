@@ -1249,11 +1249,7 @@ Confidence: {data.get("confidence", 0.0):.1%}
             serials = data
             self.generated_serials = serials
 
-            output_list: list[str] = [
-                f"{i:04d}: {serial.serial}"
-                for i, serial in enumerate(serials, 1)
-                if hasattr(serial, "serial")
-            ]
+            output_list: list[str] = [f"{i:04d}: {serial.serial}" for i, serial in enumerate(serials, 1) if hasattr(serial, "serial")]
             self.batch_output.setPlainText("\n".join(output_list))
             self.batch_stats.setText(f"Generated {len(serials)} unique serials")
             self.btn_export_batch.setEnabled(True)

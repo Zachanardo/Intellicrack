@@ -19,11 +19,15 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 # Optional imports with graceful fallbacks
 from intellicrack.handlers.pyqt6_handler import HAS_PYQT
 
 from ..logger import setup_logger
+
+if TYPE_CHECKING:
+    from typing import Any
 
 
 if HAS_PYQT:
@@ -77,16 +81,18 @@ else:
             self._attributes["text"] = text
 
         def text(self) -> str:
-            return self._attributes.get("text", "")
+            result = self._attributes.get("text", "")
+            return str(result) if result is not None else ""
 
         def setValue(self, value: int) -> None:
             self._attributes["value"] = value
 
         def value(self) -> int:
-            return self._attributes.get("value", 0)
+            result = self._attributes.get("value", 0)
+            return int(result) if isinstance(result, (int, float)) else 0
 
         def addWidget(self, widget: object) -> None:
-            if widget:
+            if widget and hasattr(widget, "setParent"):
                 widget.setParent(self)
 
         def addLayout(self, layout: object) -> None:
@@ -105,7 +111,7 @@ else:
         def __init__(self, *args: object, **kwargs: object) -> None:
             super().__init__(*args, **kwargs)
             self._spacing = 0
-            self._margin = 0
+            self._margin: tuple[int, int, int, int] = (0, 0, 0, 0)
 
         def setSpacing(self, spacing: int) -> None:
             self._spacing = spacing
@@ -151,31 +157,39 @@ else:
         LeftButton = 0x1
         RightButton = 0x2
 
-    # Assign production fallback classes
-    QWidget = HeadlessWidget
-    QVBoxLayout = QHBoxLayout = HeadlessLayout
-    QLabel = QComboBox = QPushButton = HeadlessWidget
-    QGroupBox = QTableWidget = QProgressBar = HeadlessWidget
-    QSpinBox = QSplitter = QPlainTextEdit = HeadlessWidget
-    QTimer = HeadlessTimer
-    Qt = HeadlessQt
+    # Assign production fallback classes using type aliases
+    QWidget = HeadlessWidget  # type: ignore[misc,assignment]
+    QVBoxLayout = HeadlessLayout  # type: ignore[misc,assignment]
+    QHBoxLayout = HeadlessLayout  # type: ignore[misc,assignment]
+    QLabel = HeadlessWidget  # type: ignore[misc,assignment]
+    QComboBox = HeadlessWidget  # type: ignore[misc,assignment]
+    QPushButton = HeadlessWidget  # type: ignore[misc,assignment]
+    QGroupBox = HeadlessWidget  # type: ignore[misc,assignment]
+    QTableWidget = HeadlessWidget  # type: ignore[misc,assignment]
+    QProgressBar = HeadlessWidget  # type: ignore[misc,assignment]
+    QSpinBox = HeadlessWidget  # type: ignore[misc,assignment]
+    QSplitter = HeadlessWidget  # type: ignore[misc,assignment]
+    QPlainTextEdit = HeadlessWidget  # type: ignore[misc,assignment]
+    QTimer = HeadlessTimer  # type: ignore[misc,assignment]
+    Qt = HeadlessQt  # type: ignore[misc,assignment]
 
 
 logger = setup_logger(__name__)
+
+from typing import Any
+
+HAS_MATPLOTLIB = False
+Figure: type[Any] | None = None
+FigureCanvas: type[Any] | None = None
 
 try:
     from intellicrack.handlers.matplotlib_handler import (
         HAS_MATPLOTLIB,
         Figure,
         FigureCanvasQTAgg as FigureCanvas,
-        matplotlib,
     )
-
-    if HAS_MATPLOTLIB:
-        matplotlib.use("qtagg")
 except ImportError as e:
     logger.exception("Import error in ui_setup_functions: %s", e)
-    HAS_MATPLOTLIB = False
 
 
 def setup_dataset_tab(parent: object) -> object | None:
@@ -195,7 +209,8 @@ def setup_dataset_tab(parent: object) -> object | None:
         logger.warning("PyQt6 not available, cannot create dataset tab")
         return None
 
-    tab = QWidget(parent)  # Set parent for proper widget hierarchy
+    parent_widget = parent if hasattr(parent, "setLayout") else None
+    tab = QWidget(parent_widget)  # type: ignore[arg-type]
     layout = QVBoxLayout()
 
     # Dataset controls
@@ -279,7 +294,7 @@ def setup_dataset_tab(parent: object) -> object | None:
     layout.addWidget(operations_group)
 
     # Dataset visualization
-    if HAS_MATPLOTLIB:
+    if HAS_MATPLOTLIB and Figure is not None and FigureCanvas is not None:
         viz_group = QGroupBox("Data Visualization")
         viz_layout = QVBoxLayout()
 
@@ -314,7 +329,8 @@ def setup_memory_monitor(parent: object) -> object | None:
         logger.warning("PyQt6 not available, cannot create memory monitor")
         return None
 
-    widget = QWidget(parent)  # Set parent for proper widget hierarchy
+    parent_widget = parent if hasattr(parent, "setLayout") else None
+    widget = QWidget(parent_widget)  # type: ignore[arg-type]
     layout = QVBoxLayout()
 
     # Memory stats
@@ -355,7 +371,7 @@ def setup_memory_monitor(parent: object) -> object | None:
     layout.addWidget(memory_bar)
 
     # Memory history graph
-    if HAS_MATPLOTLIB:
+    if HAS_MATPLOTLIB and Figure is not None and FigureCanvas is not None:
         figure = Figure(figsize=(8, 3))
         canvas = FigureCanvas(figure)
         canvas.setObjectName("memory_history_canvas")
@@ -389,7 +405,9 @@ def setup_memory_monitor(parent: object) -> object | None:
     process_table.setObjectName("process_memory_table")
     process_table.setColumnCount(4)
     process_table.setHorizontalHeaderLabels(["Process", "PID", "Memory (MB)", "CPU %"])
-    process_table.horizontalHeader().setStretchLastSection(True)
+    header = process_table.horizontalHeader()
+    if header is not None:
+        header.setStretchLastSection(True)
     process_layout.addWidget(process_table)
 
     process_group.setLayout(process_layout)
@@ -422,7 +440,8 @@ def setup_training_tab(parent: object) -> object | None:
         logger.warning("PyQt6 not available, cannot create training tab")
         return None
 
-    tab = QWidget(parent)  # Set parent for proper widget hierarchy
+    parent_widget = parent if hasattr(parent, "setLayout") else None
+    tab = QWidget(parent_widget)  # type: ignore[arg-type]
     layout = QVBoxLayout()
 
     # Model selection
@@ -563,8 +582,8 @@ def setup_training_tab(parent: object) -> object | None:
     metrics_layout.addLayout(metrics_layout_inner)
 
     # Loss/accuracy graphs
-    if HAS_MATPLOTLIB:
-        graphs_splitter = QSplitter(Qt.Horizontal)
+    if HAS_MATPLOTLIB and Figure is not None and FigureCanvas is not None:
+        graphs_splitter = QSplitter(Qt.Horizontal)  # type: ignore[attr-defined]
 
         # Loss graph
         loss_figure = Figure(figsize=(4, 3))

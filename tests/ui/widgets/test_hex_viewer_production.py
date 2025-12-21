@@ -102,9 +102,9 @@ class TestHexEditing:
         self, hex_viewer: HexViewerWidget
     ) -> None:
         """Hex viewer modifies byte values."""
-        test_data = bytearray([0x00, 0x01, 0x02, 0x03])
-
         if hasattr(hex_viewer, 'set_data'):
+            test_data = bytearray([0x00, 0x01, 0x02, 0x03])
+
             hex_viewer.set_data(test_data)
             hex_viewer.edit_mode = True
 
@@ -131,8 +131,8 @@ class TestByteSelection:
         self, hex_viewer: HexViewerWidget
     ) -> None:
         """Hex viewer selects byte ranges."""
-        test_data = bytearray(range(100))
         if hasattr(hex_viewer, 'set_data'):
+            test_data = bytearray(range(100))
             hex_viewer.set_data(test_data)
 
         hex_viewer.selected_start = 0x10
@@ -167,8 +167,8 @@ class TestOffsetNavigation:
         self, hex_viewer: HexViewerWidget
     ) -> None:
         """Hex viewer jumps to specified offset."""
-        test_data = bytearray(range(256))
         if hasattr(hex_viewer, 'set_data'):
+            test_data = bytearray(range(256))
             hex_viewer.set_data(test_data)
 
         hex_viewer.current_offset = 0x80
@@ -188,8 +188,8 @@ class TestSearchFunctionality:
         self, hex_viewer: HexViewerWidget
     ) -> None:
         """Hex viewer searches for byte patterns."""
-        test_data = bytearray([0x00, 0x01, 0xAA, 0xBB, 0xCC, 0xDD])
         if hasattr(hex_viewer, 'set_data'):
+            test_data = bytearray([0x00, 0x01, 0xAA, 0xBB, 0xCC, 0xDD])
             hex_viewer.set_data(test_data)
 
 

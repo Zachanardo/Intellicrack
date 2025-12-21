@@ -980,11 +980,7 @@ class Radare2Emulator:
         # Determine actual object size from heap metadata analysis
         if object_size == 0:
             if heap_chunks := self.r2.cmdj("dmhj"):
-                if sizes := [
-                    chunk.get("size", 0)
-                    for chunk in heap_chunks
-                    if chunk.get("size", 0) > 0
-                ]:
+                if sizes := [chunk.get("size", 0) for chunk in heap_chunks if chunk.get("size", 0) > 0]:
                     object_size = sum(sizes) // len(sizes)  # Use average size
                 else:
                     object_size = 0x40 if self.bits == 64 else 0x20
@@ -1227,16 +1223,18 @@ class Radare2Emulator:
             # Analyze function for potential integer overflows
             disasm = self.r2.cmdj(f"pdj {func['size']} @ {func['offset']}")
             vulnerabilities.extend(
-                (ExploitType.INTEGER_OVERFLOW, inst["offset"])
-                for inst in disasm
-                if "mul" in inst["mnemonic"] or "imul" in inst["mnemonic"]
+                (ExploitType.INTEGER_OVERFLOW, inst["offset"]) for inst in disasm if "mul" in inst["mnemonic"] or "imul" in inst["mnemonic"]
             )
         return vulnerabilities
 
     def generate_exploit_report(self, exploits: list[ExploitPrimitive]) -> str:
         """Generate report of generated exploits."""
-        report: list[str] = ["=" * 60, "EXPLOIT GENERATION REPORT", "=" * 60]
-        report.append(f"Binary: {self.binary_path}")
+        report: list[str] = [
+            "=" * 60,
+            "EXPLOIT GENERATION REPORT",
+            "=" * 60,
+            f"Binary: {self.binary_path}",
+        ]
         report.append(f"Architecture: {self.arch} {self.bits}-bit")
         report.append("")
 

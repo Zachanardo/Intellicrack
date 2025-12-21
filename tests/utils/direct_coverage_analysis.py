@@ -45,9 +45,8 @@ def analyze_init_module():
             elif isinstance(node, ast.Assign):
                 for target in node.targets:
                     if isinstance(target, ast.Name):
-                        if target.id == "__all__":
-                            if isinstance(node.value, ast.List):
-                                all_exports = [elt.s for elt in node.value.elts if isinstance(elt, ast.Str)]
+                        if target.id == "__all__" and isinstance(node.value, ast.List):
+                            all_exports = [elt.s for elt in node.value.elts if isinstance(elt, ast.Str)]
                         assignments.append(target.id)
 
         print(f"Total lines: {total_lines}")

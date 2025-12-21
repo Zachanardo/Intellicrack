@@ -32,7 +32,7 @@ def fix_syntax_errors():
                 # Check if this assert is misaligned
                 if not line.startswith('        '):
                     # Add proper indentation
-                    fixed_lines.append('        ' + line.lstrip())
+                    fixed_lines.append(f'        {line.lstrip()}')
                 else:
                     fixed_lines.append(line)
             else:
@@ -41,7 +41,7 @@ def fix_syntax_errors():
         with open(cfi_test, 'w', encoding='utf-8') as f:
             f.writelines(fixed_lines)
 
-        print(f"  OK Fixed indentation errors")
+        print("  OK Fixed indentation errors")
 
     # Fix test_dep_bypass.py syntax error
     dep_test = test_dir / 'test_dep_bypass.py'
@@ -61,7 +61,7 @@ def fix_syntax_errors():
         with open(dep_test, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        print(f"  OK Fixed analyzer syntax error")
+        print("  OK Fixed analyzer syntax error")
 
     # Fix test_aslr_bypass.py indentation
     aslr_test = test_dir / 'test_aslr_bypass.py'
@@ -76,7 +76,7 @@ def fix_syntax_errors():
             if line.strip().startswith('assert') and i > 0:
                 # Ensure proper indentation
                 if not line.startswith('        '):
-                    fixed_lines.append('        ' + line.lstrip())
+                    fixed_lines.append(f'        {line.lstrip()}')
                 else:
                     fixed_lines.append(line)
             else:
@@ -85,7 +85,7 @@ def fix_syntax_errors():
         with open(aslr_test, 'w', encoding='utf-8') as f:
             f.writelines(fixed_lines)
 
-        print(f"  OK Fixed indentation errors")
+        print("  OK Fixed indentation errors")
 
     print()
     print("=" * 60)

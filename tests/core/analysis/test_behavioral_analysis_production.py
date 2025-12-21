@@ -265,9 +265,7 @@ class TestQEMUController:
         config: QEMUConfig = QEMUConfig()
         controller: QEMUController = QEMUController(config)
 
-        qemu_binary: str | None = controller._find_qemu_binary()
-
-        if qemu_binary:
+        if qemu_binary := controller._find_qemu_binary():
             assert isinstance(qemu_binary, str)
             assert len(qemu_binary) > 0
             assert "qemu" in qemu_binary.lower()
@@ -283,7 +281,7 @@ class TestQEMUController:
             kvm_expected: bool = os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.R_OK | os.W_OK)
             assert kvm_available == kvm_expected
         else:
-            assert kvm_available is False
+            assert not kvm_available
 
     def test_qemu_controller_stops_cleanly_when_not_running(self) -> None:
         """QEMUController handles stop when no VM is running."""
@@ -302,7 +300,7 @@ class TestQEMUController:
 
         result: str = controller.send_monitor_command("info registers")
 
-        assert result == ""
+        assert not result
         assert isinstance(result, str)
 
     def test_qemu_controller_qmp_command_handles_no_socket(self) -> None:
@@ -312,7 +310,7 @@ class TestQEMUController:
 
         result: dict[str, Any] = controller.send_qmp_command({"execute": "query-status"})
 
-        assert result == {}
+        assert not result
         assert isinstance(result, dict)
 
 
@@ -788,9 +786,7 @@ class TestBehavioralAnalyzer:
         time.sleep(0.5)
 
         try:
-            pid: int | None = analyzer._get_target_process_id()
-
-            if pid:
+            if pid := analyzer._get_target_process_id():
                 assert isinstance(pid, int)
                 assert pid > 0
         finally:
@@ -919,7 +915,7 @@ class TestBehavioralAnalysisRealWorldScenarios:
         file_operations: list[dict[str, Any]] = [
             e.to_dict() for e in analyzer.events if e.event_type.startswith("file_")
         ]
-        assert len(file_operations) > 0
+        assert file_operations
 
     def test_behavioral_analysis_tracks_license_file_modifications(self, windows_notepad: Path) -> None:
         """Behavioral analysis monitors license file write operations."""

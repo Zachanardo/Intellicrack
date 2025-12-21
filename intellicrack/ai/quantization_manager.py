@@ -74,8 +74,8 @@ try:
     HAS_AUTO_GPTQ = True
 except ImportError as e:
     logger.debug("Optional dependency auto_gptq not available: %s", e)
-    AutoGPTQForCausalLM = None  # type: ignore[assignment,misc]
-    BaseQuantizeConfig = None  # type: ignore[assignment,misc]
+    AutoGPTQForCausalLM = None
+    BaseQuantizeConfig = None
     HAS_AUTO_GPTQ = False
 
 # AWQ removed due to dependency issues
@@ -102,8 +102,8 @@ except ImportError as e:
     logger.exception("Import error in quantization_manager: %s", e)
     PeftModel = None  # type: ignore[assignment,misc]
     LoraConfig = None  # type: ignore[assignment,misc]
-    get_peft_model = None  # type: ignore[assignment,misc]
-    prepare_model_for_kbit_training = None  # type: ignore[assignment,misc]
+    get_peft_model = None  # type: ignore[assignment]
+    prepare_model_for_kbit_training = None  # type: ignore[assignment]
     HAS_PEFT = False
 
 
@@ -338,7 +338,7 @@ class QuantizationManager:
             fused_mlp = kwargs.get("fused_mlp", True)
             trust_remote = kwargs.get("trust_remote_code", True)
 
-            model = AutoGPTQForCausalLM.from_quantized(  # type: ignore[no-untyped-call]
+            model = AutoGPTQForCausalLM.from_quantized(
                 str(model_path),
                 device_map="auto",
                 trust_remote_code=trust_remote if isinstance(trust_remote, bool) else True,
@@ -387,7 +387,7 @@ class QuantizationManager:
 
             # Load model
             trust_remote_param = kwargs.get("trust_remote_code", True)
-            model = AutoModelForCausalLM.from_pretrained(  # type: ignore[no-untyped-call]
+            model = AutoModelForCausalLM.from_pretrained(
                 str(model_path),
                 device_map=device_map,
                 torch_dtype=torch_dtype,
@@ -395,10 +395,10 @@ class QuantizationManager:
             )
 
             if device == "cpu":
-                model = model.to(device)
+                model = model.to(device)  # type: ignore[arg-type]
             elif GPU_AUTOLOADER_AVAILABLE:
                 # Move model to appropriate device using unified GPU system
-                device_result = to_device(model)
+                device_result = to_device(cast("Any", model))
                 if device_result is not None:
                     model = device_result
 
@@ -444,7 +444,7 @@ class QuantizationManager:
             device_map_param = kwargs.get("device_map", "auto")
 
             # Load LoRA adapter
-            model = PeftModel.from_pretrained(  # type: ignore[no-untyped-call]
+            model = PeftModel.from_pretrained(
                 base_model,
                 str(adapter_path_obj),
                 torch_dtype=torch_dtype_param,
@@ -476,7 +476,7 @@ class QuantizationManager:
             Quantized model or None
 
         """
-        if torch is None:
+        if not HAS_TORCH or torch is None:
             logger.exception("PyTorch required for dynamic quantization")
             return None
 
@@ -486,7 +486,7 @@ class QuantizationManager:
             if quant_type == "int8":
                 # Apply INT8 dynamic quantization using torch.ao.quantization
                 if hasattr(torch, "ao") and hasattr(torch.ao, "quantization"):
-                    quantized_model = torch.ao.quantization.quantize_dynamic(  # type: ignore[attr-defined,no-untyped-call]
+                    quantized_model = torch.ao.quantization.quantize_dynamic(  # type: ignore[no-untyped-call]
                         model,
                         {torch.nn.Linear},
                         dtype=torch.qint8,
@@ -601,13 +601,13 @@ class QuantizationManager:
         inference_mode_param = kwargs.get("inference_mode", False)
         inference_mode_value: bool = inference_mode_param if isinstance(inference_mode_param, bool) else False
 
-        return LoraConfig(  # type: ignore[no-untyped-call]
+        return LoraConfig(
             r=r,
             lora_alpha=lora_alpha,
             target_modules=target_modules,
             lora_dropout=lora_dropout,
             bias=bias_value,  # type: ignore[arg-type]
-            task_type=task_type_value,  # type: ignore[arg-type]
+            task_type=task_type_value,
             inference_mode=inference_mode_value,
         )
 
@@ -636,7 +636,7 @@ class QuantizationManager:
                     "reason": "Single GPU or no GPU available",
                 }
 
-        if torch is not None:
+        if HAS_TORCH and torch is not None:
             return {
                 "cuda_available": torch.cuda.is_available(),
                 "device_count": torch.cuda.device_count() if torch.cuda.is_available() else 0,
@@ -704,7 +704,7 @@ class QuantizationManager:
 
                         # Create 8-bit linear layer using bnb.nn submodule
                         if hasattr(bnb, "nn") and hasattr(bnb.nn, "Linear8bitLt"):
-                            linear_8bit = bnb.nn.Linear8bitLt(  # type: ignore[attr-defined,no-untyped-call]
+                            linear_8bit = bnb.nn.Linear8bitLt(
                                 in_features,
                                 out_features,
                                 bias=module.bias is not None,
@@ -714,7 +714,7 @@ class QuantizationManager:
 
                             # Copy weights using Int8Params
                             if hasattr(bnb.nn, "Int8Params"):
-                                weight_params = bnb.nn.Int8Params(  # type: ignore[attr-defined,no-untyped-call]
+                                weight_params = bnb.nn.Int8Params(  # type: ignore[attr-defined]
                                     module.weight.data.clone(),
                                     requires_grad=False,
                                     has_fp16_weights=has_fp16_weights,
@@ -722,7 +722,7 @@ class QuantizationManager:
                                 linear_8bit.weight = weight_params
 
                             if module.bias is not None:
-                                linear_8bit.bias = torch.nn.Parameter(module.bias.clone())  # type: ignore[assignment]
+                                linear_8bit.bias = torch.nn.Parameter(module.bias.clone())
 
                             # Replace module
                             parent: Any = model
@@ -743,7 +743,7 @@ class QuantizationManager:
 
                         # Create 4-bit layer using LinearFP4
                         if hasattr(bnb, "nn") and hasattr(bnb.nn, "LinearFP4"):
-                            linear_4bit = bnb.nn.LinearFP4(  # type: ignore[attr-defined,no-untyped-call]
+                            linear_4bit = bnb.nn.LinearFP4(
                                 in_features,
                                 out_features,
                                 compress_statistics=compress_stats,
@@ -754,7 +754,7 @@ class QuantizationManager:
                                 quant_type_param = kwargs.get("quant_type", "fp4")
                                 quant_type_str = quant_type_param if isinstance(quant_type_param, str) else "fp4"
 
-                                weight_params_4bit = bnb.nn.Params4bit(  # type: ignore[attr-defined,no-untyped-call]
+                                weight_params_4bit = bnb.nn.Params4bit(  # type: ignore[attr-defined]
                                     module.weight.data.clone(),
                                     requires_grad=False,
                                     compress_statistics=compress_stats,
@@ -763,7 +763,7 @@ class QuantizationManager:
                                 linear_4bit.weight = weight_params_4bit
 
                             if module.bias is not None:
-                                linear_4bit.bias = torch.nn.Parameter(module.bias.clone())  # type: ignore[assignment]
+                                linear_4bit.bias = torch.nn.Parameter(module.bias.clone())
 
                             # Replace module
                             parent_4bit: Any = model
@@ -818,7 +818,7 @@ class QuantizationManager:
 
             # Create GPTQ config using BaseQuantizeConfig
             logger.info("Created GPTQ config: %d-bit, group_size=%d", bits, group_size)
-            return BaseQuantizeConfig(  # type: ignore[no-untyped-call]
+            return BaseQuantizeConfig(
                 bits=bits,
                 group_size=group_size,
                 damp_percent=float(damp_percent),
@@ -834,9 +834,7 @@ class QuantizationManager:
             logger.exception("Failed to create GPTQ config: %s", e)
             return None
 
-    def prepare_model_for_gptq_quantization(
-        self, model_path: str | Path, config: Any = None, **kwargs: object
-    ) -> Any:
+    def prepare_model_for_gptq_quantization(self, model_path: str | Path, config: Any = None, **kwargs: object) -> Any:
         """Prepare a model for GPTQ quantization using GPTQConfig.
 
         Args:
@@ -878,7 +876,7 @@ class QuantizationManager:
                 true_sequential_param = kwargs.get("true_sequential", True)
                 true_sequential = true_sequential_param if isinstance(true_sequential_param, bool) else True
 
-                gptq_config = GPTQConfig(  # type: ignore[no-untyped-call]
+                gptq_config = GPTQConfig(
                     bits=bits,
                     group_size=group_size,
                     damp_percent=float(damp_percent),
@@ -890,7 +888,7 @@ class QuantizationManager:
             else:
                 # Convert BaseQuantizeConfig to GPTQConfig parameters
                 config_any = cast("Any", config)
-                gptq_config = GPTQConfig(  # type: ignore[no-untyped-call]
+                gptq_config = GPTQConfig(
                     bits=config_any.bits,
                     group_size=config_any.group_size,
                     damp_percent=config_any.damp_percent,
@@ -905,7 +903,7 @@ class QuantizationManager:
             trust_remote = trust_remote_param if isinstance(trust_remote_param, bool) else True
 
             logger.info("Successfully prepared model for GPTQ quantization")
-            return AutoModelForCausalLM.from_pretrained(  # type: ignore[no-untyped-call]
+            return AutoModelForCausalLM.from_pretrained(
                 str(model_path),
                 quantization_config=gptq_config,
                 device_map="auto",
@@ -956,7 +954,7 @@ class QuantizationManager:
             if HAS_TORCH and torch is not None:
                 # Use torch.ao.quantization if available
                 if hasattr(torch, "ao") and hasattr(torch.ao, "quantization"):
-                    default_qconfig = getattr(torch.ao.quantization, "default_dynamic_qconfig", None)  # type: ignore[attr-defined,no-untyped-call]
+                    default_qconfig = getattr(torch.ao.quantization, "default_dynamic_qconfig", None)
                     if default_qconfig is not None:
                         return {
                             "qconfig_spec": {
@@ -974,7 +972,7 @@ class QuantizationManager:
             if HAS_TORCH and torch is not None:
                 # Use torch.ao.quantization if available
                 if hasattr(torch, "ao") and hasattr(torch.ao, "quantization"):
-                    default_static_qconfig = getattr(torch.ao.quantization, "default_qconfig", None)  # type: ignore[attr-defined,no-untyped-call]
+                    default_static_qconfig = getattr(torch.ao.quantization, "default_qconfig", None)
                     if default_static_qconfig is not None:
                         return {
                             "qconfig_spec": {
@@ -1007,9 +1005,9 @@ class QuantizationManager:
                 if gpu_type == "nvidia_cuda" and torch is not None and torch.cuda.is_available():
                     torch.cuda.empty_cache()
                 elif gpu_type == "intel_xpu" and torch is not None and hasattr(torch, "xpu"):
-                    torch_xpu = torch.xpu  # type: ignore[attr-defined]
+                    torch_xpu = torch.xpu
                     if hasattr(torch_xpu, "empty_cache"):
-                        torch_xpu.empty_cache()  # type: ignore[no-untyped-call]
+                        torch_xpu.empty_cache()
         elif torch is not None and torch.cuda.is_available():
             torch.cuda.empty_cache()
 

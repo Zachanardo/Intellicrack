@@ -79,7 +79,7 @@ class TestValidationAnalyzer:
         analysis = analyzer.analyze(bytes(crc32_code), 0, "x64")
 
         crc_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "CRC32"]
-        assert len(crc_primitives) > 0
+        assert crc_primitives
         assert any(p.confidence > 0.8 for p in crc_primitives)
 
     def test_analyze_detects_md5_constants(self) -> None:
@@ -95,7 +95,7 @@ class TestValidationAnalyzer:
         analysis = analyzer.analyze(bytes(md5_code), 0, "x64")
 
         md5_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "MD5"]
-        assert len(md5_primitives) > 0
+        assert md5_primitives
 
     def test_analyze_detects_sha256_constants(self) -> None:
         """Analyzer detects SHA256 initialization constants."""
@@ -110,7 +110,7 @@ class TestValidationAnalyzer:
         analysis = analyzer.analyze(bytes(sha256_code), 0, "x64")
 
         sha_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "SHA256"]
-        assert len(sha_primitives) > 0
+        assert sha_primitives
         assert any(p.confidence > 0.9 for p in sha_primitives)
 
     def test_analyze_detects_rsa_exponents(self) -> None:
@@ -126,7 +126,7 @@ class TestValidationAnalyzer:
         analysis = analyzer.analyze(bytes(rsa_code), 0, "x64")
 
         rsa_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "RSA"]
-        assert len(rsa_primitives) > 0
+        assert rsa_primitives
 
     def test_analyze_extracts_length_constraints(self) -> None:
         """Analyzer extracts key length constraints from comparison operations."""
@@ -142,7 +142,7 @@ class TestValidationAnalyzer:
         analysis = analyzer.analyze(bytes(length_check_code), 0, "x64")
 
         length_constraints = [c for c in analysis.constraints if c.constraint_type == "length"]
-        assert len(length_constraints) > 0
+        assert length_constraints
         assert any(c.value == 16 for c in length_constraints)
 
     def test_analyze_identifies_patch_points(self) -> None:
@@ -161,7 +161,7 @@ class TestValidationAnalyzer:
 
         assert len(analysis.patch_points) > 0
         nop_patches = [p for p in analysis.patch_points if p.patch_type == "nop_conditional"]
-        assert len(nop_patches) > 0
+        assert nop_patches
 
     def test_analyze_generates_recommendations(self) -> None:
         """Analyzer generates actionable cracking recommendations."""
@@ -217,7 +217,7 @@ class TestConstraintExtractor:
         constraints = extractor.extract_constraints()
 
         keyword_constraints = [c for c in constraints if c.constraint_type == "keyword"]
-        assert len(keyword_constraints) > 0
+        assert keyword_constraints
         assert any("LICENSE" in str(c.value) or "SERIAL" in str(c.value) for c in keyword_constraints)
 
     def test_extract_crypto_constraints(self, sample_binary: Path) -> None:
@@ -226,7 +226,6 @@ class TestConstraintExtractor:
         constraints = extractor.extract_constraints()
 
         crypto_constraints = [c for c in constraints if c.constraint_type == "algorithm"]
-        assert len(crypto_constraints) >= 0
 
     def test_analyze_validation_algorithms(self, sample_binary: Path) -> None:
         """Extractor analyzes and groups validation algorithms."""

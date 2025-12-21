@@ -4,61 +4,61 @@ intellicrack\tools\plugin_test_generator.py:28: D400: in public class `PluginTes
 
 intellicrack\tools\plugin_test_generator.py:108: D400: in public method `generate_tests_for_file`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:128: D400: in private method `_extract_and_generate_tests`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:126: D400: in private method `_extract_and_generate_tests`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:244: D400: in private method `_generate_test_for_method`: - First line should end with a period (not 'd')
+intellicrack\tools\plugin_test_generator.py:241: D400: in private method `_generate_test_for_method`: - First line should end with a period (not 'd')
 
-intellicrack\tools\plugin_test_generator.py:281: D400: in private method `_get_default_value`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:274: D400: in private method `_get_default_value`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:296: D400: in private method `_get_decorator_name`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:287: D400: in private method `_get_decorator_name`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:309: D400: in private method `_analyze_return_type`: - First line should end with a period (not 'T')
+intellicrack\tools\plugin_test_generator.py:302: D400: in private method `_analyze_return_type`: - First line should end with a period (not 'T')
 
-intellicrack\tools\plugin_test_generator.py:330: D400: in private method `_analyze_exceptions`: - First line should end with a period (not 'd')
+intellicrack\tools\plugin_test_generator.py:323: D400: in private method `_analyze_exceptions`: - First line should end with a period (not 'd')
 
-intellicrack\tools\plugin_test_generator.py:341: D400: in private method `_generate_comprehensive_test_for_method`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:334: D400: in private method `_generate_comprehensive_test_for_method`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:403: D400: in private method `_generate_smart_test_param`: - First line should end with a period (not 't')
+intellicrack\tools\plugin_test_generator.py:389: D400: in private method `_generate_smart_test_param`: - First line should end with a period (not 't')
 
-intellicrack\tools\plugin_test_generator.py:453: D400: in private method `_generate_edge_case_test`: - First line should end with a period (not 'd')
+intellicrack\tools\plugin_test_generator.py:418: D400: in private method `_generate_edge_case_test`: - First line should end with a period (not 'd')
 
-intellicrack\tools\plugin_test_generator.py:497: D400: in private method `_generate_exception_test`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:456: D400: in private method `_generate_exception_test`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:514: D400: in private method `_generate_attribute_tests`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:473: D400: in private method `_generate_attribute_tests`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:528: D400: in private method `_generate_inheritance_tests`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:487: D400: in private method `_generate_inheritance_tests`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:538: D400: in private method `_generate_plugin_specific_tests`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:497: D400: in private method `_generate_plugin_specific_tests`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:559: D400: in private method `_generate_frida_plugin_tests`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:514: D400: in private method `_generate_frida_plugin_tests`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:569: D400: in private method `_generate_ghidra_plugin_tests`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:524: D400: in private method `_generate_ghidra_plugin_tests`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:579: D400: in private method `_generate_analysis_plugin_tests`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:534: D400: in private method `_generate_analysis_plugin_tests`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:593: D400: in private method `_generate_comprehensive_fallback_tests`: - First line should end with a period (not 'd')
+intellicrack\tools\plugin_test_generator.py:548: D400: in private method `_generate_comprehensive_fallback_tests`: - First line should end with a period (not 'd')
 
-intellicrack\tools\plugin_test_generator.py:624: D400: in private method `_generate_error_aware_fallback_tests`: - First line should end with a period (not 'r')
+intellicrack\tools\plugin_test_generator.py:579: D400: in private method `_generate_error_aware_fallback_tests`: - First line should end with a period (not 'r')
 
-intellicrack\tools\plugin_test_generator.py:648: D400: in public class `MockDataGenerator`: - First line should end with a period (not 'a')
+intellicrack\tools\plugin_test_generator.py:603: D400: in public class `MockDataGenerator`: - First line should end with a period (not 'a')
 
-intellicrack\tools\plugin_test_generator.py:651: D400: in public method `__init__`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:606: D400: in public method `__init__`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:656: D400: in private method `_load_pe_template`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:611: D400: in private method `_load_pe_template`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:852: D400: in private method `_load_elf_template`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:807: D400: in private method `_load_elf_template`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:923: D400: in public method `create_mock_binary`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:878: D400: in public method `create_mock_binary`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_test_generator.py:1081: D400: in public method `create_mock_network_data`: - First line should end with a period (not 'a')
+intellicrack\tools\plugin_test_generator.py:1035: D400: in public method `create_mock_network_data`: - First line should end with a period (not 'a')
 
-intellicrack\tools\plugin_test_generator.py:1166: D400: in public method `create_mock_registry_data`: - First line should end with a period (not 'a')
+intellicrack\tools\plugin_test_generator.py:1116: D400: in public method `create_mock_registry_data`: - First line should end with a period (not 'a')
 
-intellicrack\tools\plugin_test_generator.py:1973: D400: in public class `TestCoverageAnalyzer`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_test_generator.py:1916: D400: in public class `TestCoverageAnalyzer`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_test_generator.py:1975: D107: in public method `__init__`: - Missing docstring in __init__
+intellicrack\tools\plugin_test_generator.py:1919: D400: in public method `__init__`: - First line should end with a period (not 'r')
 
-intellicrack\tools\plugin_test_generator.py:1979: D400: in public method `analyze_coverage`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_test_generator.py:1923: D400: in public method `analyze_coverage`: - First line should end with a period (not 'e')
 
 
 28 findings in tests\validation_system\runner.py
@@ -181,102 +181,102 @@ intellicrack\tools\plugin_ci_cd.py:37: D400: in public class `CICDPipeline`: - F
 
 intellicrack\tools\plugin_ci_cd.py:52: D400: in private method `_load_or_create_config`: - First line should end with a period (not 'n')
 
-intellicrack\tools\plugin_ci_cd.py:88: D400: in public method `run_pipeline`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:89: D400: in public method `run_pipeline`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:113: D400: in public method `run_validate_stage`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:122: D400: in public method `run_validate_stage`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:113: D401: in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')
+intellicrack\tools\plugin_ci_cd.py:122: D401: in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')
 
-intellicrack\tools\plugin_ci_cd.py:141: D400: in public method `run_test_stage`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:160: D400: in public method `run_test_stage`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:210: D400: in public method `run_quality_stage`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:237: D400: in public method `run_quality_stage`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:242: D400: in public method `run_security_stage`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:280: D400: in public method `run_security_stage`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:271: D400: in public method `run_build_stage`: - First line should end with a period (not 'n')
+intellicrack\tools\plugin_ci_cd.py:319: D400: in public method `run_build_stage`: - First line should end with a period (not 'n')
 
-intellicrack\tools\plugin_ci_cd.py:309: D400: in public method `run_deploy_stage`: - First line should end with a period (not 't')
+intellicrack\tools\plugin_ci_cd.py:360: D400: in public method `run_deploy_stage`: - First line should end with a period (not 't')
 
-intellicrack\tools\plugin_ci_cd.py:344: D400: in private method `_check_syntax`: - First line should end with a period (not 'x')
+intellicrack\tools\plugin_ci_cd.py:398: D400: in private method `_check_syntax`: - First line should end with a period (not 'x')
 
-intellicrack\tools\plugin_ci_cd.py:357: D400: in private method `_check_structure`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:411: D400: in private method `_check_structure`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:363: D400: in private method `_check_imports`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:417: D400: in private method `_check_imports`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:369: D400: in private method `_run_linter`: - First line should end with a period (not 'r')
+intellicrack\tools\plugin_ci_cd.py:423: D400: in private method `_run_linter`: - First line should end with a period (not 'r')
 
-intellicrack\tools\plugin_ci_cd.py:399: D400: in private method `_calculate_complexity`: - First line should end with a period (not 'y')
+intellicrack\tools\plugin_ci_cd.py:456: D400: in private method `_calculate_complexity`: - First line should end with a period (not 'y')
 
-intellicrack\tools\plugin_ci_cd.py:417: D400: in private method `_check_line_length`: - First line should end with a period (not 'h')
+intellicrack\tools\plugin_ci_cd.py:475: D400: in private method `_check_line_length`: - First line should end with a period (not 'h')
 
-intellicrack\tools\plugin_ci_cd.py:427: D400: in private method `_run_bandit`: - First line should end with a period (not 'r')
+intellicrack\tools\plugin_ci_cd.py:485: D400: in private method `_run_bandit`: - First line should end with a period (not 'r')
 
-intellicrack\tools\plugin_ci_cd.py:453: D400: in private method `_check_dependencies`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:516: D400: in private method `_check_dependencies`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:459: D400: in private method `_optimize_plugin`: - First line should end with a period (not 'e')
+intellicrack\tools\plugin_ci_cd.py:522: D400: in private method `_optimize_plugin`: - First line should end with a period (not 'e')
 
-intellicrack\tools\plugin_ci_cd.py:476: D400: in private method `_get_version`: - First line should end with a period (not 'n')
+intellicrack\tools\plugin_ci_cd.py:537: D400: in private method `_get_version`: - First line should end with a period (not 'n')
 
-intellicrack\tools\plugin_ci_cd.py:492: D400: in private method `_calculate_checksum`: - First line should end with a period (not 'm')
+intellicrack\tools\plugin_ci_cd.py:553: D400: in private method `_calculate_checksum`: - First line should end with a period (not 'm')
 
-intellicrack\tools\plugin_ci_cd.py:502: D400: in private method `_update_plugin_registry`: - First line should end with a period (not 'o')
+intellicrack\tools\plugin_ci_cd.py:563: D400: in private method `_update_plugin_registry`: - First line should end with a period (not 'o')
 
-intellicrack\tools\plugin_ci_cd.py:522: D400: in private method `_generate_report`: - First line should end with a period (not 't')
+intellicrack\tools\plugin_ci_cd.py:591: D400: in private method `_generate_report`: - First line should end with a period (not 't')
 
-intellicrack\tools\plugin_ci_cd.py:554: D400: in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')
+intellicrack\tools\plugin_ci_cd.py:632: D400: in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')
 
-intellicrack\tools\plugin_ci_cd.py:558: D400: in public method `generate_workflow`: - First line should end with a period (not 'L')
+intellicrack\tools\plugin_ci_cd.py:636: D400: in public method `generate_workflow`: - First line should end with a period (not 'L')
 
 
 24 findings in intellicrack\llm\tools\intellicrack_protection_analysis_tool.py
 
 intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:1: D400: at module level: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:30: D400: in public class `DIEAnalysisTool`: - First line should end with a period (not 's')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:29: D400: in public class `DIEAnalysisTool`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:33: D400: in public method `__init__`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:32: D400: in public method `__init__`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:40: D400: in public method `get_tool_definition`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:38: D400: in public method `get_tool_definition`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:89: D400: in public method `execute`: - First line should end with a period (not 's')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:87: D400: in public method `execute`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:240: D400: in private method `_format_protections`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:243: D400: in private method `_format_protections`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:262: D400: in private method `_categorize_protection`: - First line should end with a period (not 'g')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:265: D400: in private method `_categorize_protection`: - First line should end with a period (not 'g')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:279: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:278: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:288: D400: in private method `_get_generic_bypass_methods`: - First line should end with a period (not 'e')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:287: D400: in private method `_get_generic_bypass_methods`: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:330: D400: in private method `_format_entropy_analysis`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:323: D400: in private method `_format_entropy_analysis`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:377: D400: in private method `_format_certificates`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:378: D400: in private method `_format_certificates`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:399: D400: in private method `_format_strings`: - First line should end with a period (not 's')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:400: D400: in private method `_format_strings`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:411: D400: in private method `_categorize_string`: - First line should end with a period (not 'g')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:412: D400: in private method `_categorize_string`: - First line should end with a period (not 'g')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:428: D400: in private method `_generate_text_report`: - First line should end with a period (not 't')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:429: D400: in private method `_generate_text_report`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:474: D400: in public method `analyze_batch`: - First line should end with a period (not 'h')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:475: D400: in public method `analyze_batch`: - First line should end with a period (not 'h')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:516: D400: in public method `compare_files`: - First line should end with a period (not 's')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:526: D400: in public method `compare_files`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:562: D400: in private method `_should_analyze_license_patterns`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:576: D400: in private method `_should_analyze_license_patterns`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:593: D400: in private method `_analyze_license_patterns_for_llm`: - First line should end with a period (not 'n')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:607: D400: in private method `_analyze_license_patterns_for_llm`: - First line should end with a period (not 'n')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:658: D400: in private method `_check_for_network_apis`: - First line should end with a period (not 'd')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:674: D400: in private method `_check_for_network_apis`: - First line should end with a period (not 'd')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:665: D400: in private method `_check_for_crypto_apis`: - First line should end with a period (not 'd')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:681: D400: in private method `_check_for_crypto_apis`: - First line should end with a period (not 'd')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:672: D400: in private method `_check_for_registry_apis`: - First line should end with a period (not 'd')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:688: D400: in private method `_check_for_registry_apis`: - First line should end with a period (not 'd')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:678: D400: in private method `_get_license_llm_guidance`: - First line should end with a period (not 's')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:694: D400: in private method `_get_license_llm_guidance`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:706: D400: in public function `create_die_tool`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:722: D400: in public function `create_die_tool`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:706: D401: in public function `create_die_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
+intellicrack\llm\tools\intellicrack_protection_analysis_tool.py:722: D401: in public function `create_die_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
 
 
 23 findings in tests\validation_system\forensic_collector.py
@@ -440,70 +440,70 @@ intellicrack\llm\tools\script_generation_tool.py:239: D400: in private method `_
 
 intellicrack\llm\tools\script_generation_tool.py:257: D400: in private method `_generate_frida_hook`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\script_generation_tool.py:343: D400: in private method `_generate_frida_trace`: - First line should end with a period (not 's')
+intellicrack\llm\tools\script_generation_tool.py:344: D400: in private method `_generate_frida_trace`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\script_generation_tool.py:446: D400: in private method `_get_apis_to_trace`: - First line should end with a period (not 'o')
+intellicrack\llm\tools\script_generation_tool.py:447: D400: in private method `_get_apis_to_trace`: - First line should end with a period (not 'o')
 
-intellicrack\llm\tools\script_generation_tool.py:472: D400: in private method `_generate_frida_bypass`: - First line should end with a period (not 't')
+intellicrack\llm\tools\script_generation_tool.py:473: D400: in private method `_generate_frida_bypass`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\script_generation_tool.py:602: D400: in private method `_generate_frida_patch`: - First line should end with a period (not 't')
+intellicrack\llm\tools\script_generation_tool.py:603: D400: in private method `_generate_frida_patch`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\script_generation_tool.py:679: D400: in private method `_generate_frida_custom`: - First line should end with a period (not 't')
+intellicrack\llm\tools\script_generation_tool.py:682: D400: in private method `_generate_frida_custom`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\script_generation_tool.py:759: D400: in private method `_generate_ghidra_script`: - First line should end with a period (not 't')
+intellicrack\llm\tools\script_generation_tool.py:762: D400: in private method `_generate_ghidra_script`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\script_generation_tool.py:785: D400: in private method `_generate_packer_hooks`: - First line should end with a period (not 's')
+intellicrack\llm\tools\script_generation_tool.py:788: D400: in private method `_generate_packer_hooks`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\script_generation_tool.py:1042: D400: in private method `_generate_license_hooks`: - First line should end with a period (not 's')
+intellicrack\llm\tools\script_generation_tool.py:1045: D400: in private method `_generate_license_hooks`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\script_generation_tool.py:1078: D400: in private method `_generate_anti_analysis_hooks`: - First line should end with a period (not 's')
+intellicrack\llm\tools\script_generation_tool.py:1081: D400: in private method `_generate_anti_analysis_hooks`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\script_generation_tool.py:1315: D400: in private method `_get_target_functions_from_protection`: - First line should end with a period (not 'o')
+intellicrack\llm\tools\script_generation_tool.py:1318: D400: in private method `_get_target_functions_from_protection`: - First line should end with a period (not 'o')
 
-intellicrack\llm\tools\script_generation_tool.py:1333: D400: in public function `create_script_tool`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\script_generation_tool.py:1336: D400: in public function `create_script_tool`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\script_generation_tool.py:1333: D401: in public function `create_script_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
+intellicrack\llm\tools\script_generation_tool.py:1336: D401: in public function `create_script_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
 
 
 19 findings in intellicrack\utils\tools\tool_wrappers.py
 
-intellicrack\utils\tools\tool_wrappers.py:49: D401: in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\utils\tools\tool_wrappers.py:50: D401: in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\utils\tools\tool_wrappers.py:54: D205: in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:55: D205: in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:96: D205: in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:97: D205: in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:140: D205: in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:141: D205: in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:185: D205: in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:186: D205: in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:232: D205: in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:233: D205: in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:282: D205: in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:283: D205: in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:312: D205: in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:313: D205: in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:338: D205: in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:339: D205: in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:371: D205: in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:372: D205: in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:485: D205: in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:486: D205: in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:532: D205: in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:533: D205: in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:657: D205: in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:661: D205: in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:741: D205: in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:745: D205: in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:868: D205: in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:873: D205: in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:952: D205: in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:957: D205: in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:1441: D205: in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:1449: D205: in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:1493: D205: in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:1501: D205: in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\tools\tool_wrappers.py:1605: D205: in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\tools\tool_wrappers.py:1613: D205: in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)
 
 
 19 findings in tests\validation_system\cross_version_tester.py
@@ -709,21 +709,21 @@ intellicrack\llm\tools\yara_pattern_analysis_tool.py:194: D400: in private metho
 
 intellicrack\llm\tools\yara_pattern_analysis_tool.py:227: D400: in private method `_assess_security_findings`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:305: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:304: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:380: D400: in private method `_categorize_patterns`: - First line should end with a period (not 'e')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:379: D400: in private method `_categorize_patterns`: - First line should end with a period (not 'e')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:392: D400: in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:391: D400: in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:410: D400: in private method `_extract_threat_indicators`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:407: D400: in private method `_extract_threat_indicators`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:438: D400: in private method `_analyze_protection_layers`: - First line should end with a period (not 's')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:435: D400: in private method `_analyze_protection_layers`: - First line should end with a period (not 's')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:473: D400: in public method `analyze_custom_patterns`: - First line should end with a period (not 't')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:470: D400: in public method `analyze_custom_patterns`: - First line should end with a period (not 't')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:514: D400: in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:511: D400: in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')
 
-intellicrack\llm\tools\yara_pattern_analysis_tool.py:514: D401: in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
+intellicrack\llm\tools\yara_pattern_analysis_tool.py:511: D401: in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')
 
 
 15 findings in tests\validation\day8_3_final_production_validation.py
@@ -829,31 +829,31 @@ tests\validation_system\version_compatibility_verifier.py:615: D205: in private 
 
 intellicrack\utils\core\siphash24_replacement.py:1: D400: at module level: - First line should end with a period (not 't')
 
-intellicrack\utils\core\siphash24_replacement.py:84: D204: in public class `siphash13`: - 1 blank line required after class docstring (found 0)
+intellicrack\utils\core\siphash24_replacement.py:80: D204: in public class `siphash13`: - 1 blank line required after class docstring (found 0)
 
-intellicrack\utils\core\siphash24_replacement.py:84: D205: in public class `siphash13`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\core\siphash24_replacement.py:80: D205: in public class `siphash13`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\core\siphash24_replacement.py:84: D400: in public class `siphash13`: - First line should end with a period (not ')')
+intellicrack\utils\core\siphash24_replacement.py:80: D400: in public class `siphash13`: - First line should end with a period (not ')')
 
-intellicrack\utils\core\siphash24_replacement.py:97: D205: in public method `__call__`: - 1 blank line required between summary line and description (found 0)
+intellicrack\utils\core\siphash24_replacement.py:93: D205: in public method `__call__`: - 1 blank line required between summary line and description (found 0)
 
-intellicrack\utils\core\siphash24_replacement.py:97: D400: in public method `__call__`: - First line should end with a period (not ':')
+intellicrack\utils\core\siphash24_replacement.py:93: D400: in public method `__call__`: - First line should end with a period (not ':')
 
-intellicrack\utils\core\siphash24_replacement.py:140: D400: in public function `siphash24`: - First line should end with a period (not ')')
+intellicrack\utils\core\siphash24_replacement.py:133: D400: in public function `siphash24`: - First line should end with a period (not ')')
 
-intellicrack\utils\core\siphash24_replacement.py:154: D200: in private function `_siphash`: - One-line docstring should fit on one line with quotes (found 3)
+intellicrack\utils\core\siphash24_replacement.py:147: D200: in private function `_siphash`: - One-line docstring should fit on one line with quotes (found 3)
 
-intellicrack\utils\core\siphash24_replacement.py:154: D400: in private function `_siphash`: - First line should end with a period (not 'n')
+intellicrack\utils\core\siphash24_replacement.py:147: D400: in private function `_siphash`: - First line should end with a period (not 'n')
 
-intellicrack\utils\core\siphash24_replacement.py:235: D200: in private function `_sipround`: - One-line docstring should fit on one line with quotes (found 3)
+intellicrack\utils\core\siphash24_replacement.py:228: D200: in private function `_sipround`: - One-line docstring should fit on one line with quotes (found 3)
 
-intellicrack\utils\core\siphash24_replacement.py:235: D400: in private function `_sipround`: - First line should end with a period (not 'n')
+intellicrack\utils\core\siphash24_replacement.py:228: D400: in private function `_sipround`: - First line should end with a period (not 'n')
 
-intellicrack\utils\core\siphash24_replacement.py:235: D403: in private function `_sipround`: - First word of the first line should be properly capitalized ('Sipround', not 'SipRound')
+intellicrack\utils\core\siphash24_replacement.py:228: D403: in private function `_sipround`: - First word of the first line should be properly capitalized ('Sipround', not 'SipRound')
 
-intellicrack\utils\core\siphash24_replacement.py:259: D200: in private function `_rotl64`: - One-line docstring should fit on one line with quotes (found 3)
+intellicrack\utils\core\siphash24_replacement.py:252: D200: in private function `_rotl64`: - One-line docstring should fit on one line with quotes (found 3)
 
-intellicrack\utils\core\siphash24_replacement.py:259: D400: in private function `_rotl64`: - First line should end with a period (not 't')
+intellicrack\utils\core\siphash24_replacement.py:252: D400: in private function `_rotl64`: - First line should end with a period (not 't')
 
 
 14 findings in tests\validation\day7_3_checkpoint.py
@@ -1601,23 +1601,6 @@ tests\validation_system\phase6\exploitation_pass_criteria_validator.py:161: D401
 tests\validation_system\phase6\exploitation_pass_criteria_validator.py:2333: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
-7 findings in intellicrack\cli\cli.py
-
-intellicrack\cli\cli.py:211: D401: in private function `_perform_vulnerability_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-intellicrack\cli\cli.py:227: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-intellicrack\cli\cli.py:257: D401: in private function `_perform_basic_security_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-intellicrack\cli\cli.py:913: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-intellicrack\cli\cli.py:926: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-intellicrack\cli\cli.py:933: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-intellicrack\cli\cli.py:942: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
-
-
 7 findings in tests\validation_system\phase2\detection_depth_validator.py
 
 tests\validation_system\phase2\detection_depth_validator.py:1: D205: at module level: - 1 blank line required between summary line and description (found 0)
@@ -1645,9 +1628,9 @@ intellicrack\cli\analysis_cli.py:157: D401: in private method `_perform_vulnerab
 
 intellicrack\cli\analysis_cli.py:172: D401: in private method `_perform_pe_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\analysis_cli.py:193: D401: in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\analysis_cli.py:192: D401: in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\analysis_cli.py:208: D401: in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\analysis_cli.py:207: D401: in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
 
 6 findings in intellicrack\utils\deprecation_warnings.py
@@ -1785,6 +1768,19 @@ tests\validation_system\phase6\statistical_requirements_validator.py:44: D204: i
 tests\validation_system\phase6\statistical_requirements_validator.py:634: D401: in public function `main`: - First line should be in imperative mood; try rephrasing (found 'Example')
 
 
+5 findings in intellicrack\cli\cli.py
+
+intellicrack\cli\cli.py:261: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:953: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:966: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:973: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+intellicrack\cli\cli.py:982: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+
 5 findings in tests\checkpoints\day2_checkpoint2_validation.py
 
 tests\checkpoints\day2_checkpoint2_validation.py:2: D205: at module level: - 1 blank line required between summary line and description (found 0)
@@ -1865,13 +1861,13 @@ tests\validation_system\phase6\detection_pass_criteria_validator.py:1016: D401: 
 
 4 findings in intellicrack\core\gpu_acceleration.py
 
-intellicrack\core\gpu_acceleration.py:301: D403: in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
+intellicrack\core\gpu_acceleration.py:298: D403: in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
 
-intellicrack\core\gpu_acceleration.py:433: D403: in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')
+intellicrack\core\gpu_acceleration.py:430: D403: in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')
 
-intellicrack\core\gpu_acceleration.py:592: D403: in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
+intellicrack\core\gpu_acceleration.py:589: D403: in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
 
-intellicrack\core\gpu_acceleration.py:755: D403: in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
+intellicrack\core\gpu_acceleration.py:752: D403: in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')
 
 
 4 findings in tests\integration\simple_day6_1_cet_cfi_test.py
@@ -1951,20 +1947,20 @@ intellicrack\ai\protection_aware_script_gen.py:4862: D403: in private method `_g
 
 3 findings in intellicrack\cli\ai_chat_interface.py
 
-intellicrack\cli\ai_chat_interface.py:905: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\ai_chat_interface.py:900: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\ai_chat_interface.py:915: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\ai_chat_interface.py:910: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
-intellicrack\cli\ai_chat_interface.py:941: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+intellicrack\cli\ai_chat_interface.py:936: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')
 
 
 3 findings in intellicrack\core\exploitation\automated_unpacker.py
 
-intellicrack\core\exploitation\automated_unpacker.py:697: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')
+intellicrack\core\exploitation\automated_unpacker.py:695: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')
 
-intellicrack\core\exploitation\automated_unpacker.py:1522: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
+intellicrack\core\exploitation\automated_unpacker.py:1510: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')
 
-intellicrack\core\exploitation\automated_unpacker.py:2112: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')
+intellicrack\core\exploitation\automated_unpacker.py:2088: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')
 
 
 3 findings in intellicrack\handlers\numpy_handler.py
@@ -2138,23 +2134,30 @@ intellicrack\ai\llm_types.py:62: D401: in public method `on_completed`: - First 
 
 2 findings in intellicrack\core\analysis\cross_tool_orchestrator.py
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:870: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\analysis\cross_tool_orchestrator.py:906: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)
 
-intellicrack\core\analysis\cross_tool_orchestrator.py:900: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\analysis\cross_tool_orchestrator.py:936: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)
+
+
+2 findings in intellicrack\hexview\integration.py
+
+intellicrack\hexview\integration.py:28: D102: in public method `menuBar`: - Missing docstring in public method
+
+intellicrack\hexview\integration.py:29: D102: in public method `children`: - Missing docstring in public method
 
 
 2 findings in intellicrack\ui\dialogs\model_finetuning_dialog.py
 
-intellicrack\ui\dialogs\model_finetuning_dialog.py:2037: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
+intellicrack\ui\dialogs\model_finetuning_dialog.py:2035: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
-intellicrack\ui\dialogs\model_finetuning_dialog.py:2049: D403: in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
+intellicrack\ui\dialogs\model_finetuning_dialog.py:2047: D403: in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
 
 2 findings in intellicrack\utils\logger.py
 
-intellicrack\utils\logger.py:57: D103: in public function `log_function_call`: - Missing docstring in public function
+intellicrack\utils\logger.py:61: D103: in public function `log_function_call`: - Missing docstring in public function
 
-intellicrack\utils\logger.py:179: D103: in public function `log_all_methods`: - Missing docstring in public function
+intellicrack\utils\logger.py:183: D103: in public function `log_all_methods`: - Missing docstring in public function
 
 
 2 findings in tests\checkpoints\day5_3_production_checkpoint.py
@@ -2263,9 +2266,14 @@ intellicrack\ai\enhanced_training_interface.py:977: D403: in private method `_re
 intellicrack\ai\headless_training_interface.py:888: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')
 
 
+1 findings in intellicrack\ai\__init__.py
+
+intellicrack\ai\__init__.py:168: D103: in public function `learning_engine`: - Missing docstring in public function
+
+
 1 findings in intellicrack\core\analysis\export_analyzer.py
 
-intellicrack\core\analysis\export_analyzer.py:690: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')
+intellicrack\core\analysis\export_analyzer.py:669: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')
 
 
 1 findings in intellicrack\core\processing\parallel_processing_manager.py
@@ -2275,12 +2283,12 @@ intellicrack\core\processing\parallel_processing_manager.py:177: D202: in privat
 
 1 findings in intellicrack\core\processing\qiling_emulator.py
 
-intellicrack\core\processing\qiling_emulator.py:850: D202: in public method `emulate_with_patches`: - No blank lines allowed after function docstring (found 1)
+intellicrack\core\processing\qiling_emulator.py:859: D202: in public method `emulate_with_patches`: - No blank lines allowed after function docstring (found 1)
 
 
 1 findings in intellicrack\handlers\pyqt6_handler.py
 
-intellicrack\handlers\pyqt6_handler.py:252: D401: in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')
+intellicrack\handlers\pyqt6_handler.py:253: D401: in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')
 
 
 1 findings in intellicrack\models\repositories\lmstudio_repository.py
@@ -2300,12 +2308,12 @@ intellicrack\models\repositories\openrouter_repository.py:225: D403: in public m
 
 1 findings in intellicrack\plugins\custom_modules\hardware_dongle_emulator.py
 
-intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:432: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')
+intellicrack\plugins\custom_modules\hardware_dongle_emulator.py:439: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')
 
 
 1 findings in intellicrack\plugins\custom_modules\success_rate_analyzer.py
 
-intellicrack\plugins\custom_modules\success_rate_analyzer.py:1464: D202: in public function `register_component_hooks`: - No blank lines allowed after function docstring (found 1)
+intellicrack\plugins\custom_modules\success_rate_analyzer.py:1473: D202: in public function `register_component_hooks`: - No blank lines allowed after function docstring (found 1)
 
 
 1 findings in intellicrack\tools\ml_manager.py
@@ -2318,9 +2326,19 @@ intellicrack\tools\ml_manager.py:300: D401: in public function `main`: - First l
 intellicrack\tools\protection_analyzer_tool.py:2: D205: at module level: - 1 blank line required between summary line and description (found 0)
 
 
+1 findings in intellicrack\ui\dialogs\model_manager_dialog.py
+
+intellicrack\ui\dialogs\model_manager_dialog.py:214: D202: in public method `setup_content`: - No blank lines allowed after function docstring (found 1)
+
+
+1 findings in intellicrack\ui\dialogs\trial_reset_dialog.py
+
+intellicrack\ui\dialogs\trial_reset_dialog.py:559: D401: in private method `_quick_scan_helper`: - First line should be in imperative mood; try rephrasing (found 'Helper')
+
+
 1 findings in intellicrack\ui\widgets\unified_protection_widget.py
 
-intellicrack\ui\widgets\unified_protection_widget.py:599: D401: in private method `_update_analysis_details`: - First line should be in imperative mood; try rephrasing (found 'Internal')
+intellicrack\ui\widgets\unified_protection_widget.py:600: D401: in private method `_update_analysis_details`: - First line should be in imperative mood; try rephrasing (found 'Internal')
 
 
 1 findings in intellicrack\utils\tools\ghidra_script_manager.py

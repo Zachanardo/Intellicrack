@@ -44,11 +44,11 @@ REAL_WINDOWS_BINARIES: dict[str, Path] = {
 @pytest.fixture(scope="module")
 def real_binaries() -> dict[str, Path]:
     """Provide real Windows system binaries for testing."""
-    binaries: dict[str, Path] = {}
-    for name, path in REAL_WINDOWS_BINARIES.items():
-        if path.exists():
-            binaries[name] = path
-
+    binaries: dict[str, Path] = {
+        name: path
+        for name, path in REAL_WINDOWS_BINARIES.items()
+        if path.exists()
+    }
     if not binaries:
         pytest.skip("No Windows system binaries found for testing")
 
@@ -86,7 +86,7 @@ def trained_classifier(temp_model_dir: Path, real_binaries: dict[str, Path]) -> 
     features_list: list[np.ndarray] = []
     labels_list: list[str] = []
 
-    for binary_name, binary_path in real_binaries.items():
+    for binary_path in real_binaries.values():
         feature_vector = extractor.extract_features(binary_path)
         features_list.append(feature_vector)
         labels_list.append("None")
@@ -536,12 +536,11 @@ class TestModelTrainingAndPrediction:
         features_list = [extractor.extract_features(path) for path in list(real_binaries.values())[:2]]
         base_features = features_list.copy()
 
-        for i in range(5):
-            features_list.append(base_features[0] * (1.1 + i * 0.02))
-
-        for i in range(5):
-            features_list.append(base_features[1 if len(base_features) > 1 else 0] * (0.9 + i * 0.02))
-
+        features_list.extend(base_features[0] * (1.1 + i * 0.02) for i in range(5))
+        features_list.extend(
+            base_features[1 if len(base_features) > 1 else 0] * (0.9 + i * 0.02)
+            for i in range(5)
+        )
         X = np.vstack(features_list)
         y = np.array(["None"] * len(base_features) + ["VMProtect"] * 5 + ["Themida"] * 5)
 

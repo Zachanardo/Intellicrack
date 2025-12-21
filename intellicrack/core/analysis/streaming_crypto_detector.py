@@ -124,7 +124,10 @@ class StreamingCryptoDetector(StreamingAnalyzer):
 
             logger.debug(
                 "Chunk %d/%d: Found %d crypto routines at offset 0x%08x",
-                context.chunk_number, context.total_chunks, len(filtered_detections), context.offset,
+                context.chunk_number,
+                context.total_chunks,
+                len(filtered_detections),
+                context.offset,
             )
 
             return {
@@ -208,7 +211,9 @@ class StreamingCryptoDetector(StreamingAnalyzer):
 
             logger.info(
                 "Merged %d chunk results: %d total detections across %d algorithm types",
-                len(results), len(all_detections), len(total_algorithm_counts),
+                len(results),
+                len(all_detections),
+                len(total_algorithm_counts),
             )
 
             return merged
@@ -255,7 +260,8 @@ class StreamingCryptoDetector(StreamingAnalyzer):
 
             logger.info(
                 "Finalized analysis: %d unique algorithms, %d licensing-relevant routines",
-                len(unique_algorithms), len(licensing_relevant),
+                len(unique_algorithms),
+                len(licensing_relevant),
             )
 
             return merged_results

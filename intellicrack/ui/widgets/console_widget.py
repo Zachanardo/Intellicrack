@@ -31,15 +31,19 @@ from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QColor,
     QComboBox,
+    QEvent,
     QFont,
     QHBoxLayout,
     QLineEdit,
+    QObject,
     QPushButton,
     QRegularExpression,
+    QScrollBar,
     QSyntaxHighlighter,
     Qt,
     QTextCharFormat,
     QTextCursor,
+    QTextDocument,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -55,11 +59,11 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
     paths, and other common patterns found in analysis tool output.
     """
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QTextDocument | None = None) -> None:
         """Initialize the syntax highlighter with predefined highlighting rules.
 
         Args:
-            parent: Parent QObject, typically the document to be highlighted.
+            parent: Parent QTextDocument to be highlighted.
 
         """
         super().__init__(parent)
@@ -76,7 +80,7 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # ERROR
         error_format = QTextCharFormat()
         error_format.setForeground(QColor("#ff6b6b"))
-        error_format.setFontWeight(QFont.Bold)
+        error_format.setFontWeight(QFont.Weight.Bold)
         self.rules.append((QRegularExpression(r"\[ERROR\]|\[FAILED\]|ERROR:|FAIL:"), error_format))
 
         # WARNING
@@ -87,7 +91,7 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         # SUCCESS
         success_format = QTextCharFormat()
         success_format.setForeground(QColor("#51cf66"))
-        success_format.setFontWeight(QFont.Bold)
+        success_format.setFontWeight(QFont.Weight.Bold)
         self.rules.append((QRegularExpression(r"\[SUCCESS\]|\[OK\]|SUCCESS:|OK:"), success_format))
 
         # INFO
@@ -139,13 +143,15 @@ class ConsoleSyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((QRegularExpression(r'"[^"]*"'), string_format))
         self.rules.append((QRegularExpression(r"'[^']*'"), string_format))
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str | None) -> None:
         """Apply syntax highlighting to a block of text.
 
         Args:
             text: The text block to apply syntax highlighting to.
 
         """
+        if text is None:
+            return
         for pattern, text_format in self.rules:
             expression = QRegularExpression(pattern)
             match_iterator = expression.globalMatch(text)
@@ -165,7 +171,7 @@ class ConsoleWidget(QWidget):
 
     command_entered = pyqtSignal(str)
 
-    def __init__(self, parent: object | None = None, enable_input: bool = False) -> None:
+    def __init__(self, parent: QWidget | None = None, enable_input: bool = False) -> None:
         """Initialize console widget with input capability, command history, and UI setup.
 
         Args:
@@ -291,17 +297,19 @@ class ConsoleWidget(QWidget):
         else:
             formatted_text = text
 
-        if self.output.document().lineCount() > self.max_lines:
-            cursor = QTextCursor(self.output.document())
-            cursor.movePosition(QTextCursor.Start)
-            cursor.movePosition(QTextCursor.Down, QTextCursor.KeepAnchor, 100)
+        document = self.output.document()
+        if document is not None and document.lineCount() > self.max_lines:
+            cursor = QTextCursor(document)
+            cursor.movePosition(QTextCursor.MoveOperation.Start)
+            cursor.movePosition(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.KeepAnchor, 100)
             cursor.removeSelectedText()
 
         self.output.append(formatted_text)
 
         if self.autoscroll_cb.isChecked():
             scrollbar = self.output.verticalScrollBar()
-            scrollbar.setValue(scrollbar.maximum())
+            if scrollbar is not None:
+                scrollbar.setValue(scrollbar.maximum())
 
     def append_error(self, text: str) -> None:
         """Append error-level message (displayed in red with bold formatting).
@@ -413,45 +421,47 @@ class ConsoleWidget(QWidget):
             return
 
         cursor = self.output.textCursor()
-        cursor.movePosition(QTextCursor.Start)
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
 
         self.output.setExtraSelections([])
 
         found = False
-        while True:
-            cursor = self.output.document().find(
-                search_term,
-                cursor,
-                QTextCursor.FindFlags(),
-            )
+        document = self.output.document()
+        if document is not None:
+            while True:
+                cursor = document.find(
+                    search_term,
+                    cursor,
+                    QTextDocument.FindFlag(0),
+                )
 
-            if cursor.isNull():
-                break
+                if cursor.isNull():
+                    break
 
-            found = True
-            cursor.movePosition(
-                QTextCursor.Right,
-                QTextCursor.KeepAnchor,
-                len(search_term),
-            )
+                found = True
+                cursor.movePosition(
+                    QTextCursor.MoveOperation.Right,
+                    QTextCursor.MoveMode.KeepAnchor,
+                    len(search_term),
+                )
 
-            if not found:
-                self.output.setTextCursor(cursor)
+                if not found:
+                    self.output.setTextCursor(cursor)
 
     def toggle_wrap(self, state: int) -> None:
         """Toggle text wrapping in console output.
 
         Args:
-            state: Qt.Checked to enable wrapping, Qt.Unchecked to disable.
+            state: Checkbox state value (2 for checked, 0 for unchecked).
 
         Returns:
             None
 
         """
-        if state == Qt.Checked:
-            self.output.setLineWrapMode(QTextEdit.WidgetWidth)
+        if state == 2:
+            self.output.setLineWrapMode(QTextEdit.LineWrapMode.WidgetWidth)
         else:
-            self.output.setLineWrapMode(QTextEdit.NoWrap)
+            self.output.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
 
     def export_log(self) -> None:
         """Export console log contents to a text file.
@@ -511,7 +521,7 @@ class ConsoleWidget(QWidget):
 
         self.command_entered.emit(command)
 
-    def eventFilter(self, obj: object, event: object) -> bool:
+    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
         """Handle key events for command history navigation.
 
         Intercepts Up/Down arrow key presses in the command input field to navigate
@@ -526,15 +536,16 @@ class ConsoleWidget(QWidget):
             bool: True if event was handled (key press intercepted), False otherwise.
 
         """
-        if hasattr(self, "command_input") and obj == self.command_input and event.type() == event.KeyPress:
-            if event.key() == Qt.Key_Up:
+        if hasattr(self, "command_input") and obj == self.command_input and event is not None and event.type() == QEvent.Type.KeyPress and hasattr(event, "key"):
+            key_value = event.key()
+            if key_value == Qt.Key.Key_Up:
                 if self.history_index > 0:
                     self.history_index -= 1
                     self.command_input.setText(
                         self.command_history[self.history_index],
                     )
                 return True
-            if event.key() == Qt.Key_Down:
+            if key_value == Qt.Key.Key_Down:
                 if self.history_index < len(self.command_history) - 1:
                     self.history_index += 1
                     self.command_input.setText(
@@ -562,20 +573,22 @@ class ConsoleWidget(QWidget):
 
         """
         if not search_text:
-            extra_selections: list = []
-            self.output.setExtraSelections(extra_selections)
+            empty_selections: list[QTextEdit.ExtraSelection] = []
+            self.output.setExtraSelections(empty_selections)
             return 0
 
         from intellicrack.handlers.pyqt6_handler import QTextEdit
 
-        extra_selections = []
+        extra_selections: list[QTextEdit.ExtraSelection] = []
         highlight_format = QTextCharFormat()
         highlight_format.setBackground(QColor("#FFFF00"))
         highlight_format.setForeground(QColor("#000000"))
 
         document = self.output.document()
+        if document is None:
+            return 0
         cursor = QTextCursor(document)
-        cursor.movePosition(QTextCursor.Start)
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
 
         match_count = 0
         first_match_cursor: QTextCursor | None = None
@@ -639,18 +652,15 @@ class ConsoleWidget(QWidget):
         source_content = self._original_content or current_content
         lines = source_content.split("\n")
 
-        filtered_lines: list[str] = [
-            line
-            for line in lines
-            if any(pattern in line for pattern in filter_patterns)
-        ]
+        filtered_lines: list[str] = [line for line in lines if any(pattern in line for pattern in filter_patterns)]
         self.output.clear()
         if filtered_lines:
             self.output.setPlainText("\n".join(filtered_lines))
 
         if self.autoscroll_cb.isChecked():
             scrollbar = self.output.verticalScrollBar()
-            scrollbar.setValue(scrollbar.maximum())
+            if scrollbar is not None:
+                scrollbar.setValue(scrollbar.maximum())
 
     def get_content(self) -> str:
         """Get the complete console output as plain text.

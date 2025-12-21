@@ -62,8 +62,7 @@ def protected_binary() -> Path:
 def keygen_assistant(sample_binary: Path) -> R2KeygenAssistant:
     """Initialize R2KeygenAssistant with sample binary."""
     r2 = r2pipe.open(str(sample_binary))
-    assistant = R2KeygenAssistant(r2=r2)
-    yield assistant
+    yield R2KeygenAssistant(r2=r2)
     r2.quit()
 
 
@@ -135,8 +134,7 @@ class TestCryptoAlgorithmDetection:
             pytest.skip("No functions found")
 
         for func in functions[:10]:
-            func_addr = func.get("offset", 0)
-            if func_addr:
+            if func_addr := func.get("offset", 0):
                 flow = keygen_assistant._analyze_function_flow(func_addr)
                 if flow and flow.operations:
                     for op in flow.operations:
@@ -171,9 +169,7 @@ class TestValidationFlowAnalysis:
             pytest.skip("No functions found")
 
         func_addr = functions[0]["offset"]
-        flow = keygen_assistant._analyze_function_flow(func_addr)
-
-        if flow:
+        if flow := keygen_assistant._analyze_function_flow(func_addr):
             assert isinstance(flow, ValidationFlow)
             assert flow.entry_point == func_addr
             assert isinstance(flow.operations, list)
@@ -189,9 +185,7 @@ class TestValidationFlowAnalysis:
 
         for func in functions[:5]:
             func_addr = func["offset"]
-            serial_format = keygen_assistant._detect_serial_format(func_addr)
-
-            if serial_format:
+            if serial_format := keygen_assistant._detect_serial_format(func_addr):
                 assert serial_format in ["4x4", "3x5", "16-char", "3-6-6", "5x5", "6x4"]
 
 
@@ -234,8 +228,7 @@ class TestCryptoParameterExtraction:
 
     def test_extract_custom_algorithms_finds_xor_patterns(self, keygen_assistant: R2KeygenAssistant) -> None:
         """_extract_custom_algorithms() identifies custom XOR encryption patterns."""
-        functions = keygen_assistant.r2.cmdj("aflj")
-        if functions:
+        if functions := keygen_assistant.r2.cmdj("aflj"):
             keygen_assistant.analyze_validation([func["offset"] for func in functions[:3]])
 
         keygen_assistant._extract_custom_algorithms()
@@ -250,7 +243,7 @@ class TestCryptoParameterExtraction:
 
     def test_is_high_entropy_detects_key_material(self, keygen_assistant: R2KeygenAssistant) -> None:
         """_is_high_entropy() correctly identifies high-entropy key material."""
-        high_entropy_data = bytes(range(0, 64))
+        high_entropy_data = bytes(range(64))
         low_entropy_data = b"\x00" * 64
         repeated_data = b"AAAA" * 16
 
@@ -455,8 +448,8 @@ class TestKeygenExport:
         cpp_files = list(output_dir.glob("*.cpp"))
         readme_files = list(output_dir.glob("README_*.txt"))
 
-        assert len(py_files) >= 1
-        assert len(cpp_files) >= 1
+        assert py_files
+        assert cpp_files
         assert len(readme_files) >= 2
 
     def test_export_keygens_creates_readme(self, keygen_assistant: R2KeygenAssistant, tmp_path: Path) -> None:
@@ -538,8 +531,7 @@ class TestProtectedBinaryAnalysis:
         assert assistant.r2 is not None
         assert isinstance(assistant.info, dict)
 
-        functions = assistant.r2.cmdj("aflj")
-        if functions:
+        if functions := assistant.r2.cmdj("aflj"):
             target_funcs = [func["offset"] for func in functions[:2]]
             flows = assistant.analyze_validation(target_funcs)
             assert isinstance(flows, list)

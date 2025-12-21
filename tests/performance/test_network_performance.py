@@ -90,7 +90,7 @@ class TestNetworkPerformance:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -271,7 +271,7 @@ class TestNetworkPerformance:
 
             end_time = time.time()
 
-            assert len(errors) == 0, f"Concurrent connection errors: {errors}"
+            assert not errors, f"Concurrent connection errors: {errors}"
             assert len(results) == 5, f"Expected 5 connections, got {len(results)}"
             assert end_time - start_time < 3.0, "Concurrent connections should complete under 3 seconds"
 
@@ -402,8 +402,6 @@ class TestNetworkPerformance:
         for packet in invalid_packets:
             try:
                 result = hooker.parse_flexlm_packet(packet)
-                if result is not None:
-                    pass
             except Exception:
                 pass
 

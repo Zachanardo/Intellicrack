@@ -251,8 +251,6 @@ class DynamicResponseGeneratorCoverageAnalyzer:
     def _analyze_validation_depth(self, method_name: str, test_content: str) -> list:
         """Analyze the depth of functionality validation for a method."""
 
-        validations = []
-
         # Check for sophisticated validation patterns
         validation_patterns = {
             'cryptographic_validation': r'(signature|encryption|decrypt|hash|hmac|rsa|aes)',
@@ -267,17 +265,18 @@ class DynamicResponseGeneratorCoverageAnalyzer:
             'integration_testing': r'(integration|end.*to.*end|workflow|full.*flow)'
         }
 
-        for validation_type, pattern in validation_patterns.items():
-            if re.search(pattern, test_content, re.IGNORECASE):
-                validations.append(validation_type)
-
-        return validations
+        return [
+            validation_type
+            for validation_type, pattern in validation_patterns.items()
+            if re.search(pattern, test_content, re.IGNORECASE)
+        ]
 
     def generate_coverage_report(self, coverage_results: dict) -> str:
         """Generate a comprehensive coverage report."""
 
         total_methods = len(coverage_results)
-        covered_methods = sum(1 for result in coverage_results.values() if result['covered'])
+        covered_methods = sum(bool(result['covered'])
+                          for result in coverage_results.values())
         coverage_percentage = (covered_methods / total_methods) * 100
 
         report = f"""
@@ -404,19 +403,18 @@ class DynamicResponseGeneratorCoverageAnalyzer:
 
             # Check for missing security validation
             security_validations = {'cryptographic_validation', 'security_assessment', 'anti_detection'}
-            if result['covered'] and not any(v in validations for v in security_validations):
-                if any(term in method.lower() for term in ['encrypt', 'signature', 'security', 'crypto']):
-                    gaps['missing_security_tests'].append(method)
+            if result['covered'] and all(
+                            v not in validations for v in security_validations
+                        ) and any(term in method.lower() for term in ['encrypt', 'signature', 'security', 'crypto']):
+                gaps['missing_security_tests'].append(method)
 
             # Check for missing performance validation
-            if result['covered'] and 'performance_validation' not in validations:
-                if any(term in method.lower() for term in ['generate', 'process', 'cache']):
-                    gaps['missing_performance_tests'].append(method)
+            if result['covered'] and 'performance_validation' not in validations and any(term in method.lower() for term in ['generate', 'process', 'cache']):
+                gaps['missing_performance_tests'].append(method)
 
             # Check for missing integration validation
-            if result['covered'] and 'integration_testing' not in validations:
-                if 'generate_response' in method or 'protocol' in method.lower():
-                    gaps['missing_integration_tests'].append(method)
+            if result['covered'] and 'integration_testing' not in validations and ('generate_response' in method or 'protocol' in method.lower()):
+                gaps['missing_integration_tests'].append(method)
 
         return gaps
 
@@ -445,7 +443,7 @@ def main():
     # Generate functionality gap analysis
     gaps = analyzer.identify_functionality_gaps(coverage_results)
 
-    gap_report = f"""
+    gap_report = """
 # Dynamic Response Generator Functionality Gap Analysis
 
 ## Summary
@@ -475,7 +473,8 @@ def main():
 
     # Print summary
     total_methods = len(coverage_results)
-    covered_methods = sum(1 for result in coverage_results.values() if result['covered'])
+    covered_methods = sum(bool(result['covered'])
+                      for result in coverage_results.values())
     coverage_percentage = (covered_methods / total_methods) * 100
 
     print(f"\n=== COVERAGE ANALYSIS COMPLETE ===")

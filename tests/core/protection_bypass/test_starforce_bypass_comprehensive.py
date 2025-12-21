@@ -60,7 +60,7 @@ def temp_dir() -> Path:
 def minimal_pe_binary(temp_dir: Path) -> Path:
     """Create minimal valid PE executable for StarForce bypass testing."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
@@ -148,7 +148,7 @@ def minimal_pe_binary(temp_dir: Path) -> Path:
     )
 
     text_section = bytearray(40)
-    text_section[0:8] = b".text\x00\x00\x00"
+    text_section[:8] = b".text\x00\x00\x00"
     struct.pack_into("<I", text_section, 8, 512)
     struct.pack_into("<I", text_section, 12, 0x1000)
     struct.pack_into("<I", text_section, 16, 512)
@@ -156,7 +156,7 @@ def minimal_pe_binary(temp_dir: Path) -> Path:
     struct.pack_into("<I", text_section, 36, 0x60000020)
 
     data_section = bytearray(40)
-    data_section[0:8] = b".data\x00\x00\x00"
+    data_section[:8] = b".data\x00\x00\x00"
     struct.pack_into("<I", data_section, 8, 512)
     struct.pack_into("<I", data_section, 12, 0x2000)
     struct.pack_into("<I", data_section, 16, 512)
@@ -178,7 +178,7 @@ def minimal_pe_binary(temp_dir: Path) -> Path:
     code_section[0] = 0xC3
 
     data_section_content = bytearray(512)
-    data_section_content[0:13] = b"Hello World!\x00"
+    data_section_content[:13] = b"Hello World!\x00"
 
     pe_file = (
         dos_header
@@ -564,8 +564,6 @@ class TestLicenseValidationBypass:
         if "License validation checks patched" in result.details:
             modified_data = starforce_protected_binary.read_bytes()
             assert modified_data != original_data
-        else:
-            assert True
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile not available")
     def test_bypass_license_validation_injects_license_data(

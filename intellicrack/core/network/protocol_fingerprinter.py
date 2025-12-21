@@ -544,9 +544,7 @@ class ProtocolFingerprinter:
                         sock.close()
 
                         if probe_data:
-                            if protocol_info := self._identify_protocol_from_response(
-                                probe_data, port
-                            ):
+                            if protocol_info := self._identify_protocol_from_response(probe_data, port):
                                 protocol_info["host"] = host
                                 detected.append(protocol_info)
                         else:
@@ -1167,11 +1165,7 @@ class ProtocolFingerprinter:
                 b"TLS_",
             ]
 
-            network_funcs_list: list[str] = [
-                func.decode("utf-8", errors="ignore")
-                for func in network_functions
-                if func in binary_data
-            ]
+            network_funcs_list: list[str] = [func.decode("utf-8", errors="ignore") for func in network_functions if func in binary_data]
             results["network_functions"] = network_funcs_list
 
             # 2. Search for protocol-specific strings

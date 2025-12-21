@@ -16,6 +16,7 @@ This tool helps ensure the anti-analysis detection components have sufficient
 test coverage and meet production quality standards.
 """
 
+
 import os
 import ast
 import re
@@ -146,7 +147,6 @@ try:
                         if re.search(pattern, test_name):
                             test_categories[category].append(item.name)
 
-        # Count mocking usage
         elif isinstance(node, ast.Call):
             if hasattr(node.func, 'attr'):
                 if 'Mock' in str(node.func.attr) or 'patch' in str(node.func.attr):
@@ -154,11 +154,6 @@ try:
             elif hasattr(node.func, 'id'):
                 if 'patch' in str(node.func.id):
                     mocking_count += 1
-
-        # Count assertions
-        elif isinstance(node, ast.Call):
-            if hasattr(node.func, 'attr') and node.func.attr.startswith('assert'):
-                assertion_count += 1
 
     print(f"Test classes: {len(test_classes)}")
     for cls in test_classes:
@@ -193,7 +188,8 @@ if total_testable_elements > 0:
 
     # Category coverage
     total_categories = len(test_categories)
-    covered_categories = sum(1 for tests in test_categories.values() if tests)
+    covered_categories = sum(bool(tests)
+                         for tests in test_categories.values())
     category_coverage = (covered_categories / total_categories) * 100
     print(f"Category coverage: {category_coverage:.1f}%")
 
@@ -245,7 +241,8 @@ if total_testable_elements > 0:
         ('Comprehensive assertions', assertion_count >= 20)
     ]
 
-    passed_indicators = sum(1 for _, passed in production_indicators if passed)
+    passed_indicators = sum(bool(passed)
+                        for _, passed in production_indicators)
     total_indicators = len(production_indicators)
 
     print(f"Production readiness: {passed_indicators}/{total_indicators} indicators met")

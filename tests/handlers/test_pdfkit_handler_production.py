@@ -105,7 +105,7 @@ def test_from_string_with_plain_text() -> None:
 
 def test_from_string_with_long_content() -> None:
     """from_string() handles long content with pagination."""
-    lines = ["Line " + str(i) for i in range(100)]
+    lines = [f"Line {str(i)}" for i in range(100)]
     content = "\n".join(lines)
 
     result = pdfkit_handler.from_string(content, output_path=None)
@@ -173,7 +173,7 @@ def test_pdf_generator_handles_multiple_pages() -> None:
         from intellicrack.handlers.pdfkit_handler import PDFGenerator
 
         generator = PDFGenerator()
-        lines = ["Line " + str(i) for i in range(60)]
+        lines = [f"Line {str(i)}" for i in range(60)]
         content = "\n".join(lines)
 
         pdf_data = generator.create_pdf(content, output_path=None)
@@ -489,4 +489,4 @@ def test_pdf_binary_marker_present() -> None:
     pdf_bytes = pdfkit_handler.from_string(content, output_path=None)
 
     assert isinstance(pdf_bytes, bytes)
-    assert pdf_bytes[0:8] == b"%PDF-1.4"
+    assert pdf_bytes[:8] == b"%PDF-1.4"

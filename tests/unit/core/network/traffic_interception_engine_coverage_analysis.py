@@ -64,9 +64,8 @@ class CoverageAnalyzer:
     def _is_method(self, node: ast.FunctionDef, tree: ast.AST) -> bool:
         """Check if a function is a method within a class"""
         for parent in ast.walk(tree):
-            if isinstance(parent, ast.ClassDef):
-                if node in parent.body:
-                    return True
+            if isinstance(parent, ast.ClassDef) and node in parent.body:
+                return True
         return False
 
     def analyze_test_file(self) -> list[str]:

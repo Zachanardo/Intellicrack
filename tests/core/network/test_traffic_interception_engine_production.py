@@ -229,9 +229,7 @@ class TestTrafficInterceptionEngineProduction:
             flags={},
         )
 
-        analysis = engine._analyze_packet(packet)
-
-        if analysis:
+        if analysis := engine._analyze_packet(packet):
             assert analysis.is_license_related is True, "Port 27000 must trigger detection"
             assert analysis.confidence >= 0.3, "Port match must increase confidence"
 
@@ -378,7 +376,7 @@ class TestTrafficInterceptionEngineProduction:
         if response:
             assert b"RESPONSE" in response, "Must receive server response"
         if server_received:
-            assert len(server_received) > 0, "Server must receive command"
+            assert server_received, "Server must receive command"
 
     def test_wrap_protocol_command_flexlm(self, engine: TrafficInterceptionEngine) -> None:
         """Wrap protocol command adds FlexLM header."""
@@ -457,7 +455,7 @@ class TestTrafficInterceptionEngineProduction:
 
     def test_queue_packet_limits_queue_size(self, engine: TrafficInterceptionEngine) -> None:
         """Queue packet enforces maximum queue size."""
-        for i in range(10500):
+        for _ in range(10500):
             packet = InterceptedPacket(
                 source_ip="127.0.0.1",
                 dest_ip="127.0.0.1",

@@ -315,7 +315,7 @@ class TestVisualizationRendererProduction:
         """Node and edge colors use valid hex format."""
         for node in sample_graph_nodes:
             assert node.color.startswith("#"), "Color must start with #"
-            assert len(node.color) in [4, 7], "Color must be #RGB or #RRGGBB"
+            assert len(node.color) in {4, 7}, "Color must be #RGB or #RRGGBB"
 
     def test_visualization_types_supported(
         self,
@@ -349,7 +349,7 @@ class TestVisualizationRendererProduction:
         for scheme_name, colors in renderer.color_schemes.items():
             for color in colors:
                 assert color.startswith("#"), f"Color in {scheme_name} must start with #"
-                assert len(color) in [4, 7], f"Color in {scheme_name} must be valid hex"
+                assert len(color) in {4, 7}, f"Color in {scheme_name} must be valid hex"
                 hex_chars = color[1:]
                 assert all(
                     c in "0123456789ABCDEFabcdef" for c in hex_chars

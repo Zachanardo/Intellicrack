@@ -117,12 +117,11 @@ def test_file_extensions():
 
         # Check for all required extensions
         required_extensions = [".pth", ".pt", ".h5", ".onnx", ".safetensors"]
-        found_extensions = []
-
-        for ext in required_extensions:
-            if f'"{ext}"' in content or f"'{ext}'" in content:
-                found_extensions.append(ext)
-
+        found_extensions = [
+            ext
+            for ext in required_extensions
+            if f'"{ext}"' in content or f"'{ext}'" in content
+        ]
         if len(found_extensions) == len(required_extensions):
             print(f"OK All required file extensions supported: {found_extensions}")
             return True

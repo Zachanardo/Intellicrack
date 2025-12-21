@@ -704,7 +704,7 @@ class TestIntegrationScenarios:
         assert len(exploration_plugin.fork_history) == 5, "Must maintain complete fork history for path analysis"
 
         # Validate fork history contains path relationships
-        for i, fork_record in enumerate(exploration_plugin.fork_history):
+        for fork_record in exploration_plugin.fork_history:
             assert 'parent_id' in fork_record, "Must track parent-child relationships for path exploration"
             assert 'child_id' in fork_record, "Must track child state IDs for path management"
 

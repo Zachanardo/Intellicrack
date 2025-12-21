@@ -413,7 +413,7 @@ class TestComplexAssembly:
 
         assert encoding is not None
         assert count == 5
-        assert len(bytes(encoding)) > 0
+        assert bytes(encoding)
 
 
 class TestPatchGeneration:

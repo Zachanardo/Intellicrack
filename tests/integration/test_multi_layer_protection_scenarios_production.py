@@ -40,11 +40,11 @@ class MultiLayerProtectionAnalyzer:
             b'StarForce': 'starforce',
         }
 
-        found_protections: Set[str] = set()
-        for marker, protection_type in protection_markers.items():
-            if marker in binary_data:
-                found_protections.add(protection_type)
-
+        found_protections: Set[str] = {
+            protection_type
+            for marker, protection_type in protection_markers.items()
+            if marker in binary_data
+        }
         return len(found_protections)
 
     @staticmethod
@@ -63,11 +63,11 @@ class MultiLayerProtectionAnalyzer:
             b'StarForce': 'StarForce',
         }
 
-        found: Set[str] = set()
-        for marker, protection_type in protection_markers.items():
-            if marker in binary_data:
-                found.add(protection_type)
-
+        found: Set[str] = {
+            protection_type
+            for marker, protection_type in protection_markers.items()
+            if marker in binary_data
+        }
         return sorted(list(found))
 
     @staticmethod

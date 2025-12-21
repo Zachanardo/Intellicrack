@@ -1142,7 +1142,9 @@ class SuccessRateAnalyzer:
 
         return result
 
-    def get_bayesian_success_rate(self, component: str | None = None, protection_category: ProtectionCategory | None = None) -> dict[str, Any]:
+    def get_bayesian_success_rate(
+        self, component: str | None = None, protection_category: ProtectionCategory | None = None
+    ) -> dict[str, Any]:
         """Get Bayesian success rate analysis."""
         success_count, total_count = self.event_tracker.get_success_counts(component, protection_category)
         failure_count = total_count - success_count
@@ -1164,7 +1166,9 @@ class SuccessRateAnalyzer:
             "sample_size": total_count,
         }
 
-    def compare_success_rates(self, component1: str, component2: str, protection_category: ProtectionCategory | None = None) -> dict[str, Any]:
+    def compare_success_rates(
+        self, component1: str, component2: str, protection_category: ProtectionCategory | None = None
+    ) -> dict[str, Any]:
         """Compare success rates between components."""
         success1, total1 = self.event_tracker.get_success_counts(component1, protection_category)
         success2, total2 = self.event_tracker.get_success_counts(component2, protection_category)
@@ -1257,9 +1261,7 @@ class SuccessRateAnalyzer:
 
         # Overall metrics
         total_events = len(recent_events)
-        successful_events = sum(
-            e.outcome == OutcomeType.SUCCESS for e in recent_events
-        )
+        successful_events = sum(e.outcome == OutcomeType.SUCCESS for e in recent_events)
         overall_success_rate = successful_events / total_events if total_events > 0 else 0
 
         # Component breakdown
@@ -1268,9 +1270,7 @@ class SuccessRateAnalyzer:
 
         for component in components:
             component_events = [e for e in recent_events if e.component == component]
-            component_successes = sum(
-                e.outcome == OutcomeType.SUCCESS for e in component_events
-            )
+            component_successes = sum(e.outcome == OutcomeType.SUCCESS for e in component_events)
 
             component_performance[component] = {
                 "events": len(component_events),

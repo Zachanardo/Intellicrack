@@ -81,14 +81,14 @@ class R2PatchIntegratorTest:
 
         # Process automated patches
         for patch in r2_result.get("automated_patches", []):
-            binary_patch = self._create_binary_patch_from_r2(patch, "automated")
-            if binary_patch:
+            if binary_patch := self._create_binary_patch_from_r2(
+                patch, "automated"
+            ):
                 binary_patches.append(binary_patch)
 
         # Process memory patches
         for patch in r2_result.get("memory_patches", []):
-            binary_patch = self._create_binary_patch_from_r2(patch, "memory")
-            if binary_patch:
+            if binary_patch := self._create_binary_patch_from_r2(patch, "memory"):
                 binary_patches.append(binary_patch)
 
         return binary_patches
@@ -106,9 +106,7 @@ class R2PatchIntegratorTest:
             else:
                 offset = int(address_str)
 
-            # Extract patch bytes
-            patch_bytes_str = r2_patch.get("patch_bytes", "")
-            if patch_bytes_str:
+            if patch_bytes_str := r2_patch.get("patch_bytes", ""):
                 clean_hex = patch_bytes_str.replace(" ", "").replace("??", "90")
                 if len(clean_hex) % 2:
                     clean_hex += "0"
@@ -116,9 +114,7 @@ class R2PatchIntegratorTest:
             else:
                 patched_bytes = b"\x90"
 
-            # Extract original bytes
-            original_bytes_str = r2_patch.get("original_bytes", "")
-            if original_bytes_str:
+            if original_bytes_str := r2_patch.get("original_bytes", ""):
                 clean_orig_hex = original_bytes_str.replace(" ", "")
                 if len(clean_orig_hex) % 2:
                     clean_orig_hex += "0"
@@ -157,9 +153,7 @@ class R2PatchIntegratorTest:
             return False
         if not patch.patched_bytes:
             return False
-        if len(patch.patched_bytes) > 1024:
-            return False
-        return True
+        return len(patch.patched_bytes) <= 1024
 
 
 def test_r2_to_binary_patch_conversion():

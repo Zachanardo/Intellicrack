@@ -74,7 +74,7 @@ class RealProcessSimulator:
 
         if vm_type and vm_type in self.vm_processes:
             vm_procs = self.vm_processes[vm_type]
-            combined_processes = base_processes + " " + " ".join(vm_procs)
+            combined_processes = f"{base_processes} " + " ".join(vm_procs)
             combined_list = base_list + vm_procs
             return (combined_processes, combined_list)
 
@@ -444,12 +444,9 @@ class TestVMDetectorInitialization(unittest.TestCase):
 
         # Verify coverage of major VM platforms
         expected_vm_types = ['vmware', 'virtualbox', 'hyperv', 'qemu', 'parallels']
-        found_vm_types = []
-
-        for vm_type in expected_vm_types:
-            if vm_type in vm_signatures:
-                found_vm_types.append(vm_type)
-
+        found_vm_types = [
+            vm_type for vm_type in expected_vm_types if vm_type in vm_signatures
+        ]
         self.assertGreaterEqual(len(found_vm_types), 4,
                                f"Should cover major VM platforms. Found: {found_vm_types}")
 
@@ -460,12 +457,11 @@ class TestVMDetectorInitialization(unittest.TestCase):
 
             # Each VM should have multiple detection vectors
             expected_categories = ['processes', 'files', 'registry', 'hardware', 'mac_prefixes']
-            found_categories = []
-
-            for category in expected_categories:
-                if signatures.get(category):
-                    found_categories.append(category)
-
+            found_categories = [
+                category
+                for category in expected_categories
+                if signatures.get(category)
+            ]
             self.assertGreaterEqual(len(found_categories), 2,
                                    f"VM type '{vm_type}' should have multiple detection vectors")
 
@@ -616,8 +612,8 @@ class TestCPUIDDetection(unittest.TestCase):
 
                 # Check for expected CPUID indicators
                 expected_indicators = ['hypervisor_bit', 'vendor_id', 'cpu_flags']
-                found_indicators = sum(1 for indicator in expected_indicators
-                                     if indicator in details)
+                found_indicators = sum(bool(indicator in details)
+                                   for indicator in expected_indicators)
                 self.assertGreater(found_indicators, 0,
                                  "Should have at least one CPUID indicator")
 
@@ -629,7 +625,7 @@ class TestCPUIDDetection(unittest.TestCase):
                         # Real system test: if hypervisor flag exists, should be detected
                         if 'hypervisor' in cpuinfo_content:
                             self.assertTrue(detected, "Real hypervisor flag should be detected")
-                except (OSError, PermissionError):
+                except OSError:
                     # /proc/cpuinfo not accessible, test graceful handling
                     pass
 
@@ -660,15 +656,12 @@ class TestCPUIDDetection(unittest.TestCase):
                     import wmi
                     # Test real WMI processor detection
                     c = wmi.WMI()
-                    processors = c.Win32_Processor()
-
-                    if processors:
+                    if processors := c.Win32_Processor():
+                        # Check for real VM indicators in processor information
+                        vm_indicators = ['vmware', 'virtualbox', 'microsoft corporation', 'xen', 'qemu']
                         processor = processors[0]
                         processor_name = getattr(processor, 'Manufacturer', '')
                         processor_model = getattr(processor, 'Name', '')
-
-                        # Check for real VM indicators in processor information
-                        vm_indicators = ['vmware', 'virtualbox', 'microsoft corporation', 'xen', 'qemu']
                         is_vm_processor = any(indicator in processor_name.lower()
                                             for indicator in vm_indicators)
                         is_vm_model = any(indicator in processor_model.lower()
@@ -691,11 +684,8 @@ class TestCPUIDDetection(unittest.TestCase):
                     self.assertIsInstance(e, (OSError, PermissionError, AttributeError),
                                         f"WMI error should be handled: {type(e).__name__}: {e}")
 
-            # For non-Windows platforms, should use alternative detection methods
-            else:
-                # Should still attempt detection using available methods
-                if detected:
-                    self.assertGreater(len(details), 0, "Non-Windows detection should have details")
+            elif detected:
+                self.assertGreater(len(details), 0, "Non-Windows detection should have details")
 
         except Exception as e:
             # Detection should handle all errors gracefully
@@ -720,7 +710,8 @@ class TestCPUIDDetection(unittest.TestCase):
             # Should have some detection details even if some methods fail
             # (May not have hypervisor_bit if dependencies missing, but should have something)
             expected_fields = ['hypervisor_bit', 'vendor_id', 'cpu_flags', 'detection_method']
-            found_fields = sum(1 for field in expected_fields if field in details)
+            found_fields = sum(bool(field in details)
+                           for field in expected_fields)
             self.assertGreaterEqual(found_fields, 1,
                                   "Should have at least one detection field even with missing dependencies")
 
@@ -798,7 +789,8 @@ class TestHypervisorBrandDetection(unittest.TestCase):
 
                 # Should have brand information if detected
                 expected_fields = ['brand', 'manufacturer', 'product', 'detection_method']
-                found_fields = sum(1 for field in expected_fields if field in details)
+                found_fields = sum(bool(field in details)
+                               for field in expected_fields)
                 self.assertGreaterEqual(found_fields, 1,
                                       "Should have at least one brand detection field")
 
@@ -824,7 +816,8 @@ class TestHypervisorBrandDetection(unittest.TestCase):
 
             # Should have some detection attempt details even if subprocess fails
             expected_fields = ['brand', 'manufacturer', 'product', 'detection_method', 'error']
-            found_fields = sum(1 for field in expected_fields if field in details)
+            found_fields = sum(bool(field in details)
+                           for field in expected_fields)
             self.assertGreaterEqual(found_fields, 1,
                                   "Should have at least one detection field even with failures")
 
@@ -880,9 +873,7 @@ class TestHardwareSignatureDetection(unittest.TestCase):
                     import wmi
                     c = wmi.WMI()
 
-                    # Test real WMI computer system detection
-                    computer_systems = c.Win32_ComputerSystem()
-                    if computer_systems:
+                    if computer_systems := c.Win32_ComputerSystem():
                         system = computer_systems[0]
                         model = getattr(system, 'Model', '').lower()
                         manufacturer = getattr(system, 'Manufacturer', '').lower()
@@ -901,23 +892,21 @@ class TestHardwareSignatureDetection(unittest.TestCase):
                                             for sig in vm_disk_signatures)
                                         for disk in disk_drives)
 
-                        if has_vm_model or has_vm_manufacturer or has_vm_disk:
-                            # Real VM hardware detected, verify detection works
-                            if detected:
-                                self.assertGreater(confidence, 0.5,
-                                                 "Real VM hardware should have good confidence")
-                                self.assertIn('detected_hardware', details,
-                                            "Should have hardware detection details")
-
-                                hardware_details = details.get('detected_hardware', [])
-                                self.assertGreater(len(hardware_details), 0,
-                                                 "Should have specific hardware signatures")
-
-                                # Should contain meaningful hardware information
-                                for hw_detail in hardware_details:
-                                    self.assertIsInstance(hw_detail, (str, dict))
-                                    if isinstance(hw_detail, dict):
-                                        self.assertGreater(len(hw_detail), 0)
+                        if (has_vm_model or has_vm_manufacturer or has_vm_disk) and detected:
+                            self.assertGreater(confidence, 0.5,
+                                             "Real VM hardware should have good confidence")
+                            self.assertIn('detected_hardware', details,
+                                        "Should have hardware detection details")
+                        
+                            hardware_details = details.get('detected_hardware', [])
+                            self.assertGreater(len(hardware_details), 0,
+                                             "Should have specific hardware signatures")
+                        
+                            # Should contain meaningful hardware information
+                            for hw_detail in hardware_details:
+                                self.assertIsInstance(hw_detail, (str, dict))
+                                if isinstance(hw_detail, dict):
+                                    self.assertGreater(len(hw_detail), 0)
 
                 except ImportError:
                     # WMI not available, should handle gracefully
@@ -990,7 +979,7 @@ class TestHardwareSignatureDetection(unittest.TestCase):
                                 if any(indicator in content for indicator in vm_indicators):
                                     real_vm_detected = True
 
-                    except (OSError, PermissionError):
+                    except OSError:
                         # DMI file not accessible, continue with other files
                         continue
 
@@ -1341,9 +1330,7 @@ class TestTimingAttacks(unittest.TestCase):
         def simulate_timing_error():
             nonlocal call_count
             call_count += 1
-            if call_count == 2:  # Second call returns inf
-                return float('inf')
-            return original_perf_counter()
+            return float('inf') if call_count == 2 else original_perf_counter()
 
         time.perf_counter_ns = simulate_timing_error
 
@@ -1895,7 +1882,8 @@ class TestEvasionCodeGeneration(unittest.TestCase):
 
         # Should include actual VM detection methods
         vm_detection_methods = ['__cpuid', 'GetFileAttributes', 'RegOpenKeyEx']
-        found_methods = sum(1 for method in vm_detection_methods if method in evasion_code)
+        found_methods = sum(bool(method in evasion_code)
+                        for method in vm_detection_methods)
         self.assertGreaterEqual(found_methods, 2, "Should include multiple detection methods")
 
     def test_generate_evasion_code_target_specific_vm(self):
@@ -2011,12 +1999,12 @@ class TestVMDetectorIntegration(unittest.TestCase):
 
         # If we're actually in a VM, validate detection accuracy
         is_vm_detected = result['is_vm']
-        confidence = result['confidence']
-        vm_type = result['vm_type']
-
         # Validation logic - if VM is detected, should have reasonable confidence
         if is_vm_detected:
+            confidence = result['confidence']
             self.assertGreater(confidence, 0.3, "VM detection should have reasonable confidence")
+            vm_type = result['vm_type']
+
             self.assertIsNotNone(vm_type, "Should identify VM type when detected")
             self.assertIn(vm_type, ['vmware', 'virtualbox', 'hyperv', 'qemu', 'parallels', 'unknown'],
                          f"VM type '{vm_type}' should be recognized")

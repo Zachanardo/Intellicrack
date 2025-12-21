@@ -554,10 +554,9 @@ class EmbeddedTerminalWidget(QWidget):
             True if event was handled, False otherwise.
 
         """
-        if obj == self.terminal_display and isinstance(event, QKeyEvent):
-            if event.type() == QEvent.Type.KeyPress:
-                self._handle_keyboard_input(event)
-                return True
+        if obj == self.terminal_display and isinstance(event, QKeyEvent) and event.type() == QEvent.Type.KeyPress:
+            self._handle_keyboard_input(event)
+            return True
         return super().eventFilter(obj, event)
 
     def _handle_keyboard_input(self, event: QKeyEvent) -> None:
@@ -585,8 +584,7 @@ class EmbeddedTerminalWidget(QWidget):
                 else:
                     clipboard = QApplication.clipboard()
                     if clipboard is not None:
-                        clipboard_text = clipboard.text()
-                        if clipboard_text:
+                        if clipboard_text := clipboard.text():
                             self._append_to_command_buffer(clipboard_text)
                 return
             if key == Qt.Key.Key_D:
@@ -737,6 +735,7 @@ class EmbeddedTerminalWidget(QWidget):
         try:
             if sys.platform == "win32":
                 import signal
+
                 self._process.send_signal(signal.CTRL_C_EVENT)
             else:
                 self._process.terminate()

@@ -1,8 +1,8 @@
 {
   "tool": "pydocstyle",
-  "generated": "2025-12-20T03:02:46.201286",
-  "total_findings": 1016,
-  "total_files": 171,
+  "generated": "2025-12-20T22:14:53.491553",
+  "total_findings": 1019,
+  "total_files": 175,
   "files": [
     {
       "path": "intellicrack\\tools\\plugin_test_generator.py",
@@ -25,228 +25,228 @@
           "raw": "intellicrack\\tools\\plugin_test_generator.py:108: D400: in public method `generate_tests_for_file`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 128,
+          "line": 126,
           "column": null,
           "code": "D400",
           "context": "in private method `_extract_and_generate_tests`:",
           "message": "in private method `_extract_and_generate_tests`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:128: D400: in private method `_extract_and_generate_tests`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:126: D400: in private method `_extract_and_generate_tests`: - First line should end with a period (not 's')"
         },
         {
-          "line": 244,
+          "line": 241,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_test_for_method`:",
           "message": "in private method `_generate_test_for_method`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:244: D400: in private method `_generate_test_for_method`: - First line should end with a period (not 'd')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:241: D400: in private method `_generate_test_for_method`: - First line should end with a period (not 'd')"
         },
         {
-          "line": 281,
+          "line": 274,
           "column": null,
           "code": "D400",
           "context": "in private method `_get_default_value`:",
           "message": "in private method `_get_default_value`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:281: D400: in private method `_get_default_value`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:274: D400: in private method `_get_default_value`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 296,
+          "line": 287,
           "column": null,
           "code": "D400",
           "context": "in private method `_get_decorator_name`:",
           "message": "in private method `_get_decorator_name`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:296: D400: in private method `_get_decorator_name`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:287: D400: in private method `_get_decorator_name`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 309,
+          "line": 302,
           "column": null,
           "code": "D400",
           "context": "in private method `_analyze_return_type`:",
           "message": "in private method `_analyze_return_type`: - First line should end with a period (not 'T')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:309: D400: in private method `_analyze_return_type`: - First line should end with a period (not 'T')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:302: D400: in private method `_analyze_return_type`: - First line should end with a period (not 'T')"
         },
         {
-          "line": 330,
+          "line": 323,
           "column": null,
           "code": "D400",
           "context": "in private method `_analyze_exceptions`:",
           "message": "in private method `_analyze_exceptions`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:330: D400: in private method `_analyze_exceptions`: - First line should end with a period (not 'd')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:323: D400: in private method `_analyze_exceptions`: - First line should end with a period (not 'd')"
         },
         {
-          "line": 341,
+          "line": 334,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_comprehensive_test_for_method`:",
           "message": "in private method `_generate_comprehensive_test_for_method`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:341: D400: in private method `_generate_comprehensive_test_for_method`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:334: D400: in private method `_generate_comprehensive_test_for_method`: - First line should end with a period (not 's')"
         },
         {
-          "line": 403,
+          "line": 389,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_smart_test_param`:",
           "message": "in private method `_generate_smart_test_param`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:403: D400: in private method `_generate_smart_test_param`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:389: D400: in private method `_generate_smart_test_param`: - First line should end with a period (not 't')"
         },
         {
-          "line": 453,
+          "line": 418,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_edge_case_test`:",
           "message": "in private method `_generate_edge_case_test`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:453: D400: in private method `_generate_edge_case_test`: - First line should end with a period (not 'd')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:418: D400: in private method `_generate_edge_case_test`: - First line should end with a period (not 'd')"
+        },
+        {
+          "line": 456,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_generate_exception_test`:",
+          "message": "in private method `_generate_exception_test`: - First line should end with a period (not 's')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:456: D400: in private method `_generate_exception_test`: - First line should end with a period (not 's')"
+        },
+        {
+          "line": 473,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_generate_attribute_tests`:",
+          "message": "in private method `_generate_attribute_tests`: - First line should end with a period (not 's')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:473: D400: in private method `_generate_attribute_tests`: - First line should end with a period (not 's')"
+        },
+        {
+          "line": 487,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_generate_inheritance_tests`:",
+          "message": "in private method `_generate_inheritance_tests`: - First line should end with a period (not 'e')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:487: D400: in private method `_generate_inheritance_tests`: - First line should end with a period (not 'e')"
         },
         {
           "line": 497,
           "column": null,
           "code": "D400",
-          "context": "in private method `_generate_exception_test`:",
-          "message": "in private method `_generate_exception_test`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:497: D400: in private method `_generate_exception_test`: - First line should end with a period (not 's')"
+          "context": "in private method `_generate_plugin_specific_tests`:",
+          "message": "in private method `_generate_plugin_specific_tests`: - First line should end with a period (not 's')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:497: D400: in private method `_generate_plugin_specific_tests`: - First line should end with a period (not 's')"
         },
         {
           "line": 514,
           "column": null,
           "code": "D400",
-          "context": "in private method `_generate_attribute_tests`:",
-          "message": "in private method `_generate_attribute_tests`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:514: D400: in private method `_generate_attribute_tests`: - First line should end with a period (not 's')"
-        },
-        {
-          "line": 528,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_generate_inheritance_tests`:",
-          "message": "in private method `_generate_inheritance_tests`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:528: D400: in private method `_generate_inheritance_tests`: - First line should end with a period (not 'e')"
-        },
-        {
-          "line": 538,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_generate_plugin_specific_tests`:",
-          "message": "in private method `_generate_plugin_specific_tests`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:538: D400: in private method `_generate_plugin_specific_tests`: - First line should end with a period (not 's')"
-        },
-        {
-          "line": 559,
-          "column": null,
-          "code": "D400",
           "context": "in private method `_generate_frida_plugin_tests`:",
           "message": "in private method `_generate_frida_plugin_tests`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:559: D400: in private method `_generate_frida_plugin_tests`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:514: D400: in private method `_generate_frida_plugin_tests`: - First line should end with a period (not 's')"
         },
         {
-          "line": 569,
+          "line": 524,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_ghidra_plugin_tests`:",
           "message": "in private method `_generate_ghidra_plugin_tests`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:569: D400: in private method `_generate_ghidra_plugin_tests`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:524: D400: in private method `_generate_ghidra_plugin_tests`: - First line should end with a period (not 's')"
+        },
+        {
+          "line": 534,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_generate_analysis_plugin_tests`:",
+          "message": "in private method `_generate_analysis_plugin_tests`: - First line should end with a period (not 's')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:534: D400: in private method `_generate_analysis_plugin_tests`: - First line should end with a period (not 's')"
+        },
+        {
+          "line": 548,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_generate_comprehensive_fallback_tests`:",
+          "message": "in private method `_generate_comprehensive_fallback_tests`: - First line should end with a period (not 'd')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:548: D400: in private method `_generate_comprehensive_fallback_tests`: - First line should end with a period (not 'd')"
         },
         {
           "line": 579,
           "column": null,
           "code": "D400",
-          "context": "in private method `_generate_analysis_plugin_tests`:",
-          "message": "in private method `_generate_analysis_plugin_tests`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:579: D400: in private method `_generate_analysis_plugin_tests`: - First line should end with a period (not 's')"
-        },
-        {
-          "line": 593,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_generate_comprehensive_fallback_tests`:",
-          "message": "in private method `_generate_comprehensive_fallback_tests`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:593: D400: in private method `_generate_comprehensive_fallback_tests`: - First line should end with a period (not 'd')"
-        },
-        {
-          "line": 624,
-          "column": null,
-          "code": "D400",
           "context": "in private method `_generate_error_aware_fallback_tests`:",
           "message": "in private method `_generate_error_aware_fallback_tests`: - First line should end with a period (not 'r')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:624: D400: in private method `_generate_error_aware_fallback_tests`: - First line should end with a period (not 'r')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:579: D400: in private method `_generate_error_aware_fallback_tests`: - First line should end with a period (not 'r')"
         },
         {
-          "line": 648,
+          "line": 603,
           "column": null,
           "code": "D400",
           "context": "in public class `MockDataGenerator`:",
           "message": "in public class `MockDataGenerator`: - First line should end with a period (not 'a')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:648: D400: in public class `MockDataGenerator`: - First line should end with a period (not 'a')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:603: D400: in public class `MockDataGenerator`: - First line should end with a period (not 'a')"
         },
         {
-          "line": 651,
+          "line": 606,
           "column": null,
           "code": "D400",
           "context": "in public method `__init__`:",
           "message": "in public method `__init__`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:651: D400: in public method `__init__`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:606: D400: in public method `__init__`: - First line should end with a period (not 's')"
         },
         {
-          "line": 656,
+          "line": 611,
           "column": null,
           "code": "D400",
           "context": "in private method `_load_pe_template`:",
           "message": "in private method `_load_pe_template`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:656: D400: in private method `_load_pe_template`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:611: D400: in private method `_load_pe_template`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 852,
+          "line": 807,
           "column": null,
           "code": "D400",
           "context": "in private method `_load_elf_template`:",
           "message": "in private method `_load_elf_template`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:852: D400: in private method `_load_elf_template`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:807: D400: in private method `_load_elf_template`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 923,
+          "line": 878,
           "column": null,
           "code": "D400",
           "context": "in public method `create_mock_binary`:",
           "message": "in public method `create_mock_binary`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:923: D400: in public method `create_mock_binary`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:878: D400: in public method `create_mock_binary`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 1081,
+          "line": 1035,
           "column": null,
           "code": "D400",
           "context": "in public method `create_mock_network_data`:",
           "message": "in public method `create_mock_network_data`: - First line should end with a period (not 'a')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:1081: D400: in public method `create_mock_network_data`: - First line should end with a period (not 'a')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:1035: D400: in public method `create_mock_network_data`: - First line should end with a period (not 'a')"
         },
         {
-          "line": 1166,
+          "line": 1116,
           "column": null,
           "code": "D400",
           "context": "in public method `create_mock_registry_data`:",
           "message": "in public method `create_mock_registry_data`: - First line should end with a period (not 'a')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:1166: D400: in public method `create_mock_registry_data`: - First line should end with a period (not 'a')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:1116: D400: in public method `create_mock_registry_data`: - First line should end with a period (not 'a')"
         },
         {
-          "line": 1973,
+          "line": 1916,
           "column": null,
           "code": "D400",
           "context": "in public class `TestCoverageAnalyzer`:",
           "message": "in public class `TestCoverageAnalyzer`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:1973: D400: in public class `TestCoverageAnalyzer`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:1916: D400: in public class `TestCoverageAnalyzer`: - First line should end with a period (not 's')"
         },
         {
-          "line": 1975,
+          "line": 1919,
           "column": null,
-          "code": "D107",
+          "code": "D400",
           "context": "in public method `__init__`:",
-          "message": "in public method `__init__`: - Missing docstring in __init__",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:1975: D107: in public method `__init__`: - Missing docstring in __init__"
+          "message": "in public method `__init__`: - First line should end with a period (not 'r')",
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:1919: D400: in public method `__init__`: - First line should end with a period (not 'r')"
         },
         {
-          "line": 1979,
+          "line": 1923,
           "column": null,
           "code": "D400",
           "context": "in public method `analyze_coverage`:",
           "message": "in public method `analyze_coverage`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_test_generator.py:1979: D400: in public method `analyze_coverage`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_test_generator.py:1923: D400: in public method `analyze_coverage`: - First line should end with a period (not 'e')"
         }
       ]
     },
@@ -715,188 +715,188 @@
           "raw": "intellicrack\\tools\\plugin_ci_cd.py:52: D400: in private method `_load_or_create_config`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 88,
+          "line": 89,
           "column": null,
           "code": "D400",
           "context": "in public method `run_pipeline`:",
           "message": "in public method `run_pipeline`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:88: D400: in public method `run_pipeline`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:89: D400: in public method `run_pipeline`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 113,
+          "line": 122,
           "column": null,
           "code": "D400",
           "context": "in public method `run_validate_stage`:",
           "message": "in public method `run_validate_stage`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:113: D400: in public method `run_validate_stage`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:122: D400: in public method `run_validate_stage`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 113,
+          "line": 122,
           "column": null,
           "code": "D401",
           "context": "in public method `run_validate_stage`:",
           "message": "in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:113: D401: in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:122: D401: in public method `run_validate_stage`: - First line should be in imperative mood (perhaps 'Validate', not 'Validation')"
         },
         {
-          "line": 141,
+          "line": 160,
           "column": null,
           "code": "D400",
           "context": "in public method `run_test_stage`:",
           "message": "in public method `run_test_stage`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:141: D400: in public method `run_test_stage`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:160: D400: in public method `run_test_stage`: - First line should end with a period (not 's')"
         },
         {
-          "line": 210,
+          "line": 237,
           "column": null,
           "code": "D400",
           "context": "in public method `run_quality_stage`:",
           "message": "in public method `run_quality_stage`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:210: D400: in public method `run_quality_stage`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:237: D400: in public method `run_quality_stage`: - First line should end with a period (not 's')"
         },
         {
-          "line": 242,
+          "line": 280,
           "column": null,
           "code": "D400",
           "context": "in public method `run_security_stage`:",
           "message": "in public method `run_security_stage`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:242: D400: in public method `run_security_stage`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:280: D400: in public method `run_security_stage`: - First line should end with a period (not 's')"
         },
         {
-          "line": 271,
+          "line": 319,
           "column": null,
           "code": "D400",
           "context": "in public method `run_build_stage`:",
           "message": "in public method `run_build_stage`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:271: D400: in public method `run_build_stage`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:319: D400: in public method `run_build_stage`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 309,
+          "line": 360,
           "column": null,
           "code": "D400",
           "context": "in public method `run_deploy_stage`:",
           "message": "in public method `run_deploy_stage`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:309: D400: in public method `run_deploy_stage`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:360: D400: in public method `run_deploy_stage`: - First line should end with a period (not 't')"
         },
         {
-          "line": 344,
+          "line": 398,
           "column": null,
           "code": "D400",
           "context": "in private method `_check_syntax`:",
           "message": "in private method `_check_syntax`: - First line should end with a period (not 'x')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:344: D400: in private method `_check_syntax`: - First line should end with a period (not 'x')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:398: D400: in private method `_check_syntax`: - First line should end with a period (not 'x')"
         },
         {
-          "line": 357,
+          "line": 411,
           "column": null,
           "code": "D400",
           "context": "in private method `_check_structure`:",
           "message": "in private method `_check_structure`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:357: D400: in private method `_check_structure`: - First line should end with a period (not 'e')"
-        },
-        {
-          "line": 363,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_check_imports`:",
-          "message": "in private method `_check_imports`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:363: D400: in private method `_check_imports`: - First line should end with a period (not 's')"
-        },
-        {
-          "line": 369,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_run_linter`:",
-          "message": "in private method `_run_linter`: - First line should end with a period (not 'r')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:369: D400: in private method `_run_linter`: - First line should end with a period (not 'r')"
-        },
-        {
-          "line": 399,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_calculate_complexity`:",
-          "message": "in private method `_calculate_complexity`: - First line should end with a period (not 'y')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:399: D400: in private method `_calculate_complexity`: - First line should end with a period (not 'y')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:411: D400: in private method `_check_structure`: - First line should end with a period (not 'e')"
         },
         {
           "line": 417,
           "column": null,
           "code": "D400",
-          "context": "in private method `_check_line_length`:",
-          "message": "in private method `_check_line_length`: - First line should end with a period (not 'h')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:417: D400: in private method `_check_line_length`: - First line should end with a period (not 'h')"
+          "context": "in private method `_check_imports`:",
+          "message": "in private method `_check_imports`: - First line should end with a period (not 's')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:417: D400: in private method `_check_imports`: - First line should end with a period (not 's')"
         },
         {
-          "line": 427,
+          "line": 423,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_run_linter`:",
+          "message": "in private method `_run_linter`: - First line should end with a period (not 'r')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:423: D400: in private method `_run_linter`: - First line should end with a period (not 'r')"
+        },
+        {
+          "line": 456,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_calculate_complexity`:",
+          "message": "in private method `_calculate_complexity`: - First line should end with a period (not 'y')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:456: D400: in private method `_calculate_complexity`: - First line should end with a period (not 'y')"
+        },
+        {
+          "line": 475,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_check_line_length`:",
+          "message": "in private method `_check_line_length`: - First line should end with a period (not 'h')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:475: D400: in private method `_check_line_length`: - First line should end with a period (not 'h')"
+        },
+        {
+          "line": 485,
           "column": null,
           "code": "D400",
           "context": "in private method `_run_bandit`:",
           "message": "in private method `_run_bandit`: - First line should end with a period (not 'r')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:427: D400: in private method `_run_bandit`: - First line should end with a period (not 'r')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:485: D400: in private method `_run_bandit`: - First line should end with a period (not 'r')"
         },
         {
-          "line": 453,
+          "line": 516,
           "column": null,
           "code": "D400",
           "context": "in private method `_check_dependencies`:",
           "message": "in private method `_check_dependencies`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:453: D400: in private method `_check_dependencies`: - First line should end with a period (not 's')"
-        },
-        {
-          "line": 459,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_optimize_plugin`:",
-          "message": "in private method `_optimize_plugin`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:459: D400: in private method `_optimize_plugin`: - First line should end with a period (not 'e')"
-        },
-        {
-          "line": 476,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_get_version`:",
-          "message": "in private method `_get_version`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:476: D400: in private method `_get_version`: - First line should end with a period (not 'n')"
-        },
-        {
-          "line": 492,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_calculate_checksum`:",
-          "message": "in private method `_calculate_checksum`: - First line should end with a period (not 'm')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:492: D400: in private method `_calculate_checksum`: - First line should end with a period (not 'm')"
-        },
-        {
-          "line": 502,
-          "column": null,
-          "code": "D400",
-          "context": "in private method `_update_plugin_registry`:",
-          "message": "in private method `_update_plugin_registry`: - First line should end with a period (not 'o')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:502: D400: in private method `_update_plugin_registry`: - First line should end with a period (not 'o')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:516: D400: in private method `_check_dependencies`: - First line should end with a period (not 's')"
         },
         {
           "line": 522,
           "column": null,
           "code": "D400",
-          "context": "in private method `_generate_report`:",
-          "message": "in private method `_generate_report`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:522: D400: in private method `_generate_report`: - First line should end with a period (not 't')"
+          "context": "in private method `_optimize_plugin`:",
+          "message": "in private method `_optimize_plugin`: - First line should end with a period (not 'e')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:522: D400: in private method `_optimize_plugin`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 554,
+          "line": 537,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_get_version`:",
+          "message": "in private method `_get_version`: - First line should end with a period (not 'n')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:537: D400: in private method `_get_version`: - First line should end with a period (not 'n')"
+        },
+        {
+          "line": 553,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_calculate_checksum`:",
+          "message": "in private method `_calculate_checksum`: - First line should end with a period (not 'm')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:553: D400: in private method `_calculate_checksum`: - First line should end with a period (not 'm')"
+        },
+        {
+          "line": 563,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_update_plugin_registry`:",
+          "message": "in private method `_update_plugin_registry`: - First line should end with a period (not 'o')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:563: D400: in private method `_update_plugin_registry`: - First line should end with a period (not 'o')"
+        },
+        {
+          "line": 591,
+          "column": null,
+          "code": "D400",
+          "context": "in private method `_generate_report`:",
+          "message": "in private method `_generate_report`: - First line should end with a period (not 't')",
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:591: D400: in private method `_generate_report`: - First line should end with a period (not 't')"
+        },
+        {
+          "line": 632,
           "column": null,
           "code": "D400",
           "context": "in public class `GitHubActionsGenerator`:",
           "message": "in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:554: D400: in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:632: D400: in public class `GitHubActionsGenerator`: - First line should end with a period (not 's')"
         },
         {
-          "line": 558,
+          "line": 636,
           "column": null,
           "code": "D400",
           "context": "in public method `generate_workflow`:",
           "message": "in public method `generate_workflow`: - First line should end with a period (not 'L')",
-          "raw": "intellicrack\\tools\\plugin_ci_cd.py:558: D400: in public method `generate_workflow`: - First line should end with a period (not 'L')"
+          "raw": "intellicrack\\tools\\plugin_ci_cd.py:636: D400: in public method `generate_workflow`: - First line should end with a period (not 'L')"
         }
       ]
     },
@@ -913,188 +913,188 @@
           "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:1: D400: at module level: - First line should end with a period (not 'n')"
         },
         {
-          "line": 30,
+          "line": 29,
           "column": null,
           "code": "D400",
           "context": "in public class `DIEAnalysisTool`:",
           "message": "in public class `DIEAnalysisTool`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:30: D400: in public class `DIEAnalysisTool`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:29: D400: in public class `DIEAnalysisTool`: - First line should end with a period (not 's')"
         },
         {
-          "line": 33,
+          "line": 32,
           "column": null,
           "code": "D400",
           "context": "in public method `__init__`:",
           "message": "in public method `__init__`: - First line should end with a period (not 'l')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:33: D400: in public method `__init__`: - First line should end with a period (not 'l')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:32: D400: in public method `__init__`: - First line should end with a period (not 'l')"
         },
         {
-          "line": 40,
+          "line": 38,
           "column": null,
           "code": "D400",
           "context": "in public method `get_tool_definition`:",
           "message": "in public method `get_tool_definition`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:40: D400: in public method `get_tool_definition`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:38: D400: in public method `get_tool_definition`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 89,
+          "line": 87,
           "column": null,
           "code": "D400",
           "context": "in public method `execute`:",
           "message": "in public method `execute`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:89: D400: in public method `execute`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:87: D400: in public method `execute`: - First line should end with a period (not 's')"
         },
         {
-          "line": 240,
+          "line": 243,
           "column": null,
           "code": "D400",
           "context": "in private method `_format_protections`:",
           "message": "in private method `_format_protections`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:240: D400: in private method `_format_protections`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:243: D400: in private method `_format_protections`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 262,
+          "line": 265,
           "column": null,
           "code": "D400",
           "context": "in private method `_categorize_protection`:",
           "message": "in private method `_categorize_protection`: - First line should end with a period (not 'g')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:262: D400: in private method `_categorize_protection`: - First line should end with a period (not 'g')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:265: D400: in private method `_categorize_protection`: - First line should end with a period (not 'g')"
         },
         {
-          "line": 279,
+          "line": 278,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_bypass_recommendations`:",
           "message": "in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:279: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:278: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')"
         },
         {
-          "line": 288,
+          "line": 287,
           "column": null,
           "code": "D400",
           "context": "in private method `_get_generic_bypass_methods`:",
           "message": "in private method `_get_generic_bypass_methods`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:288: D400: in private method `_get_generic_bypass_methods`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:287: D400: in private method `_get_generic_bypass_methods`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 330,
+          "line": 323,
           "column": null,
           "code": "D400",
           "context": "in private method `_format_entropy_analysis`:",
           "message": "in private method `_format_entropy_analysis`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:330: D400: in private method `_format_entropy_analysis`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:323: D400: in private method `_format_entropy_analysis`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 377,
+          "line": 378,
           "column": null,
           "code": "D400",
           "context": "in private method `_format_certificates`:",
           "message": "in private method `_format_certificates`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:377: D400: in private method `_format_certificates`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:378: D400: in private method `_format_certificates`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 399,
+          "line": 400,
           "column": null,
           "code": "D400",
           "context": "in private method `_format_strings`:",
           "message": "in private method `_format_strings`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:399: D400: in private method `_format_strings`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:400: D400: in private method `_format_strings`: - First line should end with a period (not 's')"
         },
         {
-          "line": 411,
+          "line": 412,
           "column": null,
           "code": "D400",
           "context": "in private method `_categorize_string`:",
           "message": "in private method `_categorize_string`: - First line should end with a period (not 'g')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:411: D400: in private method `_categorize_string`: - First line should end with a period (not 'g')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:412: D400: in private method `_categorize_string`: - First line should end with a period (not 'g')"
         },
         {
-          "line": 428,
+          "line": 429,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_text_report`:",
           "message": "in private method `_generate_text_report`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:428: D400: in private method `_generate_text_report`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:429: D400: in private method `_generate_text_report`: - First line should end with a period (not 't')"
         },
         {
-          "line": 474,
+          "line": 475,
           "column": null,
           "code": "D400",
           "context": "in public method `analyze_batch`:",
           "message": "in public method `analyze_batch`: - First line should end with a period (not 'h')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:474: D400: in public method `analyze_batch`: - First line should end with a period (not 'h')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:475: D400: in public method `analyze_batch`: - First line should end with a period (not 'h')"
         },
         {
-          "line": 516,
+          "line": 526,
           "column": null,
           "code": "D400",
           "context": "in public method `compare_files`:",
           "message": "in public method `compare_files`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:516: D400: in public method `compare_files`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:526: D400: in public method `compare_files`: - First line should end with a period (not 's')"
         },
         {
-          "line": 562,
+          "line": 576,
           "column": null,
           "code": "D400",
           "context": "in private method `_should_analyze_license_patterns`:",
           "message": "in private method `_should_analyze_license_patterns`: - First line should end with a period (not 'l')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:562: D400: in private method `_should_analyze_license_patterns`: - First line should end with a period (not 'l')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:576: D400: in private method `_should_analyze_license_patterns`: - First line should end with a period (not 'l')"
         },
         {
-          "line": 593,
+          "line": 607,
           "column": null,
           "code": "D400",
           "context": "in private method `_analyze_license_patterns_for_llm`:",
           "message": "in private method `_analyze_license_patterns_for_llm`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:593: D400: in private method `_analyze_license_patterns_for_llm`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:607: D400: in private method `_analyze_license_patterns_for_llm`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 658,
+          "line": 674,
           "column": null,
           "code": "D400",
           "context": "in private method `_check_for_network_apis`:",
           "message": "in private method `_check_for_network_apis`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:658: D400: in private method `_check_for_network_apis`: - First line should end with a period (not 'd')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:674: D400: in private method `_check_for_network_apis`: - First line should end with a period (not 'd')"
         },
         {
-          "line": 665,
+          "line": 681,
           "column": null,
           "code": "D400",
           "context": "in private method `_check_for_crypto_apis`:",
           "message": "in private method `_check_for_crypto_apis`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:665: D400: in private method `_check_for_crypto_apis`: - First line should end with a period (not 'd')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:681: D400: in private method `_check_for_crypto_apis`: - First line should end with a period (not 'd')"
         },
         {
-          "line": 672,
+          "line": 688,
           "column": null,
           "code": "D400",
           "context": "in private method `_check_for_registry_apis`:",
           "message": "in private method `_check_for_registry_apis`: - First line should end with a period (not 'd')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:672: D400: in private method `_check_for_registry_apis`: - First line should end with a period (not 'd')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:688: D400: in private method `_check_for_registry_apis`: - First line should end with a period (not 'd')"
         },
         {
-          "line": 678,
+          "line": 694,
           "column": null,
           "code": "D400",
           "context": "in private method `_get_license_llm_guidance`:",
           "message": "in private method `_get_license_llm_guidance`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:678: D400: in private method `_get_license_llm_guidance`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:694: D400: in private method `_get_license_llm_guidance`: - First line should end with a period (not 's')"
         },
         {
-          "line": 706,
+          "line": 722,
           "column": null,
           "code": "D400",
           "context": "in public function `create_die_tool`:",
           "message": "in public function `create_die_tool`: - First line should end with a period (not 'l')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:706: D400: in public function `create_die_tool`: - First line should end with a period (not 'l')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:722: D400: in public function `create_die_tool`: - First line should end with a period (not 'l')"
         },
         {
-          "line": 706,
+          "line": 722,
           "column": null,
           "code": "D401",
           "context": "in public function `create_die_tool`:",
           "message": "in public function `create_die_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')",
-          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:706: D401: in public function `create_die_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')"
+          "raw": "intellicrack\\llm\\tools\\intellicrack_protection_analysis_tool.py:722: D401: in public function `create_die_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')"
         }
       ]
     },
@@ -1721,100 +1721,100 @@
           "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:257: D400: in private method `_generate_frida_hook`: - First line should end with a period (not 's')"
         },
         {
-          "line": 343,
+          "line": 344,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_frida_trace`:",
           "message": "in private method `_generate_frida_trace`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:343: D400: in private method `_generate_frida_trace`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:344: D400: in private method `_generate_frida_trace`: - First line should end with a period (not 's')"
         },
         {
-          "line": 446,
+          "line": 447,
           "column": null,
           "code": "D400",
           "context": "in private method `_get_apis_to_trace`:",
           "message": "in private method `_get_apis_to_trace`: - First line should end with a period (not 'o')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:446: D400: in private method `_get_apis_to_trace`: - First line should end with a period (not 'o')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:447: D400: in private method `_get_apis_to_trace`: - First line should end with a period (not 'o')"
         },
         {
-          "line": 472,
+          "line": 473,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_frida_bypass`:",
           "message": "in private method `_generate_frida_bypass`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:472: D400: in private method `_generate_frida_bypass`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:473: D400: in private method `_generate_frida_bypass`: - First line should end with a period (not 't')"
         },
         {
-          "line": 602,
+          "line": 603,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_frida_patch`:",
           "message": "in private method `_generate_frida_patch`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:602: D400: in private method `_generate_frida_patch`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:603: D400: in private method `_generate_frida_patch`: - First line should end with a period (not 't')"
         },
         {
-          "line": 679,
+          "line": 682,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_frida_custom`:",
           "message": "in private method `_generate_frida_custom`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:679: D400: in private method `_generate_frida_custom`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:682: D400: in private method `_generate_frida_custom`: - First line should end with a period (not 't')"
         },
         {
-          "line": 759,
+          "line": 762,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_ghidra_script`:",
           "message": "in private method `_generate_ghidra_script`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:759: D400: in private method `_generate_ghidra_script`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:762: D400: in private method `_generate_ghidra_script`: - First line should end with a period (not 't')"
         },
         {
-          "line": 785,
+          "line": 788,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_packer_hooks`:",
           "message": "in private method `_generate_packer_hooks`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:785: D400: in private method `_generate_packer_hooks`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:788: D400: in private method `_generate_packer_hooks`: - First line should end with a period (not 's')"
         },
         {
-          "line": 1042,
+          "line": 1045,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_license_hooks`:",
           "message": "in private method `_generate_license_hooks`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1042: D400: in private method `_generate_license_hooks`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1045: D400: in private method `_generate_license_hooks`: - First line should end with a period (not 's')"
         },
         {
-          "line": 1078,
+          "line": 1081,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_anti_analysis_hooks`:",
           "message": "in private method `_generate_anti_analysis_hooks`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1078: D400: in private method `_generate_anti_analysis_hooks`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1081: D400: in private method `_generate_anti_analysis_hooks`: - First line should end with a period (not 's')"
         },
         {
-          "line": 1315,
+          "line": 1318,
           "column": null,
           "code": "D400",
           "context": "in private method `_get_target_functions_from_protection`:",
           "message": "in private method `_get_target_functions_from_protection`: - First line should end with a period (not 'o')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1315: D400: in private method `_get_target_functions_from_protection`: - First line should end with a period (not 'o')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1318: D400: in private method `_get_target_functions_from_protection`: - First line should end with a period (not 'o')"
         },
         {
-          "line": 1333,
+          "line": 1336,
           "column": null,
           "code": "D400",
           "context": "in public function `create_script_tool`:",
           "message": "in public function `create_script_tool`: - First line should end with a period (not 'l')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1333: D400: in public function `create_script_tool`: - First line should end with a period (not 'l')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1336: D400: in public function `create_script_tool`: - First line should end with a period (not 'l')"
         },
         {
-          "line": 1333,
+          "line": 1336,
           "column": null,
           "code": "D401",
           "context": "in public function `create_script_tool`:",
           "message": "in public function `create_script_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')",
-          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1333: D401: in public function `create_script_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')"
+          "raw": "intellicrack\\llm\\tools\\script_generation_tool.py:1336: D401: in public function `create_script_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')"
         }
       ]
     },
@@ -1823,156 +1823,156 @@
       "count": 19,
       "findings": [
         {
-          "line": 49,
+          "line": 50,
           "column": null,
           "code": "D401",
           "context": "in public function `log_message`:",
           "message": "in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:49: D401: in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:50: D401: in public function `log_message`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         },
         {
-          "line": 54,
+          "line": 55,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_find_file`:",
           "message": "in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:54: D205: in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:55: D205: in public function `wrapper_find_file`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 96,
+          "line": 97,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_load_binary`:",
           "message": "in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:96: D205: in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:97: D205: in public function `wrapper_load_binary`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 140,
+          "line": 141,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_list_relevant_files`:",
           "message": "in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:140: D205: in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:141: D205: in public function `wrapper_list_relevant_files`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 185,
+          "line": 186,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_read_file_chunk`:",
           "message": "in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:185: D205: in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:186: D205: in public function `wrapper_read_file_chunk`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 232,
+          "line": 233,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_get_file_metadata`:",
           "message": "in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:232: D205: in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:233: D205: in public function `wrapper_get_file_metadata`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 282,
+          "line": 283,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_run_static_analysis`:",
           "message": "in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:282: D205: in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:283: D205: in public function `wrapper_run_static_analysis`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 312,
+          "line": 313,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_deep_license_analysis`:",
           "message": "in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:312: D205: in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:313: D205: in public function `wrapper_deep_license_analysis`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 338,
+          "line": 339,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_detect_protections`:",
           "message": "in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:338: D205: in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:339: D205: in public function `wrapper_detect_protections`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 371,
+          "line": 372,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_disassemble_address`:",
           "message": "in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:371: D205: in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:372: D205: in public function `wrapper_disassemble_address`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 485,
+          "line": 486,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_get_cfg`:",
           "message": "in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:485: D205: in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:486: D205: in public function `wrapper_get_cfg`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 532,
+          "line": 533,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_launch_target`:",
           "message": "in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:532: D205: in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:533: D205: in public function `wrapper_launch_target`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 657,
+          "line": 661,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_attach_target`:",
           "message": "in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:657: D205: in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:661: D205: in public function `wrapper_attach_target`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 741,
+          "line": 745,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_run_frida_script`:",
           "message": "in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:741: D205: in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:745: D205: in public function `wrapper_run_frida_script`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 868,
+          "line": 873,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_detach`:",
           "message": "in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:868: D205: in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:873: D205: in public function `wrapper_detach`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 952,
+          "line": 957,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_propose_patch`:",
           "message": "in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:952: D205: in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:957: D205: in public function `wrapper_propose_patch`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 1441,
+          "line": 1449,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_get_proposed_patches`:",
           "message": "in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:1441: D205: in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:1449: D205: in public function `wrapper_get_proposed_patches`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 1493,
+          "line": 1501,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_apply_confirmed_patch`:",
           "message": "in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:1493: D205: in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:1501: D205: in public function `wrapper_apply_confirmed_patch`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 1605,
+          "line": 1613,
           "column": null,
           "code": "D205",
           "context": "in public function `wrapper_generate_launcher_script`:",
           "message": "in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:1605: D205: in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\tools\\tool_wrappers.py:1613: D205: in public function `wrapper_generate_launcher_script`: - 1 blank line required between summary line and description (found 0)"
         }
       ]
     },
@@ -2755,68 +2755,68 @@
           "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:227: D400: in private method `_assess_security_findings`: - First line should end with a period (not 's')"
         },
         {
-          "line": 305,
+          "line": 304,
           "column": null,
           "code": "D400",
           "context": "in private method `_generate_bypass_recommendations`:",
           "message": "in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:305: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:304: D400: in private method `_generate_bypass_recommendations`: - First line should end with a period (not 's')"
         },
         {
-          "line": 380,
+          "line": 379,
           "column": null,
           "code": "D400",
           "context": "in private method `_categorize_patterns`:",
           "message": "in private method `_categorize_patterns`: - First line should end with a period (not 'e')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:380: D400: in private method `_categorize_patterns`: - First line should end with a period (not 'e')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:379: D400: in private method `_categorize_patterns`: - First line should end with a period (not 'e')"
         },
         {
-          "line": 392,
+          "line": 391,
           "column": null,
           "code": "D400",
           "context": "in private method `_analyze_confidence_levels`:",
           "message": "in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:392: D400: in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:391: D400: in private method `_analyze_confidence_levels`: - First line should end with a period (not 's')"
         },
         {
-          "line": 410,
+          "line": 407,
           "column": null,
           "code": "D400",
           "context": "in private method `_extract_threat_indicators`:",
           "message": "in private method `_extract_threat_indicators`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:410: D400: in private method `_extract_threat_indicators`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:407: D400: in private method `_extract_threat_indicators`: - First line should end with a period (not 's')"
         },
         {
-          "line": 438,
+          "line": 435,
           "column": null,
           "code": "D400",
           "context": "in private method `_analyze_protection_layers`:",
           "message": "in private method `_analyze_protection_layers`: - First line should end with a period (not 's')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:438: D400: in private method `_analyze_protection_layers`: - First line should end with a period (not 's')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:435: D400: in private method `_analyze_protection_layers`: - First line should end with a period (not 's')"
         },
         {
-          "line": 473,
+          "line": 470,
           "column": null,
           "code": "D400",
           "context": "in public method `analyze_custom_patterns`:",
           "message": "in public method `analyze_custom_patterns`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:473: D400: in public method `analyze_custom_patterns`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:470: D400: in public method `analyze_custom_patterns`: - First line should end with a period (not 't')"
         },
         {
-          "line": 514,
+          "line": 511,
           "column": null,
           "code": "D400",
           "context": "in public function `create_yara_pattern_tool`:",
           "message": "in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:514: D400: in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:511: D400: in public function `create_yara_pattern_tool`: - First line should end with a period (not 'l')"
         },
         {
-          "line": 514,
+          "line": 511,
           "column": null,
           "code": "D401",
           "context": "in public function `create_yara_pattern_tool`:",
           "message": "in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')",
-          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:514: D401: in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')"
+          "raw": "intellicrack\\llm\\tools\\yara_pattern_analysis_tool.py:511: D401: in public function `create_yara_pattern_tool`: - First line should be in imperative mood; try rephrasing (found 'Factory')"
         }
       ]
     },
@@ -3211,108 +3211,108 @@
           "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:1: D400: at module level: - First line should end with a period (not 't')"
         },
         {
-          "line": 84,
+          "line": 80,
           "column": null,
           "code": "D204",
           "context": "in public class `siphash13`:",
           "message": "in public class `siphash13`: - 1 blank line required after class docstring (found 0)",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:84: D204: in public class `siphash13`: - 1 blank line required after class docstring (found 0)"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:80: D204: in public class `siphash13`: - 1 blank line required after class docstring (found 0)"
         },
         {
-          "line": 84,
+          "line": 80,
           "column": null,
           "code": "D205",
           "context": "in public class `siphash13`:",
           "message": "in public class `siphash13`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:84: D205: in public class `siphash13`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:80: D205: in public class `siphash13`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 84,
+          "line": 80,
           "column": null,
           "code": "D400",
           "context": "in public class `siphash13`:",
           "message": "in public class `siphash13`: - First line should end with a period (not ')')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:84: D400: in public class `siphash13`: - First line should end with a period (not ')')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:80: D400: in public class `siphash13`: - First line should end with a period (not ')')"
         },
         {
-          "line": 97,
+          "line": 93,
           "column": null,
           "code": "D205",
           "context": "in public method `__call__`:",
           "message": "in public method `__call__`: - 1 blank line required between summary line and description (found 0)",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:97: D205: in public method `__call__`: - 1 blank line required between summary line and description (found 0)"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:93: D205: in public method `__call__`: - 1 blank line required between summary line and description (found 0)"
         },
         {
-          "line": 97,
+          "line": 93,
           "column": null,
           "code": "D400",
           "context": "in public method `__call__`:",
           "message": "in public method `__call__`: - First line should end with a period (not ':')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:97: D400: in public method `__call__`: - First line should end with a period (not ':')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:93: D400: in public method `__call__`: - First line should end with a period (not ':')"
         },
         {
-          "line": 140,
+          "line": 133,
           "column": null,
           "code": "D400",
           "context": "in public function `siphash24`:",
           "message": "in public function `siphash24`: - First line should end with a period (not ')')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:140: D400: in public function `siphash24`: - First line should end with a period (not ')')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:133: D400: in public function `siphash24`: - First line should end with a period (not ')')"
         },
         {
-          "line": 154,
+          "line": 147,
           "column": null,
           "code": "D200",
           "context": "in private function `_siphash`:",
           "message": "in private function `_siphash`: - One-line docstring should fit on one line with quotes (found 3)",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:154: D200: in private function `_siphash`: - One-line docstring should fit on one line with quotes (found 3)"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:147: D200: in private function `_siphash`: - One-line docstring should fit on one line with quotes (found 3)"
         },
         {
-          "line": 154,
+          "line": 147,
           "column": null,
           "code": "D400",
           "context": "in private function `_siphash`:",
           "message": "in private function `_siphash`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:154: D400: in private function `_siphash`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:147: D400: in private function `_siphash`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 235,
+          "line": 228,
           "column": null,
           "code": "D200",
           "context": "in private function `_sipround`:",
           "message": "in private function `_sipround`: - One-line docstring should fit on one line with quotes (found 3)",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:235: D200: in private function `_sipround`: - One-line docstring should fit on one line with quotes (found 3)"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:228: D200: in private function `_sipround`: - One-line docstring should fit on one line with quotes (found 3)"
         },
         {
-          "line": 235,
+          "line": 228,
           "column": null,
           "code": "D400",
           "context": "in private function `_sipround`:",
           "message": "in private function `_sipround`: - First line should end with a period (not 'n')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:235: D400: in private function `_sipround`: - First line should end with a period (not 'n')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:228: D400: in private function `_sipround`: - First line should end with a period (not 'n')"
         },
         {
-          "line": 235,
+          "line": 228,
           "column": null,
           "code": "D403",
           "context": "in private function `_sipround`:",
           "message": "in private function `_sipround`: - First word of the first line should be properly capitalized ('Sipround', not 'SipRound')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:235: D403: in private function `_sipround`: - First word of the first line should be properly capitalized ('Sipround', not 'SipRound')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:228: D403: in private function `_sipround`: - First word of the first line should be properly capitalized ('Sipround', not 'SipRound')"
         },
         {
-          "line": 259,
+          "line": 252,
           "column": null,
           "code": "D200",
           "context": "in private function `_rotl64`:",
           "message": "in private function `_rotl64`: - One-line docstring should fit on one line with quotes (found 3)",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:259: D200: in private function `_rotl64`: - One-line docstring should fit on one line with quotes (found 3)"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:252: D200: in private function `_rotl64`: - One-line docstring should fit on one line with quotes (found 3)"
         },
         {
-          "line": 259,
+          "line": 252,
           "column": null,
           "code": "D400",
           "context": "in private function `_rotl64`:",
           "message": "in private function `_rotl64`: - First line should end with a period (not 't')",
-          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:259: D400: in private function `_rotl64`: - First line should end with a period (not 't')"
+          "raw": "intellicrack\\utils\\core\\siphash24_replacement.py:252: D400: in private function `_rotl64`: - First line should end with a period (not 't')"
         }
       ]
     },
@@ -6123,68 +6123,6 @@
       ]
     },
     {
-      "path": "intellicrack\\cli\\cli.py",
-      "count": 7,
-      "findings": [
-        {
-          "line": 211,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_perform_vulnerability_scan_cli`:",
-          "message": "in private function `_perform_vulnerability_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:211: D401: in private function `_perform_vulnerability_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        },
-        {
-          "line": 227,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_display_vulnerability_summary_cli`:",
-          "message": "in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:227: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        },
-        {
-          "line": 257,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_perform_basic_security_scan_cli`:",
-          "message": "in private function `_perform_basic_security_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:257: D401: in private function `_perform_basic_security_scan_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        },
-        {
-          "line": 913,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_update_progress`:",
-          "message": "in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:913: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        },
-        {
-          "line": 926,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_handle_gpu_acceleration_progress`:",
-          "message": "in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:926: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        },
-        {
-          "line": 933,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_handle_distributed_processing_progress`:",
-          "message": "in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:933: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        },
-        {
-          "line": 942,
-          "column": null,
-          "code": "D401",
-          "context": "in private function `_handle_symbolic_execution_progress`:",
-          "message": "in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\cli.py:942: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
-        }
-      ]
-    },
-    {
       "path": "tests\\validation_system\\phase2\\detection_depth_validator.py",
       "count": 7,
       "findings": [
@@ -6283,20 +6221,20 @@
           "raw": "intellicrack\\cli\\analysis_cli.py:172: D401: in private method `_perform_pe_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         },
         {
-          "line": 193,
+          "line": 192,
           "column": null,
           "code": "D401",
           "context": "in private method `_perform_elf_analysis`:",
           "message": "in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\analysis_cli.py:193: D401: in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+          "raw": "intellicrack\\cli\\analysis_cli.py:192: D401: in private method `_perform_elf_analysis`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         },
         {
-          "line": 208,
+          "line": 207,
           "column": null,
           "code": "D401",
           "context": "in private method `_perform_string_extraction`:",
           "message": "in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\analysis_cli.py:208: D401: in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+          "raw": "intellicrack\\cli\\analysis_cli.py:207: D401: in private method `_perform_string_extraction`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         }
       ]
     },
@@ -6787,6 +6725,52 @@
       ]
     },
     {
+      "path": "intellicrack\\cli\\cli.py",
+      "count": 5,
+      "findings": [
+        {
+          "line": 261,
+          "column": null,
+          "code": "D401",
+          "context": "in private function `_display_vulnerability_summary_cli`:",
+          "message": "in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+          "raw": "intellicrack\\cli\\cli.py:261: D401: in private function `_display_vulnerability_summary_cli`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+        },
+        {
+          "line": 953,
+          "column": null,
+          "code": "D401",
+          "context": "in private function `_update_progress`:",
+          "message": "in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+          "raw": "intellicrack\\cli\\cli.py:953: D401: in private function `_update_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+        },
+        {
+          "line": 966,
+          "column": null,
+          "code": "D401",
+          "context": "in private function `_handle_gpu_acceleration_progress`:",
+          "message": "in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+          "raw": "intellicrack\\cli\\cli.py:966: D401: in private function `_handle_gpu_acceleration_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+        },
+        {
+          "line": 973,
+          "column": null,
+          "code": "D401",
+          "context": "in private function `_handle_distributed_processing_progress`:",
+          "message": "in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+          "raw": "intellicrack\\cli\\cli.py:973: D401: in private function `_handle_distributed_processing_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+        },
+        {
+          "line": 982,
+          "column": null,
+          "code": "D401",
+          "context": "in private function `_handle_symbolic_execution_progress`:",
+          "message": "in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+          "raw": "intellicrack\\cli\\cli.py:982: D401: in private function `_handle_symbolic_execution_progress`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+        }
+      ]
+    },
+    {
       "path": "tests\\checkpoints\\day2_checkpoint2_validation.py",
       "count": 5,
       "findings": [
@@ -7067,36 +7051,36 @@
       "count": 4,
       "findings": [
         {
-          "line": 301,
+          "line": 298,
           "column": null,
           "code": "D403",
           "context": "in private method `_cupy_pattern_search`:",
           "message": "in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')",
-          "raw": "intellicrack\\core\\gpu_acceleration.py:301: D403: in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')"
+          "raw": "intellicrack\\core\\gpu_acceleration.py:298: D403: in private method `_cupy_pattern_search`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')"
         },
         {
-          "line": 433,
+          "line": 430,
           "column": null,
           "code": "D403",
           "context": "in private method `_pycuda_pattern_search`:",
           "message": "in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')",
-          "raw": "intellicrack\\core\\gpu_acceleration.py:433: D403: in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')"
+          "raw": "intellicrack\\core\\gpu_acceleration.py:430: D403: in private method `_pycuda_pattern_search`: - First word of the first line should be properly capitalized ('Pycuda', not 'PyCUDA')"
         },
         {
-          "line": 592,
+          "line": 589,
           "column": null,
           "code": "D403",
           "context": "in private method `_cupy_entropy`:",
           "message": "in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')",
-          "raw": "intellicrack\\core\\gpu_acceleration.py:592: D403: in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')"
+          "raw": "intellicrack\\core\\gpu_acceleration.py:589: D403: in private method `_cupy_entropy`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')"
         },
         {
-          "line": 755,
+          "line": 752,
           "column": null,
           "code": "D403",
           "context": "in private method `_cupy_crc32`:",
           "message": "in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')",
-          "raw": "intellicrack\\core\\gpu_acceleration.py:755: D403: in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')"
+          "raw": "intellicrack\\core\\gpu_acceleration.py:752: D403: in private method `_cupy_crc32`: - First word of the first line should be properly capitalized ('Cupy', not 'CuPy')"
         }
       ]
     },
@@ -7363,28 +7347,28 @@
       "count": 3,
       "findings": [
         {
-          "line": 905,
+          "line": 900,
           "column": null,
           "code": "D401",
           "context": "in private method `_get_available_backends`:",
           "message": "in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\ai_chat_interface.py:905: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+          "raw": "intellicrack\\cli\\ai_chat_interface.py:900: D401: in private method `_get_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         },
         {
-          "line": 915,
+          "line": 910,
           "column": null,
           "code": "D401",
           "context": "in private method `_display_available_backends`:",
           "message": "in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\ai_chat_interface.py:915: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+          "raw": "intellicrack\\cli\\ai_chat_interface.py:910: D401: in private method `_display_available_backends`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         },
         {
-          "line": 941,
+          "line": 936,
           "column": null,
           "code": "D401",
           "context": "in private method `_handle_backend_switch_logic`:",
           "message": "in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
-          "raw": "intellicrack\\cli\\ai_chat_interface.py:941: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+          "raw": "intellicrack\\cli\\ai_chat_interface.py:936: D401: in private method `_handle_backend_switch_logic`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
         }
       ]
     },
@@ -7393,28 +7377,28 @@
       "count": 3,
       "findings": [
         {
-          "line": 697,
+          "line": 695,
           "column": null,
           "code": "D403",
           "context": "in private method `_unpack_aspack`:",
           "message": "in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')",
-          "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:697: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')"
+          "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:695: D403: in private method `_unpack_aspack`: - First word of the first line should be properly capitalized ('Aspack', not 'ASPack')"
         },
         {
-          "line": 1522,
+          "line": 1510,
           "column": null,
           "code": "D403",
           "context": "in private method `_unpack_vmprotect`:",
           "message": "in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')",
-          "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:1522: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')"
+          "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:1510: D403: in private method `_unpack_vmprotect`: - First word of the first line should be properly capitalized ('Vmprotect', not 'VMProtect')"
         },
         {
-          "line": 2112,
+          "line": 2088,
           "column": null,
           "code": "D403",
           "context": "in private method `_unpack_asprotect`:",
           "message": "in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')",
-          "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:2112: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')"
+          "raw": "intellicrack\\core\\exploitation\\automated_unpacker.py:2088: D403: in private method `_unpack_asprotect`: - First word of the first line should be properly capitalized ('Asprotect', not 'ASProtect')"
         }
       ]
     },
@@ -7985,20 +7969,42 @@
       "count": 2,
       "findings": [
         {
-          "line": 870,
+          "line": 906,
           "column": null,
           "code": "D202",
           "context": "in private method `_setup_resolution_rules`:",
           "message": "in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)",
-          "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:870: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)"
+          "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:906: D202: in private method `_setup_resolution_rules`: - No blank lines allowed after function docstring (found 1)"
         },
         {
-          "line": 900,
+          "line": 936,
           "column": null,
           "code": "D202",
           "context": "in private method `_setup_recovery_strategies`:",
           "message": "in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)",
-          "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:900: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)"
+          "raw": "intellicrack\\core\\analysis\\cross_tool_orchestrator.py:936: D202: in private method `_setup_recovery_strategies`: - No blank lines allowed after function docstring (found 1)"
+        }
+      ]
+    },
+    {
+      "path": "intellicrack\\hexview\\integration.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 28,
+          "column": null,
+          "code": "D102",
+          "context": "in public method `menuBar`:",
+          "message": "in public method `menuBar`: - Missing docstring in public method",
+          "raw": "intellicrack\\hexview\\integration.py:28: D102: in public method `menuBar`: - Missing docstring in public method"
+        },
+        {
+          "line": 29,
+          "column": null,
+          "code": "D102",
+          "context": "in public method `children`:",
+          "message": "in public method `children`: - Missing docstring in public method",
+          "raw": "intellicrack\\hexview\\integration.py:29: D102: in public method `children`: - Missing docstring in public method"
         }
       ]
     },
@@ -8007,20 +8013,20 @@
       "count": 2,
       "findings": [
         {
-          "line": 2037,
+          "line": 2035,
           "column": null,
           "code": "D403",
           "context": "in private method `_relu`:",
           "message": "in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')",
-          "raw": "intellicrack\\ui\\dialogs\\model_finetuning_dialog.py:2037: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')"
+          "raw": "intellicrack\\ui\\dialogs\\model_finetuning_dialog.py:2035: D403: in private method `_relu`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')"
         },
         {
-          "line": 2049,
+          "line": 2047,
           "column": null,
           "code": "D403",
           "context": "in private method `_relu_derivative`:",
           "message": "in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')",
-          "raw": "intellicrack\\ui\\dialogs\\model_finetuning_dialog.py:2049: D403: in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')"
+          "raw": "intellicrack\\ui\\dialogs\\model_finetuning_dialog.py:2047: D403: in private method `_relu_derivative`: - First word of the first line should be properly capitalized ('Relu', not 'ReLU')"
         }
       ]
     },
@@ -8029,20 +8035,20 @@
       "count": 2,
       "findings": [
         {
-          "line": 57,
+          "line": 61,
           "column": null,
           "code": "D103",
           "context": "in public function `log_function_call`:",
           "message": "in public function `log_function_call`: - Missing docstring in public function",
-          "raw": "intellicrack\\utils\\logger.py:57: D103: in public function `log_function_call`: - Missing docstring in public function"
+          "raw": "intellicrack\\utils\\logger.py:61: D103: in public function `log_function_call`: - Missing docstring in public function"
         },
         {
-          "line": 179,
+          "line": 183,
           "column": null,
           "code": "D103",
           "context": "in public function `log_all_methods`:",
           "message": "in public function `log_all_methods`: - Missing docstring in public function",
-          "raw": "intellicrack\\utils\\logger.py:179: D103: in public function `log_all_methods`: - Missing docstring in public function"
+          "raw": "intellicrack\\utils\\logger.py:183: D103: in public function `log_all_methods`: - Missing docstring in public function"
         }
       ]
     },
@@ -8375,16 +8381,30 @@
       ]
     },
     {
+      "path": "intellicrack\\ai\\__init__.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 168,
+          "column": null,
+          "code": "D103",
+          "context": "in public function `learning_engine`:",
+          "message": "in public function `learning_engine`: - Missing docstring in public function",
+          "raw": "intellicrack\\ai\\__init__.py:168: D103: in public function `learning_engine`: - Missing docstring in public function"
+        }
+      ]
+    },
+    {
       "path": "intellicrack\\core\\analysis\\export_analyzer.py",
       "count": 1,
       "findings": [
         {
-          "line": 690,
+          "line": 669,
           "column": null,
           "code": "D401",
           "context": "in public function `analyze_exports`:",
           "message": "in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')",
-          "raw": "intellicrack\\core\\analysis\\export_analyzer.py:690: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')"
+          "raw": "intellicrack\\core\\analysis\\export_analyzer.py:669: D401: in public function `analyze_exports`: - First line should be in imperative mood; try rephrasing (found 'Convenience')"
         }
       ]
     },
@@ -8407,12 +8427,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 850,
+          "line": 859,
           "column": null,
           "code": "D202",
           "context": "in public method `emulate_with_patches`:",
           "message": "in public method `emulate_with_patches`: - No blank lines allowed after function docstring (found 1)",
-          "raw": "intellicrack\\core\\processing\\qiling_emulator.py:850: D202: in public method `emulate_with_patches`: - No blank lines allowed after function docstring (found 1)"
+          "raw": "intellicrack\\core\\processing\\qiling_emulator.py:859: D202: in public method `emulate_with_patches`: - No blank lines allowed after function docstring (found 1)"
         }
       ]
     },
@@ -8421,12 +8441,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 252,
+          "line": 253,
           "column": null,
           "code": "D401",
           "context": "in private function `log_all_methods`:",
           "message": "in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')",
-          "raw": "intellicrack\\handlers\\pyqt6_handler.py:252: D401: in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')"
+          "raw": "intellicrack\\handlers\\pyqt6_handler.py:253: D401: in private function `log_all_methods`: - First line should be in imperative mood (perhaps 'Decorate', not 'Decorator')"
         }
       ]
     },
@@ -8477,12 +8497,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 432,
+          "line": 439,
           "column": null,
           "code": "D401",
           "context": "in private method `_algo_custom`:",
           "message": "in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')",
-          "raw": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py:432: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')"
+          "raw": "intellicrack\\plugins\\custom_modules\\hardware_dongle_emulator.py:439: D401: in private method `_algo_custom`: - First line should be in imperative mood; try rephrasing (found 'Custom')"
         }
       ]
     },
@@ -8491,12 +8511,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 1464,
+          "line": 1473,
           "column": null,
           "code": "D202",
           "context": "in public function `register_component_hooks`:",
           "message": "in public function `register_component_hooks`: - No blank lines allowed after function docstring (found 1)",
-          "raw": "intellicrack\\plugins\\custom_modules\\success_rate_analyzer.py:1464: D202: in public function `register_component_hooks`: - No blank lines allowed after function docstring (found 1)"
+          "raw": "intellicrack\\plugins\\custom_modules\\success_rate_analyzer.py:1473: D202: in public function `register_component_hooks`: - No blank lines allowed after function docstring (found 1)"
         }
       ]
     },
@@ -8529,16 +8549,44 @@
       ]
     },
     {
+      "path": "intellicrack\\ui\\dialogs\\model_manager_dialog.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 214,
+          "column": null,
+          "code": "D202",
+          "context": "in public method `setup_content`:",
+          "message": "in public method `setup_content`: - No blank lines allowed after function docstring (found 1)",
+          "raw": "intellicrack\\ui\\dialogs\\model_manager_dialog.py:214: D202: in public method `setup_content`: - No blank lines allowed after function docstring (found 1)"
+        }
+      ]
+    },
+    {
+      "path": "intellicrack\\ui\\dialogs\\trial_reset_dialog.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 559,
+          "column": null,
+          "code": "D401",
+          "context": "in private method `_quick_scan_helper`:",
+          "message": "in private method `_quick_scan_helper`: - First line should be in imperative mood; try rephrasing (found 'Helper')",
+          "raw": "intellicrack\\ui\\dialogs\\trial_reset_dialog.py:559: D401: in private method `_quick_scan_helper`: - First line should be in imperative mood; try rephrasing (found 'Helper')"
+        }
+      ]
+    },
+    {
       "path": "intellicrack\\ui\\widgets\\unified_protection_widget.py",
       "count": 1,
       "findings": [
         {
-          "line": 599,
+          "line": 600,
           "column": null,
           "code": "D401",
           "context": "in private method `_update_analysis_details`:",
           "message": "in private method `_update_analysis_details`: - First line should be in imperative mood; try rephrasing (found 'Internal')",
-          "raw": "intellicrack\\ui\\widgets\\unified_protection_widget.py:599: D401: in private method `_update_analysis_details`: - First line should be in imperative mood; try rephrasing (found 'Internal')"
+          "raw": "intellicrack\\ui\\widgets\\unified_protection_widget.py:600: D401: in private method `_update_analysis_details`: - First line should be in imperative mood; try rephrasing (found 'Internal')"
         }
       ]
     },

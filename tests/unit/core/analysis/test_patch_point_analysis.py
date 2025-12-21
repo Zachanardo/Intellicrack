@@ -217,7 +217,7 @@ class TestPatchPointAnalysis(IntellicrackTestBase):
 
         # Should identify integrity check bypasses
         integrity_patches = [p for p in patch_points if p.bypass_type == 'integrity_check_skip']
-        assert len(integrity_patches) >= 1
+        assert integrity_patches
 
         for patch in integrity_patches:
             # Verify patch targets integrity validation
@@ -269,7 +269,7 @@ class TestPatchPointAnalysis(IntellicrackTestBase):
 
             # First byte should be valid x86 opcode
             opcode = original[0]
-            valid_opcodes = list(range(0x00, 0xff))  # All possible opcodes
+            valid_opcodes = list(range(0xff))  # All possible opcodes
             assert opcode in valid_opcodes
 
     def test_patch_strategy_selection(self):
@@ -289,19 +289,19 @@ class TestPatchPointAnalysis(IntellicrackTestBase):
 
             # Should find patches of expected type
             matching_patches = [p for p in patch_points if p.bypass_type == expected_type]
-            assert len(matching_patches) > 0
+            assert matching_patches
 
             # Verify strategy appropriateness
             for patch in matching_patches:
-                if expected_type == 'license_check_bypass':
-                    # License checks typically use conditional jumps
-                    assert patch.bypass_strategy in ['jump_redirect', 'nop_fill']
-                elif expected_type == 'anti_debug_disable':
+                if expected_type == 'anti_debug_disable':
                     # Anti-debug often requires NOPs or register manipulation
                     assert patch.bypass_strategy in ['nop_fill', 'register_clear']
                 elif expected_type == 'integrity_check_skip':
                     # Integrity checks often need jump redirects
                     assert patch.bypass_strategy in ['jump_redirect', 'comparison_patch']
+                elif expected_type == 'license_check_bypass':
+                    # License checks typically use conditional jumps
+                    assert patch.bypass_strategy in ['jump_redirect', 'nop_fill']
                 elif expected_type == 'registration_bypass':
                     # Registration can use various strategies
                     assert patch.bypass_strategy in ['jump_redirect', 'register_set', 'nop_fill']

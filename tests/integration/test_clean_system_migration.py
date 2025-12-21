@@ -449,9 +449,7 @@ class RealLoggerSimulator:
 
     def get_logs(self, level=None):
         """Get logs by level."""
-        if level:
-            return self.logs.get(level, [])
-        return self.logs.copy()
+        return self.logs.get(level, []) if level else self.logs.copy()
 
 
 class RealQApplicationSimulator:
@@ -941,7 +939,7 @@ class TestCleanSystemMigration(unittest.TestCase):
                 # If it succeeds despite permission issues, that's fine too
                 # (some systems may handle this differently)
                 success = True
-            except (PermissionError, OSError):
+            except OSError:
                 # Expected behavior - log the error gracefully
                 self.logger_sim.error("Permission denied during clean system initialization")
                 success = False
@@ -955,7 +953,7 @@ class TestCleanSystemMigration(unittest.TestCase):
             # Restore permissions for cleanup
             try:
                 os.chmod(self.config_dir, 0o755)
-            except (OSError, PermissionError):
+            except OSError:
                 pass
 
     def test_clean_system_concurrent_initialization(self):

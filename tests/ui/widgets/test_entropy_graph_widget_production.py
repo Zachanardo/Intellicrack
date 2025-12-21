@@ -73,13 +73,13 @@ class TestEntropyDataDisplay:
         self, entropy_widget: EntropyGraphWidget
     ) -> None:
         """Widget color-codes entropy values."""
-        test_data = [
-            ('.text', 5.0),
-            ('.data', 6.5),
-            ('.packed', 7.9)
-        ]
-
         if hasattr(entropy_widget, 'set_data'):
+            test_data = [
+                ('.text', 5.0),
+                ('.data', 6.5),
+                ('.packed', 7.9)
+            ]
+
             entropy_widget.set_data(test_data)
 
 
@@ -107,14 +107,14 @@ class TestEntropyThresholds:
         self, entropy_widget: EntropyGraphWidget
     ) -> None:
         """Widget identifies low entropy sections."""
-        test_data = [('.data', 3.5)]
         if hasattr(entropy_widget, 'set_data'):
+            test_data = [('.data', 3.5)]
             entropy_widget.set_data(test_data)
 
     def test_high_entropy_detection(
         self, entropy_widget: EntropyGraphWidget
     ) -> None:
         """Widget identifies high entropy (packed) sections."""
-        test_data = [('.packed', 7.9)]
         if hasattr(entropy_widget, 'set_data'):
+            test_data = [('.packed', 7.9)]
             entropy_widget.set_data(test_data)

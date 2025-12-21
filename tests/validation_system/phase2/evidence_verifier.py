@@ -245,8 +245,9 @@ class EvidenceVerifier:
 
             # Cryptographic signature verification (if available)
             if self.crypto_utils:
-                signature_data = evidence_data.get('cryptographic_signature', {})
-                if signature_data:
+                if signature_data := evidence_data.get(
+                    'cryptographic_signature', {}
+                ):
                     verification_result['digital_signature_valid'] = self.crypto_utils.verify_signature(
                         evidence_data, signature_data
                     )
@@ -275,9 +276,9 @@ class EvidenceVerifier:
             current_time = datetime.now(timezone.utc)
             max_age = timedelta(hours=self.config.max_evidence_age_hours)
 
-            # Check main evidence timestamp
-            evidence_timestamp_str = evidence_data.get('evidence_summary', {}).get('collection_timestamp', '')
-            if evidence_timestamp_str:
+            if evidence_timestamp_str := evidence_data.get(
+                'evidence_summary', {}
+            ).get('collection_timestamp', ''):
                 evidence_timestamp = datetime.fromisoformat(evidence_timestamp_str.replace('Z', '+00:00'))
                 if current_time - evidence_timestamp > max_age:
                     self.logger.warning(f"Evidence older than {self.config.max_evidence_age_hours} hours")
@@ -286,8 +287,9 @@ class EvidenceVerifier:
             # Check individual protection evidence timestamps
             protection_evidence = evidence_data.get('protection_evidence', {})
             for protection_name, protection_data in protection_evidence.items():
-                protection_timestamp_str = protection_data.get('evidence_timestamp', '')
-                if protection_timestamp_str:
+                if protection_timestamp_str := protection_data.get(
+                    'evidence_timestamp', ''
+                ):
                     protection_timestamp = datetime.fromisoformat(protection_timestamp_str.replace('Z', '+00:00'))
                     if current_time - protection_timestamp > max_age:
                         self.logger.warning(f"Protection evidence for {protection_name} older than threshold")
@@ -614,7 +616,8 @@ class EvidenceVerifier:
                 string_values = {str_info.get('string', '') for str_info in suspicious_strings}
 
                 # Check if any import names appear in strings
-                import_string_matches = sum(1 for imp_name in import_names if any(imp_name in s for s in string_values))
+                import_string_matches = sum(bool(any(imp_name in s for s in string_values))
+                                        for imp_name in import_names)
                 validation_result['import_to_string_refs'] += import_string_matches
                 validation_result['cross_references_found'] += import_string_matches
                 validation_result['cross_references_valid'] += import_string_matches
@@ -686,8 +689,9 @@ class EvidenceVerifier:
             collection_time = evidence_summary.get('collection_time', 0)
 
             for protection_name, protection_data in protection_evidence.items():
-                protection_timestamp = protection_data.get('evidence_timestamp', '')
-                if protection_timestamp:
+                if protection_timestamp := protection_data.get(
+                    'evidence_timestamp', ''
+                ):
                     try:
                         protection_time = datetime.fromisoformat(protection_timestamp.replace('Z', '+00:00'))
                         collection_datetime = datetime.fromtimestamp(collection_time, tz=timezone.utc)
@@ -710,14 +714,10 @@ class EvidenceVerifier:
                                  cross_ref_validation: dict[str, Any], anomalies: list[str]) -> float:
         """Calculate overall integrity score from all verification components."""
         try:
-            score_components = []
-            weights = []
-
             # Cryptographic verification (weight: 0.25)
             crypto_score = crypto_verification.get('cryptographic_score', 0.0)
-            score_components.append(crypto_score)
-            weights.append(0.25)
-
+            score_components = [crypto_score]
+            weights = [0.25]
             # Temporal consistency (weight: 0.15)
             temporal_score = 1.0 if temporal_consistency else 0.0
             score_components.append(temporal_score)
@@ -762,10 +762,7 @@ class EvidenceVerifier:
 
             # Apply anomaly penalty
             anomaly_penalty = min(0.5, len(anomalies) * 0.1)  # Max 50% penalty
-            final_score = max(0.0, weighted_score - anomaly_penalty)
-
-            return final_score
-
+            return max(0.0, weighted_score - anomaly_penalty)
         except Exception as e:
             self.logger.error(f"Integrity score calculation failed: {str(e)}")
             return 0.0
@@ -777,10 +774,7 @@ class EvidenceVerifier:
 
         # Check for critical anomalies
         critical_anomalies = [a for a in anomalies if 'suspicious' in a.lower() or 'invalid' in a.lower()]
-        if len(critical_anomalies) > 2:
-            return False
-
-        return True
+        return len(critical_anomalies) <= 2
 
     def _assess_confidence(self, integrity_score: float, authenticity_verified: bool) -> str:
         """Assess confidence level in evidence verification."""

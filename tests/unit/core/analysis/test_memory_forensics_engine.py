@@ -89,8 +89,7 @@ class TestMemoryDumpAnalysis:
         # Production requirement: Tests must work with actual dump files
         test_dumps_dir = Path("tests/fixtures/memory_dumps")
         if test_dumps_dir.exists():
-            dumps = list(test_dumps_dir.glob("*.mem"))
-            if dumps:
+            if dumps := list(test_dumps_dir.glob("*.mem")):
                 return str(dumps[0])
 
         # For testing purposes, create a mock dump path
@@ -274,13 +273,14 @@ class TestLiveProcessAnalysis:
         assert isinstance(result, MemoryAnalysisResult)
         assert len(result.processes) >= 1
 
-        # Production requirement: Must find target process
-        target_process = None
-        for process in result.processes:
-            if process.pid == current_pid:
-                target_process = process
-                break
-
+        target_process = next(
+            (
+                process
+                for process in result.processes
+                if process.pid == current_pid
+            ),
+            None,
+        )
         assert target_process is not None
         assert target_process.pid == current_pid
         assert target_process.name is not None
@@ -311,13 +311,9 @@ class TestLiveProcessAnalysis:
         # Production requirement: Must enumerate loaded modules
         assert len(result.modules) > 0
 
-        # Production requirement: Must include main executable
-        main_module = None
-        for module in result.modules:
-            if module.is_main_module:
-                main_module = module
-                break
-
+        main_module = next(
+            (module for module in result.modules if module.is_main_module), None
+        )
         assert main_module is not None
         assert main_module.base_address > 0
 
@@ -387,7 +383,7 @@ class TestStringAnalysis:
 
                 # Production requirement: Must detect credential patterns
                 credential_strings = [s for s in strings if 'password' in s.value.lower() or 'key' in s.value.lower()]
-                assert len(credential_strings) > 0
+                assert credential_strings
 
                 # Production requirement: Must classify as credential material
                 for cred_string in credential_strings:
@@ -415,7 +411,7 @@ class TestStringAnalysis:
                 assert len(strings) > 0
 
                 unicode_strings = [s for s in strings if any(ord(c) > 127 for c in s.value)]
-                assert len(unicode_strings) > 0
+                assert unicode_strings
 
             finally:
                 os.unlink(temp_file.name)
@@ -706,7 +702,7 @@ class TestPerformanceAndScalability:
             thread.join()
 
         # Production requirement: All operations should complete successfully
-        assert len(errors) == 0
+        assert not errors
         assert len(results) == 3
 
         for result in results:
@@ -758,7 +754,7 @@ class TestIntegrationScenarios:
 
         # Production requirement: Must correlate multiple artifact types
         artifact_types_found = list(result.artifacts_found.keys())
-        assert len(artifact_types_found) > 0
+        assert artifact_types_found
 
         # Production requirement: Must establish relationships between artifacts
         if len(result.processes) > 0 and len(result.modules) > 0:

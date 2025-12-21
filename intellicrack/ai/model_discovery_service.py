@@ -395,9 +395,7 @@ class ModelDiscoveryService:
                     continue
 
                 cached_ids = {m.id for m in self._cached_models[provider_name]}
-                if provider_new_ids := [
-                    m.id for m in models if m.id not in cached_ids
-                ]:
+                if provider_new_ids := [m.id for m in models if m.id not in cached_ids]:
                     new_model_ids[provider_name] = provider_new_ids
 
             return new_model_ids

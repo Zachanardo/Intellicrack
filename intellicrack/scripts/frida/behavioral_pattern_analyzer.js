@@ -2090,7 +2090,7 @@ const BehavioralPatternAnalyzer = {
 
     performNeuralNetworkTraining: function (trainingData) {
         // Simplified neural network training (gradient descent)
-        const {learningRate} = this.patternClassifier;
+        const { learningRate } = this.patternClassifier;
 
         for (let i = 0; i < trainingData.length; i++) {
             const sample = trainingData[i];

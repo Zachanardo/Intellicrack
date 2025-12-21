@@ -4,14 +4,12 @@ This tests that the search_type parameter is properly used for type-specific
 optimizations including case sensitivity and binary vs text search handling.
 """
 
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestAdvancedSearchTypeOptimization:
@@ -31,29 +29,29 @@ class TestAdvancedSearchTypeOptimization:
         case_sensitive = SearchType.HEX != SearchType.TEXT
         is_binary_search = SearchType.HEX in (SearchType.HEX, SearchType.WILDCARD)
 
-        assert case_sensitive is True
-        assert is_binary_search is True
+        assert case_sensitive
+        assert is_binary_search
 
     def test_text_search_case_insensitive(self) -> None:
         """Test that TEXT search applies case-insensitive matching."""
         from intellicrack.hexview.advanced_search import SearchType
 
         case_sensitive = SearchType.TEXT != SearchType.TEXT
-        assert case_sensitive is False
+        assert not case_sensitive
 
     def test_regex_search_type(self) -> None:
         """Test REGEX search type handling."""
         from intellicrack.hexview.advanced_search import SearchType
 
         is_binary = SearchType.REGEX in (SearchType.HEX, SearchType.WILDCARD)
-        assert is_binary is False
+        assert not is_binary
 
     def test_wildcard_search_is_binary(self) -> None:
         """Test that WILDCARD search is treated as binary search."""
         from intellicrack.hexview.advanced_search import SearchType
 
         is_binary = SearchType.WILDCARD in (SearchType.HEX, SearchType.WILDCARD)
-        assert is_binary is True
+        assert is_binary
 
     def test_search_result_structure(self) -> None:
         """Test SearchResult structure is correct."""
@@ -114,7 +112,7 @@ class TestAdvancedSearchTypeOptimization:
         pattern = b"LICENSE"
 
         case_sensitive = SearchType.HEX != SearchType.TEXT
-        assert case_sensitive is True
+        assert case_sensitive
 
         if case_sensitive:
             search_data = chunk_data
@@ -146,14 +144,12 @@ class TestAdvancedSearchTypeOptimization:
 
     def test_empty_pattern_handling(self) -> None:
         """Test handling of empty search patterns."""
-        chunk_data = b"\x00\x01\x02\x03"
         pattern = b""
 
-        if len(pattern) == 0:
-            positions = []
-        else:
-            positions = []
+        positions = []
+        if pattern:
             pos = 0
+            chunk_data = b"\x00\x01\x02\x03"
             while True:
                 pos = chunk_data.find(pattern, pos)
                 if pos == -1:
@@ -161,7 +157,7 @@ class TestAdvancedSearchTypeOptimization:
                 positions.append(pos)
                 pos += 1
 
-        assert positions == []
+        assert not positions
 
     def test_pattern_longer_than_chunk(self) -> None:
         """Test handling when pattern is longer than chunk."""

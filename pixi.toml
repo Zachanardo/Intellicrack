@@ -47,6 +47,7 @@ cargo-expand = "*"
 cargo-llvm-cov = "*"
 cargo-audit = "*"
 cargo-deny = "*"
+google-java-format = ">=1.33.0,<2"
 
 [pypi-dependencies]
 intellicrack = { path = ".", editable = true } # Editable install of Intellicrack for development
@@ -144,6 +145,9 @@ poetry = "*"           # Python dependency management and packaging
 pycallgraph2 = "*"     # Call graph visualization tool
 pre-commit-hooks = "*" # Collection of pre-commit hooks
 detect-secrets = "*"   # Prevent secrets from being committed
+
+# MCP Server
+mcp = ">=1.2.0" # Model Context Protocol SDK for dev-tools server
 
 [pypi-options]
 extra-index-urls = ["https://download.pytorch.org/whl/xpu"]

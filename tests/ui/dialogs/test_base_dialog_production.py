@@ -35,7 +35,7 @@ def qapp(qapp: QApplication) -> QApplication:
 @pytest.fixture
 def base_dialog(qapp: QApplication) -> BaseDialog:
     """Create a basic BaseDialog instance for testing."""
-    dialog = BaseDialog(
+    return BaseDialog(
         parent=None,
         title="Test Dialog",
         width=800,
@@ -44,13 +44,12 @@ def base_dialog(qapp: QApplication) -> BaseDialog:
         show_help=False,
         help_text="",
     )
-    return dialog
 
 
 @pytest.fixture
 def base_dialog_with_help(qapp: QApplication) -> BaseDialog:
     """Create a BaseDialog with help button enabled."""
-    dialog = BaseDialog(
+    return BaseDialog(
         parent=None,
         title="Test Dialog with Help",
         width=800,
@@ -59,20 +58,18 @@ def base_dialog_with_help(qapp: QApplication) -> BaseDialog:
         show_help=True,
         help_text="This is comprehensive help text for the dialog.",
     )
-    return dialog
 
 
 @pytest.fixture
 def non_resizable_dialog(qapp: QApplication) -> BaseDialog:
     """Create a non-resizable BaseDialog."""
-    dialog = BaseDialog(
+    return BaseDialog(
         parent=None,
         title="Fixed Size Dialog",
         width=400,
         height=300,
         resizable=False,
     )
-    return dialog
 
 
 class TestBaseDialogInitialization:

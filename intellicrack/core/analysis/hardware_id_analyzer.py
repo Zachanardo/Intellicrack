@@ -271,9 +271,7 @@ class HardwareIDAnalyzer:
             results["validation_count"] = len(self.validation_patterns)
             results["node_locked"] = len(self.node_lock_patterns) > 0
 
-            if obfuscation_levels := [
-                v.obfuscation_level for v in self.validation_patterns
-            ]:
+            if obfuscation_levels := [v.obfuscation_level for v in self.validation_patterns]:
                 avg_obfuscation = sum(obfuscation_levels) / len(obfuscation_levels)
                 if avg_obfuscation > 7:
                     results["obfuscation_level"] = "high"
@@ -388,10 +386,7 @@ class HardwareIDAnalyzer:
             context_end = min(len(data), pos + 20)
             context = data[context_start:context_end]
 
-            disasm_text = "".join(
-                f"{instr.mnemonic} {instr.op_str}\n"
-                for instr in self.disasm.disasm(context, base_va + context_start)
-            )
+            disasm_text = "".join(f"{instr.mnemonic} {instr.op_str}\n" for instr in self.disasm.disasm(context, base_va + context_start))
             check = HWIDCheck(
                 offset=base_va + pos,
                 hwid_type=HWIDType.CPU_ID,
@@ -755,44 +750,28 @@ class HardwareIDAnalyzer:
     def _get_disk_serial(self) -> str:
         """Get primary disk serial number."""
         return next(
-            (
-                disk.SerialNumber
-                for disk in self.wmi_conn.Win32_DiskDrive()
-                if disk.SerialNumber
-            ),
+            (disk.SerialNumber for disk in self.wmi_conn.Win32_DiskDrive() if disk.SerialNumber),
             "",
         )
 
     def _get_mac_address(self) -> str:
         """Get primary MAC address."""
         return next(
-            (
-                adapter.MACAddress
-                for adapter in self.wmi_conn.Win32_NetworkAdapter()
-                if adapter.MACAddress
-            ),
+            (adapter.MACAddress for adapter in self.wmi_conn.Win32_NetworkAdapter() if adapter.MACAddress),
             "",
         )
 
     def _get_motherboard_serial(self) -> str:
         """Get motherboard serial number."""
         return next(
-            (
-                board.SerialNumber
-                for board in self.wmi_conn.Win32_BaseBoard()
-                if board.SerialNumber
-            ),
+            (board.SerialNumber for board in self.wmi_conn.Win32_BaseBoard() if board.SerialNumber),
             "",
         )
 
     def _get_bios_serial(self) -> str:
         """Get BIOS serial number."""
         return next(
-            (
-                bios.SerialNumber
-                for bios in self.wmi_conn.Win32_BIOS()
-                if bios.SerialNumber
-            ),
+            (bios.SerialNumber for bios in self.wmi_conn.Win32_BIOS() if bios.SerialNumber),
             "",
         )
 

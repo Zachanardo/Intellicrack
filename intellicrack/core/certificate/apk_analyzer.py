@@ -369,16 +369,12 @@ class APKAnalyzer:
                     if domain_matches := domain_pattern.findall(content):
                         pinning_infos.extend(
                             PinningInfo(
-                                location=str(
-                                    smali_file.relative_to(self.decompiled_path)
-                                ),
+                                location=str(smali_file.relative_to(self.decompiled_path)),
                                 pin_type="okhttp",
                                 domains=domain_matches[:5],
                                 hashes=[f"sha256/{pin_hash}"],
                                 confidence=0.80,
-                                additional_info={
-                                    "detection": "const-string-pattern"
-                                },
+                                additional_info={"detection": "const-string-pattern"},
                             )
                             for pin_hash in pin_matches
                         )

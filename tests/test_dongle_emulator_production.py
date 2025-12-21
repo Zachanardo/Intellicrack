@@ -1111,7 +1111,7 @@ class TestSentinelProtocol:
         status = struct.unpack("<I", response[:4])[0]
         assert status == SentinelStatus.SP_SUCCESS
         ciphertext = bytes(dongle.response_buffer[: len(plaintext) + 16])
-        assert len(ciphertext) > 0
+        assert ciphertext
 
 
 class TestWibuKeyProtocol:

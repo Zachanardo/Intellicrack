@@ -44,9 +44,7 @@ def convert_r2_to_binary_patch(r2_patch, patch_category):
         else:
             offset = int(address_str)
 
-        # Extract patch bytes
-        patch_bytes_str = r2_patch.get("patch_bytes", "")
-        if patch_bytes_str:
+        if patch_bytes_str := r2_patch.get("patch_bytes", ""):
             clean_hex = patch_bytes_str.replace(" ", "").replace("??", "90")
             if len(clean_hex) % 2:
                 clean_hex += "0"
@@ -54,9 +52,7 @@ def convert_r2_to_binary_patch(r2_patch, patch_category):
         else:
             patched_bytes = b"\x90"
 
-        # Extract original bytes
-        original_bytes_str = r2_patch.get("original_bytes", "")
-        if original_bytes_str:
+        if original_bytes_str := r2_patch.get("original_bytes", ""):
             clean_orig_hex = original_bytes_str.replace(" ", "")
             if len(clean_orig_hex) % 2:
                 clean_orig_hex += "0"
@@ -85,9 +81,7 @@ def validate_patch(patch):
         return False
     if not patch.patched_bytes:
         return False
-    if len(patch.patched_bytes) > 1024:
-        return False
-    return True
+    return len(patch.patched_bytes) <= 1024
 
 
 def apply_patch_to_binary(binary_path, patch):
@@ -166,7 +160,7 @@ def test_patch_validation():
     invalid_result = validate_patch(invalid_patch)
 
     print(f"OK Valid patch validation: {'PASSED' if valid_result else 'FAILED'}")
-    print(f"OK Invalid patch rejection: {'PASSED' if not invalid_result else 'FAILED'}")
+    print(f"OK Invalid patch rejection: {'FAILED' if invalid_result else 'PASSED'}")
 
     success = valid_result and not invalid_result
     print(f"  Overall validation: {'OK PASSED' if success else 'FAIL FAILED'}")
@@ -250,13 +244,11 @@ def test_integration_workflow():
     all_binary_patches = []
 
     for patch in r2_results["automated_patches"]:
-        binary_patch = convert_r2_to_binary_patch(patch, "automated")
-        if binary_patch:
+        if binary_patch := convert_r2_to_binary_patch(patch, "automated"):
             all_binary_patches.append(binary_patch)
 
     for patch in r2_results["memory_patches"]:
-        binary_patch = convert_r2_to_binary_patch(patch, "memory")
-        if binary_patch:
+        if binary_patch := convert_r2_to_binary_patch(patch, "memory"):
             all_binary_patches.append(binary_patch)
 
     # Step 3: Validate all patches

@@ -198,7 +198,7 @@ class TestFileTreeWidgetComprehensive:
                 widget.on_item_double_clicked(child, 0)
                 break
 
-        assert len(signals_received) > 0
+        assert signals_received
 
     @pytest.mark.skipif(not PYQT6_AVAILABLE, reason="PyQt6 required")
     def test_hidden_files_excluded(self, qapp_session: QApplication, tmp_path: Path) -> None:
@@ -262,7 +262,7 @@ class TestCodeEditorComprehensive:
 
         editor.setPlainText("modified content")
 
-        assert len(signals_received) > 0
+        assert signals_received
         assert signals_received[0] == str(test_file)
 
     @pytest.mark.skipif(not PYQT6_AVAILABLE, reason="PyQt6 required")
@@ -368,7 +368,7 @@ class TestChatWidgetComprehensive:
         widget = ChatWidget()
         widget.available_models = ["model1", "model2", "model3"]
 
-        for i, model in enumerate(widget.available_models):
+        for model in widget.available_models:
             widget.model_combo.addItem(model)
 
         widget.model_combo.setCurrentIndex(1)
@@ -671,7 +671,7 @@ class TestBinaryPatcherComprehensive:
 
         binary_data = bytearray(license_protected_binary.read_bytes())
 
-        for offset in range(0, min(1000, len(binary_data) - 10)):
+        for offset in range(min(1000, len(binary_data) - 10)):
             result = patcher._is_conditional_jump_context(binary_data, offset)
             assert isinstance(result, bool)
 
@@ -1150,7 +1150,6 @@ class TestEdgeCasesAndErrorHandling:
         """generate_license_key handles None as user_info."""
         try:
             key = generate_license_key(None)
-            assert key is not None or True
         except TypeError:
             pass
 
@@ -1182,7 +1181,7 @@ class TestPerformanceAndScalability:
         binary = tmp_path / "many_patches.exe"
 
         binary_data = b"MZ\x90\x00"
-        for i in range(100):
+        for _ in range(100):
             binary_data += b"\x74\x05"
             binary_data += b"\x00" * 10
 

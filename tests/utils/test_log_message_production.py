@@ -280,7 +280,7 @@ class TestCallbackManagement:
         with patch("intellicrack.utils.log_message.main_logger"):
             log_message("Test after unregister")
 
-        assert len(callback_data) == 0
+        assert not callback_data
 
     def test_callback_not_added_twice(self) -> None:
         """Callback is not added multiple times."""
@@ -328,7 +328,7 @@ class TestCallbackManagement:
             with patch("intellicrack.utils.log_message.main_logger"):
                 log_message("Test", notify_ui=False)
 
-            assert len(callback_data) == 0
+            assert not callback_data
         finally:
             unregister_message_callback(test_callback)
 

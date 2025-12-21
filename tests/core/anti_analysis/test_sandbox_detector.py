@@ -36,7 +36,7 @@ except (ImportError, AttributeError) as e:
     SKIP_REASON = f"SandboxDetector unavailable: {e}"
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestSandboxDetectorInitialization:
     """Test SandboxDetector initialization and signature building."""
 
@@ -163,7 +163,7 @@ class TestSandboxDetectorInitialization:
             assert "files" in sig or "processes" in sig or "artifacts" in sig
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestEnvironmentDetection:
     """Test environment-based sandbox detection."""
 
@@ -228,7 +228,7 @@ class TestEnvironmentDetection:
                 assert any(var_name in str(var) for var in details["suspicious_vars"])
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestHardwareDetection:
     """Test hardware-based sandbox detection."""
 
@@ -271,7 +271,7 @@ class TestHardwareDetection:
         mac_node = uuid.getnode()
         mac_str = ":".join([f"{(mac_node >> i) & 0xFF:02x}" for i in range(0, 48, 8)])
 
-        is_vm = any(mac_str.upper().startswith(prefix) for prefix in vm_prefixes.keys())
+        is_vm = any(mac_str.upper().startswith(prefix) for prefix in vm_prefixes)
 
         detected, confidence, details = detector._check_mac_address_artifacts()
 
@@ -316,7 +316,7 @@ class TestRegistryDetection:
             assert found_vmware or found_vbox or indicators["detected"]
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestVirtualizationDetection:
     """Test virtualization artifact detection."""
 
@@ -366,7 +366,7 @@ class TestVirtualizationDetection:
             assert confidence >= 0.7
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestBehavioralDetection:
     """Test behavioral sandbox detection."""
 
@@ -419,7 +419,7 @@ class TestBehavioralDetection:
                 assert any("disk" in limit.lower() for limit in details["limitations"])
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestNetworkDetection:
     """Test network-based sandbox detection."""
 
@@ -457,7 +457,7 @@ class TestNetworkDetection:
         assert not detector._ip_in_network("10.1.1.1", "10.0.0.0/24")
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestProcessDetection:
     """Test process-based sandbox detection."""
 
@@ -485,12 +485,9 @@ class TestProcessDetection:
         assert "parent_name" in details
 
         current_proc = psutil.Process()
-        try:
-            parent = current_proc.parent()
-            if parent:
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
+            if parent := current_proc.parent():
                 assert details["parent_name"] == parent.name() or details["parent_name"] is None
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            pass
 
     def test_check_file_system_artifacts_finds_sandbox_files(self) -> None:
         """File system check identifies sandbox-specific files."""
@@ -506,7 +503,7 @@ class TestProcessDetection:
             assert len(details["artifacts_found"]) > 0
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestTimingDetection:
     """Test timing-based sandbox detection."""
 
@@ -587,13 +584,13 @@ class TestMouseDetection:
 
         if detected:
             assert confidence > 0
-            suspicious_patterns = ["constant_velocity", "perfectly_linear", "identical_distances"]
             assert "suspicious_pattern" in details or not detected
             if "suspicious_pattern" in details:
+                suspicious_patterns = ["constant_velocity", "perfectly_linear", "identical_distances"]
                 assert details["suspicious_pattern"] in suspicious_patterns
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestBrowserAutomationDetection:
     """Test browser automation framework detection."""
 
@@ -619,7 +616,7 @@ class TestBrowserAutomationDetection:
             )
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestUserInteractionDetection:
     """Test user interaction detection."""
 
@@ -642,7 +639,7 @@ class TestUserInteractionDetection:
             assert isinstance(details["found_browsers"], list)
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestSandboxDetectionIntegration:
     """Test complete sandbox detection workflow."""
 
@@ -698,7 +695,7 @@ class TestSandboxDetectionIntegration:
         assert difficulty >= 0
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestSandboxEvasion:
     """Test sandbox evasion functionality."""
 
@@ -741,7 +738,7 @@ class TestSandboxEvasion:
         assert detection_type == "sandbox"
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestSystemUtilities:
     """Test system utility methods."""
 
@@ -779,7 +776,7 @@ class TestSystemUtilities:
             assert "systemd" in processes or "init" in processes
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestSandboxSignatures:
     """Test sandbox signature matching."""
 
@@ -829,7 +826,7 @@ class TestSandboxSignatures:
         assert any("sbie" in dll.lower() for dll in sbie_sig["dlls"])
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestProfileMatching:
     """Test known sandbox profile matching."""
 
@@ -849,7 +846,7 @@ class TestProfileMatching:
         assert len(detector1.system_profile["fingerprint"]) == 64
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 class TestErrorHandling:
     """Test error handling and edge cases."""
 
@@ -879,7 +876,7 @@ class TestErrorHandling:
             assert isinstance(detected, bool)
 
 
-@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason=SKIP_REASON if not SANDBOX_AVAILABLE else "")
+@pytest.mark.skipif(not SANDBOX_AVAILABLE, reason="" if SANDBOX_AVAILABLE else SKIP_REASON)
 @pytest.mark.real_data
 class TestRealWorldScenarios:
     """Test real-world sandbox detection scenarios."""

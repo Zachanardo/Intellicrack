@@ -23,6 +23,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+
 from __future__ import annotations
 
 import os
@@ -37,9 +38,6 @@ from intellicrack.core.analysis.symbolic_executor import (
     ANGR_AVAILABLE,
     SymbolicExecutionEngine,
 )
-
-if TYPE_CHECKING:
-    pass
 
 SYSTEM32 = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32"
 NOTEPAD = SYSTEM32 / "notepad.exe"
@@ -89,11 +87,11 @@ def minimal_pe_binary() -> Path:
     temp_path = Path(temp_file.name)
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_header = bytearray(248)
-    pe_header[0:4] = b"PE\x00\x00"
+    pe_header[:4] = b"PE\x00\x00"
     pe_header[4:6] = struct.pack("<H", 0x8664)
     pe_header[6:8] = struct.pack("<H", 1)
     pe_header[20:22] = struct.pack("<H", 0xF0)
@@ -101,7 +99,7 @@ def minimal_pe_binary() -> Path:
     pe_header[24:28] = struct.pack("<I", 0x1000)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 0x1000)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 0x200)
@@ -109,7 +107,7 @@ def minimal_pe_binary() -> Path:
     section_header[36:40] = struct.pack("<I", 0x60000020)
 
     code_section = bytearray(512)
-    code_section[0:3] = b"\x48\x31\xC0"
+    code_section[:3] = b"\x48\x31\xC0"
     code_section[3:4] = b"\xC3"
 
     temp_file.write(dos_header)
@@ -132,11 +130,11 @@ def license_check_binary() -> Path:
     temp_path = Path(temp_file.name)
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_header = bytearray(248)
-    pe_header[0:4] = b"PE\x00\x00"
+    pe_header[:4] = b"PE\x00\x00"
     pe_header[4:6] = struct.pack("<H", 0x8664)
     pe_header[6:8] = struct.pack("<H", 1)
     pe_header[20:22] = struct.pack("<H", 0xF0)
@@ -144,7 +142,7 @@ def license_check_binary() -> Path:
     pe_header[24:28] = struct.pack("<I", 0x1000)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 0x2000)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 0x400)
@@ -153,21 +151,21 @@ def license_check_binary() -> Path:
 
     code_section = bytearray(1024)
 
-    code_section[0:50] = (
-        b"\x48\x83\xEC\x28"
-        b"\x48\x8D\x0D\x20\x00\x00\x00"
-        b"\xE8\x00\x00\x00\x00"
-        b"\x48\x85\xC0"
+    code_section[:50] = (
+        b"\x48\x83\xec\x28"
+        b"\x48\x8d\x0d\x20\x00\x00\x00"
+        b"\xe8\x00\x00\x00\x00"
+        b"\x48\x85\xc0"
         b"\x74\x10"
-        b"\x48\x8B\xC8"
-        b"\xE8\x00\x00\x00\x00"
-        b"\x85\xC0"
+        b"\x48\x8b\xc8"
+        b"\xe8\x00\x00\x00\x00"
+        b"\x85\xc0"
         b"\x75\x05"
-        b"\xB8\x01\x00\x00\x00"
-        b"\xEB\x02"
-        b"\x33\xC0"
-        b"\x48\x83\xC4\x28"
-        b"\xC3"
+        b"\xb8\x01\x00\x00\x00"
+        b"\xeb\x02"
+        b"\x33\xc0"
+        b"\x48\x83\xc4\x28"
+        b"\xc3"
     )
 
     code_section[50:100] = (
@@ -334,7 +332,6 @@ class TestVulnerabilityDiscoveryRealBinaries:
         assert isinstance(vulnerabilities, list)
         if vulnerabilities and "error" not in vulnerabilities[0]:
             vulnerability_types = {v.get("type") for v in vulnerabilities if "type" in v}
-            assert len(vulnerability_types) >= 0
 
     def test_discovers_all_vulnerability_types_default(self, minimal_pe_binary: Path) -> None:
         """Discovers all vulnerability types when none specified."""

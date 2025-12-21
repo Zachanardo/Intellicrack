@@ -163,9 +163,9 @@ class DynamicMutationTester:
                     # Add self-modifying code
                     self_modify_code = self._generate_self_modifying_code(modification_id)
 
-                    # Find insertion point
-                    cave_offset = self.variant_generator._find_code_cave(pe, len(self_modify_code))
-                    if cave_offset:
+                    if cave_offset := self.variant_generator._find_code_cave(
+                        pe, len(self_modify_code)
+                    ):
                         pe.set_bytes_at_offset(cave_offset, self_modify_code)
 
                     # Add markers
@@ -205,9 +205,9 @@ class DynamicMutationTester:
                     # Add polymorphic code that changes form but not function
                     poly_code = self._generate_polymorphic_code(variant_id)
 
-                    # Find insertion point
-                    cave_offset = self.variant_generator._find_code_cave(pe, len(poly_code))
-                    if cave_offset:
+                    if cave_offset := self.variant_generator._find_code_cave(
+                        pe, len(poly_code)
+                    ):
                         pe.set_bytes_at_offset(cave_offset, poly_code)
 
                     # Add markers
@@ -432,21 +432,32 @@ class DynamicMutationTester:
         for mutation_type, results in mutation_results.items():
             mutation_desc = self.dynamic_mutations.get(mutation_type, {}).get("description", "Unknown")
             report_lines.append(f"Mutation Type: {mutation_type}")
-            report_lines.append(f"Description: {mutation_desc}")
-            report_lines.append("-" * 30)
+            report_lines.extend((f"Description: {mutation_desc}", "-" * 30))
+            successful_tests = sum(bool(r.success)
+                               for r in results)
+            adaptation_detected = sum(bool(r.adaptation_detected)
+                                  for r in results)
 
-            successful_tests = sum(1 for r in results if r.success)
-            adaptation_detected = sum(1 for r in results if r.adaptation_detected)
-
-            report_lines.append(f"  Successful Tests: {successful_tests}/{len(results)}")
-            report_lines.append(f"  Adaptation Detected: {adaptation_detected}/{len(results)}")
-
+            report_lines.extend(
+                (
+                    f"  Successful Tests: {successful_tests}/{len(results)}",
+                    f"  Adaptation Detected: {adaptation_detected}/{len(results)}",
+                )
+            )
             for result in results:
-                report_lines.append(f"    Test: {Path(result.original_binary).name} -> {Path(result.mutated_binary).name if result.mutated_binary else 'FAILED'}")
-                report_lines.append(f"      Success: {result.success}")
+                report_lines.extend(
+                    (
+                        f"    Test: {Path(result.original_binary).name} -> {Path(result.mutated_binary).name if result.mutated_binary else 'FAILED'}",
+                        f"      Success: {result.success}",
+                    )
+                )
                 if result.success:
-                    report_lines.append(f"      Adaptation Detected: {result.adaptation_detected}")
-                    report_lines.append(f"      Hash Changed: {result.original_hash[:8]}... -> {result.mutated_hash[:8]}...")
+                    report_lines.extend(
+                        (
+                            f"      Adaptation Detected: {result.adaptation_detected}",
+                            f"      Hash Changed: {result.original_hash[:8]}... -> {result.mutated_hash[:8]}...",
+                        )
+                    )
                 else:
                     report_lines.append(f"      Error: {result.error_message}")
                 report_lines.append("")
@@ -484,9 +495,7 @@ if __name__ == "__main__":
 
     # Test with real binaries if available
     try:
-        # Get available binaries
-        binaries = tester.binary_manager.list_acquired_binaries()
-        if binaries:
+        if binaries := tester.binary_manager.list_acquired_binaries():
             print(f"\nFound {len(binaries)} acquired binaries:")
             for binary in binaries:
                 print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")

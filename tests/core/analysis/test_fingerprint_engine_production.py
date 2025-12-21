@@ -77,7 +77,7 @@ def minimal_pe_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "minimal.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
     dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
@@ -98,7 +98,7 @@ def minimal_pe_binary(temp_workspace: Path) -> Path:
     )
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
     optional_header[16:20] = struct.pack("<I", 0x1000)
     optional_header[20:24] = struct.pack("<I", 0x2000)
     optional_header[24:28] = struct.pack("<I", 0x1000)
@@ -106,7 +106,7 @@ def minimal_pe_binary(temp_workspace: Path) -> Path:
     optional_header[36:40] = struct.pack("<I", 0x10000)
 
     section_1 = bytearray(40)
-    section_1[0:8] = b".text\x00\x00\x00"
+    section_1[:8] = b".text\x00\x00\x00"
     section_1[8:12] = struct.pack("<I", 0x1000)
     section_1[12:16] = struct.pack("<I", 0x1000)
     section_1[16:20] = struct.pack("<I", 0x200)
@@ -114,7 +114,7 @@ def minimal_pe_binary(temp_workspace: Path) -> Path:
     section_1[36:40] = struct.pack("<I", 0x20000040)
 
     section_2 = bytearray(40)
-    section_2[0:8] = b".data\x00\x00\x00"
+    section_2[:8] = b".data\x00\x00\x00"
     section_2[8:12] = struct.pack("<I", 0x2000)
     section_2[12:16] = struct.pack("<I", 0x2000)
     section_2[16:20] = struct.pack("<I", 0x200)
@@ -146,7 +146,7 @@ def upx_packed_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "upx_packed.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
     dos_stub = b"\x0e\x1f" + b"\x00" * (0x80 - 64 - 2)
@@ -156,10 +156,10 @@ def upx_packed_binary(temp_workspace: Path) -> Path:
     coff_header = struct.pack("<HHIIIHH", 0x014C, 3, 0x5F5E100C, 0, 0, 224, 0x0122)
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     upx0_section = bytearray(40)
-    upx0_section[0:8] = b"UPX0\x00\x00\x00\x00"
+    upx0_section[:8] = b"UPX0\x00\x00\x00\x00"
     upx0_section[8:12] = struct.pack("<I", 0x1000)
     upx0_section[12:16] = struct.pack("<I", 0x1000)
     upx0_section[16:20] = struct.pack("<I", 0x200)
@@ -167,7 +167,7 @@ def upx_packed_binary(temp_workspace: Path) -> Path:
     upx0_section[36:40] = struct.pack("<I", 0xE0000020)
 
     upx1_section = bytearray(40)
-    upx1_section[0:8] = b"UPX1\x00\x00\x00\x00"
+    upx1_section[:8] = b"UPX1\x00\x00\x00\x00"
     upx1_section[8:12] = struct.pack("<I", 0x2000)
     upx1_section[12:16] = struct.pack("<I", 0x2000)
     upx1_section[16:20] = struct.pack("<I", 0x400)
@@ -175,7 +175,7 @@ def upx_packed_binary(temp_workspace: Path) -> Path:
     upx1_section[36:40] = struct.pack("<I", 0xE0000040)
 
     upx2_section = bytearray(40)
-    upx2_section[0:8] = b"UPX2\x00\x00\x00\x00"
+    upx2_section[:8] = b"UPX2\x00\x00\x00\x00"
     upx2_section[8:12] = struct.pack("<I", 0x3000)
     upx2_section[12:16] = struct.pack("<I", 0x1000)
     upx2_section[16:20] = struct.pack("<I", 0x200)
@@ -210,7 +210,7 @@ def vmprotect_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "vmprotect.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
     dos_stub = b"\x00" * (0x80 - 64)
@@ -220,10 +220,10 @@ def vmprotect_binary(temp_workspace: Path) -> Path:
     coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0x5F5E100C, 0, 0, 224, 0x0122)
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     vmp0_section = bytearray(40)
-    vmp0_section[0:8] = b".vmp0\x00\x00\x00"
+    vmp0_section[:8] = b".vmp0\x00\x00\x00"
     vmp0_section[8:12] = struct.pack("<I", 0x1000)
     vmp0_section[12:16] = struct.pack("<I", 0x1000)
     vmp0_section[16:20] = struct.pack("<I", 0x400)
@@ -231,7 +231,7 @@ def vmprotect_binary(temp_workspace: Path) -> Path:
     vmp0_section[36:40] = struct.pack("<I", 0xE0000060)
 
     vmp1_section = bytearray(40)
-    vmp1_section[0:8] = b".vmp1\x00\x00\x00"
+    vmp1_section[:8] = b".vmp1\x00\x00\x00"
     vmp1_section[8:12] = struct.pack("<I", 0x2000)
     vmp1_section[12:16] = struct.pack("<I", 0x2000)
     vmp1_section[16:20] = struct.pack("<I", 0x400)
@@ -263,17 +263,17 @@ def themida_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "themida.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
     dos_stub = b"\x00" * (0x80 - 64)
 
     pe_signature = b"PE\x00\x00"
     coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0x5F5E100C, 0, 0, 224, 0x0122)
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     themida_section = bytearray(40)
-    themida_section[0:8] = b".themida"
+    themida_section[:8] = b".themida"
     themida_section[8:12] = struct.pack("<I", 0x1000)
     themida_section[12:16] = struct.pack("<I", 0x1000)
     themida_section[16:20] = struct.pack("<I", 0x400)
@@ -281,7 +281,7 @@ def themida_binary(temp_workspace: Path) -> Path:
     themida_section[36:40] = struct.pack("<I", 0xE0000060)
 
     text_section = bytearray(40)
-    text_section[0:8] = b".text\x00\x00\x00"
+    text_section[:8] = b".text\x00\x00\x00"
     text_section[8:12] = struct.pack("<I", 0x2000)
     text_section[12:16] = struct.pack("<I", 0x2000)
     text_section[16:20] = struct.pack("<I", 0x400)
@@ -313,17 +313,17 @@ def flexlm_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "flexlm_app.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
     dos_stub = b"\x00" * (0x80 - 64)
 
     pe_signature = b"PE\x00\x00"
     coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0x5F5E100C, 0, 0, 224, 0x0122)
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     text_section = bytearray(40)
-    text_section[0:8] = b".text\x00\x00\x00"
+    text_section[:8] = b".text\x00\x00\x00"
     text_section[8:12] = struct.pack("<I", 0x1000)
     text_section[12:16] = struct.pack("<I", 0x1000)
     text_section[16:20] = struct.pack("<I", 0x400)
@@ -331,7 +331,7 @@ def flexlm_binary(temp_workspace: Path) -> Path:
     text_section[36:40] = struct.pack("<I", 0x60000020)
 
     rdata_section = bytearray(40)
-    rdata_section[0:8] = b".rdata\x00\x00"
+    rdata_section[:8] = b".rdata\x00\x00"
     rdata_section[8:12] = struct.pack("<I", 0x2000)
     rdata_section[12:16] = struct.pack("<I", 0x2000)
     rdata_section[16:20] = struct.pack("<I", 0x400)
@@ -364,17 +364,17 @@ def hasp_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "hasp_app.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
     dos_stub = b"\x00" * (0x80 - 64)
 
     pe_signature = b"PE\x00\x00"
     coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0x5F5E100C, 0, 0, 224, 0x0122)
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     text_section = bytearray(40)
-    text_section[0:8] = b".text\x00\x00\x00"
+    text_section[:8] = b".text\x00\x00\x00"
     text_section[8:12] = struct.pack("<I", 0x1000)
     text_section[12:16] = struct.pack("<I", 0x1000)
     text_section[16:20] = struct.pack("<I", 0x400)
@@ -404,17 +404,17 @@ def msvc_compiled_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "msvc_app.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
     dos_stub = b"\x00" * (0x80 - 64)
 
     pe_signature = b"PE\x00\x00"
     coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0x5F5E100C, 0, 0, 224, 0x0122)
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     text_section = bytearray(40)
-    text_section[0:8] = b".text\x00\x00\x00"
+    text_section[:8] = b".text\x00\x00\x00"
     text_section[8:12] = struct.pack("<I", 0x1000)
     text_section[12:16] = struct.pack("<I", 0x1000)
     text_section[16:20] = struct.pack("<I", 0x400)
@@ -422,7 +422,7 @@ def msvc_compiled_binary(temp_workspace: Path) -> Path:
     text_section[36:40] = struct.pack("<I", 0x60000020)
 
     rdata_section = bytearray(40)
-    rdata_section[0:8] = b".rdata\x00\x00"
+    rdata_section[:8] = b".rdata\x00\x00"
     rdata_section[8:12] = struct.pack("<I", 0x2000)
     rdata_section[12:16] = struct.pack("<I", 0x2000)
     rdata_section[16:20] = struct.pack("<I", 0x400)
@@ -455,17 +455,17 @@ def gcc_compiled_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "gcc_app.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
     dos_stub = b"\x00" * (0x80 - 64)
 
     pe_signature = b"PE\x00\x00"
     coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0x5F5E100C, 0, 0, 224, 0x0122)
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     text_section = bytearray(40)
-    text_section[0:8] = b".text\x00\x00\x00"
+    text_section[:8] = b".text\x00\x00\x00"
     text_section[8:12] = struct.pack("<I", 0x1000)
     text_section[12:16] = struct.pack("<I", 0x1000)
     text_section[16:20] = struct.pack("<I", 0x400)
@@ -473,7 +473,7 @@ def gcc_compiled_binary(temp_workspace: Path) -> Path:
     text_section[36:40] = struct.pack("<I", 0x60000020)
 
     rodata_section = bytearray(40)
-    rodata_section[0:8] = b".rodata\x00"
+    rodata_section[:8] = b".rodata\x00"
     rodata_section[8:12] = struct.pack("<I", 0x2000)
     rodata_section[12:16] = struct.pack("<I", 0x2000)
     rodata_section[16:20] = struct.pack("<I", 0x400)
@@ -933,8 +933,7 @@ class TestSectionFingerprinting:
         assert text_section is not None
         assert text_section["is_executable"]
 
-        data_section = sections.get(".data")
-        if data_section:
+        if data_section := sections.get(".data"):
             assert data_section["is_writable"]
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile not available")

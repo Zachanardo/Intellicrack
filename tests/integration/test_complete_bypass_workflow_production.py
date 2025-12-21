@@ -34,10 +34,9 @@ class ProtectionVerifier:
             b'\x85\xC0\x75',
         ]
 
-        found_checks = 0
-        for pattern in suspicious_patterns:
-            found_checks += binary_data.count(pattern)
-
+        found_checks = sum(
+            binary_data.count(pattern) for pattern in suspicious_patterns
+        )
         return found_checks < 5
 
     @staticmethod
@@ -51,10 +50,7 @@ class ProtectionVerifier:
         }
 
         signatures = protection_signatures.get(protection_type.lower(), [])
-        for sig in signatures:
-            if sig in binary_data:
-                return False
-        return True
+        return all(sig not in binary_data for sig in signatures)
 
     @staticmethod
     def verify_trial_limitation_removed(binary_data: bytes) -> bool:
@@ -66,10 +62,9 @@ class ProtectionVerifier:
             b'days remaining',
         ]
 
-        found_trial_refs = 0
-        for pattern in trial_patterns:
-            found_trial_refs += binary_data.count(pattern.lower())
-
+        found_trial_refs = sum(
+            binary_data.count(pattern.lower()) for pattern in trial_patterns
+        )
         return found_trial_refs < 3
 
 
@@ -263,8 +258,9 @@ def test_multi_layer_protection_workflow(multi_protection_binary: bytes) -> None
     strategies: List[str] = []
 
     for protection in detections:
-        strategy = orchestrator.select_strategy(protection, multi_protection_binary)
-        if strategy:
+        if strategy := orchestrator.select_strategy(
+            protection, multi_protection_binary
+        ):
             strategies.append(strategy)
 
     assert len(strategies) >= 2

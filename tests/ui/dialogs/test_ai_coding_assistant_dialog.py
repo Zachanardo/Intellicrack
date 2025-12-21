@@ -154,7 +154,7 @@ class TestFileTreeWidget:
                 tree.on_item_clicked(child, 0)
                 break
 
-        assert len(selected_files) > 0
+        assert selected_files
         assert selected_files[0].endswith("keygen.py")
 
     def test_file_tree_supported_extensions_filtering(
@@ -168,8 +168,7 @@ class TestFileTreeWidget:
         file_items = []
 
         for i in range(root_item.childCount()):
-            child = root_item.child(i)
-            if child:
+            if child := root_item.child(i):
                 file_path = child.data(0, Qt.ItemDataRole.UserRole)
                 if file_path and Path(file_path).is_file():
                     file_items.append(child.text(0))
@@ -472,8 +471,7 @@ class TestRealAICodeGeneration:
 
         assert widget.editor_tabs.count() > 0
 
-        current_editor = widget.editor_tabs.currentWidget()
-        if current_editor:
+        if current_editor := widget.editor_tabs.currentWidget():
             generated_code = current_editor.toPlainText()
 
             assert len(generated_code) > 100
@@ -499,8 +497,7 @@ class TestRealAICodeGeneration:
         widget.ai_generate_license_bypass()
 
         if widget.editor_tabs.count() > 0:
-            current_editor = widget.editor_tabs.currentWidget()
-            if current_editor:
+            if current_editor := widget.editor_tabs.currentWidget():
                 generated_code = current_editor.toPlainText()
 
                 self._validate_python_syntax(generated_code)
@@ -516,7 +513,7 @@ class TestRealAICodeGeneration:
                 )
 
                 assert result.returncode == 0, \
-                    f"Generated code has syntax errors: {result.stderr}"
+                        f"Generated code has syntax errors: {result.stderr}"
 
     @pytest.mark.skipif(
         os.getenv("SKIP_AI_TESTS") == "1",
@@ -536,13 +533,12 @@ class TestRealAICodeGeneration:
         widget.ai_generate_license_bypass()
 
         if widget.editor_tabs.count() > 0:
-            current_editor = widget.editor_tabs.currentWidget()
-            if current_editor:
+            if current_editor := widget.editor_tabs.currentWidget():
                 generated_code = current_editor.toPlainText()
 
                 assert "Interceptor" in generated_code or \
-                       "frida" in generated_code.lower() or \
-                       "console.log" in generated_code
+                           "frida" in generated_code.lower() or \
+                           "console.log" in generated_code
 
     def _validate_python_syntax(self, code: str) -> None:
         """Validate Python code syntax by compiling it."""
@@ -898,8 +894,7 @@ class TestIntegrationWorkflows:
         widget.ai_generate_license_bypass()
 
         if widget.editor_tabs.count() > 0:
-            current_editor = widget.editor_tabs.currentWidget()
-            if current_editor:
+            if current_editor := widget.editor_tabs.currentWidget():
                 generated_code = current_editor.toPlainText()
 
                 assert len(generated_code) > 100

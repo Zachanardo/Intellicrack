@@ -142,7 +142,7 @@ class GroundTruthEstablisher:
                     result = subprocess.run([tool_info["exe"], "--help"],  # noqa: S603
                                          capture_output=True,
                                          timeout=5)
-                    if result.returncode == 0 or result.returncode == 1:
+                    if result.returncode in [0, 1]:
                         tool_info["available"] = True
                         logger.info(f"Found external tool: {tool_name}")
                 except Exception:
@@ -242,7 +242,7 @@ class GroundTruthEstablisher:
             }
 
             if analyzer_name == "radare2" and analyzer_info["available"]:
-                analysis_results.update(self._analyze_with_radare2(binary_path))
+                analysis_results |= self._analyze_with_radare2(binary_path)
             else:
                 analysis_results.update(self._analyze_with_pe_headers(binary_path))
 
@@ -463,32 +463,31 @@ rule FlexNet_Protection {
         }
 
         for scanner_name in self.external_validators["protection_scanners"]:
-            scan_result = self.scan_with_protection_scanner(binary_path, scanner_name)
-            if scan_result:
+            if scan_result := self.scan_with_protection_scanner(
+                binary_path, scanner_name
+            ):
                 all_evidence["evidence_sources"].append(scan_result)
 
         for analyzer_name in ["radare2", "ghidra"]:
-            analysis_result = self.analyze_with_binary_analyzer(binary_path, analyzer_name)
-            if analysis_result:
+            if analysis_result := self.analyze_with_binary_analyzer(
+                binary_path, analyzer_name
+            ):
                 all_evidence["evidence_sources"].append(analysis_result)
 
-        yara_results = self.check_with_yara_rules(binary_path)
-        if yara_results:
+        if yara_results := self.check_with_yara_rules(binary_path):
             all_evidence["evidence_sources"].append({
                 "type": "yara",
                 "results": yara_results
             })
 
-        vendor_docs = self.consult_vendor_documentation(software_name)
-        if vendor_docs:
+        if vendor_docs := self.consult_vendor_documentation(software_name):
             all_evidence["evidence_sources"].append(vendor_docs)
 
         protection_votes = {}
         for source in all_evidence["evidence_sources"]:
             if "protections" in source:
                 for protection in source["protections"]:
-                    name = protection.get("name", "")
-                    if name:
+                    if name := protection.get("name", ""):
                         protection_votes[name] = protection_votes.get(name, 0) + 1
 
             if "protection_indicators" in source:

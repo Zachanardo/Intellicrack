@@ -134,9 +134,12 @@ class Phase3Orchestrator:
         }
 
         # Add success rates for each category
-        successful_negative_controls = sum(1 for r in test_result.negative_control_results if r.test_valid and r.software_refused_execution)
-        successful_functional_tests = sum(1 for r in test_result.functional_verification_results if r.overall_success)
-        successful_evidence_collections = sum(1 for r in test_result.forensic_evidence_results if not r.error_messages)
+        successful_negative_controls = sum(bool(r.test_valid and r.software_refused_execution)
+                                       for r in test_result.negative_control_results)
+        successful_functional_tests = sum(bool(r.overall_success)
+                                      for r in test_result.functional_verification_results)
+        successful_evidence_collections = sum(bool(not r.error_messages)
+                                          for r in test_result.forensic_evidence_results)
 
         if summary["total_negative_control_tests"] > 0:
             summary["negative_control_success_rate"] = successful_negative_controls / summary["total_negative_control_tests"]

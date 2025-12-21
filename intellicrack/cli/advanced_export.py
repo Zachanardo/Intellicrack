@@ -32,10 +32,8 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET  # noqa: S405
 
-# Create logger for this module
 logger = logging.getLogger(__name__)
 
-# Optional imports for enhanced export capabilities
 try:
     import yaml
 
@@ -102,6 +100,8 @@ class XlsxWorkbookProxy:
             The worksheet object
 
         """
+        if not hasattr(self._workbook, "add_worksheet"):
+            raise TypeError("Invalid workbook: missing add_worksheet method")
         return self._workbook.add_worksheet(name)
 
     def add_format(self, properties: dict[str, Any] | None = None) -> object:
@@ -116,10 +116,14 @@ class XlsxWorkbookProxy:
         """
         if properties is None:
             properties = {}
+        if not hasattr(self._workbook, "add_format"):
+            raise TypeError("Invalid workbook: missing add_format method")
         return self._workbook.add_format(properties)
 
     def close(self) -> None:
         """Close the workbook."""
+        if not hasattr(self._workbook, "close"):
+            raise TypeError("Invalid workbook: missing close method")
         self._workbook.close()
 
 
@@ -136,7 +140,7 @@ class AdvancedExporter:
         """
         self.binary_path = binary_path
         self.analysis_results = analysis_results
-        self.export_metadata = {
+        self.export_metadata: dict[str, Any] = {
             "export_time": datetime.now().isoformat(),
             "binary_path": binary_path,
             "binary_name": os.path.basename(binary_path),
@@ -156,7 +160,7 @@ class AdvancedExporter:
 
         """
         try:
-            export_data = {
+            export_data: dict[str, Any] = {
                 "metadata": self.export_metadata,
                 "summary": self._generate_summary(),
                 "analysis_results": self.analysis_results,
@@ -214,19 +218,19 @@ class AdvancedExporter:
         try:
             vuln_data = self.analysis_results.get("vulnerabilities", {})
 
-            report = {
+            report: dict[str, Any] = {
                 "metadata": self.export_metadata,
                 "executive_summary": {
-                    "total_vulnerabilities": len(vuln_data.get("vulnerabilities", [])),
-                    "critical_count": self._count_vulnerabilities_by_severity(vuln_data, "critical"),
-                    "high_count": self._count_vulnerabilities_by_severity(vuln_data, "high"),
-                    "medium_count": self._count_vulnerabilities_by_severity(vuln_data, "medium"),
-                    "low_count": self._count_vulnerabilities_by_severity(vuln_data, "low"),
-                    "risk_score": self._calculate_risk_score(vuln_data),
+                    "total_vulnerabilities": len(vuln_data.get("vulnerabilities", [])) if isinstance(vuln_data, dict) else 0,
+                    "critical_count": self._count_vulnerabilities_by_severity(vuln_data if isinstance(vuln_data, dict) else {}, "critical"),
+                    "high_count": self._count_vulnerabilities_by_severity(vuln_data if isinstance(vuln_data, dict) else {}, "high"),
+                    "medium_count": self._count_vulnerabilities_by_severity(vuln_data if isinstance(vuln_data, dict) else {}, "medium"),
+                    "low_count": self._count_vulnerabilities_by_severity(vuln_data if isinstance(vuln_data, dict) else {}, "low"),
+                    "risk_score": self._calculate_risk_score(vuln_data if isinstance(vuln_data, dict) else {}),
                 },
-                "detailed_findings": self._format_vulnerability_details(vuln_data),
-                "mitigation_strategies": self._generate_mitigation_strategies(vuln_data),
-                "compliance_notes": self._generate_compliance_notes(vuln_data),
+                "detailed_findings": self._format_vulnerability_details(vuln_data if isinstance(vuln_data, dict) else {}),
+                "mitigation_strategies": self._generate_mitigation_strategies(vuln_data if isinstance(vuln_data, dict) else {}),
+                "compliance_notes": self._generate_compliance_notes(vuln_data if isinstance(vuln_data, dict) else {}),
             }
 
             with open(output_path, "w", encoding="utf-8") as f:
@@ -276,22 +280,18 @@ class AdvancedExporter:
         try:
             root = ET.Element("intellicrack_report")
 
-            # Metadata
             metadata_elem = ET.SubElement(root, "metadata")
             for key, value in self.export_metadata.items():
                 elem = ET.SubElement(metadata_elem, key.replace(" ", "_"))
                 elem.text = str(value)
 
-            # Analysis results
             analysis_elem = ET.SubElement(root, "analysis_results")
             self._dict_to_xml(self.analysis_results, analysis_elem)
 
-            # Summary
             summary_elem = ET.SubElement(root, "summary")
             summary_data = self._generate_summary()
             self._dict_to_xml(summary_data, summary_elem)
 
-            # Write XML
             tree = ET.ElementTree(root)
             ET.indent(tree, space="  ", level=0)
             tree.write(output_path, encoding="utf-8", xml_declaration=True)
@@ -316,7 +316,6 @@ class AdvancedExporter:
             return False
 
         try:
-            # Basic HTML template for analysis report
             html_template = Template("""
 <!DOCTYPE html>
 <html>
@@ -367,7 +366,6 @@ class AdvancedExporter:
 </html>
             """)
 
-            # Render template with data
             html_content = html_template.render(
                 metadata=self.export_metadata,
                 analysis_results=self.analysis_results,
@@ -397,7 +395,7 @@ class AdvancedExporter:
             return False
 
         try:
-            export_data = {
+            export_data: dict[str, Any] = {
                 "metadata": self.export_metadata,
                 "analysis_config": self._generate_analysis_config(),
                 "findings_summary": self._generate_summary(),
@@ -429,7 +427,6 @@ class AdvancedExporter:
         try:
             workbook = xlsxwriter.Workbook(output_path)
 
-            # Define formats
             header_format = workbook.add_format(
                 {
                     "bold": True,
@@ -441,19 +438,10 @@ class AdvancedExporter:
 
             cell_format = workbook.add_format({"border": 1})
 
-            # Summary sheet
             self._create_summary_sheet(workbook, header_format, cell_format)
-
-            # Vulnerabilities sheet
             self._create_vulnerabilities_sheet(workbook, header_format, cell_format)
-
-            # Strings sheet
             self._create_strings_sheet(workbook, header_format, cell_format)
-
-            # Imports sheet
             self._create_imports_sheet(workbook, header_format, cell_format)
-
-            # Statistics sheet
             self._create_statistics_sheet(workbook, header_format, cell_format)
 
             workbook.close()
@@ -464,7 +452,7 @@ class AdvancedExporter:
 
     def _generate_summary(self) -> dict[str, Any]:
         """Generate analysis summary."""
-        summary = {
+        summary: dict[str, Any] = {
             "file_info": {
                 "name": os.path.basename(self.binary_path),
                 "path": self.binary_path,
@@ -475,57 +463,63 @@ class AdvancedExporter:
             "security_assessment": {},
         }
 
-        # Count different analysis types
+        analysis_overview: dict[str, int] = {}
+        key_findings: list[str] = []
+
         for analysis_type, results in self.analysis_results.items():
             if isinstance(results, (dict, list)):
-                summary["analysis_overview"][analysis_type] = len(results)
+                analysis_overview[analysis_type] = len(results)
             else:
-                summary["analysis_overview"][analysis_type] = 1
+                analysis_overview[analysis_type] = 1
 
-        # Extract key findings
+        summary["analysis_overview"] = analysis_overview
+
         if "vulnerabilities" in self.analysis_results:
             vuln_data = self.analysis_results["vulnerabilities"]
             if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
                 vuln_count = len(vuln_data["vulnerabilities"])
                 if vuln_count > 0:
-                    summary["key_findings"].append(f"{vuln_count} potential vulnerabilities detected")
+                    key_findings.append(f"{vuln_count} potential vulnerabilities detected")
 
         if "protections" in self.analysis_results:
             prot_data = self.analysis_results["protections"]
             if isinstance(prot_data, dict):
                 if enabled_protections := [k for k, v in prot_data.items() if v]:
-                    summary["key_findings"].append(f"Security protections: {', '.join(enabled_protections)}")
+                    key_findings.append(f"Security protections: {', '.join(enabled_protections)}")
+
+        summary["key_findings"] = key_findings
 
         return summary
 
     def _generate_statistics(self) -> dict[str, Any]:
         """Generate analysis statistics."""
-        stats = {
-            "analysis_time": self.export_metadata["export_time"],
-            "total_categories": len(self.analysis_results),
-            "data_points": 0,
-            "categories": {},
-        }
+        categories: dict[str, int] = {}
+        data_points: int = 0
 
         for category, data in self.analysis_results.items():
             count = len(data) if isinstance(data, (dict, list)) else 1
-            stats["categories"][category] = count
-            stats["data_points"] += count
+            categories[category] = count
+            data_points += count
+
+        stats: dict[str, Any] = {
+            "analysis_time": self.export_metadata["export_time"],
+            "total_categories": len(self.analysis_results),
+            "data_points": data_points,
+            "categories": categories,
+        }
 
         return stats
 
     def _generate_recommendations(self) -> list[str]:
         """Generate security recommendations based on analysis."""
-        recommendations = []
+        recommendations: list[str] = []
 
-        # Check for vulnerabilities
         vuln_data = self.analysis_results.get("vulnerabilities", {})
         if isinstance(vuln_data, dict) and vuln_data.get("vulnerabilities"):
             recommendations.extend((
                 "Address identified vulnerabilities before deployment",
                 "Implement input validation and bounds checking",
             ))
-        # Check for protections
         prot_data = self.analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
             if not prot_data.get("aslr", True):
@@ -535,7 +529,6 @@ class AdvancedExporter:
             if not prot_data.get("canary", True):
                 recommendations.append("Enable stack canaries for buffer overflow protection")
 
-        # General recommendations
         recommendations.extend(
             [
                 "Regular security audits and penetration testing",
@@ -558,7 +551,7 @@ class AdvancedExporter:
             },
             "risk_assessment": self._assess_overall_risk(),
             "key_findings": self._extract_key_findings(),
-            "recommendations": self._generate_recommendations()[:5],  # Top 5
+            "recommendations": self._generate_recommendations()[:5],
             "next_steps": [
                 "Review and address critical vulnerabilities",
                 "Implement recommended security controls",
@@ -742,21 +735,18 @@ KEY FINDINGS
 
     def _extract_key_findings(self) -> list[str]:
         """Extract key findings from analysis results."""
-        findings = []
+        findings: list[str] = []
 
-        # Vulnerability findings
         vuln_data = self.analysis_results.get("vulnerabilities", {})
         if isinstance(vuln_data, dict):
             if vulns := vuln_data.get("vulnerabilities", []):
                 findings.append(f"{len(vulns)} potential vulnerabilities identified")
 
-        # Protection findings
         prot_data = self.analysis_results.get("protections", {})
         if isinstance(prot_data, dict):
             if missing_protections := [k for k, v in prot_data.items() if not v]:
                 findings.append(f"Missing security protections: {', '.join(missing_protections)}")
 
-        # String analysis findings
         strings_data = self.analysis_results.get("strings", [])
         if isinstance(strings_data, list) and len(strings_data) > 100:
             findings.append(f"Large number of embedded strings detected ({len(strings_data)})")
@@ -765,24 +755,14 @@ KEY FINDINGS
 
     def _count_vulnerabilities_by_severity(self, vuln_data: dict[str, Any], severity: str) -> int:
         """Count vulnerabilities by severity level."""
-        if not isinstance(vuln_data, dict):
-            return 0
-
         vulns = vuln_data.get("vulnerabilities", [])
         if not isinstance(vulns, list):
             return 0
 
-        return sum(
-            isinstance(vuln, dict)
-            and vuln.get("severity", "").lower() == severity.lower()
-            for vuln in vulns
-        )
+        return sum(isinstance(vuln, dict) and vuln.get("severity", "").lower() == severity.lower() for vuln in vulns)
 
     def _calculate_risk_score(self, vuln_data: dict[str, Any]) -> float:
         """Calculate overall risk score."""
-        if not isinstance(vuln_data, dict):
-            return 0.0
-
         vulns = vuln_data.get("vulnerabilities", [])
         if not isinstance(vulns, list):
             return 0.0
@@ -823,16 +803,14 @@ KEY FINDINGS
 
     def _extract_raw_data_samples(self) -> dict[str, str]:
         """Extract sample raw data from binary."""
-        samples = {}
+        samples: dict[str, str] = {}
 
         try:
             if os.path.exists(self.binary_path):
                 with open(self.binary_path, "rb") as f:
-                    # Read first 256 bytes
                     header_data = f.read(256)
                     samples["header_hex"] = header_data.hex()
 
-                    # Read some data from middle
                     file_size = os.path.getsize(self.binary_path)
                     if file_size > 512:
                         f.seek(file_size // 2)
@@ -870,14 +848,11 @@ KEY FINDINGS
 
     def _format_vulnerability_details(self, vuln_data: dict[str, Any]) -> list[dict[str, Any]]:
         """Format vulnerability details for reporting."""
-        if not isinstance(vuln_data, dict):
-            return []
-
         vulns = vuln_data.get("vulnerabilities", [])
         if not isinstance(vulns, list):
             return []
 
-        formatted = []
+        formatted: list[dict[str, Any]] = []
         formatted.extend(
             {
                 "id": len(formatted) + 1,
@@ -945,7 +920,6 @@ KEY FINDINGS
                             ],
                         )
                     else:
-                        # Fallback for simple string list
                         writer.writerow([str(string_item), "", "", "", len(str(string_item))])
 
             return True
@@ -987,16 +961,13 @@ KEY FINDINGS
     def _export_comprehensive_csv(self, output_path: str) -> bool:
         """Export comprehensive analysis data to CSV format."""
         try:
-            # Use base filename to create multiple files
             base_path = os.path.splitext(output_path)[0]
 
-            # Export different data types to separate files
             success = True
             success &= self._export_vulnerabilities_csv(f"{base_path}_vulnerabilities.csv")
             success &= self._export_strings_csv(f"{base_path}_strings.csv")
             success &= self._export_imports_csv(f"{base_path}_imports.csv")
 
-            # Create summary CSV
             with open(f"{base_path}_summary.csv", "w", newline="", encoding="utf-8") as csvfile:
                 writer = csv.writer(csvfile)
                 writer.writerow(["Category", "Count", "Details"])
@@ -1044,21 +1015,22 @@ KEY FINDINGS
 
     def _generate_detection_rules(self) -> dict[str, Any]:
         """Generate detection rules based on analysis results."""
-        rules = {
-            "yara_rules": [],
-            "snort_rules": [],
-            "sigma_rules": [],
-        }
+        yara_rules: list[dict[str, Any]] = []
+        snort_rules: list[dict[str, Any]] = []
+        sigma_rules: list[dict[str, Any]] = []
 
-        # Extract binary metadata for rule generation
         binary_info = self.analysis_results.get("basic_info", {})
-        file_hash = binary_info.get("md5", "")
-        file_size = binary_info.get("size", 0)
+        if not isinstance(binary_info, dict):
+            binary_info = {}
+        file_hash = binary_info.get("md5", "") if isinstance(binary_info.get("md5"), str) else ""
+        file_size = binary_info.get("size", 0) if isinstance(binary_info.get("size"), int) else 0
 
-        # Extract strings for pattern matching
         strings_data = self.analysis_results.get("strings", [])
-        suspicious_strings = []
-        for string in strings_data[:50]:  # Analyze first 50 strings
+        if not isinstance(strings_data, list):
+            strings_data = []
+
+        suspicious_strings: list[str] = []
+        for string in strings_data[:50]:
             if isinstance(string, str) and any(
                 pattern in string.lower()
                 for pattern in [
@@ -1076,9 +1048,30 @@ KEY FINDINGS
             ):
                 suspicious_strings.append(string)
 
-        # Generate YARA rules
         if file_hash or suspicious_strings:
-            yara_rule = {
+            yara_strings: list[str] = []
+
+            for idx, string in enumerate(suspicious_strings[:10]):
+                safe_string = string.replace('"', '\\"')
+                yara_strings.append(f'$s{idx} = "{safe_string}"')
+
+            vuln_data = self.analysis_results.get("vulnerabilities", {})
+            if isinstance(vuln_data, dict):
+                vulns = vuln_data.get("vulnerabilities", [])
+                if isinstance(vulns, list):
+                    for vuln in vulns[:5]:
+                        if isinstance(vuln, dict) and vuln.get("pattern"):
+                            pattern = vuln["pattern"]
+                            if isinstance(pattern, str) and len(pattern) <= 32:
+                                yara_strings.append(f"$vuln_{len(yara_strings)} = {{ {pattern} }}")
+
+            yara_condition: str
+            if yara_strings:
+                yara_condition = "uint16(0) == 0x5A4D and any of them"
+            else:
+                yara_condition = f"uint16(0) == 0x5A4D and filesize == {file_size}"
+
+            yara_rule: dict[str, Any] = {
                 "rule_name": f"Intellicrack_Detection_{os.path.basename(self.binary_path).replace('.', '_')}",
                 "meta": {
                     "author": "Intellicrack CLI",
@@ -1087,58 +1080,37 @@ KEY FINDINGS
                     "md5": file_hash,
                     "file_size": str(file_size),
                 },
-                "strings": [],
-                "condition": "",
+                "strings": yara_strings,
+                "condition": yara_condition,
             }
 
-            # Add string patterns
-            for idx, string in enumerate(suspicious_strings[:10]):
-                safe_string = string.replace('"', '\\"')
-                yara_rule["strings"].append(f'$s{idx} = "{safe_string}"')
+            yara_rules.append(yara_rule)
 
-            # Add hex patterns for common vulnerability signatures
-            vuln_data = self.analysis_results.get("vulnerabilities", {})
-            if isinstance(vuln_data, dict):
-                vulns = vuln_data.get("vulnerabilities", [])
-                for vuln in vulns[:5]:
-                    if isinstance(vuln, dict) and vuln.get("pattern"):
-                        pattern = vuln["pattern"]
-                        if len(pattern) <= 32:  # Reasonable hex pattern length
-                            yara_rule["strings"].append(f"$vuln_{len(yara_rule['strings'])} = {{ {pattern} }}")
-
-            # Build condition
-            if yara_rule["strings"]:
-                yara_rule["condition"] = "uint16(0) == 0x5A4D and any of them"  # PE file check + any string
-            else:
-                yara_rule["condition"] = f"uint16(0) == 0x5A4D and filesize == {file_size}"
-
-            rules["yara_rules"].append(yara_rule)
-
-        # Generate Snort rules for network detection
         network_indicators = self.analysis_results.get("network_indicators", [])
-        for idx, indicator in enumerate(network_indicators[:5]):
-            if isinstance(indicator, dict):
-                snort_rule = {
-                    "action": "alert",
-                    "protocol": indicator.get("protocol", "tcp"),
-                    "src_ip": "$HOME_NET",
-                    "src_port": "any",
-                    "direction": "->",
-                    "dst_ip": indicator.get("destination", "$EXTERNAL_NET"),
-                    "dst_port": indicator.get("port", "any"),
-                    "options": {
-                        "msg": f'"Intellicrack: Potential {os.path.basename(self.binary_path)} activity"',
-                        "flow": "to_server,established",
-                        "content": f'"{indicator.get("pattern", "")}"' if indicator.get("pattern") else None,
-                        "sid": 1000000 + idx,
-                        "rev": 1,
-                    },
-                }
-                rules["snort_rules"].append(snort_rule)
+        if isinstance(network_indicators, list):
+            for idx, indicator in enumerate(network_indicators[:5]):
+                if isinstance(indicator, dict):
+                    snort_rule: dict[str, Any] = {
+                        "action": "alert",
+                        "protocol": indicator.get("protocol", "tcp"),
+                        "src_ip": "$HOME_NET",
+                        "src_port": "any",
+                        "direction": "->",
+                        "dst_ip": indicator.get("destination", "$EXTERNAL_NET"),
+                        "dst_port": indicator.get("port", "any"),
+                        "options": {
+                            "msg": f'"Intellicrack: Potential {os.path.basename(self.binary_path)} activity"',
+                            "flow": "to_server,established",
+                            "content": f'"{indicator.get("pattern", "")}"' if indicator.get("pattern") else None,
+                            "sid": 1000000 + idx,
+                            "rev": 1,
+                        },
+                    }
+                    snort_rules.append(snort_rule)
 
-        # Generate Sigma rules for log detection
-        if suspicious_strings or vuln_data:
-            sigma_rule = {
+        vuln_data = self.analysis_results.get("vulnerabilities", {})
+        if suspicious_strings or (isinstance(vuln_data, dict) and vuln_data):
+            sigma_rule: dict[str, Any] = {
                 "title": f"Potential {os.path.basename(self.binary_path)} Execution",
                 "id": f"intellicrack-{file_hash[:8] if file_hash else 'unknown'}",
                 "status": "experimental",
@@ -1160,11 +1132,16 @@ KEY FINDINGS
                 "tags": ["attack.execution", "attack.t1204"],
             }
 
-            # Add hash-based detection if available
             if file_hash:
                 sigma_rule["detection"]["selection"]["Hashes|contains"] = file_hash
 
-            rules["sigma_rules"].append(sigma_rule)
+            sigma_rules.append(sigma_rule)
+
+        rules: dict[str, Any] = {
+            "yara_rules": yara_rules,
+            "snort_rules": snort_rules,
+            "sigma_rules": sigma_rules,
+        }
 
         return rules
 
@@ -1172,6 +1149,7 @@ KEY FINDINGS
         self,
         workbook: object,
         header_format: object | None = None,
+        cell_format: object | None = None,
         worksheet_name: str = "Summary",
     ) -> object | None:
         """Create summary sheet for Excel export.
@@ -1187,9 +1165,14 @@ KEY FINDINGS
 
         """
         try:
+            if not hasattr(workbook, "add_worksheet"):
+                raise TypeError("Invalid workbook: missing add_worksheet method")
+            if not hasattr(workbook, "add_format"):
+                raise TypeError("Invalid workbook: missing add_format method")
+
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            header_format = workbook.add_format(
+            header_fmt = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#D7E4BC",
@@ -1199,29 +1182,35 @@ KEY FINDINGS
 
             headers = ["Category", "Count", "Status", "Risk Level"]
             for col, header in enumerate(headers):
-                worksheet.write(0, col, header, header_format)
+                if hasattr(worksheet, "write"):
+                    worksheet.write(0, col, header, header_fmt)
 
             summary = self._generate_summary()
             row = 1
 
-            worksheet.write(row, 0, "Binary Analysis")
-            worksheet.write(row, 1, 1)
-            worksheet.write(row, 2, "Complete")
-            worksheet.write(row, 3, summary.get("risk_assessment", {}).get("level", "Unknown"))
-            row += 1
+            if hasattr(worksheet, "write"):
+                worksheet.write(row, 0, "Binary Analysis")
+                worksheet.write(row, 1, 1)
+                worksheet.write(row, 2, "Complete")
+                risk_assessment = summary.get("risk_assessment", {})
+                if isinstance(risk_assessment, dict):
+                    worksheet.write(row, 3, risk_assessment.get("level", "Unknown"))
+                else:
+                    worksheet.write(row, 3, "Unknown")
+                row += 1
 
-            vuln_count = len(self.analysis_results.get("vulnerabilities", {}))
-            worksheet.write(row, 0, "Vulnerabilities")
-            worksheet.write(row, 1, vuln_count)
-            worksheet.write(row, 2, "Found" if vuln_count > 0 else "None")
-            worksheet.write(row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low")
-            row += 1
+                vuln_count = len(self.analysis_results.get("vulnerabilities", {}))
+                worksheet.write(row, 0, "Vulnerabilities")
+                worksheet.write(row, 1, vuln_count)
+                worksheet.write(row, 2, "Found" if vuln_count > 0 else "None")
+                worksheet.write(row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low")
+                row += 1
 
-            protections = self.analysis_results.get("protections", [])
-            worksheet.write(row, 0, "Protections")
-            worksheet.write(row, 1, len(protections))
-            worksheet.write(row, 2, "Detected" if protections else "None")
-            worksheet.write(row, 3, "High" if len(protections) > 3 else "Medium" if protections else "Low")
+                protections = self.analysis_results.get("protections", [])
+                worksheet.write(row, 0, "Protections")
+                worksheet.write(row, 1, len(protections))
+                worksheet.write(row, 2, "Detected" if protections else "None")
+                worksheet.write(row, 3, "High" if len(protections) > 3 else "Medium" if protections else "Low")
 
             return worksheet
         except Exception as e:
@@ -1232,6 +1221,7 @@ KEY FINDINGS
         self,
         workbook: object,
         header_format: object | None = None,
+        cell_format: object | None = None,
         worksheet_name: str = "Vulnerabilities",
     ) -> object | None:
         """Create vulnerabilities sheet for Excel export.
@@ -1247,9 +1237,14 @@ KEY FINDINGS
 
         """
         try:
+            if not hasattr(workbook, "add_worksheet"):
+                raise TypeError("Invalid workbook: missing add_worksheet method")
+            if not hasattr(workbook, "add_format"):
+                raise TypeError("Invalid workbook: missing add_format method")
+
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            header_format = workbook.add_format(
+            header_fmt = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#FFB3B3",
@@ -1259,19 +1254,21 @@ KEY FINDINGS
 
             headers = ["Type", "Severity", "Description", "Location", "Recommendation"]
             for col, header in enumerate(headers):
-                worksheet.write(0, col, header, header_format)
+                if hasattr(worksheet, "write"):
+                    worksheet.write(0, col, header, header_fmt)
 
             vulnerabilities = self.analysis_results.get("vulnerabilities", {})
             row = 1
 
-            for vuln_type, vuln_data in vulnerabilities.items():
-                if isinstance(vuln_data, dict):
-                    worksheet.write(row, 0, vuln_type)
-                    worksheet.write(row, 1, vuln_data.get("severity", "Medium"))
-                    worksheet.write(row, 2, vuln_data.get("description", ""))
-                    worksheet.write(row, 3, vuln_data.get("location", ""))
-                    worksheet.write(row, 4, vuln_data.get("recommendation", ""))
-                    row += 1
+            if isinstance(vulnerabilities, dict) and hasattr(worksheet, "write"):
+                for vuln_type, vuln_data in vulnerabilities.items():
+                    if isinstance(vuln_data, dict):
+                        worksheet.write(row, 0, vuln_type)
+                        worksheet.write(row, 1, vuln_data.get("severity", "Medium"))
+                        worksheet.write(row, 2, vuln_data.get("description", ""))
+                        worksheet.write(row, 3, vuln_data.get("location", ""))
+                        worksheet.write(row, 4, vuln_data.get("recommendation", ""))
+                        row += 1
 
             return worksheet
         except Exception as e:
@@ -1282,6 +1279,7 @@ KEY FINDINGS
         self,
         workbook: object,
         header_format: object | None = None,
+        cell_format: object | None = None,
         worksheet_name: str = "Strings",
     ) -> object | None:
         """Create strings sheet for Excel export.
@@ -1297,9 +1295,14 @@ KEY FINDINGS
 
         """
         try:
+            if not hasattr(workbook, "add_worksheet"):
+                raise TypeError("Invalid workbook: missing add_worksheet method")
+            if not hasattr(workbook, "add_format"):
+                raise TypeError("Invalid workbook: missing add_format method")
+
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            header_format = workbook.add_format(
+            header_fmt = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#B3D9FF",
@@ -1309,19 +1312,21 @@ KEY FINDINGS
 
             headers = ["String", "Address", "Section", "Type", "Length"]
             for col, header in enumerate(headers):
-                worksheet.write(0, col, header, header_format)
+                if hasattr(worksheet, "write"):
+                    worksheet.write(0, col, header, header_fmt)
 
             strings_data = self.analysis_results.get("strings", [])
-            for row, string_item in enumerate(strings_data, start=1):
-                if isinstance(string_item, dict):
-                    worksheet.write(row, 0, string_item.get("value", ""))
-                    worksheet.write(row, 1, string_item.get("address", ""))
-                    worksheet.write(row, 2, string_item.get("section", ""))
-                    worksheet.write(row, 3, string_item.get("type", ""))
-                    worksheet.write(row, 4, string_item.get("length", 0))
-                else:
-                    worksheet.write(row, 0, str(string_item))
-                    worksheet.write(row, 4, len(str(string_item)))
+            if isinstance(strings_data, list) and hasattr(worksheet, "write"):
+                for row, string_item in enumerate(strings_data, start=1):
+                    if isinstance(string_item, dict):
+                        worksheet.write(row, 0, string_item.get("value", ""))
+                        worksheet.write(row, 1, string_item.get("address", ""))
+                        worksheet.write(row, 2, string_item.get("section", ""))
+                        worksheet.write(row, 3, string_item.get("type", ""))
+                        worksheet.write(row, 4, string_item.get("length", 0))
+                    else:
+                        worksheet.write(row, 0, str(string_item))
+                        worksheet.write(row, 4, len(str(string_item)))
             return worksheet
         except Exception as e:
             logger.exception("Failed to create strings sheet: %s", e)
@@ -1331,6 +1336,7 @@ KEY FINDINGS
         self,
         workbook: object,
         header_format: object | None = None,
+        cell_format: object | None = None,
         worksheet_name: str = "Imports",
     ) -> object | None:
         """Create imports sheet for Excel export.
@@ -1346,9 +1352,14 @@ KEY FINDINGS
 
         """
         try:
+            if not hasattr(workbook, "add_worksheet"):
+                raise TypeError("Invalid workbook: missing add_worksheet method")
+            if not hasattr(workbook, "add_format"):
+                raise TypeError("Invalid workbook: missing add_format method")
+
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            header_format = workbook.add_format(
+            header_fmt = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#FFE6B3",
@@ -1358,26 +1369,28 @@ KEY FINDINGS
 
             headers = ["Library", "Function", "Address", "Ordinal"]
             for col, header in enumerate(headers):
-                worksheet.write(0, col, header, header_format)
+                if hasattr(worksheet, "write"):
+                    worksheet.write(0, col, header, header_fmt)
 
             imports_data = self.analysis_results.get("imports", {})
             row = 1
 
-            for library, functions in imports_data.items():
-                if isinstance(functions, list):
-                    for func in functions:
+            if isinstance(imports_data, dict) and hasattr(worksheet, "write"):
+                for library, functions in imports_data.items():
+                    if isinstance(functions, list):
+                        for func in functions:
+                            worksheet.write(row, 0, library)
+                            if isinstance(func, dict):
+                                worksheet.write(row, 1, func.get("name", ""))
+                                worksheet.write(row, 2, func.get("address", ""))
+                                worksheet.write(row, 3, func.get("ordinal", ""))
+                            else:
+                                worksheet.write(row, 1, str(func))
+                            row += 1
+                    else:
                         worksheet.write(row, 0, library)
-                        if isinstance(func, dict):
-                            worksheet.write(row, 1, func.get("name", ""))
-                            worksheet.write(row, 2, func.get("address", ""))
-                            worksheet.write(row, 3, func.get("ordinal", ""))
-                        else:
-                            worksheet.write(row, 1, str(func))
+                        worksheet.write(row, 1, str(functions))
                         row += 1
-                else:
-                    worksheet.write(row, 0, library)
-                    worksheet.write(row, 1, str(functions))
-                    row += 1
 
             return worksheet
         except Exception as e:
@@ -1388,6 +1401,7 @@ KEY FINDINGS
         self,
         workbook: object,
         header_format: object | None = None,
+        cell_format: object | None = None,
         worksheet_name: str = "Statistics",
     ) -> object | None:
         """Create statistics sheet for Excel export.
@@ -1403,9 +1417,14 @@ KEY FINDINGS
 
         """
         try:
+            if not hasattr(workbook, "add_worksheet"):
+                raise TypeError("Invalid workbook: missing add_worksheet method")
+            if not hasattr(workbook, "add_format"):
+                raise TypeError("Invalid workbook: missing add_format method")
+
             worksheet = workbook.add_worksheet(worksheet_name)
 
-            header_format = workbook.add_format(
+            header_fmt = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#E6E6FA",
@@ -1415,24 +1434,26 @@ KEY FINDINGS
 
             headers = ["Metric", "Value", "Category", "Notes"]
             for col, header in enumerate(headers):
-                worksheet.write(0, col, header, header_format)
+                if hasattr(worksheet, "write"):
+                    worksheet.write(0, col, header, header_fmt)
 
             statistics = self._generate_statistics()
             row = 1
 
-            for category, stats in statistics.items():
-                if isinstance(stats, dict):
-                    for metric, value in stats.items():
-                        worksheet.write(row, 0, metric)
-                        worksheet.write(row, 1, str(value))
-                        worksheet.write(row, 2, category)
-                        worksheet.write(row, 3, f"Part of {category} analysis")
+            if hasattr(worksheet, "write"):
+                for category, stats in statistics.items():
+                    if isinstance(stats, dict):
+                        for metric, value in stats.items():
+                            worksheet.write(row, 0, metric)
+                            worksheet.write(row, 1, str(value))
+                            worksheet.write(row, 2, category)
+                            worksheet.write(row, 3, f"Part of {category} analysis")
+                            row += 1
+                    else:
+                        worksheet.write(row, 0, category)
+                        worksheet.write(row, 1, str(stats))
+                        worksheet.write(row, 2, "General")
                         row += 1
-                else:
-                    worksheet.write(row, 0, category)
-                    worksheet.write(row, 1, str(stats))
-                    worksheet.write(row, 2, "General")
-                    row += 1
 
             return worksheet
         except Exception as e:

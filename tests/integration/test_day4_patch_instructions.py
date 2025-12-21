@@ -70,8 +70,7 @@ def test_enhanced_patch_instructions():
 def main():
     """Main test function."""
     try:
-        success = test_enhanced_patch_instructions()
-        if success:
+        if success := test_enhanced_patch_instructions():
             print("\n Day 4.1 VALIDATION: SUCCESS")
             print("OK Template patch instructions replaced with production-ready implementations")
             print("OK Enhanced instruction generation supports comprehensive bypass methods")

@@ -172,10 +172,7 @@ class BypassStrategySelector:
             return BypassMethod.HYBRID
 
         if num_functions <= 3 and risk_level == "low":
-            high_confidence = sum(
-                func.confidence >= 0.8
-                for func in detection_report.validation_functions
-            )
+            high_confidence = sum(func.confidence >= 0.8 for func in detection_report.validation_functions)
             if high_confidence == num_functions:
                 logger.info("Simple validation with high confidence, using binary patch")
                 return BypassMethod.BINARY_PATCH
@@ -228,9 +225,7 @@ class BypassStrategySelector:
         if hasattr(detection_report, "is_packed"):
             return detection_report.is_packed
 
-        low_confidence_count = sum(
-            func.confidence < 0.5 for func in detection_report.validation_functions
-        )
+        low_confidence_count = sum(func.confidence < 0.5 for func in detection_report.validation_functions)
 
         return low_confidence_count > len(detection_report.validation_functions) * 0.5
 

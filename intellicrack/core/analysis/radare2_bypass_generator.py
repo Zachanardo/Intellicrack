@@ -635,9 +635,7 @@ class R2BypassGenerator:
                     if f"{const:x}" in func_bytes.lower():
                         constants_list.append({"type": "SHA1", "value": f"{const:x}"})
 
-                if sbox_pattern := r2.cmd(
-                    f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}"
-                ):
+                if sbox_pattern := r2.cmd(f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}"):
                     logger.debug("S-box pattern found at %s: %s", hex(func_addr), sbox_pattern)
                     s_boxes_list: list[dict[str, Any]] = analysis["s_boxes"]
                     s_boxes_list.append(
@@ -826,7 +824,7 @@ if __name__ == "__main__":
                 strings = r2.cmdj("izj")
                 r2.cmdj("axtj")
 
-                for s in (strings if isinstance(strings, list) else []):
+                for s in strings if isinstance(strings, list) else []:
                     if not isinstance(s, dict):
                         continue
                     string_val = s.get("string", "").lower()
@@ -1127,12 +1125,7 @@ if __name__ == "__main__":
 
                 imports = r2.get_imports()
                 if rsa_imports := [
-                    imp
-                    for imp in imports
-                    if any(
-                        x in imp.get("name", "").lower()
-                        for x in ["rsa", "bignum", "bn_", "modexp", "publickey"]
-                    )
+                    imp for imp in imports if any(x in imp.get("name", "").lower() for x in ["rsa", "bignum", "bn_", "modexp", "publickey"])
                 ]:
                     for imp in rsa_imports:
                         if imp_addr := imp.get("plt", 0) or imp.get("addr", 0):
@@ -1678,7 +1671,9 @@ void apply_patch() {{
             "confidence": len(registry_patterns) * 0.2 + len(license_keys) * 0.15,
         }
 
-    def _create_binary_patch(self, r2: R2Session | R2SessionPoolAdapter, func_info: dict[str, Any], bypass_point: dict[str, Any]) -> dict[str, Any] | None:
+    def _create_binary_patch(
+        self, r2: R2Session | R2SessionPoolAdapter, func_info: dict[str, Any], bypass_point: dict[str, Any]
+    ) -> dict[str, Any] | None:
         """Create binary patch for bypass point."""
         func_addr = func_info["function"].get("offset", 0)
         if not func_addr:
@@ -3216,7 +3211,9 @@ def generate_key():
 
         return decision_points
 
-    def _determine_patch_strategy(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    def _determine_patch_strategy(
+        self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], cfg: dict[str, Any]
+    ) -> dict[str, Any]:
         """Determine the optimal patching strategy for a decision point.
 
         Analyzes the context around the decision point to determine the most
@@ -3301,7 +3298,9 @@ def generate_key():
 
         return strategy
 
-    def _generate_register_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_register_patch(
+        self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a patch that manipulates register values."""
         patch = {
             "type": "register_manipulation",
@@ -3329,7 +3328,9 @@ def generate_key():
 
         return patch
 
-    def _generate_stack_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_stack_patch(
+        self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a patch that manipulates stack values."""
         return {
             "type": "stack_manipulation",
@@ -3343,7 +3344,9 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_flow_redirect_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_flow_redirect_patch(
+        self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a patch that redirects control flow."""
         return {
             "type": "control_flow_redirect",
@@ -3357,7 +3360,9 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_memory_override_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_memory_override_patch(
+        self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a patch that overrides memory values."""
         return {
             "type": "memory_value_override",
@@ -3371,7 +3376,9 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_return_injection_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_return_injection_patch(
+        self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Generate a patch that injects a return value."""
         return {
             "type": "return_value_injection",

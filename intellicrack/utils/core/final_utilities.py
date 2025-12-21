@@ -785,20 +785,10 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                                 "timestamp": time.time() - 5,
                                 "source": "Process_Monitor",
                                 "type": "process_connection",
-                                "protocol": (
-                                    "TCP"
-                                    if conn.type == socket.SOCK_STREAM
-                                    else "UDP"
-                                ),
-                                "src_ip": (
-                                    conn.laddr.ip if conn.laddr else "unknown"
-                                ),
-                                "dst_ip": (
-                                    conn.raddr.ip if conn.raddr else "unknown"
-                                ),
-                                "dst_port": (
-                                    conn.raddr.port if conn.raddr else 0
-                                ),
+                                "protocol": ("TCP" if conn.type == socket.SOCK_STREAM else "UDP"),
+                                "src_ip": (conn.laddr.ip if conn.laddr else "unknown"),
+                                "dst_ip": (conn.raddr.ip if conn.raddr else "unknown"),
+                                "dst_port": (conn.raddr.port if conn.raddr else 0),
                                 "process_name": child.name(),
                                 "process_pid": child.pid,
                                 "status": conn.status,
@@ -2653,7 +2643,7 @@ def display_patch_validation_results(results: dict[str, object], display_mode: s
                 for i, patch_result in enumerate(validation_results):
                     if isinstance(patch_result, dict):
                         output.append(f"\nPatch {i + 1}:")
-                        offset_val = patch_result.get('offset', 0)
+                        offset_val = patch_result.get("offset", 0)
                         offset = offset_val if isinstance(offset_val, int) else 0
                         output.append(f"  Offset: {hex(offset)}\n")
                         output.append(f"  Description: {patch_result.get('description', 'N/A')}\n")

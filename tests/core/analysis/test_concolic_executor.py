@@ -45,7 +45,7 @@ def simple_pe_binary(tmp_path: Path) -> Path:
     pe_binary = tmp_path / "test_binary.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature = b"PE\x00\x00"
@@ -91,7 +91,7 @@ def simple_pe_binary(tmp_path: Path) -> Path:
     )
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 4096)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 512)
@@ -99,10 +99,16 @@ def simple_pe_binary(tmp_path: Path) -> Path:
     section_header[36:40] = struct.pack("<I", 0x60000020)
 
     code_section = bytearray(512)
-    code_section[0:6] = bytes([
-        0x90,
-        0xB8, 0x01, 0x00, 0x00, 0x00,
-    ])
+    code_section[:6] = bytes(
+        [
+            0x90,
+            0xB8,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+        ]
+    )
     code_section[6:7] = bytes([0xC3])
 
     pe_data = dos_header + pe_signature + coff_header + optional_header + section_header + code_section
@@ -117,7 +123,7 @@ def simple_elf_binary(tmp_path: Path) -> Path:
     elf_binary = tmp_path / "test_binary.elf"
 
     elf_header = bytearray(64)
-    elf_header[0:4] = b"\x7fELF"
+    elf_header[:4] = b"\x7fELF"
     elf_header[4] = 2
     elf_header[5] = 1
     elf_header[6] = 1
@@ -127,7 +133,7 @@ def simple_elf_binary(tmp_path: Path) -> Path:
     elf_header[24:32] = struct.pack("<Q", 0x401000)
 
     code = bytearray(256)
-    code[0:3] = bytes([0x90, 0x90, 0xC3])
+    code[:3] = bytes([0x90, 0x90, 0xC3])
 
     elf_data = elf_header + code
 
@@ -141,7 +147,7 @@ def binary_with_license_string(tmp_path: Path) -> Path:
     binary = tmp_path / "licensed_app.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature = b"PE\x00\x00"
@@ -153,7 +159,7 @@ def binary_with_license_string(tmp_path: Path) -> Path:
     )
 
     section_header = bytearray(40)
-    section_header[0:8] = b".data\x00\x00\x00"
+    section_header[:8] = b".data\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 4096)
     section_header[12:16] = struct.pack("<I", 0x2000)
     section_header[16:20] = struct.pack("<I", 512)
@@ -175,7 +181,7 @@ def binary_with_conditional_branches(tmp_path: Path) -> Path:
     binary = tmp_path / "branching_app.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature = b"PE\x00\x00"
@@ -187,7 +193,7 @@ def binary_with_conditional_branches(tmp_path: Path) -> Path:
     )
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 4096)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 512)
@@ -204,7 +210,7 @@ def binary_with_conditional_branches(tmp_path: Path) -> Path:
         0xB8, 0x02, 0x00, 0x00, 0x00,
         0xC3,
     ]
-    code_section[0:len(code)] = bytes(code)
+    code_section[:len(code)] = bytes(code)
 
     binary_data = dos_header + pe_signature + coff_header + optional_header + section_header + code_section
     binary.write_bytes(binary_data)
@@ -489,7 +495,7 @@ class TestManticoreNativeImplementation:
 
         m.run(procs=1)
 
-        assert len(hook_called) > 0
+        assert hook_called
 
     def test_run_terminates_states_properly(self, simple_pe_binary: Path) -> None:
         """run moves completed states to terminated list."""

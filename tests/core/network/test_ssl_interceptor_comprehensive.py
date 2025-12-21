@@ -548,9 +548,7 @@ class TestSSLInterceptorStartStop:
         assert not cert_path.exists()
         assert not key_path.exists()
 
-        result = interceptor.start()
-
-        if result:
+        if result := interceptor.start():
             assert cert_path.exists()
             assert key_path.exists()
 
@@ -596,11 +594,11 @@ class TestSSLInterceptorStartStop:
         started = interceptor.start()
         if started and interceptor.proxy_process is not None:
             result = interceptor.stop()
-            assert result is True
             assert interceptor.proxy_process is None
         else:
             result = interceptor.stop()
-            assert result is True
+
+        assert result is True
 
     def test_stop_handles_no_running_process(self, interceptor: SSLTLSInterceptor) -> None:
         """Stop handles case when no proxy is running."""
@@ -620,7 +618,7 @@ class TestSSLInterceptorTLSRecordParsing:
         if len(real_tls_client_hello) < 6:
             pytest.skip("Invalid ClientHello fixture")
 
-        record_type = struct.unpack("!B", real_tls_client_hello[0:1])[0]
+        record_type = struct.unpack("!B", real_tls_client_hello[:1])[0]
         assert record_type == 0x16
 
         tls_version = struct.unpack("!H", real_tls_client_hello[1:3])[0]
@@ -652,7 +650,7 @@ class TestSSLInterceptorTLSRecordParsing:
         if len(real_tls_server_hello) < 6:
             pytest.skip("Invalid ServerHello fixture")
 
-        record_type = struct.unpack("!B", real_tls_server_hello[0:1])[0]
+        record_type = struct.unpack("!B", real_tls_server_hello[:1])[0]
         assert record_type == 0x16
 
         handshake_type = struct.unpack("!B", real_tls_server_hello[5:6])[0]
@@ -668,7 +666,7 @@ class TestSSLInterceptorTLSRecordParsing:
         if len(real_tls_certificate_record) < 6:
             pytest.skip("Invalid certificate record fixture")
 
-        record_type = struct.unpack("!B", real_tls_certificate_record[0:1])[0]
+        record_type = struct.unpack("!B", real_tls_certificate_record[:1])[0]
         assert record_type == 0x16
 
         handshake_type = struct.unpack("!B", real_tls_certificate_record[5:6])[0]
@@ -683,7 +681,7 @@ class TestSSLInterceptorTLSRecordParsing:
         if len(real_tls_application_data) < 6:
             pytest.skip("Invalid application data fixture")
 
-        record_type = struct.unpack("!B", real_tls_application_data[0:1])[0]
+        record_type = struct.unpack("!B", real_tls_application_data[:1])[0]
         assert record_type == 0x17
 
         tls_version = struct.unpack("!H", real_tls_application_data[1:3])[0]
@@ -915,7 +913,7 @@ class TestSSLInterceptorSessionKeyExtraction:
 
         key_material = hashlib.sha256(master_secret + seed).digest()
 
-        client_write_key = key_material[0:16]
+        client_write_key = key_material[:16]
         server_write_key = key_material[16:32]
 
         assert len(client_write_key) == 16
@@ -928,10 +926,8 @@ class TestSSLInterceptorErrorHandling:
 
     def test_handle_invalid_tls_record(self, interceptor: SSLTLSInterceptor) -> None:
         """Interceptor handles malformed TLS records gracefully."""
-        invalid_record = b"\x99\x99\x99\x99\x99"
-
-        if len(invalid_record) >= 1:
-            record_type = struct.unpack("!B", invalid_record[0:1])[0]
+        if invalid_record := b"\x99\x99\x99\x99\x99":
+            record_type = struct.unpack("!B", invalid_record[:1])[0]
             assert record_type not in [0x14, 0x15, 0x16, 0x17]
 
     def test_handle_truncated_tls_record(self, interceptor: SSLTLSInterceptor) -> None:
@@ -995,7 +991,7 @@ class TestSSLInterceptorPerformance:
         chain_size = 3
         certs = []
 
-        for i in range(chain_size):
+        for _ in range(chain_size):
             cert_pem, _ = interceptor.generate_ca_certificate()
             if cert_pem:
                 certs.append(cert_pem)

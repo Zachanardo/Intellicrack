@@ -102,7 +102,7 @@ cleanup:
         assert result["language"] == "c", "Must detect C language"
 
         security_issues: list[str] = result.get("security_issues", [])
-        assert len(security_issues) > 0, "Must detect buffer overflow security issue"
+        assert security_issues, "Must detect buffer overflow security issue"
 
         assert any(
             "strcpy" in issue.lower() or "unsafe" in issue.lower() or "buffer" in issue.lower()
@@ -123,7 +123,7 @@ cleanup:
         assert result["language"] == "assembly", "Must detect assembly language"
 
         patterns: list[str] = result.get("patterns", [])
-        assert len(patterns) > 0, "Must detect assembly patterns"
+        assert patterns, "Must detect assembly patterns"
 
         assert any(
             "control flow" in pattern.lower() or "jump" in pattern.lower()
@@ -151,7 +151,7 @@ def process_data(data):
         assert result["language"] == "python"
 
         security_issues: list[str] = result.get("security_issues", [])
-        assert len(security_issues) > 0, "Must detect eval/exec vulnerabilities"
+        assert security_issues, "Must detect eval/exec vulnerabilities"
 
         assert any(
             "eval" in issue.lower() or "exec" in issue.lower()
@@ -334,10 +334,10 @@ cleanup:
         assert result["instruction_count"] > 20, "Must count real instructions"
 
         patterns: list[str] = result.get("patterns", [])
-        assert len(patterns) > 0, "Must detect assembly patterns"
+        assert patterns, "Must detect assembly patterns"
 
         control_flow: list[str] = result.get("control_flow", [])
-        assert len(control_flow) > 0, "Must detect control flow in license check"
+        assert control_flow, "Must detect control flow in license check"
 
         assert any(
             "jmp" in cf.lower() or "jne" in cf.lower() or "jz" in cf.lower()
@@ -352,7 +352,7 @@ cleanup:
         assert any("stack" in pattern.lower() for pattern in patterns), "Must detect stack manipulation"
 
         data_operations: list[str] = result.get("data_operations", [])
-        assert len(data_operations) > 0, "Must detect data movement operations"
+        assert data_operations, "Must detect data movement operations"
 
 
 class TestAnalyzeWithAIFunctions:
@@ -390,7 +390,7 @@ class TestAnalyzeWithAIFunctions:
         context: str = "analyzing license validation routine in binary"
         suggestions: list[str] = get_ai_suggestions(context, domain="reverse_engineering")
 
-        assert len(suggestions) > 0, "Must provide suggestions for license analysis"
+        assert suggestions, "Must provide suggestions for license analysis"
         assert any("license" in s.lower() or "validation" in s.lower() for s in suggestions), "Suggestions must be relevant to license analysis"
 
     def test_explain_code_with_real_vulnerable_function(self) -> None:
@@ -405,7 +405,7 @@ void process_input(char *user_data) {
 
         explanation: str = explain_code(vulnerable_code, language="c", detail_level="high")
 
-        assert len(explanation) > 0, "Must generate explanation"
+        assert explanation != "", "Must generate explanation"
         assert "c" in explanation.lower() or "code" in explanation.lower()
         assert "line" in explanation.lower() or "analysis" in explanation.lower()
 
@@ -451,7 +451,7 @@ class TestProductionCodeAnalysisEndToEnd:
 
         suggestions: list[str] = analyzer.get_analysis_suggestions(binary_result)
 
-        assert len(suggestions) > 0, "Step 3: Must provide actionable suggestions"
+        assert suggestions, "Step 3: Must provide actionable suggestions"
 
     def test_large_binary_analysis_performance(self, analyzer: CodeAnalyzer, tmp_path: Path) -> None:
         """Analyzer handles large binary files efficiently."""

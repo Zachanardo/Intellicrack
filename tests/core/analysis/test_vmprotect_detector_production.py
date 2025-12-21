@@ -259,8 +259,8 @@ class TestSectionAnalysis:
 
     def test_analyze_sections_returns_empty_without_pefile(self) -> None:
         """_analyze_sections returns safe defaults when pefile unavailable."""
-        detector = VMProtectDetector()
         if not PEFILE_AVAILABLE:
+            detector = VMProtectDetector()
             analysis = detector._analyze_sections(b"MZ" + b"\x00" * 1000)
             assert analysis["vmp_sections"] == []
             assert analysis["high_entropy_sections"] == []
@@ -395,8 +395,8 @@ class TestHandlerSizeEstimation:
 
     def test_estimate_handler_size_returns_default_without_capstone(self) -> None:
         """_estimate_handler_size returns default size when Capstone unavailable."""
-        detector = VMProtectDetector()
         if not CAPSTONE_AVAILABLE:
+            detector = VMProtectDetector()
             size = detector._estimate_handler_size(b"\x90" * 100, 0, "x86")
             assert size == 64
 
@@ -506,8 +506,8 @@ class TestJunkCodeRatioCalculation:
 
     def test_calculate_junk_code_ratio_handles_no_capstone(self) -> None:
         """_calculate_junk_code_ratio returns 0.0 when Capstone unavailable."""
-        detector = VMProtectDetector()
         if not CAPSTONE_AVAILABLE:
+            detector = VMProtectDetector()
             ratio = detector._calculate_junk_code_ratio(b"\x90" * 1000)
             assert ratio == 0.0
 

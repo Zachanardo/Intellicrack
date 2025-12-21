@@ -131,7 +131,7 @@ class TestAPIMonitorLifecycle:
             monitor = APIMonitor(pid=pid)
             result: bool = monitor.start()
 
-            assert result is True
+            assert result
             assert monitor.is_running()
             assert monitor.session is not None
             assert not monitor.session.is_detached
@@ -154,7 +154,7 @@ class TestAPIMonitorLifecycle:
             monitor = APIMonitor(pid=pid)
             result: bool = monitor.start()
 
-            assert result is True
+            assert result
             assert monitor.is_running()
             assert monitor.session is not None
             assert monitor.script is not None
@@ -199,8 +199,8 @@ class TestAPIMonitorLifecycle:
             result1: bool = monitor.start()
             result2: bool = monitor.start()
 
-            assert result1 is True
-            assert result2 is True
+            assert result1
+            assert result2
             assert monitor.is_running()
 
             monitor.stop()
@@ -269,7 +269,7 @@ class TestAPIMonitorFridaScriptGeneration:
             script_source: str = monitor._build_frida_script()
 
             assert isinstance(script_source, str)
-            assert len(script_source) > 0
+            assert script_source != ""
             assert "function" in script_source
             assert "Interceptor.attach" in script_source
 
@@ -301,9 +301,9 @@ class TestAPIMonitorFridaScriptGeneration:
             device.resume(pid)
             time.sleep(TIMEOUT_SHORT)
 
-            assert len(messages) >= 1
+            assert messages
             ready_msg = [m for m in messages if m.get("type") == "send"]
-            assert len(ready_msg) >= 1
+            assert ready_msg
 
             session.detach()
 
@@ -1296,7 +1296,7 @@ class TestErrorHandling:
         monitor = APIMonitor(pid=999999)
         result: bool = monitor.start()
 
-        assert result is False
+        assert not result
         assert not monitor.is_running()
 
     def test_api_monitor_handles_process_not_found_error(self) -> None:
@@ -1304,7 +1304,7 @@ class TestErrorHandling:
         monitor = APIMonitor(pid=888888)
         result: bool = monitor.start()
 
-        assert result is False
+        assert not result
         stats = monitor.get_stats()
         assert stats["error_count"] > 0
 
@@ -1440,8 +1440,8 @@ class TestMultipleProcessMonitoring:
             result1: bool = monitor1.start()
             result2: bool = monitor2.start()
 
-            assert result1 is True
-            assert result2 is True
+            assert result1
+            assert result2
             assert monitor1.is_running()
             assert monitor2.is_running()
 
@@ -1481,9 +1481,9 @@ class TestMultipleProcessMonitoring:
             device.resume(pid2)
             time.sleep(TIMEOUT_LONG)
 
-            if len(events1) > 0:
+            if events1:
                 assert all(e.process_info == info1 for e in events1)
-            if len(events2) > 0:
+            if events2:
                 assert all(e.process_info == info2 for e in events2)
 
             monitor1.stop()

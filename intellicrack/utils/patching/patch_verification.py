@@ -551,7 +551,9 @@ def _process_deep_analysis_candidates(app: MainWindow) -> tuple[list[dict[str, A
     if not candidate_list:
         return patches, strategy_used
 
-    app.update_output.emit(log_message(f"[License Rewrite] Deep analysis found {len(candidate_list)} candidates. Processing top candidates..."))
+    app.update_output.emit(
+        log_message(f"[License Rewrite] Deep analysis found {len(candidate_list)} candidates. Processing top candidates...")
+    )
     strategy_used = "Deep Analysis"
 
     sorted_candidates = _sort_candidates_by_confidence(candidate_list)

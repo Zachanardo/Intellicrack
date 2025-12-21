@@ -23,67 +23,166 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # pylint: disable=cyclic-import
 
 from datetime import datetime
+from typing import Any, Callable, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QObject as _QObject, QRunnable as _QRunnable, QThreadPool as _QThreadPool, pyqtSignal as _pyqtSignal
+    from PyQt6.QtWidgets import (
+        QCheckBox as _QCheckBox,
+        QComboBox as _QComboBox,
+        QDialog as _QDialog,
+        QFileDialog as _QFileDialog,
+        QGroupBox as _QGroupBox,
+        QHBoxLayout as _QHBoxLayout,
+        QPushButton as _QPushButton,
+        QVBoxLayout as _QVBoxLayout,
+    )
+    QObject = _QObject
+    QRunnable = _QRunnable
+    QThreadPool = _QThreadPool
+    pyqtSignal = _pyqtSignal
+    QCheckBox = _QCheckBox
+    QComboBox = _QComboBox
+    QDialog = _QDialog
+    QFileDialog = _QFileDialog
+    QGroupBox = _QGroupBox
+    QHBoxLayout = _QHBoxLayout
+    QPushButton = _QPushButton
+    QVBoxLayout = _QVBoxLayout
+else:
+    try:
+        from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
+        from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout
 
-try:
-    from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
-    from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout
+        PYQT6_AVAILABLE = True
+    except ImportError:
+        PYQT6_AVAILABLE = False
 
-    PYQT6_AVAILABLE = True
-except ImportError:
-    # Fallback classes when PyQt6 is not available
-    class QObject:
-        """Fallback QObject class when PyQt6 is not available."""
+        class QObject:
+            """Fallback QObject class when PyQt6 is not available."""
+            def __init__(self, parent: object | None = None) -> None:
+                pass
 
-    class QRunnable:
-        """Fallback QRunnable class when PyQt6 is not available."""
+        class QRunnable:
+            """Fallback QRunnable class when PyQt6 is not available."""
 
-        def run(self) -> None:
-            """Execute the runnable task."""
+            def run(self) -> None:
+                """Execute the runnable task."""
 
-    class QThreadPool:
-        """Fallback QThreadPool class when PyQt6 is not available."""
+        class QThreadPool:
+            """Fallback QThreadPool class when PyQt6 is not available."""
 
-        @staticmethod
-        def globalInstance() -> None:
-            """Return the global thread pool instance."""
-            return
+            @staticmethod
+            def globalInstance() -> "QThreadPool | None":
+                """Return the global thread pool instance."""
+                return None
 
-    def pyqtSignal(*args: object) -> None:
-        """Fallback pyqtSignal function when PyQt6 is not available."""
-        return
+            def start(self, runnable: "QRunnable") -> None:
+                """Start a runnable task."""
 
-    # Fallback widget classes
-    class QCheckBox:
-        """Fallback QCheckBox class when PyQt6 is not available."""
+        def pyqtSignal(*args: object, **kwargs: object) -> Callable[..., Any]:
+            """Fallback pyqtSignal function when PyQt6 is not available."""
+            def signal_decorator(*inner_args: object, **inner_kwargs: object) -> Callable[..., Any]:
+                def dummy_signal(*signal_args: object, **signal_kwargs: object) -> None:
+                    pass
+                return dummy_signal
+            return signal_decorator
 
-    class QComboBox:
-        """Fallback QComboBox class when PyQt6 is not available."""
+        class QCheckBox:
+            """Fallback QCheckBox class when PyQt6 is not available."""
+            def setChecked(self, checked: bool) -> None:
+                pass
+            def isChecked(self) -> bool:
+                return False
+            def setEnabled(self, enabled: bool) -> None:
+                pass
 
-    class QDialog:
-        """Fallback QDialog class when PyQt6 is not available."""
+        class QComboBox:
+            """Fallback QComboBox class when PyQt6 is not available."""
+            currentTextChanged: Callable[..., Any]
 
-    class QFileDialog:
-        """Fallback QFileDialog class when PyQt6 is not available."""
+            def __init__(self) -> None:
+                self.currentTextChanged = pyqtSignal()
 
-    class QGroupBox:
-        """Fallback QGroupBox class when PyQt6 is not available."""
+            def addItems(self, items: list[str]) -> None:
+                pass
 
-    class QHBoxLayout:
-        """Fallback QHBoxLayout class when PyQt6 is not available."""
+            def currentText(self) -> str:
+                return ""
 
-    class QPushButton:
-        """Fallback QPushButton class when PyQt6 is not available."""
+            def connect(self, slot: Callable[..., Any]) -> None:
+                pass
 
-    class QVBoxLayout:
-        """Fallback QVBoxLayout class when PyQt6 is not available."""
+        class QDialog:
+            """Fallback QDialog class when PyQt6 is not available."""
+            Accepted: int = 1
+            Rejected: int = 0
 
-    PYQT6_AVAILABLE = False
+            def __init__(self, parent: object | None = None) -> None:
+                pass
+            def setWindowTitle(self, title: str) -> None:
+                pass
+            def setMinimumWidth(self, width: int) -> None:
+                pass
+            def exec(self) -> int:
+                return 0
+            def accept(self) -> None:
+                pass
+            def reject(self) -> None:
+                pass
+            def setLayout(self, layout: object) -> None:
+                pass
 
-try:
+        class QFileDialog:
+            """Fallback QFileDialog class when PyQt6 is not available."""
+            @staticmethod
+            def getSaveFileName(
+                parent: object | None = None,
+                caption: str = "",
+                directory: str = "",
+                filter: str = "",
+            ) -> tuple[str, str]:
+                return ("", "")
+
+        class QGroupBox:
+            """Fallback QGroupBox class when PyQt6 is not available."""
+            def __init__(self, title: str = "") -> None:
+                pass
+            def setLayout(self, layout: object) -> None:
+                pass
+
+        class QHBoxLayout:
+            """Fallback QHBoxLayout class when PyQt6 is not available."""
+            def addWidget(self, widget: object) -> None:
+                pass
+
+        class QPushButton:
+            """Fallback QPushButton class when PyQt6 is not available."""
+            clicked: Callable[..., Any]
+
+            def __init__(self, text: str = "") -> None:
+                self.clicked = pyqtSignal()
+
+            def connect(self, slot: Callable[..., Any]) -> None:
+                pass
+
+        class QVBoxLayout:
+            """Fallback QVBoxLayout class when PyQt6 is not available."""
+            def addWidget(self, widget: object) -> None:
+                pass
+            def addLayout(self, layout: object) -> None:
+                pass
+
+if TYPE_CHECKING:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
-except ImportError:
-    UnifiedProtectionResult = None
+else:
+    try:
+        from ...protection.unified_protection_engine import UnifiedProtectionResult
+    except ImportError:
+        class UnifiedProtectionResult:
+            """Fallback UnifiedProtectionResult when module is not available."""
+            def __init__(self) -> None:
+                self.file_path: str = ""
 
 try:
     from ...utils.logger import get_logger
@@ -118,7 +217,7 @@ class ReportGeneratorWorkerSignals(QObject):
 class ReportGeneratorWorker(QRunnable):
     """Worker thread for report generation."""
 
-    def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict) -> None:
+    def __init__(self, result: UnifiedProtectionResult, format_type: str, output_path: str, options: dict[str, Any]) -> None:
         """Initialize the report generator worker.
 
         Args:
@@ -265,7 +364,7 @@ class ReportOptionsDialog(QDialog):
         else:
             self.include_entropy.setEnabled(True)
 
-    def get_options(self) -> dict:
+    def get_options(self) -> dict[str, Any]:
         """Get selected options."""
         return {
             "format": self.format_combo.currentText().lower(),
@@ -298,7 +397,7 @@ class ReportGenerationHandler(QObject):
 
         """
         super().__init__(parent)
-        self.thread_pool = QThreadPool.globalInstance()
+        self.thread_pool: QThreadPool | None = QThreadPool.globalInstance()
         self.current_result: UnifiedProtectionResult | None = None
 
     def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
@@ -355,15 +454,15 @@ class ReportGenerationHandler(QObject):
         worker.signals.error.connect(self._on_worker_error)
         worker.signals.progress.connect(self.report_progress.emit)
 
-        self.thread_pool.start(worker)
+        if self.thread_pool is not None:
+            self.thread_pool.start(worker)
 
-    def _on_report_ready(self, result: dict) -> None:
+    def _on_report_ready(self, result: dict[str, Any]) -> None:
         """Handle report generation completion."""
-        if result["success"]:
+        if result.get("success"):
             self.report_ready.emit(result)
 
-            # Show success message if we have a parent
-            msg = f"Report saved to:\n{result['path']}"
+            msg = f"Report saved to:\n{result.get('path', '')}"
             logger.info(msg)
 
     def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:

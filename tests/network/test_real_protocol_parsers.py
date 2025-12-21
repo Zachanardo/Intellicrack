@@ -44,8 +44,6 @@ class TestRealProtocolParsers:
     @pytest.fixture
     def flexlm_packets(self):
         """Create REAL FlexLM protocol packets."""
-        packets = {}
-
         # License request packet
         request = b''
         request += struct.pack('>I', 0x464C584D)  # Magic 'FLXM'
@@ -63,8 +61,7 @@ class TestRealProtocolParsers:
         request += struct.pack('>I', int(time.time()))  # Timestamp
         request += struct.pack('>I', 0x12345678)  # Host ID 1
         request += struct.pack('>I', 0x87654321)  # Host ID 2
-        packets['license_request'] = request
-
+        packets = {'license_request': request}
         # License response packet
         response = b''
         response += struct.pack('>I', 0x464C584D)  # Magic 'FLXM'
@@ -102,8 +99,6 @@ class TestRealProtocolParsers:
     @pytest.fixture
     def hasp_packets(self):
         """Create REAL HASP protocol packets."""
-        packets = {}
-
         # Login packet
         login = b''
         login += b'HASP'  # Signature
@@ -116,8 +111,6 @@ class TestRealProtocolParsers:
         login += b'MyApplication\x00\x00\x00\x00'  # Application name (16 bytes)
         login += struct.pack('<I', 0x20240101)  # Build date
         login += b'\x00' * 32  # Reserved
-        packets['login'] = login
-
         # Login response
         login_response = b''
         login_response += b'HASP'  # Signature
@@ -129,8 +122,7 @@ class TestRealProtocolParsers:
         login_response += struct.pack('<Q', int(time.time()) + 3600)  # Session expiry
         login_response += struct.pack('<I', 0x00000001)  # Max concurrent
         login_response += b'\x00' * 28  # Reserved
-        packets['login_response'] = login_response
-
+        packets = {'login': login, 'login_response': login_response}
         # Read memory packet
         read_mem = b''
         read_mem += b'HASP'  # Signature
@@ -148,8 +140,6 @@ class TestRealProtocolParsers:
     @pytest.fixture
     def adobe_packets(self):
         """Create REAL Adobe Creative Cloud packets."""
-        packets = {}
-
         # Activation request
         activation_request = {
             "header": {
@@ -187,8 +177,7 @@ class TestRealProtocolParsers:
         http_request += f"User-Agent: Adobe-Activation-Client/2.1\r\n"
         http_request += f"Authorization: Bearer TOKEN_PLACEHOLDER\r\n"
         http_request += f"\r\n{json_data}"
-        packets['activation_request'] = http_request.encode()
-
+        packets = {'activation_request': http_request.encode()}
         # Activation response
         activation_response = {
             "header": {
@@ -228,8 +217,6 @@ class TestRealProtocolParsers:
     @pytest.fixture
     def kms_packets(self):
         """Create REAL KMS (Key Management Service) packets."""
-        packets = {}
-
         # KMS activation request
         kms_request = b''
         kms_request += struct.pack('<I', 0x4B4D5320)  # Magic 'KMS '
@@ -250,8 +237,6 @@ class TestRealProtocolParsers:
         kms_request += b'WORKSTATION-PC\x00\x00'  # Machine name (16 bytes)
         kms_request += struct.pack('<Q', 0xFEDCBA9876543210)  # Hardware hash
         kms_request += b'\x00' * 128  # Reserved/padding
-        packets['activation_request'] = kms_request
-
         # KMS activation response
         kms_response = b''
         kms_response += struct.pack('<I', 0x4B4D5320)  # Magic 'KMS '
@@ -268,9 +253,7 @@ class TestRealProtocolParsers:
         kms_response += b'KMS-SERVER-2024\x00'  # Server name (16 bytes)
         kms_response += struct.pack('<Q', 0x1122334455667788)  # Server signature
         kms_response += b'\x00' * 64  # Reserved
-        packets['activation_response'] = kms_response
-
-        return packets
+        return {'activation_request': kms_request, 'activation_response': kms_response}
 
     def test_real_flexlm_protocol_parsing(self, flexlm_packets, app_context):
         """Test REAL FlexLM protocol packet parsing."""

@@ -1159,7 +1159,9 @@ class FridaPlugin(AbstractPlugin):
             target_obj = parameters.get("target")
             if not target_obj:
                 raise ValueError("Target process not specified")
-            target: str | int = str(target_obj) if isinstance(target_obj, str) else int(target_obj) if isinstance(target_obj, int) else str(target_obj)
+            target: str | int = (
+                str(target_obj) if isinstance(target_obj, str) else int(target_obj) if isinstance(target_obj, int) else str(target_obj)
+            )
 
             # Attach to process
             if operation == "attach_process":
@@ -2770,14 +2772,9 @@ class WorkflowEngine:
                     "completed_steps": workflow_record["completed_steps"],
                     "errors": workflow_record["errors"],
                     "start_time": workflow_record["start_time"].isoformat(),
-                    "end_time": (
-                        workflow_record["end_time"].isoformat()
-                        if workflow_record["end_time"]
-                        else None
-                    ),
+                    "end_time": (workflow_record["end_time"].isoformat() if workflow_record["end_time"] else None),
                     "duration": (
-                        (workflow_record["end_time"] or datetime.now(timezone.utc))
-                        - workflow_record["start_time"]
+                        (workflow_record["end_time"] or datetime.now(timezone.utc)) - workflow_record["start_time"]
                     ).total_seconds(),
                 }
                 for workflow_record in self.workflow_history

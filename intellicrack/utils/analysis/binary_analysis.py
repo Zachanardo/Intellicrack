@@ -413,19 +413,15 @@ def _get_recommended_ai_actions(analysis_results: dict[str, Any]) -> list[str]:
                 "Generate GOT (Global Offset Table) manipulation scripts",
             ])
         elif binary_format == "PE":
-            actions.extend(
-                (
-                    "Analyze PE imports and exports for bypass opportunities",
-                    "Generate IAT (Import Address Table) hook scripts",
-                )
-            )
+            actions.extend((
+                "Analyze PE imports and exports for bypass opportunities",
+                "Generate IAT (Import Address Table) hook scripts",
+            ))
         if analysis_results.get("protection"):
-            actions.extend(
-                (
-                    "Generate multi-layer protection bypass strategy",
-                    "Create adaptive bypass scripts with fallback mechanisms",
-                )
-            )
+            actions.extend((
+                "Generate multi-layer protection bypass strategy",
+                "Create adaptive bypass scripts with fallback mechanisms",
+            ))
     except Exception as e:
         logger.exception("Error getting recommended AI actions: %s", e)
 

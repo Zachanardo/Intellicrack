@@ -188,9 +188,7 @@ class AntiGamingValidationSystem:
 
             for result in test_results:
                 input_data = result.get("input_hash", "")
-                output_data = result.get("output_hash", "")
-
-                if output_data:
+                if output_data := result.get("output_hash", ""):
                     if output_data not in output_hashes:
                         output_hashes[output_data] = []
                     output_hashes[output_data].append(input_data)
@@ -262,7 +260,7 @@ class AntiGamingValidationSystem:
                 violations.append(violation)
 
             self.violations.extend(violations)
-            return len(violations) == 0, violations
+            return not violations, violations
 
         except Exception as e:
             self.logger.error(f"Analysis tools detection failed: {e}")
@@ -284,28 +282,26 @@ class AntiGamingValidationSystem:
                     remote_ip = conn.get("remote_addr", "")
                     remote_port = conn.get("remote_port", 0)
 
-                    if remote_ip and not self._is_whitelisted_ip(remote_ip):
-                        # Check if this is a license server connection
-                        if self._is_potential_license_server(remote_ip, remote_port):
-                            violation = GamingViolation(
-                                violation_type=GamingViolationType.UNAUTHORIZED_NETWORK,
-                                description=f"Potential license server connection detected: {remote_ip}:{remote_port}",
-                                severity="CRITICAL",
-                                evidence={
-                                    "remote_ip": remote_ip,
-                                    "remote_port": remote_port,
-                                    "local_port": conn.get("local_port"),
-                                    "status": conn.get("status")
-                                },
-                                timestamp=self._get_timestamp(),
-                                confidence=0.8
-                            )
-                            violations.append(violation)
+                    if remote_ip and not self._is_whitelisted_ip(remote_ip) and self._is_potential_license_server(remote_ip, remote_port):
+                        violation = GamingViolation(
+                            violation_type=GamingViolationType.UNAUTHORIZED_NETWORK,
+                            description=f"Potential license server connection detected: {remote_ip}:{remote_port}",
+                            severity="CRITICAL",
+                            evidence={
+                                "remote_ip": remote_ip,
+                                "remote_port": remote_port,
+                                "local_port": conn.get("local_port"),
+                                "status": conn.get("status")
+                            },
+                            timestamp=self._get_timestamp(),
+                            confidence=0.8
+                        )
+                        violations.append(violation)
 
                 time.sleep(1)
 
             self.violations.extend(violations)
-            return len(violations) == 0, violations
+            return not violations, violations
 
         except Exception as e:
             self.logger.error(f"Network monitoring failed: {e}")
@@ -327,23 +323,21 @@ class AntiGamingValidationSystem:
             for process in current_processes:
                 process_name = process["name"]
 
-                if process_name not in baseline_processes:
-                    # New process - check if it's suspicious
-                    if self._is_suspicious_process(process):
-                        violation = GamingViolation(
-                            violation_type=GamingViolationType.PROCESS_INJECTION,
-                            description=f"Suspicious new process detected: {process_name}",
-                            severity="HIGH",
-                            evidence={
-                                "process_name": process_name,
-                                "process_id": process.get("pid"),
-                                "parent_pid": process.get("ppid"),
-                                "command_line": process.get("cmdline", "")
-                            },
-                            timestamp=self._get_timestamp(),
-                            confidence=0.7
-                        )
-                        violations.append(violation)
+                if process_name not in baseline_processes and self._is_suspicious_process(process):
+                    violation = GamingViolation(
+                        violation_type=GamingViolationType.PROCESS_INJECTION,
+                        description=f"Suspicious new process detected: {process_name}",
+                        severity="HIGH",
+                        evidence={
+                            "process_name": process_name,
+                            "process_id": process.get("pid"),
+                            "parent_pid": process.get("ppid"),
+                            "command_line": process.get("cmdline", "")
+                        },
+                        timestamp=self._get_timestamp(),
+                        confidence=0.7
+                    )
+                    violations.append(violation)
 
             # Check for DLL injection
             dll_injection_detected = self._check_dll_injection()
@@ -359,7 +353,7 @@ class AntiGamingValidationSystem:
                 violations.append(violation)
 
             self.violations.extend(violations)
-            return len(violations) == 0, violations
+            return not violations, violations
 
         except Exception as e:
             self.logger.error(f"Process injection detection failed: {e}")
@@ -386,10 +380,7 @@ class AntiGamingValidationSystem:
             challenge_data["expected_response"] = expected_response
             self.active_challenges[challenge_id] = challenge_data
 
-            # Return challenge without expected response
-            client_challenge = {k: v for k, v in challenge_data.items() if k != "expected_response"}
-            return client_challenge
-
+            return {k: v for k, v in challenge_data.items() if k != "expected_response"}
         except Exception as e:
             self.logger.error(f"Time challenge generation failed: {e}")
             return {}
@@ -548,16 +539,18 @@ class AntiGamingValidationSystem:
         """Get active network connections."""
         connections = []
         try:
-            for conn in psutil.net_connections():
-                if conn.raddr:
-                    connections.append({
-                        "local_addr": conn.laddr.ip if conn.laddr else "",
-                        "local_port": conn.laddr.port if conn.laddr else 0,
-                        "remote_addr": conn.raddr.ip,
-                        "remote_port": conn.raddr.port,
-                        "status": conn.status,
-                        "pid": conn.pid
-                    })
+            connections.extend(
+                {
+                    "local_addr": conn.laddr.ip if conn.laddr else "",
+                    "local_port": conn.laddr.port if conn.laddr else 0,
+                    "remote_addr": conn.raddr.ip,
+                    "remote_port": conn.raddr.port,
+                    "status": conn.status,
+                    "pid": conn.pid,
+                }
+                for conn in psutil.net_connections()
+                if conn.raddr
+            )
         except Exception as e:
             self.logger.error(f"Failed to get network connections: {e}")
         return connections
@@ -661,11 +654,11 @@ class AntiGamingValidationSystem:
             "inject", "hook", "patch", "crack", "keygen", "loader"
         ]
 
-        for pattern in suspicious_patterns:
-            if pattern in process_name or (cmdline and pattern in " ".join(cmdline).lower()):
-                return True
-
-        return False
+        return any(
+            pattern in process_name
+            or (cmdline and pattern in " ".join(cmdline).lower())
+            for pattern in suspicious_patterns
+        )
 
     def _check_debugger_presence(self) -> dict[str, Any]:
         """Check for debugger presence using Windows API."""
@@ -697,9 +690,11 @@ class AntiGamingValidationSystem:
             loaded_dlls = []
 
             try:
-                for dll in current_process.memory_maps():
-                    if dll.path and dll.path.endswith('.dll'):
-                        loaded_dlls.append(dll.path.lower())
+                loaded_dlls.extend(
+                    dll.path.lower()
+                    for dll in current_process.memory_maps()
+                    if dll.path and dll.path.endswith('.dll')
+                )
             except (psutil.AccessDenied, psutil.NoSuchProcess):
                 pass
                 # Process may have exited or access denied, continue
@@ -729,7 +724,7 @@ class AntiGamingValidationSystem:
 
     def _get_timestamp(self) -> str:
         """Get ISO timestamp."""
-        return datetime.utcnow().isoformat() + 'Z'
+        return f'{datetime.utcnow().isoformat()}Z'
 
 
 def main():

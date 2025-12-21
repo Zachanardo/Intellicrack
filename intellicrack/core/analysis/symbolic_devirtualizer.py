@@ -372,10 +372,7 @@ class SymbolicDevirtualizer:
         if not block.capstone:
             return False
 
-        indirect_jumps: int = sum(
-            insn.mnemonic == "jmp" and "[" in insn.op_str
-            for insn in block.capstone.insns
-        )
+        indirect_jumps: int = sum(insn.mnemonic == "jmp" and "[" in insn.op_str for insn in block.capstone.insns)
         return indirect_jumps >= 1
 
     def _find_dispatcher_pattern(self) -> int | None:

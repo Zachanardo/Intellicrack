@@ -543,20 +543,16 @@ class FunctionRenamingEngine:
         ]
 
         for result in results:
-            lines.extend(
-                (
-                    f'    idc.set_name(0x{result.address:X}, "{result.suggested_name}", idc.SN_NOWARN)',
-                    f'    idc.set_func_cmt(0x{result.address:X}, "Type: {result.function_type.value}, Confidence: {result.confidence:.2f}", 1)',
-                )
-            )
-        lines.extend(
-            (
-                "",
-                "if __name__ == '__main__':",
-                "    rename_functions()",
-                f'    print("Renamed {len(results)} functions")',
-            )
-        )
+            lines.extend((
+                f'    idc.set_name(0x{result.address:X}, "{result.suggested_name}", idc.SN_NOWARN)',
+                f'    idc.set_func_cmt(0x{result.address:X}, "Type: {result.function_type.value}, Confidence: {result.confidence:.2f}", 1)',
+            ))
+        lines.extend((
+            "",
+            "if __name__ == '__main__':",
+            "    rename_functions()",
+            f'    print("Renamed {len(results)} functions")',
+        ))
         return "\n".join(lines)
 
     def _generate_ghidra_script(self, results: list[FunctionRenameResult]) -> str:
@@ -571,23 +567,19 @@ class FunctionRenamingEngine:
         ]
 
         for result in results:
-            lines.extend(
-                (
-                    f"    addr = toAddr(0x{result.address:X})",
-                    "    func = fm.getFunctionAt(addr)",
-                    "    if func:",
-                    f'        func.setName("{result.suggested_name}", SourceType.USER_DEFINED)',
-                    f'        func.setComment("Type: {result.function_type.value}, Confidence: {result.confidence:.2f}")',
-                    "",
-                )
-            )
-        lines.extend(
-            (
-                "if __name__ == '__main__':",
-                "    rename_functions()",
-                f'    println("Renamed {len(results)} functions")',
-            )
-        )
+            lines.extend((
+                f"    addr = toAddr(0x{result.address:X})",
+                "    func = fm.getFunctionAt(addr)",
+                "    if func:",
+                f'        func.setName("{result.suggested_name}", SourceType.USER_DEFINED)',
+                f'        func.setComment("Type: {result.function_type.value}, Confidence: {result.confidence:.2f}")',
+                "",
+            ))
+        lines.extend((
+            "if __name__ == '__main__':",
+            "    rename_functions()",
+            f'    println("Renamed {len(results)} functions")',
+        ))
         return "\n".join(lines)
 
     def _generate_radare2_script(self, results: list[FunctionRenameResult]) -> str:
@@ -595,12 +587,10 @@ class FunctionRenamingEngine:
         lines = []
 
         for result in results:
-            lines.extend(
-                (
-                    f"afn {result.suggested_name} 0x{result.address:X}",
-                    f"CC Type: {result.function_type.value}, Confidence: {result.confidence:.2f} @ 0x{result.address:X}",
-                )
-            )
+            lines.extend((
+                f"afn {result.suggested_name} 0x{result.address:X}",
+                f"CC Type: {result.function_type.value}, Confidence: {result.confidence:.2f} @ 0x{result.address:X}",
+            ))
         return "\n".join(lines)
 
     def get_statistics(self) -> dict[str, Any]:

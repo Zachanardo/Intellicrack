@@ -208,7 +208,7 @@ class TestPatchPointDetection:
         patch_points = agent._find_patch_points(binary_data)
 
         license_points = [p for p in patch_points if p["type"] == "license_check"]
-        assert len(license_points) > 0
+        assert license_points
 
     def test_find_anti_debug_patterns(self, agent: AutomatedPatchAgent, binary_path: Path) -> None:
         """_find_patch_points detects anti-debug checks."""
@@ -218,7 +218,7 @@ class TestPatchPointDetection:
         patch_points = agent._find_patch_points(binary_data)
 
         anti_debug_points = [p for p in patch_points if p["type"] == "anti_debug"]
-        assert len(anti_debug_points) > 0
+        assert anti_debug_points
 
     def test_find_time_check_patterns(self, agent: AutomatedPatchAgent, binary_path: Path) -> None:
         """_find_patch_points detects time bombs."""
@@ -228,16 +228,14 @@ class TestPatchPointDetection:
         patch_points = agent._find_patch_points(binary_data)
 
         time_points = [p for p in patch_points if p["type"] == "time_check"]
-        assert len(time_points) > 0
+        assert time_points
 
     def test_patch_points_include_metadata(self, agent: AutomatedPatchAgent, binary_path: Path) -> None:
         """Patch points include complete metadata."""
         with open(binary_path, 'rb') as f:
             binary_data = f.read()
 
-        patch_points = agent._find_patch_points(binary_data)
-
-        if patch_points:
+        if patch_points := agent._find_patch_points(binary_data):
             point = patch_points[0]
             assert "offset" in point
             assert "type" in point
@@ -277,7 +275,7 @@ class TestPatchApplication:
         agent.apply_patch(str(binary_path), patch)
 
         backup_files = list(tmp_path.glob("*.bak_*"))
-        assert len(backup_files) > 0
+        assert backup_files
 
     def test_apply_patch_updates_history(self, agent: AutomatedPatchAgent, binary_path: Path) -> None:
         """apply_patch logs to patch history."""
@@ -365,7 +363,7 @@ class TestKeygenGeneration:
         except SyntaxError:
             is_valid = False
 
-        assert is_valid is True
+        assert is_valid
 
 
 class TestRunAutomatedPatchAgent:
@@ -470,9 +468,7 @@ class TestEdgeCases:
 
             success = agent.apply_patch(str(binary_path), patch)
 
-            if success is False:
-                assert True
-            else:
+            if success is not False:
                 binary_path.chmod(0o644)
 
     def test_find_patch_points_empty_binary(self, agent: AutomatedPatchAgent) -> None:

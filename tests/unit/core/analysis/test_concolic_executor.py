@@ -235,7 +235,7 @@ class TestConcolicExecutionEngine(IntellicrackTestBase):
             # Each bypass input should be concrete test data
             for bypass_input in bypass_inputs:
                 assert isinstance(bypass_input, (bytes, str, dict))
-                assert len(str(bypass_input)) > 0
+                assert str(bypass_input) != ""
 
     def test_comprehensive_binary_analysis(self):
         """Test comprehensive analysis method with real symbolic execution."""
@@ -925,7 +925,7 @@ class TestConcolicExecutorPerformance(IntellicrackTestBase):
 
         log_messages = [record.message for record in caplog.records]
         pc_logs = [msg for msg in log_messages if "0x" in msg.lower() or "pc" in msg.lower()]
-        assert len(pc_logs) > 0
+        assert pc_logs
 
     def test_symbolic_execution_path_exploration_logging(self, caplog):
         """Test that both taken and not-taken paths are explored and logged."""

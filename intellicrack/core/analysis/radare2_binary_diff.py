@@ -542,10 +542,7 @@ class R2BinaryDiff:
             primary_opcodes = [op.get("opcode", "") for op in primary_ops.get("ops", [])]
             secondary_opcodes = [op.get("opcode", "") for op in secondary_ops.get("ops", [])]
 
-            changes = sum(
-                primary_opcodes[i] != secondary_opcodes[i]
-                for i in range(min(len(primary_opcodes), len(secondary_opcodes)))
-            )
+            changes = sum(primary_opcodes[i] != secondary_opcodes[i] for i in range(min(len(primary_opcodes), len(secondary_opcodes))))
             # Add difference in lengths
             changes += abs(len(primary_opcodes) - len(secondary_opcodes))
 

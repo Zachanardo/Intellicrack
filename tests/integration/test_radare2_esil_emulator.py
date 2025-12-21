@@ -384,7 +384,7 @@ class TestRegisterOperations:
             for thread in threads:
                 thread.join()
 
-            assert len(errors) == 0
+            assert not errors
             assert len(results) == 3
 
 
@@ -445,7 +445,7 @@ class TestMemoryOperations:
             for thread in threads:
                 thread.join()
 
-            assert len(errors) == 0
+            assert not errors
 
 
 class TestInstructionStepping:
@@ -829,8 +829,8 @@ class TestSessionPoolIntegration:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
-        assert len(results) > 0
+        assert not errors
+        assert results
 
 
 class TestErrorHandling:

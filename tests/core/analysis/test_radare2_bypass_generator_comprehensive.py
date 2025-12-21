@@ -88,8 +88,7 @@ class TestLicenseMechanismAnalysis:
             analysis = generator._analyze_license_mechanisms(mock_session)
 
         assert analysis is not None
-        validation_funcs = analysis.get('validation_functions', [])
-        if validation_funcs:
+        if validation_funcs := analysis.get('validation_functions', []):
             assert any(v.get('crypto_usage', False) for v in validation_funcs)
 
     def test_detect_network_validation(self, pe_with_online_check: Path) -> None:
@@ -113,8 +112,7 @@ class TestLicenseMechanismAnalysis:
 
             analysis = generator._analyze_license_mechanisms(mock_session)
 
-        validation_funcs = analysis.get('validation_functions', [])
-        if validation_funcs:
+        if validation_funcs := analysis.get('validation_functions', []):
             assert any(v.get('network_validation', False) for v in validation_funcs)
 
     def test_detect_time_based_trial(self, pe_with_trial_check: Path) -> None:
@@ -138,8 +136,7 @@ class TestLicenseMechanismAnalysis:
 
             analysis = generator._analyze_license_mechanisms(mock_session)
 
-        validation_funcs = analysis.get('validation_functions', [])
-        if validation_funcs:
+        if validation_funcs := analysis.get('validation_functions', []):
             assert any(v.get('time_based', False) for v in validation_funcs)
 
 
@@ -187,7 +184,7 @@ class TestBypassStrategyGeneration:
 
         assert len(strategies) > 0
         crypto_strategies = [s for s in strategies if 'crypto' in s.get('strategy', '').lower()]
-        assert len(crypto_strategies) > 0
+        assert crypto_strategies
 
     def test_generate_network_interception_for_online_check(self, pe_with_online_check: Path) -> None:
         """Generator creates network interception for online validation."""
@@ -207,7 +204,7 @@ class TestBypassStrategyGeneration:
 
         assert len(strategies) > 0
         network_strategies = [s for s in strategies if 'network' in s.get('strategy', '').lower()]
-        assert len(network_strategies) > 0
+        assert network_strategies
 
     def test_registry_modification_strategy_for_registry_license(self, pe_with_registry_check: Path) -> None:
         """Generator creates registry modification strategy."""
@@ -227,7 +224,7 @@ class TestBypassStrategyGeneration:
 
         assert len(strategies) > 0
         reg_strategies = [s for s in strategies if 'registry' in s.get('strategy', '').lower()]
-        assert len(reg_strategies) > 0
+        assert reg_strategies
 
 
 class TestAutomatedPatchGeneration:

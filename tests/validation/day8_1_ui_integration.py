@@ -76,13 +76,14 @@ class UIIntegrationTester:
             app = QApplication(sys.argv)
             window = IntellicrackMainApp()
 
-            # Check that protection analysis tab exists
-            protection_tab = None
-            for i in range(window.tab_widget.count()):
-                if "Protection" in window.tab_widget.tabText(i):
-                    protection_tab = window.tab_widget.widget(i)
-                    break
-
+            protection_tab = next(
+                (
+                    window.tab_widget.widget(i)
+                    for i in range(window.tab_widget.count())
+                    if "Protection" in window.tab_widget.tabText(i)
+                ),
+                None,
+            )
             if not protection_tab:
                 print("    Protection Analysis tab not found in UI")
                 return False
@@ -91,13 +92,12 @@ class UIIntegrationTester:
             if not hasattr(protection_tab, 'commercial_analyzer'):
                 # Check if it has the analyzer as a component
                 components = ['flexlm', 'hasp', 'codemeter']
-                found = 0
-                for comp in components:
-                    if any(comp.lower() in str(widget.objectName()).lower()
-                          for widget in protection_tab.findChildren(object)
-                          if hasattr(widget, 'objectName') and widget.objectName()):
-                        found += 1
-
+                found = sum(bool(any(
+                                                comp.lower() in str(widget.objectName()).lower()
+                                                for widget in protection_tab.findChildren(object)
+                                                if hasattr(widget, 'objectName') and widget.objectName()
+                                            ))
+                        for comp in components)
                 if found == 0:
                     print("    No commercial license components found in Protection tab")
                     # This is acceptable as long as the analyzer can be invoked
@@ -145,7 +145,7 @@ class UIIntegrationTester:
                 from intellicrack.ui.components.progress_bar import ProgressBar
                 print("    OK Progress bar component available")
                 return True
-            except:
+            except Exception:
                 print("    ⚠ Progress tracking components not fully implemented")
                 return True  # Not critical for now
 
@@ -166,10 +166,9 @@ class UIIntegrationTester:
             result = analyzer.analyze_binary("nonexistent_file.exe")
 
             # Should return empty results, not crash
-            if result and "detected_systems" in result:
-                if len(result["detected_systems"]) > 0:
-                    print("    Error: Invalid file should not detect systems")
-                    return False
+            if result and "detected_systems" in result and len(result["detected_systems"]) > 0:
+                print("    Error: Invalid file should not detect systems")
+                return False
 
             # Test with None path
             analyzer2 = CommercialLicenseAnalyzer(None)

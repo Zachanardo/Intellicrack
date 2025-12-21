@@ -122,23 +122,25 @@ class EnvironmentRecorder:
                     "free": usage.free,
                     "percent": usage.percent
                 }
-            except:
+            except Exception:
                 continue
 
         # GPU information
         gpu_info = []
         try:
             gpus = GPUtil.getGPUs()
-            for gpu in gpus:
-                gpu_info.append({
+            gpu_info.extend(
+                {
                     "id": gpu.id,
                     "name": gpu.name,
                     "driver": gpu.driver,
                     "memory_total": gpu.memoryTotal,
                     "memory_used": gpu.memoryUsed,
-                    "temperature": gpu.temperature
-                })
-        except:
+                    "temperature": gpu.temperature,
+                }
+                for gpu in gpus
+            )
+        except Exception:
             pass
 
         # Network interfaces
@@ -221,25 +223,27 @@ class EnvironmentRecorder:
                                 "version": version,
                                 "publisher": publisher
                             })
-                        except:
+                        except Exception:
                             pass
                         winreg.CloseKey(subkey)
-                    except:
+                    except Exception:
                         pass
                 winreg.CloseKey(key)
-            except:
+            except Exception:
                 pass
 
         # Also check using WMI
         if self.wmi_client:
             try:
-                for product in self.wmi_client.Win32_Product():
-                    software_list.append({
+                software_list.extend(
+                    {
                         "name": product.Name,
                         "version": product.Version,
-                        "vendor": product.Vendor
-                    })
-            except:
+                        "vendor": product.Vendor,
+                    }
+                    for product in self.wmi_client.Win32_Product()
+                )
+            except Exception:
                 pass
 
         return software_list
@@ -262,13 +266,16 @@ class EnvironmentRecorder:
         if platform.system() == "Windows" and self.wmi_client:
             try:
                 # Check for antivirus
-                for av in self.wmi_client.AntiVirusProduct():
-                    security_software.append(f"Antivirus: {av.displayName}")
-
+                security_software.extend(
+                    f"Antivirus: {av.displayName}"
+                    for av in self.wmi_client.AntiVirusProduct()
+                )
                 # Check for firewall
-                for fw in self.wmi_client.FirewallProduct():
-                    security_software.append(f"Firewall: {fw.displayName}")
-            except:
+                security_software.extend(
+                    f"Firewall: {fw.displayName}"
+                    for fw in self.wmi_client.FirewallProduct()
+                )
+            except Exception:
                 pass
 
         # Check for common security tools in processes
@@ -286,7 +293,7 @@ class EnvironmentRecorder:
             try:
                 if proc.info['name'] in security_processes:
                     security_software.append(f"Process: {proc.info['name']}")
-            except:
+            except Exception:
                 pass
 
         return security_software
@@ -317,7 +324,7 @@ class EnvironmentRecorder:
                     virt["qemu"] = True
                 elif "xen" in brand:
                     virt["xen"] = True
-        except:
+        except Exception:
             pass
 
         # Windows-specific checks
@@ -330,7 +337,7 @@ class EnvironmentRecorder:
                         virt["hyperv"] = True
                     elif "innotek" in item.Manufacturer.lower():  # VirtualBox
                         virt["virtualbox"] = True
-            except:
+            except Exception:
                 pass
 
         return virt
@@ -353,7 +360,7 @@ class EnvironmentRecorder:
             )
             if result.returncode == 0:
                 pip_packages = json.loads(result.stdout)
-        except:
+        except Exception:
             pass
 
         # Conda packages (if in conda environment)
@@ -366,7 +373,7 @@ class EnvironmentRecorder:
                 )
                 if result.returncode == 0:
                     conda_packages = json.loads(result.stdout)
-            except:
+            except Exception:
                 pass
 
         # System packages (Windows)
@@ -380,7 +387,7 @@ class EnvironmentRecorder:
                 )
                 if result.returncode == 0:
                     system_packages = result.stdout.strip().split("\n")
-            except:
+            except Exception:
                 pass
 
         # DLL dependencies
@@ -395,18 +402,11 @@ class EnvironmentRecorder:
         # Generate environment.yml
         environment_yml = self._generate_environment_yml(conda_packages)
 
-        # Check for Pipfile
-        pipfile = None
-        if Path("Pipfile").exists():
-            with open("Pipfile") as f:
-                pipfile = f.read()
-
+        pipfile = Path("Pipfile").read_text() if Path("Pipfile").exists() else None
         # Check for poetry.lock
         poetry_lock = None
         if Path("poetry.lock").exists():
-            with open("poetry.lock") as f:
-                poetry_lock = f.read()
-
+            poetry_lock = Path("poetry.lock").read_text()
         return DependencySnapshot(
             python_version=python_info["version"],
             python_executable=python_info["executable"],
@@ -448,22 +448,22 @@ class EnvironmentRecorder:
                         lines = result.stdout.split("\n")
                         for line in lines:
                             if ".dll" in line.lower():
-                                dll_name = line.strip()
-                                if dll_name:
+                                if dll_name := line.strip():
                                     dll_deps.append({
                                         "file": str(file_path),
                                         "dependency": dll_name
                                     })
-                except:
+                except Exception:
                     pass
 
         return dll_deps
 
     def _generate_requirements_txt(self, pip_packages: list[dict]) -> str:
         """Generate requirements.txt from pip packages."""
-        requirements = []
-        for package in pip_packages:
-            requirements.append(f"{package.get('name')}=={package.get('version')}")
+        requirements = [
+            f"{package.get('name')}=={package.get('version')}"
+            for package in pip_packages
+        ]
         return "\n".join(requirements)
 
     def _generate_environment_yml(self, conda_packages: list[dict]) -> str:
@@ -531,9 +531,7 @@ class ExecutionRecorder:
 
         # Prepare execution
         start_time = datetime.now()
-        process_env = os.environ.copy()
-        process_env.update(environment)
-
+        process_env = os.environ.copy() | environment
         # Execute and record
         process = subprocess.Popen(
             [command] + arguments,
@@ -562,7 +560,7 @@ class ExecutionRecorder:
         try:
             process_info = psutil.Process(process.pid)
             memory_usage = process_info.memory_info().rss
-        except:
+        except Exception:
             pass
 
         # Store recording
@@ -605,7 +603,7 @@ class ExecutionRecorder:
                     with open(file_path, "rb") as f:
                         file_hash = hashlib.sha256(f.read()).hexdigest()
                     snapshot[str(file_path)] = file_hash
-                except:
+                except Exception:
                     pass
 
         return snapshot
@@ -783,19 +781,18 @@ class ReproducibilityPackager:
         ]
 
         for tool in tool_names:
-            tool_path = shutil.which(tool)
-            if tool_path:
+            if tool_path := shutil.which(tool):
                 tools[tool] = tool_path
 
         return tools
 
     def _encrypt_sensitive_data(self, data: dict) -> dict:
         """Encrypt sensitive configuration data."""
-        encrypted = {}
-        for key, value in data.items():
-            if value:
-                encrypted[key] = self.cipher.encrypt(value.encode()).decode()
-        return encrypted
+        return {
+            key: self.cipher.encrypt(value.encode()).decode()
+            for key, value in data.items()
+            if value
+        }
 
     def _generate_vagrantfile(self, system: SystemSnapshot) -> str:
         """Generate Vagrantfile for VM-based reproduction."""
@@ -1004,7 +1001,7 @@ __pycache__/
 """
             (package_path / ".gitignore").write_text(gitignore)
 
-        except:
+        except Exception:
             pass  # Git not available
 
     def _generate_checksums(self, package_path: Path) -> str:
@@ -1018,7 +1015,7 @@ __pycache__/
                         file_hash = hashlib.sha256(f.read()).hexdigest()
                     relative_path = file_path.relative_to(package_path)
                     checksums.append(f"{file_hash}  {relative_path}")
-                except:
+                except Exception:
                     pass
 
         return "\n".join(checksums)
@@ -1040,7 +1037,7 @@ __pycache__/
     ) -> str:
         """Generate detailed reproduction instructions."""
 
-        instructions = f"""# Intellicrack Validation Reproduction Instructions
+        return f"""# Intellicrack Validation Reproduction Instructions
 
 ## Package: {package_name}
 ## Generated: {datetime.now(timezone.utc).isoformat()}
@@ -1049,7 +1046,7 @@ __pycache__/
 
 ### Hardware
 - CPU: {system.cpu_count} cores minimum
-- RAM: {system.memory_total // (1024**3)}GB minimum
+- RAM: {system.memory_total // 1024**3}GB minimum
 - Disk: 50GB free space
 - GPU: Optional (improves performance)
 
@@ -1124,8 +1121,6 @@ For issues with reproduction, include:
 ---
 End of Instructions
 """
-
-        return instructions
 
     def _save_snapshot(self, path: Path, data: dict):
         """Save snapshot data as JSON."""

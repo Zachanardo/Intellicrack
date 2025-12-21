@@ -204,7 +204,7 @@ class RealWorldUIIntegrationTester:
             result = analyzer.analyze_binary()
 
             if "FlexLM" not in result.get("detected_systems", []):
-                print(f"    FAILURE: FlexLM not detected in real binary")
+                print("    FAILURE: FlexLM not detected in real binary")
                 print(f"    Detected: {result.get('detected_systems', [])}")
                 return False
 
@@ -243,7 +243,7 @@ class RealWorldUIIntegrationTester:
             result = analyzer.analyze_binary()
 
             if "HASP" not in result.get("detected_systems", []):
-                print(f"    FAILURE: HASP not detected in real binary")
+                print("    FAILURE: HASP not detected in real binary")
                 return False
 
             # Verify bypass generation
@@ -281,7 +281,7 @@ class RealWorldUIIntegrationTester:
             result = analyzer.analyze_binary()
 
             if "CodeMeter" not in result.get("detected_systems", []):
-                print(f"    FAILURE: CodeMeter not detected in real binary")
+                print("    FAILURE: CodeMeter not detected in real binary")
                 return False
 
             # Verify bypass generation

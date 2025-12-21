@@ -8,19 +8,18 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
 from ...ai.interactive_assistant import IntellicrackAIAssistant
-from ...protection import get_protection_detector
 from ...protection.intellicrack_protection_advanced import (
     AdvancedProtectionAnalysis,
     CertificateInfo,
-    DIEAdvancedDetector,
     EntropyInfo,
+    IntellicrackAdvancedProtection,
     ScanMode,
     StringInfo,
 )
-from ...protection.intellicrack_protection_core import ProtectionType
+from ...protection.intellicrack_protection_core import DetectionResult, ProtectionType
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -29,12 +28,11 @@ logger = get_logger(__name__)
 class DIEAnalysisTool:
     """LLM tool for running protection analysis and interpreting results"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize protection analysis tool"""
-        self.detector = get_protection_detector()
-        self.intellicrack_protection_core = DIEAdvancedDetector()  # Keep for advanced features
-        self.analysis_cache = {}
-        self.ai_assistant = IntellicrackAIAssistant()
+        self.detector: IntellicrackAdvancedProtection = IntellicrackAdvancedProtection()
+        self.analysis_cache: dict[str, dict[str, Any]] = {}
+        self.ai_assistant: IntellicrackAIAssistant = IntellicrackAIAssistant()
 
     def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration
@@ -85,7 +83,7 @@ class DIEAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> dict[str, Any]:
+    def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute DIE analysis
 
         Args:
@@ -96,23 +94,28 @@ class DIEAnalysisTool:
 
         """
         file_path = kwargs.get("file_path")
-        if not file_path or not os.path.exists(file_path):
+        if not file_path or not isinstance(file_path, str) or not os.path.exists(file_path):
             return {"success": False, "error": f"File not found: {file_path}"}
 
         # Get parameters
-        scan_mode_str = kwargs.get("scan_mode", "deep")
+        scan_mode_str_raw = kwargs.get("scan_mode", "deep")
+        scan_mode_str = scan_mode_str_raw if isinstance(scan_mode_str_raw, str) else "deep"
         scan_mode = ScanMode[scan_mode_str.upper()]
-        extract_strings = kwargs.get("extract_strings", True)
-        analyze_entropy = kwargs.get("analyze_entropy", True)
-        check_certificates = kwargs.get("check_certificates", True)
-        export_format = kwargs.get("export_format", "json")
+        extract_strings_raw = kwargs.get("extract_strings", True)
+        extract_strings = extract_strings_raw if isinstance(extract_strings_raw, bool) else True
+        analyze_entropy_raw = kwargs.get("analyze_entropy", True)
+        analyze_entropy = analyze_entropy_raw if isinstance(analyze_entropy_raw, bool) else True
+        check_certificates_raw = kwargs.get("check_certificates", True)
+        check_certificates = check_certificates_raw if isinstance(check_certificates_raw, bool) else True
+        export_format_raw = kwargs.get("export_format", "json")
+        export_format = export_format_raw if isinstance(export_format_raw, str) else "json"
 
         try:
             # Check cache
             cache_key = f"{file_path}:{scan_mode_str}"
             if cache_key in self.analysis_cache:
                 logger.debug(f"Returning cached analysis for {file_path}")
-                cached_result = self.analysis_cache[cache_key]
+                cached_result = self.analysis_cache[cache_key].copy()
                 cached_result["from_cache"] = True
                 return cached_result
 
@@ -238,10 +241,10 @@ class DIEAnalysisTool:
 
     def _format_protections(self, analysis: AdvancedProtectionAnalysis) -> list[dict[str, Any]]:
         """Format protection detections for LLM consumption"""
-        protections = []
+        protections: list[dict[str, Any]] = []
 
         for detection in analysis.detections:
-            protection = {
+            protection: dict[str, Any] = {
                 "name": detection.name,
                 "type": detection.type.value,
                 "confidence": detection.confidence,
@@ -260,16 +263,12 @@ class DIEAnalysisTool:
 
     def _categorize_protection(self, protection_type: ProtectionType) -> str:
         """Categorize protection type for AI understanding"""
-        categories = {
+        categories: dict[ProtectionType, str] = {
             ProtectionType.PACKER: "compression",
             ProtectionType.PROTECTOR: "anti-tampering",
             ProtectionType.CRYPTOR: "encryption",
-            ProtectionType.OBFUSCATOR: "code_obfuscation",
             ProtectionType.LICENSE: "licensing",
             ProtectionType.DRM: "digital_rights",
-            ProtectionType.ANTIDEBUG: "anti_debugging",
-            ProtectionType.ANTIDUMP: "anti_dumping",
-            ProtectionType.ANTIVM: "anti_virtualization",
             ProtectionType.DONGLE: "hardware_protection",
             ProtectionType.UNKNOWN: "unknown",
         }
@@ -286,7 +285,7 @@ class DIEAnalysisTool:
 
     def _get_generic_bypass_methods(self, protection_type: ProtectionType) -> list[str]:
         """Get generic bypass methods by protection type"""
-        methods = {
+        methods: dict[ProtectionType, list[str]] = {
             ProtectionType.PACKER: [
                 "Use unpacking tools (UPX, PEiD)",
                 "Dump process memory after unpacking",
@@ -311,12 +310,6 @@ class DIEAnalysisTool:
                 "Bypass online verification",
                 "Extract decryption keys",
             ],
-            ProtectionType.ANTIDEBUG: [
-                "Use ScyllaHide plugin",
-                "Patch IsDebuggerPresent checks",
-                "Hide debugger with TitanHide",
-                "Use timing attack mitigation",
-            ],
             ProtectionType.DONGLE: [
                 "Emulate dongle responses",
                 "Identify dongle communication protocol",
@@ -328,18 +321,24 @@ class DIEAnalysisTool:
 
     def _format_entropy_analysis(self, entropy_info: list[EntropyInfo]) -> dict[str, Any]:
         """Format entropy analysis for AI interpretation"""
-        analysis = {
-            "sections": [],
-            "packed_sections": [],
-            "encrypted_sections": [],
+        sections_list: list[dict[str, Any]] = []
+        packed_sections: list[str] = []
+        encrypted_sections: list[str] = []
+
+        analysis: dict[str, Any] = {
+            "sections": sections_list,
+            "packed_sections": packed_sections,
+            "encrypted_sections": encrypted_sections,
             "average_entropy": 0.0,
             "max_entropy": 0.0,
             "packing_likelihood": "low",
         }
 
         total_entropy = 0.0
+        max_entropy_value = 0.0
+
         for info in entropy_info:
-            section_data = {
+            section_data: dict[str, Any] = {
                 "name": info.section_name,
                 "offset": hex(info.offset),
                 "size": info.size,
@@ -349,24 +348,26 @@ class DIEAnalysisTool:
 
             if info.encrypted:
                 section_data["status"] = "encrypted"
-                analysis["encrypted_sections"].append(info.section_name)
+                encrypted_sections.append(info.section_name)
             elif info.packed:
                 section_data["status"] = "packed"
-                analysis["packed_sections"].append(info.section_name)
+                packed_sections.append(info.section_name)
 
-            analysis["sections"].append(section_data)
+            sections_list.append(section_data)
             total_entropy += info.entropy
-            analysis["max_entropy"] = max(analysis["max_entropy"], info.entropy)
+            max_entropy_value = max(max_entropy_value, info.entropy)
+
+        analysis["max_entropy"] = max_entropy_value
 
         if entropy_info:
             analysis["average_entropy"] = round(total_entropy / len(entropy_info), 3)
 
             # Determine packing likelihood
-            if analysis["max_entropy"] > 7.5:
+            if max_entropy_value > 7.5:
                 analysis["packing_likelihood"] = "very_high"
-            elif analysis["max_entropy"] > 7.0:
+            elif max_entropy_value > 7.0:
                 analysis["packing_likelihood"] = "high"
-            elif analysis["max_entropy"] > 6.5:
+            elif max_entropy_value > 6.5:
                 analysis["packing_likelihood"] = "medium"
             else:
                 analysis["packing_likelihood"] = "low"
@@ -481,13 +482,18 @@ class DIEAnalysisTool:
             Batch analysis results
 
         """
-        results = {
+        analyzed_count = 0
+        error_count = 0
+        protections_found = 0
+        files_dict: dict[str, Any] = {}
+
+        results: dict[str, Any] = {
             "success": True,
             "total_files": len(file_paths),
-            "analyzed": 0,
-            "errors": 0,
-            "protections_found": 0,
-            "files": {},
+            "analyzed": analyzed_count,
+            "errors": error_count,
+            "protections_found": protections_found,
+            "files": files_dict,
         }
 
         mode = ScanMode[scan_mode.upper()]
@@ -497,18 +503,22 @@ class DIEAnalysisTool:
 
         for file_path, analysis in batch_results.items():
             if analysis.file_type != "Error":
-                results["analyzed"] += 1
+                analyzed_count += 1
                 if analysis.detections:
-                    results["protections_found"] += 1
+                    protections_found += 1
 
-                results["files"][file_path] = {
+                files_dict[file_path] = {
                     "type": analysis.file_type,
                     "protected": bool(analysis.detections),
                     "protections": [d.name for d in analysis.detections],
                 }
             else:
-                results["errors"] += 1
-                results["files"][file_path] = {"error": "Analysis failed"}
+                error_count += 1
+                files_dict[file_path] = {"error": "Analysis failed"}
+
+        results["analyzed"] = analyzed_count
+        results["errors"] = error_count
+        results["protections_found"] = protections_found
 
         return results
 
@@ -542,15 +552,19 @@ class DIEAnalysisTool:
         protections2 = {d.name for d in analysis2.detections}
 
         # Find common and unique protections
-        comparison["same_protections"] = list(protections1 & protections2)
-        comparison["unique_to_file1"] = list(protections1 - protections2)
-        comparison["unique_to_file2"] = list(protections2 - protections1)
+        same_prots = list(protections1 & protections2)
+        unique_to_file1 = list(protections1 - protections2)
+        unique_to_file2 = list(protections2 - protections1)
+
+        comparison["same_protections"] = same_prots
+        comparison["unique_to_file1"] = unique_to_file1
+        comparison["unique_to_file2"] = unique_to_file2
 
         # Calculate similarity score
         if protections1 or protections2:
-            common = len(comparison["same_protections"])
-            total = len(protections1 | protections2)
-            comparison["similarity_score"] = round(common / total * 100, 2)
+            common_count = len(same_prots)
+            total_unique = len(protections1 | protections2)
+            comparison["similarity_score"] = round(common_count / total_unique * 100, 2) if total_unique > 0 else 0.0
 
         # Compare import hashes if available
         if analysis1.import_hash and analysis2.import_hash:
@@ -593,7 +607,9 @@ class DIEAnalysisTool:
         """Analyze license patterns for LLM consumption"""
         try:
             # Prepare input data for AI license analysis
-            input_data = {"patterns": [], "strings": [], "binary_path": file_path}
+            patterns_list: list[dict[str, Any]] = []
+            strings_list: list[str] = []
+            input_data: dict[str, Any] = {"patterns": patterns_list, "strings": strings_list, "binary_path": file_path}
 
             # Extract relevant strings from analysis
             if analysis.suspicious_strings:
@@ -611,27 +627,27 @@ class DIEAnalysisTool:
                 ]
                 for string_info in analysis.suspicious_strings:
                     if any(keyword in string_info.value.lower() for keyword in license_keywords):
-                        input_data["strings"].append(string_info.value)
-                        if len(input_data["strings"]) >= 50:  # Limit to 50 strings
+                        strings_list.append(string_info.value)
+                        if len(strings_list) >= 50:
                             break
 
             # Add detection patterns
             if analysis.detections:
-                for detection in analysis.detections:
-                    if detection.type in [
+                patterns_list.extend(
+                    {
+                        "name": detection.name,
+                        "type": detection.type.value,
+                        "version": detection.version,
+                        "confidence": detection.confidence,
+                    }
+                    for detection in analysis.detections
+                    if detection.type
+                    in [
                         ProtectionType.LICENSE,
                         ProtectionType.DONGLE,
                         ProtectionType.DRM,
-                    ]:
-                        input_data["patterns"].append(
-                            {
-                                "name": detection.name,
-                                "type": detection.type.value,
-                                "version": detection.version,
-                                "confidence": detection.confidence,
-                            }
-                        )
-
+                    ]
+                )
             # Call AI assistant's license pattern analysis
             license_analysis = self.ai_assistant.analyze_license_patterns(input_data)
 
@@ -674,7 +690,7 @@ class DIEAnalysisTool:
             return False
         return "advapi32.dll" in analysis.imports
 
-    def _get_license_llm_guidance(self, license_type: str, detections: list[Any]) -> str:
+    def _get_license_llm_guidance(self, license_type: str, detections: list[DetectionResult]) -> str:
         """Get LLM-specific guidance for license analysis"""
         guidance = f"Detected {license_type} licensing. "
 

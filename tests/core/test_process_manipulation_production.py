@@ -36,14 +36,12 @@ class TestProcessAttachment:
 
         analyzer.detach()
 
-    def test_attach_to_existing_process_by_name(self) -> None:  # noqa: PLR6301
+    def test_attach_to_existing_process_by_name(self) -> None:    # noqa: PLR6301
         """Attaches to process by name (notepad.exe or python.exe)."""
         analyzer = LicenseAnalyzer()
 
         python_name = "python.exe"
-        result = analyzer.attach(python_name)
-
-        if result:
+        if result := analyzer.attach(python_name):
             assert analyzer.pid is not None
             assert analyzer.process_handle is not None
             analyzer.detach()
@@ -84,7 +82,7 @@ class TestProcessAttachment:
 class TestMemoryReading:
     """Test real memory reading operations on live processes."""
 
-    def test_read_memory_from_attached_process(self) -> None:  # noqa: PLR6301
+    def test_read_memory_from_attached_process(self) -> None:    # noqa: PLR6301
         """Reads actual memory from attached process."""
         analyzer = LicenseAnalyzer()
 
@@ -94,9 +92,7 @@ class TestMemoryReading:
         test_string = b"TEST_MEMORY_MARKER_12345"
         marker_address = ctypes.addressof(ctypes.c_char_p(test_string).contents)
 
-        read_data = analyzer.read_memory(marker_address, len(test_string))
-
-        if read_data:
+        if read_data := analyzer.read_memory(marker_address, len(test_string)):
             assert test_string in read_data or len(read_data) > 0
 
         analyzer.detach()
@@ -115,7 +111,7 @@ class TestMemoryReading:
 
         analyzer.detach()
 
-    def test_read_memory_respects_size_parameter(self) -> None:  # noqa: PLR6301
+    def test_read_memory_respects_size_parameter(self) -> None:    # noqa: PLR6301
         """Reads specified number of bytes from memory."""
         analyzer = LicenseAnalyzer()
 
@@ -126,9 +122,7 @@ class TestMemoryReading:
         data_address = ctypes.addressof(ctypes.c_char_p(test_data).contents)
 
         read_size = 50
-        read_data = analyzer.read_memory(data_address, read_size)
-
-        if read_data:
+        if read_data := analyzer.read_memory(data_address, read_size):
             assert len(read_data) <= read_size
 
         analyzer.detach()
@@ -137,7 +131,7 @@ class TestMemoryReading:
 class TestMemoryWriting:
     """Test real memory writing operations on live processes."""
 
-    def test_write_memory_to_attached_process(self) -> None:  # noqa: PLR6301
+    def test_write_memory_to_attached_process(self) -> None:    # noqa: PLR6301
         """Writes data to attached process memory."""
         analyzer = LicenseAnalyzer()
 
@@ -149,11 +143,8 @@ class TestMemoryWriting:
 
         new_data = b"MODIFIED"
 
-        result = analyzer.write_memory(buffer_address, new_data)
-
-        if result:
-            read_back = analyzer.read_memory(buffer_address, len(new_data))
-            if read_back:
+        if result := analyzer.write_memory(buffer_address, new_data):
+            if read_back := analyzer.read_memory(buffer_address, len(new_data)):
                 assert new_data in read_back
 
         analyzer.detach()
@@ -200,7 +191,7 @@ class TestMemoryRegionEnumeration:
 
         analyzer.detach()
 
-    def test_enumerate_memory_finds_executable_regions(self) -> None:  # noqa: PLR6301
+    def test_enumerate_memory_finds_executable_regions(self) -> None:    # noqa: PLR6301
         """Finds executable memory regions in process."""
         analyzer = LicenseAnalyzer()
 
@@ -211,11 +202,11 @@ class TestMemoryRegionEnumeration:
 
         executable_regions = [r for r in regions if r["is_executable"]]
 
-        assert len(executable_regions) > 0
+        assert executable_regions
 
         analyzer.detach()
 
-    def test_enumerate_memory_finds_writable_regions(self) -> None:  # noqa: PLR6301
+    def test_enumerate_memory_finds_writable_regions(self) -> None:    # noqa: PLR6301
         """Finds writable memory regions in process."""
         analyzer = LicenseAnalyzer()
 
@@ -226,7 +217,7 @@ class TestMemoryRegionEnumeration:
 
         writable_regions = [r for r in regions if r["is_writable"]]
 
-        assert len(writable_regions) > 0
+        assert writable_regions
 
         analyzer.detach()
 
@@ -284,7 +275,7 @@ class TestSerialValidationDetection:
 
         analyzer.detach()
 
-    def test_serial_validation_detection_identifies_patterns(self) -> None:  # noqa: PLR6301
+    def test_serial_validation_detection_identifies_patterns(self) -> None:    # noqa: PLR6301
         """Identifies specific serial validation patterns."""
         analyzer = LicenseAnalyzer()
 
@@ -297,7 +288,7 @@ class TestSerialValidationDetection:
             validation_types = {v["type"] for v in validations}
             expected_types = {"string_compare", "length_check", "checksum_loop", "xor_validation"}
 
-            assert len(validation_types.intersection(expected_types)) > 0
+            assert validation_types.intersection(expected_types)
 
         analyzer.detach()
 
@@ -325,7 +316,7 @@ class TestTrialCheckDetection:
 
         analyzer.detach()
 
-    def test_trial_check_detection_identifies_time_patterns(self) -> None:  # noqa: PLR6301
+    def test_trial_check_detection_identifies_time_patterns(self) -> None:    # noqa: PLR6301
         """Identifies time-related patterns in trial checks."""
         analyzer = LicenseAnalyzer()
 
@@ -343,8 +334,6 @@ class TestTrialCheckDetection:
                 "trial_counter",
                 "expiry_check"
             }
-
-            assert len(check_types.intersection(expected_types)) >= 0
 
         analyzer.detach()
 
@@ -369,7 +358,7 @@ class TestProtectionSignatureDetection:
 class TestPEBAccess:
     """Test access to Process Environment Block (PEB)."""
 
-    def test_access_peb_of_attached_process(self) -> None:  # noqa: PLR6301
+    def test_access_peb_of_attached_process(self) -> None:    # noqa: PLR6301
         """Accesses PEB of attached process."""
         analyzer = LicenseAnalyzer()
 
@@ -377,13 +366,12 @@ class TestPEBAccess:
         analyzer.attach_pid(current_pid)
 
         if hasattr(analyzer, 'get_peb_address'):
-            peb_address = analyzer.get_peb_address()
-            if peb_address:
+            if peb_address := analyzer.get_peb_address():
                 assert peb_address > 0
 
         analyzer.detach()
 
-    def test_read_being_debugged_flag_from_peb(self) -> None:  # noqa: PLR6301
+    def test_read_being_debugged_flag_from_peb(self) -> None:    # noqa: PLR6301
         """Reads BeingDebugged flag from PEB."""
         analyzer = LicenseAnalyzer()
 
@@ -391,8 +379,7 @@ class TestPEBAccess:
         analyzer.attach_pid(current_pid)
 
         if hasattr(analyzer, 'read_peb'):
-            peb_data = analyzer.read_peb()
-            if peb_data:
+            if peb_data := analyzer.read_peb():
                 assert isinstance(peb_data, (dict, bytes))
 
         analyzer.detach()
@@ -401,34 +388,32 @@ class TestPEBAccess:
 class TestProcessEnumeration:
     """Test process enumeration capabilities."""
 
-    def test_enumerate_running_processes(self) -> None:  # noqa: PLR6301
+    def test_enumerate_running_processes(self) -> None:    # noqa: PLR6301
         """Enumerates currently running processes."""
         processes = list(psutil.process_iter(['pid', 'name']))
 
-        assert len(processes) > 0
+        assert processes
 
         for proc in processes[:10]:
             assert 'pid' in proc.info
             assert 'name' in proc.info
             assert proc.info['pid'] > 0
 
-    def test_find_process_by_name(self) -> None:  # noqa: PLR6301
+    def test_find_process_by_name(self) -> None:    # noqa: PLR6301
         """Finds process by its executable name."""
         current_name = psutil.Process().name()
 
-        found = False
-        for proc in psutil.process_iter(['pid', 'name']):
-            if proc.info['name'].lower() == current_name.lower():
-                found = True
-                break
-
-        assert found is True
+        found = any(
+            proc.info['name'].lower() == current_name.lower()
+            for proc in psutil.process_iter(['pid', 'name'])
+        )
+        assert found
 
 
 class TestMemoryPatternSearching:
     """Test memory pattern searching capabilities."""
 
-    def test_search_memory_for_byte_pattern(self) -> None:  # noqa: PLR6301
+    def test_search_memory_for_byte_pattern(self) -> None:    # noqa: PLR6301
         """Searches process memory for specific byte patterns."""
         analyzer = LicenseAnalyzer()
 
@@ -437,9 +422,7 @@ class TestMemoryPatternSearching:
 
         regions = analyzer.enumerate_memory_regions()
 
-        readable_regions = [r for r in regions if r["is_readable"]]
-
-        if len(readable_regions) > 0:
+        if readable_regions := [r for r in regions if r["is_readable"]]:
             region = readable_regions[0]
             memory = analyzer.read_memory(region["base_address"], min(region["size"], 4096))
 
@@ -479,11 +462,9 @@ class TestCacheManagement:
 class TestWindowsAPISetup:
     """Test Windows API initialization."""
 
-    def test_windows_apis_loaded(self) -> None:  # noqa: PLR6301
+    def test_windows_apis_loaded(self) -> None:    # noqa: PLR6301
         """Windows API functions are properly loaded."""
         analyzer = LicenseAnalyzer()
-
-        assert hasattr(analyzer, '_setup_windows_apis') or True
 
 
 class TestErrorHandling:
@@ -581,14 +562,14 @@ class TestMemoryProtectionFlags:
 class TestContextAnalysis:
     """Test code context analysis for validation detection."""
 
-    def test_analyze_serial_validation_context(self) -> None:  # noqa: PLR6301
+    def test_analyze_serial_validation_context(self) -> None:    # noqa: PLR6301
         """Analyzes code context around potential serial validation."""
         analyzer = LicenseAnalyzer()
 
         context_with_loop = b"\xe2\x00" + b"\x00" * 50
-        result = analyzer._analyze_serial_validation_context(0x1000, context_with_loop)
-
-        if result:
+        if result := analyzer._analyze_serial_validation_context(
+            0x1000, context_with_loop
+        ):
             assert "has_loop" in result
             assert "has_comparison" in result
             assert "confidence" in result

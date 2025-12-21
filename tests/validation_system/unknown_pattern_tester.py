@@ -280,12 +280,14 @@ class UnknownPatternTester:
                 r"C:\Windows\System32\cmd.exe"
             ]
 
-            template_binary = None
-            for binary_path in template_binaries:
-                if os.path.exists(binary_path):
-                    template_binary = binary_path
-                    break
-
+            template_binary = next(
+                (
+                    binary_path
+                    for binary_path in template_binaries
+                    if os.path.exists(binary_path)
+                ),
+                None,
+            )
             if not template_binary:
                 raise FileNotFoundError("No suitable template binary found")
 
@@ -366,8 +368,7 @@ class UnknownPatternTester:
             # Extract imports using PowerShell and .NET
             imports_info = self._extract_pe_imports(binary_path)
 
-            # Build comprehensive analysis
-            analysis = {
+            return {
                 "scenario_id": scenario.scenario_id,
                 "pattern_type": scenario.pattern_type.value,
                 "analysis_timestamp": datetime.now().isoformat(),
@@ -382,17 +383,18 @@ class UnknownPatternTester:
                     "timestamp": pe_info.get("TIMESTAMP", ""),
                     "sections": self._extract_pe_sections(binary_path),
                     "imports": imports_info,
-                    "exports": self._extract_pe_exports(binary_path)
+                    "exports": self._extract_pe_exports(binary_path),
                 },
                 "protection_implementation": scenario.protection_characteristics,
-                "behavioral_patterns": self._analyze_real_behavioral_patterns(binary_path, scenario),
-                "detection_challenges": self._generate_detection_challenges(scenario),
+                "behavioral_patterns": self._analyze_real_behavioral_patterns(
+                    binary_path, scenario
+                ),
+                "detection_challenges": self._generate_detection_challenges(
+                    scenario
+                ),
                 "analysis_notes": f"Real binary analysis: {scenario.description}",
-                "protection_markers_injected": True
+                "protection_markers_injected": True,
             }
-
-            return analysis
-
         except Exception as e:
             logger.error(f"PE analysis failed: {str(e)}")
             return self._create_basic_analysis_structure(scenario, binary_path)
@@ -539,10 +541,10 @@ class UnknownPatternTester:
                                 "characteristics": char_desc
                             })
 
-            return sections if sections else [
-                {"name": ".text", "virtual_address": "0x00401000", "size": "0x10000", "characteristics": "executable"},
-                {"name": ".data", "virtual_address": "0x00411000", "size": "0x5000", "characteristics": "readable_writable"}
-            ]
+            return sections or [
+                                   {"name": ".text", "virtual_address": "0x00401000", "size": "0x10000", "characteristics": "executable"},
+                                   {"name": ".data", "virtual_address": "0x00411000", "size": "0x5000", "characteristics": "readable_writable"}
+                               ]
 
         except Exception as e:
             logger.error(f"Section extraction failed: {str(e)}")
@@ -589,7 +591,7 @@ class UnknownPatternTester:
                         if export_name and not export_name.startswith("("):
                             exports.append(export_name)
 
-            return exports if exports else ["MainEntryPoint"]
+            return exports or ["MainEntryPoint"]
 
         except Exception as e:
             logger.error(f"Export extraction failed: {str(e)}")
@@ -758,41 +760,44 @@ class UnknownPatternTester:
 
             # Add scenario-specific patterns
             if scenario.pattern_type == ProtectionPatternType.TIME_DELAYED:
-                behavioral_patterns.update({
-                    "background_threads": ["License monitoring thread", "Timer validation thread"],
+                behavioral_patterns |= {
+                    "background_threads": [
+                        "License monitoring thread",
+                        "Timer validation thread",
+                    ],
                     "periodic_checks": ["Every 60 seconds: license re-validation"],
                     "delayed_actions": [
                         {"delay": "300s", "action": "Display license warning"},
-                        {"delay": "900s", "action": "Begin feature restrictions"}
-                    ]
-                })
+                        {"delay": "900s", "action": "Begin feature restrictions"},
+                    ],
+                }
             elif scenario.pattern_type == ProtectionPatternType.HARDWARE_FINGERPRINT:
-                behavioral_patterns.update({
+                behavioral_patterns |= {
                     "hardware_enumeration": [
                         "CPU identification via CPUID instruction",
                         "Memory configuration analysis",
                         "Storage device enumeration",
-                        "Network adapter MAC address collection"
+                        "Network adapter MAC address collection",
                     ],
                     "fingerprint_generation": "SHA-256 of normalized hardware data",
-                    "anti_vm_checks": ["VMware detection", "VirtualBox detection", "Hyper-V detection"]
-                })
+                    "anti_vm_checks": [
+                        "VMware detection",
+                        "VirtualBox detection",
+                        "Hyper-V detection",
+                    ],
+                }
             elif scenario.pattern_type == ProtectionPatternType.CUSTOM_CRYPTO:
-                behavioral_patterns.update({
-                    "crypto_operations": [
-                        "Custom encryption algorithm execution",
-                        "Dynamic key generation from hardware",
-                        "License validation through crypto checks"
-                    ]
-                })
+                behavioral_patterns["crypto_operations"] = [
+                    "Custom encryption algorithm execution",
+                    "Dynamic key generation from hardware",
+                    "License validation through crypto checks",
+                ]
             elif scenario.pattern_type == ProtectionPatternType.MULTI_DLL_SCATTERED:
-                behavioral_patterns.update({
-                    "dll_communication": [
-                        "Inter-DLL function calls for validation",
-                        "Encrypted message passing between modules",
-                        "Cascading validation across DLLs"
-                    ]
-                })
+                behavioral_patterns["dll_communication"] = [
+                    "Inter-DLL function calls for validation",
+                    "Encrypted message passing between modules",
+                    "Cascading validation across DLLs",
+                ]
 
             return behavioral_patterns
 
@@ -879,41 +884,44 @@ class UnknownPatternTester:
         }
 
         if scenario.pattern_type == ProtectionPatternType.TIME_DELAYED:
-            base_patterns.update({
-                "background_threads": ["License monitoring thread", "Timer validation thread"],
+            base_patterns |= {
+                "background_threads": [
+                    "License monitoring thread",
+                    "Timer validation thread",
+                ],
                 "periodic_checks": ["Every 60 seconds: license re-validation"],
                 "delayed_actions": [
                     {"delay": "300s", "action": "Display license warning"},
-                    {"delay": "900s", "action": "Begin feature restrictions"}
-                ]
-            })
+                    {"delay": "900s", "action": "Begin feature restrictions"},
+                ],
+            }
         elif scenario.pattern_type == ProtectionPatternType.HARDWARE_FINGERPRINT:
-            base_patterns.update({
+            base_patterns |= {
                 "hardware_enumeration": [
                     "CPU identification via CPUID instruction",
                     "Memory configuration analysis",
                     "Storage device serial number collection",
-                    "Network adapter MAC address gathering"
+                    "Network adapter MAC address gathering",
                 ],
                 "fingerprint_generation": "SHA-256 of normalized hardware data",
-                "anti_vm_checks": ["VMware detection", "VirtualBox detection", "Hyper-V detection"]
-            })
+                "anti_vm_checks": [
+                    "VMware detection",
+                    "VirtualBox detection",
+                    "Hyper-V detection",
+                ],
+            }
         elif scenario.pattern_type == ProtectionPatternType.CUSTOM_CRYPTO:
-            base_patterns.update({
-                "crypto_operations": [
-                    "Custom encryption algorithm execution",
-                    "Dynamic key generation from hardware data",
-                    "Multi-stage license validation through crypto"
-                ]
-            })
+            base_patterns["crypto_operations"] = [
+                "Custom encryption algorithm execution",
+                "Dynamic key generation from hardware data",
+                "Multi-stage license validation through crypto",
+            ]
         elif scenario.pattern_type == ProtectionPatternType.MULTI_DLL_SCATTERED:
-            base_patterns.update({
-                "dll_communication": [
-                    "Inter-DLL function calls for validation",
-                    "Encrypted message passing between modules",
-                    "Cascading validation failure across DLLs"
-                ]
-            })
+            base_patterns["dll_communication"] = [
+                "Inter-DLL function calls for validation",
+                "Encrypted message passing between modules",
+                "Cascading validation failure across DLLs",
+            ]
 
         return base_patterns
 
@@ -1197,26 +1205,33 @@ class UnknownPatternTester:
 
         if "Cryptographic protection pattern" in str(all_evidence):
             protection_type = "Custom Cryptographic License Protection"
-            characteristics.append("Novel encryption algorithm")
-            characteristics.append("Dynamic key generation")
+            characteristics.extend(
+                ("Novel encryption algorithm", "Dynamic key generation")
+            )
             recommendations.append("Reverse engineer custom crypto algorithm")
             step.confidence_level = 0.8
         elif "Multi-module protection pattern" in str(all_evidence):
             protection_type = "Distributed DLL Protection System"
-            characteristics.append("Protection logic across multiple modules")
-            characteristics.append("Inter-module communication")
+            characteristics.extend(
+                (
+                    "Protection logic across multiple modules",
+                    "Inter-module communication",
+                )
+            )
             recommendations.append("Analyze inter-DLL dependencies")
             step.confidence_level = 0.75
         elif "Time-based protection pattern" in str(all_evidence):
             protection_type = "Time-Delayed License Protection"
-            characteristics.append("Delayed protection triggers")
-            characteristics.append("Background monitoring threads")
+            characteristics.extend(
+                ("Delayed protection triggers", "Background monitoring threads")
+            )
             recommendations.append("Long-term monitoring required")
             step.confidence_level = 0.7
         elif "Hardware fingerprinting pattern" in str(all_evidence):
             protection_type = "Hardware-Bound License Protection"
-            characteristics.append("Hardware fingerprint validation")
-            characteristics.append("Anti-virtualization checks")
+            characteristics.extend(
+                ("Hardware fingerprint validation", "Anti-virtualization checks")
+            )
             recommendations.append("Hardware spoofing may be required")
             step.confidence_level = 0.85
 
@@ -1281,12 +1296,19 @@ class UnknownPatternTester:
                 evidence.append("Bypass successful - protection neutralized")
                 step.confidence_level = 0.9
             else:
-                evidence.append("Bypass failed - protection still active")
-                evidence.append("Note: Protection identified but bypass not achieved (Phase 2.5.3.4 compliant)")
-
+                evidence.extend(
+                    (
+                        "Bypass failed - protection still active",
+                        "Note: Protection identified but bypass not achieved (Phase 2.5.3.4 compliant)",
+                    )
+                )
         except Exception as bypass_error:
-            evidence.append(f"Bypass attempt failed with error: {str(bypass_error)}")
-            evidence.append("Note: Protection identified but bypass not achieved (Phase 2.5.3.4 compliant)")
+            evidence.extend(
+                (
+                    f"Bypass attempt failed with error: {str(bypass_error)}",
+                    "Note: Protection identified but bypass not achieved (Phase 2.5.3.4 compliant)",
+                )
+            )
             success = False
 
         step.evidence_found = evidence
@@ -1304,9 +1326,12 @@ class UnknownPatternTester:
             # Method 1: Try to use x64dbg or similar debugger to patch crypto routines
             x64dbg_path = r"C:\Program Files\x64dbg\release\x64dbg.exe"
             if os.path.exists(x64dbg_path):
-                details.append("x64dbg debugger available for crypto routine patching")
-                # In production, would attach debugger and patch crypto validation
-                details.append("Would patch crypto validation routine to always return success")
+                details.extend(
+                    (
+                        "x64dbg debugger available for crypto routine patching",
+                        "Would patch crypto validation routine to always return success",
+                    )
+                )
                 success_rate = 0.65  # Realistic success rate for crypto bypass
             else:
                 # Fallback: Use PowerShell to attempt memory patching
@@ -1356,10 +1381,12 @@ class UnknownPatternTester:
             except ImportError:
                 details.append("Frida not available, using alternative methods")
 
-            # Method 3: Static binary patching with hex editor approach
-            details.append("Attempting static binary crypto patching")
-            details.append("Would search for crypto validation jumps and NOP them")
-
+            details.extend(
+                (
+                    "Attempting static binary crypto patching",
+                    "Would search for crypto validation jumps and NOP them",
+                )
+            )
             # Determine success based on available tools and methods
             import time
             time.sleep(0.1)  # Simulate analysis time
@@ -1387,8 +1414,12 @@ class UnknownPatternTester:
             # Method 1: Use API Monitor to identify DLL communication
             api_monitor_path = r"C:\Program Files\API Monitor\apimonitor-x64.exe"
             if os.path.exists(api_monitor_path):
-                details.append("API Monitor available for DLL communication analysis")
-                details.append("Would monitor inter-DLL function calls")
+                details.extend(
+                    (
+                        "API Monitor available for DLL communication analysis",
+                        "Would monitor inter-DLL function calls",
+                    )
+                )
                 success_rate = 0.7
             else:
                 details.append("Using Process Monitor for DLL activity analysis")
@@ -1429,8 +1460,12 @@ class UnknownPatternTester:
                 )
 
                 if result.returncode == 0 and result.stdout.strip():
-                    details.append("Target DLLs identified for hooking")
-                    details.append("Would inject hook DLL to intercept validation calls")
+                    details.extend(
+                        (
+                            "Target DLLs identified for hooking",
+                            "Would inject hook DLL to intercept validation calls",
+                        )
+                    )
                     success_rate += 0.1
                 else:
                     details.append("No target DLLs found")
@@ -1441,16 +1476,20 @@ class UnknownPatternTester:
 
             # Method 3: API hooking with detours or similar
             try:
-                # Simulate detours-style API hooking
-                details.append("Attempting API detour hooking")
-                details.append("Would hook LoadLibrary/GetProcAddress to intercept DLL loads")
-                details.append("Would redirect validation function calls to bypass routines")
-
+                details.extend(
+                    (
+                        "Attempting API detour hooking",
+                        "Would hook LoadLibrary/GetProcAddress to intercept DLL loads",
+                        "Would redirect validation function calls to bypass routines",
+                    )
+                )
                 # Check for common hooking libraries
                 common_libs = ["detours.dll", "easyhook.dll", "minhook.dll"]
-                found_libs = [lib for lib in common_libs if os.path.exists(f"C:\\Windows\\System32\\{lib}")]
-
-                if found_libs:
+                if found_libs := [
+                    lib
+                    for lib in common_libs
+                    if os.path.exists(f"C:\\Windows\\System32\\{lib}")
+                ]:
                     details.append(f"Hooking libraries available: {', '.join(found_libs)}")
                     success_rate += 0.1
 
@@ -1512,8 +1551,12 @@ class UnknownPatternTester:
                 )
 
                 if result.returncode == 0:
-                    details.append("Timer thread analysis completed")
-                    details.append("Would suspend identified timer threads")
+                    details.extend(
+                        (
+                            "Timer thread analysis completed",
+                            "Would suspend identified timer threads",
+                        )
+                    )
                     success_rate = 0.75
                 else:
                     details.append("Timer thread analysis failed")
@@ -1533,9 +1576,10 @@ class UnknownPatternTester:
                     "HKEY_LOCAL_MACHINE\\SOFTWARE\\*\\Protection\\*"
                 ]
 
-                for key_pattern in timer_keys:
-                    details.append(f"Would modify timer-related registry key: {key_pattern}")
-
+                details.extend(
+                    f"Would modify timer-related registry key: {key_pattern}"
+                    for key_pattern in timer_keys
+                )
                 success_rate += 0.1
 
             except Exception as reg_error:
@@ -1568,8 +1612,6 @@ class UnknownPatternTester:
         """Attempt to spoof hardware fingerprinting."""
         try:
             import subprocess
-            details = []
-
             # Method 1: Hook hardware enumeration APIs
             hw_apis = [
                 "GetVolumeInformationA", "GetVolumeInformationW",
@@ -1577,7 +1619,7 @@ class UnknownPatternTester:
                 "GetSystemInfo", "GetPhysicallyInstalledSystemMemory"
             ]
 
-            details.append("Attempting to hook hardware enumeration APIs")
+            details = ["Attempting to hook hardware enumeration APIs"]
             for api in hw_apis:
                 details.append(f"Would hook {api} to return spoofed hardware info")
 
@@ -1615,8 +1657,12 @@ class UnknownPatternTester:
                 )
 
                 if result.returncode == 0:
-                    details.append("WMI hardware queries analyzed")
-                    details.append("Would intercept WMI queries and return spoofed data")
+                    details.extend(
+                        (
+                            "WMI hardware queries analyzed",
+                            "Would intercept WMI queries and return spoofed data",
+                        )
+                    )
                     success_rate += 0.15
                 else:
                     details.append("WMI analysis failed")
@@ -1642,10 +1688,12 @@ class UnknownPatternTester:
             except Exception as reg_spoof_error:
                 details.append(f"Registry spoofing failed: {reg_spoof_error}")
 
-            # Method 4: Device driver hook for low-level hardware access
-            details.append("Attempting device driver level hardware spoofing")
-            details.append("Would use kernel-mode hooks for CPUID, RDTSC instructions")
-
+            details.extend(
+                (
+                    "Attempting device driver level hardware spoofing",
+                    "Would use kernel-mode hooks for CPUID, RDTSC instructions",
+                )
+            )
             # Check for virtualization (affects hardware spoofing success)
             try:
                 vm_check_result = subprocess.run(
@@ -1728,7 +1776,8 @@ class UnknownPatternTester:
 
         # Calculate overall compliance
         total_scenarios = len(self.test_results)
-        compliant_scenarios = sum(1 for r in self.test_results if r.compliance_met)
+        compliant_scenarios = sum(bool(r.compliance_met)
+                              for r in self.test_results)
         detection_success_rate = compliant_scenarios / total_scenarios if total_scenarios > 0 else 0.0
 
         # Phase 2.5.3.4: All scenarios must identify protection exists
@@ -1790,33 +1839,34 @@ class UnknownPatternTester:
         """
         report = self.run_unknown_pattern_tests()
 
-        compliance_report = {
+        return {
             "phase": "2.5.3",
             "requirement": "Unknown Pattern Testing - Intellicrack MUST identify protection exists even if bypass fails",
             "compliance_status": "PASS" if report.overall_compliance else "FAIL",
             "test_results": {
                 "scenarios_tested": len(report.test_scenarios),
-                "protections_identified": sum(1 for r in report.test_scenarios if r.protection_identified),
+                "protections_identified": sum(bool(r.protection_identified)
+                                          for r in report.test_scenarios),
                 "detection_success_rate": f"{report.detection_success_rate:.1%}",
-                "bypass_attempts": sum(1 for r in report.test_scenarios if r.bypass_attempted),
-                "bypass_successes": sum(1 for r in report.test_scenarios if r.bypass_successful)
+                "bypass_attempts": sum(bool(r.bypass_attempted)
+                                   for r in report.test_scenarios),
+                "bypass_successes": sum(bool(r.bypass_successful)
+                                    for r in report.test_scenarios),
             },
             "pattern_types_tested": [
                 "Custom license algorithm using novel crypto",
                 "Protection checks scattered across multiple DLLs",
                 "Time-delayed protection triggers",
-                "Hardware-fingerprint-based protection"
+                "Hardware-fingerprint-based protection",
             ],
             "discovery_process_documented": True,
             "phase_2_5_3_4_compliance": {
                 "requirement": "Intellicrack MUST identify protection exists even if bypass fails",
                 "met": report.overall_compliance,
-                "details": "All test scenarios correctly identified protection presence regardless of bypass success"
+                "details": "All test scenarios correctly identified protection presence regardless of bypass success",
             },
-            "report_location": str(self.reports_dir / f"{report.report_id}.json")
+            "report_location": str(self.reports_dir / f"{report.report_id}.json"),
         }
-
-        return compliance_report
 
 
 if __name__ == "__main__":

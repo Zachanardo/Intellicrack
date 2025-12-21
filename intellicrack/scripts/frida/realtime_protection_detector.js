@@ -1499,7 +1499,7 @@ const RealtimeProtectionDetector = {
 
     // === PATTERN ANALYSIS METHODS ===
     checkAPICallPatterns: function (callData) {
-        const {apiName} = callData;
+        const { apiName } = callData;
 
         // Check against anti-debug signatures
         if (this.protectionSignatures.antiDebug.has(apiName)) {
@@ -1877,7 +1877,7 @@ const RealtimeProtectionDetector = {
 
     checkAPICallFrequency: function (callData) {
         // Track API call frequency for pattern analysis
-        const {apiName} = callData;
+        const { apiName } = callData;
         const timeWindow = 10000; // 10 seconds
         const currentTime = Date.now();
 
@@ -2125,7 +2125,7 @@ const RealtimeProtectionDetector = {
     updateAnomalyBaseline: function () {
         // Calculate baseline from recent normal behavior
         const recentCalls = this.analysisData.apiCallSequences.slice(-100);
-        const {baseline} = this.mlComponents.anomalyDetector;
+        const { baseline } = this.mlComponents.anomalyDetector;
 
         // Calculate API call frequency baseline
         const apiFrequency = new Map();
@@ -2149,7 +2149,7 @@ const RealtimeProtectionDetector = {
     },
 
     analyzeSequencePatterns: function () {
-        const {sequences} = this.mlComponents.sequencePredictor;
+        const { sequences } = this.mlComponents.sequencePredictor;
         const recentCalls = this.analysisData.apiCallSequences.slice(-20);
 
         // Extract call sequences

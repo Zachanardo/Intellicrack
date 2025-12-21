@@ -240,7 +240,7 @@ class TestProjectDeletion:
         assert backup_dir.exists()
 
         backups = list(backup_dir.glob("DeleteTest_*.zip"))
-        assert len(backups) > 0
+        assert backups
 
     def test_delete_project_removes_directory(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(Path, "home", lambda: tmp_path)

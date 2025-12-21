@@ -1280,7 +1280,7 @@ const DynamicScriptGenerator = {
 
         // Check import table for anti-debug APIs
         if (this.analysisResults.binaryInfo.imports) {
-            const {imports} = this.analysisResults.binaryInfo;
+            const { imports } = this.analysisResults.binaryInfo;
 
             if (imports.debugAPIs.length > 0) {
                 mechanisms.push({
@@ -1376,7 +1376,7 @@ const DynamicScriptGenerator = {
 
         // Check for license-related API usage
         if (this.analysisResults.binaryInfo.imports?.licenseAPIs) {
-            const {licenseAPIs} = this.analysisResults.binaryInfo.imports;
+            const { licenseAPIs } = this.analysisResults.binaryInfo.imports;
 
             if (licenseAPIs.length > 3) {
                 mechanisms.push({
@@ -1397,7 +1397,7 @@ const DynamicScriptGenerator = {
 
         // Check for DRM-related imports
         if (this.analysisResults.binaryInfo.imports) {
-            const {imports} = this.analysisResults.binaryInfo;
+            const { imports } = this.analysisResults.binaryInfo;
 
             const drmAPIs = imports.protectionAPIs.filter(
                 api =>

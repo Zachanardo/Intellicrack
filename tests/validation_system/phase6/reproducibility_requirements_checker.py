@@ -153,7 +153,7 @@ class ReproducibilityRequirementsChecker:
             )
 
             # Determine overall result
-            if len(methods_to_test) > 0:
+            if methods_to_test:
                 success_percentage = successful_reproductions / len(methods_to_test)
                 validation_report["reproducibility_score"] = success_percentage
 
@@ -294,7 +294,7 @@ class ReproducibilityRequirementsChecker:
 
             # Set environment variables
             env = dict(os.environ)
-            env.update(package.environment_spec.get('environment_variables', {}))
+            env |= package.environment_spec.get('environment_variables', {})
 
             # Run validation
             validation_script = temp_dir / "run_validation.py"
@@ -470,7 +470,7 @@ class ReproducibilityRequirementsChecker:
         memory = package.environment_spec.get('memory', 2048)
         cpus = package.environment_spec.get('cpus', 2)
 
-        vagrantfile = f"""
+        return f"""
 Vagrant.configure("2") do |config|
   config.vm.box = "{box}"
   config.vm.provider "virtualbox" do |vb|
@@ -481,11 +481,11 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", path: "provision.sh"
 end
 """
-        return vagrantfile
 
     def _generate_provision_script(self, package: ReproductionPackage) -> str:
         """Generate provisioning script for Vagrant."""
-        script = """#!/bin/bash
+        return (
+            """#!/bin/bash
 set -e
 
 # Update system
@@ -493,31 +493,37 @@ apt-get update
 apt-get install -y python3 python3-pip wget curl git
 
 # Install dependencies
-""" + "\\n".join(f"pip3 install {dep}" for dep in package.dependencies) + """
+"""
+            + "\\n".join(f"pip3 install {dep}" for dep in package.dependencies)
+            + """
 
 # Set environment variables
-""" + "\\n".join(f"export {k}={v}" for k, v in package.environment_spec.get('environment_variables', {}).items()) + """
+"""
+            + "\\n".join(
+                f"export {k}={v}"
+                for k, v in package.environment_spec.get(
+                    'environment_variables', {}
+                ).items()
+            )
+            + """
 
 # Run validation
 cd /vagrant
 python3 run_validation.py
 """
-        return script
+        )
 
     def _format_env_vars(self, env_vars: dict[str, str]) -> str:
         """Format environment variables for Dockerfile."""
         if not env_vars:
             return ""
 
-        env_lines = []
-        for key, value in env_vars.items():
-            env_lines.append(f"ENV {key}={value}")
-
+        env_lines = [f"ENV {key}={value}" for key, value in env_vars.items()]
         return "\\n".join(env_lines)
 
     def _generate_validation_script(self, package: ReproductionPackage) -> str:
         """Generate validation script for reproduction."""
-        script = f"""#!/usr/bin/env python3
+        return f"""#!/usr/bin/env python3
 import json
 import sys
 import time
@@ -573,7 +579,6 @@ def main():
 if __name__ == "__main__":
     sys.exit(main())
 """
-        return script
 
     def _compare_results(self, reproduced_results: dict[str, Any],
                         original_results: dict[str, Any]) -> tuple[bool, float]:
@@ -651,7 +656,7 @@ if __name__ == "__main__":
 
     def _get_timestamp(self) -> str:
         """Get ISO timestamp."""
-        return datetime.utcnow().isoformat() + 'Z'
+        return f'{datetime.utcnow().isoformat()}Z'
 
     # Environment-specific extraction methods for Vagrant
 
@@ -710,7 +715,8 @@ if __name__ == "__main__":
                             if 'tests' in test_data:
                                 tests = test_data['tests']
                                 results['total_tests'] = len(tests)
-                                results['passed_tests'] = sum(1 for test in tests if test.get('passed', False))
+                                results['passed_tests'] = sum(bool(test.get('passed', False))
+                                                          for test in tests)
                                 results['failed_tests'] = results['total_tests'] - results['passed_tests']
                                 results['test_details'] = tests
 
@@ -858,40 +864,38 @@ if __name__ == "__main__":
 
                                     if scp_result.returncode == 0:
                                         evidence_files.append(local_path.with_suffix('.tar.gz'))
-                            else:
-                                # Single file or wildcard
-                                if '*' in vm_path:
-                                    # Handle wildcard by listing matching files first
-                                    list_result = subprocess.run(
-                                        ['vagrant', 'ssh', '-c', f'ls -la {vm_path} 2>/dev/null'],
-                                        capture_output=True, text=True, timeout=30
-                                    )
+                            elif '*' in vm_path:
+                                # Handle wildcard by listing matching files first
+                                list_result = subprocess.run(
+                                    ['vagrant', 'ssh', '-c', f'ls -la {vm_path} 2>/dev/null'],
+                                    capture_output=True, text=True, timeout=30
+                                )
 
-                                    if list_result.returncode == 0 and list_result.stdout.strip():
-                                        # Create archive of matching files
-                                        archive_cmd = f'tar -czf /tmp/{local_filename}.tar.gz {vm_path} 2>/dev/null'
-                                        tar_result = subprocess.run(
-                                            ['vagrant', 'ssh', '-c', archive_cmd],
-                                            capture_output=True, text=True, timeout=60
-                                        )
-
-                                        if tar_result.returncode == 0:
-                                            scp_result = subprocess.run(
-                                                ['vagrant', 'scp', f':/tmp/{local_filename}.tar.gz', str(local_path.with_suffix('.tar.gz'))],
-                                                capture_output=True, text=True, timeout=60
-                                            )
-
-                                            if scp_result.returncode == 0:
-                                                evidence_files.append(local_path.with_suffix('.tar.gz'))
-                                else:
-                                    # Single file
-                                    scp_result = subprocess.run(
-                                        ['vagrant', 'scp', f':{vm_path}', str(local_path)],
+                                if list_result.returncode == 0 and list_result.stdout.strip():
+                                    # Create archive of matching files
+                                    archive_cmd = f'tar -czf /tmp/{local_filename}.tar.gz {vm_path} 2>/dev/null'
+                                    tar_result = subprocess.run(
+                                        ['vagrant', 'ssh', '-c', archive_cmd],
                                         capture_output=True, text=True, timeout=60
                                     )
 
-                                    if scp_result.returncode == 0:
-                                        evidence_files.append(local_path)
+                                    if tar_result.returncode == 0:
+                                        scp_result = subprocess.run(
+                                            ['vagrant', 'scp', f':/tmp/{local_filename}.tar.gz', str(local_path.with_suffix('.tar.gz'))],
+                                            capture_output=True, text=True, timeout=60
+                                        )
+
+                                        if scp_result.returncode == 0:
+                                            evidence_files.append(local_path.with_suffix('.tar.gz'))
+                            else:
+                                # Single file
+                                scp_result = subprocess.run(
+                                    ['vagrant', 'scp', f':{vm_path}', str(local_path)],
+                                    capture_output=True, text=True, timeout=60
+                                )
+
+                                if scp_result.returncode == 0:
+                                    evidence_files.append(local_path)
 
                     except subprocess.TimeoutExpired:
                         self.logger.warning(f"Timeout copying {vm_path} from Vagrant VM")
@@ -957,7 +961,7 @@ if __name__ == "__main__":
                         zip_ref.extractall(extract_dir)
                         self.logger.info(f"Extracted ZIP package to {extract_dir}")
 
-                elif archive_path.suffix.lower() in ['.tar', '.tar.gz', '.tgz']:
+                elif archive_path.suffix.lower() in {'.tar', '.tar.gz', '.tgz'}:
                     with tarfile.open(archive_path, 'r:*') as tar_ref:
                         tar_ref.extractall(extract_dir)
                         self.logger.info(f"Extracted TAR package to {extract_dir}")
@@ -982,17 +986,16 @@ if __name__ == "__main__":
 
             # Validate extraction
             required_files = ['test_data', 'results', 'environment.json']
-            missing_files = []
-            for req_file in required_files:
-                if not (extract_dir / req_file).exists():
-                    missing_files.append(req_file)
-
-            if missing_files:
+            if missing_files := [
+                req_file
+                for req_file in required_files
+                if not (extract_dir / req_file).exists()
+            ]:
                 self.logger.warning(f"Missing required files in reproduction package: {missing_files}")
 
         except Exception as e:
             self.logger.error(f"Failed to extract reproduction package: {e}")
-            raise RuntimeError(f"Package extraction failed: {e}")
+            raise RuntimeError(f"Package extraction failed: {e}") from e
 
     def _install_dependencies(self, dependencies: list[str], temp_dir: Path) -> None:
         """Install dependencies for native reproduction."""
@@ -1094,7 +1097,7 @@ if __name__ == "__main__":
 
         except Exception as e:
             self.logger.error(f"Critical error during dependency installation: {e}")
-            raise RuntimeError(f"Dependency installation process failed: {e}")
+            raise RuntimeError(f"Dependency installation process failed: {e}") from e
 
         if failed_dependencies:
             self.logger.warning(f"Some dependencies failed to install: {failed_dependencies}")
@@ -1136,7 +1139,8 @@ if __name__ == "__main__":
                         if 'tests' in test_data:
                             tests = test_data['tests']
                             results['total_tests'] = len(tests)
-                            results['passed_tests'] = sum(1 for test in tests if test.get('passed', False))
+                            results['passed_tests'] = sum(bool(test.get('passed', False))
+                                                      for test in tests)
                             results['failed_tests'] = results['total_tests'] - results['passed_tests']
                             results['test_details'] = tests
 
@@ -1172,9 +1176,7 @@ if __name__ == "__main__":
                         continue
 
             if not results_found:
-                # Try to analyze log files for basic success indicators
-                log_files = list(temp_dir.glob("*.log"))
-                if log_files:
+                if log_files := list(temp_dir.glob("*.log")):
                     success_indicators = 0
                     failure_indicators = 0
 
@@ -1316,16 +1318,16 @@ def main():
     # Create example reproduction package
     package = ReproductionPackage(
         package_id="test-repro-001",
-        creation_timestamp=datetime.utcnow().isoformat() + 'Z',
+        creation_timestamp=f'{datetime.utcnow().isoformat()}Z',
         method=ReproducibilityMethod.NATIVE,
         environment_spec={
             "base_image": "ubuntu:20.04",
-            "environment_variables": {"PYTHONPATH": "/app"}
+            "environment_variables": {"PYTHONPATH": "/app"},
         },
         dependencies=["numpy", "requests"],
         test_data={"total_tests": 10, "passed_tests": 9},
         expected_results={"success_rate": 0.95},
-        verification_checksums={}
+        verification_checksums={},
     )
 
     # Initialize checker

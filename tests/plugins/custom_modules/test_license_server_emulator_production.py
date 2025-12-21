@@ -595,7 +595,7 @@ class TestFlexLMProtocolCompliance:
 
         keys = [emulator._generate_vendor_keys() for _ in range(10)]
 
-        unique_encryption_keys = set(k["encryption_key"] for k in keys)
+        unique_encryption_keys = {k["encryption_key"] for k in keys}
         assert len(unique_encryption_keys) == 10
 
         for key_set in keys:

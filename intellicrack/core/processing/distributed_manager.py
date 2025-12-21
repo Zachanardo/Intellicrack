@@ -685,8 +685,7 @@ class DistributedAnalysisManager:
             return [
                 node
                 for node in self.nodes.values()
-                if node.status in (NodeStatus.READY, NodeStatus.BUSY)
-                and node.current_load < node.max_load
+                if node.status in (NodeStatus.READY, NodeStatus.BUSY) and node.current_load < node.max_load
             ]
 
     def _select_best_node(self, task: AnalysisTask, available_nodes: list[WorkerNode]) -> WorkerNode | None:
@@ -1399,21 +1398,11 @@ class DistributedAnalysisManager:
             }
         with self.task_lock:
             task_stats = {
-                "pending": sum(
-                    t.status == TaskStatus.PENDING for t in self.tasks.values()
-                ),
-                "assigned": sum(
-                    t.status == TaskStatus.ASSIGNED for t in self.tasks.values()
-                ),
-                "running": sum(
-                    t.status == TaskStatus.RUNNING for t in self.tasks.values()
-                ),
-                "completed": sum(
-                    t.status == TaskStatus.COMPLETED for t in self.tasks.values()
-                ),
-                "failed": sum(
-                    t.status == TaskStatus.FAILED for t in self.tasks.values()
-                ),
+                "pending": sum(t.status == TaskStatus.PENDING for t in self.tasks.values()),
+                "assigned": sum(t.status == TaskStatus.ASSIGNED for t in self.tasks.values()),
+                "running": sum(t.status == TaskStatus.RUNNING for t in self.tasks.values()),
+                "completed": sum(t.status == TaskStatus.COMPLETED for t in self.tasks.values()),
+                "failed": sum(t.status == TaskStatus.FAILED for t in self.tasks.values()),
                 "total": len(self.tasks),
             }
 

@@ -31,8 +31,7 @@ def qapp() -> QApplication:
 @pytest.fixture
 def text_document(qapp: QApplication) -> QTextDocument:
     """Create QTextDocument for syntax highlighting testing."""
-    doc = QTextDocument()
-    return doc
+    return QTextDocument()
 
 
 class TestSyntaxHighlighterInitialization:
@@ -142,7 +141,7 @@ class TestPythonSyntaxHighlighting:
         string_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if '".*?"' in pattern.pattern or "'.*?'" in pattern.pattern
         ]
-        assert len(string_rules) > 0
+        assert string_rules
 
     def test_python_comment_highlighting(self, text_document: QTextDocument) -> None:
         """Python comments are highlighted correctly."""
@@ -154,7 +153,7 @@ class TestPythonSyntaxHighlighting:
         comment_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "#" in pattern.pattern
         ]
-        assert len(comment_rules) > 0
+        assert comment_rules
 
     def test_python_decorator_highlighting(self, text_document: QTextDocument) -> None:
         """Python decorators are highlighted correctly."""
@@ -166,7 +165,7 @@ class TestPythonSyntaxHighlighting:
         decorator_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "@" in pattern.pattern
         ]
-        assert len(decorator_rules) > 0
+        assert decorator_rules
 
     def test_python_number_highlighting(self, text_document: QTextDocument) -> None:
         """Python numbers are highlighted correctly."""
@@ -180,7 +179,7 @@ class TestPythonSyntaxHighlighting:
             for pattern, fmt in highlighter.rules
             if "[0-9]" in pattern.pattern
         ]
-        assert len(number_rules) > 0
+        assert number_rules
 
 
 class TestJavaScriptSyntaxHighlighting:
@@ -212,7 +211,7 @@ class TestJavaScriptSyntaxHighlighting:
         arrow_function_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "=>" in pattern.pattern
         ]
-        assert len(arrow_function_rules) > 0
+        assert arrow_function_rules
 
     def test_javascript_comment_highlighting(
         self, text_document: QTextDocument
@@ -228,7 +227,7 @@ class TestJavaScriptSyntaxHighlighting:
             for pattern, fmt in highlighter.rules
             if "//" in pattern.pattern or r"/\*" in pattern.pattern
         ]
-        assert len(comment_rules) > 0
+        assert comment_rules
 
 
 class TestAssemblySyntaxHighlighting:
@@ -273,7 +272,7 @@ class TestAssemblySyntaxHighlighting:
         hex_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "0x" in pattern.pattern
         ]
-        assert len(hex_rules) > 0
+        assert hex_rules
 
     def test_assembly_label_highlighting(self, text_document: QTextDocument) -> None:
         """Assembly labels are highlighted correctly."""
@@ -285,7 +284,7 @@ class TestAssemblySyntaxHighlighting:
         label_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if ":" in pattern.pattern
         ]
-        assert len(label_rules) > 0
+        assert label_rules
 
     def test_assembly_comment_highlighting(
         self, text_document: QTextDocument
@@ -299,7 +298,7 @@ class TestAssemblySyntaxHighlighting:
         comment_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if ";" in pattern.pattern
         ]
-        assert len(comment_rules) > 0
+        assert comment_rules
 
 
 class TestJSONSyntaxHighlighting:
@@ -317,7 +316,7 @@ class TestJSONSyntaxHighlighting:
             for pattern, fmt in highlighter.rules
             if '"' in pattern.pattern and ":" in pattern.pattern
         ]
-        assert len(key_rules) > 0
+        assert key_rules
 
     def test_json_boolean_and_null_highlighting(
         self, text_document: QTextDocument
@@ -333,7 +332,7 @@ class TestJSONSyntaxHighlighting:
             for pattern, fmt in highlighter.rules
             if "true" in pattern.pattern or "false" in pattern.pattern or "null" in pattern.pattern
         ]
-        assert len(boolean_rules) > 0
+        assert boolean_rules
 
     def test_json_number_highlighting(self, text_document: QTextDocument) -> None:
         """JSON numbers are highlighted correctly."""
@@ -347,7 +346,7 @@ class TestJSONSyntaxHighlighting:
             for pattern, fmt in highlighter.rules
             if "[0-9]" in pattern.pattern
         ]
-        assert len(number_rules) > 0
+        assert number_rules
 
 
 class TestXMLSyntaxHighlighting:
@@ -363,7 +362,7 @@ class TestXMLSyntaxHighlighting:
         tag_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "<" in pattern.pattern
         ]
-        assert len(tag_rules) > 0
+        assert tag_rules
 
     def test_xml_attribute_highlighting(self, text_document: QTextDocument) -> None:
         """XML attributes are highlighted correctly."""
@@ -375,7 +374,7 @@ class TestXMLSyntaxHighlighting:
         attribute_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "=" in pattern.pattern
         ]
-        assert len(attribute_rules) > 0
+        assert attribute_rules
 
     def test_xml_comment_highlighting(self, text_document: QTextDocument) -> None:
         """XML comments are highlighted correctly."""
@@ -387,7 +386,7 @@ class TestXMLSyntaxHighlighting:
         comment_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "<!--" in pattern.pattern
         ]
-        assert len(comment_rules) > 0
+        assert comment_rules
 
 
 class TestShellSyntaxHighlighting:
@@ -427,7 +426,7 @@ class TestShellSyntaxHighlighting:
         variable_rules = [
             (pattern, fmt) for pattern, fmt in highlighter.rules if "$" in pattern.pattern
         ]
-        assert len(variable_rules) > 0
+        assert variable_rules
 
 
 class TestSyntaxHighlighterLanguageSwitching:

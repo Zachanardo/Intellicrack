@@ -759,7 +759,8 @@ class TestTriggerRemoval:
             b"PhoneHome",
         ]
 
-        found_triggers = sum(1 for keyword in trigger_keywords if keyword in original_data)
+        found_triggers = sum(bool(keyword in original_data)
+                         for keyword in trigger_keywords)
         assert found_triggers >= 3
 
         result = securom_bypass.remove_triggers(test_binary_with_securom_v7)
@@ -1077,9 +1078,7 @@ class TestRegistryManipulation:
         cleanup_registry_keys: None,
     ) -> None:
         """Activation registry bypass sets high maximum activation count."""
-        result = securom_bypass._bypass_activation_registry()
-
-        if result:
+        if result := securom_bypass._bypass_activation_registry():
             try:
                 key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"SOFTWARE\SecuROM\Activation")
                 max_activations, _ = winreg.QueryValueEx(key, "MaxActivations")
@@ -1125,9 +1124,9 @@ class TestBinaryPatching:
         conditional_jumps = [b"\x85\xc0\x74", b"\x85\xc0\x75", b"\x84\xc0\x74", b"\x84\xc0\x75"]
         original_jump_count = sum(original_data.count(jump) for jump in conditional_jumps)
 
-        result = securom_bypass._patch_activation_checks(test_binary_with_securom_v7)
-
-        if result:
+        if result := securom_bypass._patch_activation_checks(
+            test_binary_with_securom_v7
+        ):
             modified_data = test_binary_with_securom_v7.read_bytes()
             modified_jump_count = sum(modified_data.count(jump) for jump in conditional_jumps)
             assert modified_jump_count < original_jump_count
@@ -1170,9 +1169,9 @@ class TestBinaryPatching:
         original_data = test_binary_with_securom_v7.read_bytes()
         assert b"VerifyProductKey" in original_data
 
-        result = securom_bypass._patch_key_validation(test_binary_with_securom_v7)
-
-        if result:
+        if result := securom_bypass._patch_key_validation(
+            test_binary_with_securom_v7
+        ):
             modified_data = test_binary_with_securom_v7.read_bytes()
             assert original_data != modified_data
 

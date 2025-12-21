@@ -1121,9 +1121,10 @@ function detect(bShowType, bShowVersion, bShowOptions)
         if analysis.entropy_info:
             if high_entropy_sections := [e for e in analysis.entropy_info if e.entropy > 7.0]:
                 strings_section.append("        // High entropy sections detected")
-                for section in high_entropy_sections[:3]:  # Limit to 3
-                    strings_section.append(f"        // Section {section.section_name}: entropy={section.entropy:.2f}")
-
+                strings_section.extend(
+                    f"        // Section {section.section_name}: entropy={section.entropy:.2f}"
+                    for section in high_entropy_sections[:3]
+                )
         # Add import hash if available
         if analysis.import_hash:
             strings_section.append(f"        // Import hash: {analysis.import_hash.imphash}")

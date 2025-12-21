@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Test fingerprint randomizer."""
 
+
 import sys
 sys.path.insert(0, r'D:\Intellicrack')
 
@@ -14,7 +15,7 @@ fp = SystemFingerprinter()
 print("SystemFingerprinter initialized")
 
 fingerprint = fp.collect_fingerprint()
-print(f"Fingerprint collected")
+print("Fingerprint collected")
 print(f"  Hash: {fingerprint['hash'][:16]}...")
 print(f"  Categories: {list(fingerprint.keys())}")
 

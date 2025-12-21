@@ -281,7 +281,7 @@ class TestGenericProtocolHandlerLicenseManipulation:
         auth_message.extend(b'AUTH_TOKEN\x00')
 
         # Simulate encrypted token (128 bytes)
-        original_token = bytes([(i * 7) % 256 for i in range(128)])
+        original_token = bytes((i * 7) % 256 for i in range(128))
         auth_message.extend(struct.pack('<H', len(original_token)))
         auth_message.extend(original_token)
 
@@ -290,7 +290,7 @@ class TestGenericProtocolHandlerLicenseManipulation:
         auth_message.extend(struct.pack('<Q', current_time))
 
         # Add signature placeholder
-        signature = bytes([(i * 13) % 256 for i in range(32)])
+        signature = bytes((i * 13) % 256 for i in range(32))
         auth_message.extend(signature)
 
         # Test token manipulation
@@ -421,8 +421,6 @@ class TestGenericProtocolHandlerConnectionManagement:
         # Should handle errors gracefully without crashing
         try:
             response = protocol_handler.handle_connection(failing_socket, test_data)
-            # Even with errors, should attempt to generate response
-            assert True, "Must handle network errors gracefully"
         except Exception as e:
             # Should not propagate low-level network exceptions
             pytest.fail(f"Should handle network errors gracefully, but got: {e}")
@@ -480,7 +478,7 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
         hasp_request.extend(struct.pack('<Q', 0x123456789ABCDEF0))
 
         # Encrypted challenge
-        challenge = bytes([(i * 17) % 256 for i in range(48)])
+        challenge = bytes((i * 17) % 256 for i in range(48))
         hasp_request.extend(challenge)
 
         # Test HASP protocol handling
@@ -502,7 +500,7 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
         encrypted_request.extend(struct.pack('>H', 256))   # Length
 
         # Encrypted payload (simulated)
-        encrypted_payload = bytes([(i * 23) % 256 for i in range(252)])
+        encrypted_payload = bytes((i * 23) % 256 for i in range(252))
         encrypted_request.extend(encrypted_payload)
 
         # Test encrypted protocol handling
@@ -510,7 +508,9 @@ class TestGenericProtocolHandlerRealWorldProtocolSupport:
 
         # Validate encrypted protocol awareness
         assert response is not None, "Must handle encrypted protocols"
-        assert response[0:1] == b'\x16', "Should maintain TLS-like structure in response"
+        assert (
+            response[:1] == b'\x16'
+        ), "Should maintain TLS-like structure in response"
         assert len(response) > 100, "Encrypted response must be substantial"
 
 
@@ -536,7 +536,7 @@ class TestGenericProtocolHandlerPerformanceAndReliability:
             message = bytearray()
             message.extend(struct.pack('<I', i))           # Message ID
             message.extend(f'BULK_MESSAGE_{i:04d}'.encode())
-            message.extend(bytes([(i + j) % 256 for j in range(50)]))  # Variable payload
+            message.extend(bytes((i + j) % 256 for j in range(50)))
             messages.append(bytes(message))
 
         start_time = time.time()
@@ -644,14 +644,10 @@ class TestGenericProtocolHandlerSecurityResearchCapabilities:
         base_message.extend(struct.pack('<I', 100))
         base_message.extend(b'A' * 100)
 
-        # Generate fuzzing variants
-        fuzzing_variants = []
-
         # Length field manipulation
         fuzz_msg1 = base_message.copy()
         fuzz_msg1[9:13] = struct.pack('<I', 0xFFFFFFFF)  # Maximum length
-        fuzzing_variants.append(bytes(fuzz_msg1))
-
+        fuzzing_variants = [bytes(fuzz_msg1)]
         # Null byte injection
         fuzz_msg2 = base_message.copy()
         fuzz_msg2[13:16] = b'\x00\x00\x00'

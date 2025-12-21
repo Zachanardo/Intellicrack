@@ -47,8 +47,7 @@ class TestWin32API:
 
     def test_get_window_long_retrieves_window_style(self) -> None:
         """get_window_long retrieves window style bits for real windows."""
-        hwnd = Win32API.find_window("Shell_TrayWnd", None)
-        if hwnd:
+        if hwnd := Win32API.find_window("Shell_TrayWnd", None):
             style = Win32API.get_window_long(hwnd, -16)
             assert style != 0
             assert isinstance(style, int)

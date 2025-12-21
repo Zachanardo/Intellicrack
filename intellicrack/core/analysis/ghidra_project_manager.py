@@ -16,7 +16,7 @@ import zipfile
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import lz4.frame
 import msgpack
@@ -58,7 +58,7 @@ class GhidraProject:
 class GhidraProjectManager:
     """Manages persistent Ghidra projects with versioning and collaboration."""
 
-    def __init__(self, projects_dir: str = None) -> None:
+    def __init__(self, projects_dir: str | None = None) -> None:
         """Initialize the GhidraProjectManager with an optional projects directory."""
         self.projects_dir = Path(projects_dir) if projects_dir else Path.home() / ".intellicrack" / "ghidra_projects"
         self.projects_dir.mkdir(parents=True, exist_ok=True)
@@ -136,9 +136,9 @@ class GhidraProjectManager:
 
     def _init_cache(self) -> None:
         """Initialize in-memory cache for frequently accessed data."""
-        self.cache = {"projects": {}, "versions": {}, "analysis_results": {}}
+        self.cache: dict[str, dict[str, Any]] = {"projects": {}, "versions": {}, "analysis_results": {}}
 
-    def create_project(self, name: str, binary_path: str, initial_analysis: GhidraAnalysisResult = None) -> GhidraProject:
+    def create_project(self, name: str, binary_path: str, initial_analysis: GhidraAnalysisResult | None = None) -> GhidraProject:
         """Create a new Ghidra project with initial version."""
         project_id = self._generate_project_id(name, binary_path)
         binary_hash = self._compute_file_hash(binary_path)
@@ -198,7 +198,9 @@ class GhidraProjectManager:
         """Load a project from persistent storage."""
         # Check cache first
         if project_id in self.cache["projects"]:
-            return self.cache["projects"][project_id]
+            cached_project = self.cache["projects"][project_id]
+            if isinstance(cached_project, GhidraProject):
+                return cached_project
 
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
@@ -217,6 +219,15 @@ class GhidraProjectManager:
         if not row:
             conn.close()
             return None
+
+        name: str = row[0]
+        binary_path: str = row[1]
+        created_at: str = row[2]
+        modified_at: str = row[3]
+        current_version: str = row[4]
+        is_locked: int = row[5]
+        settings_json: str | None = row[6]
+        metadata_json: str | None = row[7]
 
         # Load versions
         cursor.execute(
@@ -258,14 +269,15 @@ class GhidraProjectManager:
         # Create project object
         project = GhidraProject(
             project_id=project_id,
-            name=row[0],
-            binary_path=row[1],
-            created_at=datetime.fromisoformat(row[2]),
-            modified_at=datetime.fromisoformat(row[3]),
+            name=name,
+            binary_path=binary_path,
+            created_at=datetime.fromisoformat(created_at),
+            modified_at=datetime.fromisoformat(modified_at),
             versions=versions,
-            current_version=row[4],
+            current_version=current_version,
             collaborators=collaborators,
-            settings=json.loads(row[6]) if row[6] else {},
+            settings=json.loads(settings_json) if settings_json else {},
+            is_locked=bool(is_locked),
         )
 
         # Cache the project
@@ -278,7 +290,7 @@ class GhidraProjectManager:
         project_id: str,
         analysis_result: GhidraAnalysisResult,
         description: str = "",
-        tags: list[str] = None,
+        tags: list[str] | None = None,
     ) -> ProjectVersion:
         """Save a new version of the project."""
         project = self.load_project(project_id)
@@ -327,7 +339,9 @@ class GhidraProjectManager:
         # Check cache
         cache_key = f"{project_id}_{version_id}"
         if cache_key in self.cache["analysis_results"]:
-            return self.cache["analysis_results"][cache_key]
+            cached_result = self.cache["analysis_results"][cache_key]
+            if isinstance(cached_result, GhidraAnalysisResult):
+                return cached_result
 
         project_dir = self.projects_dir / project_id
         version_path = project_dir / f"version_{version_id}.dat"
@@ -353,7 +367,7 @@ class GhidraProjectManager:
         if not analysis1 or not analysis2:
             raise ValueError("One or both versions not found")
 
-        diff_result = {
+        diff_result: dict[str, Any] = {
             "added_functions": [],
             "removed_functions": [],
             "modified_functions": [],
@@ -393,25 +407,31 @@ class GhidraProjectManager:
                 )
 
         # Compare strings
-        strings1 = set(analysis1.strings)
-        strings2 = set(analysis2.strings)
+        strings1_set = set(analysis1.strings)
+        strings2_set = set(analysis2.strings)
 
-        diff_result["added_strings"] = list(strings2 - strings1)
-        diff_result["removed_strings"] = list(strings1 - strings2)
+        added_strings: list[tuple[int, str]] = [s for s in analysis2.strings if s in (strings2_set - strings1_set)]
+        removed_strings: list[tuple[int, str]] = [s for s in analysis1.strings if s in (strings1_set - strings2_set)]
+        diff_result["added_strings"] = added_strings
+        diff_result["removed_strings"] = removed_strings
 
         # Compare imports
-        imports1 = set(analysis1.imports)
-        imports2 = set(analysis2.imports)
+        imports1_set = set(analysis1.imports)
+        imports2_set = set(analysis2.imports)
 
-        diff_result["imports_changes"]["added"] = list(imports2 - imports1)
-        diff_result["imports_changes"]["removed"] = list(imports1 - imports2)
+        added_imports: list[tuple[str, str, int]] = [i for i in analysis2.imports if i in (imports2_set - imports1_set)]
+        removed_imports: list[tuple[str, str, int]] = [i for i in analysis1.imports if i in (imports1_set - imports2_set)]
+        diff_result["imports_changes"]["added"] = added_imports
+        diff_result["imports_changes"]["removed"] = removed_imports
 
         # Compare exports
-        exports1 = set(analysis1.exports)
-        exports2 = set(analysis2.exports)
+        exports1_set = set(analysis1.exports)
+        exports2_set = set(analysis2.exports)
 
-        diff_result["exports_changes"]["added"] = list(exports2 - exports1)
-        diff_result["exports_changes"]["removed"] = list(exports1 - exports2)
+        added_exports: list[tuple[str, int]] = [e for e in analysis2.exports if e in (exports2_set - exports1_set)]
+        removed_exports: list[tuple[str, int]] = [e for e in analysis1.exports if e in (exports1_set - exports2_set)]
+        diff_result["exports_changes"]["added"] = added_exports
+        diff_result["exports_changes"]["removed"] = removed_exports
 
         # Calculate statistics
         diff_result["statistics"] = {
@@ -438,7 +458,7 @@ class GhidraProjectManager:
 
     def _analyze_function_changes(self, func1: GhidraFunction, func2: GhidraFunction) -> dict[str, Any]:
         """Analyze specific changes in a function."""
-        changes = {}
+        changes: dict[str, Any] = {}
 
         if func1.size != func2.size:
             changes["size"] = {"old": func1.size, "new": func2.size}
@@ -476,9 +496,9 @@ class GhidraProjectManager:
         if not project:
             raise ValueError(f"Project {project_id} not found")
 
-        export_path = Path(export_path)
+        export_path_obj = Path(export_path)
 
-        with zipfile.ZipFile(export_path, "w", zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(export_path_obj, "w", zipfile.ZIP_DEFLATED) as zipf:
             # Export project metadata
             project_data = {
                 "project_id": project.project_id,
@@ -513,13 +533,13 @@ class GhidraProjectManager:
                 }
                 zipf.writestr(f"versions/{version.version_id}.json", json.dumps(version_data, indent=2))
 
-        return export_path
+        return export_path_obj
 
     def import_project(self, archive_path: str) -> GhidraProject:
         """Import project from archive."""
-        archive_path = Path(archive_path)
+        archive_path_obj = Path(archive_path)
 
-        with zipfile.ZipFile(archive_path, "r") as zipf:
+        with zipfile.ZipFile(archive_path_obj, "r") as zipf:
             # Read project metadata
             project_data = json.loads(zipf.read("project.json"))
 
@@ -635,7 +655,8 @@ class GhidraProjectManager:
         # Serialize with msgpack for efficiency
         serialized = msgpack.packb(data, use_bin_type=True)
 
-        return lz4.frame.compress(serialized, compression_level=lz4.frame.COMPRESSIONLEVEL_MAX)
+        compressed = lz4.frame.compress(serialized, compression_level=lz4.frame.COMPRESSIONLEVEL_MAX)
+        return cast(bytes, compressed)
 
     def _decompress_analysis(self, compressed_data: bytes) -> GhidraAnalysisResult:
         """Decompress analysis result from storage."""
@@ -643,7 +664,8 @@ class GhidraProjectManager:
         decompressed = lz4.frame.decompress(compressed_data)
 
         # Deserialize
-        data = msgpack.unpackb(decompressed, raw=False)
+        unpacked_data = msgpack.unpackb(decompressed, raw=False)
+        data = cast(dict[str, Any], unpacked_data)
 
         functions = {int(addr): GhidraFunction(**func_data) for addr, func_data in data["functions"].items()}
         data_types = {name: GhidraDataType(**dt_data) for name, dt_data in data["data_types"].items()}

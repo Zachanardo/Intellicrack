@@ -144,7 +144,7 @@ class TestRealLLMCodeGeneration:
             for name, obj in namespace.items()
             if callable(obj) and "generate" in name.lower()
         ]
-        assert len(keygen_functions) > 0, "No keygen function found in generated code"
+        assert keygen_functions, "No keygen function found in generated code"
 
     @pytest.mark.skipif(
         not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
@@ -274,11 +274,7 @@ def validate_license(key: str) -> bool:
         assert analysis is not None
         assert "status" in analysis or isinstance(analysis, str)
 
-        if isinstance(analysis, dict):
-            result_text = str(analysis)
-        else:
-            result_text = analysis
-
+        result_text = str(analysis) if isinstance(analysis, dict) else analysis
         assert (
             "license" in result_text.lower()
             or "validation" in result_text.lower()
@@ -479,8 +475,6 @@ class TestLLMErrorHandling:
             except Exception as e:
                 assert "rate limit" in str(e).lower() or isinstance(e, Exception)
 
-        assert len(rapid_requests) >= 0
-
     @pytest.mark.skipif(
         not os.getenv("OPENAI_API_KEY") and not os.getenv("ANTHROPIC_API_KEY"),
         reason="LLM API key required",
@@ -554,11 +548,7 @@ class TestCodeExecutionIntegration:
         """
 
         response = ai_assistant.generate_code(prompt, language="python")
-        if isinstance(response, dict):
-            code = response.get("code", "")
-        else:
-            code = response
-
+        code = response.get("code", "") if isinstance(response, dict) else response
         test_file = temp_workspace / "keygen_test.py"
         test_file.write_text(code)
 

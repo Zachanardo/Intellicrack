@@ -19,7 +19,7 @@ from intellicrack.core.analysis.ghidra_script_runner import GhidraScript, Ghidra
 def create_minimal_pe(path: Path) -> Path:
     """Create minimal PE binary for testing."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     pe_signature = b"PE\x00\x00"
@@ -217,8 +217,7 @@ print('test')
         with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
             runner = GhidraScriptRunner(mock_ghidra_path)
 
-            script = runner.discovered_scripts.get("metadata_test")
-            if script:
+            if script := runner.discovered_scripts.get("metadata_test"):
                 assert script.output_format == "json"
 
     def test_default_metadata_when_missing(self, mock_ghidra_path: Path, mock_script_dir: Path) -> None:
@@ -229,8 +228,7 @@ print('test')
         with patch.object(GhidraScriptRunner, "intellicrack_scripts_dir", mock_script_dir):
             runner = GhidraScriptRunner(mock_ghidra_path)
 
-            script = runner.discovered_scripts.get("no_metadata")
-            if script:
+            if script := runner.discovered_scripts.get("no_metadata"):
                 assert script.timeout == 300
                 assert script.output_format == "json"
 

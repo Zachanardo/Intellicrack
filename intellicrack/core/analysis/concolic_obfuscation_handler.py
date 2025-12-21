@@ -85,7 +85,9 @@ class OpaquePredicateDetector:
                 }
                 self.logger.info(
                     "Opaque predicate detected at 0x%x: always TRUE (confidence: %.2f%%, samples: %d)",
-                    address, taken_ratio * 100, total_count,
+                    address,
+                    taken_ratio * 100,
+                    total_count,
                 )
                 return {
                     "opaque": True,
@@ -104,7 +106,9 @@ class OpaquePredicateDetector:
                 }
                 self.logger.info(
                     "Opaque predicate detected at 0x%x: always FALSE (confidence: %.2f%%, samples: %d)",
-                    address, (1 - taken_ratio) * 100, total_count,
+                    address,
+                    (1 - taken_ratio) * 100,
+                    total_count,
                 )
                 return {
                     "opaque": True,
@@ -138,12 +142,8 @@ class OpaquePredicateDetector:
             dict: Statistics about detected opaque predicates
 
         """
-        always_true = sum(
-            p["type"] == "always_true" for p in self.detected_predicates.values()
-        )
-        always_false = sum(
-            p["type"] == "always_false" for p in self.detected_predicates.values()
-        )
+        always_true = sum(p["type"] == "always_true" for p in self.detected_predicates.values())
+        always_false = sum(p["type"] == "always_false" for p in self.detected_predicates.values())
 
         return {
             "total_detected": len(self.detected_predicates),
@@ -238,7 +238,8 @@ class ControlFlowFlatteningHandler:
                 self.dispatcher_address = address
                 self.logger.info(
                     "Control flow flattening dispatcher detected at 0x%x (score: %d)",
-                    address, switch_pattern_score,
+                    address,
+                    switch_pattern_score,
                 )
                 return {
                     "is_dispatcher": True,
@@ -356,7 +357,9 @@ class VirtualizationDetector:
 
             self.logger.info(
                 "VM dispatch loop detected at 0x%x (score: %d, indicators: %s)",
-                loop_address, total_score, vm_indicators,
+                loop_address,
+                total_score,
+                vm_indicators,
             )
 
             return {

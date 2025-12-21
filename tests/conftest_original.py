@@ -141,14 +141,7 @@ def isolated_test_env():
     else:
         os.chmod(temp_dir, 0o700)
 
-    sandbox_info = {
-        'path': Path(temp_dir),
-        'env': restricted_env,
-        'is_isolated': True
-    }
-
-    yield sandbox_info
-
+    yield {'path': Path(temp_dir), 'env': restricted_env, 'is_isolated': True}
     shutil.rmtree(temp_dir, ignore_errors=True)
 
 

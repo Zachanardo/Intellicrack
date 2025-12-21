@@ -72,7 +72,7 @@ class TestDirectR2Session:
 
         connected: bool = session.connect()
 
-        assert connected is True
+        assert connected
         assert session.r2 is not None
         session.disconnect()
 
@@ -84,7 +84,7 @@ class TestDirectR2Session:
         result: str = session.execute("i")
 
         assert isinstance(result, str)
-        assert len(result) > 0
+        assert result != ""
         assert "arch" in result.lower() or "size" in result.lower()
         session.disconnect()
 
@@ -123,7 +123,7 @@ class TestDirectR2Session:
 
         connected: bool = session.connect()
 
-        assert connected is True
+        assert connected
         assert session.flags == custom_flags
         session.disconnect()
 
@@ -137,7 +137,7 @@ class TestSessionContextManager:
             result: str = session.execute("i")
 
             assert isinstance(result, str)
-            assert len(result) > 0
+            assert result != ""
 
     def test_context_manager_with_pooling_disabled(self, test_binary_path: str) -> None:
         """Context manager provides direct session when pooling disabled."""
@@ -146,7 +146,7 @@ class TestSessionContextManager:
             result: str = session.execute("i")
 
             assert isinstance(result, str)
-            assert len(result) > 0
+            assert result != ""
 
     def test_context_manager_auto_analyzes_binary(self, test_binary_path: str) -> None:
         """Context manager auto-analyzes binary when enabled."""
@@ -182,7 +182,7 @@ class TestExecuteR2Command:
         result: str = execute_r2_command(test_binary_path, "i", use_pooling=False)
 
         assert isinstance(result, str)
-        assert len(result) > 0
+        assert result != ""
 
     def test_execute_json_command_returns_dict(self, test_binary_path: str) -> None:
         """execute_r2_command executes JSON command and returns parsed dict."""
@@ -201,7 +201,7 @@ class TestExecuteR2Command:
         result: str = execute_r2_command(test_binary_path, "i", use_pooling=True)
 
         assert isinstance(result, str)
-        assert len(result) > 0
+        assert result != ""
 
     def test_execute_command_with_custom_flags(self, test_binary_path: str) -> None:
         """execute_r2_command accepts custom radare2 flags."""
@@ -379,7 +379,7 @@ class TestErrorHandling:
 
         connected: bool = session.connect()
 
-        assert connected is False
+        assert not connected
 
 
 class TestPerformanceBenchmarks:

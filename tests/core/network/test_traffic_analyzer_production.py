@@ -507,7 +507,7 @@ class TestPacketProcessing:
 
         is_license_port = dst_port in production_analyzer.license_ports
 
-        assert is_license_port is True, "Failed to identify license server port"
+        assert is_license_port, "Failed to identify license server port"
         assert dst_port == 27000
 
 
@@ -527,7 +527,7 @@ class TestLicensePatternDetection:
             pattern in flexlm_license_request_packet
             for pattern in production_analyzer.license_patterns
         )
-        assert payload_contains_pattern is True
+        assert payload_contains_pattern
 
     def test_detects_hasp_identifier(
         self,
@@ -560,7 +560,9 @@ class TestLicensePatternDetection:
             pattern in flexlm_license_request_packet
             for pattern in production_analyzer.license_patterns
         )
-        assert has_any_license_pattern is True, "FlexLM packet should match at least one license pattern"
+        assert (
+            has_any_license_pattern
+        ), "FlexLM packet should match at least one license pattern"
 
     def test_detects_vendor_strings(
         self,
@@ -624,7 +626,7 @@ class TestConnectionTracking:
 
         is_local = any(src_ip.startswith(net) for net in production_analyzer.local_networks)
 
-        assert is_local is True, "Should recognize local network traffic"
+        assert is_local, "Should recognize local network traffic"
         assert src_ip.startswith("192.168.")
 
     def test_tracks_bytes_sent_and_received(
@@ -653,7 +655,7 @@ class TestLicenseServerIdentification:
 
         is_flexlm_port = dst_port in range(27000, 27010)
 
-        assert is_flexlm_port is True
+        assert is_flexlm_port
         assert dst_port == 27000
 
     def test_identifies_hasp_server_from_port(
@@ -853,7 +855,7 @@ class TestSuspiciousTrafficDetection:
             for s in suspicious
             for indicator in s["indicators"]
         )
-        assert high_port_detected is True
+        assert high_port_detected
 
     def test_detects_large_data_transfers(
         self,
@@ -883,7 +885,7 @@ class TestSuspiciousTrafficDetection:
             for s in suspicious
             for indicator in s["indicators"]
         )
-        assert large_transfer_detected is True
+        assert large_transfer_detected
 
     def test_detects_long_duration_connections(
         self,
@@ -913,7 +915,7 @@ class TestSuspiciousTrafficDetection:
             for s in suspicious
             for indicator in s["indicators"]
         )
-        assert long_duration_detected is True
+        assert long_duration_detected
 
     def test_detects_asymmetric_data_flow(
         self,
@@ -943,7 +945,7 @@ class TestSuspiciousTrafficDetection:
             for s in suspicious
             for indicator in s["indicators"]
         )
-        assert asymmetric_detected is True
+        assert asymmetric_detected
 
     def test_assesses_threat_levels_correctly(
         self,
@@ -1068,7 +1070,7 @@ class TestCaptureControl:
         result = production_analyzer.stop_capture()
 
         assert result is True
-        assert production_analyzer.capturing is False
+        assert not production_analyzer.capturing
 
     def test_stop_capture_logs_statistics(
         self,

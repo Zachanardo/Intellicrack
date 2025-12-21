@@ -187,15 +187,14 @@ class CryptographicSigner:
 
     def sign_data(self, data: bytes) -> bytes:
         """Sign data with private key."""
-        signature = self.private_key.sign(
+        return self.private_key.sign(
             data,
             padding.PSS(
                 mgf=padding.MGF1(hashes.SHA256()),
-                salt_length=padding.PSS.MAX_LENGTH
+                salt_length=padding.PSS.MAX_LENGTH,
             ),
-            hashes.SHA256()
+            hashes.SHA256(),
         )
-        return signature
 
     def verify_signature(self, data: bytes, signature: bytes) -> bool:
         """Verify signature with public key."""
@@ -388,7 +387,7 @@ class ForensicEvidenceCollector:
             draw = ImageDraw.Draw(screenshot)
             try:
                 font = ImageFont.truetype("arial.ttf", 24)
-            except:
+            except Exception:
                 font = ImageFont.load_default()
 
             # Add timestamp and annotation
@@ -480,15 +479,10 @@ class ForensicEvidenceCollector:
             ORDER BY timestamp
         """, (test_id,))
 
-        evidence = []
-        for row in cursor.fetchall():
-            evidence.append({
-                "type": row[0],
-                "path": row[1],
-                "hash": row[2],
-                "timestamp": row[3]
-            })
-
+        evidence = [
+            {"type": row[0], "path": row[1], "hash": row[2], "timestamp": row[3]}
+            for row in cursor.fetchall()
+        ]
         conn.close()
         return evidence
 
@@ -502,19 +496,23 @@ class StatisticalAnalyzer:
 
     def _create_dataframe(self) -> pd.DataFrame:
         """Convert results to pandas DataFrame for analysis."""
-        data = []
-        for result in self.results:
-            data.append({
+        data = [
+            {
                 "test_id": result.test_id,
                 "category": result.category,
                 "protection": result.target_protection,
                 "success": result.success,
                 "confidence": result.confidence_score,
                 "execution_time": result.execution_time,
-                "memory_usage": result.memory_after - result.memory_before
-                                if result.memory_before and result.memory_after else 0,
-                "cpu_usage": result.cpu_usage or 0
-            })
+                "memory_usage": (
+                    result.memory_after - result.memory_before
+                    if result.memory_before and result.memory_after
+                    else 0
+                ),
+                "cpu_usage": result.cpu_usage or 0,
+            }
+            for result in self.results
+        ]
         return pd.DataFrame(data)
 
     def calculate_confidence_intervals(self, confidence_level: float = 0.95) -> dict:
@@ -693,7 +691,7 @@ class UndeniableReportGenerator:
         verification_chain = self._create_verification_chain(report_data)
 
         print(f"\n{'='*60}")
-        print(f"VALIDATION REPORT GENERATED")
+        print("VALIDATION REPORT GENERATED")
         print(f"{'='*60}")
         print(f"Verdict: {verdict.value.upper()}")
         print(f"Success Rate: {len([r for r in results if r.success])}/{len(results)}")
@@ -708,7 +706,8 @@ class UndeniableReportGenerator:
         if not results:
             return VerdictLevel.FAILURE
 
-        success_rate = sum(1 for r in results if r.success) / len(results)
+        success_rate = sum(bool(r.success)
+                       for r in results) / len(results)
 
         if success_rate >= 0.95:
             return VerdictLevel.COMPLETE_SUCCESS
@@ -726,7 +725,8 @@ class UndeniableReportGenerator:
     def _generate_executive_summary(self, results: list[ValidationResult], verdict: VerdictLevel) -> str:
         """Generate executive summary of validation results."""
         total = len(results)
-        successful = sum(1 for r in results if r.success)
+        successful = sum(bool(r.success)
+                     for r in results)
         success_rate = (successful / total * 100) if total > 0 else 0
 
         # Category breakdown
@@ -772,9 +772,9 @@ class UndeniableReportGenerator:
         # Key achievements
         summary += "\n## Key Achievements\n"
 
-        # Find most sophisticated bypasses
-        sophisticated = [r for r in results if r.success and r.confidence_score > 0.9]
-        if sophisticated:
+        if sophisticated := [
+            r for r in results if r.success and r.confidence_score > 0.9
+        ]:
             summary += f"- Successfully bypassed {len(sophisticated)} protections with >90% confidence\n"
 
         # Find fastest bypasses
@@ -784,9 +784,11 @@ class UndeniableReportGenerator:
 
         # Modern licensing systems defeated
         modern_systems = ["Denuvo", "VMProtect", "Themida", "SecuROM", "StarForce"]
-        defeated_modern = {r.target_protection for r in results
-                            if r.success and any(m in r.target_protection for m in modern_systems)}
-        if defeated_modern:
+        if defeated_modern := {
+            r.target_protection
+            for r in results
+            if r.success and any(m in r.target_protection for m in modern_systems)
+        }:
             summary += f"- Defeated {len(defeated_modern)} modern licensing systems: {', '.join(defeated_modern)}\n"
 
         return summary
@@ -893,30 +895,26 @@ class UndeniableReportGenerator:
                 try:
                     file_size = Path(evidence["path"]).stat().st_size
                     evidence_inventory["evidence_size_bytes"] += file_size
-                except:
+                except Exception:
                     pass
-                    # File may not exist or be inaccessible, continue with other evidence
-
         return evidence_inventory
 
     def _document_failed_tests(self, results: list[ValidationResult]) -> list[dict]:
         """Document failed tests with root cause analysis."""
-        failed_tests = []
-
-        for result in results:
-            if not result.success:
-                failed_tests.append({
-                    "test_id": result.test_id,
-                    "test_name": result.test_name,
-                    "category": result.category,
-                    "target_protection": result.target_protection,
-                    "error_message": result.error_message,
-                    "confidence_score": result.confidence_score,
-                    "possible_causes": self._analyze_failure_cause(result),
-                    "recommendations": self._generate_failure_recommendations(result)
-                })
-
-        return failed_tests
+        return [
+            {
+                "test_id": result.test_id,
+                "test_name": result.test_name,
+                "category": result.category,
+                "target_protection": result.target_protection,
+                "error_message": result.error_message,
+                "confidence_score": result.confidence_score,
+                "possible_causes": self._analyze_failure_cause(result),
+                "recommendations": self._generate_failure_recommendations(result),
+            }
+            for result in results
+            if not result.success
+        ]
 
     def _analyze_failure_cause(self, result: ValidationResult) -> list[str]:
         """Analyze potential causes for test failure."""
@@ -944,17 +942,26 @@ class UndeniableReportGenerator:
         recommendations = []
 
         if result.target_protection in ["VMProtect", "Themida"]:
-            recommendations.append("Consider using hardware-based tracing (Intel PT)")
-            recommendations.append("Implement VM handler pattern recognition")
-
+            recommendations.extend(
+                (
+                    "Consider using hardware-based tracing (Intel PT)",
+                    "Implement VM handler pattern recognition",
+                )
+            )
         if "anti-debug" in (result.error_message or "").lower():
-            recommendations.append("Enhance anti-anti-debugging capabilities")
-            recommendations.append("Use kernel-mode debugging techniques")
-
+            recommendations.extend(
+                (
+                    "Enhance anti-anti-debugging capabilities",
+                    "Use kernel-mode debugging techniques",
+                )
+            )
         if result.confidence_score < 0.7:
-            recommendations.append("Collect additional training data for ML models")
-            recommendations.append("Enhance pattern recognition algorithms")
-
+            recommendations.extend(
+                (
+                    "Collect additional training data for ML models",
+                    "Enhance pattern recognition algorithms",
+                )
+            )
         if not recommendations:
             recommendations.append("Manual analysis required to develop bypass")
 
@@ -964,9 +971,7 @@ class UndeniableReportGenerator:
         """Generate improvement recommendations based on results."""
         recommendations = []
 
-        # Analyze failure patterns
-        failed = [r for r in results if not r.success]
-        if failed:
+        if failed := [r for r in results if not r.success]:
             # Group by protection type
             failed_protections = {}
             for result in failed:
@@ -975,30 +980,36 @@ class UndeniableReportGenerator:
                 failed_protections[result.target_protection] += 1
 
             # Recommend improvements for most failed protections
-            for protection, count in sorted(failed_protections.items(),
-                                          key=lambda x: x[1], reverse=True)[:3]:
-                recommendations.append(
-                    f"Enhance {protection} analysis capabilities ({count} failures)"
-                )
-
+            recommendations.extend(
+                f"Enhance {protection} analysis capabilities ({count} failures)"
+                for protection, count in sorted(
+                    failed_protections.items(), key=lambda x: x[1], reverse=True
+                )[:3]
+            )
         # Performance recommendations
         slow_tests = [r for r in results if r.execution_time > 60]
         if len(slow_tests) > len(results) * 0.2:
             recommendations.append("Optimize performance - 20% of tests exceed 60 seconds")
 
-        # Memory usage recommendations
-        high_memory = [r for r in results
-                      if r.memory_after and r.memory_before and
-                      (r.memory_after - r.memory_before) > 500_000_000]
-        if high_memory:
+        if high_memory := [
+            r
+            for r in results
+            if r.memory_after
+            and r.memory_before
+            and (r.memory_after - r.memory_before) > 500_000_000
+        ]:
             recommendations.append(f"Optimize memory usage - {len(high_memory)} tests use >500MB")
 
         # Success rate improvements
-        success_rate = sum(1 for r in results if r.success) / len(results) if results else 0
+        success_rate = sum(bool(r.success)
+                       for r in results) / len(results) if results else 0
         if success_rate < 0.8:
-            recommendations.append("Focus on improving core detection algorithms")
-            recommendations.append("Expand protection signature database")
-
+            recommendations.extend(
+                (
+                    "Focus on improving core detection algorithms",
+                    "Expand protection signature database",
+                )
+            )
         return recommendations
 
     def _generate_json_report(self, report_data: dict) -> Path:
@@ -1168,12 +1179,12 @@ class UndeniableReportGenerator:
             # Try using wkhtmltopdf
             import pdfkit
             pdfkit.from_file(str(html_report), str(pdf_file))
-        except:
+        except Exception:
             # Fallback to weasyprint
             try:
                 from weasyprint import HTML
                 HTML(filename=str(html_report)).write_pdf(str(pdf_file))
-            except:
+            except Exception:
                 # Last resort - copy HTML as PDF placeholder
                 import shutil
                 shutil.copy(html_report, pdf_file)
@@ -1218,8 +1229,6 @@ class UndeniableReportGenerator:
 
     def _create_verification_chain(self, report_data: dict) -> dict:
         """Create blockchain-style verification chain for report integrity."""
-        chain = []
-
         # Genesis block
         genesis = {
             "index": 0,
@@ -1229,8 +1238,7 @@ class UndeniableReportGenerator:
             "nonce": 0
         }
         genesis["hash"] = self._calculate_block_hash(genesis)
-        chain.append(genesis)
-
+        chain = [genesis]
         # Add blocks for each major component
         components = [
             ("detection_results", report_data.get("detection_results", {})),
@@ -1281,7 +1289,7 @@ class UndeniableReportGenerator:
                 return False
 
             # Verify proof of work
-            if not current["hash"][:4] == "0000":
+            if current["hash"][:4] != "0000":
                 return False
 
         return True

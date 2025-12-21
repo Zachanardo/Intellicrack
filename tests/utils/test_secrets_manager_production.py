@@ -83,7 +83,7 @@ class TestSecretsManagerInitialization:
             manager = SecretsManager(config_dir=config_dir)
 
             key_stat = manager.key_file.stat()
-            assert oct(key_stat.st_mode)[-3:] == "600"
+            assert oct(key_stat.st_mode).endswith("600")
 
 
 class TestSecretsManagerEncryption:
@@ -564,7 +564,7 @@ class TestSecretsManagerFilePermissions:
             manager.set("PERM_TEST", "value", use_keychain=False)
 
             secrets_stat = manager.secrets_file.stat()
-            assert oct(secrets_stat.st_mode)[-3:] == "600"
+            assert oct(secrets_stat.st_mode).endswith("600")
 
 
 class TestSecretsManagerDotenvIntegration:

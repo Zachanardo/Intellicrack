@@ -28,6 +28,7 @@ class AppInstance(Protocol):
     def menuBar(self) -> Any: ...
     def children(self) -> list[QObject]: ...
 
+
 """
 Integration between enhanced hex viewer/editor and Intellicrack.
 

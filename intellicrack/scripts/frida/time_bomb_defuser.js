@@ -800,7 +800,7 @@ const TimeBombDefuser = {
         const parsed = Stalker.parse(events);
         parsed.forEach(event => {
             if (event.type === 'call') {
-                const {target} = event;
+                const { target } = event;
                 const context = {
                     address: target,
                     module: Process.findModuleByAddress(target),

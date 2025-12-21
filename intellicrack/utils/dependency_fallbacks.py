@@ -22,6 +22,8 @@ Provides safe imports and fallback implementations when dependencies are missing
 
 import logging
 import sys
+from typing import Any, Callable
+from collections.abc import Sequence
 
 
 logger = logging.getLogger(__name__)
@@ -35,11 +37,11 @@ PYELFTOOLS_AVAILABLE: bool = False
 
 
 # Safe import functions
-def safe_import_numpy() -> object:
+def safe_import_numpy() -> Any:
     """Safely import numpy with fallback.
 
     Returns:
-        Module: Either the real numpy module or a NumpyFallback instance.
+        Any: Either the real numpy module or a NumpyFallback instance.
 
     """
     global NUMPY_AVAILABLE
@@ -64,11 +66,11 @@ def safe_import_numpy() -> object:
         return create_numpy_fallback()
 
 
-def safe_import_pandas() -> object:
+def safe_import_pandas() -> Any:
     """Safely import pandas with fallback.
 
     Returns:
-        Module: Either the real pandas module or a PandasFallback instance.
+        Any: Either the real pandas module or a PandasFallback instance.
 
     """
     global PANDAS_AVAILABLE
@@ -90,11 +92,11 @@ def safe_import_pandas() -> object:
         return create_pandas_fallback()
 
 
-def safe_import_sklearn() -> object:
+def safe_import_sklearn() -> Any:
     """Safely import sklearn with fallback.
 
     Returns:
-        Module: Either the real sklearn module or a SklearnFallback instance.
+        Any: Either the real sklearn module or a SklearnFallback instance.
 
     """
     global SKLEARN_AVAILABLE
@@ -116,11 +118,11 @@ def safe_import_sklearn() -> object:
         return create_sklearn_fallback()
 
 
-def safe_import_lief() -> object:
+def safe_import_lief() -> Any:
     """Safely import lief with fallback.
 
     Returns:
-        Module: Either the real lief module or a LiefFallback instance.
+        Any: Either the real lief module or a LiefFallback instance.
 
     """
     global LIEF_AVAILABLE
@@ -139,24 +141,21 @@ def safe_import_lief() -> object:
         return create_lief_fallback()
 
 
-def safe_import_pyelftools() -> bool | None:
+def safe_import_pyelftools() -> bool:
     """Safely import pyelftools with fallback."""
     global PYELFTOOLS_AVAILABLE
     try:
-        from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, bytes2str, maxint
+        from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, bytes2str
 
         if not HAS_PYELFTOOLS:
             error_msg = "pyelftools not available"
             logger.error(error_msg)
             raise ImportError(error_msg)
 
-        # Test that imports work by using them
         test_bytes = b"test"
         test_str = bytes2str(test_bytes)
-        test_max = maxint  # Just reference it to ensure it's valid
 
-        # Log successful import with usage verification
-        logger.debug("pyelftools available - bytes2str: %s, maxint: %s, ELFFile: %s", test_str, test_max, ELFFile)
+        logger.debug("pyelftools available - bytes2str: %s, ELFFile: %s", test_str, ELFFile)
 
         PYELFTOOLS_AVAILABLE = True
         return True
@@ -167,7 +166,7 @@ def safe_import_pyelftools() -> bool | None:
 
 
 # Fallback implementations
-def _create_randn_fallback(shape: tuple) -> object:
+def _create_randn_fallback(shape: tuple[int, ...]) -> object:
     """Generate random normal distribution for given shape.
 
     Args:
@@ -199,7 +198,7 @@ def _create_randn_fallback(shape: tuple) -> object:
     raise ValueError(error_msg)
 
 
-def _create_rand_fallback(shape: tuple) -> object:
+def _create_rand_fallback(shape: tuple[int, ...]) -> object:
     """Generate random uniform distribution [0, 1) for given shape.
 
     Args:
@@ -225,7 +224,7 @@ def _create_rand_fallback(shape: tuple) -> object:
     raise ValueError(error_msg)
 
 
-def _create_random_int_fallback(low: int, high: int, size: int | None) -> object:
+def _create_random_int_fallback(low: int, high: int, size: int | None) -> int | list[int]:
     """Generate random integers.
 
     Args:
@@ -234,24 +233,17 @@ def _create_random_int_fallback(low: int, high: int, size: int | None) -> object
         size: Number of random integers to generate, or None for single value.
 
     Returns:
-        object: Single integer or list of random integers.
-
-    Raises:
-        ValueError: If size is not an integer or None.
+        int | list[int]: Single integer or list of random integers.
 
     """
     import random
 
     if size is None:
         return random.randint(low, high - 1)  # noqa: S311
-    if isinstance(size, int):
-        return [random.randint(low, high - 1) for _ in range(size)]  # noqa: S311
-    error_msg = "Complex sizes not supported in fallback"
-    logger.error(error_msg)
-    raise ValueError(error_msg)
+    return [random.randint(low, high - 1) for _ in range(size)]  # noqa: S311
 
 
-def _create_random_uniform_fallback(low: float, high: float, size: int | None) -> object:
+def _create_random_uniform_fallback(low: float, high: float, size: int | None) -> float | list[float]:
     """Generate uniform random values.
 
     Args:
@@ -260,24 +252,17 @@ def _create_random_uniform_fallback(low: float, high: float, size: int | None) -
         size: Number of values to generate, or None for single value.
 
     Returns:
-        object: Single float or list of uniform random values.
-
-    Raises:
-        ValueError: If size is not an integer or None.
+        float | list[float]: Single float or list of uniform random values.
 
     """
     import random
 
     if size is None:
         return random.uniform(low, high)  # noqa: S311
-    if isinstance(size, int):
-        return [random.uniform(low, high) for _ in range(size)]  # noqa: S311
-    error_msg = "Complex sizes not supported in fallback"
-    logger.error(error_msg)
-    raise ValueError(error_msg)
+    return [random.uniform(low, high) for _ in range(size)]  # noqa: S311
 
 
-def _create_random_normal_fallback(loc: float, scale: float, size: int | None) -> object:
+def _create_random_normal_fallback(loc: float, scale: float, size: int | None) -> float | list[float]:
     """Generate normal distribution.
 
     Args:
@@ -286,24 +271,17 @@ def _create_random_normal_fallback(loc: float, scale: float, size: int | None) -
         size: Number of values to generate, or None for single value.
 
     Returns:
-        object: Single float or list of normally distributed values.
-
-    Raises:
-        ValueError: If size is not an integer or None.
+        float | list[float]: Single float or list of normally distributed values.
 
     """
     import random
 
     if size is None:
         return random.gauss(loc, scale)
-    if isinstance(size, int):
-        return [random.gauss(loc, scale) for _ in range(size)]
-    error_msg = "Complex sizes not supported in fallback"
-    logger.error(error_msg)
-    raise ValueError(error_msg)
+    return [random.gauss(loc, scale) for _ in range(size)]
 
 
-def _create_random_choice_fallback(a: list, size: int | None, p: list | None) -> object:
+def _create_random_choice_fallback(a: list[Any], size: int | None, p: list[float] | None) -> Any | list[Any]:
     """Random choice from array.
 
     Args:
@@ -327,35 +305,28 @@ def _create_random_choice_fallback(a: list, size: int | None, p: list | None) ->
     return [random.choice(a) for _ in range(size)]  # noqa: S311
 
 
-def _create_random_float_fallback(size: int | None) -> object:
+def _create_random_float_fallback(size: int | None) -> float | list[float]:
     """Generate random floats [0, 1).
 
     Args:
         size: Number of floats to generate, or None for single value.
 
     Returns:
-        object: Single float or list of random floats in [0, 1).
-
-    Raises:
-        ValueError: If size is not an integer or None.
+        float | list[float]: Single float or list of random floats in [0, 1).
 
     """
     import random
 
     if size is None:
         return random.random()  # noqa: S311
-    if isinstance(size, int):
-        return [random.random() for _ in range(size)]  # noqa: S311
-    error_msg = "Complex sizes not supported in fallback"
-    logger.error(error_msg)
-    raise ValueError(error_msg)
+    return [random.random() for _ in range(size)]  # noqa: S311
 
 
-def create_numpy_fallback() -> object:
+def create_numpy_fallback() -> Any:
     """Create a minimal numpy fallback.
 
     Returns:
-        NumpyFallback: A minimal numpy replacement module.
+        Any: A minimal numpy replacement module.
 
     """
 
@@ -368,7 +339,7 @@ def create_numpy_fallback() -> object:
         ndarray = list
 
         @staticmethod
-        def array(data: object) -> list:
+        def array(data: Any) -> list[Any]:
             """Convert data to array-like structure.
 
             Args:
@@ -383,7 +354,7 @@ def create_numpy_fallback() -> object:
             return list(data) if hasattr(data, "__iter__") else [data]
 
         @staticmethod
-        def zeros(shape: int | tuple) -> list:
+        def zeros(shape: int | tuple[int, ...]) -> list[int] | list[list[int]]:
             """Create array of zeros with given shape.
 
             Args:
@@ -400,7 +371,7 @@ def create_numpy_fallback() -> object:
             return []
 
         @staticmethod
-        def mean(data: list) -> float:
+        def mean(data: Sequence[float]) -> float:
             """Calculate mean of data.
 
             Args:
@@ -411,11 +382,11 @@ def create_numpy_fallback() -> object:
 
             """
             if not data:
-                return 0
-            return sum(data) / len(data)
+                return 0.0
+            return float(sum(data)) / len(data)
 
         @staticmethod
-        def sum(data: list) -> float:
+        def sum(data: Sequence[float]) -> float:
             """Calculate sum of data.
 
             Args:
@@ -425,10 +396,12 @@ def create_numpy_fallback() -> object:
                 float: Sum of values.
 
             """
-            return sum(data) if data else 0
+            import builtins
+
+            return float(builtins.sum(data)) if data else 0.0
 
         @staticmethod
-        def where(condition: list) -> list:
+        def where(condition: Sequence[bool]) -> list[int]:
             """Return indices where condition is true.
 
             Args:
@@ -444,7 +417,7 @@ def create_numpy_fallback() -> object:
             """Random number generation fallback."""
 
             @staticmethod
-            def randn(*shape: tuple) -> object:
+            def randn(*shape: int) -> object:
                 """Generate random normal distribution.
 
                 Args:
@@ -457,7 +430,7 @@ def create_numpy_fallback() -> object:
                 return _create_randn_fallback(shape)
 
             @staticmethod
-            def rand(*shape: tuple) -> object:
+            def rand(*shape: int) -> object:
                 """Generate random uniform distribution [0, 1).
 
                 Args:
@@ -470,7 +443,7 @@ def create_numpy_fallback() -> object:
                 return _create_rand_fallback(shape)
 
             @staticmethod
-            def randint(low: int, high: int, size: int | None = None) -> object:
+            def randint(low: int, high: int, size: int | None = None) -> int | list[int]:
                 """Generate random integers.
 
                 Args:
@@ -479,13 +452,13 @@ def create_numpy_fallback() -> object:
                     size: Number of values, or None for single value.
 
                 Returns:
-                    object: Random integer or list of integers.
+                    int | list[int]: Random integer or list of integers.
 
                 """
                 return _create_random_int_fallback(low, high, size)
 
             @staticmethod
-            def uniform(low: float, high: float, size: int | None = None) -> object:
+            def uniform(low: float, high: float, size: int | None = None) -> float | list[float]:
                 """Generate uniform random values.
 
                 Args:
@@ -494,13 +467,13 @@ def create_numpy_fallback() -> object:
                     size: Number of values, or None for single value.
 
                 Returns:
-                    object: Random float or list of floats.
+                    float | list[float]: Random float or list of floats.
 
                 """
                 return _create_random_uniform_fallback(low, high, size)
 
             @staticmethod
-            def normal(loc: float = 0.0, scale: float = 1.0, size: int | None = None) -> object:
+            def normal(loc: float = 0.0, scale: float = 1.0, size: int | None = None) -> float | list[float]:
                 """Generate normal distribution.
 
                 Args:
@@ -509,13 +482,13 @@ def create_numpy_fallback() -> object:
                     size: Number of values, or None for single value.
 
                 Returns:
-                    object: Normally distributed random value(s).
+                    float | list[float]: Normally distributed random value(s).
 
                 """
                 return _create_random_normal_fallback(loc, scale, size)
 
             @staticmethod
-            def choice(a: list, size: int | None = None, p: list | None = None) -> object:
+            def choice(a: list[Any], size: int | None = None, p: list[float] | None = None) -> Any | list[Any]:
                 """Random choice from array.
 
                 Args:
@@ -524,20 +497,20 @@ def create_numpy_fallback() -> object:
                     p: Probabilities for weighted sampling.
 
                 Returns:
-                    object: Randomly chosen element(s).
+                    Any | list[Any]: Randomly chosen element(s).
 
                 """
                 return _create_random_choice_fallback(a, size, p)
 
             @staticmethod
-            def random(size: int | None = None) -> object:
+            def random(size: int | None = None) -> float | list[float]:
                 """Generate random floats [0, 1).
 
                 Args:
                     size: Number of floats, or None for single.
 
                 Returns:
-                    object: Random float(s) in [0, 1).
+                    float | list[float]: Random float(s) in [0, 1).
 
                 """
                 return _create_random_float_fallback(size)
@@ -545,18 +518,18 @@ def create_numpy_fallback() -> object:
     return NumpyFallback()
 
 
-def create_pandas_fallback() -> object:
+def create_pandas_fallback() -> Any:
     """Create a minimal pandas fallback.
 
     Returns:
-        PandasFallback: A minimal pandas replacement module.
+        Any: A minimal pandas replacement module.
 
     """
 
     class DataFrameFallback:
         """Minimal DataFrame replacement for when pandas is unavailable."""
 
-        def __init__(self, data: dict | list | None = None) -> None:
+        def __init__(self, data: dict[str, Any] | list[Any] | None = None) -> None:
             """Initialize DataFrame fallback.
 
             Args:
@@ -564,13 +537,13 @@ def create_pandas_fallback() -> object:
 
             """
             if isinstance(data, dict):
-                self.data = data
+                self.data: dict[str, Any] = data
             elif isinstance(data, list):
                 self.data = {"column_0": data}
             else:
                 self.data = {}
 
-        def to_dict(self) -> dict:
+        def to_dict(self) -> dict[str, Any]:
             """Convert DataFrame to dictionary.
 
             Returns:
@@ -597,11 +570,11 @@ def create_pandas_fallback() -> object:
     return PandasFallback()
 
 
-def create_sklearn_fallback() -> object:
+def create_sklearn_fallback() -> Any:
     """Create a minimal sklearn fallback.
 
     Returns:
-        SklearnFallback: A minimal sklearn replacement module.
+        Any: A minimal sklearn replacement module.
 
     """
 
@@ -617,7 +590,7 @@ def create_sklearn_fallback() -> object:
             """
             self.n_estimators = n_estimators
 
-        def fit(self, X: list, y: list) -> "RandomForestFallback":
+        def fit(self, X: list[Any], y: list[Any]) -> "RandomForestFallback":
             """Fit the model (fallback does nothing).
 
             Args:
@@ -631,7 +604,7 @@ def create_sklearn_fallback() -> object:
             logger.debug("RandomForest fallback fit called with %s samples and %s labels", len(X), len(y))
             return self
 
-        def predict(self, X: list) -> list:
+        def predict(self, X: list[Any]) -> list[int]:
             """Predict labels (fallback returns zeros).
 
             Args:
@@ -643,7 +616,7 @@ def create_sklearn_fallback() -> object:
             """
             return [0] * len(X)
 
-        def predict_proba(self, X: list) -> list:
+        def predict_proba(self, X: list[Any]) -> list[list[float]]:
             """Predict probabilities (fallback returns 50/50).
 
             Args:
@@ -669,7 +642,7 @@ def create_sklearn_fallback() -> object:
             self.eps = eps
             self.min_samples = min_samples
 
-        def fit_predict(self, X: list) -> list:
+        def fit_predict(self, X: list[Any]) -> list[int]:
             """Fit and predict clusters (fallback returns zeros).
 
             Args:
@@ -684,7 +657,7 @@ def create_sklearn_fallback() -> object:
     class StandardScalerFallback:
         """Minimal StandardScaler replacement for when sklearn is unavailable."""
 
-        def fit(self, X: list) -> "StandardScalerFallback":
+        def fit(self, X: list[Any]) -> "StandardScalerFallback":
             """Fit the scaler (fallback does nothing).
 
             Args:
@@ -697,7 +670,7 @@ def create_sklearn_fallback() -> object:
             logger.debug("StandardScaler fallback fit called with %s samples", len(X))
             return self
 
-        def transform(self, X: list) -> list:
+        def transform(self, X: list[Any]) -> list[Any]:
             """Transform data (fallback returns unchanged).
 
             Args:
@@ -709,7 +682,7 @@ def create_sklearn_fallback() -> object:
             """
             return X
 
-        def fit_transform(self, X: list) -> list:
+        def fit_transform(self, X: list[Any]) -> list[Any]:
             """Fit and transform data (fallback returns unchanged).
 
             Args:
@@ -747,11 +720,11 @@ def create_sklearn_fallback() -> object:
     return SklearnFallback()
 
 
-def create_lief_fallback() -> object:
+def create_lief_fallback() -> Any:
     """Create a minimal lief fallback.
 
     Returns:
-        LiefFallback: A minimal lief replacement module.
+        Any: A minimal lief replacement module.
 
     """
 
@@ -798,10 +771,10 @@ class SafeModuleReplacer:
 
     def __init__(self) -> None:
         """Initialize safe module replacer with empty tracking state."""
-        self.original_modules: dict = {}
-        self.replaced_modules: set = set()
+        self.original_modules: dict[str, Any] = {}
+        self.replaced_modules: set[str] = set()
 
-    def replace_module(self, module_name: str, fallback_factory: object) -> None:
+    def replace_module(self, module_name: str, fallback_factory: Callable[[], Any]) -> None:
         """Replace a module with a fallback implementation.
 
         Args:
@@ -810,10 +783,8 @@ class SafeModuleReplacer:
 
         """
         if module_name in sys.modules and module_name not in self.replaced_modules:
-            # Store original
             self.original_modules[module_name] = sys.modules[module_name]
 
-        # Replace with fallback
         sys.modules[module_name] = fallback_factory()
         self.replaced_modules.add(module_name)
         logger.info("Replaced %s with fallback implementation", module_name)
@@ -863,15 +834,27 @@ def initialize_safe_imports() -> None:
         logger.warning("pandas issue detected: %s", e, exc_info=True)
         _module_replacer.replace_module("pandas", create_pandas_fallback)
 
-    # Test and replace sklearn if needed
     try:
         logger.info("sklearn working correctly")
     except Exception as e:
         logger.warning("sklearn issue detected: %s", e, exc_info=True)
         _module_replacer.replace_module("sklearn", create_sklearn_fallback)
-        _module_replacer.replace_module("sklearn.ensemble", lambda: create_sklearn_fallback().ensemble)
-        _module_replacer.replace_module("sklearn.cluster", lambda: create_sklearn_fallback().cluster)
-        _module_replacer.replace_module("sklearn.preprocessing", lambda: create_sklearn_fallback().preprocessing)
+
+        def sklearn_ensemble_factory() -> Any:
+            sklearn_obj = create_sklearn_fallback()
+            return sklearn_obj.ensemble
+
+        def sklearn_cluster_factory() -> Any:
+            sklearn_obj = create_sklearn_fallback()
+            return sklearn_obj.cluster
+
+        def sklearn_preprocessing_factory() -> Any:
+            sklearn_obj = create_sklearn_fallback()
+            return sklearn_obj.preprocessing
+
+        _module_replacer.replace_module("sklearn.ensemble", sklearn_ensemble_factory)
+        _module_replacer.replace_module("sklearn.cluster", sklearn_cluster_factory)
+        _module_replacer.replace_module("sklearn.preprocessing", sklearn_preprocessing_factory)
 
     logger.info("Safe import initialization complete")
 

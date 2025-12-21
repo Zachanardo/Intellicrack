@@ -437,9 +437,7 @@ class StructureVisualizerWidget(QWidget):
                     section_item.setForeground(0, QBrush(QColor(255, 100, 100)))
 
         if "dylibs" in self.structure_data or "libraries" in self.structure_data:
-            if libs := self.structure_data.get(
-                "dylibs", self.structure_data.get("libraries", [])
-            ):
+            if libs := self.structure_data.get("dylibs", self.structure_data.get("libraries", [])):
                 libs_item = QTreeWidgetItem(root, ["Dynamic Libraries"])
                 for lib in libs:
                     if isinstance(lib, dict):

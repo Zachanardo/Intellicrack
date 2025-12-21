@@ -779,9 +779,7 @@ class _FallbackPE:
                         symbol.forwarder = None
 
                         if export_dir.VirtualAddress <= func_rva < export_dir.VirtualAddress + export_dir.Size:
-                            if forwarder_offset := self.get_offset_from_rva(
-                                func_rva
-                            ):
+                            if forwarder_offset := self.get_offset_from_rva(func_rva):
                                 symbol.forwarder = self._get_string(forwarder_offset)
 
                         export.symbols.append(symbol)

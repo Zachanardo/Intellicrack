@@ -208,17 +208,12 @@ class ProductionReadinessValidator:
 
                 if rop_gadgets or jop_gadgets:
                     print(f"  OK PASS: Found {len(rop_gadgets)} ROP and {len(jop_gadgets)} JOP gadgets")
-                    self.test_results.append(True)
-                    return True
                 else:
                     print("  WARNING  WARNING: No gadgets found (may need real binary)")
-                    self.test_results.append(True)
-                    return True
             else:
                 print("  WARNING  Using mock test (modules not available)")
-                self.test_results.append(True)
-                return True
-
+            self.test_results.append(True)
+            return True
         except Exception as e:
             print(f"  FAIL FAIL: CFI bypass error: {e}")
             self.test_results.append(False)
@@ -244,22 +239,17 @@ class ProductionReadinessValidator:
 
                 # Test dongle emulator
                 dongle_emulator = HardwareDongleEmulator()
-                dongle_config = dongle_emulator.get_dongle_config("hasp")
-
-                if dongle_config:
+                if dongle_config := dongle_emulator.get_dongle_config("hasp"):
                     print("  OK PASS: Dongle emulator configuration available")
                 else:
                     print("  FAIL FAIL: Dongle emulator not functional")
                     self.test_results.append(False)
                     return False
 
-                self.test_results.append(True)
-                return True
             else:
                 print("  WARNING  Using mock test (modules not available)")
-                self.test_results.append(True)
-                return True
-
+            self.test_results.append(True)
+            return True
         except Exception as e:
             print(f"  FAIL FAIL: Hardware bypass error: {e}")
             self.test_results.append(False)
@@ -276,15 +266,12 @@ class ProductionReadinessValidator:
             if MODULES_AVAILABLE:
                 engine = R2VulnerabilityEngine(test_binary)
 
-                # Verify modules are initialized
-                modules_ok = (
-                    hasattr(engine, 'cet_bypass') and
-                    hasattr(engine, 'cfi_bypass') and
-                    hasattr(engine, 'tpm_bypass') and
-                    hasattr(engine, 'dongle_emulator')
-                )
-
-                if modules_ok:
+                if modules_ok := (
+                    hasattr(engine, 'cet_bypass')
+                    and hasattr(engine, 'cfi_bypass')
+                    and hasattr(engine, 'tpm_bypass')
+                    and hasattr(engine, 'dongle_emulator')
+                ):
                     print("  OK PASS: All bypass modules integrated with radare2")
 
                     # Test analysis includes modern protections
@@ -297,17 +284,16 @@ class ProductionReadinessValidator:
                         'hardware_protection_analysis'
                     ]
 
-                    missing = [f for f in required_fields if f not in result]
-                    if not missing:
-                        print("  OK PASS: Analysis includes all modern protection fields")
-                        self.test_results.append(True)
-                        os.unlink(test_binary)
-                        return True
-                    else:
+                    if missing := [f for f in required_fields if f not in result]:
                         print(f"  FAIL FAIL: Missing fields: {missing}")
                         self.test_results.append(False)
                         os.unlink(test_binary)
                         return False
+                    else:
+                        print("  OK PASS: Analysis includes all modern protection fields")
+                        self.test_results.append(True)
+                        os.unlink(test_binary)
+                        return True
                 else:
                     print("  FAIL FAIL: Bypass modules not properly integrated")
                     self.test_results.append(False)
@@ -355,21 +341,16 @@ class ProductionReadinessValidator:
                 else:
                     print("  WARNING  WARNING: No CFI bypass techniques (may need CFI-enabled binary)")
 
-                # Check hardware bypass analysis
-                hw_analysis = result.get('hardware_protection_analysis', {})
-                if hw_analysis:
+                if hw_analysis := result.get('hardware_protection_analysis', {}):
                     print("  OK PASS: Hardware protection analysis performed")
                 else:
                     print("  WARNING  WARNING: No hardware protections detected")
 
                 os.unlink(test_binary)
-                self.test_results.append(True)
-                return True
             else:
                 print("  WARNING  Using mock test (modules not available)")
-                self.test_results.append(True)
-                return True
-
+            self.test_results.append(True)
+            return True
         except Exception as e:
             print(f"  WARNING  WARNING: Real-world test limited: {e}")
             self.test_results.append(True)

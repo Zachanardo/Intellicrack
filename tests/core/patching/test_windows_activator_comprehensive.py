@@ -181,7 +181,7 @@ class TestGenerateHWID:
         """generate_hwid returns a string value."""
         hwid: str = activator.generate_hwid()
         assert isinstance(hwid, str)
-        assert len(hwid) > 0
+        assert hwid != ""
 
     def test_generate_hwid_format_has_dashes(self, activator: WindowsActivator) -> None:
         """generate_hwid returns formatted HWID with dashes."""

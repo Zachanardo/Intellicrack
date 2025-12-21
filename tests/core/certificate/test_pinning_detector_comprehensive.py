@@ -186,8 +186,10 @@ def create_android_apk_with_pinning(
         include_network_config: Whether to include network_security_config.xml
     """
     with zipfile.ZipFile(output_path, "w") as apk:
-        manifest = '<?xml version="1.0" encoding="utf-8"?>\n'
-        manifest += '<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n'
+        manifest = (
+            '<?xml version="1.0" encoding="utf-8"?>\n'
+            + '<manifest xmlns:android="http://schemas.android.com/apk/res/android"\n'
+        )
         manifest += '    package="com.test.pinning">\n'
         if include_network_config:
             manifest += '    <application android:networkSecurityConfig="@xml/network_security_config">\n'
@@ -198,8 +200,10 @@ def create_android_apk_with_pinning(
         apk.writestr("AndroidManifest.xml", manifest)
 
         if include_network_config:
-            nsc = '<?xml version="1.0" encoding="utf-8"?>\n'
-            nsc += "<network-security-config>\n"
+            nsc = (
+                '<?xml version="1.0" encoding="utf-8"?>\n'
+                + "<network-security-config>\n"
+            )
             for domain in domains:
                 nsc += "    <domain-config>\n"
                 nsc += f'        <domain includeSubdomains="true">{domain}</domain>\n'
@@ -359,7 +363,7 @@ class TestWindowsPinningDetection:
 
         assert len(locations) > 0
         windows_pinning = [loc for loc in locations if loc.pinning_type == "custom"]
-        assert len(windows_pinning) > 0
+        assert windows_pinning
         assert windows_pinning[0].confidence >= 0.7
         assert any("CertVerifyCertificateChainPolicy" in e or "APIs:" in e for e in windows_pinning[0].evidence)
 
@@ -390,7 +394,7 @@ class TestWindowsPinningDetection:
         locations = detector.detect_pinning_logic(str(binary_path))
 
         windows_locations = [loc for loc in locations if loc.pinning_type == "custom"]
-        assert len(windows_locations) == 0
+        assert not windows_locations
 
 
 class TestLinuxPinningDetection:
@@ -410,7 +414,7 @@ class TestLinuxPinningDetection:
 
         assert len(locations) > 0
         openssl_pinning = [loc for loc in locations if loc.pinning_type == "openssl"]
-        assert len(openssl_pinning) > 0
+        assert openssl_pinning
         assert openssl_pinning[0].confidence >= 0.75
         assert any("SSL_CTX_set_verify" in e or "APIs:" in e for e in openssl_pinning[0].evidence)
 
@@ -441,7 +445,7 @@ class TestLinuxPinningDetection:
         locations = detector.detect_pinning_logic(str(binary_path))
 
         openssl_locations = [loc for loc in locations if loc.pinning_type == "openssl"]
-        assert len(openssl_locations) == 0
+        assert not openssl_locations
 
 
 class TestIOSPinningDetection:
@@ -461,7 +465,7 @@ class TestIOSPinningDetection:
 
         assert len(locations) > 0
         afnet_locations = [loc for loc in locations if loc.pinning_type == "afnetworking"]
-        assert len(afnet_locations) > 0
+        assert afnet_locations
         assert afnet_locations[0].confidence >= 0.8
         assert any("AFSecurityPolicy" in e for e in afnet_locations[0].evidence)
 
@@ -479,7 +483,7 @@ class TestIOSPinningDetection:
 
         assert len(locations) > 0
         alamofire_locations = [loc for loc in locations if loc.pinning_type == "alamofire"]
-        assert len(alamofire_locations) > 0
+        assert alamofire_locations
         assert alamofire_locations[0].confidence >= 0.8
         assert any("ServerTrustPolicy" in e for e in alamofire_locations[0].evidence)
 
@@ -497,7 +501,7 @@ class TestIOSPinningDetection:
 
         assert len(locations) > 0
         custom_locations = [loc for loc in locations if loc.pinning_type == "custom"]
-        assert len(custom_locations) > 0
+        assert custom_locations
         assert custom_locations[0].confidence >= 0.6
         assert any("SecTrustEvaluate" in e for e in custom_locations[0].evidence)
 
@@ -808,9 +812,12 @@ class TestAndroidPinningDetection:
         report = detector.generate_pinning_report(str(apk_path))
 
         assert report.has_pinning
-        nsc_pins = [p for p in report.detected_pins if p.pin_type == "network_security_config"]
-        if nsc_pins:
-            assert len(nsc_pins) > 0
+        if nsc_pins := [
+            p
+            for p in report.detected_pins
+            if p.pin_type == "network_security_config"
+        ]:
+            assert nsc_pins
             assert nsc_pins[0].confidence == 1.0
             assert any(domain in nsc_pins[0].domains for domain in domains)
 
@@ -968,8 +975,9 @@ class TestEdgeCasesAndErrorHandling:
 
         assert report.has_pinning
         assert len(report.detected_pins) > 0
-        unknown_pins = [p for p in report.detected_pins if p.pin_type == "unknown"]
-        if unknown_pins:
+        if unknown_pins := [
+            p for p in report.detected_pins if p.pin_type == "unknown"
+        ]:
             assert unknown_pins[0].confidence <= 0.6
 
 
@@ -1010,7 +1018,7 @@ class TestMultiplePinDetection:
         locations = detector.detect_pinning_logic(str(binary_path))
 
         detected_types = {loc.pinning_type for loc in locations}
-        assert len(detected_types) >= 1
+        assert detected_types
 
     def test_multiple_pins_increase_confidence(
         self,

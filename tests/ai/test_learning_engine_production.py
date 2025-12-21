@@ -34,8 +34,7 @@ from intellicrack.ai.learning_engine import (
 def temp_db_path() -> Generator[Path, None, None]:
     """Create a temporary database path with proper Windows cleanup."""
     tmpdir = tempfile.mkdtemp()
-    db_path = Path(tmpdir) / "test_learning.db"
-    yield db_path
+    yield Path(tmpdir) / "test_learning.db"
     gc.collect()
     try:
         shutil.rmtree(tmpdir, ignore_errors=True)

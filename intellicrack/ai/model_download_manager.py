@@ -36,26 +36,34 @@ logger = get_logger(__name__)
 # Try to import huggingface_hub
 try:
     from huggingface_hub import HfApi, ModelCard, hf_hub_download, list_models, snapshot_download
-    from huggingface_hub.utils import RepositoryNotFoundError
+    from huggingface_hub.utils._errors import RepositoryNotFoundError
 
     HAS_HF_HUB = True
+    HfApi_TYPE: type[Any] = HfApi
+    ModelCard_TYPE: type[Any] = ModelCard
+    hf_hub_download_FUNC: Any = hf_hub_download
+    list_models_FUNC: Any = list_models
+    snapshot_download_FUNC: Any = snapshot_download
+    RepositoryNotFoundError_TYPE: type[Exception] = RepositoryNotFoundError
 except ImportError as e:
     logger.exception("Import error in model_download_manager: %s", e)
-    HfApi = None
-    ModelCard = None
-    hf_hub_download = None
-    list_models = None
-    snapshot_download = None
-    RepositoryNotFoundError = Exception
+    HfApi_TYPE = Any
+    ModelCard_TYPE = Any
+    hf_hub_download_FUNC = Any
+    list_models_FUNC = Any
+    snapshot_download_FUNC = Any
+    RepositoryNotFoundError_TYPE = Exception
     HAS_HF_HUB = False
 
 try:
     import requests
+    from requests import Session as requests_Session
 
     HAS_REQUESTS = True
+    requests_MODULE: Any = requests
 except ImportError as e:
     logger.exception("Import error in model_download_manager: %s", e)
-    requests = None
+    requests_MODULE = Any
     HAS_REQUESTS = False
 
 
@@ -102,15 +110,18 @@ class ModelDownloadManager:
             token: Hugging Face API token for private/gated models
 
         """
+        cache_dir_path: Path
         if cache_dir is None:
-            cache_dir = Path.home() / ".intellicrack" / "model_cache"
+            cache_dir_path = Path.home() / ".intellicrack" / "model_cache"
+        else:
+            cache_dir_path = Path(cache_dir)
 
-        self.cache_dir = Path(cache_dir)
+        self.cache_dir = cache_dir_path
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         self.token = token or os.environ.get("HF_TOKEN")
-        self.download_progress = {}
-        self.active_downloads = {}
+        self.download_progress: dict[str, DownloadProgress] = {}
+        self.active_downloads: dict[str, dict[str, Any]] = {}
 
         # Cache metadata
         self.metadata_file = self.cache_dir / "metadata.json"
@@ -120,14 +131,17 @@ class ModelDownloadManager:
             logger.warning("huggingface_hub not available - download functionality limited")
 
         # Initialize API
-        self.api = HfApi(token=self.token) if HAS_HF_HUB else None
+        self.api: Any = HfApi_TYPE(token=self.token) if HAS_HF_HUB else None
 
     def _load_metadata(self) -> dict[str, Any]:
         """Load cached metadata."""
         if self.metadata_file.exists():
             try:
                 with open(self.metadata_file) as f:
-                    return json.load(f)
+                    loaded_data: Any = json.load(f)
+                    if isinstance(loaded_data, dict):
+                        return loaded_data
+                    return {"models": {}, "downloads": {}}
             except Exception as e:
                 logger.exception("Failed to load metadata: %s", e)
         return {"models": {}, "downloads": {}}
@@ -167,7 +181,7 @@ class ModelDownloadManager:
 
         try:
             # Build filters
-            filters = {}
+            filters: dict[str, str] = {}
             if task:
                 filters["pipeline_tag"] = task
             if library:
@@ -175,7 +189,7 @@ class ModelDownloadManager:
 
             # Search models
             models = list(
-                list_models(
+                list_models_FUNC(
                     search=query,
                     filter=filters,
                     limit=limit,
@@ -224,32 +238,50 @@ class ModelDownloadManager:
             return None
 
         try:
+            if self.api is None:
+                logger.exception("API not initialized")
+                return None
+
             # Get model info from API
-            model = self.api.model_info(model_id, token=self.token)
+            model: Any = self.api.model_info(model_id, token=self.token)
 
             # Try to get model size
-            model_size = None
+            model_size: int | None = None
             try:
-                siblings = model.siblings or []
+                siblings: Any = getattr(model, "siblings", None) or []
                 for file in siblings:
-                    if file.rfilename and file.size and file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
+                    if hasattr(file, "rfilename") and hasattr(file, "size") and file.rfilename and file.size and file.rfilename.endswith((".bin", ".safetensors", ".pt", ".pth")):
                         model_size = (model_size or 0) + file.size
             except Exception as e:
-                logger.debug("Could not calculate model size for %s: %s", model.modelId, e)
+                model_id_attr: str = getattr(model, "modelId", model_id)
+                logger.debug("Could not calculate model size for %s: %s", model_id_attr, e)
+
+            model_id_val: str = getattr(model, "modelId", model_id)
+            author_val: str = getattr(model, "author", None) or model_id_val.split("/")[0]
+            model_name_val: str = model_id_val.split("/")[-1]
+            downloads_val: int = getattr(model, "downloads", None) or 0
+            likes_val: int = getattr(model, "likes", None) or 0
+            tags_val: list[str] = getattr(model, "tags", None) or []
+            pipeline_tag_val: str | None = getattr(model, "pipeline_tag", None)
+            library_name_val: str | None = getattr(model, "library_name", None)
+            last_modified_val: datetime | None = getattr(model, "lastModified", None)
+            private_val: bool = bool(getattr(model, "private", False))
+            gated_val_raw: Any = getattr(model, "gated", False)
+            gated_val: bool = bool(gated_val_raw) if gated_val_raw not in ("auto", "manual") else gated_val_raw != False
 
             info = ModelInfo(
-                model_id=model.modelId,
-                author=model.author or model.modelId.split("/")[0],
-                model_name=model.modelId.split("/")[-1],
-                downloads=model.downloads or 0,
-                likes=model.likes or 0,
-                tags=model.tags or [],
-                pipeline_tag=model.pipeline_tag,
-                library_name=model.library_name,
+                model_id=model_id_val,
+                author=author_val,
+                model_name=model_name_val,
+                downloads=downloads_val,
+                likes=likes_val,
+                tags=tags_val,
+                pipeline_tag=pipeline_tag_val,
+                library_name=library_name_val,
                 model_size=model_size,
-                last_modified=model.lastModified,
-                private=model.private,
-                gated=model.gated,
+                last_modified=last_modified_val,
+                private=private_val,
+                gated=gated_val,
             )
 
             # Cache info
@@ -261,7 +293,7 @@ class ModelDownloadManager:
 
             return info
 
-        except RepositoryNotFoundError:
+        except RepositoryNotFoundError_TYPE:
             logger.exception("Model not found: %s", model_id)
             return None
         except Exception as e:
@@ -278,13 +310,13 @@ class ModelDownloadManager:
             Dictionary containing model card content or None
 
         """
-        if not HAS_HF_HUB or not ModelCard:
+        if not HAS_HF_HUB:
             logger.exception("ModelCard functionality not available")
             return None
 
         try:
             # Try to load model card
-            card = ModelCard.load(model_id, token=self.token)
+            card: Any = ModelCard_TYPE.load(model_id, token=self.token)
 
             # Extract useful information from the card
             card_data = {
@@ -391,7 +423,7 @@ class ModelDownloadManager:
             # so we'll call progress_hook with a start notification
             if progress_callback:
                 progress_hook({"downloaded": 0, "total": 0, "percentage": 0, "filename": model_id})
-            local_path = snapshot_download(
+            local_path_str: str = snapshot_download_FUNC(
                 repo_id=model_id,
                 revision=revision,
                 cache_dir=str(self.cache_dir),
@@ -401,6 +433,7 @@ class ModelDownloadManager:
                 allow_patterns=allow_patterns,
                 ignore_patterns=ignore_patterns or ["*.md", "*.txt", ".gitattributes"],
             )
+            local_path = Path(local_path_str)
 
             # Update metadata
             self.metadata["downloads"][model_id] = {
@@ -451,18 +484,17 @@ class ModelDownloadManager:
             if progress_callback:
                 # Create progress tracking
                 progress = DownloadProgress(
-                    model_id=model_id,
-                    file_name=filename,
-                    total_bytes=0,
-                    downloaded_bytes=0,
-                    progress_percent=0.0,
-                    download_speed=0.0,
-                    status="starting",
+                    total_size=0,
+                    downloaded_size=0,
+                    speed=0.0,
+                    eta=0.0,
+                    percentage=0.0,
+                    current_file=filename,
                 )
                 progress_callback(progress)
 
             # Download file
-            local_path = hf_hub_download(
+            local_path_str: str = hf_hub_download_FUNC(
                 repo_id=model_id,
                 filename=filename,
                 revision=revision,
@@ -472,11 +504,17 @@ class ModelDownloadManager:
 
             # Report completion if callback provided
             if progress_callback:
-                progress.status = "completed"
-                progress.progress_percent = 100.0
-                progress_callback(progress)
+                progress_complete = DownloadProgress(
+                    total_size=0,
+                    downloaded_size=0,
+                    speed=0.0,
+                    eta=0.0,
+                    percentage=100.0,
+                    current_file=filename,
+                )
+                progress_callback(progress_complete)
 
-            return Path(local_path)
+            return Path(local_path_str)
 
         except Exception as e:
             logger.exception("Failed to download file: %s", e)
@@ -545,7 +583,7 @@ class ModelDownloadManager:
 
         return False
 
-    def get_cache_size(self) -> dict[str, float]:
+    def get_cache_size(self) -> dict[str, float | int | str]:
         """Get total cache size information.
 
         Returns:
@@ -609,7 +647,7 @@ class ModelDownloadManager:
 
         """
         model_path = Path(model_path)
-        results = {
+        results: dict[str, Any] = {
             "valid": True,
             "errors": [],
             "warnings": [],
@@ -618,7 +656,9 @@ class ModelDownloadManager:
 
         if not model_path.exists():
             results["valid"] = False
-            results["errors"].append("Model path does not exist")
+            errors_list: Any = results["errors"]
+            if isinstance(errors_list, list):
+                errors_list.append("Model path does not exist")
             return results
 
         # Check for essential files
@@ -644,29 +684,37 @@ class ModelDownloadManager:
                     has_weights = True
 
                 for file in files:
-                    results["files"][file.name] = {
-                        "size_mb": file.stat().st_size / (1024 * 1024),
-                        "exists": True,
-                    }
+                    files_dict: Any = results["files"]
+                    if isinstance(files_dict, dict):
+                        files_dict[file.name] = {
+                            "size_mb": file.stat().st_size / (1024 * 1024),
+                            "exists": True,
+                        }
 
         if not has_config:
-            results["warnings"].append("No config.json found")
+            warnings_list: Any = results["warnings"]
+            if isinstance(warnings_list, list):
+                warnings_list.append("No config.json found")
 
         if not has_weights:
             results["valid"] = False
-            results["errors"].append("No model weight files found")
+            errors_list2: Any = results["errors"]
+            if isinstance(errors_list2, list):
+                errors_list2.append("No model weight files found")
 
         # Check tokenizer files
         tokenizer_files = ["tokenizer_config.json", "tokenizer.json", "vocab.json"]
         has_tokenizer = any((model_path / file).exists() for file in tokenizer_files)
         if not has_tokenizer:
-            results["warnings"].append("No tokenizer files found")
+            warnings_list2: Any = results["warnings"]
+            if isinstance(warnings_list2, list):
+                warnings_list2.append("No tokenizer files found")
 
         return results
 
 
 # Global instance
-_DOWNLOAD_MANAGER = None
+_DOWNLOAD_MANAGER: ModelDownloadManager | None = None
 
 
 def get_download_manager(token: str | None = None) -> ModelDownloadManager:

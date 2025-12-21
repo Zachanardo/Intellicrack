@@ -17,7 +17,6 @@ def test_payload_engine_integration():
     print("Testing complete exploit generation and deployment pipeline...")
     print()
 
-    # Mock dependencies for isolated testing
     class MockArchitecture:
         X86 = type('X86', (), {'value': 'x86'})()
         X64 = type('X64', (), {'value': 'x64'})()
@@ -31,6 +30,8 @@ def test_payload_engine_integration():
             else:
                 # x86 reverse shell stub: connect back to 127.0.0.1:4444
                 return b"\x31\xc0\x31\xdb\x31\xc9\x31\xd2\x6a\x06\x6a\x01\x6a\x02\x89\xe1\xb0\x66\xcd\x80"
+
+
 
     class MockPayloadEngine:
         def __init__(self):
@@ -117,18 +118,7 @@ def test_payload_engine_integration():
                 payload = payload_info.get("payload", b"")
                 payload_type = payload_info.get("type", "unknown")
 
-                if deployment_method == "remote_thread":
-                    return {
-                        "deployment_method": "remote_thread",
-                        "status": "success",
-                        "payload_deployed": True,
-                        "target_process": "target.exe",
-                        "thread_id": 1337,
-                        "payload_address": 0x00401000,
-                        "deployment_size": len(payload)
-                    }
-
-                elif deployment_method == "dll_injection":
+                if deployment_method == "dll_injection":
                     return {
                         "deployment_method": "dll_injection",
                         "status": "success",
@@ -149,6 +139,17 @@ def test_payload_engine_integration():
                         "deployment_size": len(payload)
                     }
 
+                elif deployment_method == "remote_thread":
+                    return {
+                        "deployment_method": "remote_thread",
+                        "status": "success",
+                        "payload_deployed": True,
+                        "target_process": "target.exe",
+                        "thread_id": 1337,
+                        "payload_address": 0x00401000,
+                        "deployment_size": len(payload)
+                    }
+
                 else:
                     return {
                         "deployment_method": deployment_method,
@@ -165,7 +166,7 @@ def test_payload_engine_integration():
                     "payload_deployed": False
                 }
 
-    # Create test vulnerability engine with integrated components
+
     class TestVulnEngineIntegrated:
         def __init__(self):
             self.binary_path = "test.exe"
@@ -326,7 +327,7 @@ def test_payload_engine_integration():
         shellcode_size = len(bof_result["shellcode"])
         payload_size = len(bof_result["optimized_payload"])
 
-        print(f"OK BOF payload integration successful")
+        print("OK BOF payload integration successful")
         print(f"OK ShellcodeGenerator produced {shellcode_size} bytes")
         print(f"OK PayloadEngine optimized to {payload_size} bytes")
         print(f"OK Optimizations: {bof_result.get('optimizations', [])}")

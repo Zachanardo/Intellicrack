@@ -55,7 +55,7 @@ def fix_test_files():
         with open(aslr_test, 'w', encoding='utf-8') as f:
             f.write(content)
 
-        print(f"  OK Fixed syntax errors and patch references")
+        print("  OK Fixed syntax errors and patch references")
 
     # Check all test files for remaining mock references
     for test_file in test_dir.glob('test_*.py'):
@@ -117,12 +117,11 @@ def validate_compliance():
         with open(test_file, encoding='utf-8') as f:
             content = f.read()
 
-        file_violations = []
-        for pattern, description in forbidden_patterns:
-            if pattern in content and pattern not in ['# patch', '# Mock']:
-                file_violations.append(description)
-
-        if file_violations:
+        if file_violations := [
+            description
+            for pattern, description in forbidden_patterns
+            if pattern in content and pattern not in ['# patch', '# Mock']
+        ]:
             violations.append((test_file.name, file_violations))
 
     if violations:

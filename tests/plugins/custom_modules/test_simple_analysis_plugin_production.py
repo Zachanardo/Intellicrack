@@ -311,10 +311,10 @@ class TestPluginState:
         assert firefox_size != seven_zip_size, "Test requires different sized binaries"
 
         assert any(str(firefox_size) in r for r in firefox_results)
-        assert not any(str(seven_zip_size) in r for r in firefox_results)
+        assert all(str(seven_zip_size) not in r for r in firefox_results)
 
         assert any(str(seven_zip_size) in r for r in seven_zip_results)
-        assert not any(str(firefox_size) in r for r in seven_zip_results)
+        assert all(str(firefox_size) not in r for r in seven_zip_results)
 
 
 class TestEdgeCases:

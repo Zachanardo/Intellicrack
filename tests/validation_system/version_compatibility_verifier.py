@@ -305,9 +305,9 @@ class VersionCompatibilityVerifier:
                                     for resource_lang in resource_id.directory.entries:
                                         data = pe.get_data(resource_lang.data.struct.OffsetToData,
                                                          resource_lang.data.struct.Size)
-                                        # Look for version strings
-                                        version_match = self._extract_version_from_data(data, protection_name)
-                                        if version_match:
+                                        if version_match := self._extract_version_from_data(
+                                            data, protection_name
+                                        ):
                                             detected_version = version_match
                                             break
                 pe.close()
@@ -328,7 +328,7 @@ class VersionCompatibilityVerifier:
                     pass
                     # Pattern matching may fail, continue with other methods
 
-            logger.info(f"Detected version: {detected_version if detected_version else 'Unknown'}")
+            logger.info(f"Detected version: {detected_version or 'Unknown'}")
             return detected_version
 
         except Exception as e:
@@ -362,14 +362,11 @@ class VersionCompatibilityVerifier:
             return None
 
         for pattern in patterns:
-            match = re.search(pattern, data_str, re.IGNORECASE)
-            if match:
+            if match := re.search(pattern, data_str, re.IGNORECASE):
                 # Extract version from the match
-                version_part = match.group(0)
-                # Try to extract just the version number
-                version_match = re.search(r'v?(\d+\.\d+\.?\d*)', version_part)
-                if version_match:
-                    return f"v{version_match.group(1)}"
+                version_part = match[0]
+                if version_match := re.search(r'v?(\d+\.\d+\.?\d*)', version_part):
+                    return f"v{version_match[1]}"
                 return version_part
 
         return None
@@ -558,8 +555,9 @@ class VersionCompatibilityVerifier:
             # Simulate feature testing (in real implementation, these would be actual feature tests)
             for feature in features_tested:
                 try:
-                    success = self._test_feature(binary_path, feature, protection_name)
-                    if success:
+                    if success := self._test_feature(
+                        binary_path, feature, protection_name
+                    ):
                         features_passed.append(feature)
                     else:
                         features_failed.append(feature)
@@ -574,8 +572,9 @@ class VersionCompatibilityVerifier:
 
             for feature in features_tested:
                 try:
-                    success = self._test_feature(binary_path, feature, protection_name)
-                    if success:
+                    if success := self._test_feature(
+                        binary_path, feature, protection_name
+                    ):
                         features_passed.append(feature)
                     else:
                         features_failed.append(feature)
@@ -586,14 +585,19 @@ class VersionCompatibilityVerifier:
 
         # Step 4: Generate incompatibility report if needed
         incompatibility_report = None
-        if (compatibility_status in [CompatibilityStatus.UNSUPPORTED, CompatibilityStatus.UNKNOWN] or
-            compatibility_status == CompatibilityStatus.PARTIALLY_SUPPORTED):
+        if compatibility_status in [
+            CompatibilityStatus.UNSUPPORTED,
+            CompatibilityStatus.UNKNOWN,
+            CompatibilityStatus.PARTIALLY_SUPPORTED,
+        ]:
             incompatibility_report = self.generate_incompatibility_report(
                 software_name, protection_name, detected_version, version_support
             )
 
-        test_success = (compatibility_status == CompatibilityStatus.FULLY_SUPPORTED and
-                       len(features_failed) == 0)
+        test_success = (
+            compatibility_status == CompatibilityStatus.FULLY_SUPPORTED
+            and not features_failed
+        )
 
         result = CompatibilityTestResult(
             software_name=software_name,
@@ -622,9 +626,9 @@ class VersionCompatibilityVerifier:
                 return self._test_license_detection(binary_path, protection_name)
             elif feature == "version_detection":
                 return self.detect_version_from_binary(binary_path, protection_name) is not None
-            elif feature in ["bypass_generation", "protection_bypass"]:
+            elif feature in {"bypass_generation", "protection_bypass"}:
                 return self._test_bypass_capability(binary_path, protection_name)
-            elif feature in ["crypto_analysis", "key_extraction"]:
+            elif feature in {"crypto_analysis", "key_extraction"}:
                 return self._test_crypto_analysis(binary_path, protection_name)
             elif feature == "anti_debug_detection":
                 return self._test_antidebug_detection(binary_path)
@@ -685,12 +689,7 @@ class VersionCompatibilityVerifier:
                 b"encrypt", b"decrypt", b"hash", b"key"
             ]
 
-            for pattern in crypto_patterns:
-                if pattern in binary_data:
-                    return True
-
-            return False
-
+            return any(pattern in binary_data for pattern in crypto_patterns)
         except Exception:
             return False
 
@@ -706,12 +705,7 @@ class VersionCompatibilityVerifier:
                 b"NtQueryInformationProcess", b"OutputDebugString"
             ]
 
-            for pattern in antidebug_patterns:
-                if pattern in binary_data:
-                    return True
-
-            return False
-
+            return any(pattern in binary_data for pattern in antidebug_patterns)
         except Exception:
             return False
 
@@ -734,17 +728,17 @@ class VersionCompatibilityVerifier:
         unsupported = len([r for r in self.test_results if r.compatibility_status == CompatibilityStatus.UNSUPPORTED])
         unknown = len([r for r in self.test_results if r.compatibility_status == CompatibilityStatus.UNKNOWN])
 
-        report_lines.extend([
-            "COMPATIBILITY SUMMARY:",
-            f"- Fully Supported: {fully_supported}",
-            f"- Partially Supported: {partially_supported}",
-            f"- Unsupported: {unsupported}",
-            f"- Unknown: {unknown}",
-            ""
-        ])
-
-        # Detailed results
-        report_lines.append("DETAILED RESULTS:")
+        report_lines.extend(
+            [
+                "COMPATIBILITY SUMMARY:",
+                f"- Fully Supported: {fully_supported}",
+                f"- Partially Supported: {partially_supported}",
+                f"- Unsupported: {unsupported}",
+                f"- Unknown: {unknown}",
+                "",
+                "DETAILED RESULTS:",
+            ]
+        )
         for result in self.test_results:
             report_lines.extend([
                 f"Software: {result.software_name}",

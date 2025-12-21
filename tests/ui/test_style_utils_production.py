@@ -182,7 +182,7 @@ class TestProgressBarStyleCSSProperties:
         )
         assert chunk_match is not None
 
-        chunk_properties = chunk_match.group(1)
+        chunk_properties = chunk_match[1]
         assert "background-color:" in chunk_properties
 
 
@@ -197,7 +197,7 @@ class TestProgressBarStyleCSSProperties:
         )
         assert chunk_match is not None
 
-        chunk_properties = chunk_match.group(1)
+        chunk_properties = chunk_match[1]
         assert "border-radius:" in chunk_properties
 
 

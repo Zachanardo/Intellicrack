@@ -156,8 +156,10 @@ except ImportError as e:
 
     def pyqtSignal(*args: Any, **kwargs: Any) -> Callable[..., None]:  # type: ignore[no-redef]
         """Fallback pyqtSignal implementation when PyQt6 is not available."""
+
         def _noop_signal(*signal_args: Any) -> None:
             logger.debug("No-op signal called with args: %s", signal_args)
+
         return _noop_signal
 
     QFont = None  # type: ignore[misc,assignment]

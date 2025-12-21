@@ -17,19 +17,19 @@ from intellicrack.handlers import lief_handler
 def minimal_pe_binary() -> bytes:
     """Create minimal valid PE binary for testing."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = (128).to_bytes(4, "little")
 
     pe_header = b"PE\x00\x00"
 
     coff_header = bytearray(20)
-    coff_header[0:2] = (0x14C).to_bytes(2, "little")
+    coff_header[:2] = (0x14C).to_bytes(2, "little")
     coff_header[2:4] = (1).to_bytes(2, "little")
     coff_header[16:18] = (224).to_bytes(2, "little")
     coff_header[18:20] = (0x0002).to_bytes(2, "little")
 
     optional_header = bytearray(224)
-    optional_header[0:2] = (0x10B).to_bytes(2, "little")
+    optional_header[:2] = (0x10B).to_bytes(2, "little")
     optional_header[16:20] = (0x1000).to_bytes(4, "little")
     optional_header[20:24] = (0x1000).to_bytes(4, "little")
     optional_header[28:32] = (0x400000).to_bytes(4, "little")
@@ -39,7 +39,7 @@ def minimal_pe_binary() -> bytes:
     optional_header[60:64] = (0x400).to_bytes(4, "little")
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = (0x1000).to_bytes(4, "little")
     section_header[12:16] = (0x1000).to_bytes(4, "little")
     section_header[16:20] = (0x200).to_bytes(4, "little")
@@ -56,7 +56,7 @@ def minimal_pe_binary() -> bytes:
 def minimal_elf_binary() -> bytes:
     """Create minimal valid ELF binary for testing."""
     elf_header = bytearray(64)
-    elf_header[0:4] = b"\x7fELF"
+    elf_header[:4] = b"\x7fELF"
     elf_header[4] = 2
     elf_header[5] = 1
     elf_header[6] = 1
@@ -508,7 +508,7 @@ def test_binary_has_empty_collections_initialized(minimal_pe_binary: bytes) -> N
 def test_is_macho_detects_macho_files() -> None:
     """is_macho() returns True for Mach-O binary."""
     macho_header = bytearray(32)
-    macho_header[0:4] = b"\xfe\xed\xfa\xcf"
+    macho_header[:4] = b"\xfe\xed\xfa\xcf"
 
     with tempfile.NamedTemporaryFile(mode="wb", suffix=".macho", delete=False) as f:
         f.write(macho_header + b"\x00" * 1000)

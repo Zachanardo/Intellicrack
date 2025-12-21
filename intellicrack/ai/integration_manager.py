@@ -28,7 +28,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from queue import Empty, Queue
-from typing import Any, Self
+from typing import TYPE_CHECKING, Any, Literal, Self
+
+if TYPE_CHECKING:
+    from .llm_backends import LLMProvider
 
 from ..utils.logger import get_logger
 from .ai_script_generator import AIScriptGenerator
@@ -42,11 +45,13 @@ logger = get_logger(__name__)
 
 # Import QEMU Test Manager with fallback
 try:
-    from .qemu_manager import QEMUManager
+    from .qemu_manager import QEMUManager as ImportedQEMUManager
+
+    QEMUManager = ImportedQEMUManager
 except ImportError:
     logger.warning("QEMUManager not available")
 
-    class QEMUManager:
+    class QEMUManager:  # type: ignore[no-redef]
         """Fallback QEMUManager providing static validation and safe dry-run only."""
 
         def __init__(self, *_args: object, **_kwargs: object) -> None:
@@ -62,7 +67,7 @@ except ImportError:
 
             self.working_dir = Path(tempfile.gettempdir()) / "intellicrack_qemu_fallback"
             self.working_dir.mkdir(exist_ok=True)
-            self.snapshots = {}
+            self.snapshots: dict[str, Any] = {}
             logger.warning("QEMUManager fallback initialized")
 
         def validate_script_in_vm(self, script: str, target_binary: str, vm_config: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -184,7 +189,7 @@ except ImportError:
                     return {"type": "empty", "extension": "txt", "analysis": "Empty script"}
 
                 script_lower = script.lower()
-                analysis_result = {
+                analysis_result: dict[str, Any] = {
                     "length": len(script),
                     "lines": len(script.split("\n")),
                     "features": [],
@@ -192,40 +197,46 @@ except ImportError:
                 }
 
                 # Determine script type and extension
+                features_list: list[str] = []
                 if "java.perform" in script_lower or "frida" in script_lower:
                     analysis_result["type"] = "frida"
                     analysis_result["extension"] = "js"
-                    analysis_result["features"].append("frida_javascript")
+                    features_list.append("frida_javascript")
                 elif "javascript" in script_lower or script.strip().startswith("Java"):
                     analysis_result["type"] = "javascript"
                     analysis_result["extension"] = "js"
-                    analysis_result["features"].append("javascript")
+                    features_list.append("javascript")
                 elif "python" in script_lower or script.strip().startswith("#!/usr/bin/python"):
                     analysis_result["type"] = "python"
                     analysis_result["extension"] = "py"
-                    analysis_result["features"].append("python_script")
+                    features_list.append("python_script")
                 else:
                     analysis_result["type"] = "generic"
                     analysis_result["extension"] = "txt"
-                    analysis_result["features"].append("generic_script")
+                    features_list.append("generic_script")
 
                 # Analyze script features
                 if "memory" in script_lower:
-                    analysis_result["features"].append("memory_manipulation")
+                    features_list.append("memory_manipulation")
                 if any(hook in script_lower for hook in ["hook", "intercept", "patch"]):
-                    analysis_result["features"].append("hooking_techniques")
+                    features_list.append("hooking_techniques")
                 if any(api in script_lower for api in ["api", "call", "function"]):
-                    analysis_result["features"].append("api_interaction")
+                    features_list.append("api_interaction")
                 if "encrypt" in script_lower or "decrypt" in script_lower:
-                    analysis_result["features"].append("cryptographic_operations")
+                    features_list.append("cryptographic_operations")
+
+                analysis_result["features"] = features_list
+                lines_count = analysis_result["lines"]
+                assert isinstance(lines_count, int), "lines must be an integer"
+                complexity = "high" if lines_count > 50 else "medium" if lines_count > 20 else "simple"
 
                 # Generate analysis summary
                 analysis_result["analysis"] = f"""
 Script Analysis:
 - Type: {analysis_result["type"]}
-- Size: {analysis_result["length"]} bytes ({analysis_result["lines"]} lines)
-- Features: {", ".join(analysis_result["features"]) if analysis_result["features"] else "basic"}
-- Complexity: {"high" if analysis_result["lines"] > 50 else "medium" if analysis_result["lines"] > 20 else "simple"}
+- Size: {analysis_result["length"]} bytes ({lines_count} lines)
+- Features: {", ".join(features_list) if features_list else "basic"}
+- Complexity: {complexity}
 """
 
                 return analysis_result
@@ -365,7 +376,8 @@ Script Analysis:
                     return self._perform_script_validation(script, script_path, target_path)
 
                 try:
-                    qemu_result = self._try_qemu_execution(script_path, target_path, vm_config)  # may raise
+                    effective_vm_config = vm_config or {}
+                    qemu_result = self._try_qemu_execution(script_path, target_path, effective_vm_config)
                     if qemu_result["success"]:
                         return qemu_result
                 except Exception as qemu_error:
@@ -501,9 +513,8 @@ Script Analysis:
                     "=== Script Validation Results ===",
                     f"Script file: {script_file}",
                     f"Target binary: {target_file}",
+                    f"Script size: {len(script)} bytes",
                 ]
-                validation_results.append(f"Script size: {len(script)} bytes")
-
                 try:
                     if script_file.suffix == ".js":
                         if any(tok in script for tok in ("function", "var ", "let ", "const ")):
@@ -589,7 +600,7 @@ class IntegrationManager:
         self.qemu_manager = QEMUManager()
 
         # Task management
-        self.task_queue: Queue = Queue()
+        self.task_queue: Queue[IntegrationTask] = Queue()
         self.active_tasks: dict[str, IntegrationTask] = {}
         self.completed_tasks: dict[str, IntegrationTask] = {}
         self.task_dependencies: dict[str, list[str]] = {}
@@ -607,7 +618,7 @@ class IntegrationManager:
         self.worker_threads: list[threading.Thread] = []
 
         # Event handlers
-        self.event_handlers: dict[str, list[Callable]] = {}
+        self.event_handlers: dict[str, list[Callable[..., Any]]] = {}
 
         # Optimization settings
         self.enable_caching = True
@@ -776,7 +787,23 @@ class IntegrationManager:
         target_binary = task.input_data["target_binary"]
         vm_config = task.input_data.get("vm_config", {})
 
-        return self.qemu_manager.validate_script_in_vm(script, target_binary, vm_config)
+        if hasattr(self.qemu_manager, "validate_script_in_vm"):
+            result = self.qemu_manager.validate_script_in_vm(script, target_binary, vm_config)
+            if isinstance(result, dict):
+                return result
+            return {
+                "success": False,
+                "output": "Invalid result from QEMU manager",
+                "error": "validate_script_in_vm returned non-dict",
+                "exit_code": 1,
+            }
+        else:
+            return {
+                "success": False,
+                "output": "QEMU manager not available",
+                "error": "validate_script_in_vm method not found",
+                "exit_code": 1,
+            }
 
     def _execute_autonomous_analysis(self, task: IntegrationTask) -> dict[str, Any]:
         """Execute autonomous analysis task."""
@@ -789,9 +816,9 @@ class IntegrationManager:
         dependency_results = {dep_id: self.completed_tasks[dep_id].result for dep_id in task.dependencies if dep_id in self.completed_tasks}
         combination_logic = task.input_data.get("combination_logic", "merge")
 
+        combined: dict[str, Any] = {}
         if combination_logic == "merge":
             # Simple merge of all results
-            combined = {}
             for dep_id, result in dependency_results.items():
                 if isinstance(result, dict):
                     combined |= result
@@ -800,9 +827,11 @@ class IntegrationManager:
         elif combination_logic == "select_best":
             # Select best result based on criteria
             criteria = task.input_data.get("selection_criteria", "confidence")
-            combined = self._select_best_result(dependency_results, criteria)
+            best_result = self._select_best_result(dependency_results, criteria)
+            if best_result is not None:
+                combined = best_result
         else:
-            combined = dependency_results
+            combined = dependency_results if isinstance(dependency_results, dict) else {}
 
         return combined
 
@@ -822,27 +851,31 @@ class IntegrationManager:
 
         if criteria == "confidence":
             # Select result with highest confidence
-            best_result = None
+            best_result: dict[str, Any] | None = None
             best_confidence = 0.0
 
             for result in results.values():
                 if isinstance(result, dict) and "confidence" in result:
                     confidence = result["confidence"]
-                    if confidence > best_confidence:
-                        best_confidence = confidence
+                    if isinstance(confidence, (int, float)) and confidence > best_confidence:
+                        best_confidence = float(confidence)
                         best_result = result
 
-            return best_result or next(iter(results.values()))
+            if best_result is not None:
+                return best_result
+            first_value = next(iter(results.values()), None)
+            return first_value if isinstance(first_value, dict) else None
 
         # Default: return first result
-        return next(iter(results.values()))
+        first_value = next(iter(results.values()), None)
+        return first_value if isinstance(first_value, dict) else None
 
     def create_task(
         self,
         task_type: str,
         description: str,
         input_data: dict[str, Any],
-        dependencies: list[str] = None,
+        dependencies: list[str] | None = None,
         priority: int = 1,
     ) -> str:
         """Create a new integration task."""
@@ -867,7 +900,7 @@ class IntegrationManager:
         """Create a complex workflow with multiple tasks."""
         workflow_id = f"workflow_{int(time.time() * 1000)}"
 
-        workflow = {
+        workflow: dict[str, Any] = {
             "id": workflow_id,
             "definition": workflow_definition,
             "tasks": {},
@@ -877,7 +910,7 @@ class IntegrationManager:
 
         # Create tasks from definition
         tasks = workflow_definition.get("tasks", [])
-        task_mapping = {}
+        task_mapping: dict[str, str] = {}
 
         for task_def in tasks:
             dependencies = [task_mapping[dep_name] for dep_name in task_def.get("dependencies", []) if dep_name in task_mapping]
@@ -889,8 +922,11 @@ class IntegrationManager:
                 priority=task_def.get("priority", 1),
             )
 
-            task_mapping[task_def.get("name", task_id)] = task_id
-            workflow["tasks"][task_id] = task_def
+            task_name = task_def.get("name", task_id)
+            task_mapping[task_name] = task_id
+            workflow_tasks = workflow.get("tasks")
+            if isinstance(workflow_tasks, dict):
+                workflow_tasks[task_id] = task_def
 
         self.active_workflows[workflow_id] = workflow
         logger.info("Created workflow %s with %d tasks", workflow_id, len(tasks))
@@ -921,8 +957,8 @@ class IntegrationManager:
         start_time = time.time()
 
         # Wait for all tasks to complete
-        completed_tasks = {}
-        failed_tasks = {}
+        completed_tasks: dict[str, IntegrationTask] = {}
+        failed_tasks: dict[str, IntegrationTask] = {}
 
         while len(completed_tasks) + len(failed_tasks) < len(task_ids):
             for task_id in task_ids:
@@ -1000,16 +1036,8 @@ class IntegrationManager:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
 
-            completed = sum(
-                tid in self.completed_tasks
-                and self.completed_tasks[tid].status == "completed"
-                for tid in task_ids
-            )
-            failed = sum(
-                tid in self.completed_tasks
-                and self.completed_tasks[tid].status == "failed"
-                for tid in task_ids
-            )
+            completed = sum(tid in self.completed_tasks and self.completed_tasks[tid].status == "completed" for tid in task_ids)
+            failed = sum(tid in self.completed_tasks and self.completed_tasks[tid].status == "failed" for tid in task_ids)
             running = sum(tid in self.active_tasks for tid in task_ids)
             pending = len(task_ids) - completed - failed - running
 
@@ -1036,7 +1064,6 @@ class IntegrationManager:
 
     def cancel_task(self, task_id: str) -> bool:
         """Cancel a pending task."""
-        # Remove task from queue or stop execution
         cancelled = False
 
         # Requeue all except the one to cancel
@@ -1056,8 +1083,6 @@ class IntegrationManager:
         # Check active tasks
         with self._state_lock:
             if task_id in self.active_tasks:
-                task = self.active_tasks[task_id]
-                task.cancelled = True
                 del self.active_tasks[task_id]
                 cancelled = True
 
@@ -1068,7 +1093,7 @@ class IntegrationManager:
 
         return cancelled
 
-    def add_event_handler(self, event_type: str, handler: Callable) -> None:
+    def add_event_handler(self, event_type: str, handler: Callable[..., Any]) -> None:
         """Add event handler."""
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []
@@ -1236,7 +1261,7 @@ class IntegrationManager:
             self.logger.exception("Error generating AI response")
             return f"Error generating response: {e}"
 
-    def _detect_provider_from_model(self, model: str | None) -> "LLMProvider | None":
+    def _detect_provider_from_model(self, model: str | None) -> LLMProvider | None:
         """Detect the LLM provider from model name.
 
         Args:
@@ -1308,7 +1333,7 @@ class IntegrationManager:
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool:
+    ) -> Literal[False]:
         """Context manager exit.
 
         Args:

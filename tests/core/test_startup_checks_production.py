@@ -156,7 +156,7 @@ class TestCheckDataPaths:
                 path_str, exists = value
                 path = Path(path_str)
 
-                assert path.suffix in [".qcow2", ".img", ".raw", ".vmdk"]
+                assert path.suffix in {".qcow2", ".img", ".raw", ".vmdk"}
                 assert path.exists() == exists
 
 
@@ -171,9 +171,7 @@ class TestCheckQEMUSetup:
 
     def test_check_qemu_setup_validates_qemu_img(self) -> None:
         """check_qemu_setup validates qemu-img command availability."""
-        result = check_qemu_setup()
-
-        if result:
+        if result := check_qemu_setup():
             qemu_result = subprocess.run(
                 ["qemu-img", "--version"], capture_output=True, check=False
             )
@@ -215,9 +213,7 @@ class TestCreateMinimalQEMUDisk:
 
         original_dir = get_qemu_images_dir()
 
-        result = create_minimal_qemu_disk()
-
-        if result:
+        if result := create_minimal_qemu_disk():
             assert result.exists()
             assert result.suffix == ".qcow2"
 

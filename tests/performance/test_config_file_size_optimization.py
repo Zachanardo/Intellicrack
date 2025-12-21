@@ -69,14 +69,24 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
             config["llm_configuration"]["models"][model_id] = {
                 "provider": random.choice(["openai", "anthropic", "google"]),
                 "model_name": f"model-{i}",
-                "api_key": "sk-" + "".join(random.choices(string.ascii_letters + string.digits, k=48)),
+                "api_key": "sk-"
+                + "".join(
+                    random.choices(string.ascii_letters + string.digits, k=48)
+                ),
                 "api_base": f"https://api-{i}.example.com",
                 "context_length": random.randint(1000, 100000),
                 "temperature": random.uniform(0.1, 2.0),
                 "max_tokens": random.randint(100, 4000),
-                "custom_params": {f"param_{j}": "".join(random.choices(string.ascii_letters, k=50)) for j in range(10)},
+                "custom_params": {
+                    f"param_{j}": "".join(
+                        random.choices(string.ascii_letters, k=50)
+                    )
+                    for j in range(10)
+                },
                 "metadata": {
-                    "description": "".join(random.choices(string.ascii_letters + " ", k=200)),
+                    "description": "".join(
+                        random.choices(f"{string.ascii_letters} ", k=200)
+                    ),
                     "tags": [f"tag_{j}" for j in range(20)],
                 },
             }
@@ -333,7 +343,7 @@ class TestConfigFileSizeOptimization(unittest.TestCase):
             start_time = time.time()
             msgpack.unpackb(msgpack_data)
             msgpack_load_time = time.time() - start_time
-        except:
+        except Exception:
             msgpack_size = 0
             msgpack_load_time = 0
 

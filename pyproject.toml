@@ -495,6 +495,7 @@ ensure_newline_before_comments = true
 
 [tool.mypy]
 python_version = "3.12"
+mypy_path = "."
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -592,7 +593,7 @@ exclude = [
 [tool.ty.environment]
 python-platform = "win32"
 python-version = "3.12"
-root = ["intellicrack"]
+extra-paths = ["."]
 
 [tool.ty.rules]
 possibly-unresolved-reference = "error"
@@ -740,13 +741,15 @@ reportTypedDictNotRequiredAccess = "warning"
 reportMatchNotExhaustive = "warning"
 
 [[tool.pyright.executionEnvironments]]
-root = "intellicrack"
+root = "."
 pythonVersion = "3.12"
 pythonPlatform = "Windows"
-extraPaths = []
+extraPaths = ["."]
 
 [tool.pylint.main]
 extension-pkg-allow-list = ["PyQt5", "PyQt6"]
+init-hook = "import sys; sys.path.insert(0, '.')"
+source-roots = ["."]
 ignore-paths = [
     "^tests/.*",
     "^dev/.*",
@@ -867,6 +870,7 @@ ignored-classes = [
 line-length = 140
 target-version = "py312"
 preview = true
+src = ["."]
 exclude = [
     "tests/",
     "test/",

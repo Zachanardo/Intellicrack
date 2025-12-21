@@ -286,11 +286,10 @@ class CertifiedGroundTruthProfile:
         }
 
         name_lower = protection_name.lower()
-        for key, ptype in protection_map.items():
-            if key in name_lower:
-                return ptype
-
-        return ProtectionType.CUSTOM
+        return next(
+            (ptype for key, ptype in protection_map.items() if key in name_lower),
+            ProtectionType.CUSTOM,
+        )
 
     def _calculate_confidence(self, ground_truth_data: dict[str, Any]) -> float:
         """Calculate confidence level based on consensus data."""
@@ -313,13 +312,11 @@ class CertifiedGroundTruthProfile:
 
     def _extract_detection_methods(self, ground_truth_data: dict[str, Any]) -> list[str]:
         """Extract detection methods from ground truth data."""
-        methods = []
-
-        # Add scanner-based detections
-        for scanner in ground_truth_data.get("scanners", []):
-            if scanner.get("detected"):
-                methods.append(f"scanner:{scanner.get('name', 'unknown')}")
-
+        methods = [
+            f"scanner:{scanner.get('name', 'unknown')}"
+            for scanner in ground_truth_data.get("scanners", [])
+            if scanner.get("detected")
+        ]
         # Add binary analysis detections
         for analyzer in ground_truth_data.get("analyzers", []):
             if analyzer.get("indicators"):
@@ -342,7 +339,7 @@ class CertifiedGroundTruthProfile:
         if ground_truth_data.get("strings_analysis"):
             methods.append("strings:pattern_matching")
 
-        return methods if methods else ["manual:expert_analysis"]
+        return methods or ["manual:expert_analysis"]
 
     def _generate_bypass_methods(self, protection_type: ProtectionType,
                                  ground_truth_data: dict[str, Any]) -> list[str]:
@@ -407,9 +404,9 @@ class CertifiedGroundTruthProfile:
 
         # Add specific bypass hints from ground truth
         if "bypass_hints" in ground_truth_data:
-            for hint in ground_truth_data["bypass_hints"]:
-                bypass_methods.append(f"hint:{hint}")
-
+            bypass_methods.extend(
+                f"hint:{hint}" for hint in ground_truth_data["bypass_hints"]
+            )
         return bypass_methods
 
     def _calculate_file_hash(self, file_path: Path) -> str:
@@ -732,17 +729,17 @@ class CertifiedGroundTruthProfile:
                 ORDER BY created_at DESC
             ''')
 
-        profiles = []
-        for row in cursor.fetchall():
-            profiles.append({
+        profiles = [
+            {
                 "id": row[0],
                 "name": row[1],
                 "type": row[2],
                 "version": row[3],
                 "confidence": row[4],
-                "created_at": row[5]
-            })
-
+                "created_at": row[5],
+            }
+            for row in cursor.fetchall()
+        ]
         conn.close()
         return profiles
 
@@ -907,28 +904,31 @@ class CertifiedGroundTruthProfile:
 
         conn.close()
 
-        report = {
+        return {
             "timestamp": datetime.now().isoformat(),
             "profile_statistics": {
                 "total_profiles": total_profiles,
-                "profiles_by_type": profiles_by_type
+                "profiles_by_type": profiles_by_type,
             },
             "certification_statistics": {
                 "total_certifications": total_certifications,
                 "active_certifications": active_certifications,
-                "expired_certifications": total_certifications - active_certifications
+                "expired_certifications": total_certifications
+                - active_certifications,
             },
             "validation_statistics": {
                 "total_validations": total_validations,
                 "successful_validations": successful_validations,
                 "failed_validations": total_validations - successful_validations,
-                "success_rate": successful_validations / total_validations if total_validations > 0 else 0,
-                "most_validated_profiles": most_validated
+                "success_rate": (
+                    successful_validations / total_validations
+                    if total_validations > 0
+                    else 0
+                ),
+                "most_validated_profiles": most_validated,
             },
-            "system_stats": self.validation_stats
+            "system_stats": self.validation_stats,
         }
-
-        return report
 
 
 def main():

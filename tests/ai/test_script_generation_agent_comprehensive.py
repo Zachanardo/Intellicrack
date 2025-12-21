@@ -274,7 +274,10 @@ class TestScriptSyntaxValidation:
 
         assert not re.search(r"\b(undefined|null)\s*\(", enhanced)
         assert not re.search(r",\s*[,;]", enhanced)
-        assert not re.search(r"\)\s*\{(?!\})", enhanced) is None or enhanced.count("{") > 0
+        assert (
+            re.search(r"\)\s*\{(?!\})", enhanced) is not None
+            or enhanced.count("{") > 0
+        )
 
 
 class TestScriptAnalysisCapabilities:
@@ -860,7 +863,7 @@ class TestFridaScriptLibrary:
         success, output = ai_agent._validate_generic_script("test.exe", str(tmp_path))
 
         assert isinstance(success, bool)
-        assert isinstance(output, list) or isinstance(output, str)
+        assert isinstance(output, (list, str))
 
 
 class TestScriptContentAnalysis:

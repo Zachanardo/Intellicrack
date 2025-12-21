@@ -47,7 +47,7 @@ def test_r2pipe_simple():
 
     try:
         # Use r2pipe.open with the executable path
-        r2 = r2pipe.open(radare2_path + " -q0 " + f'"{test_binary}"')
+        r2 = r2pipe.open(f"{radare2_path} -q0 " + f'"{test_binary}"')
 
         # Test basic command
         info = r2.cmd('i')

@@ -504,8 +504,5 @@ class TestIntegrationBinaryPathSync:
 
         integration.integrate_with_application(window)
 
-        if integration.ui_manager is not None:
-            assert hasattr(integration.ui_manager, "binary_path") or True
-
         window.deleteLater()
         qapp.processEvents()

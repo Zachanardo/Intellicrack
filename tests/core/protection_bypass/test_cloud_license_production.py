@@ -458,7 +458,7 @@ class TestResponseSynthesizerProduction:
         expiry_match = re.search(r"<ExpiryDate>(.*?)</ExpiryDate>", response)
         assert expiry_match is not None
 
-        expiry_date_str = expiry_match.group(1)
+        expiry_date_str = expiry_match[1]
         expiry_date = datetime.fromisoformat(expiry_date_str)
         assert expiry_date > datetime.utcnow()
 
@@ -640,7 +640,7 @@ class TestCloudLicenseProtocolHandlerProduction:
 
         assert result["success"] is True
         assert result["status"] == "stopped"
-        assert handler.running is False
+        assert not handler.running
 
     def test_flexnet_cloud_bypass_generates_valid_response(self) -> None:
         """FlexNet Cloud bypass generates valid FlexNet license data."""
@@ -942,11 +942,9 @@ class TestBinaryAnalysisForCloudLicenseProduction:
             b"CURLOPT_SSL_VERIFYPEER",
         ]
 
-        pinning_indicators = []
-        for pattern in pinning_patterns:
-            if pattern in pe_data:
-                pinning_indicators.append(pattern)
-
+        pinning_indicators = [
+            pattern for pattern in pinning_patterns if pattern in pe_data
+        ]
         assert isinstance(pinning_indicators, list)
 
     def test_detect_oauth_client_ids_in_binary(self, real_pe_binary: Path) -> None:
@@ -977,11 +975,9 @@ class TestBinaryAnalysisForCloudLicenseProduction:
             b"Bearer ",
         ]
 
-        found_indicators = []
-        for indicator in jwt_indicators:
-            if indicator in pe_data:
-                found_indicators.append(indicator)
-
+        found_indicators = [
+            indicator for indicator in jwt_indicators if indicator in pe_data
+        ]
         assert isinstance(found_indicators, list)
 
 
@@ -1044,7 +1040,7 @@ class TestProtocolTypeDetectionProduction:
         except json.JSONDecodeError:
             pass
 
-        assert is_json is True
+        assert is_json
 
     def test_detect_soap_protocol_from_traffic(self) -> None:
         """SOAP protocol detection from XML patterns."""
@@ -1052,7 +1048,7 @@ class TestProtocolTypeDetectionProduction:
 
         is_soap = b"soap:Envelope" in traffic_sample
 
-        assert is_soap is True
+        assert is_soap
 
     def test_detect_grpc_protocol_from_traffic(self) -> None:
         """gRPC protocol detection from protobuf patterns."""
@@ -1069,4 +1065,4 @@ class TestProtocolTypeDetectionProduction:
 
         is_websocket = ws_frame[0] == 0x81
 
-        assert is_websocket is True
+        assert is_websocket

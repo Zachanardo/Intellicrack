@@ -208,11 +208,10 @@ def fix_try_except_pass(filepath: Path) -> bool:
         for i, line in enumerate(lines):
             if line.strip().startswith('import ') or line.strip().startswith('from '):
                 continue
-            else:
-                lines.insert(i, 'import logging')
-                lines.insert(i+1, '')
-                lines.insert(i+2, 'logger = logging.getLogger(__name__)')
-                break
+            lines.insert(i, 'import logging')
+            lines.insert(i+1, '')
+            lines.insert(i+2, 'logger = logging.getLogger(__name__)')
+            break
         content = '\n'.join(lines)
 
     if content != original:

@@ -235,13 +235,11 @@ class TestBinaryAnalysis:
             "FAILED: Analyzer did not report scanning VMProtect binary."
         )
 
-        has_analysis_content = any([
-            "patch location" in r.lower() for r in results
-        ]) or any([
-            "function" in r.lower() for r in results
-        ]) or any([
-            "pattern" in r.lower() for r in results
-        ])
+        has_analysis_content = (
+            any("patch location" in r.lower() for r in results)
+            or any("function" in r.lower() for r in results)
+            or any("pattern" in r.lower() for r in results)
+        )
         assert has_analysis_content or len(results) >= 2, (
             f"FAILED: Analyzer only returned '{results[0]}' for VMProtect binary. "
             f"Expected actual analysis findings like patch locations or patterns."
@@ -285,9 +283,8 @@ class TestBinaryAnalysis:
     ) -> None:
         results = patcher_plugin.analyze(str(real_binary_with_license_checks))
 
-        pattern_count = sum(
-            1 for result in results if ("NOP sled" in result or "function prologue" in result)
-        )
+        pattern_count = sum(bool("NOP sled" in result or "function prologue" in result)
+                        for result in results)
 
         assert pattern_count >= 1
 
@@ -343,7 +340,7 @@ class TestBinaryPatching:
         patcher_plugin: BinaryPatcherPlugin,
         real_binary_with_license_checks: Path,
     ) -> None:
-        backup_path = Path(str(real_binary_with_license_checks) + ".backup")
+        backup_path = Path(f"{str(real_binary_with_license_checks)}.backup")
 
         if backup_path.exists():
             backup_path.unlink()
@@ -362,7 +359,7 @@ class TestBinaryPatching:
 
         patcher_plugin.patch(str(real_binary_with_license_checks))
 
-        backup_path = Path(str(real_binary_with_license_checks) + ".backup")
+        backup_path = Path(f"{str(real_binary_with_license_checks)}.backup")
         backup_data = backup_path.read_bytes()
 
         assert backup_data == original_data
@@ -418,7 +415,7 @@ class TestBinaryPatching:
 
         if any("Successfully applied" in result for result in results):
             patches_applied = [r for r in results if "patches" in r.lower()]
-            assert len(patches_applied) > 0
+            assert patches_applied
 
     def test_patch_restores_from_backup_on_error(
         self,
@@ -524,7 +521,7 @@ class TestRealProtectedBinaries:
             results = patcher_plugin.patch(str(upx_copy))
 
             assert any("Created backup" in result for result in results)
-            assert Path(str(upx_copy) + ".backup").exists()
+            assert Path(f"{str(upx_copy)}.backup").exists()
 
     def test_patch_vmprotect_protected_binary(
         self,
@@ -608,12 +605,9 @@ class TestPatchEffectiveness:
 
         if not patch_occurred:
             applied_patches = [r for r in results if "applied" in r.lower() or "patch" in r.lower()]
-            assert len(applied_patches) == 0 or "No applicable" in str(results), (
-                f"FAILED: Patcher claimed to apply patches but binary was not modified. "
-                f"Original NOPs: {original_nop_count}, Patched NOPs: {patched_nop_count}. "
-                f"Original JZ: {original_jz_count}, Patched JZ: {patched_jz_count}. "
-                f"Results: {results}"
-            )
+            assert not applied_patches or "No applicable" in str(
+                results
+            ), f"FAILED: Patcher claimed to apply patches but binary was not modified. Original NOPs: {original_nop_count}, Patched NOPs: {patched_nop_count}. Original JZ: {original_jz_count}, Patched JZ: {patched_jz_count}. Results: {results}"
 
     def test_patched_binary_trial_strings_neutralized(
         self,
@@ -679,7 +673,7 @@ class TestIntegrationWithRealBinaries:
             results = patcher_plugin.patch(str(bc_copy))
 
             assert any("Created backup" in result for result in results)
-            assert Path(str(bc_copy) + ".backup").exists()
+            assert Path(f"{str(bc_copy)}.backup").exists()
 
     def test_patch_resource_hacker_binary(
         self,

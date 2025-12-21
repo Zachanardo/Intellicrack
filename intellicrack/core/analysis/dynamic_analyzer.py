@@ -462,7 +462,7 @@ class AdvancedDynamicAnalyzer:
             # Message handler
             analysis_data: dict[str, Any] = {}
 
-            def on_message(message: Any, _data: bytes | None) -> None:    # pylint: disable=unused-argument
+            def on_message(message: Any, _data: bytes | None) -> None:  # pylint: disable=unused-argument
                 """Handle messages from the Frida script during dynamic analysis.
 
                 Args:
@@ -1173,13 +1173,13 @@ print(matches)
                 searchable_data.extend((f"env_{key}", value) for key, value in environ.items())
             # Open files
             with contextlib.suppress(AttributeError, OSError):
-                searchable_data.extend(
-                    ("open_file", file.path) for file in process.open_files()
-                )
+                searchable_data.extend(("open_file", file.path) for file in process.open_files())
             # Connections
             with contextlib.suppress(AttributeError, OSError):
-                for conn in process.connections():
-                    searchable_data.append(("connection", f"{conn.laddr}:{conn.raddr}"))
+                searchable_data.extend(
+                    ("connection", f"{conn.laddr}:{conn.raddr}")
+                    for conn in process.connections()
+                )
             # Search for keywords in available data
             for source, data in searchable_data:
                 for keyword in keywords:
@@ -1193,9 +1193,7 @@ print(matches)
                                 if "x" in region.get("perms", ""):
                                     with contextlib.suppress(ValueError, KeyError, TypeError):
                                         base_address = (
-                                            int(region["addr"].split("-")[0], 16)
-                                            if isinstance(region["addr"], str)
-                                            else region["addr"]
+                                            int(region["addr"].split("-")[0], 16) if isinstance(region["addr"], str) else region["addr"]
                                         )
                                         break
                         offset = data.lower().find(keyword.lower())

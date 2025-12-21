@@ -53,7 +53,7 @@ class SyntheticProtectedBinaryBuilder:
     def build_minimal_pe_header() -> bytes:
         """Build minimal valid PE header structure."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 128)
 
         dos_stub = b"This program cannot be run in DOS mode.\r\r\n$" + b"\x00" * 21
@@ -72,7 +72,7 @@ class SyntheticProtectedBinaryBuilder:
         )
 
         opt_header = bytearray(240)
-        opt_header[0:2] = struct.pack("<H", 0x020B)
+        opt_header[:2] = struct.pack("<H", 0x020B)
         struct.pack_into("<I", opt_header, 24, 0x1000)
         struct.pack_into("<I", opt_header, 28, 0x1000)
         struct.pack_into("<Q", opt_header, 32, 0x140000000)
@@ -385,7 +385,7 @@ class TestDenuvoVersionDetection:
         assert result.detected is True, "FAILED: v6 protection not detected"
         assert result.version is not None, "FAILED: version should be identified"
         assert result.version.major == 6, f"FAILED: expected v6, detected v{result.version.major}"
-        assert result.version.confidence >= 0.60, f"FAILED: confidence too low"
+        assert result.version.confidence >= 0.60, "FAILED: confidence too low"
 
     def test_detects_denuvo_v5_from_real_signatures(self, v5_protected_binary: Path) -> None:
         """Analyzer correctly identifies Denuvo 5.x from embedded signatures."""
@@ -461,7 +461,9 @@ class TestEncryptedSectionDetection:
         result: DenuvoAnalysisResult = analyzer.analyze(str(clean_unprotected_binary))
 
         high_entropy_sections = [s for s in result.encrypted_sections if s["entropy"] > 7.2]
-        assert len(high_entropy_sections) == 0, "FAILED: clean binary should have no encrypted sections"
+        assert (
+            not high_entropy_sections
+        ), "FAILED: clean binary should have no encrypted sections"
 
 
 class TestVMRegionDetection:
@@ -596,7 +598,9 @@ class TestTriggerDetection:
         trigger_type, description = analyzer._identify_trigger_type(validation_pattern)
 
         assert trigger_type == "validation_trigger", f"FAILED: wrong type {trigger_type}"
-        assert "validation" in description.lower(), f"FAILED: description should mention validation"
+        assert (
+            "validation" in description.lower()
+        ), "FAILED: description should mention validation"
 
     def test_limits_trigger_detection_count(self, v7_protected_binary: Path) -> None:
         """Analyzer limits trigger results to prevent excessive matches."""

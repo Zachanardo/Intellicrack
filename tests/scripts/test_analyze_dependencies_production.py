@@ -102,7 +102,7 @@ class TestLocalModuleDiscovery:
         analyzer = DependencyAnalyzer(project_root)
 
         submodules = [m for m in analyzer.local_modules if "." in m and m.startswith("intellicrack")]
-        assert len(submodules) > 0
+        assert submodules
 
     def test_discover_local_modules_real_directories(self) -> None:
         """Discovered local modules correspond to real directories."""
@@ -397,8 +397,7 @@ class TestInstalledPackageMapping:
 
         for import_name, expected_package in common_mappings.items():
             if expected_package in analyzer.installed_packages:
-                mapped_package = analyzer.package_to_imports.get(import_name)
-                if mapped_package:
+                if mapped_package := analyzer.package_to_imports.get(import_name):
                     assert mapped_package == expected_package
 
     def test_package_name_normalization(self) -> None:

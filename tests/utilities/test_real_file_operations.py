@@ -72,7 +72,7 @@ class TestRealFileOperations:
         # Cleanup
         try:
             shutil.rmtree(temp_dir)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -118,7 +118,7 @@ class TestRealFileOperations:
         assert 'size' in mmap_result, "Result must contain size"
 
         # Read from memory map
-        mmap_data = mmap_result['mmap'][0:4]
+        mmap_data = mmap_result['mmap'][:4]
         assert mmap_data == b'MZ\x90\x00', "Memory mapped data must match"
 
         # Close memory map
@@ -343,11 +343,9 @@ class TestRealFileOperations:
 
         # Check for detected changes (with small delay for filesystem)
         time.sleep(0.1)
-        changes = system_utils.get_file_changes(watcher_result['watcher_id'])
-
-        if changes:
+        if changes := system_utils.get_file_changes(watcher_result['watcher_id']):
             assert 'modified' in changes or 'created' in changes or 'deleted' in changes, \
-                "Must detect file changes"
+                    "Must detect file changes"
 
     def test_real_secure_file_operations(self, test_directory, app_context):
         """Test REAL secure file operations."""

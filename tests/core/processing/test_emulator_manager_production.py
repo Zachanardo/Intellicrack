@@ -178,7 +178,7 @@ class TestEmulatorCleanup:
         emulator_manager.cleanup()
 
         mock_qemu.stop_system.assert_called_once()
-        assert emulator_manager.qemu_running is False
+        assert not emulator_manager.qemu_running
 
     def test_cleanup_handles_qemu_stop_errors(self, emulator_manager: EmulatorManager) -> None:
         """cleanup() handles errors during QEMU shutdown gracefully."""
@@ -440,7 +440,7 @@ class TestEmulatorSignalEmission:
         emulator_manager.emulator_status_changed.connect(capture_status)
         emulator_manager.ensure_qiling_ready(real_binary_path)
 
-        assert len(signals_received) > 0
+        assert signals_received
         assert any("Qiling" in s[0] for s in signals_received)
 
 

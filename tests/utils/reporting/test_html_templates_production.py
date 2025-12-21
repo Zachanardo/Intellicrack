@@ -334,18 +334,20 @@ class TestColorScheme:
         """Vulnerability class uses red color tones."""
         html = get_base_html_template()
 
-        vuln_color = re.search(r"\.vulnerability\s*{[^}]*color:\s*(#[0-9a-fA-F]{6})", html)
-        if vuln_color:
-            color = vuln_color.group(1)
+        if vuln_color := re.search(
+            r"\.vulnerability\s*{[^}]*color:\s*(#[0-9a-fA-F]{6})", html
+        ):
+            color = vuln_color[1]
             assert color.startswith("#e") or color.startswith("#f") or color.startswith("#d")
 
     def test_protection_uses_green_tones(self) -> None:
         """Protection class uses green color tones."""
         html = get_base_html_template()
 
-        prot_color = re.search(r"\.protection\s*{[^}]*color:\s*(#[0-9a-fA-F]{6})", html)
-        if prot_color:
-            color = prot_color.group(1).lower()
+        if prot_color := re.search(
+            r"\.protection\s*{[^}]*color:\s*(#[0-9a-fA-F]{6})", html
+        ):
+            color = prot_color[1].lower()
             assert "27ae60" in color or color[1] in "0123456789ab"
 
 

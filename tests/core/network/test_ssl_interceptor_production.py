@@ -114,9 +114,7 @@ class TestSSLInterceptorProduction:
         assert not ca_cert_path.exists(), "Cert file must not exist initially"
         assert not ca_key_path.exists(), "Key file must not exist initially"
 
-        result = interceptor.start()
-
-        if result:
+        if result := interceptor.start():
             try:
                 assert ca_cert_path.exists(), "Certificate file must be created"
                 assert ca_key_path.exists(), "Key file must be created"
@@ -151,7 +149,7 @@ class TestSSLInterceptorProduction:
             try:
                 os.kill(initial_pid, 0)
                 pytest.fail("Process should be terminated")
-            except (OSError, ProcessLookupError):
+            except OSError:
                 pass
 
     def test_add_target_host_functionality(self, interceptor: SSLTLSInterceptor) -> None:
@@ -342,9 +340,7 @@ class TestSSLInterceptorProduction:
         }
 
         interceptor = SSLTLSInterceptor(config)
-        result = interceptor.start()
-
-        if result:
+        if result := interceptor.start():
             try:
                 assert nested_dir.exists(), "Directory must be created"
             finally:
@@ -352,9 +348,7 @@ class TestSSLInterceptorProduction:
 
     def test_find_executable_locates_mitmdump(self, interceptor: SSLTLSInterceptor) -> None:
         """Find executable can locate mitmdump if installed."""
-        mitmdump_path = interceptor._find_executable("mitmdump")
-
-        if mitmdump_path:
+        if mitmdump_path := interceptor._find_executable("mitmdump"):
             assert os.path.exists(mitmdump_path), "Located path must exist"
             assert "mitmdump" in mitmdump_path.lower(), "Must be mitmdump executable"
 

@@ -100,8 +100,7 @@ class TestMemoryDumperWidget:
         assert memory_dumper_widget.process_combo.count() > 0
 
         for i in range(min(5, memory_dumper_widget.process_combo.count())):
-            item_data = memory_dumper_widget.process_combo.itemData(i)
-            if item_data:
+            if item_data := memory_dumper_widget.process_combo.itemData(i):
                 assert isinstance(item_data, int)
                 assert item_data > 0
 
@@ -115,8 +114,7 @@ class TestMemoryDumperWidget:
         assert memory_dumper_widget.process_combo.count() > 0
 
         for i in range(min(5, memory_dumper_widget.process_combo.count())):
-            item_data = memory_dumper_widget.process_combo.itemData(i)
-            if item_data:
+            if item_data := memory_dumper_widget.process_combo.itemData(i):
                 assert isinstance(item_data, int)
                 assert item_data > 0
 
@@ -425,8 +423,7 @@ class TestMemoryDumperIntegration:
                     try:
                         thread.run()
 
-                        dump_files = list(temp_output_dir.glob("dump_*.bin"))
-                        if len(dump_files) > 0:
+                        if dump_files := list(temp_output_dir.glob("dump_*.bin")):
                             assert dump_files[0].stat().st_size > 0
                     except Exception as e:
                         pytest.skip(f"Memory dump failed (may require elevated privileges): {e}")

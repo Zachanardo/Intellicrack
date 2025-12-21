@@ -128,8 +128,7 @@ class TestScanMaliciousTestFiles:
     def temp_test_env(self) -> Path:
         """Create temporary environment with test files."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            temp_path = Path(tmpdir)
-            yield temp_path
+            yield Path(tmpdir)
 
     def test_scan_finds_suspicious_test_file_with_exec(self, temp_test_env: Path) -> None:
         """Test scan identifies test.py with exec()."""
@@ -185,7 +184,7 @@ class TestScanMaliciousTestFiles:
 
         try:
             suspicious = scan_for_malicious_test_files()
-            assert not any(str(tests_dir) in str(f) for f in suspicious)
+            assert all(str(tests_dir) not in str(f) for f in suspicious)
         finally:
             sys.path = original_path
 
@@ -234,7 +233,8 @@ class TestScanMaliciousTestFiles:
 
         try:
             suspicious = scan_for_malicious_test_files()
-            found_count = sum(1 for f in suspicious if str(temp_test_env) in str(f))
+            found_count = sum(bool(str(temp_test_env) in str(f))
+                          for f in suspicious)
             assert found_count >= 1
         finally:
             sys.path = original_path
@@ -480,9 +480,9 @@ class TestSecurityMitigationsIntegration:
 
         try:
             suspicious = scan_for_malicious_test_files()
-            malicious_in_env = [f for f in suspicious if str(malicious_test_env) in str(f)]
-
-            if malicious_in_env:
+            if malicious_in_env := [
+                f for f in suspicious if str(malicious_test_env) in str(f)
+            ]:
                 removed = remove_malicious_test_files(malicious_in_env, force=True)
                 assert removed >= 1
 

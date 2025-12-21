@@ -166,15 +166,14 @@ class DetectionPassCriteriaValidator:
         """Load YARA rules for protection detection."""
         rules_path = Path(__file__).parent / 'yara_rules' / 'protection_patterns.yar'
 
-        if rules_path.exists():
-            try:
-                return yara.compile(filepath=str(rules_path))
-            except Exception as e:
-                self.logger.warning(f"Failed to load YARA rules: {e}")
-                return None
-        else:
+        if not rules_path.exists():
             # Create basic protection detection rules
             return self._create_default_yara_rules()
+        try:
+            return yara.compile(filepath=str(rules_path))
+        except Exception as e:
+            self.logger.warning(f"Failed to load YARA rules: {e}")
+            return None
 
     def _create_default_yara_rules(self) -> yara.Rules:
         """Create default YARA rules for common protections."""
@@ -289,7 +288,7 @@ class DetectionPassCriteriaValidator:
         )
 
         # Overall pass status
-        overall_passed = all(criteria_results.values()) and len(failure_reasons) == 0
+        overall_passed = all(criteria_results.values()) and not failure_reasons
 
         self.logger.info(f"Detection validation completed. Passed: {overall_passed}")
 
@@ -309,10 +308,16 @@ class DetectionPassCriteriaValidator:
 
     def _get_ground_truth_for_binary(self, binary_hash: str) -> dict[str, Any] | None:
         """Get ground truth protection data for a specific binary."""
-        for protection_id, protection_data in self.ground_truth.get('protections', {}).items():
-            if protection_data.get('binary_hash') == binary_hash:
-                return protection_data
-        return None
+        return next(
+            (
+                protection_data
+                for protection_id, protection_data in self.ground_truth.get(
+                    'protections', {}
+                ).items()
+                if protection_data.get('binary_hash') == binary_hash
+            ),
+            None,
+        )
 
     def _validate_exact_version_match(self,
                                     detection_results: list[DetectionResult],
@@ -360,12 +365,7 @@ class DetectionPassCriteriaValidator:
     def _validate_single_memory_address(self, addr_str: str, binary_path: str) -> bool:
         """Validate a single memory address points to protection code."""
         try:
-            # Parse hexadecimal address
-            if addr_str.startswith('0x'):
-                addr = int(addr_str, 16)
-            else:
-                addr = int(addr_str, 16)
-
+            addr = int(addr_str, 16)
             # Load PE file to validate address
             pe = pefile.PE(binary_path)
 
@@ -390,7 +390,7 @@ class DetectionPassCriteriaValidator:
 
             return False
 
-        except (ValueError, pefile.PEFormatError, Exception) as e:
+        except (pefile.PEFormatError, Exception) as e:
             self.logger.warning(f"Error validating memory address {addr_str}: {e}")
             return False
 
@@ -524,10 +524,7 @@ class DetectionPassCriteriaValidator:
             weighted_sum += result.confidence_score * weight
             total_weight += weight
 
-        if total_weight == 0:
-            return 0.0
-
-        return weighted_sum / total_weight
+        return 0.0 if total_weight == 0 else weighted_sum / total_weight
 
     def _validate_confidence_score(self,
                                  confidence_score: float,
@@ -551,11 +548,9 @@ class DetectionPassCriteriaValidator:
         expected_name = ground_truth.get('name', '').lower()
         expected_version = ground_truth.get('version', '')
 
-        matching_detections = sum(
-            1 for result in detection_results
-            if (result.protection_name.lower() == expected_name and
-                result.version == expected_version)
-        )
+        matching_detections = sum(bool((result.protection_name.lower() == expected_name and
+                                              result.version == expected_version))
+                              for result in detection_results)
 
         return matching_detections / len(detection_results)
 
@@ -600,8 +595,7 @@ class DetectionPassCriteriaValidator:
             for future in as_completed(future_to_source):
                 source = future_to_source[future]
                 try:
-                    result = future.result(timeout=300)  # 5-minute timeout
-                    if result:
+                    if result := future.result(timeout=300):
                         results.append(result)
                         self.logger.info(f"Detection completed from {source}")
                 except Exception as e:
@@ -653,14 +647,14 @@ class DetectionPassCriteriaValidator:
             'algorithm': {}
         }
 
-        # Analyze imports for protection-related functions
-        protection_imports = [
-            'CryptAcquireContext', 'CryptGenKey', 'CryptEncrypt',
-            'VirtualProtect', 'VirtualAlloc', 'CreateThread',
-            'LoadLibrary', 'GetProcAddress', 'IsDebuggerPresent'
-        ]
-
         if hasattr(pe, 'DIRECTORY_ENTRY_IMPORT'):
+            # Analyze imports for protection-related functions
+            protection_imports = [
+                'CryptAcquireContext', 'CryptGenKey', 'CryptEncrypt',
+                'VirtualProtect', 'VirtualAlloc', 'CreateThread',
+                'LoadLibrary', 'GetProcAddress', 'IsDebuggerPresent'
+            ]
+
             for entry in pe.DIRECTORY_ENTRY_IMPORT:
                 for imp in entry.imports:
                     if imp.name and imp.name.decode('utf-8', errors='ignore') in protection_imports:
@@ -719,7 +713,7 @@ class DetectionPassCriteriaValidator:
             if result.returncode == 0 and result.stdout:
                 return self._parse_peid_output(result.stdout, binary_path)
 
-        except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+        except (subprocess.TimeoutExpired, Exception) as e:
             self.logger.error(f"PEiD detection failed: {e}")
 
         return None
@@ -759,9 +753,8 @@ class DetectionPassCriteriaValidator:
         ]
 
         for pattern in version_patterns:
-            match = re.search(pattern, text, re.IGNORECASE)
-            if match:
-                return match.group(1)
+            if match := re.search(pattern, text, re.IGNORECASE):
+                return match[1]
 
         return ''
 
@@ -954,9 +947,7 @@ class DetectionPassCriteriaValidator:
                 self.logger.warning("No YARA rules available, skipping detection")
                 return None
 
-            matches = self.yara_rules.match(binary_path)
-
-            if matches:
+            if matches := self.yara_rules.match(binary_path):
                 # Use first match
                 match = matches[0]
 
@@ -981,7 +972,7 @@ class DetectionPassCriteriaValidator:
                                  binary_path: str,
                                  validation_results: ValidationResults) -> dict[str, Any]:
         """Generate comprehensive validation report."""
-        report = {
+        return {
             'validation_summary': {
                 'binary_path': binary_path,
                 'binary_hash': self._calculate_file_hash(binary_path),
@@ -989,27 +980,39 @@ class DetectionPassCriteriaValidator:
                 'overall_passed': validation_results.passed,
                 'evidence_count': validation_results.evidence_count,
                 'confidence_score': validation_results.confidence_score,
-                'consensus_rate': validation_results.consensus_rate
+                'consensus_rate': validation_results.consensus_rate,
             },
             'criteria_results': {
-                '6.1.1_exact_version_match': validation_results.criteria_results.get('6.1.1', False),
-                '6.1.2_memory_addresses_valid': validation_results.criteria_results.get('6.1.2', False),
-                '6.1.3_independent_sources': validation_results.criteria_results.get('6.1.3', False),
-                '6.1.4_algorithm_details': validation_results.criteria_results.get('6.1.4', False),
-                '6.1.5_entry_points': validation_results.criteria_results.get('6.1.5', False),
-                '6.1.6_confidence_threshold': validation_results.criteria_results.get('6.1.6', False),
-                '6.1.7_consensus_threshold': validation_results.criteria_results.get('6.1.7', False)
+                '6.1.1_exact_version_match': validation_results.criteria_results.get(
+                    '6.1.1', False
+                ),
+                '6.1.2_memory_addresses_valid': validation_results.criteria_results.get(
+                    '6.1.2', False
+                ),
+                '6.1.3_independent_sources': validation_results.criteria_results.get(
+                    '6.1.3', False
+                ),
+                '6.1.4_algorithm_details': validation_results.criteria_results.get(
+                    '6.1.4', False
+                ),
+                '6.1.5_entry_points': validation_results.criteria_results.get(
+                    '6.1.5', False
+                ),
+                '6.1.6_confidence_threshold': validation_results.criteria_results.get(
+                    '6.1.6', False
+                ),
+                '6.1.7_consensus_threshold': validation_results.criteria_results.get(
+                    '6.1.7', False
+                ),
             },
             'failure_reasons': validation_results.failure_reasons,
             'validation_thresholds': {
                 'minimum_confidence': self.min_confidence,
                 'minimum_consensus': self.min_consensus,
-                'minimum_sources': self.min_sources
+                'minimum_sources': self.min_sources,
             },
-            'phase_gate_status': 'PASS' if validation_results.passed else 'FAIL'
+            'phase_gate_status': 'PASS' if validation_results.passed else 'FAIL',
         }
-
-        return report
 
 
 def main():

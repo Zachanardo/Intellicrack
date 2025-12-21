@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Test which QMainWindow is being used in main_app.py"""
 
+
 import sys
 from pathlib import Path
 
@@ -30,9 +31,7 @@ try:
     try:
         spec.loader.exec_module(main_app_module)
 
-        # Check which QMainWindow is being used
-        qmw = getattr(main_app_module, 'QMainWindow', None)
-        if qmw:
+        if qmw := getattr(main_app_module, 'QMainWindow', None):
             print(f"   QMainWindow from main_app: {qmw}")
             print(f"   QMainWindow module: {qmw.__module__}")
             print(f"   Has setGeometry: {hasattr(qmw, 'setGeometry')}")

@@ -870,4 +870,6 @@ def test_comprehensive_coverage_validation():
 
     for validation in sophisticated_validations:
         # Each validation area should be covered by multiple test methods
-        assert validation in str(test_methods) or len([m for m in test_methods if validation.split('_')[0] in m]) > 0
+        assert validation in str(test_methods) or [
+            m for m in test_methods if validation.split('_')[0] in m
+        ]

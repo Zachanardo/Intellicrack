@@ -243,7 +243,6 @@ class TestTorchXpuHandler:
             try:
                 import intel_extension_for_pytorch as ipex
 
-                assert True
             except ImportError:
                 pytest.fail("HAS_XPU is True but intel_extension_for_pytorch not importable")
 
@@ -697,8 +696,7 @@ class TestAllHandlersConsistency:
         for handler_name in handler_files:
             module = importlib.import_module(f"intellicrack.handlers.{handler_name}")
 
-            expected_flag = availability_mapping.get(handler_name)
-            if expected_flag:
+            if expected_flag := availability_mapping.get(handler_name):
                 assert hasattr(
                     module, expected_flag
                 ), f"{handler_name} missing {expected_flag} constant"

@@ -30,6 +30,8 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+PYQT6_AVAILABLE = False
+
 try:
     from intellicrack.handlers.pyqt6_handler import (
         HAS_PYQT,
@@ -70,12 +72,19 @@ try:
     )
 
     PYQT6_AVAILABLE = HAS_PYQT
+    if not PYQT6_AVAILABLE:
+        error_msg = """
+        CRITICAL: PyQt6 is not installed but is required for the Enhanced Training Interface.
+
+        To install PyQt6, run:
+            pip install PyQt6
+
+        For headless training without GUI, use the headless_training_interface module instead.
+        """
+        raise ImportError(error_msg)
 except ImportError as e:
     logger.exception("Import error in enhanced_training_interface: %s", e)
     logger.exception("PyQt6 is required for GUI functionality. Install with: pip install PyQt6")
-    PYQT6_AVAILABLE = False
-
-    # Raise error immediately when PyQt6 is not available
     error_msg = """
     CRITICAL: PyQt6 is not installed but is required for the Enhanced Training Interface.
 
@@ -85,6 +94,9 @@ except ImportError as e:
     For headless training without GUI, use the headless_training_interface module instead.
     """
     raise ImportError(error_msg) from e
+
+MATPLOTLIB_AVAILABLE = False
+
 try:
     from intellicrack.handlers.matplotlib_handler import (
         MATPLOTLIB_AVAILABLE,
@@ -136,11 +148,13 @@ except ImportError as e:
 
             from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg
 
-            canvas_raw = FigureCanvasQTAgg(self.figure)
-            self.canvas = cast("QWidget", canvas_raw)
+            if FigureCanvasQTAgg is not None and callable(FigureCanvasQTAgg):
+                canvas_raw: Any = FigureCanvasQTAgg(self.figure)
+                self.canvas: QWidget = cast(QWidget, canvas_raw)
+            else:
+                self.canvas = QWidget()
             self.ax = self.figure.add_subplot(111)
 
-            # Set up layout for the widget
             layout = QVBoxLayout(self)
             layout.setContentsMargins(0, 0, 0, 0)
             layout.addWidget(self.canvas)
@@ -285,39 +299,32 @@ class TrainingConfiguration:
     dataset_path: str = ""
     output_directory: str = os.path.join(os.path.dirname(__file__), "..", "models", "trained")
 
-    # Training parameters
     learning_rate: float = 0.001
     batch_size: int = 32
     epochs: int = 100
     validation_split: float = 0.2
 
-    # Optimization settings
     optimizer: str = "adam"
     loss_function: str = "categorical_crossentropy"
     use_early_stopping: bool = True
     patience: int = 10
 
-    # Advanced features
     use_augmentation: bool = True
     use_transfer_learning: bool = False
     base_model: str = ""
     freeze_layers: int = 0
 
-    # Hardware settings
     use_gpu: bool = True
     multi_gpu: bool = False
     mixed_precision: bool = False
 
-    # Monitoring
     save_checkpoints: bool = True
     checkpoint_frequency: int = 5
     tensorboard_logging: bool = True
 
-    # Data
     training_data: Any | None = None
     validation_data: Any | None = None
 
-    # Regularization
     dropout_rate: float = 0.5
 
 
@@ -357,9 +364,7 @@ class TrainingThread(QThread):
         try:
             self.log_message.emit("Starting model training...")
 
-            # Production ML training loop - processes real binary analysis datasets
-            # Track metrics history for error recovery
-            metrics_history = []
+            metrics_history: list[dict[str, float]] = []
             epoch_accuracy = 0.0
 
             for epoch in range(self.config.epochs):
@@ -371,13 +376,10 @@ class TrainingThread(QThread):
                     if self.should_stop:
                         break
 
-                # Execute real training epoch
                 epoch_start_time = time.time()
 
-                # Real training implementation with actual data processing
                 progress = int((epoch + 1) / self.config.epochs * 100)
 
-                # Initialize real metrics for this epoch
                 epoch_loss = 0.0
                 epoch_accuracy = 0.0
                 val_loss = 0.0
@@ -385,9 +387,7 @@ class TrainingThread(QThread):
                 samples_processed = 0
 
                 try:
-                    # Real training data processing
                     if hasattr(self.config, "training_data") and self.config.training_data:
-                        # Process actual training batches
                         batch_size = getattr(self.config, "batch_size", 32)
                         total_samples = len(self.config.training_data)
                         num_batches = max(1, total_samples // batch_size)
@@ -397,7 +397,6 @@ class TrainingThread(QThread):
                             end_idx = min(start_idx + batch_size, total_samples)
                             batch_data = self.config.training_data[start_idx:end_idx]
 
-                            # Real batch processing with gradient computation
                             try:
                                 batch_loss, batch_acc = self._process_training_batch(batch_data, epoch)
                                 epoch_loss += batch_loss
@@ -407,16 +406,13 @@ class TrainingThread(QThread):
                                 self.log_message.emit(f"Batch {batch_idx} error: {batch_error}")
                                 continue
 
-                        # Calculate average metrics
                         if num_batches > 0:
                             epoch_loss /= num_batches
                             epoch_accuracy /= num_batches
 
-                        # Real validation if validation data available
                         if hasattr(self.config, "validation_data") and self.config.validation_data:
                             val_loss, val_accuracy = self._evaluate_validation_data(self.config.validation_data)
                     else:
-                        # Fallback to synthetic training data generation
                         synthetic_batches = 10
                         for _ in range(synthetic_batches):
                             synthetic_data = self._generate_synthetic_training_data()
@@ -427,18 +423,15 @@ class TrainingThread(QThread):
 
                         epoch_loss /= synthetic_batches
                         epoch_accuracy /= synthetic_batches
-                        val_loss = epoch_loss * 1.1  # Validation typically higher loss
-                        val_accuracy = epoch_accuracy * 0.95  # Validation typically lower accuracy
+                        val_loss = epoch_loss * 1.1
+                        val_accuracy = epoch_accuracy * 0.95
 
                 except Exception as training_error:
                     self.log_message.emit(f"Training epoch {epoch + 1} error: {training_error}")
 
-                    # Use adaptive error recovery with real historical data
                     if metrics_history:
-                        # Use exponential moving average of recent metrics
                         recent_metrics = metrics_history[-min(5, len(metrics_history)) :]
 
-                        # Calculate weighted average with more weight on recent epochs
                         weights = [0.1, 0.15, 0.2, 0.25, 0.3][-len(recent_metrics) :]
                         total_weight = sum(weights)
 
@@ -464,20 +457,16 @@ class TrainingThread(QThread):
                         val_loss = epoch_loss * validation_loss_ratio
                         val_accuracy = epoch_accuracy * validation_acc_ratio
                     else:
-                        # First epoch error - use reasonable initialization
-                        # Initialize based on model complexity and dataset characteristics
                         model_params = getattr(self.config, "model_params", 1000000)
                         dataset_size = getattr(self.config, "dataset_size", 10000)
 
-                        # Calculate initial loss based on model/data complexity
                         complexity_factor = min(1.0, model_params / dataset_size / 100)
                         epoch_loss = 2.0 + complexity_factor
-                        epoch_accuracy = 1.0 / max(2, getattr(self.config, "num_classes", 2))  # Random guess baseline
+                        epoch_accuracy = 1.0 / max(2, getattr(self.config, "num_classes", 2))
 
                         val_loss = epoch_loss * 1.2
                         val_accuracy = epoch_accuracy * 0.9
 
-                # Calculate epoch duration
                 epoch_duration = time.time() - epoch_start_time
 
                 metrics = {
@@ -491,10 +480,8 @@ class TrainingThread(QThread):
                     "samples_processed": samples_processed,
                 }
 
-                # Store metrics for potential error recovery in future epochs
                 metrics_history.append(metrics)
 
-                # Keep only recent history to save memory
                 if len(metrics_history) > 20:
                     metrics_history = metrics_history[-20:]
 
@@ -502,7 +489,6 @@ class TrainingThread(QThread):
                 self.metrics_updated.emit(metrics)
                 self.log_message.emit(f"Epoch {epoch + 1}/{self.config.epochs} - Accuracy: {epoch_accuracy:.4f}")
 
-                # Early stopping based on validation performance
                 if self.config.use_early_stopping and epoch > 20 and metrics["val_loss"] > metrics["loss"] * 1.5:
                     self.log_message.emit("Early stopping triggered")
                     break
@@ -541,33 +527,41 @@ class TrainingThread(QThread):
 
         """
         try:
-            # Real batch processing implementation
             batch_size = len(batch_data)
             total_loss = 0.0
             correct_predictions = 0
 
-            # Process each sample in the batch
             for sample_idx, sample in enumerate(batch_data):
                 try:
-                    # Extract features and labels from sample
+                    features: list[float] | None = None
+                    label: int | None = None
+
                     if isinstance(sample, dict):
-                        features = sample.get("features", sample.get("data", []))
-                        label = sample.get("label", sample.get("target", 0))
+                        features_raw = sample.get("features", sample.get("data", []))
+                        label_raw = sample.get("label", sample.get("target", 0))
+                        if isinstance(features_raw, list):
+                            features = features_raw
+                        label = int(label_raw) if label_raw is not None else 0
                     elif isinstance(sample, (list, tuple)) and len(sample) >= 2:
-                        features, label = sample[0], sample[1]
+                        features_raw = sample[0]
+                        label_raw = sample[1]
+                        if isinstance(features_raw, list):
+                            features = features_raw
+                        label = int(label_raw) if label_raw is not None else 0
                     else:
-                        # Generate synthetic features from sample
                         features = self._extract_features_from_sample(sample)
                         label = self._extract_label_from_sample(sample, sample_idx)
 
-                    # Forward pass - compute prediction
+                    if features is None:
+                        features = [0.0]
+                    if label is None:
+                        label = 0
+
                     prediction = self._forward_pass(features, epoch)
 
-                    # Compute loss
                     sample_loss = self._compute_loss(prediction, label)
                     total_loss += sample_loss
 
-                    # Check accuracy
                     if self._is_correct_prediction(prediction, label):
                         correct_predictions += 1
 
@@ -575,11 +569,9 @@ class TrainingThread(QThread):
                     self.log_message.emit(f"Sample {sample_idx} processing error: {sample_error}")
                     continue
 
-            # Calculate batch metrics
             batch_loss = total_loss / batch_size if batch_size > 0 else 0.0
             batch_accuracy = correct_predictions / batch_size if batch_size > 0 else 0.0
 
-            # Apply learning rate scheduling
             learning_rate = self._get_learning_rate(epoch)
             batch_loss *= learning_rate
 
@@ -587,7 +579,7 @@ class TrainingThread(QThread):
 
         except Exception as batch_error:
             self.log_message.emit(f"Batch processing error: {batch_error}")
-            return 1.0, 0.0  # Default high loss, zero accuracy on error
+            return 1.0, 0.0
 
     def _evaluate_validation_data(self, validation_data: list[Any]) -> tuple[float, float]:
         """Evaluate model performance on validation data.
@@ -609,24 +601,35 @@ class TrainingThread(QThread):
 
             for sample in validation_data:
                 try:
-                    # Extract features and labels
+                    features: list[float] | None = None
+                    label: int | None = None
+
                     if isinstance(sample, dict):
-                        features = sample.get("features", sample.get("data", []))
-                        label = sample.get("label", sample.get("target", 0))
+                        features_raw = sample.get("features", sample.get("data", []))
+                        label_raw = sample.get("label", sample.get("target", 0))
+                        if isinstance(features_raw, list):
+                            features = features_raw
+                        label = int(label_raw) if label_raw is not None else 0
                     elif isinstance(sample, (list, tuple)) and len(sample) >= 2:
-                        features, label = sample[0], sample[1]
+                        features_raw = sample[0]
+                        label_raw = sample[1]
+                        if isinstance(features_raw, list):
+                            features = features_raw
+                        label = int(label_raw) if label_raw is not None else 0
                     else:
                         features = self._extract_features_from_sample(sample)
                         label = self._extract_label_from_sample(sample, 0)
 
-                    # Forward pass without gradient computation
+                    if features is None:
+                        features = [0.0]
+                    if label is None:
+                        label = 0
+
                     prediction = self._forward_pass(features, validation=True)
 
-                    # Compute validation loss
                     sample_loss = self._compute_loss(prediction, label)
                     total_loss += sample_loss
 
-                    # Check accuracy
                     if self._is_correct_prediction(prediction, label):
                         correct_predictions += 1
 
@@ -655,10 +658,9 @@ class TrainingThread(QThread):
         import sqlite3
         from pathlib import Path
 
-        real_data = []
+        real_data: list[dict[str, Any]] = []
         batch_size = getattr(self.config, "batch_size", 32)
 
-        # First try to load from active analysis sessions
         session_dir = Path(os.path.expanduser("~/.intellicrack/sessions"))
         if session_dir.exists():
             for session_file in session_dir.glob("*.json"):
@@ -666,17 +668,15 @@ class TrainingThread(QThread):
                     with open(session_file) as f:
                         session_data = json.load(f)
 
-                    # Extract real features from analysis sessions
                     if "analysis_results" in session_data:
                         for result in session_data["analysis_results"]:
                             features = []
 
-                            # Binary metadata features
                             if "binary_info" in result:
                                 info = result["binary_info"]
                                 features.extend(
                                     [
-                                        float(info.get("file_size", 0)) / 1000000,  # Normalize MB
+                                        float(info.get("file_size", 0)) / 1000000,
                                         float(info.get("section_count", 0)) / 10,
                                         float(info.get("import_count", 0)) / 100,
                                         float(info.get("export_count", 0)) / 50,
@@ -686,7 +686,6 @@ class TrainingThread(QThread):
                                     ],
                                 )
 
-                            # Protection detection results
                             label = 1 if result.get("protection_detected", False) else 0
 
                             if len(features) >= 7:
@@ -708,7 +707,6 @@ class TrainingThread(QThread):
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-        # Try loading from analysis database
         db_path = Path(os.path.expanduser("~/.intellicrack/analysis.db"))
         if db_path.exists():
             try:
@@ -729,16 +727,15 @@ class TrainingThread(QThread):
 
                 for row in cursor.fetchall():
                     features = [
-                        float(row[0]) / 1000000 if row[0] else 0.0,  # file_size
-                        float(row[1]) / 10 if row[1] else 0.0,  # section_count
-                        float(row[2]) / 100 if row[2] else 0.0,  # import_count
-                        float(row[3]) / 50 if row[3] else 0.0,  # export_count
-                        float(row[4]) if row[4] else 0.5,  # entropy
-                        float(row[5]) if row[5] else 0.0,  # is_packed
-                        float(row[6]) if row[6] else 0.0,  # has_signature
+                        float(row[0]) / 1000000 if row[0] else 0.0,
+                        float(row[1]) / 10 if row[1] else 0.0,
+                        float(row[2]) / 100 if row[2] else 0.0,
+                        float(row[3]) / 50 if row[3] else 0.0,
+                        float(row[4]) if row[4] else 0.5,
+                        float(row[5]) if row[5] else 0.0,
+                        float(row[6]) if row[6] else 0.0,
                     ]
 
-                    # Label based on protection type
                     label = 1 if row[7] and row[7] != "none" else 0
 
                     real_data.append({"features": features, "label": label, "metadata": {"source": "database"}})
@@ -751,7 +748,6 @@ class TrainingThread(QThread):
             except sqlite3.Error as e:
                 self.log_message.emit(f"Database access error: {e}")
 
-        # Load from cached analysis results
         cache_dir = Path(os.path.expanduser("~/.intellicrack/cache/features"))
         if cache_dir.exists():
             for cache_file in cache_dir.glob("*.json"):
@@ -775,34 +771,22 @@ class TrainingThread(QThread):
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-        # If still not enough data, use real baseline patterns from known binaries
         if len(real_data) < batch_size:
-            # Real-world baseline patterns from actual binary analysis
             baseline_patterns = [
-                # Standard PE executable
                 {"features": [2.5, 0.6, 0.8, 0.1, 0.65, 0.0, 1.0], "label": 0},
-                # Packed with UPX
                 {"features": [0.8, 0.3, 0.2, 0.0, 0.95, 1.0, 0.0], "label": 1},
-                # Protected with Themida
                 {"features": [4.2, 0.8, 1.2, 0.0, 0.88, 1.0, 0.0], "label": 1},
-                # Standard DLL
                 {"features": [1.8, 0.5, 0.6, 0.4, 0.60, 0.0, 1.0], "label": 0},
-                # VMProtect protected
                 {"features": [3.5, 0.9, 0.3, 0.0, 0.92, 1.0, 0.0], "label": 1},
-                # .NET assembly
                 {"features": [2.1, 0.4, 1.5, 0.2, 0.55, 0.0, 1.0], "label": 0},
-                # Enigma protected
                 {"features": [3.8, 0.7, 0.4, 0.0, 0.89, 1.0, 0.0], "label": 1},
-                # Native executable
                 {"features": [1.2, 0.5, 0.5, 0.3, 0.58, 0.0, 0.0], "label": 0},
             ]
 
-            # Add baseline patterns to fill the batch
             while len(real_data) < batch_size and baseline_patterns:
                 pattern = baseline_patterns.pop(0)
                 pattern["metadata"] = {"source": "baseline"}
                 real_data.append(pattern)
-                # Cycle patterns if needed
                 if not baseline_patterns:
                     baseline_patterns = [
                         {"features": [2.5, 0.6, 0.8, 0.1, 0.65, 0.0, 1.0], "label": 0},
@@ -823,19 +807,16 @@ class TrainingThread(QThread):
         """
         try:
             if isinstance(sample, (list, tuple)):
-                return list(sample)[:10]  # Take first 10 elements as features
+                return list(sample)[:10]
             if isinstance(sample, (int, float)):
-                # Convert scalar to feature vector
                 return [float(sample), float(sample) * 0.5, float(sample) * 0.25]
             if isinstance(sample, str):
-                # Convert string to feature vector based on hash
                 h = hash(sample)
                 return [
                     (h % 1000) / 1000.0,
                     ((h >> 10) % 1000) / 1000.0,
                     ((h >> 20) % 1000) / 1000.0,
                 ]
-            # Default feature extraction
             return [0.5, 0.5, 0.5]
         except Exception:
             return [0.5, 0.5, 0.5]
@@ -853,10 +834,10 @@ class TrainingThread(QThread):
         """
         try:
             if hasattr(sample, "label"):
-                return int(getattr(sample, "label", 0))
+                label_value = getattr(sample, "label", 0)
+                return int(label_value)
             if isinstance(sample, dict) and "label" in sample:
-                return sample["label"]
-            # Generate deterministic label based on sample and index
+                return int(sample["label"])
             return (hash(str(sample)) + index) % 2
         except Exception:
             return 0
@@ -876,57 +857,45 @@ class TrainingThread(QThread):
         try:
             import numpy as np
 
-            # Initialize model weights if not already initialized
             if not hasattr(self, "_model_weights"):
                 self._initialize_model_weights(len(features) if features else 10)
 
             if not features:
                 return 0.0
 
-            # Convert features to numpy array
             feature_array = np.array(
                 [float(f) if isinstance(f, (int, float)) else 0.0 for f in features],
                 dtype=np.float32,
             )
 
-            # Normalize features using batch normalization
             mean = np.mean(feature_array)
-            std = np.std(feature_array) + 1e-8  # Prevent division by zero
+            std = np.std(feature_array) + 1e-8
             normalized_features = (feature_array - mean) / std
 
-            # Ensure correct input dimensions
             if len(normalized_features) < self._input_size:
-                # Pad with zeros if needed
                 normalized_features = np.pad(normalized_features, (0, self._input_size - len(normalized_features)))
             elif len(normalized_features) > self._input_size:
-                # Truncate if too many features
                 normalized_features = normalized_features[: self._input_size]
 
-            # Layer 1: Input -> Hidden1
             z1 = np.dot(normalized_features, self._weights["W1"]) + self._weights["b1"]
             a1 = self._relu(z1)
 
-            # Apply dropout during training
             if not validation and hasattr(self.config, "dropout_rate"):
                 dropout_rate = self.config.dropout_rate
                 dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a1.shape) / (1 - dropout_rate)
                 a1 *= dropout_mask
 
-            # Layer 2: Hidden1 -> Hidden2
             z2 = np.dot(a1, self._weights["W2"]) + self._weights["b2"]
             a2 = self._relu(z2)
 
-            # Apply dropout during training
             if not validation and hasattr(self.config, "dropout_rate"):
                 dropout_rate = self.config.dropout_rate
                 dropout_mask = np.random.binomial(1, 1 - dropout_rate, size=a2.shape) / (1 - dropout_rate)
                 a2 *= dropout_mask
 
-            # Layer 3: Hidden2 -> Output
             z3 = np.dot(a2, self._weights["W3"]) + self._weights["b3"]
             output = self._sigmoid(z3)
 
-            # Store activations for backpropagation
             if not validation:
                 self._last_activations = {
                     "input": normalized_features,
@@ -953,7 +922,6 @@ class TrainingThread(QThread):
         hidden2_size = max(16, input_size)
         output_size = 1
 
-        # He initialization for ReLU activation
         self._weights = {
             "W1": np.random.randn(input_size, hidden1_size) * np.sqrt(2.0 / input_size),
             "b1": np.zeros((hidden1_size,)),
@@ -963,7 +931,6 @@ class TrainingThread(QThread):
             "b3": np.zeros((output_size,)),
         }
 
-        # Initialize optimizer parameters (Adam)
         self._adam_params = {
             "m": {key: np.zeros_like(val) for key, val in self._weights.items()},
             "v": {key: np.zeros_like(val) for key, val in self._weights.items()},
@@ -999,7 +966,6 @@ class TrainingThread(QThread):
         """
         import numpy as np
 
-        # Clip values to prevent overflow
         x_clipped = np.clip(x, -500, 500)
         return 1.0 / (1.0 + np.exp(-x_clipped))
 
@@ -1068,39 +1034,32 @@ class TrainingThread(QThread):
 
         """
         try:
-            # Get configuration parameters
             initial_lr = getattr(self.config, "learning_rate", 0.001)
             total_epochs = getattr(self.config, "epochs", 100)
             warmup_epochs = getattr(self.config, "warmup_epochs", 5)
             min_lr = getattr(self.config, "min_learning_rate", 1e-6)
             schedule_type = getattr(self.config, "lr_schedule", "cosine")
 
-            # Warm-up phase
             if epoch < warmup_epochs:
-                # Linear warm-up from min_lr to initial_lr
                 warmup_progress = epoch / warmup_epochs
                 return min_lr + (initial_lr - min_lr) * warmup_progress
 
-            # Main scheduling phase
             adjusted_epoch = epoch - warmup_epochs
             adjusted_total = total_epochs - warmup_epochs
 
             if schedule_type == "cosine":
-                # Cosine annealing
                 import math
 
                 cosine_progress = (1 + math.cos(math.pi * adjusted_epoch / adjusted_total)) / 2
                 return min_lr + (initial_lr - min_lr) * cosine_progress
 
             if schedule_type == "exponential":
-                # Exponential decay
                 decay_rate = getattr(self.config, "lr_decay_rate", 0.95)
                 decay_steps = getattr(self.config, "lr_decay_steps", 10)
                 decay_factor = decay_rate ** (adjusted_epoch // decay_steps)
                 return max(min_lr, initial_lr * decay_factor)
 
             if schedule_type == "step":
-                # Step decay
                 drop_rate = getattr(self.config, "lr_drop_rate", 0.5)
                 drop_epochs = getattr(self.config, "lr_drop_epochs", [30, 60, 90])
 
@@ -1111,20 +1070,17 @@ class TrainingThread(QThread):
                 return max(min_lr, current_lr)
 
             if schedule_type == "polynomial":
-                # Polynomial decay
                 power = getattr(self.config, "lr_poly_power", 0.9)
                 decay_progress = 1 - (adjusted_epoch / adjusted_total)
-                decay_factor = decay_progress**power
+                decay_factor = float(decay_progress**power)
                 return min_lr + (initial_lr - min_lr) * decay_factor
 
             if schedule_type == "cosine_restarts":
-                # Cosine annealing with warm restarts (SGDR)
                 import math
 
                 restart_period = getattr(self.config, "lr_restart_period", 20)
                 restart_mult = getattr(self.config, "lr_restart_mult", 2)
 
-                # Calculate which restart we're in
                 current_restart = 0
                 epoch_in_restart = adjusted_epoch
                 period = restart_period
@@ -1134,17 +1090,14 @@ class TrainingThread(QThread):
                     current_restart += 1
                     period = int(period * restart_mult)
 
-                # Calculate cosine annealing within current restart
                 cosine_progress = (1 + math.cos(math.pi * epoch_in_restart / period)) / 2
 
-                # Apply decay across restarts
                 restart_decay = getattr(self.config, "lr_restart_decay", 0.9) ** current_restart
                 effective_max_lr = initial_lr * restart_decay
 
                 return min_lr + (effective_max_lr - min_lr) * cosine_progress
 
             if schedule_type == "one_cycle":
-                # One-cycle learning rate policy
                 max_lr = getattr(self.config, "lr_max", initial_lr * 10)
                 div_factor = getattr(self.config, "lr_div_factor", 25)
                 pct_start = getattr(self.config, "lr_pct_start", 0.3)
@@ -1153,18 +1106,14 @@ class TrainingThread(QThread):
                 end_lr = start_lr / 1000
 
                 if adjusted_epoch < adjusted_total * pct_start:
-                    # Increasing phase
                     pct = adjusted_epoch / (adjusted_total * pct_start)
                     return start_lr + (max_lr - start_lr) * pct
-                # Decreasing phase
                 pct = (adjusted_epoch - adjusted_total * pct_start) / (adjusted_total * (1 - pct_start))
                 return max_lr - (max_lr - end_lr) * pct
 
-            # Constant learning rate (no scheduling)
             return initial_lr
 
         except Exception as e:
-            # Fallback to initial learning rate on error
             self.log_message.emit(f"Learning rate calculation error: {e}")
             return getattr(self.config, "learning_rate", 0.001)
 
@@ -1180,7 +1129,6 @@ class TrainingThread(QThread):
 
         """
         try:
-            # Binary cross-entropy loss
             prediction = max(1e-7, min(1 - 1e-7, prediction))
             label_float = float(label)
 
@@ -1220,7 +1168,7 @@ class TrainingVisualizationWidget(QWidget):
         """Initialize training visualization widget with plots and metrics display."""
         super().__init__()
         self.setup_ui()
-        self.training_data = {"epochs": [], "loss": [], "accuracy": []}
+        self.training_data: dict[str, list[int | float]] = {"epochs": [], "loss": [], "accuracy": []}
 
     def setup_ui(self) -> None:
         """Set up the user interface for training visualization."""
@@ -1239,9 +1187,9 @@ class TrainingVisualizationWidget(QWidget):
         from typing import cast
 
         layout.addWidget(QLabel("Loss Over Time"))
-        layout.addWidget(cast("QWidget", self.loss_plot))
+        layout.addWidget(cast(QWidget, self.loss_plot))
         layout.addWidget(QLabel("Accuracy Over Time"))
-        layout.addWidget(cast("QWidget", self.accuracy_plot))
+        layout.addWidget(cast(QWidget, self.accuracy_plot))
 
         self.setLayout(layout)
 
@@ -1273,7 +1221,7 @@ class TrainingVisualizationWidget(QWidget):
         epoch = metrics.get("epoch", 0)
         loss = metrics.get("loss", 0.0)
         accuracy = metrics.get("accuracy", 0.0)
-        self.update_plots(epoch, loss, accuracy)
+        self.update_plots(int(epoch), float(loss), float(accuracy))
 
     def clear_history(self) -> None:
         """Clear training history and plots."""
@@ -1303,13 +1251,12 @@ class DatasetAnalysisWidget(QWidget):
         """Initialize dataset analysis widget with data quality metrics and visualization."""
         super().__init__()
         self.setup_ui()
-        self.current_dataset = None
+        self.current_dataset: Any | None = None
 
     def setup_ui(self) -> None:
         """Set up the user interface for dataset analysis."""
         layout = QVBoxLayout()
 
-        # Dataset loading section
         load_group = QGroupBox("Dataset Loading")
         load_layout = QHBoxLayout()
 
@@ -1327,7 +1274,6 @@ class DatasetAnalysisWidget(QWidget):
         load_layout.addWidget(self.load_btn)
         load_group.setLayout(load_layout)
 
-        # Analysis results section
         analysis_group = QGroupBox("Dataset Analysis")
         analysis_layout = QVBoxLayout()
 
@@ -1335,33 +1281,31 @@ class DatasetAnalysisWidget(QWidget):
         self.stats_text.setReadOnly(True)
         self.stats_text.setMaximumHeight(200)
 
-        # Visualization section
         self.distribution_plot = PlotWidget()
 
-        # Initialize matplotlib plots if available
-        self.matplotlib_canvas = None
-        self.matplotlib_figure = None
+        self.matplotlib_canvas: Any | None = None
+        self.matplotlib_figure: Any | None = None
         if MATPLOTLIB_AVAILABLE:
-            from intellicrack.handlers.matplotlib_handler import Figure, FigureCanvasQTAgg
+            from intellicrack.handlers.matplotlib_handler import Figure as _MPLFigure
+            from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg as _MPLCanvas
 
-            # Create matplotlib figure for advanced visualizations
-            self.matplotlib_figure = Figure(figsize=(8, 6))
-            self.matplotlib_canvas = FigureCanvasQTAgg(self.matplotlib_figure)
-            self.matplotlib_ax = self.matplotlib_figure.add_subplot(111)
+            self.matplotlib_figure = _MPLFigure(figsize=(8, 6))
+            if _MPLCanvas is not None and callable(_MPLCanvas):
+                canvas_raw: Any = _MPLCanvas(self.matplotlib_figure)
+                self.matplotlib_canvas = canvas_raw
+                self.matplotlib_ax = self.matplotlib_figure.add_subplot(111)
         self.distribution_plot.setLabel("left", "Count")
         self.distribution_plot.setLabel("bottom", "Class")
 
         from typing import cast
 
         analysis_layout.addWidget(self.stats_text)
-        analysis_layout.addWidget(cast("QWidget", self.distribution_plot))
+        analysis_layout.addWidget(cast(QWidget, self.distribution_plot))
 
-        # Add matplotlib canvas if available
         if hasattr(self, "matplotlib_canvas") and self.matplotlib_canvas:
-            analysis_layout.addWidget(cast("QWidget", self.matplotlib_canvas))
+            analysis_layout.addWidget(cast(QWidget, self.matplotlib_canvas))
         analysis_group.setLayout(analysis_layout)
 
-        # Preprocessing options
         preprocess_group = QGroupBox("Preprocessing Options")
         preprocess_layout = QGridLayout()
 
@@ -1410,7 +1354,6 @@ class DatasetAnalysisWidget(QWidget):
             return
 
         try:
-            # Load dataset based on file extension
             if dataset_path.endswith(".csv"):
                 import pandas as pd
 
@@ -1421,7 +1364,6 @@ class DatasetAnalysisWidget(QWidget):
                 with open(dataset_path) as f:
                     self.current_dataset = json.load(f)
             elif dataset_path.endswith(".pkl"):
-                # Security warning for pickle files
                 reply = QMessageBox.question(
                     self,
                     "Security Warning",
@@ -1433,18 +1375,15 @@ class DatasetAnalysisWidget(QWidget):
                 )
 
                 if reply == QMessageBox.StandardButton.Yes:
-                    # Use safer loading with restricted unpickler if available
                     try:
                         import joblib
 
-                        # joblib is safer for loading ML models and data
                         self.current_dataset = joblib.load(dataset_path)
                     except ImportError:
-                        # Fallback to pickle with warning
-                        import pickle  # noqa: S403
+                        import pickle
 
                         with open(dataset_path, "rb") as f:
-                            self.current_dataset = pickle.load(f)  # noqa: S301
+                            self.current_dataset = pickle.load(f)
                 else:
                     return
             else:
@@ -1463,21 +1402,18 @@ class DatasetAnalysisWidget(QWidget):
             return
 
         try:
-            # Generate basic statistics
-            stats = []
-            if hasattr(self.current_dataset, "shape"):  # pandas DataFrame
+            stats: list[str] = []
+            if hasattr(self.current_dataset, "shape"):
                 stats.extend((
                     f"Shape: {self.current_dataset.shape}",
                     f"Columns: {list(self.current_dataset.columns)}",
                     f"Data Types: {self.current_dataset.dtypes.to_dict()}",
                     f"Missing Values: {self.current_dataset.isna().sum().to_dict()}",
                 ))
-                # Class distribution if target column exists
                 if "target" in self.current_dataset.columns:
                     distribution = self.current_dataset["target"].value_counts()
                     stats.append(f"Class Distribution: {distribution.to_dict()}")
 
-                    # Plot distribution
                     self.distribution_plot.clear()
                     self.distribution_plot.plot(
                         list(distribution.index),
@@ -1486,7 +1422,6 @@ class DatasetAnalysisWidget(QWidget):
                         symbol="o",
                     )
 
-                    # Also create matplotlib plot if available
                     if (
                         hasattr(self, "matplotlib_ax")
                         and self.matplotlib_ax
@@ -1538,17 +1473,15 @@ class HyperparameterOptimizationWidget(QWidget):
         """Initialize hyperparameter optimization widget with parameter controls and optimization algorithms."""
         super().__init__()
         self.setup_ui()
-        self.optimization_history = []
+        self.optimization_history: list[dict[str, Any]] = []
 
     def setup_ui(self) -> None:
         """Set up the user interface for hyperparameter optimization."""
         layout = QVBoxLayout()
 
-        # Parameter ranges section
         params_group = QGroupBox("Parameter Ranges")
         params_layout = QGridLayout()
 
-        # Learning rate
         params_layout.addWidget(QLabel("Learning Rate:"), 0, 0)
         self.lr_min_spin = QDoubleSpinBox()
         self.lr_min_spin.setRange(0.0001, 1.0)
@@ -1564,7 +1497,6 @@ class HyperparameterOptimizationWidget(QWidget):
         params_layout.addWidget(QLabel("Max:"), 0, 3)
         params_layout.addWidget(self.lr_max_spin, 0, 4)
 
-        # Batch size
         params_layout.addWidget(QLabel("Batch Size:"), 1, 0)
         self.batch_min_spin = QSpinBox()
         self.batch_min_spin.setRange(1, 1024)
@@ -1578,7 +1510,6 @@ class HyperparameterOptimizationWidget(QWidget):
         params_layout.addWidget(QLabel("Max:"), 1, 3)
         params_layout.addWidget(self.batch_max_spin, 1, 4)
 
-        # Hidden layers
         params_layout.addWidget(QLabel("Hidden Layers:"), 2, 0)
         self.layers_min_spin = QSpinBox()
         self.layers_min_spin.setRange(1, 10)
@@ -1594,7 +1525,6 @@ class HyperparameterOptimizationWidget(QWidget):
 
         params_group.setLayout(params_layout)
 
-        # Optimization strategy section
         strategy_group = QGroupBox("Optimization Strategy")
         strategy_layout = QVBoxLayout()
 
@@ -1633,7 +1563,6 @@ class HyperparameterOptimizationWidget(QWidget):
         strategy_layout.addLayout(button_layout)
         strategy_group.setLayout(strategy_layout)
 
-        # Results section
         results_group = QGroupBox("Optimization Results")
         results_layout = QVBoxLayout()
 
@@ -1654,7 +1583,6 @@ class HyperparameterOptimizationWidget(QWidget):
         self.best_params_text.setReadOnly(True)
         self.best_params_text.setMaximumHeight(100)
 
-        # Optimization progress plot
         self.progress_plot = PlotWidget()
         self.progress_plot.setLabel("left", "Best Accuracy")
         self.progress_plot.setLabel("bottom", "Trial")
@@ -1666,7 +1594,7 @@ class HyperparameterOptimizationWidget(QWidget):
         results_layout.addWidget(QLabel("Best Parameters:"))
         results_layout.addWidget(self.best_params_text)
         results_layout.addWidget(QLabel("Optimization Progress:"))
-        results_layout.addWidget(cast("QWidget", self.progress_plot))
+        results_layout.addWidget(cast(QWidget, self.progress_plot))
         results_group.setLayout(results_layout)
 
         layout.addWidget(params_group)
@@ -1680,12 +1608,10 @@ class HyperparameterOptimizationWidget(QWidget):
         self.start_optimization_btn.setEnabled(False)
         self.stop_optimization_btn.setEnabled(True)
 
-        # Clear previous results
         self.optimization_history.clear()
         self.results_table.setRowCount(0)
         self.progress_plot.clear()
 
-        # Get parameter ranges
         param_ranges = {
             "learning_rate": (self.lr_min_spin.value(), self.lr_max_spin.value()),
             "batch_size": (self.batch_min_spin.value(), self.batch_max_spin.value()),
@@ -1695,7 +1621,6 @@ class HyperparameterOptimizationWidget(QWidget):
         strategy = self.strategy_combo.currentText()
         num_trials = self.num_trials_spin.value()
 
-        # Start optimization in separate thread (simplified for example)
         self.run_optimization(strategy, param_ranges, num_trials)
 
     def stop_optimization(self) -> None:
@@ -1707,24 +1632,21 @@ class HyperparameterOptimizationWidget(QWidget):
         """Run the hyperparameter optimization."""
         import random
 
-        best_accuracy = 0
-        best_params = None
+        best_accuracy: float = 0.0
+        best_params: dict[str, Any] | None = None
 
         for trial in range(num_trials):
             params = {
-                "learning_rate": random.uniform(*param_ranges["learning_rate"]),  # noqa: S311
-                "batch_size": random.choice(range(*param_ranges["batch_size"])),  # noqa: S311
-                "hidden_layers": random.choice(range(*param_ranges["hidden_layers"])),  # noqa: S311
+                "learning_rate": random.uniform(*param_ranges["learning_rate"]),
+                "batch_size": random.choice(range(*param_ranges["batch_size"])),
+                "hidden_layers": random.choice(range(*param_ranges["hidden_layers"])),
             }
-            # Perform real hyperparameter evaluation by training with parameters
             accuracy, loss = self._evaluate_hyperparameters(params)
 
-            # Track best parameters
             if accuracy > best_accuracy:
                 best_accuracy = accuracy
                 best_params = params.copy()
 
-            # Add to history
             result = {
                 "trial": trial + 1,
                 "params": params,
@@ -1733,7 +1655,6 @@ class HyperparameterOptimizationWidget(QWidget):
             }
             self.optimization_history.append(result)
 
-            # Update UI
             self.add_result_to_table(result)
             self.update_progress_plot()
 
@@ -1753,57 +1674,46 @@ class HyperparameterOptimizationWidget(QWidget):
 
         """
         try:
-            # Create a mini training run with the hyperparameters
             learning_rate = params.get("learning_rate", 0.001)
             batch_size = params.get("batch_size", 32)
             hidden_layers = params.get("hidden_layers", 2)
 
-            # Generate synthetic evaluation dataset if no real data available
             eval_data = self._generate_evaluation_dataset(size=min(100, batch_size * 5)) or [
                 {"features": [i * 0.1, (i + 1) * 0.15, (i + 2) * 0.2], "label": i % 2} for i in range(50)
             ]
 
-            # Perform mini training session with hyperparameters
             total_loss = 0.0
-            correct_predictions = 0
+            correct_predictions: float = 0.0
             total_samples = len(eval_data)
 
-            # Run multiple evaluation epochs for robust hyperparameter assessment
-            num_eval_epochs = min(5, max(2, 10 // hidden_layers))  # Adjust epochs based on complexity
+            num_eval_epochs = min(5, max(2, 10 // hidden_layers))
 
             for eval_epoch in range(num_eval_epochs):
                 epoch_loss = 0.0
-                epoch_correct = 0
+                epoch_correct: float = 0.0
 
-                # Process data in batches
                 for batch_start in range(0, len(eval_data), batch_size):
                     batch_end = min(batch_start + batch_size, len(eval_data))
                     batch = eval_data[batch_start:batch_end]
 
-                    # Evaluate batch with current hyperparameters
                     batch_loss, batch_acc = self._evaluate_batch_with_params(batch, params, eval_epoch)
 
                     epoch_loss += batch_loss * len(batch)
                     epoch_correct += batch_acc * len(batch)
 
-                # Apply learning rate effect
-                lr_factor = learning_rate * (1.0 - 0.1 * eval_epoch)  # Learning rate decay
-                epoch_loss *= 1.0 + lr_factor  # Higher LR can increase loss initially
+                lr_factor = learning_rate * (1.0 - 0.1 * eval_epoch)
+                epoch_loss *= 1.0 + lr_factor
 
                 total_loss += epoch_loss
                 correct_predictions += epoch_correct
 
-            # Calculate final metrics
             avg_loss = total_loss / (total_samples * num_eval_epochs) if total_samples > 0 else 1.0
             avg_accuracy = correct_predictions / (total_samples * num_eval_epochs) if total_samples > 0 else 0.0
 
-            # Apply hyperparameter-specific adjustments for realistic evaluation
-            # More hidden layers can improve accuracy but increase overfitting risk
             complexity_factor = min(1.2, 1.0 + (hidden_layers - 1) * 0.1)
             avg_accuracy *= complexity_factor
-            avg_accuracy = min(0.98, avg_accuracy)  # Cap at realistic maximum
+            avg_accuracy = min(0.98, avg_accuracy)
 
-            # Adjust loss based on learning rate (too high or too low LR hurts performance)
             optimal_lr = 0.001
             lr_penalty = abs(learning_rate - optimal_lr) / optimal_lr
             avg_loss *= 1.0 + lr_penalty * 0.5
@@ -1812,7 +1722,6 @@ class HyperparameterOptimizationWidget(QWidget):
 
         except Exception as e:
             logger.exception("Hyperparameter evaluation error: %s", e)
-            # Return reasonable defaults on error
             return 0.5, 1.0
 
     def _evaluate_batch_with_params(self, batch: list[Any], params: dict[str, Any], epoch: int) -> tuple[float, float]:
@@ -1836,22 +1745,18 @@ class HyperparameterOptimizationWidget(QWidget):
             params.get("hidden_layers", 2)
 
             for sample in batch:
-                # Extract features and labels
                 if isinstance(sample, dict):
                     features = sample.get("features", [0.1, 0.2, 0.3])
                     label = sample.get("label", 0)
                 else:
-                    features = [0.1, 0.2, 0.3]  # Default features
+                    features = [0.1, 0.2, 0.3]
                     label = 0
 
-                # Forward pass with hyperparameter influence
                 prediction = self._forward_pass_with_params(features, params, epoch)
 
-                # Compute loss with learning rate influence
                 sample_loss = self._compute_loss(prediction, label) * learning_rate
                 total_loss += sample_loss
 
-                # Check accuracy
                 if self._is_correct_prediction(prediction, label):
                     correct_predictions += 1
 
@@ -1861,7 +1766,7 @@ class HyperparameterOptimizationWidget(QWidget):
             return batch_loss, batch_accuracy
 
         except Exception:
-            return 1.0, 0.0  # Default values on error
+            return 1.0, 0.0
 
     def _forward_pass_with_params(self, features: list[float], params: dict[str, Any], epoch: int) -> float:
         """Perform forward pass with hyperparameter influence.
@@ -1882,35 +1787,30 @@ class HyperparameterOptimizationWidget(QWidget):
             learning_rate = params.get("learning_rate", 0.001)
             hidden_layers = params.get("hidden_layers", 2)
 
-            # Normalize features
             feature_sum = sum(abs(float(f)) for f in features if isinstance(f, (int, float)))
             if feature_sum == 0:
                 return 0.0
 
             normalized_features = [float(f) / feature_sum for f in features if isinstance(f, (int, float))]
 
-            # Multi-layer forward pass based on hidden_layers parameter
-            current_values = normalized_features[:6]  # Use first 6 features
+            current_values = normalized_features[:6]
 
             for layer in range(hidden_layers):
-                # Layer-specific weights influenced by learning rate and epoch
                 layer_factor = learning_rate * (1.0 + layer * 0.2) * (1.0 + epoch * 0.05)
                 next_values = []
 
-                # Process current layer
-                for _i in range(min(3, len(current_values))):  # 3 neurons per layer
+                for _i in range(min(3, len(current_values))):
                     neuron_sum = sum(val * layer_factor for val in current_values[:3])
-                    activation = max(0, neuron_sum)  # ReLU activation
+                    activation = max(0, neuron_sum)
                     next_values.append(activation)
 
                 current_values = next_values or [0.0]
 
-            # Output layer
             output = sum(current_values) / len(current_values) if current_values else 0.0
-            return max(0.0, min(1.0, output))  # Clamp between 0 and 1
+            return max(0.0, min(1.0, output))
 
         except Exception:
-            return 0.5  # Default prediction on error
+            return 0.5
 
     def _compute_loss(self, prediction: float, label: int) -> float:
         """Compute loss between prediction and true label.
@@ -1924,7 +1824,6 @@ class HyperparameterOptimizationWidget(QWidget):
 
         """
         try:
-            # Binary cross-entropy loss
             prediction = max(1e-7, min(1 - 1e-7, prediction))
             label_float = float(label)
 
@@ -1969,17 +1868,15 @@ class HyperparameterOptimizationWidget(QWidget):
         try:
             dataset = []
             for i in range(size):
-                # Generate varied synthetic features
                 features = [
-                    (i % 10) * 0.1,  # Feature 1: cyclic
-                    (i * 0.03) % 1.0,  # Feature 2: linear with wraparound
-                    ((i * 13) % 7) * 0.14,  # Feature 3: pseudo-random pattern
-                    (i / size),  # Feature 4: normalized index
-                    ((i**2) % 100) * 0.01,  # Feature 5: quadratic pattern
-                    (1.0 / (i + 1)) if i < 50 else (0.5 / (size - i + 1)),  # Feature 6: inverse patterns
+                    (i % 10) * 0.1,
+                    (i * 0.03) % 1.0,
+                    ((i * 13) % 7) * 0.14,
+                    (i / size),
+                    ((i**2) % 100) * 0.01,
+                    (1.0 / (i + 1)) if i < 50 else (0.5 / (size - i + 1)),
                 ]
 
-                # Generate label based on features for consistent evaluation
                 label = 1 if (features[0] + features[1] + features[2]) > 0.3 else 0
 
                 dataset.append({"features": features, "label": label})
@@ -2008,11 +1905,11 @@ class HyperparameterOptimizationWidget(QWidget):
 
         trials = []
         best_accuracies = []
-        best_so_far = 0
+        best_so_far: float = 0.0
 
         for result in self.optimization_history:
             trials.append(result["trial"])
-            best_so_far = max(best_so_far, result["accuracy"])
+            best_so_far = max(best_so_far, float(result["accuracy"]))
             best_accuracies.append(best_so_far)
 
         self.progress_plot.clear()
@@ -2037,8 +1934,8 @@ class HyperparameterOptimizationWidget(QWidget):
         if not self.optimization_history:
             return None
 
-        best_result = max(self.optimization_history, key=lambda x: x["accuracy"])
-        return best_result["params"]
+        best_result = max(self.optimization_history, key=lambda x: float(x["accuracy"]))
+        return dict(best_result["params"])
 
 
 class EnhancedTrainingInterface(QDialog):
@@ -2055,15 +1952,13 @@ class EnhancedTrainingInterface(QDialog):
         self.setWindowTitle("Enhanced AI Model Training Interface")
         self.setMinimumSize(1200, 800)
 
-        self.training_thread = None
+        self.training_thread: TrainingThread | None = None
         self.config = TrainingConfiguration()
 
-        # Initialize status update timer for UI refresh
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self._update_status_display)
-        self.status_timer.setInterval(1000)  # Update every second
+        self.status_timer.setInterval(1000)
 
-        # Initialize UI attributes (will be set in create_config_tab)
         self.model_name_edit: QLineEdit | None = None
         self.model_type_combo: QComboBox | None = None
         self.learning_rate_spin: QDoubleSpinBox | None = None
@@ -2083,38 +1978,29 @@ class EnhancedTrainingInterface(QDialog):
         """Initialize the user interface."""
         layout = QVBoxLayout()
 
-        # Apply consistent styling
         self.apply_styling()
 
-        # Create tab widget
         self.tabs = QTabWidget()
 
-        # Training Configuration Tab
         self.config_tab = self.create_config_tab()
         self.tabs.addTab(self.config_tab, "Configuration")
 
-        # Dataset Analysis Tab
         self.dataset_tab = DatasetAnalysisWidget()
         self.tabs.addTab(self.dataset_tab, "Dataset Analysis")
 
-        # Training Visualization Tab
         self.viz_tab = TrainingVisualizationWidget()
         self.tabs.addTab(self.viz_tab, "Training Visualization")
 
-        # Hyperparameter Optimization Tab
         self.hyperopt_tab = HyperparameterOptimizationWidget()
         self.tabs.addTab(self.hyperopt_tab, "Hyperparameter Optimization")
 
-        # Create main splitter for resizable panes
         main_splitter = QSplitter(Qt.Orientation.Vertical)
         main_splitter.addWidget(self.tabs)
 
-        # Create bottom widget for controls and status
         bottom_widget = QWidget()
         bottom_layout = QVBoxLayout(bottom_widget)
         bottom_layout.setContentsMargins(0, 0, 0, 0)
 
-        # Control buttons
         controls_layout = QHBoxLayout()
 
         self.start_btn = QPushButton("Start Training")
@@ -2123,7 +2009,6 @@ class EnhancedTrainingInterface(QDialog):
         self.save_config_btn = QPushButton("Save Configuration")
         self.load_config_btn = QPushButton("Load Configuration")
 
-        # Apply icons to buttons
         self._apply_button_icons()
 
         self.pause_btn.setEnabled(False)
@@ -2138,7 +2023,6 @@ class EnhancedTrainingInterface(QDialog):
 
         bottom_layout.addLayout(controls_layout)
 
-        # Status bar with frame
         status_frame = QFrame()
         status_frame.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
         status_frame_layout = QVBoxLayout(status_frame)
@@ -2153,23 +2037,19 @@ class EnhancedTrainingInterface(QDialog):
         status_frame_layout.addLayout(status_layout)
         bottom_layout.addWidget(status_frame)
 
-        # Add bottom widget to splitter
         main_splitter.addWidget(bottom_widget)
-        main_splitter.setStretchFactor(0, 1)  # Tabs get more space
-        main_splitter.setStretchFactor(1, 0)  # Controls/status stay compact
+        main_splitter.setStretchFactor(0, 1)
+        main_splitter.setStretchFactor(1, 0)
 
-        # Add splitter to main layout
         layout.addWidget(main_splitter)
 
         self.setLayout(layout)
 
     def apply_styling(self) -> None:
         """Apply consistent styling to the interface."""
-        # Set application font
         app_font = QFont("Arial", 10)
         self.setFont(app_font)
 
-        # Set window palette for better theming
         palette = QPalette()
         palette.setColor(QPalette.ColorRole.Window, Qt.GlobalColor.white)
         palette.setColor(QPalette.ColorRole.WindowText, Qt.GlobalColor.black)
@@ -2180,7 +2060,7 @@ class EnhancedTrainingInterface(QDialog):
         from PyQt6.QtCore import QByteArray
         from PyQt6.QtSvg import QSvgRenderer
 
-        def create_svg_icon(svg_str: str, size: int = 16) -> "QIcon":
+        def create_svg_icon(svg_str: str, size: int = 16) -> QIcon:
             """Create an icon from SVG string data.
 
             Args:
@@ -2200,23 +2080,19 @@ class EnhancedTrainingInterface(QDialog):
             painter.end()
             return QIcon(pixmap)
 
-        # Play icon (triangle pointing right)
         play_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <path d="M4 2 L12 8 L4 14 Z" fill="#28a745" stroke="#1e7e34" stroke-width="0.5"/>
         </svg>"""
 
-        # Pause icon (two vertical bars)
         pause_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <rect x="4" y="2" width="3" height="12" fill="#ffc107" stroke="#d39e00" stroke-width="0.5"/>
             <rect x="9" y="2" width="3" height="12" fill="#ffc107" stroke="#d39e00" stroke-width="0.5"/>
         </svg>"""
 
-        # Stop icon (square)
         stop_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <rect x="3" y="3" width="10" height="10" fill="#dc3545" stroke="#bd2130" stroke-width="0.5"/>
         </svg>"""
 
-        # Save icon (floppy disk)
         save_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <path d="M2 2 L2 14 L14 14 L14 5 L11 2 Z" fill="#007bff" stroke="#0056b3" stroke-width="0.5"/>
             <rect x="5" y="2" width="6" height="4" fill="#ffffff" stroke="#0056b3" stroke-width="0.5"/>
@@ -2224,13 +2100,11 @@ class EnhancedTrainingInterface(QDialog):
             <rect x="8" y="2.5" width="2" height="2.5" fill="#0056b3"/>
         </svg>"""
 
-        # Load icon (folder with arrow)
         load_svg = """<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
             <path d="M2 4 L2 13 L14 13 L14 6 L8 6 L7 4 Z" fill="#17a2b8" stroke="#117a8b" stroke-width="0.5"/>
             <path d="M8 8 L8 11 M6 9.5 L8 11 L10 9.5" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" fill="none"/>
         </svg>"""
 
-        # Apply icons
         if self.start_btn:
             self.start_btn.setIcon(create_svg_icon(play_svg, 20))
             self.start_btn.setToolTip("Start Training")
@@ -2249,16 +2123,13 @@ class EnhancedTrainingInterface(QDialog):
 
     def create_config_tab(self) -> QWidget:
         """Create the configuration tab with scrollable area."""
-        # Create scroll area for configuration
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setFrameStyle(QFrame.Shape.NoFrame)
 
-        # Create the actual tab content
         tab = QWidget()
         layout = QVBoxLayout()
 
-        # Model Configuration
         model_group = QGroupBox("Model Configuration")
         model_layout = QFormLayout()
 
@@ -2280,7 +2151,6 @@ class EnhancedTrainingInterface(QDialog):
         model_group.setLayout(model_layout)
         layout.addWidget(model_group)
 
-        # Training Parameters
         training_group = QGroupBox("Training Parameters")
         training_layout = QFormLayout()
 
@@ -2297,13 +2167,12 @@ class EnhancedTrainingInterface(QDialog):
         self.epochs_spin.setRange(1, 1000)
         self.epochs_spin.setValue(self.config.epochs)
 
-        # Create a widget to hold both slider and spinbox
         validation_widget = QWidget()
         validation_layout = QHBoxLayout(validation_widget)
         validation_layout.setContentsMargins(0, 0, 0, 0)
 
         self.validation_split_slider = QSlider(Qt.Orientation.Horizontal)
-        self.validation_split_slider.setRange(10, 50)  # 10% to 50%
+        self.validation_split_slider.setRange(10, 50)
         self.validation_split_slider.setValue(int(self.config.validation_split * 100))
         self.validation_split_slider.setTickPosition(QSlider.TickPosition.TicksBelow)
         self.validation_split_slider.setTickInterval(5)
@@ -2313,7 +2182,6 @@ class EnhancedTrainingInterface(QDialog):
         self.validation_split_spin.setSingleStep(0.05)
         self.validation_split_spin.setValue(self.config.validation_split)
 
-        # Connect slider and spinbox
         def update_spin_from_slider(v: int) -> None:
             if self.validation_split_spin:
                 self.validation_split_spin.setValue(v / 100.0)
@@ -2336,7 +2204,6 @@ class EnhancedTrainingInterface(QDialog):
         training_group.setLayout(training_layout)
         layout.addWidget(training_group)
 
-        # Advanced Features
         advanced_group = QGroupBox("Advanced Features")
         advanced_layout = QFormLayout()
 
@@ -2362,7 +2229,6 @@ class EnhancedTrainingInterface(QDialog):
 
         tab.setLayout(layout)
 
-        # Set the tab as the scroll area's widget
         scroll_area.setWidget(tab)
         return scroll_area
 
@@ -2376,30 +2242,26 @@ class EnhancedTrainingInterface(QDialog):
 
     def start_training(self) -> None:
         """Start the training process."""
-        # Update configuration from UI
         self.update_config_from_ui()
 
-        # Validate configuration
         if not self.validate_config():
             return
 
-        # Create and start training thread
         self.training_thread = TrainingThread(self.config)
-        self.training_thread.progress_updated.connect(self.progress_bar.setValue)
-        self.training_thread.metrics_updated.connect(self.viz_tab.update_metrics)
-        self.training_thread.log_message.connect(self.update_status)
-        self.training_thread.training_completed.connect(self.training_completed)
-        self.training_thread.error_occurred.connect(self.training_error)
+        if self.training_thread:
+            self.training_thread.progress_updated.connect(self.progress_bar.setValue)
+            self.training_thread.metrics_updated.connect(self.viz_tab.update_metrics)
+            self.training_thread.log_message.connect(self.update_status)
+            self.training_thread.training_completed.connect(self.training_completed)
+            self.training_thread.error_occurred.connect(self.training_error)
 
-        self.training_thread.start()
+            self.training_thread.start()
 
-        # Update UI state
         self.start_btn.setEnabled(False)
         self.pause_btn.setEnabled(True)
         self.stop_btn.setEnabled(True)
         self.status_label.setText("Training in progress...")
 
-        # Clear previous visualization
         self.viz_tab.clear_history()
 
     def pause_training(self) -> None:
@@ -2407,7 +2269,10 @@ class EnhancedTrainingInterface(QDialog):
         if self.training_thread:
             self.training_thread.pause_training()
             self.pause_btn.setText("Resume")
-            self.pause_btn.clicked.disconnect()
+            try:
+                self.pause_btn.clicked.disconnect()
+            except (TypeError, RuntimeError):
+                pass
             self.pause_btn.clicked.connect(self.resume_training)
             self.status_label.setText("Training paused")
 
@@ -2416,7 +2281,10 @@ class EnhancedTrainingInterface(QDialog):
         if self.training_thread:
             self.training_thread.resume_training()
             self.pause_btn.setText("Pause")
-            self.pause_btn.clicked.disconnect()
+            try:
+                self.pause_btn.clicked.disconnect()
+            except (TypeError, RuntimeError):
+                pass
             self.pause_btn.clicked.connect(self.pause_training)
             self.status_label.setText("Training resumed")
 
@@ -2454,7 +2322,6 @@ class EnhancedTrainingInterface(QDialog):
         self.stop_btn.setEnabled(False)
         self.pause_btn.setText("Pause")
 
-        # Reconnect pause button
         try:
             self.pause_btn.clicked.disconnect()
         except (AttributeError, TypeError) as e:
@@ -2533,12 +2400,10 @@ class EnhancedTrainingInterface(QDialog):
                 with open(file_path, encoding="utf-8") as f:
                     config_dict = json.load(f)
 
-                # Update configuration
                 for key, value in config_dict.items():
                     if hasattr(self.config, key):
                         setattr(self.config, key, value)
 
-                # Update UI
                 self.update_ui_from_config()
 
                 QMessageBox.information(self, "Configuration Loaded", f"Configuration loaded from {file_path}")
@@ -2578,13 +2443,11 @@ class EnhancedTrainingInterface(QDialog):
             current_time = datetime.now().strftime("%H:%M:%S")
             if hasattr(self, "status_label"):
                 self.status_label.setText(f"Training in progress... ({current_time})")
-        elif hasattr(self, "status_label"):
-            self.status_label.setText("Ready for training")
 
 
 def create_enhanced_training_interface(
     parent: QWidget | None = None,
-) -> "EnhancedTrainingInterface":
+) -> EnhancedTrainingInterface:
     """Create the enhanced training interface.
 
     Args:
@@ -2599,5 +2462,4 @@ def create_enhanced_training_interface(
     """
     if not PYQT6_AVAILABLE:
         raise ImportError("PyQt6 is required for the enhanced training interface")
-
     return EnhancedTrainingInterface(parent)

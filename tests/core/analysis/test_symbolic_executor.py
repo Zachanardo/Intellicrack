@@ -174,11 +174,11 @@ class TestSymbolicExecutionEngineBasicTests:
     def _create_minimal_pe(self) -> bytes:
         """Create minimal valid PE binary for testing."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 128)
 
         pe_header = bytearray(256)
-        pe_header[0:4] = b"PE\x00\x00"
+        pe_header[:4] = b"PE\x00\x00"
         pe_header[4:6] = struct.pack("<H", 0x8664)
         pe_header[6:8] = struct.pack("<H", 1)
         pe_header[16:18] = struct.pack("<H", 224)
@@ -187,7 +187,7 @@ class TestSymbolicExecutionEngineBasicTests:
         pe_header[28:32] = struct.pack("<I", 0x1000)
 
         code_section = bytearray(4096)
-        code_section[0:10] = b"\x48\x83\xEC\x28\x48\x8D\x0D\x00\x00\x00"
+        code_section[:10] = b"\x48\x83\xEC\x28\x48\x8D\x0D\x00\x00\x00"
         code_section[16:20] = b"\x48\x31\xC0\xC3"
 
         return bytes(dos_header + pe_header + code_section)
@@ -640,7 +640,8 @@ class TestSymbolicExecutionEngineBasicTests:
             "safe_hardcoded_value",
         ]
 
-        tainted_count = sum(1 for var in tainted_vars if tracker.is_tainted(var))
+        tainted_count = sum(bool(tracker.is_tainted(var))
+                        for var in tainted_vars)
 
         assert tainted_count == 3
 
@@ -1010,7 +1011,7 @@ class TestSymbolicExecutionRealWorldScenarios:
     def _create_license_validation_binary(self) -> bytes:
         """Create binary with license validation logic."""
         base = bytearray(4096)
-        base[0:2] = b"MZ"
+        base[:2] = b"MZ"
         base[60:64] = struct.pack("<I", 128)
         base[128:132] = b"PE\x00\x00"
         base[132:134] = struct.pack("<H", 0x8664)
@@ -1031,7 +1032,7 @@ class TestSymbolicExecutionRealWorldScenarios:
     def _create_serial_validation_binary(self) -> bytes:
         """Create binary with serial number validation."""
         base = bytearray(4096)
-        base[0:2] = b"MZ"
+        base[:2] = b"MZ"
         base[60:64] = struct.pack("<I", 128)
         base[128:132] = b"PE\x00\x00"
         base[132:134] = struct.pack("<H", 0x8664)
@@ -1054,7 +1055,7 @@ class TestSymbolicExecutionRealWorldScenarios:
     def _create_activation_binary(self) -> bytes:
         """Create binary with activation code logic."""
         base = bytearray(4096)
-        base[0:2] = b"MZ"
+        base[:2] = b"MZ"
         base[60:64] = struct.pack("<I", 128)
         base[128:132] = b"PE\x00\x00"
         base[132:134] = struct.pack("<H", 0x8664)

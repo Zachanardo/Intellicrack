@@ -40,7 +40,7 @@ class TestSampleDatabase:
         binary_file = tmp_path / "test_sample.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         pe_data = dos_header + b'\x00' * 200 + b'PE\x00\x00' + b'\x00' * 1000
@@ -141,7 +141,7 @@ class TestSampleDatabase:
             binary_file = tmp_path / f"train_{i}.exe"
 
             dos_header = bytearray(64)
-            dos_header[0:2] = b'MZ'
+            dos_header[:2] = b'MZ'
             dos_header[60:64] = struct.pack('<I', 128)
 
             pe_data = dos_header + b'\x00' * 200 + b'PE\x00\x00' + b'\x00' * 1000

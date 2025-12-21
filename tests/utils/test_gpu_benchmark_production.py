@@ -443,12 +443,24 @@ class TestRunGPUAcceleratedAnalysis:
             assert isinstance(pattern_results, list)
             assert len(pattern_results) > 0
 
-            mz_pattern = next((r for r in pattern_results if r.get("description") == "MZ Header"), None)
-            if mz_pattern:
+            if mz_pattern := next(
+                (
+                    r
+                    for r in pattern_results
+                    if r.get("description") == "MZ Header"
+                ),
+                None,
+            ):
                 assert mz_pattern["match_count"] >= 1
 
-            license_pattern = next((r for r in pattern_results if r.get("description") == "License string"), None)
-            if license_pattern:
+            if license_pattern := next(
+                (
+                    r
+                    for r in pattern_results
+                    if r.get("description") == "License string"
+                ),
+                None,
+            ):
                 assert license_pattern["match_count"] >= 1
 
     def test_run_gpu_accelerated_analysis_entropy(self, pe_binary: bytes) -> None:

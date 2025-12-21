@@ -106,10 +106,12 @@ except ImportError as e:
     STATUS_IDLE = "idle"
 
     # Exception classes
-    class Error(Exception):
+    class ErrorBase(Exception):
         """Base psutil error."""
 
-    class NoSuchProcessError(Error):
+    Error = ErrorBase
+
+    class NoSuchProcessError(ErrorBase):
         """Process does not exist."""
 
         def __init__(self, pid: int, name: str | None = None, msg: str | None = None) -> None:
@@ -129,7 +131,7 @@ except ImportError as e:
             self.name: str | None = name
             super().__init__(pid, name, f"process still exists but it's a zombie (pid={pid})")
 
-    class AccessDeniedError(Error):
+    class AccessDeniedError(ErrorBase):
         """Access denied to process information."""
 
         def __init__(self, pid: int | None = None, name: str | None = None, msg: str | None = None) -> None:
@@ -139,7 +141,7 @@ except ImportError as e:
             self.msg: str = msg or "access denied"
             super().__init__(self.msg)
 
-    class TimeoutExpiredError(Error):
+    class TimeoutExpiredError(ErrorBase):
         """Timeout expired."""
 
         def __init__(self, seconds: float, pid: int | None = None, name: str | None = None) -> None:
@@ -267,7 +269,7 @@ except ImportError as e:
                 try:
                     wmic_path = shutil.which("wmic")
                     if not wmic_path:
-                        return None
+                        return ""
 
                     result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                         [
@@ -292,10 +294,10 @@ except ImportError as e:
                     logger.debug(f"Failed to get process exe path: {e}")
             else:
                 # Try readlink on /proc/pid/exe (Linux)
-                proc_exe = f"/proc/{self._pid}/exe"
-                if os.path.exists(proc_exe):
+                proc_exe_path = Path(f"/proc/{self._pid}/exe")
+                if proc_exe_path.exists():
                     try:
-                        return str(Path(proc_exe).readlink())
+                        return str(proc_exe_path.readlink())
                     except OSError as e:
                         logger.debug(f"Failed to read exe link for PID {self._pid}: {e}")
 
@@ -387,29 +389,28 @@ except ImportError as e:
                 raise NoSuchProcessError(self._pid, msg=error_msg)
 
             # Basic status check
-            if sys.platform == "win32":
-                return STATUS_RUNNING  # Windows processes are running if they exist
-            # Try reading /proc/pid/stat (Linux)
-            proc_stat = f"/proc/{self._pid}/stat"
-            if os.path.exists(proc_stat):
-                try:
-                    with open(proc_stat) as f:
-                        stat = f.read()
-                        # Status is the third field after command in parentheses
-                        status_char = stat.split(")")[1].strip()[0]
-                        status_map = {
-                            "R": STATUS_RUNNING,
-                            "S": STATUS_SLEEPING,
-                            "D": STATUS_DISK_SLEEP,
-                            "Z": STATUS_ZOMBIE,
-                            "T": STATUS_STOPPED,
-                            "I": STATUS_IDLE,
-                        }
-                        return status_map.get(status_char, STATUS_RUNNING)
-                except (OSError, IndexError) as e:
-                    logger.debug(f"Failed to read process status: {e}")
+            if sys.platform != "win32":
+                # Try reading /proc/pid/stat (Linux)
+                proc_stat = f"/proc/{self._pid}/stat"
+                if os.path.exists(proc_stat):
+                    try:
+                        with open(proc_stat) as f:
+                            stat = f.read()
+                            # Status is the third field after command in parentheses
+                            status_char = stat.split(")")[1].strip()[0]
+                            status_map = {
+                                "R": STATUS_RUNNING,
+                                "S": STATUS_SLEEPING,
+                                "D": STATUS_DISK_SLEEP,
+                                "Z": STATUS_ZOMBIE,
+                                "T": STATUS_STOPPED,
+                                "I": STATUS_IDLE,
+                            }
+                            return status_map.get(status_char, STATUS_RUNNING)
+                    except (OSError, IndexError) as e:
+                        logger.debug(f"Failed to read process status: {e}")
 
-            return STATUS_RUNNING
+            return str(STATUS_RUNNING)
 
         def create_time(self) -> float:
             """Get process creation time."""
@@ -733,7 +734,7 @@ except ImportError as e:
             logger.debug(f"Failed to get disk usage for {path}: {e}")
             return DiskUsage()
 
-    def disk_partitions(all: bool = False) -> list[object]:
+    def disk_partitions(all: bool = False) -> list[object]:  # noqa: A002
         """Get disk partitions."""
 
         class DiskPartition:  # noqa: B903 - Must match psutil API for compatibility
@@ -743,7 +744,7 @@ except ImportError as e:
                 self.fstype: str = fstype
                 self.opts: str = opts
 
-        partitions: list[DiskPartition] = []
+        partitions: list[object] = []
 
         if sys.platform == "win32":
             # Get Windows drives
@@ -789,15 +790,15 @@ except ImportError as e:
 
         return {"eth0": NetIOCounters()} if pernic else NetIOCounters()
 
-    def net_connections(kind: str = "all") -> list:
+    def net_connections(kind: str = "all") -> list[object]:
         """Get network connections."""
         return []
 
-    def net_if_addrs() -> dict:
+    def net_if_addrs() -> dict[str, object]:
         """Get network interface addresses."""
         return {}
 
-    def net_if_stats() -> dict:
+    def net_if_stats() -> dict[str, object]:
         """Get network interface statistics."""
         return {}
 
@@ -806,7 +807,7 @@ except ImportError as e:
         # Return approximate boot time
         return time.time() - (7 * 24 * 3600)  # 7 days ago
 
-    def users() -> list:
+    def users() -> list[object]:
         """Get logged in users."""
         return []
 
@@ -896,41 +897,38 @@ except ImportError as e:
                     if callback:
                         callback(proc)
 
-            alive: list[FallbackProcess] = new_alive
+            alive = new_alive
             if alive:
                 time.sleep(0.1)
 
         return gone, alive
 
-    class Popen(subprocess.Popen):  # type: ignore[misc]
+    class PopenFallback(subprocess.Popen[bytes]):
         """Process class that wraps subprocess.Popen."""
 
         def __init__(self, *args: object, **kwargs: object) -> None:
             """Initialize Popen process wrapper with fallback process monitoring capabilities."""
-            super().__init__(*args, **kwargs)
+            super().__init__(*args, **kwargs)  # type: ignore[call-overload]
             self._process: FallbackProcess | None = FallbackProcess(self.pid) if self.pid else None
 
-        def as_dict(self, attrs: list[str] | None = None) -> dict:
+        def as_dict(self, attrs: list[str] | None = None) -> dict[str, object]:
             """Return process info as dict."""
             if not self._process:
                 return {}
 
             return {
                 "pid": self._process.pid,
-                "name": self._process.name(),
+                "name": self._process.name,
                 "status": self._process.status(),
             }
 
-    # Create Process wrapper that matches psutil.Process() interface
-    class ProcessWrapper:
-        """Process wrapper that matches psutil.Process() interface."""
+    Popen = PopenFallback
 
-        def __new__(cls, pid: int | None = None) -> FallbackProcess:
-            if pid is None:
-                pid = os.getpid()
-            return FallbackProcess(pid)
-
-    Process = ProcessWrapper
+    def Process(pid: int | None = None) -> FallbackProcess:
+        """Create a process object matching psutil.Process() interface."""
+        if pid is None:
+            pid = os.getpid()
+        return FallbackProcess(pid)
 
     # Create module-like object
     class FallbackPsutil:

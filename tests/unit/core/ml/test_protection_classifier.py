@@ -41,7 +41,7 @@ class TestBinaryFeatureExtractor:
         pe_file = tmp_path / "test.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         dos_stub = b'\x00' * 64
@@ -69,7 +69,7 @@ class TestBinaryFeatureExtractor:
         section_table = bytearray()
 
         text_section = bytearray(40)
-        text_section[0:6] = b'.text\x00'
+        text_section[:6] = b'.text\x00'
         struct.pack_into('<I', text_section, 8, 0x1000)
         struct.pack_into('<I', text_section, 12, 0x1000)
         struct.pack_into('<I', text_section, 16, 0x400)
@@ -78,7 +78,7 @@ class TestBinaryFeatureExtractor:
         section_table.extend(text_section)
 
         data_section = bytearray(40)
-        data_section[0:6] = b'.data\x00'
+        data_section[:6] = b'.data\x00'
         struct.pack_into('<I', data_section, 8, 0x200)
         struct.pack_into('<I', data_section, 12, 0x2000)
         struct.pack_into('<I', data_section, 16, 0x200)
@@ -87,7 +87,7 @@ class TestBinaryFeatureExtractor:
         section_table.extend(data_section)
 
         rsrc_section = bytearray(40)
-        rsrc_section[0:6] = b'.rsrc\x00'
+        rsrc_section[:6] = b'.rsrc\x00'
         struct.pack_into('<I', rsrc_section, 8, 0x200)
         struct.pack_into('<I', rsrc_section, 12, 0x3000)
         struct.pack_into('<I', rsrc_section, 16, 0x200)
@@ -122,7 +122,7 @@ class TestBinaryFeatureExtractor:
         pe_file = tmp_path / "vmprotect_test.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         dos_stub = b'\x00' * 64
@@ -139,7 +139,7 @@ class TestBinaryFeatureExtractor:
         section_table = bytearray()
 
         vmp0_section = bytearray(40)
-        vmp0_section[0:6] = b'.vmp0\x00'
+        vmp0_section[:6] = b'.vmp0\x00'
         struct.pack_into('<I', vmp0_section, 8, 0x2000)
         struct.pack_into('<I', vmp0_section, 12, 0x1000)
         struct.pack_into('<I', vmp0_section, 16, 0x2000)
@@ -148,7 +148,7 @@ class TestBinaryFeatureExtractor:
         section_table.extend(vmp0_section)
 
         vmp1_section = bytearray(40)
-        vmp1_section[0:6] = b'.vmp1\x00'
+        vmp1_section[:6] = b'.vmp1\x00'
         struct.pack_into('<I', vmp1_section, 8, 0x1000)
         struct.pack_into('<I', vmp1_section, 12, 0x3000)
         struct.pack_into('<I', vmp1_section, 16, 0x1000)
@@ -300,18 +300,18 @@ class TestBinaryFeatureExtractor:
             test_file = tmp_path / f"test_{test_case['name']}.exe"
 
             dos_header = bytearray(64)
-            dos_header[0:2] = b'MZ'
+            dos_header[:2] = b'MZ'
             dos_header[60:64] = struct.pack('<I', 128)
 
             coff_header = bytearray(20)
-            coff_header[0:2] = struct.pack('<H', 0x014c)
+            coff_header[:2] = struct.pack('<H', 0x014c)
             coff_header[2:4] = struct.pack('<H', 1)
             coff_header[4:8] = struct.pack('<I', test_case.get('timestamp', 0x12345678))
             coff_header[16:18] = struct.pack('<H', 224)
             coff_header[18:20] = struct.pack('<H', 0x010b)
 
             optional_header = bytearray(224)
-            optional_header[0:2] = struct.pack('<H', 0x010b)
+            optional_header[:2] = struct.pack('<H', 0x010b)
             if 'entry_point_sig' in test_case:
                 optional_header[16:20] = struct.pack('<I', 0x1000)
 
@@ -320,7 +320,7 @@ class TestBinaryFeatureExtractor:
 
             section_table = bytearray(40)
             section_name = test_case.get('section_name', b'.text\x00\x00\x00')
-            section_table[0:8] = section_name
+            section_table[:8] = section_name
             section_table[8:12] = struct.pack('<I', 1000)
             section_table[12:16] = struct.pack('<I', 0x1000)
             section_table[16:20] = struct.pack('<I', 1000)
@@ -329,7 +329,7 @@ class TestBinaryFeatureExtractor:
 
             section_data = bytearray(1000)
             if 'entry_point_sig' in test_case:
-                section_data[0:5] = test_case['entry_point_sig']
+                section_data[:5] = test_case['entry_point_sig']
             if 'signature_bytes' in test_case:
                 section_data[500:500+len(test_case['signature_bytes'])] = test_case['signature_bytes']
 
@@ -344,7 +344,7 @@ class TestBinaryFeatureExtractor:
             actual_score = features[feature_idx]
 
             assert abs(actual_score - test_case['expected_score']) < 0.15, \
-                f"{test_case['description']}: Expected ~{test_case['expected_score']}, got {actual_score}"
+                    f"{test_case['description']}: Expected ~{test_case['expected_score']}, got {actual_score}"
 
     def test_feature_names_completeness(self, extractor):
         """Test that all expected feature names are present."""
@@ -480,7 +480,7 @@ class TestProtectionClassifier:
         classifier.train(X, y, n_estimators=50, cross_validate=False)
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         pe_binary = dos_header + b'\x00' * 64 + b'PE\x00\x00' + b'\x00' * 1000
@@ -558,7 +558,7 @@ class TestProtectionClassifier:
         classifier.train(X, y, n_estimators=50, cross_validate=False, random_state=42)
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         pe_binary = dos_header + b'\x00' * 200 + b'PE\x00\x00' + b'\x00' * 1000

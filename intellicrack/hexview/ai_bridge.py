@@ -140,7 +140,7 @@ class BinaryContextBuilder:
             return 0.0
 
         # Count byte frequencies
-        freq = {}
+        freq: dict[int, int] = {}
         for b in data:
             freq[b] = freq.get(b, 0) + 1
 
@@ -401,7 +401,7 @@ class BinaryContextBuilder:
             Dictionary of interpretations
 
         """
-        result = {}
+        result: dict[str, Any] = {}
 
         # Only interpret if the data is of an appropriate size
         if data:
@@ -438,27 +438,31 @@ class BinaryContextBuilder:
 
         # Try to interpret as a timestamp
         if len(data) >= 4:
-            uint32 = struct.unpack("<I", data[:4])[0]
+            uint32_tuple = struct.unpack("<I", data[:4])
+            uint32_val: int = uint32_tuple[0]
             # Check if it's a reasonable Unix timestamp (between 1970 and 2100)
-            if 0 < uint32 < 4102444800:
+            if 0 < uint32_val < 4102444800:
                 import datetime
 
                 try:
-                    result["unix_timestamp"] = datetime.datetime.fromtimestamp(uint32).isoformat()
+                    timestamp_str: str = datetime.datetime.fromtimestamp(uint32_val).isoformat()
+                    result["unix_timestamp"] = timestamp_str
                 except (ValueError, OSError, OverflowError) as e:
                     logger.exception("Error in ai_bridge: %s", e)
 
             # Windows FILETIME (64-bit value representing 100-nanosecond intervals since January 1, 1601)
             if len(data) >= 8:
-                uint64 = struct.unpack("<Q", data[:8])[0]
+                uint64_tuple = struct.unpack("<Q", data[:8])
+                uint64_val: int = uint64_tuple[0]
                 # Convert to Unix time by subtracting the difference in epochs
-                if uint64 > 116444736000000000:  # January 1, 1970 in FILETIME
-                    unix_time = (uint64 - 116444736000000000) // 10000000
-                    if unix_time < 4102444800:  # Before 2100
+                if uint64_val > 116444736000000000:  # January 1, 1970 in FILETIME
+                    unix_time_val: int = (uint64_val - 116444736000000000) // 10000000
+                    if unix_time_val < 4102444800:  # Before 2100
                         import datetime
 
                         try:
-                            result["windows_filetime"] = datetime.datetime.fromtimestamp(unix_time).isoformat()
+                            filetime_str: str = datetime.datetime.fromtimestamp(unix_time_val).isoformat()
+                            result["windows_filetime"] = filetime_str
                         except (ValueError, OSError, OverflowError) as e:
                             logger.exception("Error in ai_bridge: %s", e)
 
@@ -482,8 +486,9 @@ class AIBinaryBridge:
         # Try to use the new LLM manager if available
         if LLM_AVAILABLE:
             try:
-                self.llm_manager = get_llm_manager()
-                self.use_llm_backend = len(self.llm_manager.get_available_llms()) > 0
+                llm_mgr = get_llm_manager()
+                self.llm_manager: object | None = llm_mgr
+                self.use_llm_backend = len(llm_mgr.get_available_llms()) > 0
                 if self.use_llm_backend:
                     logger.info("AIBinaryBridge initialized with LLM backend support")
                 else:
@@ -530,7 +535,7 @@ class AIBinaryBridge:
         prompt = self._build_analysis_prompt(context, query)
 
         # Get analysis from AI model
-        if self.use_llm_backend and self.llm_manager:
+        if self.use_llm_backend and self.llm_manager and hasattr(self.llm_manager, "chat"):
             try:
                 # Use LLM backend for analysis
                 messages = [
@@ -563,7 +568,7 @@ class AIBinaryBridge:
                         "summary": "Real-time analysis unavailable",
                     },
                 )
-        elif self.model_manager:
+        elif self.model_manager and hasattr(self.model_manager, "get_completion"):
             # Legacy model manager support
             response = self.model_manager.get_completion(prompt)
         else:
@@ -606,7 +611,7 @@ class AIBinaryBridge:
         prompt = self._build_edit_prompt(context, edit_intent)
 
         # Get suggestions from AI model
-        if self.use_llm_backend and self.llm_manager:
+        if self.use_llm_backend and self.llm_manager and hasattr(self.llm_manager, "chat"):
             try:
                 # Use LLM backend for edit suggestions
                 messages = [
@@ -643,7 +648,7 @@ class AIBinaryBridge:
                         "consequences": "Unknown",
                     },
                 )
-        elif self.model_manager:
+        elif self.model_manager and hasattr(self.model_manager, "get_completion"):
             # Legacy model manager support
             response = self.model_manager.get_completion(prompt)
         else:
@@ -694,7 +699,7 @@ class AIBinaryBridge:
         prompt = self._build_pattern_prompt(context, known_patterns)
 
         # Get identifications from AI model
-        if self.use_llm_backend and self.llm_manager:
+        if self.use_llm_backend and self.llm_manager and hasattr(self.llm_manager, "chat"):
             try:
                 # Use LLM backend for pattern identification
                 messages = [
@@ -709,7 +714,7 @@ class AIBinaryBridge:
             except Exception as e:
                 logger.warning("LLM pattern identification failed: %s - using fallback", e)
                 response = json.dumps({"identified_patterns": []})
-        elif self.model_manager:
+        elif self.model_manager and hasattr(self.model_manager, "get_completion"):
             # Legacy model manager support
             response = self.model_manager.get_completion(prompt)
         else:
@@ -766,7 +771,7 @@ class AIBinaryBridge:
             prompt = self._build_search_prompt(context, query)
 
             # Get search results from AI model
-            if self.use_llm_backend and self.llm_manager:
+            if self.use_llm_backend and self.llm_manager and hasattr(self.llm_manager, "chat"):
                 try:
                     # Use LLM backend for semantic search
                     messages = [
@@ -781,7 +786,7 @@ class AIBinaryBridge:
                 except Exception as e:
                     logger.warning("LLM semantic search failed: %s - using fallback", e)
                     response = json.dumps({"matches": []})
-            elif self.model_manager:
+            elif self.model_manager and hasattr(self.model_manager, "get_completion"):
                 # Legacy model manager support
                 response = self.model_manager.get_completion(prompt)
             else:
@@ -1103,7 +1108,7 @@ class AIBinaryBridge:
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
-                result = json.loads(json_str)
+                result: dict[str, Any] = json.loads(json_str)
             else:
                 # Fallback: try to parse the whole response
                 result = json.loads(response)
@@ -1156,7 +1161,7 @@ class AIBinaryBridge:
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
-                result = json.loads(json_str)
+                result: dict[str, Any] = json.loads(json_str)
             else:
                 # Fallback: try to parse the whole response
                 result = json.loads(response)
@@ -1211,11 +1216,11 @@ class AIBinaryBridge:
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
-                result = json.loads(json_str)
+                result: dict[str, Any] = json.loads(json_str)
             else:
                 result = json.loads(response)
 
-            patterns = result.get("identified_patterns", [])
+            patterns: list[dict[str, Any]] = result.get("identified_patterns", [])
 
             for pattern_ in patterns:
                 if "start_offset" in pattern_:
@@ -1248,11 +1253,11 @@ class AIBinaryBridge:
 
             if json_start >= 0 and json_end > json_start:
                 json_str = response[json_start:json_end]
-                result = json.loads(json_str)
+                result: dict[str, Any] = json.loads(json_str)
             else:
                 result = json.loads(response)
 
-            matches = result.get("matches", [])
+            matches: list[dict[str, Any]] = result.get("matches", [])
 
             for match_ in matches:
                 if "start_offset" in match_:
@@ -1273,7 +1278,7 @@ class AIBinaryBridge:
             logger.exception("Error parsing search response: %s", e)
             return []
 
-    def _calculate_analysis_confidence(self, patterns: list[dict], anomalies: list[dict], suspicious_strings: list[str]) -> float:
+    def _calculate_analysis_confidence(self, patterns: list[dict[str, Any]], anomalies: list[dict[str, Any]], suspicious_strings: list[str]) -> float:
         """Calculate confidence score for analysis results."""
         confidence = 0.5  # Base confidence
 
@@ -1292,28 +1297,27 @@ class AIBinaryBridge:
             confidence += min(0.15, len(suspicious_strings) * 0.03)
             # Higher confidence for specific keywords
             critical_keywords = ["license", "trial", "expired", "debug", "crack"]
-            if critical_found := sum(
-                any((k in s.lower() for k in critical_keywords))
-                for s in suspicious_strings
-            ):
+            if critical_found := sum(any((k in s.lower() for k in critical_keywords)) for s in suspicious_strings):
                 confidence += min(0.1, critical_found * 0.05)
 
         return min(1.0, confidence)
 
-    def _calculate_edit_confidence(self, edit_suggestions: list[dict], context: dict) -> float:
+    def _calculate_edit_confidence(self, edit_suggestions: list[dict[str, Any]], context: dict[str, Any]) -> float:
         """Calculate confidence score for edit suggestions."""
         if not edit_suggestions:
             return 0.1
 
         # Average confidence of individual suggestions
-        avg_confidence = sum(s.get("confidence", 0.5) for s in edit_suggestions) / len(edit_suggestions)
+        total_confidence: float = sum(float(s.get("confidence", 0.5)) for s in edit_suggestions)
+        avg_confidence: float = total_confidence / len(edit_suggestions)
 
         # Adjust based on context
-        confidence = avg_confidence
+        confidence: float = avg_confidence
 
         # Higher confidence if we have good pattern matches in context
-        if context.get("patterns"):
-            if relevant_patterns := [p for p in context["patterns"] if p.get("pattern_type") in ["license_check", "anti_debug"]]:
+        context_patterns = context.get("patterns")
+        if context_patterns:
+            if relevant_patterns := [p for p in context_patterns if p.get("pattern_type") in ["license_check", "anti_debug"]]:
                 logger.debug("Found %d relevant patterns, boosting confidence", len(relevant_patterns))
                 confidence = min(1.0, confidence + 0.1)
 
@@ -1324,7 +1328,7 @@ class AIBinaryBridge:
 
         return confidence
 
-    def _calculate_pattern_confidence(self, patterns: list[dict], context: dict) -> float:
+    def _calculate_pattern_confidence(self, patterns: list[dict[str, Any]], context: dict[str, Any]) -> float:
         """Calculate confidence score for pattern identification."""
         if not patterns:
             return 0.2
@@ -1345,7 +1349,7 @@ class AIBinaryBridge:
 
         return min(1.0, confidence)
 
-    def _calculate_search_confidence(self, matches: list[dict], query: str) -> float:
+    def _calculate_search_confidence(self, matches: list[dict[str, Any]], query: str) -> float:
         """Calculate confidence score for search results."""
         if not matches:
             return 0.1
@@ -1366,7 +1370,7 @@ class AIBinaryBridge:
 
         return min(1.0, confidence)
 
-    def _calculate_search_coverage(self, matches: list[dict], context: dict) -> float:
+    def _calculate_search_coverage(self, matches: list[dict[str, Any]], context: dict[str, Any]) -> float:
         """Calculate search coverage percentage based on matched regions."""
         if not matches or not context:
             return 0.0
@@ -1453,7 +1457,7 @@ class AIBinaryBridge:
 # AI tool functions for _Intellicrack integration
 
 
-def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[str, object]:
+def wrapper_ai_binary_analyze(app_instance: object, parameters: dict[str, Any]) -> dict[str, object]:
     """AI tool wrapper for analyzing binary data.
 
     Args:
@@ -1470,11 +1474,12 @@ def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[
     """
     try:
         # Get file path
-        file_path = parameters.get("file_path", "")
+        file_path_val = parameters.get("file_path", "")
+        file_path = str(file_path_val) if file_path_val else ""
 
         # If no file path provided, try to use the current binary
         if not file_path and hasattr(app_instance, "binary_path"):
-            file_path = app_instance.binary_path
+            file_path = str(app_instance.binary_path)
 
         if not os.path.exists(file_path):
             return {"error": f"File not found: {file_path}"}
@@ -1489,7 +1494,8 @@ def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[
             data = f.read(size)
 
         # Get user query
-        query = parameters.get("query", "")
+        query_val = parameters.get("query", "")
+        query = str(query_val) if query_val else ""
 
         # Initialize AI bridge
         ai_bridge = AIBinaryBridge(app_instance.model_manager if hasattr(app_instance, "model_manager") else None)
@@ -1500,7 +1506,7 @@ def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[
         return {"error": str(e)}
 
 
-def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -> dict[str, object]:
+def wrapper_ai_binary_pattern_search(app_instance: object, parameters: dict[str, Any]) -> dict[str, object]:
     """AI tool wrapper for searching binary patterns.
 
     Args:
@@ -1517,17 +1523,19 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
     """
     try:
         # Get file path
-        file_path = parameters.get("file_path", "")
+        file_path_val = parameters.get("file_path", "")
+        file_path = str(file_path_val) if file_path_val else ""
 
         # If no file path provided, try to use the current binary
         if not file_path and hasattr(app_instance, "binary_path"):
-            file_path = app_instance.binary_path
+            file_path = str(app_instance.binary_path)
 
         if not os.path.exists(file_path):
             return {"error": f"File not found: {file_path}"}
 
         # Get pattern description
-        pattern_description = parameters.get("pattern_description", "")
+        pattern_desc_val = parameters.get("pattern_description", "")
+        pattern_description = str(pattern_desc_val) if pattern_desc_val else ""
         if not pattern_description:
             return {"error": "Pattern description is required"}
 
@@ -1575,7 +1583,7 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
         return {"error": str(e)}
 
 
-def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: object) -> dict[str, object]:
+def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: dict[str, Any]) -> dict[str, object]:
     """AI tool wrapper for suggesting binary edits.
 
     Args:
@@ -1592,17 +1600,19 @@ def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: object) -> 
     """
     try:
         # Get file path
-        file_path = parameters.get("file_path", "")
+        file_path_val = parameters.get("file_path", "")
+        file_path = str(file_path_val) if file_path_val else ""
 
         # If no file path provided, try to use the current binary
         if not file_path and hasattr(app_instance, "binary_path"):
-            file_path = app_instance.binary_path
+            file_path = str(app_instance.binary_path)
 
         if not os.path.exists(file_path):
             return {"error": f"File not found: {file_path}"}
 
         # Get edit intent
-        edit_intent = parameters.get("edit_intent", "")
+        edit_intent_val = parameters.get("edit_intent", "")
+        edit_intent = str(edit_intent_val) if edit_intent_val else ""
         if not edit_intent:
             return {"error": "Edit intent is required"}
 

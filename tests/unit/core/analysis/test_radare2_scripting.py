@@ -73,9 +73,9 @@ class RealR2Pipe:
         elif command.startswith('s '):
             return f"Seeking to {command[2:]}"
         elif command.startswith('wz'):
-            return f"String written at current offset"
+            return "String written at current offset"
         elif command.startswith('wa'):
-            return f"Assembly written at current offset"
+            return "Assembly written at current offset"
         else:
             return f"Command executed: {command}"
 
@@ -84,7 +84,7 @@ class RealR2Pipe:
         result = self.cmd(command)
         try:
             return json.loads(result)
-        except:
+        except Exception:
             return {"result": result}
 
     def quit(self):
@@ -112,18 +112,25 @@ class RealScriptGenerator:
         ]
 
         if options.get('find_strings', False):
-            script_lines.append("strings = r2.cmdj('iz')")
-            script_lines.append("for s in strings:")
-            script_lines.append("    print(f'String: {s[\"string\"]} at {hex(s[\"offset\"])}')")
-
+            script_lines.extend(
+                (
+                    "strings = r2.cmdj('iz')",
+                    "for s in strings:",
+                    "    print(f'String: {s[\"string\"]} at {hex(s[\"offset\"])}')",
+                )
+            )
         if options.get('find_functions', False):
-            script_lines.append("functions = r2.cmdj('afl')")
-            script_lines.append("for f in functions:")
-            script_lines.append("    print(f'Function: {f[\"name\"]} at {hex(f[\"offset\"])}')")
-
+            script_lines.extend(
+                (
+                    "functions = r2.cmdj('afl')",
+                    "for f in functions:",
+                    "    print(f'Function: {f[\"name\"]} at {hex(f[\"offset\"])}')",
+                )
+            )
         if options.get('patch_checks', False):
-            script_lines.append("# Patch license checks")
-            script_lines.append("r2.cmd('s sym.check_license')")
+            script_lines.extend(
+                ("# Patch license checks", "r2.cmd('s sym.check_license')")
+            )
             script_lines.append("r2.cmd('wa mov eax, 1; ret')")
 
         script_lines.append("r2.quit()")
@@ -147,12 +154,8 @@ class RealScriptGenerator:
         for patch in patches:
             offset = patch.get('offset', 0)
             data = patch.get('data', 'nop')
-            script_lines.append(f"r2.cmd('s {hex(offset)}')")
-            script_lines.append(f"r2.cmd('wa {data}')")
-
-        script_lines.append("print('Patches applied successfully')")
-        script_lines.append("r2.quit()")
-
+            script_lines.extend((f"r2.cmd('s {hex(offset)}')", f"r2.cmd('wa {data}')"))
+        script_lines.extend(("print('Patches applied successfully')", "r2.quit()"))
         script_content = "\n".join(script_lines)
         self.generated_scripts.append(script_content)
         return script_content
@@ -210,12 +213,7 @@ class RealScriptExecutor:
             if imp not in script_content:
                 return False
 
-        # Check for dangerous commands
-        for cmd in dangerous_commands:
-            if cmd in script_content.lower():
-                return False
-
-        return True
+        return all(cmd not in script_content.lower() for cmd in dangerous_commands)
 
 
 class RealScriptLibrary:
@@ -261,11 +259,12 @@ class RealScriptLibrary:
 
     def search_scripts(self, keyword: str) -> list[str]:
         """Search scripts by keyword."""
-        results = []
-        for name, info in self.scripts.items():
-            if keyword.lower() in name.lower() or keyword.lower() in info['content'].lower():
-                results.append(name)
-        return results
+        return [
+            name
+            for name, info in self.scripts.items()
+            if keyword.lower() in name.lower()
+            or keyword.lower() in info['content'].lower()
+        ]
 
 
 class RealTemplateManager:
@@ -347,7 +346,7 @@ class RealScriptOptimizer:
             if 'aaa' in line and not analysis_done:
                 optimized_lines.append(line)
                 analysis_done = True
-            elif 'aaa' in line and analysis_done:
+            elif 'aaa' in line:
                 continue  # Skip redundant analysis
             else:
                 optimized_lines.append(line)
@@ -852,7 +851,7 @@ class TestRadareScriptCaching(unittest.TestCase):
         result1 = executor.execute_script(script, 'test.exe')
 
         # Cache result
-        cache_key = hash(script + 'test.exe')
+        cache_key = hash(f'{script}test.exe')
         self.cache[cache_key] = result1
 
         # Second execution (from cache)
@@ -875,12 +874,7 @@ class TestRadareScriptCaching(unittest.TestCase):
         }
 
         # Check if cache is valid
-        if binary_mtime_new > cache_entry['mtime']:
-            # Cache invalid, need to re-execute
-            cache_valid = False
-        else:
-            cache_valid = True
-
+        cache_valid = binary_mtime_new <= cache_entry['mtime']
         self.assertFalse(cache_valid)
 
 

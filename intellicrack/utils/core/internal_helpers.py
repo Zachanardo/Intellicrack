@@ -1184,6 +1184,7 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
         Dict containing response data from the appropriate handler
 
     """
+
     def _get_info_wrapper(d: dict[str, Any]) -> dict[str, Any]:
         logger.debug("Get info request data: %s", d)
         return _handle_get_info()
@@ -3029,9 +3030,9 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
         bias_array = np.zeros(total_elements, dtype=np.float16)
 
         if total_elements % 4 == 0:
-            bias_array[total_elements // 4:total_elements // 2] = np.float16(1.0)
+            bias_array[total_elements // 4 : total_elements // 2] = np.float16(1.0)
         elif total_elements % 3 == 0:
-            bias_array[total_elements // 3:2 * total_elements // 3] = np.float16(-1.0)
+            bias_array[total_elements // 3 : 2 * total_elements // 3] = np.float16(-1.0)
 
         # Add small perturbation for numerical stability
         if fan_out < 256:
@@ -3048,15 +3049,11 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
 
         # Check if this is likely an LSTM/GRU layer (multiple of 4 or 3 hidden units)
         if total_elements % 4 == 0:
-            # LSTM layer - set forget gate biases to 1.0
-            # Forget gates are typically at positions 1/4 to 2/4 of the bias vector
-            forget_start = total_elements // 4
-            bias_array[forget_start:total_elements // 2] = 1.0
+            bias_array[total_elements // 4:total_elements // 2] = 1.0
         elif total_elements % 3 == 0:
             # GRU layer - reset gate biases sometimes initialized to -1.0
             reset_start = total_elements // 3
-            reset_end = 2 * total_elements // 3
-            bias_array[reset_start:reset_end] = -1.0
+            bias_array[reset_start:2 * total_elements // 3] = -1.0
 
         # Add small random initialization for specific layer types
         # Batch normalization biases are often initialized to small values

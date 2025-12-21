@@ -41,21 +41,38 @@ def test_binary_path(tmp_path: Path) -> Path:
     binary_path = tmp_path / "test_binary.exe"
 
     pe_header = (
-        b"MZ\x90\x00"
-        + b"\x00" * 56
-        + b"\x40\x00\x00\x00"
-        + b"\x00" * (0x40 - 64)
-        + b"PE\x00\x00"
-        + b"\x4c\x01"
-        + b"\x03\x00"
-        + b"\x00" * 12
-        + b"\xE0\x00"
-        + b"\x0F\x01"
-        + b"\x0B\x01"
-        + b"\x00" * 16
+        (
+            (
+                (
+                    (
+                        (
+                            (
+                                (
+                                    (
+                                        (
+                                            b"MZ\x90\x00"
+                                            + b"\x00" * 56
+                                            + b"\x40\x00\x00\x00"
+                                            + b"\x00" * 0
+                                        )
+                                        + b"PE\x00\x00"
+                                    )
+                                    + b"\x4c\x01"
+                                )
+                                + b"\x03\x00"
+                            )
+                            + b"\x00" * 12
+                        )
+                        + b"\xe0\x00"
+                    )
+                    + b"\x0f\x01"
+                )
+                + b"\x0b\x01"
+            )
+            + b"\x00" * 16
+        )
         + b"\x00\x10\x00\x00"
-        + b"\x00" * 200
-    )
+    ) + b"\x00" * 200
 
     binary_path.write_bytes(pe_header + b"\x00" * 1024)
     return binary_path
@@ -620,15 +637,14 @@ async def test_agent_busy_status_prevents_task_assignment(
     """Busy agents are not assigned new tasks."""
     multi_agent_system.start()
 
-    agents = list(multi_agent_system.agents.values())
-    if len(agents) > 0:
+    if agents := list(multi_agent_system.agents.values()):
         agents[0].busy = True
 
         required_capabilities = [cap.capability_name for cap in agents[0].capabilities]
         suitable_agents = multi_agent_system._find_suitable_agents(required_capabilities)
 
         busy_agent_ids = [agent_id for agent_id, _ in suitable_agents if agents[0].agent_id == agent_id]
-        assert len(busy_agent_ids) == 0
+        assert not busy_agent_ids
 
     multi_agent_system.stop()
 

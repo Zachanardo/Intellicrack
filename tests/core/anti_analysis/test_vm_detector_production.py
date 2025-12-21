@@ -42,7 +42,6 @@ class TestVMDetectorInitialization:
             found = any(method in key for key in detector.detection_methods.keys())
             if not found:
                 continue
-            assert True
 
 
 class TestCPUIDDataStructures:
@@ -222,8 +221,6 @@ class TestHardwareFingerprintDetection:
         try:
             detected, confidence, details = detector._check_hardware_fingerprint()
 
-            if "cpu_vendor" in details or "cpu_model" in details:
-                assert True
         except Exception:
             pytest.skip("CPU info not available")
 
@@ -270,10 +267,9 @@ class TestVMTypeIdentification:
         try:
             detected, confidence, details = detector.detect_vm()
 
-            if "vm_type" in details:
-                if "VMware" in details["vm_type"]:
-                    assert detected is True
-                    assert confidence > 0.5
+            if "vm_type" in details and "VMware" in details["vm_type"]:
+                assert detected is True
+                assert confidence > 0.5
         except Exception:
             pytest.skip("VM type identification not available")
 
@@ -284,10 +280,9 @@ class TestVMTypeIdentification:
         try:
             detected, confidence, details = detector.detect_vm()
 
-            if "vm_type" in details:
-                if "VirtualBox" in details["vm_type"]:
-                    assert detected is True
-                    assert confidence > 0.5
+            if "vm_type" in details and "VirtualBox" in details["vm_type"]:
+                assert detected is True
+                assert confidence > 0.5
         except Exception:
             pytest.skip("VM type identification not available")
 
@@ -298,10 +293,9 @@ class TestVMTypeIdentification:
         try:
             detected, confidence, details = detector.detect_vm()
 
-            if "vm_type" in details:
-                if "Hyper-V" in details["vm_type"]:
-                    assert detected is True
-                    assert confidence > 0.5
+            if "vm_type" in details and "Hyper-V" in details["vm_type"]:
+                assert detected is True
+                assert confidence > 0.5
         except Exception:
             pytest.skip("VM type identification not available")
 

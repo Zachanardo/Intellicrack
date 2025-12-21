@@ -96,8 +96,7 @@ class TestLicenseMechanismAnalysis:
             tmp_binary.write(pe_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_analyze_license_mechanisms_comprehensive(self, generator):
@@ -221,8 +220,7 @@ class TestBypassStrategyGeneration:
             tmp_binary.write(complex_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_comprehensive_bypass_multiple_strategies(self, generator_with_analysis):
@@ -329,8 +327,7 @@ class TestCryptographicAnalysisAndKeygenGeneration:
             tmp_binary.write(crypto_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_keygen_algorithms_multiple_types(self, crypto_generator):
@@ -496,8 +493,7 @@ class TestAutomatedPatchingAndMemoryManipulation:
             tmp_binary.write(patch_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_automated_patches_comprehensive(self, patchable_generator):
@@ -650,8 +646,7 @@ class TestControlFlowAnalysisAndAdvancedTechniques:
             tmp_binary.write(complex_flow_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_analyze_control_flow_graph_comprehensive(self, complex_flow_generator):
@@ -883,8 +878,7 @@ class TestProductionReadinessValidation:
             tmp_binary.write(production_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_handles_packed_binaries_detection(self, production_generator):
@@ -1044,8 +1038,7 @@ class TestCryptoPatternDetection:
             tmp_binary.write(pe_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_sbox_pattern_detection_logging(self, generator, caplog):
@@ -1089,8 +1082,7 @@ class TestRegistryModificationGeneration:
             tmp_binary.write(registry_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_registry_modifications_complete_bypass(self, registry_generator: "R2BypassGenerator") -> None:
@@ -1117,7 +1109,7 @@ class TestRegistryModificationGeneration:
             assert len(registry_path) > 5
 
             value_type: str = mod["value_type"]
-            assert value_type in ["REG_SZ", "REG_DWORD", "REG_BINARY", "REG_MULTI_SZ"]
+            assert value_type in {"REG_SZ", "REG_DWORD", "REG_BINARY", "REG_MULTI_SZ"}
 
     def test_generate_registry_bypass_implementation_executable(self, registry_generator: "R2BypassGenerator") -> None:
         """Test that registry bypass implementations are executable"""
@@ -1150,7 +1142,7 @@ class TestRegistryModificationGeneration:
         registry_path: str = registry_generator._predict_registry_path(reg_op)
 
         assert isinstance(registry_path, str)
-        assert len(registry_path) > 0
+        assert registry_path != ""
         assert registry_path.startswith("HKEY_") or registry_path.startswith("SOFTWARE\\")
 
     def test_generate_license_value_valid_format(self, registry_generator: "R2BypassGenerator") -> None:
@@ -1179,8 +1171,7 @@ class TestFileModificationGeneration:
             tmp_binary.write(file_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_file_modifications_comprehensive(self, file_generator: "R2BypassGenerator") -> None:
@@ -1203,7 +1194,7 @@ class TestFileModificationGeneration:
 
             file_path: str = mod["file_path"]
             assert isinstance(file_path, str)
-            assert len(file_path) > 0
+            assert file_path != ""
 
     def test_predict_license_file_path_accurate(self, file_generator: "R2BypassGenerator") -> None:
         """Test accurate prediction of license file paths"""
@@ -1215,7 +1206,7 @@ class TestFileModificationGeneration:
         file_path: str = file_generator._predict_license_file_path(file_op)
 
         assert isinstance(file_path, str)
-        assert len(file_path) > 0
+        assert file_path != ""
         assert any(ext in file_path.lower() for ext in [".lic", ".dat", ".key", ".license"])
 
     def test_generate_license_file_content_valid_format(self, file_generator: "R2BypassGenerator") -> None:
@@ -1223,14 +1214,22 @@ class TestFileModificationGeneration:
         file_content: str = file_generator._generate_license_file_content()
 
         assert isinstance(file_content, str)
-        assert len(file_content) > 0
+        assert file_content != ""
 
     def test_detect_license_format_identification(self, file_generator: "R2BypassGenerator") -> None:
         """Test identification of license file formats"""
         license_format: str = file_generator._detect_license_format()
 
         assert isinstance(license_format, str)
-        assert license_format in ["xml", "json", "ini", "binary", "text", "custom", "unknown"]
+        assert license_format in {
+            "xml",
+            "json",
+            "ini",
+            "binary",
+            "text",
+            "custom",
+            "unknown",
+        }
 
 
 class TestValidationBypassGeneration:
@@ -1249,8 +1248,7 @@ class TestValidationBypassGeneration:
             tmp_binary.write(validation_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_validation_bypasses_multiple_methods(self, validation_generator: "R2BypassGenerator") -> None:
@@ -1268,7 +1266,7 @@ class TestValidationBypassGeneration:
         bypasses: list[dict[str, Any]] = validation_generator._generate_validation_bypasses(license_analysis)
 
         assert isinstance(bypasses, list)
-        assert len(bypasses) > 0
+        assert bypasses
 
         for bypass in bypasses:
             assert isinstance(bypass, dict)
@@ -1286,8 +1284,14 @@ class TestValidationBypassGeneration:
         bypass_method: str = validation_generator._suggest_bypass_method(pattern)
 
         assert isinstance(bypass_method, str)
-        assert len(bypass_method) > 0
-        assert bypass_method in ["patch_jump", "nop_instruction", "force_return", "register_manipulation", "flow_redirect"]
+        assert bypass_method != ""
+        assert bypass_method in {
+            "patch_jump",
+            "nop_instruction",
+            "force_return",
+            "register_manipulation",
+            "flow_redirect",
+        }
 
 
 class TestPatchByteGeneration:
@@ -1309,8 +1313,7 @@ class TestPatchByteGeneration:
             tmp_binary.write(patch_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_patch_bytes_various_methods(self, patch_generator: "R2BypassGenerator") -> None:
@@ -1321,7 +1324,7 @@ class TestPatchByteGeneration:
             patch_bytes: str = patch_generator._generate_patch_bytes_for_method(method)
 
             assert isinstance(patch_bytes, str)
-            assert len(patch_bytes) > 0
+            assert patch_bytes != ""
 
             if method == "nop_instruction":
                 assert "90" in patch_bytes.replace("\\x", "")
@@ -1334,7 +1337,7 @@ class TestPatchByteGeneration:
             instruction: str = patch_generator._generate_patch_instruction(method)
 
             assert isinstance(instruction, str)
-            assert len(instruction) > 0
+            assert instruction != ""
 
 
 class TestArchitectureSpecificPatches:
@@ -1347,8 +1350,7 @@ class TestArchitectureSpecificPatches:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_register_set_instructions_x86(self, arch_generator: "R2BypassGenerator") -> None:
@@ -1359,7 +1361,7 @@ class TestArchitectureSpecificPatches:
             instructions: str = arch_generator._generate_register_set_instructions(register, 1)
 
             assert isinstance(instructions, str)
-            assert len(instructions) > 0
+            assert instructions != ""
 
     def test_generate_arm_register_set_instructions(self, arch_generator: "R2BypassGenerator") -> None:
         """Test generation of ARM register set instructions"""
@@ -1369,35 +1371,35 @@ class TestArchitectureSpecificPatches:
             instructions: str = arch_generator._generate_arm_register_set(register, 1)
 
             assert isinstance(instructions, str)
-            assert len(instructions) > 0
+            assert instructions != ""
 
     def test_generate_memory_write_instructions_valid(self, arch_generator: "R2BypassGenerator") -> None:
         """Test generation of valid memory write instructions"""
         instructions: str = arch_generator._generate_memory_write_instructions("0x401000", 1)
 
         assert isinstance(instructions, str)
-        assert len(instructions) > 0
+        assert instructions != ""
 
     def test_generate_return_injection_instructions_proper_format(self, arch_generator: "R2BypassGenerator") -> None:
         """Test generation of return injection instructions"""
         instructions: str = arch_generator._generate_return_injection_instructions(1)
 
         assert isinstance(instructions, str)
-        assert len(instructions) > 0
+        assert instructions != ""
 
     def test_generate_stack_manipulation_instructions_valid(self, arch_generator: "R2BypassGenerator") -> None:
         """Test generation of stack manipulation instructions"""
         instructions: str = arch_generator._generate_stack_manipulation_instructions(8, 1)
 
         assert isinstance(instructions, str)
-        assert len(instructions) > 0
+        assert instructions != ""
 
     def test_generate_jump_instructions_correct_encoding(self, arch_generator: "R2BypassGenerator") -> None:
         """Test generation of jump instructions"""
         instructions: str = arch_generator._generate_jump_instructions(0x401000)
 
         assert isinstance(instructions, str)
-        assert len(instructions) > 0
+        assert instructions != ""
 
 
 class TestControlFlowGraphAnalysis:
@@ -1421,8 +1423,7 @@ class TestControlFlowGraphAnalysis:
             tmp_binary.write(cfg_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_calculate_dominators_proper_analysis(self, cfg_generator: "R2BypassGenerator") -> None:
@@ -1485,8 +1486,7 @@ class TestSuccessProbabilityCalculation:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_calculate_success_probabilities_realistic_values(self, prob_generator: "R2BypassGenerator") -> None:
@@ -1532,8 +1532,7 @@ class TestRiskAssessment:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_assess_bypass_risks_comprehensive_assessment(self, risk_generator: "R2BypassGenerator") -> None:
@@ -1565,7 +1564,7 @@ class TestRiskAssessment:
         risk_level: str = risk_generator._calculate_risk_level(strategies, mechanisms)
 
         assert isinstance(risk_level, str)
-        assert risk_level in ["low", "medium", "high", "very_high"]
+        assert risk_level in {"low", "medium", "high", "very_high"}
 
     def test_get_recommended_precautions_useful_advice(self, risk_generator: "R2BypassGenerator") -> None:
         """Test generation of useful security precautions"""
@@ -1576,7 +1575,7 @@ class TestRiskAssessment:
         precautions: list[str] = risk_generator._get_recommended_precautions(strategies)
 
         assert isinstance(precautions, list)
-        assert len(precautions) > 0
+        assert precautions
 
         for precaution in precautions:
             assert isinstance(precaution, str)
@@ -1593,8 +1592,7 @@ class TestImplementationGuideGeneration:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_implementation_guide_comprehensive(self, guide_generator: "R2BypassGenerator") -> None:
@@ -1623,7 +1621,7 @@ class TestImplementationGuideGeneration:
         bypass_steps: list[str] = guide_generator._generate_bypass_steps(step)
 
         assert isinstance(bypass_steps, list)
-        assert len(bypass_steps) > 0
+        assert bypass_steps
 
         for step_text in bypass_steps:
             assert isinstance(step_text, str)
@@ -1638,7 +1636,7 @@ class TestImplementationGuideGeneration:
         tools: list[str] = guide_generator._get_required_tools(step)
 
         assert isinstance(tools, list)
-        assert len(tools) > 0
+        assert tools
 
         for tool in tools:
             assert isinstance(tool, str)
@@ -1653,7 +1651,7 @@ class TestImplementationGuideGeneration:
         indicators: list[str] = guide_generator._get_success_indicators(step)
 
         assert isinstance(indicators, list)
-        assert len(indicators) > 0
+        assert indicators
 
         for indicator in indicators:
             assert isinstance(indicator, str)
@@ -1679,8 +1677,7 @@ class TestAdvancedPatchStrategies:
             tmp_binary.write(advanced_binary_data)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_generate_stack_patch_proper_implementation(self, advanced_generator: "R2BypassGenerator") -> None:
@@ -1752,8 +1749,7 @@ class TestCryptoAlgorithmIdentification:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_identify_crypto_algorithm_from_operation(self, crypto_id_generator: "R2BypassGenerator") -> None:
@@ -1764,8 +1760,17 @@ class TestCryptoAlgorithmIdentification:
             algorithm: str = crypto_id_generator._identify_crypto_algorithm(operation)
 
             assert isinstance(algorithm, str)
-            assert len(algorithm) > 0
-            assert algorithm in ["AES", "SHA256", "MD5", "RSA", "DES", "3DES", "Custom", "Unknown"]
+            assert algorithm != ""
+            assert algorithm in {
+                "AES",
+                "SHA256",
+                "MD5",
+                "RSA",
+                "DES",
+                "3DES",
+                "Custom",
+                "Unknown",
+            }
 
     def test_identify_crypto_purpose_accurate_classification(self, crypto_id_generator: "R2BypassGenerator") -> None:
         """Test accurate classification of crypto operation purposes"""
@@ -1779,8 +1784,14 @@ class TestCryptoAlgorithmIdentification:
             purpose: str = crypto_id_generator._identify_crypto_purpose(line)
 
             assert isinstance(purpose, str)
-            assert len(purpose) > 0
-            assert purpose in ["key_validation", "key_generation", "data_protection", "signature_verification", "unknown"]
+            assert purpose != ""
+            assert purpose in {
+                "key_validation",
+                "key_generation",
+                "data_protection",
+                "signature_verification",
+                "unknown",
+            }
 
 
 class TestBypassDifficultyAssessment:
@@ -1793,8 +1804,7 @@ class TestBypassDifficultyAssessment:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_assess_bypass_difficulty_accurate_ratings(self, difficulty_generator: "R2BypassGenerator") -> None:
@@ -1809,7 +1819,7 @@ class TestBypassDifficultyAssessment:
             difficulty: str = difficulty_generator._assess_bypass_difficulty(func_info)
 
             assert isinstance(difficulty, str)
-            assert difficulty in ["trivial", "easy", "medium", "hard", "expert"]
+            assert difficulty in {"trivial", "easy", "medium", "hard", "expert"}
 
     def test_recommend_bypass_approach_appropriate_methods(self, difficulty_generator: "R2BypassGenerator") -> None:
         """Test recommendation of appropriate bypass approaches"""
@@ -1835,8 +1845,7 @@ class TestDecisionPointAnalysis:
             tmp_binary.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00' + b'\x00' * 200)
             binary_path = tmp_binary.name
 
-        generator = R2BypassGenerator(binary_path, "r2")
-        yield generator
+        yield R2BypassGenerator(binary_path, "r2")
         os.unlink(binary_path)
 
     def test_assess_decision_importance_realistic_scoring(self, decision_generator: "R2BypassGenerator") -> None:
@@ -1866,7 +1875,7 @@ class TestDecisionPointAnalysis:
         bypass_method: str = decision_generator._determine_bypass_method(condition_analysis)
 
         assert isinstance(bypass_method, str)
-        assert len(bypass_method) > 0
+        assert bypass_method != ""
 
 
 if __name__ == '__main__':

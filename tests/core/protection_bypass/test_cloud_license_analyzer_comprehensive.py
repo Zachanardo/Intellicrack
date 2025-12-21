@@ -68,7 +68,7 @@ except ImportError as e:
 
 pytestmark = pytest.mark.skipif(
     not MITMPROXY_AVAILABLE,
-    reason=f"mitmproxy or frida not available: {ImportError_MSG if not MITMPROXY_AVAILABLE else ''}"
+    reason=f"mitmproxy or frida not available: {'' if MITMPROXY_AVAILABLE else ImportError_MSG}"
 )
 
 

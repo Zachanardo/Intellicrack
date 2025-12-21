@@ -55,7 +55,7 @@ class TestValidationAnalyzerCryptoDetection:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x64")
 
         md5_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "MD5"]
-        assert len(md5_primitives) >= 1
+        assert md5_primitives
         assert md5_primitives[0].crypto_type == CryptoType.HASH
         assert md5_primitives[0].confidence >= 0.85
         assert analysis.algorithm_type == AlgorithmType.MD5
@@ -94,7 +94,7 @@ class TestValidationAnalyzerCryptoDetection:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         crc_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "CRC32"]
-        assert len(crc_primitives) >= 1
+        assert crc_primitives
         assert crc_primitives[0].crypto_type == CryptoType.CHECKSUM
         assert 0xEDB88320 in crc_primitives[0].constants
         assert analysis.algorithm_type == AlgorithmType.CRC32
@@ -111,7 +111,7 @@ class TestValidationAnalyzerCryptoDetection:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         rsa_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "RSA"]
-        assert len(rsa_primitives) >= 1
+        assert rsa_primitives
         assert rsa_primitives[0].crypto_type == CryptoType.SIGNATURE
         assert 65537 in rsa_primitives[0].constants
 
@@ -129,7 +129,7 @@ class TestValidationAnalyzerCryptoDetection:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         custom_primitives = [p for p in analysis.crypto_primitives if p.algorithm == "CUSTOM_XOR"]
-        assert len(custom_primitives) >= 1
+        assert custom_primitives
         assert custom_primitives[0].crypto_type == CryptoType.CHECKSUM
 
 
@@ -148,7 +148,7 @@ class TestValidationAnalyzerConstraintExtraction:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         length_constraints = [c for c in analysis.constraints if c.constraint_type == "length"]
-        assert len(length_constraints) >= 1
+        assert length_constraints
         assert length_constraints[0].value == 16
         assert "length must be 16" in length_constraints[0].description.lower()
 
@@ -165,7 +165,7 @@ class TestValidationAnalyzerConstraintExtraction:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         charset_constraints = [c for c in analysis.constraints if c.constraint_type == "charset"]
-        assert len(charset_constraints) >= 1
+        assert charset_constraints
         assert any(c.value == "uppercase" for c in charset_constraints)
 
     def test_separator_constraint_detected(self) -> None:
@@ -180,7 +180,7 @@ class TestValidationAnalyzerConstraintExtraction:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         separator_constraints = [c for c in analysis.constraints if c.constraint_type == "separator"]
-        assert len(separator_constraints) >= 1
+        assert separator_constraints
         assert separator_constraints[0].value == "-"
 
     def test_null_check_constraint_extracted(self) -> None:
@@ -195,7 +195,7 @@ class TestValidationAnalyzerConstraintExtraction:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         null_checks = [c for c in analysis.constraints if c.constraint_type == "null_check"]
-        assert len(null_checks) >= 1
+        assert null_checks
         assert null_checks[0].value is True
 
 
@@ -215,7 +215,7 @@ class TestValidationAnalyzerPatchPoints:
 
         assert len(analysis.patch_points) >= 1
         nop_patches = [p for p in analysis.patch_points if p.patch_type == "nop_conditional"]
-        assert len(nop_patches) >= 1
+        assert nop_patches
         assert nop_patches[0].suggested_patch == b'\x90' * 2
 
     def test_force_jump_patch_suggested(self) -> None:
@@ -231,7 +231,7 @@ class TestValidationAnalyzerPatchPoints:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         force_jump_patches = [p for p in analysis.patch_points if p.patch_type == "force_jump"]
-        assert len(force_jump_patches) >= 1
+        assert force_jump_patches
         assert force_jump_patches[0].suggested_patch[0] == 0xEB
 
     def test_force_success_return_patch_identified(self) -> None:
@@ -245,7 +245,7 @@ class TestValidationAnalyzerPatchPoints:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         success_patches = [p for p in analysis.patch_points if p.patch_type == "force_success"]
-        assert len(success_patches) >= 1
+        assert success_patches
         assert success_patches[0].suggested_patch in (b'\xb8\x01\x00\x00\x00', b'\xb0\x01')
 
 
@@ -264,7 +264,7 @@ class TestValidationAnalyzerEmbeddedConstants:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         md5_constants = {k: v for k, v in analysis.embedded_constants.items() if "md5" in k}
-        assert len(md5_constants) >= 1
+        assert md5_constants
 
     def test_string_constants_extracted(self) -> None:
         """Analyzer extracts ASCII string constants from binary."""
@@ -277,7 +277,7 @@ class TestValidationAnalyzerEmbeddedConstants:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         string_constants = {k: v for k, v in analysis.embedded_constants.items() if "string" in k}
-        assert len(string_constants) >= 1
+        assert string_constants
 
 
 class TestValidationAnalyzerRecommendations:
@@ -295,7 +295,7 @@ class TestValidationAnalyzerRecommendations:
 
         assert len(analysis.recommendations) > 0
         md5_recs = [r for r in analysis.recommendations if "MD5" in r or "rainbow" in r.lower()]
-        assert len(md5_recs) >= 1
+        assert md5_recs
 
     def test_patch_point_recommendations_included(self) -> None:
         """Analyzer recommends patching when patch points found."""
@@ -309,7 +309,7 @@ class TestValidationAnalyzerRecommendations:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         patch_recs = [r for r in analysis.recommendations if "patch" in r.lower()]
-        assert len(patch_recs) >= 1
+        assert patch_recs
 
     def test_crc32_reversibility_recommendation(self) -> None:
         """Analyzer recommends CRC32 reversal technique."""
@@ -322,7 +322,7 @@ class TestValidationAnalyzerRecommendations:
         analysis: ValidationAnalysis = analyzer.analyze(bytes(binary_code), arch="x86")
 
         crc_recs = [r for r in analysis.recommendations if "CRC" in r and "reversible" in r.lower()]
-        assert len(crc_recs) >= 1
+        assert crc_recs
 
 
 class TestConstraintExtractorAlgorithmBuilding:

@@ -226,10 +226,7 @@ class EnvironmentDetector:
                 wsl_info['is_wsl'] = True
                 wsl_info['kernel'] = kernel_version
                 # Determine WSL version
-                if 'WSL2' in kernel_version:
-                    wsl_info['version'] = 2
-                else:
-                    wsl_info['version'] = 1
+                wsl_info['version'] = 2 if 'WSL2' in kernel_version else 1
         except Exception as e:
                 logger.debug(f"Suppressed error: {e}")
 
@@ -295,7 +292,7 @@ class TestExecutor:
             )
 
             result.output = process.stdout
-            result.error = process.stderr if process.stderr else None
+            result.error = process.stderr or None
             result.passed = (process.returncode == 0)
 
             # Collect metrics
@@ -338,26 +335,23 @@ class TestExecutor:
         Returns:
             Compatibility check results
         """
-        compatibility = {
-            'compatible': True,
-            'warnings': [],
-            'errors': [],
-            'current_environment': {}
-        }
-
         # Get current environment info
         hw_validator = HardwareValidator()
         current_hw = hw_validator.collect_hardware_info()
 
-        compatibility['current_environment'] = {
-            'os': platform.system(),
-            'architecture': platform.machine(),
-            'is_vm': current_hw.is_virtualized,
-            'container': self.detector.detect_container(),
-            'cloud': self.detector.detect_cloud_provider(),
-            'wsl': self.detector.detect_wsl()
+        compatibility = {
+            'compatible': True,
+            'warnings': [],
+            'errors': [],
+            'current_environment': {
+                'os': platform.system(),
+                'architecture': platform.machine(),
+                'is_vm': current_hw.is_virtualized,
+                'container': self.detector.detect_container(),
+                'cloud': self.detector.detect_cloud_provider(),
+                'wsl': self.detector.detect_wsl(),
+            },
         }
-
         # Check OS compatibility
         if environment.platform_os != 'any':
             current_os = platform.system().lower()
@@ -424,26 +418,25 @@ class MultiEnvironmentTester:
         Returns:
             List of test environments
         """
-        environments = []
-
-        # Bare Metal Windows
-        environments.append(TestEnvironment(
-            name="Bare Metal Windows x64",
-            environment_type="bare_metal",
-            platform_os="windows",
-            architecture="x86_64",
-            requirements={
-                'virtualized': False,
-                'min_ram_gb': 8,
-                'min_cores': 4
-            },
-            validation_criteria={
-                'no_vm_artifacts': True,
-                'no_hypervisor': True,
-                'hardware_acceleration': True
-            },
-            tags=['critical', 'windows', 'bare_metal']
-        ))
+        environments = [
+            TestEnvironment(
+                name="Bare Metal Windows x64",
+                environment_type="bare_metal",
+                platform_os="windows",
+                architecture="x86_64",
+                requirements={
+                    'virtualized': False,
+                    'min_ram_gb': 8,
+                    'min_cores': 4,
+                },
+                validation_criteria={
+                    'no_vm_artifacts': True,
+                    'no_hypervisor': True,
+                    'hardware_acceleration': True,
+                },
+                tags=['critical', 'windows', 'bare_metal'],
+            )
+        ]
 
         # VMware Workstation
         environments.append(TestEnvironment(
@@ -616,7 +609,7 @@ class MultiEnvironmentTester:
         Returns:
             List of test configurations
         """
-        tests = [
+        return [
             {
                 'name': 'Hardware Detection',
                 'command': (
@@ -625,7 +618,7 @@ class MultiEnvironmentTester:
                     'print(v.collect_hardware_info())"'
                 ),
                 'expected_output_contains': ['CPU Model', 'RAM'],
-                'tags': ['basic', 'hardware']
+                'tags': ['basic', 'hardware'],
             },
             {
                 'name': 'VM Detection',
@@ -635,7 +628,7 @@ class MultiEnvironmentTester:
                     'print(f\'Is VM: {v.is_virtual_machine()}\')"'
                 ),
                 'expected_output_contains': ['Is VM:'],
-                'tags': ['basic', 'detection']
+                'tags': ['basic', 'detection'],
             },
             {
                 'name': 'Protection Analysis',
@@ -644,7 +637,7 @@ class MultiEnvironmentTester:
                     '--analyze-protection notepad.exe'
                 ),
                 'expected_output_contains': ['Analysis complete'],
-                'tags': ['core', 'protection']
+                'tags': ['core', 'protection'],
             },
             {
                 'name': 'Binary Analysis',
@@ -654,7 +647,7 @@ class MultiEnvironmentTester:
                     'print(\'BinaryAnalyzer initialized\')"'
                 ),
                 'expected_output_contains': ['BinaryAnalyzer initialized'],
-                'tags': ['core', 'analysis']
+                'tags': ['core', 'analysis'],
             },
             {
                 'name': 'Network License Detection',
@@ -664,11 +657,9 @@ class MultiEnvironmentTester:
                     'detector = NetworkLicenseDetector(); print(\'NetworkLicenseDetector ready\')"'
                 ),
                 'expected_output_contains': ['NetworkLicenseDetector ready'],
-                'tags': ['network', 'license']
-            }
+                'tags': ['network', 'license'],
+            },
         ]
-
-        return tests
 
     def run_compatibility_check(self) -> dict[str, Any]:
         """
@@ -776,8 +767,10 @@ class MultiEnvironmentTester:
         report = {
             'timestamp': time.time(),
             'total_tests': len(self.results),
-            'passed': sum(1 for r in self.results if r.passed),
-            'failed': sum(1 for r in self.results if not r.passed),
+            'passed': sum(bool(r.passed)
+                      for r in self.results),
+            'failed': sum(bool(not r.passed)
+                      for r in self.results),
             'environments_tested': list({r.environment_name for r in self.results}),
             'compatibility_check': self.run_compatibility_check(),
             'results_by_environment': {},
@@ -889,11 +882,11 @@ def run_multi_environment_testing():
 
     # Run tests only in compatible environments
     print("\n[*] Starting test suite execution...")
-    compatible_envs = [
-        c['environment'] for c in compat_report['compatibility_matrix'] if c['compatible']
-    ]
-
-    if compatible_envs:
+    if compatible_envs := [
+        c['environment']
+        for c in compat_report['compatibility_matrix']
+        if c['compatible']
+    ]:
         tester.run_test_suite(environment_filter=compatible_envs[:3])  # Test first 3 compatible
 
         # Generate report

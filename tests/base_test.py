@@ -63,7 +63,7 @@ class IntellicrackTestBase:
                 pytest.fail(f"{error_msg}: Found '{indicator}' in output: {output}")
 
         # Check for suspiciously simple data
-        if output_str in ["success", "ok", "done", "true", "false", "{}", "[]"]:
+        if output_str in {"success", "ok", "done", "true", "false", "{}", "[]"}:
             pytest.fail(f"{error_msg}: Output is suspiciously simple: {output}")
 
     def assert_binary_analysis_real(self, analysis_result):

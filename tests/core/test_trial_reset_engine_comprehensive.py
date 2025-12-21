@@ -117,8 +117,7 @@ class TestTrialResetEngineInitialization:
         assert any("AppData\\Local" in loc for loc in file_locs)
         assert any("AppData\\Roaming" in loc for loc in file_locs)
 
-        username = os.environ.get("USERNAME")
-        if username:
+        if username := os.environ.get("USERNAME"):
             assert any(username in loc for loc in file_locs)
 
 
@@ -230,7 +229,9 @@ class TestAlternateDataStreamDetection:
 
         old_locations = trial_engine.common_trial_locations["alternate_streams"].copy()
         try:
-            trial_engine.common_trial_locations["alternate_streams"] = [str(test_file) + ":trial"]
+            trial_engine.common_trial_locations["alternate_streams"] = [
+                f"{str(test_file)}:trial"
+            ]
             ads_files = trial_engine._scan_alternate_data_streams("test")
         finally:
             trial_engine.common_trial_locations["alternate_streams"] = old_locations
@@ -658,9 +659,7 @@ class TestGUIDRegeneration:
         )
 
         try:
-            success = trial_engine._guid_regeneration_reset(trial_info)
-
-            if success:
+            if success := trial_engine._guid_regeneration_reset(trial_info):
                 with winreg.OpenKey(
                     winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, winreg.KEY_READ
                 ) as key:
@@ -742,9 +741,9 @@ class TestTimeManipulation:
         current_process = psutil.Process()
         process_name = current_process.name()
 
-        result = time_manipulator.freeze_time_for_app(process_name, frozen_time)
-
-        if result:
+        if result := time_manipulator.freeze_time_for_app(
+            process_name, frozen_time
+        ):
             assert process_name in time_manipulator.frozen_apps
             assert time_manipulator.frozen_apps[process_name]["time"] == frozen_time
 

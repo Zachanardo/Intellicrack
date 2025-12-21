@@ -194,7 +194,9 @@ class StreamingYaraScanner(StreamingAnalyzer):
 
             logger.debug(
                 "Chunk %d/%d: Found %d YARA matches",
-                context.chunk_number, context.total_chunks, len(chunk_matches),
+                context.chunk_number,
+                context.total_chunks,
+                len(chunk_matches),
             )
 
             return {
@@ -267,7 +269,9 @@ class StreamingYaraScanner(StreamingAnalyzer):
 
             logger.info(
                 "Merged %d chunk results: %d total matches for %d unique rules",
-                len(results), len(all_matches), len(rules_matched),
+                len(results),
+                len(all_matches),
+                len(rules_matched),
             )
 
             return merged
@@ -327,7 +331,8 @@ class StreamingYaraScanner(StreamingAnalyzer):
 
             logger.info(
                 "Finalized YARA analysis: %d licensing matches, %d protection matches",
-                len(license_matches), len(protection_matches),
+                len(license_matches),
+                len(protection_matches),
             )
 
             return merged_results

@@ -469,7 +469,7 @@ class TestPluginInstallation:
         thread.installation_finished.connect(on_finish)
         thread.run()
 
-        assert success is True
+        assert success
         assert "successfully" in message.lower()
         assert (install_dir / "source_plugin.py").exists()
 
@@ -493,7 +493,7 @@ class TestPluginInstallation:
         thread.installation_finished.connect(on_finish)
         thread.run()
 
-        assert success is True
+        assert success
         assert "successfully" in message.lower()
         assert (install_dir / "entropy_analyzer.py").exists()
 
@@ -522,7 +522,7 @@ class TestPluginInstallation:
         thread.installation_finished.connect(on_finish)
         thread.run()
 
-        assert success is False
+        assert not success
         assert "no python files" in message.lower()
 
     def test_installation_handles_errors_gracefully(
@@ -546,7 +546,7 @@ class TestPluginInstallation:
         thread.installation_finished.connect(on_finish)
         thread.run()
 
-        assert success is False
+        assert not success
         assert "failed" in message.lower()
 
 
@@ -1082,7 +1082,7 @@ class TestPluginManagerIntegration:
         thread.installation_finished.connect(on_finish)
         thread.run()
 
-        assert success is True
+        assert success
 
         dialog.refresh_plugins()
         assert len(dialog.installed_plugins) > initial_count

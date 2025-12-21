@@ -383,7 +383,6 @@ class TestSignatureMatching:
         for sandbox in expected_sandboxes:
             found = any(sandbox in sig.lower() for sig in detector.sandbox_signatures.keys())
             if found:
-                assert True
                 break
         else:
             assert len(detector.sandbox_signatures) > 0

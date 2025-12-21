@@ -633,10 +633,7 @@ class Radare2AdvancedPatcher:
                 # bx r12             ; Branch to target
                 # .word target       ; Target address
 
-                trampoline = [3852451840, 3778019100]
-                # Target address (32-bit)
-                trampoline.append(new_target & 0xFFFFFFFF)
-
+                trampoline = [3852451840, 3778019100, new_target & 0xFFFFFFFF]
                 # Write trampoline to code cave
                 trampoline_bytes = b"".join([struct.pack("<I", inst) for inst in trampoline])
                 self._write_bytes(cave, trampoline_bytes)

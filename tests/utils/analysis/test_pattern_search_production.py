@@ -272,9 +272,7 @@ class TestFindLicensePatterns:
         """License pattern detector categorizes findings."""
         binary_data = b"activation_key\x00"
 
-        results = find_license_patterns(binary_data)
-
-        if results:
+        if results := find_license_patterns(binary_data):
             assert results[0]["type"] == "license_keyword"
 
 

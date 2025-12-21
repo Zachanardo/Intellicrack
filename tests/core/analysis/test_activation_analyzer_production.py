@@ -86,7 +86,7 @@ def create_pe_binary(
     )
 
     optional_header = bytearray(240)
-    optional_header[0:2] = struct.pack("<H", 0x020B)
+    optional_header[:2] = struct.pack("<H", 0x020B)
     optional_header[2] = 14
     optional_header[3] = 0
 
@@ -106,7 +106,7 @@ def create_pe_binary(
     struct.pack_into("<I", optional_header, 92, 2)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     struct.pack_into("<I", section_header, 8, 0x1000)
     struct.pack_into("<I", section_header, 12, 0x1000)
     struct.pack_into("<I", section_header, 16, 0x1000)
@@ -278,7 +278,7 @@ def test_detect_license_key_with_crypto(analyzer: ActivationAnalyzer, temp_dir: 
 
     crypto_patterns = [p for p in result.registration_patterns
                        if "rsa" in p.algorithm_hints or "cryptographic_hash" in p.algorithm_hints]
-    assert len(crypto_patterns) > 0
+    assert crypto_patterns
 
 
 def test_detect_trial_period_limitation(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -352,7 +352,7 @@ def test_detect_registry_based_trial_storage(analyzer: ActivationAnalyzer, temp_
 
     registry_trials = [p for p in result.trial_patterns
                        if p.storage_location and "registry" in p.storage_location]
-    assert len(registry_trials) > 0
+    assert registry_trials
 
 
 def test_detect_file_based_trial_storage(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -372,7 +372,7 @@ def test_detect_file_based_trial_storage(analyzer: ActivationAnalyzer, temp_dir:
 
     file_trials = [p for p in result.trial_patterns
                    if p.storage_location and "file" in p.storage_location]
-    assert len(file_trials) > 0
+    assert file_trials
 
 
 def test_detect_hwid_volume_serial_fingerprinting(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -393,7 +393,7 @@ def test_detect_hwid_volume_serial_fingerprinting(analyzer: ActivationAnalyzer, 
 
     volume_hwid = [p for p in result.hardware_id_patterns
                    if "volume_serial" in p.components]
-    assert len(volume_hwid) > 0
+    assert volume_hwid
 
 
 def test_detect_hwid_computer_name_fingerprinting(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -413,7 +413,7 @@ def test_detect_hwid_computer_name_fingerprinting(analyzer: ActivationAnalyzer, 
 
     computer_hwid = [p for p in result.hardware_id_patterns
                      if "computer_name" in p.components]
-    assert len(computer_hwid) > 0
+    assert computer_hwid
 
 
 def test_detect_multi_component_hwid(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -438,7 +438,7 @@ def test_detect_multi_component_hwid(analyzer: ActivationAnalyzer, temp_dir: Pat
 
     multi_hwid = [p for p in result.hardware_id_patterns
                   if p.hwid_type == "multi_component"]
-    assert len(multi_hwid) > 0
+    assert multi_hwid
 
 
 def test_detect_license_file_dat_format(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -458,7 +458,7 @@ def test_detect_license_file_dat_format(analyzer: ActivationAnalyzer, temp_dir: 
 
     dat_licenses = [p for p in result.license_file_patterns
                     if p.file_path and "license.dat" in p.file_path]
-    assert len(dat_licenses) > 0
+    assert dat_licenses
 
 
 def test_detect_license_file_xml_format(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -478,7 +478,7 @@ def test_detect_license_file_xml_format(analyzer: ActivationAnalyzer, temp_dir: 
 
     xml_licenses = [p for p in result.license_file_patterns
                     if p.file_format == "xml"]
-    assert len(xml_licenses) > 0
+    assert xml_licenses
 
 
 def test_detect_encrypted_license_file(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -498,7 +498,7 @@ def test_detect_encrypted_license_file(analyzer: ActivationAnalyzer, temp_dir: P
 
     encrypted_licenses = [p for p in result.license_file_patterns
                           if p.encryption_used]
-    assert len(encrypted_licenses) > 0
+    assert encrypted_licenses
 
 
 def test_extract_https_activation_url(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -632,7 +632,7 @@ def test_pattern_confidence_scoring(analyzer: ActivationAnalyzer, temp_dir: Path
     result: ActivationAnalysisResult = analyzer.analyze(binary)
 
     high_confidence = [p for p in result.activation_patterns if p.confidence > 0.7]
-    assert len(high_confidence) > 0
+    assert high_confidence
 
 
 def test_detect_phone_activation(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -759,7 +759,7 @@ def test_algorithm_hint_detection_md5(analyzer: ActivationAnalyzer, temp_dir: Pa
 
     md5_patterns = [p for p in result.registration_patterns
                     if "md5" in p.algorithm_hints]
-    assert len(md5_patterns) > 0
+    assert md5_patterns
 
 
 def test_algorithm_hint_detection_rsa(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -777,7 +777,7 @@ def test_algorithm_hint_detection_rsa(analyzer: ActivationAnalyzer, temp_dir: Pa
 
     rsa_patterns = [p for p in result.registration_patterns
                     if "rsa" in p.algorithm_hints]
-    assert len(rsa_patterns) > 0
+    assert rsa_patterns
 
 
 def test_algorithm_hint_detection_sha(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -795,7 +795,7 @@ def test_algorithm_hint_detection_sha(analyzer: ActivationAnalyzer, temp_dir: Pa
 
     sha_patterns = [p for p in result.registration_patterns
                     if "sha" in p.algorithm_hints]
-    assert len(sha_patterns) > 0
+    assert sha_patterns
 
 
 def test_time_check_detection(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -814,7 +814,6 @@ def test_time_check_detection(analyzer: ActivationAnalyzer, temp_dir: Path) -> N
     if PEFILE_AVAILABLE and result.has_trial:
         time_checks = [p for p in result.trial_patterns
                        if p.time_check_address is not None]
-        assert len(time_checks) >= 0
 
 
 def test_expiration_check_detection(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:
@@ -834,7 +833,7 @@ def test_expiration_check_detection(analyzer: ActivationAnalyzer, temp_dir: Path
 
     expiry_checks = [p for p in result.trial_patterns
                      if p.expiration_check is not None]
-    assert len(expiry_checks) > 0
+    assert expiry_checks
 
 
 def test_empty_binary_produces_empty_results(analyzer: ActivationAnalyzer, temp_dir: Path) -> None:

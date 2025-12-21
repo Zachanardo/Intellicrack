@@ -54,12 +54,12 @@ class RealBinaryGenerator:
         try:
             # Create minimal but valid PE structure
             dos_header = bytearray(64)
-            dos_header[0:2] = b'MZ'  # DOS signature
+            dos_header[:2] = b'MZ'
             dos_header[60:64] = struct.pack('<L', 64)  # PE header offset
 
             # NT headers
             nt_headers = bytearray(248)
-            nt_headers[0:4] = b'PE\x00\x00'  # PE signature
+            nt_headers[:4] = b'PE\x00\x00'
 
             # File header
             nt_headers[4:6] = struct.pack('<H', 0x014c)  # Machine (i386)
@@ -78,7 +78,7 @@ class RealBinaryGenerator:
 
             # Section header for .text
             section_header = bytearray(40)
-            section_header[0:8] = b'.text\x00\x00\x00'
+            section_header[:8] = b'.text\x00\x00\x00'
             section_header[8:12] = struct.pack('<L', 0x1000)  # VirtualSize
             section_header[12:16] = struct.pack('<L', 0x1000)  # VirtualAddress
             section_header[16:20] = struct.pack('<L', 0x200)   # SizeOfRawData
@@ -90,11 +90,11 @@ class RealBinaryGenerator:
             if license_check:
                 # Add recognizable license check pattern
                 license_check_code = b'\xb8LICENSE_CHECK\xc3'  # mov eax, "LICENSE_CHECK"; ret
-                code_section[0:len(license_check_code)] = license_check_code
+                code_section[:len(license_check_code)] = license_check_code
             else:
                 # Simple exit code
                 simple_code = b'\xb8\x00\x00\x00\x00\xc3'  # mov eax, 0; ret
-                code_section[0:len(simple_code)] = simple_code
+                code_section[:len(simple_code)] = simple_code
 
             # Write complete PE file
             with open(output_path, 'wb') as f:
@@ -115,9 +115,9 @@ class RealBinaryGenerator:
                     import shutil
                     shutil.copy2(calc_path, output_path)
                     return output_path
-            except:
+            except Exception:
                 pass
-            raise Exception(f"Failed to create test binary: {e}")
+            raise Exception(f"Failed to create test binary: {e}") from e
 
 
 class RealScriptTemplates:
@@ -341,7 +341,7 @@ class RealProcessManager:
             return process_id, process
 
         except Exception as e:
-            raise RuntimeError(f"Failed to start process: {e}")
+            raise RuntimeError(f"Failed to start process: {e}") from e
 
     def get_process_output(self, process_id: int) -> tuple[str, str, int]:
         """Get process output and return code."""
@@ -377,7 +377,7 @@ class RealProcessManager:
                 process.wait()
                 del self.running_processes[process_id]
                 return True
-            except:
+            except Exception:
                 return False
         return False
 
@@ -431,25 +431,25 @@ class RealQEMUManager:
 
         # Add script-specific results
         if script_type == 'frida':
-            execution_result.update({
+            execution_result |= {
                 'hooks_installed': 3,
                 'functions_intercepted': ['license_check', 'validate_key'],
-                'api_calls_intercepted': ['RegQueryValueExW', 'CreateFileW']
-            })
+                'api_calls_intercepted': ['RegQueryValueExW', 'CreateFileW'],
+            }
         elif script_type == 'ghidra':
-            execution_result.update({
+            execution_result |= {
                 'functions_analyzed': 127,
                 'license_functions_found': 5,
                 'strings_analyzed': 2341,
-                'potential_vulnerabilities': 2
-            })
+                'potential_vulnerabilities': 2,
+            }
         elif script_type == 'radare2':
-            execution_result.update({
+            execution_result |= {
                 'patches_applied': 3,
                 'bytes_modified': 12,
                 'modifications_detected': True,
-                'file_modifications': [snapshot['binary_path']]
-            })
+                'file_modifications': [snapshot['binary_path']],
+            }
 
         return execution_result
 
@@ -1278,7 +1278,7 @@ class TestExecutionHistoryAndMonitoring:
             time.sleep(1)
 
         # Should have captured progress updates
-        assert len(progress_updates) > 0
+        assert progress_updates
         final_status = progress_updates[-1]
         assert 'status' in final_status
         assert final_status['status'] in ['running', 'completed', 'failed']

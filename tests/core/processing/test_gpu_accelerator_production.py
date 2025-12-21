@@ -172,7 +172,7 @@ class TestGPUAvailabilityDetection:
         accelerator: GPUAccelerator = GPUAccelerator()
         vendor: str = accelerator.detected_gpu_vendor
 
-        assert vendor in ["Intel", "NVIDIA", "AMD", "Unknown"]
+        assert vendor in {"Intel", "NVIDIA", "AMD", "Unknown"}
 
         if accelerator.gpu_type:
             if "intel" in accelerator.gpu_type.lower():
@@ -265,7 +265,7 @@ class TestPatternMatchingAcceleration:
 
         matches: list[int] = manager.accelerate_pattern_matching(data, patterns)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_pattern_matching_overlapping_patterns(self) -> None:
         """GPU pattern matching must handle overlapping pattern matches."""
@@ -592,7 +592,7 @@ class TestEdgeCases:
 
         matches: list[int] = manager.accelerate_pattern_matching(data, patterns)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_pattern_matching_empty_patterns(self) -> None:
         """GPU pattern matching must handle empty pattern list gracefully."""
@@ -602,7 +602,7 @@ class TestEdgeCases:
 
         matches: list[int] = manager.accelerate_pattern_matching(data, patterns)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_pattern_matching_pattern_larger_than_data(self) -> None:
         """GPU pattern matching must handle patterns larger than data."""
@@ -612,7 +612,7 @@ class TestEdgeCases:
 
         matches: list[int] = manager.accelerate_pattern_matching(data, patterns)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_pattern_matching_single_byte_pattern(self) -> None:
         """GPU pattern matching must handle single-byte patterns."""
@@ -768,7 +768,7 @@ class TestMemoryEfficiency:
         """GPU processing must efficiently handle large datasets without memory leaks."""
         manager: GPUAccelerationManager = GPUAccelerationManager()
 
-        for i in range(10):
+        for _ in range(10):
             data: bytes = secrets.token_bytes(1024 * 1024)
             patterns: list[bytes] = [secrets.token_bytes(8) for _ in range(5)]
 
@@ -784,7 +784,7 @@ class TestMemoryEfficiency:
         data: bytes = secrets.token_bytes(50 * 1024)
         pattern: bytes = b"\x90\x90"
 
-        for i in range(50):
+        for _ in range(50):
             matches: list[int] = manager.accelerate_pattern_matching(data, [pattern])
             assert isinstance(matches, list)
 

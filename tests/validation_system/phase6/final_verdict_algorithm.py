@@ -220,7 +220,7 @@ class FinalVerdictAlgorithm:
         Returns:
             Binary PASS/FAIL verdict
         """
-        if len(violations) == 0:
+        if not violations:
             self.logger.info("Zero violations found - PASS")
             return VerdictStatus.PASS
 
@@ -261,18 +261,14 @@ class FinalVerdictAlgorithm:
         }
 
         found_components = {result.component_name for result in component_results}
-        missing_components = required_components - found_components
-
-        if missing_components:
+        if missing_components := required_components - found_components:
             self.logger.error(f"Missing required components: {missing_components}")
             return False
 
-        # Validate individual component results
-        for result in component_results:
-            if not self._validate_individual_component(result):
-                return False
-
-        return True
+        return all(
+            self._validate_individual_component(result)
+            for result in component_results
+        )
 
     def _validate_individual_component(self, result: ComponentResult) -> bool:
         """
@@ -306,12 +302,9 @@ class FinalVerdictAlgorithm:
             )
             return False
 
-        # Validate individual violations
-        for violation in result.violations:
-            if not self._validate_violation(violation):
-                return False
-
-        return True
+        return all(
+            self._validate_violation(violation) for violation in result.violations
+        )
 
     def _validate_violation(self, violation: ValidationViolation) -> bool:
         """

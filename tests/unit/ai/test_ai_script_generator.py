@@ -30,12 +30,11 @@ def has_any_llm_api_keys():
         if key:
             return True
 
-    # Check environment variables for any LLM API keys
-    for env_var in os.environ:
-        if (env_var.endswith("_API_KEY") or env_var.endswith("_API_TOKEN")) and os.environ[env_var]:
-            return True
-
-    return False
+    return any(
+        (env_var.endswith("_API_KEY") or env_var.endswith("_API_TOKEN"))
+        and value
+        for env_var, value in os.environ.items()
+    )
 
 
 class TestAIScriptGenerator(BaseIntellicrackTest):
@@ -474,16 +473,12 @@ class TestAIScriptGenerator(BaseIntellicrackTest):
             # Check that script addresses multiple objectives
             code = script_result['script_code'].lower()
 
-            # Count how many objectives are addressed (rough heuristic)
-            objectives_found = 0
             keywords = ['hook', 'monitor', 'intercept', 'log', 'detect', 'dump',
                        'identify', 'find', 'map', 'export', 'recon', 'gadget',
                        'payload', 'bypass', 'execute', 'persist']
 
-            for keyword in keywords:
-                if keyword in code:
-                    objectives_found += 1
-
+            objectives_found = sum(bool(keyword in code)
+                               for keyword in keywords)
             # Complex scripts should address multiple objectives
             assert objectives_found >= 3, f"Complex script {i+1} doesn't address enough objectives"
 

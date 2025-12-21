@@ -139,10 +139,13 @@ class TestGetCachePath:
                 # Should generate valid paths even for edge cases
                 assert isinstance(cache_path, (str, Path))
                 path_str = str(cache_path)
-                assert len(path_str) > 0
+                assert path_str != ""
 
                 # Path should be filesystem-safe
-                assert not any(char in path_str for char in ['<', '>', ':', '"', '|', '?', '*'])
+                assert all(
+                    char not in path_str
+                    for char in ['<', '>', ':', '"', '|', '?', '*']
+                )
 
             except (OSError, UnicodeError):
                 # Some edge cases may not be supported by filesystem
@@ -196,25 +199,22 @@ class TestRunIncrementalAnalysis:
             + b'\x00' * 32 + b'PE\x00\x00'
         )
 
+        code_section = b'\x55\x8b\xec'  # Standard function prologue
         # Version-specific code sections
         if version == 1:
-            code_section = b'\x55\x8b\xec'  # Standard function prologue
             code_section += b'\x68\x00\x10\x00\x00'  # Push constant
             code_section += b'\xff\x15\x00\x20\x00\x00'  # Call API
-            code_section += b'\x5d\xc3'  # Function epilogue
-
             # Add protection signature (UPX-like)
             protection_sig = b'UPX0\x00\x00\x00\x00'
 
         else:  # version == 2
-            code_section = b'\x55\x8b\xec'  # Same prologue
             code_section += b'\x68\x00\x20\x00\x00'  # Different constant (evolution)
             code_section += b'\xff\x15\x00\x30\x00\x00'  # Different API call
             code_section += b'\x90\x90'  # Added NOPs (anti-analysis)
-            code_section += b'\x5d\xc3'
-
             # Modified protection (Themida-like)
             protection_sig = b'TMD!\x00\x00\x00\x00'
+
+        code_section += b'\x5d\xc3'  # Function epilogue
 
         # Pad with realistic binary content
         binary_content = pe_header + code_section + protection_sig + b'\x00' * 2000
@@ -539,8 +539,8 @@ class TestIncrementalAnalyzerIntegration:
                     'packing_detected', 'encryption_detected',
                     'obfuscation_level', 'evasion_techniques'
                 ]
-                current_complexity = sum(1 for indicator in complexity_indicators
-                                       if indicator in result)
+                current_complexity = sum(bool(indicator in result)
+                                     for indicator in complexity_indicators)
                 # Should show progression in complexity detection
                 assert current_complexity >= 0  # At minimum, should have some analysis
 

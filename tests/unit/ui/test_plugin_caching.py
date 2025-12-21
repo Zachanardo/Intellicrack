@@ -115,10 +115,7 @@ class MockIntellicrackApp:
         cached_filenames = {p["filename"]: p["modified"] for p in cached_plugins}
         is_valid, remaining = self._check_file_modifications(plugin_dir, cached_filenames)
 
-        if not is_valid:
-            return False
-
-        return len(remaining) == 0
+        return len(remaining) == 0 if is_valid else False
 
     def load_available_plugins(self):
         """Load available plugins from plugin directory with caching for performance.
@@ -241,7 +238,7 @@ class MockIntellicrackApp:
                                     }
                                     plugins[plugin_type].append(plugin_info)
 
-                                except (OSError, UnicodeDecodeError, PermissionError) as file_error:
+                                except (OSError, UnicodeDecodeError) as file_error:
                                     self.logger.warning(f"Failed to validate plugin {file_path}: {file_error}")
                                     plugins[plugin_type].append(
                                         {
@@ -254,7 +251,7 @@ class MockIntellicrackApp:
                                         }
                                     )
 
-                except (OSError, PermissionError) as dir_error:
+                except OSError as dir_error:
                     self.logger.error(f"Error accessing plugin directory {plugin_dir}: {dir_error}")
 
             try:
@@ -623,12 +620,14 @@ class TestPluginCaching:
         assert plugins_after["custom"][0]["name"] == "legitimate_plugin", "Wrong plugin loaded"
 
         for malicious_path in malicious_paths:
-            assert not any(malicious_path in p.get("path", "") for p in plugins_after["custom"]), \
-                f"Malicious path {malicious_path} was loaded"
+            assert all(
+                malicious_path not in p.get("path", "")
+                for p in plugins_after["custom"]
+            ), f"Malicious path {malicious_path} was loaded"
 
         assert "Rejecting potentially malicious plugin path" in caplog.text or \
-               len(plugins_after["custom"]) == 1, \
-               "Malicious paths were not properly rejected or logged"
+                   len(plugins_after["custom"]) == 1, \
+                   "Malicious paths were not properly rejected or logged"
 
     def test_concurrent_cache_access(self, temp_plugin_dir, cache_file):
         """Test that concurrent cache access doesn't corrupt cache file.

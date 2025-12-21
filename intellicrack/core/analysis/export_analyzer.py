@@ -362,9 +362,7 @@ class ExportAnalyzer:
 
     def get_export_by_ordinal(self, ordinal: int) -> ExportEntry | None:
         """Get export entry by ordinal."""
-        return next(
-            (export for export in self.exports if export.ordinal == ordinal), None
-        )
+        return next((export for export in self.exports if export.ordinal == ordinal), None)
 
     def get_license_related_exports(self) -> list[ExportEntry]:
         """Identify exports related to license validation and activation."""
@@ -493,11 +491,7 @@ class ExportAnalyzer:
         """Search exports by name substring."""
         search_lower: str = search_term.lower()
 
-        results: list[ExportEntry] = [
-            export
-            for export in self.exports
-            if export.name and search_lower in export.name.lower()
-        ]
+        results: list[ExportEntry] = [export for export in self.exports if export.name and search_lower in export.name.lower()]
         return results
 
     def filter_exports_by_pattern(self, pattern: str) -> list[ExportEntry]:
@@ -507,11 +501,7 @@ class ExportAnalyzer:
         try:
             regex = re.compile(pattern)
 
-            results.extend(
-                export
-                for export in self.exports
-                if export.name and regex.search(export.name)
-            )
+            results.extend(export for export in self.exports if export.name and regex.search(export.name))
         except re.error as e:
             self.logger.exception("Invalid regex pattern: %s", e)
 

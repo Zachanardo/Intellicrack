@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any
+from typing import Any, cast
 
 # Import for QDateTime
 from PyQt6.QtCore import QDateTime, Qt, QThread, pyqtSignal, pyqtSlot
@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QInputDialog,
     QLabel,
+    QLayoutItem,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -113,7 +114,7 @@ class ProtectionCard(QFrame):
 
     def init_ui(self) -> None:
         """Initialize the protection card UI."""
-        self.setFrameStyle(QFrame.Box)
+        self.setFrameStyle(QFrame.Shape.Box)
         self.setStyleSheet("""
             ProtectionCard {
                 border: 2px solid #ddd;
@@ -131,7 +132,7 @@ class ProtectionCard(QFrame):
 
         # Protection name
         name_label = QLabel(self.protection_data["name"])
-        name_label.setFont(QFont("Arial", 11, QFont.Bold))
+        name_label.setFont(QFont("Arial", 11, QFont.Weight.Bold))
         layout.addWidget(name_label)
 
         # Type and confidence
@@ -185,14 +186,14 @@ class ProtectionCard(QFrame):
             return "Multi-Engine Verification"
         return "Signature Match"
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Handle mouse click event on the protection card.
 
         Args:
             event: The mouse event containing button and position information
 
         """
-        if event.button() == Qt.LeftButton:
+        if event and event.button() == Qt.MouseButton.LeftButton:
             self.clicked.emit(self.protection_data)
         super().mousePressEvent(event)
 
@@ -227,7 +228,7 @@ class UnifiedProtectionWidget(QWidget):
         self._create_header_section(layout)
 
         # Main content area
-        self.content_splitter = QSplitter(Qt.Horizontal)
+        self.content_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Overview
         left_widget = self._create_overview_panel()
@@ -259,7 +260,7 @@ class UnifiedProtectionWidget(QWidget):
         title_layout = QHBoxLayout()
 
         title = QLabel("Protection Analysis")
-        title.setFont(QFont("Arial", 14, QFont.Bold))
+        title.setFont(QFont("Arial", 14, QFont.Weight.Bold))
         title_layout.addWidget(title)
 
         title_layout.addStretch()
@@ -334,7 +335,7 @@ class UnifiedProtectionWidget(QWidget):
 
         self.cards_widget = QWidget()
         self.cards_layout = QVBoxLayout()
-        self.cards_layout.setAlignment(Qt.AlignTop)
+        self.cards_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.cards_widget.setLayout(self.cards_layout)
 
         scroll.setWidget(self.cards_widget)
@@ -406,7 +407,7 @@ class UnifiedProtectionWidget(QWidget):
 
         # Strategies will be added dynamically
         self.strategies_layout = QVBoxLayout()
-        self.strategies_layout.setAlignment(Qt.AlignTop)
+        self.strategies_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
@@ -516,20 +517,20 @@ class UnifiedProtectionWidget(QWidget):
             self.string_extractor.load_file(self._current_file_path)
 
             # Highlight protection-related regions if available
-            if result.icp_analysis and result.icp_analysis.entropy_info:
-                for entropy in result.icp_analysis.entropy_info:
-                    if entropy.packed or entropy.encrypted:
+            if result.icp_analysis and hasattr(result.icp_analysis, "supplemental_data"):
+                entropy_info = result.icp_analysis.supplemental_data.get("entropy_info", [])
+                for entropy in entropy_info:
+                    if entropy.get("packed") or entropy.get("encrypted"):
                         # Highlight suspicious sections
                         self.hex_viewer.add_protection_highlight(
-                            entropy.offset,
-                            entropy.size,
-                            f"{entropy.section_name} ({'Packed' if entropy.packed else 'Encrypted'})",
+                            entropy.get("offset", 0),
+                            entropy.get("size", 0),
+                            f"{entropy.get('section_name', 'Unknown')} ({'Packed' if entropy.get('packed') else 'Encrypted'})",
                         )
 
         # Re-enable buttons
         self.quick_scan_btn.setEnabled(True)
         self.deep_scan_btn.setEnabled(True)
-        self.generate_script_btn.setEnabled(len(result.protections) > 0)
         self.progress_bar.setVisible(False)
 
         # Update status
@@ -705,9 +706,11 @@ Overall Confidence: {result.confidence_score:.0f}%</p>
         """Display protection cards."""
         # Clear existing cards
         while self.cards_layout.count():
-            child = self.cards_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            child: QLayoutItem | None = self.cards_layout.takeAt(0)
+            if child is not None:
+                widget = child.widget()
+                if widget is not None:
+                    widget.deleteLater()
 
         # Add new cards
         for protection in result.protections:
@@ -776,9 +779,11 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         """Display bypass strategies."""
         # Clear existing strategies
         while self.strategies_layout.count():
-            child = self.strategies_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            child: QLayoutItem | None = self.strategies_layout.takeAt(0)
+            if child is not None:
+                widget = child.widget()
+                if widget is not None:
+                    widget.deleteLater()
 
         if not result.bypass_strategies:
             no_strategies = QLabel("No specific bypass strategies available for detected protections.")
@@ -870,25 +875,28 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             tech_info += "ICP Analysis Results:\n"
             icp = result.icp_analysis
 
-            if icp.entry_point:
-                tech_info += f"  Entry Point: {icp.entry_point}\n"
+            if hasattr(icp, "supplemental_data"):
+                if entry_point := icp.supplemental_data.get("entry_point"):
+                    tech_info += f"  Entry Point: {entry_point}\n"
 
-            if icp.sections:
-                tech_info += f"  Sections: {len(icp.sections)}\n"
-                for section in icp.sections[:5]:
-                    name = section.get("name", "Unknown")
-                    size = section.get("size", 0)
-                    tech_info += f"    - {name}: {size} bytes\n"
+                if sections := icp.supplemental_data.get("sections", []):
+                    tech_info += f"  Sections: {len(sections)}\n"
+                    for section in sections[:5]:
+                        name = section.get("name", "Unknown")
+                        size = section.get("size", 0)
+                        tech_info += f"    - {name}: {size} bytes\n"
 
-            if icp.entropy_info:
-                tech_info += "\n  Entropy Analysis:\n"
-                for entropy in icp.entropy_info:
-                    tech_info += f"    - {entropy.section_name}: {entropy.entropy:.3f}"
-                    if entropy.packed:
-                        tech_info += " [PACKED]"
-                    elif entropy.encrypted:
-                        tech_info += " [ENCRYPTED]"
-                    tech_info += "\n"
+                if entropy_info := icp.supplemental_data.get("entropy_info", []):
+                    tech_info += "\n  Entropy Analysis:\n"
+                    for entropy in entropy_info:
+                        section_name = entropy.get("section_name", "Unknown")
+                        entropy_val = entropy.get("entropy", 0.0)
+                        tech_info += f"    - {section_name}: {entropy_val:.3f}"
+                        if entropy.get("packed"):
+                            tech_info += " [PACKED]"
+                        elif entropy.get("encrypted"):
+                            tech_info += " [ENCRYPTED]"
+                        tech_info += "\n"
 
         self.tech_text.setPlainText(tech_info)
 
@@ -922,7 +930,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
         perf_info += f"Engines Used: {', '.join(result.engines_used)}\n\n"
 
         perf_info += "Detection Sources:\n"
-        source_counts = {}
+        source_counts: dict[AnalysisSource, int] = {}
         for protection in result.protections:
             source = protection.get("source", AnalysisSource.ICP)
             source_counts[source] = source_counts.get(source, 0) + 1
@@ -938,9 +946,11 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
         # Clear cards
         while self.cards_layout.count():
-            child = self.cards_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            child: QLayoutItem | None = self.cards_layout.takeAt(0)
+            if child is not None:
+                widget = child.widget()
+                if widget is not None:
+                    widget.deleteLater()
 
         # Clear text displays
         self.details_text.clear()
@@ -949,9 +959,11 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
         # Clear strategies
         while self.strategies_layout.count():
-            child = self.strategies_layout.takeAt(0)
-            if child.widget():
-                child.widget().deleteLater()
+            child_item: QLayoutItem | None = self.strategies_layout.takeAt(0)
+            if child_item is not None:
+                widget_item = child_item.widget()
+                if widget_item is not None:
+                    widget_item.deleteLater()
 
         self.current_result = None
 
@@ -992,6 +1004,8 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
     def _generate_bypass_guide(self) -> str:
         """Generate bypass guide content."""
         result = self.current_result
+        if result is None:
+            return ""
 
         guide = "# Protection Bypass Guide\n\n"
         guide += f"**File:** {os.path.basename(result.file_path)}\n"
@@ -1288,8 +1302,9 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
     def _on_hex_offset_selected(self, offset: int) -> None:
         """Handle hex viewer offset selection."""
         # Update technical info with offset details
-        if self.current_result and self.current_result.icp_analysis and self.current_result.icp_analysis.sections:
-            for section in self.current_result.icp_analysis.sections:
+        if self.current_result and self.current_result.icp_analysis and hasattr(self.current_result.icp_analysis, "supplemental_data"):
+            sections = self.current_result.icp_analysis.supplemental_data.get("sections", [])
+            for section in sections:
                 section_start = section.get("virtual_address", 0)
                 section_size = section.get("virtual_size", 0)
                 if section_start <= offset < section_start + section_size:

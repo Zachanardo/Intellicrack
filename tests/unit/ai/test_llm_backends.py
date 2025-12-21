@@ -240,8 +240,7 @@ class TestLLMBackends(BaseIntellicrackTest):
             )
 
         local_backend = LocalModelBackend()
-        available_local = local_backend.list_available_models()
-        if available_local:
+        if available_local := local_backend.list_available_models():
             responses['local'] = local_backend.generate(
                 coding_prompt, model=available_local[0], max_tokens=300
             )
@@ -252,7 +251,7 @@ class TestLLMBackends(BaseIntellicrackTest):
         # Assess quality of each response
         quality_assessor = self.model_manager.get_quality_assessor()
 
-        for model_name, response in responses.items():
+        for response in responses.values():
             self.assert_real_output(response)
 
             quality_score = quality_assessor.assess_code_quality(
@@ -318,8 +317,7 @@ class TestLLMBackends(BaseIntellicrackTest):
             available_configs.append(('anthropic', 'claude-3-haiku-20240307'))
 
         local_backend = LocalModelBackend()
-        local_models = local_backend.list_available_models()
-        if local_models:
+        if local_models := local_backend.list_available_models():
             available_configs.append(('local', local_models[0]))
 
         if len(available_configs) < 2:
@@ -335,7 +333,7 @@ class TestLLMBackends(BaseIntellicrackTest):
             responses[f"{provider}_{model}"] = response
 
         # Validate all responses
-        for model_key, response in responses.items():
+        for response in responses.values():
             self.assert_real_output(response)
             assert len(response['content']) > 10
 

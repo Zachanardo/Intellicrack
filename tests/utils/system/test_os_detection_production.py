@@ -46,7 +46,7 @@ class TestOperatingSystemDetection:
         """OS detection returns one of the expected values."""
         detected_os: str = detect_operating_system()
 
-        assert detected_os in ["windows", "linux", "unknown"]
+        assert detected_os in {"windows", "linux", "unknown"}
 
     def test_detect_operating_system_matches_platform(self) -> None:
         """OS detection matches actual platform.system()."""
@@ -55,7 +55,7 @@ class TestOperatingSystemDetection:
 
         if system == "windows":
             assert detected_os == "windows"
-        elif system in ["linux", "darwin"]:
+        elif system in {"linux", "darwin"}:
             assert detected_os == "linux"
 
     def test_detect_operating_system_consistency(self) -> None:
@@ -71,18 +71,18 @@ class TestOperatingSystemDetection:
         result: bool = is_windows()
 
         if sys.platform == "win32":
-            assert result is True
+            assert result
         else:
-            assert result is False
+            assert not result
 
     def test_is_linux_like_correct_for_platform(self) -> None:
         """is_linux_like() returns correct value for current platform."""
         result: bool = is_linux_like()
 
         if sys.platform.startswith("linux") or sys.platform == "darwin":
-            assert result is True
+            assert result
         else:
-            assert result is False
+            assert not result
 
     def test_is_unix_like_matches_linux_like(self) -> None:
         """is_unix_like() matches is_linux_like() output."""
@@ -173,7 +173,7 @@ class TestPersistenceMethod:
         method: str = get_default_persistence_method()
 
         assert isinstance(method, str)
-        assert len(method) > 0
+        assert method != ""
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
     def test_get_default_persistence_method_windows(self) -> None:
@@ -205,7 +205,7 @@ class TestPlatformSpecificPaths:
         paths: dict[str, str] = get_platform_specific_paths()
 
         assert isinstance(paths, dict)
-        assert len(paths) > 0
+        assert paths
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
     def test_get_platform_specific_paths_windows_keys(self) -> None:
@@ -373,7 +373,7 @@ class TestFileTypeDetection:
 
         file_type: str = detect_file_type(str(short_file))
 
-        assert file_type in ["pe", "unknown"]
+        assert file_type in {"pe", "unknown"}
 
     def test_detect_file_type_consistency(self, tmp_path: Path) -> None:
         """Multiple detections of same file return same result."""
@@ -396,12 +396,12 @@ class TestOSDetectionIntegration:
         windows: bool = is_windows()
         unix: bool = is_unix_like()
 
-        if detected_os == "windows":
+        if detected_os == "linux":
+            assert not windows
+            assert unix
+        elif detected_os == "windows":
             assert windows is True
             assert unix is False
-        elif detected_os == "linux":
-            assert windows is False
-            assert unix is True
 
     def test_platform_paths_accessible(self) -> None:
         """Platform-specific paths are accessible on real system."""
@@ -424,7 +424,7 @@ class TestOSDetectionIntegration:
         os_type: str = detect_operating_system()
         method: str = get_default_persistence_method()
 
-        if os_type == "windows":
+        if os_type == "linux":
+            assert method in {"systemd_service", "cron_job"}
+        elif os_type == "windows":
             assert method == "scheduled_task"
-        elif os_type == "linux":
-            assert method in ["systemd_service", "cron_job"]

@@ -2329,7 +2329,12 @@ class LicenseAnalysisNeuralNetwork:
 
         self.logger.info(
             "Epoch %d/%d: Loss=%.4f, Acc=%.4f, Val_Loss=%.4f, Val_Acc=%.4f",
-            epoch + 1, epochs, epoch_loss, epoch_accuracy, val_loss, val_accuracy,
+            epoch + 1,
+            epochs,
+            epoch_loss,
+            epoch_accuracy,
+            val_loss,
+            val_accuracy,
         )
 
     def _update_weights(self, gradients: dict[str, Any], learning_rate: float) -> None:

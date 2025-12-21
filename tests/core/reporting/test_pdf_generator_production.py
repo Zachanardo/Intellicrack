@@ -20,8 +20,7 @@ def pdf_generator(tmp_path: Path) -> Any:
     from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 
     output_dir = tmp_path / "reports"
-    generator = PDFReportGenerator(output_dir=str(output_dir))
-    yield generator
+    yield PDFReportGenerator(output_dir=str(output_dir))
 
 
 def test_pdf_generator_initialization(pdf_generator: Any, tmp_path: Path) -> None:
@@ -199,7 +198,7 @@ def test_pdf_generator_backend_fallback_handling(pdf_generator: Any) -> None:
     pdf_generator.matplotlib_available = False
     pdf_generator.pdfkit_available = False
 
-    assert pdf_generator.reportlab_available is False
+    assert not pdf_generator.reportlab_available
 
     pdf_generator.reportlab_available = original_reportlab
 

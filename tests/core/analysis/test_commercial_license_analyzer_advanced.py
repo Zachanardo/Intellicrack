@@ -32,11 +32,9 @@ def create_pe_binary_with_code(code: bytes = b"") -> bytes:
     pe_header += b"\x00" * 204
 
     padding = b"\x00" * (0x80 - len(dos_header))
-    text_section = b"\x90" * 0x1000
-
-    if code:
-        text_section = code + b"\x90" * (0x1000 - len(code))
-
+    text_section = (
+        code + b"\x90" * (0x1000 - len(code)) if code else b"\x90" * 0x1000
+    )
     return dos_header + padding + pe_header + text_section
 
 
@@ -84,8 +82,9 @@ class TestDynamicFridaScriptGeneration:
 
         hooks: list[dict[str, Any]] = bypass.get("hooks", [])
 
-        checkout_hook = next((h for h in hooks if "checkout" in h.get("api", "")), None)
-        if checkout_hook:
+        if checkout_hook := next(
+            (h for h in hooks if "checkout" in h.get("api", "")), None
+        ):
             assert "replacement" in checkout_hook
             assert isinstance(checkout_hook["replacement"], bytes)
             assert len(checkout_hook["replacement"]) > 0
@@ -101,9 +100,7 @@ class TestDynamicFridaScriptGeneration:
         analyzer = CommercialLicenseAnalyzer(str(binary_path))
         bypass = analyzer._generate_flexlm_bypass()
 
-        patches: list[dict[str, Any]] = bypass.get("patches", [])
-
-        if patches:
+        if patches := bypass.get("patches", []):
             for patch in patches:
                 assert "offset" in patch
                 assert "original" in patch or "replacement" in patch
@@ -159,8 +156,9 @@ class TestDynamicFridaScriptGeneration:
 
         script: str = analyzer._generate_dynamic_hasp_frida_script(hooks, patches)
 
-        login_hook = next((h for h in hooks if "login" in h.get("api", "")), None)
-        if login_hook:
+        if login_hook := next(
+            (h for h in hooks if "login" in h.get("api", "")), None
+        ):
             assert "replacement" in login_hook
             assert isinstance(login_hook["replacement"], bytes)
 
@@ -212,8 +210,9 @@ class TestDynamicFridaScriptGeneration:
 
         hooks: list[dict[str, Any]] = bypass.get("hooks", [])
 
-        crypto_hooks = [h for h in hooks if "crypt" in h.get("api", "").lower()]
-        if crypto_hooks:
+        if crypto_hooks := [
+            h for h in hooks if "crypt" in h.get("api", "").lower()
+        ]:
             for hook in crypto_hooks:
                 assert "replacement" in hook
                 assert isinstance(hook["replacement"], bytes)
@@ -244,7 +243,7 @@ class TestCodeMeterAdvancedFeatures:
         hook: bytes = analyzer._generate_cm_crypto_hook(crypto_mode)
 
         assert isinstance(hook, bytes)
-        assert len(hook) > 0
+        assert hook
 
         if len(hook) >= 3:
             valid_opcodes = [0x31, 0x33, 0x48, 0xB8, 0xC3, 0x8B, 0x89, 0x90]
@@ -258,7 +257,7 @@ class TestCodeMeterAdvancedFeatures:
         hook: bytes = analyzer._generate_cm_crypto_hook(crypto_mode)
 
         assert isinstance(hook, bytes)
-        assert len(hook) > 0
+        assert hook
 
     def test_generate_cm_secure_data_hook_memory_protection(self) -> None:
         """CodeMeter secure data hook bypasses memory protection."""
@@ -267,7 +266,7 @@ class TestCodeMeterAdvancedFeatures:
         secure_data_hook: bytes = analyzer._generate_cm_secure_data_hook()
 
         assert isinstance(secure_data_hook, bytes)
-        assert len(secure_data_hook) > 0
+        assert secure_data_hook
 
     def test_extract_cm_access_flags_from_binary(self, temp_workspace: Path) -> None:
         """Extract CodeMeter access flags from CmAccess calls."""
@@ -307,8 +306,8 @@ class TestCodeMeterAdvancedFeatures:
         crypto_mode: str = analyzer._detect_cm_crypto_mode(binary_data, offset + 10)
 
         assert isinstance(crypto_mode, str)
-        assert len(crypto_mode) > 0
-        assert crypto_mode in ["AES", "RSA", "DES", "TDES", "Unknown"]
+        assert crypto_mode != ""
+        assert crypto_mode in {"AES", "RSA", "DES", "TDES", "Unknown"}
 
     def test_extract_cm_box_mask_product_configuration(
         self, temp_workspace: Path
@@ -359,7 +358,7 @@ class TestHASPAdvancedFeatures:
         decrypt_patch: bytes = analyzer._generate_hasp_decrypt_patch()
 
         assert isinstance(decrypt_patch, bytes)
-        assert len(decrypt_patch) > 0
+        assert decrypt_patch
 
         if len(decrypt_patch) >= 3:
             valid_opcodes = [
@@ -386,12 +385,13 @@ class TestHASPAdvancedFeatures:
 
         hooks: list[dict[str, Any]] = bypass.get("hooks", [])
 
-        decrypt_hook = next((h for h in hooks if "decrypt" in h.get("api", "")), None)
-        if decrypt_hook:
+        if decrypt_hook := next(
+            (h for h in hooks if "decrypt" in h.get("api", "")), None
+        ):
             assert "replacement" in decrypt_hook
             patch: bytes = decrypt_hook["replacement"]
             assert isinstance(patch, bytes)
-            assert len(patch) > 0
+            assert patch
 
     def test_hasp_decrypt_patch_handles_seed_values(
         self, temp_workspace: Path
@@ -402,7 +402,7 @@ class TestHASPAdvancedFeatures:
         patch: bytes = analyzer._generate_hasp_decrypt_patch()
 
         assert isinstance(patch, bytes)
-        assert len(patch) > 0
+        assert patch
 
 
 class TestNetworkProtocolAnalysisDetailed:

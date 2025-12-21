@@ -280,7 +280,7 @@ class TestRealLicenseEmulation:
                 test_socket.connect(('localhost', port))
                 test_socket.send(b'TEST_LICENSE_REQUEST')
                 test_socket.close()
-            except:
+            except Exception:
                 pass  # Expected if no server on port
 
         # Stop capture and analyze
@@ -324,12 +324,9 @@ class TestRealLicenseEmulation:
         assert len(active_protocols) == 3, "All protocols must be active"
 
         try:
-            # Test each protocol
-            test_results = {}
-
             # Test FlexLM
             flexlm_test = license_hooker.test_protocol_endpoint('flexlm', 27000)
-            test_results['flexlm'] = flexlm_test
+            test_results = {'flexlm': flexlm_test}
             assert flexlm_test['responsive'], "FlexLM must respond"
 
             # Test HASP

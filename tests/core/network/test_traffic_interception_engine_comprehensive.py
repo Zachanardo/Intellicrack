@@ -55,8 +55,7 @@ def tcp_packet_flexlm() -> bytes:
 
     payload = b"FEATURE MATLAB 1.0 permanent 1 SIGN=0123456789ABCDEF VENDOR_STRING=MATHWORKS INCREMENT MATLAB 1.0 permanent 1 HOSTID=001122334455"
 
-    packet = bytes(ip_header + tcp_header + payload)
-    return packet
+    return bytes(ip_header + tcp_header + payload)
 
 
 @pytest.fixture
@@ -87,8 +86,7 @@ def tcp_packet_hasp() -> bytes:
 
     payload = b"HASP_LICENSE_REQUEST sentinel=enabled Aladdin dongle verification checksum=ABCD1234"
 
-    packet = bytes(ip_header + tcp_header + payload)
-    return packet
+    return bytes(ip_header + tcp_header + payload)
 
 
 @pytest.fixture
@@ -119,8 +117,7 @@ def tcp_packet_adobe() -> bytes:
 
     payload = b"POST /lcsap/request HTTP/1.1\r\nHost: activate.adobe.com\r\nContent-Type: application/xml\r\n\r\n<activation><serial>1234-5678-9012-3456</serial><adobe_id>test@test.com</adobe_id></activation>"
 
-    packet = bytes(ip_header + tcp_header + payload)
-    return packet
+    return bytes(ip_header + tcp_header + payload)
 
 
 @pytest.fixture
@@ -151,8 +148,7 @@ def tcp_packet_codemeter() -> bytes:
 
     payload = struct.pack("<I", 0x434D4554) + struct.pack("<I", 0x100A) + b"CodeMeter License Checkout Request FirmCode=500001 ProductCode=12345"
 
-    packet = bytes(ip_header + tcp_header + payload)
-    return packet
+    return bytes(ip_header + tcp_header + payload)
 
 
 @pytest.fixture
@@ -181,8 +177,7 @@ def tcp_packet_syn() -> bytes:
     tcp_header.extend(struct.pack("!H", 0))
     tcp_header.extend(struct.pack("!H", 0))
 
-    packet = bytes(ip_header + tcp_header)
-    return packet
+    return bytes(ip_header + tcp_header)
 
 
 @pytest.fixture
@@ -213,8 +208,7 @@ def tcp_packet_generic_license() -> bytes:
 
     payload = b"LICENSE_CHECKOUT verification=true activation_code=ABC123 VERIFY serial_number=XYZ789"
 
-    packet = bytes(ip_header + tcp_header + payload)
-    return packet
+    return bytes(ip_header + tcp_header + payload)
 
 
 @pytest.fixture
@@ -255,8 +249,7 @@ def tcp_packet_non_license() -> bytes:
 
     payload = b"GET /index.html HTTP/1.1\r\nHost: example.com\r\n\r\n"
 
-    packet = bytes(ip_header + tcp_header + payload)
-    return packet
+    return bytes(ip_header + tcp_header + payload)
 
 
 def test_engine_initialization_with_interface() -> None:
@@ -812,7 +805,7 @@ def test_analysis_loop_processes_queued_packets(engine: TrafficInterceptionEngin
 
     engine.stop_interception()
 
-    assert len(callback_results) > 0
+    assert callback_results
     assert callback_results[0].is_license_related
     assert callback_results[0].protocol_type == "flexlm"
 
@@ -849,7 +842,7 @@ def test_analysis_loop_handles_callback_exceptions(engine: TrafficInterceptionEn
 
     engine.stop_interception()
 
-    assert len(successful_callbacks) > 0
+    assert successful_callbacks
 
 
 def test_intercepted_packet_dataclass_initialization() -> None:

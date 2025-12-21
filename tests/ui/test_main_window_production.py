@@ -383,8 +383,6 @@ class TestMainWindowErrorHandling:
             status["enabled"] for status in window.component_status.values()
         )
 
-        assert at_least_one_component_works or True
-
         window.close()
         window.deleteLater()
         qapp.processEvents()
@@ -431,5 +429,3 @@ class TestMainWindowCleanup:
         window2.close()
         window2.deleteLater()
         qapp.processEvents()
-
-        assert True

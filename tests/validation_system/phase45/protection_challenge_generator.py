@@ -127,7 +127,7 @@ class ProtectionChallengeGenerator:
         Returns:
             List of challenge templates
         """
-        templates = [
+        return [
             ProtectionChallenge(
                 name="basic_license_check",
                 protection_types=[ProtectionType.LICENSING],
@@ -135,52 +135,82 @@ class ProtectionChallengeGenerator:
                 difficulty=2,
                 obfuscation_level=1,
                 anti_analysis_level=1,
-                custom_parameters={"key_algorithm": "simple_xor"}
+                custom_parameters={"key_algorithm": "simple_xor"},
             ),
             ProtectionChallenge(
                 name="flexlm_emulation",
-                protection_types=[ProtectionType.LICENSING, ProtectionType.ANTI_DEBUG],
+                protection_types=[
+                    ProtectionType.LICENSING,
+                    ProtectionType.ANTI_DEBUG,
+                ],
                 licensing_system=LicensingSystem.FLEXLM,
                 difficulty=5,
                 obfuscation_level=3,
                 anti_analysis_level=4,
-                custom_parameters={"server_port": 27000, "feature": "advanced_feature"}
+                custom_parameters={
+                    "server_port": 27000,
+                    "feature": "advanced_feature",
+                },
             ),
             ProtectionChallenge(
                 name="sentinel_hasp_dongle",
-                protection_types=[ProtectionType.LICENSING, ProtectionType.HARDWARE_ID],
+                protection_types=[
+                    ProtectionType.LICENSING,
+                    ProtectionType.HARDWARE_ID,
+                ],
                 licensing_system=LicensingSystem.SENTINEL_HASP,
                 difficulty=7,
                 obfuscation_level=5,
                 anti_analysis_level=6,
-                custom_parameters={"dongle_id": "HASP_12345", "encryption": "aes256"}
+                custom_parameters={
+                    "dongle_id": "HASP_12345",
+                    "encryption": "aes256",
+                },
             ),
             ProtectionChallenge(
                 name="online_activation_rsa",
-                protection_types=[ProtectionType.LICENSING, ProtectionType.ONLINE_CHECK, ProtectionType.CRYPTO_SIGNATURE],
+                protection_types=[
+                    ProtectionType.LICENSING,
+                    ProtectionType.ONLINE_CHECK,
+                    ProtectionType.CRYPTO_SIGNATURE,
+                ],
                 licensing_system=LicensingSystem.ONLINE_ACTIVATION,
                 difficulty=6,
                 obfuscation_level=4,
                 anti_analysis_level=5,
-                custom_parameters={"server_url": "https://license.example.com", "rsa_bits": 2048}
+                custom_parameters={
+                    "server_url": "https://license.example.com",
+                    "rsa_bits": 2048,
+                },
             ),
             ProtectionChallenge(
                 name="vm_protected_trial",
-                protection_types=[ProtectionType.VM_PROTECTION, ProtectionType.TIMING, ProtectionType.OBFUSCATION],
+                protection_types=[
+                    ProtectionType.VM_PROTECTION,
+                    ProtectionType.TIMING,
+                    ProtectionType.OBFUSCATION,
+                ],
                 licensing_system=LicensingSystem.TIME_TRIAL,
                 difficulty=9,
                 obfuscation_level=8,
                 anti_analysis_level=9,
-                custom_parameters={"vm_layers": 3, "trial_days": 30}
+                custom_parameters={"vm_layers": 3, "trial_days": 30},
             ),
             ProtectionChallenge(
                 name="hardware_locked_crypto",
-                protection_types=[ProtectionType.HARDWARE_ID, ProtectionType.ENCRYPTION, ProtectionType.INTEGRITY],
+                protection_types=[
+                    ProtectionType.HARDWARE_ID,
+                    ProtectionType.ENCRYPTION,
+                    ProtectionType.INTEGRITY,
+                ],
                 licensing_system=LicensingSystem.HARDWARE_LOCK,
                 difficulty=8,
                 obfuscation_level=6,
                 anti_analysis_level=7,
-                custom_parameters={"hw_components": ["cpu", "motherboard", "network"], "crypto": "aes_gcm"}
+                custom_parameters={
+                    "hw_components": ["cpu", "motherboard", "network"],
+                    "crypto": "aes_gcm",
+                },
             ),
             ProtectionChallenge(
                 name="multi_layer_protection",
@@ -190,17 +220,19 @@ class ProtectionChallengeGenerator:
                     ProtectionType.PACKING,
                     ProtectionType.OBFUSCATION,
                     ProtectionType.LICENSING,
-                    ProtectionType.INTEGRITY
+                    ProtectionType.INTEGRITY,
                 ],
                 licensing_system=LicensingSystem.CUSTOM_CRYPTO,
                 difficulty=10,
                 obfuscation_level=10,
                 anti_analysis_level=10,
-                custom_parameters={"layers": 5, "polymorphic": True, "anti_tamper": True}
-            )
+                custom_parameters={
+                    "layers": 5,
+                    "polymorphic": True,
+                    "anti_tamper": True,
+                },
+            ),
         ]
-
-        return templates
 
     def generate_challenge_binary(self, challenge: ProtectionChallenge) -> Path:
         """Generate a challenge binary with specified protections.
@@ -247,7 +279,7 @@ class ProtectionChallengeGenerator:
         licensing_code = self._generate_licensing_code(challenge)
         protection_code = self._generate_protection_code(challenge)
 
-        code = f'''
+        return f'''
 #include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -329,8 +361,6 @@ int main(int argc, char* argv[]) {{
     return 0;
 }}
 '''
-
-        return code
 
     def _generate_licensing_code(self, challenge: ProtectionChallenge) -> str:
         """Generate licensing validation code.
@@ -1230,7 +1260,7 @@ void timing_check() {
                     # Simple XOR encryption for demonstration
                     data = section.get_data()
                     key = secrets.token_bytes(1)[0]
-                    encrypted = bytes([b ^ key for b in data])
+                    encrypted = bytes(b ^ key for b in data)
 
                     # Would need to add decryption stub in real implementation
                     break
@@ -1324,7 +1354,7 @@ void timing_check() {
             # Generate valid key
             if challenge.licensing_system == LicensingSystem.CUSTOM_CRYPTO:
                 # Generate key that produces the valid hash
-                solution["key"] = "INTLCRK-" + secrets.token_hex(12).upper()
+                solution["key"] = f"INTLCRK-{secrets.token_hex(12).upper()}"
             elif challenge.licensing_system == LicensingSystem.HARDWARE_LOCK:
                 solution["key"] = "Hardware-specific key (run binary to see hardware ID)"
 

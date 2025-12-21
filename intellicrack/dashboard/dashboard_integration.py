@@ -26,6 +26,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from .dashboard_manager import create_dashboard_manager
 from .dashboard_widgets import WidgetType, create_widget
@@ -51,9 +52,9 @@ class ToolIntegration:
 
     tool_name: str
     analyzer_instance: object
-    event_handler: Callable | None = None
-    metrics_provider: Callable | None = None
-    status_provider: Callable | None = None
+    event_handler: Callable[[str, dict[str, object]], None] | None = None
+    metrics_provider: Callable[[], dict[str, object]] | None = None
+    status_provider: Callable[[], dict[str, object]] | None = None
     enabled: bool = True
 
 
@@ -100,7 +101,7 @@ class DashboardIntegration:
         self.analysis_lock = threading.Lock()
 
         # Event handlers
-        self.event_handlers: dict[str, list[Callable]] = {}
+        self.event_handlers: dict[str, list[Callable[[str, dict[str, object]], None]]] = {}
 
         # Initialize custom widgets
         self._initialize_custom_widgets()
@@ -312,8 +313,11 @@ class DashboardIntegration:
         with self.analysis_lock:
             if analysis_id in self.active_analyses:
                 analysis = self.active_analyses[analysis_id]
-                analysis["end_time"] = datetime.now()
-                analysis["duration"] = (analysis["end_time"] - analysis["start_time"]).total_seconds()
+                end_time: datetime = datetime.now()
+                start_time_obj = analysis["start_time"]
+                if isinstance(start_time_obj, datetime):
+                    analysis["end_time"] = end_time
+                    analysis["duration"] = (end_time - start_time_obj).total_seconds()
                 analysis["results"] = results
 
         # Notify dashboard
@@ -321,8 +325,9 @@ class DashboardIntegration:
 
         # Update tool status
         if analysis_id in self.active_analyses:
-            tool = self.active_analyses[analysis_id]["tool"]
-            self._update_tool_status(tool, "Idle")
+            tool_obj = self.active_analyses[analysis_id]["tool"]
+            if isinstance(tool_obj, str):
+                self._update_tool_status(tool_obj, "Idle")
 
         # Process results for visualization
         self._process_analysis_results(results)
@@ -391,13 +396,20 @@ class DashboardIntegration:
         # Collect analysis data
         with self.analysis_lock:
             for analysis_id, analysis in self.active_analyses.items():
-                report["analyses"][analysis_id] = {
-                    "tool": analysis["tool"],
-                    "target": analysis["target"],
-                    "duration": analysis.get("duration", 0),
-                    "event_count": len(analysis.get("events", [])),
-                    "results_summary": self._summarize_results(analysis.get("results", {})),
-                }
+                analyses_dict = report["analyses"]
+                if isinstance(analyses_dict, dict):
+                    events_obj = analysis.get("events", [])
+                    events_list: list[Any] = events_obj if isinstance(events_obj, list) else []
+                    results_obj = analysis.get("results", {})
+                    results_dict: dict[str, object] = results_obj if isinstance(results_obj, dict) else {}
+
+                    analyses_dict[analysis_id] = {
+                        "tool": analysis["tool"],
+                        "target": analysis["target"],
+                        "duration": analysis.get("duration", 0),
+                        "event_count": len(events_list),
+                        "results_summary": self._summarize_results(results_dict),
+                    }
 
         # Get dashboard state
         dashboard_state = self.dashboard_manager.dashboard.get_dashboard_state()
@@ -406,7 +418,9 @@ class DashboardIntegration:
         # Get tool status
         for tool_name, integration in self.tool_integrations.items():
             if integration.status_provider:
-                report["tool_status"][tool_name] = integration.status_provider()
+                tool_status_dict = report["tool_status"]
+                if isinstance(tool_status_dict, dict):
+                    tool_status_dict[tool_name] = integration.status_provider()
 
         # Export to file
         with open(filepath, "w") as f:
@@ -522,11 +536,12 @@ class DashboardIntegration:
             return {}
 
         analyzer = integration.analyzer_instance
-        metrics = {}
+        metrics: dict[str, object] = {}
 
         if hasattr(analyzer, "get_analysis_stats"):
             stats = analyzer.get_analysis_stats()
-            metrics |= stats
+            if isinstance(stats, dict):
+                metrics |= stats
 
         return metrics
 
@@ -544,10 +559,12 @@ class DashboardIntegration:
             return {}
 
         analyzer = integration.analyzer_instance
-        metrics = {}
+        metrics: dict[str, object] = {}
 
         if hasattr(analyzer, "get_hook_stats"):
-            metrics["hooks_installed"] = analyzer.get_hook_stats().get("total", 0)
+            hook_stats = analyzer.get_hook_stats()
+            if isinstance(hook_stats, dict):
+                metrics["hooks_installed"] = hook_stats.get("total", 0)
 
         if hasattr(analyzer, "get_intercept_count"):
             metrics["intercepts"] = analyzer.get_intercept_count()
@@ -568,12 +585,14 @@ class DashboardIntegration:
             return {}
 
         analyzer = integration.analyzer_instance
-        metrics = {}
+        metrics: dict[str, object] = {}
 
         if hasattr(analyzer, "performance_monitor"):
             monitor = analyzer.performance_monitor
             if hasattr(monitor, "get_current_metrics"):
-                metrics |= monitor.get_current_metrics()
+                current_metrics = monitor.get_current_metrics()
+                if isinstance(current_metrics, dict):
+                    metrics |= current_metrics
 
         return metrics
 
@@ -633,7 +652,7 @@ class DashboardIntegration:
             return {"status": "Not integrated"}
 
         analyzer = integration.analyzer_instance
-        status = {
+        status: dict[str, object] = {
             "status": "Active" if integration.enabled else "Disabled",
             "metrics": self._get_frida_metrics(),
         }
@@ -676,7 +695,7 @@ class DashboardIntegration:
             return {"status": "Not integrated"}
 
         orchestrator = integration.analyzer_instance
-        status = {
+        status: dict[str, object] = {
             "status": "Active" if integration.enabled else "Disabled",
             "metrics": self._get_orchestrator_metrics(),
         }
@@ -762,9 +781,9 @@ class DashboardIntegration:
             widget = self.dashboard_manager.widgets["functions_chart"]
             current = widget.get_current_data()
 
-            values = current.values if current else {}
-            values[tool] = values.get(tool, 0) + 1
-
+            values: dict[str, object] = current.values if current else {}
+            current_count = values.get(tool, 0)
+            values[tool] = current_count + 1 if isinstance(current_count, int) else 1
             widget_data = WidgetData(timestamp=datetime.now(), values=values)
             widget.update_data(widget_data)
 
@@ -843,9 +862,14 @@ class DashboardIntegration:
             widget = self.dashboard_manager.widgets["bypass_strategies"]
             current = widget.get_current_data()
 
-            values = current.values if current else {}
-            bypass_type = data.get("type", "Unknown")
-            values[bypass_type] = values.get(bypass_type, 0) + 1
+            values: dict[str, object] = current.values if current else {}
+            bypass_type_obj = data.get("type", "Unknown")
+            bypass_type = str(bypass_type_obj)
+            current_count = values.get(bypass_type, 0)
+            if isinstance(current_count, int):
+                values[bypass_type] = current_count + 1
+            else:
+                values[bypass_type] = 1
 
             widget_data = WidgetData(timestamp=datetime.now(), values=values)
             widget.update_data(widget_data)
@@ -860,17 +884,21 @@ class DashboardIntegration:
             results: Analysis results dictionary.
 
         """
-        # Update various widgets based on results
-        if results.get("functions"):
-            self._update_function_analysis("analysis", {"count": len(results["functions"])})
+        if functions_obj := results.get("functions"):
+            functions_list: list[Any] = functions_obj if isinstance(functions_obj, list) else []
+            self._update_function_analysis("analysis", {"count": len(functions_list)})
 
-        if results.get("vulnerabilities"):
-            for vuln in results["vulnerabilities"]:
-                self.report_finding("vulnerability", "analysis", vuln)
+        vulnerabilities_obj = results.get("vulnerabilities")
+        if vulnerabilities_obj and isinstance(vulnerabilities_obj, list):
+            for vuln in vulnerabilities_obj:
+                if isinstance(vuln, dict):
+                    self.report_finding("vulnerability", "analysis", vuln)
 
-        if results.get("protections"):
-            for prot in results["protections"]:
-                self.report_finding("protection", "analysis", prot)
+        protections_obj = results.get("protections")
+        if protections_obj and isinstance(protections_obj, list):
+            for prot in protections_obj:
+                if isinstance(prot, dict):
+                    self.report_finding("protection", "analysis", prot)
 
     def _summarize_results(self, results: dict[str, object]) -> dict[str, object]:
         """Summarize analysis results.
@@ -886,12 +914,27 @@ class DashboardIntegration:
             protections, imports, and strings.
 
         """
+        functions_obj = results.get("functions", [])
+        functions_list: list[Any] = functions_obj if isinstance(functions_obj, list) else []
+
+        vulnerabilities_obj = results.get("vulnerabilities", [])
+        vulnerabilities_list: list[Any] = vulnerabilities_obj if isinstance(vulnerabilities_obj, list) else []
+
+        protections_obj = results.get("protections", [])
+        protections_list: list[Any] = protections_obj if isinstance(protections_obj, list) else []
+
+        imports_obj = results.get("imports", [])
+        imports_list: list[Any] = imports_obj if isinstance(imports_obj, list) else []
+
+        strings_obj = results.get("strings", [])
+        strings_list: list[Any] = strings_obj if isinstance(strings_obj, list) else []
+
         return {
-            "functions": len(results.get("functions", [])),
-            "vulnerabilities": len(results.get("vulnerabilities", [])),
-            "protections": len(results.get("protections", [])),
-            "imports": len(results.get("imports", [])),
-            "strings": len(results.get("strings", [])),
+            "functions": len(functions_list),
+            "vulnerabilities": len(vulnerabilities_list),
+            "protections": len(protections_list),
+            "imports": len(imports_list),
+            "strings": len(strings_list),
         }
 
 

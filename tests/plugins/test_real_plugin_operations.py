@@ -69,7 +69,7 @@ class TestRealPluginOperations:
         try:
             import shutil
             shutil.rmtree(temp_dir)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -404,7 +404,7 @@ def create_plugin():
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_real_plugin_loading_and_discovery(self, plugin_directory, sample_analysis_plugin, sample_exploitation_plugin, app_context):
@@ -766,9 +766,7 @@ def create_plugin():
 
         # Modify plugin file (simulate update)
         time.sleep(0.1)  # Ensure different modification time
-        with open(sample_analysis_plugin) as f:
-            content = f.read()
-
+        content = Path(sample_analysis_plugin).read_text()
         # Update version in plugin
         updated_content = content.replace('version = "1.0.0"', 'version = "1.0.1"')
         with open(sample_analysis_plugin, 'w') as f:
@@ -786,7 +784,7 @@ def create_plugin():
         else:
             # Hot reload may not be supported - verify error handling
             assert 'not_supported' in reload_result['error'] or 'reload_failed' in reload_result['error'], \
-                "Must provide clear error message for reload failure"
+                    "Must provide clear error message for reload failure"
 
     def test_real_plugin_resource_management(self, sample_exploitation_plugin, test_binary_file, app_context):
         """Test REAL plugin resource management and cleanup."""
@@ -824,14 +822,12 @@ def create_plugin():
             assert 'memory_usage' in final_resources, "Must track memory usage"
             assert 'execution_count' in final_resources, "Must track execution count"
             assert final_resources['execution_count'] > initial_resources['execution_count'], \
-                "Execution count must increase"
+                    "Execution count must increase"
 
         # Test plugin cleanup
         cleanup_result = plugin_manager.cleanup_plugin_resources(plugin_id)
         assert cleanup_result['success'], "Plugin resource cleanup must succeed"
 
-        # Verify cleanup was performed
-        post_cleanup_resources = plugin_manager.get_resource_usage(plugin_id)
-        if post_cleanup_resources:
+        if post_cleanup_resources := plugin_manager.get_resource_usage(plugin_id):
             assert post_cleanup_resources['memory_usage'] <= final_resources['memory_usage'], \
-                "Memory usage should not increase after cleanup"
+                    "Memory usage should not increase after cleanup"

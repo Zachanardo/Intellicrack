@@ -20,8 +20,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
 import os
+import time
 from threading import Thread
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import frida
 
@@ -29,12 +30,15 @@ from intellicrack.handlers.pyqt6_handler import QInputDialog
 
 
 if TYPE_CHECKING:
+    from intellicrack.core.analysis.stalker_manager import StalkerSession as StalkerSessionType
     from intellicrack.ui.main_app import IntellicrackApp
 
-try:
-    from intellicrack.core.analysis.stalker_manager import StalkerSession
-except ImportError:
-    StalkerSession = None
+    StalkerSession: type[StalkerSessionType] | None = None
+else:
+    try:
+        from intellicrack.core.analysis.stalker_manager import StalkerSession
+    except ImportError:
+        StalkerSession = None
 
 active_frida_sessions: dict[str, Any] = {}
 active_stalker_sessions: dict[str, Any] = {}
@@ -60,26 +64,30 @@ ANALYSIS_SCRIPTS_WHITELIST: list[str] = [
 def on_frida_message(
     main_app: "IntellicrackApp",
     binary_path: str,
-    message: dict[str, Any],
-    data: object,
+    message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage,
+    data: bytes | None,
 ) -> None:
     """Handle messages from Frida scripts.
 
     Args:
         main_app: Main application instance for emitting UI updates.
         binary_path: Path to the binary being analyzed.
-        message: Message dictionary from Frida script containing type and payload.
-        data: Additional data associated with the message.
+        message: Message from Frida script, either payload or error type.
+        data: Additional binary data associated with the message.
 
     """
     try:
-        if message["type"] == "send":
-            payload = message.get("payload", "")
-            log_message = f"[{os.path.basename(binary_path)}] {payload}"
-            main_app.update_output.emit(log_message)
-        elif message["type"] == "error":
-            error_message = message.get("stack", "No stack trace available")
-            main_app.update_output.emit(f"[Frida Error] {error_message}")
+        msg_type: str = message.get("type", "")
+
+        if msg_type == "send":
+            if isinstance(message, dict) and "payload" in message:
+                payload: Any = message.get("payload", "")
+                log_message = f"[{os.path.basename(binary_path)}] {payload}"
+                main_app.update_output.emit(log_message)
+        elif msg_type == "error":
+            if isinstance(message, dict) and "stack" in message:
+                error_message: str = str(message.get("stack", "No stack trace available"))
+                main_app.update_output.emit(f"[Frida Error] {error_message}")
     except Exception as e:
         main_app.update_output.emit(f"[Frida Message Error] Failed to process message: {e}")
 
@@ -123,15 +131,16 @@ def run_frida_script_thread(
         device.resume(pid)
 
         while not session.is_detached:
-            frida.sleep(1)
+            time.sleep(1)
 
     except Exception as e:
         main_app.update_output.emit(f"[Frida Runner] An error occurred: {e}")
     finally:
         active_frida_sessions.pop(binary_path, None)
         main_app.update_output.emit(f"[Frida Runner] Script '{os.path.basename(script_path)}' finished.")
-        if hasattr(main_app, "analysis_completed"):
-            main_app.analysis_completed.emit("Frida Script Runner")
+        analysis_completed = getattr(main_app, "analysis_completed", None)
+        if analysis_completed is not None:
+            analysis_completed.emit("Frida Script Runner")
 
 
 def run_frida_analysis(main_app: "IntellicrackApp") -> None:
@@ -145,11 +154,12 @@ def run_frida_analysis(main_app: "IntellicrackApp") -> None:
         main_app: Main application instance.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
         return
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
     if binary_path in active_frida_sessions:
         main_app.update_output.emit("[Frida Runner] Error: A Frida script is already running for this binary.")
         return
@@ -198,11 +208,12 @@ def stop_frida_analysis(main_app: "IntellicrackApp") -> None:
         main_app: Main application instance.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         main_app.update_output.emit("[Frida Runner] Error: No binary loaded.")
         return
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
     if binary_path in active_frida_sessions:
         session = active_frida_sessions.get(binary_path)
         if session and not session.is_detached:
@@ -235,11 +246,12 @@ def start_stalker_session(
         main_app.update_output.emit("[Stalker] Error: Stalker module not available.")
         return False
 
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         main_app.update_output.emit("[Stalker] Error: No binary loaded.")
         return False
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
 
     if binary_path in active_stalker_sessions:
         main_app.update_output.emit("[Stalker] Error: A Stalker session is already active for this binary.")
@@ -278,11 +290,12 @@ def stop_stalker_session(main_app: "IntellicrackApp") -> bool:
         True if session stopped successfully, False otherwise.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         main_app.update_output.emit("[Stalker] Error: No binary loaded.")
         return False
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
 
     if binary_path not in active_stalker_sessions:
         main_app.update_output.emit("[Stalker] No active session for this binary.")
@@ -336,11 +349,12 @@ def trace_function_stalker(
         True if trace started successfully, False otherwise.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         main_app.update_output.emit("[Stalker] Error: No binary loaded.")
         return False
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
 
     if binary_path not in active_stalker_sessions:
         main_app.update_output.emit("[Stalker] Error: No active session. Start a session first.")
@@ -348,7 +362,7 @@ def trace_function_stalker(
 
     try:
         session = active_stalker_sessions[binary_path]
-        success = session.trace_function(module_name, function_name)
+        success: bool = bool(session.trace_function(module_name, function_name))
 
         if success:
             main_app.update_output.emit(f"[Stalker] Tracing function: {module_name}!{function_name}")
@@ -380,11 +394,12 @@ def collect_module_coverage_stalker(
         True if coverage collection started successfully, False otherwise.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         main_app.update_output.emit("[Stalker] Error: No binary loaded.")
         return False
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
 
     if binary_path not in active_stalker_sessions:
         main_app.update_output.emit("[Stalker] Error: No active session. Start a session first.")
@@ -392,7 +407,7 @@ def collect_module_coverage_stalker(
 
     try:
         session = active_stalker_sessions[binary_path]
-        success = session.collect_module_coverage(module_name)
+        success: bool = bool(session.collect_module_coverage(module_name))
 
         if success:
             main_app.update_output.emit(f"[Stalker] Collecting coverage for module: {module_name}")
@@ -422,10 +437,11 @@ def get_stalker_stats(main_app: "IntellicrackApp") -> dict[str, Any] | None:
         Returns None if no active session for the current binary.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         return None
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
 
     if binary_path not in active_stalker_sessions:
         return None
@@ -463,17 +479,19 @@ def get_licensing_routines_stalker(main_app: "IntellicrackApp") -> list[str] | N
         if no active session for the current binary.
 
     """
-    if not main_app.current_binary:
+    current_binary: str | None = getattr(main_app, "current_binary", None)
+    if not current_binary:
         return None
 
-    binary_path = main_app.current_binary
+    binary_path: str = current_binary
 
     if binary_path not in active_stalker_sessions:
         return None
 
     try:
         session = active_stalker_sessions[binary_path]
-        return session.get_licensing_routines()
+        routines: list[str] = list(session.get_licensing_routines())
+        return routines
 
     except Exception as e:
         main_app.update_output.emit(f"[Stalker] Error getting licensing routines: {e}")

@@ -1317,9 +1317,7 @@ class FridaBypassWizard:
                 "attempted": attempted_int,
                 "successful": successful_int,
                 "failed": len(self.failed_bypasses),
-                "success_rate": (
-                    successful_int / attempted_int * 100 if attempted_int > 0 else 0
-                ),
+                "success_rate": (successful_int / attempted_int * 100 if attempted_int > 0 else 0),
                 "successful_types": [p.value for p in self.successful_bypasses],
                 "failed_types": [p.value for p in self.failed_bypasses],
             },

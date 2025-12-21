@@ -39,7 +39,7 @@ def pe_header_sample() -> bytes:
 def vmprotect_sample() -> bytes:
     """Create realistic VMProtect-protected binary sample."""
     data = bytearray(512)
-    data[0:2] = b"MZ"
+    data[:2] = b"MZ"
     data[10:30] = b"VMProtect by Oreans"
     data[50:70] = b"\xE8\x00\x00\x00\x00\x5D\x81\xED" + b"\x90" * 12
     data[100:120] = b"License validation"
@@ -113,7 +113,7 @@ class TestBinaryContextBuilder:
         strings = context_builder._extract_strings(binary_data, min_length=4)
 
         string_values = [s["value"] for s in strings if s["encoding"] == "UTF-16LE"]
-        assert len(string_values) > 0
+        assert string_values
         assert any("License" in val or "Key" in val or "Required" in val for val in string_values)
 
     def test_file_signature_detection_pe(self, context_builder: BinaryContextBuilder, pe_header_sample: bytes) -> None:
@@ -122,7 +122,7 @@ class TestBinaryContextBuilder:
 
         signature_hints = [h for h in hints if h["type"] == "file_signature"]
 
-        assert len(signature_hints) > 0
+        assert signature_hints
         assert signature_hints[0]["description"] == "PE/DOS Executable"
         assert signature_hints[0]["offset"] == 0
 
@@ -133,7 +133,7 @@ class TestBinaryContextBuilder:
 
         signature_hints = [h for h in hints if h["type"] == "file_signature"]
 
-        assert len(signature_hints) > 0
+        assert signature_hints
         assert signature_hints[0]["description"] == "ELF Executable"
 
     def test_length_prefix_detection(self, context_builder: BinaryContextBuilder) -> None:
@@ -146,7 +146,7 @@ class TestBinaryContextBuilder:
 
         length_hints = [h for h in hints if h["type"] == "length_prefix"]
 
-        assert len(length_hints) > 0
+        assert length_hints
         assert any(h["value"] == length_value for h in length_hints)
 
     def test_repeating_pattern_detection(self, context_builder: BinaryContextBuilder) -> None:
@@ -510,4 +510,4 @@ class TestAIIntegrationWorkflows:
 
         segments = context["entropy_segments"]
         high_entropy_segments = [s for s in segments if s["high_entropy"]]
-        assert len(high_entropy_segments) > 0
+        assert high_entropy_segments

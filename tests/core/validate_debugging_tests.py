@@ -103,13 +103,14 @@ def analyze_test_file(test_file_path: Path) -> dict[str, Any]:
 
 def validate_test_quality(metrics: dict[str, Any]) -> bool:
     """Validate test quality against production standards."""
-    validation_results = {}
+    validation_results = {
+        "has_multiple_test_classes": metrics["test_classes"] >= 10,
+        "has_many_tests": metrics["test_methods"] >= 40,
+        "has_sufficient_assertions": metrics["assertions"] >= 100,
+        "no_mocks": metrics["mock_usage"] == 0,
+        "no_stubs": metrics["stub_usage"] == 0,
+    }
 
-    validation_results["has_multiple_test_classes"] = metrics["test_classes"] >= 10
-    validation_results["has_many_tests"] = metrics["test_methods"] >= 40
-    validation_results["has_sufficient_assertions"] = metrics["assertions"] >= 100
-    validation_results["no_mocks"] = metrics["mock_usage"] == 0
-    validation_results["no_stubs"] = metrics["stub_usage"] == 0
     validation_results["uses_real_windows_apis"] = len(metrics["windows_apis"]) >= 8
     validation_results["tests_offensive_capabilities"] = (
         len(metrics["offensive_capabilities"]) >= 8

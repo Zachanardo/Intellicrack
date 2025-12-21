@@ -140,8 +140,7 @@ class IntelPTTracer:
             self._setup_etw_tracing()
 
             while self.is_tracing:
-                trace_packet = self._read_trace_packet()
-                if trace_packet:
+                if trace_packet := self._read_trace_packet():
                     self._decode_trace_packet(trace_packet)
 
                 time.sleep(0.001)  # 1ms sampling
@@ -259,9 +258,7 @@ class DynamoRIOTracer:
             Path.home() / "DynamoRIO"
         ]
 
-        # Check environment variable
-        dr_home = os.environ.get("DYNAMORIO_HOME")
-        if dr_home:
+        if dr_home := os.environ.get("DYNAMORIO_HOME"):
             common_paths.insert(0, Path(dr_home))
 
         for path in common_paths:
@@ -468,10 +465,7 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
         with open(client_source, 'w') as f:
             f.write(client_code)
 
-        # Compile client DLL
-        client_dll = self._compile_dynamorio_client(client_source)
-
-        return client_dll
+        return self._compile_dynamorio_client(client_source)
 
     def _compile_dynamorio_client(self, source_file: Path) -> Path:
         """Compile DynamoRIO client DLL.
@@ -658,14 +652,6 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
         Returns:
             Analysis results
         """
-        analysis = {
-            "hot_paths": [],
-            "api_patterns": {},
-            "memory_patterns": {},
-            "control_flow_anomalies": [],
-            "licensing_indicators": []
-        }
-
         # Identify hot paths (frequently executed code)
         address_counts = {}
         for inst in trace_data["instructions"]:
@@ -674,18 +660,21 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
 
         # Top 10 hot paths
         hot_addresses = sorted(address_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-        analysis["hot_paths"] = [
-            {"address": addr, "count": count} for addr, count in hot_addresses
-        ]
-
         # API call patterns
         api_counts = {}
         for api in trace_data["apis"]:
             api_name = api["api"].split("!")[1] if "!" in api["api"] else api["api"]
             api_counts[api_name] = api_counts.get(api_name, 0) + 1
 
-        analysis["api_patterns"] = api_counts
-
+        analysis = {
+            "memory_patterns": {},
+            "control_flow_anomalies": [],
+            "licensing_indicators": [],
+            "hot_paths": [
+                {"address": addr, "count": count} for addr, count in hot_addresses
+            ],
+            "api_patterns": api_counts,
+        }
         # Detect licensing-related patterns
         licensing_apis = [
             "GetVolumeInformation", "GetComputerName", "RegQueryValue",
@@ -702,8 +691,10 @@ static dr_emit_flags_t event_bb_insert(void *drcontext, void *tag,
                 })
 
         # Memory access patterns
-        mem_reads = sum(1 for m in trace_data["memory"] if m["type"] == "R")
-        mem_writes = sum(1 for m in trace_data["memory"] if m["type"] == "W")
+        mem_reads = sum(bool(m["type"] == "R")
+                    for m in trace_data["memory"])
+        mem_writes = sum(bool(m["type"] == "W")
+                     for m in trace_data["memory"])
 
         analysis["memory_patterns"] = {
             "total_accesses": len(trace_data["memory"]),
@@ -734,10 +725,10 @@ class RuntimeInstructionTracer:
         try:
             self.target_pid = int(target)
             self.is_pid = True
-        except ValueError:
+        except ValueError as e:
             self.target_path = Path(target)
             if not self.target_path.exists():
-                raise FileNotFoundError(f"Target not found: {target}")
+                raise FileNotFoundError(f"Target not found: {target}") from e
 
         # Initialize tracers
         self.intel_pt_tracer = None
@@ -811,14 +802,10 @@ class RuntimeInstructionTracer:
 
             kernel32 = ctypes.windll.kernel32
 
-            # Debug privilege constants
-            DEBUG_PROCESS = 0x00000001
             DEBUG_ONLY_THIS_PROCESS = 0x00000002
 
             if self.is_pid:
-                # Attach to existing process
-                success = kernel32.DebugActiveProcess(self.target_pid)
-                if success:
+                if success := kernel32.DebugActiveProcess(self.target_pid):
                     self.logger.info(f"Attached debugger to PID {self.target_pid}")
                     return True
             else:
@@ -826,7 +813,9 @@ class RuntimeInstructionTracer:
                 si = subprocess.STARTUPINFO()
                 pi = subprocess.PROCESS_INFORMATION()
 
-                success = kernel32.CreateProcessW(
+                # Debug privilege constants
+                DEBUG_PROCESS = 0x00000001
+                if success := kernel32.CreateProcessW(
                     str(self.target_path),
                     None,
                     None,
@@ -836,10 +825,8 @@ class RuntimeInstructionTracer:
                     None,
                     None,
                     ctypes.byref(si),
-                    ctypes.byref(pi)
-                )
-
-                if success:
+                    ctypes.byref(pi),
+                ):
                     self.logger.info(f"Started process with debugging: {self.target_path}")
                     return True
 
@@ -889,19 +876,11 @@ class RuntimeInstructionTracer:
         Returns:
             Combined analysis results
         """
-        analysis = {
-            "instruction_statistics": {},
-            "control_flow_patterns": [],
-            "memory_access_patterns": {},
-            "protection_mechanisms": [],
-            "performance_metrics": {}
-        }
-
         # Aggregate instruction statistics
         total_instructions = 0
         unique_addresses = set()
 
-        for technique, trace in traces.items():
+        for trace in traces.values():
             if isinstance(trace, list):
                 total_instructions += len(trace)
                 for inst in trace:
@@ -911,12 +890,18 @@ class RuntimeInstructionTracer:
                 if "instruction_count" in trace:
                     total_instructions += trace["instruction_count"]
 
-        analysis["instruction_statistics"] = {
-            "total_instructions": total_instructions,
-            "unique_addresses": len(unique_addresses),
-            "code_coverage": len(unique_addresses) / max(total_instructions, 1)
+        analysis = {
+            "control_flow_patterns": [],
+            "memory_access_patterns": {},
+            "protection_mechanisms": [],
+            "performance_metrics": {},
+            "instruction_statistics": {
+                "total_instructions": total_instructions,
+                "unique_addresses": len(unique_addresses),
+                "code_coverage": len(unique_addresses)
+                / max(total_instructions, 1),
+            },
         }
-
         # Identify protection mechanisms
         protection_indicators = [
             ("anti_debug", ["IsDebuggerPresent", "CheckRemoteDebuggerPresent", "int3"]),
@@ -948,11 +933,7 @@ class RuntimeInstructionTracer:
         """
         trace_str = str(trace).lower()
 
-        for indicator in indicators:
-            if indicator.lower() in trace_str:
-                return True
-
-        return False
+        return any(indicator.lower() in trace_str for indicator in indicators)
 
     def _detect_licensing_mechanisms(self, results: dict) -> list[dict]:
         """Detect licensing mechanisms from runtime traces.

@@ -231,7 +231,7 @@ class TestAddingSamples:
         with open(learner.buffer_path, "rb") as f:
             loaded_buffer: list[TrainingSample] = pickle.load(f)
 
-        assert len(loaded_buffer) > 0, "Persisted buffer must have samples"
+        assert loaded_buffer, "Persisted buffer must have samples"
         assert loaded_buffer[-1].protection_type == "upx", "Persisted sample must match"
 
     def test_add_sample_with_metadata(self, learner: IncrementalLearner, test_binary: Path) -> None:
@@ -358,7 +358,7 @@ class TestIncrementalRetraining:
 
         results: dict[str, Any] = learner_with_samples.retrain_incremental()
 
-        assert "test_accuracy" in results or len(results) > 0, "Must return training results"
+        assert "test_accuracy" in results or results, "Must return training results"
         assert len(learner_with_samples.sample_buffer) < initial_buffer_size, "Buffer must be cleared"
         assert len(learner_with_samples.learning_history) > 0, "Learning history must be updated"
 
@@ -373,7 +373,8 @@ class TestIncrementalRetraining:
             )
         )
 
-        high_conf_count: int = sum(1 for s in learner_with_samples.sample_buffer if s.confidence >= 0.5)
+        high_conf_count: int = sum(bool(s.confidence >= 0.5)
+                               for s in learner_with_samples.sample_buffer)
 
         learner_with_samples.retrain_incremental()
 
@@ -390,7 +391,7 @@ class TestIncrementalRetraining:
 
         results: dict[str, Any] = learner.retrain_incremental()
 
-        assert results == {}, "Empty buffer must return empty results"
+        assert not results, "Empty buffer must return empty results"
 
     def test_retrain_tracks_learning_session(self, learner_with_samples: IncrementalLearner) -> None:
         """Retraining creates and stores learning session."""

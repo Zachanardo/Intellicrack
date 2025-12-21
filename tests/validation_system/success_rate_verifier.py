@@ -264,9 +264,7 @@ class SuccessRateVerifier:
         if not meets_threshold:
             recommendations.append(f"CRITICAL: Overall success rate {overall_rate:.1%} is below 90% threshold")
 
-            # Identify worst performing versions
-            worst_versions = [v for v in version_data if v.success_rate < 0.8]
-            if worst_versions:
+            if worst_versions := [v for v in version_data if v.success_rate < 0.8]:
                 versions_str = ", ".join([f"{v.version} ({v.success_rate:.1%})" for v in worst_versions])
                 recommendations.append(f"Focus improvement efforts on versions with <80% success: {versions_str}")
 
@@ -292,12 +290,11 @@ class SuccessRateVerifier:
                 recommendations.append("Consider optimization to achieve >95% success rate for robustness")
 
         # Version-specific recommendations
-        for version in version_data:
-            if version.success_rate < self.success_threshold:
-                recommendations.append(
-                    f"Version {version.version}: {version.success_rate:.1%} success rate needs improvement"
-                )
-
+        recommendations.extend(
+            f"Version {version.version}: {version.success_rate:.1%} success rate needs improvement"
+            for version in version_data
+            if version.success_rate < self.success_threshold
+        )
         return recommendations
 
     def verify_success_rate_compliance(self, software_name: str, protection_name: str) -> SuccessRateReport:
@@ -383,7 +380,7 @@ class SuccessRateVerifier:
         """
         report = self.verify_success_rate_compliance(software_name, protection_name)
 
-        compliance_report = {
+        return {
             "phase": "2.5.2.4",
             "requirement": "Success rate must be ≥ 90% across versions or documented why not",
             "compliance_status": report.compliance_status.name,
@@ -391,19 +388,22 @@ class SuccessRateVerifier:
                 "overall_success_rate": f"{report.analysis.overall_success_rate:.1%}",
                 "meets_90_percent_threshold": report.analysis.meets_90_percent_threshold,
                 "versions_tested": len(report.analysis.version_data),
-                "total_test_attempts": sum(v.total_attempts for v in report.analysis.version_data)
+                "total_test_attempts": sum(
+                    v.total_attempts for v in report.analysis.version_data
+                ),
             },
             "detailed_analysis": report.detailed_findings,
             "recommendations": report.analysis.recommendations,
             "improvement_plan": report.improvement_plan,
             "documentation": {
-                "failure_reasons_documented": len(report.analysis.failure_analysis["failure_categories"]) > 0,
+                "failure_reasons_documented": len(
+                    report.analysis.failure_analysis["failure_categories"]
+                )
+                > 0,
                 "version_specific_analysis": True,
-                "statistical_analysis_provided": True
-            }
+                "statistical_analysis_provided": True,
+            },
         }
-
-        return compliance_report
 
 
 if __name__ == "__main__":

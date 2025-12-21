@@ -200,7 +200,9 @@ class TestCompleteConfigSystem(IntellicrackTestBase):
                 self.config.get("ui_preferences.window_geometry")
 
                 # Write to different sections
-                self.config.set(f"qemu_testing.execution_history", [f"test_{thread_id}_{i}.exe"])
+                self.config.set(
+                    "qemu_testing.execution_history", [f"test_{thread_id}_{i}.exe"]
+                )
                 self.config.set(f"environment.variables.THREAD_{thread_id}", f"value_{i}")
                 self.config.set(f"cli_configuration.profiles.thread_{thread_id}", {"verbosity": "info"})
 

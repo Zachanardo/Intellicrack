@@ -178,8 +178,7 @@ class TestGenerateReportFunction(IntellicrackTestBase):
         mock_app.analysis_results = {"format": "PE32"}
 
         try:
-            result = generate_report(mock_app, format="html", save=False)
-            if result:
+            if result := generate_report(mock_app, format="html", save=False):
                 assert isinstance(result, str)
                 assert len(result) > 0
         except Exception as e:
@@ -192,8 +191,7 @@ class TestGenerateReportFunction(IntellicrackTestBase):
         mock_app.analysis_results = {"format": "PE32", "protections": []}
 
         try:
-            result = generate_report(mock_app, format="json", save=False)
-            if result:
+            if result := generate_report(mock_app, format="json", save=False):
                 assert isinstance(result, str)
                 assert "{" in result or "[" in result
         except Exception as e:
@@ -243,8 +241,7 @@ class TestViewReportFunction(IntellicrackTestBase):
 
         with patch("webbrowser.open") as mock_open:
             try:
-                result = view_report(mock_app, filepath=str(test_report))
-                if result:
+                if result := view_report(mock_app, filepath=str(test_report)):
                     assert mock_open.called or result is True
             except Exception as e:
                 pass
@@ -293,8 +290,8 @@ class TestReportingEdgeCases(IntellicrackTestBase):
     def test_report_generator_with_very_large_data(self) -> None:
         """ReportGenerator handles large datasets."""
         data = {
-            "strings": ["String" + str(i) for i in range(1000)],
-            "license_checks": [{"address": i, "type": "test"} for i in range(100)]
+            "strings": [f"String{str(i)}" for i in range(1000)],
+            "license_checks": [{"address": i, "type": "test"} for i in range(100)],
         }
 
         generator = ReportGenerator()

@@ -284,9 +284,7 @@ class TestProcessAttachment:
     def test_attach_to_real_system_process_succeeds(self, hooks_with_cleanup: FridaCertificateHooks) -> None:
         """attach must succeed when attaching to real running process."""
         try:
-            result = hooks_with_cleanup.attach("explorer.exe")
-
-            if result:
+            if result := hooks_with_cleanup.attach("explorer.exe"):
                 assert hooks_with_cleanup.is_attached()
                 assert hooks_with_cleanup.session is not None
         except Exception as e:
@@ -527,8 +525,8 @@ class TestDetachment:
 
         hooks.detach()
 
-        assert hooks._attached is False
-        assert hooks._script_loaded is False
+        assert not hooks._attached
+        assert not hooks._script_loaded
         assert hooks.session is None
         assert hooks.script is None
 
@@ -548,7 +546,7 @@ class TestDetachment:
         result = hooks.clear_logs()
 
         assert result is True
-        assert len(hooks.messages) == 0
+        assert not hooks.messages
 
 
 class TestStateQueries:
@@ -599,7 +597,7 @@ class TestContextManager:
         with hooks:
             pass
 
-        assert hooks._attached is False
+        assert not hooks._attached
 
 
 class TestEdgeCases:

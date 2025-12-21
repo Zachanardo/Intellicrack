@@ -407,7 +407,7 @@ class TestTPMCommandProcessing:
         command = struct.pack(">HIIH", 0x8001, 12, TPM2CommandCode.GetRandom, 32)
         response = engine.send_tpm_command(command)
 
-        assert len(hook_called) > 0
+        assert hook_called
         assert response is not None
         assert struct.unpack(">I", response[10:14])[0] == 0xDEADBEEF
 

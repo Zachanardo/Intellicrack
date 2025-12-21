@@ -53,7 +53,7 @@ def large_test_file(tmp_path):
 
     with open(file_path, "wb") as f:
         for i in range(num_chunks):
-            chunk = bytes([(i + j) % 256 for j in range(chunk_size)])
+            chunk = bytes((i + j) % 256 for j in range(chunk_size))
             f.write(chunk)
 
     return file_path
@@ -157,7 +157,7 @@ class TestHashCalculation:
 
         analyzer._calculate_hashes_streaming(test_file, callback)
 
-        assert len(progress_updates) > 0
+        assert progress_updates
         assert all(current <= total for current, total in progress_updates)
 
 
@@ -209,7 +209,7 @@ class TestProgressTracking:
         results = analyzer.analyze_with_progress(small_pe_binary, callback)
 
         assert results.get("analysis_status") == "completed"
-        assert len(progress_stages) > 0
+        assert progress_stages
         assert "completed" in progress_stages
 
     def test_progress_stages_order(self, analyzer, small_pe_binary):
@@ -342,7 +342,7 @@ class TestLicenseStringScanning:
 
         patterns_found = {r["pattern_matched"] for r in results if isinstance(r, dict) and "pattern_matched" in r}
 
-        assert len(patterns_found) > 0
+        assert patterns_found
 
 
 class TestSectionAnalysis:
@@ -382,7 +382,7 @@ class TestSectionAnalysis:
         """Test section characteristics classification."""
         test_file = tmp_path / "classification.bin"
         text_section = b"This is printable text content for testing" * 20
-        binary_section = bytes([(i * 37) % 256 for i in range(1000)])
+        binary_section = bytes((i * 37) % 256 for i in range(1000))
         test_data = text_section + binary_section
         test_file.write_bytes(test_data)
 

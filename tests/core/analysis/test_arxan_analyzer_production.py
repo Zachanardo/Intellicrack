@@ -82,7 +82,7 @@ def temp_binary_dir(tmp_path: Path) -> Path:
 def create_pe_header() -> bytes:
     """Create minimal valid PE header for test binaries."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     pe_signature = b"PE\x00\x00"
@@ -99,10 +99,10 @@ def create_pe_header() -> bytes:
     )
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 0x1000)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 0x1000)
@@ -198,7 +198,7 @@ def create_arxan_protected_binary(
     binary_data.extend(b"\xc1\xe8\x08\x33\x81")
     binary_data.extend(b"\x33\x81\xaa\xbb\xcc\xdd")
 
-    high_entropy_data = bytes([(i * 137 + 73) % 256 for i in range(2048)])
+    high_entropy_data = bytes((i * 137 + 73) % 256 for i in range(2048))
     binary_data.extend(high_entropy_data)
 
     with open(binary_path, "wb") as f:
@@ -659,7 +659,7 @@ class TestArxanAnalyzerTamperCheckDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         crc32_checks = [c for c in result.tamper_checks if c.algorithm == "crc32"]
-        assert len(crc32_checks) > 0
+        assert crc32_checks
 
         for check in crc32_checks:
             assert check.bypass_complexity == "low"
@@ -683,7 +683,7 @@ class TestArxanAnalyzerTamperCheckDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         md5_checks = [c for c in result.tamper_checks if c.algorithm == "md5"]
-        assert len(md5_checks) > 0
+        assert md5_checks
 
         for check in md5_checks:
             assert check.bypass_complexity == "medium"
@@ -707,7 +707,7 @@ class TestArxanAnalyzerTamperCheckDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         sha256_checks = [c for c in result.tamper_checks if c.algorithm == "sha256"]
-        assert len(sha256_checks) > 0
+        assert sha256_checks
 
         for check in sha256_checks:
             assert check.bypass_complexity == "high"
@@ -731,7 +731,7 @@ class TestArxanAnalyzerTamperCheckDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         hmac_checks = [c for c in result.tamper_checks if c.algorithm == "hmac"]
-        assert len(hmac_checks) > 0
+        assert hmac_checks
 
         for check in hmac_checks:
             assert check.bypass_complexity == "high"
@@ -878,7 +878,7 @@ class TestArxanAnalyzerRASPDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         anti_frida = [r for r in result.rasp_mechanisms if r.mechanism_type == "anti_frida"]
-        assert len(anti_frida) > 0
+        assert anti_frida
 
         for rasp in anti_frida:
             assert rasp.detection_method == "string_detection"
@@ -904,7 +904,7 @@ class TestArxanAnalyzerRASPDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         anti_debug = [r for r in result.rasp_mechanisms if r.mechanism_type == "anti_debug"]
-        assert len(anti_debug) > 0
+        assert anti_debug
 
         for rasp in anti_debug:
             assert rasp.detection_method == "peb_check"
@@ -930,7 +930,7 @@ class TestArxanAnalyzerRASPDetection:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         anti_vm = [r for r in result.rasp_mechanisms if r.mechanism_type == "anti_vm"]
-        assert len(anti_vm) > 0
+        assert anti_vm
 
         for rasp in anti_vm:
             assert rasp.detection_method == "signature_scan"
@@ -958,7 +958,7 @@ class TestArxanAnalyzerRASPDetection:
         exception_handlers = [
             r for r in result.rasp_mechanisms if r.mechanism_type == "exception_handler"
         ]
-        assert len(exception_handlers) > 0
+        assert exception_handlers
 
         for rasp in exception_handlers:
             assert rasp.hook_target == "SEH"
@@ -988,7 +988,7 @@ class TestArxanAnalyzerLicenseValidation:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         rsa_routines = [r for r in result.license_routines if r.validation_type == "rsa_validation"]
-        assert len(rsa_routines) > 0
+        assert rsa_routines
 
         for routine in rsa_routines:
             assert routine.algorithm == "RSA"
@@ -1015,7 +1015,7 @@ class TestArxanAnalyzerLicenseValidation:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         aes_routines = [r for r in result.license_routines if r.validation_type == "aes_license"]
-        assert len(aes_routines) > 0
+        assert aes_routines
 
         for routine in aes_routines:
             assert routine.algorithm == "AES"
@@ -1040,7 +1040,7 @@ class TestArxanAnalyzerLicenseValidation:
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
         serial_routines = [r for r in result.license_routines if r.validation_type == "serial_check"]
-        assert len(serial_routines) > 0
+        assert serial_routines
 
         for routine in serial_routines:
             assert routine.algorithm == "custom"
@@ -1085,9 +1085,9 @@ class TestArxanAnalyzerIntegrityChecks:
 
         result: ArxanAnalysisResult = arxan_analyzer.analyze(binary_path)
 
-        crc_checks = [c for c in result.integrity_checks if c.hash_algorithm == "CRC32"]
-
-        if len(crc_checks) > 0:
+        if crc_checks := [
+            c for c in result.integrity_checks if c.hash_algorithm == "CRC32"
+        ]:
             for check in crc_checks:
                 assert check.check_type == "hash_verification"
                 assert check.bypass_strategy == "hook_hash_function"
@@ -1127,7 +1127,7 @@ class TestArxanAnalyzerStringEncryption:
         binary_data = bytearray(pe_header)
 
         binary_data.extend(b"\x30\x04\x08\x47")
-        high_entropy = bytes([(i * 137 + 73) % 256 for i in range(256)])
+        high_entropy = bytes((i * 137 + 73) % 256 for i in range(256))
         binary_data.extend(high_entropy)
 
         with open(binary_path, "wb") as f:
@@ -1155,7 +1155,7 @@ class TestArxanAnalyzerWhiteBoxCrypto:
         binary_data = bytearray(pe_header)
 
         for _ in range(5):
-            unique_table = bytes([(i * 137 + 73) % 256 for i in range(2048)])
+            unique_table = bytes((i * 137 + 73) % 256 for i in range(2048))
             binary_data.extend(unique_table)
 
         with open(binary_path, "wb") as f:

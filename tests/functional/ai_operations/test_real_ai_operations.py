@@ -33,7 +33,7 @@ class TestRealAIOperations:
     @pytest.fixture
     def test_code_sample(self):
         """Create REAL code sample for AI analysis."""
-        code = '''
+        return '''
 #include <windows.h>
 #include <stdio.h>
 
@@ -90,7 +90,6 @@ int main() {
     return 0;
 }
 '''
-        return code
 
     @pytest.fixture
     def app_context(self):

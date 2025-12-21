@@ -533,9 +533,12 @@ class TestLLMConfiguration(unittest.TestCase):
             t.join(timeout=5.0)
 
         # Check results
-        save_count = sum(1 for r in results if r[0] == "save" and r[2] == "success")
-        load_count = sum(1 for r in results if r[0] == "load")
-        metrics_count = sum(1 for r in results if r[0] == "metrics" and r[2] == "success")
+        save_count = sum(bool(r[0] == "save" and r[2] == "success")
+                     for r in results)
+        load_count = sum(bool(r[0] == "load")
+                     for r in results)
+        metrics_count = sum(bool(r[0] == "metrics" and r[2] == "success")
+                        for r in results)
 
         self.assertEqual(save_count, 10, f"All saves should succeed. Errors: {errors}")
         self.assertEqual(load_count, 10, f"All loads should complete. Errors: {errors}")

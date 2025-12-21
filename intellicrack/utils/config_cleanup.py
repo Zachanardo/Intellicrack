@@ -184,15 +184,13 @@ def generate_cleanup_report(results: dict) -> str:
         report.extend((f"\n{file_path}:", "-" * 40))
         if info["unused_imports"]:
             report.append("  Unused imports:")
-            report.extend(
-                f"    Line {line}: {import_name}"
-                for import_name, line in info["unused_imports"]
-            )
+            report.extend(f"    Line {line}: {import_name}" for import_name, line in info["unused_imports"])
         if info["unused_methods"]:
             report.append("  Unused methods:")
-            for method_name, line in info["unused_methods"]:
-                report.append(f"    Line {line}: {method_name}")
-
+            report.extend(
+                f"    Line {line}: {method_name}"
+                for method_name, line in info["unused_methods"]
+            )
         if info["qsettings_usage"]:
             report.append("  QSettings usage:")
             for line in info["qsettings_usage"]:

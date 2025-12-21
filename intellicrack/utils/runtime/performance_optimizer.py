@@ -485,9 +485,7 @@ class PerformanceOptimizer:
         cache_hits = int(results["cache_hits"])
         cache_misses = int(results["cache_misses"])
         results["performance_metrics"]["cache_efficiency"] = (
-            cache_hits / (cache_hits + cache_misses)
-            if (cache_hits + cache_misses) > 0
-            else 0.0
+            cache_hits / (cache_hits + cache_misses) if (cache_hits + cache_misses) > 0 else 0.0
         )
 
         logger.info("Analysis completed in %fs", total_time)
@@ -495,7 +493,9 @@ class PerformanceOptimizer:
 
         return results
 
-    def _run_chunked_analysis(self, file_path: str, analysis_func: Callable[..., dict[str, Any]], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _run_chunked_analysis(
+        self, file_path: str, analysis_func: Callable[..., dict[str, Any]], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Run analysis on binary chunks."""
         chunk_size_mb = float(strategy["chunk_size_mb"])
         chunk_size = int(chunk_size_mb * 1024 * 1024)
@@ -528,7 +528,9 @@ class PerformanceOptimizer:
 
         return aggregated_result
 
-    def _run_standard_analysis(self, file_path: str, analysis_func: Callable[..., dict[str, Any]], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _run_standard_analysis(
+        self, file_path: str, analysis_func: Callable[..., dict[str, Any]], strategy: dict[str, Any]
+    ) -> dict[str, Any]:
         """Run standard analysis on entire file."""
         _ = strategy
         try:
@@ -644,6 +646,7 @@ def example_entropy_analysis(data: bytes | mmap.mmap, chunk_info: dict[str, Any]
         if count > 0:
             p = count / len(sample_data)
             import math
+
             entropy -= p * math.log2(p)
 
     result: dict[str, Any] = {

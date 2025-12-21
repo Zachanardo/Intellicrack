@@ -211,7 +211,7 @@ class TestMemoryOptimizationExecution:
 
         assert isinstance(bytes_saved, int)
         assert optimizer.optimization_stats["total_optimizations"] > initial_optimizations
-        assert optimizer.enabled is False
+        assert not optimizer.enabled
 
 
 class TestCheckMemoryUsage:

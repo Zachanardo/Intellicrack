@@ -237,7 +237,7 @@ class TestHardwareTokenEmulation:
         sig_pos = chuid.find(b'\x3e\x40')
         assert sig_pos != -1
         # Signature should be at least 64 bytes
-        assert len(chuid) - sig_pos - 2 > 63
+        assert len(chuid) - sig_pos > 65
 
     def test_x509_certificate_generation(self, bypasser):
         """Test X.509 certificate generation."""

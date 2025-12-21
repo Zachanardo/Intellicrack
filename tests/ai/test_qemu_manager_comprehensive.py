@@ -687,7 +687,7 @@ class TestNetworkIsolation:
 
         qemu_manager.enable_network_isolation(sample_snapshot.snapshot_id, isolated=False)
 
-        assert sample_snapshot.network_isolated is False
+        assert not sample_snapshot.network_isolated
 
 
 class TestPerformanceMonitoring:

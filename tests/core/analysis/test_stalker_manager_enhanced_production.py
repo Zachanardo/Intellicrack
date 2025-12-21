@@ -90,11 +90,15 @@ int main() {
 
         try:
             result = subprocess.run(
-                ["cl.exe", "/Fe:" + str(test_exe), str(source_file),
-                 "advapi32.lib"],
+                [
+                    "cl.exe",
+                    f"/Fe:{str(test_exe)}",
+                    str(source_file),
+                    "advapi32.lib",
+                ],
                 cwd=str(tmp_path),
                 capture_output=True,
-                timeout=30
+                timeout=30,
             )
 
             if result.returncode == 0 and test_exe.exists():
@@ -144,9 +148,7 @@ def test_stalker_session_real_process_spawn() -> None:
         )
 
         try:
-            started = session.start()
-
-            if started:
+            if started := session.start():
                 assert session.pid is not None
                 assert session.pid > 0
                 assert session._is_active is True
@@ -185,12 +187,9 @@ def test_stalker_trace_function_real_execution(test_executable: Path) -> None:
             if session.start():
                 time.sleep(0.5)
 
-                success = session.trace_function(
-                    test_executable.stem,
-                    "CheckLicense"
-                )
-
-                if success:
+                if success := session.trace_function(
+                    test_executable.stem, "CheckLicense"
+                ):
                     time.sleep(1)
 
                     assert len(session.trace_events) >= 0
@@ -281,11 +280,9 @@ def test_stalker_coverage_collection_real_code(test_executable: Path) -> None:
             if session.start():
                 time.sleep(0.5)
 
-                success = session.collect_module_coverage(
+                if success := session.collect_module_coverage(
                     test_executable.stem
-                )
-
-                if success:
+                ):
                     time.sleep(1)
 
                     coverage_summary = session.get_coverage_summary()
@@ -404,8 +401,6 @@ def test_stalker_config_update_real_session() -> None:
 
                 success = session.set_config(config)
 
-                if success:
-                    assert True
         finally:
             session.cleanup()
 

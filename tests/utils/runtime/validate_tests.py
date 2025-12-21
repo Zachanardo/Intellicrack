@@ -54,7 +54,7 @@ def test_hash_computation() -> bool:
 
         result = verify_hash(temp_path, expected_hash, "sha256")
         assert result["verified"] is True, "Hash verification failed"
-        print(f"  ✓ Hash verification passed")
+        print("  ✓ Hash verification passed")
 
         return True
     finally:
@@ -77,7 +77,7 @@ def test_external_command() -> bool:
     assert result["return_code"] == 0, f"Non-zero return code: {result['return_code']}"
     assert "test_output" in result["stdout"], "Output not captured"
 
-    print(f"  ✓ Command executed successfully")
+    print("  ✓ Command executed successfully")
     print(f"  ✓ Output captured: {result['stdout'].strip()}")
 
     return True
@@ -175,11 +175,11 @@ def test_verification_functions() -> bool:
 
         license_check = _verify_license_bypass(temp_binary)
         assert "bypassed" in license_check, "License check missing 'bypassed' field"
-        print(f"  ✓ License bypass verification completed")
+        print("  ✓ License bypass verification completed")
 
         protection = _verify_protection_bypass(temp_binary)
         assert "bypassed" in protection, "Protection missing 'bypassed' field"
-        print(f"  ✓ Protection bypass verification completed")
+        print("  ✓ Protection bypass verification completed")
 
         return True
     finally:
@@ -246,7 +246,7 @@ def test_weak_crypto_detection() -> bool:
 
         if result["status"] == "success":
             assert "severity" in result, "Missing severity"
-            print(f"  ✓ Crypto detection completed")
+            print("  ✓ Crypto detection completed")
             print(f"  ✓ Issues found: {result.get('issues_found', 0)}")
             print(f"  ✓ Severity: {result['severity']}")
         else:
@@ -289,7 +289,7 @@ def test_tool_output_parsing() -> bool:
 
     assert "file_type" in file_result, "Missing file_type"
     assert isinstance(file_result["file_type"], str), "file_type not string"
-    print(f"  ✓ File output parsed")
+    print("  ✓ File output parsed")
 
     strings_output = "String1\nString2\nString3\nString4"
     strings_result = _parse_tool_output("strings", strings_output)

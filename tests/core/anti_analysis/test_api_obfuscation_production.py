@@ -113,9 +113,9 @@ class TestDynamicAPIResolution:
         """Verify dynamic resolution returns valid address."""
         obfuscator = APIObfuscator()
 
-        address = obfuscator.resolve_api("kernel32.dll", "LoadLibraryW", method="dynamic_resolution")
-
-        if address:
+        if address := obfuscator.resolve_api(
+            "kernel32.dll", "LoadLibraryW", method="dynamic_resolution"
+        ):
             assert isinstance(address, int)
 
 
@@ -150,9 +150,9 @@ class TestAPIResolutionCaching:
         """Verify resolved APIs are cached."""
         obfuscator = APIObfuscator()
 
-        address = obfuscator.resolve_api("kernel32.dll", "GetProcAddress", method="normal")
-
-        if address:
+        if address := obfuscator.resolve_api(
+            "kernel32.dll", "GetProcAddress", method="normal"
+        ):
             cache_key = "kernel32.dll!GetProcAddress"
             assert cache_key in obfuscator.resolved_apis_cache
             assert obfuscator.resolved_apis_cache[cache_key] == address
@@ -252,8 +252,9 @@ class TestMultipleAPIsResolution:
         addresses = []
 
         for api_name in apis:
-            address = obfuscator.resolve_api("kernel32.dll", api_name, method="normal")
-            if address:
+            if address := obfuscator.resolve_api(
+                "kernel32.dll", api_name, method="normal"
+            ):
                 addresses.append(address)
 
         assert len(addresses) >= 2
@@ -272,11 +273,10 @@ class TestMultipleAPIsResolution:
 
         addresses = []
         for dll, api in apis:
-            address = obfuscator.resolve_api(dll, api, method="normal")
-            if address:
+            if address := obfuscator.resolve_api(dll, api, method="normal"):
                 addresses.append((dll, api, address))
 
-        assert len(addresses) >= 1
+        assert addresses
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-only functionality")
@@ -295,8 +295,9 @@ class TestLicensingAntiHook:
         ]
 
         for api_name in apis:
-            address = obfuscator.resolve_api("kernel32.dll", api_name, method="normal")
-            if address:
+            if address := obfuscator.resolve_api(
+                "kernel32.dll", api_name, method="normal"
+            ):
                 assert isinstance(address, int)
                 assert address > 0
 
@@ -335,7 +336,7 @@ class TestPerformance:
         """Test bulk API resolution performance."""
         obfuscator = APIObfuscator()
 
-        apis = [f"GetProcAddress", "LoadLibraryW", "GetModuleHandleW"] * 10
+        apis = ["GetProcAddress", "LoadLibraryW", "GetModuleHandleW"] * 10
 
         for api_name in apis:
             obfuscator.resolve_api("kernel32.dll", api_name, method="normal")

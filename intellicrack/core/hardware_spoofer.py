@@ -13,7 +13,7 @@ import winreg
 from ctypes import c_void_p
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import netifaces
 
@@ -161,7 +161,7 @@ class HardwareFingerPrintSpoofer:
                     cpu_id: str = cpu.ProcessorId.strip()
                     return cpu_id
             else:
-                with open("/proc/cpuinfo") as f:
+                with open("/proc/cpuinfo", encoding="utf-8") as f:
                     for line in f:
                         if "serial" in line.lower():
                             return line.split(":")[1].strip()
@@ -360,7 +360,7 @@ class HardwareFingerPrintSpoofer:
         """
         try:
             if platform.system() == "Windows":
-                result = subprocess.run(["vol", "C:"], capture_output=True, text=True)
+                result = subprocess.run(["vol", "C:"], capture_output=True, text=True, check=False)
                 for line in result.stdout.split("\n"):
                     if "Serial Number" in line:
                         return line.split()[-1]
@@ -884,7 +884,7 @@ class HardwareFingerPrintSpoofer:
         iid = uuid.UUID(IID_IWbemLocator)
 
         class GUID(ctypes.Structure):
-            _fields_ = [
+            _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("Data1", ctypes.c_ulong),
                 ("Data2", ctypes.c_ushort),
                 ("Data3", ctypes.c_ushort),
@@ -1031,17 +1031,17 @@ class HardwareFingerPrintSpoofer:
 
     def _create_spoofed_enumerator(
         self,
-        this: ctypes.c_void_p,
+        _this: ctypes.c_void_p,
         hw_class: str,
-        lFlags: int,
+        _l_flags: int,
         ppEnum: Any,
     ) -> int:
         """Create a spoofed WMI enumerator that returns modified hardware data.
 
         Args:
-            this: COM object pointer for the WMI service.
+            _this: COM object pointer for the WMI service (unused).
             hw_class: WMI hardware class name (e.g., Win32_Processor).
-            lFlags: WMI operation flags.
+            _l_flags: WMI operation flags (unused).
             ppEnum: Pointer to receive the spoofed enumerator.
 
         Returns:
@@ -1064,7 +1064,7 @@ class HardwareFingerPrintSpoofer:
                 return E_FAIL
 
             class SpoofedEnumeratorVTable(ctypes.Structure):
-                _fields_ = [
+                _fields_: ClassVar[list[tuple[str, Any]]] = [
                     ("QueryInterface", ctypes.CFUNCTYPE(HRESULT, c_void_p, c_void_p, POINTER(c_void_p))),
                     ("AddRef", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
                     ("Release", ctypes.CFUNCTYPE(ctypes.c_ulong, c_void_p)),
@@ -1079,7 +1079,7 @@ class HardwareFingerPrintSpoofer:
                 ]
 
             class SpoofedEnumerator(ctypes.Structure):
-                _fields_ = [
+                _fields_: ClassVar[list[tuple[str, Any]]] = [
                     ("lpVtbl", POINTER(SpoofedEnumeratorVTable)),
                     ("ref_count", ctypes.c_ulong),
                     ("current_index", ctypes.c_ulong),
@@ -1161,8 +1161,8 @@ class HardwareFingerPrintSpoofer:
 
             return S_OK
 
-        except Exception as e:
-            logger.exception("Failed to create spoofed enumerator: %s", e)
+        except Exception:
+            logger.exception("Failed to create spoofed enumerator")
             return E_FAIL
 
     def _get_spoofed_values_for_class(self, hw_class: str) -> list[dict[str, Any]]:
@@ -2148,10 +2148,11 @@ class HardwareFingerPrintSpoofer:
 
         wmi_pids = self._find_wmi_processes()
 
+        inherit_handle = False
         for pid in wmi_pids:
             if hProcess := kernel32.OpenProcess(
                 PROCESS_VM_READ | PROCESS_VM_WRITE | PROCESS_VM_OPERATION | PROCESS_QUERY_INFORMATION,
-                False,
+                inherit_handle,
                 pid,
             ):
                 self._patch_processor_info(kernel32, hProcess)
@@ -2179,7 +2180,7 @@ class HardwareFingerPrintSpoofer:
             return processes
 
         class PROCESSENTRY32(ctypes.Structure):
-            _fields_ = [
+            _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("dwSize", wintypes.DWORD),
                 ("cntUsage", wintypes.DWORD),
                 ("th32ProcessID", wintypes.DWORD),
@@ -2299,7 +2300,7 @@ class HardwareFingerPrintSpoofer:
         from ctypes import byref, c_void_p, create_string_buffer, sizeof, wintypes
 
         class SystemInfo(ctypes.Structure):
-            _fields_ = [
+            _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("wProcessorArchitecture", wintypes.WORD),
                 ("wReserved", wintypes.WORD),
                 ("dwPageSize", wintypes.DWORD),
@@ -2317,7 +2318,7 @@ class HardwareFingerPrintSpoofer:
         kernel32.GetSystemInfo(byref(sysinfo))
 
         class MemoryBasicInformation(ctypes.Structure):
-            _fields_ = [
+            _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("BaseAddress", c_void_p),
                 ("AllocationBase", c_void_p),
                 ("AllocationProtect", wintypes.DWORD),
@@ -2347,11 +2348,11 @@ class HardwareFingerPrintSpoofer:
             PAGE_READONLY = 0x02
             PAGE_EXECUTE_READWRITE = 0x40
 
-            if mbi.State == MEM_COMMIT and mbi.Protect in [
+            if mbi.State == MEM_COMMIT and mbi.Protect in {
                 PAGE_READWRITE,
                 PAGE_READONLY,
                 PAGE_EXECUTE_READWRITE,
-            ]:
+            }:
                 buffer = create_string_buffer(mbi.RegionSize)
                 bytes_read = ctypes.c_size_t()
 

@@ -335,7 +335,10 @@ class TestCSVExport:
             reader = csv.reader(f)
             rows = list(reader)
 
-        assert 'file_with_"quotes".dll' in rows[1][1] or 'file_with_"quotes".dll' == rows[1][1]
+        assert (
+            'file_with_"quotes".dll' in rows[1][1]
+            or rows[1][1] == 'file_with_"quotes".dll'
+        )
 
     def test_exports_generic_csv(self, tmp_path: Path) -> None:
         """CSV exporter handles generic data structures."""

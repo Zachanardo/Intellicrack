@@ -115,7 +115,7 @@ class TestRealCryptoOperations:
         yield temp_file.name
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -411,7 +411,7 @@ class TestRealCryptoOperations:
                 hashes.SHA256()
             )
             signature_valid = True
-        except:
+        except Exception:
             signature_valid = False
 
         assert signature_valid, "Signature must be valid"
@@ -429,7 +429,7 @@ class TestRealCryptoOperations:
                 hashes.SHA256()
             )
             tampered_valid = True
-        except:
+        except Exception:
             tampered_valid = False
 
         assert not tampered_valid, "Tampered message must not verify"
@@ -511,7 +511,7 @@ class TestRealCryptoOperations:
 
         # Test wrong passwords
         for password, hash_info in hashed_passwords.items():
-            wrong_password = password + "_wrong"
+            wrong_password = f"{password}_wrong"
             verify_result = secrets_manager.verify_password(
                 wrong_password,
                 hash_info['hash'],

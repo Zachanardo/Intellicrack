@@ -157,12 +157,10 @@ def test_breakpoint_toggle_adds_breakpoint(debugger_dialog: DebuggerDialog) -> N
 
     assert len(debugger_dialog.debugger.breakpoints) == initial_count + 1
 
-    found_breakpoint = False
-    for bp in debugger_dialog.debugger.breakpoints.values():
-        if bp.line == 5 and bp.file == debugger_dialog.plugin_path:
-            found_breakpoint = True
-            break
-
+    found_breakpoint = any(
+        bp.line == 5 and bp.file == debugger_dialog.plugin_path
+        for bp in debugger_dialog.debugger.breakpoints.values()
+    )
     assert found_breakpoint, "Breakpoint not added to debugger"
 
 
@@ -203,12 +201,14 @@ def test_breakpoint_list_shows_disabled_status(debugger_dialog: DebuggerDialog) 
     """Breakpoint list shows disabled status correctly."""
     debugger_dialog.toggle_breakpoint(25)
 
-    bp_id = None
-    for bp in debugger_dialog.debugger.breakpoints.values():
-        if bp.line == 25:
-            bp_id = bp.id
-            break
-
+    bp_id = next(
+        (
+            bp.id
+            for bp in debugger_dialog.debugger.breakpoints.values()
+            if bp.line == 25
+        ),
+        None,
+    )
     assert bp_id is not None
 
     debugger_dialog.disable_breakpoint(bp_id)
@@ -227,12 +227,14 @@ def test_breakpoint_enable_after_disable(debugger_dialog: DebuggerDialog) -> Non
     """Breakpoint can be re-enabled after disabling."""
     debugger_dialog.toggle_breakpoint(30)
 
-    bp_id = None
-    for bp in debugger_dialog.debugger.breakpoints.values():
-        if bp.line == 30:
-            bp_id = bp.id
-            break
-
+    bp_id = next(
+        (
+            bp.id
+            for bp in debugger_dialog.debugger.breakpoints.values()
+            if bp.line == 30
+        ),
+        None,
+    )
     assert bp_id is not None
 
     debugger_dialog.disable_breakpoint(bp_id)
@@ -503,10 +505,9 @@ def test_watch_display_update_sets_values(debugger_dialog: DebuggerDialog) -> No
     found_value = False
     for i in range(debugger_dialog.watch_tree.topLevelItemCount()):
         item = debugger_dialog.watch_tree.topLevelItem(i)
-        if item and item.text(0) == "seed":
-            if "12345" in item.text(1):
-                found_value = True
-                break
+        if item and item.text(0) == "seed" and "12345" in item.text(1):
+            found_value = True
+            break
 
     assert found_value, "Watch value not updated"
 
@@ -662,7 +663,7 @@ def test_debugger_output_thread_processes_messages() -> None:
     thread.stop()
     thread.wait()
 
-    assert len(received_messages) > 0
+    assert received_messages
     assert received_messages[0][0] == "test_message"
 
 

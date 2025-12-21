@@ -10,16 +10,28 @@
  * @tags strings,extraction,analysis,cryptography,obfuscation,encoding
  */
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolTable;
 import java.io.*;
 import java.nio.charset.*;
 import java.util.*;
+import java.util.Locale;
 import java.util.regex.*;
 
 public class QuickStringDump extends GhidraScript {
@@ -285,10 +297,14 @@ public class QuickStringDump extends GhidraScript {
         byte[] bytes = new byte[2];
         currentProgram.getMemory().getBytes(addr, bytes);
 
+        // Use UTF16_PATTERN to validate UTF-16 byte pattern
+        String twoByteStr = new String(bytes, StandardCharsets.ISO_8859_1);
+        boolean isUtf16Pattern = UTF16_PATTERN.matcher(twoByteStr).matches();
+
         // Check for little-endian UTF-16
         char c = (char) ((bytes[1] & 0xFF) << 8 | (bytes[0] & 0xFF));
 
-        if (isPrintableUnicode(c)) {
+        if (isPrintableUnicode(c) || isUtf16Pattern) {
           if (stringStart == null) {
             stringStart = addr;
           }
@@ -305,6 +321,7 @@ public class QuickStringDump extends GhidraScript {
           stringStart = null;
         }
       } catch (Exception e) {
+        printerr("UTF-16 search error at " + addr + ": " + e.getMessage());
         currentString.setLength(0);
         stringStart = null;
       }
@@ -338,14 +355,13 @@ public class QuickStringDump extends GhidraScript {
             }
           }
         }
-      } catch (Exception e) {
-        // Continue searching
+      } catch (MemoryAccessException e) {
+        continue;
       }
     }
   }
 
   private void performAdvancedAnalysis() {
-    // Analyze string patterns for potential decryption keys, passwords, etc.
     for (StringAnalysisResult result : new ArrayList<>(analysisResults)) {
       performEntropyAnalysis(result);
       performCryptographicAnalysis(result);
@@ -356,7 +372,9 @@ public class QuickStringDump extends GhidraScript {
 
   private void performEntropyAnalysis(StringAnalysisResult result) {
     String str = result.value;
-    if (str.length() < 8) return;
+    if (str.length() < 8) {
+      return;
+    }
 
     // Calculate Shannon entropy
     Map<Character, Integer> charCounts = new HashMap<>();
@@ -388,7 +406,7 @@ public class QuickStringDump extends GhidraScript {
   }
 
   private void performCryptographicAnalysis(StringAnalysisResult result) {
-    String str = result.value.toLowerCase();
+    String str = result.value.toLowerCase(Locale.ROOT);
 
     // Check for cryptographic indicators
     if (CRYPTO_KEYWORD_PATTERN.matcher(str).find()) {
@@ -448,12 +466,11 @@ public class QuickStringDump extends GhidraScript {
           result.analysisNotes.add("Valid Base64 encoding detected");
           result.decodedValue = decodedStr;
         }
-      } catch (Exception e) {
-        // Not valid Base64
+      } catch (IllegalArgumentException e) {
+        result.analysisNotes.add("Base64 decode attempted: " + e.getMessage());
       }
     }
 
-    // Check for URL encoding
     if (str.contains("%") && str.matches(".*%[0-9a-fA-F]{2}.*")) {
       try {
         String decoded = java.net.URLDecoder.decode(str, StandardCharsets.UTF_8);
@@ -462,19 +479,17 @@ public class QuickStringDump extends GhidraScript {
           result.decodedValue = decoded;
           result.confidence += 0.3;
         }
-      } catch (Exception e) {
-        // Not valid URL encoding
+      } catch (IllegalArgumentException e) {
+        result.analysisNotes.add("URL decode attempted: " + e.getMessage());
       }
     }
 
-    // Check for Unicode escape sequences
     if (UNICODE_ESCAPE_PATTERN.matcher(str).find()) {
       result.category = "Unicode";
       result.confidence += 0.4;
       result.analysisNotes.add("Unicode escape sequences detected");
     }
 
-    // Check for hex encoding
     if (str.length() % 2 == 0 && str.matches("[0-9a-fA-F]+") && str.length() >= 8) {
       try {
         StringBuilder decoded = new StringBuilder();
@@ -489,14 +504,14 @@ public class QuickStringDump extends GhidraScript {
           result.analysisNotes.add("Hex-encoded string detected");
           result.decodedValue = decodedStr;
         }
-      } catch (Exception e) {
-        // Not valid hex encoding
+      } catch (NumberFormatException e) {
+        result.analysisNotes.add("Hex decode attempted: " + e.getMessage());
       }
     }
   }
 
   private void performKeywordAnalysis(StringAnalysisResult result) {
-    String str = result.value.toLowerCase();
+    String str = result.value.toLowerCase(Locale.ROOT);
 
     // Password/secret indicators
     if (str.contains("password")
@@ -579,10 +594,10 @@ public class QuickStringDump extends GhidraScript {
         // Check instruction context
         Instruction instr = currentProgram.getListing().getInstructionAt(fromAddr);
         if (instr != null) {
-          String mnemonic = instr.getMnemonicString().toLowerCase();
+          String mnemonic = instr.getMnemonicString().toLowerCase(Locale.ROOT);
 
           // Strings used in function calls are highly relevant
-          if (mnemonic.equals("call")) {
+          if ("call".equals(mnemonic)) {
             result.relevanceScore += 2.0;
             result.analysisNotes.add("Referenced in function call");
           }
@@ -711,9 +726,9 @@ public class QuickStringDump extends GhidraScript {
       for (int i = 0; i < 10 && currentAddr.compareTo(addr) < 0; i++) {
         Instruction instr = currentProgram.getListing().getInstructionAt(currentAddr);
         if (instr != null) {
-          String mnemonic = instr.getMnemonicString().toLowerCase();
+          String mnemonic = instr.getMnemonicString().toLowerCase(Locale.ROOT);
 
-          if (mnemonic.equals("push") || mnemonic.equals("mov")) {
+          if ("push".equals(mnemonic) || "mov".equals(mnemonic)) {
             // Potential stack string construction
             result.analysisNotes.add("Potential stack string construction detected");
             result.relevanceScore += 1.0;
@@ -723,7 +738,7 @@ public class QuickStringDump extends GhidraScript {
         currentAddr = currentAddr.add(1);
       }
     } catch (Exception e) {
-      // Skip stack string detection for this string
+      result.analysisNotes.add("Stack string detection skipped: " + e.getMessage());
     }
   }
 
@@ -859,7 +874,7 @@ public class QuickStringDump extends GhidraScript {
       "new", "years", "way", "may", "say"
     };
 
-    String lowerStr = str.toLowerCase();
+    String lowerStr = str.toLowerCase(Locale.ROOT);
     int wordCount = 0;
 
     for (String word : commonWords) {
@@ -885,7 +900,7 @@ public class QuickStringDump extends GhidraScript {
     };
 
     for (Pattern pattern : licensePatterns) {
-      if (pattern.matcher(str.toUpperCase()).matches()) {
+      if (pattern.matcher(str.toUpperCase(Locale.ROOT)).matches()) {
         return true;
       }
     }
@@ -895,12 +910,14 @@ public class QuickStringDump extends GhidraScript {
 
   private boolean isAPIKeyPattern(String str) {
     // Common API key patterns
-    if (str.length() < 16) return false;
+    if (str.length() < 16) {
+      return false;
+    }
 
     // Check for common API key prefixes
     String[] apiPrefixes = {"sk_", "pk_", "ak_", "api_", "key_", "token_", "auth_"};
     for (String prefix : apiPrefixes) {
-      if (str.toLowerCase().startsWith(prefix)) {
+      if (str.toLowerCase(Locale.ROOT).startsWith(prefix)) {
         return true;
       }
     }
@@ -1068,7 +1085,7 @@ public class QuickStringDump extends GhidraScript {
                 .add(result.address);
           }
         } catch (Exception e) {
-          // Continue analysis
+          println("  [Debug] Data type mapping: " + e.getMessage());
         }
       }
     }
@@ -1077,7 +1094,9 @@ public class QuickStringDump extends GhidraScript {
     println("      Enums analyzed: " + enumsAnalyzed);
     println("      Data type mappings: " + dataTypeStringMap.size());
 
-    // Generate data type analysis report
+    performAdvancedDataTypeStringAnalysis();
+    performAdvancedStructureStringAnalysis();
+
     generateDataTypeReport();
   }
 
@@ -1089,7 +1108,7 @@ public class QuickStringDump extends GhidraScript {
       DataTypeComponent component = structure.getComponent(i);
       if (component != null) {
         DataType componentType = component.getDataType();
-        String typeName = componentType.getName().toLowerCase();
+        String typeName = componentType.getName().toLowerCase(Locale.ROOT);
 
         if (typeName.contains("string") || typeName.contains("char") || typeName.contains("text")) {
           // Find instances of this structure in the program
@@ -1180,7 +1199,7 @@ public class QuickStringDump extends GhidraScript {
       Symbol symbol = symbolIter.next();
       symbolsAnalyzed++;
 
-      String symbolName = symbol.getName().toLowerCase();
+      String symbolName = symbol.getName().toLowerCase(Locale.ROOT);
 
       // Check if symbol name suggests string-related functionality
       if (symbolName.contains("string")
@@ -1220,7 +1239,7 @@ public class QuickStringDump extends GhidraScript {
         }
       }
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Symbol neighborhood analysis: " + e.getMessage());
     }
   }
 
@@ -1245,10 +1264,11 @@ public class QuickStringDump extends GhidraScript {
         stringsBySpace.put(space, spaceStrings);
         println("      " + space.getName() + ": " + stringCount + " strings");
 
-        // Analyze address ranges within this space
         analyzeAddressRangesInSpace(space, spaceStrings);
       }
     }
+
+    performComprehensiveAddressSpaceStringOrganization();
   }
 
   private void analyzeAddressRangesInSpace(AddressSpace space, AddressSet addresses) {
@@ -1307,6 +1327,8 @@ public class QuickStringDump extends GhidraScript {
     println("      Total code units analyzed: " + codeUnitsAnalyzed);
     println("      String-referencing units: " + stringReferencingUnits);
     println("      Code units stored: " + stringCodeUnits.size());
+
+    performAdvancedStringCodeUnitTracking();
   }
 
   private boolean analyzeCodeUnitForStringReferences(CodeUnit codeUnit) {
@@ -1325,35 +1347,34 @@ public class QuickStringDump extends GhidraScript {
         }
       }
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Code unit reference analysis: " + e.getMessage());
     }
 
     return false;
   }
 
   private void analyzePcodeForStringOperations(Instruction instruction) {
-    // Analyze P-code operations for string-related activities
     try {
-      // Note: In a real implementation, we would use the decompiler interface
-      // to get PcodeOp, PcodeOpAST, Varnode analysis
-      // For now, we'll analyze the instruction directly
+      PcodeOp[] pcodeOps = instruction.getPcode();
+      if (pcodeOps != null) {
+        for (PcodeOp op : pcodeOps) {
+          analyzeVarnodeForStringRef(op);
+        }
+      }
 
-      String mnemonic = instruction.getMnemonicString().toLowerCase();
+      String mnemonic = instruction.getMnemonicString().toLowerCase(Locale.ROOT);
 
-      // Check for string manipulation instructions
       if (mnemonic.contains("mov")
           || mnemonic.contains("lea")
           || mnemonic.contains("push")
           || mnemonic.contains("call")) {
 
-        // Look for potential string operations
         for (int i = 0; i < instruction.getNumOperands(); i++) {
           Object[] opObjects = instruction.getOpObjects(i);
 
           for (Object obj : opObjects) {
             if (obj instanceof Address opAddr) {
 
-              // Check if this address corresponds to a string
               for (StringAnalysisResult result : analysisResults) {
                 if (result.address.equals(opAddr)) {
                   result.analysisNotes.add("P-code analysis: " + mnemonic + " operation");
@@ -1365,7 +1386,38 @@ public class QuickStringDump extends GhidraScript {
         }
       }
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] P-code string operations: " + e.getMessage());
+    }
+  }
+
+  private void analyzeVarnodeForStringRef(PcodeOp op) {
+    try {
+      Varnode[] inputs = op.getInputs();
+      if (inputs != null) {
+        for (Varnode vn : inputs) {
+          if (vn != null && vn.isAddress()) {
+            Address vnAddr = vn.getAddress();
+            for (StringAnalysisResult result : analysisResults) {
+              if (result.address.equals(vnAddr)) {
+                result.analysisNotes.add("P-code varnode reference: opcode " + op.getOpcode());
+                result.relevanceScore += 0.3;
+              }
+            }
+          }
+        }
+      }
+      Varnode output = op.getOutput();
+      if (output != null && output.isAddress()) {
+        Address outAddr = output.getAddress();
+        for (StringAnalysisResult result : analysisResults) {
+          if (result.address.equals(outAddr)) {
+            result.analysisNotes.add("P-code output varnode: opcode " + op.getOpcode());
+            result.relevanceScore += 0.2;
+          }
+        }
+      }
+    } catch (Exception e) {
+      println("  [Debug] Varnode string ref: " + e.getMessage());
     }
   }
 
@@ -1435,13 +1487,14 @@ public class QuickStringDump extends GhidraScript {
    * their data type contexts for comprehensive licensing analysis
    */
   private void performAdvancedDataTypeStringAnalysis() {
-    if (currentProgram == null) return;
+    if (currentProgram == null) {
+      return;
+    }
 
     try {
-      DataTypeManager dtm = currentProgram.getDataTypeManager();
       dataTypeStringMap.clear();
-
-      println("    Performing advanced data type string mapping analysis...");
+      int dataTypeCount = dataTypeManager.getDataTypeCount(true);
+      println("    Performing advanced data type string mapping analysis (" + dataTypeCount + " types)...");
 
       // Analyze strings in context of specific data types
       analyzeStringDataTypes();
@@ -1469,7 +1522,9 @@ public class QuickStringDump extends GhidraScript {
       MemoryBlock[] blocks = memory.getBlocks();
 
       for (MemoryBlock block : blocks) {
-        if (!block.isInitialized() || monitor.isCancelled()) continue;
+        if (!block.isInitialized() || monitor.isCancelled()) {
+          continue;
+        }
 
         Address start = block.getStart();
         Address end = block.getEnd();
@@ -1480,7 +1535,9 @@ public class QuickStringDump extends GhidraScript {
 
         for (long offset = 0; offset < blockSize; offset += sampleInterval) {
           Address addr = start.add(offset);
-          if (addr.compareTo(end) > 0) break;
+          if (addr.compareTo(end) > 0) {
+            break;
+          }
 
           Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null) {
@@ -1498,7 +1555,7 @@ public class QuickStringDump extends GhidraScript {
   /** Analyze individual data type for string content */
   private void analyzeDataTypeForStrings(DataType dataType, Address addr, Data data) {
     try {
-      String typeName = dataType.getName().toLowerCase();
+      String typeName = dataType.getName().toLowerCase(Locale.ROOT);
 
       // Check for string-related data types
       if (typeName.contains("string")
@@ -1527,7 +1584,7 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Analysis: " + e.getMessage());
     }
   }
 
@@ -1578,7 +1635,7 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Analysis: " + e.getMessage());
     }
   }
 
@@ -1612,7 +1669,9 @@ public class QuickStringDump extends GhidraScript {
       Memory memory = currentProgram.getMemory();
 
       for (MemoryBlock block : memory.getBlocks()) {
-        if (!block.isInitialized() || monitor.isCancelled()) continue;
+        if (!block.isInitialized() || monitor.isCancelled()) {
+          continue;
+        }
 
         Address start = block.getStart();
         Address end = block.getEnd();
@@ -1622,7 +1681,9 @@ public class QuickStringDump extends GhidraScript {
 
         for (long offset = 0; offset < block.getSize(); offset += sampleInterval) {
           Address addr = start.add(offset);
-          if (addr.compareTo(end) > 0) break;
+          if (addr.compareTo(end) > 0) {
+            break;
+          }
 
           Data data = currentProgram.getListing().getDataAt(addr);
           if (data != null && data.getDataType().equals(arrayType)) {
@@ -1635,7 +1696,7 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Analysis: " + e.getMessage());
     }
   }
 
@@ -1694,15 +1755,17 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Analysis: " + e.getMessage());
     }
   }
 
   /** Check if data type is string-related */
   private boolean isStringRelatedType(DataType dataType) {
-    if (dataType == null) return false;
+    if (dataType == null) {
+      return false;
+    }
 
-    String typeName = dataType.getName().toLowerCase();
+    String typeName = dataType.getName().toLowerCase(Locale.ROOT);
     return typeName.contains("string")
         || typeName.contains("char")
         || typeName.contains("text")
@@ -1711,27 +1774,33 @@ public class QuickStringDump extends GhidraScript {
         || typeName.contains("utf");
   }
 
-  /** Perform cross-reference analysis for data type strings */
   private void performDataTypeStringCrossReference() {
     try {
       for (Map.Entry<DataType, Set<Address>> entry : dataTypeStringMap.entrySet()) {
         DataType dataType = entry.getKey();
         Set<Address> addresses = entry.getValue();
+        String typeName = dataType.getName();
 
         for (Address addr : addresses) {
-          if (monitor.isCancelled()) break;
+          if (monitor.isCancelled()) {
+            break;
+          }
 
-          // Find references to this string address
           Reference[] refs = currentProgram.getReferenceManager().getReferencesTo(addr);
 
-          // This string is referenced - analyze referencing functions
           for (Reference ref : refs) {
             Address fromAddr = ref.getFromAddress();
             Function func = currentProgram.getFunctionManager().getFunctionContaining(fromAddr);
 
+            for (StringAnalysisResult result : analysisResults) {
+              if (result.address.equals(addr)) {
+                result.analysisNotes.add("Data type: " + typeName);
+              }
+            }
+
             if (func != null) {
               // Check for licensing-related function names
-              String funcName = func.getName().toLowerCase();
+              String funcName = func.getName().toLowerCase(Locale.ROOT);
               if (funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*serial.*")) {
                 // High-value string in licensing context
                 println(
@@ -1757,7 +1826,7 @@ public class QuickStringDump extends GhidraScript {
 
       for (Map.Entry<DataType, Set<Address>> entry : dataTypeStringMap.entrySet()) {
         DataType dataType = entry.getKey();
-        String typeName = dataType.getName().toLowerCase();
+        String typeName = dataType.getName().toLowerCase(Locale.ROOT);
 
         // Count licensing-related data types
         if (typeName.matches(".*licen.*|.*key.*|.*serial.*|.*auth.*|.*token.*|.*valid.*")) {
@@ -1781,7 +1850,9 @@ public class QuickStringDump extends GhidraScript {
   private void analyzeStringForLicensingPatterns(
       String stringValue, Address addr, DataType dataType) {
     try {
-      if (stringValue == null || stringValue.length() < 4) return;
+      if (stringValue == null || stringValue.length() < 4) {
+        return;
+      }
 
       // Check for licensing patterns
       if (stringValue.matches(".*[Ll]icen.*|.*[Ss]erial.*|.*[Kk]ey.*|.*[Tt]oken.*|.*[Aa]uth.*")) {
@@ -1800,7 +1871,7 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Analysis: " + e.getMessage());
     }
   }
 
@@ -1809,7 +1880,9 @@ public class QuickStringDump extends GhidraScript {
    * within data structures for licensing patterns
    */
   private void performAdvancedStructureStringAnalysis() {
-    if (currentProgram == null) return;
+    if (currentProgram == null) {
+      return;
+    }
 
     try {
       DataTypeManager dtm = currentProgram.getDataTypeManager();
@@ -1854,13 +1927,15 @@ public class QuickStringDump extends GhidraScript {
         // Check if component is string-related
         if (isStringRelatedType(componentType)
             || (fieldName != null
-                && fieldName.toLowerCase().matches(".*str.*|.*text.*|.*name.*"))) {
+                && fieldName.toLowerCase(Locale.ROOT).matches(".*str.*|.*text.*|.*name.*"))) {
 
           // Find instances of this structure in memory
           List<Address> structInstances = findStructureInstances(struct);
 
           for (Address structAddr : structInstances) {
-            if (monitor.isCancelled()) break;
+            if (monitor.isCancelled()) {
+              break;
+            }
 
             try {
               Address componentAddr = structAddr.add(component.getOffset());
@@ -1880,7 +1955,7 @@ public class QuickStringDump extends GhidraScript {
                   result.referencingFunctions = new ArrayList<>();
 
                   // Analyze for licensing patterns
-                  if (result.value.toLowerCase().matches(".*licen.*|.*serial.*|.*key.*|.*auth.*")) {
+                  if (result.value.toLowerCase(Locale.ROOT).matches(".*licen.*|.*serial.*|.*key.*|.*auth.*")) {
                     result.analysisNotes.add("LICENSING_PATTERN");
                     result.relevanceScore = 0.9;
                   }
@@ -1889,7 +1964,7 @@ public class QuickStringDump extends GhidraScript {
                 }
               }
             } catch (Exception e) {
-              // Continue with next component
+              println("  [Debug] Structure component: " + e.getMessage());
             }
           }
         }
@@ -1900,11 +1975,10 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue with next structure
+      println("  [Debug] Structure analysis: " + e.getMessage());
     }
   }
 
-  /** Find instances of structure in memory */
   private List<Address> findStructureInstances(Structure struct) {
     List<Address> instances = new ArrayList<>();
 
@@ -1912,7 +1986,7 @@ public class QuickStringDump extends GhidraScript {
       SymbolTable symbolTable = currentProgram.getSymbolTable();
       SymbolIterator symbols = symbolTable.getAllSymbols(true);
 
-      int maxInstances = 20; // Limit for performance
+      int maxInstances = 20;
       int foundInstances = 0;
 
       while (symbols.hasNext() && foundInstances < maxInstances && !monitor.isCancelled()) {
@@ -1927,7 +2001,7 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Return what we have
+      println("  [Debug] Structure instances: " + e.getMessage());
     }
 
     return instances;
@@ -1935,21 +2009,33 @@ public class QuickStringDump extends GhidraScript {
 
   /** Calculate string confidence score */
   private double calculateStringConfidence(String value) {
-    if (value == null) return 0.0;
+    if (value == null) {
+      return 0.0;
+    }
 
-    double confidence = 0.5; // Base confidence
+    double confidence = 0.5;
 
     // Higher confidence for longer strings
-    if (value.length() > 10) confidence += 0.2;
-    if (value.length() > 50) confidence += 0.2;
+    if (value.length() > 10) {
+      confidence += 0.2;
+    }
+    if (value.length() > 50) {
+      confidence += 0.2;
+    }
 
     // Lower confidence for very short or very long strings
-    if (value.length() < 4) confidence -= 0.3;
-    if (value.length() > 1000) confidence -= 0.2;
+    if (value.length() < 4) {
+      confidence -= 0.3;
+    }
+    if (value.length() > 1000) {
+      confidence -= 0.2;
+    }
 
     // Higher confidence for printable ASCII
     boolean isPrintable = value.chars().allMatch(c -> c >= 32 && c <= 126);
-    if (isPrintable) confidence += 0.2;
+    if (isPrintable) {
+      confidence += 0.2;
+    }
 
     return Math.max(0.0, Math.min(1.0, confidence));
   }
@@ -1961,7 +2047,7 @@ public class QuickStringDump extends GhidraScript {
 
       for (Map.Entry<Structure, List<StringAnalysisResult>> entry : structureStrings.entrySet()) {
         Structure struct = entry.getKey();
-        String structName = struct.getName().toLowerCase();
+        String structName = struct.getName().toLowerCase(Locale.ROOT);
 
         // Check for licensing-related structure names
         if (structName.matches(".*licen.*|.*key.*|.*auth.*|.*valid.*|.*serial.*|.*token.*")) {
@@ -1990,16 +2076,19 @@ public class QuickStringDump extends GhidraScript {
     }
   }
 
-  /** Cross-reference structure strings with functions */
   private void performStructureStringCrossReference() {
     try {
       for (Map.Entry<Structure, List<StringAnalysisResult>> entry : structureStrings.entrySet()) {
         Structure struct = entry.getKey();
+        String structName = struct.getName();
 
         for (StringAnalysisResult result : entry.getValue()) {
-          if (monitor.isCancelled()) break;
+          if (monitor.isCancelled()) {
+            break;
+          }
 
-          // Find functions that reference this string address
+          result.analysisNotes.add("From structure: " + structName);
+
           Reference[] refs = currentProgram.getReferenceManager().getReferencesTo(result.address);
 
           for (Reference ref : refs) {
@@ -2010,7 +2099,7 @@ public class QuickStringDump extends GhidraScript {
               result.referencingFunctions.add(func.getName());
 
               // Check for licensing context
-              String funcName = func.getName().toLowerCase();
+              String funcName = func.getName().toLowerCase(Locale.ROOT);
               if (funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*verify.*")) {
                 result.analysisNotes.add("REFERENCED_BY_LICENSING_FUNCTION");
                 result.relevanceScore = Math.min(1.0, result.relevanceScore + 0.3);
@@ -2030,7 +2119,9 @@ public class QuickStringDump extends GhidraScript {
    * address space for efficient analysis and licensing pattern detection
    */
   private void performComprehensiveAddressSpaceStringOrganization() {
-    if (currentProgram == null) return;
+    if (currentProgram == null) {
+      return;
+    }
 
     try {
       stringsBySpace.clear();
@@ -2042,10 +2133,14 @@ public class QuickStringDump extends GhidraScript {
       Set<AddressSpace> processedSpaces = new HashSet<>();
 
       for (MemoryBlock block : memory.getBlocks()) {
-        if (monitor.isCancelled()) break;
+        if (monitor.isCancelled()) {
+          break;
+        }
 
         AddressSpace space = block.getStart().getAddressSpace();
-        if (processedSpaces.contains(space)) continue;
+        if (processedSpaces.contains(space)) {
+          continue;
+        }
 
         processedSpaces.add(space);
         analyzeAddressSpaceStrings(space);
@@ -2070,17 +2165,17 @@ public class QuickStringDump extends GhidraScript {
       AddressSet spaceStrings = new AddressSet();
       Memory memory = currentProgram.getMemory();
 
-      // Find all strings in blocks belonging to this address space
       for (MemoryBlock block : memory.getBlocks()) {
         if (!block.getStart().getAddressSpace().equals(space)
             || !block.isInitialized()
-            || monitor.isCancelled()) continue;
+            || monitor.isCancelled()) {
+          continue;
+        }
 
-        Address start = block.getStart();
-        Address end = block.getEnd();
-
-        // Search for strings in this block
-        findStringsInBlock(block, spaceStrings);
+        long blockSize = block.getEnd().subtract(block.getStart());
+        if (blockSize > 0) {
+          findStringsInBlock(block, spaceStrings);
+        }
       }
 
       if (!spaceStrings.isEmpty()) {
@@ -2110,10 +2205,14 @@ public class QuickStringDump extends GhidraScript {
       int sampleInterval = Math.max(1, (int) (blockSize / 10000));
 
       for (long offset = 0; offset < blockSize; offset += sampleInterval) {
-        if (monitor.isCancelled()) break;
+        if (monitor.isCancelled()) {
+          break;
+        }
 
         Address addr = start.add(offset);
-        if (addr.compareTo(end) > 0) break;
+        if (addr.compareTo(end) > 0) {
+          break;
+        }
 
         try {
           Data data = currentProgram.getListing().getDataAt(addr);
@@ -2125,7 +2224,7 @@ public class QuickStringDump extends GhidraScript {
                 spaceStrings.add(addr);
 
                 // Check for licensing relevance
-                if (stringValue.toLowerCase().matches(".*licen.*|.*serial.*|.*key.*|.*auth.*")) {
+                if (stringValue.toLowerCase(Locale.ROOT).matches(".*licen.*|.*serial.*|.*key.*|.*auth.*")) {
                   println(
                       "        Licensing string in "
                           + block.getName()
@@ -2138,16 +2237,15 @@ public class QuickStringDump extends GhidraScript {
             }
           }
         } catch (Exception e) {
-          // Continue scanning
+          println("  [Debug] Block scan: " + e.getMessage());
         }
       }
 
     } catch (Exception e) {
-      // Continue with next block
+      println("  [Debug] Memory block analysis: " + e.getMessage());
     }
   }
 
-  /** Perform cross-space string analysis */
   private void performCrossSpaceStringAnalysis() {
     try {
       Map<String, Set<AddressSpace>> stringPatternSpaces = new HashMap<>();
@@ -2156,9 +2254,10 @@ public class QuickStringDump extends GhidraScript {
         AddressSpace space = entry.getKey();
         AddressSet addresses = entry.getValue();
 
-        // Analyze string patterns in this space
         for (Address addr : addresses.getAddresses(true)) {
-          if (monitor.isCancelled()) break;
+          if (monitor.isCancelled()) {
+            break;
+          }
 
           try {
             Data data = currentProgram.getListing().getDataAt(addr);
@@ -2166,7 +2265,6 @@ public class QuickStringDump extends GhidraScript {
               Object value = data.getValue();
               if (value instanceof String stringValue) {
 
-                // Extract patterns for cross-space comparison
                 String pattern = extractStringPattern(stringValue);
                 if (pattern != null) {
                   if (!stringPatternSpaces.containsKey(pattern)) {
@@ -2177,12 +2275,11 @@ public class QuickStringDump extends GhidraScript {
               }
             }
           } catch (Exception e) {
-            // Continue analysis
+            println("  [Debug] Cross-space pattern: " + e.getMessage());
           }
         }
       }
 
-      // Report patterns found across multiple spaces
       for (Map.Entry<String, Set<AddressSpace>> patternEntry : stringPatternSpaces.entrySet()) {
         if (patternEntry.getValue().size() > 1) {
           println(
@@ -2195,28 +2292,46 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      println("      ⚠ Error in cross-space string analysis: " + e.getMessage());
+      printerr("Error in cross-space string analysis: " + e.getMessage());
     }
   }
 
-  /** Extract pattern from string for comparison */
   private String extractStringPattern(String value) {
-    if (value == null || value.length() < 4) return null;
+    if (value == null || value.length() < 4) {
+      return null;
+    }
 
-    // Extract licensing patterns
-    if (value.toLowerCase().matches(".*licen.*")) return "LICENSE";
-    if (value.toLowerCase().matches(".*serial.*")) return "SERIAL";
-    if (value.toLowerCase().matches(".*key.*")) return "KEY";
-    if (value.toLowerCase().matches(".*auth.*")) return "AUTH";
-    if (value.toLowerCase().matches(".*token.*")) return "TOKEN";
-    if (value.toLowerCase().matches(".*valid.*")) return "VALIDATION";
+    String lower = value.toLowerCase(Locale.ROOT);
+    if (lower.matches(".*licen.*")) {
+      return "LICENSE";
+    }
+    if (lower.matches(".*serial.*")) {
+      return "SERIAL";
+    }
+    if (lower.matches(".*key.*")) {
+      return "KEY";
+    }
+    if (lower.matches(".*auth.*")) {
+      return "AUTH";
+    }
+    if (lower.matches(".*token.*")) {
+      return "TOKEN";
+    }
+    if (lower.matches(".*valid.*")) {
+      return "VALIDATION";
+    }
 
     // Extract format patterns
-    if (value.matches(".*[0-9a-fA-F]{8,}.*")) return "HEX_PATTERN";
-    if (value.matches(".*[A-Za-z0-9+/]{20,}={0,2}.*")) return "BASE64_PATTERN";
+    if (value.matches(".*[0-9a-fA-F]{8,}.*")) {
+      return "HEX_PATTERN";
+    }
+    if (value.matches(".*[A-Za-z0-9+/]{20,}={0,2}.*")) {
+      return "BASE64_PATTERN";
+    }
     if (value.matches(
-        ".*\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b.*"))
+        ".*\\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\\b.*")) {
       return "UUID_PATTERN";
+    }
 
     return null;
   }
@@ -2233,7 +2348,9 @@ public class QuickStringDump extends GhidraScript {
         int licensingStrings = 0;
 
         for (Address addr : addresses.getAddresses(true)) {
-          if (monitor.isCancelled()) break;
+          if (monitor.isCancelled()) {
+            break;
+          }
 
           try {
             Data data = currentProgram.getListing().getDataAt(addr);
@@ -2241,14 +2358,14 @@ public class QuickStringDump extends GhidraScript {
               Object value = data.getValue();
               if (value instanceof String stringValue) {
                 if (stringValue
-                    .toLowerCase()
+                    .toLowerCase(Locale.ROOT)
                     .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*")) {
                   licensingStrings++;
                 }
               }
             }
           } catch (Exception e) {
-            // Continue counting
+            println("  [Debug] Licensing pattern count: " + e.getMessage());
           }
         }
 
@@ -2279,7 +2396,9 @@ public class QuickStringDump extends GhidraScript {
    * for comprehensive context analysis
    */
   private void performAdvancedStringCodeUnitTracking() {
-    if (currentProgram == null) return;
+    if (currentProgram == null) {
+      return;
+    }
 
     try {
       stringCodeUnits.clear();
@@ -2311,7 +2430,9 @@ public class QuickStringDump extends GhidraScript {
       Memory memory = currentProgram.getMemory();
 
       for (MemoryBlock block : memory.getBlocks()) {
-        if (!block.isInitialized() || monitor.isCancelled()) continue;
+        if (!block.isInitialized() || monitor.isCancelled()) {
+          continue;
+        }
 
         Address start = block.getStart();
         Address end = block.getEnd();
@@ -2322,7 +2443,9 @@ public class QuickStringDump extends GhidraScript {
 
         for (long offset = 0; offset < blockSize; offset += sampleInterval) {
           Address addr = start.add(offset);
-          if (addr.compareTo(end) > 0) break;
+          if (addr.compareTo(end) > 0) {
+            break;
+          }
 
           try {
             CodeUnit codeUnit = currentProgram.getListing().getCodeUnitAt(addr);
@@ -2330,7 +2453,7 @@ public class QuickStringDump extends GhidraScript {
               stringCodeUnits.add(codeUnit);
             }
           } catch (Exception e) {
-            // Continue tracking
+            println("  [Debug] Code unit tracking: " + e.getMessage());
           }
         }
       }
@@ -2391,7 +2514,9 @@ public class QuickStringDump extends GhidraScript {
       Map<Function, Set<CodeUnit>> functionStringUnits = new HashMap<>();
 
       for (CodeUnit codeUnit : stringCodeUnits) {
-        if (monitor.isCancelled()) break;
+        if (monitor.isCancelled()) {
+          break;
+        }
 
         Address addr = codeUnit.getAddress();
         Function func = currentProgram.getFunctionManager().getFunctionContaining(addr);
@@ -2428,7 +2553,9 @@ public class QuickStringDump extends GhidraScript {
       Set<CodeUnit> licensingUnits = new HashSet<>();
 
       for (CodeUnit codeUnit : stringCodeUnits) {
-        if (monitor.isCancelled()) break;
+        if (monitor.isCancelled()) {
+          break;
+        }
 
         if (isLicensingRelatedCodeUnit(codeUnit)) {
           licensingUnits.add(codeUnit);
@@ -2457,7 +2584,7 @@ public class QuickStringDump extends GhidraScript {
 
         if (value instanceof String stringValue) {
           return stringValue
-              .toLowerCase()
+              .toLowerCase(Locale.ROOT)
               .matches(".*licen.*|.*serial.*|.*key.*|.*auth.*|.*token.*|.*valid.*");
         }
       }
@@ -2467,7 +2594,7 @@ public class QuickStringDump extends GhidraScript {
       Function func = currentProgram.getFunctionManager().getFunctionContaining(addr);
 
       if (func != null) {
-        String funcName = func.getName().toLowerCase();
+        String funcName = func.getName().toLowerCase(Locale.ROOT);
         return funcName.matches(".*licen.*|.*valid.*|.*check.*|.*auth.*|.*serial.*|.*key.*");
       }
 
@@ -2498,7 +2625,7 @@ public class QuickStringDump extends GhidraScript {
                     + "...");
           }
 
-          if (stringValue.toLowerCase().contains("serial") && stringValue.length() > 8) {
+          if (stringValue.toLowerCase(Locale.ROOT).contains("serial") && stringValue.length() > 8) {
             println(
                 "        Serial number pattern at "
                     + addr
@@ -2509,7 +2636,7 @@ public class QuickStringDump extends GhidraScript {
       }
 
     } catch (Exception e) {
-      // Continue analysis
+      println("  [Debug] Analysis: " + e.getMessage());
     }
   }
 
@@ -2519,7 +2646,9 @@ public class QuickStringDump extends GhidraScript {
       Map<String, Integer> contextCategories = new HashMap<>();
 
       for (CodeUnit codeUnit : stringCodeUnits) {
-        if (monitor.isCancelled()) break;
+        if (monitor.isCancelled()) {
+          break;
+        }
 
         String context = determineCodeUnitContext(codeUnit);
         contextCategories.put(context, contextCategories.getOrDefault(context, 0) + 1);
@@ -2544,23 +2673,39 @@ public class QuickStringDump extends GhidraScript {
       Function func = currentProgram.getFunctionManager().getFunctionContaining(addr);
 
       if (func != null) {
-        String funcName = func.getName().toLowerCase();
+        String funcName = func.getName().toLowerCase(Locale.ROOT);
 
-        if (funcName.matches(".*licen.*|.*valid.*|.*auth.*")) return "LICENSING";
-        if (funcName.matches(".*init.*|.*setup.*|.*config.*")) return "INITIALIZATION";
-        if (funcName.matches(".*check.*|.*verify.*|.*test.*")) return "VALIDATION";
-        if (funcName.matches(".*error.*|.*fail.*|.*warn.*")) return "ERROR_HANDLING";
-        if (funcName.matches(".*debug.*|.*log.*|.*trace.*")) return "DEBUGGING";
+        if (funcName.matches(".*licen.*|.*valid.*|.*auth.*")) {
+          return "LICENSING";
+        }
+        if (funcName.matches(".*init.*|.*setup.*|.*config.*")) {
+          return "INITIALIZATION";
+        }
+        if (funcName.matches(".*check.*|.*verify.*|.*test.*")) {
+          return "VALIDATION";
+        }
+        if (funcName.matches(".*error.*|.*fail.*|.*warn.*")) {
+          return "ERROR_HANDLING";
+        }
+        if (funcName.matches(".*debug.*|.*log.*|.*trace.*")) {
+          return "DEBUGGING";
+        }
       }
 
       // Check memory block context
       MemoryBlock block = currentProgram.getMemory().getBlock(addr);
       if (block != null) {
-        String blockName = block.getName().toLowerCase();
+        String blockName = block.getName().toLowerCase(Locale.ROOT);
 
-        if (blockName.contains("data")) return "DATA_SECTION";
-        if (blockName.contains("text") || blockName.contains("code")) return "CODE_SECTION";
-        if (blockName.contains("resource") || blockName.contains("rsrc")) return "RESOURCE_SECTION";
+        if (blockName.contains("data")) {
+          return "DATA_SECTION";
+        }
+        if (blockName.contains("text") || blockName.contains("code")) {
+          return "CODE_SECTION";
+        }
+        if (blockName.contains("resource") || blockName.contains("rsrc")) {
+          return "RESOURCE_SECTION";
+        }
       }
 
       return "UNKNOWN";

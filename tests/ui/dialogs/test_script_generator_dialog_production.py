@@ -112,22 +112,20 @@ Write-Output $result
 @pytest.fixture
 def test_script_dialog(qapp: QApplication, test_python_script: str) -> TestScriptDialog:
     """Create TestScriptDialog for testing."""
-    dialog = TestScriptDialog(
+    return TestScriptDialog(
         parent=None,
         script_content=test_python_script,
         script_type="Bypass Script",
     )
-    return dialog
 
 
 @pytest.fixture
 def script_generator_dialog(qapp: QApplication) -> ScriptGeneratorDialog:
     """Create ScriptGeneratorDialog for testing."""
-    dialog = ScriptGeneratorDialog(
+    return ScriptGeneratorDialog(
         parent=None,
         binary_path="D:\\test\\sample.exe",
     )
-    return dialog
 
 
 class TestTestScriptDialogInitialization:
@@ -611,7 +609,7 @@ class TestScriptGeneratorWorker:
                 "documentation": "Bypass documentation",
             }
             worker.run()
-            assert len(result) > 0
+            assert result
 
     def test_worker_generates_exploit_script(self) -> None:
         """Worker generates exploit script with proper structure."""

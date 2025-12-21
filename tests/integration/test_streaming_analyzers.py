@@ -159,7 +159,6 @@ class TestStreamingEntropyAnalyzerWithRealBinaries:
         assert len(results) > 0
 
         high_entropy_windows = [w for w in results if w.entropy > 7.0]
-        assert len(high_entropy_windows) >= 0
 
     def test_entropy_on_multiple_system_binaries(self) -> None:
         analyzer = StreamingEntropyAnalyzer(window_size=4096)
@@ -180,7 +179,7 @@ class TestStreamingEntropyAnalyzerWithRealBinaries:
 
             all_results.extend(windows)
 
-        assert len(all_results) > 0
+        assert all_results
 
     def test_entropy_detects_packed_regions(self) -> None:
         user32_path = r"C:\Windows\System32\user32.dll"

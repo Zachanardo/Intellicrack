@@ -22,14 +22,12 @@ def validate_test_file(test_file: Path) -> tuple[bool, list[str]]:
         test_functions = []
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                if node.name.startswith("Test"):
-                    test_classes.append(node.name)
-
-                    for item in node.body:
-                        if isinstance(item, ast.FunctionDef):
-                            if item.name.startswith("test_"):
-                                test_functions.append(f"{node.name}.{item.name}")
+            if isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+                test_classes.append(node.name)
+            
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef) and item.name.startswith("test_"):
+                        test_functions.append(f"{node.name}.{item.name}")
 
         if not test_classes:
             issues.append("No test classes found")
@@ -56,22 +54,24 @@ def validate_test_file(test_file: Path) -> tuple[bool, list[str]]:
 
         imports_found = []
         for node in ast.walk(tree):
-            if isinstance(node, ast.ImportFrom):
-                if node.module:
-                    imports_found.extend([alias.name for alias in node.names])
-            elif isinstance(node, ast.Import):
+            if (
+                isinstance(node, ast.ImportFrom)
+                and node.module
+                or not isinstance(node, ast.ImportFrom)
+                and isinstance(node, ast.Import)
+            ):
                 imports_found.extend([alias.name for alias in node.names])
-
-        missing_imports = [imp for imp in required_imports if imp not in imports_found]
-        if missing_imports:
+        if missing_imports := [
+            imp for imp in required_imports if imp not in imports_found
+        ]:
             issues.append(f"Missing imports: {missing_imports}")
 
         print("\nValidation Results:")
         print(f"  Test classes: {len(test_classes)}")
         print(f"  Test functions: {len(test_functions)}")
-        print(f"  Syntax: Valid")
+        print("  Syntax: Valid")
 
-        return len(issues) == 0, issues
+        return not issues, issues
 
     except SyntaxError as e:
         issues.append(f"Syntax error: {e}")

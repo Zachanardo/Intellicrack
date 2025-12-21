@@ -60,16 +60,25 @@ class HelpDocumentationWidget(QWidget):
 
         """
         super().__init__(parent)
-        self.parent = parent
+        self._parent_widget: QWidget | None = parent
+        self.nav_tree: QTreeWidget
+        self.features_tree: QTreeWidget
+        self.issues_tree: QTreeWidget
+        self.tutorial_viewer: QTextBrowser
+        self.solution_viewer: QTextBrowser
+        self.doc_browser: QTextBrowser
+        self.search_edit: QLineEdit
+        self.content_tabs: QTabWidget
+        self.features_widget: QWidget
+        self.tutorials_widget: QWidget
+        self.troubleshooting_widget: QWidget
+        self.feature_details: QTextBrowser
+        self.tutorial_tabs: QTabWidget
         self.setup_ui()
         self.load_documentation()
 
     def setup_ui(self) -> None:
         """Set up the user interface."""
-        # Initialize UI attributes
-        self.issues_tree = None
-        self.solution_viewer = None
-        self.tutorial_viewer = None
         layout = QVBoxLayout(self)
 
         # Header with search
@@ -98,7 +107,7 @@ class HelpDocumentationWidget(QWidget):
         layout.addLayout(header_layout)
 
         # Main content area with splitter
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Navigation tree
         self.nav_tree = QTreeWidget()
@@ -201,7 +210,8 @@ class HelpDocumentationWidget(QWidget):
         # Connect tutorial selection
         for i in range(self.tutorial_tabs.count()):
             list_widget = self.tutorial_tabs.widget(i)
-            list_widget.itemClicked.connect(self.on_tutorial_selected)
+            if isinstance(list_widget, QListWidget):
+                list_widget.itemClicked.connect(self.on_tutorial_selected)
 
         return widget
 
@@ -586,8 +596,9 @@ class HelpDocumentationWidget(QWidget):
         """
         # Note: column parameter is required by Qt signal but not used
         _ = column  # Acknowledge unused parameter
-        if item.parent():
-            category = item.parent().text(0)
+        parent_item = item.parent()
+        if parent_item is not None:
+            category = parent_item.text(0)
             topic = item.text(0)
             self.load_documentation_content(category, topic)
 
@@ -601,8 +612,9 @@ class HelpDocumentationWidget(QWidget):
         """
         # Note: column parameter is required by Qt signal but not used
         _ = column  # Acknowledge unused parameter
-        if item.parent():
-            category = item.parent().text(0)
+        parent_item = item.parent()
+        if parent_item is not None:
+            category = parent_item.text(0)
             feature = item.text(0)
 
             # Show how to use this feature
@@ -613,10 +625,10 @@ class HelpDocumentationWidget(QWidget):
                 self,
                 "Try Feature",
                 f"Would you like to try '{feature}' now?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
 
-            if reply == QMessageBox.Yes:
+            if reply == QMessageBox.StandardButton.Yes:
                 self.feature_selected.emit(category, feature)
 
     def show_feature_details(self, category: str, feature: str) -> None:
@@ -731,7 +743,8 @@ class HelpDocumentationWidget(QWidget):
         """
         # Note: column parameter is required by Qt signal but not used
         _ = column  # Acknowledge unused parameter
-        if item.parent():
+        parent_item = item.parent()
+        if parent_item is not None:
             issue = item.text(0)
             self.load_solution(issue)
 
@@ -795,7 +808,7 @@ class HelpDocumentationWidget(QWidget):
 
         """
         # Documentation content mapping
-        content_map = {
+        content_map: dict[tuple[str, str], object] = {
             ("Overview", "Welcome"): self.load_welcome_content,
             ("Overview", "Getting Started"): lambda: self.doc_browser.setHtml("""
                 <h1>Getting Started with Intellicrack</h1>
@@ -840,10 +853,10 @@ class HelpDocumentationWidget(QWidget):
                     <li>Test patches thoroughly</li>
                 </ol>
             """),
-            # Add more content mappings...
         }
 
-        if loader := content_map.get((category, topic)):
+        loader = content_map.get((category, topic))
+        if loader is not None and callable(loader):
             loader()
         else:
             # Default content
@@ -862,9 +875,12 @@ class HelpDocumentationWidget(QWidget):
         """
         if not text:
             # Show all items
-            self.show_all_tree_items(self.nav_tree)
-            self.show_all_tree_items(self.features_tree)
-            self.show_all_tree_items(self.issues_tree)
+            if hasattr(self, "nav_tree"):
+                self.show_all_tree_items(self.nav_tree)
+            if hasattr(self, "features_tree"):
+                self.show_all_tree_items(self.features_tree)
+            if hasattr(self, "issues_tree"):
+                self.show_all_tree_items(self.issues_tree)
 
     def perform_search(self) -> None:
         """Perform search across all documentation content and highlight results."""
@@ -903,7 +919,7 @@ class HelpDocumentationWidget(QWidget):
         # Then show matching items
         for i in range(tree.topLevelItemCount()):
             item = tree.topLevelItem(i)
-            if self.search_tree_item(item, search_text):
+            if item is not None and self.search_tree_item(item, search_text):
                 item.setHidden(False)
                 item.setExpanded(True)
 
@@ -931,11 +947,12 @@ class HelpDocumentationWidget(QWidget):
         child_matches = False
         for i in range(item.childCount()):
             child = item.child(i)
-            if self.search_tree_item(child, search_text):
-                child_matches = True
-                child.setHidden(False)
-            else:
-                child.setHidden(True)
+            if child is not None:
+                if self.search_tree_item(child, search_text):
+                    child_matches = True
+                    child.setHidden(False)
+                else:
+                    child.setHidden(True)
 
         # Show item if it or its children match
         if matches or child_matches:
@@ -952,7 +969,9 @@ class HelpDocumentationWidget(QWidget):
 
         """
         for i in range(tree.topLevelItemCount()):
-            self.hide_tree_item(tree.topLevelItem(i))
+            item = tree.topLevelItem(i)
+            if item is not None:
+                self.hide_tree_item(item)
 
     def hide_tree_item(self, item: QTreeWidgetItem) -> None:
         """Recursively hide tree item and all descendants.
@@ -963,7 +982,9 @@ class HelpDocumentationWidget(QWidget):
         """
         item.setHidden(True)
         for i in range(item.childCount()):
-            self.hide_tree_item(item.child(i))
+            child = item.child(i)
+            if child is not None:
+                self.hide_tree_item(child)
 
     def show_all_tree_items(self, tree: QTreeWidget) -> None:
         """Show all items in a tree recursively.
@@ -973,7 +994,9 @@ class HelpDocumentationWidget(QWidget):
 
         """
         for i in range(tree.topLevelItemCount()):
-            self.show_tree_item(tree.topLevelItem(i))
+            item = tree.topLevelItem(i)
+            if item is not None:
+                self.show_tree_item(item)
 
     def show_tree_item(self, item: QTreeWidgetItem) -> None:
         """Recursively show tree item and all descendants, clearing highlights.
@@ -986,4 +1009,6 @@ class HelpDocumentationWidget(QWidget):
         for col in range(item.columnCount()):
             item.setBackground(col, Qt.GlobalColor.transparent)
         for i in range(item.childCount()):
-            self.show_tree_item(item.child(i))
+            child = item.child(i)
+            if child is not None:
+                self.show_tree_item(child)

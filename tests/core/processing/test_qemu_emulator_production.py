@@ -155,8 +155,7 @@ class TestQEMUEmulatorInitialization:
             )
 
             qemu_binary = emulator.SUPPORTED_ARCHITECTURES["x86_64"]["qemu"]
-            qemu_path = shutil.which(qemu_binary)
-            if qemu_path:
+            if qemu_path := shutil.which(qemu_binary):
                 assert os.path.exists(qemu_path)
         except FileNotFoundError:
             pytest.skip("QEMU not installed")

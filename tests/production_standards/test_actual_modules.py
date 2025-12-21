@@ -68,7 +68,8 @@ class TestActualModules(unittest.TestCase):
                 self.results["errors"].append(f"{module} import failed: {error}")
 
         total = len(modules_status)
-        imported = sum(1 for v in modules_status.values() if v)
+        imported = sum(bool(v)
+                   for v in modules_status.values())
         print(f"\nModules imported: {imported}/{total}")
 
         self.assertGreaterEqual(imported, 2,
@@ -111,24 +112,23 @@ class TestActualModules(unittest.TestCase):
 
         for dll_name, apis in required_apis.items():
             try:
-                if dll_name == "kernel32":
+                if dll_name == "advapi32":
+                    dll = ctypes.windll.advapi32
+                elif dll_name == "dbghelp":
+                    dll = ctypes.windll.dbghelp
+                elif dll_name == "kernel32":
                     dll = ctypes.windll.kernel32
                 elif dll_name == "ntdll":
                     dll = ctypes.windll.ntdll
-                elif dll_name == "advapi32":
-                    dll = ctypes.windll.advapi32
                 elif dll_name == "user32":
                     dll = ctypes.windll.user32
-                elif dll_name == "dbghelp":
-                    dll = ctypes.windll.dbghelp
                 else:
                     continue
 
                 print(f"\nChecking {dll_name}.dll:")
                 for api in apis:
                     try:
-                        func = getattr(dll, api)
-                        if func:
+                        if func := getattr(dll, api):
                             api_count += 1
                             found_apis.append(f"{dll_name}.{api}")
                             print(f"  OK {api}")
@@ -139,7 +139,7 @@ class TestActualModules(unittest.TestCase):
 
         self.results["windows_apis"] = found_apis
         print(f"\nTotal Windows APIs found: {api_count}")
-        print(f"Required minimum: 15")
+        print("Required minimum: 15")
 
         self.assertGreaterEqual(api_count, 15,
                                "At least 15 Windows APIs must be available")
@@ -407,17 +407,17 @@ class TestActualModules(unittest.TestCase):
         try:
             analyzer = LicenseAnalyzer()
 
-            protections = [
-                "themida", "vmprotect", "enigma", "asprotect",
-                "armadillo", "safengine", "obsidium", "winlicense"
-            ]
-
             if hasattr(analyzer, 'detect_protection'):
                 print("  OK detect_protection method found")
 
                 if hasattr(analyzer, 'protection_signatures'):
                     sigs = getattr(analyzer, 'protection_signatures', {})
                     print(f"  OK Protection signatures: {len(sigs)} defined")
+                    protections = [
+                        "themida", "vmprotect", "enigma", "asprotect",
+                        "armadillo", "safengine", "obsidium", "winlicense"
+                    ]
+
                     for prot in protections[:4]:
                         if prot in str(sigs).lower():
                             print(f"     {prot} signature present")
@@ -517,7 +517,7 @@ class TestActualModules(unittest.TestCase):
         print("\n[WINDOWS API COUNT]")
         api_count = len(self.results.get("windows_apis", []))
         print(f"Total APIs found: {api_count}")
-        print(f"Minimum required: 15")
+        print("Minimum required: 15")
         print(f"Status: {'OK PASS' if api_count >= 15 else 'FAIL FAIL'}")
 
         print("\n[CAPABILITIES SUMMARY]")
@@ -532,21 +532,25 @@ class TestActualModules(unittest.TestCase):
         capabilities_check = {
             "Pattern scanning": "scan" in capabilities_str,
             "Memory patching": "patch" in capabilities_str,
-            "Conditional jumps": "jump" in capabilities_str or "conditional" in capabilities_str,
+            "Conditional jumps": "jump" in capabilities_str
+            or "conditional" in capabilities_str,
             "Serial validation": "serial" in capabilities_str,
             "Trial expiration": "trial" in capabilities_str,
             "Registry manipulation": "registry" in capabilities_str,
             "DLL injection": "inject" in capabilities_str,
             "API hooking": "hook" in capabilities_str,
-            "Signature detection": True if YARA_SCANNER_AVAILABLE else False,
-            "Protection detection": self.results.get("capabilities", {}).get("protection_detection", False)
+            "Signature detection": bool(YARA_SCANNER_AVAILABLE),
+            "Protection detection": self.results.get("capabilities", {}).get(
+                "protection_detection", False
+            ),
         }
 
         for capability, present in capabilities_check.items():
             status = "OK" if present else "FAIL"
             print(f"  {status} {capability}")
 
-        capabilities_count = sum(1 for v in capabilities_check.values() if v)
+        capabilities_count = sum(bool(v)
+                             for v in capabilities_check.values())
         print(f"\nTotal: {capabilities_count}/10 capabilities present")
 
         if self.results.get("errors"):
@@ -565,12 +569,12 @@ class TestActualModules(unittest.TestCase):
             print("OK PRODUCTION READY - All critical requirements met")
         else:
             print("FAIL NOT PRODUCTION READY - Critical requirements missing:")
-            if not modules_ok:
-                print("  - Insufficient modules available")
-            if not apis_ok:
-                print("  - Insufficient Windows APIs")
-            if not capabilities_ok:
-                print("  - Insufficient cracking capabilities")
+        if not modules_ok:
+            print("  - Insufficient modules available")
+        if not apis_ok:
+            print("  - Insufficient Windows APIs")
+        if not capabilities_ok:
+            print("  - Insufficient cracking capabilities")
 
         print("\n" + "=" * 70)
 

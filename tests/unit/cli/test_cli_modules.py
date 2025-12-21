@@ -37,7 +37,7 @@ def temp_dir(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestPipelineDataFlowEffectiveness:
 
     def test_pipeline_data_serialization_integrity(self) -> None:
@@ -128,10 +128,13 @@ class TestPipelineDataFlowEffectiveness:
             "FAILED: Round-trip serialization lost format"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestPipelineStageProcessingEffectiveness:
 
     def test_custom_stage_processes_data_correctly(self) -> None:
+
+
+
         class LicenseKeyExtractorStage(PipelineStage):
             def process(self, input_data: PipelineData) -> PipelineData:
                 binary_content = input_data.content.get("binary_data", b"")
@@ -142,12 +145,15 @@ class TestPipelineStageProcessingEffectiveness:
                     key = binary_content[start:start+16].decode('ascii', errors='ignore')
                     extracted_keys.append(key)
 
-                output_data = PipelineData(
+                return PipelineData(
                     content={"extracted_keys": extracted_keys},
-                    metadata={**input_data.metadata, "stage": "license_key_extractor"},
-                    format="json"
+                    metadata={
+                        **input_data.metadata,
+                        "stage": "license_key_extractor",
+                    },
+                    format="json",
                 )
-                return output_data
+
 
         KNOWN_BINARY = b"HEADER\x00\x00LICENSE-KEY:ABCD-1234-EFGH-56FOOTER"
         KNOWN_KEY = "ABCD-1234-EFGH-5"
@@ -165,9 +171,9 @@ class TestPipelineStageProcessingEffectiveness:
         assert output_data is not None, "FAILED: Stage processing returned None"
         assert "extracted_keys" in output_data.content, "FAILED: Stage didn't extract keys"
         assert len(output_data.content["extracted_keys"]) >= 1, \
-            "FAILED: Stage didn't extract any keys from binary with known key"
+                "FAILED: Stage didn't extract any keys from binary with known key"
         assert output_data.content["extracted_keys"][0] == KNOWN_KEY, \
-            f"FAILED: Stage extracted wrong key (got {output_data.content['extracted_keys'][0]}, expected {KNOWN_KEY})"
+                f"FAILED: Stage extracted wrong key (got {output_data.content['extracted_keys'][0]}, expected {KNOWN_KEY})"
 
     def test_pipeline_stage_chaining(self) -> None:
         class ProtectionDetectorStage(PipelineStage):
@@ -229,7 +235,7 @@ class TestPipelineStageProcessingEffectiveness:
             "FAILED: Stage 2 didn't generate correct bypass strategy for VMProtect"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestTerminalDashboardEffectiveness:
 
     def test_system_metrics_accuracy(self) -> None:
@@ -330,7 +336,7 @@ class TestTerminalDashboardEffectiveness:
         assert stats.vulnerabilities_found == 12, "FAILED: Dashboard didn't update vulnerabilities found"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestProgressManagerEffectiveness:
 
     def test_progress_tracking_accuracy(self) -> None:
@@ -346,20 +352,20 @@ class TestProgressManagerEffectiveness:
 
         assert task_id is not None, "FAILED: Progress manager didn't return task ID"
 
-        for i in range(50):
+        for _ in range(50):
             manager.update_task(task_id, advance=1)
 
         progress = manager.get_task_progress(task_id)
 
         assert progress is not None, "FAILED: Progress manager didn't return task progress"
         assert progress.get("completed", 0) == 50, \
-            f"FAILED: Progress tracking incorrect (got {progress.get('completed', 0)}, expected 50)"
+                f"FAILED: Progress tracking incorrect (got {progress.get('completed', 0)}, expected 50)"
         assert progress.get("total", 0) == KNOWN_TOTAL, \
-            f"FAILED: Total not tracked correctly (got {progress.get('total', 0)}, expected {KNOWN_TOTAL})"
+                f"FAILED: Total not tracked correctly (got {progress.get('total', 0)}, expected {KNOWN_TOTAL})"
 
         percentage = (progress.get("completed", 0) / progress.get("total", 1)) * 100
         assert abs(percentage - 50.0) < 0.1, \
-            f"FAILED: Progress percentage incorrect (got {percentage}%, expected 50%)"
+                f"FAILED: Progress percentage incorrect (got {percentage}%, expected 50%)"
 
     def test_multiple_task_tracking(self) -> None:
         manager = ProgressManager()
@@ -402,7 +408,7 @@ class TestProgressManagerEffectiveness:
             f"FAILED: Task 1 completion percentage incorrect (got {task1_percentage}%, expected 75%)"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestOutputFormattingEffectiveness:
 
     def test_json_output_validity(self) -> None:
@@ -420,7 +426,7 @@ class TestOutputFormattingEffectiveness:
         json_output = json.dumps(analysis_results, indent=2)
 
         assert json_output is not None, "FAILED: JSON output generation returned None"
-        assert len(json_output) > 0, "FAILED: JSON output is empty"
+        assert json_output != "", "FAILED: JSON output is empty"
 
         try:
             parsed = json.loads(json_output)
@@ -428,26 +434,28 @@ class TestOutputFormattingEffectiveness:
             pytest.fail(f"FAILED: JSON output is not valid JSON: {e}")
 
         assert parsed["binary"] == "protected.exe", \
-            "FAILED: JSON output missing binary name"
+                "FAILED: JSON output missing binary name"
         assert len(parsed["protections"]) == 2, \
-            "FAILED: JSON output missing protections"
+                "FAILED: JSON output missing protections"
         assert parsed["bypass_success"] is True, \
-            "FAILED: JSON output missing bypass success flag"
+                "FAILED: JSON output missing bypass success flag"
 
     def test_csv_output_structure(self) -> None:
-        csv_data = "binary,protection,bypass_status,confidence\n"
-        csv_data += "app1.exe,VMProtect,success,0.95\n"
+        csv_data = (
+            "binary,protection,bypass_status,confidence\n"
+            + "app1.exe,VMProtect,success,0.95\n"
+        )
         csv_data += "app2.exe,Themida,success,0.88\n"
         csv_data += "app3.exe,None,N/A,1.00\n"
 
         lines = csv_data.strip().split('\n')
 
         assert len(lines) == 4, \
-            f"FAILED: CSV output has wrong number of lines (got {len(lines)}, expected 4)"
+                f"FAILED: CSV output has wrong number of lines (got {len(lines)}, expected 4)"
 
         header = lines[0].split(',')
         assert header == ["binary", "protection", "bypass_status", "confidence"], \
-            "FAILED: CSV header structure incorrect"
+                "FAILED: CSV header structure incorrect"
 
         row1 = lines[1].split(',')
         assert row1[0] == "app1.exe", "FAILED: CSV row 1 binary name incorrect"
@@ -456,8 +464,7 @@ class TestOutputFormattingEffectiveness:
         assert float(row1[3]) == 0.95, "FAILED: CSV row 1 confidence incorrect"
 
     def test_text_report_formatting(self) -> None:
-        report = ""
-        report += "=== Intellicrack Analysis Report ===\n"
+        report = "" + "=== Intellicrack Analysis Report ===\n"
         report += "Binary: protected.exe\n"
         report += "Protections Detected: VMProtect, Themida\n"
         report += "Keys Extracted: 3\n"
@@ -465,16 +472,16 @@ class TestOutputFormattingEffectiveness:
         report += "Confidence: 92%\n"
 
         assert "Intellicrack Analysis Report" in report, \
-            "FAILED: Text report missing title"
+                "FAILED: Text report missing title"
         assert "protected.exe" in report, \
-            "FAILED: Text report missing binary name"
+                "FAILED: Text report missing binary name"
         assert "VMProtect" in report and "Themida" in report, \
-            "FAILED: Text report missing protection names"
+                "FAILED: Text report missing protection names"
         assert "SUCCESS" in report, \
-            "FAILED: Text report missing bypass status"
+                "FAILED: Text report missing bypass status"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestBatchProcessingEffectiveness:
 
     def test_batch_analysis_completion(self, temp_dir: Path) -> None:
@@ -528,7 +535,8 @@ class TestBatchProcessingEffectiveness:
         assert len(results) == KNOWN_TASK_COUNT, \
             f"FAILED: Concurrent processing incomplete (got {len(results)}, expected {KNOWN_TASK_COUNT})"
 
-        success_count = sum(1 for r in results if r["success"])
+        success_count = sum(bool(r["success"])
+                        for r in results)
         assert success_count == KNOWN_TASK_COUNT, \
             f"FAILED: Not all concurrent tasks succeeded (got {success_count}/{KNOWN_TASK_COUNT})"
 
@@ -548,7 +556,8 @@ class TestBatchProcessingEffectiveness:
             "total_binaries": len(INDIVIDUAL_RESULTS),
             "total_keys_extracted": sum(r["keys"] for r in INDIVIDUAL_RESULTS),
             "total_protections_detected": sum(r["protections"] for r in INDIVIDUAL_RESULTS),
-            "success_count": sum(1 for r in INDIVIDUAL_RESULTS if r["success"]),
+            "success_count": sum(bool(r["success"])
+                             for r in INDIVIDUAL_RESULTS),
         }
 
         assert aggregated["total_binaries"] == 4, \

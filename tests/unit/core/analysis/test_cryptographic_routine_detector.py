@@ -61,11 +61,11 @@ class TestAESDetection:
 
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-        assert len(aes_detections) >= 1, "FAILED: Cannot detect real AES S-boxes"
+        assert aes_detections, "FAILED: Cannot detect real AES S-boxes"
         assert any(d.variant == "AES Forward S-box" for d in aes_detections), \
-            "FAILED: Cannot identify AES forward S-box"
+                "FAILED: Cannot identify AES forward S-box"
         assert any(d.confidence > 0.85 for d in aes_detections), \
-            "FAILED: Low confidence in AES detection"
+                "FAILED: Low confidence in AES detection"
 
     def test_detects_aes_with_obfuscation(self):
         """MUST detect AES S-box even with minor obfuscation.
@@ -85,10 +85,11 @@ class TestAESDetection:
 
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-        assert len(aes_detections) >= 1, \
-            "FAILED: Cannot detect obfuscated AES (real malware uses this)"
+        assert (
+            aes_detections
+        ), "FAILED: Cannot detect obfuscated AES (real malware uses this)"
         assert aes_detections[0].details.get("obfuscated") is True, \
-            "FAILED: Does not recognize obfuscation"
+                "FAILED: Does not recognize obfuscation"
 
     def test_rejects_false_positives(self):
         """MUST NOT detect AES in random data.
@@ -102,8 +103,9 @@ class TestAESDetection:
         detections = detector.detect_all(random_data)
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-        assert len(aes_detections) == 0, \
-            "FAILED: False positive - detected AES in random data"
+        assert (
+            not aes_detections
+        ), "FAILED: False positive - detected AES in random data"
 
 
 class TestDESDetection:
@@ -133,10 +135,9 @@ class TestDESDetection:
 
         des_detections = [d for d in detections if d.algorithm in (CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES)]
 
-        assert len(des_detections) >= 1, \
-            "FAILED: Cannot detect real DES S-boxes"
+        assert des_detections, "FAILED: Cannot detect real DES S-boxes"
         assert any(d.confidence > 0.7 for d in des_detections), \
-            "FAILED: Low confidence in DES detection"
+                "FAILED: Low confidence in DES detection"
 
 
 class TestBlowfishDetection:
@@ -162,8 +163,7 @@ class TestBlowfishDetection:
 
         bf_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.BLOWFISH]
 
-        assert len(bf_detections) >= 1, \
-            "FAILED: Cannot detect real Blowfish constants"
+        assert bf_detections, "FAILED: Cannot detect real Blowfish constants"
 
 
 class TestHashFunctionDetection:
@@ -189,8 +189,7 @@ class TestHashFunctionDetection:
 
         sha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256]
 
-        assert len(sha_detections) >= 1, \
-            "FAILED: Cannot detect real SHA-256 constants"
+        assert sha_detections, "FAILED: Cannot detect real SHA-256 constants"
 
     def test_detects_genuine_sha1_constants(self):
         """MUST detect authentic SHA-1 constants.
@@ -209,8 +208,7 @@ class TestHashFunctionDetection:
 
         sha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA1]
 
-        assert len(sha_detections) >= 1, \
-            "FAILED: Cannot detect real SHA-1 constants"
+        assert sha_detections, "FAILED: Cannot detect real SHA-1 constants"
 
 
 class TestRSADetection:
@@ -236,8 +234,7 @@ class TestRSADetection:
 
         rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
 
-        assert len(rsa_detections) >= 1, \
-            "FAILED: Cannot detect real RSA patterns"
+        assert rsa_detections, "FAILED: Cannot detect real RSA patterns"
 
 
 class TestCustomCryptoDetection:
@@ -261,8 +258,9 @@ class TestCustomCryptoDetection:
 
         custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
 
-        assert len(custom_detections) >= 1, \
-            "FAILED: Cannot detect custom crypto with high entropy"
+        assert (
+            custom_detections
+        ), "FAILED: Cannot detect custom crypto with high entropy"
 
 
 class TestDataFlowAnalysis:
@@ -322,7 +320,7 @@ class TestAlgorithmFingerprinting:
 
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-        assert len(aes_detections) > 0, "FAILED: AES not detected"
+        assert aes_detections, "FAILED: AES not detected"
 
         has_variant_info = any(
             d.variant is not None and len(d.variant) > 0
@@ -330,7 +328,7 @@ class TestAlgorithmFingerprinting:
         )
 
         assert has_variant_info, \
-            "FAILED: Algorithm fingerprinting not working"
+                "FAILED: Algorithm fingerprinting not working"
 
 
 class TestUsageAnalysis:
@@ -413,8 +411,10 @@ class TestPerformanceAndAccuracy:
 
         detections = detector.detect_all(bytes(test_data), quick_mode=True)
 
-        true_positives = sum(1 for d in detections if d.confidence > 0.85)
-        false_positives = sum(1 for d in detections if d.confidence <= 0.5)
+        true_positives = sum(bool(d.confidence > 0.85)
+                         for d in detections)
+        false_positives = sum(bool(d.confidence <= 0.5)
+                          for d in detections)
 
         accuracy = true_positives / (true_positives + false_positives) if (true_positives + false_positives) > 0 else 0
 

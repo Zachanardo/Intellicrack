@@ -1,5 +1,6 @@
 """Test Coverage Summary for Cloud License Hooker Module"""
 
+
 print("=" * 80)
 print("CLOUD LICENSE HOOKER TEST SUITE - COMPREHENSIVE COVERAGE REPORT")
 print("=" * 80)
@@ -100,7 +101,7 @@ print(f"Estimated Method Coverage: {estimated_coverage:.1f}%")
 if estimated_coverage >= 80:
     print("OK COVERAGE REQUIREMENT MET (80%+)")
 else:
-    print(f"FAIL Coverage below 80% requirement")
+    print("FAIL Coverage below 80% requirement")
 
 print("\n SECURITY RESEARCH VALIDATION")
 print("-" * 50)

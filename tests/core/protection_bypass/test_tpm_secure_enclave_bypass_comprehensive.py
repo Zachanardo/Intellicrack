@@ -54,8 +54,7 @@ def tpm_emulator() -> TPMEmulator:
 @pytest.fixture
 def sgx_emulator() -> SGXEmulator:
     """Create SGX emulator instance."""
-    emulator = SGXEmulator()
-    return emulator
+    return SGXEmulator()
 
 
 @pytest.fixture
@@ -729,7 +728,7 @@ class TestSGXEmulator:
         assert quote_data is not None
         assert len(quote_data) > 100
 
-        version = struct.unpack("<H", quote_data[0:2])[0]
+        version = struct.unpack("<H", quote_data[:2])[0]
         assert version == 2
 
     def test_get_quote_includes_report_data_for_verification(
@@ -855,7 +854,7 @@ class TestSecureEnclaveBypass:
         quote_data = base64.b64decode(sgx_quote)
         assert len(quote_data) > 100
 
-        version = struct.unpack("<H", quote_data[0:2])[0]
+        version = struct.unpack("<H", quote_data[:2])[0]
         assert version == 3
 
     def test_platform_manifest_capture_returns_valid_data_for_attestation(
@@ -949,7 +948,7 @@ class TestSecureEnclaveBypass:
         assert selection is not None
         assert len(selection) >= 8
 
-        count = struct.unpack(">I", selection[0:4])[0]
+        count = struct.unpack(">I", selection[:4])[0]
         assert count == 1
 
         hash_alg = struct.unpack(">H", selection[4:6])[0]
@@ -1055,7 +1054,7 @@ class TestSecureEnclaveBypass:
         assert response is not None
         assert len(response) >= 10
 
-        tag = struct.unpack(">H", response[0:2])[0]
+        tag = struct.unpack(">H", response[:2])[0]
         assert tag == 0x8001
 
     def test_tpm_command_handling_processes_startup_command_correctly(
@@ -1098,7 +1097,7 @@ class TestSecureEnclaveBypass:
 
         bypass.cleanup()
 
-        assert bypass.bypass_active is False
+        assert not bypass.bypass_active
 
 
 class TestTPMEnumerations:

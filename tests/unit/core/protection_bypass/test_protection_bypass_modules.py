@@ -105,7 +105,7 @@ class TestHardwareDongleEmulator:
         )
 
         assert result is not None
-        assert isinstance(result, dict) or isinstance(result, bool)
+        assert isinstance(result, (dict, bool))
 
     def test_hasp_challenge_processing(self) -> None:
         """Test HASP challenge-response processing."""
@@ -152,8 +152,6 @@ class TestHardwareDongleEmulator:
             size=len(test_data),
         )
 
-        assert read_back == test_data or True
-
     def test_generate_emulation_script(self) -> None:
         """Test generating Frida emulation script."""
         emulator = HardwareDongleEmulator()
@@ -178,8 +176,6 @@ class TestHardwareDongleEmulator:
         emulator = HardwareDongleEmulator()
 
         emulator.clear_emulation()
-
-        assert True
 
     def test_factory_function_activate_emulation(self) -> None:
         """Test factory function for dongle emulation activation."""
@@ -234,7 +230,7 @@ class TestHardwareIDSpoofer:
         result = spoofer._generate_random_cpu_id()
 
         assert result is not None
-        assert isinstance(result, str) or isinstance(result, int)
+        assert isinstance(result, (str, int))
 
     def test_spoof_mac_address_generation(self) -> None:
         """Test MAC address generation."""
@@ -293,8 +289,6 @@ class TestHardwareIDSpoofer:
 
         spoofer.cleanup()
 
-        assert True
-
 
 class TestCloudLicenseAnalyzer:
     """Test cloud license analysis capabilities."""
@@ -348,7 +342,7 @@ class TestCloudLicenseAnalyzer:
         result = analyzer.analyze_endpoint(endpoint_data)
 
         assert result is not None
-        assert isinstance(result, dict) or isinstance(result, CloudEndpoint)
+        assert isinstance(result, (dict, CloudEndpoint))
 
     def test_extract_license_tokens(self) -> None:
         """Test license token extraction from traffic."""
@@ -362,7 +356,7 @@ class TestCloudLicenseAnalyzer:
         tokens = analyzer.extract_license_tokens(traffic_data)
 
         assert tokens is not None
-        assert isinstance(tokens, list) or isinstance(tokens, dict)
+        assert isinstance(tokens, (list, dict))
 
     def test_generate_jwt_token(self) -> None:
         """Test JWT token generation."""
@@ -432,8 +426,6 @@ class TestCloudLicenseAnalyzer:
         analyzer = CloudLicenseAnalyzer()
 
         analyzer.cleanup()
-
-        assert True
 
 
 class TestIntegration:

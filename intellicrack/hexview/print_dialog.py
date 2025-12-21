@@ -20,9 +20,9 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Optional
+from typing import Any
 
-from PyQt6.QtCore import QRectF
+from PyQt6.QtCore import QPointF, QRectF
 from PyQt6.QtGui import QFont, QFontMetrics, QPainter
 from PyQt6.QtPrintSupport import QPrintDialog, QPrinter, QPrintPreviewDialog
 from PyQt6.QtWidgets import (
@@ -90,11 +90,14 @@ class PrintOptionsDialog(QDialog):
         if (
             self.hex_viewer
             and hasattr(self.hex_viewer, "selection_start")
-            and (self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1)
+            and hasattr(self.hex_viewer, "selection_end")
         ):
-            self.selection_check.setEnabled(True)
-            selection_size = self.hex_viewer.selection_end - self.hex_viewer.selection_start
-            self.selection_check.setText(f"Selection only ({selection_size} bytes)")
+            selection_start: Any = getattr(self.hex_viewer, "selection_start")
+            selection_end: Any = getattr(self.hex_viewer, "selection_end")
+            if selection_start != -1 and selection_end != -1:
+                self.selection_check.setEnabled(True)
+                selection_size = selection_end - selection_start
+                self.selection_check.setText(f"Selection only ({selection_size} bytes)")
 
         range_layout.addWidget(self.selection_check)
 
@@ -293,16 +296,19 @@ class PrintOptionsDialog(QDialog):
 
         if self.selection_check.isChecked() and self.selection_check.isEnabled():
             # Print selection
-            start = self.hex_viewer.selection_start
-            end = self.hex_viewer.selection_end
-            if start != -1 and end != -1:
-                data = self.hex_viewer.file_handler.read_data(start, end - start)
-                return (data, start)
+            if hasattr(self.hex_viewer, "selection_start") and hasattr(self.hex_viewer, "selection_end"):
+                start: Any = getattr(self.hex_viewer, "selection_start")
+                end: Any = getattr(self.hex_viewer, "selection_end")
+                if start != -1 and end != -1:
+                    handler: Any = getattr(self.hex_viewer, "file_handler")
+                    data: bytes = handler.read_data(start, end - start)
+                    return (data, start)
         else:
             # Print all or page range
-            file_size = self.hex_viewer.file_handler.file_size
-            data = self.hex_viewer.file_handler.read_data(0, file_size)
-            return (data, 0)
+            handler_all: Any = getattr(self.hex_viewer, "file_handler")
+            file_size: int = handler_all.file_size
+            data_all: bytes = handler_all.read_data(0, file_size)
+            return (data_all, 0)
 
         return (None, 0)
 
@@ -397,7 +403,7 @@ class PrintOptionsDialog(QDialog):
         if self.show_header_check.isChecked():
             header_text = self.header_edit.text()
             header_text = self.replace_variables(header_text, page_num, total_pages)
-            painter.drawText(content_rect.left(), y_pos, header_text)
+            painter.drawText(QPointF(content_rect.left(), y_pos), header_text)
             y_pos += line_height * 2
 
         # Calculate lines per page
@@ -423,7 +429,7 @@ class PrintOptionsDialog(QDialog):
                 data_end = min(data_start + bytes_per_row, page_end)
                 if data_chunk := data[data_start:data_end]:
                     line = self.format_hex_line(start_offset + data_start, data_chunk, bytes_per_row)
-                    painter.drawText(content_rect.left(), y_pos, line)
+                    painter.drawText(QPointF(content_rect.left(), y_pos), line)
                     y_pos += line_height
 
         # Draw footer if enabled
@@ -431,7 +437,7 @@ class PrintOptionsDialog(QDialog):
             footer_text = self.footer_edit.text()
             footer_text = self.replace_variables(footer_text, page_num, total_pages)
             footer_y = content_rect.bottom() - line_height
-            painter.drawText(content_rect.left(), footer_y, footer_text)
+            painter.drawText(QPointF(content_rect.left(), footer_y), footer_text)
 
     def replace_variables(
         self,
@@ -456,10 +462,13 @@ class PrintOptionsDialog(QDialog):
 
         # Get filename
         filename = "Untitled"
-        if self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
-            import os
+        if self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
+            file_handler: Any = getattr(self.hex_viewer, "file_handler")
+            if hasattr(file_handler, "file_path"):
+                import os
 
-            filename = os.path.basename(self.hex_viewer.file_handler.file_path)
+                file_path: str = getattr(file_handler, "file_path")
+                filename = os.path.basename(file_path)
 
         text = text.replace("%filename%", filename)
         text = text.replace("%page%", str(page_num))

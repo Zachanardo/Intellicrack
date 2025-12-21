@@ -130,11 +130,10 @@ class TestTorchXPUIntegration:
         """XPU devices are enumerated when hardware available."""
         import torch
 
-        if hasattr(torch, "xpu") and callable(getattr(torch.xpu, "is_available", None)):
-            if torch.xpu.is_available():
-                device_count = torch.xpu.device_count()
-                assert device_count > 0
-                assert isinstance(device_count, int)
+        if hasattr(torch, "xpu") and callable(getattr(torch.xpu, "is_available", None)) and torch.xpu.is_available():
+            device_count = torch.xpu.device_count()
+            assert device_count > 0
+            assert isinstance(device_count, int)
 
     @pytest.mark.skipif(
         not os.environ.get("HAS_INTEL_XPU"),
@@ -144,13 +143,12 @@ class TestTorchXPUIntegration:
         """XPU device names can be retrieved."""
         import torch
 
-        if hasattr(torch, "xpu") and callable(getattr(torch.xpu, "is_available", None)):
-            if torch.xpu.is_available():
-                device_count = torch.xpu.device_count()
-                for i in range(device_count):
-                    device_name = torch.xpu.get_device_name(i)
-                    assert isinstance(device_name, str)
-                    assert len(device_name) > 0
+        if hasattr(torch, "xpu") and callable(getattr(torch.xpu, "is_available", None)) and torch.xpu.is_available():
+            device_count = torch.xpu.device_count()
+            for i in range(device_count):
+                device_name = torch.xpu.get_device_name(i)
+                assert isinstance(device_name, str)
+                assert len(device_name) > 0
 
 
 class TestGracefulDegradation:
@@ -269,7 +267,7 @@ class TestWarningsSuppression:
             importlib.reload(torch_xpu_handler)
 
             user_warnings = [item for item in w if issubclass(item.category, UserWarning)]
-            assert len(user_warnings) == 0
+            assert not user_warnings
 
     def test_suppresses_deprecation_warnings(self) -> None:
         """Handler suppresses DeprecationWarning during torch import."""
@@ -284,7 +282,7 @@ class TestWarningsSuppression:
             importlib.reload(torch_xpu_handler)
 
             deprecation_warnings = [item for item in w if issubclass(item.category, DeprecationWarning)]
-            assert len(deprecation_warnings) == 0
+            assert not deprecation_warnings
 
 
 class TestEdgeCases:

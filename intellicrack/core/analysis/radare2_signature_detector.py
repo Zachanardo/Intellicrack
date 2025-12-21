@@ -928,12 +928,10 @@ rule CryptoAPI_Usage {
 
         # Report each type
         for sig_type, matches in by_type.items():
-            report.extend(
-                (
-                    f"\n{sig_type.value.upper()} SIGNATURES ({len(matches)} matches)",
-                    "-" * 40,
-                )
-            )
+            report.extend((
+                f"\n{sig_type.value.upper()} SIGNATURES ({len(matches)} matches)",
+                "-" * 40,
+            ))
             # Group by unique names
             unique_sigs = {}
             for match in matches:
@@ -942,23 +940,32 @@ rule CryptoAPI_Usage {
                 unique_sigs[match.name].append(match)
 
             for sig_name, sig_matches in unique_sigs.items():
-                report.extend((f"  {sig_name}", f"    Matches: {len(sig_matches)}"))
-                report.append(f"    Confidence: {sig_matches[0].confidence:.0%}")
-
+                report.extend(
+                    (
+                        f"  {sig_name}",
+                        f"    Matches: {len(sig_matches)}",
+                        f"    Confidence: {sig_matches[0].confidence:.0%}",
+                    )
+                )
                 # Show first few offsets
                 offsets = [hex(m.offset) for m in sig_matches[:5]]
                 if len(sig_matches) > 5:
                     offsets.append(f"... and {len(sig_matches) - 5} more")
-                report.append(f"    Offsets: {', '.join(offsets)}")
-                report.append("")
-
+                report.extend((f"    Offsets: {', '.join(offsets)}", ""))
         if compiler_info := self.detect_compiler():
-            report.append("\nCOMPILER INFORMATION")
-            report.append("-" * 40)
-            report.append(f"  Compiler: {compiler_info.compiler}")
-            report.append(f"  Version: {compiler_info.version}")
-            report.append(f"  Optimization: {compiler_info.optimization_level}")
-            report.append(f"  Architecture: {compiler_info.architecture}")
+            report.extend(("\nCOMPILER INFORMATION", "-" * 40))
+            report.extend(
+                (
+                    f"  Compiler: {compiler_info.compiler}",
+                    f"  Version: {compiler_info.version}",
+                )
+            )
+            report.extend(
+                (
+                    f"  Optimization: {compiler_info.optimization_level}",
+                    f"  Architecture: {compiler_info.architecture}",
+                )
+            )
             report.append("")
 
         if libraries := self.detect_libraries():
@@ -972,13 +979,11 @@ rule CryptoAPI_Usage {
                 report.append(f"  ... and {len(libraries) - 10} more libraries")
             report.append("")
 
-        report.extend(
-            (
-                "\nSUMMARY",
-                "-" * 40,
-                f"Total Signatures Matched: {len(self.matches)}",
-            )
-        )
+        report.extend((
+            "\nSUMMARY",
+            "-" * 40,
+            f"Total Signatures Matched: {len(self.matches)}",
+        ))
         if protection_matches := [
             m for m in self.matches if "protect" in m.name.lower() or "pack" in m.name.lower() or "crypt" in m.name.lower()
         ]:

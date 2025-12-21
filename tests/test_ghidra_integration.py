@@ -79,8 +79,7 @@ def check_ghidra_available() -> tuple[bool, Optional[str]]:
         for path_pattern in common_paths:
             if '*' in path_pattern:
                 import glob
-                matches = glob.glob(path_pattern)
-                if matches:
+                if matches := glob.glob(path_pattern):
                     return True, matches[0]
             elif Path(path_pattern).exists():
                 return True, path_pattern

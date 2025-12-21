@@ -876,7 +876,7 @@ class TestLicenseProtocolIntegration:
             thread.join()
 
         # Verify no errors occurred
-        assert len(errors) == 0, f"Thread safety errors: {errors}"
+        assert not errors, f"Thread safety errors: {errors}"
 
         # Verify all requests were processed
         assert len(results) == 500  # 10 threads * 50 requests each

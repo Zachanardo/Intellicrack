@@ -658,7 +658,7 @@ class RealTimeDashboard:
         self.flask_thread = threading.Thread(target=run_flask, daemon=True)
         self.flask_thread.start()
 
-        self.logger.info("HTTP API server started on port %d", self.config.get('http_port', 5000))
+        self.logger.info("HTTP API server started on port %d", self.config.get("http_port", 5000))
 
     def _start_metrics_updater(self) -> None:
         """Start metrics update thread."""

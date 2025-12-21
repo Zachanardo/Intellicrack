@@ -25,6 +25,7 @@ import os
 import sys
 import time
 from datetime import datetime
+from collections.abc import Callable
 from typing import Any
 
 
@@ -67,20 +68,22 @@ class AITerminalChat:
             analysis_results: Current analysis results for context
 
         """
-        self.console = Console() if RICH_AVAILABLE else None
+        self.console: Console | None = Console() if RICH_AVAILABLE else None
         self.binary_path = binary_path
         self.analysis_results = analysis_results or {}
-        self.conversation_history = []
-        self.ai_backend = None
+        self.conversation_history: list[dict[str, Any]] = []
+        self.ai_backend: Any = None
+        self.llm_manager: Any = None
+        self.orchestrator: Any = None
         self.session_start = datetime.now()
 
         # Chat configuration
         self.max_history = 50
-        self.response_buffer_size = 4096  # Response streaming buffer size
+        self.response_buffer_size = 4096
         self.auto_save = True
 
-        # Available commands
-        self.commands = {
+        # Available commands - using Any for callable type due to method compatibility
+        self.commands: dict[str, Any] = {
             "/help": self._show_help,
             "/clear": self._clear_history,
             "/save": self._save_conversation,
@@ -111,14 +114,14 @@ class AITerminalChat:
             # Initialize AI orchestrator for complex tasks
             from intellicrack.ai.orchestrator import AIOrchestrator
 
-            self.orchestrator = AIOrchestrator(llm_config_manager=self.llm_manager)
+            self.orchestrator = AIOrchestrator()
 
             # Try to initialize the coordination layer as primary backend
             try:
-                from intellicrack.ai.coordination_layer import CoordinationLayer
+                from intellicrack.ai.coordination_layer import AICoordinationLayer
 
-                self.ai_backend = CoordinationLayer(llm_config_manager=self.llm_manager)
-            except ImportError:
+                self.ai_backend = AICoordinationLayer()
+            except (ImportError, AttributeError):
                 # Use orchestrator as fallback
                 self.ai_backend = self.orchestrator
 
@@ -159,6 +162,8 @@ class AITerminalChat:
 
     def _start_rich_chat(self) -> None:
         """Start rich terminal chat interface."""
+        if not self.console:
+            return
         self.console.clear()
 
         # Welcome message
@@ -191,7 +196,8 @@ class AITerminalChat:
                     args = user_input.split()[1:] if len(user_input.split()) > 1 else []
 
                     if command in self.commands:
-                        result = self.commands[command](args)
+                        command_func = self.commands[command]
+                        result = command_func(args)
                         if result == "quit":
                             break
                         continue
@@ -232,7 +238,8 @@ class AITerminalChat:
                     args = user_input.split()[1:] if len(user_input.split()) > 1 else []
 
                     if command in self.commands:
-                        result = self.commands[command](args)
+                        command_func = self.commands[command]
+                        result = command_func(args)
                         if result == "quit":
                             break
                         continue
@@ -346,7 +353,7 @@ class AITerminalChat:
                 )
 
                 if isinstance(response, dict):
-                    return response.get("response", response.get("analysis", str(response)))
+                    return str(response.get("response", response.get("analysis", str(response))))
                 return str(response)
 
             # Try using analyze_with_llm method
@@ -358,7 +365,7 @@ class AITerminalChat:
                 )
 
                 if isinstance(response, dict):
-                    return response.get("analysis", response.get("response", str(response)))
+                    return str(response.get("analysis", response.get("response", str(response))))
                 return str(response)
 
             # Try using ask_question method (AIAssistant fallback)
@@ -383,7 +390,7 @@ class AITerminalChat:
                 return str(response)
 
             # Direct LLM manager usage as final attempt
-            if self.llm_manager:
+            if self.llm_manager and hasattr(self.llm_manager, "generate_response"):
                 response = self.llm_manager.generate_response(
                     prompt=user_input,
                     context=enriched_context.get("binary_analysis", {}),
@@ -391,7 +398,7 @@ class AITerminalChat:
                 )
 
                 if isinstance(response, dict):
-                    return response.get("content", response.get("text", str(response)))
+                    return str(response.get("content", response.get("text", str(response))))
                 return str(response)
 
             return "AI backend is available but doesn't support the required methods for chat functionality."
@@ -417,7 +424,7 @@ class AITerminalChat:
 
             return f"AI backend error: {e}\n\nPlease check your AI configuration and try again."
 
-    def _prepare_enriched_context(self, base_context: dict) -> dict:
+    def _prepare_enriched_context(self, user_input: str, base_context: dict[str, Any]) -> dict[str, Any]:
         """Prepare enriched context for AI responses."""
         enriched_context = base_context.copy()
 
@@ -439,7 +446,7 @@ class AITerminalChat:
                 else:
                     vuln_list = vulns if isinstance(vulns, list) else []
 
-                severity_counts = {}
+                severity_counts: dict[str, int] = {}
                 for vuln in vuln_list:
                     severity = vuln.get("severity", "unknown")
                     severity_counts[severity] = severity_counts.get(severity, 0) + 1
@@ -545,11 +552,7 @@ class AITerminalChat:
         if advanced_count > ADVANCED_THRESHOLD:
             return "advanced"
         INTERMEDIATE_THRESHOLD = 1
-        return (
-            "intermediate"
-            if intermediate_count > INTERMEDIATE_THRESHOLD or advanced_count > 0
-            else "beginner"
-        )
+        return "intermediate" if intermediate_count > INTERMEDIATE_THRESHOLD or advanced_count > 0 else "beginner"
 
     def _build_context(self) -> dict[str, Any]:
         """Build context for AI responses."""
@@ -599,15 +602,15 @@ class AITerminalChat:
         layout["header"].update(Panel(header_content, border_style="green"))
 
         # Body with response content - check for code blocks and markdown
-        if "```" in response:
-            # Process code blocks with syntax highlighting
-            response_content = self._process_code_blocks(response)
-        elif response.startswith("#") or "*" in response or "**" in response:
-            # Render as markdown for formatted text
-            response_content = Markdown(response)
+        processed_response = self._process_code_blocks(response) if "```" in response else response
+
+        if isinstance(processed_response, str):
+            if processed_response.startswith("#") or "*" in processed_response or "**" in processed_response:
+                response_content: Any = Markdown(processed_response)
+            else:
+                response_content = processed_response
         else:
-            # Plain text response
-            response_content = response
+            response_content = processed_response
 
         ai_panel = Panel(
             response_content,
@@ -622,16 +625,15 @@ class AITerminalChat:
         layout["footer"].update(footer_content)
 
         # Display with streaming update for real-time response rendering
-        with Live(layout, refresh_per_second=10, console=self.console) as live:
-            import time
+        if self.console:
+            with Live(layout, refresh_per_second=10, console=self.console) as live:
+                # Stream response chunks as they arrive from the AI backend
+                # This provides real-time display of AI processing results
+                live.update(layout)
+                # Allow brief time for console to render complex layouts
+                time.sleep(0.05)
 
-            # Stream response chunks as they arrive from the AI backend
-            # This provides real-time display of AI processing results
-            live.update(layout)
-            # Allow brief time for console to render complex layouts
-            time.sleep(0.05)
-
-        self.console.print()
+            self.console.print()
 
     @staticmethod
     def _process_code_blocks(response: str) -> str | object:
@@ -729,7 +731,7 @@ class AITerminalChat:
                 ),
             )
 
-        if panels:
+        if panels and self.console:
             # Display in columns for better layout
             columns = Columns(panels, equal=True, expand=True)
             self.console.print("\n")
@@ -902,9 +904,12 @@ class AITerminalChat:
 
     def _get_available_backends(self) -> tuple[list[str], str]:
         """Helper to get available backends and current backend."""
-        if self.llm_manager:
-            available_backends = self.llm_manager.list_available_backends()
-            current_backend = self.llm_manager.get_current_backend()
+        available_backends: list[str]
+        current_backend: str
+        if self.llm_manager and hasattr(self.llm_manager, "list_model_configs"):
+            available_backends = [config for config in self.llm_manager.list_model_configs()]
+            loaded_configs = self.llm_manager.configs if hasattr(self.llm_manager, "configs") else {}
+            current_backend = list(loaded_configs.keys())[0] if loaded_configs else "default"
         else:
             available_backends = ["openai", "anthropic", "google", "local", "ollama"]
             current_backend = "openai"
@@ -989,14 +994,14 @@ class AITerminalChat:
             # Reinitialize orchestrator with new LLM manager
             from intellicrack.ai.orchestrator import AIOrchestrator
 
-            self.orchestrator = AIOrchestrator(llm_config_manager=self.llm_manager)
+            self.orchestrator = AIOrchestrator()
 
             # Try to reinitialize coordination layer
             try:
-                from intellicrack.ai.coordination_layer import CoordinationLayer
+                from intellicrack.ai.coordination_layer import AICoordinationLayer
 
-                self.ai_backend = CoordinationLayer(llm_config_manager=self.llm_manager)
-            except ImportError:
+                self.ai_backend = AICoordinationLayer()
+            except (ImportError, AttributeError):
                 # Use orchestrator as backend
                 self.ai_backend = self.orchestrator
 

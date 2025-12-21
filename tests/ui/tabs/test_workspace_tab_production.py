@@ -262,8 +262,6 @@ class TestWorkspaceTabActivityLog:
 
         workspace_tab.filter_activity_log("Test")
 
-        assert True
-
     def test_clear_activity_log(self, workspace_tab: WorkspaceTab, monkeypatch: pytest.MonkeyPatch) -> None:
         workspace_tab.log_activity("Test message", "INFO")
 

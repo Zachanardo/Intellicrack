@@ -255,12 +255,12 @@ def arxan_protected_binary(tmp_path: Path) -> Generator[Path, None, None]:
     code_section_data[0x950 : 0x950 + len(b"serial")] = b"serial"
 
     data_section_data = bytearray(0x1000)
-    data_section_data[0:4] = struct.pack("<I", 0x12345678)
+    data_section_data[:4] = struct.pack("<I", 0x12345678)
     data_section_data[0x100 : 0x100 + len(b"activation")] = b"activation"
     data_section_data[0x200 : 0x200 + len(b"registration")] = b"registration"
 
     arxan_section_data = bytearray(0x1000)
-    arxan_section_data[0 : len(b"TRANSFORMIT")] = b"TRANSFORMIT"
+    arxan_section_data[:len(b"TRANSFORMIT")] = b"TRANSFORMIT"
     arxan_section_data[0x100 : 0x100 + len(b"\x63\x7c\x77\x7b\xf2\x6b\x6f\xc5")] = b"\x63\x7c\x77\x7b\xf2\x6b\x6f\xc5"
 
     binary_data = (
@@ -409,7 +409,7 @@ class TestTamperCheckBypass:
         assert result.success is True
 
         tamper_patches = [p for p in result.patches_applied if p.patch_type == "tamper_bypass"]
-        assert len(tamper_patches) > 0
+        assert tamper_patches
 
         for patch in tamper_patches:
             assert patch.address >= 0
@@ -455,7 +455,7 @@ class TestIntegrityCheckBypass:
         result = bypass.bypass(arxan_protected_binary)
 
         integrity_patches = [p for p in result.patches_applied if p.patch_type == "integrity_bypass"]
-        assert len(integrity_patches) > 0
+        assert integrity_patches
 
         for patch in integrity_patches:
             assert "integrity" in patch.description.lower() or any(
@@ -497,7 +497,7 @@ class TestLicenseValidationBypass:
         result = bypass.bypass(arxan_protected_binary)
 
         license_patches = [p for p in result.patches_applied if p.patch_type == "license_bypass"]
-        assert len(license_patches) > 0
+        assert license_patches
 
         for patch in license_patches:
             assert "license" in patch.description.lower() or "validation" in patch.description.lower()
@@ -511,10 +511,10 @@ class TestLicenseValidationBypass:
         license_patches = [p for p in result.patches_applied if p.patch_type == "license_bypass"]
 
         for patch in license_patches:
-            assert (
-                patch.patched_bytes == b"\xb8\x01\x00\x00\x00\xc3"
-                or patch.patched_bytes == b"\x33\xc0\x40\xc3"
-            )
+            assert patch.patched_bytes in [
+                b"\xb8\x01\x00\x00\x00\xc3",
+                b"\x33\xc0\x40\xc3",
+            ]
 
     def test_bypass_handles_rsa_validation(self) -> None:
         """Bypass correctly handles RSA license validation routines."""
@@ -575,7 +575,7 @@ class TestRASPBypass:
         result = bypass.bypass(arxan_protected_binary)
 
         rasp_patches = [p for p in result.patches_applied if p.patch_type == "rasp_bypass"]
-        assert len(rasp_patches) > 0
+        assert rasp_patches
 
     def test_bypass_rasp_uses_correct_patch_bytes(self) -> None:
         """Bypass uses appropriate opcodes for different RASP types."""
@@ -633,13 +633,13 @@ class TestStringDecryption:
         bypass._decrypt_strings(binary_data, encrypted_regions, patches)
 
         string_patches = [p for p in patches if p.patch_type == "string_decryption"]
-        assert len(string_patches) > 0
+        assert string_patches
 
         decrypted_patch = string_patches[0]
         assert decrypted_patch.original_bytes == encrypted
         assert len(decrypted_patch.patched_bytes) == len(plaintext)
 
-        printable_count = sum(bool(32 <= b < 127) for b in decrypted_patch.patched_bytes)
+        printable_count = sum(32 <= b < 127 for b in decrypted_patch.patched_bytes)
         assert printable_count / len(decrypted_patch.patched_bytes) > 0.7
 
     def test_bypass_string_decryption_validates_printable_ratio(self) -> None:
@@ -659,7 +659,7 @@ class TestStringDecryption:
         string_patches = [p for p in patches if p.patch_type == "string_decryption"]
 
         for patch in string_patches:
-            printable_count = sum(bool(32 <= b < 127) for b in patch.patched_bytes)
+            printable_count = sum(32 <= b < 127 for b in patch.patched_bytes)
             printable_ratio = printable_count / len(patch.patched_bytes)
             assert printable_ratio > 0.7
 
@@ -733,9 +733,9 @@ class TestFridaBypassScriptGeneration:
 
         script = bypass._generate_frida_bypass_script(analysis_result)
 
-        unique_addresses = len(set([hex(0x400000 + i * 0x1000) for i in range(5)]))
+        unique_addresses = len({hex(0x400000 + i * 0x1000) for i in range(5)})
         assert all(hex(0x400000 + i * 0x1000)[2:] in script for i in range(5))
-        assert not any(hex(0x400000 + i * 0x1000)[2:] in script for i in range(6, 10))
+        assert all(hex(0x400000 + i * 0x1000)[2:] not in script for i in range(6, 10))
 
     def test_generate_frida_script_includes_anti_debug_bypass(self) -> None:
         """Frida script includes anti-debugging bypasses."""
@@ -897,7 +897,7 @@ class TestBypassEdgeCases:
 
         bypass._bypass_tamper_checks(binary_data, tamper_checks, patches)
 
-        assert len(patches) == 0
+        assert not patches
 
     def test_bypass_handles_overlapping_patches(self) -> None:
         """Bypass handles overlapping protection mechanisms."""

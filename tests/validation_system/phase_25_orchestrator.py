@@ -124,9 +124,7 @@ class Phase25Orchestrator:
                 pattern_results = self.unknown_pattern_tester.test_all_patterns(binary_path)
 
                 # Convert to dict format
-                for result in pattern_results:
-                    results.append(asdict(result))
-
+                results.extend(asdict(result) for result in pattern_results)
                 logger.info(f"Unknown pattern testing completed for {software_name}")
 
             except Exception as e:
@@ -276,10 +274,14 @@ class Phase25Orchestrator:
         }
 
         # Add success rates for each category
-        successful_cross_version = sum(1 for r in test_result.cross_version_results if r.get("overall_success", False))
-        successful_unknown_pattern = sum(1 for r in test_result.unknown_pattern_results if r.get("success", False))
-        successful_dynamic_mutation = sum(1 for r in test_result.dynamic_mutation_results if r.get("success", False))
-        successful_variant_generation = sum(1 for r in test_result.variant_generation_results if r.get("success", False))
+        successful_cross_version = sum(bool(r.get("overall_success", False))
+                                   for r in test_result.cross_version_results)
+        successful_unknown_pattern = sum(bool(r.get("success", False))
+                                     for r in test_result.unknown_pattern_results)
+        successful_dynamic_mutation = sum(bool(r.get("success", False))
+                                      for r in test_result.dynamic_mutation_results)
+        successful_variant_generation = sum(bool(r.get("success", False))
+                                        for r in test_result.variant_generation_results)
 
         if summary["total_cross_version_tests"] > 0:
             summary["cross_version_success_rate"] = successful_cross_version / summary["total_cross_version_tests"]

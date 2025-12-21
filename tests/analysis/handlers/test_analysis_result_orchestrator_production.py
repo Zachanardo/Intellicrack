@@ -375,8 +375,9 @@ class TestICPUnifiedMerge:
     ) -> None:
         """Merge creates new unified result if none provided."""
         try:
-            merged = orchestrator.merge_icp_with_unified_result(mock_icp_result, None)
-            if merged:
+            if merged := orchestrator.merge_icp_with_unified_result(
+                mock_icp_result, None
+            ):
                 assert merged.file_path == mock_icp_result.file_path
         except ImportError:
             pytest.skip("UnifiedProtectionResult not available")

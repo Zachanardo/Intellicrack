@@ -331,9 +331,7 @@ class AnalysisOrchestrator(QObject):
 
                 vm_binary_path = f"{tempfile.gettempdir()}/analysis_{os.path.basename(binary_path)}"
                 if self.qemu_manager is not None:
-                    if copy_success := self.qemu_manager.copy_file_to_vm(
-                        binary_path, vm_binary_path
-                    ):
+                    if copy_success := self.qemu_manager.copy_file_to_vm(binary_path, vm_binary_path):
                         logger.debug("Binary copied to VM successfully: %s", copy_success)
                         ghidra_command = self._build_ghidra_command(selected_script.path, vm_binary_path)
 
@@ -668,7 +666,9 @@ class AnalysisOrchestrator(QObject):
                     if analyze_method is not None and callable(analyze_method):
                         analysis_result: dict[str, Any] = analyze_method(binary_path)
                         return analysis_result
-            elif hasattr(self.dynamic_analyzer, "run_comprehensive_analysis") and callable(getattr(self.dynamic_analyzer, "run_comprehensive_analysis", None)):
+            elif hasattr(self.dynamic_analyzer, "run_comprehensive_analysis") and callable(
+                getattr(self.dynamic_analyzer, "run_comprehensive_analysis", None)
+            ):
                 run_method = getattr(self.dynamic_analyzer, "run_comprehensive_analysis")
                 if callable(run_method):
                     comprehensive_result: dict[str, Any] = run_method()

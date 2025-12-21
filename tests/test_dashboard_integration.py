@@ -98,7 +98,7 @@ class RealTestAnalyzer:
 
         # Read actual file if it exists
         path = Path(target_path)
-        if path.exists() and path.is_file():
+        if path.is_file():
             try:
                 # Get file info
                 file_size = path.stat().st_size
@@ -464,7 +464,7 @@ class TestDashboardIntegration:
             f.write(b'MZ')  # DOS header
             f.write(b'\x00' * 58)  # Padding to PE offset location
             f.write(b'\x40\x00\x00\x00')  # PE offset
-            f.write(b'\x00' * (0x40 - 64))  # Padding to PE header
+            f.write(b'\x00' * 0)
             f.write(b'PE\x00\x00')  # PE signature
 
             # Add vulnerable function imports

@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import logging
 import time
 from typing import TYPE_CHECKING, Any, cast

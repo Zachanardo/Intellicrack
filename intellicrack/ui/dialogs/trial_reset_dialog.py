@@ -206,9 +206,7 @@ class TrialResetDialog(QDialog):
 
         for software in ["WinRAR", "VMware", "IDM", "Sublime", "Beyond Compare"]:
             btn = QPushButton(software)
-            btn.clicked.connect(
-                lambda checked, s=software: self._quick_scan_helper(checked, s)
-            )
+            btn.clicked.connect(lambda checked, s=software: self._quick_scan_helper(checked, s))
             quick_layout.addWidget(btn)
 
         quick_layout.addStretch()

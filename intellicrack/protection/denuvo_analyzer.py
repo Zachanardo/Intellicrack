@@ -831,12 +831,10 @@ class DenuvoAnalyzer:
                 "Use ScyllaHide RDTSC feature or manual timing manipulation",
             ))
         if vm_regions:
-            recommendations.extend(
-                (
-                    f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",
-                    "Consider VMProtect devirtualization tools adapted for Denuvo",
-                )
-            )
+            recommendations.extend((
+                f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",
+                "Consider VMProtect devirtualization tools adapted for Denuvo",
+            ))
         if not recommendations:
             recommendations.append(
                 "Advanced analysis required - Consider manual reversing with IDA/Ghidra",

@@ -3,16 +3,16 @@
 Provides comprehensive interface for the Frida Bypass Wizard with real-time monitoring.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import os
 from datetime import datetime
+from typing import Any
 
 import psutil
-
-
-logger = logging.getLogger(__name__)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QCloseEvent, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QColor, QFont, QTextCursor
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -22,8 +22,10 @@ from PyQt6.QtWidgets import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QLayout,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QProgressBar,
     QPushButton,
@@ -39,6 +41,8 @@ from PyQt6.QtWidgets import (
 
 from intellicrack.core.frida_bypass_wizard import FridaBypassWizard
 
+logger = logging.getLogger(__name__)
+
 
 class FridaWorkerThread(QThread):
     """Worker thread for running Frida operations without blocking UI."""
@@ -48,7 +52,7 @@ class FridaWorkerThread(QThread):
     bypass_complete = pyqtSignal(dict)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, wizard: FridaBypassWizard, target_process: str, mode: str, options: dict) -> None:
+    def __init__(self, wizard: FridaBypassWizard, target_process: str, mode: str, options: dict[str, Any]) -> None:
         """Initialize the FridaBypassWorker with wizard and process information.
 
         Args:
@@ -270,7 +274,7 @@ setInterval(function() {
         self.wizard.inject_script(monitor_script, "api_monitor")
 
         # Set up message handler for receiving data from script
-        def on_message(message: object, data: object) -> None:
+        def on_message(message: Any, data: Any) -> None:
             """Handle messages from Frida script.
 
             Args:
@@ -278,18 +282,23 @@ setInterval(function() {
                 data: Additional payload data.
 
             """
-            if message["type"] == "send":
-                payload = message["payload"]
-                if payload["type"] == "api_call":
-                    self.progress_update.emit(f"[API] {payload['dll']}!{payload['api']} called")
-                elif payload["type"] == "api_return":
-                    self.progress_update.emit(f"[RET] {payload['api']} returned: {payload['retval']}")
-                elif payload["type"] == "license_api":
-                    self.progress_update.emit(f"[LICENSE] {payload['module']}!{payload['api']} detected")
-                elif payload["type"] == "stats_update":
-                    self.status_update.emit(f"Hooks: {payload['hooks']} | Calls: {payload['calls']}", "blue")
-                elif payload["type"] == "monitor_started":
-                    self.progress_update.emit(f"Hook monitoring active with {payload['hooks']} hooks")
+            if not isinstance(message, dict):
+                return
+            if message.get("type") == "send":
+                payload = message.get("payload")
+                if not isinstance(payload, dict):
+                    return
+                payload_type = payload.get("type")
+                if payload_type == "api_call":
+                    self.progress_update.emit(f"[API] {payload.get('dll', '')}!{payload.get('api', '')} called")
+                elif payload_type == "api_return":
+                    self.progress_update.emit(f"[RET] {payload.get('api', '')} returned: {payload.get('retval', '')}")
+                elif payload_type == "license_api":
+                    self.progress_update.emit(f"[LICENSE] {payload.get('module', '')}!{payload.get('api', '')} detected")
+                elif payload_type == "stats_update":
+                    self.status_update.emit(f"Hooks: {payload.get('hooks', 0)} | Calls: {payload.get('calls', 0)}", "blue")
+                elif payload_type == "monitor_started":
+                    self.progress_update.emit(f"Hook monitoring active with {payload.get('hooks', 0)} hooks")
 
         # Register message handler with Frida session
         if self.wizard.session:
@@ -319,7 +328,7 @@ setInterval(function() {
 class FridaBypassWizardDialog(QDialog):
     """Advanced dialog for Frida Bypass Wizard with full functionality."""
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the FridaBypassWizardDialog with wizard and UI components.
 
         Args:
@@ -327,8 +336,13 @@ class FridaBypassWizardDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.wizard = FridaBypassWizard()
-        self.worker_thread = None
+        try:
+            from intellicrack.core.frida_manager import FridaManager
+            frida_manager = FridaManager()
+            self.wizard = FridaBypassWizard(frida_manager=frida_manager)
+        except Exception:
+            self.wizard = FridaBypassWizard(frida_manager=None)  # type: ignore[arg-type]
+        self.worker_thread: FridaWorkerThread | None = None
         self.init_ui()
         self.load_settings()
 
@@ -392,7 +406,9 @@ class FridaBypassWizardDialog(QDialog):
         self.process_table = QTableWidget()
         self.process_table.setColumnCount(4)
         self.process_table.setHorizontalHeaderLabels(["PID", "Name", "Path", "Status"])
-        self.process_table.horizontalHeader().setStretchLastSection(True)
+        header = self.process_table.horizontalHeader()
+        if header:
+            header.setStretchLastSection(True)
         self.process_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         process_layout.addWidget(self.process_table)
 
@@ -702,7 +718,7 @@ class FridaBypassWizardDialog(QDialog):
 
         return tab
 
-    def create_status_bar(self, parent_layout: object) -> None:
+    def create_status_bar(self, parent_layout: QLayout) -> None:
         """Create status bar.
 
         Args:
@@ -722,9 +738,10 @@ class FridaBypassWizardDialog(QDialog):
         self.progress_bar.setVisible(False)
         status_layout.addWidget(self.progress_bar)
 
-        parent_layout.addLayout(status_layout)
+        if isinstance(parent_layout, QVBoxLayout):
+            parent_layout.addLayout(status_layout)
 
-    def create_control_buttons(self, parent_layout: object) -> None:
+    def create_control_buttons(self, parent_layout: QLayout) -> None:
         """Create main control buttons.
 
         Args:
@@ -753,7 +770,8 @@ class FridaBypassWizardDialog(QDialog):
         button_layout.addWidget(self.save_config_btn)
         button_layout.addWidget(self.load_config_btn)
 
-        parent_layout.addLayout(button_layout)
+        if isinstance(parent_layout, QVBoxLayout):
+            parent_layout.addLayout(button_layout)
 
     def refresh_process_list(self) -> None:
         """Refresh the list of running processes."""
@@ -805,7 +823,7 @@ class FridaBypassWizardDialog(QDialog):
 
         self.template_list.addItems(templates)
 
-    def on_template_selected(self, item: object) -> None:
+    def on_template_selected(self, item: QListWidgetItem) -> None:
         """Load selected template into editor.
 
         Args:
@@ -1351,7 +1369,7 @@ setTimeout(function() {{
 
             self.wizard.inject_script(test_wrapper, "test_script")
 
-            def on_test_message(message: object, data: object) -> None:
+            def on_test_message(message: Any, data: Any) -> None:
                 """Handle test script messages.
 
                 Args:
@@ -1359,14 +1377,18 @@ setTimeout(function() {{
                     data: Additional payload data.
 
                 """
-                if message["type"] == "send" and message["payload"].get("type") == "test_complete":
-                    duration = message["payload"]["duration"]
-                    QMessageBox.information(
-                        self,
-                        "Test Complete",
-                        f"Script executed successfully\nDuration: {duration}ms\n\nCheck monitor output for details",
-                    )
-                    self.wizard.detach()
+                if not isinstance(message, dict):
+                    return
+                if message.get("type") == "send":
+                    payload = message.get("payload")
+                    if isinstance(payload, dict) and payload.get("type") == "test_complete":
+                        duration = payload.get("duration", 0)
+                        QMessageBox.information(
+                            self,
+                            "Test Complete",
+                            f"Script executed successfully\nDuration: {duration}ms\n\nCheck monitor output for details",
+                        )
+                        self.wizard.detach()
 
             if self.wizard.session:
                 self.wizard.session.on("message", on_test_message)
@@ -1468,19 +1490,20 @@ setTimeout(function() {{
         options = self.get_bypass_options()
 
         # Create and start worker thread
-        self.worker_thread = FridaWorkerThread(self.wizard, target, mode, options)
-        self.worker_thread.progress_update.connect(self.on_progress_update)
-        self.worker_thread.status_update.connect(self.on_status_update)
-        self.worker_thread.bypass_complete.connect(self.on_bypass_complete)
-        self.worker_thread.error_occurred.connect(self.on_error)
+        worker = FridaWorkerThread(self.wizard, target, mode, options)
+        self.worker_thread = worker
+        worker.progress_update.connect(self.on_progress_update)
+        worker.status_update.connect(self.on_status_update)
+        worker.bypass_complete.connect(self.on_bypass_complete)
+        worker.error_occurred.connect(self.on_error)
 
-        self.worker_thread.start()
+        worker.start()
 
         self.log_message(f"Starting bypass operation in {mode} mode", "blue")
 
     def stop_bypass(self) -> None:
         """Stop the bypass operation."""
-        if self.worker_thread and self.worker_thread.isRunning():
+        if self.worker_thread is not None and self.worker_thread.isRunning():
             self.worker_thread.stop()
             self.worker_thread.wait()
 
@@ -1498,11 +1521,13 @@ setTimeout(function() {{
 
         if selected := self.process_table.selectedItems():
             row = selected[0].row()
-            return self.process_table.item(row, 0).text()  # Return PID
+            item = self.process_table.item(row, 0)
+            if item:
+                return item.text()  # Return PID
 
         return None
 
-    def get_bypass_options(self) -> dict:
+    def get_bypass_options(self) -> dict[str, Any]:
         """Get current bypass options."""
         return {
             "protections": [name for name, check in self.protection_checks.items() if check.isChecked()],
@@ -1536,7 +1561,7 @@ setTimeout(function() {{
         self.status_label.setText(status)
         self.status_label.setStyleSheet(f"QLabel {{ padding: 5px; color: {color}; }}")
 
-    def on_bypass_complete(self, results: object) -> None:
+    def on_bypass_complete(self, results: dict[str, Any]) -> None:
         """Handle bypass completion.
 
         Args:
@@ -1552,9 +1577,12 @@ setTimeout(function() {{
         summary += f"Mode: {results.get('mode', 'Unknown')}\n"
 
         if "detections" in results:
-            summary += f"Protections found: {len(results['detections'])}\n"
-            for protection, confidence in results["detections"].items():
-                summary += f"  - {protection}: {confidence:.1%} confidence\n"
+            detections = results["detections"]
+            if isinstance(detections, dict):
+                summary += f"Protections found: {len(detections)}\n"
+                for protection, confidence in detections.items():
+                    if isinstance(confidence, (int, float)):
+                        summary += f"  - {protection}: {confidence:.1%} confidence\n"
 
         self.summary_text.setText(summary)
 
@@ -1693,14 +1721,14 @@ setTimeout(function() {{
                 logger.exception("Failed to load settings: %s", e)
                 self.log_message(f"Failed to load settings: {e!s}", "orange")
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent) -> None:
         """Handle dialog close.
 
         Args:
             event: Close event from Qt framework.
 
         """
-        if self.worker_thread and self.worker_thread.isRunning():
+        if self.worker_thread is not None and self.worker_thread.isRunning():
             reply = QMessageBox.question(
                 self,
                 "Confirm Exit",

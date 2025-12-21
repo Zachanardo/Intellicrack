@@ -370,8 +370,10 @@ class TestUIStatePersistence(unittest.TestCase):
             t.join(timeout=5.0)
 
         # Verify all operations completed
-        save_count = sum(1 for r in results if len(r) == 2 and r[1] == "saved")
-        load_count = sum(1 for r in results if len(r) == 4 and r[1] == "loaded")
+        save_count = sum(bool(len(r) == 2 and r[1] == "saved")
+                     for r in results)
+        load_count = sum(bool(len(r) == 4 and r[1] == "loaded")
+                     for r in results)
 
         self.assertEqual(save_count, 5, "All save operations should complete")
         self.assertEqual(load_count, 5, "All load operations should complete")

@@ -381,7 +381,7 @@ class TestAuditLogger:
 
         # Verify log file was created and contains the event
         log_files = list(self.log_dir.glob("*.log"))
-        assert len(log_files) >= 1
+        assert log_files
 
         # Read and verify log content
         with open(log_files[0]) as f:
@@ -415,7 +415,7 @@ class TestAuditLogger:
 
         # Verify comprehensive analysis data was logged
         log_files = list(self.log_dir.glob("*.log"))
-        assert len(log_files) >= 1
+        assert log_files
 
         with open(log_files[0]) as f:
             log_content = f.read()
@@ -560,9 +560,7 @@ class TestAuditLogger:
         assert integrity_result["verified_entries"] >= 5
         assert "hash_chain_valid" in integrity_result
 
-        # Simulate tampering by modifying a log file
-        log_files = list(self.log_dir.glob("*.log"))
-        if log_files:
+        if log_files := list(self.log_dir.glob("*.log")):
             with open(log_files[0], 'a') as f:
                 f.write("\nTAMPERED ENTRY")
 
@@ -755,7 +753,7 @@ class TestAuditLogger:
 
         # Verify log file was created
         log_files = list(self.log_dir.glob("*.log"))
-        assert len(log_files) >= 1
+        assert log_files
 
         # Verify encryption (content should not be plaintext readable)
         with open(log_files[0], 'rb') as f:
@@ -1216,11 +1214,7 @@ class TestSecurityResearchWorkflowIntegration:
 
         assert len(workflow_events) >= 6
 
-        # Verify event types are logged
-        event_types_found = set()
-        for event in workflow_events:
-            event_types_found.add(event.get("event_type"))
-
+        event_types_found = {event.get("event_type") for event in workflow_events}
         expected_types = {
             AuditEventType.BINARY_LOADED,
             AuditEventType.PROTECTION_DETECTED,
@@ -1269,12 +1263,11 @@ class TestSecurityResearchWorkflowIntegration:
 
         assert len(vm_events) >= 7
 
-        # Verify VM operations are properly categorized
-        vm_operations_found = set()
-        for event in vm_events:
-            if "details" in event and "operation" in event.get("details", {}):
-                vm_operations_found.add(event["details"]["operation"])
-
+        vm_operations_found = {
+            event["details"]["operation"]
+            for event in vm_events
+            if "details" in event and "operation" in event.get("details", {})
+        }
         expected_operations = {"file_copy", "execute_analysis", "collect_artifacts", "restore"}
         assert len(vm_operations_found.intersection(expected_operations)) >= 3
 
@@ -1326,7 +1319,14 @@ class TestSecurityResearchWorkflowIntegration:
         ]
 
         for step_name, event_type, details in exploitation_workflow:
-            if event_type in [AuditEventType.EXPLOIT_ATTEMPT, AuditEventType.EXPLOIT_SUCCESS]:
+            if event_type == AuditEventType.EXPLOIT_ATTEMPT:
+                result = log_exploit_attempt(
+                    target="enterprise_app.exe",
+                    exploit_type=details.get("technique", "advanced"),
+                    success=(event_type == AuditEventType.EXPLOIT_SUCCESS),
+                    details=details
+                )
+            elif event_type == AuditEventType.EXPLOIT_SUCCESS:
                 result = log_exploit_attempt(
                     target="enterprise_app.exe",
                     exploit_type=details.get("technique", "advanced"),
@@ -1366,11 +1366,11 @@ class TestSecurityResearchWorkflowIntegration:
             start_time=datetime.now() - timedelta(minutes=1)
         )
 
-        techniques_logged = set()
-        for event in all_events:
-            if "details" in event and "technique" in event.get("details", {}):
-                techniques_logged.add(event["details"]["technique"])
-
+        techniques_logged = {
+            event["details"]["technique"]
+            for event in all_events
+            if "details" in event and "technique" in event.get("details", {})
+        }
         expected_techniques = {"info_leak", "rop_chain", "canary_leak", "token_manipulation"}
         assert len(techniques_logged.intersection(expected_techniques)) >= 3
 
@@ -1511,14 +1511,14 @@ class TestTelemetryCollector:
             perf_monitor = collector.performance_monitor
 
             # Simulate binary analysis operations
-            for i in range(5):
+            for _ in range(5):
                 perf_monitor.start_timer("binary_analysis")
                 time.sleep(0.001)  # Minimal delay
                 perf_monitor.end_timer("binary_analysis")
                 perf_monitor.increment_counter("binaries_analyzed")
 
             # Simulate exploit attempts
-            for i in range(3):
+            for _ in range(3):
                 perf_monitor.start_timer("exploit_attempt")
                 time.sleep(0.002)
                 perf_monitor.end_timer("exploit_attempt")
@@ -1644,10 +1644,6 @@ class TestContextualLogger:
             contextual_logger.warning("Potential detection risk")
             contextual_logger.error("Exploit execution failed")
             contextual_logger.critical("Critical security breach detected")
-
-            # Verify messages were logged (implementation dependent)
-            # The contextual logger should integrate with both standard logging and audit logging
-            assert True  # Basic validation that methods execute without error
 
     def test_contextual_logger_audit_integration(self):
         """Test integration with audit logging system."""

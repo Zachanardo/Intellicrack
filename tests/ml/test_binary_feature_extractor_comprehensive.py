@@ -39,7 +39,7 @@ class TestBinaryFeatureExtractor:
         pe_path = tmp_path / "sample32.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 0x80)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"This program cannot be run in DOS mode.\r\r\n$" + b"\x00" * 7
@@ -73,7 +73,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<II", optional_header, import_dir_offset, 0x00002000, 0x00000100)
 
         text_section = bytearray(40)
-        text_section[0:6] = b".text\x00"
+        text_section[:6] = b".text\x00"
         struct.pack_into("<I", text_section, 8, 0x00000800)
         struct.pack_into("<I", text_section, 12, 0x00001000)
         struct.pack_into("<I", text_section, 16, 0x00000800)
@@ -81,7 +81,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", text_section, 36, 0x20000020)
 
         data_section = bytearray(40)
-        data_section[0:6] = b".data\x00"
+        data_section[:6] = b".data\x00"
         struct.pack_into("<I", data_section, 8, 0x00000400)
         struct.pack_into("<I", data_section, 12, 0x00002000)
         struct.pack_into("<I", data_section, 16, 0x00000400)
@@ -89,7 +89,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", data_section, 36, 0xC0000040)
 
         idata_section = bytearray(40)
-        idata_section[0:7] = b".idata\x00"
+        idata_section[:7] = b".idata\x00"
         struct.pack_into("<I", idata_section, 8, 0x00000200)
         struct.pack_into("<I", idata_section, 12, 0x00002000)
         struct.pack_into("<I", idata_section, 16, 0x00000200)
@@ -97,7 +97,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", idata_section, 36, 0xC0000040)
 
         text_data = bytearray(0x800)
-        text_data[0:10] = bytes(
+        text_data[:10] = bytes(
             [
                 0x55,
                 0x89,
@@ -198,7 +198,7 @@ class TestBinaryFeatureExtractor:
         pe_path = tmp_path / "sample64.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 0x80)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"This program cannot be run in DOS mode.\r\r\n$" + b"\x00" * 7
@@ -225,7 +225,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<H", optional_header, 92, 16)
 
         text_section = bytearray(40)
-        text_section[0:6] = b".text\x00"
+        text_section[:6] = b".text\x00"
         struct.pack_into("<I", text_section, 8, 0x00001000)
         struct.pack_into("<I", text_section, 12, 0x00001000)
         struct.pack_into("<I", text_section, 16, 0x00001000)
@@ -233,7 +233,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", text_section, 36, 0x60000020)
 
         vmp_section = bytearray(40)
-        vmp_section[0:8] = b".vmp0\x00\x00\x00"
+        vmp_section[:8] = b".vmp0\x00\x00\x00"
         struct.pack_into("<I", vmp_section, 8, 0x00001000)
         struct.pack_into("<I", vmp_section, 12, 0x00002000)
         struct.pack_into("<I", vmp_section, 16, 0x00001000)
@@ -269,7 +269,7 @@ class TestBinaryFeatureExtractor:
                 0xC3,
             ]
         )
-        text_data[0 : len(x64_code)] = x64_code
+        text_data[:len(x64_code)] = x64_code
 
         np.random.seed(42)
         vmp_data = np.random.bytes(0x1000)
@@ -293,7 +293,7 @@ class TestBinaryFeatureExtractor:
         elf_path = tmp_path / "sample.elf"
 
         elf_header = bytearray(64)
-        elf_header[0:4] = b"\x7fELF"
+        elf_header[:4] = b"\x7fELF"
         elf_header[4] = 2
         elf_header[5] = 1
         elf_header[6] = 1
@@ -361,11 +361,11 @@ class TestBinaryFeatureExtractor:
                 0xC3,
             ]
         )
-        code_section[0 : len(x64_asm)] = x64_asm
+        code_section[:len(x64_asm)] = x64_asm
 
         data_section = bytearray(0x1000)
         data_strings = b"License\x00Product Key\x00Registration\x00"
-        data_section[0 : len(data_strings)] = data_strings
+        data_section[:len(data_strings)] = data_strings
 
         elf_binary += bytes(code_section) + bytes(data_section)
 
@@ -378,7 +378,7 @@ class TestBinaryFeatureExtractor:
         packed_path = tmp_path / "packed.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 0x80)
 
         dos_stub = b"\x0e\x1f" + b"\x00" * 60
@@ -401,7 +401,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", optional_header, 28, 0x00400000)
 
         upx_section = bytearray(40)
-        upx_section[0:5] = b"UPX0\x00"
+        upx_section[:5] = b"UPX0\x00"
         struct.pack_into("<I", upx_section, 8, 0x00002000)
         struct.pack_into("<I", upx_section, 12, 0x00001000)
         struct.pack_into("<I", upx_section, 16, 0x00002000)
@@ -690,7 +690,7 @@ class TestBinaryFeatureExtractor:
         unicode_binary = tmp_path / "unicode.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 0x80)
 
         pe_signature = b"PE\x00\x00"
@@ -710,7 +710,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<H", optional_header, 0, 0x010B)
 
         data_section = bytearray(40)
-        data_section[0:6] = b".data\x00"
+        data_section[:6] = b".data\x00"
         struct.pack_into("<I", data_section, 8, 0x00000400)
         struct.pack_into("<I", data_section, 12, 0x00001000)
         struct.pack_into("<I", data_section, 16, 0x00000400)
@@ -720,7 +720,7 @@ class TestBinaryFeatureExtractor:
         unicode_strings += "Registration\x00".encode("utf-16le")
 
         data_content = bytearray(0x400)
-        data_content[0 : len(unicode_strings)] = unicode_strings
+        data_content[:len(unicode_strings)] = unicode_strings
 
         binary = bytes(dos_header) + b"\x00" * 18
         binary += pe_signature + file_header + bytes(optional_header)
@@ -750,7 +750,7 @@ class TestBinaryFeatureExtractor:
         """Entropy calculation returns mathematically correct values."""
         test_binary = tmp_path / "entropy_test.bin"
 
-        uniform_data = bytes([i % 256 for i in range(256)])
+        uniform_data = bytes(i % 256 for i in range(256))
 
         binary = b"NON_PE_BINARY" + uniform_data * 10
 
@@ -772,7 +772,7 @@ class TestBinaryFeatureExtractor:
         opt_hdr = b"\x00" * 224
 
         section = bytearray(40)
-        section[0:6] = b".text\x00"
+        section[:6] = b".text\x00"
         struct.pack_into("<I", section, 8, 0x100)
         struct.pack_into("<I", section, 12, 0x1000)
         struct.pack_into("<I", section, 16, 0x100)
@@ -802,7 +802,7 @@ class TestBinaryFeatureExtractor:
         opt_hdr = b"\x00" * 224
 
         section = bytearray(40)
-        section[0:6] = b".text\x00"
+        section[:6] = b".text\x00"
         struct.pack_into("<I", section, 8, 0xFFFFFFFF)
         struct.pack_into("<I", section, 12, 0x1000)
         struct.pack_into("<I", section, 16, 0x100)
@@ -834,7 +834,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", opt_hdr, 28, 0x400000)
 
         text1 = bytearray(40)
-        text1[0:7] = b".text1\x00"
+        text1[:7] = b".text1\x00"
         struct.pack_into("<I", text1, 8, 0x200)
         struct.pack_into("<I", text1, 12, 0x1000)
         struct.pack_into("<I", text1, 16, 0x200)
@@ -842,7 +842,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", text1, 36, 0x60000020)
 
         text2 = bytearray(40)
-        text2[0:7] = b".text2\x00"
+        text2[:7] = b".text2\x00"
         struct.pack_into("<I", text2, 8, 0x200)
         struct.pack_into("<I", text2, 12, 0x1200)
         struct.pack_into("<I", text2, 16, 0x200)
@@ -850,7 +850,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", text2, 36, 0x60000020)
 
         data = bytearray(40)
-        data[0:6] = b".data\x00"
+        data[:6] = b".data\x00"
         struct.pack_into("<I", data, 8, 0x100)
         struct.pack_into("<I", data, 12, 0x1400)
         struct.pack_into("<I", data, 16, 0x100)
@@ -910,7 +910,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<II", opt_hdr, import_dir_offset, 0x2000, 0x100)
 
         text_sec = bytearray(40)
-        text_sec[0:6] = b".text\x00"
+        text_sec[:6] = b".text\x00"
         struct.pack_into("<I", text_sec, 8, 0x100)
         struct.pack_into("<I", text_sec, 12, 0x1000)
         struct.pack_into("<I", text_sec, 16, 0x100)
@@ -918,7 +918,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", text_sec, 36, 0x20000020)
 
         idata_sec = bytearray(40)
-        idata_sec[0:7] = b".idata\x00"
+        idata_sec[:7] = b".idata\x00"
         struct.pack_into("<I", idata_sec, 8, 0x200)
         struct.pack_into("<I", idata_sec, 12, 0x2000)
         struct.pack_into("<I", idata_sec, 16, 0x200)
@@ -966,7 +966,7 @@ class TestBinaryFeatureExtractor:
         """Extractor handles non-PE binaries with fallback logic."""
         raw_binary = tmp_path / "raw.bin"
 
-        random_data = bytes([i % 256 for i in range(1024)])
+        random_data = bytes(i % 256 for i in range(1024))
         raw_binary.write_bytes(random_data)
 
         extractor = BinaryFeatureExtractor(str(raw_binary))
@@ -990,7 +990,7 @@ class TestBinaryFeatureExtractor:
         opt_hdr = b"\x00" * 224
 
         text_sec = bytearray(40)
-        text_sec[0:6] = b".text\x00"
+        text_sec[:6] = b".text\x00"
         struct.pack_into("<I", text_sec, 8, 0x100)
         struct.pack_into("<I", text_sec, 12, 0x1000)
         struct.pack_into("<I", text_sec, 16, 0x100)
@@ -998,7 +998,7 @@ class TestBinaryFeatureExtractor:
         struct.pack_into("<I", text_sec, 36, 0x20000020)
 
         zero_sec = bytearray(40)
-        zero_sec[0:6] = b".zero\x00"
+        zero_sec[:6] = b".zero\x00"
         struct.pack_into("<I", zero_sec, 8, 0)
         struct.pack_into("<I", zero_sec, 12, 0x1100)
         struct.pack_into("<I", zero_sec, 16, 0)

@@ -62,7 +62,7 @@ class TestOptimizationRule:
         assert rule.last_triggered is None
 
         rule.custom_handler("test.metric", "warning", 150.0)
-        assert handler_called is True
+        assert handler_called
 
     def test_optimization_rule_default_values(self) -> None:
         """OptimizationRule uses default enabled and cooldown values."""
@@ -593,7 +593,7 @@ class TestRecommendations:
         recommendations = manager.get_recommendations()
 
         gc_recommendation = any("GC frequency" in rec for rec in recommendations)
-        assert gc_recommendation is True
+        assert gc_recommendation
 
 
 class TestGlobalFunctions:

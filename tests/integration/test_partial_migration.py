@@ -100,12 +100,9 @@ class RealPartialMigrationSimulator:
             "general_preferences"
         ]
 
-        missing_sections = []
-        for section in required_sections:
-            if not config.get(section):
-                missing_sections.append(section)
-
-        if missing_sections:
+        if missing_sections := [
+            section for section in required_sections if not config.get(section)
+        ]:
             self.migration_errors.extend([f"Missing section: {section}" for section in missing_sections])
             return False
 

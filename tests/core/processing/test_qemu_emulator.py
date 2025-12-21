@@ -327,9 +327,9 @@ class TestQEMUSystemLifecycle:
         )
 
         try:
-            result = emulator.start_system(headless=True, enable_snapshot=False)
-
-            if result:
+            if result := emulator.start_system(
+                headless=True, enable_snapshot=False
+            ):
                 assert emulator.qemu_process is not None
                 assert emulator.qemu_process.poll() is None
         finally:
@@ -411,9 +411,7 @@ class TestQEMUMonitorCommunication:
             if emulator.start_system(headless=True, enable_snapshot=False):
                 time.sleep(2)
 
-                result = emulator._send_monitor_command("info status")
-
-                if result:
+                if result := emulator._send_monitor_command("info status"):
                     assert isinstance(result, str)
         finally:
             emulator.stop_system(force=True)
@@ -434,9 +432,7 @@ class TestQEMUMonitorCommunication:
                 time.sleep(2)
 
                 cmd = {"execute": "query-status"}
-                result = emulator._send_qmp_command(cmd)
-
-                if result:
+                if result := emulator._send_qmp_command(cmd):
                     assert isinstance(result, dict)
         finally:
             emulator.stop_system(force=True)
@@ -474,9 +470,7 @@ class TestQEMUSnapshotManagement:
             if emulator.start_system(headless=True, enable_snapshot=True):
                 time.sleep(2)
 
-                result = emulator.create_snapshot("test_snapshot")
-
-                if result:
+                if result := emulator.create_snapshot("test_snapshot"):
                     assert "test_snapshot" in emulator.snapshots
                     snapshot_data = emulator.snapshots["test_snapshot"]
                     assert "timestamp" in snapshot_data

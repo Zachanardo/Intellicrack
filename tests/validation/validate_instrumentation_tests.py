@@ -26,19 +26,17 @@ def analyze_test_coverage():
     test_methods = []
 
     for node in ast.walk(test_tree):
-        if isinstance(node, ast.ClassDef):
-            if node.name.startswith('Test'):
-                test_classes.append(node.name)
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name.startswith('test_'):
-                        test_methods.append(f"{node.name}.{item.name}")
+        if isinstance(node, ast.ClassDef) and node.name.startswith('Test'):
+            test_classes.append(node.name)
+            for item in node.body:
+                if isinstance(item, ast.FunctionDef) and item.name.startswith('test_'):
+                    test_methods.append(f"{node.name}.{item.name}")
 
-    # Count source functions
-    source_functions = []
-    for node in ast.walk(source_tree):
-        if isinstance(node, ast.FunctionDef):
-            source_functions.append(node.name)
-
+    source_functions = [
+        node.name
+        for node in ast.walk(source_tree)
+        if isinstance(node, ast.FunctionDef)
+    ]
     # Print coverage report
     print("=" * 70)
     print("DYNAMIC INSTRUMENTATION TEST COVERAGE ANALYSIS")
@@ -62,9 +60,9 @@ def analyze_test_coverage():
         print(f"  OK {func}")
 
     print("\n COVERAGE BREAKDOWN:")
-    print(f"  - on_message: Multiple test scenarios")
-    print(f"  - run_instrumentation_thread: Comprehensive testing")
-    print(f"  - run_dynamic_instrumentation: Full entry point coverage")
+    print("  - on_message: Multiple test scenarios")
+    print("  - run_instrumentation_thread: Comprehensive testing")
+    print("  - run_dynamic_instrumentation: Full entry point coverage")
 
     print("\n TEST CATEGORIES COVERED:")
     categories = [

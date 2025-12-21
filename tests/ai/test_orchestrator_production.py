@@ -140,7 +140,7 @@ class TestAISharedContext:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
+        assert not errors
         for i in range(50):
             assert context.get(f"key_{i}") == f"value_{i}"
 

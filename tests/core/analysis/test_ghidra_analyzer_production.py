@@ -81,7 +81,7 @@ def sample_pe_with_licensing(temp_workspace: Path) -> Path:
     )
 
     optional_header = bytearray(248)
-    optional_header[0:2] = struct.pack('<H', 0x20B)
+    optional_header[:2] = struct.pack('<H', 0x20B)
     struct.pack_into('<Q', optional_header, 24, 0x140000000)
     struct.pack_into('<I', optional_header, 16, 0x1000)
     struct.pack_into('<Q', optional_header, 32, 0x1000)

@@ -42,6 +42,6 @@ class TestDialogCreation:
             from intellicrack.ui.dialogs import vm_manager_dialog
             module_attrs = dir(vm_manager_dialog)
             has_dialog = any("Dialog" in attr for attr in module_attrs)
-            assert has_dialog or len(module_attrs) > 0
+            assert has_dialog or module_attrs
         except ImportError:
             pytest.skip("Dialog module not available")

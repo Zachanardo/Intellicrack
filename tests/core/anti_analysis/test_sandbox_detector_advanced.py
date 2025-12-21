@@ -73,7 +73,8 @@ class TestEvasionStrategyDetermination:
 
         assert isinstance(strategy, dict)
         assert "timing" in strategy
-        enabled_count = sum(1 for cat in strategy.values() if isinstance(cat, dict) and cat)
+        enabled_count = sum(bool(isinstance(cat, dict) and cat)
+                        for cat in strategy.values())
         assert enabled_count <= 5, "Low confidence should produce fewer enabled categories"
 
     def test_determine_evasion_strategy_aggressive_mode(self) -> None:
@@ -119,7 +120,8 @@ class TestEvasionStrategyDetermination:
         strategy = detector._determine_evasion_strategy(detection_results, aggressive=True)
 
         assert isinstance(strategy, dict)
-        populated_categories = sum(1 for cat in strategy.values() if isinstance(cat, dict) and cat)
+        populated_categories = sum(bool(isinstance(cat, dict) and cat)
+                               for cat in strategy.values())
         assert populated_categories >= 1, "Multi-layer detection should populate at least one category"
 
     def test_determine_evasion_strategy_no_detection(self) -> None:
@@ -258,8 +260,6 @@ class TestComplexIntegrationScenarios:
 
     def test_layered_evasion_workflow(self) -> None:
         """Complete workflow: detect → determine strategy → get techniques → apply."""
-        detector = SandboxDetector()
-
         # Simulate detection results to avoid low-level CPU instructions that can crash
         detection_results = {
             "is_sandbox": True,
@@ -272,6 +272,8 @@ class TestComplexIntegrationScenarios:
         }
 
         if detection_results["is_sandbox"]:
+            detector = SandboxDetector()
+
             strategy = detector._determine_evasion_strategy(detection_results, aggressive=True)
 
             assert isinstance(strategy, dict)

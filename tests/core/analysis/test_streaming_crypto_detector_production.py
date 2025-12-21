@@ -1227,7 +1227,6 @@ class TestStreamingAlgorithmSpecificDetection:
         detections = results.get("detections", [])
 
         aes_detections = [d for d in detections if d.get("algorithm") == "AES"]
-        assert len(aes_detections) >= 0
 
     def test_sha256_constant_detection_in_streaming_mode(self, temp_binary_with_sha256: Path) -> None:
         """Streaming mode detects SHA-256 round constants."""
@@ -1237,7 +1236,6 @@ class TestStreamingAlgorithmSpecificDetection:
         detections = results.get("detections", [])
 
         sha_detections = [d for d in detections if "SHA" in d.get("algorithm", "")]
-        assert len(sha_detections) >= 0
 
     def test_rsa_constant_detection_in_streaming_mode(self, temp_binary_with_rsa_constants: Path) -> None:
         """Streaming mode detects RSA public exponent."""
@@ -1247,7 +1245,6 @@ class TestStreamingAlgorithmSpecificDetection:
         detections = results.get("detections", [])
 
         rsa_detections = [d for d in detections if d.get("algorithm") == "RSA"]
-        assert len(rsa_detections) >= 0
 
     def test_multiple_algorithm_types_detected_in_single_binary(self, crypto_binary: Path) -> None:
         """Streaming analysis detects multiple algorithm types in real crypto library."""

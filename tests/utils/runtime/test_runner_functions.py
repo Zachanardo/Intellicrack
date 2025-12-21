@@ -138,7 +138,7 @@ class TestGetResourcePath:
         """get_resource_path returns valid path string for valid package."""
         result: str = get_resource_path("intellicrack", "utils/runtime")
         assert isinstance(result, str)
-        assert len(result) > 0
+        assert result != ""
 
     def test_get_resource_path_handles_missing_package(self) -> None:
         """get_resource_path handles non-existent package gracefully."""

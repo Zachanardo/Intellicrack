@@ -245,8 +245,26 @@ class TestCryptoAnalysis:
         """Test AES key schedule extraction"""
         test_memory = bytearray(256)
 
-        test_memory[0:16] = bytes([0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
-                                    0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c])
+        test_memory[:16] = bytes(
+            [
+                0x2B,
+                0x7E,
+                0x15,
+                0x16,
+                0x28,
+                0xAE,
+                0xD2,
+                0xA6,
+                0xAB,
+                0xF7,
+                0x15,
+                0x88,
+                0x09,
+                0xCF,
+                0x4F,
+                0x3C,
+            ]
+        )
 
         keys = self.crypto_extractor.extract_key_schedules(bytes(test_memory))
         assert len(keys) >= 0
@@ -260,7 +278,7 @@ class TestCryptoAnalysis:
 
     def test_entropy_based_key_detection(self):
         """Test entropy-based key material detection"""
-        high_entropy_data = bytes([i % 256 for i in range(256)])
+        high_entropy_data = bytes(i % 256 for i in range(256))
         low_entropy_data = bytes([0x00] * 256)
 
         assert self.crypto_extractor.looks_like_key_material(high_entropy_data)
@@ -278,7 +296,7 @@ class TestPerformance:
         """Test entropy calculation performance on large data"""
         import time
 
-        large_data = bytes([i % 256 for i in range(10 * 1024 * 1024)])  # 10MB
+        large_data = bytes(i % 256 for i in range(10 * 1024 * 1024))
 
         start_time = time.time()
         entropy = self.engine.calculate_entropy(large_data)
@@ -291,7 +309,7 @@ class TestPerformance:
         """Test pattern matching performance"""
         import time
 
-        test_data = bytes([i % 256 for i in range(1024 * 1024)])  # 1MB
+        test_data = bytes(i % 256 for i in range(1024 * 1024))
         patterns = [b'UPX!', b'VMProtect', b'Themida', b'ASPack']
 
         start_time = time.time()

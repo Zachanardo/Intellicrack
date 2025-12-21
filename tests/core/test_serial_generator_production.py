@@ -567,7 +567,7 @@ class TestECCSignedLicenseAnalysis:
         generator = SerialNumberGenerator()
         private_key, public_key = ecc_key_pair
 
-        machine_code = "HWID-" + hashlib.sha256(b"unique_hardware_id").hexdigest()[:16].upper()
+        machine_code = f'HWID-{hashlib.sha256(b"unique_hardware_id").hexdigest()[:16].upper()}'
 
         result = generator.generate_ecc_signed(
             private_key=private_key,
@@ -641,7 +641,7 @@ class TestHardwareBoundKeyGeneration:
             licenses.append(result)
 
         assert all(lic.hardware_id in hardware_ids for lic in licenses)
-        assert len(set(lic.serial for lic in licenses)) == len(licenses)
+        assert len({lic.serial for lic in licenses}) == len(licenses)
 
     def test_hardware_bound_license_includes_machine_fingerprint(self) -> None:
         """Hardware-bound license includes machine fingerprint in encoding."""
@@ -797,8 +797,8 @@ class TestFeatureFlagEncodingDecoding:
         assert match_basic is not None
         assert match_full is not None
 
-        flags_basic = int(match_basic.group(1), 16)
-        flags_full = int(match_full.group(1), 16)
+        flags_basic = int(match_basic[1], 16)
+        flags_full = int(match_full[1], 16)
 
         assert flags_basic != flags_full
         assert flags_full > flags_basic
@@ -826,7 +826,7 @@ class TestFeatureFlagEncodingDecoding:
         match = re.search(r'-([0-9A-F]{4})-', result.serial)
         assert match is not None
 
-        encoded_flags = int(match.group(1), 16)
+        encoded_flags = int(match[1], 16)
         assert encoded_flags == expected_flags
 
 
@@ -877,7 +877,7 @@ class TestLicenseFileFormatAnalysis:
 
         serial_clean = result.serial.replace("-", "")
 
-        decoded = base64.b32decode(serial_clean + "====")
+        decoded = base64.b32decode(f"{serial_clean}====")
         assert len(decoded) > 0
         assert b"BASE32-TEST" in decoded
 
@@ -1251,7 +1251,7 @@ class TestCompleteWorkflows:
 
         assert len(licenses) == 20
         assert all(lic.hardware_id in machine_ids for lic in licenses)
-        assert len(set(lic.serial for lic in licenses)) == 20
+        assert len({lic.serial for lic in licenses}) == 20
 
     def test_workflow_trial_reset_time_based_licenses(self) -> None:
         """Complete workflow: generate time-based licenses for trial reset."""

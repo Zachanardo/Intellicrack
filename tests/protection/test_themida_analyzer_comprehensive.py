@@ -21,7 +21,7 @@ from intellicrack.protection.themida_analyzer import (
 
 def create_pe_header() -> bytes:
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 0x80)
 
     pe_signature = b"PE\x00\x00"
@@ -38,7 +38,7 @@ def create_pe_header() -> bytes:
     )
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
     optional_header[16:20] = struct.pack("<I", 0x1000)
     optional_header[20:24] = struct.pack("<I", 0x1000)
     optional_header[24:28] = struct.pack("<I", 0x400000)
@@ -57,7 +57,7 @@ def create_pe_section(
     characteristics: int,
 ) -> bytes:
     section = bytearray(40)
-    section[0:8] = name[:8].ljust(8, b"\x00")
+    section[:8] = name[:8].ljust(8, b"\x00")
     section[8:12] = struct.pack("<I", virtual_size)
     section[12:16] = struct.pack("<I", virtual_address)
     section[16:20] = struct.pack("<I", raw_size)
@@ -103,7 +103,7 @@ def create_themida_protected_binary_v1() -> bytes:
     padding = b"\x00" * (0x400 - len(pe))
 
     text_code = bytearray(0x1000)
-    text_code[0:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
+    text_code[:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
     text_code[100:106] = b"\x8b\x45\x00\x89\x45\x04"
     text_code[200:206] = b"\x8b\x45\x00\x03\x45\x04"
     text_code[300:304] = b"\xf7\x45\x00"
@@ -115,7 +115,7 @@ def create_themida_protected_binary_v1() -> bytes:
     text_code[800:815] = b"VirtualProtect\x00"
 
     themida_code = bytearray(0x2000)
-    themida_code[0:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
+    themida_code[:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
     themida_code[100:112] = b"\xeb\x10\x66\x62\x3a\x43\x2b\x2b\x48\x4f\x4f\x4b"
 
     for i in range(10):
@@ -127,13 +127,13 @@ def create_themida_protected_binary_v1() -> bytes:
     themida_code[1530:1536] = b"\x8b\x45\x00\x0f\xaf\x45\x04"
     themida_code[1540:1546] = b"\x8b\x45\x00\x33\x45\x04"
 
-    high_entropy_key = bytes([i ^ 0xA5 for i in range(32)])
+    high_entropy_key = bytes(i ^ 0xA5 for i in range(32))
     themida_code[2000:2032] = high_entropy_key
 
     themida_code[3000:3002] = b"\x61\xc3"
 
     data_section_content = bytearray(0x1000)
-    data_section_content[0:32] = bytes([i ^ 0x5A for i in range(32)])
+    data_section_content[:32] = bytes(i ^ 0x5A for i in range(32))
 
     return pe + padding + bytes(text_code) + bytes(themida_code) + bytes(data_section_content)
 
@@ -173,7 +173,7 @@ def create_themida_protected_binary_v2() -> bytes:
     padding = b"\x00" * (0x400 - len(pe))
 
     text_code = bytearray(0x1000)
-    text_code[0:9] = b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74"
+    text_code[:9] = b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74"
     text_code[100:106] = b"\x8b\x45\x00\x89\x45\x04"
     text_code[200:203] = b"\xff\x24\x85"
     text_code[203:207] = struct.pack("<I", 0x402000)
@@ -184,7 +184,7 @@ def create_themida_protected_binary_v2() -> bytes:
     text_code[700:713] = b"VirtualAlloc\x00"
 
     themida_code = bytearray(0x2000)
-    themida_code[0:9] = b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74"
+    themida_code[:9] = b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74"
 
     for i in range(12):
         themida_code[1000 + i * 4 : 1000 + i * 4 + 4] = struct.pack("<I", 0x402000 + i * 16)
@@ -197,8 +197,8 @@ def create_themida_protected_binary_v2() -> bytes:
     themida_code[1550:1556] = b"\x8b\x45\x00\x0b\x45\x04"
     themida_code[1560:1566] = b"\x8b\x45\x00\x23\x45\x04"
 
-    high_entropy_key1 = bytes([(i * 7 + 13) % 256 for i in range(16)])
-    high_entropy_key2 = bytes([(i * 11 + 23) % 256 for i in range(32)])
+    high_entropy_key1 = bytes((i * 7 + 13) % 256 for i in range(16))
+    high_entropy_key2 = bytes((i * 11 + 23) % 256 for i in range(32))
     themida_code[2000:2016] = high_entropy_key1
     themida_code[2100:2132] = high_entropy_key2
 
@@ -244,13 +244,13 @@ def create_themida_protected_binary_v3() -> bytes:
     padding = b"\x00" * (0x400 - len(pe))
 
     text_code = bytearray(0x1000)
-    text_code[0:9] = b"\x55\x8b\xec\x83\xc4\xf0\x53\x56\x57"
+    text_code[:9] = b"\x55\x8b\xec\x83\xc4\xf0\x53\x56\x57"
     text_code[100:106] = b"\x8b\x45\x00\x89\x45\x04"
     text_code[200:209] = b"\x89\x45\x00\x8b\x45\x04\x89\x45\x08"
     text_code[300:310] = b"Themida\x00\x00\x00"
 
     themida_code = bytearray(0x2000)
-    themida_code[0:9] = b"\x55\x8b\xec\x83\xc4\xf0\x53\x56\x57"
+    themida_code[:9] = b"\x55\x8b\xec\x83\xc4\xf0\x53\x56\x57"
 
     data_section_content = b"\x00" * 0x1000
 
@@ -292,12 +292,12 @@ def create_winlicense_protected_binary_v1() -> bytes:
     padding = b"\x00" * (0x400 - len(pe))
 
     text_code = bytearray(0x1000)
-    text_code[0:8] = b"\x68\x00\x00\x00\x00\x9c\x60\xe8"
+    text_code[:8] = b"\x68\x00\x00\x00\x00\x9c\x60\xe8"
     text_code[100:112] = b"\xeb\x10\x66\x62\x3a\x43\x2b\x2b\x48\x4f\x4f\x4b"
     text_code[200:206] = b"\x8b\x45\x00\x89\x45\x04"
 
     winlicense_code = bytearray(0x2000)
-    winlicense_code[0:8] = b"\x68\x00\x00\x00\x00\x9c\x60\xe8"
+    winlicense_code[:8] = b"\x68\x00\x00\x00\x00\x9c\x60\xe8"
     winlicense_code[100:112] = b"\xeb\x10\x66\x62\x3a\x43\x2b\x2b\x48\x4f\x4f\x4b"
 
     data_section_content = b"\x00" * 0x1000
@@ -340,10 +340,10 @@ def create_risc_vm_binary() -> bytes:
     padding = b"\x00" * (0x400 - len(pe))
 
     text_code = bytearray(0x1000)
-    text_code[0:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
+    text_code[:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
 
     themida_code = bytearray(0x2000)
-    themida_code[0:4] = b"\xe2\x8f\x00\x00"
+    themida_code[:4] = b"\xe2\x8f\x00\x00"
     themida_code[10:14] = b"\xe0\x80\x00\x00"
     themida_code[20:24] = b"\xe0\x40\x00\x00"
     themida_code[30:34] = b"\xe0\x00\x00\x00"
@@ -393,10 +393,10 @@ def create_fish_vm_binary() -> bytes:
     padding = b"\x00" * (0x400 - len(pe))
 
     text_code = bytearray(0x1000)
-    text_code[0:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
+    text_code[:10] = b"\x8b\xc5\x8b\xd4\x60\xe8\x00\x00\x00\x00"
 
     themida_code = bytearray(0x2000)
-    themida_code[0:3] = b"\x48\x8b\x00"
+    themida_code[:3] = b"\x48\x8b\x00"
     themida_code[10:13] = b"\x48\x01\x00"
     themida_code[20:23] = b"\x48\x29\x00"
     themida_code[30:34] = b"\x48\x0f\xaf\x00"
@@ -866,7 +866,7 @@ class TestEncryptionKeyExtraction:
 
             for key in result.encryption_keys:
                 assert isinstance(key, bytes)
-                assert len(key) in [16, 32]
+                assert len(key) in {16, 32}
         finally:
             Path(temp_path).unlink(missing_ok=True)
 

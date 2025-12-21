@@ -212,9 +212,7 @@ class TestDiskSerialRetrieval:
     def test_get_volume_serial_retrieves_c_drive_serial(self) -> None:
         """Volume serial retrieval returns C: drive serial number via GetVolumeInformationW."""
         spoofer = HardwareIDSpoofer()
-        volume_info = spoofer._get_volume_serial("C:\\")
-
-        if volume_info:
+        if volume_info := spoofer._get_volume_serial("C:\\"):
             assert isinstance(volume_info, dict)
             assert "serial" in volume_info
 
@@ -326,9 +324,9 @@ class TestCPUIDSpoofing:
         test_vendor = "AuthenticAMD"
         test_cpu_id = "178BFBFF00800F11"
 
-        result = spoofer.spoof_cpu_id(vendor=test_vendor, processor_id=test_cpu_id)
-
-        if result:
+        if result := spoofer.spoof_cpu_id(
+            vendor=test_vendor, processor_id=test_cpu_id
+        ):
             assert spoofer.spoofed_values.get("cpu_vendor") == test_vendor
             assert spoofer.spoofed_values.get("cpu_id") == test_cpu_id
 
@@ -384,9 +382,7 @@ class TestMACAddressSpoofing:
         if not original_info.get("mac_addresses"):
             pytest.skip("No network adapters available for testing")
 
-        result = spoofer.spoof_mac_address(new_mac=test_mac)
-
-        if result:
+        if result := spoofer.spoof_mac_address(new_mac=test_mac):
             adapter_name = list(spoofer.spoofed_values.keys())[0].replace("mac_", "")
             assert spoofer.spoofed_values[f"mac_{adapter_name}"] == test_mac
 
@@ -442,9 +438,9 @@ class TestDiskSerialSpoofing:
         test_serial = "SPOOFED123456789"
         test_drive = "C:\\"
 
-        result = spoofer.spoof_disk_serial(drive=test_drive, new_serial=test_serial)
-
-        if result:
+        if result := spoofer.spoof_disk_serial(
+            drive=test_drive, new_serial=test_serial
+        ):
             assert spoofer.spoofed_values.get(f"disk_{test_drive}") == test_serial
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
@@ -464,9 +460,9 @@ class TestDiskSerialSpoofing:
         test_serial = "USERMODETEST1234"
         test_drive = "C:\\"
 
-        result = spoofer._spoof_disk_usermode(drive=test_drive, new_serial=test_serial)
-
-        if result:
+        if result := spoofer._spoof_disk_usermode(
+            drive=test_drive, new_serial=test_serial
+        ):
             assert spoofer.spoofed_values.get(f"disk_{test_drive}") == test_serial
 
 
@@ -503,11 +499,11 @@ class TestMotherboardSerialSpoofing:
         test_product = "ASUS-Z690"
         test_serial = "MB123456789ABC"
 
-        result = spoofer.spoof_motherboard_serial(
-            manufacturer=test_manufacturer, product=test_product, serial=test_serial
-        )
-
-        if result:
+        if result := spoofer.spoof_motherboard_serial(
+            manufacturer=test_manufacturer,
+            product=test_product,
+            serial=test_serial,
+        ):
             assert spoofer.spoofed_values.get("motherboard_manufacturer") == test_manufacturer
             assert spoofer.spoofed_values.get("motherboard_product") == test_product
             assert spoofer.spoofed_values.get("motherboard_serial") == test_serial
@@ -553,9 +549,7 @@ class TestSystemUUIDSpoofing:
         original_guid = spoofer._get_machine_guid()
 
         try:
-            result = spoofer.spoof_system_uuid(new_uuid=test_uuid)
-
-            if result:
+            if result := spoofer.spoof_system_uuid(new_uuid=test_uuid):
                 with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
                     current_guid, _ = winreg.QueryValueEx(key, "MachineGuid")
                     assert current_guid == test_uuid
@@ -567,7 +561,7 @@ class TestSystemUUIDSpoofing:
                     winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, winreg.KEY_WRITE
                 ) as key:
                     winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, original_guid)
-            except (OSError, PermissionError):
+            except OSError:
                 pass
 
     @pytest.mark.skipif(not WINDOWS_ONLY or ADMIN_REQUIRED, reason="Requires Windows admin privileges")
@@ -577,15 +571,13 @@ class TestSystemUUIDSpoofing:
         test_uuid = str(uuid.uuid4())
 
         try:
-            result = spoofer.spoof_system_uuid(new_uuid=test_uuid)
-
-            if result:
+            if result := spoofer.spoof_system_uuid(new_uuid=test_uuid):
                 with winreg.OpenKey(
                     winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation"
                 ) as key:
                     current_uuid, _ = winreg.QueryValueEx(key, "ComputerHardwareId")
                     assert test_uuid in current_uuid
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Insufficient permissions for registry modification")
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
@@ -594,9 +586,7 @@ class TestSystemUUIDSpoofing:
         spoofer = HardwareIDSpoofer()
         test_uuid = str(uuid.uuid4())
 
-        result = spoofer.spoof_system_uuid(new_uuid=test_uuid)
-
-        if result:
+        if result := spoofer.spoof_system_uuid(new_uuid=test_uuid):
             assert spoofer.spoofed_values.get("system_uuid") == test_uuid
 
 
@@ -1129,9 +1119,7 @@ class TestRealWorldIntegrationScenarios:
         new_uuid = str(uuid.uuid4())
 
         try:
-            result = spoofer.spoof_system_uuid(new_uuid=new_uuid)
-
-            if result:
+            if result := spoofer.spoof_system_uuid(new_uuid=new_uuid):
                 current_guid = spoofer._get_machine_guid()
                 assert current_guid != original_guid
                 assert current_guid == new_uuid
@@ -1143,7 +1131,7 @@ class TestRealWorldIntegrationScenarios:
                     winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography", 0, winreg.KEY_WRITE
                 ) as key:
                     winreg.SetValueEx(key, "MachineGuid", 0, winreg.REG_SZ, original_guid)
-            except (OSError, PermissionError):
+            except OSError:
                 pass
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")

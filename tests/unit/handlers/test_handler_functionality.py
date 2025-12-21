@@ -54,7 +54,7 @@ def temp_dir(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {IMPORT_ERROR if not HANDLERS_AVAILABLE else ''}")
+@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {'' if HANDLERS_AVAILABLE else IMPORT_ERROR}")
 class TestCapstoneHandlerEffectiveness:
 
     def test_capstone_availability_flag_correctness(self) -> None:
@@ -74,14 +74,15 @@ class TestCapstoneHandlerEffectiveness:
         md = Cs(CS_ARCH_X86, CS_MODE_32)
         instructions = list(md.disasm(KNOWN_BYTES, 0x1000))
 
-        assert len(instructions) >= 1, \
-            "FAILED: Capstone didn't disassemble known x86-32 instruction"
+        assert (
+            instructions
+        ), "FAILED: Capstone didn't disassemble known x86-32 instruction"
 
         first_insn = instructions[0]
         assert first_insn.mnemonic == KNOWN_MNEMONIC, \
-            f"FAILED: Capstone disassembled wrong mnemonic (got {first_insn.mnemonic}, expected {KNOWN_MNEMONIC})"
+                f"FAILED: Capstone disassembled wrong mnemonic (got {first_insn.mnemonic}, expected {KNOWN_MNEMONIC})"
         assert first_insn.address == 0x1000, \
-            f"FAILED: Capstone returned wrong address (got {hex(first_insn.address)}, expected 0x1000)"
+                f"FAILED: Capstone returned wrong address (got {hex(first_insn.address)}, expected 0x1000)"
 
     @pytest.mark.skipif(not HAS_CAPSTONE, reason="Capstone not available")
     def test_disassemble_x86_64_instructions(self) -> None:
@@ -91,12 +92,13 @@ class TestCapstoneHandlerEffectiveness:
         md = Cs(CS_ARCH_X86, CS_MODE_64)
         instructions = list(md.disasm(KNOWN_BYTES, 0x400000))
 
-        assert len(instructions) >= 1, \
-            "FAILED: Capstone didn't disassemble known x86-64 instruction"
+        assert (
+            instructions
+        ), "FAILED: Capstone didn't disassemble known x86-64 instruction"
 
         first_insn = instructions[0]
         assert first_insn.mnemonic == KNOWN_MNEMONIC, \
-            f"FAILED: Capstone disassembled wrong mnemonic (got {first_insn.mnemonic}, expected {KNOWN_MNEMONIC})"
+                f"FAILED: Capstone disassembled wrong mnemonic (got {first_insn.mnemonic}, expected {KNOWN_MNEMONIC})"
 
     @pytest.mark.skipif(not HAS_CAPSTONE, reason="Capstone not available")
     def test_disassemble_multiple_instructions(self) -> None:
@@ -115,7 +117,7 @@ class TestCapstoneHandlerEffectiveness:
                 f"FAILED: Instruction {i} has wrong mnemonic (got {insn.mnemonic}, expected {expected_mnemonics[i]})"
 
 
-@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {IMPORT_ERROR if not HANDLERS_AVAILABLE else ''}")
+@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {'' if HANDLERS_AVAILABLE else IMPORT_ERROR}")
 class TestLIEFHandlerEffectiveness:
 
     def test_lief_availability_flag_correctness(self) -> None:
@@ -164,7 +166,7 @@ class TestLIEFHandlerEffectiveness:
             "FAILED: LIEF should return None for invalid binary, but returned an object"
 
 
-@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {IMPORT_ERROR if not HANDLERS_AVAILABLE else ''}")
+@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {'' if HANDLERS_AVAILABLE else IMPORT_ERROR}")
 class TestPEfileHandlerEffectiveness:
 
     def test_pefile_availability_flag_correctness(self) -> None:
@@ -229,7 +231,7 @@ class TestPEfileHandlerEffectiveness:
             f"FAILED: PEfile parsed wrong machine type (got {hex(pe.FILE_HEADER.Machine)}, expected 0x014c)"
 
 
-@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {IMPORT_ERROR if not HANDLERS_AVAILABLE else ''}")
+@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {'' if HANDLERS_AVAILABLE else IMPORT_ERROR}")
 class TestKeystoneHandlerEffectiveness:
 
     def test_keystone_availability_flag_correctness(self) -> None:
@@ -287,16 +289,17 @@ class TestKeystoneHandlerEffectiveness:
         encoding, count = ks.asm(KNOWN_ASM)
 
         assert encoding is not None, \
-            "FAILED: Keystone failed to assemble multiple instructions"
+                "FAILED: Keystone failed to assemble multiple instructions"
         assert count == EXPECTED_INSTRUCTION_COUNT, \
-            f"FAILED: Keystone assembled wrong instruction count (got {count}, expected {EXPECTED_INSTRUCTION_COUNT})"
+                f"FAILED: Keystone assembled wrong instruction count (got {count}, expected {EXPECTED_INSTRUCTION_COUNT})"
 
         assembled_bytes = bytes(encoding)
-        assert len(assembled_bytes) > 0, \
-            "FAILED: Keystone assembled zero bytes for multiple instructions"
+        assert (
+            assembled_bytes
+        ), "FAILED: Keystone assembled zero bytes for multiple instructions"
 
 
-@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {IMPORT_ERROR if not HANDLERS_AVAILABLE else ''}")
+@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {'' if HANDLERS_AVAILABLE else IMPORT_ERROR}")
 class TestCryptographyHandlerEffectiveness:
 
     def test_cryptography_availability_flag_correctness(self) -> None:
@@ -323,19 +326,20 @@ class TestCryptographyHandlerEffectiveness:
         ciphertext = encryptor.update(padded_plaintext) + encryptor.finalize()
 
         assert ciphertext is not None, \
-            "FAILED: AES encryption returned None"
+                "FAILED: AES encryption returned None"
         assert len(ciphertext) > 0, \
-            "FAILED: AES encryption returned empty ciphertext"
+                "FAILED: AES encryption returned empty ciphertext"
         assert ciphertext != padded_plaintext, \
-            "FAILED: AES encryption didn't modify plaintext (encryption failed)"
+                "FAILED: AES encryption didn't modify plaintext (encryption failed)"
 
         cipher_decrypt = Cipher(algorithms.AES(KNOWN_KEY), modes.CBC(KNOWN_IV))
         decryptor = cipher_decrypt.decryptor()
 
         decrypted = decryptor.update(ciphertext) + decryptor.finalize()
 
-        assert decrypted[:len(KNOWN_PLAINTEXT)] == KNOWN_PLAINTEXT, \
-            f"FAILED: AES decryption didn't recover original plaintext"
+        assert (
+            decrypted[: len(KNOWN_PLAINTEXT)] == KNOWN_PLAINTEXT
+        ), "FAILED: AES decryption didn't recover original plaintext"
 
     @pytest.mark.skipif(not HAS_CRYPTOGRAPHY, reason="Cryptography not available")
     def test_rsa_key_generation(self) -> None:
@@ -390,7 +394,7 @@ class TestCryptographyHandlerEffectiveness:
             "FAILED: SHA256 hash is not deterministic (same input produced different hashes)"
 
 
-@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {IMPORT_ERROR if not HANDLERS_AVAILABLE else ''}")
+@pytest.mark.skipif(not HANDLERS_AVAILABLE, reason=f"Handlers not available: {'' if HANDLERS_AVAILABLE else IMPORT_ERROR}")
 class TestHandlerIntegrationEffectiveness:
 
     @pytest.mark.skipif(not (HAS_CAPSTONE and HAS_KEYSTONE), reason="Capstone or Keystone not available")

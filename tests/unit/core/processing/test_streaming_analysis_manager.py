@@ -125,7 +125,7 @@ class TestStreamingAnalysisManager:
 
         file_handle, mm = manager.open_memory_mapped(test_file)
         try:
-            assert mm[0:8] == b"TestData"
+            assert mm[:8] == b"TestData"
             assert mm[100:108] == b"DataTest"
             assert len(mm) == len(test_data)
         finally:
@@ -183,7 +183,7 @@ class TestStreamingAnalysisManager:
 
         manager.analyze_streaming(test_file, analyzer)
 
-        assert len(progress_updates) > 0
+        assert progress_updates
         assert any(p["stage"] == "initializing" for p in progress_updates)
         assert any(p["stage"] == "analyzing_chunks" for p in progress_updates)
         assert any(p["stage"] == "completed" for p in progress_updates)

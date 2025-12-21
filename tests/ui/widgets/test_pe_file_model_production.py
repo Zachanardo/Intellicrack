@@ -57,7 +57,7 @@ def create_minimal_pe(path: Path) -> None:
         f.write(nt_headers)
 
         section_header = bytearray(40)
-        section_header[0:8] = b".text\x00\x00\x00"
+        section_header[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", section_header, 8, 0x1000)
         struct.pack_into("<I", section_header, 12, 0x1000)
         struct.pack_into("<I", section_header, 16, 0x200)
@@ -255,7 +255,7 @@ def test_structures_include_sections(sample_pe: Path) -> None:
 
     section_structures = [s for s in model.structures if s.structure_type == "section"]
 
-    assert len(section_structures) > 0
+    assert section_structures
     assert any(".text" in s.name for s in section_structures)
 
 
@@ -518,9 +518,9 @@ def test_section_properties_in_structures(sample_pe: Path) -> None:
     """Section structures include property information."""
     model = PEFileModel(str(sample_pe))
 
-    section_structures = [s for s in model.structures if s.structure_type == "section"]
-
-    if len(section_structures) > 0:
+    if section_structures := [
+        s for s in model.structures if s.structure_type == "section"
+    ]:
         section = section_structures[0]
         assert "virtual_address" in section.properties
         assert "characteristics" in section.properties

@@ -633,8 +633,6 @@ class TestErrorHandling:
 
         session_pool.return_session(session)
 
-        assert session.session_id not in session_pool._sessions or True
-
     def test_reconnect_on_failed_connection(self, simple_binary: Path) -> None:
         """Session reconnects when connection fails."""
         wrapper = R2SessionWrapper(
@@ -648,9 +646,7 @@ class TestErrorHandling:
         wrapper.r2 = None
         wrapper.state = SessionState.ERROR
 
-        result = wrapper.reconnect()
-
-        if result:
+        if result := wrapper.reconnect():
             assert wrapper.state == SessionState.ACTIVE
 
         wrapper.disconnect()

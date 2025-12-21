@@ -361,15 +361,9 @@ class CompareDialog(QDialog):
             self.stats_label.setText("Files are identical")
             self.stats_label.setStyleSheet("color: green; font-weight: bold;")
         else:
-            modified = sum(
-                str(d.diff_type) == "DifferenceType.MODIFIED" for d in differences
-            )
-            inserted = sum(
-                str(d.diff_type) == "DifferenceType.INSERTED" for d in differences
-            )
-            deleted = sum(
-                str(d.diff_type) == "DifferenceType.DELETED" for d in differences
-            )
+            modified = sum(str(d.diff_type) == "DifferenceType.MODIFIED" for d in differences)
+            inserted = sum(str(d.diff_type) == "DifferenceType.INSERTED" for d in differences)
+            deleted = sum(str(d.diff_type) == "DifferenceType.DELETED" for d in differences)
 
             stats_text = f"Found {len(differences)} difference blocks: "
             parts = []

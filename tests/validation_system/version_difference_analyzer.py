@@ -283,16 +283,16 @@ class VersionDifferenceAnalyzer:
         filtered_strings = []
         for s in strings:
             # Skip pure numeric strings, paths, and very common strings
-            if not s.isdigit() and len(s) <= 100:
-                if not any(skip in s.lower() for skip in ['temp', 'windows', 'system32', 'program files']):
-                    filtered_strings.append(s)
+            if not s.isdigit() and len(s) <= 100 and all(
+                                skip not in s.lower()
+                                for skip in ['temp', 'windows', 'system32', 'program files']
+                            ):
+                filtered_strings.append(s)
 
         return list(set(filtered_strings))[:100]  # Remove duplicates and limit
 
     def _detect_obfuscation(self, binary_data: bytes) -> list[str]:
         """Detect obfuscation markers in binary data."""
-        obfuscation_markers = []
-
         # Common obfuscation patterns
         obfuscation_patterns = [
             (b"UPX", "UPX Packer"),
@@ -304,10 +304,11 @@ class VersionDifferenceAnalyzer:
             (b"Obsidium", "Obsidium")
         ]
 
-        for pattern, name in obfuscation_patterns:
-            if pattern in binary_data:
-                obfuscation_markers.append(name)
-
+        obfuscation_markers = [
+            name
+            for pattern, name in obfuscation_patterns
+            if pattern in binary_data
+        ]
         # Calculate entropy to detect potential obfuscation
         entropy = self._calculate_entropy(binary_data)
         if entropy > 7.5:  # High entropy suggests obfuscation/encryption
@@ -497,11 +498,14 @@ class VersionDifferenceAnalyzer:
             "registry", "process", "thread", "memory"
         ]
 
-        for keyword in medium_impact_imports:
-            if keyword.lower() in import_name.lower():
-                return "medium"
-
-        return "low"
+        return next(
+            (
+                "medium"
+                for keyword in medium_impact_imports
+                if keyword.lower() in import_name.lower()
+            ),
+            "low",
+        )
 
     def generate_evolution_summary(self, signatures: dict[str, VersionSignature],
                                    differences: list[VersionDifference]) -> dict[str, Any]:
@@ -756,9 +760,13 @@ class VersionDifferenceAnalyzer:
         if report.evolution_summary['major_changes']:
             lines.append("MAJOR CHANGES:")
             for change in report.evolution_summary['major_changes']:
-                lines.append(f"- [{change['type']}] {change['description']}")
-                lines.append(f"  Impact: {change['impact']}")
-                lines.append(f"  Versions: {change['versions']}")
+                lines.extend(
+                    (
+                        f"- [{change['type']}] {change['description']}",
+                        f"  Impact: {change['impact']}",
+                        f"  Versions: {change['versions']}",
+                    )
+                )
             lines.append("")
 
         # Attack surface analysis
@@ -768,21 +776,19 @@ class VersionDifferenceAnalyzer:
                 lines.append(f"- {category.replace('_', ' ').title()}:")
                 for change in changes:
                     lines.append(f"   {change}")
-        lines.append("")
-
-        # Bypass implications
-        lines.append("BYPASS IMPLICATIONS BY VERSION:")
+        lines.extend(("", "BYPASS IMPLICATIONS BY VERSION:"))
         for version, implication in report.bypass_implications.items():
             lines.append(f"- {version}: {implication}")
-        lines.append("")
-
-        # Detailed differences (top 10)
-        lines.append("DETAILED DIFFERENCES (Top 10 by Severity):")
+        lines.extend(("", "DETAILED DIFFERENCES (Top 10 by Severity):"))
         severity_map = {"critical": 4, "high": 3, "medium": 2, "low": 1}
         sorted_diffs = sorted(report.differences, key=lambda x: severity_map.get(x.severity, 0), reverse=True)
         for diff in sorted_diffs[:10]:
-            lines.append(f"- [{diff.severity.upper()}] {diff.description}")
-            lines.append(f"  Type: {diff.diff_type} | Category: {diff.category}")
+            lines.extend(
+                (
+                    f"- [{diff.severity.upper()}] {diff.description}",
+                    f"  Type: {diff.diff_type} | Category: {diff.category}",
+                )
+            )
             lines.append(f"  Versions: {diff.old_version} -> {diff.new_version}")
             lines.append(f"  Impact: {diff.impact}")
             lines.append("")

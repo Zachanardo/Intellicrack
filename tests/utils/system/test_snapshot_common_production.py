@@ -166,7 +166,7 @@ class TestGetSnapshotData:
 
         data: dict[str, Any] = get_snapshot_data(snapshots, "nonexistent")
 
-        assert data == {}
+        assert not data
 
     def test_get_snapshot_data_preserves_snapshot_structure(self) -> None:
         """Retrieved data preserves original structure."""

@@ -143,14 +143,10 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
 
     def test_error_propagation_and_recovery_integration_real(self):
         """Test REAL error propagation and recovery across integrated components."""
-        # Create multiple problematic files to test error handling integration
-        error_files = []
-
         # Empty file
         empty_file = self.temp_dir / "empty.exe"
         empty_file.write_bytes(b"")
-        error_files.append(str(empty_file))
-
+        error_files = [str(empty_file)]
         # Corrupted file
         corrupt_file = self.temp_dir / "corrupt.exe"
         corrupt_file.write_bytes(b"INVALID_PE_DATA" * 50)
@@ -304,7 +300,7 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
         result = self.orchestrator.analyze_binary(self.pe_binary, phases=phases)
 
         # Validate signal coordination
-        assert len(signals_received) > 0
+        assert signals_received
 
         # Should have proper signal sequence
         signal_types = [s[0] for s in signals_received]
@@ -397,23 +393,20 @@ class TestAnalysisOrchestratorIntegration(IntellicrackTestBase):
 
     def _validate_cross_phase_consistency(self, result: OrchestrationResult):
         """Validate consistency of data across different analysis phases."""
-        # Validate file size consistency across phases
-        file_sizes = []
-
-        for phase_name, phase_result in result.results.items():
-            if isinstance(phase_result, dict) and 'file_size' in phase_result:
-                file_sizes.append(phase_result['file_size'])
-
+        file_sizes = [
+            phase_result['file_size']
+            for phase_name, phase_result in result.results.items()
+            if isinstance(phase_result, dict) and 'file_size' in phase_result
+        ]
         # All phases should report consistent file size
         if len(file_sizes) > 1:
             assert all(size == file_sizes[0] for size in file_sizes)
 
-        # Validate binary path consistency
-        binary_paths = []
-        for phase_name, phase_result in result.results.items():
-            if isinstance(phase_result, dict) and 'file_path' in phase_result:
-                binary_paths.append(phase_result['file_path'])
-
+        binary_paths = [
+            phase_result['file_path']
+            for phase_name, phase_result in result.results.items()
+            if isinstance(phase_result, dict) and 'file_path' in phase_result
+        ]
         # All phases should reference same binary path
         if len(binary_paths) > 1:
             assert all(path == binary_paths[0] for path in binary_paths)

@@ -51,7 +51,7 @@ def temp_dir(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestLiveDataPipelineEffectiveness:
 
     def test_pipeline_processes_and_stores_events(self, temp_dir: Path) -> None:
@@ -149,7 +149,7 @@ class TestLiveDataPipelineEffectiveness:
             f"FAILED: Callback received wrong data: {callback_invoked['received_data']}"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestVisualizationRendererEffectiveness:
 
     def test_graph_rendering_produces_output(self, temp_dir: Path) -> None:
@@ -226,7 +226,7 @@ class TestVisualizationRendererEffectiveness:
             assert len(chart_content) > 100, "FAILED: Metrics chart output too short"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestRealTimeDashboardEffectiveness:
 
     def test_dashboard_tracks_analysis_events(self, temp_dir: Path) -> None:
@@ -312,7 +312,7 @@ class TestRealTimeDashboardEffectiveness:
                 f"FAILED: Success rate incorrect (got {actual_rate:.2f}, expected {expected_rate:.2f})"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestWebSocketEventStreamEffectiveness:
 
     def test_event_publishing(self) -> None:
@@ -339,17 +339,16 @@ class TestWebSocketEventStreamEffectiveness:
 
         stream.stop()
 
-        assert len(published_events) >= 1, \
-            "FAILED: Event not published (no broadcasts recorded)"
+        assert published_events, "FAILED: Event not published (no broadcasts recorded)"
 
-        if len(published_events) > 0:
+        if published_events:
             last_event = published_events[-1]
             assert last_event.get("event_type") == "protection_detected" or \
-                   last_event.get("type") == "protection_detected", \
-                "FAILED: Published event missing correct type"
+                       last_event.get("type") == "protection_detected", \
+                    "FAILED: Published event missing correct type"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestDashboardManagerEffectiveness:
 
     def test_manager_widget_data_flow(self, temp_dir: Path) -> None:
@@ -387,7 +386,7 @@ class TestDashboardManagerEffectiveness:
             "FAILED: Widget not subscribed to data source"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestIntegrationEffectiveness:
 
     def test_full_dashboard_pipeline(self, temp_dir: Path) -> None:

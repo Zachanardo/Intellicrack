@@ -52,16 +52,13 @@ class SimpleStringAnalyzer:
         if dash_pattern.match(content):
             return True
         uuid_pattern = re.compile(r'^[0-9A-F]{8}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{12}$', re.IGNORECASE)
-        if uuid_pattern.match(content):
-            return True
-        return False
+        return bool(uuid_pattern.match(content))
 
     def _detect_cryptographic_data(self, content):
         """Detect cryptographic data."""
         hex_pattern = re.compile(r'^[0-9A-F]+$', re.IGNORECASE)
-        if hex_pattern.match(content) and len(content) % 2 == 0:
-            if len(content) in [32, 40, 64]:  # Hash lengths
-                return True
+        if hex_pattern.match(content) and len(content) % 2 == 0 and len(content) in {32, 40, 64}:
+            return True
         return False
 
     def _analyze_api_function_patterns(self, content):
@@ -81,8 +78,7 @@ class SimpleRealtimeAnalyzer:
 
     def _determine_analysis_components(self, binary_path, trigger_event):
         """Determine analysis components - should include enhanced_strings."""
-        base_components = ["strings", "enhanced_strings", "imports"]
-        return base_components
+        return ["strings", "enhanced_strings", "imports"]
 
     def _perform_enhanced_string_analysis(self, r2_mock, binary_path):
         """Enhanced string analysis method - core Day 5.2 functionality."""
@@ -141,33 +137,30 @@ class SimpleRealtimeAnalyzer:
             detected_patterns = len(license_keys) + len(crypto_strings) + len(api_strings)
             detection_rate = (detected_patterns / total_strings) if total_strings > 0 else 0
 
-            result = {
+            return {
                 "timestamp": datetime.now().isoformat(),
                 "total_strings": total_strings,
                 "pattern_detection": {
                     "license_keys": license_keys,
                     "crypto_strings": crypto_strings,
                     "api_strings": api_strings,
-                    "regular_strings": regular_strings
+                    "regular_strings": regular_strings,
                 },
                 "analysis_summary": {
                     "license_key_count": len(license_keys),
                     "crypto_string_count": len(crypto_strings),
                     "api_string_count": len(api_strings),
                     "detection_rate": detection_rate,
-                    "high_value_strings": len(license_keys) + len(crypto_strings)
+                    "high_value_strings": len(license_keys) + len(crypto_strings),
                 },
                 "dynamic_monitoring": dynamic_patterns,
                 "enhanced_features": {
                     "entropy_analysis": True,
                     "pattern_detection": True,
                     "real_time_monitoring": True,
-                    "dynamic_extraction": True
-                }
+                    "dynamic_extraction": True,
+                },
             }
-
-            return result
-
         except Exception as e:
             return {"error": str(e), "enhanced_features": {"available": False}}
 
@@ -343,7 +336,7 @@ def test_day5_2_implementation():
 
         required_keys = ["running", "update_mode", "watched_binaries"]
         if all(key in status for key in required_keys):
-            print(f"  OK PASS: Real-time status structure complete")
+            print("  OK PASS: Real-time status structure complete")
             print(f"  OK INFO: Update mode: {status['update_mode']}")
 
             # Test callback registration

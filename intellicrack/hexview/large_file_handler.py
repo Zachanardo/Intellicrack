@@ -139,7 +139,9 @@ class FileCache:
 
             logger.debug(
                 "Cached region: offset=0x%X, size=%d, total_memory=%.1fMB",
-                region.offset, region.size, self.total_memory / (1024 * 1024),
+                region.offset,
+                region.size,
+                self.total_memory / (1024 * 1024),
             )
             return True
 
@@ -613,7 +615,9 @@ class LargeFileHandler:
 
             logger.warning(
                 "Memory pressure detected: %.1f%%, reduced cache from %dMB to %dMB",
-                memory_usage * 100, old_size, self.config.cache_size_mb,
+                memory_usage * 100,
+                old_size,
+                self.config.cache_size_mb,
             )
 
     def _periodic_cleanup(self) -> None:

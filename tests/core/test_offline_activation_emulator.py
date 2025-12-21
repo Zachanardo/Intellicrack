@@ -1058,7 +1058,7 @@ class TestEdgeCases:
         response: str = emulator.bypass_challenge_response("ABC")
 
         assert response
-        assert len(response) > 0
+        assert response != ""
 
     def test_malformed_request_code_handled(self, emulator: OfflineActivationEmulator) -> None:
         """Malformed request code in SolidWorks activation handled."""

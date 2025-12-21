@@ -252,9 +252,14 @@ class TestEnvironmentDetection:
             "COMPUTERNAME": "DESKTOP-XYZ123",
         }
 
-        clean_env = {k: v for k, v in os.environ.items() if not any(s in k for s in ["CUCKOO", "VMRAY", "JOEBOX", "SANDBOX", "SANDBOXIE"])}
-        clean_env.update(normal_env)
-
+        clean_env = {
+            k: v
+            for k, v in os.environ.items()
+            if all(
+                s not in k
+                for s in ["CUCKOO", "VMRAY", "JOEBOX", "SANDBOX", "SANDBOXIE"]
+            )
+        } | normal_env
         with patch.dict(os.environ, clean_env, clear=True):
             detected, confidence, details = detector._check_environment()
 
@@ -491,9 +496,8 @@ class TestResourceLimits:
 
         detected, confidence, details = detector._check_resource_limits()
 
-        if cpu_count <= 2:
-            if detected and any("CPU" in limitation for limitation in details["limitations"]):
-                assert confidence > 0
+        if cpu_count <= 2 and (detected and any("CPU" in limitation for limitation in details["limitations"])):
+            assert confidence > 0
 
     def test_check_resource_limits_detects_low_memory(self) -> None:
         """Resource check can detect systems with low memory."""
@@ -1049,7 +1053,7 @@ class TestIntegrationScenarios:
         detected_methods = [method for method, result in results["detections"].items() if isinstance(result, dict) and result.get("detected")]
 
         if results["is_sandbox"]:
-            assert len(detected_methods) > 0
+            assert detected_methods
 
     def test_evasion_strategy_matches_detection_results(self, safe_detector: SandboxDetector) -> None:
         """Evasion strategy appropriately matches detection results."""

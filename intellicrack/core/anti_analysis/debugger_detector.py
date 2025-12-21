@@ -24,7 +24,7 @@ import os
 import platform
 import shutil
 import time
-from typing import Any
+from typing import Any, cast
 
 import psutil
 
@@ -99,7 +99,7 @@ class DebuggerDetector(BaseDetector):
         import json
         import os
 
-        signatures = {
+        signatures: dict[str, dict[str, list[str]]] = {
             "windows": {
                 "processes": [],
                 "window_classes": [],
@@ -573,7 +573,7 @@ class DebuggerDetector(BaseDetector):
             Detection results with details
 
         """
-        results = {
+        results: dict[str, Any] = {
             "is_debugged": False,
             "confidence": 0.0,
             "debugger_type": None,
@@ -594,10 +594,14 @@ class DebuggerDetector(BaseDetector):
             if detection_results["detection_count"] > 0:
                 results["is_debugged"] = True
                 results["confidence"] = min(1.0, detection_results["average_confidence"])
-                results["debugger_type"] = self._identify_debugger_type(results["detections"])
+                detections_value = results.get("detections", {})
+                if isinstance(detections_value, dict):
+                    results["debugger_type"] = self._identify_debugger_type(detections_value)
 
             # Calculate anti-debug effectiveness score
-            results["anti_debug_score"] = self._calculate_antidebug_score(results["detections"])
+            detections_value = results.get("detections", {})
+            if isinstance(detections_value, dict):
+                results["anti_debug_score"] = self._calculate_antidebug_score(detections_value)
 
             self.logger.info("Debugger detection complete: %s (confidence: %.2f)", results["is_debugged"], results["confidence"])
             return results
@@ -666,7 +670,7 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_peb_flags(self) -> tuple[bool, float, dict[str, bool | int]]:
+    def _check_peb_flags(self) -> tuple[bool, float, dict[str, bool | int | str]]:
         """Check Process Environment Block flags.
 
         Reads the PEB structure to examine the BeingDebugged flag and
@@ -677,7 +681,7 @@ class DebuggerDetector(BaseDetector):
             flag information.
 
         """
-        details: dict[str, bool | int] = {"being_debugged": False, "nt_global_flag": 0}
+        details: dict[str, bool | int | str] = {"being_debugged": False, "nt_global_flag": 0}
 
         try:
             # Real PEB flags detection implementation
@@ -1025,7 +1029,9 @@ class DebuggerDetector(BaseDetector):
 
         return False, 0.0, details
 
-    def _check_hardware_breakpoints(self) -> tuple[bool, float, dict[str, list[str] | int | str]]:
+    def _check_hardware_breakpoints(
+        self,
+    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]]:
         """Check for hardware breakpoints in debug registers.
 
         Examines CPU debug registers (DR0-DR7) to detect hardware breakpoints
@@ -1036,7 +1042,7 @@ class DebuggerDetector(BaseDetector):
             breakpoint information.
 
         """
-        details: dict[str, list[str] | int | str] = {
+        details: dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool] = {
             "dr_registers": [],
             "breakpoints_found": 0,
             "active_registers": [],
@@ -1056,8 +1062,8 @@ class DebuggerDetector(BaseDetector):
         return False, elapsed, details
 
     def _check_hardware_breakpoints_windows(
-        self, details: dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]
-    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int]] | bool]]:
+        self, details: dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]
+    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]]:
         """Check for hardware breakpoints on Windows using debug registers.
 
         Reads the CONTEXT structure to access debug registers and analyze
@@ -1105,7 +1111,7 @@ class DebuggerDetector(BaseDetector):
                 dr6_status = context.Dr6
                 dr7_control = context.Dr7
 
-                details["dr_registers"] = {
+                dr_regs_dict: dict[str, str] = {
                     "DR0": hex(context.Dr0) if context.Dr0 else "0x0",
                     "DR1": hex(context.Dr1) if context.Dr1 else "0x0",
                     "DR2": hex(context.Dr2) if context.Dr2 else "0x0",
@@ -1113,16 +1119,20 @@ class DebuggerDetector(BaseDetector):
                     "DR6": hex(dr6_status),
                     "DR7": hex(dr7_control),
                 }
+                details["dr_registers"] = cast(dict[str, bool | list[int] | str], dr_regs_dict)
 
                 # Check DR7 control register for enabled breakpoints
                 # DR7 bits: L0,G0,L1,G1,L2,G2,L3,G3 (local/global enable bits)
-                breakpoint_enables = []
+                breakpoint_enables: list[int] = []
                 for i in range(4):
                     local_enable = (dr7_control >> (i * 2)) & 1
                     global_enable = (dr7_control >> (i * 2 + 1)) & 1
                     if local_enable or global_enable:
                         breakpoint_enables.append(i)
-                        details["active_registers"].append(f"DR{i}")
+                        active_regs = details.get("active_registers", [])
+                        if isinstance(active_regs, list):
+                            active_regs.append(f"DR{i}")
+                            details["active_registers"] = active_regs
 
                 # Count active breakpoints
                 active_breakpoints = 0
@@ -1141,10 +1151,10 @@ class DebuggerDetector(BaseDetector):
 
                 # Check DR6 status for triggered breakpoints
                 if dr6_status & 0x0000000F:  # B0-B3 bits indicate triggered breakpoints
-                    details["triggered_breakpoints"] = []
-                    for i in range(4):
-                        if dr6_status & (1 << i):
-                            details["triggered_breakpoints"].append(f"DR{i}")
+                    triggered_breakpoints: list[str] = [
+                        f"DR{i}" for i in range(4) if dr6_status & (1 << i)
+                    ]
+                    details["triggered_breakpoints"] = triggered_breakpoints
 
                 elapsed = time.time() - start_time
                 if active_breakpoints > 0:
@@ -1161,8 +1171,8 @@ class DebuggerDetector(BaseDetector):
         return False, elapsed, details
 
     def _check_hardware_breakpoints_linux(
-        self, details: dict[str, list[str] | int | str | dict[str, str] | bool]
-    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, str] | bool]]:
+        self, details: dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]
+    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]]:
         """Check for hardware breakpoints on Linux using ptrace.
 
         Uses ptrace and /proc filesystem to detect debug registers and
@@ -1224,7 +1234,7 @@ class DebuggerDetector(BaseDetector):
                     }
 
                     # Try to read debug registers (requires permissions)
-                    debug_regs = {}
+                    debug_regs: dict[str, str] = {}
                     for reg_name, offset in DR_OFFSETS.items():
                         try:
                             # This will fail without proper permissions, but attempt shows capability
@@ -1233,14 +1243,11 @@ class DebuggerDetector(BaseDetector):
                         except Exception:
                             debug_regs[reg_name] = "inaccessible"
 
-                    details["dr_registers"] = debug_regs
+                    details["dr_registers"] = cast(dict[str, bool | list[int] | str], debug_regs)
                     details["ptrace_available"] = True
 
                     # Count potentially active registers
-                    accessible_count = sum(
-                        v not in {"inaccessible", "0x0"}
-                        for v in debug_regs.values()
-                    )
+                    accessible_count = sum(v not in {"inaccessible", "0x0"} for v in debug_regs.values())
                     if accessible_count > 0:
                         details["accessible_registers"] = accessible_count
 
@@ -1439,7 +1446,7 @@ class DebuggerDetector(BaseDetector):
         """
         try:
             int3_count = 0
-            locations = []
+            locations: list[str] = []
 
             # Read process memory maps
             try:
@@ -1456,9 +1463,9 @@ class DebuggerDetector(BaseDetector):
 
                         # Parse address range
                         addr_range = parts[0]
-                        start_addr, end_addr = addr_range.split("-")
-                        start_addr = int(start_addr, 16)
-                        end_addr = int(end_addr, 16)
+                        start_addr_str, end_addr_str = addr_range.split("-")
+                        start_addr = int(start_addr_str, 16)
+                        end_addr = int(end_addr_str, 16)
                         size = end_addr - start_addr
 
                         # Skip if region too large (probably not code)

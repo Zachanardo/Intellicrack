@@ -142,12 +142,9 @@ class RealLegacySystemSimulator:
             "font_configuration"
         ]
 
-        missing_sections = []
-        for section in required_sections:
-            if not config.get(section):
-                missing_sections.append(section)
-
-        if missing_sections:
+        if missing_sections := [
+            section for section in required_sections if not config.get(section)
+        ]:
             self.migration_errors.extend([f"Missing section: {section}" for section in missing_sections])
             return False
 
@@ -657,32 +654,30 @@ class TestLegacySystemMigration(unittest.TestCase):
             if expected_ghidra:
                 self.assertEqual(qemu_config.get("script_type_preferences", {}).get("ghidra"), expected_ghidra)
 
-            # Check trusted binaries migrated
-            expected_trusted = self.legacy_sim.simulate_qsettings_data("trusted_binaries", [])
-            if expected_trusted:
+            if expected_trusted := self.legacy_sim.simulate_qsettings_data(
+                "trusted_binaries", []
+            ):
                 trusted = qemu_config.get("trusted_binaries", [])
                 for binary in expected_trusted:
                     self.assertIn(binary, trusted)
 
-            # Check execution history migrated
-            expected_history = self.legacy_sim.simulate_qsettings_data("execution_history", [])
-            if expected_history:
+            if expected_history := self.legacy_sim.simulate_qsettings_data(
+                "execution_history", []
+            ):
                 history = qemu_config.get("execution_history", [])
                 self.assertGreaterEqual(len(history), len(expected_history))
 
-        # Check theme migrated
-        expected_theme = self.legacy_sim.simulate_qsettings_data("theme", "light")
-        if expected_theme:
-            actual_theme = config.get("ui_preferences.theme")
-            if actual_theme:
+        if expected_theme := self.legacy_sim.simulate_qsettings_data(
+            "theme", "light"
+        ):
+            if actual_theme := config.get("ui_preferences.theme"):
                 self.assertEqual(actual_theme, expected_theme)
 
         # Check general preferences migrated
         expected_auto_save = self.legacy_sim.simulate_qsettings_data("general/auto_save", True)
         expected_confirm_exit = self.legacy_sim.simulate_qsettings_data("general/confirm_exit", True)
 
-        general = config.get("general_preferences")
-        if general:
+        if general := config.get("general_preferences"):
             if expected_auto_save is not None:
                 self.assertEqual(general.get("auto_save"), expected_auto_save)
             if expected_confirm_exit is not None:
@@ -745,9 +740,7 @@ class TestLegacySystemMigration(unittest.TestCase):
         # Create config instance (triggers migration)
         config = IntellicrackConfig()
 
-        # Check font config migrated
-        font_config = config.get("font_configuration")
-        if font_config:
+        if font_config := config.get("font_configuration"):
             self.assertEqual(font_config["default_font"], "Consolas")
             self.assertIn("Monaco", font_config["fallback_fonts"])
             self.assertEqual(font_config["sizes"]["medium"], 12)
@@ -763,24 +756,23 @@ class TestLegacySystemMigration(unittest.TestCase):
         # Test backup creation using simulator
         source_config = self.config_dir / "config.json"
         if source_config.exists():
-            backup_path = self.legacy_sim.create_backup(source_config)
-            if backup_path:
+            if backup_path := self.legacy_sim.create_backup(source_config):
                 self.assertTrue(backup_path.exists())
                 self.assertIn(str(backup_path), self.legacy_sim.backup_locations)
 
         # Test multiple backup creation
         llm_models_file = self.legacy_llm_dir / "models.json"
         if llm_models_file.exists():
-            llm_backup = self.legacy_sim.create_backup(llm_models_file, ".migration_backup")
-            if llm_backup:
+            if llm_backup := self.legacy_sim.create_backup(
+                llm_models_file, ".migration_backup"
+            ):
                 self.assertTrue(llm_backup.exists())
 
         # Verify original data is preserved somewhere
         # Either in backups or in the migrated config
         self.assertIsNotNone(config.get("llm_configuration.models.gpt4-legacy"))
         if config.get("cli_configuration"):
-            aliases = config.get("cli_configuration.aliases")
-            if aliases:
+            if aliases := config.get("cli_configuration.aliases"):
                 self.assertIsNotNone(aliases.get("ll"))
 
         # Verify backup tracking

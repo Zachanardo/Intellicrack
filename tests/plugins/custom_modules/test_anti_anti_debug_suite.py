@@ -258,7 +258,8 @@ class TestWindowsAPIHooker:
             assert isinstance(result, str)
             assert "OK" in result or "FAIL" in result
 
-        successful_hooks = sum(1 for r in results if "OK" in r)
+        successful_hooks = sum(bool("OK" in r)
+                           for r in results)
         assert successful_hooks > 0
 
         api_hooker.restore_hooks()
@@ -323,15 +324,13 @@ class TestPEBManipulator:
             current_value = ctypes.c_ubyte()
             bytes_read = ctypes.c_size_t()
 
-            success = peb_manipulator.kernel32.ReadProcessMemory(
+            if success := peb_manipulator.kernel32.ReadProcessMemory(
                 peb_manipulator.kernel32.GetCurrentProcess(),
                 flag_addr,
                 ctypes.byref(current_value),
                 1,
                 ctypes.byref(bytes_read),
-            )
-
-            if success:
+            ):
                 assert current_value.value == 0
 
     def test_patch_nt_global_flag(self, peb_manipulator: PEBManipulator) -> None:
@@ -537,9 +536,7 @@ class TestMemoryPatcher:
     def test_find_patterns_in_memory(self, memory_patcher: MemoryPatcher) -> None:
         """find_patterns_in_memory must locate anti-debug patterns."""
         kernel32 = ctypes.windll.kernel32
-        module_handle = kernel32.GetModuleHandleW(None)
-
-        if module_handle:
+        if module_handle := kernel32.GetModuleHandleW(None):
             found = memory_patcher.find_patterns_in_memory(module_handle, 0x10000)
             assert isinstance(found, list)
 
@@ -553,9 +550,7 @@ class TestMemoryPatcher:
         test_data = ctypes.create_string_buffer(16)
         test_addr = ctypes.addressof(test_data)
 
-        result = memory_patcher.patch_memory_location(test_addr, b"\x90" * 4)
-
-        if result:
+        if result := memory_patcher.patch_memory_location(test_addr, b"\x90" * 4):
             assert len(memory_patcher.patches_applied) > 0
             patch = memory_patcher.patches_applied[-1]
             assert patch["address"] == test_addr
@@ -737,7 +732,7 @@ class TestTargetAnalyzer:
         pe_file = tmp_path / "sample.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         struct.pack_into("<I", dos_header, 60, 64)
 
         pe_signature = b"PE\x00\x00"
@@ -1138,9 +1133,8 @@ class TestIntegrationScenarios:
 
         assert suite.statistics["bypasses_attempted"] == initial_stats["bypasses_attempted"] + 2
 
-        success_count = sum(
-            1 for op in suite.bypass_history[-2:] if op.result == BypassResult.SUCCESS
-        )
+        success_count = sum(bool(op.result == BypassResult.SUCCESS)
+                        for op in suite.bypass_history[-2:])
         assert suite.statistics["bypasses_successful"] == initial_stats["bypasses_successful"] + success_count
 
         suite.remove_bypasses()

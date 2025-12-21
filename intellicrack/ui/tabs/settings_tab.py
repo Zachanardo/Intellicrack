@@ -630,6 +630,7 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
+
         def _on_browse(checked: bool = False, edit: QLineEdit = path_edit, title: str = browse_title) -> None:
             self.logger.debug(
                 "Browse button clicked, checked state: %s for edit: %s, title: %s",
@@ -638,14 +639,17 @@ class SettingsTab(BaseTab):
                 title,
             )
             self.browse_tool_path(edit, title)
+
         browse_btn.clicked.connect(_on_browse)
 
         reset_btn = QPushButton("↻")
         reset_btn.setMaximumWidth(40)
         reset_btn.setToolTip("Reset to auto-discovered path")
+
         def _on_reset(checked: bool = False, key: str = tool_key) -> None:
             self.logger.debug("Reset button clicked, checked state: %s for key: %s", checked, key)
             self.reset_tool_path(key)
+
         reset_btn.clicked.connect(_on_reset)
 
         main_row.addWidget(path_edit)
@@ -701,6 +705,7 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
+
         def _on_browse_dir(checked: bool = False, edit: QLineEdit = path_edit, title: str = browse_title) -> None:
             self.logger.debug(
                 "Directory browse button clicked, checked state: %s for edit: %s, title: %s",
@@ -709,6 +714,7 @@ class SettingsTab(BaseTab):
                 title,
             )
             self.browse_directory(edit, title)
+
         browse_btn.clicked.connect(_on_browse_dir)
 
         layout.addWidget(path_edit)

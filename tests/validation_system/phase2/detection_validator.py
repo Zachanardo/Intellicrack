@@ -370,9 +370,9 @@ class DetectionValidator:
         try:
             scores = []
 
-            # Intellicrack confidence scores
-            intellicrack_scores = intellicrack_results.get('confidence_scores', {})
-            if intellicrack_scores:
+            if intellicrack_scores := intellicrack_results.get(
+                'confidence_scores', {}
+            ):
                 avg_intellicrack = sum(intellicrack_scores.values()) / len(intellicrack_scores)
                 scores.append(avg_intellicrack)
 
@@ -417,15 +417,14 @@ class DetectionValidator:
             for _protection_name, evidence in protection_evidence.items():
                 # Verify evidence completeness
                 required_fields = ['memory_addresses', 'disassembly_proof', 'import_analysis', 'string_analysis']
-                completeness = sum(1 for field in required_fields if evidence.get(field)) / len(required_fields)
+                completeness = sum(bool(evidence.get(field))
+                               for field in required_fields) / len(required_fields)
 
                 # Update integrity metrics
                 if completeness < integrity_data['evidence_completeness']:
                     integrity_data['evidence_completeness'] = completeness
 
-                # Verify timestamp freshness (within last hour)
-                evidence_timestamp = evidence.get('evidence_timestamp', '')
-                if evidence_timestamp:
+                if evidence_timestamp := evidence.get('evidence_timestamp', ''):
                     try:
                         timestamp = datetime.fromisoformat(evidence_timestamp.replace('Z', '+00:00'))
                         age_minutes = (datetime.now(timezone.utc) - timestamp).total_seconds() / 60

@@ -312,7 +312,7 @@ class BinaryAnalyzer:
         try:
             file_handle, mm = self._open_mmap(file_path)
             try:
-                pe_info = {}
+                pe_info: dict[str, Any] = {}
 
                 if len(mm) < 64:
                     return {"error": "File too small for PE"}
@@ -392,7 +392,7 @@ class BinaryAnalyzer:
                 if mm[:4] != b"\x7fELF":
                     return {"error": "Invalid ELF header"}
 
-                elf_info = {}
+                elf_info: dict[str, Any] = {}
 
                 ei_class = mm[4]
                 ei_data = mm[5]
@@ -484,7 +484,7 @@ class BinaryAnalyzer:
 
                 magic = struct.unpack("<I", mm[:4])[0]
 
-                macho_info = {}
+                macho_info: dict[str, Any] = {}
 
                 if magic == 0xCEFAEDFE:
                     is_64 = False
@@ -501,9 +501,7 @@ class BinaryAnalyzer:
                 else:
                     return {"error": "Invalid Mach-O magic"}
 
-                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(
-                    f"{endian}IIIIII", mm[4:28]
-                )
+                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(f"{endian}IIIIII", mm[4:28])
                 offset = 32 if is_64 else 28
                 macho_info |= {
                     "architecture": "64-bit" if is_64 else "32-bit",
@@ -592,7 +590,7 @@ class BinaryAnalyzer:
         try:
             import math
 
-            byte_counts = {}
+            byte_counts: dict[int, int] = {}
             total_bytes = 0
 
             for chunk, _offset in self._read_chunks(file_path):
@@ -748,7 +746,8 @@ class BinaryAnalyzer:
                 return None
 
             with open(checkpoint_path, encoding="utf-8") as f:
-                return json.load(f)
+                result: dict[str, Any] = json.load(f)
+                return result
 
         except Exception as e:
             self.logger.exception("Failed to load checkpoint: %s", e)
@@ -770,7 +769,7 @@ class BinaryAnalyzer:
         """
         try:
             binary_path = Path(binary_path)
-            results = {pattern.hex(): [] for pattern in patterns}
+            results: dict[str, list[dict[str, Any]]] = {pattern.hex(): [] for pattern in patterns}
 
             overlap_size = max(len(p) for p in patterns) - 1
             previous_chunk_tail = b""
@@ -808,7 +807,7 @@ class BinaryAnalyzer:
 
         except Exception as e:
             self.logger.exception("Pattern scanning failed: %s", e)
-            return {"error": str(e)}
+            return {"error": [{"error": str(e)}]}
 
     def scan_for_license_strings_streaming(self, binary_path: str | Path) -> list[dict[str, Any]]:
         """Scan large binary for licensing-related strings using streaming.
@@ -884,7 +883,7 @@ class BinaryAnalyzer:
         """
         try:
             binary_path = Path(binary_path)
-            results = {}
+            results: dict[str, Any] = {}
 
             file_handle, mm = self._open_mmap(binary_path)
             try:
@@ -896,7 +895,7 @@ class BinaryAnalyzer:
                     section_data = mm[start:end]
                     section_size = len(section_data)
 
-                    byte_counts = {}
+                    byte_counts: dict[int, int] = {}
                     for byte in section_data:
                         byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
@@ -911,15 +910,18 @@ class BinaryAnalyzer:
                     printable_count = sum(32 <= byte <= 126 for byte in section_data)
                     null_count = byte_counts.get(0, 0)
 
+                    printable_ratio = round(printable_count / section_size, 4) if section_size > 0 else 0.0
+                    null_ratio = round(null_count / section_size, 4) if section_size > 0 else 0.0
+
                     results[f"section_{idx}"] = {
                         "range": f"0x{start:08x}-0x{end:08x}",
                         "size": section_size,
                         "entropy": round(entropy, 4),
                         "unique_bytes": len(byte_counts),
-                        "printable_ratio": round(printable_count / section_size, 4) if section_size > 0 else 0,
-                        "null_ratio": round(null_count / section_size, 4) if section_size > 0 else 0,
+                        "printable_ratio": printable_ratio,
+                        "null_ratio": null_ratio,
                         "characteristics": self._classify_section_characteristics(
-                            entropy, printable_count / section_size if section_size > 0 else 0
+                            entropy, printable_count / section_size if section_size > 0 else 0.0
                         ),
                     }
 
@@ -1016,9 +1018,8 @@ class BinaryAnalyzer:
             with open(file_path, "rb") as f:
                 data = f.read()
 
-            pe_info = {}
+            pe_info: dict[str, Any] = {}
 
-            # Check DOS header
             if data[:2] != b"MZ":
                 return {"error": "Invalid DOS header"}
 
@@ -1083,9 +1084,8 @@ class BinaryAnalyzer:
             if data[:4] != b"\x7fELF":
                 return {"error": "Invalid ELF header"}
 
-            elf_info = {}
+            elf_info: dict[str, Any] = {}
 
-            # Parse ELF header
             ei_class = data[4]
             ei_data = data[5]
             ei_version = data[6]
@@ -1178,9 +1178,8 @@ class BinaryAnalyzer:
 
             magic = struct.unpack("<I", data[:4])[0]
 
-            macho_info = {}
+            macho_info: dict[str, Any] = {}
 
-            # Determine architecture and endianness
             if magic == 0xCEFAEDFE:
                 is_64 = False
                 endian = ">"
@@ -1196,9 +1195,7 @@ class BinaryAnalyzer:
             else:
                 return {"error": "Invalid Mach-O magic"}
 
-            cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(
-                f"{endian}IIIIII", data[4:28]
-            )
+            cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(f"{endian}IIIIII", data[4:28])
             # Parse header
             offset = 32 if is_64 else 28
             macho_info |= {
@@ -1288,7 +1285,9 @@ class BinaryAnalyzer:
 
                                 if pos + length <= len(data):
                                     string = data[pos : pos + length].decode("utf-8", errors="ignore")
-                                    dex_info["strings"].append(string)
+                                    strings_list = dex_info.get("strings")
+                                    if isinstance(strings_list, list):
+                                        strings_list.append(string)
                     except (UnicodeDecodeError, IndexError, struct.error):
                         continue
 
@@ -1320,23 +1319,28 @@ class BinaryAnalyzer:
                 elif any(name.endswith(".class") for name in zf.namelist()):
                     archive_info["type"] = "JAR"
 
-                # Analyze files (limit to first 20)
                 for file_info in zf.filelist[:20]:
-                    archive_info["files"].append(
-                        {
-                            "filename": file_info.filename,
-                            "compressed_size": file_info.compress_size,
-                            "uncompressed_size": file_info.file_size,
-                            "crc32": f"0x{file_info.CRC:08x}",
-                        },
-                    )
+                    files_list = archive_info.get("files")
+                    if isinstance(files_list, list):
+                        files_list.append(
+                            {
+                                "filename": file_info.filename,
+                                "compressed_size": file_info.compress_size,
+                                "uncompressed_size": file_info.file_size,
+                                "crc32": f"0x{file_info.CRC:08x}",
+                            },
+                        )
 
-                    archive_info["compressed_size"] += file_info.compress_size
-                    archive_info["uncompressed_size"] += file_info.file_size
+                    compressed = archive_info.get("compressed_size")
+                    uncompressed = archive_info.get("uncompressed_size")
+                    if isinstance(compressed, int) and isinstance(uncompressed, int):
+                        archive_info["compressed_size"] = compressed + file_info.compress_size
+                        archive_info["uncompressed_size"] = uncompressed + file_info.file_size
 
-                # Calculate compression ratio
-                if archive_info["uncompressed_size"] > 0:
-                    archive_info["compression_ratio"] = (1 - archive_info["compressed_size"] / archive_info["uncompressed_size"]) * 100
+                uncompressed_size = archive_info.get("uncompressed_size")
+                compressed_size = archive_info.get("compressed_size")
+                if isinstance(uncompressed_size, int) and isinstance(compressed_size, int) and uncompressed_size > 0:
+                    archive_info["compression_ratio"] = (1 - compressed_size / uncompressed_size) * 100
 
             return archive_info
 
@@ -1380,8 +1384,7 @@ class BinaryAnalyzer:
             with open(file_path, "rb") as f:
                 data = f.read()
 
-            # Calculate overall entropy
-            byte_counts = {}
+            byte_counts: dict[int, int] = {}
             for byte in data:
                 byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
@@ -1405,7 +1408,7 @@ class BinaryAnalyzer:
     def _security_analysis(self, file_path: Path, file_format: str) -> dict[str, Any]:
         """Perform security-focused analysis."""
         try:
-            security_info = {
+            security_info: dict[str, Any] = {
                 "risk_level": "Unknown",
                 "suspicious_indicators": [],
                 "recommendations": [],
@@ -1413,21 +1416,28 @@ class BinaryAnalyzer:
             }
 
             file_size = file_path.stat().st_size
+            susp_indicators = security_info.get("suspicious_indicators")
+            recommendations = security_info.get("recommendations")
+
             if file_size == 0:
-                security_info["suspicious_indicators"].append("Empty file")
+                if isinstance(susp_indicators, list):
+                    susp_indicators.append("Empty file")
                 security_info["risk_level"] = "Low"
             elif file_size > 100 * 1024 * 1024:
-                security_info["suspicious_indicators"].append("Very large file size")
+                if isinstance(susp_indicators, list):
+                    susp_indicators.append("Very large file size")
                 security_info["risk_level"] = "Medium"
             else:
                 security_info["risk_level"] = "Low"
 
             if file_format == "Unknown":
-                security_info["suspicious_indicators"].append("Unknown file format")
+                if isinstance(susp_indicators, list):
+                    susp_indicators.append("Unknown file format")
                 security_info["risk_level"] = "Medium"
             elif file_format in {"PE", "ELF", "Mach-O"}:
-                security_info["recommendations"].append("Run in sandboxed environment")
-                security_info["recommendations"].append("Scan with antivirus")
+                if isinstance(recommendations, list):
+                    recommendations.append("Run in sandboxed environment")
+                    recommendations.append("Scan with antivirus")
 
                 try:
                     from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
@@ -1436,7 +1446,7 @@ class BinaryAnalyzer:
                     arxan_result = arxan_detector.detect(file_path)
 
                     if arxan_result.is_protected:
-                        security_info["protection_detected"] = {
+                        protection_info: dict[str, Any] = {
                             "type": "Arxan TransformIT",
                             "version": arxan_result.version.value,
                             "confidence": arxan_result.confidence,
@@ -1447,12 +1457,17 @@ class BinaryAnalyzer:
                                 "license_validation": arxan_result.features.license_validation,
                             },
                         }
-                        security_info["suspicious_indicators"].append(
-                            f"Protected with Arxan TransformIT {arxan_result.version.value}",
-                        )
-                        security_info["recommendations"].append(
-                            "Use Arxan bypass tools for analysis",
-                        )
+                        security_info["protection_detected"] = protection_info
+                        susp_indicators_refresh = security_info.get("suspicious_indicators")
+                        recommendations_refresh = security_info.get("recommendations")
+                        if isinstance(susp_indicators_refresh, list):
+                            susp_indicators_refresh.append(
+                                f"Protected with Arxan TransformIT {arxan_result.version.value}",
+                            )
+                        if isinstance(recommendations_refresh, list):
+                            recommendations_refresh.append(
+                                "Use Arxan bypass tools for analysis",
+                            )
 
                 except Exception as e:
                     self.logger.debug("Arxan detection failed: %s", e)

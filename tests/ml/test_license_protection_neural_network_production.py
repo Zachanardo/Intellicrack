@@ -60,7 +60,7 @@ def sample_pe_binary() -> bytes:
     """Create minimal valid PE binary with license-related strings."""
     pe_binary = bytearray(2048)
 
-    pe_binary[0:2] = b"MZ"
+    pe_binary[:2] = b"MZ"
     pe_binary[0x3C:0x40] = struct.pack("<I", 0x100)
 
     pe_offset = 0x100
@@ -81,7 +81,7 @@ def sample_pe_binary() -> bytes:
 def vmprotect_binary() -> bytes:
     """Create binary with VMProtect signatures."""
     binary = bytearray(4096)
-    binary[0:2] = b"MZ"
+    binary[:2] = b"MZ"
     binary[0x3C:0x40] = struct.pack("<I", 0x100)
     binary[0x100:0x104] = b"PE\x00\x00"
     binary[0x500:0x520] = b"VMProtect\x00IsDebuggerPresent\x00"
@@ -97,7 +97,7 @@ def vmprotect_binary() -> bytes:
 def themida_binary() -> bytes:
     """Create binary with Themida signatures."""
     binary = bytearray(4096)
-    binary[0:2] = b"MZ"
+    binary[:2] = b"MZ"
     binary[0x3C:0x40] = struct.pack("<I", 0x100)
     binary[0x100:0x104] = b"PE\x00\x00"
     binary[0x500:0x520] = b"Themida\x00WinLicense\x00"
@@ -113,7 +113,7 @@ def themida_binary() -> bytes:
 def flexlm_binary() -> bytes:
     """Create binary with FlexLM signatures."""
     binary = bytearray(3072)
-    binary[0:2] = b"MZ"
+    binary[:2] = b"MZ"
     binary[0x3C:0x40] = struct.pack("<I", 0x100)
     binary[0x100:0x104] = b"PE\x00\x00"
     binary[0x500:0x520] = b"FLEXlm\x00lmgr\x00"
@@ -237,7 +237,7 @@ class TestLicenseProtectionCNN:
 
             if epoch == 0:
                 initial_loss = loss.item()
-            if epoch == 9:
+            elif epoch == 9:
                 final_loss = loss.item()
 
         assert initial_loss is not None
@@ -348,7 +348,7 @@ class TestLicenseProtectionTransformer:
 
             if epoch == 0:
                 initial_loss = loss.item()
-            if epoch == 14:
+            elif epoch == 14:
                 final_loss = loss.item()
 
         assert initial_loss is not None
@@ -466,7 +466,7 @@ class TestHybridLicenseAnalyzer:
 
             if epoch == 0:
                 initial_loss = loss.item()
-            if epoch == 9:
+            elif epoch == 9:
                 final_loss = loss.item()
 
         assert initial_loss is not None
@@ -932,7 +932,7 @@ class TestIntegrationWorkflows:
 
     def test_complete_training_workflow_with_real_data(self, temp_dataset_dir: Path) -> None:
         """Complete workflow: create dataset, train model, evaluate."""
-        if len(list(temp_dataset_dir.iterdir())) == 0:
+        if not list(temp_dataset_dir.iterdir()):
             pytest.skip("Empty dataset directory")
 
         dataset = LicenseDataset(str(temp_dataset_dir))
@@ -955,7 +955,7 @@ class TestIntegrationWorkflows:
             labels_list.append(label)
 
         features_tensor = torch.stack(features_list)
-        labels_tensor = torch.tensor(labels_list) if not isinstance(labels_list[0], torch.Tensor) else torch.stack(labels_list)
+        labels_tensor = torch.stack(labels_list) if isinstance(labels_list[0], torch.Tensor) else torch.tensor(labels_list)
 
         train_size = int(len(dataset) * 0.7)
         val_size = len(dataset) - train_size

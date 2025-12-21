@@ -57,7 +57,7 @@ class TestProtectionDetectionPerformance:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -90,7 +90,7 @@ class TestProtectionDetectionPerformance:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -122,7 +122,7 @@ class TestProtectionDetectionPerformance:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -250,7 +250,7 @@ class TestProtectionDetectionPerformance:
 
         end_time = time.time()
 
-        assert len(errors) == 0, f"Concurrent detection errors: {errors}"
+        assert not errors, f"Concurrent detection errors: {errors}"
         assert len(results) == len(files), f"Expected {len(files)} results, got {len(results)}"
         assert end_time - start_time < 5.0, "Concurrent detection should complete under 5 seconds"
 
@@ -364,8 +364,6 @@ class TestProtectionDetectionPerformance:
         for invalid_file in invalid_files:
             try:
                 result = detector.analyze_file(invalid_file)
-                if result is not None:
-                    pass
             except Exception:
                 pass
 

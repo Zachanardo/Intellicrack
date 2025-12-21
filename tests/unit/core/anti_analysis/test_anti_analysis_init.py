@@ -64,8 +64,8 @@ class TestAntiAnalysisEngine(unittest.TestCase):
 
         # Should return boolean or detection result dictionary
         self.assertTrue(
-            isinstance(result, bool) or isinstance(result, dict),
-            "VM detection should return boolean or detailed result dictionary"
+            isinstance(result, (bool, dict)),
+            "VM detection should return boolean or detailed result dictionary",
         )
 
         # If dictionary result, should have expected structure
@@ -73,14 +73,14 @@ class TestAntiAnalysisEngine(unittest.TestCase):
             expected_keys = ['detected', 'confidence', 'details']
             for key in expected_keys:
                 if key in result:
-                    if key == 'detected':
-                        self.assertIsInstance(result[key], bool)
-                    elif key == 'confidence':
+                    if key == 'confidence':
                         self.assertIsInstance(result[key], (int, float))
                         self.assertGreaterEqual(result[key], 0)
                         self.assertLessEqual(result[key], 100)
                     elif key == 'details':
                         self.assertIsInstance(result[key], (str, list, dict))
+                    elif key == 'detected':
+                        self.assertIsInstance(result[key], bool)
 
     def test_detect_debugger_returns_detection_result(self):
         """Test that detect_debugger returns proper debugger detection results."""
@@ -88,8 +88,8 @@ class TestAntiAnalysisEngine(unittest.TestCase):
 
         # Should return boolean or detection result dictionary
         self.assertTrue(
-            isinstance(result, bool) or isinstance(result, dict),
-            "Debugger detection should return boolean or detailed result dictionary"
+            isinstance(result, (bool, dict)),
+            "Debugger detection should return boolean or detailed result dictionary",
         )
 
         # If dictionary result, should have expected structure
@@ -97,14 +97,14 @@ class TestAntiAnalysisEngine(unittest.TestCase):
             expected_keys = ['detected', 'confidence', 'details']
             for key in expected_keys:
                 if key in result:
-                    if key == 'detected':
-                        self.assertIsInstance(result[key], bool)
-                    elif key == 'confidence':
+                    if key == 'confidence':
                         self.assertIsInstance(result[key], (int, float))
                         self.assertGreaterEqual(result[key], 0)
                         self.assertLessEqual(result[key], 100)
                     elif key == 'details':
                         self.assertIsInstance(result[key], (str, list, dict))
+                    elif key == 'detected':
+                        self.assertIsInstance(result[key], bool)
 
     def test_detect_sandbox_returns_detection_result(self):
         """Test that detect_sandbox returns proper sandbox detection results."""
@@ -112,8 +112,8 @@ class TestAntiAnalysisEngine(unittest.TestCase):
 
         # Should return boolean or detection result dictionary
         self.assertTrue(
-            isinstance(result, bool) or isinstance(result, dict),
-            "Sandbox detection should return boolean or detailed result dictionary"
+            isinstance(result, (bool, dict)),
+            "Sandbox detection should return boolean or detailed result dictionary",
         )
 
         # If dictionary result, should have expected structure
@@ -121,14 +121,14 @@ class TestAntiAnalysisEngine(unittest.TestCase):
             expected_keys = ['detected', 'confidence', 'details']
             for key in expected_keys:
                 if key in result:
-                    if key == 'detected':
-                        self.assertIsInstance(result[key], bool)
-                    elif key == 'confidence':
+                    if key == 'confidence':
                         self.assertIsInstance(result[key], (int, float))
                         self.assertGreaterEqual(result[key], 0)
                         self.assertLessEqual(result[key], 100)
                     elif key == 'details':
                         self.assertIsInstance(result[key], (str, list, dict))
+                    elif key == 'detected':
+                        self.assertIsInstance(result[key], bool)
 
     def test_detection_components_have_required_methods(self):
         """Test that all detection components have required detection methods."""
@@ -257,10 +257,8 @@ class TestAntiAnalysisEngine(unittest.TestCase):
 
         # Results should be consistent with actual environment
         # This validates that detectors are actually analyzing the environment
-        if isinstance(vm_result, dict) and 'detected' in vm_result:
-            # If VM is detected, confidence should be reasonable
-            if vm_result['detected']:
-                self.assertGreaterEqual(vm_result.get('confidence', 0), 50)
+        if isinstance(vm_result, dict) and 'detected' in vm_result and vm_result['detected']:
+            self.assertGreaterEqual(vm_result.get('confidence', 0), 50)
 
         if isinstance(debugger_result, dict) and 'detected' in debugger_result:
             # Debugger detection should have proper confidence levels
@@ -313,7 +311,7 @@ class TestAntiAnalysisEngine(unittest.TestCase):
 
         # Create and destroy multiple engines
         engines = []
-        for i in range(100):
+        for _ in range(100):
             engine = AntiAnalysisEngine()
             engines.append(engine)
 
@@ -468,8 +466,7 @@ class TestModuleIntegration(unittest.TestCase):
         engine = AntiAnalysisEngine()
 
         # Run all detections
-        results = {}
-        results['vm'] = engine.detect_virtual_environment()
+        results = {'vm': engine.detect_virtual_environment()}
         results['debugger'] = engine.detect_debugger()
         results['sandbox'] = engine.detect_sandbox()
 
@@ -478,10 +475,8 @@ class TestModuleIntegration(unittest.TestCase):
             self.assertIsNotNone(result, f"{detection_type} detection should return a result")
 
             # Results should be in expected format
-            if isinstance(result, dict):
-                # If detailed result, should have consistent structure
-                if 'detected' in result:
-                    self.assertIsInstance(result['detected'], bool)
+            if isinstance(result, dict) and 'detected' in result:
+                self.assertIsInstance(result['detected'], bool)
 
     def test_component_error_isolation(self):
         """Test that errors in one component don't affect others."""
@@ -506,15 +501,15 @@ class TestModuleIntegration(unittest.TestCase):
                 remaining_results = []
                 try:
                     remaining_results.append(engine.detect_debugger())
-                except:
+                except Exception:
                     pass
                 try:
                     remaining_results.append(engine.detect_sandbox())
-                except:
+                except Exception:
                     pass
                 # At least some components should work
                 self.assertGreater(len([r for r in remaining_results if r is not None]), 0)
-            except:
+            except Exception:
                 # Complete failure is acceptable in edge cases
                 pass
 
@@ -524,10 +519,7 @@ class TestModuleIntegration(unittest.TestCase):
         engine = AntiAnalysisEngine()
 
         # Comprehensive detection workflow
-        detection_results = {}
-
-        # Phase 1: Basic environment detection
-        detection_results['environment'] = engine.detect_virtual_environment()
+        detection_results = {'environment': engine.detect_virtual_environment()}
 
         # Phase 2: Debugger detection
         detection_results['debugger'] = engine.detect_debugger()
@@ -549,7 +541,7 @@ class TestModuleIntegration(unittest.TestCase):
         results = []
 
         # Create multiple engines
-        for i in range(10):
+        for _ in range(10):
             engine = AntiAnalysisEngine()
             engines.append(engine)
 

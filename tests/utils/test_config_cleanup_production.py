@@ -404,7 +404,7 @@ class BadConfig:
         results = find_unused_config_code(tmp_path)
 
         assert any("src" in path and "module.py" in path for path in results.keys())
-        assert not any("tests" in path for path in results.keys())
+        assert all("tests" not in path for path in results.keys())
 
 
 class TestEdgeCases:

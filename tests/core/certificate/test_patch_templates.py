@@ -311,16 +311,16 @@ class TestTemplateCoverage:
         x86_templates = [t for t in get_all_templates() if "WinHttp" in t.target_api and t.architecture == Architecture.X86]
         x64_templates = [t for t in get_all_templates() if "WinHttp" in t.target_api and t.architecture == Architecture.X64]
 
-        assert len(x86_templates) > 0
-        assert len(x64_templates) > 0
+        assert x86_templates
+        assert x64_templates
 
     def test_openssl_has_both_architectures(self) -> None:
         """OpenSSL templates cover both x86 and x64."""
         x86_templates = [t for t in get_all_templates() if "SSL" in t.target_api and t.architecture == Architecture.X86]
         x64_templates = [t for t in get_all_templates() if "SSL" in t.target_api and t.architecture == Architecture.X64]
 
-        assert len(x86_templates) > 0
-        assert len(x64_templates) > 0
+        assert x86_templates
+        assert x64_templates
 
     def test_cryptoapi_has_both_architectures(self) -> None:
         """CryptoAPI templates cover both x86 and x64."""
@@ -373,8 +373,8 @@ class TestPatchByteValidity:
 
     def test_openssl_always_valid_returns_zero(self) -> None:
         """OpenSSL always valid patches return 0 (XOR EAX, EAX; RET)."""
-        assert OPENSSL_ALWAYS_VALID_X86.patch_bytes[0:2] == bytes([0x31, 0xC0])
-        assert OPENSSL_ALWAYS_VALID_X64.patch_bytes[0:2] == bytes([0x31, 0xC0])
+        assert OPENSSL_ALWAYS_VALID_X86.patch_bytes[:2] == bytes([0x31, 0xC0])
+        assert OPENSSL_ALWAYS_VALID_X64.patch_bytes[:2] == bytes([0x31, 0xC0])
 
     def test_patch_bytes_are_readonly(self) -> None:
         """Patch bytes are immutable bytes objects."""

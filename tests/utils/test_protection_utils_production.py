@@ -353,7 +353,7 @@ class TestCalculateEntropy:
         """calculate_entropy calculates entropy for random data."""
         import random
 
-        random_data = bytes([random.randint(0, 255) for _ in range(1000)])
+        random_data = bytes(random.randint(0, 255) for _ in range(1000))
 
         entropy = calculate_entropy(random_data)
 

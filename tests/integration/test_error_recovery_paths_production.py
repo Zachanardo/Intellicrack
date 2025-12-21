@@ -74,10 +74,7 @@ class RecoveryStrategy:
         if recovered == original:
             return False
 
-        if recovered[0:2] != b'MZ':
-            return False
-
-        return True
+        return recovered[:2] == b'MZ'
 
 
 class ErrorScenarioGenerator:
@@ -96,8 +93,7 @@ class ErrorScenarioGenerator:
         """Create truncated binary (incomplete data)."""
         pe_header = bytes([0x4D, 0x5A, 0x90, 0x00]) + b'\x00' * 56
         pe_header = pe_header[:60] + struct.pack('<I', 64)
-        truncated = pe_header + b'PE\x00\x00'
-        return truncated
+        return pe_header + b'PE\x00\x00'
 
     @staticmethod
     def create_unknown_protection() -> bytes:
@@ -341,7 +337,7 @@ def test_error_logging_during_recovery() -> None:
     except Exception as e:
         error_log.append(f"Generic patch failed: {type(e).__name__}")
 
-    assert len(error_log) > 0
+    assert error_log
     print(f"Error log entries: {len(error_log)}")
 
 
@@ -407,7 +403,7 @@ def test_recovery_validates_result() -> None:
     assert not recovery.validate_recovery_result(binary, invalid_result)
 
     same_result = binary
-    assert not recovery.validate_recovery_result(binary, same_result)
+    assert not recovery.validate_recovery_result(same_result, same_result)
 
 
 def test_recovery_from_exception_cascade() -> None:
@@ -480,8 +476,8 @@ def test_recovery_preserves_partial_progress() -> None:
         if checkpoints:
             current = checkpoints[-1]
 
-    assert len(checkpoints) > 0 or current == binary
-    assert current != binary or len(checkpoints) == 0
+    assert checkpoints or current == binary
+    assert current != binary or not checkpoints
 
 
 def test_recovery_with_timeout() -> None:
@@ -569,6 +565,6 @@ def test_recovery_state_consistency() -> None:
 
     for state in states:
         assert len(state) >= 64
-        assert state[0:2] == b'MZ'
+        assert state[:2] == b'MZ'
 
     print(f"Validated {len(states)} intermediate states")

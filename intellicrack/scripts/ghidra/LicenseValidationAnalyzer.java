@@ -8,21 +8,38 @@
  * @author Intellicrack Framework
  * @version 2.0.0
  */
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
-import ghidra.app.services.*;
-import ghidra.framework.options.*;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import ghidra.program.util.*;
-import ghidra.util.exception.*;
-import java.io.*;
-import java.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.DataIterator;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.PcodeBlockBasic;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import java.io.File;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class LicenseValidationAnalyzer extends GhidraScript {
 
@@ -169,7 +186,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     int analyzed = 0;
     while (funcIter.hasNext() && !monitor.isCancelled()) {
       Function func = funcIter.next();
-      String funcName = func.getName().toLowerCase();
+      String funcName = func.getName().toLowerCase(Locale.ROOT);
 
       double score = 0.0;
       for (Map.Entry<String, Double> entry : FUNCTION_NAME_WEIGHTS.entrySet()) {
@@ -212,9 +229,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       double score = functionScores.getOrDefault(entry.getKey(), 0.0);
 
       for (String str : entry.getValue()) {
-        String lowerStr = str.toLowerCase();
+        String lowerStr = str.toLowerCase(Locale.ROOT);
         for (Map.Entry<String, Double> pattern : STRING_PATTERN_WEIGHTS.entrySet()) {
-          if (lowerStr.contains(pattern.getKey().toLowerCase())) {
+          if (lowerStr.contains(pattern.getKey().toLowerCase(Locale.ROOT))) {
             score += pattern.getValue() * 0.8; // Weight string evidence
           }
         }
@@ -227,7 +244,6 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private void analyzeAPICalls() {
-    FunctionManager funcManager = currentProgram.getFunctionManager();
     SymbolTable symbolTable = currentProgram.getSymbolTable();
 
     // Get all external functions (API calls)
@@ -272,44 +288,52 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
   private void analyzeControlFlow() {
     int complexFunctions = 0;
+    List<String> analysisErrors = new ArrayList<>();
 
     for (Map.Entry<Address, Double> entry : functionScores.entrySet()) {
-      if (entry.getValue() < CONFIDENCE_THRESHOLD * 0.5) continue;
+      if (entry.getValue() < CONFIDENCE_THRESHOLD * 0.5) {
+        continue;
+      }
 
       Function func = getFunctionAt(entry.getKey());
-      if (func == null) continue;
+      if (func == null) {
+        continue;
+      }
 
       try {
-        // Decompile function
         DecompileResults results = decompiler.decompileFunction(func, 30, monitor);
-        if (!results.decompileCompleted()) continue;
+        if (!results.decompileCompleted()) {
+          continue;
+        }
 
         HighFunction highFunc = results.getHighFunction();
-        if (highFunc == null) continue;
+        if (highFunc == null) {
+          continue;
+        }
 
-        // Analyze control flow complexity
         double complexity = analyzeControlFlowComplexity(highFunc);
 
-        // License functions often have moderate to high complexity
         if (complexity > 5.0 && complexity < 50.0) {
           double score = entry.getValue();
-          score += 0.3; // Bonus for appropriate complexity
+          score += 0.3;
           functionScores.put(entry.getKey(), score);
           complexFunctions++;
         }
 
-        // Look for specific patterns
         if (hasLicenseControlFlowPattern(highFunc)) {
           double score = entry.getValue();
-          score += 0.5; // Significant bonus for pattern match
+          score += 0.5;
           functionScores.put(entry.getKey(), score);
         }
 
       } catch (Exception e) {
-        // Continue on error
+        analysisErrors.add("Control flow analysis error at " + entry.getKey() + ": " + e.getMessage());
       }
     }
 
+    if (!analysisErrors.isEmpty()) {
+      println("  Control flow analysis encountered " + analysisErrors.size() + " errors");
+    }
     println("  Analyzed control flow for " + complexFunctions + " candidate functions");
   }
 
@@ -359,41 +383,40 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
   private void analyzeDataFlow() {
     int analyzedFlows = 0;
+    List<String> analysisErrors = new ArrayList<>();
 
     for (Map.Entry<Address, Double> entry : functionScores.entrySet()) {
-      if (entry.getValue() < CONFIDENCE_THRESHOLD * 0.6) continue;
+      if (entry.getValue() < CONFIDENCE_THRESHOLD * 0.6) {
+        continue;
+      }
 
       Function func = getFunctionAt(entry.getKey());
-      if (func == null) continue;
+      if (func == null) {
+        continue;
+      }
 
       try {
-        // Look for data flow patterns
         if (hasLicenseDataFlowPattern(func)) {
           double score = entry.getValue();
-          score += 0.4; // Bonus for data flow pattern
+          score += 0.4;
           functionScores.put(entry.getKey(), score);
           analyzedFlows++;
         }
       } catch (Exception e) {
-        // Continue on error
+        analysisErrors.add("Data flow analysis error at " + entry.getKey() + ": " + e.getMessage());
       }
     }
 
+    if (!analysisErrors.isEmpty()) {
+      println("  Data flow analysis encountered " + analysisErrors.size() + " errors");
+    }
     println("  Analyzed data flow patterns in " + analyzedFlows + " functions");
   }
 
   private boolean hasLicenseDataFlowPattern(Function func) {
-    // Look for common data flow patterns in license functions:
-    // 1. Reading from registry/file
-    // 2. String comparisons
-    // 3. Cryptographic operations
-    // 4. Network communications
-    // 5. Hardware ID collection
-
     Parameter[] params = func.getParameters();
     VariableStorage returnStorage = func.getReturn();
 
-    // License functions often take string parameters (keys, serials)
     boolean hasStringParam = false;
     for (Parameter param : params) {
       DataType type = param.getDataType();
@@ -406,7 +429,6 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       }
     }
 
-    // License functions typically return boolean/int (success/failure)
     boolean hasStatusReturn = false;
     DataType returnType = func.getReturnType();
     if (returnType instanceof BooleanDataType
@@ -414,26 +436,30 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       hasStatusReturn = true;
     }
 
-    return hasStringParam || hasStatusReturn;
+    boolean hasValidReturnStorage = returnStorage != null && returnStorage.isValid();
+
+    return hasStringParam || hasStatusReturn || hasValidReturnStorage;
   }
 
   private void analyzeCrossReferences() {
-    // Analyze how suspected license functions are called
     int crossRefBonus = 0;
 
     for (Map.Entry<Address, Double> entry : functionScores.entrySet()) {
-      if (entry.getValue() < CONFIDENCE_THRESHOLD * 0.7) continue;
+      if (entry.getValue() < CONFIDENCE_THRESHOLD * 0.7) {
+        continue;
+      }
 
       Function func = getFunctionAt(entry.getKey());
-      if (func == null) continue;
+      if (func == null) {
+        continue;
+      }
 
-      // Check callers
       Reference[] refs = getReferencesTo(func.getEntryPoint());
       for (Reference ref : refs) {
         if (ref.getReferenceType().isCall()) {
           Function caller = getFunctionContaining(ref.getFromAddress());
           if (caller != null) {
-            String callerName = caller.getName().toLowerCase();
+            String callerName = caller.getName().toLowerCase(Locale.ROOT);
 
             // Bonus if called from initialization or startup
             if (callerName.contains("init")
@@ -481,7 +507,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     licFunc.confidence = confidence;
 
     // Determine validation type
-    String funcName = func.getName().toLowerCase();
+    String funcName = func.getName().toLowerCase(Locale.ROOT);
     if (funcName.contains("trial") || funcName.contains("demo")) {
       licFunc.type = "Trial/Demo Check";
     } else if (funcName.contains("serial") || funcName.contains("key")) {
@@ -521,7 +547,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     strategies.add("Hook function to always return success");
 
     // Strategy 5: Specific patterns
-    String name = func.getName().toLowerCase();
+    String name = func.getName().toLowerCase(Locale.ROOT);
     if (name.contains("timer") || name.contains("expire")) {
       strategies.add("Freeze time or extend expiration date");
     }
@@ -564,33 +590,34 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   private void exportDetailedReport() {
     try {
       File reportFile = askFile("Save Analysis Report", "Save");
-      if (reportFile == null) return;
-
-      PrintWriter writer = new PrintWriter(reportFile);
-      writer.println("License Validation Analysis Report");
-      writer.println("Generated by Intellicrack License Validation Analyzer v2.0.0");
-      writer.println("Date: " + new Date());
-      writer.println("Program: " + currentProgram.getName());
-      writer.println("=====================================\n");
-
-      for (LicenseFunction func : detectedFunctions) {
-        writer.println("Function: " + func.name);
-        writer.println("Address: " + func.address);
-        writer.println("Type: " + func.type);
-        writer.println("Confidence: " + String.format("%.2f%%", func.confidence * 100));
-        writer.println("\nRecommended Bypass Strategies:");
-        for (int i = 0; i < func.bypassStrategies.size(); i++) {
-          writer.println("  " + (i + 1) + ". " + func.bypassStrategies.get(i));
-        }
-        writer.println("\nDetailed Analysis:");
-        writer.println("  - Function parameters: " + getFunctionParameters(func.address));
-        writer.println("  - Return type: " + getFunctionReturnType(func.address));
-        writer.println("  - Cyclomatic complexity: " + getFunctionComplexity(func.address));
-        writer.println("  - Cross-references: " + getCrossReferenceCount(func.address));
-        writer.println("\n" + "=".repeat(50) + "\n");
+      if (reportFile == null) {
+        return;
       }
 
-      writer.close();
+      try (PrintWriter writer = new PrintWriter(reportFile)) {
+        writer.println("License Validation Analysis Report");
+        writer.println("Generated by Intellicrack License Validation Analyzer v2.0.0");
+        writer.println("Date: " + new Date());
+        writer.println("Program: " + currentProgram.getName());
+        writer.println("=====================================\n");
+
+        for (LicenseFunction func : detectedFunctions) {
+          writer.println("Function: " + func.name);
+          writer.println("Address: " + func.address);
+          writer.println("Type: " + func.type);
+          writer.println("Confidence: " + String.format("%.2f%%", func.confidence * 100));
+          writer.println("\nRecommended Bypass Strategies:");
+          for (int i = 0; i < func.bypassStrategies.size(); i++) {
+            writer.println("  " + (i + 1) + ". " + func.bypassStrategies.get(i));
+          }
+          writer.println("\nDetailed Analysis:");
+          writer.println("  - Function parameters: " + getFunctionParameters(func.address));
+          writer.println("  - Return type: " + getFunctionReturnType(func.address));
+          writer.println("  - Cyclomatic complexity: " + getFunctionComplexity(func.address));
+          writer.println("  - Cross-references: " + getCrossReferenceCount(func.address));
+          writer.println("\n" + "=".repeat(50) + "\n");
+        }
+      }
       println("Detailed report saved to: " + reportFile.getAbsolutePath());
 
     } catch (Exception e) {
@@ -600,14 +627,20 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
   private String getFunctionParameters(Address addr) {
     Function func = getFunctionAt(addr);
-    if (func == null) return "Unknown";
+    if (func == null) {
+      return "Unknown";
+    }
 
     Parameter[] params = func.getParameters();
-    if (params.length == 0) return "void";
+    if (params.length == 0) {
+      return "void";
+    }
 
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < params.length; i++) {
-      if (i > 0) sb.append(", ");
+      if (i > 0) {
+        sb.append(", ");
+      }
       sb.append(params[i].getDataType().getName());
     }
     return sb.toString();
@@ -615,13 +648,17 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
   private String getFunctionReturnType(Address addr) {
     Function func = getFunctionAt(addr);
-    if (func == null) return "Unknown";
+    if (func == null) {
+      return "Unknown";
+    }
     return func.getReturnType().getName();
   }
 
   private String getFunctionComplexity(Address addr) {
     Function func = getFunctionAt(addr);
-    if (func == null) return "Unknown";
+    if (func == null) {
+      return "Unknown";
+    }
 
     try {
       DecompileResults results = decompiler.decompileFunction(func, 10, monitor);
@@ -630,7 +667,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         return String.format("%.1f", complexity);
       }
     } catch (Exception e) {
-      // Ignore
+      printerr("Complexity analysis failed: " + e.getMessage());
     }
     return "N/A";
   }
@@ -1000,7 +1037,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       FunctionIterator funcIter = program.getFunctionManager().getFunctions(true);
       while (funcIter.hasNext()) {
         Function func = funcIter.next();
-        String funcName = func.getName().toLowerCase();
+        String funcName = func.getName().toLowerCase(Locale.ROOT);
         double semanticScore = 0.0;
 
         for (Map.Entry<String, List<String>> cluster : semanticClusters.entrySet()) {
@@ -1011,7 +1048,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
             }
           }
           if (matches > 0) {
-            semanticScore += (matches / (double) cluster.getValue().size()) * 0.5;
+            semanticScore += matches / (double) cluster.getValue().size() * 0.5;
           }
         }
 
@@ -1151,7 +1188,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         Instruction inst = instIter.next();
         String mnemonic = inst.getMnemonicString().toUpperCase();
 
-        if (mnemonic.equals("CALL")) {
+        if ("CALL".equals(mnemonic)) {
           callCount++;
         } else if (mnemonic.startsWith("CMP") || mnemonic.startsWith("TEST")) {
           cmpCount++;
@@ -1171,7 +1208,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
               && (decompiledCode.contains("!= 0") || decompiledCode.contains("== 0"));
         }
       } catch (Exception e) {
-        // Ignore decompilation errors
+        println("  [Debug] Decompilation error in error propagation check: " + e.getMessage());
       }
       return false;
     }
@@ -1182,7 +1219,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("time")
               || name.contains("date")
               || name.contains("clock")
@@ -1204,7 +1241,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("regopen") || name.contains("regopenkey")) {
             hasRegOpen = true;
           }
@@ -1223,7 +1260,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("internet")
               || name.contains("http")
               || name.contains("socket")
@@ -1244,7 +1281,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         Data data = getDataAt(ref.getToAddress());
         if (data != null && data.hasStringValue()) {
-          String str = data.getDefaultValueRepresentation().toLowerCase();
+          String str = data.getDefaultValueRepresentation().toLowerCase(Locale.ROOT);
 
           // Check semantic clusters
           for (Map.Entry<String, List<String>> cluster : semanticClusters.entrySet()) {
@@ -1285,11 +1322,13 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     }
 
     private String getInstructionPattern(List<Instruction> instructions) {
-      if (instructions.size() < 2) return "";
+      if (instructions.size() < 2) {
+        return "";
+      }
 
       StringBuilder pattern = new StringBuilder();
       for (Instruction inst : instructions) {
-        pattern.append(inst.getMnemonicString().toLowerCase()).append("_");
+        pattern.append(inst.getMnemonicString().toLowerCase(Locale.ROOT)).append("_");
       }
 
       String patternStr = pattern.toString();
@@ -1319,7 +1358,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         instructionCount++;
 
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.startsWith("J") || mnemonic.equals("CALL") || mnemonic.equals("RET")) {
+        if (mnemonic.startsWith("J") || "CALL".equals(mnemonic) || "RET".equals(mnemonic)) {
           branchCount++;
         }
       }
@@ -1332,19 +1371,17 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
           String code = results.getDecompiledFunction().getC();
-          // Look for validation patterns
           return code.contains("if")
               && code.contains("return")
               && (code.contains("!=") || code.contains("=="));
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Control flow validation analysis: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasErrorHandlingControlFlow(Function func) {
-      // Count return statements - license functions often have multiple returns
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -1353,13 +1390,12 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           return returnCount >= 2;
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Error handling control flow analysis: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasValidationLoopPattern(Function func) {
-      // Look for loops (common in validation routines)
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -1367,7 +1403,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           return code.contains("while") || code.contains("for") || code.contains("do");
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Validation loop pattern analysis: " + e.getMessage());
       }
       return false;
     }
@@ -1394,7 +1430,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           Address toAddr = ref.getToAddress();
           MemoryBlock block = currentProgram.getMemory().getBlock(toAddr);
           if (block != null
-              && (block.getName().equals(".data") || block.getName().equals(".bss"))) {
+              && (".data".equals(block.getName()) || ".bss".equals(block.getName()))) {
             return true;
           }
         }
@@ -1411,7 +1447,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("createfile")
               || name.contains("readfile")
               || name.contains("openfile")
@@ -1451,7 +1487,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
             "ML-Generated: Block network validation calls identified by pattern analysis");
       }
       if (hasRegistryValidationSequence(func)) {
-        strategies.add("ML-Generated: Mock registry validation sequence detected by ML");
+        strategies.add("ML-Generated: Registry-based license validation sequence detected by ML pattern analysis");
       }
 
       return strategies;
@@ -1628,7 +1664,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.startsWith("J") && !mnemonic.equals("JMP")) {
+        if (mnemonic.startsWith("J") && !"JMP".equals(mnemonic)) {
           conditionalJumps++;
         }
       }
@@ -1649,18 +1685,17 @@ public class LicenseValidationAnalyzer extends GhidraScript {
               || code.contains("return NULL");
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Error return pattern analysis: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasTimeoutHandlingBehavior(Function func) {
-      // Look for time-related comparisons and timeout handling
       Reference[] refs = getReferencesFrom(func.getBody());
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("timeout")
               || name.contains("gettick")
               || name.contains("timegettime")
@@ -1673,7 +1708,6 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     }
 
     private boolean hasRetryMechanismPattern(Function func) {
-      // Look for loop patterns that might indicate retry logic
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -1682,13 +1716,12 @@ public class LicenseValidationAnalyzer extends GhidraScript {
               && (code.contains("retry") || code.contains("attempt") || code.contains("count"));
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Retry mechanism analysis: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasStateMachineBehavior(Function func) {
-      // Look for switch statements or state variables
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -1698,20 +1731,18 @@ public class LicenseValidationAnalyzer extends GhidraScript {
               || code.contains("state");
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] State machine analysis: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasValidationCachePattern(Function func) {
-      // Look for caching behavior (storing validation results)
       Reference[] refs = getReferencesFrom(func.getBody());
       for (Reference ref : refs) {
         if (ref.getReferenceType().isData()) {
-          // Check if accessing global variables (potential cache)
           Address toAddr = ref.getToAddress();
           MemoryBlock block = currentProgram.getMemory().getBlock(toAddr);
-          if (block != null && block.getName().equals(".data")) {
+          if (block != null && ".data".equals(block.getName())) {
             return true;
           }
         }
@@ -1720,7 +1751,6 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     }
 
     private boolean hasTrialCountdownBehavior(Function func) {
-      // Look for decrement operations and countdown logic
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -1729,14 +1759,14 @@ public class LicenseValidationAnalyzer extends GhidraScript {
               && (code.contains("days") || code.contains("trial") || code.contains("remaining"));
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Trial countdown analysis: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasActivationFlowPattern(Function func) {
       // Look for activation-related strings and patterns
-      String funcName = func.getName().toLowerCase();
+      String funcName = func.getName().toLowerCase(Locale.ROOT);
       return funcName.contains("activate")
           || funcName.contains("register")
           || funcName.contains("unlock")
@@ -1745,7 +1775,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
     private boolean hasFeatureLockoutPattern(Function func) {
       // Look for feature disabling patterns
-      String funcName = func.getName().toLowerCase();
+      String funcName = func.getName().toLowerCase(Locale.ROOT);
       return funcName.contains("disable")
           || funcName.contains("lock")
           || funcName.contains("restrict")
@@ -1758,8 +1788,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Map.Entry<Address, List<String>> entry : functionBehaviors.entrySet()) {
         double flowScore = 0.0;
 
-        // Analyze execution flow complexity
-        Function func = getFunctionAt(entry.getKey());
+        Function func = program.getFunctionManager().getFunctionAt(entry.getKey());
         if (func != null) {
           int exitPoints = countExitPoints(func);
           int entryPoints = countEntryPoints(func);
@@ -1792,7 +1821,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
       for (Map.Entry<Address, List<String>> entry : functionBehaviors.entrySet()) {
         if (entry.getValue().contains("state_machine_behavior")) {
-          Function func = getFunctionAt(entry.getKey());
+          Function func = program.getFunctionManager().getFunctionAt(entry.getKey());
           if (func != null) {
             double stateScore = analyzeStateComplexity(func);
             if (stateScore > 0.0) {
@@ -1810,7 +1839,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
       for (Map.Entry<Address, List<String>> entry : functionBehaviors.entrySet()) {
         if (entry.getValue().contains("error_state_propagation")) {
-          Function func = getFunctionAt(entry.getKey());
+          Function func = program.getFunctionManager().getFunctionAt(entry.getKey());
           if (func != null) {
             double errorScore = analyzeErrorHandlingComplexity(func);
             if (errorScore > 0.0) {
@@ -1840,9 +1869,14 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     }
 
     private int countEntryPoints(Function func) {
-      // For now, assume single entry point (function start)
-      // Could be extended to count multiple entry points for complex functions
-      return 1;
+      int entryPoints = 1;
+      Reference[] refs = getReferencesTo(func.getEntryPoint());
+      for (Reference ref : refs) {
+        if (ref.getReferenceType().isCall()) {
+          entryPoints++;
+        }
+      }
+      return Math.min(entryPoints, 10);
     }
 
     private int analyzeCallDepth(Function func) {
@@ -1876,13 +1910,12 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           }
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] State complexity analysis: " + e.getMessage());
       }
       return 0.0;
     }
 
     private double analyzeErrorHandlingComplexity(Function func) {
-      // Analyze complexity of error handling
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -1895,7 +1928,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           }
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Error handling complexity analysis: " + e.getMessage());
       }
       return 0.0;
     }
@@ -2289,7 +2322,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           currentProgram.getListing().getInstructions(func.getBody(), true);
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
-        String repr = inst.toString().toLowerCase();
+        String repr = inst.toString().toLowerCase(Locale.ROOT);
         if (repr.contains("fs:") && (repr.contains("0x30") || repr.contains("30h"))) {
           return true;
         }
@@ -2303,7 +2336,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           currentProgram.getListing().getInstructions(func.getBody(), true);
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
-        String repr = inst.toString().toLowerCase();
+        String repr = inst.toString().toLowerCase(Locale.ROOT);
         if (repr.contains("heap") || (repr.contains("0x18") && repr.contains("fs:"))) {
           return true;
         }
@@ -2333,7 +2366,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.equals("RDTSC")) {
+        if ("RDTSC".equals(mnemonic)) {
           hasRDTSC = true;
         } else if (mnemonic.startsWith("CMP")) {
           hasComparison = true;
@@ -2349,7 +2382,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         Data data = getDataAt(ref.getToAddress());
         if (data != null && data.hasStringValue()) {
-          String str = data.getDefaultValueRepresentation().toLowerCase();
+          String str = data.getDefaultValueRepresentation().toLowerCase(Locale.ROOT);
           if (str.contains("vmware")
               || str.contains("virtualbox")
               || str.contains("vbox")
@@ -2373,9 +2406,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         Instruction inst = instIter.next();
         totalInst++;
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.equals("NOP")
-            || mnemonic.equals("XCHG")
-            || (mnemonic.equals("MOV") && inst.getOperandReferences(0).length == 0)) {
+        if ("NOP".equals(mnemonic)
+            || "XCHG".equals(mnemonic)
+            || ("MOV".equals(mnemonic) && inst.getOperandReferences(0).length == 0)) {
           nopCount++;
         }
       }
@@ -2390,29 +2423,26 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
           String code = results.getDecompiledFunction().getC();
-          // Look for complex conditions with simple results
           return code.contains("(")
               && code.contains("&")
               && (code.contains("== 0") || code.contains("!= 0"));
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Opaque predicate detection: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasDeadCodeInsertion(Function func) {
-      // Look for unreachable code blocks
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
           HighFunction highFunc = results.getHighFunction();
           PcodeBlockBasic[] blocks = highFunc.getBasicBlocks();
 
-          // Simple heuristic: if there are blocks with no incoming references
           int unreachableBlocks = 0;
           for (PcodeBlockBasic block : blocks) {
-            if (block.getInSize() == 0 && block != blocks[0]) { // Not entry block
+            if (block.getInSize() == 0 && block != blocks[0]) {
               unreachableBlocks++;
             }
           }
@@ -2420,22 +2450,20 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           return unreachableBlocks > 0;
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Dead code detection: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasInstructionSubstitution(Function func) {
-      // Look for unusual instruction sequences that could be substitutions
       InstructionIterator instIter =
           currentProgram.getListing().getInstructions(func.getBody(), true);
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        // Complex ways to do simple operations
-        if ((mnemonic.equals("SUB") && inst.toString().contains("0"))
-            || (mnemonic.equals("XOR") && inst.getOperandReferences(0).length > 0)
-            || (mnemonic.equals("ROR") && inst.toString().contains("0"))) {
+        if (("SUB".equals(mnemonic) && inst.toString().contains("0"))
+            || ("XOR".equals(mnemonic) && inst.getOperandReferences(0).length > 0)
+            || ("ROR".equals(mnemonic) && inst.toString().contains("0"))) {
           return true;
         }
       }
@@ -2443,30 +2471,26 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     }
 
     private boolean hasControlFlowFlattening(Function func) {
-      // Look for dispatch-based control flow (typical of flattening)
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
           String code = results.getDecompiledFunction().getC();
-          // Look for switch statements or dispatch variables
           return code.contains("switch")
               && code.contains("case")
-              && code.split("case").length > 5; // Many cases suggest flattening
+              && code.split("case").length > 5;
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] Control flow flattening detection: " + e.getMessage());
       }
       return false;
     }
 
     private boolean hasAPICallIndirection(Function func) {
-      // Look for indirect API calls through function pointers
       InstructionIterator instIter =
           currentProgram.getListing().getInstructions(func.getBody(), true);
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
-        if (inst.getMnemonicString().toUpperCase().equals("CALL")) {
-          // Check if it's an indirect call
+        if ("CALL".equals(inst.getMnemonicString().toUpperCase())) {
           if (inst.toString().contains("[") || inst.toString().contains("*")) {
             return true;
           }
@@ -2481,8 +2505,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           currentProgram.getListing().getInstructions(func.getBody(), true);
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
-        if (inst.toString().toLowerCase().contains("(bad)")
-            || inst.toString().toLowerCase().contains("undefined")) {
+        if (inst.toString().toLowerCase(Locale.ROOT).contains("(bad)")
+            || inst.toString().toLowerCase(Locale.ROOT).contains("undefined")) {
           return true;
         }
       }
@@ -2496,7 +2520,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.startsWith("J") && !mnemonic.equals("JMP")) {
+        if (mnemonic.startsWith("J") && !"JMP".equals(mnemonic)) {
           // Check if jump target is very close (potential middle of instruction)
           Reference[] refs = inst.getOperandReferences(0);
           if (refs.length > 0) {
@@ -2518,7 +2542,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.equals("MOV") && inst.toString().contains("[")) {
+        if ("MOV".equals(mnemonic) && inst.toString().contains("[")) {
           // Check if writing to executable section
           MemoryBlock block = currentProgram.getMemory().getBlock(inst.getAddress());
           if (block != null && block.isExecute() && block.isWrite()) {
@@ -2537,7 +2561,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
 
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
-        if (inst.getMnemonicString().toUpperCase().equals("CALL")) {
+        if ("CALL".equals(inst.getMnemonicString().toUpperCase())) {
           totalCalls++;
           if (inst.toString().contains("[") || inst.toString().contains("*")) {
             indirectCalls++;
@@ -2555,7 +2579,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           currentProgram.getListing().getInstructions(func.getBody(), true);
       while (instIter.hasNext()) {
         Instruction inst = instIter.next();
-        String repr = inst.toString().toLowerCase();
+        String repr = inst.toString().toLowerCase(Locale.ROOT);
         if (repr.contains("fs:[0]")
             || repr.contains("exception")
             || inst.getMnemonicString().equalsIgnoreCase("INT3")) {
@@ -2571,8 +2595,8 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null
-            && (refName.toLowerCase().contains("checksum")
-                || refName.toLowerCase().contains("crc"))) {
+            && (refName.toLowerCase(Locale.ROOT).contains("checksum")
+                || refName.toLowerCase(Locale.ROOT).contains("crc"))) {
           return true;
         }
       }
@@ -2580,7 +2604,6 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     }
 
     private boolean hasCRCChecks(Function func) {
-      // Look for CRC calculation loops
       try {
         DecompileResults results = decompiler.decompileFunction(func, 15, monitor);
         if (results.decompileCompleted() && results.getHighFunction() != null) {
@@ -2588,7 +2611,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           return code.contains("crc") || (code.contains("for") && code.contains("^"));
         }
       } catch (Exception e) {
-        // Ignore
+        println("  [Debug] CRC check detection: " + e.getMessage());
       }
       return false;
     }
@@ -2599,7 +2622,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("hash")
               || name.contains("md5")
               || name.contains("sha")
@@ -2618,7 +2641,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("virtualprotect")
               || name.contains("virtualalloc")
               || name.contains("virtualquery")
@@ -2636,7 +2659,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("cryptverify")
               || name.contains("wintrust")
               || name.contains("signature")
@@ -2821,9 +2844,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         for (Reference ref : refs) {
           Data data = getDataAt(ref.getToAddress());
           if (data != null && data.hasStringValue()) {
-            String str = data.getDefaultValueRepresentation().toLowerCase();
+            String str = data.getDefaultValueRepresentation().toLowerCase(Locale.ROOT);
             for (String endpoint : cloudEndpoints) {
-              if (str.contains(endpoint.toLowerCase())) {
+              if (str.contains(endpoint.toLowerCase(Locale.ROOT))) {
                 cloudScore += 0.4;
               }
             }
@@ -2831,7 +2854,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         }
 
         // Check function names for cloud patterns
-        String funcName = func.getName().toLowerCase();
+        String funcName = func.getName().toLowerCase(Locale.ROOT);
         if (funcName.contains("azure")
             || funcName.contains("aws")
             || funcName.contains("gcp")
@@ -2883,7 +2906,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         for (Reference ref : refs) {
           Data data = getDataAt(ref.getToAddress());
           if (data != null && data.hasStringValue()) {
-            String str = data.getDefaultValueRepresentation().toLowerCase();
+            String str = data.getDefaultValueRepresentation().toLowerCase(Locale.ROOT);
             for (String oauthStr : oauthStrings) {
               if (str.contains(oauthStr)) {
                 oauthScore += 0.2;
@@ -3047,7 +3070,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         double subscriptionScore = 0.0;
 
         // Check function names for subscription patterns
-        String funcName = func.getName().toLowerCase();
+        String funcName = func.getName().toLowerCase(Locale.ROOT);
         for (String pattern : subscriptionPatterns) {
           if (funcName.contains(pattern)) {
             subscriptionScore += 0.2;
@@ -3059,7 +3082,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
         for (Reference ref : refs) {
           Data data = getDataAt(ref.getToAddress());
           if (data != null && data.hasStringValue()) {
-            String str = data.getDefaultValueRepresentation().toLowerCase();
+            String str = data.getDefaultValueRepresentation().toLowerCase(Locale.ROOT);
             for (String pattern : subscriptionPatterns) {
               if (str.contains(pattern)) {
                 subscriptionScore += 0.1;
@@ -3087,7 +3110,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         Data data = getDataAt(ref.getToAddress());
         if (data != null && data.hasStringValue()) {
-          String str = data.getDefaultValueRepresentation().toLowerCase();
+          String str = data.getDefaultValueRepresentation().toLowerCase(Locale.ROOT);
           if (str.contains("authorization:")
               || str.contains("bearer ")
               || str.contains("content-type:")
@@ -3104,7 +3127,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("base64")
               || name.contains("b64")
               || name.contains("encode")
@@ -3121,7 +3144,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("json") || name.contains("parse") || name.contains("stringify")) {
             return true;
           }
@@ -3143,7 +3166,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("httpclient")
               || name.contains("curl")
               || name.contains("wininet")
@@ -3161,7 +3184,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       for (Reference ref : refs) {
         String refName = getSymbolName(ref);
         if (refName != null) {
-          String name = refName.toLowerCase();
+          String name = refName.toLowerCase(Locale.ROOT);
           if (name.contains("time")
               || name.contains("date")
               || name.contains("systemtime")
@@ -3183,9 +3206,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       List<String> strategies = new ArrayList<>();
 
       strategies.add("Cloud: Intercept and modify cloud authentication requests");
-      strategies.add("Cloud: Mock cloud service responses with valid tokens");
+      strategies.add("Cloud: Emulate cloud service responses with valid tokens");
       strategies.add("Cloud: Bypass certificate validation for cloud endpoints");
-      strategies.add("Cloud: Redirect cloud validation to local mock server");
+      strategies.add("Cloud: Redirect cloud validation to local license emulator server");
 
       if (hasHTTPHeaderManipulation(func)) {
         strategies.add("Cloud: Modify HTTP headers to inject valid authentication tokens");
@@ -3254,7 +3277,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       CodeUnit codeUnit = codeUnitIter.next();
 
       if (codeUnit instanceof Instruction inst) {
-        String mnemonic = inst.getMnemonicString().toLowerCase();
+        String mnemonic = inst.getMnemonicString().toLowerCase(Locale.ROOT);
 
         // Check for license validation instruction patterns
         if (isLicenseValidationInstruction(inst)) {
@@ -3392,12 +3415,12 @@ public class LicenseValidationAnalyzer extends GhidraScript {
           }
         }
 
-        // Analyze each address range for license data patterns
         for (AddressRange range : spaceAddresses) {
-          if (monitor.isCancelled()) break;
+          if (monitor.isCancelled()) {
+            break;
+          }
 
           Address rangeStart = range.getMinAddress();
-          Address rangeEnd = range.getMaxAddress();
           long rangeSize = range.getLength();
 
           // Scan range for license-related data
@@ -3509,7 +3532,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     // Analyze register usage in license validation functions
     for (Register register : registers) {
       if (register.isBaseRegister()) {
-        String regName = register.getName().toLowerCase();
+        String regName = register.getName().toLowerCase(Locale.ROOT);
         registerPatterns.put(regName, 0);
 
         // Check usage in known license functions
@@ -3602,7 +3625,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
             }
           }
         } catch (Exception e) {
-          // Continue analysis even if decompilation fails for this function
+          println("  [Debug] Decompilation failed for P-code analysis: " + e.getMessage());
         }
       }
     }
@@ -3626,12 +3649,12 @@ public class LicenseValidationAnalyzer extends GhidraScript {
     Map<String, Integer> blockTypePatterns = new HashMap<>();
 
     for (MemoryBlock block : memoryBlocks) {
-      if (monitor.isCancelled()) break;
+      if (monitor.isCancelled()) {
+        break;
+      }
 
-      String blockName = block.getName().toLowerCase();
+      String blockName = block.getName().toLowerCase(Locale.ROOT);
       long blockSize = block.getSize();
-      Address blockStart = block.getStart();
-      Address blockEnd = block.getEnd();
 
       blockTypePatterns.merge(block.getType().toString(), 1, Integer::sum);
 
@@ -3765,7 +3788,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   // Helper methods for comprehensive analysis
 
   private boolean isLicenseValidationInstruction(Instruction inst) {
-    String mnemonic = inst.getMnemonicString().toLowerCase();
+    String mnemonic = inst.getMnemonicString().toLowerCase(Locale.ROOT);
     return mnemonic.contains("cmp")
         || mnemonic.contains("test")
         || mnemonic.contains("jz")
@@ -3784,8 +3807,10 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private boolean isLicenseRelatedString(String str) {
-    if (str == null) return false;
-    String lower = str.toLowerCase();
+    if (str == null) {
+      return false;
+    }
+    String lower = str.toLowerCase(Locale.ROOT);
     return lower.contains("license")
         || lower.contains("serial")
         || lower.contains("activation")
@@ -3800,7 +3825,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
       byte[] bytes = new byte[Math.min(1024, (int) range.getLength())];
       memory.getBytes(range.getMinAddress(), bytes);
 
-      String dataStr = new String(bytes).toLowerCase();
+      String dataStr = new String(bytes).toLowerCase(Locale.ROOT);
       return isLicenseRelatedString(dataStr);
     } catch (Exception e) {
       return false;
@@ -3825,7 +3850,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private boolean isLicenseRelatedStructure(Structure structure) {
-    String structName = structure.getName().toLowerCase();
+    String structName = structure.getName().toLowerCase(Locale.ROOT);
     if (isLicenseRelatedString(structName)) {
       return true;
     }
@@ -3842,7 +3867,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private boolean isLicenseRelatedEnum(Enum enumType) {
-    String enumName = enumType.getName().toLowerCase();
+    String enumName = enumType.getName().toLowerCase(Locale.ROOT);
     if (isLicenseRelatedString(enumName)) {
       return true;
     }
@@ -3896,7 +3921,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
               }
             }
           } catch (Exception e) {
-            // Continue analysis even if register value access fails
+            println("  [Debug] Register value analysis: " + e.getMessage());
           }
         }
       }
@@ -3938,7 +3963,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private boolean blockContainsLicenseData(MemoryBlock block) {
-    String blockName = block.getName().toLowerCase();
+    String blockName = block.getName().toLowerCase(Locale.ROOT);
     return isLicenseRelatedString(blockName)
         || blockName.contains("data")
         || blockName.contains("const")
@@ -3947,7 +3972,9 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private void scanMemoryBlockForLicensePatterns(MemoryBlock block) throws MemoryAccessException {
-    if (block.getSize() > 1024 * 1024) return; // Skip very large blocks
+    if (block.getSize() > 1024 * 1024) {
+      return;
+    }
 
     try {
       byte[] blockData = new byte[(int) block.getSize()];
@@ -3959,7 +3986,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
             block.getStart(), "License Data Block", "Memory block contains license-related data");
       }
     } catch (Exception e) {
-      // Continue analysis even if memory read fails
+      println("  [Debug] Memory scan failed for block: " + e.getMessage());
     }
   }
 
@@ -3968,7 +3995,7 @@ public class LicenseValidationAnalyzer extends GhidraScript {
   }
 
   private boolean isLicenseAPICall(String apiName) {
-    String lower = apiName.toLowerCase();
+    String lower = apiName.toLowerCase(Locale.ROOT);
     return lower.contains("reg")
         || lower.contains("crypt")
         || lower.contains("internet")

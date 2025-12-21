@@ -55,8 +55,7 @@ def crypto_manager() -> CryptoManager:
 def database_manager() -> DatabaseManager:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".db") as tmp_db:
         db_path = tmp_db.name
-    db_mgr = DatabaseManager(db_path=db_path)
-    yield db_mgr
+    yield DatabaseManager(db_path=db_path)
     try:
         os.unlink(db_path)
     except Exception:
@@ -109,7 +108,7 @@ class TestCryptoManager:
         assert isinstance(key1, str)
         assert isinstance(key2, str)
         assert key1 != key2
-        assert len(key1) > 0
+        assert key1 != ""
         assert "-" in key1
         parts = key1.split("-")
         assert all(len(part) == 4 for part in parts)
@@ -133,7 +132,7 @@ class TestCryptoManager:
         signature: str = crypto_manager.sign_license_data(test_data)
 
         assert isinstance(signature, str)
-        assert len(signature) > 0
+        assert signature != ""
         try:
             bytes.fromhex(signature)
         except ValueError:
@@ -149,7 +148,7 @@ class TestCryptoManager:
         signature: str = crypto_manager.sign_license_data(test_data)
         is_valid: bool = crypto_manager.verify_license_signature(test_data, signature)
 
-        assert is_valid is True
+        assert is_valid
 
     def test_rejects_invalid_signature(self, crypto_manager: CryptoManager) -> None:
         test_data: dict[str, Any] = {"product": "TestApp"}
@@ -158,7 +157,7 @@ class TestCryptoManager:
         tampered_data: dict[str, Any] = {"product": "TamperedApp"}
         is_valid: bool = crypto_manager.verify_license_signature(tampered_data, signature)
 
-        assert is_valid is False
+        assert not is_valid
 
     def test_encrypts_and_decrypts_license_data(self, crypto_manager: CryptoManager) -> None:
         plaintext: str = "TESTLICENSE-ABCD-1234-EFGH-5678"
@@ -182,12 +181,12 @@ class TestCryptoManager:
         encrypted: str = crypto_manager.encrypt_license_data("")
         decrypted: str = crypto_manager.decrypt_license_data(encrypted)
 
-        assert decrypted == ""
+        assert not decrypted
 
     def test_handles_invalid_encrypted_data(self, crypto_manager: CryptoManager) -> None:
         result: str = crypto_manager.decrypt_license_data("invalid_hex_data")
 
-        assert result == ""
+        assert not result
 
 
 class TestFlexLMEmulator:
@@ -219,7 +218,7 @@ class TestFlexLMEmulator:
             client.close()
             flexlm_emulator.stop_server()
 
-        assert connected is True
+        assert connected
 
     def test_processes_feature_checkout_request(self, flexlm_emulator: FlexLMEmulator) -> None:
         port: int = 27052
@@ -236,7 +235,7 @@ class TestFlexLMEmulator:
 
             response: bytes = client.recv(1024)
 
-            assert len(response) > 0
+            assert response
             assert b"GRANTED" in response or b"ERROR" in response
         finally:
             client.close()
@@ -265,14 +264,14 @@ class TestFlexLMEmulator:
 
         is_valid: bool = flexlm_emulator._vendor_validate(valid_data)
 
-        assert is_valid is True
+        assert is_valid
 
     def test_vendor_validation_rejects_short_data(self, flexlm_emulator: FlexLMEmulator) -> None:
         short_data: bytes = b"ABC"
 
         is_valid: bool = flexlm_emulator._vendor_validate(short_data)
 
-        assert is_valid is False
+        assert not is_valid
 
     def test_adds_and_lists_features(self, flexlm_emulator: FlexLMEmulator) -> None:
         feature: dict[str, Any] = {
@@ -291,7 +290,7 @@ class TestFlexLMEmulator:
     def test_creates_status_response(self, flexlm_emulator: FlexLMEmulator) -> None:
         status: bytes = flexlm_emulator._create_status_response()
 
-        assert len(status) > 0
+        assert status
         assert b"server_version" in status
         assert b"vendor_daemon" in status
 
@@ -594,8 +593,7 @@ class TestDatabaseManager:
 
         session = database_manager.get_db()
         try:
-            first_license = session.query(LicenseEntry).first()
-            if first_license:
+            if first_license := session.query(LicenseEntry).first():
                 result = database_manager.validate_license(first_license.license_key, first_license.product_name)
                 assert result is not None
         finally:
@@ -667,7 +665,7 @@ class TestProtocolStateMachine:
 
         response: bytes = protocol_state_machine._flexlm_hello_response(keys)
 
-        assert len(response) > 0
+        assert response
         assert len(response) >= 60
 
     def test_flexlm_vendor_response_includes_signature(self, protocol_state_machine: ProtocolStateMachine) -> None:
@@ -841,8 +839,8 @@ class TestBinaryKeyExtractor:
         is_prime: bool = binary_key_extractor._is_prime_miller_rabin(prime, k=10)
         is_composite: bool = binary_key_extractor._is_prime_miller_rabin(composite, k=10)
 
-        assert is_prime is True
-        assert is_composite is False
+        assert is_prime
+        assert not is_composite
 
     def test_generates_prime_list(self, binary_key_extractor: BinaryKeyExtractor) -> None:
         primes: list[int] = binary_key_extractor._primes_up_to(100)
@@ -913,7 +911,7 @@ class TestEdgeCases:
 
         is_valid: bool = crypto_manager.verify_license_signature(data, corrupted_sig)
 
-        assert is_valid is False
+        assert not is_valid
 
     def test_protocol_analyzer_handles_empty_data(self, protocol_analyzer: ProtocolAnalyzer) -> None:
         result: dict[str, Any] = protocol_analyzer.analyze_traffic(b"", "127.0.0.1")
@@ -944,7 +942,7 @@ class TestRealWorldScenarios:
 
             response: bytes = client.recv(2048)
 
-            assert len(response) > 0
+            assert response
             assert b"GRANTED" in response or b"ENGINEERING_SUITE" in response.upper()
         finally:
             client.close()
@@ -1023,7 +1021,7 @@ class TestProtocolCompliance:
         except DefusedElementTree.ParseError:
             is_valid_xml = False
 
-        assert is_valid_xml is True
+        assert is_valid_xml
 
     def test_hasp_binary_protocol_structure(self, protocol_state_machine: ProtocolStateMachine) -> None:
         protocol_state_machine.master_key = os.urandom(32)

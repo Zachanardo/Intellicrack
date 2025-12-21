@@ -47,10 +47,10 @@ class SerialConstraints:
     group_separator: str = "-"
     checksum_algorithm: str | None = None
     custom_alphabet: str | None = None
-    blacklist_patterns: list[str] = None
-    must_contain: list[str] = None
-    cannot_contain: list[str] = None
-    validation_function: Callable | None = None
+    blacklist_patterns: list[str] | None = None
+    must_contain: list[str] | None = None
+    cannot_contain: list[str] | None = None
+    validation_function: Callable[[str], bool] | None = None
 
 
 @dataclass
@@ -58,16 +58,16 @@ class GeneratedSerial:
     """Generated serial number with validation metadata."""
 
     serial: str
-    format: SerialFormat = None
+    format: SerialFormat | None = None
     confidence: float = 0.0
-    validation_data: dict[str, Any] = None
-    algorithm_used: str = None
-    raw_bytes: bytes = None
+    validation_data: dict[str, Any] | None = None
+    algorithm_used: str | None = None
+    raw_bytes: bytes | None = None
     checksum: str | None = None
     hardware_id: str | None = None
     expiration: int | None = None
-    features: list[str] = None
-    algorithm: str = None
+    features: list[str] | None = None
+    algorithm: str | None = None
 
 
 @log_all_methods
@@ -81,9 +81,9 @@ class SerialNumberGenerator:
         self.checksum_functions = self._initialize_checksums()
         self.solver = z3.Solver()
 
-    def _initialize_algorithms(self) -> dict[str, Callable]:
+    def _initialize_algorithms(self) -> dict[str, Callable[[int], str]]:
         """Initialize common serial generation algorithms."""
-        algorithms = {
+        algorithms: dict[str, Callable[[int], str]] = {
             "luhn": self._generate_luhn_serial,
             "verhoeff": self._generate_verhoeff_serial,
             "damm": self._generate_damm_serial,
@@ -98,9 +98,9 @@ class SerialNumberGenerator:
         logger.debug("Initialized %s serial generation algorithms.", len(algorithms))
         return algorithms
 
-    def _initialize_checksums(self) -> dict[str, Callable]:
+    def _initialize_checksums(self) -> dict[str, Callable[[str], str]]:
         """Initialize checksum calculation functions."""
-        checksums = {
+        checksums: dict[str, Callable[[str], str]] = {
             "luhn": self._calculate_luhn,
             "verhoeff": self._calculate_verhoeff,
             "damm": self._calculate_damm,
@@ -140,7 +140,7 @@ class SerialNumberGenerator:
 
         # Select best matching algorithm
         if algorithms_scores:
-            best_algo = max(algorithms_scores, key=algorithms_scores.get)
+            best_algo = max(algorithms_scores.items(), key=lambda x: x[1])[0]
             analysis["algorithm"] = best_algo
             analysis["confidence"] = algorithms_scores[best_algo]
             logger.info("Best matching algorithm detected: %s with confidence: %.2f", best_algo, algorithms_scores[best_algo])
@@ -204,7 +204,7 @@ class SerialNumberGenerator:
 
     def _analyze_structure(self, serials: list[str]) -> dict[str, Any]:
         """Analyze structural patterns in serials."""
-        structure = {"groups": [], "separators": [], "group_lengths": []}
+        structure: dict[str, Any] = {"groups": [], "separators": [], "group_lengths": []}
 
         for serial in serials:
             if seps := re.findall(r"[^A-Za-z0-9]", serial):
@@ -216,8 +216,10 @@ class SerialNumberGenerator:
                 structure["group_lengths"].extend([len(g) for g in groups])
 
         if structure["separators"]:
-            structure["common_separator"] = max(set(structure["separators"]), key=structure["separators"].count)
-            structure["group_count"] = max(set(structure["groups"]), key=structure["groups"].count) if structure["groups"] else 1
+            separators_list: list[str] = structure["separators"]
+            structure["common_separator"] = max(set(separators_list), key=separators_list.count)
+            groups_list: list[int] = structure["groups"]
+            structure["group_count"] = max(set(groups_list), key=groups_list.count) if groups_list else 1
         logger.debug("Serial structure analysis: %s", structure)
         return structure
 
@@ -233,7 +235,7 @@ class SerialNumberGenerator:
         logger.debug("Detected checksum algorithms: %s", results)
         return results
 
-    def _verify_checksum(self, serial: str, checksum_func: Callable) -> bool:
+    def _verify_checksum(self, serial: str, checksum_func: Callable[[str], str]) -> bool:
         """Verify if serial passes checksum validation."""
         try:
             # Remove separators
@@ -249,6 +251,7 @@ class SerialNumberGenerator:
                     if calculated == expected_checksum:
                         return True
 
+            return False
         except (ValueError, TypeError) as e:
             logger.debug("Error verifying checksum for serial '%s' with function %s: %s", serial, checksum_func.__name__, e, exc_info=True)
             return False
@@ -744,7 +747,7 @@ class SerialNumberGenerator:
         p = 2**255 - 19  # Curve25519
         base_point = 9
 
-        serial_parts = []
+        serial_parts: list[str] = []
         # Note: Using random module for generating serials, not cryptographic purposes
         x = random.randint(1, p - 1)  # noqa: S311
 
@@ -752,7 +755,7 @@ class SerialNumberGenerator:
             # Scalar multiplication (simplified)
             x = (x * base_point) % p
             # Take some bits as serial part
-            format(x % (10**8), "08d")
+            serial_parts.append(format(x % (10**8), "08d"))
         serial = "".join(serial_parts)[:length]
         logger.debug("Generated ECC serial: %s", serial)
         return serial
@@ -921,8 +924,9 @@ class SerialNumberGenerator:
             candidate = self._generate_random_serial(constraints)
 
             # Validate
-            if constraints.validation_function(candidate.serial):
-                candidate.validation_data["custom_validation"] = True
+            if constraints.validation_function is not None and constraints.validation_function(candidate.serial):
+                if candidate.validation_data is not None:
+                    candidate.validation_data["custom_validation"] = True
                 candidate.confidence = 1.0
                 return candidate
 
@@ -953,14 +957,15 @@ class SerialNumberGenerator:
         logger.debug("Batch generation completed. Generated %s serials.", len(serials))
         return serials
 
-    def reverse_engineer_algorithm(self, valid_serials: list[str], invalid_serials: list[str] = None) -> dict[str, Any]:
+    def reverse_engineer_algorithm(self, valid_serials: list[str], invalid_serials: list[str] | None = None) -> dict[str, Any]:
         """Reverse engineer the serial generation algorithm."""
         analysis = self.analyze_serial_algorithm(valid_serials)
         logger.debug("Reverse engineering initial analysis: %s", analysis)
 
         # Test with invalid serials if provided
         if invalid_serials:
-            false_positive_rate = sum(bool(self._test_single_serial(invalid, analysis["algorithm"])) for invalid in invalid_serials)
+            algorithm_name = str(analysis["algorithm"]) if analysis["algorithm"] is not None else "unknown"
+            false_positive_rate = sum(bool(self._test_single_serial(invalid, algorithm_name)) for invalid in invalid_serials)
             analysis["false_positive_rate"] = false_positive_rate / len(invalid_serials)
             logger.debug("False positive rate with invalid serials: %.2f", analysis["false_positive_rate"])
 
@@ -1122,32 +1127,33 @@ class SerialNumberGenerator:
 
     def generate_mathematical(self, seed: int, algorithm: str = "quadratic") -> GeneratedSerial:
         """Generate serial using mathematical relationships."""
+        result_int: int
         if algorithm == "fibonacci":
             f1, f2 = seed, seed + 1
             for _ in range(10):
                 f1, f2 = f2, (f1 + f2) & 0xFFFFFFFF
-            result = f2
+            result_int = f2
 
         elif algorithm == "mersenne":
             mersenne_primes = [3, 7, 31, 127, 8191, 131071, 524287]
-            result = seed * mersenne_primes[seed % len(mersenne_primes)] & 0xFFFFFFFF
+            result_int = seed * mersenne_primes[seed % len(mersenne_primes)] & 0xFFFFFFFF
 
         elif algorithm == "quadratic":
             a, b, c = 1337, 42069, 314159
-            result = (a * seed * seed + b * seed + c) & 0xFFFFFFFF
+            result_int = (a * seed * seed + b * seed + c) & 0xFFFFFFFF
 
         else:
-            result = hashlib.sha256(str(seed).encode()).hexdigest()[:8]
-            result = int(result, 16)
+            result_hex = hashlib.sha256(str(seed).encode()).hexdigest()[:8]
+            result_int = int(result_hex, 16)
 
-        serial = f"{seed:05d}-{result:08X}"
+        serial = f"{seed:05d}-{result_int:08X}"
 
         validation = self._calculate_crc32(serial)
         serial = f"{serial}-{validation}"
         logger.debug("Generated mathematical serial: %s", serial)
         return GeneratedSerial(
             serial=serial,
-            raw_bytes=struct.pack(">II", seed, result),
+            raw_bytes=struct.pack(">II", seed, result_int),
             checksum="CRC32",
             hardware_id=None,
             expiration=None,

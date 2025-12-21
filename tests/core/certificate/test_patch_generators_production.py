@@ -106,7 +106,7 @@ class TestAlwaysSucceedPatchGeneration:
         patch = generate_always_succeed_x64()
 
         assert len(patch) == 8
-        assert patch[0:3] == b"\x48\xC7\xC0"
+        assert patch[:3] == b"\x48\xC7\xC0"
         assert patch[3:7] == b"\x01\x00\x00\x00"
         assert patch[7] == 0xC3
 
@@ -120,7 +120,7 @@ class TestAlwaysSucceedPatchGeneration:
         assert len(patch) == 8
         assert patch == b"\x01\x00\xA0\xE3\x1E\xFF\x2F\xE1"
 
-        mov_r0_1 = patch[0:4]
+        mov_r0_1 = patch[:4]
         bx_lr = patch[4:8]
         assert mov_r0_1 == b"\x01\x00\xA0\xE3"
         assert bx_lr == b"\x1E\xFF\x2F\xE1"
@@ -132,7 +132,7 @@ class TestAlwaysSucceedPatchGeneration:
         assert len(patch) == 8
         assert patch == b"\x20\x00\x80\xD2\xC0\x03\x5F\xD6"
 
-        mov_x0_1 = patch[0:4]
+        mov_x0_1 = patch[:4]
         ret = patch[4:8]
         assert mov_x0_1 == b"\x20\x00\x80\xD2"
         assert ret == b"\xC0\x03\x5F\xD6"
@@ -224,7 +224,7 @@ class TestConditionalInvertPatchGeneration:
         inverted = generate_conditional_invert_arm(beq_instruction)
 
         assert len(inverted) == 4
-        assert inverted[0:3] == beq_instruction[0:3]
+        assert inverted[:3] == beq_instruction[:3]
         assert inverted[3] != beq_instruction[3]
 
     def test_arm_handles_short_input(self) -> None:
@@ -338,7 +338,7 @@ class TestTrampolineGeneration:
         trampoline = generate_trampoline_x64(target_addr, hook_addr)
 
         assert len(trampoline) == 12
-        assert trampoline[0:2] == b"\x48\xB8"
+        assert trampoline[:2] == b"\x48\xB8"
         assert trampoline[10:12] == b"\xFF\xE0"
 
         embedded_addr = int.from_bytes(trampoline[2:10], byteorder="little")
@@ -404,7 +404,7 @@ class TestCallingConventionWrappers:
         wrapped = wrap_patch_fastcall(base_patch)
 
         assert len(wrapped) == len(base_patch) + 4
-        assert wrapped[0:2] == b"\x51\x52"
+        assert wrapped[:2] == b"\x51\x52"
         assert wrapped[-2:] == b"\x5A\x59"
 
     def test_x64_convention_wrapper_preserves_argument_registers(self) -> None:
@@ -417,7 +417,7 @@ class TestCallingConventionWrappers:
         expected_push = b"\x51\x52\x41\x50\x41\x51"
         expected_pop = b"\x41\x59\x41\x58\x5A\x59"
 
-        assert wrapped[0:6] == expected_push
+        assert wrapped[:6] == expected_push
         assert wrapped[-6:] == expected_pop
 
 
@@ -636,13 +636,9 @@ class TestRealBinaryPatchApplication:
         assert len(x86_patch) <= 10
         assert len(x64_patch) <= 10
 
-        text_section = None
-        for section in pe.sections:
-            if b".text" in section.Name:
-                text_section = section
-                break
-
-        if text_section:
+        if text_section := next(
+            (section for section in pe.sections if b".text" in section.Name), None
+        ):
             assert text_section.SizeOfRawData > len(x64_patch)
 
     def test_nop_sled_can_pad_certificate_validation_function(
@@ -657,13 +653,9 @@ class TestRealBinaryPatchApplication:
             nop_sled = generate_nop_sled(size, Architecture.X64)
             assert len(nop_sled) == size
 
-        text_section = None
-        for section in pe.sections:
-            if b".text" in section.Name:
-                text_section = section
-                break
-
-        if text_section:
+        if text_section := next(
+            (section for section in pe.sections if b".text" in section.Name), None
+        ):
             nop_sled = generate_nop_sled(100, Architecture.X64)
             assert text_section.SizeOfRawData > len(nop_sled)
 
@@ -675,13 +667,9 @@ class TestRealBinaryPatchApplication:
         pe = pefile.PE(data=real_pe_binary)
         image_base = pe.OPTIONAL_HEADER.ImageBase
 
-        text_section = None
-        for section in pe.sections:
-            if b".text" in section.Name:
-                text_section = section
-                break
-
-        if text_section:
+        if text_section := next(
+            (section for section in pe.sections if b".text" in section.Name), None
+        ):
             cert_check_rva = 0x1000
             hook_rva = 0x5000
 
@@ -704,13 +692,9 @@ class TestRealBinaryPatchApplication:
         assert validate_patch_size(wrapped_patch, max_size=64)
 
         pe = pefile.PE(data=real_pe_binary)
-        text_section = None
-        for section in pe.sections:
-            if b".text" in section.Name:
-                text_section = section
-                break
-
-        if text_section:
+        if text_section := next(
+            (section for section in pe.sections if b".text" in section.Name), None
+        ):
             assert text_section.SizeOfRawData > len(wrapped_patch)
 
     def test_conditional_invert_preserves_binary_structure(

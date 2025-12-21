@@ -113,15 +113,19 @@ class PR001_TodoComment(Rule):
         pattern = comment_patterns[ctx.language]
         lines = ctx.content.split('\n')
 
-        for i, line in enumerate(lines, 1):
-            if re.search(pattern, line, re.IGNORECASE):
-                violations.append(self._create_violation(
-                    ctx, i, "PLACEHOLDER", line.strip(),
-                    "TODO comment indicates incomplete implementation",
-                    "Complete the implementation or remove the comment",
-                    "MEDIUM"
-                ))
-
+        violations.extend(
+            self._create_violation(
+                ctx,
+                i,
+                "PLACEHOLDER",
+                line.strip(),
+                "TODO comment indicates incomplete implementation",
+                "Complete the implementation or remove the comment",
+                "MEDIUM",
+            )
+            for i, line in enumerate(lines, 1)
+            if re.search(pattern, line, re.IGNORECASE)
+        )
         return violations
 
     def _is_quality_control_file(self, ctx: FileContext) -> bool:
@@ -151,15 +155,14 @@ class PR002_EmptyImplementation(Rule):
             return violations
 
         for node in ast.walk(ctx.tree):
-            if isinstance(node, ast.FunctionDef):
-                if self._is_empty_implementation(node) and not self._is_abstract(node, ctx):
-                    violations.append(self._create_violation(
-                        ctx, node.lineno, "PLACEHOLDER",
-                        f"def {node.name}(...): pass",
-                        "Empty function implementation",
-                        "Implement the function body",
-                        "CRITICAL"
-                    ))
+            if isinstance(node, ast.FunctionDef) and (self._is_empty_implementation(node) and not self._is_abstract(node, ctx)):
+                violations.append(self._create_violation(
+                    ctx, node.lineno, "PLACEHOLDER",
+                    f"def {node.name}(...): pass",
+                    "Empty function implementation",
+                    "Implement the function body",
+                    "CRITICAL"
+                ))
 
         return violations
 
@@ -230,10 +233,8 @@ class PR003_MockAssignment(Rule):
 
     def _is_unittest_mock(self, node: ast.Assign) -> bool:
         """Check if assignment uses unittest.mock."""
-        if isinstance(node.value, ast.Call):
-            if isinstance(node.value.func, ast.Attribute):
-                if isinstance(node.value.func.value, ast.Name):
-                    return node.value.func.value.id == "mock"
+        if isinstance(node.value, ast.Call) and isinstance(node.value.func, ast.Attribute) and isinstance(node.value.func.value, ast.Name):
+            return node.value.func.value.id == "mock"
         return False
 
     def _is_ml_context(self, ctx: FileContext) -> bool:
@@ -300,7 +301,13 @@ class PR004_HardcodedSecret(Rule):
         """Use entropy and patterns to identify likely secrets."""
         if len(value) < 8:
             return False
-        if value.lower() in ["password", "secret", "test123", "example", "localhost"]:
+        if value.lower() in {
+            "password",
+            "secret",
+            "test123",
+            "example",
+            "localhost",
+        }:
             return False
 
         # Simple entropy check
@@ -336,15 +343,19 @@ class PR005_SimulationFlag(Rule):
         lines = ctx.content.split('\n')
         pattern = flag_patterns[ctx.language]
 
-        for i, line in enumerate(lines, 1):
-            if re.search(pattern, line, re.IGNORECASE):
-                violations.append(self._create_violation(
-                    ctx, i, "SIMULATION_MODE", line.strip(),
-                    "Simulation mode flag enabled in production code",
-                    "Remove simulation mode or use configuration",
-                    "HIGH"
-                ))
-
+        violations.extend(
+            self._create_violation(
+                ctx,
+                i,
+                "SIMULATION_MODE",
+                line.strip(),
+                "Simulation mode flag enabled in production code",
+                "Remove simulation mode or use configuration",
+                "HIGH",
+            )
+            for i, line in enumerate(lines, 1)
+            if re.search(pattern, line, re.IGNORECASE)
+        )
         return violations
 
 
@@ -571,7 +582,6 @@ class ProductionReadinessAuditor:
                 if f"/{pattern}/" in path_str or path_str.startswith(f"{pattern}/") or path_str.endswith(f"/{pattern}"):
                     return True
 
-            # Handle wildcard patterns (e.g., "tests/**", "*.md")
             elif "**" in pattern:
                 # Convert ** patterns to directory matching
                 base_pattern = pattern.replace("/**", "").replace("**", "").rstrip("/")
@@ -580,15 +590,12 @@ class ProductionReadinessAuditor:
                 if f"/{base_pattern}/" in path_str or path_str.startswith(f"{base_pattern}/"):
                     return True
 
-            # Handle file extension patterns (e.g., "*.md")
             elif pattern.startswith("*"):
                 if file_path.name.lower().endswith(pattern[1:]):
                     return True
 
-            # Handle exact matches
-            else:
-                if pattern in path_str:
-                    return True
+            elif pattern in path_str:
+                return True
 
         return False
 

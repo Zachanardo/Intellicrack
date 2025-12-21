@@ -271,7 +271,7 @@ class TestBackendBaseClass:
         backend.is_initialized = True
         backend.register_tools([{"name": "tool1"}])
         backend.shutdown()
-        assert backend.is_initialized is False
+        assert not backend.is_initialized
         assert len(backend.tools) == 0
 
 
@@ -641,7 +641,7 @@ class TestLLMManagerSingleton:
         for thread in threads:
             thread.join()
 
-        assert len(set(id(inst) for inst in instances)) == 1
+        assert len({id(inst) for inst in instances}) == 1
 
     def test_llm_manager_initialization_parameters(self) -> None:
         """LLM Manager accepts lazy loading and background loading parameters."""
@@ -1144,7 +1144,7 @@ class TestErrorHandling:
         backend.client = Mock()
 
         backend.shutdown()
-        assert backend.is_initialized is False
+        assert not backend.is_initialized
         assert backend.client is None
 
 
@@ -1160,7 +1160,7 @@ class TestBackendShutdown:
 
         backend.shutdown()
         assert backend.client is None
-        assert backend.is_initialized is False
+        assert not backend.is_initialized
 
     def test_anthropic_backend_shutdown_clears_client(self) -> None:
         """Anthropic backend shutdown clears client reference."""
@@ -1171,7 +1171,7 @@ class TestBackendShutdown:
 
         backend.shutdown()
         assert backend.client is None
-        assert backend.is_initialized is False
+        assert not backend.is_initialized
 
     def test_llamacpp_backend_shutdown_clears_model(self) -> None:
         """llama.cpp backend shutdown clears model reference."""
@@ -1182,7 +1182,7 @@ class TestBackendShutdown:
 
         backend.shutdown()
         assert backend.llama is None
-        assert backend.is_initialized is False
+        assert not backend.is_initialized
 
     def test_global_shutdown_llm_manager_clears_singleton(self) -> None:
         """shutdown_llm_manager clears global singleton instance."""

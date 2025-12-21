@@ -268,7 +268,7 @@ class TestControlFlowDeobfuscator(unittest.TestCase):
                         {"disasm": "cmovne eax, ebx"},
                         {"disasm": "cmovg ecx, edx"},
                     ],
-                    successors=[i for i in range(0x401100, 0x401200, 10)],
+                    successors=list(range(0x401100, 0x401200, 10)),
                     predecessors=[],
                     block_type="branch",
                 )
@@ -288,7 +288,7 @@ class TestControlFlowDeobfuscator(unittest.TestCase):
                     address=0x403000,
                     size=200,
                     instructions=[{"disasm": "jmp [rax*4]"}],
-                    successors=[i for i in range(0x403100, 0x403300, 8)],
+                    successors=list(range(0x403100, 0x403300, 8)),
                     predecessors=[],
                     block_type="branch",
                 )

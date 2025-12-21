@@ -394,26 +394,25 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
             "Consider using hardware breakpoints instead of software breakpoints",
         ))
     if protections.get("vm_detection"):
-        strategies.extend(
-            (
-                "Use VM evasion techniques",
-                "Modify VM artifacts to appear as physical machine",
-                "Hook VM detection APIs",
-            )
-        )
+        strategies.extend((
+            "Use VM evasion techniques",
+            "Modify VM artifacts to appear as physical machine",
+            "Hook VM detection APIs",
+        ))
     if protections.get("hardware_fingerprinting"):
+        strategies.extend((
+            "Implement hardware fingerprint spoofing",
+            "Hook GetVolumeInformation and GetSystemInfo",
+            "Use consistent spoofed hardware identifiers",
+        ))
+    if protections.get("time_checks"):
         strategies.extend(
             (
-                "Implement hardware fingerprint spoofing",
-                "Hook GetVolumeInformation and GetSystemInfo",
-                "Use consistent spoofed hardware identifiers",
+                "Implement time manipulation hooks",
+                "Hook GetTickCount and time-related APIs",
+                "Consider time acceleration techniques",
             )
         )
-    if protections.get("time_checks"):
-        strategies.append("Implement time manipulation hooks")
-        strategies.append("Hook GetTickCount and time-related APIs")
-        strategies.append("Consider time acceleration techniques")
-
     if protections.get("network_validation"):
         strategies.append("Set up local license server emulation")
         strategies.append("Hook network APIs to redirect requests")
@@ -1184,8 +1183,7 @@ console.log('[Telemetry] Telemetry blocker active');
 """
 
     # Add batch script for easy setup
-    config["setup_script"] = (
-        f"""@echo off
+    config["setup_script"] = f"""@echo off
 echo Setting up telemetry blocker for {app_name}...
 
 :: Add hosts entries
@@ -1202,7 +1200,6 @@ echo.
 echo Telemetry blocker setup complete!
 pause
 """
-    )
 
     # Add removal script
     config["removal_script"] = f"""@echo off

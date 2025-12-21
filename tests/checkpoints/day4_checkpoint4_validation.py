@@ -134,11 +134,7 @@ def test_memory_write_instruction_generation():
         """Enhanced memory write instruction generation."""
         try:
             # Parse address string and convert to proper format
-            if address.startswith("0x"):
-                addr_int = int(address, 16)
-            else:
-                addr_int = int(address, 16)
-
+            addr_int = int(address, 16) if address.startswith("0x") else int(address, 16)
             # Generate x86 machine code for memory write
             addr_bytes = struct.pack("<I", addr_int)
             value_bytes = struct.pack("<I", value & 0xFFFFFFFF)

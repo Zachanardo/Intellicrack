@@ -2,6 +2,7 @@
 Simple test execution for license server emulator to validate test suite
 """
 
+
 import sys
 import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
@@ -20,10 +21,11 @@ try:
     for name, obj in globals().items():
         if name.startswith('Test') and inspect.isclass(obj):
             test_classes.append(name)
-            for method_name in dir(obj):
-                if method_name.startswith('test_'):
-                    test_methods.append(f"{name}.{method_name}")
-
+            test_methods.extend(
+                f"{name}.{method_name}"
+                for method_name in dir(obj)
+                if method_name.startswith('test_')
+            )
     print(f"OK Found {len(test_classes)} test classes")
     print(f"OK Found {len(test_methods)} test methods")
 

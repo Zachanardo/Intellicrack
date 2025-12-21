@@ -229,7 +229,9 @@ class ResultSerializer:
     PROTOCOL_VERSION = "1.0"
 
     @staticmethod
-    def serialize_result(tool_name: str, result: dict[Any, Any] | list[Any] | str | object, metadata: dict[str, Any] | None = None) -> bytes:
+    def serialize_result(
+        tool_name: str, result: dict[Any, Any] | list[Any] | str | object, metadata: dict[str, Any] | None = None
+    ) -> bytes:
         """Serialize analysis result with metadata.
 
         Args:
@@ -1443,9 +1445,7 @@ class CrossToolOrchestrator:
         try:
             # Execute the memory scan script
             if hasattr(self.frida_manager, "inject_script") and self.frida_manager.sessions:
-                if first_pid := next(
-                    iter(self.frida_manager.sessions.keys()), None
-                ):
+                if first_pid := next(iter(self.frida_manager.sessions.keys()), None):
                     script_result = self.frida_manager.inject_script(first_pid, script_code)
                     if script_result and "data" in script_result:
                         results |= script_result["data"]
@@ -1492,9 +1492,7 @@ class CrossToolOrchestrator:
         try:
             # Execute the API monitoring script
             if hasattr(self.frida_manager, "inject_script") and self.frida_manager.sessions:
-                if first_pid := next(
-                    iter(self.frida_manager.sessions.keys()), None
-                ):
+                if first_pid := next(iter(self.frida_manager.sessions.keys()), None):
                     script_result = self.frida_manager.inject_script(first_pid, script_code)
                     if script_result and "calls" in script_result:
                         api_calls.extend(script_result["calls"])
@@ -1550,9 +1548,7 @@ class CrossToolOrchestrator:
         try:
             # Execute the hook detection script
             if hasattr(self.frida_manager, "inject_script") and self.frida_manager.sessions:
-                if first_pid := next(
-                    iter(self.frida_manager.sessions.keys()), None
-                ):
+                if first_pid := next(iter(self.frida_manager.sessions.keys()), None):
                     script_result = self.frida_manager.inject_script(first_pid, script_code)
                     if script_result and "hooks" in script_result:
                         hooks |= script_result["hooks"]

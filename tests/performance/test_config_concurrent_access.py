@@ -57,7 +57,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
     def worker_read(self, config, key, iterations=100):
         """Worker function for concurrent reads."""
         try:
-            for i in range(iterations):
+            for _ in range(iterations):
                 value = config.get(key)
                 self.results.put(("read", key, value))
                 # Small random delay
@@ -156,7 +156,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
             if result[0] == "read":
                 successful_reads += 1
 
-        print(f"Concurrent reads completed:")
+        print("Concurrent reads completed:")
         print(f"  Threads: {num_threads}")
         print(f"  Operations per thread: {iterations}")
         print(f"  Total operations: {num_threads * iterations}")
@@ -209,7 +209,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
             if result[0] == "write":
                 successful_writes += 1
 
-        print(f"Concurrent writes completed:")
+        print("Concurrent writes completed:")
         print(f"  Threads: {num_threads}")
         print(f"  Operations per thread: {iterations}")
         print(f"  Total operations: {num_threads * iterations}")
@@ -272,7 +272,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
 
         total_ops = sum(operations.values())
 
-        print(f"Mixed operations completed:")
+        print("Mixed operations completed:")
         print(f"  Threads: {num_threads}")
         print(f"  Operations per thread: {iterations}")
         print(f"  Total operations: {total_ops}")
@@ -342,7 +342,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
         while not self.errors.empty():
             errors.append(self.errors.get())
 
-        print(f"Save under load completed:")
+        print("Save under load completed:")
         print(f"  Save operations: {save_count[0]}")
         print(f"  Save errors: {len(save_errors)}")
         print(f"  Modify errors: {len(errors)}")
@@ -406,7 +406,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
 
         elapsed = time.time() - start_time
 
-        print(f"Thread pool stress test completed:")
+        print("Thread pool stress test completed:")
         print(f"  Total operations: {num_operations}")
         print(f"  Max workers: {max_workers}")
         print(f"  Get operations: {results['get']}")
@@ -456,7 +456,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
 
         final_value = config.get("counter")
 
-        print(f"Race condition test:")
+        print("Race condition test:")
         print(f"  Expected final value: {expected_final}")
         print(f"  Actual final value: {final_value}")
         print(f"  Race condition likely: {final_value != expected_final}")
@@ -517,7 +517,7 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
         # Check if threads completed
         threads_alive = thread_a.is_alive() or thread_b.is_alive()
 
-        print(f"Deadlock prevention test:")
+        print("Deadlock prevention test:")
         print(f"  Thread A alive: {thread_a.is_alive()}")
         print(f"  Thread B alive: {thread_b.is_alive()}")
         print(f"  Deadlock detected: {threads_alive}")
@@ -567,8 +567,8 @@ class ConfigConcurrentAccessTests(unittest.TestCase):
         for thread in threads:
             thread.join()
 
-        print(f"Concurrent migration test:")
-        print(f"  Migration threads: 5")
+        print("Concurrent migration test:")
+        print("  Migration threads: 5")
         print(f"  Errors: {len(migration_errors)}")
 
         # No migration errors should occur

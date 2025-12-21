@@ -741,10 +741,8 @@ class TestESILIntegrationScenarios:
         assert 'common_patterns' in comparative
 
         # Should provide comprehensive evasion intelligence
-        total_techniques_found = sum(
-            1 for techniques in all_techniques.values()
-            if any(techniques[category]['detected'] for category in ['anti_debug', 'anti_vm'])
-        )
+        total_techniques_found = sum(bool(any(techniques[category]['detected'] for category in ['anti_debug', 'anti_vm']))
+                                 for techniques in all_techniques.values())
 
         # Results should be meaningful for security research
         assert isinstance(total_techniques_found, int)
@@ -820,7 +818,7 @@ class TestESILPerformanceValidation:
         engines = []
         binary_paths = []
 
-        for i in range(5):
+        for _ in range(5):
             with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as f:
                 f.write(b'MZ\x90\x00' + b'\x00' * 60 + b'PE\x00\x00')
                 f.write(b'\x00' * 2000)

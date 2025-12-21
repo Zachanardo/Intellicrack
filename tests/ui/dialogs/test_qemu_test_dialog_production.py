@@ -118,9 +118,7 @@ class TestRememberChoice:
 
     def test_remember_choice_toggles(self, qemu_dialog: QEMUTestDialog) -> None:
         """Remember checkbox can be toggled."""
-        checkboxes = qemu_dialog.findChildren(QCheckBox)
-
-        if checkboxes:
+        if checkboxes := qemu_dialog.findChildren(QCheckBox):
             checkbox = checkboxes[0]
             initial_state = checkbox.isChecked()
 
@@ -136,9 +134,7 @@ class TestScriptPreview:
         text_edits = qemu_dialog.findChildren(PyQt6.QtWidgets.QTextEdit)
         text_browsers = qemu_dialog.findChildren(PyQt6.QtWidgets.QTextBrowser)
 
-        all_text_widgets = text_edits + text_browsers
-
-        if all_text_widgets:
+        if all_text_widgets := text_edits + text_browsers:
             found_preview = any(
                 qemu_dialog.script_preview in widget.toPlainText()
                 for widget in all_text_widgets
@@ -184,18 +180,19 @@ class TestDialogActions:
         )
 
         try:
-            radios = dialog.findChildren(QRadioButton)
-            if radios:
+            if radios := dialog.findChildren(QRadioButton):
                 radios[0].setChecked(True)
 
                 buttons = dialog.findChildren(QPushButton)
-                continue_btn = None
-                for btn in buttons:
-                    if "continue" in btn.text().lower() or "ok" in btn.text().lower():
-                        continue_btn = btn
-                        break
-
-                if continue_btn:
+                if continue_btn := next(
+                    (
+                        btn
+                        for btn in buttons
+                        if "continue" in btn.text().lower()
+                        or "ok" in btn.text().lower()
+                    ),
+                    None,
+                ):
                     continue_btn.click()
 
                     assert dialog.user_choice is not None
@@ -262,13 +259,9 @@ class TestDialogBehavior:
 
         try:
             buttons = dialog.findChildren(QPushButton)
-            cancel_btn = None
-            for btn in buttons:
-                if "cancel" in btn.text().lower():
-                    cancel_btn = btn
-                    break
-
-            if cancel_btn:
+            if cancel_btn := next(
+                (btn for btn in buttons if "cancel" in btn.text().lower()), None
+            ):
                 cancel_btn.click()
         finally:
             dialog.close()

@@ -18,7 +18,10 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import json
 import os
+from collections.abc import Callable
 from datetime import datetime
+from types import ModuleType
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -73,7 +76,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 try:
     import yaml
 except ImportError:
-    yaml = None
+    yaml = None  # type: ignore[assignment]
 
 
 class PipelineThread(QThread):
@@ -95,8 +98,8 @@ class PipelineThread(QThread):
         """Run the pipeline."""
         try:
             # Override pipeline methods to emit signals
-            def run_stage_wrapper(stage_name: str, original_method: object) -> object:
-                def wrapper() -> object:
+            def run_stage_wrapper(stage_name: str, original_method: Callable[[], Any]) -> Callable[[], Any]:
+                def wrapper() -> Any:
                     self.stage_started.emit(stage_name)
                     result = original_method()
                     self.stage_completed.emit(stage_name, result)
@@ -124,10 +127,10 @@ class PipelineThread(QThread):
 class CICDDialog(PluginDialogBase):
     """CI/CD Pipeline Management Dialog."""
 
-    def __init__(self, parent: object | None = None, plugin_path: str | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, plugin_path: str | None = None) -> None:
         """Initialize the CICDDialog with default values."""
-        self.pipeline_thread = None
-        self.stage_widgets = {}
+        self.pipeline_thread: PipelineThread | None = None
+        self.stage_widgets: dict[str, QWidget] = {}
         super().__init__(parent, plugin_path)
 
     def init_dialog(self) -> None:
@@ -243,13 +246,13 @@ class CICDDialog(PluginDialogBase):
 
         # Result label
         result_label = QLabel("")
-        result_label.setAlignment(Qt.AlignRight)
+        result_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout.addWidget(result_label)
 
         # Store references
-        widget.status_label = status_label
-        widget.progress = progress
-        widget.result_label = result_label
+        setattr(widget, "status_label", status_label)
+        setattr(widget, "progress", progress)
+        setattr(widget, "result_label", result_label)
 
         # Style
         widget.setObjectName("pipelineStageIdle")
@@ -408,9 +411,10 @@ class CICDDialog(PluginDialogBase):
             ".intellicrack-ci.yml",
         )
 
+        config: dict[str, Any]
         if os.path.exists(config_path):
             with open(config_path) as f:
-                config = yaml.safe_load(f)
+                config = yaml.safe_load(f) if yaml else {}
         else:
             # Default config
             config = {
@@ -426,7 +430,9 @@ class CICDDialog(PluginDialogBase):
 
         # Populate tree
         self.config_tree.clear()
-        self.populate_config_tree(config, self.config_tree.invisibleRootItem())
+        root_item = self.config_tree.invisibleRootItem()
+        if root_item is not None:
+            self.populate_config_tree(config, root_item)
 
     def populate_config_tree(self, config: dict[str, object], parent: QTreeWidgetItem) -> None:
         """Populate configuration tree."""
@@ -440,7 +446,7 @@ class CICDDialog(PluginDialogBase):
             else:
                 # Create leaf node
                 item = QTreeWidgetItem(parent, [key, str(value)])
-                item.setFlags(item.flags() | Qt.ItemIsEditable)
+                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
 
     def on_config_changed(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle configuration change."""
@@ -452,6 +458,10 @@ class CICDDialog(PluginDialogBase):
     def save_configuration(self) -> None:
         """Save pipeline configuration."""
         if not self.plugin_path:
+            return
+
+        if not yaml:
+            QMessageBox.warning(self, "YAML Required", "PyYAML is not installed. Configuration cannot be saved.")
             return
 
         # Build config from tree
@@ -471,7 +481,7 @@ class CICDDialog(PluginDialogBase):
 
     def build_config_from_tree(self) -> dict[str, object]:
         """Build configuration from tree widget."""
-        config = {}
+        config: dict[str, object] = {}
 
         def process_item(item: QTreeWidgetItem) -> object:
             if item.childCount() > 0:
@@ -479,7 +489,8 @@ class CICDDialog(PluginDialogBase):
                 result: dict[str, object] = {}
                 for i in range(item.childCount()):
                     child = item.child(i)
-                    result[child.text(0)] = process_item(child)
+                    if child is not None:
+                        result[child.text(0)] = process_item(child)
                 return result
             # Leaf node
             value = item.text(1)
@@ -489,7 +500,7 @@ class CICDDialog(PluginDialogBase):
             try:
                 return int(value)
             except ValueError as e:
-                self.logger.exception("Value error in ci_cd_dialog: %s", e)
+                logger.exception("Value error in ci_cd_dialog: %s", e)
                 try:
                     return float(value)
                 except ValueError as e:
@@ -498,9 +509,11 @@ class CICDDialog(PluginDialogBase):
 
         # Process root items
         root = self.config_tree.invisibleRootItem()
-        for i in range(root.childCount()):
-            item = root.child(i)
-            config[item.text(0)] = process_item(item)
+        if root is not None:
+            for i in range(root.childCount()):
+                item = root.child(i)
+                if item is not None:
+                    config[item.text(0)] = process_item(item)
 
         return config
 
@@ -510,10 +523,10 @@ class CICDDialog(PluginDialogBase):
             self,
             "Reset Configuration",
             "Are you sure you want to reset to default configuration?",
-            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             # Remove config file
             if self.plugin_path:
                 config_path = os.path.join(
@@ -547,12 +560,12 @@ class CICDDialog(PluginDialogBase):
                 icon = "OK" if status == "success" else "ERROR"
 
                 item = QListWidgetItem(f"{icon} {timestamp}")
-                item.setData(Qt.UserRole, os.path.join(report_dir, file))
+                item.setData(Qt.ItemDataRole.UserRole, os.path.join(report_dir, file))
                 self.report_list.addItem(item)
 
     def show_report(self, item: QListWidgetItem) -> None:
         """Show selected report."""
-        report_path = item.data(Qt.UserRole)
+        report_path = item.data(Qt.ItemDataRole.UserRole)
 
         # Also check for text report
         text_path = report_path.replace(".json", ".txt")
@@ -636,9 +649,15 @@ class CICDDialog(PluginDialogBase):
 
         # Reset stage widgets
         for stage_widget in self.stage_widgets.values():
-            stage_widget.status_label.setText("⏸️")
-            stage_widget.progress.setVisible(False)
-            stage_widget.result_label.setText("")
+            status_label = getattr(stage_widget, "status_label", None)
+            progress = getattr(stage_widget, "progress", None)
+            result_label = getattr(stage_widget, "result_label", None)
+            if status_label is not None:
+                status_label.setText("⏸️")
+            if progress is not None:
+                progress.setVisible(False)
+            if result_label is not None:
+                result_label.setText("")
             stage_widget.setObjectName("pipelineStageIdle")
 
         # Update UI
@@ -671,9 +690,13 @@ class CICDDialog(PluginDialogBase):
 
         if stage in self.stage_widgets:
             widget = self.stage_widgets[stage]
-            widget.status_label.setText("⏳")
-            widget.progress.setVisible(True)
-            widget.progress.setRange(0, 0)  # Indeterminate
+            status_label = getattr(widget, "status_label", None)
+            progress = getattr(widget, "progress", None)
+            if status_label is not None:
+                status_label.setText("⏳")
+            if progress is not None:
+                progress.setVisible(True)
+                progress.setRange(0, 0)  # Indeterminate
             widget.setObjectName("pipelineStageRunning")
 
     def on_stage_completed(self, stage: str, result: dict[str, object]) -> None:
@@ -682,18 +705,29 @@ class CICDDialog(PluginDialogBase):
 
         if stage in self.stage_widgets:
             widget = self.stage_widgets[stage]
-            widget.status_label.setText("OK" if success else "ERROR")
-            widget.progress.setVisible(False)
+            status_label = getattr(widget, "status_label", None)
+            progress = getattr(widget, "progress", None)
+            result_label = getattr(widget, "result_label", None)
+
+            if status_label is not None:
+                status_label.setText("OK" if success else "ERROR")
+            if progress is not None:
+                progress.setVisible(False)
 
             # Update result label
-            if stage == "test" and "coverage" in result:
-                widget.result_label.setText(f"Coverage: {result['coverage']}%")
-            elif stage == "quality" and "metrics" in result:
-                complexity = result["metrics"].get("complexity", 0)
-                widget.result_label.setText(f"Complexity: {complexity}")
-            elif stage == "security" and "vulnerabilities" in result:
-                vuln_count = len(result.get("vulnerabilities", []))
-                widget.result_label.setText(f"Issues: {vuln_count}")
+            if result_label is not None:
+                if stage == "test" and "coverage" in result:
+                    result_label.setText(f"Coverage: {result['coverage']}%")
+                elif stage == "quality" and "metrics" in result:
+                    metrics = result["metrics"]
+                    if isinstance(metrics, dict):
+                        complexity = metrics.get("complexity", 0)
+                        result_label.setText(f"Complexity: {complexity}")
+                elif stage == "security" and "vulnerabilities" in result:
+                    vulnerabilities = result.get("vulnerabilities", [])
+                    if hasattr(vulnerabilities, "__len__"):
+                        vuln_count = len(vulnerabilities)
+                        result_label.setText(f"Issues: {vuln_count}")
 
             # Update style
             if success:
@@ -702,17 +736,19 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(
-            w.status_label.text() in ["OK", "ERROR"]
-            for w in self.stage_widgets.values()
-        )
+        completed = sum(bool(hasattr(w, "status_label")
+                                and getattr(w, "status_label", None) is not None
+                                and getattr(getattr(w, "status_label", None), "text", lambda: "")() in ["OK", "ERROR"])
+                    for w in self.stage_widgets.values())
         self.progress_bar.setValue(completed)
 
         # Log errors
-        if not success and result.get("errors"):
+        errors = result.get("errors")
+        if not success and errors:
             self.console_output.append(f"  ERROR Errors in {stage}:")
-            for error in result["errors"]:
-                self.console_output.append(f"    - {error}")
+            if hasattr(errors, "__iter__"):
+                for error in errors:
+                    self.console_output.append(f"    - {error}")
 
     def on_log_message(self, message: str) -> None:
         """Handle log message."""

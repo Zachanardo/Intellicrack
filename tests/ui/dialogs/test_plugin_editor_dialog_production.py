@@ -84,15 +84,13 @@ def temp_binary_file(tmp_path: Path) -> Path:
 @pytest.fixture
 def plugin_editor_dialog(qapp: QApplication) -> PluginEditorDialog:
     """Create PluginEditorDialog for testing."""
-    dialog = PluginEditorDialog()
-    return dialog
+    return PluginEditorDialog()
 
 
 @pytest.fixture
 def plugin_editor_with_file(qapp: QApplication, temp_plugin_file: Path) -> PluginEditorDialog:
     """Create PluginEditorDialog with loaded plugin file."""
-    dialog = PluginEditorDialog(plugin_path=str(temp_plugin_file))
-    return dialog
+    return PluginEditorDialog(plugin_path=str(temp_plugin_file))
 
 
 class TestPluginEditorDialogInitialization:
@@ -356,10 +354,10 @@ class TestPluginEditorDialogDocumentation:
         self, plugin_editor_dialog: PluginEditorDialog
     ) -> None:
         """API list contains essential plugin development topics."""
-        topics = []
-        for i in range(plugin_editor_dialog.api_list.count()):
-            topics.append(plugin_editor_dialog.api_list.item(i).text())
-
+        topics = [
+            plugin_editor_dialog.api_list.item(i).text()
+            for i in range(plugin_editor_dialog.api_list.count())
+        ]
         assert "Plugin Base Class" in topics
         assert "Binary Analysis API" in topics
         assert "Frida API" in topics

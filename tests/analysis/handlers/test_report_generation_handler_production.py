@@ -112,7 +112,7 @@ class TestReportFileOperations:
 
         serialized = json.dumps(large_dataset)
 
-        assert len(serialized) > 0
+        assert serialized != ""
         assert large_dataset["metadata"]["count"] == LARGE_DATASET_SIZE
 
 

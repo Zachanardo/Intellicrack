@@ -313,8 +313,6 @@ class TestRadare2Analysis:
             assert isinstance(strings, list)
 
             string_values = [s.get('string', '') for s in strings if 'string' in s]
-            assert len(string_values) >= 0
-
             r2.quit()
 
         finally:

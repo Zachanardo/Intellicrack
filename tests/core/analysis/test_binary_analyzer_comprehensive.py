@@ -52,7 +52,7 @@ class TestBinaryAnalyzerPEFormat:
         binary_path = temp_workspace / "minimal.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21This program cannot be run in DOS mode.\r\r\n$\x00\x00\x00\x00\x00\x00\x00" + b"\x00" * (0x80 - 64 - 48)
@@ -79,19 +79,19 @@ class TestBinaryAnalyzerPEFormat:
         )
 
         optional_header = bytearray(optional_header_size)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         section_table_offset = 0x80 + 4 + len(coff_header) + optional_header_size
 
         section_1 = bytearray(40)
-        section_1[0:8] = b".text\x00\x00\x00"
+        section_1[:8] = b".text\x00\x00\x00"
         section_1[8:12] = struct.pack("<I", 0x1000)
         section_1[12:16] = struct.pack("<I", 0x1000)
         section_1[16:20] = struct.pack("<I", 0x200)
         section_1[20:24] = struct.pack("<I", 0x400)
 
         section_2 = bytearray(40)
-        section_2[0:8] = b".data\x00\x00\x00"
+        section_2[:8] = b".data\x00\x00\x00"
         section_2[8:12] = struct.pack("<I", 0x2000)
         section_2[12:16] = struct.pack("<I", 0x2000)
         section_2[16:20] = struct.pack("<I", 0x200)
@@ -118,7 +118,7 @@ class TestBinaryAnalyzerPEFormat:
         binary_path = temp_workspace / "corrupted.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub = b"\x00" * (0x80 - 64)
@@ -212,7 +212,7 @@ class TestBinaryAnalyzerELFFormat:
         binary_path = temp_workspace / "minimal_elf64"
 
         e_ident = bytearray(16)
-        e_ident[0:4] = b"\x7fELF"
+        e_ident[:4] = b"\x7fELF"
         e_ident[4] = 2
         e_ident[5] = 1
         e_ident[6] = 1
@@ -271,7 +271,7 @@ class TestBinaryAnalyzerELFFormat:
         binary_path = temp_workspace / "minimal_elf32"
 
         e_ident = bytearray(16)
-        e_ident[0:4] = b"\x7fELF"
+        e_ident[:4] = b"\x7fELF"
         e_ident[4] = 1
         e_ident[5] = 1
         e_ident[6] = 1
@@ -639,7 +639,7 @@ class TestBinaryAnalyzerStringExtraction:
 
         strings = result["strings"]
         assert any("long enough" in s for s in strings)
-        assert not any(s == "AB" for s in strings)
+        assert all(s != "AB" for s in strings)
 
     def test_extract_strings_streaming_mode(self, binary_with_strings: Path) -> None:
         """analyze extracts strings in streaming mode."""
@@ -848,7 +848,7 @@ class TestBinaryAnalyzerProgressTracking:
         result = analyzer.analyze_with_progress(test_file, progress_callback)
 
         assert result["analysis_status"] == "completed"
-        assert len(progress_calls) > 0
+        assert progress_calls
         assert any("format_detection" in call[0] for call in progress_calls)
 
     def test_analyze_with_progress_hash_updates(self, temp_workspace: Path) -> None:

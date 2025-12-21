@@ -416,7 +416,7 @@ class BaseDongleEmulator:
         serial_hash = hashlib.sha256(self.spec.serial_number.encode()).digest()
         expected_code = struct.unpack("<I", serial_hash[:4])[0]
 
-        if feature_code in [expected_code, 1, 2, 5, 10, 100]:
+        if feature_code in {expected_code, 1, 2, 5, 10, 100}:
             return struct.pack("<I", 0) + serial_hash
         return struct.pack("<I", 0x00000002)
 
@@ -704,13 +704,13 @@ class HASPEmulator(BaseDongleEmulator):
         feature_id = struct.unpack("<I", data[:4])[0]
 
         # Check if feature is available (simple check)
-        if feature_id in [1, 2, 5, 10]:  # Demo features
+        if feature_id in {1, 2, 5, 10}:  # Demo features
             session_id = random.randint(1000, 9999)  # noqa: S311 - HASP dongle emulation demo session ID
             return struct.pack("<II", 0, session_id)  # Success + session ID
 
         return b"\x00\x00\x00\x02"  # Feature not found
 
-    def _hasp_logout(self, data: bytes) -> bytes:
+    def _hasp_logout(self, _data: bytes) -> bytes:
         """HASP logout command."""
         return b"\x00\x00\x00\x00"  # Success
 
@@ -761,11 +761,11 @@ class HASPEmulator(BaseDongleEmulator):
         except Exception:
             return b"\x00\x00\x00\x01"  # Error
 
-    def _hasp_get_size(self, data: bytes) -> bytes:
+    def _hasp_get_size(self, _data: bytes) -> bytes:
         """HASP get memory size command."""
         return struct.pack("<II", 0, self.spec.memory_size * 1024)
 
-    def _hasp_get_rtc(self, data: bytes) -> bytes:
+    def _hasp_get_rtc(self, _data: bytes) -> bytes:
         """HASP get real-time clock."""
         current_time = int(time.time())
         return struct.pack("<II", 0, current_time)
@@ -997,9 +997,9 @@ class USBDongleDriver:
 
                 # USB control transfer direction
                 if data:  # Write
-                    bmRequestType = 0x40  # Host to device, vendor request
+                    bm_request_type = 0x40  # Host to device, vendor request
                     result = device.ctrl_transfer(
-                        bmRequestType,
+                        bm_request_type,
                         request,
                         value,
                         index,
@@ -1007,11 +1007,11 @@ class USBDongleDriver:
                     )
                     return b"\x00" if result == len(data) else b"\x01"
                 # Read
-                bmRequestType = 0xC0  # Device to host, vendor request
+                bm_request_type = 0xC0  # Device to host, vendor request
                 length = 64  # Default read length
 
                 result = device.ctrl_transfer(
-                    bmRequestType,
+                    bm_request_type,
                     request,
                     value,
                     index,
@@ -1235,7 +1235,7 @@ class ParallelPortEmulator:
                 import platform
 
                 # Create inline assembly function for port read
-                if platform.machine() in ["x86_64", "AMD64"]:
+                if platform.machine() in {"x86_64", "AMD64"}:
                     # x86_64 inline assembly for IN instruction
                     asm_code = bytes(
                         [
@@ -1276,17 +1276,17 @@ class ParallelPortEmulator:
                 ]
 
                 # Allocate executable memory page
-                PROT_READ = 0x1
-                PROT_WRITE = 0x2
-                PROT_EXEC = 0x4
-                MAP_PRIVATE = 0x02
-                MAP_ANONYMOUS = 0x20
+                prot_read = 0x1
+                prot_write = 0x2
+                prot_exec = 0x4
+                map_private = 0x02
+                map_anonymous = 0x20
 
                 exec_mem = mmap_func(
                     0,
                     len(asm_code),
-                    PROT_READ | PROT_WRITE | PROT_EXEC,
-                    MAP_PRIVATE | MAP_ANONYMOUS,
+                    prot_read | prot_write | prot_exec,
+                    map_private | map_anonymous,
                     -1,
                     0,
                 )
@@ -1754,7 +1754,7 @@ class DongleRegistryManager:
         """Install application-specific registry entries."""
         try:
             # HASP entries
-            if spec.dongle_type in [DongleType.HASP_HL, DongleType.HASP_4]:
+            if spec.dongle_type in {DongleType.HASP_HL, DongleType.HASP_4}:
                 hasp_key = winreg.CreateKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Aladdin Knowledge Systems\HASP")
                 winreg.SetValueEx(hasp_key, "InstallPath", 0, winreg.REG_SZ, r"C:\Windows\System32")
                 winreg.CloseKey(hasp_key)
@@ -1907,15 +1907,15 @@ class DongleAPIHooker:
         Returns:
             Status code (0 = success, non-zero = error).
         """
-        SENTINEL_SUCCESS = 0
-        SENTINEL_INVALID_PARAMETER = 0x00000002
-        SENTINEL_INVALID_CELL = 0x00000004
-        SENTINEL_ACCESS_DENIED = 0x00000005
+        sentinel_success = 0
+        sentinel_invalid_parameter = 0x00000002
+        sentinel_invalid_cell = 0x00000004
+        sentinel_access_denied = 0x00000005
 
         if not dongle or not dongle.active:
             return 0x00000003
         if len(args) < 2:
-            return SENTINEL_INVALID_PARAMETER
+            return sentinel_invalid_parameter
 
         query_type = args[0]
         cell_id = args[1] if len(args) > 1 else 0
@@ -1923,50 +1923,50 @@ class DongleAPIHooker:
         try:
             if query_type == 0x00:
                 if not hasattr(dongle, "cell_data") or cell_id not in dongle.cell_data:
-                    return SENTINEL_INVALID_CELL
+                    return sentinel_invalid_cell
                 cell = dongle.cell_data[cell_id]
                 if "R" not in cell.get("permissions", ""):
-                    return SENTINEL_ACCESS_DENIED
-                return SENTINEL_SUCCESS
+                    return sentinel_access_denied
+                return sentinel_success
 
             elif query_type == 0x01:
                 if not hasattr(dongle, "read_cell"):
-                    return SENTINEL_INVALID_PARAMETER
+                    return sentinel_invalid_parameter
                 dongle.read_cell(cell_id)
-                return SENTINEL_SUCCESS
+                return sentinel_success
 
             elif query_type == 0x02:
                 if len(args) < 4:
-                    return SENTINEL_INVALID_PARAMETER
+                    return sentinel_invalid_parameter
                 if not hasattr(dongle, "transform_data"):
-                    return SENTINEL_INVALID_PARAMETER
+                    return sentinel_invalid_parameter
                 input_data = args[2] if len(args) > 2 else b""
                 if isinstance(input_data, bytes):
                     dongle.transform_data(cell_id, input_data)
-                return SENTINEL_SUCCESS
+                return sentinel_success
 
             elif query_type == 0x03:
-                return SENTINEL_SUCCESS
+                return sentinel_success
 
             elif query_type == 0x04:
                 if not hasattr(dongle, "cell_data"):
-                    return SENTINEL_INVALID_PARAMETER
-                return SENTINEL_SUCCESS
+                    return sentinel_invalid_parameter
+                return sentinel_success
 
             elif query_type == 0x10:
-                return SENTINEL_SUCCESS
+                return sentinel_success
 
             else:
                 self.logger.warning("Unknown Sentinel query type: 0x%02X", query_type)
-                return SENTINEL_INVALID_PARAMETER
+                return sentinel_invalid_parameter
 
         except PermissionError:
-            return SENTINEL_ACCESS_DENIED
+            return sentinel_access_denied
         except ValueError:
-            return SENTINEL_INVALID_CELL
+            return sentinel_invalid_cell
         except Exception:
             self.logger.exception("Sentinel query error")
-            return SENTINEL_INVALID_PARAMETER
+            return sentinel_invalid_parameter
 
     def _handle_hasp_encrypt(self, dongle: BaseDongleEmulator, buffer: bytes, length: int) -> int:
         """Handle HASP encryption API calls.
@@ -1983,9 +1983,9 @@ class DongleAPIHooker:
         Returns:
             Status code (0 = HASP_STATUS_OK, non-zero = error).
         """
-        HASP_STATUS_OK = 0
-        HASP_ENC_NOT_SUPP = 0x0000001C
-        HASP_INTERNAL_ERROR = 0x00000021
+        hasp_status_ok = 0
+        hasp_enc_not_supp = 0x0000001C
+        hasp_internal_error = 0x00000021
 
         if not dongle or not dongle.active:
             return 0x00000001
@@ -2005,10 +2005,10 @@ class DongleAPIHooker:
                 try:
                     data_to_encrypt = bytes(buffer)[:length]
                 except (TypeError, ValueError):
-                    return HASP_INTERNAL_ERROR
+                    return hasp_internal_error
 
             if not hasattr(dongle, "encrypt_data"):
-                return HASP_ENC_NOT_SUPP
+                return hasp_enc_not_supp
 
             encrypted = dongle.encrypt_data(data_to_encrypt)
 
@@ -2021,10 +2021,10 @@ class DongleAPIHooker:
             elif hasattr(buffer, "value") and not isinstance(buffer, (bytes, bytearray)):
                 buffer.value = encrypted
 
-            return HASP_STATUS_OK
+            return hasp_status_ok
         except Exception:
             self.logger.exception("HASP encryption error")
-            return HASP_INTERNAL_ERROR
+            return hasp_internal_error
 
     def _handle_hasp_login(self, dongle: BaseDongleEmulator, feature_id: int, vendor_code: bytes | int) -> int:
         """Handle HASP login API calls.
@@ -2041,11 +2041,11 @@ class DongleAPIHooker:
         Returns:
             Status code (0 = HASP_STATUS_OK, non-zero = error).
         """
-        HASP_STATUS_OK = 0
-        HASP_FEATURE_NOT_FOUND = 0x00000009
-        HASP_INV_VCODE = 0x0000000F
-        HASP_NO_MORE_CONNECTIONS = 0x00000016
-        HASP_INTERNAL_ERROR = 0x00000021
+        hasp_status_ok = 0
+        hasp_feature_not_found = 0x00000009
+        hasp_inv_vcode = 0x0000000F
+        hasp_no_more_connections = 0x00000016
+        hasp_internal_error = 0x00000021
 
         if not dongle or not dongle.active:
             return 0x00000001
@@ -2056,7 +2056,7 @@ class DongleAPIHooker:
                 allowed_features = set(dongle.spec.features["allowed_features"])
 
             if feature_id not in allowed_features and feature_id != 0 and not (0 <= feature_id <= 0xFFFF):
-                return HASP_FEATURE_NOT_FOUND
+                return hasp_feature_not_found
 
             if vendor_code is not None:
                 if isinstance(vendor_code, int):
@@ -2067,7 +2067,7 @@ class DongleAPIHooker:
                     try:
                         vendor_bytes = bytes(vendor_code)
                     except (TypeError, ValueError):
-                        return HASP_INV_VCODE
+                        return hasp_inv_vcode
 
                 if len(vendor_bytes) >= 4:
                     provided_vendor = struct.unpack("<I", vendor_bytes[:4])[0]
@@ -2081,7 +2081,7 @@ class DongleAPIHooker:
             max_sessions = 16
             sessions = getattr(dongle, "_sessions", {})
             if isinstance(sessions, dict) and len(sessions) >= max_sessions:
-                return HASP_NO_MORE_CONNECTIONS
+                return hasp_no_more_connections
 
             session_id = (int(time.time() * 1000) & 0x7FFFFFFF) | (feature_id << 16)
             session_id &= 0xFFFFFFFF
@@ -2098,11 +2098,11 @@ class DongleAPIHooker:
                 dongle._current_session = session_id
 
             self.logger.debug("HASP login successful: feature=%d, session=%08X", feature_id, session_id)
-            return HASP_STATUS_OK
+            return hasp_status_ok
 
         except Exception:
             self.logger.exception("HASP login error")
-            return HASP_INTERNAL_ERROR
+            return hasp_internal_error
 
     def _hook_lpt_apis(self) -> None:
         """Install hooks for parallel port (LPT) dongle API functions.
@@ -2145,18 +2145,18 @@ class DongleAPIHooker:
 
         port_address = args[0]
 
-        LPT1_BASE = 0x378
-        LPT2_BASE = 0x278
-        LPT3_BASE = 0x3BC
+        lpt1_base = 0x378
+        lpt2_base = 0x278
+        lpt3_base = 0x3BC
 
-        for lpt_base in [LPT1_BASE, LPT2_BASE, LPT3_BASE]:
+        for lpt_base in [lpt1_base, lpt2_base, lpt3_base]:
             if lpt_base <= port_address <= lpt_base + 2 and hasattr(self.manager, "lpt_emulator"):
                 result: int = self.manager.lpt_emulator.read_port(port_address)
                 return result
 
         return 0xFF
 
-    def _handle_port_write(self, func_name: str, args: tuple[Any, ...]) -> int:
+    def _handle_port_write(self, _func_name: str, args: tuple[Any, ...]) -> int:
         """Handle parallel port write operations."""
         if len(args) < 2:
             return 0
@@ -2164,11 +2164,11 @@ class DongleAPIHooker:
         port_address = args[0]
         value = args[1] & 0xFF
 
-        LPT1_BASE = 0x378
-        LPT2_BASE = 0x278
-        LPT3_BASE = 0x3BC
+        lpt1_base = 0x378
+        lpt2_base = 0x278
+        lpt3_base = 0x3BC
 
-        for lpt_base in [LPT1_BASE, LPT2_BASE, LPT3_BASE]:
+        for lpt_base in [lpt1_base, lpt2_base, lpt3_base]:
             if lpt_base <= port_address <= lpt_base + 2 and hasattr(self.manager, "lpt_emulator"):
                 self.manager.lpt_emulator.write_port(port_address, value)
                 return 0
@@ -2377,7 +2377,7 @@ class HardwareDongleEmulator:
 
         # Create appropriate emulator
         emulator: BaseDongleEmulator
-        if dongle_type in [DongleType.HASP_HL, DongleType.HASP_4]:
+        if dongle_type in {DongleType.HASP_HL, DongleType.HASP_4}:
             emulator = HASPEmulator(spec)
         elif dongle_type.value.startswith("Sentinel"):
             emulator = SentinelEmulator(spec)
@@ -2546,14 +2546,14 @@ class HardwareDongleEmulator:
                 "active": dongle.active,
             }
 
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)
 
         self.logger.info("Exported %d dongles to %s", len(self.dongles), output_file)
 
     def import_dongles(self, input_file: str) -> None:
         """Import dongle configurations."""
-        with open(input_file) as f:
+        with open(input_file, encoding="utf-8") as f:
             import_data = json.load(f)
 
         imported_count = 0

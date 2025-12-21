@@ -127,7 +127,7 @@ class TestExportSymbolResolution:
                 forwarder: str = export.forwarder.decode("utf-8")
                 forwarded_exports[name] = forwarder
 
-        assert len(forwarded_exports) > 0
+        assert forwarded_exports
 
         for name, forwarder in list(forwarded_exports.items())[:5]:
             assert "." in forwarder
@@ -210,9 +210,9 @@ class TestImportSymbolResolution:
                         if imp.name:
                             all_imports.append(imp.name.decode("utf-8"))
 
-                if len(all_imports) > 0:
+                if all_imports:
                     found_imports = True
-                    assert len(all_imports) > 0
+                    assert all_imports
                     return
             except (pefile.PEFormatError, OSError):
                 continue
@@ -250,8 +250,8 @@ class TestImportSymbolResolution:
                         address: int = imp.address
                         iat_entries.append((dll_name, func_name, address))
 
-                if len(iat_entries) > 0:
-                    assert len(iat_entries) > 0
+                if iat_entries:
+                    assert iat_entries
 
                     for dll, func, addr in iat_entries[:10]:
                         assert len(dll) > 0
@@ -348,8 +348,11 @@ class TestDebugSymbolLoading:
                                 null_pos: int = debug_data.find(b"\x00\x00")
                                 if null_pos > 0:
                                     pdb_section: bytes = debug_data[:null_pos]
-                                    pdb_matches: List[bytes] = [s for s in pdb_section.split(b"\x00") if b".pdb" in s.lower()]
-                                    if pdb_matches:
+                                    if pdb_matches := [
+                                        s
+                                        for s in pdb_section.split(b"\x00")
+                                        if b".pdb" in s.lower()
+                                    ]:
                                         pdb_path: str = pdb_matches[0].decode("utf-8", errors="ignore")
                                         assert ".pdb" in pdb_path.lower()
                                         assert len(pdb_path) > 4
@@ -446,7 +449,7 @@ class TestSymbolDemangling:
             except (pefile.PEFormatError, OSError):
                 continue
 
-        if len(mangled_symbols) == 0:
+        if not mangled_symbols:
             pytest.skip("No mangled symbols found in sample DLLs")
 
         for symbol in mangled_symbols:
@@ -480,7 +483,7 @@ class TestSymbolDemangling:
             except (pefile.PEFormatError, OSError):
                 continue
 
-        if len(decorated_names) == 0:
+        if not decorated_names:
             pytest.skip("No MSVC decorated names found")
 
         for name in decorated_names:
@@ -530,7 +533,7 @@ class TestAddressSymbolMapping:
         sample_rvas: List[int] = list(rva_to_symbol.keys())[:10]
         for rva in sample_rvas:
             symbol: str = rva_to_symbol[rva]
-            assert len(symbol) > 0
+            assert symbol != ""
             assert rva > 0
 
     def test_resolve_virtual_address_to_symbol(self, kernel32_pe: pefile.PE) -> None:
@@ -563,7 +566,7 @@ class TestAddressSymbolMapping:
                 except pefile.PEFormatError:
                     continue
 
-        assert len(offset_to_symbol) > 0
+        assert offset_to_symbol
 
         for offset, symbol in list(offset_to_symbol.items())[:10]:
             assert offset > 0
@@ -625,10 +628,8 @@ class TestThunkResolution:
 
         thunk_addresses: List[int] = []
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
-            for imp in entry.imports:
-                thunk_addresses.append(imp.address)
-
-        assert len(thunk_addresses) > 0
+            thunk_addresses.extend(imp.address for imp in entry.imports)
+        assert thunk_addresses
 
         for addr in thunk_addresses[:20]:
             assert addr > 0
@@ -665,11 +666,8 @@ class TestForwardReferenceHandling:
         pe: pefile.PE = pefile.PE(str(kernel32_path), fast_load=True)
         pe.parse_data_directories()
 
-        forwarded_count: int = 0
-        for export in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-            if export.forwarder:
-                forwarded_count += 1
-
+        forwarded_count: int = sum(bool(export.forwarder)
+                               for export in pe.DIRECTORY_ENTRY_EXPORT.symbols)
         assert forwarded_count > 0
 
     def test_parse_forwarder_string_format(self) -> None:
@@ -690,7 +688,7 @@ class TestForwardReferenceHandling:
                     target_dll, target_func = forwarder.split(".", 1)
                     forwarders.append((name, target_dll, target_func))
 
-        assert len(forwarders) > 0
+        assert forwarders
 
         for orig_name, target_dll, target_func in forwarders[:10]:
             assert len(orig_name) > 0
@@ -842,7 +840,6 @@ class TestLicenseAPISymbolIdentification:
 
         for func in common_crypto_funcs:
             if func in crypto_apis:
-                assert True
                 return
 
         pytest.skip("Expected crypto APIs not found")
@@ -1061,7 +1058,7 @@ class TestSymbolResolutionIntegration:
                     target_dll, target_func = forwarder.split(".", 1)
                     cross_references.append((orig_name, target_dll, target_func))
 
-        assert len(cross_references) > 0
+        assert cross_references
 
         for orig, target_dll, target_func in cross_references[:5]:
             target_path: Path = system32 / f"{target_dll}.dll"
@@ -1071,7 +1068,7 @@ class TestSymbolResolutionIntegration:
                     target_pe.parse_data_directories()
 
                     if hasattr(target_pe, "DIRECTORY_ENTRY_EXPORT"):
-                        assert len(list(target_pe.DIRECTORY_ENTRY_EXPORT.symbols)) > 0
+                        assert list(target_pe.DIRECTORY_ENTRY_EXPORT.symbols)
                 except (pefile.PEFormatError, OSError):
                     continue
 

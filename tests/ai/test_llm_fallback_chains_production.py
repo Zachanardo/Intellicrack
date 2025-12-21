@@ -66,9 +66,8 @@ class TestLLMBackend(LLMBackend):
                 raise Exception("Temporary failure")
             self.consecutive_failures = 0
 
-        if self.failure_mode == "consecutive_failures":
-            if self.call_count <= 5:
-                raise Exception("Consecutive failure")
+        if self.failure_mode == "consecutive_failures" and self.call_count <= 5:
+            raise Exception("Consecutive failure")
 
         return LLMResponse(
             content=f"Test response {self.call_count}",
@@ -240,15 +239,13 @@ class TestFallbackChain:
             api_base="http://localhost:11435",
         )
 
-        chain = FallbackChain(
+        return FallbackChain(
             chain_id="test-chain",
             model_configs=[("model1", config1), ("model2", config2)],
             max_retries=3,
             retry_delay=0.1,
             circuit_failure_threshold=5,
         )
-
-        return chain
 
     def test_chain_initialization(self, test_chain: FallbackChain) -> None:
         """Fallback chain initializes with correct configuration."""

@@ -264,9 +264,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
             try:
                 pe = pefile.PE(binary_path)
                 code_sections.extend(
-                    (section.VirtualAddress, section.get_data())
-                    for section in pe.sections
-                    if section.Characteristics & 0x20000000
+                    (section.VirtualAddress, section.get_data()) for section in pe.sections if section.Characteristics & 0x20000000
                 )
             except (pefile.PEFormatError, Exception) as e:
                 logger.exception("Error in security_analysis: %s", e)
@@ -738,10 +736,14 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
         if isinstance(static_analysis, dict):
             potential_leaks = static_analysis["potential_leaks"]
             if isinstance(potential_leaks, list):
-                high_severity = sum(bool(isinstance(leak, dict) and leak.get("severity") == "high")
-                                for leak in potential_leaks)
-                medium_severity = sum(bool(isinstance(leak, dict) and leak.get("severity") == "medium")
-                                  for leak in potential_leaks)
+                high_severity = sum(
+                    isinstance(leak, dict) and leak.get("severity") == "high"
+                    for leak in potential_leaks
+                )
+                medium_severity = sum(
+                    isinstance(leak, dict) and leak.get("severity") == "medium"
+                    for leak in potential_leaks
+                )
             else:
                 high_severity = 0
                 medium_severity = 0

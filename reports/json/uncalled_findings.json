@@ -1,8 +1,8 @@
 {
   "tool": "uncalled",
-  "generated": "2025-12-20T02:58:53.734295",
-  "total_findings": 332,
-  "total_files": 156,
+  "generated": "2025-12-20T22:10:40.171829",
+  "total_findings": 328,
+  "total_files": 155,
   "files": [
     {
       "path": "intellicrack\\handlers\\pyelftools_handler.py",
@@ -911,36 +911,6 @@
       ]
     },
     {
-      "path": "intellicrack\\core\\task_manager.py",
-      "count": 4,
-      "findings": [
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: get_task_history",
-          "raw": "intellicrack\\core\\task_manager.py: Unused function get_task_history"
-        },
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: get_thread_count",
-          "raw": "intellicrack\\core\\task_manager.py: Unused function get_thread_count"
-        },
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: set_thread_count",
-          "raw": "intellicrack\\core\\task_manager.py: Unused function set_thread_count"
-        },
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: wait_for_all",
-          "raw": "intellicrack\\core\\task_manager.py: Unused function wait_for_all"
-        }
-      ]
-    },
-    {
       "path": "tests\\utils\\secure_assertions.py",
       "count": 4,
       "findings": [
@@ -1817,6 +1787,18 @@
       ]
     },
     {
+      "path": "intellicrack\\ai\\code_analysis_tools.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: ask_ai_about_analysis",
+          "raw": "intellicrack\\ai\\code_analysis_tools.py: Unused function ask_ai_about_analysis"
+        }
+      ]
+    },
+    {
       "path": "intellicrack\\ai\\integration_manager.py",
       "count": 1,
       "findings": [
@@ -1849,18 +1831,6 @@
           "column": null,
           "message": "Unused function: unload_model_endpoint",
           "raw": "intellicrack\\ai\\local_gguf_server.py: Unused function unload_model_endpoint"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack\\ai\\optimization_config.py",
-      "count": 1,
-      "findings": [
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: disable_rule",
-          "raw": "intellicrack\\ai\\optimization_config.py: Unused function disable_rule"
         }
       ]
     },

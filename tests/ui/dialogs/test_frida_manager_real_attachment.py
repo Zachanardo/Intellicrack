@@ -153,7 +153,7 @@ class TestRealProcessEnumeration:
         all_processes = frida.enumerate_processes()
 
         system_processes = [p for p in all_processes if "system" in p.name.lower()]
-        assert len(system_processes) >= 1
+        assert system_processes
 
 
 class TestRealProcessAttachment:
@@ -185,7 +185,7 @@ class TestRealProcessAttachment:
             python_modules = [
                 m for m in modules if "python" in m.name.lower()
             ]
-            assert len(python_modules) > 0
+            assert python_modules
 
             for module in modules[:5]:
                 assert hasattr(module, "name")
@@ -314,8 +314,7 @@ rpc.exports = {
 
             time.sleep(0.1)
 
-            modules = session.enumerate_modules()
-            if modules:
+            if modules := session.enumerate_modules():
                 first_module = modules[0]
                 module_info = script.exports.find_module(first_module.name)
 
@@ -453,7 +452,7 @@ class TestFridaWorkerIntegration:
             if attached:
                 break
 
-        assert len(attached) > 0
+        assert attached
         assert attached[0] == pid
 
         worker.detach()
@@ -485,7 +484,7 @@ send({type: "test", message: "Script running"});
             if outputs:
                 break
 
-        assert len(outputs) > 0
+        assert outputs
 
         worker.detach()
 
@@ -505,8 +504,7 @@ class TestFridaManagerDialog:
 
         process_names = []
         for row in range(min(process_list.rowCount(), 20)):
-            name_item = process_list.item(row, 1)
-            if name_item:
+            if name_item := process_list.item(row, 1):
                 process_names.append(name_item.text())
 
         assert any(
@@ -528,8 +526,7 @@ class TestFridaManagerDialog:
 
         if filtered_count > 0:
             for row in range(filtered_count):
-                name_item = dialog.process_list.item(row, 1)
-                if name_item:
+                if name_item := dialog.process_list.item(row, 1):
                     assert "python" in name_item.text().lower()
 
     def test_dialog_attach_to_selected_process(

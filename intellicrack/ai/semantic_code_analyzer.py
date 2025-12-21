@@ -18,7 +18,6 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import ast
 import hashlib
 import logging
@@ -438,9 +437,7 @@ class NLPCodeProcessor:
 
         # Extract vocabulary matches
         for category, keywords in self.vocabulary.items():
-            matches = sum(
-                keyword.lower() in normalized_code.lower() for keyword in keywords
-            )
+            matches = sum(keyword.lower() in normalized_code.lower() for keyword in keywords)
             features["vocabulary_matches"][category] = matches
 
         # Extract pattern matches
@@ -963,7 +960,10 @@ class SemanticCodeAnalyzer:
             strength = 0.6
             confidence = 0.7
 
-        elif node1.location["line"] < node2.location["line"] and abs(node1.location["line"] - node2.location["line"]) < SEQUENTIAL_LINE_THRESHOLD:
+        elif (
+            node1.location["line"] < node2.location["line"]
+            and abs(node1.location["line"] - node2.location["line"]) < SEQUENTIAL_LINE_THRESHOLD
+        ):
             relationship_type = "sequential"
             strength = 0.4
             confidence = 0.6
@@ -1112,26 +1112,11 @@ class SemanticCodeAnalyzer:
         """Calculate complexity metrics."""
         return {
             "semantic_complexity": len(semantic_nodes),
-            "intent_diversity": len(
-                {node.semantic_intent for node in semantic_nodes}
-            ),
-            "business_pattern_count": len(
-                {
-                    node.business_pattern
-                    for node in semantic_nodes
-                    if node.business_pattern
-                }
-            ),
-            "avg_node_confidence": (
-                sum(node.confidence for node in semantic_nodes)
-                / len(semantic_nodes)
-                if semantic_nodes
-                else 0
-            ),
+            "intent_diversity": len({node.semantic_intent for node in semantic_nodes}),
+            "business_pattern_count": len({node.business_pattern for node in semantic_nodes if node.business_pattern}),
+            "avg_node_confidence": (sum(node.confidence for node in semantic_nodes) / len(semantic_nodes) if semantic_nodes else 0),
             "content_length": len(content),
-            "function_count": sum(
-                node.node_type.lower() == "functiondef" for node in semantic_nodes
-            ),
+            "function_count": sum(node.node_type.lower() == "functiondef" for node in semantic_nodes),
         }
 
     def _generate_semantic_summary(self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]) -> dict[str, Any]:
@@ -1252,7 +1237,9 @@ class SemanticCodeAnalyzer:
 
         insights["complexity_overview"] = {
             "simple_files": len([r for r in all_results if len(r.semantic_nodes) < LOW_COMPLEXITY_THRESHOLD]),
-            "moderate_files": len([r for r in all_results if LOW_COMPLEXITY_THRESHOLD <= len(r.semantic_nodes) < MEDIUM_COMPLEXITY_THRESHOLD]),
+            "moderate_files": len([
+                r for r in all_results if LOW_COMPLEXITY_THRESHOLD <= len(r.semantic_nodes) < MEDIUM_COMPLEXITY_THRESHOLD
+            ]),
             "complex_files": len([r for r in all_results if len(r.semantic_nodes) >= MEDIUM_COMPLEXITY_THRESHOLD]),
         }
 

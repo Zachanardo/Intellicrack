@@ -8,21 +8,64 @@
  * @author Intellicrack Framework
  * @version 2.0.0
  */
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import ghidra.util.exception.*;
-import java.io.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressIterator;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.Pointer;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.lang.OperandType;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CodeUnitIterator;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.PcodeBlock;
+import ghidra.program.model.pcode.PcodeBlockBasic;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeOpAST;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class CryptoRoutineIdentifier extends GhidraScript {
 
@@ -228,6 +271,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     try {
       Address start = block.getStart();
       Address end = block.getEnd();
+      long blockSize = end.subtract(start);
+      printf("    Scanning block %s from %s to %s (%d bytes)%n",
+          block.getName(), start, end, blockSize);
 
       // Check for AES S-boxes
       checkForAESTables(block);
@@ -273,7 +319,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   }
 
   private boolean isAESSBox(byte[] data) {
-    if (data.length < 16) return false;
+    if (data.length < 16) {
+      return false;
+    }
 
     // Check first 16 bytes of standard AES S-box
     byte[] aesSboxStart = {
@@ -296,13 +344,17 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     };
 
     for (int i = 0; i < aesSboxStart.length; i++) {
-      if (data[i] != aesSboxStart[i]) return false;
+      if (data[i] != aesSboxStart[i]) {
+        return false;
+      }
     }
     return true;
   }
 
   private boolean isAESInvSBox(byte[] data) {
-    if (data.length < 16) return false;
+    if (data.length < 16) {
+      return false;
+    }
 
     // Check first 16 bytes of AES inverse S-box
     byte[] aesInvSboxStart = {
@@ -325,7 +377,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     };
 
     for (int i = 0; i < aesInvSboxStart.length; i++) {
-      if (data[i] != aesInvSboxStart[i]) return false;
+      if (data[i] != aesInvSboxStart[i]) {
+        return false;
+      }
     }
     return true;
   }
@@ -358,7 +412,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   }
 
   private boolean containsSHA256Constants(byte[] data) {
-    if (data.length < 16) return false;
+    if (data.length < 16) {
+      return false;
+    }
 
     // Check first 4 SHA-256 K constants
     int[] sha256K = {0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5};
@@ -369,7 +425,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         bb.position(0);
         bb.order(ByteOrder.BIG_ENDIAN);
         for (int k2 : sha256K) {
-          if (bb.getInt() != k2) return false;
+          if (bb.getInt() != k2) {
+            return false;
+          }
         }
         return true;
       }
@@ -378,14 +436,18 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   }
 
   private boolean containsMD5Constants(byte[] data) {
-    if (data.length < 16) return false;
+    if (data.length < 16) {
+      return false;
+    }
 
     // Check first 4 MD5 constants
     int[] md5K = {0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee};
 
     ByteBuffer bb = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
     for (int k : md5K) {
-      if (bb.getInt() != k) return false;
+      if (bb.getInt() != k) {
+        return false;
+      }
     }
     return true;
   }
@@ -504,10 +566,14 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       try {
         // Decompile function
         DecompileResults results = decompiler.decompileFunction(func, 30, monitor);
-        if (!results.decompileCompleted()) continue;
+        if (!results.decompileCompleted()) {
+          continue;
+        }
 
         HighFunction highFunc = results.getHighFunction();
-        if (highFunc == null) continue;
+        if (highFunc == null) {
+          continue;
+        }
 
         // Analyze operations
         CryptoOperationAnalysis analysis = analyzeOperations(highFunc);
@@ -525,7 +591,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         }
 
       } catch (Exception e) {
-        // Continue on error
+        printf("    Warning: Error analyzing function %s: %s%n", func.getName(), e.getMessage());
       }
     }
   }
@@ -584,9 +650,16 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     // Look for multiplication followed by modulo (common in RSA/ECC)
     // Trace data flow to find modular reduction patterns
 
+    // Verify function context is valid for pattern analysis
+    if (func == null || func.getBasicBlocks() == null) {
+      return false;
+    }
+
     // Get the output varnode from multiplication
     Varnode multOutput = multOp.getOutput();
-    if (multOutput == null) return false;
+    if (multOutput == null) {
+      return false;
+    }
 
     // Find all uses of the multiplication result
     Iterator<PcodeOp> descendants = multOutput.getDescendants();
@@ -764,7 +837,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
           }
 
         } catch (MemoryAccessException e) {
-          // Continue
+          printf("      Memory access error at data entry: %s%n", e.getMessage());
         }
       }
     }
@@ -794,23 +867,26 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   }
 
   private String identifyKeyType(int size, byte[] data) {
+    double entropy = calculateEntropy(data);
+    String entropyQuality = entropy > 7.5 ? " (high entropy)" : entropy > 6.0 ? " (good entropy)" : "";
+
     switch (size) {
       case 16:
-        return "AES-128/ChaCha20";
+        return "AES-128/ChaCha20" + entropyQuality;
       case 24:
-        return "3DES/AES-192";
+        return "3DES/AES-192" + entropyQuality;
       case 32:
-        return "AES-256/ChaCha20-256";
+        return "AES-256/ChaCha20-256" + entropyQuality;
       case 48:
-        return "P-384 ECC";
+        return "P-384 ECC" + entropyQuality;
       case 64:
-        return "P-521 ECC/SHA-512";
+        return "P-521 ECC/SHA-512" + entropyQuality;
       case 128:
-        return "RSA-1024";
+        return "RSA-1024" + entropyQuality;
       case 256:
-        return "RSA-2048";
+        return "RSA-2048" + entropyQuality;
       default:
-        return "Unknown (" + (size * 8) + "-bit)";
+        return "Unknown (" + (size * 8) + "-bit)" + entropyQuality;
     }
   }
 
@@ -898,11 +974,21 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
         // Scoring system for key schedule detection
         double confidence = 0.0;
-        if (hasRcon) confidence += 0.3;
-        if (hasLoop) confidence += 0.2;
-        if (hasXor) confidence += 0.2;
-        if (hasSboxAccess) confidence += 0.2;
-        if (hasRotWord) confidence += 0.1;
+        if (hasRcon) {
+          confidence += 0.3;
+        }
+        if (hasLoop) {
+          confidence += 0.2;
+        }
+        if (hasXor) {
+          confidence += 0.2;
+        }
+        if (hasSboxAccess) {
+          confidence += 0.2;
+        }
+        if (hasRotWord) {
+          confidence += 0.1;
+        }
 
         if (confidence >= 0.6) {
           println(
@@ -921,7 +1007,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         }
       }
     } catch (Exception e) {
-      // Continue analysis
+      printf("    Warning: Error in key expansion analysis: %s%n", e.getMessage());
     }
   }
 
@@ -1027,10 +1113,14 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
       try {
         DecompileResults results = decompiler.decompileFunction(func, 30, monitor);
-        if (!results.decompileCompleted()) continue;
+        if (!results.decompileCompleted()) {
+          continue;
+        }
 
         HighFunction highFunc = results.getHighFunction();
-        if (highFunc == null) continue;
+        if (highFunc == null) {
+          continue;
+        }
 
         // Count XOR operations
         int xorCount = countOperations(highFunc, PcodeOp.INT_XOR);
@@ -1044,7 +1134,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         }
 
       } catch (Exception e) {
-        // Continue
+        printf("    Warning: Error analyzing XOR function: %s%n", e.getMessage());
       }
     }
   }
@@ -1052,7 +1142,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   private void findCustomBlockCiphers() {
     // Look for Feistel-like structures and S-box usage
     for (CryptoRoutine routine : detectedRoutines) {
-      if (routine.reason.contains("S-box") && !routine.algorithm.equals("AES")) {
+      if (routine.reason.contains("S-box") && !"AES".equals(routine.algorithm)) {
         println("  Possible custom block cipher using S-boxes at " + routine.address);
       }
     }
@@ -1067,10 +1157,14 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
       try {
         DecompileResults results = decompiler.decompileFunction(func, 30, monitor);
-        if (!results.decompileCompleted()) continue;
+        if (!results.decompileCompleted()) {
+          continue;
+        }
 
         HighFunction highFunc = results.getHighFunction();
-        if (highFunc == null) continue;
+        if (highFunc == null) {
+          continue;
+        }
 
         // Look for shift and XOR patterns (LFSR)
         int shiftCount =
@@ -1086,7 +1180,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         }
 
       } catch (Exception e) {
-        // Continue
+        printf("    Warning: Error analyzing stream cipher: %s%n", e.getMessage());
       }
     }
   }
@@ -1100,10 +1194,14 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
       try {
         DecompileResults results = decompiler.decompileFunction(func, 30, monitor);
-        if (!results.decompileCompleted()) continue;
+        if (!results.decompileCompleted()) {
+          continue;
+        }
 
         HighFunction highFunc = results.getHighFunction();
-        if (highFunc == null) continue;
+        if (highFunc == null) {
+          continue;
+        }
 
         // Hash functions typically have:
         // - Many bitwise operations
@@ -1131,7 +1229,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         }
 
       } catch (Exception e) {
-        // Continue
+        printf("    Warning: Error analyzing hash function: %s%n", e.getMessage());
       }
     }
   }
@@ -1422,16 +1520,14 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       }
     }
 
-    // Analyze reference patterns
+    // Analyze reference patterns using ReferenceIterator for efficient iteration
     AddressSetView analysisSet = currentProgram.getMemory().getLoadedAndInitializedAddressSet();
-    AddressIterator addrIter = analysisSet.getAddresses(true);
     int referenceCount = 0;
 
-    while (addrIter.hasNext() && !monitor.isCancelled()) {
-      Address addr = addrIter.next();
-      Reference[] refsFrom = referenceManager.getReferencesFrom(addr);
-
-      for (Reference ref : refsFrom) {
+    ReferenceIterator refIter = referenceManager.getReferenceIterator(analysisSet.getMinAddress());
+    while (refIter.hasNext() && !monitor.isCancelled()) {
+      Reference ref = refIter.next();
+      if (analysisSet.contains(ref.getFromAddress())) {
         referenceCount++;
         String refType = ref.getReferenceType().toString();
         referenceStats.merge(refType, 1, Integer::sum);
@@ -1440,6 +1536,18 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       if (referenceCount % 1000 == 0) {
         monitor.checkCancelled();
       }
+    }
+
+    // Perform additional address-based analysis using AddressIterator
+    AddressIterator cryptoAddrIter = analysisSet.getAddresses(true);
+    int cryptoAddressCount = 0;
+    while (cryptoAddrIter.hasNext() && cryptoAddressCount < 10000 && !monitor.isCancelled()) {
+      Address addr = cryptoAddrIter.next();
+      Symbol symbol = symbolTable.getPrimarySymbol(addr);
+      if (symbol != null && containsCryptoKeywords(symbol.getName().toLowerCase(Locale.ROOT))) {
+        cryptoSymbols.add(symbol);
+      }
+      cryptoAddressCount++;
     }
 
     println("    Total symbols: " + symbolCount);
@@ -1490,7 +1598,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       // Analyze structure for crypto field patterns
       for (DataTypeComponent component : struct.getDefinedComponents()) {
         String fieldName = component.getFieldName();
-        if (fieldName != null && containsCryptoKeywords(fieldName.toLowerCase())) {
+        if (fieldName != null && containsCryptoKeywords(fieldName.toLowerCase(Locale.ROOT))) {
           println("      Crypto field found: " + struct.getName() + "." + fieldName);
         }
       }
@@ -1503,7 +1611,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
       // Analyze enum values for crypto patterns
       for (String enumName : enumNames) {
-        if (containsCryptoKeywords(enumName.toLowerCase())) {
+        if (containsCryptoKeywords(enumName.toLowerCase(Locale.ROOT))) {
           println("      Crypto enum value: " + enumType.getName() + "." + enumName);
         }
       }
@@ -1536,10 +1644,15 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       monitor.checkCancelled();
 
       String regType = "unknown";
-      if (register.isProcessorContext()) regType = "context";
-      else if (register.isBaseRegister()) regType = "base";
-      else if (register.isVectorRegister()) regType = "vector";
-      else regType = "general";
+      if (register.isProcessorContext()) {
+        regType = "context";
+      } else if (register.isBaseRegister()) {
+        regType = "base";
+      } else if (register.isVectorRegister()) {
+        regType = "vector";
+      } else {
+        regType = "general";
+      }
 
       registerStats.merge(regType, 1, Integer::sum);
 
@@ -1592,7 +1705,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
                             .getProgramContext()
                             .getRegisterValue(reg, pcodeOp.getSeqnum().getTarget());
                   } catch (Exception e) {
-                    // Continue analysis
+                    printf("      Warning: Failed to get register value: %s%n", e.getMessage());
                   }
 
                   if (regValue != null && regValue.hasValue()) {
@@ -1604,7 +1717,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
           }
         }
       } catch (Exception e) {
-        // Continue analysis on error
+        printf("      Warning: Error during PCode analysis: %s%n", e.getMessage());
       }
     }
 
@@ -1738,7 +1851,7 @@ public class CryptoRoutineIdentifier extends GhidraScript {
         }
       }
     } catch (Exception e) {
-      // Continue analysis
+      printf("    Warning: Error during entropy pattern analysis: %s%n", e.getMessage());
     }
     return patterns;
   }
@@ -1748,20 +1861,24 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       "aes", "des", "rsa", "sha", "md5", "encrypt", "decrypt", "cipher", "hash", "crypto", "key",
       "iv", "salt", "nonce"
     };
-    text = text.toLowerCase();
+    text = text.toLowerCase(Locale.ROOT);
     for (String keyword : keywords) {
-      if (text.contains(keyword)) return true;
+      if (text.contains(keyword)) {
+        return true;
+      }
     }
     return false;
   }
 
   private boolean analyzeCryptoStructure(Structure structure) {
-    String name = structure.getName().toLowerCase();
-    if (containsCryptoKeywords(name)) return true;
+    String name = structure.getName().toLowerCase(Locale.ROOT);
+    if (containsCryptoKeywords(name)) {
+      return true;
+    }
 
     for (DataTypeComponent component : structure.getDefinedComponents()) {
       String fieldName = component.getFieldName();
-      if (fieldName != null && containsCryptoKeywords(fieldName.toLowerCase())) {
+      if (fieldName != null && containsCryptoKeywords(fieldName.toLowerCase(Locale.ROOT))) {
         return true;
       }
     }
@@ -1769,12 +1886,14 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   }
 
   private boolean analyzeCryptoEnum(Enum enumType) {
-    String name = enumType.getName().toLowerCase();
-    if (containsCryptoKeywords(name)) return true;
+    String name = enumType.getName().toLowerCase(Locale.ROOT);
+    if (containsCryptoKeywords(name)) {
+      return true;
+    }
 
     String[] enumNames = enumType.getNames();
     for (String enumName : enumNames) {
-      if (containsCryptoKeywords(enumName.toLowerCase())) {
+      if (containsCryptoKeywords(enumName.toLowerCase(Locale.ROOT))) {
         return true;
       }
     }
@@ -1904,39 +2023,40 @@ public class CryptoRoutineIdentifier extends GhidraScript {
   private void exportCryptoReport() {
     try {
       File reportFile = askFile("Save Crypto Analysis Report", "Save");
-      if (reportFile == null) return;
-
-      PrintWriter writer = new PrintWriter(reportFile);
-      writer.println("Cryptographic Routine Analysis Report");
-      writer.println("Generated by Intellicrack Crypto Identifier v2.0.0");
-      writer.println("Date: " + new Date());
-      writer.println("Program: " + currentProgram.getName());
-      writer.println("=====================================\n");
-
-      // Write detailed findings
-      writer.println("Summary:");
-      writer.println("  Total crypto routines found: " + detectedRoutines.size());
-      writer.println("  Crypto constants found: " + foundConstants.size());
-      writer.println("  Keys extracted: " + extractedKeys.size());
-
-      // Detailed algorithm breakdown
-      Map<String, List<CryptoRoutine>> grouped = new HashMap<>();
-      for (CryptoRoutine routine : detectedRoutines) {
-        grouped.computeIfAbsent(routine.algorithm, k -> new ArrayList<>()).add(routine);
+      if (reportFile == null) {
+        return;
       }
 
-      writer.println("\nDetailed Findings by Algorithm:");
-      for (Map.Entry<String, List<CryptoRoutine>> entry : grouped.entrySet()) {
-        writer.println("\n" + entry.getKey() + " (" + entry.getValue().size() + " instances):");
-        for (CryptoRoutine routine : entry.getValue()) {
-          writer.println("  Address: " + routine.address);
-          writer.println("  Reason: " + routine.reason);
-          writer.println("  Confidence: " + String.format("%.0f%%", routine.confidence * 100));
-          writer.println();
+      try (PrintWriter writer = new PrintWriter(reportFile)) {
+        writer.println("Cryptographic Routine Analysis Report");
+        writer.println("Generated by Intellicrack Crypto Identifier v2.0.0");
+        writer.println("Date: " + new Date());
+        writer.println("Program: " + currentProgram.getName());
+        writer.println("=====================================\n");
+
+        // Write detailed findings
+        writer.println("Summary:");
+        writer.println("  Total crypto routines found: " + detectedRoutines.size());
+        writer.println("  Crypto constants found: " + foundConstants.size());
+        writer.println("  Keys extracted: " + extractedKeys.size());
+
+        // Detailed algorithm breakdown
+        Map<String, List<CryptoRoutine>> grouped = new HashMap<>();
+        for (CryptoRoutine routine : detectedRoutines) {
+          grouped.computeIfAbsent(routine.algorithm, k -> new ArrayList<>()).add(routine);
+        }
+
+        writer.println("\nDetailed Findings by Algorithm:");
+        for (Map.Entry<String, List<CryptoRoutine>> entry : grouped.entrySet()) {
+          writer.println("\n" + entry.getKey() + " (" + entry.getValue().size() + " instances):");
+          for (CryptoRoutine routine : entry.getValue()) {
+            writer.println("  Address: " + routine.address);
+            writer.println("  Reason: " + routine.reason);
+            writer.println("  Confidence: " + String.format(Locale.ROOT, "%.0f%%", routine.confidence * 100));
+            writer.println();
+          }
         }
       }
-
-      writer.close();
       println("\nDetailed report saved to: " + reportFile.getAbsolutePath());
 
     } catch (Exception e) {
@@ -1946,7 +2066,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
   // Helper methods
   private double calculateEntropy(byte[] data) {
-    if (data.length == 0) return 0.0;
+    if (data.length == 0) {
+      return 0.0;
+    }
 
     int[] frequency = new int[256];
     for (byte b : data) {
@@ -1966,7 +2088,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
 
   private boolean isProbableRSAModulus(BigInteger n) {
     // Check if it's odd (RSA moduli are products of odd primes)
-    if (!n.testBit(0)) return false;
+    if (!n.testBit(0)) {
+      return false;
+    }
 
     // Check bit length (common RSA sizes)
     int bitLength = n.bitLength();
@@ -1980,11 +2104,9 @@ public class CryptoRoutineIdentifier extends GhidraScript {
       }
     }
 
-    if (!validSize) return false;
-
     // Check that it's not prime (RSA modulus should be composite)
     // Use Miller-Rabin with low certainty for speed
-    return !n.isProbablePrime(5);
+    return validSize && !n.isProbablePrime(5);
   }
 
   private boolean isProbableECCParameter(BigInteger p) {
@@ -2014,19 +2136,33 @@ public class CryptoRoutineIdentifier extends GhidraScript {
     };
 
     for (long known : knownConstants) {
-      if (value == known) return true;
+      if (value == known) {
+        return true;
+      }
     }
 
     return false;
   }
 
   private String identifyCryptoConstant(long value) {
-    if (value == 0x428a2f98L) return "SHA-256";
-    if (value == 0xd76aa478L) return "MD5";
-    if (value == 0x67452301L) return "SHA-1";
-    if (value == 0x61707865L) return "ChaCha20";
-    if (value == 3329L) return "Kyber";
-    if (value == 65537L) return "RSA";
+    if (value == 0x428a2f98L) {
+      return "SHA-256";
+    }
+    if (value == 0xd76aa478L) {
+      return "MD5";
+    }
+    if (value == 0x67452301L) {
+      return "SHA-1";
+    }
+    if (value == 0x61707865L) {
+      return "ChaCha20";
+    }
+    if (value == 3329L) {
+      return "Kyber";
+    }
+    if (value == 65537L) {
+      return "RSA";
+    }
     return "Unknown Crypto";
   }
 

@@ -91,7 +91,7 @@ def validate_entropy_analyzer():
 
     # Random data
     random.seed(42)
-    random_data = bytes([random.randint(0, 255) for _ in range(1000)])
+    random_data = bytes(random.randint(0, 255) for _ in range(1000))
     entropy = analyzer.calculate_entropy(random_data)
     print(f"   Random data: {entropy:.3f}")
     assert entropy > 7.0

@@ -105,7 +105,7 @@ class TestProcessStateCapture:
         processes = snapshot._capture_process_state()
 
         processes_with_hash = [p for p in processes if "exe_hash" in p]
-        assert len(processes_with_hash) > 0
+        assert processes_with_hash
 
 
 class TestRegistryStateCapture:

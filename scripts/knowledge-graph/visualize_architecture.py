@@ -491,6 +491,7 @@ class KnowledgeGraphGenerator:
         layout_method: str = 'sfdp',
         *,
         enable_clustering: bool = True,
+        dot_output_dir: Path | None = None,
     ) -> None:
         """Generates a standalone HTML file with all optimizations."""
         logger.info("Filtering graph for visualization...")
@@ -514,21 +515,22 @@ class KnowledgeGraphGenerator:
             "Visualization graph: %d nodes (Original: %d)", len(filtered_graph), self.graph.number_of_nodes()
         )
 
-        dot_path = output_path.with_suffix('.dot')
+        if dot_output_dir is not None:
+            dot_path = dot_output_dir / (output_path.stem + '.dot')
+        else:
+            dot_path = output_path.with_suffix('.dot')
         positions: dict[str, dict[str, float]] = {}
+
+        self._generate_dot_file(filtered_graph, dot_path)
+        logger.info("DOT file saved to: %s", dot_path)
 
         if layout_method == 'hierarchical':
             positions = self._calculate_hierarchical_layout(filtered_graph)
         elif layout_method == 'radial':
             positions = self._calculate_radial_layout(filtered_graph)
         else:
-            if self._generate_dot_file(filtered_graph, dot_path):
+            if dot_path.exists():
                 positions = self._calculate_sfdp_layout(dot_path)
-                try:
-                    if dot_path.exists():
-                        dot_path.unlink()
-                except OSError:
-                    logger.debug("Could not delete temporary dot file: %s", dot_path)
 
             if not positions:
                 logger.info("Falling back to hierarchical layout...")
@@ -1475,6 +1477,7 @@ def main() -> None:
             project_root / "IntellicrackKnowledgeGraph.html",
             layout_method=args.layout,
             enable_clustering=not args.no_clusters,
+            dot_output_dir=knowledge_graph_dir,
         )
 
     except Exception:

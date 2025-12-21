@@ -380,13 +380,13 @@ class TestHandlerIntegration:
         """Disassembly functionality available with fallback."""
         from intellicrack.handlers import capstone_handler
 
-        x86_nop = b"\x90"
-
         if not capstone_handler.HAS_CAPSTONE:
             disasm = capstone_handler.FallbackDisassembler(
                 capstone_handler.CS_ARCH_X86, capstone_handler.CS_MODE_32
             )
 
+            x86_nop = b"\x90"
+
             instructions = list(disasm.disasm(x86_nop, 0x1000))
 
-            assert len(instructions) > 0
+            assert instructions

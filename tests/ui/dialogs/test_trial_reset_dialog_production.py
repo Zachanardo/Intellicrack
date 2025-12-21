@@ -136,10 +136,7 @@ class TestTrialResetDialogInitialization:
 
             assert dialog.tabs.count() == 5
 
-            tab_names = []
-            for i in range(dialog.tabs.count()):
-                tab_names.append(dialog.tabs.tabText(i))
-
+            tab_names = [dialog.tabs.tabText(i) for i in range(dialog.tabs.count())]
             assert "Scan" in tab_names
             assert "Reset" in tab_names
             assert "Monitor" in tab_names
@@ -452,7 +449,7 @@ class TestTrialMonitoring:
         worker.start()
         worker.wait(2000)
 
-        assert len(results) >= 1
+        assert results
         assert all(r["operation"] == "monitor" for r in results)
 
     def test_stop_monitoring(self, qapp: Any, mock_engine: Mock) -> None:
@@ -526,9 +523,8 @@ class TestScanHistory:
                 dialog.scan_for_trial()
                 qapp.processEvents()
 
-                if hasattr(dialog, "add_to_history"):
-                    if dialog.current_trial_info:
-                        dialog.add_to_history(dialog.current_trial_info)
+                if hasattr(dialog, "add_to_history") and dialog.current_trial_info:
+                    dialog.add_to_history(dialog.current_trial_info)
 
 
 class TestExpiredTrialHandling:

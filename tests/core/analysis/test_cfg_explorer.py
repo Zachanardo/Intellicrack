@@ -65,12 +65,12 @@ class TestBinaryLoading:
         explorer: CFGExplorer = CFGExplorer()
         result: bool = explorer.load_binary(str(simple_pe_binary))
 
-        assert result is True
+        assert result
         assert len(explorer.functions) > 0
         assert explorer.call_graph is not None
 
         functions: list[str] = explorer.get_function_list()
-        assert len(functions) > 0
+        assert functions
         assert all(isinstance(func_name, str) for func_name in functions)
 
     def test_load_binary_extracts_function_metadata(self, simple_pe_binary: Path) -> None:
@@ -117,7 +117,7 @@ class TestBinaryLoading:
         assert explorer.call_graph.number_of_nodes() > 0
 
         functions: list[str] = list(explorer.call_graph.nodes())
-        assert len(functions) > 0
+        assert functions
         assert all(isinstance(func, str) for func in functions)
 
     def test_load_nonexistent_binary_fails_gracefully(self) -> None:
@@ -125,7 +125,7 @@ class TestBinaryLoading:
         explorer: CFGExplorer = CFGExplorer()
         result: bool = explorer.load_binary("nonexistent_binary.exe")
 
-        assert result is False
+        assert not result
         assert len(explorer.functions) == 0
 
     def test_load_invalid_binary_fails_gracefully(self) -> None:
@@ -138,7 +138,7 @@ class TestBinaryLoading:
 
         try:
             result: bool = explorer.load_binary(tmp_path)
-            assert result is False or result is True
+            assert not result or result
         finally:
             Path(tmp_path).unlink()
 
@@ -211,7 +211,7 @@ class TestFunctionGraphConstruction:
                     assert score >= 0.0
                     complexity_scores.append(score)
 
-        assert len(complexity_scores) > 0
+        assert complexity_scores
 
     def test_function_graph_detects_crypto_operations(self, simple_pe_binary: Path) -> None:
         """Blocks track presence of cryptographic operations."""
@@ -327,8 +327,6 @@ class TestLicenseCheckDetection:
             if explorer.set_current_function(func_name):
                 patterns: list[dict[str, Any]] = explorer.find_license_check_patterns()
                 all_patterns.extend(patterns)
-
-        assert len(all_patterns) >= 0
 
         for pattern in all_patterns:
             assert "block_addr" in pattern
@@ -454,9 +452,9 @@ class TestCallGraphAnalysis:
         if "function_ranks" in metrics:
             ranks: dict[str, float] = metrics["function_ranks"]
             assert isinstance(ranks, dict)
-            assert len(ranks) > 0
+            assert ranks
 
-            for func, rank in ranks.items():
+            for rank in ranks.values():
                 assert isinstance(rank, float)
                 assert rank > 0.0
 
@@ -471,7 +469,7 @@ class TestCallGraphAnalysis:
             centrality: dict[str, float] = metrics["betweenness_centrality"]
             assert isinstance(centrality, dict)
 
-            for func, score in centrality.items():
+            for score in centrality.values():
                 assert isinstance(score, float)
                 assert score >= 0.0
 
@@ -499,7 +497,7 @@ class TestCrossReferenceAnalysis:
         analysis: dict[str, Any] = explorer.get_cross_reference_analysis()
         dependencies: dict[str, Any] = analysis["function_dependencies"]
 
-        for func_name, dep_data in dependencies.items():
+        for dep_data in dependencies.values():
             assert "calls" in dep_data
             assert "called_by" in dep_data
             assert "dependency_count" in dep_data
@@ -651,9 +649,7 @@ class TestGraphVisualization:
         func_name: str = list(explorer.functions.keys())[0]
         explorer.set_current_function(func_name)
 
-        layout: dict[int, tuple[float, float]] | None = explorer.get_graph_layout("spring")
-
-        if layout:
+        if layout := explorer.get_graph_layout("spring"):
             assert isinstance(layout, dict)
             for node, pos in layout.items():
                 assert isinstance(pos, tuple)
@@ -669,9 +665,7 @@ class TestGraphVisualization:
         func_name: str = list(explorer.functions.keys())[0]
         explorer.set_current_function(func_name)
 
-        layout: dict[int, tuple[float, float]] | None = explorer.get_graph_layout("circular")
-
-        if layout:
+        if layout := explorer.get_graph_layout("circular"):
             assert isinstance(layout, dict)
             assert len(layout) > 0
 
@@ -683,9 +677,7 @@ class TestGraphVisualization:
         func_name: str = list(explorer.functions.keys())[0]
         explorer.set_current_function(func_name)
 
-        graph_data: dict[str, Any] | None = explorer.get_graph_data()
-
-        if graph_data:
+        if graph_data := explorer.get_graph_data():
             assert "nodes" in graph_data
             assert "edges" in graph_data
             assert "function" in graph_data
@@ -715,7 +707,7 @@ class TestExportFunctionality:
         json_file: Path = tmp_path / "cfg_export.json"
         result: bool = explorer.export_json(str(json_file))
 
-        assert result is True
+        assert result
         assert json_file.exists()
         assert json_file.stat().st_size > 0
 
@@ -723,7 +715,7 @@ class TestExportFunctionality:
             data: dict[str, Any] = json.load(f)
 
         assert isinstance(data, dict)
-        assert len(data) > 0
+        assert data
 
     def test_export_dot_file(self, simple_pe_binary: Path, tmp_path: Path) -> None:
         """Export CFG to DOT format."""
@@ -846,7 +838,7 @@ class TestFunctionManagement:
         functions: list[str] = explorer.get_function_list()
 
         assert isinstance(functions, list)
-        assert len(functions) > 0
+        assert functions
         assert all(isinstance(func, str) for func in functions)
 
     def test_set_current_function(self, simple_pe_binary: Path) -> None:
@@ -857,7 +849,7 @@ class TestFunctionManagement:
         func_name: str = list(explorer.functions.keys())[0]
         result: bool = explorer.set_current_function(func_name)
 
-        assert result is True
+        assert result
         assert explorer.current_function == func_name
         assert explorer.graph is not None
 
@@ -868,7 +860,7 @@ class TestFunctionManagement:
 
         result: bool = explorer.set_current_function("nonexistent_function")
 
-        assert result is False
+        assert not result
 
     def test_get_functions_metadata(self, simple_pe_binary: Path) -> None:
         """Get functions with metadata."""
@@ -878,7 +870,7 @@ class TestFunctionManagement:
         functions: list[dict[str, Any]] = explorer.get_functions()
 
         assert isinstance(functions, list)
-        assert len(functions) > 0
+        assert functions
 
         for func in functions:
             assert "name" in func
@@ -890,9 +882,7 @@ class TestFunctionManagement:
         explorer.load_binary(str(simple_pe_binary))
 
         func_name: str = list(explorer.functions.keys())[0]
-        analysis: dict[str, Any] | None = explorer.analyze_function(func_name)
-
-        if analysis:
+        if analysis := explorer.analyze_function(func_name):
             assert "name" in analysis
             assert "address" in analysis
             assert "graph" in analysis

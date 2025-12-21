@@ -212,8 +212,7 @@ class TestComprehensiveBypassGeneration:
         for patch in patches:
             assert "address" in patch or "target_address" in patch
 
-            addr = patch.get("address") or patch.get("target_address")
-            if addr:
+            if addr := patch.get("address") or patch.get("target_address"):
                 if isinstance(addr, str):
                     assert addr.startswith("0x") or addr.isdigit()
                 else:
@@ -280,8 +279,9 @@ class TestComprehensiveBypassGeneration:
                 assert isinstance(bytes_val, (str, bytes))
 
                 if isinstance(bytes_val, str):
-                    clean_bytes = bytes_val.replace("\\x", "").replace(" ", "")
-                    if clean_bytes:
+                    if clean_bytes := bytes_val.replace("\\x", "").replace(
+                        " ", ""
+                    ):
                         assert all(c in "0123456789abcdefABCDEF" for c in clean_bytes)
 
     def test_api_hooks_contain_hook_implementations(
@@ -386,12 +386,9 @@ class TestRealRadare2Integration:
 
         try:
             result = generator.generate_comprehensive_bypass()
-            patches = result.get("automated_patches", [])
-
-            if patches:
+            if patches := result.get("automated_patches", []):
                 for patch in patches:
-                    addr = patch.get("address") or patch.get("target_address")
-                    if addr:
+                    if addr := patch.get("address") or patch.get("target_address"):
                         if isinstance(addr, str) and addr.startswith("0x"):
                             int(addr, 16)
                         elif isinstance(addr, int):
@@ -469,9 +466,7 @@ class TestKeygenGenerationRealistic:
 
         for keygen in keygens:
             impl = keygen.get("implementation", {})
-            code = impl.get("code", "")
-
-            if code:
+            if code := impl.get("code", ""):
                 assert len(code) > 100
                 assert "def " in code or "function" in code
 
@@ -576,10 +571,9 @@ class TestPatchGenerationReal:
             original = patch.get("original_bytes", "")
             patched = patch.get("patch_bytes", "")
 
-            if original and patched:
-                if isinstance(original, str) and isinstance(patched, str):
-                    orig_len = len(original.replace("\\x", "").replace(" ", "")) // 2
-                    patch_len = len(patched.replace("\\x", "").replace(" ", "")) // 2
+            if original and patched and (isinstance(original, str) and isinstance(patched, str)):
+                orig_len = len(original.replace("\\x", "").replace(" ", "")) // 2
+                patch_len = len(patched.replace("\\x", "").replace(" ", "")) // 2
 
     def test_patch_descriptions_explain_purpose(self, patchable_binary: Path) -> None:
         """Patch descriptions explain bypass purpose."""
@@ -695,10 +689,8 @@ class TestControlFlowAnalysis:
 
         try:
             with r2_session(str(cfg_binary)) as r2:
-                functions = r2.get_functions()
-                if functions:
-                    func_addr = functions[0].get("offset", 0)
-                    if func_addr:
+                if functions := r2.get_functions():
+                    if func_addr := functions[0].get("offset", 0):
                         cfg = generator._analyze_control_flow_graph(r2, func_addr)
 
                         assert isinstance(cfg, dict)
@@ -713,10 +705,8 @@ class TestControlFlowAnalysis:
 
         try:
             with r2_session(str(cfg_binary)) as r2:
-                functions = r2.get_functions()
-                if functions:
-                    func_addr = functions[0].get("offset", 0)
-                    if func_addr:
+                if functions := r2.get_functions():
+                    if func_addr := functions[0].get("offset", 0):
                         cfg = generator._analyze_control_flow_graph(r2, func_addr)
                         decision_points = generator._identify_decision_points(r2, func_addr, cfg)
 

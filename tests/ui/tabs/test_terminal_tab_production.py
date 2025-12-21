@@ -143,8 +143,7 @@ class TestSessionManagement:
         terminal_tab.create_new_session()
 
         with patch.object(terminal_tab, "_update_status") as mock_update:
-            sessions = terminal_tab.terminal_widget.get_all_sessions()
-            if sessions:
+            if sessions := terminal_tab.terminal_widget.get_all_sessions():
                 terminal_tab.terminal_widget.session_closed.emit(sessions[0])
                 mock_update.assert_called()
 

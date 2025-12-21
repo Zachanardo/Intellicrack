@@ -142,26 +142,25 @@ class TestRealTimeStringMonitoring:
                 '_is_repetitive_pattern'
             ]
 
-            missing_methods = []
-            for method_name in test_methods:
-                if not hasattr(analyzer, method_name):
-                    missing_methods.append(method_name)
+            if missing_methods := [
+                method_name
+                for method_name in test_methods
+                if not hasattr(analyzer, method_name)
+            ]:
+                print(f"FAIL FAIL: Missing methods: {missing_methods}")
+                return False
 
-            if not missing_methods:
+            else:
                 print("OK PASS: All required string analyzer methods available")
 
-                # Test a sample method call
-                test_result = analyzer._detect_license_key_formats("ABCD-1234-EFGH-5678")
-                if test_result:
+                if test_result := analyzer._detect_license_key_formats(
+                    "ABCD-1234-EFGH-5678"
+                ):
                     print("OK PASS: String analyzer methods functional")
                     return True
                 else:
                     print("FAIL FAIL: String analyzer method not working correctly")
                     return False
-            else:
-                print(f"FAIL FAIL: Missing methods: {missing_methods}")
-                return False
-
         except Exception as e:
             print(f"FAIL ERROR: {e}")
             return False
@@ -185,14 +184,13 @@ class TestRealTimeStringMonitoring:
             status = analyzer.get_status()
             required_keys = ['running', 'update_mode', 'watched_binaries']
 
-            missing_keys = [key for key in required_keys if key not in status]
-            if not missing_keys:
-                print("OK PASS: Status structure contains required keys")
-                return True
-            else:
+            if missing_keys := [key for key in required_keys if key not in status]:
                 print(f"FAIL FAIL: Missing status keys: {missing_keys}")
                 return False
 
+            else:
+                print("OK PASS: Status structure contains required keys")
+                return True
         except Exception as e:
             print(f"FAIL ERROR: {e}")
             return False

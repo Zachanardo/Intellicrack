@@ -396,8 +396,8 @@ class TestTrafficInterceptionEngine(unittest.TestCase):
         pattern_strings = [str(pattern) for pattern in license_patterns]
         license_keywords = ["license", "activation", "validate", "verify", "auth"]
 
-        found_patterns = sum(1 for keyword in license_keywords
-                           if any(keyword in pattern.lower() for pattern in pattern_strings))
+        found_patterns = sum(bool(any(keyword in pattern.lower() for pattern in pattern_strings))
+                         for keyword in license_keywords)
         self.assertGreater(found_patterns, 0)
 
     def test_dns_redirection_configuration(self):

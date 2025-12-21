@@ -485,10 +485,9 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
             # If entropy analysis was performed, should have entropy-related findings
             if AnalysisPhase.ENTROPY_ANALYSIS in real_result.phases_completed:
                 entropy_data = real_result.results.get(AnalysisPhase.ENTROPY_ANALYSIS.value, {})
-                if 'error' not in entropy_data and 'overall_entropy' in entropy_data:
-                    if entropy_data['overall_entropy'] > 7.0:
-                        entropy_finding = any('entropy' in f.lower() for f in findings)
-                        assert entropy_finding is True, "Should detect high entropy from real analysis"
+                if 'error' not in entropy_data and 'overall_entropy' in entropy_data and entropy_data['overall_entropy'] > 7.0:
+                    entropy_finding = any('entropy' in f.lower() for f in findings)
+                    assert entropy_finding, "Should detect high entropy from real analysis"
 
     def test_ghidra_analysis_phase_real(self):
         """Test REAL Ghidra analysis phase integration."""
@@ -565,7 +564,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
 
         # Should have preparation error
         prep_error = any('File not found' in error for error in result.errors)
-        assert prep_error is True
+        assert prep_error
 
         # Should have minimal phase completion
         assert len(result.phases_completed) == 0
@@ -759,11 +758,8 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         # Other phases should handle empty file appropriately
         # Some may error, some may return empty results
         for phase_name, phase_result in result.results.items():
-            if phase_name != AnalysisPhase.PREPARATION.value:
-                # Either valid empty result or error
-                if 'error' not in phase_result:
-                    # Should be well-structured empty result
-                    assert isinstance(phase_result, dict)
+            if phase_name != AnalysisPhase.PREPARATION.value and 'error' not in phase_result:
+                assert isinstance(phase_result, dict)
 
     def test_binary_with_unusual_permissions_real(self):
         """Test REAL handling of binaries with unusual file permissions."""
@@ -776,7 +772,7 @@ class TestAnalysisOrchestrator(IntellicrackTestBase):
         try:
             import stat
             os.chmod(str(restricted_binary), stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot modify file permissions in test environment")
 
         # Test analysis on restricted file
@@ -1102,4 +1098,8 @@ Analysis complete - 15 functions analyzed
 
                 if mock_vm.copy_file_to_vm.called:
                     log_messages = ' '.join(log_context.output).lower()
-                    self.assertTrue('success' in log_messages or 'copy' in log_messages or len(log_messages) > 0)
+                    self.assertTrue(
+                        'success' in log_messages
+                        or 'copy' in log_messages
+                        or log_messages != ""
+                    )

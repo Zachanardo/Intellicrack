@@ -45,9 +45,7 @@ class ConcreteMonitor(BaseMonitor):
     def _start_monitoring(self) -> bool:
         """Implement start monitoring."""
         self.start_called = True
-        if self.should_fail_start:
-            return False
-        return True
+        return not self.should_fail_start
 
     def _stop_monitoring(self) -> None:
         """Implement stop monitoring."""
@@ -407,7 +405,7 @@ class TestBaseMonitorLifecycle:
         result = monitor.start()
 
         assert result is True
-        assert monitor.start_called is False
+        assert not monitor.start_called
 
         monitor.stop()
 
@@ -423,7 +421,7 @@ class TestBaseMonitorLifecycle:
         monitor.stop_called = False
         monitor.stop()
 
-        assert monitor.stop_called is False
+        assert not monitor.stop_called
 
     def test_base_monitor_resets_stats_on_start(self) -> None:
         """BaseMonitor resets statistics when starting."""

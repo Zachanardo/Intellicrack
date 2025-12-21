@@ -763,7 +763,7 @@ class TestResultAnalysis:
         license_behaviors = [
             b for b in results["suspicious_behaviors"] if b["type"] == "license_check"
         ]
-        assert len(license_behaviors) >= 1
+        assert license_behaviors
         assert license_behaviors[0]["confidence"] == "high"
 
     def test_analyze_results_online_activation_detection(
@@ -799,7 +799,7 @@ class TestResultAnalysis:
             for b in results["suspicious_behaviors"]
             if b["type"] == "online_activation"
         ]
-        assert len(online_behaviors) >= 1
+        assert online_behaviors
 
     def test_analyze_results_trial_detection(
         self, simple_pe_binary: Path, mock_rootfs: Path
@@ -823,4 +823,4 @@ class TestResultAnalysis:
         trial_behaviors = [
             b for b in results["suspicious_behaviors"] if b["type"] == "trial_check"
         ]
-        assert len(trial_behaviors) >= 1
+        assert trial_behaviors

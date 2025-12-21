@@ -267,7 +267,7 @@ def securom_protected_binary(tmp_path: Path) -> Generator[Path, None, None]:
             offset += len(keyword) + 0x10
 
     rsrc_section_content = bytearray(0x200)
-    rsrc_section_content[0:13] = b"SecuROM v7.42"
+    rsrc_section_content[:13] = b"SecuROM v7.42"
 
     binary_data = (
         headers + padding + bytes(code_section) + bytes(data_section_content) + bytes(rsrc_section_content)
@@ -357,7 +357,7 @@ def securom_v8_binary(tmp_path: Path) -> Generator[Path, None, None]:
     code_section[offset + 7 : offset + 9] = b"\x74\x10"
 
     offset = 0x200
-    for i in range(8):
+    for _ in range(8):
         code_section[offset] = 0x12
         offset += 32
 
@@ -726,7 +726,11 @@ class TestPhoneHomeBlocking:
         result = bypass.block_phone_home(securom_protected_binary)
 
         assert isinstance(result, BypassResult)
-        if len(winhttp_offsets) > 0 and result.success and "patched" in result.details.lower():
+        if (
+            winhttp_offsets
+            and result.success
+            and "patched" in result.details.lower()
+        ):
             modified_data = securom_protected_binary.read_bytes()
             assert modified_data != original_data
 

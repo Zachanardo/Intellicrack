@@ -353,9 +353,7 @@ class BinaryNinjaAnalyzer:
         if not self.bv or not BINARYNINJA_AVAILABLE:
             return strings
 
-        strings.extend(
-            (string_ref.start, string_ref.value) for string_ref in self.bv.strings
-        )
+        strings.extend((string_ref.start, string_ref.value) for string_ref in self.bv.strings)
         return strings
 
     def _extract_imports(self) -> list[tuple[str, str, int]]:
@@ -383,8 +381,7 @@ class BinaryNinjaAnalyzer:
             (sym.short_name, sym.address)
             for sym in self.bv.symbols.values()
             if any(seg.readable and seg.executable for seg in self.bv.segments)
-            and sym.type
-            in (bn.SymbolType.FunctionSymbol, bn.SymbolType.DataSymbol)
+            and sym.type in (bn.SymbolType.FunctionSymbol, bn.SymbolType.DataSymbol)
         )
         return exports
 
@@ -463,11 +460,7 @@ class BinaryNinjaAnalyzer:
         for func in self.bv.functions:
             func_name_lower = func.name.lower()
 
-            score = sum(
-                10
-                for keyword in self.LICENSE_VALIDATION_KEYWORDS
-                if keyword in func_name_lower
-            )
+            score = sum(10 for keyword in self.LICENSE_VALIDATION_KEYWORDS if keyword in func_name_lower)
             try:
                 if func.hlil:
                     hlil_text = "\n".join(str(line) for line in func.hlil.instructions).lower()
@@ -542,13 +535,9 @@ class BinaryNinjaAnalyzer:
 
             sections = [
                 {
-                    "name": section.Name.decode("utf-8", errors="ignore").rstrip(
-                        "\x00"
-                    ),
+                    "name": section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
                     "start": pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress,
-                    "end": pe.OPTIONAL_HEADER.ImageBase
-                    + section.VirtualAddress
-                    + section.Misc_VirtualSize,
+                    "end": pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress + section.Misc_VirtualSize,
                     "size": section.Misc_VirtualSize,
                     "type": "section",
                 }
@@ -575,8 +564,7 @@ class BinaryNinjaAnalyzer:
                 binary_path=str(binary_path),
                 architecture=pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine],
                 platform="windows",
-                entry_point=pe.OPTIONAL_HEADER.ImageBase
-                + pe.OPTIONAL_HEADER.AddressOfEntryPoint,
+                entry_point=pe.OPTIONAL_HEADER.ImageBase + pe.OPTIONAL_HEADER.AddressOfEntryPoint,
                 image_base=pe.OPTIONAL_HEADER.ImageBase,
                 functions={},
                 strings=strings,

@@ -94,9 +94,7 @@ def test_process_utils_get_all_processes_default_fields() -> None:
 
     from intellicrack.utils.system.process_utils import get_all_processes
 
-    processes = get_all_processes()
-
-    if processes:
+    if processes := get_all_processes():
         first_process = processes[0]
         assert "pid" in first_process
         assert "name" in first_process
@@ -109,9 +107,7 @@ def test_process_utils_get_all_processes_custom_fields() -> None:
 
     from intellicrack.utils.system.process_utils import get_all_processes
 
-    processes = get_all_processes(fields=["pid", "name", "status"])
-
-    if processes:
+    if processes := get_all_processes(fields=["pid", "name", "status"]):
         first_process = processes[0]
         assert "pid" in first_process
         assert "name" in first_process
@@ -330,9 +326,7 @@ def test_process_utils_get_system_processes_has_required_fields() -> None:
 
     from intellicrack.utils.system.process_utils import get_system_processes
 
-    processes = get_system_processes()
-
-    if processes:
+    if processes := get_system_processes():
         first_process = processes[0]
         assert "pid" in first_process
         assert "name" in first_process
@@ -346,11 +340,7 @@ def test_process_utils_run_command_success() -> None:
 
     from intellicrack.utils.system.process_utils import run_command
 
-    if sys.platform == "win32":
-        cmd = "echo test"
-    else:
-        cmd = "echo test"
-
+    cmd = "echo test"
     result = run_command(cmd)
 
     assert result["success"] is True
@@ -364,11 +354,7 @@ def test_process_utils_run_command_timeout() -> None:
 
     from intellicrack.utils.system.process_utils import run_command
 
-    if sys.platform == "win32":
-        cmd = "timeout /t 10"
-    else:
-        cmd = "sleep 10"
-
+    cmd = "timeout /t 10" if sys.platform == "win32" else "sleep 10"
     result = run_command(cmd, timeout=1)
 
     assert result["success"] is False
@@ -381,11 +367,7 @@ def test_process_utils_run_command_captures_stdout() -> None:
 
     from intellicrack.utils.system.process_utils import run_command
 
-    if sys.platform == "win32":
-        cmd = "echo captured_output"
-    else:
-        cmd = "echo captured_output"
-
+    cmd = "echo captured_output"
     result = run_command(cmd)
 
     assert "stdout" in result

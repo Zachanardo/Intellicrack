@@ -515,9 +515,7 @@ class LicenseAnalyzer:
                         break
 
                     addr = region["base_address"] + idx
-                    if context := self._analyze_serial_validation_context(
-                        addr, memory[max(0, idx - 20) : idx + 50]
-                    ):
+                    if context := self._analyze_serial_validation_context(addr, memory[max(0, idx - 20) : idx + 50]):
                         validations.append({
                             "address": addr,
                             "type": pattern_name,

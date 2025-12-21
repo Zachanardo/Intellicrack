@@ -115,7 +115,7 @@ class TestConcolicExecutionEngineFixed(IntellicrackTestBase):
         for binary_path in self.created_binaries:
             try:
                 os.unlink(binary_path)
-            except (OSError, FileNotFoundError):
+            except OSError:
                 pass
 
     def _create_realistic_pe_binary(self):
@@ -126,7 +126,7 @@ class TestConcolicExecutionEngineFixed(IntellicrackTestBase):
             pe_data = bytearray(0x1000)  # 4KB binary
 
             # MZ signature
-            pe_data[0:2] = b'MZ'
+            pe_data[:2] = b'MZ'
 
             # PE signature offset (at 0x3C)
             struct.pack_into('<I', pe_data, 0x3C, 0x80)
@@ -437,7 +437,7 @@ class TestConcolicExecutionEngineFixed(IntellicrackTestBase):
         finally:
             try:
                 os.unlink(invalid_binary)
-            except (OSError, FileNotFoundError):
+            except OSError:
                 pass
 
     def test_timeout_handling_long_running_analysis(self):
@@ -539,14 +539,14 @@ class TestConcolicExecutionEngineFixed(IntellicrackTestBase):
 
     def test_cross_platform_compatibility_windows_focus(self):
         """Test Windows platform compatibility with cross-platform considerations."""
-        engine = ConcolicExecutionEngine(
-            binary_path=str(self.test_binary),
-            max_iterations=50,
-            timeout=30
-        )
-
         # Windows PE binary should be handled appropriately
         if SYMBOLIC_ENGINE:
+            engine = ConcolicExecutionEngine(
+                binary_path=str(self.test_binary),
+                max_iterations=50,
+                timeout=30
+            )
+
             result = engine.explore_paths()
 
             if 'error' not in result:
@@ -668,10 +668,6 @@ class TestModuleLevelFunctionality(IntellicrackTestBase):
         assert isinstance(ANGR_AVAILABLE, bool)
         assert isinstance(SIMCONCOLIC_AVAILABLE, bool)
 
-        # At least one detection mechanism should have run
-        flags_checked = True
-        assert flags_checked is True
-
     def test_logger_initialization(self):
         """Test module logger is properly initialized."""
         from intellicrack.core.analysis.concolic_executor_fixed import logger
@@ -737,7 +733,7 @@ class TestProductionReadinessCriteria(IntellicrackTestBase):
         finally:
             try:
                 os.unlink(test_binary)
-            except (OSError, FileNotFoundError):
+            except OSError:
                 pass
 
     def _create_production_test_binary(self):
@@ -747,7 +743,7 @@ class TestProductionReadinessCriteria(IntellicrackTestBase):
             pe_data = bytearray(0x2000)  # 8KB
 
             # Full PE headers
-            pe_data[0:2] = b'MZ'
+            pe_data[:2] = b'MZ'
             struct.pack_into('<I', pe_data, 0x3C, 0x80)
             pe_data[0x80:0x84] = b'PE\x00\x00'
             struct.pack_into('<H', pe_data, 0x84, 0x8664)  # AMD64

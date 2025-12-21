@@ -224,7 +224,7 @@ class TestHashCalculation:
         hashes = analyzer._calculate_hashes_streaming(notepad_path, progress_callback)
 
         assert "sha256" in hashes
-        assert len(progress_calls) > 0
+        assert progress_calls
         assert progress_calls[-1][0] == progress_calls[-1][1]
 
     def test_calculate_hashes_kernel32(self, analyzer: BinaryAnalyzer, kernel32_path: Path) -> None:
@@ -387,7 +387,8 @@ class TestStringExtraction:
         all_strings = " ".join(strings).lower()
 
         common_pe_strings = [".dll", ".exe", "microsoft", "windows", "text", "data"]
-        found_count = sum(1 for s in common_pe_strings if s in all_strings)
+        found_count = sum(bool(s in all_strings)
+                      for s in common_pe_strings)
 
         assert found_count >= 1
 
@@ -589,7 +590,7 @@ class TestProgressTracking:
         result = analyzer.analyze_with_progress(notepad_path, progress_callback)
 
         assert result["analysis_status"] == "completed"
-        assert len(progress_updates) > 0
+        assert progress_updates
 
     def test_analyze_with_progress_completion(self, analyzer: BinaryAnalyzer, notepad_path: Path) -> None:
         """Progress tracking reaches completion."""
@@ -745,7 +746,7 @@ class TestLicenseStringDetection:
 
         if len(results) > 0 and "error" not in results[0]:
             patterns_found = {match["pattern_matched"] for match in results}
-            assert len(patterns_found) > 0
+            assert patterns_found
 
 
 class TestSectionAnalysis:
@@ -848,7 +849,7 @@ class TestChunkReading:
         """Chunk reading produces valid chunks."""
         chunks = list(analyzer._read_chunks(notepad_path, chunk_size=1024))
 
-        assert len(chunks) > 0
+        assert chunks
         assert all(isinstance(chunk, bytes) for chunk, _ in chunks)
         assert all(isinstance(offset, int) for _, offset in chunks)
 

@@ -64,8 +64,7 @@ def tools_tab_instance():
     """Create ToolsTab instance for testing."""
     try:
         from intellicrack.ui.tabs.tools_tab import ToolsTab
-        tab = ToolsTab(shared_context={})
-        return tab
+        return ToolsTab(shared_context={})
     except Exception as e:
         pytest.skip(f"Cannot initialize ToolsTab: {e}")
 
@@ -299,7 +298,7 @@ class TestBinaryAnalysisTools:
             call_args_list = [str(call) for call in tab.tool_output.append.call_args_list]
             combined_output = " ".join(call_args_list)
 
-            assert len(combined_output) > 0
+            assert combined_output != ""
             assert "0x" in combined_output.lower() or "Disassembly" in combined_output or tab.tool_output.append.call_count > 0
         except Exception:
             pytest.skip("Cannot test disassembly without Qt or Capstone")
@@ -1054,6 +1053,6 @@ class TestToolOutputAndLogging:
             assert tab.tool_output.append.call_count > 0
 
             call_args_list = [str(call) for call in tab.tool_output.append.call_args_list]
-            assert len(call_args_list) > 0
+            assert call_args_list
         except Exception:
             pytest.skip("Cannot test output capture without Qt")

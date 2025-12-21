@@ -24,14 +24,16 @@ This module consolidates PE parsing patterns to reduce code duplication.
 import io
 import logging
 import struct
+from typing import Any
 
 from PIL import Image
+from PIL.ImageFile import ImageFile
 
 
 logger = logging.getLogger(__name__)
 
 
-def analyze_pe_imports(pe: object, target_apis: dict[str, list[str]]) -> dict[str, list[str]]:
+def analyze_pe_imports(pe: Any, target_apis: dict[str, list[str]]) -> dict[str, list[str]]:
     """Analyze PE imports for specific API categories.
 
     Args:
@@ -44,10 +46,11 @@ def analyze_pe_imports(pe: object, target_apis: dict[str, list[str]]) -> dict[st
     """
     from ..network_api_common import analyze_network_apis
 
-    return analyze_network_apis(pe, target_apis)
+    result: dict[str, list[str]] = analyze_network_apis(pe, target_apis)
+    return result
 
 
-def get_pe_sections_info(pe: object) -> list[dict]:
+def get_pe_sections_info(pe: Any) -> list[dict[str, Any]]:
     """Extract PE section information.
 
     Args:
@@ -57,10 +60,10 @@ def get_pe_sections_info(pe: object) -> list[dict]:
         List of section information dictionaries
 
     """
-    sections = []
+    sections: list[dict[str, Any]] = []
 
     for section in pe.sections:
-        section_info = {
+        section_info: dict[str, Any] = {
             "name": section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
             "virtual_address": section.VirtualAddress,
             "virtual_size": section.Misc_VirtualSize,
@@ -110,7 +113,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
         return None
 
 
-def extract_icon_from_resources(pe: object) -> bytes | None:
+def extract_icon_from_resources(pe: Any) -> bytes | None:
     """Extract icon data from PE resources.
 
     Args:
@@ -121,32 +124,35 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
 
     """
     try:
-        # RT_ICON = 3, RT_GROUP_ICON = 14
-        RT_ICON = 3
-        RT_GROUP_ICON = 14
-
-        icon_groups = {}
-        icons = {}
+        icon_groups: dict[int, bytes] = {}
+        icons: dict[int, bytes] = {}
 
         # Extract icon groups and individual icons
-        for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-            if hasattr(resource_type, "id"):
-                for resource_id in resource_type.directory.entries:
-                    if resource_type.id == RT_GROUP_ICON:
-                        if hasattr(resource_id, "directory"):
-                            for resource_lang in resource_id.directory.entries:
-                                data_rva = resource_lang.data.struct.OffsetToData
-                                size = resource_lang.data.struct.Size
-                                data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
-                                icon_groups[resource_id.id] = data
+        if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
+            # RT_ICON = 3, RT_GROUP_ICON = 14
+            RT_ICON = 3
+            RT_GROUP_ICON = 14
 
-                    elif resource_type.id == RT_ICON:
-                        if hasattr(resource_id, "directory"):
-                            for resource_lang in resource_id.directory.entries:
-                                data_rva = resource_lang.data.struct.OffsetToData
-                                size = resource_lang.data.struct.Size
-                                data = pe.get_memory_mapped_image()[data_rva : data_rva + size]
-                                icons[resource_id.id] = data
+            for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+                if hasattr(resource_type, "id"):
+                    for resource_id in resource_type.directory.entries:
+                        if resource_type.id == RT_GROUP_ICON:
+                            if hasattr(resource_id, "directory"):
+                                for resource_lang in resource_id.directory.entries:
+                                    data_rva = resource_lang.data.struct.OffsetToData
+                                    size = resource_lang.data.struct.Size
+                                    memory_image: bytes = pe.get_memory_mapped_image()
+                                    data: bytes = memory_image[data_rva : data_rva + size]
+                                    icon_groups[resource_id.id] = data
+
+                        elif resource_type.id == RT_ICON:
+                            if hasattr(resource_id, "directory"):
+                                for resource_lang in resource_id.directory.entries:
+                                    data_rva = resource_lang.data.struct.OffsetToData
+                                    size = resource_lang.data.struct.Size
+                                    memory_image = pe.get_memory_mapped_image()
+                                    data = memory_image[data_rva : data_rva + size]
+                                    icons[resource_id.id] = data
 
         # Parse icon group to find best icon
         if icon_groups:
@@ -158,7 +164,7 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
             # WORD idReserved, WORD idType, WORD idCount
             _, _, count = struct.unpack("<HHH", group_data[:6])
 
-            best_icon_id = None
+            best_icon_id: int | None = None
             best_size = 0
 
             # Find largest icon
@@ -182,7 +188,8 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
                         best_icon_id = icon_id
 
             if best_icon_id and best_icon_id in icons:
-                return icons[best_icon_id]
+                result: bytes = icons[best_icon_id]
+                return result
 
         return None
 
@@ -230,10 +237,10 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
 
                 # Load as BMP
                 bmp_io = io.BytesIO(bmp_data)
-                img = Image.open(bmp_io)
+                img_opened: ImageFile = Image.open(bmp_io)
 
                 # Crop to remove mask (bottom half)
-                img = img.crop((0, 0, width, actual_height))
+                img: Image.Image = img_opened.crop((0, 0, width, actual_height))
 
                 return img
 
@@ -241,8 +248,8 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
         for _fmt in ["PNG", "JPEG", "GIF"]:
             try:
                 icon_io = io.BytesIO(icon_data)
-                img = Image.open(icon_io)
-                return img
+                img_result: ImageFile = Image.open(icon_io)
+                return img_result
             except Exception as e:
                 logger.debug("Failed to parse icon data as image format: %s", e)
                 continue
@@ -316,7 +323,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
         return saved_icons
 
 
-def get_pe_icon_info(pe_path: str) -> dict[str, object]:
+def get_pe_icon_info(pe_path: str) -> dict[str, Any]:
     """Get information about icons in PE file.
 
     Args:
@@ -326,7 +333,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
         Dictionary with icon information
 
     """
-    icon_info = {
+    icon_info: dict[str, Any] = {
         "has_icon": False,
         "icon_count": 0,
         "icon_groups": 0,
@@ -342,7 +349,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
         if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
             icon_count = 0
             group_count = 0
-            icon_sizes = []
+            icon_sizes: list[int] = []
 
             RT_ICON = 3
             RT_GROUP_ICON = 14
@@ -386,7 +393,7 @@ class PEAnalyzer:
         """Initialize PE analyzer with logger instance."""
         self.logger = logger
 
-    def analyze(self, file_path: str) -> dict:
+    def analyze(self, file_path: str) -> dict[str, Any]:
         """Analyze PE file and extract comprehensive metadata.
 
         Args:
@@ -420,7 +427,7 @@ class PEAnalyzer:
             self.logger.exception("PE analysis failed for %s: %s", file_path, e, exc_info=True)
             return {"error": str(e)}
 
-    def _extract_imports(self, pe: object) -> list[dict]:
+    def _extract_imports(self, pe: Any) -> list[dict[str, Any]]:
         """Extract import information from PE file.
 
         Args:
@@ -430,13 +437,13 @@ class PEAnalyzer:
             List of dictionaries containing DLL and function import information
 
         """
-        imports = []
+        imports: list[dict[str, Any]] = []
 
         try:
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode("utf-8", errors="ignore")
-                    functions = [
+                    functions: list[dict[str, Any]] = [
                         {
                             "name": imp.name.decode("utf-8", errors="ignore"),
                             "address": imp.address,
@@ -451,7 +458,7 @@ class PEAnalyzer:
 
         return imports
 
-    def _extract_exports(self, pe: object) -> list[dict]:
+    def _extract_exports(self, pe: Any) -> list[dict[str, Any]]:
         """Extract export information from PE file.
 
         Args:
@@ -461,24 +468,25 @@ class PEAnalyzer:
             List of dictionaries containing exported function information
 
         """
-        exports = []
+        exports: list[dict[str, Any]] = []
 
         try:
             if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                exports.extend(
+                export_list: list[dict[str, Any]] = [
                     {
                         "name": (exp.name.decode("utf-8", errors="ignore") if exp.name else None),
                         "address": exp.address,
                         "ordinal": exp.ordinal,
                     }
                     for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
-                )
+                ]
+                exports.extend(export_list)
         except Exception as e:
             self.logger.debug("Export extraction failed: %s", e)
 
         return exports
 
-    def _extract_headers(self, pe: object) -> dict:
+    def _extract_headers(self, pe: Any) -> dict[str, Any]:
         """Extract PE header information.
 
         Args:
@@ -488,39 +496,42 @@ class PEAnalyzer:
             Dictionary containing DOS, file, and optional header information
 
         """
-        headers = {}
+        headers: dict[str, Any] = {}
 
         try:
-            headers["dos_header"] = {
-                "signature": pe.DOS_HEADER.e_magic,
-                "bytes_in_last_page": pe.DOS_HEADER.e_cblp,
-                "pages_in_file": pe.DOS_HEADER.e_cp,
-            }
+            if hasattr(pe, "DOS_HEADER"):
+                headers["dos_header"] = {
+                    "signature": pe.DOS_HEADER.e_magic,
+                    "bytes_in_last_page": pe.DOS_HEADER.e_cblp,
+                    "pages_in_file": pe.DOS_HEADER.e_cp,
+                }
 
-            headers["file_header"] = {
-                "machine": pe.FILE_HEADER.Machine,
-                "number_of_sections": pe.FILE_HEADER.NumberOfSections,
-                "timestamp": pe.FILE_HEADER.TimeDateStamp,
-                "characteristics": pe.FILE_HEADER.Characteristics,
-            }
+            if hasattr(pe, "FILE_HEADER"):
+                headers["file_header"] = {
+                    "machine": pe.FILE_HEADER.Machine,
+                    "number_of_sections": pe.FILE_HEADER.NumberOfSections,
+                    "timestamp": pe.FILE_HEADER.TimeDateStamp,
+                    "characteristics": pe.FILE_HEADER.Characteristics,
+                }
 
-            headers["optional_header"] = {
-                "magic": pe.OPTIONAL_HEADER.Magic,
-                "major_linker_version": pe.OPTIONAL_HEADER.MajorLinkerVersion,
-                "minor_linker_version": pe.OPTIONAL_HEADER.MinorLinkerVersion,
-                "size_of_code": pe.OPTIONAL_HEADER.SizeOfCode,
-                "size_of_initialized_data": pe.OPTIONAL_HEADER.SizeOfInitializedData,
-                "address_of_entry_point": pe.OPTIONAL_HEADER.AddressOfEntryPoint,
-                "image_base": pe.OPTIONAL_HEADER.ImageBase,
-                "section_alignment": pe.OPTIONAL_HEADER.SectionAlignment,
-                "file_alignment": pe.OPTIONAL_HEADER.FileAlignment,
-            }
+            if hasattr(pe, "OPTIONAL_HEADER"):
+                headers["optional_header"] = {
+                    "magic": pe.OPTIONAL_HEADER.Magic,
+                    "major_linker_version": pe.OPTIONAL_HEADER.MajorLinkerVersion,
+                    "minor_linker_version": pe.OPTIONAL_HEADER.MinorLinkerVersion,
+                    "size_of_code": pe.OPTIONAL_HEADER.SizeOfCode,
+                    "size_of_initialized_data": pe.OPTIONAL_HEADER.SizeOfInitializedData,
+                    "address_of_entry_point": pe.OPTIONAL_HEADER.AddressOfEntryPoint,
+                    "image_base": pe.OPTIONAL_HEADER.ImageBase,
+                    "section_alignment": pe.OPTIONAL_HEADER.SectionAlignment,
+                    "file_alignment": pe.OPTIONAL_HEADER.FileAlignment,
+                }
         except Exception as e:
             self.logger.debug("Header extraction failed: %s", e)
 
         return headers
 
-    def _extract_resources(self, pe: object) -> dict:
+    def _extract_resources(self, pe: Any) -> dict[str, Any]:
         """Extract resource information from PE file.
 
         Args:
@@ -530,27 +541,29 @@ class PEAnalyzer:
             Dictionary containing resource information and counts
 
         """
-        resources = {"has_resources": False, "resource_types": [], "total_resources": 0}
+        resources: dict[str, Any] = {"has_resources": False, "resource_types": [], "total_resources": 0}
 
         try:
             if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
                 resources["has_resources"] = True
+                resource_type_list: list[dict[str, Any]] = []
 
                 for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
                     if hasattr(resource_type, "id"):
-                        resources["resource_types"].append(
-                            {
-                                "type_id": resource_type.id,
-                                "name": resource_type.name if hasattr(resource_type, "name") else None,
-                            },
-                        )
-                        resources["total_resources"] += 1
+                        resource_type_list.append({
+                            "type_id": resource_type.id,
+                            "name": resource_type.name if hasattr(resource_type, "name") else None,
+                        })
+                        total_count: int = resources["total_resources"]
+                        resources["total_resources"] = total_count + 1
+
+                resources["resource_types"] = resource_type_list
         except Exception as e:
             self.logger.debug("Resource extraction failed: %s", e)
 
         return resources
 
-    def _extract_certificates(self, pe: object) -> dict:
+    def _extract_certificates(self, pe: Any) -> dict[str, Any]:
         """Extract certificate information from PE file.
 
         Args:
@@ -560,7 +573,7 @@ class PEAnalyzer:
             Dictionary containing certificate information and counts
 
         """
-        certs = {"has_certificates": False, "certificate_count": 0}
+        certs: dict[str, Any] = {"has_certificates": False, "certificate_count": 0}
 
         try:
             if hasattr(pe, "DIRECTORY_ENTRY_SECURITY"):
@@ -571,7 +584,7 @@ class PEAnalyzer:
 
         return certs
 
-    def _get_architecture(self, pe: object) -> str:
+    def _get_architecture(self, pe: Any) -> str:
         """Determine PE file architecture.
 
         Args:
@@ -582,14 +595,16 @@ class PEAnalyzer:
 
         """
         try:
-            machine_type = pe.FILE_HEADER.Machine
-            architecture_map = {
-                0x014C: "x86",  # IMAGE_FILE_MACHINE_I386
-                0x8664: "x64",  # IMAGE_FILE_MACHINE_AMD64
-                0x01C0: "ARM",  # IMAGE_FILE_MACHINE_ARM
-                0xAA64: "ARM64",  # IMAGE_FILE_MACHINE_ARM64
-            }
-            return architecture_map.get(machine_type, f"Unknown (0x{machine_type:04x})")
+            if hasattr(pe, "FILE_HEADER"):
+                machine_type: int = pe.FILE_HEADER.Machine
+                architecture_map: dict[int, str] = {
+                    0x014C: "x86",  # IMAGE_FILE_MACHINE_I386
+                    0x8664: "x64",  # IMAGE_FILE_MACHINE_AMD64
+                    0x01C0: "ARM",  # IMAGE_FILE_MACHINE_ARM
+                    0xAA64: "ARM64",  # IMAGE_FILE_MACHINE_ARM64
+                }
+                return architecture_map.get(machine_type, f"Unknown (0x{machine_type:04x})")
+            return "Unknown"
         except Exception as e:
             self.logger.debug("Architecture detection failed: %s", e)
             return "Unknown"

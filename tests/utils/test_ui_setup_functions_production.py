@@ -45,8 +45,7 @@ class TestSetupDatasetTab:
 
         assert tab is not None
 
-        dataset_combo = tab.findChild(type(tab), "dataset_combo")
-        if dataset_combo:
+        if dataset_combo := tab.findChild(type(tab), "dataset_combo"):
             assert dataset_combo.objectName() == "dataset_combo"
 
     def test_dataset_tab_has_browse_button(self, qapp: QApplication) -> None:
@@ -57,8 +56,7 @@ class TestSetupDatasetTab:
 
         assert tab is not None
 
-        browse_btn = tab.findChild(type(tab), "browse_dataset_btn")
-        if browse_btn:
+        if browse_btn := tab.findChild(type(tab), "browse_dataset_btn"):
             assert browse_btn.objectName() == "browse_dataset_btn"
 
     def test_dataset_tab_has_preview_table(self, qapp: QApplication) -> None:
@@ -69,8 +67,7 @@ class TestSetupDatasetTab:
 
         assert tab is not None
 
-        preview_table = tab.findChild(type(tab), "dataset_preview_table")
-        if preview_table:
+        if preview_table := tab.findChild(type(tab), "dataset_preview_table"):
             assert preview_table.objectName() == "dataset_preview_table"
 
     def test_dataset_tab_has_operation_buttons(self, qapp: QApplication) -> None:
@@ -89,8 +86,7 @@ class TestSetupDatasetTab:
         ]
 
         for btn_name in button_names:
-            btn = tab.findChild(type(tab), btn_name)
-            if btn:
+            if btn := tab.findChild(type(tab), btn_name):
                 assert btn.objectName() == btn_name
 
     def test_dataset_tab_returns_none_without_pyqt(self, qapp: QApplication) -> None:
@@ -122,8 +118,7 @@ class TestSetupMemoryMonitor:
 
         assert widget is not None
 
-        current_value = widget.findChild(type(widget), "current_memory_value")
-        if current_value:
+        if current_value := widget.findChild(type(widget), "current_memory_value"):
             assert current_value.objectName() == "current_memory_value"
 
     def test_memory_monitor_has_peak_value_label(self, qapp: QApplication) -> None:
@@ -134,8 +129,7 @@ class TestSetupMemoryMonitor:
 
         assert widget is not None
 
-        peak_value = widget.findChild(type(widget), "peak_memory_value")
-        if peak_value:
+        if peak_value := widget.findChild(type(widget), "peak_memory_value"):
             assert peak_value.objectName() == "peak_memory_value"
 
     def test_memory_monitor_has_available_value_label(self, qapp: QApplication) -> None:
@@ -146,8 +140,9 @@ class TestSetupMemoryMonitor:
 
         assert widget is not None
 
-        available_value = widget.findChild(type(widget), "available_memory_value")
-        if available_value:
+        if available_value := widget.findChild(
+            type(widget), "available_memory_value"
+        ):
             assert available_value.objectName() == "available_memory_value"
 
     def test_memory_monitor_has_usage_bar(self, qapp: QApplication) -> None:
@@ -158,8 +153,7 @@ class TestSetupMemoryMonitor:
 
         assert widget is not None
 
-        memory_bar = widget.findChild(type(widget), "memory_usage_bar")
-        if memory_bar:
+        if memory_bar := widget.findChild(type(widget), "memory_usage_bar"):
             assert memory_bar.objectName() == "memory_usage_bar"
 
     def test_memory_monitor_has_control_buttons(self, qapp: QApplication) -> None:
@@ -177,8 +171,7 @@ class TestSetupMemoryMonitor:
         ]
 
         for btn_name in button_names:
-            btn = widget.findChild(type(widget), btn_name)
-            if btn:
+            if btn := widget.findChild(type(widget), btn_name):
                 assert btn.objectName() == btn_name
 
     def test_memory_monitor_has_process_table(self, qapp: QApplication) -> None:
@@ -189,8 +182,7 @@ class TestSetupMemoryMonitor:
 
         assert widget is not None
 
-        process_table = widget.findChild(type(widget), "process_memory_table")
-        if process_table:
+        if process_table := widget.findChild(type(widget), "process_memory_table"):
             assert process_table.objectName() == "process_memory_table"
 
     def test_memory_monitor_returns_none_without_pyqt(self, qapp: QApplication) -> None:

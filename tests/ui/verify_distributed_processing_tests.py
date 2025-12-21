@@ -127,12 +127,9 @@ def test_worker_queue_operations() -> None:
     """Verify worker queue operations work."""
     print("Testing worker queue operations...")
 
-    queue = []
     task1 = DistributedTask("task_1", "binary_analysis", {})
     task2 = DistributedTask("task_2", "password_cracking", {})
-    queue.append(task1)
-    queue.append(task2)
-
+    queue = [task1, task2]
     worker = DistributedWorkerThread("worker_1", queue)
 
     retrieved = worker.get_next_task()

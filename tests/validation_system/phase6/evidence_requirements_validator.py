@@ -253,8 +253,7 @@ class EvidenceRequirementsValidator:
         try:
             for file_path in directory.rglob("*"):
                 if file_path.is_file() and not file_path.name.startswith('.'):
-                    evidence_type = self._determine_evidence_type(file_path)
-                    if evidence_type:
+                    if evidence_type := self._determine_evidence_type(file_path):
                         evidence_item = EvidenceItem(
                             evidence_type=evidence_type,
                             file_path=file_path,
@@ -540,7 +539,7 @@ class EvidenceRequirementsValidator:
             # Check for common API trace patterns
             api_patterns = ['CreateFile', 'RegOpenKey', 'LoadLibrary', 'VirtualAlloc', 'Process32']
 
-            if not any(pattern in content for pattern in api_patterns):
+            if all(pattern not in content for pattern in api_patterns):
                 validation["issues"].append("No recognizable API call patterns found")
 
         except Exception as e:
@@ -559,10 +558,8 @@ class EvidenceRequirementsValidator:
                 header = f.read(16)
 
             # Windows memory dump signature
-            if b'PAGEDUMP' not in header and b'PAGE' not in header:
-                # Could be raw memory dump, check for PE headers
-                if b'MZ' not in header[:1024]:  # Check first 1KB for PE signature
-                    validation["issues"].append("Unrecognized memory dump format")
+            if b'PAGEDUMP' not in header and b'PAGE' not in header and b'MZ' not in header[:1024]:
+                validation["issues"].append("Unrecognized memory dump format")
 
         except Exception as e:
             validation["valid"] = False
@@ -586,8 +583,8 @@ class EvidenceRequirementsValidator:
                     continue  # Skip signature files themselves
 
                 # Look for corresponding signature file
-                sig_file = item.file_path.with_suffix(item.file_path.suffix + '.sig')
-                asc_file = item.file_path.with_suffix(item.file_path.suffix + '.asc')
+                sig_file = item.file_path.with_suffix(f'{item.file_path.suffix}.sig')
+                asc_file = item.file_path.with_suffix(f'{item.file_path.suffix}.asc')
 
                 signature_file = None
                 if sig_file.exists():
@@ -738,16 +735,19 @@ class EvidenceRequirementsValidator:
         try:
             # Group by type
             for evidence_type in EvidenceType:
-                type_items = [item for item in evidence_items if item.evidence_type == evidence_type]
-                if type_items:
+                if type_items := [
+                    item
+                    for item in evidence_items
+                    if item.evidence_type == evidence_type
+                ]:
                     summary["by_type"][evidence_type.value] = {
                         "count": len(type_items),
                         "total_size_mb": sum(item.file_size for item in type_items) / (1024 * 1024)
                     }
 
-            # Find timestamp range
-            timestamps = [item.timestamp for item in evidence_items if item.timestamp]
-            if timestamps:
+            if timestamps := [
+                item.timestamp for item in evidence_items if item.timestamp
+            ]:
                 timestamps.sort()
                 summary["earliest_timestamp"] = timestamps[0]
                 summary["latest_timestamp"] = timestamps[-1]
@@ -788,12 +788,14 @@ class EvidenceRequirementsValidator:
         metadata = {}
         try:
             stat = file_path.stat()
-            metadata.update({
+            metadata |= {
                 "size_bytes": stat.st_size,
                 "creation_time": datetime.fromtimestamp(stat.st_ctime).isoformat(),
-                "modification_time": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                "access_time": datetime.fromtimestamp(stat.st_atime).isoformat()
-            })
+                "modification_time": datetime.fromtimestamp(
+                    stat.st_mtime
+                ).isoformat(),
+                "access_time": datetime.fromtimestamp(stat.st_atime).isoformat(),
+            }
 
             # Add MIME type
             mime_type, _ = mimetypes.guess_type(str(file_path))
@@ -807,7 +809,7 @@ class EvidenceRequirementsValidator:
 
     def _get_timestamp(self) -> str:
         """Get ISO timestamp."""
-        return datetime.utcnow().isoformat() + 'Z'
+        return f'{datetime.utcnow().isoformat()}Z'
 
     def create_evidence_package(self, evidence_files: list[Path], package_name: str) -> EvidencePackage:
         """Create a new evidence package with proper structure."""
@@ -817,8 +819,7 @@ class EvidenceRequirementsValidator:
         try:
             for file_path in evidence_files:
                 if file_path.exists():
-                    evidence_type = self._determine_evidence_type(file_path)
-                    if evidence_type:
+                    if evidence_type := self._determine_evidence_type(file_path):
                         item = EvidenceItem(
                             evidence_type=evidence_type,
                             file_path=file_path,

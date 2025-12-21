@@ -1,5 +1,6 @@
 """Standalone HASP parser test without full Intellicrack dependencies."""
 
+
 import sys
 from pathlib import Path
 
@@ -61,12 +62,12 @@ try:
     request_data.extend(struct.pack("<H", 0))
 
     request = parser.parse_request(bytes(request_data))
-    print(f"OK Parsed LOGIN request")
+    print("OK Parsed LOGIN request")
     print(f"   Feature ID: {request.feature_id}")
     print(f"   Vendor: {parser.VENDOR_CODES[request.vendor_code]}")
 
     response = parser.generate_response(request)
-    print(f"OK Generated response")
+    print("OK Generated response")
     print(f"   Status: {HASPStatusCode(response.status).name}")
     print(f"   Session ID: {response.session_id}")
 
@@ -145,7 +146,7 @@ try:
 
     print("\n=== 7. USB Emulator ===")
     usb = HASPUSBEmulator()
-    print(f"OK USB emulator initialized")
+    print("OK USB emulator initialized")
     print(f"   Vendor ID: 0x{usb.device_info['vendor_id']:04X}")
     print(f"   Product ID: 0x{usb.device_info['product_id']:04X}")
     print(f"   Serial: {usb.device_info['serial_number']}")
@@ -157,7 +158,7 @@ try:
 
     print("\n=== 8. Server Emulator ===")
     server = HASPServerEmulator("127.0.0.1", 1947)
-    print(f"OK Server initialized")
+    print("OK Server initialized")
     print(f"   Address: {server.bind_address}:{server.port}")
     print(f"   Server ID: {server.server_id}")
 
@@ -166,7 +167,7 @@ try:
 
     print("\n=== 9. Packet Analyzer ===")
     analyzer = HASPPacketAnalyzer()
-    print(f"OK Analyzer initialized")
+    print("OK Analyzer initialized")
     print(f"   Parser features: {len(analyzer.parser.features)}")
 
     print("\n" + "=" * 60)

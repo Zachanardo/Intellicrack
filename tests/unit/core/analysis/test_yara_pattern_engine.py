@@ -528,7 +528,7 @@ rule Invalid_Rule {
         """Should properly clean up resources after operations."""
         # Perform multiple scan operations
         files_scanned = []
-        for i in range(5):
+        for _ in range(5):
             result = self.engine.scan_file(self.upx_packed_sample)
             files_scanned.append(result)
 

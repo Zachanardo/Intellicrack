@@ -106,7 +106,7 @@ class ConcretePatcher(BaseWindowsPatcher):
         if not kernel32:
             return {}
 
-        success = kernel32.CreateProcessW(
+        if success := kernel32.CreateProcessW(
             target_exe,
             None,
             None,
@@ -116,18 +116,16 @@ class ConcretePatcher(BaseWindowsPatcher):
             None,
             None,
             ctypes.byref(si),
-            ctypes.byref(pi)
-        )
-
-        if not success:
+            ctypes.byref(pi),
+        ):
+            return {
+                "process_handle": pi.hProcess,
+                "thread_handle": pi.hThread,
+                "process_id": pi.dwProcessId,
+                "thread_id": pi.dwThreadId
+            }
+        else:
             return {}
-
-        return {
-            "process_handle": pi.hProcess,
-            "thread_handle": pi.hThread,
-            "process_id": pi.dwProcessId,
-            "thread_id": pi.dwThreadId
-        }
 
     def _get_thread_context(self, thread_handle: int) -> dict[str, Any]:
         """Get thread context for testing.
@@ -159,16 +157,16 @@ class ConcretePatcher(BaseWindowsPatcher):
         context = CONTEXT()
         context.ContextFlags = 0x00010001
 
-        success = kernel32.GetThreadContext(thread_handle, ctypes.byref(context))
-
-        if not success:
+        if success := kernel32.GetThreadContext(
+            thread_handle, ctypes.byref(context)
+        ):
+            return {
+                "ContextFlags": context.ContextFlags,
+                "Dr0": context.Dr0,
+                "Dr1": context.Dr1,
+            }
+        else:
             return {}
-
-        return {
-            "ContextFlags": context.ContextFlags,
-            "Dr0": context.Dr0,
-            "Dr1": context.Dr1,
-        }
 
 
 @pytest.fixture
@@ -443,8 +441,7 @@ class TestSuspendedProcessCreation:
             assert result["process_handle"] > 0
             assert result["thread_handle"] > 0
 
-            kernel32 = get_windows_kernel32()
-            if kernel32:
+            if kernel32 := get_windows_kernel32():
                 kernel32.TerminateProcess(result["process_handle"], 0)
                 kernel32.CloseHandle(result["process_handle"])
                 kernel32.CloseHandle(result["thread_handle"])
@@ -532,8 +529,7 @@ class TestCreateAndHandleSuspendedProcess:
             assert "process_handle" in process_info
             assert "thread_handle" in process_info
 
-            kernel32 = get_windows_kernel32()
-            if kernel32:
+            if kernel32 := get_windows_kernel32():
                 kernel32.TerminateProcess(process_info["process_handle"], 0)
                 kernel32.CloseHandle(process_info["process_handle"])
                 kernel32.CloseHandle(process_info["thread_handle"])
@@ -569,8 +565,7 @@ class TestCreateAndHandleSuspendedProcess:
         )
 
         if success and process_info:
-            kernel32 = get_windows_kernel32()
-            if kernel32:
+            if kernel32 := get_windows_kernel32():
                 kernel32.TerminateProcess(process_info["process_handle"], 0)
                 kernel32.CloseHandle(process_info["process_handle"])
                 kernel32.CloseHandle(process_info["thread_handle"])
@@ -692,9 +687,9 @@ class TestRealWorldPatching:
             pytest.skip("Could not create suspended process (permissions or Windows security)")
 
         try:
-            context = concrete_patcher._get_thread_context(process_info["thread_handle"])
-
-            if context:
+            if context := concrete_patcher._get_thread_context(
+                process_info["thread_handle"]
+            ):
                 assert context["ContextFlags"] > 0
         finally:
             kernel32 = concrete_patcher.kernel32
@@ -833,8 +828,7 @@ class TestMultipleInstances:
         if not cleanup_processes:
             pytest.skip("Could not create suspended processes (permissions or Windows security)")
 
-        kernel32 = get_windows_kernel32()
-        if kernel32:
+        if kernel32 := get_windows_kernel32():
             for proc in cleanup_processes:
                 if proc.get("process_handle"):
                     kernel32.TerminateProcess(proc["process_handle"], 0)

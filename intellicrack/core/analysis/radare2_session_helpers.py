@@ -220,7 +220,9 @@ def configure_global_pool(
         )
         logger.info(
             "Configured global pool: max_sessions=%d, max_idle_time=%d, analysis_level=%s",
-            max_sessions, max_idle_time, analysis_level,
+            max_sessions,
+            max_idle_time,
+            analysis_level,
         )
 
 

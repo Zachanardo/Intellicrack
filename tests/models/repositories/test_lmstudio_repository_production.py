@@ -92,9 +92,7 @@ class TestLMStudioRepository:
                 pytest.skip("No models loaded in LMStudio")
 
             first_model_id = models[0].model_id
-            model = repo.get_model_details(first_model_id)
-
-            if model:
+            if model := repo.get_model_details(first_model_id):
                 assert model.model_id == first_model_id
                 assert model.provider == "lmstudio"
         except Exception as e:

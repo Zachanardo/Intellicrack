@@ -210,11 +210,11 @@ class ThemidaAnalyzer:
         if LIEF_AVAILABLE:
             try:
                 self.binary = lief.parse(binary_path)
-                if self.binary and hasattr(self.binary, 'header'):
+                if self.binary and hasattr(self.binary, "header"):
                     header = self.binary.header
-                    if hasattr(header, 'machine') and hasattr(lief, 'PE'):
-                        pe_module = getattr(lief, 'PE')
-                        if hasattr(pe_module, 'MACHINE_TYPES'):
+                    if hasattr(header, "machine") and hasattr(lief, "PE"):
+                        pe_module = getattr(lief, "PE")
+                        if hasattr(pe_module, "MACHINE_TYPES"):
                             self.is_64bit = header.machine == pe_module.MACHINE_TYPES.AMD64
             except Exception as e:
                 logger.warning("LIEF parsing failed: %s", e)
@@ -257,7 +257,9 @@ class ThemidaAnalyzer:
 
         logger.info(
             "Themida analysis complete: %s, VM: %s, Confidence: %.1f%%",
-            result.version.value, result.vm_architecture.value, result.confidence
+            result.version.value,
+            result.vm_architecture.value,
+            result.confidence,
         )
         return result
 
@@ -351,10 +353,7 @@ class ThemidaAnalyzer:
         cisc_score = 0
 
         if self.binary_data is not None:
-            cisc_score = sum(
-                pattern in self.binary_data
-                for pattern in self.CISC_HANDLER_PATTERNS.values()
-            )
+            cisc_score = sum(pattern in self.binary_data for pattern in self.CISC_HANDLER_PATTERNS.values())
             for pattern in self.RISC_HANDLER_PATTERNS.values():
                 if pattern in self.binary_data:
                     risc_score += 1
@@ -573,10 +572,7 @@ class ThemidaAnalyzer:
             return 1
 
         complexity = len(instructions) + len({insn[1] for insn in instructions})
-        branch_count = sum(
-            insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"]
-            for insn in instructions
-        )
+        branch_count = sum(insn[1] in ["jmp", "je", "jne", "jg", "jl", "ja", "jb"] for insn in instructions)
         complexity += branch_count * 2
 
         return min(max(complexity // 5, 1), 10)

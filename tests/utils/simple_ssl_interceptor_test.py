@@ -232,8 +232,7 @@ def test_ssl_interceptor_security_features():
 
         # Test executable discovery for mitmproxy integration
         print("\n Testing external tool integration...")
-        mitmdump_path = interceptor._find_executable("mitmdump")
-        if mitmdump_path:
+        if mitmdump_path := interceptor._find_executable("mitmdump"):
             print(f"OK mitmproxy found at: {mitmdump_path}")
         else:
             print("WARNING  mitmproxy not found - SSL interception will be limited")

@@ -486,16 +486,13 @@ class TestCFIBypassCore:
         payloads = []
 
         for technique in techniques:
-            payload = cfi_bypass.generate_bypass_payload(
-                sample_pe_with_cfg,
-                technique=technique,
-                target_address=0x140001000
-            )
-            if payload:
+            if payload := cfi_bypass.generate_bypass_payload(
+                sample_pe_with_cfg, technique=technique, target_address=0x140001000
+            ):
                 payloads.append(payload)
 
         # At least one technique should work
-        assert len(payloads) > 0
+        assert payloads
 
     def test_cfi_bypass_with_aslr(self, cfi_bypass):
         """Test CFI bypass with ASLR consideration."""
@@ -800,7 +797,7 @@ class TestCFIBypassEdgeCases:
             real_file = f.name
 
         # Create symlink (if supported)
-        link_file = real_file + '.link'
+        link_file = f'{real_file}.link'
         try:
             os.symlink(real_file, link_file)
             result = cfi_bypass.analyze_cfi_protection(link_file)

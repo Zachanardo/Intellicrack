@@ -36,15 +36,10 @@ def fix_indentation_in_file(filepath: Path):
                     # Fix the indentation
                     fixed_next_line = ' ' * expected_indent + next_line.lstrip()
                     fixed_lines.append(fixed_next_line)
-                    skip_next = True
                     print(f"  Fixed indentation at line {i + 2}")
                 else:
                     fixed_lines.append(next_line)
-                    skip_next = True
-            else:
-                # No logger.debug, keep next line as is
-                pass
-
+                skip_next = True
     # Write back
     fixed_content = '\n'.join(fixed_lines)
     if fixed_content != content:
@@ -79,23 +74,20 @@ def fix_all_files():
                 for i, line in enumerate(lines):
                     if line.startswith('import ') or line.startswith('from '):
                         continue
-                    else:
-                        # Found the end of imports, insert logging
-                        lines.insert(i, 'import logging')
-                        lines.insert(i + 1, '')
-                        lines.insert(i + 2, 'logger = logging.getLogger(__name__)')
-                        print(f"  Added logging import to {filepath.name}")
-                        break
+                    # Found the end of imports, insert logging
+                    lines.insert(i, 'import logging')
+                    lines.insert(i + 1, '')
+                    lines.insert(i + 2, 'logger = logging.getLogger(__name__)')
+                    print(f"  Added logging import to {filepath.name}")
+                    break
 
                 filepath.write_text('\n'.join(lines))
 
             # Remove unused random import if secrets is imported
-            if 'import secrets' in content and 'import random' in content:
-                # Check if random is actually used
-                if not re.search(r'\brandom\.\w+', content):
-                    content = content.replace('import random\n', '')
-                    filepath.write_text(content)
-                    print(f"  Removed unused random import from {filepath.name}")
+            if 'import secrets' in content and 'import random' in content and not re.search(r'\brandom\.\w+', content):
+                content = content.replace('import random\n', '')
+                filepath.write_text(content)
+                print(f"  Removed unused random import from {filepath.name}")
 
 
 def main():

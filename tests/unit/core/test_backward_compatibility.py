@@ -304,9 +304,9 @@ class RealFontManagerCompat:
         if size is None:
             size = config_data.get("font_sizes", {}).get("code_default", 10)
 
-        # Try primary fonts
-        primary_fonts = config_data.get("monospace_fonts", {}).get("primary", [])
-        if primary_fonts:
+        if primary_fonts := config_data.get("monospace_fonts", {}).get(
+            "primary", []
+        ):
             return {"family": primary_fonts[0], "size": size}
 
         # Fallback
@@ -320,9 +320,7 @@ class RealFontManagerCompat:
         if size is None:
             size = config_data.get("font_sizes", {}).get("ui_default", 10)
 
-        # Try primary fonts
-        primary_fonts = config_data.get("ui_fonts", {}).get("primary", [])
-        if primary_fonts:
+        if primary_fonts := config_data.get("ui_fonts", {}).get("primary", []):
             return {"family": primary_fonts[0], "size": size}
 
         # Fallback
@@ -620,7 +618,8 @@ class TestBackwardCompatibility(unittest.TestCase):
         self.assertEqual(len(errors), 0, f"Concurrent access errors: {errors}")
 
         # Verify all operations succeeded
-        successful_operations = sum(1 for _, _, success in results if success)
+        successful_operations = sum(bool(success)
+                                for _, _, success in results)
         total_operations = len(results)
 
         self.assertEqual(successful_operations, total_operations,

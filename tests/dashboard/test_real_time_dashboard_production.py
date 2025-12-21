@@ -203,7 +203,7 @@ class TestRealTimeDashboard:
         )
         dashboard.add_event(event)
 
-        assert len(callback_called) > 0
+        assert callback_called
 
     def test_start_analysis_creates_tracking(self, dashboard: RealTimeDashboard) -> None:
         """start_analysis creates analysis tracking entry."""

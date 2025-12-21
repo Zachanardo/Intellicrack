@@ -192,7 +192,7 @@ class TestStringExtractionThread:
         thread.strings_found.connect(collect_strings)
         thread.run()
 
-        assert len(strings_found) > 0
+        assert strings_found
         string_values = [s for _, s, _ in strings_found]
         assert any("LICENSE_KEY" in s for s in string_values)
 
@@ -211,7 +211,7 @@ class TestStringExtractionThread:
         thread.run()
 
         unicode_strings = [s for _, s, enc in strings_found if enc == "Unicode"]
-        assert len(unicode_strings) > 0
+        assert unicode_strings
 
     def test_thread_respects_min_length(
         self, qapp: QApplication, temp_binary_with_strings: Path
@@ -243,7 +243,7 @@ class TestStringExtractionThread:
         thread.progress_update.connect(collect_progress)
         thread.run()
 
-        assert len(progress_values) > 0
+        assert progress_values
         assert 50 in progress_values or 100 in progress_values
 
     def test_thread_handles_nonexistent_file(self, qapp: QApplication) -> None:
@@ -474,10 +474,10 @@ class TestStringTableDisplay:
         self, string_extraction_widget: StringExtractionWidget
     ) -> None:
         """String table has correct column headers."""
-        headers = []
-        for col in range(string_extraction_widget.string_table.columnCount()):
-            headers.append(string_extraction_widget.string_table.horizontalHeaderItem(col).text())
-
+        headers = [
+            string_extraction_widget.string_table.horizontalHeaderItem(col).text()
+            for col in range(string_extraction_widget.string_table.columnCount())
+        ]
         assert "Offset" in headers
         assert "String" in headers
         assert "Length" in headers

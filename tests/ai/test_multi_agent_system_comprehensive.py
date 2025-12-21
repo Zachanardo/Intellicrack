@@ -317,13 +317,8 @@ class TestTaskDistribution:
             priority=TaskPriority.HIGH,
         )
 
-        assigned_agent: str = system.task_distributor.distribute_task(task)
-
-        if assigned_agent:
+        if assigned_agent := system.task_distributor.distribute_task(task):
             assert assigned_agent in ["analyzer_1", "reverser_1"]
-        else:
-            assert True
-
         system.stop()
 
 
@@ -384,7 +379,7 @@ class TestInterAgentCommunication:
 
         assert queue2.qsize() == 5
 
-        for original_msg in messages:
+        for _ in messages:
             received: AgentMessage = queue2.get()
             assert received.recipient_id == "agent_2"
 
@@ -982,13 +977,8 @@ class TestLoadBalancing:
             priority=TaskPriority.MEDIUM,
         )
 
-        selected: str = system.task_distributor.distribute_task(task)
-
-        if selected:
+        if selected := system.task_distributor.distribute_task(task):
             assert selected in ["agent_1", "agent_2"]
-        else:
-            assert True
-
         system.stop()
 
 
@@ -1033,10 +1023,6 @@ class TestStaticAnalysisAgent:
         assert isinstance(result, dict)
         if "status" in result:
             assert result["status"] in ["completed", "failed"]
-        elif "task_id" in result or "result" in result:
-            assert True
-        else:
-            assert len(result) >= 0
 
 
 class TestCollaborationStatistics:

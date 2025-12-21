@@ -144,7 +144,7 @@ class TestRegisterStateManagement:
 
         registers: dict[str, Any] = emu.r2.cmdj("aerj")
         assert registers is not None
-        assert len(registers) > 0
+        assert registers
 
         if emu.bits == 64:
             assert "rax" in registers or "eax" in registers
@@ -230,8 +230,7 @@ class TestMemoryReadWriteEmulation:
 
         emu.r2.cmd(f"wv1 {test_value} @ {test_addr}")
 
-        read_bytes: list[int] = emu.r2.cmdj(f"pxj 1 @ {test_addr}")
-        if read_bytes and len(read_bytes) > 0:
+        if read_bytes := emu.r2.cmdj(f"pxj 1 @ {test_addr}"):
             assert read_bytes[0] == test_value
 
     def test_esil_reads_memory_value(self, emulator_notepad: Radare2Emulator) -> None:
@@ -246,8 +245,7 @@ class TestMemoryReadWriteEmulation:
         for i, byte in enumerate(test_data):
             emu.r2.cmd(f"wv1 {byte} @ {test_addr + i}")
 
-        read_bytes: list[int] = emu.r2.cmdj(f"pxj {len(test_data)} @ {test_addr}")
-        if read_bytes:
+        if read_bytes := emu.r2.cmdj(f"pxj {len(test_data)} @ {test_addr}"):
             assert bytes(read_bytes) == test_data
 
     def test_esil_tracks_memory_changes(self, emulator_notepad: Radare2Emulator) -> None:
@@ -255,7 +253,7 @@ class TestMemoryReadWriteEmulation:
         emu: Radare2Emulator = emulator_notepad
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        assert functions is not None and len(functions) > 0
+        assert functions is not None and functions
 
         start_addr: int = functions[0]["offset"]
 
@@ -273,7 +271,7 @@ class TestInstructionSteppingExecution:
         emu: Radare2Emulator = emulator_notepad
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        assert functions is not None and len(functions) > 0
+        assert functions is not None and functions
 
         start_addr: int = functions[0]["offset"]
 
@@ -297,7 +295,7 @@ class TestInstructionSteppingExecution:
         assert len(result.execution_path) > 0
 
         unique_addresses: set[int] = set(result.execution_path)
-        assert len(unique_addresses) > 0
+        assert unique_addresses
 
     def test_esil_handles_function_prologue(self, emulator_notepad: Radare2Emulator) -> None:
         """ESIL emulation handles standard function prologue."""
@@ -307,7 +305,7 @@ class TestInstructionSteppingExecution:
         start_addr: int = functions[0]["offset"]
 
         disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 5 @ {start_addr}")
-        assert disasm is not None and len(disasm) > 0
+        assert disasm is not None and disasm
 
         result: EmulationResult = emu.emulate_esil(start_addr, num_instructions=5)
 
@@ -322,8 +320,7 @@ class TestInstructionSteppingExecution:
 
         arithmetic_funcs: list[dict[str, Any]] = []
         for func in functions[:50]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 10 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 10 @ {func['offset']}"):
                 for inst in disasm:
                     if any(op in inst.get("mnemonic", "") for op in ["add", "sub", "mul", "div", "xor", "and", "or"]):
                         arithmetic_funcs.append(func)
@@ -342,8 +339,7 @@ class TestInstructionSteppingExecution:
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
-        small_funcs: list[dict[str, Any]] = [f for f in functions if f.get("size", 1000) < 100]
-        if small_funcs:
+        if small_funcs := [f for f in functions if f.get("size", 1000) < 100]:
             start_addr: int = small_funcs[0]["offset"]
 
             result: EmulationResult = emu.emulate_esil(start_addr, num_instructions=50)
@@ -362,8 +358,7 @@ class TestLicenseValidationRoutineEmulation:
 
         cmp_funcs: list[dict[str, Any]] = []
         for func in functions[:50]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 10 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 10 @ {func['offset']}"):
                 for inst in disasm:
                     if "cmp" in inst.get("mnemonic", ""):
                         cmp_funcs.append(func)
@@ -383,8 +378,7 @@ class TestLicenseValidationRoutineEmulation:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:30]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 20 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 20 @ {func['offset']}"):
                 has_cond_jump: bool = any(inst.get("mnemonic", "").startswith("j") and
                                           inst.get("mnemonic", "") not in ["jmp", "jump"]
                                           for inst in disasm)
@@ -402,8 +396,7 @@ class TestLicenseValidationRoutineEmulation:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:50]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 20 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 20 @ {func['offset']}"):
                 has_string_ops: bool = any("cmp" in inst.get("mnemonic", "") or
                                           "test" in inst.get("mnemonic", "")
                                           for inst in disasm)
@@ -422,9 +415,9 @@ class TestLicenseValidationRoutineEmulation:
 
         xor_funcs: list[dict[str, Any]] = []
         for func in functions[:50]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 15 @ {func['offset']}")
-            if disasm:
-                xor_count: int = sum(1 for inst in disasm if "xor" in inst.get("mnemonic", ""))
+            if disasm := emu.r2.cmdj(f"pdj 15 @ {func['offset']}"):
+                xor_count: int = sum(bool("xor" in inst.get("mnemonic", ""))
+                                 for inst in disasm)
                 if xor_count >= 2:
                     xor_funcs.append(func)
                     break
@@ -510,15 +503,13 @@ class TestConditionalBranchEmulation:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:40]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 20 @ {func['offset']}")
-            if disasm:
-                cond_jumps: list[dict[str, Any]] = [
-                    inst for inst in disasm
+            if disasm := emu.r2.cmdj(f"pdj 20 @ {func['offset']}"):
+                if cond_jumps := [
+                    inst
+                    for inst in disasm
                     if inst.get("mnemonic", "").startswith("j")
                     and inst.get("mnemonic", "") not in ["jmp", "jump"]
-                ]
-
-                if cond_jumps:
+                ]:
                     result: EmulationResult = emu.emulate_esil(func["offset"], num_instructions=20)
 
                     assert result.success
@@ -546,8 +537,7 @@ class TestConditionalBranchEmulation:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:40]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 20 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 20 @ {func['offset']}"):
                 has_jz_je: bool = any(inst.get("mnemonic", "") in ["jz", "je"] for inst in disasm)
                 if has_jz_je:
                     result: EmulationResult = emu.emulate_esil(func["offset"], num_instructions=20)
@@ -566,8 +556,7 @@ class TestLoopDetectionHandling:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:40]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 30 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 30 @ {func['offset']}"):
                 for inst in disasm:
                     jump_target: int | None = inst.get("jump")
                     if jump_target and jump_target < inst["offset"]:
@@ -586,9 +575,7 @@ class TestLoopDetectionHandling:
         """ESIL emulation limits execution in infinite loops."""
         emu: Radare2Emulator = emulator_kernel32
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_esil(functions[0]["offset"], num_instructions=100)
 
             assert len(result.execution_path) <= 100
@@ -615,19 +602,18 @@ class TestUnicornEngineIntegration:
         assert success
 
         sections: list[dict[str, Any]] = emu.r2.cmdj("iSj")
-        assert sections is not None and len(sections) > 0
+        assert sections is not None and sections
 
     def test_unicorn_emulation_executes_instructions(self, emulator_notepad: Radare2Emulator) -> None:
         """Unicorn engine executes real binary instructions."""
         emu: Radare2Emulator = emulator_notepad
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        assert functions is not None and len(functions) > 0
+        assert functions is not None and functions
 
         start_addr: int = functions[0]["offset"]
 
-        small_funcs: list[dict[str, Any]] = [f for f in functions if f.get("size", 1000) < 200]
-        if small_funcs:
+        if small_funcs := [f for f in functions if f.get("size", 1000) < 200]:
             start_addr = small_funcs[0]["offset"]
             end_addr: int = start_addr + small_funcs[0]["size"]
 
@@ -641,8 +627,7 @@ class TestUnicornEngineIntegration:
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
-        small_funcs: list[dict[str, Any]] = [f for f in functions if f.get("size", 1000) < 150]
-        if small_funcs:
+        if small_funcs := [f for f in functions if f.get("size", 1000) < 150]:
             start_addr: int = small_funcs[0]["offset"]
             end_addr: int = start_addr + small_funcs[0]["size"]
 
@@ -690,8 +675,7 @@ class TestSymbolicExecution:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:15]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 20 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 20 @ {func['offset']}"):
                 has_branches: bool = any(inst.get("mnemonic", "").startswith("j") for inst in disasm)
 
                 if has_branches:
@@ -719,9 +703,7 @@ class TestTaintAnalysis:
         """Taint analysis tracks data propagation."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             taint_sources: list[tuple[int, int, str]] = [(0x1000, 4, "user_input")]
             start_addr: int = functions[0]["offset"]
 
@@ -740,9 +722,7 @@ class TestTaintAnalysis:
         """Taint analysis identifies influenced registers."""
         emu: Radare2Emulator = emulator_kernel32
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             taint_sources: list[tuple[int, int, str]] = [(0x2000, 8, "license_key")]
             start_addr: int = functions[0]["offset"]
 
@@ -779,9 +759,7 @@ class TestConstraintSolving:
         constraints: list[z3.BoolRef] = [x + y == 100, x > y]
         variables: dict[str, z3.BitVecRef] = {"x": x, "y": y}
 
-        solution: dict[str, int] | None = emu.constraint_solving(constraints, variables)
-
-        if solution:
+        if solution := emu.constraint_solving(constraints, variables):
             assert "x" in solution
             assert "y" in solution
             assert solution["x"] + solution["y"] == 100
@@ -815,11 +793,9 @@ class TestVulnerabilityDetection:
         """Vulnerability scanner detects buffer overflow candidates."""
         emu: Radare2Emulator = emulator_kernel32
 
-        vulnerabilities: list[tuple[ExploitType, int]] = emu.find_vulnerabilities()
-
-        if vulnerabilities:
+        if vulnerabilities := emu.find_vulnerabilities():
             vuln_types: set[ExploitType] = {vuln[0] for vuln in vulnerabilities}
-            assert len(vuln_types) > 0
+            assert vuln_types
 
     def test_detects_integer_overflow_operations(self, emulator_notepad: Radare2Emulator) -> None:
         """Vulnerability scanner detects potential integer overflows."""
@@ -841,14 +817,12 @@ class TestExploitGeneration:
         """Exploit generator creates buffer overflow exploits."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             vuln_addr: int = functions[0]["offset"]
 
-            exploit: ExploitPrimitive | None = emu.generate_exploit(ExploitType.BUFFER_OVERFLOW, vuln_addr)
-
-            if exploit:
+            if exploit := emu.generate_exploit(
+                ExploitType.BUFFER_OVERFLOW, vuln_addr
+            ):
                 assert isinstance(exploit, ExploitPrimitive)
                 assert exploit.type == ExploitType.BUFFER_OVERFLOW
                 assert len(exploit.trigger_input) > 0
@@ -860,14 +834,12 @@ class TestExploitGeneration:
         """Exploit generator creates format string exploits."""
         emu: Radare2Emulator = emulator_kernel32
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             vuln_addr: int = functions[0]["offset"]
 
-            exploit: ExploitPrimitive | None = emu.generate_exploit(ExploitType.FORMAT_STRING, vuln_addr)
-
-            if exploit:
+            if exploit := emu.generate_exploit(
+                ExploitType.FORMAT_STRING, vuln_addr
+            ):
                 assert isinstance(exploit, ExploitPrimitive)
                 assert exploit.type == ExploitType.FORMAT_STRING
                 assert len(exploit.trigger_input) > 0
@@ -876,14 +848,12 @@ class TestExploitGeneration:
         """Exploit generator creates integer overflow exploits."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             vuln_addr: int = functions[0]["offset"]
 
-            exploit: ExploitPrimitive | None = emu.generate_exploit(ExploitType.INTEGER_OVERFLOW, vuln_addr)
-
-            if exploit:
+            if exploit := emu.generate_exploit(
+                ExploitType.INTEGER_OVERFLOW, vuln_addr
+            ):
                 assert isinstance(exploit, ExploitPrimitive)
                 assert exploit.type == ExploitType.INTEGER_OVERFLOW
                 assert len(exploit.trigger_input) > 0
@@ -892,14 +862,12 @@ class TestExploitGeneration:
         """Exploit generator creates use-after-free exploits."""
         emu: Radare2Emulator = emulator_kernel32
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             vuln_addr: int = functions[0]["offset"]
 
-            exploit: ExploitPrimitive | None = emu.generate_exploit(ExploitType.USE_AFTER_FREE, vuln_addr)
-
-            if exploit:
+            if exploit := emu.generate_exploit(
+                ExploitType.USE_AFTER_FREE, vuln_addr
+            ):
                 assert isinstance(exploit, ExploitPrimitive)
                 assert exploit.type == ExploitType.USE_AFTER_FREE
                 assert len(exploit.trigger_input) > 0
@@ -909,21 +877,20 @@ class TestExploitGeneration:
         """Exploit generator creates comprehensive reports."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             exploits: list[ExploitPrimitive] = []
 
             for vuln_type in [ExploitType.BUFFER_OVERFLOW, ExploitType.FORMAT_STRING]:
-                exploit: ExploitPrimitive | None = emu.generate_exploit(vuln_type, functions[0]["offset"])
-                if exploit:
+                if exploit := emu.generate_exploit(
+                    vuln_type, functions[0]["offset"]
+                ):
                     exploits.append(exploit)
 
             if exploits:
                 report: str = emu.generate_exploit_report(exploits)
 
                 assert isinstance(report, str)
-                assert len(report) > 0
+                assert report != ""
                 assert "EXPLOIT GENERATION REPORT" in report
                 assert emu.binary_path in report
 
@@ -935,9 +902,7 @@ class TestPerformanceBenchmarks:
         """ESIL emulation completes within acceptable timeframe."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             start_addr: int = functions[0]["offset"]
 
             start_time: float = time.perf_counter()
@@ -955,9 +920,7 @@ class TestPerformanceBenchmarks:
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
-        small_funcs: list[dict[str, Any]] = [f for f in functions if f.get("size", 1000) < 200]
-
-        if small_funcs:
+        if small_funcs := [f for f in functions if f.get("size", 1000) < 200]:
             start_addr: int = small_funcs[0]["offset"]
             end_addr: int = start_addr + small_funcs[0]["size"]
 
@@ -1007,9 +970,7 @@ class TestEdgeCasesErrorHandling:
         """Emulation handles zero instruction count."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_esil(functions[0]["offset"], num_instructions=0)
 
             assert result.type == EmulationType.ESIL
@@ -1018,12 +979,10 @@ class TestEdgeCasesErrorHandling:
         """Emulation handles corrupted or invalid instructions."""
         emu: Radare2Emulator = emulator_kernel32
 
-        sections: list[dict[str, Any]] = emu.r2.cmdj("iSj")
-
-        if sections:
-            data_section: list[dict[str, Any]] = [s for s in sections if "data" in s.get("name", "").lower()]
-
-            if data_section:
+        if sections := emu.r2.cmdj("iSj"):
+            if data_section := [
+                s for s in sections if "data" in s.get("name", "").lower()
+            ]:
                 start_addr: int = data_section[0]["vaddr"]
 
                 result: EmulationResult = emu.emulate_esil(start_addr, num_instructions=5)
@@ -1051,11 +1010,10 @@ class TestEdgeCasesErrorHandling:
         if opened:
             functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
-            if not functions or len(functions) == 0:
+            if not functions:
                 entry_info: dict[str, Any] = emu.r2.cmdj("iej")
-                if entry_info and len(entry_info) > 0:
-                    start_addr: int = entry_info[0].get("vaddr", 0)
-                    if start_addr:
+                if entry_info:
+                    if start_addr := entry_info[0].get("vaddr", 0):
                         result: EmulationResult = emu.emulate_esil(start_addr, num_instructions=10)
                         assert result.type == EmulationType.ESIL
 
@@ -1075,7 +1033,7 @@ class TestMemoryMappingAccessControl:
         sections: list[dict[str, Any]] = emu.r2.cmdj("iSj")
         code_sections: list[dict[str, Any]] = [s for s in sections if s.get("perm", "").find("x") >= 0]
 
-        assert len(code_sections) > 0
+        assert code_sections
 
     def test_unicorn_maps_data_section(self, emulator_kernel32: Radare2Emulator) -> None:
         """Unicorn engine maps data sections correctly."""
@@ -1087,8 +1045,6 @@ class TestMemoryMappingAccessControl:
         sections: list[dict[str, Any]] = emu.r2.cmdj("iSj")
         data_sections: list[dict[str, Any]] = [s for s in sections if "data" in s.get("name", "").lower()]
 
-        assert len(data_sections) >= 0
-
 
 class TestEmulationStateSnapshots:
     """Test emulation state management."""
@@ -1097,9 +1053,7 @@ class TestEmulationStateSnapshots:
         """ESIL emulation captures final register state."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_esil(functions[0]["offset"], num_instructions=15)
 
             assert result.success
@@ -1109,9 +1063,7 @@ class TestEmulationStateSnapshots:
         """ESIL emulation preserves execution metadata."""
         emu: Radare2Emulator = emulator_kernel32
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_esil(functions[0]["offset"], num_instructions=20)
 
             assert isinstance(result.metadata, dict)
@@ -1131,9 +1083,9 @@ class TestComplexEmulationScenarios:
 
         complex_funcs: list[dict[str, Any]] = []
         for func in functions[:40]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 30 @ {func['offset']}")
-            if disasm:
-                branch_count: int = sum(1 for inst in disasm if inst.get("mnemonic", "").startswith("j"))
+            if disasm := emu.r2.cmdj(f"pdj 30 @ {func['offset']}"):
+                branch_count: int = sum(bool(inst.get("mnemonic", "").startswith("j"))
+                                    for inst in disasm)
                 if branch_count >= 3:
                     complex_funcs.append(func)
                     break
@@ -1150,8 +1102,7 @@ class TestComplexEmulationScenarios:
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
 
         for func in functions[:30]:
-            disasm: list[dict[str, Any]] = emu.r2.cmdj(f"pdj 30 @ {func['offset']}")
-            if disasm:
+            if disasm := emu.r2.cmdj(f"pdj 30 @ {func['offset']}"):
                 has_call: bool = any("call" in inst.get("mnemonic", "") for inst in disasm)
                 has_loop: bool = any(inst.get("jump", 0) < inst["offset"] for inst in disasm if inst.get("jump"))
 
@@ -1165,9 +1116,7 @@ class TestComplexEmulationScenarios:
         """Emulation handles compiler-optimized code patterns."""
         emu: Radare2Emulator = emulator_calc
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             for func in functions[:20]:
                 result: EmulationResult = emu.emulate_esil(func["offset"], num_instructions=30)
 
@@ -1196,14 +1145,13 @@ class TestESILExceptionHandling:
         emu: Radare2Emulator = Radare2Emulator(invalid_path)
         opened: bool = emu.open()
 
-        assert opened is False
+        assert not opened
 
     def test_esil_emulation_handles_corrupted_register_state(self, emulator_notepad: Radare2Emulator) -> None:
         """ESIL emulation handles corrupted register state."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             corrupted_state: dict[str, Any] = {
                 "registers": {"invalid_reg": "not_a_number"},
                 "memory": {},
@@ -1221,8 +1169,7 @@ class TestESILExceptionHandling:
         """ESIL emulation handles invalid memory write operations."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             invalid_state: dict[str, Any] = {
                 "registers": {},
                 "memory": {0xFFFFFFFFFFFFFFFF: b"\x00\x00\x00\x00"},
@@ -1240,8 +1187,7 @@ class TestESILExceptionHandling:
         """ESIL emulation handles extreme instruction counts."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_esil(
                 functions[0]["offset"],
                 num_instructions=10000
@@ -1254,8 +1200,7 @@ class TestESILExceptionHandling:
         """ESIL emulation handles negative instruction count."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_esil(
                 functions[0]["offset"],
                 num_instructions=-10
@@ -1295,8 +1240,7 @@ class TestUnicornExceptionHandling:
         """Unicorn emulation handles missing engine setup."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_unicorn(
                 functions[0]["offset"],
                 functions[0]["offset"] + 100,
@@ -1320,9 +1264,7 @@ class TestUnicornExceptionHandling:
         emu: Radare2Emulator = emulator_notepad
 
         functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        small_funcs: list[dict[str, Any]] = [f for f in functions if f.get("size", 1000) < 200]
-
-        if small_funcs:
+        if small_funcs := [f for f in functions if f.get("size", 1000) < 200]:
             result: EmulationResult = emu.emulate_unicorn(
                 small_funcs[0]["offset"],
                 small_funcs[0]["offset"] + small_funcs[0]["size"],
@@ -1336,8 +1278,7 @@ class TestUnicornExceptionHandling:
         """Unicorn emulation handles missing end address."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             result: EmulationResult = emu.emulate_unicorn(
                 functions[0]["offset"],
                 None,
@@ -1369,8 +1310,7 @@ class TestSymbolicExecutionExceptions:
         """Symbolic execution handles invalid target address."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             start_addr: int = functions[0]["offset"]
             invalid_target: int = 0xFFFFFFFFFFFFFFFF
 
@@ -1386,8 +1326,7 @@ class TestSymbolicExecutionExceptions:
         """Symbolic execution handles start address equal to target."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             addr: int = functions[0]["offset"]
 
             results: list[EmulationResult] = emu.symbolic_execution(
@@ -1402,8 +1341,7 @@ class TestSymbolicExecutionExceptions:
         """Symbolic execution handles zero maximum paths."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             start_addr: int = functions[0]["offset"]
             target_addr: int = start_addr + 50
 
@@ -1419,8 +1357,7 @@ class TestSymbolicExecutionExceptions:
         """Symbolic execution handles negative maximum paths."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             start_addr: int = functions[0]["offset"]
             target_addr: int = start_addr + 50
 
@@ -1440,8 +1377,7 @@ class TestTaintAnalysisExceptions:
         """Taint analysis handles empty taint sources."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             taints: list[TaintInfo] = emu.taint_analysis(
                 [],
                 functions[0]["offset"],
@@ -1454,8 +1390,7 @@ class TestTaintAnalysisExceptions:
         """Taint analysis handles invalid taint source address."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             taint_sources: list[tuple[int, int, str]] = [(0xFFFFFFFFFFFFFFFF, 4, "invalid")]
 
             taints: list[TaintInfo] = emu.taint_analysis(
@@ -1470,8 +1405,7 @@ class TestTaintAnalysisExceptions:
         """Taint analysis handles zero-size taint source."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             taint_sources: list[tuple[int, int, str]] = [(0x1000, 0, "zero_size")]
 
             taints: list[TaintInfo] = emu.taint_analysis(
@@ -1486,8 +1420,7 @@ class TestTaintAnalysisExceptions:
         """Taint analysis handles negative-size taint source."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             taint_sources: list[tuple[int, int, str]] = [(0x1000, -10, "negative")]
 
             taints: list[TaintInfo] = emu.taint_analysis(
@@ -1570,8 +1503,7 @@ class TestExploitGenerationExceptions:
         """Exploit generation handles invalid exploit type."""
         emu: Radare2Emulator = emulator_notepad
 
-        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
-        if functions:
+        if functions := emu.r2.cmdj("aflj"):
             exploit: ExploitPrimitive | None = emu.generate_exploit(
                 ExploitType.BUFFER_OVERFLOW,
                 0xFFFFFFFFFFFFFFFF
@@ -1597,7 +1529,7 @@ class TestExploitGenerationExceptions:
         report: str = emu.generate_exploit_report([])
 
         assert isinstance(report, str)
-        assert len(report) > 0
+        assert report != ""
 
     def test_find_vulnerabilities_with_no_imports(self, emulator_notepad: Radare2Emulator) -> None:
         """Vulnerability detection handles binaries with no imports."""
@@ -1642,4 +1574,4 @@ class TestMemoryOperationExceptions:
         constraints: list[Any] = emu._extract_esil_constraints([])
 
         assert isinstance(constraints, list)
-        assert len(constraints) == 0
+        assert not constraints

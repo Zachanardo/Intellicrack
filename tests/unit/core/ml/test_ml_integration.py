@@ -43,13 +43,11 @@ class TestMLAnalysisIntegration:
         classifier.train(X, y, n_estimators=50, cross_validate=False)
         classifier.save_model()
 
-        integration = MLAnalysisIntegration(
+        return MLAnalysisIntegration(
             model_path=model_path,
             enable_incremental_learning=True,
-            enable_sample_database=True
+            enable_sample_database=True,
         )
-
-        return integration
 
     @pytest.fixture
     def test_binary(self, tmp_path):
@@ -57,7 +55,7 @@ class TestMLAnalysisIntegration:
         binary_file = tmp_path / "integration_test.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         pe_data = dos_header + b'\x00' * 64 + b'PE\x00\x00'
@@ -176,7 +174,7 @@ class TestMLAnalysisIntegration:
             binary_file = tmp_path / f"retrain_{i}.exe"
 
             dos_header = bytearray(64)
-            dos_header[0:2] = b'MZ'
+            dos_header[:2] = b'MZ'
             dos_header[60:64] = struct.pack('<I', 128)
 
             pe_data = dos_header + b'\x00' * 200 + b'PE\x00\x00' + b'\x00' * 1000
@@ -208,7 +206,7 @@ class TestMLAnalysisIntegration:
             binary_file = tmp_path / f"multi_{i}.exe"
 
             dos_header = bytearray(64)
-            dos_header[0:2] = b'MZ'
+            dos_header[:2] = b'MZ'
             dos_header[60:64] = struct.pack('<I', 128)
 
             pe_data = dos_header + b'\x00' * 200 + b'PE\x00\x00' + b'\x00' * 1000
@@ -231,19 +229,19 @@ class TestMLAnalysisIntegration:
         binary_file = tmp_path / "high_conf.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 128)
 
         coff_header = bytearray(20)
-        coff_header[0:2] = struct.pack('<H', 0x014c)
+        coff_header[:2] = struct.pack('<H', 0x014c)
         coff_header[2:4] = struct.pack('<H', 1)
         coff_header[16:18] = struct.pack('<H', 224)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack('<H', 0x010b)
+        optional_header[:2] = struct.pack('<H', 0x010b)
 
         section_table = bytearray(40)
-        section_table[0:6] = b'.vmp0\x00'
+        section_table[:6] = b'.vmp0\x00'
         section_table[36:40] = struct.pack('<I', 0x60000020)
 
         high_entropy = bytes(np.random.randint(0, 256, size=4096, dtype=np.uint8))

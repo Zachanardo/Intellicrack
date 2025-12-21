@@ -42,13 +42,9 @@ class RealSubprocessRunner:
         if self.next_returns and len(self.next_returns) > 0:
             return self.next_returns.pop(0)
 
-        # Default realistic return
-        result = type('obj', (object,), {
-            'returncode': 0,
-            'stdout': '[]',
-            'stderr': ''
-        })()
-        return result
+        return type(
+            'obj', (object,), {'returncode': 0, 'stdout': '[]', 'stderr': ''}
+        )()
 
 
 class RealMockResult:
@@ -122,9 +118,8 @@ class RealR2ImportAnalyzer:
 
     def _process_imports(self):
         """Process import data with comprehensive metadata."""
-        processed = []
-        for imp in self.imports_data:
-            processed.append({
+        return [
+            {
                 'name': imp.get('name'),
                 'library': imp.get('libname'),
                 'address': imp.get('plt'),
@@ -132,9 +127,10 @@ class RealR2ImportAnalyzer:
                 'type': 'import',
                 'risk_level': self._assess_risk(imp.get('name')),
                 'description': self._get_api_description(imp.get('name')),
-                'category': self._categorize_api(imp.get('name'))
-            })
-        return processed
+                'category': self._categorize_api(imp.get('name')),
+            }
+            for imp in self.imports_data
+        ]
 
     def _process_exports(self):
         """Process export data."""
@@ -142,23 +138,20 @@ class RealR2ImportAnalyzer:
 
     def _process_libraries(self):
         """Process library dependencies."""
-        processed = []
-        for lib in self.libraries_data:
-            processed.append({
-                'name': lib.get('name'),
-                'bind': lib.get('bind')
-            })
-        return processed
+        return [
+            {'name': lib.get('name'), 'bind': lib.get('bind')}
+            for lib in self.libraries_data
+        ]
 
     def _process_xrefs(self):
         """Process cross-references."""
-        xrefs = {}
-        for imp in self.imports_data:
-            xrefs[imp['name']] = [
+        return {
+            imp['name']: [
                 {'address': '0x401500', 'type': 'call'},
-                {'address': '0x401540', 'type': 'jmp'}
+                {'address': '0x401540', 'type': 'jmp'},
             ]
-        return xrefs
+            for imp in self.imports_data
+        }
 
     def _categorize_api(self, api_name):
         """Categorize API by functionality."""
@@ -225,42 +218,48 @@ class RealR2ImportAnalyzer:
 
     def _detect_suspicious_apis(self):
         """Detect suspicious APIs."""
-        suspicious = []
         suspicious_names = [
             'CreateRemoteThread', 'WriteProcessMemory', 'VirtualAllocEx',
             'SetWindowsHookEx', 'SetWindowsHookExW', 'NtCreateSection',
             'RtlMoveMemory', 'NtUnmapViewOfSection', 'LdrLoadDll'
         ]
 
-        for imp in self.imports_data:
-            if imp.get('name') in suspicious_names:
-                suspicious.append({
-                    'name': imp.get('name'),
-                    'risk_level': 'high' if 'Remote' in imp.get('name', '') else 'medium',
-                    'reason': 'Commonly used in malware/injection',
-                    'category': 'injection'
-                })
-
-        return suspicious
+        return [
+            {
+                'name': imp.get('name'),
+                'risk_level': (
+                    'high' if 'Remote' in imp.get('name', '') else 'medium'
+                ),
+                'reason': 'Commonly used in malware/injection',
+                'category': 'injection',
+            }
+            for imp in self.imports_data
+            if imp.get('name') in suspicious_names
+        ]
 
     def _detect_license_apis(self):
         """Detect licensing-related APIs."""
-        license_list = []
         license_names = [
             'RegQueryValueExW', 'GetComputerNameW', 'GetVolumeInformationW',
             'CryptProtectData', 'WNetGetUserW', 'GetComputerName'
         ]
 
-        for imp in self.imports_data:
-            if imp.get('name') in license_names:
-                license_list.append({
-                    'name': imp.get('name'),
-                    'usage_purpose': 'hardware_id' if 'Computer' in imp.get('name', '') else 'license_check',
-                    'bypass_difficulty': 'hard' if 'Crypt' in imp.get('name', '') else 'medium',
-                    'data_type': 'system_info'
-                })
-
-        return license_list
+        return [
+            {
+                'name': imp.get('name'),
+                'usage_purpose': (
+                    'hardware_id'
+                    if 'Computer' in imp.get('name', '')
+                    else 'license_check'
+                ),
+                'bypass_difficulty': (
+                    'hard' if 'Crypt' in imp.get('name', '') else 'medium'
+                ),
+                'data_type': 'system_info',
+            }
+            for imp in self.imports_data
+            if imp.get('name') in license_names
+        ]
 
     def _detect_crypto_apis(self):
         """Detect cryptographic APIs."""
@@ -849,13 +848,10 @@ class TestProductionValidation(unittest.TestCase):
         total_imports = stats.get('total_imports', 0)
         self.assertLess(total_imports, 10, "Unrealistic import count for test scenario")
 
-        # CRITICAL: Must identify dynamic loading pattern
-        dynamic_loading_detected = False
-        for category, apis in result.get('api_categories', {}).items():
-            if 'dynamic' in category.lower() and len(apis) > 0:
-                dynamic_loading_detected = True
-                break
-
+        dynamic_loading_detected = any(
+            'dynamic' in category.lower() and len(apis) > 0
+            for category, apis in result.get('api_categories', {}).items()
+        )
         self.assertTrue(dynamic_loading_detected,
                       "Failed to detect dynamic loading pattern indicating packing")
 

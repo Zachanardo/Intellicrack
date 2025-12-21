@@ -45,7 +45,7 @@ try:
 
     results = list(binwalk.scan(test_zip))
 
-    if len(results) > 0 and len(results[0]) > 0:
+    if results and len(results[0]) > 0:
         sig = results[0].results[0]
         if 'zip' in sig.description.lower() and sig.offset == 0:
             test_result("ZIP signature detection", True, f"Found: {sig.description}")
@@ -68,7 +68,7 @@ try:
     if os.path.exists(jar_file):
         results = list(binwalk.scan(jar_file))
 
-        if len(results) > 0 and len(results[0]) > 0:
+        if results and len(results[0]) > 0:
             sig = results[0].results[0]
             if 'zip' in sig.description.lower():
                 test_result("JAR file detection", True, f"Found: {sig.description}")
@@ -89,7 +89,7 @@ try:
     if os.path.exists(msi_file):
         results = list(binwalk.scan(msi_file))
 
-        if len(results) > 0 and len(results[0]) > 0:
+        if results and len(results[0]) > 0:
             test_result("MSI file detection", True, f"Found {len(results[0])} signatures")
         else:
             test_result("MSI file detection", False, "No signatures found")
@@ -114,7 +114,7 @@ try:
 
     results = list(binwalk.scan(firmware_file))
 
-    if len(results) > 0 and len(results[0]) > 0:
+    if results and len(results[0]) > 0:
         sig = results[0].results[0]
         if sig.offset == 300 and 'zip' in sig.description.lower():
             test_result("Embedded ZIP detection", True, f"Found at offset {sig.offset}")
@@ -146,7 +146,7 @@ try:
         extract_dir = Path(tmpdir)
         extracted_files = list(extract_dir.rglob('*'))
 
-        if len(extracted_files) > 0:
+        if extracted_files:
             test_result("Extraction functionality", True, f"Extracted {len(extracted_files)} items")
         else:
             test_result("Extraction functionality", False, "No files extracted")

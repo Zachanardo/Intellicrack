@@ -1093,11 +1093,11 @@ const HookEffectivenessMonitor = {
         }
 
         return {
-                    successRate: this.calculateSuccessRateTrend(),
-                    responseTime: this.calculateResponseTimeTrend(),
-                    stability: this.calculateStabilityTrend(),
-                    performance: this.calculatePerformanceTrend(),
-                };
+            successRate: this.calculateSuccessRateTrend(),
+            responseTime: this.calculateResponseTimeTrend(),
+            stability: this.calculateStabilityTrend(),
+            performance: this.calculatePerformanceTrend(),
+        };
     },
 
     calculateSuccessRateTrend: function () {
@@ -1379,12 +1379,12 @@ const HookEffectivenessMonitor = {
 
     generateHookAnalysis: function () {
         return {
-                    totalHooks: this.monitor.activeHooks.size,
-                    averageSuccessRate: this.statistics.averageSuccessRate,
-                    mostActiveHooks: this.getMostActiveHooks(),
-                    leastActiveHooks: this.getLeastActiveHooks(),
-                    hooksByCategory: this.categorizeHooks(),
-                };
+            totalHooks: this.monitor.activeHooks.size,
+            averageSuccessRate: this.statistics.averageSuccessRate,
+            mostActiveHooks: this.getMostActiveHooks(),
+            leastActiveHooks: this.getLeastActiveHooks(),
+            hooksByCategory: this.categorizeHooks(),
+        };
     },
 
     getMostActiveHooks: function () {

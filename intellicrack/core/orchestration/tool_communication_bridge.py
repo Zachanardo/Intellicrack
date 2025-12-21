@@ -513,9 +513,7 @@ class ToolCommunicationBridge:
 
         for tool_type, info in self.tool_registry.items():
             heartbeat_age = current_time - info["last_heartbeat"]
-            total_messages = sum(
-                count for msg_type, count in self.message_stats.items()
-            )
+            total_messages = sum(count for msg_type, count in self.message_stats.items())
             status[tool_type] = {
                 "id": info["id"],
                 "status": "active" if heartbeat_age < 30 else "inactive",

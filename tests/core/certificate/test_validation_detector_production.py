@@ -80,11 +80,7 @@ class TestCertificateValidationDetection:
             Path(r"C:\Windows\System32\winhttp.dll"),
         ]
 
-        for binary in potential_binaries:
-            if binary.exists():
-                return binary
-
-        return None
+        return next((binary for binary in potential_binaries if binary.exists()), None)
 
     def test_detect_certificate_validation_on_minimal_binary(
         self, detector: CertificateValidationDetector, minimal_pe_binary: Path

@@ -62,8 +62,7 @@ def legitimate_binary() -> Path:
 @pytest.fixture
 def temp_binary(tmp_path: Path) -> Path:
     """Create temporary binary file for patching tests."""
-    binary_path = tmp_path / "test_binary.exe"
-    return binary_path
+    return tmp_path / "test_binary.exe"
 
 
 class TestChecksumRecalculatorProduction:
@@ -450,9 +449,9 @@ class TestBinaryPatcherProduction:
         checks = detector.detect_checks(str(legitimate_binary))
 
         if len(checks) > 0:
-            inline_checks = [c for c in checks if c.bypass_method == "patch_inline"]
-
-            if len(inline_checks) > 0:
+            if inline_checks := [
+                c for c in checks if c.bypass_method == "patch_inline"
+            ]:
                 output_path = str(temp_binary)
                 patcher.patch_integrity_checks(str(legitimate_binary), inline_checks, output_path)
 
@@ -632,9 +631,9 @@ class TestIntegrityCheckDefeatSystemProduction:
         locations = system.find_embedded_checksums(str(legitimate_binary))
 
         if len(locations) > 0:
-            success = system.patch_embedded_checksums(str(legitimate_binary), locations, str(temp_binary))
-
-            if success:
+            if success := system.patch_embedded_checksums(
+                str(legitimate_binary), locations, str(temp_binary)
+            ):
                 assert temp_binary.exists()
                 assert temp_binary.stat().st_size > 0
 

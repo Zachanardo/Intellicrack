@@ -153,7 +153,7 @@ def compute(a, b):
 
 @pytest.mark.skipif(
     not PLUGIN_SYSTEM_AVAILABLE,
-    reason=f"Plugin system not available: {IMPORT_ERROR if not PLUGIN_SYSTEM_AVAILABLE else ''}",
+    reason=f"Plugin system not available: {'' if PLUGIN_SYSTEM_AVAILABLE else IMPORT_ERROR}",
 )
 class TestLogMessage:
     """Test log_message function."""
@@ -647,7 +647,7 @@ class TestPluginSystemClass:
 
         plugin_list: list[dict[str, object]] = system.list_plugins()
 
-        assert len(plugin_list) >= 1
+        assert plugin_list
         plugin = plugin_list[0]
         assert "name" in plugin
         assert "category" in plugin
@@ -669,7 +669,7 @@ def register():
         system = PluginSystem(str(temp_plugin_dir))
         result: bool = system.install_plugin(str(source_plugin))
 
-        assert result is True
+        assert result
         installed_path = temp_plugin_dir / "custom_modules" / "external_plugin.py"
         assert installed_path.exists()
 
@@ -681,7 +681,7 @@ def register():
 
         result: bool = system.install_plugin("test_simple_plugin")
 
-        assert result is True
+        assert result
 
     def test_plugin_system_install_plugin_unsupported_type(
         self, temp_plugin_dir: Path, tmp_path: Path
@@ -693,7 +693,7 @@ def register():
         system = PluginSystem(str(temp_plugin_dir))
         result: bool = system.install_plugin(str(unsupported_file))
 
-        assert result is False
+        assert not result
 
     def test_plugin_system_execute_plugin_by_name(
         self, temp_plugin_dir: Path
@@ -903,7 +903,7 @@ def execute(a, b, c=10):
 
         plugin_list: list[dict[str, object]] = system.list_plugins()
 
-        assert len(plugin_list) == 0
+        assert not plugin_list
 
 
 @pytest.mark.skipif(not PLUGIN_SYSTEM_AVAILABLE, reason="Plugin system not available")
@@ -925,14 +925,14 @@ def register():
         system = PluginSystem(str(temp_plugin_dir))
 
         install_result: bool = system.install_plugin(str(external_plugin))
-        assert install_result is True
+        assert install_result
 
         discovered: list[str] = system.discover_plugins()
         assert "lifecycle_plugin" in discovered
 
         system.load_plugins()
         plugins: list[dict[str, object]] = system.list_plugins()
-        assert len(plugins) >= 1
+        assert plugins
 
         exec_result: object = system.execute_plugin("lifecycle_plugin", 21)
         assert exec_result == {"result": 42, "status": "success"}

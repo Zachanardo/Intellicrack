@@ -40,19 +40,16 @@ def validate_test_structure() -> None:
         "@pytest.fixture",
     ]
 
-    missing = []
-    for element in required_elements:
-        if element not in content:
-            missing.append(element)
-
-    if missing:
+    if missing := [
+        element for element in required_elements if element not in content
+    ]:
         print("ERROR: Missing required elements:")
         for item in missing:
             print(f"  - {item}")
         sys.exit(1)
 
     test_count = content.count("def test_")
-    print(f"✓ Test file structure validated")
+    print("✓ Test file structure validated")
     print(f"✓ Found {test_count} test methods")
 
     if test_count < 30:
@@ -153,15 +150,12 @@ def check_real_functionality_validation() -> None:
         "protected_binary",
     ]
 
-    found_good = 0
-    for pattern in good_patterns:
-        if pattern.replace(".*", "") in content:
-            found_good += 1
-
+    found_good = sum(bool(pattern.replace(".*", "") in content)
+                 for pattern in good_patterns)
     if found_good >= 3:
-        print(f"  ✓ Tests validate real output and behavior")
+        print("  ✓ Tests validate real output and behavior")
     else:
-        print(f"  ⚠ Limited real functionality validation detected")
+        print("  ⚠ Limited real functionality validation detected")
 
 
 if __name__ == "__main__":

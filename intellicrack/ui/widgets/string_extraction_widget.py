@@ -11,7 +11,9 @@ Licensed under GNU General Public License v3.0
 import os
 import re
 
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
+from typing import Any
+
+from PyQt6.QtCore import QPoint, Qt, QThread, pyqtSignal, pyqtSlot
 from PyQt6.QtGui import QAction, QBrush, QColor
 from PyQt6.QtWidgets import (
     QApplication,
@@ -152,8 +154,8 @@ class StringExtractionWidget(QWidget):
         """Initialize string extraction widget with empty state and UI setup."""
         super().__init__(parent)
         self.file_path: str | None = None
-        self.all_strings: list[tuple[int, str, str]] = []  # offset, string, encoding
-        self.filtered_strings: list[tuple[int, str, str]] = []
+        self.all_strings: list[tuple[int, str, str, str]] = []  # offset, string, encoding, category
+        self.filtered_strings: list[tuple[int, str, str, str]] = []
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -184,8 +186,9 @@ class StringExtractionWidget(QWidget):
 
         # Set column widths
         header = self.string_table.horizontalHeader()
-        header.setStretchLastSection(False)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)  # String column stretches
+        if header is not None:
+            header.setStretchLastSection(False)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)  # String column stretches
         self.string_table.setColumnWidth(0, 100)  # Offset
         self.string_table.setColumnWidth(2, 80)  # Length
         self.string_table.setColumnWidth(3, 80)  # Encoding
@@ -195,7 +198,7 @@ class StringExtractionWidget(QWidget):
         self.string_table.setSortingEnabled(True)
 
         # Context menu
-        self.string_table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.string_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.string_table.customContextMenuRequested.connect(self._show_context_menu)
 
         # Selection
@@ -368,11 +371,8 @@ class StringExtractionWidget(QWidget):
     @pyqtSlot(list)
     def on_strings_found(self, strings: list[tuple[int, str, str]]) -> None:
         """Handle extracted strings."""
-        self.all_strings = strings
-        self.filtered_strings = strings
-
         # Categorize strings
-        categorized = []
+        categorized: list[tuple[int, str, str, str]] = []
         for offset, string, encoding in strings:
             category = self._categorize_string(string)
             categorized.append((offset, string, encoding, category))
@@ -502,13 +502,13 @@ class StringExtractionWidget(QWidget):
 
             # Offset
             offset_item = QTableWidgetItem(f"0x{offset:08X}")
-            offset_item.setData(Qt.UserRole, offset)
+            offset_item.setData(Qt.ItemDataRole.UserRole, offset)
             self.string_table.setItem(row, 0, offset_item)
 
             # String (truncate if too long)
             display_string = string if len(string) <= 100 else f"{string[:97]}..."
             string_item = QTableWidgetItem(display_string)
-            string_item.setData(Qt.UserRole, string)  # Store full string
+            string_item.setData(Qt.ItemDataRole.UserRole, string)  # Store full string
             self.string_table.setItem(row, 1, string_item)
 
             # Length
@@ -542,7 +542,7 @@ class StringExtractionWidget(QWidget):
         min_length = self.min_length_filter.value()
 
         # Filter strings
-        self.filtered_strings = []
+        filtered: list[tuple[int, str, str, str]] = []
 
         for offset, string, encoding, category in self.all_strings:
             # Search filter
@@ -561,7 +561,9 @@ class StringExtractionWidget(QWidget):
             if len(string) < min_length:
                 continue
 
-            self.filtered_strings.append((offset, string, encoding, category))
+            filtered.append((offset, string, encoding, category))
+
+        self.filtered_strings = filtered
 
         # Update display
         self.display_strings(self.filtered_strings)
@@ -571,7 +573,7 @@ class StringExtractionWidget(QWidget):
             f"Showing {len(self.filtered_strings)} of {len(self.all_strings)} strings",
         )
 
-    def _show_context_menu(self, position: object) -> None:
+    def _show_context_menu(self, position: QPoint) -> None:
         """Show context menu for string table.
 
         Args:
@@ -603,38 +605,45 @@ class StringExtractionWidget(QWidget):
         goto_offset_action.triggered.connect(self._goto_selected_offset)
         menu.addAction(goto_offset_action)
 
-        menu.exec_(self.string_table.mapToGlobal(position))
+        menu.exec(self.string_table.mapToGlobal(position))
 
     def _copy_selected_string(self) -> None:
         """Copy selected string to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
             if string_item := self.string_table.item(row, 1):
-                full_string = string_item.data(Qt.UserRole)
+                full_string = string_item.data(Qt.ItemDataRole.UserRole)
                 from intellicrack.handlers.pyqt6_handler import QApplication
 
-                QApplication.clipboard().setText(full_string)
+                clipboard = QApplication.clipboard()
+                if clipboard is not None:
+                    clipboard.setText(full_string)
 
     def _copy_selected_offset(self) -> None:
         """Copy selected offset to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
             if offset_item := self.string_table.item(row, 0):
-                QApplication.clipboard().setText(offset_item.text())
+                clipboard = QApplication.clipboard()
+                if clipboard is not None:
+                    clipboard.setText(offset_item.text())
 
     def _copy_selected_row(self) -> None:
         """Copy entire selected row to clipboard."""
         row = self.string_table.currentRow()
         if row >= 0:
-            row_data = []
+            row_data: list[str] = []
             for col in range(self.string_table.columnCount()):
                 if item := self.string_table.item(row, col):
                     if col == 1:  # String column - get full string
-                        row_data.append(item.data(Qt.UserRole))
+                        data = item.data(Qt.ItemDataRole.UserRole)
+                        row_data.append(str(data) if data is not None else "")
                     else:
                         row_data.append(item.text())
 
-            QApplication.clipboard().setText("\t".join(row_data))
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText("\t".join(row_data))
 
     def _goto_selected_offset(self) -> None:
         """Emit signal to go to selected offset."""
@@ -643,9 +652,10 @@ class StringExtractionWidget(QWidget):
             offset_item = self.string_table.item(row, 0)
             string_item = self.string_table.item(row, 1)
             if offset_item and string_item:
-                offset = offset_item.data(Qt.UserRole)
-                string = string_item.data(Qt.UserRole)
-                self.string_selected.emit(offset, string)
+                offset_data = offset_item.data(Qt.ItemDataRole.UserRole)
+                string_data = string_item.data(Qt.ItemDataRole.UserRole)
+                if isinstance(offset_data, int) and isinstance(string_data, str):
+                    self.string_selected.emit(offset_data, string_data)
 
     def _on_selection_changed(self) -> None:
         """Handle selection change."""
@@ -654,10 +664,10 @@ class StringExtractionWidget(QWidget):
             offset_item = self.string_table.item(row, 0)
             string_item = self.string_table.item(row, 1)
             if offset_item and string_item:
-                offset = offset_item.data(Qt.UserRole)
-                string = string_item.data(Qt.UserRole)
-                # Emit for integration with hex viewer
-                self.string_selected.emit(offset, string)
+                offset_data = offset_item.data(Qt.ItemDataRole.UserRole)
+                string_data = string_item.data(Qt.ItemDataRole.UserRole)
+                if isinstance(offset_data, int) and isinstance(string_data, str):
+                    self.string_selected.emit(offset_data, string_data)
 
     def export_strings(self) -> None:
         """Export strings to file."""
@@ -724,7 +734,8 @@ class StringExtractionWidget(QWidget):
             f.write(f"Total Strings: {len(self.filtered_strings)}\n")
             f.write("=" * 80 + "\n\n")
 
-            for offset, string, encoding, category in self.filtered_strings:
+            for string_data in self.filtered_strings:
+                offset, string, encoding, category = string_data
                 f.write(f"Offset: 0x{offset:08X}\n")
                 f.write(f"Category: {category}\n")
                 f.write(f"Encoding: {encoding}\n")
@@ -740,7 +751,8 @@ class StringExtractionWidget(QWidget):
             writer = csv.writer(f)
             writer.writerow(["Offset", "String", "Length", "Encoding", "Category"])
 
-            for offset, string, encoding, category in self.filtered_strings:
+            for string_data in self.filtered_strings:
+                offset, string, encoding, category = string_data
                 writer.writerow(
                     [
                         f"0x{offset:08X}",
@@ -755,23 +767,26 @@ class StringExtractionWidget(QWidget):
         """Export strings as JSON."""
         import json
 
-        data = {
+        data: dict[str, Any] = {
             "file": self.file_path,
             "total_strings": len(self.filtered_strings),
             "strings": [],
         }
 
-        for offset, string, encoding, category in self.filtered_strings:
-            data["strings"].append(
-                {
-                    "offset": f"0x{offset:08X}",
-                    "offset_decimal": offset,
-                    "string": string,
-                    "length": len(string),
-                    "encoding": encoding,
-                    "category": category,
-                },
-            )
+        for string_data in self.filtered_strings:
+            offset, string, encoding, category = string_data
+            strings_list = data["strings"]
+            if isinstance(strings_list, list):
+                strings_list.append(
+                    {
+                        "offset": f"0x{offset:08X}",
+                        "offset_decimal": offset,
+                        "string": string,
+                        "length": len(string),
+                        "encoding": encoding,
+                        "category": category,
+                    },
+                )
 
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)

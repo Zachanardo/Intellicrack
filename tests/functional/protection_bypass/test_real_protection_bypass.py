@@ -146,7 +146,7 @@ class TestRealProtectionBypass:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -222,7 +222,7 @@ class TestRealProtectionBypass:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -291,8 +291,10 @@ class TestRealProtectionBypass:
             assert 'address' in patch, "Each patch must have address"
             assert 'original_bytes' in patch, "Each patch must have original bytes"
             assert 'patch_bytes' in patch, "Each patch must have patch bytes"
-            assert patch['patch_bytes'] == b'\x90' * len(patch['original_bytes']) or \
-                   patch['patch_bytes'] == b'\xeb', "Patches must be NOPs or JMP"
+            assert patch['patch_bytes'] in [
+                b'\x90' * len(patch['original_bytes']),
+                b'\xeb',
+            ], "Patches must be NOPs or JMP"
 
         # Bypass anti-VM
         antivm_patches = vm_bypass.bypass_anti_vm(themida_protected_binary)

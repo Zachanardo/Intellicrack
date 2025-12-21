@@ -55,9 +55,6 @@ class TestDenuvoAnalyzerInitialization:
             "DENUVO_V7_SIGNATURES",
         ]
 
-        for sig_db in signature_databases:
-            assert hasattr(denuvo_analyzer, sig_db) or True, f"Missing signature database: {sig_db}"
-
 
 class TestDenuvoVersionDetection:
     def test_version_enum_exists(self) -> None:
@@ -186,9 +183,8 @@ class TestDenuvoIntegrityCheckDetection:
             checks1 = analyzer._detect_integrity_checks(test_binary)
             checks2 = analyzer._detect_integrity_checks(test_binary)
 
-            if checks1 is not None and checks2 is not None:
-                if isinstance(checks1, (list, tuple)) and isinstance(checks2, (list, tuple)):
-                    assert len(checks1) == len(checks2), "Detection should be consistent"
+            if checks1 is not None and checks2 is not None and (isinstance(checks1, (list, tuple)) and isinstance(checks2, (list, tuple))):
+                assert len(checks1) == len(checks2), "Detection should be consistent"
         except Exception:
             pass
 
@@ -268,7 +264,7 @@ class TestDenuvoFullAnalysis:
 
             if result is not None:
                 assert isinstance(result, dict)
-        except (FileNotFoundError, OSError, ValueError):
+        except (OSError, ValueError):
             pass
 
     def test_analysis_handles_invalid_binary(self) -> None:
@@ -331,9 +327,8 @@ class TestDenuvoSignatureMatching:
             try:
                 result = analyzer.analyze(clean_binary)
 
-                if result is not None and isinstance(result, dict):
-                    if "is_denuvo" in result:
-                        assert isinstance(result["is_denuvo"], bool)
+                if result is not None and isinstance(result, dict) and "is_denuvo" in result:
+                    assert isinstance(result["is_denuvo"], bool)
             except Exception:
                 pass
 
@@ -343,17 +338,14 @@ class TestDenuvoBypassRecommendations:
         analyzer = DenuvoAnalyzer()
 
         if hasattr(analyzer, "_generate_bypass_recommendations"):
-            binaries = get_available_binaries()
-
-            if binaries:
+            if binaries := get_available_binaries():
                 test_binary = binaries[0]
 
                 try:
                     result = analyzer.analyze(test_binary)
 
-                    if result is not None and isinstance(result, dict):
-                        if "bypass_recommendations" in result:
-                            recommendations = result["bypass_recommendations"]
-                            assert isinstance(recommendations, (list, dict, str))
+                    if result is not None and isinstance(result, dict) and "bypass_recommendations" in result:
+                        recommendations = result["bypass_recommendations"]
+                        assert isinstance(recommendations, (list, dict, str))
                 except Exception:
                     pass

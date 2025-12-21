@@ -439,7 +439,7 @@ class TestOpcodeFeatureExtraction:
 
         opcode_features: dict[str, float] = extractor._extract_opcode_features(test_code)
 
-        assert len(opcode_features) > 0, "Must extract opcode features"
+        assert opcode_features, "Must extract opcode features"
 
         for key, value in opcode_features.items():
             assert key.startswith("opcode_freq_"), "Keys must be opcode_freq_*"

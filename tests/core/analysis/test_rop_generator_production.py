@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+
 from __future__ import annotations
 
 import os
@@ -29,9 +30,6 @@ from typing import TYPE_CHECKING, Any
 import pytest
 
 from intellicrack.core.analysis.rop_generator import ROPChainGenerator
-
-if TYPE_CHECKING:
-    pass
 
 SYSTEM32 = Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32"
 KERNEL32 = SYSTEM32 / "kernel32.dll"
@@ -209,7 +207,7 @@ class TestGadgetDiscoveryKernel32:
 
         pop_ret_gadgets = [g for g in kernel32_generator.gadgets if g["type"] == "pop_reg"]
 
-        assert len(pop_ret_gadgets) > 0, "Should find pop/ret gadgets in kernel32.dll"
+        assert pop_ret_gadgets, "Should find pop/ret gadgets in kernel32.dll"
 
     def test_find_gadgets_discovers_ret_gadgets(self, kernel32_generator: ROPChainGenerator) -> None:
         """Find gadgets discovers pure ret gadgets."""
@@ -217,7 +215,7 @@ class TestGadgetDiscoveryKernel32:
 
         ret_gadgets = [g for g in kernel32_generator.gadgets if g["type"] == "ret"]
 
-        assert len(ret_gadgets) > 0, "Should find ret gadgets in kernel32.dll"
+        assert ret_gadgets, "Should find ret gadgets in kernel32.dll"
 
     def test_gadget_instructions_are_valid(self, kernel32_generator: ROPChainGenerator) -> None:
         """Gadget instructions contain valid assembly mnemonics."""
@@ -292,7 +290,7 @@ class TestGadgetDiscoveryNtdll:
 
         arith_gadgets = [g for g in ntdll_generator.gadgets if g["type"] in ["arith_reg", "logic_reg"]]
 
-        assert len(arith_gadgets) > 0, "Should find arithmetic/logic gadgets"
+        assert arith_gadgets, "Should find arithmetic/logic gadgets"
 
 
 class TestGadgetClassification:
@@ -514,7 +512,9 @@ class TestTargetFunctionManagement:
         license_targets = ["check_license", "validate_key", "is_activated", "memcmp", "strcmp"]
 
         found_license_targets = [name for name in target_names if name in license_targets]
-        assert len(found_license_targets) > 0, "Default targets should include license functions"
+        assert (
+            found_license_targets
+        ), "Default targets should include license functions"
 
 
 class TestChainTypes:
@@ -529,7 +529,7 @@ class TestChainTypes:
 
         assert result is True
         license_chains = [c for c in kernel32_generator.chains if "license" in c["target"]["name"].lower()]
-        assert len(license_chains) > 0
+        assert license_chains
 
     def test_comparison_bypass_chain_generation(self, kernel32_generator: ROPChainGenerator) -> None:
         """Generate comparison bypass chain."""
@@ -540,7 +540,7 @@ class TestChainTypes:
 
         assert result is True
         comparison_chains = [c for c in kernel32_generator.chains if "strcmp" in c["target"]["name"].lower()]
-        assert len(comparison_chains) > 0
+        assert comparison_chains
 
     def test_memory_comparison_chain_generation(self, kernel32_generator: ROPChainGenerator) -> None:
         """Generate memory comparison chain."""
@@ -551,7 +551,7 @@ class TestChainTypes:
 
         assert result is True
         memcmp_chains = [c for c in kernel32_generator.chains if "memcmp" in c["target"]["name"].lower()]
-        assert len(memcmp_chains) > 0
+        assert memcmp_chains
 
 
 class TestChainValidation:
@@ -790,7 +790,7 @@ class TestPatternBasedGadgetSearch:
         gen.find_gadgets()
 
         pop_ret_gadgets = [g for g in gen.gadgets if "pop" in g["instruction"].lower() and "ret" in g["instruction"].lower()]
-        assert len(pop_ret_gadgets) > 0, "Pattern search should find pop/ret gadgets"
+        assert pop_ret_gadgets, "Pattern search should find pop/ret gadgets"
 
     def test_pattern_search_finds_xor_ret_patterns(self, temp_pe_binary: Path) -> None:
         """Pattern search finds xor/ret sequences."""
@@ -800,7 +800,7 @@ class TestPatternBasedGadgetSearch:
         gen.find_gadgets()
 
         xor_ret_gadgets = [g for g in gen.gadgets if "xor" in g["instruction"].lower()]
-        assert len(xor_ret_gadgets) > 0, "Pattern search should find xor/ret gadgets"
+        assert xor_ret_gadgets, "Pattern search should find xor/ret gadgets"
 
     def test_pattern_search_finds_simple_ret(self, temp_pe_binary: Path) -> None:
         """Pattern search finds simple ret instruction."""
@@ -810,7 +810,7 @@ class TestPatternBasedGadgetSearch:
         gen.find_gadgets()
 
         ret_gadgets = [g for g in gen.gadgets if g["instruction"].lower().strip() == "ret"]
-        assert len(ret_gadgets) > 0, "Pattern search should find simple ret"
+        assert ret_gadgets, "Pattern search should find simple ret"
 
 
 class TestChainBuildingForLicenseBypass:
@@ -935,9 +935,11 @@ class TestGadgetUtilityDetection:
         """Stack control utility is detected."""
         kernel32_generator.find_gadgets()
 
-        stack_control_gadgets = [g for g in kernel32_generator.gadgets if "stack_control" in g.get("useful_for", [])]
-
-        if len(stack_control_gadgets) > 0:
+        if stack_control_gadgets := [
+            g
+            for g in kernel32_generator.gadgets
+            if "stack_control" in g.get("useful_for", [])
+        ]:
             for gadget in stack_control_gadgets[:3]:
                 assert "pop" in gadget["instruction"].lower()
 
@@ -945,9 +947,11 @@ class TestGadgetUtilityDetection:
         """Zero register utility is detected."""
         kernel32_generator.find_gadgets()
 
-        zero_reg_gadgets = [g for g in kernel32_generator.gadgets if "zero_register" in g.get("useful_for", [])]
-
-        if len(zero_reg_gadgets) > 0:
+        if zero_reg_gadgets := [
+            g
+            for g in kernel32_generator.gadgets
+            if "zero_register" in g.get("useful_for", [])
+        ]:
             for gadget in zero_reg_gadgets[:3]:
                 assert "xor" in gadget["instruction"].lower()
 
@@ -1220,7 +1224,7 @@ class TestRealWorldEffectiveness:
     def test_generated_chains_use_real_gadgets(self, kernel32_generator: ROPChainGenerator) -> None:
         """Generated chains use real discovered gadgets."""
         kernel32_generator.find_gadgets()
-        discovered_gadgets = set(g["address"] for g in kernel32_generator.gadgets)
+        discovered_gadgets = {g["address"] for g in kernel32_generator.gadgets}
 
         kernel32_generator.add_target_function("check_license", None, "License check")
         kernel32_generator.generate_chains()

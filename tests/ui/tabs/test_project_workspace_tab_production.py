@@ -106,7 +106,7 @@ class TestProjectManagement:
         dashboard_tab.create_new_project()
 
         assert dashboard_tab.current_binary_path is None
-        assert dashboard_tab.recent_files == []
+        assert not dashboard_tab.recent_files
         assert "No binary loaded" in dashboard_tab.binary_info_label.text()
 
     def test_create_new_project_resets_labels(

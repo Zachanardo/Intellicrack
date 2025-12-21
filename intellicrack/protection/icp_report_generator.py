@@ -612,26 +612,22 @@ class ICPReportGenerator:
             "",
             "FILE INFORMATION:",
         ]
-        lines.extend(
-            (
-                f"  File: {result.file_path}",
-                f"  Type: {result.file_type}",
-                f"  Architecture: {result.architecture}",
-                f"  Protected: {'Yes' if result.is_protected else 'No'}",
-                f"  Packed: {'Yes' if result.is_packed else 'No'}",
-                f"  Confidence: {result.confidence_score:.1f}%",
-                "",
-                "DETECTED PROTECTIONS:",
-            )
-        )
+        lines.extend((
+            f"  File: {result.file_path}",
+            f"  Type: {result.file_type}",
+            f"  Architecture: {result.architecture}",
+            f"  Protected: {'Yes' if result.is_protected else 'No'}",
+            f"  Packed: {'Yes' if result.is_packed else 'No'}",
+            f"  Confidence: {result.confidence_score:.1f}%",
+            "",
+            "DETECTED PROTECTIONS:",
+        ))
         if result.protections:
             for i, protection in enumerate(result.protections, 1):
-                lines.extend(
-                    (
-                        f"  {i}. {protection['name']}",
-                        f"     Type: {protection['type']}",
-                    )
-                )
+                lines.extend((
+                    f"  {i}. {protection['name']}",
+                    f"     Type: {protection['type']}",
+                ))
                 lines.append(f"     Confidence: {protection.get('confidence', 0):.1f}%")
                 lines.append(f"     Source: {protection.get('source', 'Unknown')}")
                 if protection.get("version"):

@@ -8,13 +8,43 @@
  * @tags network,sockets,http,communication
  */
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.scalar.*;
-import ghidra.program.model.symbol.*;
-import java.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeImpl;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeComponent;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.DataIterator;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Parameter;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.scalar.Scalar;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class NetworkAnalysis extends GhidraScript {
 
@@ -147,6 +177,8 @@ public class NetworkAnalysis extends GhidraScript {
     String[] urlPatterns = {"https://", "https://", "ftp://", "tcp://", "udp://"};
 
     Memory localMemory = currentProgram.getMemory();
+    long totalBytes = localMemory.getNumAddresses();
+    printf("  Scanning %d bytes for URL patterns...%n", totalBytes);
 
     for (String pattern : urlPatterns) {
       byte[] patternBytes = pattern.getBytes();
@@ -173,6 +205,7 @@ public class NetworkAnalysis extends GhidraScript {
 
   private void findIPAddresses(List<String> urls) throws Exception {
     Memory localMemory = currentProgram.getMemory();
+    printf("  Searching %d memory blocks for IP addresses...%n", localMemory.getNumAddressRanges());
 
     // Search for potential IP addresses by looking for dot patterns
     byte[] dot = ".".getBytes();
@@ -210,8 +243,25 @@ public class NetworkAnalysis extends GhidraScript {
 
       // Read a chunk of memory around the dot
       byte[] chunk = new byte[32];
-      Address readAddr = dotAddr.subtract(15);
-      localMemory.getBytes(readAddr, chunk);
+      Address readAddr = dotAddr.subtract(Math.abs(startOffset));
+      int bytesRead = localMemory.getBytes(readAddr, chunk);
+
+      // Validate read was successful
+      if (bytesRead < buffer.length) {
+        return null; // Not enough bytes read for IP extraction
+      }
+
+      // Count dots in the chunk to determine if this looks like an IP
+      for (int k = 0; k < bytesRead; k++) {
+        if (chunk[k] == '.') {
+          dotCount++;
+        }
+      }
+
+      // IPs have exactly 3 dots, so skip if we don't have potential for that
+      if (dotCount < 3) {
+        return null;
+      }
 
       // Find the start of a potential IP address
       int ipStart = -1;
@@ -273,15 +323,21 @@ public class NetworkAnalysis extends GhidraScript {
   }
 
   private boolean isValidIP(String str) {
-    if (str == null || str.length() < 7) return false;
+    if (str == null || str.length() < 7) {
+      return false;
+    }
 
     String[] parts = str.split("\\.");
-    if (parts.length != 4) return false;
+    if (parts.length != 4) {
+      return false;
+    }
 
     try {
       for (String part : parts) {
         int num = Integer.parseInt(part);
-        if (num < 0 || num > 255) return false;
+        if (num < 0 || num > 255) {
+          return false;
+        }
       }
       return true;
     } catch (NumberFormatException e) {
@@ -293,28 +349,51 @@ public class NetworkAnalysis extends GhidraScript {
     // Search for htons/htonl calls with suspicious ports
     List<Address> htonsCalls = findAPIReferences("htons");
     List<Address> htonlCalls = findAPIReferences("htonl");
+    printf("  Found %d htons calls and %d htonl calls%n", htonsCalls.size(), htonlCalls.size());
 
-    for (Address call : htonsCalls) {
-      // Try to find the port number being passed
+    // Combine both lists for comprehensive analysis
+    List<Address> allNetworkCalls = new ArrayList<>(htonsCalls);
+    allNetworkCalls.addAll(htonlCalls);
+
+    for (Address call : allNetworkCalls) {
       Instruction instr = getInstructionBefore(call);
-      if (instr != null) {
-        // This is simplified - real implementation would be more complex
-        Object[] opObjects = instr.getOpObjects(0);
-        if (opObjects.length > 0 && opObjects[0] instanceof Scalar) {
-          int port = (int) ((Scalar) opObjects[0]).getValue();
-          if (isSuspiciousPort(port)) {
-            ports.add(port);
-            println("  [!] Suspicious port found: " + port);
-            createBookmark(call, "Network", "Suspicious port: " + port);
+      int maxBacktrack = 10;
+      int backtrackCount = 0;
+
+      while (instr != null && backtrackCount < maxBacktrack) {
+        String mnemonic = instr.getMnemonicString().toUpperCase();
+
+        if ("PUSH".equals(mnemonic) || "MOV".equals(mnemonic)) {
+          for (int opIndex = 0; opIndex < instr.getNumOperands(); opIndex++) {
+            Object[] opObjects = instr.getOpObjects(opIndex);
+            for (Object obj : opObjects) {
+              if (obj instanceof Scalar) {
+                int port = (int) ((Scalar) obj).getValue();
+                if (port > 0 && port <= 65535 && isSuspiciousPort(port)) {
+                  ports.add(port);
+                  println("  [!] Suspicious port found: " + port);
+                  createBookmark(call, "Network", "Suspicious port: " + port);
+                }
+              }
+            }
           }
         }
+
+        if ("LEA".equals(mnemonic) || "CALL".equals(mnemonic)) {
+          break;
+        }
+
+        instr = instr.getPrevious();
+        backtrackCount++;
       }
     }
   }
 
   private boolean isSuspiciousPort(int port) {
     for (int suspicious : SUSPICIOUS_PORTS) {
-      if (port == suspicious) return true;
+      if (port == suspicious) {
+        return true;
+      }
     }
     return port > 1024 && port != 8080;
   }
@@ -379,8 +458,12 @@ public class NetworkAnalysis extends GhidraScript {
 
       int len = 0;
       for (byte b : bytes) {
-        if (b == 0) break;
-        if (b < 32 || b > 126) return null;
+        if (b == 0) {
+          break;
+        }
+        if (b < 32 || b > 126) {
+          return null;
+        }
         len++;
       }
 
@@ -457,7 +540,9 @@ public class NetworkAnalysis extends GhidraScript {
             break;
           }
         }
-        if (isNetworkFunc) break;
+        if (isNetworkFunc) {
+          break;
+        }
       }
 
       if (isNetworkFunc) {
@@ -504,7 +589,7 @@ public class NetworkAnalysis extends GhidraScript {
         String mnemonic = codeUnit.getMnemonicString();
 
         // Check for port manipulation (network byte order)
-        if (mnemonic.equals("XCHG") || mnemonic.equals("BSWAP")) {
+        if ("XCHG".equals(mnemonic) || "BSWAP".equals(mnemonic)) {
           // Potential network byte order conversion
           Address addr = codeUnit.getAddress();
           if (isNearNetworkCall(addr)) {
@@ -514,7 +599,7 @@ public class NetworkAnalysis extends GhidraScript {
         }
 
         // Check for buffer operations near network calls
-        if (mnemonic.equals("REP") || mnemonic.equals("MOVS")) {
+        if ("REP".equals(mnemonic) || "MOVS".equals(mnemonic)) {
           Address addr = codeUnit.getAddress();
           if (isNearNetworkCall(addr)) {
             bufferLocations.add(addr);
@@ -594,12 +679,12 @@ public class NetworkAnalysis extends GhidraScript {
 
           // Check address space
           AddressSpace space = bufferAddr.getAddressSpace();
-          if (space.getName().equals("ram")) {
+          if ("ram".equals(space.getName())) {
             println("    Network buffer in RAM at " + bufferAddr);
           }
         }
       } catch (Exception e) {
-        // Continue with next buffer
+        printf("    Warning: Error analyzing buffer at %s: %s%n", bufferAddr, e.getMessage());
       }
     }
 
@@ -625,6 +710,7 @@ public class NetworkAnalysis extends GhidraScript {
     // Check if range contains known network structures
     Address start = range.getMinAddress();
     Address end = range.getMaxAddress();
+    long rangeSize = end.subtract(start);
 
     try {
       // Look for sockaddr structures (16 bytes)
@@ -635,11 +721,12 @@ public class NetworkAnalysis extends GhidraScript {
           DataType sockaddrType = dataTypeManager.getDataType("/sockaddr_in");
           if (sockaddrType != null) {
             networkStructures.put(start, "sockaddr_in");
+            printf("    Found potential sockaddr_in structure at %s (range size: %d)%n", start, rangeSize);
           }
         }
       }
     } catch (Exception e) {
-      // Continue
+      printf("    Warning: Error checking network structures: %s%n", e.getMessage());
     }
   }
 

@@ -17,11 +17,25 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import Any
 
-# Set up package logger
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-# Import tool modules with error handling
+PluginTestGenerator: type[Any] | None
+TestCoverageAnalyzer: type[Any] | None
+MockDataGenerator: type[Any] | None
+PluginTestRunner: type[Any] | None
+CICDPipeline: type[Any] | None
+GitHubActionsGenerator: type[Any] | None
+PluginDebugger: type[Any] | None
+DebuggerThread: type[Any] | None
+BreakpointType: type[Any] | None
+DebuggerState: type[Any] | None
+Breakpoint: type[Any] | None
+StackFrame: type[Any] | None
+ProtectionAnalyzerTool: type[Any] | None
+register_protection_analyzer_tool: Any | None
+
 try:
     from .plugin_test_generator import (
         MockDataGenerator,
@@ -71,8 +85,7 @@ except ImportError as e:
     ProtectionAnalyzerTool = None
     register_protection_analyzer_tool = None
 
-# Define package exports
-__all__ = []
+__all__: list[str] = []
 
 if PluginTestGenerator is not None:
     __all__.extend(["PluginTestGenerator", "TestCoverageAnalyzer", "MockDataGenerator", "PluginTestRunner"])
@@ -95,6 +108,5 @@ if PluginDebugger is not None:
 if ProtectionAnalyzerTool is not None:
     __all__.extend(["ProtectionAnalyzerTool", "register_protection_analyzer_tool"])
 
-# Package metadata
-__version__ = "0.1.0"
-__author__ = "Intellicrack Development Team"
+__version__: str = "0.1.0"
+__author__: str = "Intellicrack Development Team"

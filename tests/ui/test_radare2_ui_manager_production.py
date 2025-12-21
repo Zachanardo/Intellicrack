@@ -228,7 +228,7 @@ class TestR2UIManagerConfiguration:
 
         manager.show_configuration()
 
-        assert len(dialog_shown) > 0 or "config_dialog" not in manager.ui_components
+        assert dialog_shown or "config_dialog" not in manager.ui_components
 
     def test_apply_configuration(self, qtbot: object) -> None:
         manager = R2UIManager()
@@ -269,9 +269,9 @@ class TestR2UIManagerCleanup:
 
         manager.cleanup()
 
-        assert len(manager.current_results) == 0
-        assert len(manager.analysis_history) == 0
-        assert len(manager.ui_components) == 0
+        assert not manager.current_results
+        assert not manager.analysis_history
+        assert not manager.ui_components
 
     def test_cleanup_stops_running_workers(self, qtbot: object) -> None:
         manager = R2UIManager()
@@ -388,4 +388,4 @@ class TestR2UIManagerRealWorldScenarios:
         manager.clear_results()
         manager.set_binary_path(str(new_binary))
 
-        assert len(manager.current_results) == 0
+        assert not manager.current_results

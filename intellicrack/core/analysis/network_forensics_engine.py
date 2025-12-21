@@ -488,7 +488,7 @@ class NetworkForensicsEngine:
 
             # Log detected protocols
             if protocols:
-                self.logger.info("Detected protocols in packet data: %s", ', '.join(protocols))
+                self.logger.info("Detected protocols in packet data: %s", ", ".join(protocols))
             else:
                 self.logger.debug("No known protocols detected in %d bytes of packet data", len(packet_data))
 

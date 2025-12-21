@@ -23,8 +23,7 @@ from tests.base_test import IntellicrackTestBase
 def qapp() -> QApplication:
     """Create QApplication instance for testing."""
     if not QApplication.instance():
-        app = QApplication(sys.argv)
-        yield app
+        yield QApplication(sys.argv)
     else:
         yield QApplication.instance()
 
@@ -65,14 +64,13 @@ class TestIntellicrackAppInitialization(IntellicrackTestBase):
 
     def test_required_tabs_present(self, main_app: IntellicrackApp) -> None:
         """All required tabs are present in the application."""
-        tab_names: list[str] = []
-        for i in range(main_app.tabs.count()):
-            tab_names.append(main_app.tabs.tabText(i))
-
+        tab_names: list[str] = [
+            main_app.tabs.tabText(i) for i in range(main_app.tabs.count())
+        ]
         required_tabs = ["Dashboard", "Analysis", "Exploitation", "Tools"]
         for required_tab in required_tabs:
             assert any(required_tab in name for name in tab_names), \
-                f"Required tab '{required_tab}' not found in {tab_names}"
+                    f"Required tab '{required_tab}' not found in {tab_names}"
 
     def test_output_panel_created(self, main_app: IntellicrackApp) -> None:
         """Output panel is created and accessible."""

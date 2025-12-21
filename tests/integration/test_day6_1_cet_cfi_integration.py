@@ -165,18 +165,17 @@ class TestCETCFIIntegration:
                 '_analyze_cfi_bypass_opportunities'
             ]
 
-            missing_methods = []
-            for method in required_methods:
-                if not hasattr(engine, method):
-                    missing_methods.append(method)
-
-            if not missing_methods:
-                print("  OK PASS: All modern protection analysis methods present")
-                success = True
-            else:
+            if missing_methods := [
+                method
+                for method in required_methods
+                if not hasattr(engine, method)
+            ]:
                 print(f"  FAIL FAIL: Missing methods: {missing_methods}")
                 success = False
 
+            else:
+                print("  OK PASS: All modern protection analysis methods present")
+                success = True
             # Cleanup
             os.unlink(test_binary)
             self.test_results.append(success)
@@ -208,21 +207,18 @@ class TestCETCFIIntegration:
                     'cfi_bypass_analysis'
                 ]
 
-                missing_fields = []
-                for field in required_fields:
-                    if field not in result:
-                        missing_fields.append(field)
+                if missing_fields := [
+                    field for field in required_fields if field not in result
+                ]:
+                    print(f"  FAIL FAIL: Missing fields: {missing_fields}")
+                    success = False
 
-                if not missing_fields:
+                else:
                     print("  OK PASS: Modern protection fields present in analysis results")
                     print(f"  OK INFO: Modern protections data: {type(result.get('modern_protections', {}))}")
                     print(f"  OK INFO: CET analysis data: {type(result.get('cet_bypass_analysis', {}))}")
                     print(f"  OK INFO: CFI analysis data: {type(result.get('cfi_bypass_analysis', {}))}")
                     success = True
-                else:
-                    print(f"  FAIL FAIL: Missing fields: {missing_fields}")
-                    success = False
-
             except Exception as analysis_error:
                 # Analysis might fail due to test binary, but we can still check structure
                 print(f"  ⚠ WARN: Analysis failed (expected with test binary): {analysis_error}")
@@ -257,16 +253,13 @@ class TestCETCFIIntegration:
             test_binary = create_test_binary_with_modern_protections()
             engine = R2VulnerabilityEngine(test_binary)
 
-            # Verify modules are integrated
-            integration_check = (
-                hasattr(engine, 'cet_bypass') and
-                hasattr(engine, 'cfi_bypass') and
-                hasattr(engine, '_analyze_modern_protections') and
-                hasattr(engine, '_analyze_cet_bypass_opportunities') and
-                hasattr(engine, '_analyze_cfi_bypass_opportunities')
-            )
-
-            if integration_check:
+            if integration_check := (
+                hasattr(engine, 'cet_bypass')
+                and hasattr(engine, 'cfi_bypass')
+                and hasattr(engine, '_analyze_modern_protections')
+                and hasattr(engine, '_analyze_cet_bypass_opportunities')
+                and hasattr(engine, '_analyze_cfi_bypass_opportunities')
+            ):
                 print("  OK PASS: Complete bypass integration workflow functional")
                 success = True
             else:

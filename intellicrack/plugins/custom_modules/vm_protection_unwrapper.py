@@ -973,9 +973,7 @@ class VMAnalyzer:
             return "unknown"
 
         entropy = self._calculate_entropy(section_data)
-        printable_ratio = sum(32 <= b <= 126 for b in section_data) / len(
-            section_data
-        )
+        printable_ratio = sum(32 <= b <= 126 for b in section_data) / len(section_data)
         null_ratio = section_data.count(0) / len(section_data)
 
         if null_ratio > 0.8:
@@ -1003,9 +1001,7 @@ class VMAnalyzer:
                 return "code"
 
         instruction_indicators = [0x55, 0x8B, 0x89, 0xE8, 0xE9, 0x74, 0x75, 0x0F, 0x90]
-        instruction_count = sum(
-            b in instruction_indicators for b in section_data[:256]
-        )
+        instruction_count = sum(b in instruction_indicators for b in section_data[:256])
 
         if instruction_count > 20:
             return "code"

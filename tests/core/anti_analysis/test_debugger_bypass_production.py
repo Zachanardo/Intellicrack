@@ -70,8 +70,7 @@ class TestWindowsPEBFlagBypass:
         try:
             bypass._bypass_peb_flags()
 
-            peb_address = bypass.ntdll.RtlGetCurrentPeb()
-            if peb_address:
+            if peb_address := bypass.ntdll.RtlGetCurrentPeb():
                 being_debugged = ctypes.c_ubyte.from_address(peb_address + 2).value
                 assert being_debugged == 0
 
@@ -85,8 +84,7 @@ class TestWindowsPEBFlagBypass:
         try:
             bypass._bypass_ntglobalflag()
 
-            peb_address = bypass.ntdll.RtlGetCurrentPeb()
-            if peb_address:
+            if peb_address := bypass.ntdll.RtlGetCurrentPeb():
                 if sys.maxsize > 2**32:
                     ntglobalflag = ctypes.c_ulong.from_address(peb_address + 0xBC).value
                 else:
@@ -290,7 +288,8 @@ class TestComprehensiveBypassActivation:
             except Exception as e:
                 results[method_name] = False
 
-        successful_bypasses = sum(1 for success in results.values() if success)
+        successful_bypasses = sum(bool(success)
+                              for success in results.values())
         total_bypasses = len(results)
 
         assert successful_bypasses >= total_bypasses * 0.5
@@ -311,7 +310,8 @@ class TestComprehensiveBypassActivation:
             except Exception as e:
                 results[method_name] = False
 
-        successful_bypasses = sum(1 for success in results.values() if success)
+        successful_bypasses = sum(bool(success)
+                              for success in results.values())
         total_bypasses = len(results)
 
         assert successful_bypasses >= total_bypasses * 0.5
@@ -339,8 +339,7 @@ class TestBypassEffectiveness:
         try:
             bypass._bypass_peb_flags()
 
-            peb_address = bypass.ntdll.RtlGetCurrentPeb()
-            if peb_address:
+            if peb_address := bypass.ntdll.RtlGetCurrentPeb():
                 being_debugged = ctypes.c_ubyte.from_address(peb_address + 2).value
                 assert being_debugged == 0
         except Exception:

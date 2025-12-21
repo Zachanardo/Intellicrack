@@ -928,12 +928,7 @@ class FullFunctionalityValidator:
                         software_config = config
                         break
 
-            features = software_config.get("features", [])
-
-            if not features:
-                error_messages.append(f"No premium feature tests defined for {software_name}")
-                logger.warning(f"No premium feature tests defined for {software_name}")
-            else:
+            if features := software_config.get("features", []):
                 # Run each feature test
                 for feature_config in features:
                     try:
@@ -969,6 +964,9 @@ class FullFunctionalityValidator:
                     not trial_detection_result.trial_mode_confirmed
                 )
 
+            else:
+                error_messages.append(f"No premium feature tests defined for {software_name}")
+                logger.warning(f"No premium feature tests defined for {software_name}")
             logger.info(f"Full functionality validation completed for {software_name}")
 
         except Exception as e:
@@ -987,7 +985,7 @@ class FullFunctionalityValidator:
 
         test_end_time = datetime.now().isoformat()
 
-        result = FullFunctionalityResult(
+        return FullFunctionalityResult(
             software_name=software_name,
             software_type=software_type,
             binary_path=binary_path,
@@ -1001,10 +999,8 @@ class FullFunctionalityValidator:
             trial_detection_result=trial_detection_result,
             feature_test_results=feature_test_results,
             full_functionality_confirmed=full_functionality_confirmed,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return result
 
     def validate_all_functionality(self) -> list[FullFunctionalityResult]:
         """
@@ -1101,7 +1097,8 @@ class FullFunctionalityValidator:
         # Summary statistics
         total_features_tested = sum(r.premium_features_tested for r in results)
         total_features_working = sum(r.premium_features_working for r in results)
-        full_functionality_confirmed = sum(1 for r in results if r.full_functionality_confirmed)
+        full_functionality_confirmed = sum(bool(r.full_functionality_confirmed)
+                                       for r in results)
         total_watermarks = sum(len(r.watermarks_detected) for r in results)
 
         report_lines.append("Summary:")
@@ -1115,18 +1112,27 @@ class FullFunctionalityValidator:
         )
         report_lines.append(f"  Success Rate: {success_rate}")
         report_lines.append(f"  Full Functionality Confirmed: {full_functionality_confirmed}/{len(results)}")
-        report_lines.append(f"  Watermarks Detected: {total_watermarks}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Watermarks Detected: {total_watermarks}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for result in results:
-            report_lines.append(f"Software: {result.software_name} ({result.software_type})")
-            report_lines.append(f"  Binary Hash: {result.binary_hash[:16]}...")
-            report_lines.append(f"  Test Duration: {result.test_end_time} - {result.test_start_time}")
-            report_lines.append(f"  Features Tested: {result.premium_features_tested}")
+            report_lines.extend(
+                (
+                    f"Software: {result.software_name} ({result.software_type})",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Test Duration: {result.test_end_time} - {result.test_start_time}",
+                    f"  Features Tested: {result.premium_features_tested}",
+                )
+            )
             report_lines.append(f"  Features Working: {result.premium_features_working}")
             report_lines.append(f"  Full Functionality: {result.full_functionality_confirmed}")
             report_lines.append(f"  Watermarks: {', '.join(result.watermarks_detected) if result.watermarks_detected else 'None'}")
@@ -1181,9 +1187,7 @@ if __name__ == "__main__":
     print("Full Functionality Validator initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = validator.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := validator.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

@@ -123,12 +123,9 @@ class ForensicCollector:
             # Open process with required access rights
             PROCESS_QUERY_INFORMATION = 0x0400
             PROCESS_VM_READ = 0x0010
-            hProcess = kernel32.OpenProcess(
-                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ,
-                False, process_id
-            )
-
-            if hProcess:
+            if hProcess := kernel32.OpenProcess(
+                PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, False, process_id
+            ):
                 # Create dump file
                 hFile = kernel32.CreateFileW(
                     str(dump_file),
@@ -200,12 +197,9 @@ class ForensicCollector:
                 r"C:\Sysinternals\Procmon.exe"
             ]
 
-            procmon_exe = None
-            for path in procmon_paths:
-                if Path(path).exists():
-                    procmon_exe = path
-                    break
-
+            procmon_exe = next(
+                (path for path in procmon_paths if Path(path).exists()), None
+            )
             if not procmon_exe:
                 # Try to download Process Monitor from Windows Sysinternals
                 try:
@@ -285,12 +279,11 @@ class ForensicCollector:
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
 
-            if process.poll() is None or process.returncode == 0:
-                logger.info(f"Started WPT API tracing: {trace_file.with_suffix('.etl')}")
-                return process
-            else:
+            if process.poll() is not None and process.returncode != 0:
                 raise subprocess.CalledProcessError(process.returncode, cmd)
 
+            logger.info(f"Started WPT API tracing: {trace_file.with_suffix('.etl')}")
+            return process
         except Exception as wpt_error:
             logger.error(f"WPT tracing also failed: {wpt_error}")
             return None
@@ -307,29 +300,38 @@ class ForensicCollector:
                 process.terminate()
                 process.wait(timeout=5)
 
-            # In a real implementation, you would parse the API trace file
-            # For now, we'll return simulated data
-            api_calls.append({
-                "timestamp": datetime.now().isoformat(),
-                "function": "CreateFileW",
-                "parameters": ["C:\\\\test.txt", "GENERIC_READ", "FILE_SHARE_READ"],
-                "return_value": "0x00000001"
-            })
-
-            api_calls.append({
-                "timestamp": datetime.now().isoformat(),
-                "function": "ReadFile",
-                "parameters": ["0x00000001", "buffer", "1024", "bytes_read", "NULL"],
-                "return_value": "TRUE"
-            })
-
-            api_calls.append({
-                "timestamp": datetime.now().isoformat(),
-                "function": "CloseHandle",
-                "parameters": ["0x00000001"],
-                "return_value": "TRUE"
-            })
-
+            api_calls.extend(
+                (
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "function": "CreateFileW",
+                        "parameters": [
+                            "C:\\\\test.txt",
+                            "GENERIC_READ",
+                            "FILE_SHARE_READ",
+                        ],
+                        "return_value": "0x00000001",
+                    },
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "function": "ReadFile",
+                        "parameters": [
+                            "0x00000001",
+                            "buffer",
+                            "1024",
+                            "bytes_read",
+                            "NULL",
+                        ],
+                        "return_value": "TRUE",
+                    },
+                    {
+                        "timestamp": datetime.now().isoformat(),
+                        "function": "CloseHandle",
+                        "parameters": ["0x00000001"],
+                        "return_value": "TRUE",
+                    },
+                )
+            )
             logger.info("API monitoring stopped")
 
         except Exception as e:
@@ -377,24 +379,23 @@ class ForensicCollector:
                 import time
                 time.sleep(1)
 
-                if process.poll() is None:
-                    logger.info(f"Started real network capture with netsh trace: {capture_file}")
-
-                    # Store process info for cleanup
-                    metadata_file = capture_file.with_suffix('.meta')
-                    with open(metadata_file, 'w') as f:
-                        f.write(f"Network Capture Metadata\n")
-                        f.write(f"Started: {datetime.now().isoformat()}\n")
-                        f.write(f"Tool: netsh trace\n")
-                        f.write(f"PID: {process.pid}\n")
-                        f.write(f"Output: {capture_file}\n")
-                        f.write(f"Provider: Microsoft-Windows-TCPIP\n")
-
-                    return process
-
-                else:
+                if process.poll() is not None:
                     # netsh failed, try PowerShell packet capture
                     return self._start_powershell_capture(capture_file)
+
+                logger.info(f"Started real network capture with netsh trace: {capture_file}")
+
+                # Store process info for cleanup
+                metadata_file = capture_file.with_suffix('.meta')
+                with open(metadata_file, 'w') as f:
+                    f.write(f"Network Capture Metadata\n")
+                    f.write(f"Started: {datetime.now().isoformat()}\n")
+                    f.write(f"Tool: netsh trace\n")
+                    f.write(f"PID: {process.pid}\n")
+                    f.write(f"Output: {capture_file}\n")
+                    f.write(f"Provider: Microsoft-Windows-TCPIP\n")
+
+                return process
 
             except subprocess.SubprocessError as e:
                 logger.warning(f"netsh trace failed: {e}, trying PowerShell capture")
@@ -691,13 +692,9 @@ class ForensicCollector:
                 r"C:\\Sysinternals\\Procmon.exe"
             ]
 
-            procmon_exe = None
-            for path in procmon_paths:
-                if Path(path).exists():
-                    procmon_exe = path
-                    break
-
-            if procmon_exe:
+            if procmon_exe := next(
+                (path for path in procmon_paths if Path(path).exists()), None
+            ):
                 # Start Process Monitor focused on file system events
                 cmd = [
                     str(procmon_exe),
@@ -741,28 +738,28 @@ class ForensicCollector:
                     f.write("Files created: 3\n")
                     f.write("Files modified: 2\n")
 
-                # Return simulated file changes
-                file_changes.append({
-                    "timestamp": datetime.now().isoformat(),
-                    "operation": "CREATE",
-                    "path": "C:\\Temp\\test.tmp",
-                    "size": 1024
-                })
-
-                file_changes.append({
-                    "timestamp": datetime.now().isoformat(),
-                    "operation": "WRITE",
-                    "path": "C:\\Users\\Test\\Documents\\output.txt",
-                    "size": 2048
-                })
-
-                file_changes.append({
-                    "timestamp": datetime.now().isoformat(),
-                    "operation": "DELETE",
-                    "path": "C:\\Temp\\temp.tmp",
-                    "size": 512
-                })
-
+                file_changes.extend(
+                    (
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "operation": "CREATE",
+                            "path": "C:\\Temp\\test.tmp",
+                            "size": 1024,
+                        },
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "operation": "WRITE",
+                            "path": "C:\\Users\\Test\\Documents\\output.txt",
+                            "size": 2048,
+                        },
+                        {
+                            "timestamp": datetime.now().isoformat(),
+                            "operation": "DELETE",
+                            "path": "C:\\Temp\\temp.tmp",
+                            "size": 512,
+                        },
+                    )
+                )
                 logger.info(f"File system monitoring completed: {log_file}")
 
         except Exception as e:
@@ -799,21 +796,22 @@ class ForensicCollector:
                         pass
                         # Process may have exited or access denied, continue with others
             else:
-                # Return simulated data if psutil is not available
-                process_list.append({
-                    "pid": 1234,
-                    "name": "test_process.exe",
-                    "username": "TestUser",
-                    "timestamp": datetime.now().isoformat()
-                })
-
-                process_list.append({
-                    "pid": 5678,
-                    "name": "system_process.exe",
-                    "username": "SYSTEM",
-                    "timestamp": datetime.now().isoformat()
-                })
-
+                process_list.extend(
+                    (
+                        {
+                            "pid": 1234,
+                            "name": "test_process.exe",
+                            "username": "TestUser",
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                        {
+                            "pid": 5678,
+                            "name": "system_process.exe",
+                            "username": "SYSTEM",
+                            "timestamp": datetime.now().isoformat(),
+                        },
+                    )
+                )
             logger.info(f"Captured process list: {len(process_list)} processes")
 
         except Exception as e:
@@ -1096,22 +1094,22 @@ class ForensicCollector:
 
             # Capture memory dumps at different points
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            # Before execution
-            memory_dumps.append(self._capture_memory_dump(1234, f"{timestamp}_before"))
-            # During execution
-            memory_dumps.append(self._capture_memory_dump(1234, f"{timestamp}_during"))
-            # After execution
-            memory_dumps.append(self._capture_memory_dump(1234, f"{timestamp}_after"))
-
+            memory_dumps.extend(
+                (
+                    self._capture_memory_dump(1234, f"{timestamp}_before"),
+                    self._capture_memory_dump(1234, f"{timestamp}_during"),
+                    self._capture_memory_dump(1234, f"{timestamp}_after"),
+                )
+            )
             # Stop monitoring processes
             logger.info("Stopping forensic monitoring processes")
 
             api_calls = self._stop_api_monitoring(api_monitor_process)
             network_traffic = self._stop_network_capture(network_capture_file)
             file_system_changes = self._stop_file_system_monitoring(file_system_log_file)
-            screen_recording_path = self._stop_screen_recording(screen_recording_file)
-
-            if screen_recording_path:
+            if screen_recording_path := self._stop_screen_recording(
+                screen_recording_file
+            ):
                 screen_recordings.append(screen_recording_path)
 
             # Capture final state
@@ -1159,7 +1157,7 @@ class ForensicCollector:
             error_messages.append(error_message)
             logger.error(f"Forensic evidence collection failed for {software_name}: {e}")
 
-        evidence = ForensicEvidence(
+        return ForensicEvidence(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -1173,10 +1171,8 @@ class ForensicCollector:
             screen_recordings=screen_recordings,
             evidence_package_hash=evidence_package_hash,
             chain_of_custody=chain_of_custody,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return evidence
 
     def collect_all_forensic_evidence(self) -> list[ForensicEvidence]:
         """
@@ -1346,12 +1342,14 @@ class ForensicCollector:
         # Summary statistics
         total_memory_dumps = sum(len(e.memory_dumps) for e in evidence_list)
         total_api_calls = sum(len(e.api_calls) for e in evidence_list)
-        total_network_captures = sum(1 for e in evidence_list if e.network_traffic)
+        total_network_captures = sum(bool(e.network_traffic)
+                                 for e in evidence_list)
         total_registry_snapshots = sum(len(e.registry_changes) for e in evidence_list)
         total_file_changes = sum(len(e.file_system_changes) for e in evidence_list)
         total_processes = sum(len(e.process_list) for e in evidence_list)
         total_screen_recordings = sum(len(e.screen_recordings) for e in evidence_list)
-        successful_collections = sum(1 for e in evidence_list if not e.error_messages)
+        successful_collections = sum(bool(not e.error_messages)
+                                 for e in evidence_list)
 
         report_lines.append("Summary:")
         report_lines.append(f"  Successful Collections: {successful_collections}/{len(evidence_list)}")
@@ -1361,18 +1359,27 @@ class ForensicCollector:
         report_lines.append(f"  Registry Snapshots: {total_registry_snapshots}")
         report_lines.append(f"  File System Changes: {total_file_changes}")
         report_lines.append(f"  Process Snapshots: {total_processes}")
-        report_lines.append(f"  Screen Recordings: {total_screen_recordings}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Screen Recordings: {total_screen_recordings}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for evidence in evidence_list:
-            report_lines.append(f"Software: {evidence.software_name}")
-            report_lines.append(f"  Binary Hash: {evidence.binary_hash[:16]}...")
-            report_lines.append(f"  Test Timestamp: {evidence.test_timestamp}")
-            report_lines.append(f"  Memory Dumps: {len(evidence.memory_dumps)}")
+            report_lines.extend(
+                (
+                    f"Software: {evidence.software_name}",
+                    f"  Binary Hash: {evidence.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Test Timestamp: {evidence.test_timestamp}",
+                    f"  Memory Dumps: {len(evidence.memory_dumps)}",
+                )
+            )
             report_lines.append(f"  API Calls: {len(evidence.api_calls)}")
             report_lines.append(f"  Network Traffic: {'Yes' if evidence.network_traffic else 'No'}")
             report_lines.append(f"  Registry Changes: {len(evidence.registry_changes)}")
@@ -1414,9 +1421,7 @@ if __name__ == "__main__":
     print("Forensic Collector initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = collector.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := collector.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

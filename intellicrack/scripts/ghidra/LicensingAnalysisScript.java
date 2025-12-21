@@ -2,18 +2,54 @@
 // It analyzes each function, using decompilation, P-code, CFG, and cross-reference analysis,
 // and then outputs a JSON object that Intellicrack can capture and send to Mixtral.
 
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.block.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressRangeIterator;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.block.BasicBlockModel;
+import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.CodeBlockIterator;
+import ghidra.program.model.block.CodeBlockReferenceIterator;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.CodeUnitIterator;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.HighSymbol;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.symbol.*;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
 import ghidra.util.exception.CancelledException;
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class LicensingAnalysisScript extends GhidraScript {
 
@@ -78,7 +114,7 @@ public class LicensingAnalysisScript extends GhidraScript {
           if (highFunc != null) {
             highFunctionCache.put(func.getName(), highFunc);
             String decompiledCode = decompResults.getDecompiledFunction().getC();
-            if (!isSuspect && decompiledCode.toLowerCase().contains("license")) {
+            if (!isSuspect && decompiledCode.toLowerCase(Locale.ROOT).contains("license")) {
               isSuspect = true;
             }
             // Take a snippet (first 300 characters).
@@ -167,7 +203,7 @@ public class LicensingAnalysisScript extends GhidraScript {
           funcData.put("cfg_edges", edgeCount);
         }
       } catch (Exception ex) {
-        // If CFG analysis fails, skip adding CFG info.
+        printf("    Warning: CFG analysis failed: %s%n", ex.getMessage());
       }
     }
 
@@ -316,7 +352,7 @@ public class LicensingAnalysisScript extends GhidraScript {
 
         // Check for anti-debug instructions
         String mnemonic = inst.getMnemonicString().toUpperCase();
-        if (mnemonic.equals("RDTSC") || mnemonic.equals("CPUID") || mnemonic.startsWith("INT")) {
+        if ("RDTSC".equals(mnemonic) || "CPUID".equals(mnemonic) || mnemonic.startsWith("INT")) {
           funcData.put("has_anti_debug", true);
         }
       }
@@ -403,11 +439,12 @@ public class LicensingAnalysisScript extends GhidraScript {
         outputFile = new File(program.getExecutablePath() + "_analysis.json");
       }
 
-      FileWriter fileWriter = new FileWriter(outputFile);
-      reportWriter = new PrintWriter(fileWriter);
-      reportWriter.println(jsonOutput);
-      reportWriter.flush();
-      reportWriter.close();
+      try (FileWriter fileWriter = new FileWriter(outputFile);
+          PrintWriter writer = new PrintWriter(fileWriter)) {
+        writer.println(jsonOutput);
+        writer.flush();
+      }
+      reportWriter = null;
 
       println("Report written to: " + outputFile.getAbsolutePath());
     } catch (IOException ioe) {
@@ -424,7 +461,7 @@ public class LicensingAnalysisScript extends GhidraScript {
         configReader.close();
       }
     } catch (IOException ioe) {
-      // Ignore cleanup errors
+      printf("    Warning: Cleanup error: %s%n", ioe.getMessage());
     }
   }
 

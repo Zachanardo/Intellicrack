@@ -2,6 +2,7 @@
 
 import binascii
 import logging
+import math
 import re
 from typing import Any
 
@@ -55,7 +56,7 @@ class R2StringAnalyzer:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.string_cache = {}
+        self.string_cache: dict[str, Any] = {}
 
     def analyze_all_strings(self, min_length: int = 4, encoding: str = "auto") -> dict[str, Any]:
         """Perform comprehensive string analysis on the binary.
@@ -91,7 +92,22 @@ class R2StringAnalyzer:
         }
 
         try:
-            with r2_session(self.binary_path, self.radare2_path) as r2:
+            with r2_session(self.binary_path, self.radare2_path) as r2_raw:
+                # Type narrowing for r2_session which returns R2Session | R2SessionPoolAdapter
+                # Both implement the same _execute_command interface, so cast to R2Session
+                from ...utils.tools.radare2_utils import R2SessionPoolAdapter
+
+                r2: R2Session
+                if isinstance(r2_raw, R2Session):
+                    r2 = r2_raw
+                elif isinstance(r2_raw, R2SessionPoolAdapter):
+                    # R2SessionPoolAdapter has _execute_command, treat as R2Session for type checking
+                    r2 = r2_raw  # type: ignore[assignment]
+                else:
+                    # This branch is unreachable but kept for defensive programming
+                    result["error"] = "Invalid R2 session type"  # type: ignore[unreachable]
+                    return result
+
                 # Get all strings using different radare2 commands
                 all_strings = self._get_comprehensive_strings(r2, min_length, encoding)
                 result["total_strings"] = len(all_strings)
@@ -142,11 +158,7 @@ class R2StringAnalyzer:
 
             # Get strings with minimum length filter
             if min_length > 4:
-                filtered_strings = [
-                    string_data
-                    for string_data in all_strings
-                    if string_data.get("length", 0) >= min_length
-                ]
+                filtered_strings = [string_data for string_data in all_strings if string_data.get("length", 0) >= min_length]
                 all_strings = filtered_strings
 
             # Apply encoding-specific string extraction
@@ -198,12 +210,13 @@ class R2StringAnalyzer:
     def _normalize_string_data(self, string_data: dict[str, Any]) -> dict[str, Any] | None:
         """Normalize string data from radare2 output."""
         if not isinstance(string_data, dict):
-            return None
+            return None  # type: ignore[unreachable]
 
         # Extract string content
-        content = string_data.get("string", "")
-        if not content:
+        content_raw = string_data.get("string", "")
+        if not content_raw or not isinstance(content_raw, str):
             return None
+        content = content_raw
 
         # Normalize the data structure
         normalized = {
@@ -260,7 +273,7 @@ class R2StringAnalyzer:
 
     def _categorize_strings(self, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Categorize strings based on content patterns."""
-        categories = {
+        categories: dict[str, list[dict[str, Any]]] = {
             "license_strings": [],
             "crypto_strings": [],
             "api_strings": [],
@@ -433,7 +446,7 @@ class R2StringAnalyzer:
     def _has_license_key_patterns(self, content: str) -> bool:
         """Check for patterns common in license keys."""
         # Avoid keys with too many repeated characters
-        char_counts = {}
+        char_counts: dict[str, int] = {}
         for char in content:
             char_counts[char] = char_counts.get(char, 0) + 1
 
@@ -442,10 +455,7 @@ class R2StringAnalyzer:
         if max_char_freq > 0.4:
             return False
 
-        alternations = sum(
-            content[i].isdigit() != content[i + 1].isdigit()
-            for i in range(len(content) - 1)
-        )
+        alternations = sum(content[i].isdigit() != content[i + 1].isdigit() for i in range(len(content) - 1))
         alternation_ratio = alternations / max(1, len(content) - 1)
         return 0.3 <= alternation_ratio <= 0.8  # Moderate alternation suggests structure
 
@@ -455,7 +465,7 @@ class R2StringAnalyzer:
             return False
 
         # Check for excessive character repetition
-        char_counts = {}
+        char_counts: dict[str, int] = {}
         for char in content:
             char_counts[char] = char_counts.get(char, 0) + 1
 
@@ -1076,9 +1086,9 @@ class R2StringAnalyzer:
 
         return any(re.search(pattern, content, re.IGNORECASE) for pattern in network_patterns)
 
-    def _get_string_cross_references(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    def _get_string_cross_references(self, r2: R2Session, strings: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
         """Get cross-references for important strings."""
-        xrefs = {}
+        xrefs: dict[str, dict[str, Any]] = {}
 
         # Focus on license and crypto strings for cross-reference analysis
         important_strings = [
@@ -1103,31 +1113,45 @@ class R2StringAnalyzer:
 
     def _analyze_string_entropy(self, strings: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze string entropy for encoded/encrypted content detection."""
-        entropy_analysis = {
+        entropy_analysis: dict[str, Any] = {
             "high_entropy_strings": [],
             "low_entropy_strings": [],
             "average_entropy": 0,
             "entropy_distribution": {"0-1": 0, "1-2": 0, "2-3": 0, "3-4": 0, "4+": 0},
         }
 
-        total_entropy = 0
+        total_entropy: float = 0.0
         for string_data in strings:
-            entropy = string_data.get("entropy", 0)
+            entropy_value = string_data.get("entropy", 0)
+            if not isinstance(entropy_value, (int, float)):
+                entropy_value = 0
+            entropy = float(entropy_value)
             total_entropy += entropy
 
             # Categorize by entropy
+            high_entropy_list = entropy_analysis["high_entropy_strings"]
+            low_entropy_list = entropy_analysis["low_entropy_strings"]
+            distribution = entropy_analysis["entropy_distribution"]
+
             if entropy > 3.5:
-                entropy_analysis["high_entropy_strings"].append(string_data)
-                entropy_analysis["entropy_distribution"]["4+"] += 1
+                if isinstance(high_entropy_list, list):
+                    high_entropy_list.append(string_data)
+                if isinstance(distribution, dict):
+                    distribution["4+"] = distribution.get("4+", 0) + 1
             elif entropy > 2.5:
-                entropy_analysis["entropy_distribution"]["3-4"] += 1
+                if isinstance(distribution, dict):
+                    distribution["3-4"] = distribution.get("3-4", 0) + 1
             elif entropy > 1.5:
-                entropy_analysis["entropy_distribution"]["2-3"] += 1
+                if isinstance(distribution, dict):
+                    distribution["2-3"] = distribution.get("2-3", 0) + 1
             elif entropy > 0.5:
-                entropy_analysis["entropy_distribution"]["1-2"] += 1
+                if isinstance(distribution, dict):
+                    distribution["1-2"] = distribution.get("1-2", 0) + 1
             else:
-                entropy_analysis["low_entropy_strings"].append(string_data)
-                entropy_analysis["entropy_distribution"]["0-1"] += 1
+                if isinstance(low_entropy_list, list):
+                    low_entropy_list.append(string_data)
+                if isinstance(distribution, dict):
+                    distribution["0-1"] = distribution.get("0-1", 0) + 1
 
         if strings:
             entropy_analysis["average_entropy"] = total_entropy / len(strings)
@@ -1186,20 +1210,20 @@ class R2StringAnalyzer:
     def _calculate_entropy(self, text: str) -> float:
         """Calculate Shannon entropy of a string."""
         if not text:
-            return 0
+            return 0.0
 
         # Count character frequencies
-        freq = {}
+        freq: dict[str, int] = {}
         for char in text:
             freq[char] = freq.get(char, 0) + 1
 
-        # Calculate entropy
-        entropy = 0
+        # Calculate Shannon entropy using log base 2
+        entropy: float = 0.0
         text_len = len(text)
         for count in freq.values():
             p = count / text_len
             if p > 0:
-                entropy -= p * (p.bit_length() - 1)
+                entropy -= p * math.log2(p)
 
         return entropy
 
@@ -1235,7 +1259,21 @@ class R2StringAnalyzer:
     def search_license_validation_strings(self) -> dict[str, Any]:
         """Specialized search for license validation related strings."""
         try:
-            with r2_session(self.binary_path, self.radare2_path) as r2:
+            with r2_session(self.binary_path, self.radare2_path) as r2_raw:
+                # Type narrowing for r2_session which returns R2Session | R2SessionPoolAdapter
+                # Both implement the same _execute_command interface, so cast to R2Session
+                from ...utils.tools.radare2_utils import R2SessionPoolAdapter
+
+                r2: R2Session
+                if isinstance(r2_raw, R2Session):
+                    r2 = r2_raw
+                elif isinstance(r2_raw, R2SessionPoolAdapter):
+                    # R2SessionPoolAdapter has _execute_command, treat as R2Session for type checking
+                    r2 = r2_raw  # type: ignore[assignment]
+                else:
+                    # This branch is unreachable but kept for defensive programming
+                    return {"error": "Invalid R2 session type"}  # type: ignore[unreachable]
+
                 validation_strings = []
 
                 # Search for specific license validation patterns
@@ -1266,16 +1304,19 @@ class R2StringAnalyzer:
                             for result in search_results:
                                 if addr := result.get("offset", 0):
                                     try:
-                                        string_content = r2._execute_command(f"ps @ {hex(addr)}")
-                                        if string_content and term.lower() in string_content.lower():
-                                            validation_strings.append(
-                                                {
-                                                    "content": string_content.strip(),
-                                                    "address": hex(addr),
-                                                    "search_term": term,
-                                                    "context": "license_validation",
-                                                },
-                                            )
+                                        string_content_raw = r2._execute_command(f"ps @ {hex(addr)}")
+                                        # Type narrowing for string content
+                                        if isinstance(string_content_raw, str):
+                                            string_content = string_content_raw
+                                            if string_content and term.lower() in string_content.lower():
+                                                validation_strings.append(
+                                                    {
+                                                        "content": string_content.strip(),
+                                                        "address": hex(addr),
+                                                        "search_term": term,
+                                                        "context": "license_validation",
+                                                    },
+                                                )
                                     except R2Exception as e:
                                         logger.exception("R2Exception in radare2_strings: %s", e)
                                         continue
@@ -1304,7 +1345,21 @@ class R2StringAnalyzer:
 
         """
         try:
-            with r2_session(self.binary_path, self.radare2_path) as r2:
+            with r2_session(self.binary_path, self.radare2_path) as r2_raw:
+                # Type narrowing for r2_session which returns R2Session | R2SessionPoolAdapter
+                # Both implement the same _execute_command interface, so cast to R2Session
+                from ...utils.tools.radare2_utils import R2SessionPoolAdapter
+
+                r2: R2Session
+                if isinstance(r2_raw, R2Session):
+                    r2 = r2_raw
+                elif isinstance(r2_raw, R2SessionPoolAdapter):
+                    # R2SessionPoolAdapter has _execute_command, treat as R2Session for type checking
+                    r2 = r2_raw  # type: ignore[assignment]
+                else:
+                    # This branch is unreachable but kept for defensive programming
+                    return {"strings": [], "error": "Invalid R2 session type"}  # type: ignore[unreachable]
+
                 raw_strings = r2._execute_command("izzj", expect_json=True)
 
                 if not isinstance(raw_strings, list):

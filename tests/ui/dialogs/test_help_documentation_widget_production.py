@@ -176,7 +176,7 @@ def test_search_functionality_filters_navigation(help_widget: HelpDocumentationW
                 if not child.isHidden():
                     visible_items.append(child.text(0))
 
-    assert len(visible_items) > 0
+    assert visible_items
     assert any("binary" in item.lower() for item in visible_items)
 
 
@@ -299,7 +299,7 @@ def test_feature_double_click_decline_no_signal(
 
     help_widget.on_feature_double_clicked(first_feature, 0)
 
-    assert len(signal_received) == 0
+    assert not signal_received
 
 
 def test_tutorial_selection_loads_content(help_widget: HelpDocumentationWidget) -> None:
@@ -510,7 +510,7 @@ def test_search_case_insensitive(help_widget: HelpDocumentationWidget) -> None:
         if not item.isHidden():
             visible_items.append(item.text(0))
 
-    assert len(visible_items) > 0
+    assert visible_items
 
 
 def test_navigation_tree_expandable(help_widget: HelpDocumentationWidget) -> None:
@@ -563,10 +563,9 @@ def test_search_button_triggers_search(help_widget: HelpDocumentationWidget) -> 
 
     search_button = None
     for widget in help_widget.findChildren(type(help_widget.search_edit).__bases__[0]):
-        if hasattr(widget, "text") and callable(widget.text):
-            if widget.text() == "Search":
-                search_button = widget
-                break
+        if hasattr(widget, "text") and callable(widget.text) and widget.text() == "Search":
+            search_button = widget
+            break
 
     initial_html = help_widget.doc_browser.toHtml()
     help_widget.perform_search()

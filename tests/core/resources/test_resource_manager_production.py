@@ -126,7 +126,7 @@ class TestManagedResource:
 
         resource.cleanup()
 
-        assert cleanup_executed is True
+        assert cleanup_executed
         assert resource.state == ResourceState.CLEANED
         assert resource.cleaned_at is not None
 
@@ -166,7 +166,7 @@ class TestManagedResource:
 
         del resource
 
-        assert cleanup_called is True
+        assert cleanup_called
 
 
 class TestProcessResource:
@@ -341,7 +341,7 @@ class TestResourceRelease:
         manager.register_resource(resource)
         manager.release_resource("release-test")
 
-        assert cleanup_called is True
+        assert cleanup_called
         assert "release-test" not in manager._resources
 
         del os.environ["INTELLICRACK_TESTING"]

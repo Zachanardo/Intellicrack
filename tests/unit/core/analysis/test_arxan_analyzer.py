@@ -168,7 +168,7 @@ class TestArxanAnalyzer(unittest.TestCase):
 
     def test_encrypted_strings_detection(self):
         """Test encrypted string detection."""
-        xor_encrypted = bytes([0x80 ^ i for i in range(256)])
+        xor_encrypted = bytes(0x80 ^ i for i in range(256))
         section_data = b"Arxan" + xor_encrypted
 
         binary = self._create_pe_binary(section_data)

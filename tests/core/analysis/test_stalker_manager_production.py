@@ -200,7 +200,7 @@ def test_session_handles_status_messages(test_binary: Path, temp_dir: Path) -> N
 
     session._on_message(message, None)
 
-    assert len(messages_received) > 0
+    assert messages_received
     assert any("Test status" in msg for msg in messages_received)
 
 
@@ -602,7 +602,7 @@ def test_cleanup_detaches_session(test_binary: Path, temp_dir: Path) -> None:
     session.cleanup()
 
     mock_session.detach.assert_called_once()
-    assert session._is_active is False
+    assert not session._is_active
 
 
 def test_cleanup_handles_detach_errors(test_binary: Path, temp_dir: Path) -> None:

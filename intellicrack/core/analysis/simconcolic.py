@@ -22,13 +22,13 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from typing import Any as State
+    StateType = Any
 else:
-    State = object
+    StateType = object
 
 __version__: str = "1.0.0"
 
@@ -49,7 +49,14 @@ class Plugin:
         populated when the plugin is registered with a BinaryAnalyzer.
 
         """
-        self.analyzer: BinaryAnalyzer | None = None
+        self.analyzer: "BinaryAnalyzer | None" = None
+        self.analysis_start_time: float = 0.0
+        self.total_states_analyzed: int = 0
+        self.analysis_metadata: dict[str, Any] = {}
+        self.fork_count: int = 0
+        self.fork_history: list[dict[str, Any]] = []
+        self.termination_pending: dict[int, dict[str, Any]] = {}
+        self.terminated_states: list[dict[str, Any]] = []
 
     def will_run_callback(self, *args: object, **kwargs: object) -> None:
         """Prepare before analysis starts.
@@ -94,7 +101,7 @@ class Plugin:
             self.analysis_metadata["completion_args"] = args
             self.analysis_metadata["completion_kwargs"] = kwargs
 
-    def will_fork_state_callback(self, state: State, *args: object, **kwargs: object) -> None:
+    def will_fork_state_callback(self, state: "State", *args: object, **kwargs: object) -> None:
         """Prepare before a state is forked.
 
         Args:
@@ -123,7 +130,7 @@ class Plugin:
             },
         )
 
-    def will_terminate_state_callback(self, state: State, *args: object, **kwargs: object) -> None:
+    def will_terminate_state_callback(self, state: "State", *args: object, **kwargs: object) -> None:
         """Prepare before a state is terminated.
 
         Args:
@@ -147,7 +154,7 @@ class Plugin:
 
         logger.debug("State at 0x%x pending termination", state.address)
 
-    def did_terminate_state_callback(self, state: State, *args: object, **kwargs: object) -> None:
+    def did_terminate_state_callback(self, state: "State", *args: object, **kwargs: object) -> None:
         """Finalize after a state is terminated.
 
         Args:
@@ -194,7 +201,9 @@ class Plugin:
             from intellicrack.handlers.psutil_handler import psutil
 
             process = psutil.Process()
-            return process.memory_info().rss / 1024 / 1024
+            memory_info = process.memory_info()
+            rss_bytes: int = memory_info.rss
+            return float(rss_bytes / 1024 / 1024)
         except Exception:
             logger.debug("Failed to get memory usage", exc_info=True)
             return 0.0
@@ -225,8 +234,9 @@ class State:
             "argv": [],
         }
         self.id: str = state_id or f"state_{address:x}"
+        self._address: int = address
 
-        self.cpu: type = type(
+        CPUClass = type(
             "CPU",
             (object,),
             {
@@ -236,6 +246,28 @@ class State:
                 "registers": {},
             },
         )
+        self.cpu: Any = CPUClass()
+        self.constraints: list[Any] = []
+
+    @property
+    def address(self) -> int:
+        """Get the current instruction pointer address.
+
+        Returns:
+            The current instruction pointer address.
+
+        """
+        return self._address
+
+    @property
+    def state_id(self) -> str:
+        """Get the state ID.
+
+        Returns:
+            The unique state identifier.
+
+        """
+        return self.id
 
     def abandon(self) -> None:
         """Abandon this state and terminate symbolic exploration.
@@ -285,13 +317,13 @@ class BinaryAnalyzer:
         self.binary_path: str = binary_path
         self.workspace_url: str | None = workspace_url
         self.logger: logging.Logger = logging.getLogger("SimConcolic")
-        self.hooks: dict[int, list[Callable[[State], None]]] = {}
+        self.hooks: dict[int, list[Callable[["State"], None]]] = {}
         self.plugins: list[Plugin] = []
         self._states: dict[str, State] = {}
         self._exec_timeout: int | None = None
         self._procs: int = 1
 
-    def add_hook(self, address: int, callback: Callable[[State], None]) -> None:
+    def add_hook(self, address: int, callback: Callable[["State"], None]) -> None:
         """Add a hook at the specified address.
 
         Args:
@@ -300,10 +332,6 @@ class BinaryAnalyzer:
                 receives the current State as its argument.
 
         """
-        # Convert address to int if it's in hex string format
-        if isinstance(address, str) and address.startswith("0x"):
-            address = int(address, 16)
-
         if address not in self.hooks:
             self.hooks[address] = []
 

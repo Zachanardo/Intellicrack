@@ -23,27 +23,24 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import webbrowser
 from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.logger import logger
 
 
+if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
+
 try:
-    from PyQt6.QtWidgets import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton
+    from PyQt6.QtWidgets import QFileDialog, QGroupBox, QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QWidget
 
     HAS_PYQT = True
 except ImportError as e:
     logger.error("Import error in ui_common: %s", e)
     HAS_PYQT = False
-    QMessageBox = None
-    QFileDialog = None
-    QGroupBox = None
-    QHBoxLayout = None
-    QLineEdit = None
-    QPushButton = None
-    QLabel = None
 
 
-def ask_open_report(parent: object, report_path: str) -> bool:
+def ask_open_report(parent: QWidget | None, report_path: str) -> bool:
     """Ask user if they want to open a generated report.
 
     Args:
@@ -58,22 +55,21 @@ def ask_open_report(parent: object, report_path: str) -> bool:
         return False
 
     try:
-        open_report = (
-            QMessageBox.question(
-                parent,
-                "Open Report",
-                "Do you want to open the report?",
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            == QMessageBox.Yes
+        from PyQt6.QtWidgets import QMessageBox
+        reply = QMessageBox.question(
+            parent,
+            "Open Report",
+            "Do you want to open the report?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
+
+        open_report = reply == QMessageBox.StandardButton.Yes
 
         if open_report:
             webbrowser.open(f"file://{os.path.abspath(report_path)}")
             return True
     except Exception as e:
         logger.error("Exception in ui_common: %s", e)
-        # Log the error for debugging UI or file opening issues
         print(f"Error opening report dialog or file: {e}")
         return False
 
@@ -81,7 +77,7 @@ def ask_open_report(parent: object, report_path: str) -> bool:
 
 
 def get_save_filename(
-    parent: object,
+    parent: QWidget | None,
     caption: str = "Save File",
     filter_str: str = "HTML Files (*.html);;All Files (*.*)",
     default_suffix: str = ".html",
@@ -102,6 +98,7 @@ def get_save_filename(
         return None
 
     try:
+        from PyQt6.QtWidgets import QFileDialog
         filename, _ = QFileDialog.getSaveFileName(
             parent,
             caption,
@@ -112,20 +109,19 @@ def get_save_filename(
         if filename and default_suffix and not filename.endswith(default_suffix):
             filename += default_suffix
 
-        return filename
+        return filename if filename else None
     except Exception as e:
         logger.error("Exception in ui_common: %s", e)
-        # Log the error for debugging Qt dialog issues
         print(f"Error opening save file dialog: {e}")
         return None
 
 
 def create_binary_selection_header(
-    parent_layout: object,
+    parent_layout: QHBoxLayout | Any,
     binary_path: str = "",
     show_label: bool = True,
-    extra_buttons: list[tuple[str, Callable]] | None = None,
-) -> dict[str, object]:
+    extra_buttons: list[tuple[str, Callable[..., Any]]] | None = None,
+) -> dict[str, Any]:
     """Create a standard binary selection header widget.
 
     Args:
@@ -145,9 +141,11 @@ def create_binary_selection_header(
     if not HAS_PYQT:
         return {}
 
+    from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLabel, QLineEdit, QPushButton
+
     header_group = QGroupBox("Target Binary")
     header_layout = QHBoxLayout(header_group)
-    widgets = {"extra_buttons": {}, "group": header_group}
+    widgets: dict[str, Any] = {"extra_buttons": {}, "group": header_group}
     if show_label:
         header_layout.addWidget(QLabel("Binary Path:"))
 
@@ -162,12 +160,13 @@ def create_binary_selection_header(
     header_layout.addWidget(path_edit)
     header_layout.addWidget(browse_btn)
 
-    # Add any extra buttons
     if extra_buttons:
         from .ui_button_common import add_extra_buttons
 
         buttons = add_extra_buttons(header_layout, extra_buttons, widgets)
-        widgets["extra_buttons"].update(buttons)
+        extra_buttons_dict = cast(dict[str, Any], widgets["extra_buttons"])
+        extra_buttons_dict.update(buttons)
 
-    parent_layout.addWidget(header_group)
+    if hasattr(parent_layout, 'addWidget'):
+        parent_layout.addWidget(header_group)
     return widgets

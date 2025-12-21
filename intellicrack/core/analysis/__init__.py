@@ -87,11 +87,16 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import Any  # noqa: E402
+from types import ModuleType
+from typing import Any, Callable  # noqa: E402
 
+calculate_entropy: Callable[[bytes], float] | None
+analyze_binary_internal: Callable[[str, list[str] | None], list[str]] | None
+enhanced_deep_license_analysis: Callable[[str], dict[str, Any]] | None
+detect_packing: Callable[[str], dict[str, Any]] | None
 
 try:
-    from .core_analysis import analyze_binary_internal, calculate_entropy, detect_packing, enhanced_deep_license_analysis
+    from .core_analysis import analyze_binary_internal, calculate_entropy, detect_packing, enhanced_deep_license_analysis  # type: ignore[attr-defined]
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     calculate_entropy = None
@@ -99,11 +104,16 @@ except ImportError as e:
     enhanced_deep_license_analysis = None
     detect_packing = None
 
+VulnerabilityEngine: type[Any] | None
+
 try:
     from .vulnerability_engine import VulnerabilityEngine
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     VulnerabilityEngine = None
+
+DynamicAnalyzer: type[Any] | None
+AdvancedDynamicAnalyzer: type[Any] | None
 
 try:
     from .dynamic_analyzer import AdvancedDynamicAnalyzer, DynamicAnalyzer
@@ -112,17 +122,24 @@ except ImportError as e:
     DynamicAnalyzer = None
     AdvancedDynamicAnalyzer = None
 
+SymbolicExecutionEngine: type[Any] | None
+
 try:
     from .symbolic_executor import SymbolicExecutionEngine
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     SymbolicExecutionEngine = None
 
+ConcolicExecutionEngine: type[Any] | None
+
 try:
     from .concolic_executor import ConcolicExecutionEngine
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     ConcolicExecutionEngine = None
+
+TaintAnalysisEngine: type[Any] | None
+run_taint_analysis: Callable[[object], None] | None
 
 try:
     from .taint_analyzer import TaintAnalysisEngine, run_taint_analysis
@@ -131,11 +148,15 @@ except ImportError as e:
     TaintAnalysisEngine = None
     run_taint_analysis = None
 
+ROPChainGenerator: type[Any] | None
+
 try:
     from .rop_generator import ROPChainGenerator
 except ImportError as e:
     logger.error("Import error in __init__: %s", e)
     ROPChainGenerator = None
+
+MultiFormatBinaryAnalyzer: type[Any] | None
 
 try:
     from .multi_format_analyzer import MultiFormatBinaryAnalyzer
@@ -183,6 +204,7 @@ def __getattr__(name: str) -> object:
     if name in _lazy_imports:
         module_path, attr_names = _lazy_imports[name]
         try:
+            module: ModuleType
             if module_path == ".cfg_explorer":
                 from . import cfg_explorer
 

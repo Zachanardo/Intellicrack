@@ -85,7 +85,7 @@ def create_base_pe(output_path: Path, size: int = 4096) -> None:
     pe_data = bytearray(size)
 
     # DOS Header
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)  # PE header offset
 
     # PE Signature
@@ -195,7 +195,7 @@ def create_simulated_upx_binary(output_path: Path) -> None:
     pe_data = bytearray(8192)
 
     # DOS Header
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
 
     # PE Signature
@@ -223,7 +223,7 @@ def create_simulated_upx_binary(output_path: Path) -> None:
         chunk_hash = hashlib.sha256(seed_data + chunk_idx.to_bytes(4, 'little')).digest()
 
         # Mix with some structured patterns typical of UPX
-        for i in range(0, min(64, 0xC00 - chunk_idx)):
+        for i in range(min(64, 0xC00 - chunk_idx)):
             if i % 16 == 0:
                 # Occasional structured bytes (UPX metadata patterns)
                 compressed_section.append(0x8B ^ chunk_hash[i % 32])
@@ -246,7 +246,7 @@ def create_net_assembly(output_path: Path) -> None:
     pe_data = bytearray(16384)
 
     # Standard PE headers
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_data[0x80:0x84] = b"PE\x00\x00"
 
@@ -276,7 +276,7 @@ def create_themida_style_binary(output_path: Path) -> None:
     pe_data = bytearray(32768)
 
     # Standard PE headers
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_data[0x80:0x84] = b"PE\x00\x00"
 
@@ -326,7 +326,7 @@ def create_vmprotect_style_binary(output_path: Path) -> None:
     pe_data = bytearray(65536)
 
     # Standard PE headers
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_data[0x80:0x84] = b"PE\x00\x00"
 
@@ -362,7 +362,7 @@ def create_custom_packed_binary(output_path: Path, packer_name: str) -> None:
     pe_data = bytearray(16384)
 
     # Standard PE headers
-    pe_data[0:2] = b"MZ"
+    pe_data[:2] = b"MZ"
     pe_data[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_data[0x80:0x84] = b"PE\x00\x00"
 
@@ -389,7 +389,7 @@ def create_elf_binary(output_path: Path, arch: str = "x64") -> None:
     elf_data = bytearray(4096)
 
     # ELF magic
-    elf_data[0:4] = b"\x7fELF"
+    elf_data[:4] = b"\x7fELF"
 
     # Class (32/64 bit)
     elf_data[4] = 2 if arch == "x64" else 1

@@ -492,12 +492,7 @@ class TestFridaNativeReplacer:
         if len(exports) == 0:
             pytest.skip("No exports found in main module")
 
-        test_export = None
-        for exp in exports:
-            if exp.type == "function":
-                test_export = exp
-                break
-
+        test_export = next((exp for exp in exports if exp.type == "function"), None)
         if test_export is None:
             pytest.skip("No function exports found")
 
@@ -530,12 +525,7 @@ class TestFridaNativeReplacer:
         main_module = modules[0]
         exports = main_module.enumerate_exports()
 
-        test_export = None
-        for exp in exports:
-            if exp.type == "function":
-                test_export = exp
-                break
-
+        test_export = next((exp for exp in exports if exp.type == "function"), None)
         if test_export is None:
             pytest.skip("No function exports found")
 

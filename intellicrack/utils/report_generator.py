@@ -277,11 +277,7 @@ class ReportGenerator:
                 [
                     v.get("type", "Unknown"),
                     v.get("severity", "Unknown"),
-                    (
-                        v.get("description", "")[:50] + "..."
-                        if len(v.get("description", "")) > 50
-                        else v.get("description", "")
-                    ),
+                    (v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", "")),
                 ]
                 for v in result.vulnerabilities
             )
@@ -309,11 +305,7 @@ class ReportGenerator:
                 [
                     p.get("type", "Unknown"),
                     p.get("status", "Unknown"),
-                    (
-                        p.get("details", "")[:50] + "..."
-                        if len(p.get("details", "")) > 50
-                        else p.get("details", "")
-                    ),
+                    (p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", "")),
                 ]
                 for p in result.protections
             )
@@ -336,10 +328,7 @@ class ReportGenerator:
         # Recommendations
         if result.recommendations:
             story.append(Paragraph("Recommendations", styles["Heading2"]))
-            story.extend(
-                Paragraph(f" {rec}", styles["Normal"])
-                for rec in result.recommendations
-            )
+            story.extend(Paragraph(f" {rec}", styles["Normal"]) for rec in result.recommendations)
             story.append(Spacer(1, 12))
 
         doc.build(story)

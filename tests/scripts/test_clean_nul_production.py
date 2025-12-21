@@ -72,7 +72,7 @@ class TestCleanNulFilesWindows:
 
         try:
             nul_path.write_text("test content")
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot create NUL file on this system")
 
         assert os.path.exists(prefixed_path), "NUL file should exist before cleaning"
@@ -108,7 +108,7 @@ class TestCleanNulFilesWindows:
             try:
                 nul_file.write_text("nul content")
                 created_count += 1
-            except (OSError, PermissionError):
+            except OSError:
                 continue
 
         if created_count == 0:
@@ -167,7 +167,7 @@ class TestCleanNulFilesWindows:
 
         try:
             nul_path.write_text("test")
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot create NUL file on this system")
 
         read_only_dir = tmp_path / "readonly_dir"
@@ -177,7 +177,7 @@ class TestCleanNulFilesWindows:
         try:
             readonly_nul.write_text("test")
             os.chmod(str(read_only_dir), 0o444)
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot create read-only directory with NUL file")
 
         try:
@@ -194,7 +194,7 @@ class TestCleanNulFilesWindows:
         finally:
             try:
                 os.chmod(str(read_only_dir), 0o755)
-            except (OSError, PermissionError):
+            except (OSError, ):
                 pass
 
 
@@ -238,7 +238,7 @@ class TestCleanNulFilesFunction:
         nul_file = tmp_path / "nul"
         try:
             nul_file.write_text("content")
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot create NUL file on this system")
 
         with pytest.raises(SystemExit) as exc_info:
@@ -295,7 +295,7 @@ class TestWindowsPathPrefixing:
 
         try:
             nul_file.write_text("test content")
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot create NUL file on this system")
 
         prefixed = "\\\\?\\" + str(nul_file)
@@ -320,11 +320,9 @@ class TestRecursiveDirectoryWalk:
         """Script walks all subdirectories to find NUL files."""
         monkeypatch.chdir(temp_directory_structure)
 
-        visited_dirs: List[str] = []
-
-        for dirpath, _, _ in os.walk(str(temp_directory_structure)):
-            visited_dirs.append(dirpath)
-
+        visited_dirs: List[str] = [
+            dirpath for dirpath, _, _ in os.walk(str(temp_directory_structure))
+        ]
         assert len(visited_dirs) >= 5
         assert str(temp_directory_structure) in visited_dirs
         assert any("dir1" in d for d in visited_dirs)
@@ -344,12 +342,9 @@ class TestRecursiveDirectoryWalk:
         (tmp_path / "normal.txt").write_text("content")
         (tmp_path / "another.py").write_text("code")
 
-        nul_found = False
-        for dirpath, _, filenames in os.walk(str(tmp_path)):
-            if "nul" in filenames:
-                nul_found = True
-                break
-
+        nul_found = any(
+            "nul" in filenames for dirpath, _, filenames in os.walk(str(tmp_path))
+        )
         assert not nul_found, "Should not find NUL in filenames without creating one"
 
 
@@ -429,7 +424,7 @@ class TestEdgeCases:
 
         try:
             nul_file.write_text("deep content")
-        except (OSError, PermissionError):
+        except OSError:
             pytest.skip("Cannot create NUL file in deep structure")
 
         result = subprocess.run(

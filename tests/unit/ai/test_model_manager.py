@@ -128,7 +128,7 @@ class TestModelManager(BaseIntellicrackTest):
 
         # Verify no longer loaded
         loaded_models = self.manager.list_loaded_models()
-        assert not any(m['id'] == model_id for m in loaded_models)
+        assert all(m['id'] != model_id for m in loaded_models)
 
     def test_model_caching_real(self):
         """Test REAL model caching and retrieval."""

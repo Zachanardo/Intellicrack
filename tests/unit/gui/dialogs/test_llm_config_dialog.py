@@ -43,18 +43,16 @@ class TestLLMConfigDialog:
 
     def test_provider_selection_real_options(self, qtbot):
         """Test REAL provider selection with actual options."""
-        provider_combo = self.dialog.findChild(QComboBox)
-        if provider_combo:
+        if provider_combo := self.dialog.findChild(QComboBox):
             assert provider_combo.count() > 0, "Should have available LLM providers"
 
-            providers = []
-            for i in range(provider_combo.count()):
-                providers.append(provider_combo.itemText(i))
-
+            providers = [provider_combo.itemText(i) for i in range(provider_combo.count())]
             # Check for common LLM providers
             expected_providers = ["OpenAI", "Anthropic", "Local", "GGUF", "Ollama"]
             found_providers = [p for p in expected_providers if any(p.lower() in provider.lower() for provider in providers)]
-            assert len(found_providers) > 0, f"Should have recognizable providers. Found: {providers}"
+            assert (
+                found_providers
+            ), f"Should have recognizable providers. Found: {providers}"
 
     def test_api_key_input_real_validation(self, qtbot):
         """Test REAL API key input and validation."""
@@ -82,8 +80,7 @@ class TestLLMConfigDialog:
 
     def test_model_selection_real_options(self, qtbot):
         """Test REAL model selection for different providers."""
-        provider_combo = self.dialog.findChild(QComboBox)
-        if provider_combo:
+        if provider_combo := self.dialog.findChild(QComboBox):
             # Test provider switching updates model options
             original_provider = provider_combo.currentText()
 
@@ -91,11 +88,11 @@ class TestLLMConfigDialog:
                 provider_combo.setCurrentIndex(i)
                 qtbot.wait(100)
 
-                # Check if model combo box is updated
-                model_combos = [combo for combo in self.dialog.findChildren(QComboBox)
-                               if combo != provider_combo]
-
-                if model_combos:
+                if model_combos := [
+                    combo
+                    for combo in self.dialog.findChildren(QComboBox)
+                    if combo != provider_combo
+                ]:
                     model_combo = model_combos[0]
                     assert model_combo.count() >= 0, "Model combo should exist"
 
@@ -179,11 +176,11 @@ class TestLLMConfigDialog:
             api_key_field.clear()
             qtbot.wait(50)
 
-            # Find save button and check if it's disabled with empty key
-            save_buttons = [btn for btn in self.dialog.findChildren(QPushButton)
-                           if 'ok' in btn.text().lower() or 'save' in btn.text().lower()]
-
-            if save_buttons:
+            if save_buttons := [
+                btn
+                for btn in self.dialog.findChildren(QPushButton)
+                if 'ok' in btn.text().lower() or 'save' in btn.text().lower()
+            ]:
                 save_button = save_buttons[0]
                 # Button state should reflect validation
                 assert save_button.isEnabled() or not save_button.isEnabled()
@@ -225,12 +222,11 @@ class TestLLMConfigDialog:
 
             # Track widget visibility changes
             all_widgets = self.dialog.findChildren(object)
-            widget_visibility = {}
-
-            for widget in all_widgets:
-                if hasattr(widget, 'isVisible'):
-                    widget_visibility[id(widget)] = widget.isVisible()
-
+            widget_visibility = {
+                id(widget): widget.isVisible()
+                for widget in all_widgets
+                if hasattr(widget, 'isVisible')
+            }
             # Change provider
             original_index = provider_combo.currentIndex()
             new_index = (original_index + 1) % provider_combo.count()
@@ -388,9 +384,7 @@ class TestLLMConfigDialog:
                 # Click test button
                 qtbot.mouseClick(test_button, Qt.MouseButton.LeftButton)
 
-                # UI should remain responsive
-                provider_combo = self.dialog.findChild(QComboBox)
-                if provider_combo:
+                if provider_combo := self.dialog.findChild(QComboBox):
                     original_index = provider_combo.currentIndex()
                     provider_combo.setCurrentIndex((original_index + 1) % max(1, provider_combo.count()))
                     qtbot.wait(100)

@@ -82,7 +82,7 @@ except ImportError as e:
     logger.exception("Import error in traffic_analyzer: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
-    plt = None
+    plt = None  # type: ignore[assignment]
 
 # Determine available packet capture library
 if PYSHARK_AVAILABLE:
@@ -124,10 +124,10 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.config |= config
 
         # Initialize components
-        self.packets = []
-        self.connections = {}
-        self.license_servers = set()
-        self.license_connections = []
+        self.packets: list[dict[str, Any]] = []
+        self.connections: dict[str, dict[str, Any]] = {}
+        self.license_servers: set[str] = set()
+        self.license_connections: list[str] = []
         self.license_patterns = [
             b"license",
             b"activation",
@@ -343,7 +343,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             }
 
             # Inner function to handle the main capture logic
-            def perform_capture(out_file: object) -> None:
+            def perform_capture(out_file: Any) -> None:
                 """Perform the actual packet capture."""
                 nonlocal packets_captured
 
@@ -420,8 +420,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         perform_capture(out_file)
                 except Exception as e:
                     self.logger.exception("Failed to open output file: %s", e)
-                    # Continue capture without output file
-                    perform_capture(None)
+                    return capture_stats
             else:
                 # No output file specified
                 perform_capture(None)
@@ -437,11 +436,6 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         try:
             # Very basic packet processing - extract IP header info
             if len(packet_data) >= 20:  # Minimum IP header size
-                # Ensure we're working with bytes for consistent handling
-                if not isinstance(packet_data, (bytes, bytearray)):
-                    self.logger.warning("Unexpected packet_data type, expected bytes or bytearray")
-                    return
-
                 # Extract version and header length
                 version_ihl = packet_data[0]
                 version = version_ihl >> 4
@@ -516,7 +510,8 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
             # Create capture object
             # Use either custom filter or the one from config
-            display_filter = (capture_filter or self.config["filter"]) or (
+            config_filter = self.config.get("filter")
+            display_filter = capture_filter or (config_filter if isinstance(config_filter, str) else None) or (
                 # FlexLM ports
                 "tcp.port == 27000-27009 or tcp.port == 2080 or tcp.port == 8224 or "
                 # HASP/Sentinel ports
@@ -560,7 +555,8 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             signal.signal(signal.SIGINT, signal_handler)
 
             # Start capturing with appropriate method based on parameters
-            max_packets = packet_count or self.config.get("max_packets", float("inf"))
+            max_packets_config = self.config.get("max_packets", 10000)
+            max_packets: int | float = packet_count if packet_count is not None else (max_packets_config if isinstance(max_packets_config, int) else float("inf"))
             capture_start_time = time.time()
 
             # Process packets
@@ -632,7 +628,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.exception("Failed to capture packets: %s", e)
             raise
 
-    def _process_pyshark_packet(self, packet: object) -> bool:
+    def _process_pyshark_packet(self, packet: Any) -> bool:
         """Process a captured packet from pyshark.
 
         Args:
@@ -644,12 +640,12 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         """
         try:
             # Check if it's a TCP packet
-            if hasattr(packet, "tcp") and hasattr(packet, "ip"):
+            if hasattr(packet, "tcp") and hasattr(packet, "ip") and hasattr(packet, "sniff_timestamp") and hasattr(packet, "length"):
                 # Extract connection information
-                src_ip = packet.ip.src
-                dst_ip = packet.ip.dst
-                src_port = packet.tcp.srcport
-                dst_port = packet.tcp.dstport
+                src_ip = str(packet.ip.src)
+                dst_ip = str(packet.ip.dst)
+                src_port = str(packet.tcp.srcport)
+                dst_port = str(packet.tcp.dstport)
 
                 # Create connection key for tracking connections
                 conn_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
@@ -658,17 +654,21 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 is_outbound = any(src_ip.startswith(net) for net in self.local_networks)
                 direction = "outbound" if is_outbound else "inbound"
 
+                # Get timestamp safely
+                sniff_timestamp = float(packet.sniff_timestamp)
+                packet_length = int(packet.length)
+
                 # Track unique connections with enhanced metadata
                 if conn_key not in self.connections:
                     # Initialize new connection with detailed tracking info
                     self.connections[conn_key] = {
-                        "first_seen": float(packet.sniff_timestamp),
-                        "last_seen": float(packet.sniff_timestamp),
+                        "first_seen": sniff_timestamp,
+                        "last_seen": sniff_timestamp,
                         "packets": [],
                         "bytes_sent": 0,
                         "bytes_received": 0,
-                        "start_time": float(packet.sniff_timestamp),
-                        "last_time": float(packet.sniff_timestamp),
+                        "start_time": sniff_timestamp,
+                        "last_time": sniff_timestamp,
                         "is_license": False,
                         "status": "active",
                         "direction": direction,
@@ -702,25 +702,25 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
                 # Create packet info
                 packet_info = {
-                    "timestamp": float(packet.sniff_timestamp),
+                    "timestamp": sniff_timestamp,
                     "src_ip": src_ip,
                     "dst_ip": dst_ip,
                     "src_port": int(src_port),
                     "dst_port": int(dst_port),
                     "payload": payload,
-                    "size": int(packet.length),
+                    "size": packet_length,
                     "connection_id": conn_key,
                 }
 
                 # Update connection stats
                 conn = self.connections[conn_key]
                 conn["packets"].append(packet_info)
-                conn["last_time"] = float(packet.sniff_timestamp)
+                conn["last_time"] = sniff_timestamp
 
                 if src_ip == conn["src_ip"]:
-                    conn["bytes_sent"] += int(packet.length)
+                    conn["bytes_sent"] += packet_length
                 else:
-                    conn["bytes_received"] += int(packet.length)
+                    conn["bytes_received"] += packet_length
 
                 # Check if this is a license-related connection
                 if payload:
@@ -802,15 +802,18 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             )
 
             # Define packet processing function
-            def process_tcp_packet(packet: object, IP: object, TCP: object) -> None:
+            def process_tcp_packet(packet: Any, IP: Any, TCP: Any) -> None:
                 """Process TCP packets for analysis."""
-                if IP not in packet or TCP not in packet:
+                if not hasattr(packet, "__contains__") or IP not in packet or TCP not in packet:
                     return
-                # Extract packet info
-                src_ip = packet[IP].src
-                dst_ip = packet[IP].dst
-                src_port = packet[TCP].sport
-                dst_port = packet[TCP].dport
+                # Extract packet info with type safety
+                packet_ip = packet[IP]
+                packet_tcp = packet[TCP]
+
+                src_ip = str(packet_ip.src)
+                dst_ip = str(packet_ip.dst)
+                src_port = int(packet_tcp.sport)
+                dst_port = int(packet_tcp.dport)
 
                 # Create connection key
                 conn_key = f"{src_ip}:{src_port}-{dst_ip}:{dst_port}"
@@ -840,8 +843,8 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         self.logger.info("Potential license traffic: %s", conn_key)
 
                 # Extract payload if available
-                payload = None
-                if hasattr(scapy, "Raw") and scapy.Raw in packet:
+                payload: bytes | None = None
+                if hasattr(scapy, "Raw") and hasattr(packet, "__contains__") and scapy.Raw in packet:
                     payload = bytes(packet[scapy.Raw])
 
                     # Check for license patterns
@@ -855,6 +858,9 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                                     self.license_servers.add(src_ip)
                                 break
 
+                # Get packet size safely
+                packet_size = len(packet) if hasattr(packet, "__len__") else 0
+
                 # Create packet info
                 packet_info = {
                     "timestamp": time.time(),
@@ -863,7 +869,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                     "src_port": src_port,
                     "dst_port": dst_port,
                     "payload": payload,
-                    "size": len(packet),
+                    "size": packet_size,
                     "connection_id": conn_key,
                 }
 
@@ -873,9 +879,9 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 conn["last_time"] = time.time()
 
                 if src_ip == conn["src_ip"]:
-                    conn["bytes_sent"] += len(packet)
+                    conn["bytes_sent"] += packet_size
                 else:
-                    conn["bytes_received"] += len(packet)
+                    conn["bytes_received"] += packet_size
 
                 # Add to packets list
                 self.packets.append(packet_info)
@@ -1220,8 +1226,10 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
         if not self.packets:
             return 0.0
 
-        if timestamps := [pkt["timestamp"] for pkt in self.packets]:
-            return max(timestamps) - min(timestamps)
+        if timestamps := [
+            float(pkt["timestamp"]) for pkt in self.packets if "timestamp" in pkt
+        ]:
+            return float(max(timestamps) - min(timestamps))
         return 0.0
 
     def _calculate_packet_rate(self) -> float:
@@ -1241,7 +1249,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             dict[str, int]: Protocol names mapped to packet counts
 
         """
-        distribution = {}
+        distribution: dict[str, int] = {}
 
         port_protocol_map = {
             80: "HTTP",
@@ -1266,7 +1274,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             dict[int, int]: Top 10 destination ports mapped to connection counts
 
         """
-        distribution = {}
+        distribution: dict[int, int] = {}
 
         for conn in self.connections.values():
             port = conn["dst_port"]
@@ -1299,10 +1307,11 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return None
 
         # Group packets by minute
-        minute_counts = {}
+        minute_counts: dict[int, int] = {}
         for pkt in self.packets:
-            minute = int(pkt["timestamp"] / 60) * 60
-            minute_counts[minute] = minute_counts.get(minute, 0) + 1
+            if "timestamp" in pkt:
+                minute = int(float(pkt["timestamp"]) / 60) * 60
+                minute_counts[minute] = minute_counts.get(minute, 0) + 1
 
         if minute_counts:
             peak_minute = max(minute_counts.items(), key=lambda x: x[1])[0]
@@ -1318,9 +1327,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         """
         if durations := [
-            conn["last_time"] - conn["start_time"]
-            for conn in self.connections.values()
-            if "last_time" in conn and "start_time" in conn
+            conn["last_time"] - conn["start_time"] for conn in self.connections.values() if "last_time" in conn and "start_time" in conn
         ]:
             return {
                 "min": min(durations),
@@ -1449,7 +1456,13 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             # Find visualization files
             from pathlib import Path
 
-            if visualization_files := [str(p) for p in Path(self.config["visualization_dir"]).glob("*.png")]:
+            vis_dir = self.config.get("visualization_dir")
+            if vis_dir and isinstance(vis_dir, str):
+                visualization_files = [str(p) for p in Path(vis_dir).glob("*.png")]
+            else:
+                visualization_files = []
+
+            if visualization_files:
                 visualization_files.sort(key=lambda x: Path(x).stat().st_mtime, reverse=True)
 
                 for vis_file in visualization_files[:3]:  # Show latest 3 visualizations

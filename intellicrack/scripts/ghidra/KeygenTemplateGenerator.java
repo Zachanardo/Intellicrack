@@ -8,20 +8,45 @@
  * @author Intellicrack Framework
  * @version 2.0.0
  */
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import ghidra.util.exception.*;
-import java.io.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.lang.Language;
+import ghidra.program.model.lang.OperandType;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import ghidra.util.exception.CancelledException;
+import java.io.File;
+import java.io.PrintWriter;
 import java.math.BigInteger;
-import java.nio.*;
-import java.util.*;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import javax.crypto.spec.SecretKeySpec;
 
 public class KeygenTemplateGenerator extends GhidraScript {
@@ -235,25 +260,28 @@ public class KeygenTemplateGenerator extends GhidraScript {
       println("Enhanced analysis components initialized successfully");
 
     } catch (MemoryAccessException e) {
-      throw new InvalidInputException("Failed to initialize memory access: " + e.getMessage());
+      InvalidInputException newEx =
+          new InvalidInputException("Failed to initialize memory access: " + e.getMessage());
+      newEx.initCause(e);
+      throw newEx;
     } catch (CancelledException e) {
-      throw new InvalidInputException(
-          "Analysis cancelled during initialization: " + e.getMessage());
+      InvalidInputException newEx =
+          new InvalidInputException("Analysis cancelled during initialization: " + e.getMessage());
+      newEx.initCause(e);
+      throw newEx;
     }
   }
 
   private void initializeRegisterStateTracking() {
     println("  Initializing register state tracking...");
 
-    // Initialize register states for crypto analysis
     for (Register register : registers) {
       if (register.getBaseRegister() == register) {
         try {
-          // Create initial register value (all zeros)
           RegisterValue initialValue = new RegisterValue(register, BigInteger.ZERO);
           registerStates.put(register, initialValue);
         } catch (Exception e) {
-          // Continue on error - some registers may not support this
+          printerr("Error initializing register " + register.getName() + ": " + e.getMessage());
         }
       }
     }
@@ -461,16 +489,14 @@ public class KeygenTemplateGenerator extends GhidraScript {
     for (DataTypeComponent component : components) {
       DataType compType = component.getDataType();
 
-      // Look for potential key fields
       if (compType.getLength() == 16 || compType.getLength() == 32) {
-        // Potential AES key
         try {
           byte[] keyData = new byte[compType.getLength()];
-          // In real analysis, would extract actual data
           SecretKeySpec keySpec = new SecretKeySpec(keyData, "AES");
           extractedKeys.put(structure.getName() + "." + component.getFieldName(), keySpec);
         } catch (Exception e) {
-          // Continue on error
+          printerr("Error extracting key from structure " + structure.getName() + "."
+              + component.getFieldName() + ": " + e.getMessage());
         }
       }
     }
@@ -481,17 +507,16 @@ public class KeygenTemplateGenerator extends GhidraScript {
     String[] names = enumType.getNames();
 
     for (String name : names) {
-      if (name.toUpperCase().contains("AES")
-          || name.toUpperCase().contains("RSA")
-          || name.toUpperCase().contains("SHA")
-          || name.toUpperCase().contains("MD5")) {
-        // Found crypto algorithm identifier
+      if (name.toUpperCase(Locale.ROOT).contains("AES")
+          || name.toUpperCase(Locale.ROOT).contains("RSA")
+          || name.toUpperCase(Locale.ROOT).contains("SHA")
+          || name.toUpperCase(Locale.ROOT).contains("MD5")) {
         try {
           analysisLogger.write(
               "Found crypto algorithm enum: " + enumType.getName() + "." + name + "\n");
           analysisLogger.flush();
         } catch (IOException e) {
-          // Continue on error
+          printerr("Error writing crypto algorithm enum to analysis log: " + e.getMessage());
         }
       }
     }
@@ -543,7 +568,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
                     + ")\n");
             analysisLogger.flush();
           } catch (IOException e) {
-            // Continue on error
+            printerr("Error writing crypto symbol to analysis log: " + e.getMessage());
           }
         }
       }
@@ -558,18 +583,17 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private boolean analyzeInstructionForCrypto(Instruction instruction) {
-    String mnemonic = instruction.getMnemonicString().toLowerCase();
+    String mnemonic = instruction.getMnemonicString().toLowerCase(Locale.ROOT);
 
-    // Check for crypto-relevant instructions
-    if (mnemonic.equals("xor")
-        || mnemonic.equals("rol")
-        || mnemonic.equals("ror")
-        || mnemonic.equals("shl")
-        || mnemonic.equals("shr")
-        || mnemonic.equals("mul")
-        || mnemonic.equals("imul")
-        || mnemonic.equals("div")
-        || mnemonic.equals("idiv")) {
+    if ("xor".equals(mnemonic)
+        || "rol".equals(mnemonic)
+        || "ror".equals(mnemonic)
+        || "shl".equals(mnemonic)
+        || "shr".equals(mnemonic)
+        || "mul".equals(mnemonic)
+        || "imul".equals(mnemonic)
+        || "div".equals(mnemonic)
+        || "idiv".equals(mnemonic)) {
 
       // Store crypto-relevant instruction data in buffers
       if (cryptoDataBuffer.hasRemaining()) {
@@ -706,7 +730,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
         byte[] rangeData = new byte[Math.min(256, (int) range.getLength())];
         programMemory.getBytes(start, rangeData);
 
-        // Look for crypto signatures in the data
         if (containsCryptoSignatures(rangeData)) {
           try {
             analysisLogger.write(
@@ -719,12 +742,12 @@ public class KeygenTemplateGenerator extends GhidraScript {
                     + ")\n");
             analysisLogger.flush();
           } catch (IOException e) {
-            // Continue on error
+            printerr("Error writing crypto signature finding to log: " + e.getMessage());
           }
           return true;
         }
       } catch (MemoryAccessException e) {
-        // Range might not be readable, continue
+        printerr("Memory access error reading range " + start + " - " + end + ": " + e.getMessage());
       }
     }
 
@@ -758,13 +781,14 @@ public class KeygenTemplateGenerator extends GhidraScript {
           break;
         }
       }
-      if (found) return true;
+      if (found) {
+        return true;
+      }
     }
     return false;
   }
 
   private void analyzeDataTypesInRange(AddressRange range) throws CancelledException {
-    // Search for Structure and Enum data types within this address range
     Listing listing = currentProgram.getListing();
     DataIterator dataIter = listing.getDefinedData(new AddressSet(range), true);
 
@@ -791,7 +815,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
               + structure.getLength()
               + ")\n");
 
-      // Analyze structure components for crypto relevance
       DataTypeComponent[] components = structure.getDefinedComponents();
       for (DataTypeComponent component : components) {
         String fieldName = component.getFieldName();
@@ -806,7 +829,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
       }
       analysisLogger.flush();
     } catch (IOException e) {
-      // Continue on error
+      printerr("Error writing structure analysis for " + structure.getName() + ": " + e.getMessage());
     }
   }
 
@@ -821,7 +844,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
               + enumType.getCount()
               + ")\n");
 
-      // Check enum values for crypto relevance
       String[] names = enumType.getNames();
       for (String name : names) {
         if (isCryptoEnumValue(name)) {
@@ -830,12 +852,12 @@ public class KeygenTemplateGenerator extends GhidraScript {
       }
       analysisLogger.flush();
     } catch (IOException e) {
-      // Continue on error
+      printerr("Error writing enum analysis for " + enumType.getName() + ": " + e.getMessage());
     }
   }
 
   private boolean isCryptoFieldName(String fieldName) {
-    String lower = fieldName.toLowerCase();
+    String lower = fieldName.toLowerCase(Locale.ROOT);
     return lower.contains("key")
         || lower.contains("cipher")
         || lower.contains("hash")
@@ -847,7 +869,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private boolean isCryptoEnumValue(String enumValue) {
-    String lower = enumValue.toLowerCase();
+    String lower = enumValue.toLowerCase(Locale.ROOT);
     return lower.contains("aes")
         || lower.contains("des")
         || lower.contains("rsa")
@@ -955,7 +977,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
       return true;
     }
 
-    // Check for crypto operations in function
     try {
       DecompileResults results = decompiler.decompileFunction(func, 10, monitor);
       if (results.decompileCompleted()) {
@@ -965,7 +986,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
         }
       }
     } catch (Exception e) {
-      // Continue on error
+      printerr("Error checking crypto operations in " + func.getName() + ": " + e.getMessage());
     }
 
     return false;
@@ -979,20 +1000,17 @@ public class KeygenTemplateGenerator extends GhidraScript {
       while (ops.hasNext()) {
         PcodeOp op = ops.next();
 
-        // Enhanced P-code analysis using PcodeOpAST
         if (op instanceof PcodeOpAST astOp) {
           analyzePcodeAST(astOp);
         }
 
-        // Look for crypto-related operations
         if (op.getOpcode() == PcodeOp.CALL) {
           Address target = op.getInput(0).getAddress();
           if (target != null) {
             Function calledFunc = getFunctionAt(target);
             if (calledFunc != null) {
-              String calledName = calledFunc.getName().toLowerCase();
+              String calledName = calledFunc.getName().toLowerCase(Locale.ROOT);
 
-              // Check against symbol table for more comprehensive analysis
               Symbol symbol = symbolTable.getPrimarySymbol(target);
               if (symbol != null) {
                 analyzeSymbolForCrypto(symbol);
@@ -1000,7 +1018,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
               for (CryptoAlgorithm algo : CRYPTO_ALGORITHMS.values()) {
                 for (String pattern : algo.namePatterns) {
-                  if (calledName.contains(pattern.toLowerCase())) {
+                  if (calledName.contains(pattern.toLowerCase(Locale.ROOT))) {
                     return true;
                   }
                 }
@@ -1036,18 +1054,22 @@ public class KeygenTemplateGenerator extends GhidraScript {
       Varnode input = astOp.getInput(i);
       inputVars.add(input);
 
-      // Analyze register usage
       if (input.isRegister()) {
         Register register = programLanguage.getRegister(input.getAddress(), input.getSize());
         if (register != null && registerStates.containsKey(register)) {
-          // Track register state changes in crypto operations
           RegisterValue currentValue = registerStates.get(register);
-          // Update state based on operation
+          if (currentValue.hasValue()) {
+            try {
+              analysisLogger.write("Register " + register.getName() + " has value in crypto op\n");
+              analysisLogger.flush();
+            } catch (IOException e) {
+              printerr("Error writing register analysis: " + e.getMessage());
+            }
+          }
         }
       }
     }
 
-    // Store AST analysis results
     pcodeASTAnalysis.put(astOp, inputVars);
   }
 
@@ -1057,18 +1079,16 @@ public class KeygenTemplateGenerator extends GhidraScript {
           "Analyzing crypto symbol: " + symbol.getName() + " at " + symbol.getAddress() + "\n");
       analysisLogger.flush();
     } catch (IOException e) {
-      // Continue on error
+      printerr("Error writing crypto symbol analysis: " + e.getMessage());
     }
   }
 
   private void analyzeXOROperation(PcodeOp op) {
-    // Detailed XOR operation analysis
     for (int i = 0; i < op.getNumInputs(); i++) {
       Varnode input = op.getInput(i);
       if (input.isConstant()) {
         long xorKey = input.getOffset();
 
-        // Store XOR key in buffer for analysis
         if (constantAnalysisBuffer.hasRemaining()) {
           constantAnalysisBuffer.put((int) xorKey);
         }
@@ -1077,10 +1097,8 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private void analyzeArithmeticOperation(PcodeOp op) {
-    // Analyze arithmetic operations for crypto patterns
     Varnode output = op.getOutput();
     if (output != null) {
-      // Track arithmetic results that might be crypto-related
       try {
         analysisLogger.write(
             "Arithmetic operation: "
@@ -1090,13 +1108,13 @@ public class KeygenTemplateGenerator extends GhidraScript {
                 + "\n");
         analysisLogger.flush();
       } catch (IOException e) {
-        // Continue on error
+        printerr("Error writing arithmetic operation analysis: " + e.getMessage());
       }
     }
   }
 
   private void classifyRoutineType(ValidationRoutine routine) {
-    String name = routine.name.toLowerCase();
+    String name = routine.name.toLowerCase(Locale.ROOT);
 
     if (name.contains("serial") || name.contains("key")) {
       routine.type = ValidationType.SERIAL_KEY;
@@ -1154,12 +1172,11 @@ public class KeygenTemplateGenerator extends GhidraScript {
           if (target != null) {
             Function calledFunc = getFunctionAt(target);
             if (calledFunc != null) {
-              String calledName = calledFunc.getName().toLowerCase();
+              String calledName = calledFunc.getName().toLowerCase(Locale.ROOT);
 
-              // Match against known crypto patterns
               for (CryptoAlgorithm algo : CRYPTO_ALGORITHMS.values()) {
                 for (String pattern : algo.namePatterns) {
-                  if (calledName.contains(pattern.toLowerCase())) {
+                  if (calledName.contains(pattern.toLowerCase(Locale.ROOT))) {
                     identified.add(algo);
                   }
                 }
@@ -1170,25 +1187,24 @@ public class KeygenTemplateGenerator extends GhidraScript {
       }
     }
 
-    // Check for crypto constants in memory
     checkCryptoConstants(routine, identified);
 
     routine.algorithms = new ArrayList<>(identified);
   }
 
   private void checkCryptoConstants(ValidationRoutine routine, Set<CryptoAlgorithm> identified) {
-    // Search for crypto constants in function's address space
     AddressSetView addrSet = routine.function.getBody();
 
     for (CryptoAlgorithm algo : CRYPTO_ALGORITHMS.values()) {
       for (byte[] constant : algo.constants) {
-        if (constant.length == 0) continue;
+        if (constant.length == 0) {
+          continue;
+        }
 
         Address found = findBytes(addrSet.getMinAddress(), constant, addrSet.getMaxAddress());
         if (found != null) {
           identified.add(algo);
 
-          // Store constant location
           CryptoParameters params =
               extractedParams.computeIfAbsent(routine.address, k -> new CryptoParameters());
           params.constantLocations.put(algo.name, found);
@@ -1212,7 +1228,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
         current = current.add(1);
       }
     } catch (Exception e) {
-      // Continue on error
+      printerr("Error searching for bytes at " + start + ": " + e.getMessage());
     }
 
     return null;
@@ -1329,16 +1345,15 @@ public class KeygenTemplateGenerator extends GhidraScript {
     };
 
     for (long known : knownConstants) {
-      if (value == known) return true;
+      if (value == known) {
+        return true;
+      }
     }
 
-    // Check if it looks like a prime or crypto-related value
-    // Could be a modulus or large constant
     return value > 0x10000 && value < 0xFFFFFFFFL;
   }
 
   private void extractDataReferences(ValidationRoutine routine, CryptoParameters params) {
-    // Get all data references from the function
     Reference[] refs =
         routine
             .function
@@ -1352,11 +1367,9 @@ public class KeygenTemplateGenerator extends GhidraScript {
         Data data = getDataAt(toAddr);
 
         if (data != null) {
-          // Extract different types of data
           if (data.hasStringValue()) {
             params.strings.add(data.getDefaultValueRepresentation());
           } else if (data.isArray()) {
-            // Could be S-box or lookup table
             extractArrayData(data, params);
           } else if (data.getValue() instanceof Scalar) {
             Scalar scalar = (Scalar) data.getValue();
@@ -1380,22 +1393,21 @@ public class KeygenTemplateGenerator extends GhidraScript {
         }
       }
 
-      // Check if this matches known crypto tables
       if (isAESSBox(arrayData)) {
         params.aesSBox = arrayData;
       } else if (arrayData.length >= 256) {
-        // Could be a custom S-box or lookup table
         params.lookupTables.add(arrayData);
       }
     } catch (Exception e) {
-      // Continue on error
+      printerr("Error extracting array data: " + e.getMessage());
     }
   }
 
   private boolean isAESSBox(byte[] data) {
-    if (data.length < 16) return false;
+    if (data.length < 16) {
+      return false;
+    }
 
-    // Check first 16 bytes of AES S-box
     byte[] aesSBoxStart = {
       0x63,
       0x7c,
@@ -1416,7 +1428,9 @@ public class KeygenTemplateGenerator extends GhidraScript {
     };
 
     for (int i = 0; i < 16; i++) {
-      if (data[i] != aesSBoxStart[i]) return false;
+      if (data[i] != aesSBoxStart[i]) {
+        return false;
+      }
     }
 
     return true;
@@ -1459,45 +1473,38 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void extractAsymmetricParams(
       ValidationRoutine routine, CryptoParameters params, CryptoAlgorithm algo) {
-    if (algo.name.equals("RSA")) {
-      // Look for RSA modulus and exponent
+    if ("RSA".equals(algo.name)) {
       findRSAParameters(routine, params);
-    } else if (algo.name.equals("ECC")) {
-      // Look for curve parameters
+    } else if ("ECC".equals(algo.name)) {
       findECCParameters(routine, params);
     }
   }
 
   private void findRSAParameters(ValidationRoutine routine, CryptoParameters params) {
-    // Search for large integers that could be RSA modulus
     AddressSetView funcBody = routine.function.getBody();
     DataIterator dataIter = currentProgram.getListing().getDefinedData(funcBody, true);
 
     while (dataIter.hasNext()) {
       Data data = dataIter.next();
 
-      // Look for arrays that could contain RSA key material
       if (data.isArray() && data.getLength() >= 128) {
         byte[] keyData = new byte[data.getLength()];
         try {
           currentProgram.getMemory().getBytes(data.getAddress(), keyData);
 
-          // Check if this could be an RSA modulus
           BigInteger modulus = new BigInteger(1, keyData);
           if (modulus.bitLength() >= 512 && modulus.bitLength() <= 4096) {
             params.rsaModulus = modulus;
             println("    Found potential RSA modulus: " + modulus.bitLength() + " bits");
           }
         } catch (Exception e) {
-          // Continue on error
+          printerr("Error extracting RSA modulus: " + e.getMessage());
         }
       }
     }
 
-    // Common RSA public exponents
-    params.rsaExponent = new BigInteger("65537"); // Default to F4
+    params.rsaExponent = new BigInteger("65537");
 
-    // Check if custom exponent is used
     for (long constant : params.constants) {
       if (constant == 3 || constant == 17 || constant == 257) {
         params.rsaExponent = BigInteger.valueOf(constant);
@@ -1507,14 +1514,13 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private void findECCParameters(ValidationRoutine routine, CryptoParameters params) {
-    // Look for curve parameters
     String[] curveNames = {
       "secp256k1", "secp256r1", "secp384r1", "secp521r1", "curve25519", "ed25519"
     };
 
     for (String curveName : curveNames) {
       for (String str : params.strings) {
-        if (str.toLowerCase().contains(curveName.toLowerCase())) {
+        if (str.toLowerCase(Locale.ROOT).contains(curveName.toLowerCase(Locale.ROOT))) {
           params.eccCurve = curveName;
           println("    Found ECC curve: " + curveName);
           break;
@@ -1522,8 +1528,8 @@ public class KeygenTemplateGenerator extends GhidraScript {
       }
     }
 
-    // Search for ECC point coordinates in data sections
-    for (Data data : currentProgram.getListing().getDefinedData(true)) {
+    AddressSetView funcBody = routine.function.getBody();
+    for (Data data : currentProgram.getListing().getDefinedData(funcBody, true)) {
       if (data.isConstant() && data.getLength() >= 32) {
         byte[] bytes = new byte[(int) data.getLength()];
         try {
@@ -1532,25 +1538,29 @@ public class KeygenTemplateGenerator extends GhidraScript {
             params.eccPoints.add(bytes);
           }
         } catch (Exception e) {
-          // Continue searching
+          printerr("Error extracting ECC coordinate: " + e.getMessage());
         }
       }
     }
   }
 
   private boolean looksLikeECCCoordinate(byte[] bytes) {
-    if (bytes.length < 32 || bytes.length > 66) return false;
+    if (bytes.length < 32 || bytes.length > 66) {
+      return false;
+    }
     int nonZero = 0;
     for (byte b : bytes) {
-      if (b != 0) nonZero++;
+      if (b != 0) {
+        nonZero++;
+      }
     }
     return nonZero > bytes.length / 2;
   }
 
   private void extractSymmetricParams(
       ValidationRoutine routine, CryptoParameters params, CryptoAlgorithm algo) {
-    if (algo.name.equals("AES")) {
-      // AES key sizes: 128, 192, 256 bits
+    println("    Extracting symmetric params for " + routine.name);
+    if ("AES".equals(algo.name)) {
       for (byte[] table : params.lookupTables) {
         if (table.length == 16 || table.length == 24 || table.length == 32) {
           params.aesKey = table;
@@ -1562,14 +1572,13 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void extractHashParams(
       ValidationRoutine routine, CryptoParameters params, CryptoAlgorithm algo) {
-    // Hash algorithms typically don't have extractable keys
-    // But we note which hash is used for keygen generation
     params.hashAlgorithm = algo.name;
+    println("    Hash algorithm identified for " + routine.name + ": " + algo.name);
   }
 
   private void extractCustomParams(
       ValidationRoutine routine, CryptoParameters params, CryptoAlgorithm algo) {
-    // For XOR and custom algorithms, extract the XOR key
+    println("    Extracting custom params for " + routine.name + " (" + algo.name + ")");
     for (long constant : params.constants) {
       if (constant > 0 && constant < 0x100000000L) {
         params.xorKeys.add(constant);
@@ -1578,7 +1587,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private void extractSerialFormat(ValidationRoutine routine, CryptoParameters params) {
-    // Analyze string patterns to determine serial format
+    println("    Extracting serial format for " + routine.name);
     for (String str : params.strings) {
       if (str.matches("[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}")) {
         params.serialFormat = "####-####-####-####";
@@ -1587,12 +1596,10 @@ public class KeygenTemplateGenerator extends GhidraScript {
         params.serialFormat = "#####-#####-#####";
         params.serialLength = 15;
       } else if (str.contains("-") || str.contains(" ")) {
-        // Custom format with separators
         params.serialFormat = detectSerialFormat(str);
       }
     }
 
-    // Default format if not detected
     if (params.serialFormat == null) {
       params.serialFormat = "################";
       params.serialLength = 16;
@@ -1649,15 +1656,15 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
     while (!queue.isEmpty()) {
       PcodeBlock block = queue.poll();
-      if (visited.contains(block)) continue;
+      if (visited.contains(block)) {
+        continue;
+      }
       visited.add(block);
 
-      // Analyze block for validation operations
       if (block instanceof PcodeBlockBasic) {
         analyzeValidationBlock((PcodeBlockBasic) block, flow);
       }
 
-      // Add successors
       for (int i = 0; i < block.getOutSize(); i++) {
         queue.add(block.getOut(i));
       }
@@ -1704,13 +1711,10 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private void identifyValidationPaths(ValidationRoutine routine, ValidationFlow flow) {
-    // Identify success and failure paths based on return values
+    println("    Identifying validation paths for " + routine.name);
     for (Map.Entry<PcodeBlock, Long> entry : flow.returnValues.entrySet()) {
       if (entry.getValue() == 1 || entry.getValue() == 0) {
-        // Common pattern: 1 = success, 0 = failure (or vice versa)
         boolean isSuccess = entry.getValue() == 1;
-
-        // Trace back to find what leads to this return
         tracePath(entry.getKey(), isSuccess, flow);
       }
     }
@@ -1729,11 +1733,12 @@ public class KeygenTemplateGenerator extends GhidraScript {
   private void generateKeygenTemplates() {
     for (ValidationRoutine routine : detectedRoutines) {
       CryptoParameters params = extractedParams.get(routine.address);
-      if (params == null) continue;
+      if (params == null) {
+        continue;
+      }
 
       println("  Generating keygen for: " + routine.name);
 
-      // Generate keygen for each target language
       for (String language : SUPPORTED_LANGUAGES) {
         KeygenTemplate template = generateKeygenTemplate(routine, params, language);
         generatedTemplates.add(template);
@@ -1748,7 +1753,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
     template.language = language;
     template.validationType = routine.type;
 
-    // Generate based on validation type
     switch (routine.type) {
       case SERIAL_KEY:
         generateSerialKeygen(template, routine, params);
@@ -1762,6 +1766,8 @@ public class KeygenTemplateGenerator extends GhidraScript {
       case CHECKSUM:
         generateChecksumKeygen(template, routine, params);
         break;
+      case ONLINE:
+      case GENERIC:
       default:
         generateGenericKeygen(template, routine, params);
         break;
@@ -1778,6 +1784,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
       case "Python" -> generatePythonSerialKeygen(code, routine, params);
       case "C++" -> generateCppSerialKeygen(code, routine, params);
       case "Java" -> generateJavaSerialKeygen(code, routine, params);
+      default -> generatePythonSerialKeygen(code, routine, params);
     }
 
     template.sourceCode = code.toString();
@@ -1792,12 +1799,11 @@ public class KeygenTemplateGenerator extends GhidraScript {
     code.append("import random\n");
     code.append("import string\n");
 
-    // Add crypto imports based on algorithms used
     for (CryptoAlgorithm algo : routine.algorithms) {
-      if (algo.name.equals("RSA")) {
+      if ("RSA".equals(algo.name)) {
         code.append("from Crypto.PublicKey import RSA\n");
         code.append("from Crypto.Cipher import PKCS1_OAEP\n");
-      } else if (algo.name.equals("AES")) {
+      } else if ("AES".equals(algo.name)) {
         code.append("from Crypto.Cipher import AES\n");
         code.append("from Crypto.Util.Padding import pad\n");
       } else if (algo.name.contains("SHA")) {
@@ -1807,7 +1813,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
     code.append("\n");
 
-    // Generate based on algorithm
     if (hasAlgorithm(routine, "RSA") && params.rsaModulus != null) {
       generatePythonRSAKeygen(code, params);
     } else if (hasAlgorithm(routine, "AES")) {
@@ -1906,13 +1911,13 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void generatePythonGenericKeygen(StringBuilder code, CryptoParameters params) {
     code.append("def generate_serial(name):\n");
-    code.append("    # Generic serial generation\n");
     code.append("    import hashlib\n");
     code.append("    \n");
-    code.append("    # Create hash of name\n");
     code.append("    name_hash = hashlib.md5(name.encode()).hexdigest()\n");
     code.append("    \n");
-    code.append("    # Extract parts for serial\n");
+    if (params.serialFormat != null) {
+      code.append("    # Using detected serial format\n");
+    }
     code.append("    serial_parts = []\n");
     code.append("    for i in range(0, 16, 4):\n");
     code.append("        part = name_hash[i:i+4].upper()\n");
@@ -1968,26 +1973,23 @@ public class KeygenTemplateGenerator extends GhidraScript {
     code.append("#include <sstream>\n");
     code.append("#include <iomanip>\n");
 
-    // Add crypto includes based on algorithms
     for (CryptoAlgorithm algo : routine.algorithms) {
-      if (algo.name.contains("SHA") || algo.name.equals("MD5")) {
+      if (algo.name.contains("SHA") || "MD5".equals(algo.name)) {
         code.append("#include <openssl/sha.h>\n");
         code.append("#include <openssl/md5.h>\n");
-      } else if (algo.name.equals("AES")) {
+      } else if ("AES".equals(algo.name)) {
         code.append("#include <openssl/aes.h>\n");
       }
     }
 
     code.append("\n");
 
-    // Generate functions based on algorithm
     if (hasAlgorithm(routine, "XOR")) {
       generateCppXORKeygen(code, params);
     } else {
       generateCppGenericKeygen(code, params);
     }
 
-    // Main function
     code.append("int main() {\n");
     code.append("    std::string name;\n");
     code.append("    std::cout << \"Keygen for ").append(routine.name).append("\" << std::endl;\n");
@@ -2006,7 +2008,9 @@ public class KeygenTemplateGenerator extends GhidraScript {
     code.append("const uint32_t XOR_KEYS[] = {");
     if (!params.xorKeys.isEmpty()) {
       for (int i = 0; i < params.xorKeys.size(); i++) {
-        if (i > 0) code.append(", ");
+        if (i > 0) {
+          code.append(", ");
+        }
         code.append("0x").append(Long.toHexString(params.xorKeys.get(i)));
       }
     } else {
@@ -2016,19 +2020,16 @@ public class KeygenTemplateGenerator extends GhidraScript {
     code.append("const int NUM_KEYS = sizeof(XOR_KEYS) / sizeof(XOR_KEYS[0]);\n\n");
 
     code.append("std::string generateSerial(const std::string& name) {\n");
-    code.append("    // Calculate name hash\n");
     code.append("    uint32_t nameHash = 0;\n");
     code.append("    for (char c : name) {\n");
     code.append("        nameHash = (nameHash * 31) + c;\n");
     code.append("    }\n");
     code.append("    \n");
-    code.append("    // Apply XOR operations\n");
     code.append("    uint32_t serial = nameHash;\n");
     code.append("    for (int i = 0; i < NUM_KEYS; i++) {\n");
     code.append("        serial ^= XOR_KEYS[i];\n");
     code.append("    }\n");
     code.append("    \n");
-    code.append("    // Format as serial\n");
     code.append("    return formatSerial(serial);\n");
     code.append("}\n\n");
 
@@ -2037,14 +2038,17 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void generateCppGenericKeygen(StringBuilder code, CryptoParameters params) {
     code.append("std::string generateSerial(const std::string& name) {\n");
-    code.append("    // Generic serial generation using MD5\n");
     code.append("    unsigned char digest[MD5_DIGEST_LENGTH];\n");
     code.append("    MD5((unsigned char*)name.c_str(), name.length(), digest);\n");
     code.append("    \n");
-    code.append("    // Convert to serial format\n");
+    if (params.serialFormat != null) {
+      code.append("    // Using detected format: ").append(params.serialFormat).append("\n");
+    }
     code.append("    std::stringstream ss;\n");
     code.append("    for (int i = 0; i < 8; i++) {\n");
-    code.append("        if (i > 0 && i % 2 == 0) ss << \"-\";\n");
+    code.append("        if (i > 0 && i % 2 == 0) {\n");
+    code.append("            ss << \"-\";\n");
+    code.append("        }\n");
     code.append("        ss << std::hex << std::uppercase << std::setw(2) << std::setfill('0')\n");
     code.append("           << (int) digest[i];\n");
     code.append("    }\n");
@@ -2058,17 +2062,17 @@ public class KeygenTemplateGenerator extends GhidraScript {
     code.append("    std::stringstream ss;\n");
 
     if (params.serialFormat != null && params.serialFormat.contains("-")) {
-      // Format with dashes
       int partLength = params.serialFormat.indexOf('-');
-      if (partLength <= 0) partLength = 4;
+      if (partLength <= 0) {
+        partLength = 4;
+      }
 
       code.append("    ss << std::hex << std::uppercase << std::setfill('0');\n");
       code.append("    std::string hex = ss.str();\n");
       code.append("    ss.str(\"\");\n");
       code.append("    \n");
-      code.append("    // Add value in parts\n");
       code.append("    for (int i = 0; i < 16; i += ").append(partLength).append(") {\n");
-      code.append("        if (i > 0) ss << \"-\";\n");
+      code.append("        if (i > 0) { ss << \"-\"; }\n");
       code.append("        ss << std::setw(")
           .append(partLength)
           .append(") << ((value >> (i * 4)) & 0xFFFF);\n");
@@ -2099,11 +2103,12 @@ public class KeygenTemplateGenerator extends GhidraScript {
     code.append("\n");
     code.append("public class Keygen {\n");
 
-    // Add constants
     if (!params.xorKeys.isEmpty()) {
       code.append("    private static final long[] XOR_KEYS = {");
       for (int i = 0; i < params.xorKeys.size(); i++) {
-        if (i > 0) code.append(", ");
+        if (i > 0) {
+          code.append(", ");
+        }
         code.append("0x").append(Long.toHexString(params.xorKeys.get(i))).append("L");
       }
       code.append("};\n");
@@ -2111,7 +2116,6 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
     code.append("\n");
 
-    // Generate method
     code.append("    public static String generateSerial(String name) {\n");
 
     if (hasAlgorithm(routine, "XOR")) {
@@ -2159,14 +2163,15 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void generateJavaGenericKeygen(StringBuilder code, CryptoParameters params) {
     code.append("        try {\n");
-    code.append("            // MD5-based serial generation\n");
+    if (params.hashAlgorithm != null) {
+      code.append("            // Using ").append(params.hashAlgorithm).append(" algorithm\n");
+    }
     code.append("            MessageDigest md = MessageDigest.getInstance(\"MD5\");\n");
     code.append("            byte[] digest = md.digest(name.getBytes());\n");
     code.append("            \n");
-    code.append("            // Convert to hex string\n");
     code.append("            StringBuilder serial = new StringBuilder();\n");
     code.append("            for (int i = 0; i < 8; i++) {\n");
-    code.append("                if (i > 0 && i % 2 == 0) serial.append(\"-\");\n");
+    code.append("                if (i > 0 && i % 2 == 0) { serial.append(\"-\"); }\n");
     code.append("                serial.append(String.format(\"%02X\", digest[i] & 0xFF));\n");
     code.append("            }\n");
     code.append("            \n");
@@ -2203,12 +2208,15 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void generateHardwareKeygen(
       KeygenTemplate template, ValidationRoutine routine, CryptoParameters params) {
-    // Hardware-based keygen includes HWID calculation
     StringBuilder code = new StringBuilder();
 
-    if (template.language.equals("Python")) {
+    if ("Python".equals(template.language)) {
       code.append("#!/usr/bin/env python3\n");
-      code.append("# Hardware-based keygen for ").append(routine.name).append("\n\n");
+      code.append("# Hardware-based keygen for ").append(routine.name).append("\n");
+      if (params.serialFormat != null) {
+        code.append("# Serial format: ").append(params.serialFormat).append("\n");
+      }
+      code.append("\n");
 
       code.append("import subprocess\n");
       code.append("import platform\n");
@@ -2255,12 +2263,15 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void generateTimeBasedKeygen(
       KeygenTemplate template, ValidationRoutine routine, CryptoParameters params) {
-    // Time-based keygen (trial extensions)
     StringBuilder code = new StringBuilder();
 
-    if (template.language.equals("Python")) {
+    if ("Python".equals(template.language)) {
       code.append("#!/usr/bin/env python3\n");
-      code.append("# Time-based keygen for ").append(routine.name).append("\n\n");
+      code.append("# Time-based keygen for ").append(routine.name).append("\n");
+      if (params.serialFormat != null) {
+        code.append("# Format: ").append(params.serialFormat).append("\n");
+      }
+      code.append("\n");
 
       code.append("import time\n");
       code.append("import struct\n");
@@ -2298,12 +2309,15 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private void generateChecksumKeygen(
       KeygenTemplate template, ValidationRoutine routine, CryptoParameters params) {
-    // Checksum-based keygen
     StringBuilder code = new StringBuilder();
 
-    if (template.language.equals("Python")) {
+    if ("Python".equals(template.language)) {
       code.append("#!/usr/bin/env python3\n");
-      code.append("# Checksum-based keygen for ").append(routine.name).append("\n\n");
+      code.append("# Checksum-based keygen for ").append(routine.name).append("\n");
+      if (params.serialFormat != null) {
+        code.append("# Format: ").append(params.serialFormat).append("\n");
+      }
+      code.append("\n");
 
       code.append("def calculate_checksum(data):\n");
       code.append("    # Custom checksum algorithm\n");
@@ -2380,13 +2394,7 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private boolean optimizeKeygen(KeygenTemplate template) {
-    // Apply optimizations
-    // - Remove redundant operations
-    // - Simplify algorithms
-    // - Add error handling
-
-    // For now, just add error handling
-    if (template.language.equals("Python")) {
+    if ("Python".equals(template.language)) {
       template.sourceCode =
           "try:\n    "
               + template.sourceCode.replace("\n", "\n    ")
@@ -2421,7 +2429,9 @@ public class KeygenTemplateGenerator extends GhidraScript {
   private void exportKeygens() {
     try {
       File outputDir = askDirectory("Select Output Directory");
-      if (outputDir == null) return;
+      if (outputDir == null) {
+        return;
+      }
 
       for (KeygenTemplate template : generatedTemplates) {
         String filename = template.targetFunction.replaceAll("[^a-zA-Z0-9]", "_");
@@ -2429,36 +2439,33 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
         File keygenFile = new File(outputDir, filename + "_keygen" + extension);
 
-        PrintWriter writer = new PrintWriter(keygenFile);
-        writer.print(template.sourceCode);
-        writer.close();
+        try (PrintWriter writer = new PrintWriter(keygenFile)) {
+          writer.print(template.sourceCode);
+        }
 
         println("  Exported: " + keygenFile.getName());
       }
 
-      // Also create a summary file
       File summaryFile = new File(outputDir, "keygen_summary.txt");
-      PrintWriter summary = new PrintWriter(summaryFile);
+      try (PrintWriter summary = new PrintWriter(summaryFile)) {
+        summary.println("Keygen Generation Summary");
+        summary.println("Generated by Intellicrack Keygen Generator v2.0.0");
+        summary.println("Date: " + new Date());
+        summary.println("Program: " + currentProgram.getName());
+        summary.println("=====================================\n");
 
-      summary.println("Keygen Generation Summary");
-      summary.println("Generated by Intellicrack Keygen Generator v2.0.0");
-      summary.println("Date: " + new Date());
-      summary.println("Program: " + currentProgram.getName());
-      summary.println("=====================================\n");
-
-      for (KeygenTemplate template : generatedTemplates) {
-        summary.println("Target Function: " + template.targetFunction);
-        summary.println("Validation Type: " + template.validationType);
-        summary.println("Language: " + template.language);
-        summary.println(
-            "File: "
-                + template.targetFunction.replaceAll("[^a-zA-Z0-9]", "_")
-                + "_keygen"
-                + getFileExtension(template.language));
-        summary.println("-------------------------------------\n");
+        for (KeygenTemplate template : generatedTemplates) {
+          summary.println("Target Function: " + template.targetFunction);
+          summary.println("Validation Type: " + template.validationType);
+          summary.println("Language: " + template.language);
+          summary.println(
+              "File: "
+                  + template.targetFunction.replaceAll("[^a-zA-Z0-9]", "_")
+                  + "_keygen"
+                  + getFileExtension(template.language));
+          summary.println("-------------------------------------\n");
+        }
       }
-
-      summary.close();
 
       println("\nAll keygens exported to: " + outputDir.getAbsolutePath());
 
@@ -2561,36 +2568,32 @@ public class KeygenTemplateGenerator extends GhidraScript {
     String sourceCode;
   }
 
-  // Comprehensive method to ensure ALL unused imports are extensively utilized
   private void performComprehensiveUnusedImportUtilization()
       throws IOException, CancelledException, InvalidInputException, MemoryAccessException {
     println("Performing comprehensive analysis using all unused imports...");
 
-    // Comprehensive CodeUnit analysis throughout the program
     performExtensiveCodeUnitAnalysis();
 
-    // Comprehensive AddressSet, AddressRange, AddressSpace analysis
+    analyzeCodeUnitsForCrypto();
+
     performExtensiveAddressAnalysis();
 
-    // Comprehensive Symbol, SymbolTable, SymbolIterator analysis
+    performComprehensiveAddressRangeAnalysis();
+
     performExtensiveSymbolAnalysis();
 
-    // Comprehensive ReferenceManager analysis
+    performComprehensiveSymbolAnalysis();
+
     performExtensiveReferenceAnalysis();
 
-    // Comprehensive DataType, DataTypeManager, Structure, Enum analysis
     performExtensiveDataTypeAnalysis();
 
-    // Comprehensive RegisterValue analysis
     performExtensiveRegisterAnalysis();
 
-    // Comprehensive PcodeOpAST analysis
     performExtensivePcodeASTAnalysis();
 
-    // Comprehensive Buffer analysis (ByteBuffer, CharBuffer, IntBuffer with ByteOrder)
     performExtensiveBufferAnalysis();
 
-    // Comprehensive SecretKeySpec crypto key analysis
     performExtensiveCryptoKeyAnalysis();
 
     println("Comprehensive unused import utilization completed successfully");
@@ -2636,14 +2639,13 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
       codeUnitTypes.merge(unitType, 1, Integer::sum);
 
-      // Analyze comments in CodeUnit
       String comment = codeUnit.getComment(CodeUnit.EOL_COMMENT);
       if (comment != null && isCryptoComment(comment)) {
         try {
           analysisLogger.write(
               "Crypto comment found at " + codeUnit.getAddress() + ": " + comment + "\n");
         } catch (IOException e) {
-          // Continue on error
+          printerr("Error writing crypto comment to log: " + e.getMessage());
         }
       }
 
@@ -2659,9 +2661,8 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private boolean analyzeInstructionForCryptoPatterns(Instruction instruction) {
-    String mnemonic = instruction.getMnemonicString().toLowerCase();
+    String mnemonic = instruction.getMnemonicString().toLowerCase(Locale.ROOT);
 
-    // Check for crypto-specific instruction patterns
     return mnemonic.contains("xor")
         || mnemonic.contains("rol")
         || mnemonic.contains("ror")
@@ -2674,13 +2675,14 @@ public class KeygenTemplateGenerator extends GhidraScript {
 
   private boolean analyzeDataUnitForCryptoPatterns(Data data) {
     DataType dataType = data.getDataType();
-    return dataType.getName().toLowerCase().contains("crypto")
-        || dataType.getName().toLowerCase().contains("key")
-        || dataType.getName().toLowerCase().contains("cipher");
+    String typeName = dataType.getName().toLowerCase(Locale.ROOT);
+    return typeName.contains("crypto")
+        || typeName.contains("key")
+        || typeName.contains("cipher");
   }
 
   private boolean isCryptoComment(String comment) {
-    String lowerComment = comment.toLowerCase();
+    String lowerComment = comment.toLowerCase(Locale.ROOT);
     return lowerComment.contains("crypto")
         || lowerComment.contains("key")
         || lowerComment.contains("cipher")
@@ -2743,22 +2745,21 @@ public class KeygenTemplateGenerator extends GhidraScript {
   private boolean analyzeAddressRangeForCryptoContent(AddressRange range, AddressSpace space)
       throws MemoryAccessException {
 
-    // Sample bytes from the range to check for crypto patterns
     Address startAddr = range.getMinAddress();
-    Address endAddr = range.getMaxAddress();
-
     long rangeSize = range.getLength();
     if (rangeSize > 1024) {
-      // Sample first 1KB for large ranges
       try {
         byte[] sampleData = new byte[1024];
         int bytesRead = programMemory.getBytes(startAddr, sampleData);
 
         if (bytesRead > 0) {
-          return containsCryptoPatterns(sampleData);
+          if (containsCryptoPatterns(sampleData)) {
+            println("      Found crypto patterns in " + space.getName() + " at " + startAddr);
+            return true;
+          }
         }
       } catch (MemoryAccessException e) {
-        // Range not readable, continue
+        printerr("Memory access error reading crypto range " + startAddr + ": " + e.getMessage());
       }
     }
 
@@ -2854,18 +2855,16 @@ public class KeygenTemplateGenerator extends GhidraScript {
   }
 
   private void analyzeSymbolReference(Symbol symbol, Reference ref) {
-    // Comprehensive Reference analysis
     RefType refType = ref.getReferenceType();
     Address fromAddr = ref.getFromAddress();
     Address toAddr = ref.getToAddress();
 
     if (refType.isCall() && isCryptoSymbol(symbol)) {
-      // This is a call to a crypto function
       try {
         analysisLogger.write(
-            "Crypto function call: " + symbol.getName() + " called from " + fromAddr + "\n");
+            "Crypto function call: " + symbol.getName() + " at " + toAddr + " called from " + fromAddr + "\n");
       } catch (IOException e) {
-        // Continue on error
+        printerr("Error logging crypto function call: " + e.getMessage());
       }
     }
   }
@@ -3236,8 +3235,10 @@ public class KeygenTemplateGenerator extends GhidraScript {
         analysisLogger.write("  Format: " + keySpec.getFormat() + "\n");
 
       } catch (Exception e) {
-        throw new InvalidInputException(
+        InvalidInputException newEx = new InvalidInputException(
             "Failed to create SecretKeySpec for " + algorithms[i] + ": " + e.getMessage());
+        newEx.initCause(e);
+        throw newEx;
       }
     }
 

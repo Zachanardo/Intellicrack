@@ -390,17 +390,13 @@ class ArxanDetector:
         score = 0.0
         feature_count = 0
 
-        anti_debug_count = sum(
-            pattern in binary_data for pattern in self.ANTI_DEBUG_PATTERNS
-        )
+        anti_debug_count = sum(pattern in binary_data for pattern in self.ANTI_DEBUG_PATTERNS)
         if anti_debug_count >= 2:
             features.anti_debugging = True
             score += 0.15
             feature_count += 1
 
-        integrity_count = sum(
-            pattern in binary_data for pattern in self.INTEGRITY_CHECK_PATTERNS
-        )
+        integrity_count = sum(pattern in binary_data for pattern in self.INTEGRITY_CHECK_PATTERNS)
         if integrity_count >= 2:
             features.integrity_checks = True
             features.anti_tampering = True
@@ -481,9 +477,7 @@ class ArxanDetector:
             if binary_data.count(pattern) > 10:
                 return True
 
-        printable_ratio = sum(32 <= b < 127 for b in binary_data[:10000]) / min(
-            len(binary_data), 10000
-        )
+        printable_ratio = sum(32 <= b < 127 for b in binary_data[:10000]) / min(len(binary_data), 10000)
 
         return printable_ratio < 0.05
 
@@ -581,10 +575,7 @@ class ArxanDetector:
             return True
 
         aes_sbox_partial = b"\x63\x7c\x77\x7b\xf2\x6b\x6f\xc5"
-        return (
-            aes_sbox_partial in binary_data
-            and binary_data.count(aes_sbox_partial) > 4
-        )
+        return aes_sbox_partial in binary_data and binary_data.count(aes_sbox_partial) > 4
 
 
 def main() -> None:

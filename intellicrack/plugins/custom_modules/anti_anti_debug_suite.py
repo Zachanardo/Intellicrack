@@ -1320,9 +1320,7 @@ class HardwareDebugProtector:
             bool: True if hook was installed successfully, False otherwise.
         """
         try:
-            if nt_get_context_addr := self.kernel32.GetProcAddress(
-                self.kernel32.GetModuleHandleW("ntdll.dll"), b"NtGetContextThread"
-            ):
+            if nt_get_context_addr := self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("ntdll.dll"), b"NtGetContextThread"):
                 target_addr = nt_get_context_addr
                 target_name = "NtGetContextThread"
 
@@ -2233,9 +2231,7 @@ class TargetAnalyzer:
             }
 
             recommended_bypasses.extend(
-                technique_bypass_map[technique]
-                for technique in unique_techniques
-                if technique in technique_bypass_map
+                technique_bypass_map[technique] for technique in unique_techniques if technique in technique_bypass_map
             )
             self.logger.info("Target analysis complete: %s risk", analysis_results["risk_level"])
 

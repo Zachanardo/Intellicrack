@@ -321,7 +321,7 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         """Test comprehensive PCAP file analysis with real network captures."""
         # Get available PCAP files
         pcap_files = list(self.network_captures_path.glob("*.pcap"))
-        assert len(pcap_files) > 0, "No PCAP test files available"
+        assert pcap_files, "No PCAP test files available"
 
         # Test with FlexLM capture if available
         flexlm_pcap = self.network_captures_path / "flexlm_capture.pcap"
@@ -403,10 +403,12 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
 
                 # Check for realistic network functions
                 expected_functions = ['socket', 'connect', 'send', 'recv', 'WSAStartup']
-                found_functions = [func for func in network_functions if func in expected_functions]
-
-                if found_functions:
-                    assert len(found_functions) > 0, "No realistic network functions found"
+                if found_functions := [
+                    func
+                    for func in network_functions
+                    if func in expected_functions
+                ]:
+                    assert found_functions, "No realistic network functions found"
 
         # Test with non-existent binary
         nonexistent_binary_results = self.fingerprinter.analyze_binary("/nonexistent/binary.exe")
@@ -453,18 +455,17 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         # Check if learning occurred
         initial_signature_count = len(learning_fingerprinter.signatures)
 
-        # Try to learn from similar patterns
-        learned = learning_fingerprinter._learn_new_signature(unknown_pattern, port=9999)
-
-        if learned:
+        if learned := learning_fingerprinter._learn_new_signature(
+            unknown_pattern, port=9999
+        ):
             final_signature_count = len(learning_fingerprinter.signatures)
             assert final_signature_count > initial_signature_count, "Learning did not add new signatures"
 
-            # Validate learned signature structure
-            learned_signatures = {k: v for k, v in learning_fingerprinter.signatures.items()
-                                if k.startswith('learned_')}
-
-            if learned_signatures:
+            if learned_signatures := {
+                k: v
+                for k, v in learning_fingerprinter.signatures.items()
+                if k.startswith('learned_')
+            }:
                 learned_sig = next(iter(learned_signatures.values()))
                 assert 'name' in learned_sig, "Learned signature missing name"
                 assert 'patterns' in learned_sig, "Learned signature missing patterns"
@@ -588,15 +589,14 @@ class TestProtocolFingerprinter(IntellicrackTestBase):
         ]
 
         for scenario in test_scenarios:
-            # Each scenario should be properly identified
-            result = self.fingerprinter.analyze_traffic(scenario['data'], scenario['port'])
-
-            if result:  # If identified
+            if result := self.fingerprinter.analyze_traffic(
+                scenario['data'], scenario['port']
+            ):
                 assert result['protocol_id'] == scenario['expected_protocol'], \
-                    f"Incorrect identification for {scenario['name']}"
+                        f"Incorrect identification for {scenario['name']}"
 
                 assert result['confidence'] > 0.5, \
-                    f"Low confidence for {scenario['name']}: {result['confidence']}"
+                        f"Low confidence for {scenario['name']}: {result['confidence']}"
 
                 # Should be able to generate meaningful response
                 response = self.fingerprinter.generate_response(

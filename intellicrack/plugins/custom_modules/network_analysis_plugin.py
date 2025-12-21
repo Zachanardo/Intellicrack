@@ -326,12 +326,8 @@ class NetworkAnalysisPlugin:
             result["connections"] = connection_log
             result["statistics"] = {
                 "total_events": len(connection_log),
-                "new_connections": sum(
-                    c["type"] == "new_connection" for c in connection_log
-                ),
-                "closed_connections": sum(
-                    c["type"] == "closed_connection" for c in connection_log
-                ),
+                "new_connections": sum(c["type"] == "new_connection" for c in connection_log),
+                "closed_connections": sum(c["type"] == "closed_connection" for c in connection_log),
             }
 
         # Start monitoring in a separate thread
@@ -452,9 +448,7 @@ class NetworkAnalysisPlugin:
             ports, and network I/O statistics.
 
         """
-        results = [
-            f"Starting network monitoring{f' for process: {str(target_process)}' if target_process else ''}..."
-        ]
+        results = [f"Starting network monitoring{f' for process: {str(target_process)}' if target_process else ''}..."]
         try:
             import socket
 
@@ -525,23 +519,19 @@ class NetworkAnalysisPlugin:
                     results.append(f"  ... and {len(listening_ports) - 5} more listening ports")
 
             if net_io := psutil.net_io_counters():
-                results.extend(
-                    (
-                        "\nNetwork I/O Statistics:",
-                        f"  Bytes sent: {net_io.bytes_sent:,}",
-                        f"  Bytes received: {net_io.bytes_recv:,}",
-                        f"  Packets sent: {net_io.packets_sent:,}",
-                        f"  Packets received: {net_io.packets_recv:,}",
-                    )
-                )
+                results.extend((
+                    "\nNetwork I/O Statistics:",
+                    f"  Bytes sent: {net_io.bytes_sent:,}",
+                    f"  Bytes received: {net_io.bytes_recv:,}",
+                    f"  Packets sent: {net_io.packets_sent:,}",
+                    f"  Packets received: {net_io.packets_recv:,}",
+                ))
         except ImportError as e:
             logger.debug("psutil not available: %s", e, exc_info=True)
-            results.extend(
-                (
-                    "Error: psutil library not available for network monitoring",
-                    "Install with: pip install psutil",
-                )
-            )
+            results.extend((
+                "Error: psutil library not available for network monitoring",
+                "Install with: pip install psutil",
+            ))
         except Exception as e:
             logger.exception("Network monitoring error: %s", e)
             results.append(f"Network monitoring error: {e}")

@@ -414,9 +414,7 @@ class TestCorruptedConfigHandling(unittest.TestCase):
         # Should handle version mismatch
         self.assertIsNotNone(config.get("version"))
 
-        # Should preserve unknown settings
-        future_feature = config.get("future_feature")
-        if future_feature:
+        if future_feature := config.get("future_feature"):
             self.assertIsInstance(future_feature, dict)
 
         # Basic functionality should still work

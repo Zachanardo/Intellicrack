@@ -186,15 +186,13 @@ def measure_coverage():
             if not stripped:
                 continue
 
-            # Handle docstrings
-            if stripped.startswith('"""') or stripped.startswith("'''"):
-                if not in_docstring:
+            if not in_docstring:
+                if stripped.startswith('"""') or stripped.startswith("'''"):
                     docstring_delim = stripped[:3]
-                    in_docstring = True
-                    if stripped.count(docstring_delim) >= 2:  # Single line docstring
-                        in_docstring = False
+                    in_docstring = stripped.count(docstring_delim) < 2
                     continue
-                elif stripped.endswith(docstring_delim):
+            elif stripped.endswith(docstring_delim):
+                if stripped.startswith('"""') or stripped.startswith("'''"):
                     in_docstring = False
                     continue
 
@@ -296,34 +294,34 @@ def generate_coverage_report(test_count, passed_count, coverage_percent):
 
 ##  Test Categories Breakdown
 
-### 1. **Mathematical Accuracy Tests** ({test_count//8} tests)
+### 1. **Mathematical Accuracy Tests** ({test_count // 8} tests)
 - OK Shannon entropy formula validation
 - OK Entropy bounds checking [0, 8]
 - OK Known value verification
 - OK Floating point precision
 - OK Kolmogorov complexity approximation
 
-### 2. **Real Binary Analysis Tests** ({test_count//8} tests)
+### 2. **Real Binary Analysis Tests** ({test_count // 8} tests)
 - OK Legitimate PE/ELF binaries
 - OK Packed/compressed executables
 - OK Protected binaries (VMProtect, Themida)
 - OK Different file sizes (KB to GB)
 - OK Cross-platform compatibility
 
-### 3. **Edge Cases & Error Recovery** ({test_count//8} tests)
+### 3. **Edge Cases & Error Recovery** ({test_count // 8} tests)
 - OK Empty files and single bytes
 - OK Unicode filenames and paths
 - OK Permission denied scenarios
 - OK I/O errors and timeouts
 - OK Memory constraints
 
-### 4. **Performance & Scalability** ({test_count//8} tests)
+### 4. **Performance & Scalability** ({test_count // 8} tests)
 - OK Large file processing (>10MB)
 - OK Concurrent analysis capability
 - OK Memory efficiency validation
 - OK Processing speed benchmarks
 
-### 5. **Integration Scenarios** ({test_count//8} tests)
+### 5. **Integration Scenarios** ({test_count // 8} tests)
 - OK Malware detection workflows
 - OK License validation analysis
 - OK Packer detection scenarios
@@ -365,7 +363,7 @@ OK **Cross-platform:** Windows primary, Unix/Linux compatibility
 | Metric | Achievement | Target | Status |
 |--------|-------------|---------|---------|
 | Test Coverage | {coverage_percent:.1f}% | 90% | {'OK' if coverage_percent >= 90 else 'FAIL'} |
-| Test Pass Rate | {(passed_count/test_count*100):.1f}% | 100% | {'OK' if passed_count == test_count else 'FAIL'} |
+| Test Pass Rate | {passed_count / test_count * 100:.1f}% | 100% | {'OK' if passed_count == test_count else 'FAIL'} |
 | Mathematical Accuracy | 100% | 100% | OK |
 | Real Binary Testing | 100% | 100% | OK |
 | Performance Compliance | 100% | 100% | OK |
@@ -381,7 +379,7 @@ OK **Cross-platform:** Windows primary, Unix/Linux compatibility
 - OK Real-world binary analysis scenarios tested
 - OK Performance and scalability requirements met
 - OK Edge cases and error recovery validated
-- {'OK Coverage target achieved: ' + str(coverage_percent) + '% >= 90%' if coverage_percent >= 90 else 'WARNING Coverage below target: ' + str(coverage_percent) + '% < 90%'}
+- {f'OK Coverage target achieved: {str(coverage_percent)}% >= 90%' if coverage_percent >= 90 else f'WARNING Coverage below target: {str(coverage_percent)}% < 90%'}
 
 **Production Impact:**
 The entropy analyzer now has mathematically rigorous test coverage proving its effectiveness for:

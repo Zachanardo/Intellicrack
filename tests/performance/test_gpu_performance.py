@@ -61,7 +61,7 @@ class TestGPUPerformance:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -213,7 +213,7 @@ class TestGPUPerformance:
 
         end_time = time.time()
 
-        assert len(errors) == 0, f"Concurrent GPU errors: {errors}"
+        assert not errors, f"Concurrent GPU errors: {errors}"
         assert len(results) == 4, f"Expected 4 results, got {len(results)}"
         assert end_time - start_time < 5.0, "Concurrent GPU operations should complete under 5 seconds"
 
@@ -292,7 +292,7 @@ class TestGPUPerformance:
         start_time = time.time()
 
         thermal_data = []
-        for i in range(10):
+        for _ in range(10):
             temp_info = gpu.get_gpu_temperature()
             thermal_data.append(temp_info)
 

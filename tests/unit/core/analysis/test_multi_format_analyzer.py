@@ -654,14 +654,14 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
         # Should extract and analyze embedded components
         self.assertIsInstance(result.sections, list)
 
-        # APK should contain file listing
-        apk_files = None
-        for section in result.sections:
-            if section.get('name') == 'files' or 'files' in section:
-                apk_files = section.get('files', [])
-                break
-
-        if apk_files:
+        if apk_files := next(
+            (
+                section.get('files', [])
+                for section in result.sections
+                if section.get('name') == 'files' or 'files' in section
+            ),
+            None,
+        ):
             self.assertIn('AndroidManifest.xml', apk_files)
             self.assertIn('classes.dex', apk_files)
 
@@ -696,10 +696,6 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
                     manifest_found = True
                     self.assertIn('Main-Class', str(section))
                     break
-
-            if not manifest_found:
-                # Manifest data might be in different structure
-                pass
 
     def test_windows_msi_analysis_with_compound_document_parsing(self):
         """Test MSI analysis with compound document structure parsing."""
@@ -762,11 +758,10 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
 
         # COM files should be analyzed for DOS interrupts and system calls
         if result.strings:
-            found_dos_calls = False
-            for string_info in result.strings:
-                if 'dos' in string_info.get('type', '').lower():
-                    found_dos_calls = True
-                    break
+            found_dos_calls = any(
+                'dos' in string_info.get('type', '').lower()
+                for string_info in result.strings
+            )
 
     def test_error_handling_corrupted_binaries(self):
         """Test error handling with corrupted and malformed binaries."""
@@ -863,8 +858,7 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
 
         # The analyzer should detect and handle .NET assemblies
         try:
-            result = self.analyzer.analyze_dotnet(dotnet_path)
-            if result:
+            if result := self.analyzer.analyze_dotnet(dotnet_path):
                 self.assertIsInstance(result, BinaryInfo)
                 self.assertIn("NET", result.file_type.upper() or result.architecture.upper())
         except Exception:
@@ -884,11 +878,6 @@ class TestMultiFormatBinaryAnalyzer(unittest.TestCase):
                 if 'entropy' in section:
                     entropy = section['entropy']
                     self.assertIsInstance(entropy, (int, float))
-                    # High entropy might indicate packing/encryption
-                    if entropy > 7.5:
-                        # Should flag potential packing
-                        pass
-
         # 2. Import analysis for security-relevant APIs
         if result.imports:
             security_apis = ['VirtualAlloc', 'CreateRemoteThread', 'WriteProcessMemory', 'SetWindowsHookEx']
@@ -1012,9 +1001,7 @@ class TestStandaloneAnalysisFunction(unittest.TestCase):
 
         # Should handle missing files gracefully
         try:
-            result = run_multi_format_analysis(nonexistent_path)
-            # If it returns a result, should indicate error
-            if result:
+            if result := run_multi_format_analysis(nonexistent_path):
                 self.assertIn('error', str(result).lower())
         except FileNotFoundError:
             # Expected behavior for missing files

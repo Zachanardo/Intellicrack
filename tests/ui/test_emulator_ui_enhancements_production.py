@@ -221,7 +221,7 @@ class TestEmulatorTooltips:
 
         add_emulator_tooltips(widget_dict)
 
-        for feature, widget in widget_dict.items():
+        for widget in widget_dict.values():
             tooltip = widget.toolTip()
             assert len(tooltip) > 0
             assert any(

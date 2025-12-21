@@ -209,7 +209,7 @@ class TestECCKeyExtraction:
 
         assert private_ecc_found
 
-    def test_extract_ecc_keys_different_curves(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_extract_ecc_keys_different_curves(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Extracts ECC keys from different curves (P-256, P-384)."""
         bypass = LicenseValidationBypass()
 
@@ -231,13 +231,13 @@ class TestECCKeyExtraction:
         keys = bypass.extract_ecc_keys_from_binary(str(binary_file))
 
         curves_found = {key.curve for key in keys if key.curve is not None}
-        assert len(curves_found) >= 1
+        assert curves_found
 
 
 class TestCertificateExtraction:
     """Test X.509 certificate extraction from binaries."""
 
-    def test_extract_certificate_from_binary(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_extract_certificate_from_binary(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Extracts X.509 certificates from binary data."""
         bypass = LicenseValidationBypass()
 
@@ -251,19 +251,18 @@ class TestCertificateExtraction:
             x509.NameAttribute(NameOID.COMMON_NAME, "test.com"),
         ])
 
-        cert = x509.CertificateBuilder().subject_name(
-            subject
-        ).issuer_name(
-            issuer
-        ).public_key(
-            private_key.public_key()
-        ).serial_number(
-            x509.random_serial_number()
-        ).not_valid_before(
-            datetime.datetime.utcnow()
-        ).not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=365)
-        ).sign(private_key, hashes.SHA256(), default_backend())
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
+            .not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+            )
+            .sign(private_key, hashes.SHA256(), default_backend())
+        )
 
         der_cert = cert.public_bytes(serialization.Encoding.DER)
 
@@ -275,7 +274,7 @@ class TestCertificateExtraction:
         assert len(certs) > 0
         assert certs[0].subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value == "test.com"
 
-    def test_extract_certificate_public_key_as_rsa_key(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_extract_certificate_public_key_as_rsa_key(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Extracts public key from certificate as RSA key entry."""
         bypass = LicenseValidationBypass()
 
@@ -285,19 +284,18 @@ class TestCertificateExtraction:
             x509.NameAttribute(NameOID.COMMON_NAME, "test.com"),
         ])
 
-        cert = x509.CertificateBuilder().subject_name(
-            subject
-        ).issuer_name(
-            issuer
-        ).public_key(
-            private_key.public_key()
-        ).serial_number(
-            x509.random_serial_number()
-        ).not_valid_before(
-            datetime.datetime.utcnow()
-        ).not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=365)
-        ).sign(private_key, hashes.SHA256(), default_backend())
+        cert = (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
+            .not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+            )
+            .sign(private_key, hashes.SHA256(), default_backend())
+        )
 
         der_cert = cert.public_bytes(serialization.Encoding.DER)
 
@@ -430,7 +428,7 @@ class TestBCryptKeyBlobParsing:
 class TestSymmetricKeyExtraction:
     """Test symmetric key extraction (AES, DES, etc.)."""
 
-    def test_extract_symmetric_keys_from_binary(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_extract_symmetric_keys_from_binary(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Extracts high-entropy regions as potential symmetric keys."""
         bypass = LicenseValidationBypass()
 
@@ -446,7 +444,7 @@ class TestSymmetricKeyExtraction:
         assert len(keys) > 0
 
         aes_keys_found = [k for k in keys if k.key_type == KeyType.AES]
-        assert len(aes_keys_found) > 0
+        assert aes_keys_found
 
     def test_determine_symmetric_key_type_by_size(self) -> None:  # noqa: PLR6301
         """Determines symmetric key type based on key size."""

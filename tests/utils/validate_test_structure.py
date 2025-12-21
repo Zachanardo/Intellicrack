@@ -52,8 +52,7 @@ def validate_test_file():
         import_names = []
         for node in ast.walk(tree):
             if isinstance(node, ast.Import):
-                for alias in node.names:
-                    import_names.append(alias.name)
+                import_names.extend(alias.name for alias in node.names)
             elif isinstance(node, ast.ImportFrom):
                 if node.module:
                     import_names.append(node.module)

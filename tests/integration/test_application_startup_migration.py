@@ -344,7 +344,7 @@ class RealEnvironmentManagerSimulator:
                         env_vars[key] = value
 
         # Include environment variables set programmatically
-        env_vars.update(self.startup_sim.environment_variables)
+        env_vars |= self.startup_sim.environment_variables
 
         return env_vars
 
@@ -376,9 +376,7 @@ class RealComponentManagerSimulator:
 
     def get_config(self, key=None, default=None):
         """Get configuration value."""
-        if key:
-            return self.config_data.get(key, default)
-        return self.config_data
+        return self.config_data.get(key, default) if key else self.config_data
 
     def set_config(self, key, value):
         """Set configuration value."""
@@ -415,9 +413,7 @@ class RealLoggerSimulator:
 
     def get_logs(self, level=None):
         """Get logs by level."""
-        if level:
-            return self.logs.get(level, [])
-        return self.logs.copy()
+        return self.logs.get(level, []) if level else self.logs.copy()
 
     @property
     def called(self):
@@ -453,7 +449,7 @@ class TestApplicationStartupMigration(unittest.TestCase):
         """Clean up temporary files and restore environment."""
         shutil.rmtree(str(self.temp_dir), ignore_errors=True)
         os.environ.clear()
-        os.environ.update(self.original_env)
+        os.environ |= self.original_env
 
 
     def test_full_application_startup_with_migration(self):
@@ -621,10 +617,8 @@ class TestApplicationStartupMigration(unittest.TestCase):
 
         # Verify customization preservation
         custom_keys = ["execution/qemu_preference", "theme/mode", "theme/accent_color"]
-        preserved_count = 0
-        for key in custom_keys:
-            if self.startup_sim.simulate_qsettings_data(key):
-                preserved_count += 1
+        preserved_count = sum(bool(self.startup_sim.simulate_qsettings_data(key))
+                          for key in custom_keys)
         assert preserved_count > 0, "At least some user customizations should be preserved"
 
     def test_startup_performance(self):

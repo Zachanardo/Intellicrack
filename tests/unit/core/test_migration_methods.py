@@ -616,7 +616,7 @@ class RealConfigurationValidator:
         # Verify trusted binaries were migrated
         trusted_binaries = config.get("qemu_testing.trusted_binaries", [])
         original_binaries = original_data.get("trusted_binaries", [])
-        if not all(binary in trusted_binaries for binary in original_binaries):
+        if any(binary not in trusted_binaries for binary in original_binaries):
             return False
 
         # Verify script type preferences
@@ -643,10 +643,10 @@ class RealConfigurationValidator:
         recent_files = config.get("qemu_testing.execution_history.recent_files", [])
         original_recent = original_data.get("execution/recent_files", [])
 
-        if last_script != original_data.get("execution/last_script") or not all(f in recent_files for f in original_recent):
-            return False
-
-        return True
+        return bool(
+            last_script == original_data.get("execution/last_script")
+            and not any(f not in recent_files for f in original_recent)
+        )
 
     @staticmethod
     def validate_llm_migration(config: IntellicrackConfig) -> bool:
@@ -659,7 +659,7 @@ class RealConfigurationValidator:
 
         models = llm_config["models"]
         expected_models = ["gpt-4-turbo", "claude-3-5-sonnet", "llama-3-1-70b", "codellama-34b", "mistral-7b"]
-        if not all(model in models for model in expected_models):
+        if any(model not in models for model in expected_models):
             return False
 
         # Verify profiles section
@@ -668,7 +668,7 @@ class RealConfigurationValidator:
 
         profiles = llm_config["profiles"]
         expected_profiles = ["default", "code_generation", "local_analysis", "vulnerability_research", "rapid_triage"]
-        if not all(profile in profiles for profile in expected_profiles):
+        if any(profile not in profiles for profile in expected_profiles):
             return False
 
         # Verify metrics section
@@ -677,7 +677,7 @@ class RealConfigurationValidator:
 
         metrics = llm_config["metrics"]
         required_metrics = ["total_requests", "total_tokens", "total_cost", "by_model", "by_date", "by_profile"]
-        if not all(metric in metrics for metric in required_metrics):
+        if any(metric not in metrics for metric in required_metrics):
             return False
 
         return True
@@ -696,10 +696,7 @@ class RealConfigurationValidator:
 
         # Check migration metadata
         migration_meta = config.get("migration_metadata", {})
-        if not migration_meta.get("timestamp") or not migration_meta.get("source"):
-            return False
-
-        return True
+        return bool(migration_meta.get("timestamp") and migration_meta.get("source"))
 
     @staticmethod
     def validate_font_migration(config: IntellicrackConfig) -> bool:
@@ -718,7 +715,7 @@ class RealConfigurationValidator:
             "custom_css",
         ]
 
-        if not all(section in font_config for section in required_sections):
+        if any(section not in font_config for section in required_sections):
             return False
 
         # Verify specific font configurations
@@ -727,10 +724,10 @@ class RealConfigurationValidator:
             return False
 
         font_sizes = font_config.get("font_sizes", {})
-        if font_sizes.get("ui_default") != 11 or font_sizes.get("code_default") != 12:
-            return False
-
-        return True
+        return (
+            font_sizes.get("ui_default") == 11
+            and font_sizes.get("code_default") == 12
+        )
 
 
 class TestMigrationMethods(unittest.TestCase):
@@ -1648,10 +1645,11 @@ class TestMigrationMethods(unittest.TestCase):
 
         # AI models migration
         if any(key.startswith("ml_model") for key in legacy_data):
-            ai_models = {}
-            for key, value in legacy_data.items():
-                if key.startswith("ml_model"):
-                    ai_models[key] = value
+            ai_models = {
+                key: value
+                for key, value in legacy_data.items()
+                if key.startswith("ml_model")
+            }
             self.config.set("ai_models", ai_models)
 
         # Analysis settings migration
@@ -1663,7 +1661,7 @@ class TestMigrationMethods(unittest.TestCase):
                 analysis_data[analysis_key] = legacy_data[key]
 
         if "analysis_settings" in legacy_data:
-            analysis_data.update(legacy_data["analysis_settings"])
+            analysis_data |= legacy_data["analysis_settings"]
 
         if analysis_data:
             existing_analysis = self.config.get("analysis_settings", {})
@@ -1679,7 +1677,7 @@ class TestMigrationMethods(unittest.TestCase):
                 dirs_data[dir_key] = legacy_data[key]
 
         if "directories" in legacy_data:
-            dirs_data.update(legacy_data["directories"])
+            dirs_data |= legacy_data["directories"]
 
         if dirs_data:
             existing_dirs = self.config.get("directories", {})
@@ -1690,7 +1688,7 @@ class TestMigrationMethods(unittest.TestCase):
         if "performance_mode" in legacy_data:
             perf_data = {"mode": legacy_data["performance_mode"]}
             if "performance_metrics" in legacy_data:
-                perf_data.update(legacy_data["performance_metrics"])
+                perf_data |= legacy_data["performance_metrics"]
             self.config.set("performance", perf_data)
 
         # Environment variables (API keys)
@@ -1771,9 +1769,7 @@ class TestMigrationMethods(unittest.TestCase):
         if qsettings_sim.value("theme/primary_color"):
             existing_ui["primary_color"] = qsettings_sim.value("theme/primary_color")
 
-        # Update font size
-        font_size = qsettings_sim.value("ui/font_size")
-        if font_size:
+        if font_size := qsettings_sim.value("ui/font_size"):
             existing_ui["font_size"] = font_size
 
         # Update nested sidebar settings
@@ -1828,9 +1824,7 @@ class TestMigrationMethods(unittest.TestCase):
         existing_analysis = self.config.get("analysis_settings", {})
         engines = existing_analysis.get("engines", {})
 
-        # Update Ghidra settings
-        ghidra_timeout = qsettings_sim.value("analysis/ghidra_timeout")
-        if ghidra_timeout:
+        if ghidra_timeout := qsettings_sim.value("analysis/ghidra_timeout"):
             ghidra = engines.get("ghidra", {})
             ghidra["timeout"] = ghidra_timeout
             engines["ghidra"] = ghidra

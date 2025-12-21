@@ -121,10 +121,10 @@ class TestTPMBypassRealWorld(TestCase):
         spoofing_results = []
 
         for validator in test_validators:
-            expected_pcrs = {}
-            for i in range(validator['pcr_count']):
-                expected_pcrs[i] = hashlib.sha256(f"PCR{i}_{validator['name']}".encode()).digest()
-
+            expected_pcrs = {
+                i: hashlib.sha256(f"PCR{i}_{validator['name']}".encode()).digest()
+                for i in range(validator['pcr_count'])
+            }
             start_time = time.perf_counter()
             attestation_response = self.tpm_engine.spoof_remote_attestation(
                 self.test_nonce,
@@ -306,14 +306,14 @@ class TestTPMBypassRealWorld(TestCase):
 
     def test_cold_boot_attack_execution(self):
         """Execute cold boot attack on TPM memory regions for key extraction."""
-        memory_regions = [
-            'tpm_control',
-            'tpm_buffers',
-            'tpm_locality_0',
-            'tpm_data_fifo'
-        ]
-
         if hasattr(self.tpm_engine, 'mem_handle') and self.tpm_engine.mem_handle:
+            memory_regions = [
+                'tpm_control',
+                'tpm_buffers',
+                'tpm_locality_0',
+                'tpm_data_fifo'
+            ]
+
             for region in memory_regions:
                 if region in self.tpm_engine.memory_map:
                     address = self.tpm_engine.memory_map[region]
@@ -328,9 +328,12 @@ class TestTPMBypassRealWorld(TestCase):
         self.assertIsInstance(extracted_secrets, dict)
         self.assertGreater(len(extracted_secrets), 0, "Should extract some secrets")
 
-        rsa_keys_found = sum(1 for k in extracted_secrets if '_rsa' in k)
-        ecc_keys_found = sum(1 for k in extracted_secrets if '_ecc' in k)
-        entropy_data_found = sum(1 for k in extracted_secrets if '_entropy' in k)
+        rsa_keys_found = sum(bool('_rsa' in k)
+                         for k in extracted_secrets)
+        ecc_keys_found = sum(bool('_ecc' in k)
+                         for k in extracted_secrets)
+        entropy_data_found = sum(bool('_entropy' in k)
+                             for k in extracted_secrets)
 
         print(f"\nCold Boot Attack Execution Results:")
         print(f"  Attack Time: {attack_time*1000:.2f}ms")
@@ -402,8 +405,8 @@ class TestTPMBypassRealWorld(TestCase):
 
         print(f"\nPCR Manipulation Precision:")
         print(f"  PCRs Set: {len(test_pcrs)}")
-        print(f"  SHA256 Bank: OK")
-        print(f"  SHA1 Bank: OK")
+        print("  SHA256 Bank: OK")
+        print("  SHA1 Bank: OK")
 
     def test_command_virtualization_completeness(self):
         """Test completeness of virtualized TPM command processing."""
@@ -428,7 +431,7 @@ class TestTPMBypassRealWorld(TestCase):
             self.assertIn(tag, [0x8001, 0x8002], f"Invalid response tag for {description}")
 
             if cmd_code == TPM2CommandCode.GetRandom:
-                self.assertEqual(code, 0, f"GetRandom should succeed")
+                self.assertEqual(code, 0, "GetRandom should succeed")
                 self.assertGreaterEqual(len(response), 10 + 2 + param,
                                       f"GetRandom response too short")
 
@@ -470,10 +473,10 @@ class TestTPMBypassRealWorld(TestCase):
         for target in software_targets:
             start_time = time.perf_counter()
 
-            target_pcrs = {}
-            for pcr in target['pcrs']:
-                target_pcrs[pcr] = hashlib.sha256(f"{target['name']}_PCR{pcr}".encode()).digest()
-
+            target_pcrs = {
+                pcr: hashlib.sha256(f"{target['name']}_PCR{pcr}".encode()).digest()
+                for pcr in target['pcrs']
+            }
             self.tpm_engine.manipulate_pcr_values(target_pcrs)
 
             license_data = hashlib.sha256(f"{target['name']}_LICENSE".encode()).digest()
@@ -511,7 +514,8 @@ class TestTPMBypassRealWorld(TestCase):
             print(f"    Attestation Forged: {result['attestation_forged']}")
             print(f"    Overall Success: {result['success']}")
 
-        success_rate = sum(1 for r in bypass_results if r['success']) / len(bypass_results) * 100
+        success_rate = sum(bool(r['success'])
+                       for r in bypass_results) / len(bypass_results) * 100
         avg_time = sum(r['time'] for r in bypass_results) / len(bypass_results)
 
         print(f"\n  Overall Success Rate: {success_rate:.1f}%")

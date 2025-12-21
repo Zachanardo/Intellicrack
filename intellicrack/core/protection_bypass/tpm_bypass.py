@@ -1679,11 +1679,7 @@ class TPMBypassEngine:
                 b"NCryptOpenKey",
             ]
 
-            tpm_apis_found: list[str] = [
-                api.decode("latin-1", errors="ignore")
-                for api in tpm_apis
-                if api in data
-            ]
+            tpm_apis_found: list[str] = [api.decode("latin-1", errors="ignore") for api in tpm_apis if api in data]
             analysis["tpm_apis"] = tpm_apis_found
 
             analysis["tpm_detected"] = len(tpm_apis_found) > 0

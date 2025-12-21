@@ -373,8 +373,7 @@ class ResourceManager:
             stale_resources = [
                 resource_id
                 for resource_id, resource in self._resources.items()
-                if isinstance(resource, ProcessResource)
-                and resource.process.poll() is not None
+                if isinstance(resource, ProcessResource) and resource.process.poll() is not None
             ]
             for resource_id in stale_resources:
                 self.release_resource(resource_id)
@@ -592,8 +591,7 @@ class ResourceManager:
             }
 
             by_type_dict: dict[str, int] = {
-                resource_type.value: len(resource_ids)
-                for resource_type, resource_ids in self._resources_by_type.items()
+                resource_type.value: len(resource_ids) for resource_type, resource_ids in self._resources_by_type.items()
             }
             stats["by_type"] = by_type_dict
 

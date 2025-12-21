@@ -156,7 +156,6 @@ def create_udp_packet(src_port: int, dst_port: int, payload: bytes) -> bytes:
 
 def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes, float]]:
     """Create FlexLM license server handshake."""
-    packets = []
     timestamp = time.time()
 
     # Client hello
@@ -172,8 +171,7 @@ def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes,
     udp = create_udp_packet(52401, 27000, flexlm_hello)
     ip = create_ip_packet(client_ip, server_ip, 17, udp)  # 17 = UDP
     eth = create_ethernet_frame("00:11:22:33:44:55", "aa:bb:cc:dd:ee:ff", ip)
-    packets.append((eth, timestamp))
-
+    packets = [(eth, timestamp)]
     # Server response
     timestamp += 0.1
     flexlm_response = struct.pack(
@@ -229,7 +227,6 @@ def create_flexlm_handshake(client_ip: str, server_ip: str) -> list[tuple[bytes,
 
 def create_hasp_protocol(client_ip: str, server_ip: str) -> list[tuple[bytes, float]]:
     """Create HASP/Sentinel protocol communication."""
-    packets = []
     timestamp = time.time()
 
     # HASP discovery broadcast
@@ -239,8 +236,7 @@ def create_hasp_protocol(client_ip: str, server_ip: str) -> list[tuple[bytes, fl
     udp = create_udp_packet(1947, 1947, hasp_discover)
     ip = create_ip_packet(client_ip, "255.255.255.255", 17, udp)
     eth = create_ethernet_frame("00:11:22:33:44:55", "ff:ff:ff:ff:ff:ff", ip)
-    packets.append((eth, timestamp))
-
+    packets = [(eth, timestamp)]
     # Server announcement
     timestamp += 0.05
     hasp_announce = b"HASP_SERVER_READY\x00"
@@ -281,7 +277,6 @@ def create_hasp_protocol(client_ip: str, server_ip: str) -> list[tuple[bytes, fl
 
 def create_adobe_licensing(client_ip: str, server_ip: str) -> list[tuple[bytes, float]]:
     """Create Adobe licensing protocol communication."""
-    packets = []
     timestamp = time.time()
 
     # Adobe license check
@@ -296,8 +291,7 @@ def create_adobe_licensing(client_ip: str, server_ip: str) -> list[tuple[bytes, 
     tcp = create_tcp_packet(52404, 443, 5000, 0, 0x02, adobe_check)
     ip = create_ip_packet(client_ip, server_ip, 6, tcp)
     eth = create_ethernet_frame("00:11:22:33:44:55", "aa:bb:cc:dd:ee:ff", ip)
-    packets.append((eth, timestamp))
-
+    packets = [(eth, timestamp)]
     # Server response
     timestamp += 0.15
     adobe_response = b'<?xml version="1.0" encoding="UTF-8"?>'
@@ -320,7 +314,6 @@ def create_adobe_licensing(client_ip: str, server_ip: str) -> list[tuple[bytes, 
 
 def create_custom_drm_protocol(client_ip: str, server_ip: str) -> list[tuple[bytes, float]]:
     """Create custom DRM protocol communication."""
-    packets = []
     timestamp = time.time()
 
     # Custom DRM handshake
@@ -334,8 +327,7 @@ def create_custom_drm_protocol(client_ip: str, server_ip: str) -> list[tuple[byt
     tcp = create_tcp_packet(9999, 9999, 7000, 0, 0x02, drm_packet)
     ip = create_ip_packet(client_ip, server_ip, 6, tcp)
     eth = create_ethernet_frame("00:11:22:33:44:55", "aa:bb:cc:dd:ee:ff", ip)
-    packets.append((eth, timestamp))
-
+    packets = [(eth, timestamp)]
     # Server challenge-response
     timestamp += 0.05
     drm_response = b"DRM\x00\x02\x00\x00\x00"
@@ -353,7 +345,6 @@ def create_custom_drm_protocol(client_ip: str, server_ip: str) -> list[tuple[byt
 
 def create_kms_activation(client_ip: str, server_ip: str) -> list[tuple[bytes, float]]:
     """Create KMS (Key Management Service) activation protocol."""
-    packets = []
     timestamp = time.time()
 
     # KMS RPC bind request
@@ -376,8 +367,7 @@ def create_kms_activation(client_ip: str, server_ip: str) -> list[tuple[bytes, f
     tcp = create_tcp_packet(52405, 1688, 9000, 0, 0x02, rpc_bind)
     ip = create_ip_packet(client_ip, server_ip, 6, tcp)
     eth = create_ethernet_frame("00:11:22:33:44:55", "aa:bb:cc:dd:ee:ff", ip)
-    packets.append((eth, timestamp))
-
+    packets = [(eth, timestamp)]
     # KMS activation request
     timestamp += 0.1
     activation_request = struct.pack(
@@ -439,6 +429,9 @@ def generate_all_protocol_captures(output_dir: Path) -> dict[str, Path]:
 
     generated_files = {}
 
+    # Create variant with different IPs
+    alt_client = "10.0.0.50"
+    alt_server = "10.0.0.1"
     for protocol_name, creator in protocols.items():
         packets = creator(client_ip, server_ip)
 
@@ -449,9 +442,6 @@ def generate_all_protocol_captures(output_dir: Path) -> dict[str, Path]:
 
         print(f"OK Created {protocol_name} protocol capture: {filename}")
 
-        # Create variant with different IPs
-        alt_client = "10.0.0.50"
-        alt_server = "10.0.0.1"
         alt_packets = creator(alt_client, alt_server)
 
         alt_filename = output_dir / f"{protocol_name}_capture_alt.pcap"
@@ -461,7 +451,7 @@ def generate_all_protocol_captures(output_dir: Path) -> dict[str, Path]:
 
     # Create a mixed capture with multiple protocols
     mixed_packets = []
-    for protocol_name, creator in protocols.items():
+    for creator in protocols.values():
         packets = creator(client_ip, server_ip)
         # Adjust timestamps to interleave packets
         base_time = time.time() + len(mixed_packets) * 0.5

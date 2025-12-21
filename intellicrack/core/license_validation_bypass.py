@@ -64,7 +64,7 @@ class LicenseValidationBypass:
         self.ecc_patterns = self._build_ecc_patterns()
         self.cert_patterns = self._build_cert_patterns()
 
-    def _build_rsa_patterns(self) -> list[re.Pattern]:
+    def _build_rsa_patterns(self) -> list[re.Pattern[bytes]]:
         """Build patterns for RSA key detection in binary data."""
         logger.debug("Building RSA key detection patterns.")
         patterns = [re.compile(rb"\x30[\x81\x82][\x01-\x02][\x00-\xff]\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01")]
@@ -95,7 +95,7 @@ class LicenseValidationBypass:
         return patterns
 
     @log_function_call
-    def _build_ecc_patterns(self) -> list[re.Pattern]:
+    def _build_ecc_patterns(self) -> list[re.Pattern[bytes]]:
         """Build patterns for ECC key detection."""
         logger.debug("Building ECC key detection patterns.")
         patterns = [
@@ -122,7 +122,7 @@ class LicenseValidationBypass:
         return patterns
 
     @log_function_call
-    def _build_cert_patterns(self) -> list[re.Pattern]:
+    def _build_cert_patterns(self) -> list[re.Pattern[bytes]]:
         """Build patterns for certificate detection."""
         logger.debug("Building certificate detection patterns.")
         patterns = [re.compile(rb"\x30\x82[\x03-\x08][\x00-\xff]\x30\x82")]
@@ -206,17 +206,17 @@ class LicenseValidationBypass:
             # Try to parse as private key
             if data[:4] == b"\x30\x82" and data[4] == 0x02:
                 try:
-                    key = serialization.load_der_private_key(data, password=None, backend=self.backend)
-                    if isinstance(key, RSAPrivateKey):
-                        numbers = key.private_numbers()
+                    priv_key = serialization.load_der_private_key(data, password=None, backend=self.backend)
+                    if isinstance(priv_key, RSAPrivateKey):
+                        priv_numbers = priv_key.private_numbers()
                         return ExtractedKey(
                             key_type=KeyType.RSA_PRIVATE,
                             key_data=data[:],
-                            modulus=numbers.public_numbers.n,
-                            exponent=numbers.public_numbers.e,
+                            modulus=priv_numbers.public_numbers.n,
+                            exponent=priv_numbers.public_numbers.e,
                             confidence=0.98,
                             context="ASN.1 DER encoded private key",
-                            key_object=key,
+                            key_object=priv_key,
                         )
                 except (AttributeError, KeyError, ValueError):
                     logger.warning("Failed to process PKCS#1 RSA private key", exc_info=True)
@@ -332,7 +332,7 @@ class LicenseValidationBypass:
 
             # Look for CryptoAPI imports
             logger.debug("Looking for CryptoAPI imports.")
-            crypto_imports = []
+            crypto_imports: list[tuple[int, bytes]] = []
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 crypto_apis = [
                     "CryptImportKey",
@@ -691,13 +691,12 @@ class LicenseValidationBypass:
             # Check if private key components exist
             if offset + 32 < len(data):
                 if d := self._read_openssl_bignum_11x(data[offset:]):
-                    logger.debug("Found OpenSSL 1.1.x RSA private key with d component size: %s", len(d))
+                    logger.debug("Found OpenSSL 1.1.x RSA private key with d component bit length: %s", d.bit_length())
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=data[:2048],
                         modulus=n,
                         exponent=e,
-                        private_exponent=d,
                         confidence=0.92,
                         context="OpenSSL 1.1.x RSA private key structure",
                     )
@@ -745,13 +744,12 @@ class LicenseValidationBypass:
             # Check for private key
             if flags & 0x01:  # Private key flag
                 if d := self._read_openssl_bignum_3x(data[offset:]):
-                    logger.debug("Found OpenSSL 3.x RSA private key with d component size: %s", len(d))
+                    logger.debug("Found OpenSSL 3.x RSA private key with d component bit length: %s", d.bit_length())
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=data[:2048],
                         modulus=n,
                         exponent=e,
-                        private_exponent=d,
                         confidence=0.93,
                         context="OpenSSL 3.x RSA private key structure",
                     )
@@ -1048,9 +1046,9 @@ class LicenseValidationBypass:
 
             # Determine key type
             if b"RSA PRIVATE" in pem_data:
-                key = serialization.load_pem_private_key(pem_data, password=None, backend=self.backend)
-                if isinstance(key, RSAPrivateKey):
-                    numbers = key.private_numbers()
+                priv_key = serialization.load_pem_private_key(pem_data, password=None, backend=self.backend)
+                if isinstance(priv_key, RSAPrivateKey):
+                    numbers = priv_key.private_numbers()
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=pem_data,
@@ -1058,20 +1056,20 @@ class LicenseValidationBypass:
                         exponent=numbers.public_numbers.e,
                         confidence=0.95,
                         context="PEM encoded RSA private key",
-                        key_object=key,
+                        key_object=priv_key,
                     )
             elif b"PUBLIC KEY" in pem_data or b"RSA PUBLIC" in pem_data:
-                key = serialization.load_pem_public_key(pem_data, backend=self.backend)
-                if isinstance(key, RSAPublicKey):
-                    numbers = key.public_numbers()
+                pub_key = serialization.load_pem_public_key(pem_data, backend=self.backend)
+                if isinstance(pub_key, RSAPublicKey):
+                    pub_numbers = pub_key.public_numbers()
                     return ExtractedKey(
                         key_type=KeyType.RSA_PUBLIC,
                         key_data=pem_data,
-                        modulus=numbers.n,
-                        exponent=numbers.e,
+                        modulus=pub_numbers.n,
+                        exponent=pub_numbers.e,
                         confidence=0.95,
                         context="PEM encoded RSA public key",
-                        key_object=key,
+                        key_object=pub_key,
                     )
         except (AttributeError, KeyError, ValueError):
             logger.warning("Failed to parse PEM RSA public key", exc_info=True)
@@ -1106,9 +1104,9 @@ class LicenseValidationBypass:
         try:
             # PKCS#8 unencrypted private key
             if data[:4] == b"\x30\x82" and b"\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01" in data[:50]:
-                key = serialization.load_der_private_key(data, password=None, backend=self.backend)
-                if isinstance(key, RSAPrivateKey):
-                    numbers = key.private_numbers()
+                priv_key = serialization.load_der_private_key(data, password=None, backend=self.backend)
+                if isinstance(priv_key, RSAPrivateKey):
+                    numbers = priv_key.private_numbers()
                     return ExtractedKey(
                         key_type=KeyType.RSA_PRIVATE,
                         key_data=data,
@@ -1116,7 +1114,7 @@ class LicenseValidationBypass:
                         exponent=numbers.public_numbers.e,
                         confidence=0.95,
                         context="PKCS#8 RSA private key",
-                        key_object=key,
+                        key_object=priv_key,
                     )
         except (AttributeError, KeyError, ValueError):
             logger.warning("Failed to parse PKCS#8 RSA private key", exc_info=True)
@@ -1477,29 +1475,29 @@ class LicenseValidationBypass:
         """Extract ECC key from data."""
         try:
             # Try to parse as ECC public key
-            key = serialization.load_der_public_key(data, backend=self.backend)
-            if isinstance(key, EllipticCurvePublicKey):
-                curve_name = key.curve.name
+            pub_key = serialization.load_der_public_key(data, backend=self.backend)
+            if isinstance(pub_key, EllipticCurvePublicKey):
+                curve_name = pub_key.curve.name
                 return ExtractedKey(
                     key_type=KeyType.ECC_PUBLIC,
                     key_data=data[:256],
                     curve=curve_name,
                     confidence=0.95,
                     context="ASN.1 DER encoded ECC public key",
-                    key_object=key,
+                    key_object=pub_key,
                 )
 
             # Try as private key
-            key = serialization.load_der_private_key(data, password=None, backend=self.backend)
-            if isinstance(key, EllipticCurvePrivateKey):
-                curve_name = key.curve.name
+            priv_key = serialization.load_der_private_key(data, password=None, backend=self.backend)
+            if isinstance(priv_key, EllipticCurvePrivateKey):
+                curve_name = priv_key.curve.name
                 return ExtractedKey(
                     key_type=KeyType.ECC_PRIVATE,
                     key_data=data[:256],
                     curve=curve_name,
                     confidence=0.98,
                     context="ASN.1 DER encoded ECC private key",
-                    key_object=key,
+                    key_object=priv_key,
                 )
         except (AttributeError, KeyError, ValueError):
             logger.warning("Failed to extract ECC key", exc_info=True)

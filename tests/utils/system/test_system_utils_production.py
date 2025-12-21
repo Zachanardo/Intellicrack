@@ -151,9 +151,7 @@ class TestProcessManagement:
         """Find PID of Python process."""
         python_exe = sys.executable
 
-        pid = get_targetprocess_pid(python_exe)
-
-        if pid:
+        if pid := get_targetprocess_pid(python_exe):
             assert isinstance(pid, int)
             assert pid > 0
 
@@ -196,11 +194,7 @@ class TestCommandExecution:
 
     def test_run_command_list_format(self) -> None:
         """Command execution with list format."""
-        if is_windows():
-            cmd = ["cmd", "/c", "ver"]
-        else:
-            cmd = ["uname", "-s"]
-
+        cmd = ["cmd", "/c", "ver"] if is_windows() else ["uname", "-s"]
         result = run_command(cmd, shell=False)
 
         assert isinstance(result, subprocess.CompletedProcess)
@@ -208,11 +202,7 @@ class TestCommandExecution:
 
     def test_run_command_timeout(self) -> None:
         """Command timeout works correctly."""
-        if is_windows():
-            cmd = ["cmd", "/c", "timeout", "10"]
-        else:
-            cmd = ["sleep", "10"]
-
+        cmd = ["cmd", "/c", "timeout", "10"] if is_windows() else ["sleep", "10"]
         with pytest.raises(subprocess.TimeoutExpired):
             run_command(cmd, timeout=1)
 
@@ -319,9 +309,9 @@ class TestPrivilegeChecking:
     @pytest.mark.skipif(sys.platform == "win32", reason="Unix-specific test")
     def test_check_admin_privileges_unix(self) -> None:
         """Unix admin check uses os.geteuid."""
-        result = check_admin_privileges()
-
         if hasattr(os, "geteuid"):
+            result = check_admin_privileges()
+
             expected = os.geteuid() == 0
             assert result == expected
 
@@ -392,9 +382,9 @@ class TestMemoryOptimization:
     @pytest.mark.skipif(not PSUTIL_AVAILABLE, reason="psutil not available")
     def test_optimize_memory_usage_memory_stats(self) -> None:
         """Memory optimization includes before/after stats."""
-        stats = optimize_memory_usage()
-
         if psutil:
+            stats = optimize_memory_usage()
+
             assert "total" in stats["before"]
             assert "available" in stats["before"]
             assert "total" in stats["after"]

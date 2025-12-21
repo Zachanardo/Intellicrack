@@ -337,7 +337,7 @@ class TestLicensePatternDetection:
         license_hits = explorer._search_license_patterns(app, binary_data)
 
         activation_hits = [hit for hit in license_hits if hit["keyword"] == "activation"]
-        assert len(activation_hits) > 0
+        assert activation_hits
 
         hit = activation_hits[0]
         assert "address" in hit

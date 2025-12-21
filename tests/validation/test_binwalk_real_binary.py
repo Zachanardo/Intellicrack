@@ -16,7 +16,7 @@ def test_binary(filepath, name, expected_signatures_min=1):
     print('='*80)
 
     if not os.path.exists(filepath):
-        print(f"FAIL SKIP: File not found")
+        print("FAIL SKIP: File not found")
         return
 
     filesize = os.path.getsize(filepath)
@@ -25,15 +25,15 @@ def test_binary(filepath, name, expected_signatures_min=1):
     try:
         results = list(binwalk.scan(filepath))
 
-        if len(results) == 0:
-            print(f"FAIL FAIL: No module results returned")
+        if not results:
+            print("FAIL FAIL: No module results returned")
             tests_failed += 1
             return
 
         module = results[0]
 
         if module.errors:
-            print(f"FAIL FAIL: Errors encountered:")
+            print("FAIL FAIL: Errors encountered:")
             for error in module.errors:
                 print(f"  - {error}")
             tests_failed += 1

@@ -421,18 +421,12 @@ class LLMConfigManager:
 
         if isinstance(raw_configs, dict) and raw_configs:
             central_configs: dict[str, dict[str, Any]] = {
-                str(key): dict(value)
-                for key, value in raw_configs.items()
-                if isinstance(value, dict)
+                str(key): dict(value) for key, value in raw_configs.items() if isinstance(value, dict)
             }
             self.configs.update(central_configs)
             return central_configs.copy()
 
-        result: dict[str, dict[str, Any]] = {
-            str(key): dict(value)
-            for key, value in self.configs.items()
-            if isinstance(value, dict)
-        }
+        result: dict[str, dict[str, Any]] = {str(key): dict(value) for key, value in self.configs.items() if isinstance(value, dict)}
         return result
 
     def auto_load_models(
@@ -529,9 +523,7 @@ class LLMConfigManager:
 
         if isinstance(raw_profiles, dict) and raw_profiles:
             central_profiles: dict[str, dict[str, Any]] = {
-                str(key): dict(value)
-                for key, value in raw_profiles.items()
-                if isinstance(value, dict)
+                str(key): dict(value) for key, value in raw_profiles.items() if isinstance(value, dict)
             }
             for key, value in central_profiles.items():
                 self.profiles[key] = value

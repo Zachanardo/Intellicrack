@@ -209,7 +209,7 @@ class TestHexEditing:
         assert modified_data[0] == 0xFF
         assert modified_data[2] == 0xAA
         assert modified_data[1] == 0x11
-        assert viewer.modified is False
+        assert not viewer.modified
         assert len(viewer.modifications) == 0
 
 
@@ -390,7 +390,7 @@ class TestRealBinaryFiles:
 
         viewer = TerminalHexViewer(str(test_file))
 
-        assert viewer.data[0:2] == b"MZ"
+        assert viewer.data[:2] == b"MZ"
         assert b"PE\x00\x00" in viewer.data
 
     def test_hex_viewer_displays_elf_header(self, tmp_path: Path) -> None:
@@ -405,4 +405,4 @@ class TestRealBinaryFiles:
 
         viewer = TerminalHexViewer(str(test_file))
 
-        assert viewer.data[0:4] == b"\x7fELF"
+        assert viewer.data[:4] == b"\x7fELF"

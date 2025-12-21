@@ -925,9 +925,9 @@ class NativeManticore:
             if len(instruction_bytes) >= 2:
                 displacement = struct.unpack("b", instruction_bytes[1:2])[0]
 
-                if take_branch := (
-                    opcode == 0x74 and state.flags.get("ZF", False)
-                ) or (opcode == 0x75 and not state.flags.get("ZF", False)):
+                if take_branch := (opcode == 0x74 and state.flags.get("ZF", False)) or (
+                    opcode == 0x75 and not state.flags.get("ZF", False)
+                ):
                     state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
                     state.pc = state.pc + 2 + displacement
                 else:
@@ -947,9 +947,9 @@ class NativeManticore:
                 if opcode2 in [0x84, 0x85] and len(instruction_bytes) >= 6:
                     displacement = struct.unpack("<i", instruction_bytes[2:6])[0]
 
-                    if take_branch := (
-                        opcode2 == 0x84 and state.flags.get("ZF", False)
-                    ) or (opcode2 == 0x85 and not state.flags.get("ZF", False)):
+                    if take_branch := (opcode2 == 0x84 and state.flags.get("ZF", False)) or (
+                        opcode2 == 0x85 and not state.flags.get("ZF", False)
+                    ):
                         logger.debug("Taking branch at PC %#x: take_branch=%s", state.pc, take_branch)
                         state.pc = state.pc + 6 + displacement
                     else:

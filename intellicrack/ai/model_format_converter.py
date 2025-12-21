@@ -38,22 +38,43 @@ gpu_autoloader: Callable[[Any], Any] | None = None
 
 try:
     from ..utils.gpu_autoloader import (
-        empty_cache as _empty_cache,
         get_device as _get_device,
         get_gpu_info as _get_gpu_info,
         gpu_autoloader as _gpu_autoloader,
-        memory_allocated as _memory_allocated,
-        memory_reserved as _memory_reserved,
-        to_device as _to_device,
     )
 
     get_device = _get_device
     get_gpu_info = _get_gpu_info
-    to_device = _to_device
-    memory_allocated = _memory_allocated
-    memory_reserved = _memory_reserved
-    empty_cache = _empty_cache
-    gpu_autoloader = _gpu_autoloader
+
+    try:
+        from ..utils.gpu_autoloader import to_device as _to_device
+
+        to_device = _to_device  # type: ignore[assignment]
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        from ..utils.gpu_autoloader import memory_allocated as _memory_allocated  # type: ignore[attr-defined]
+
+        memory_allocated = _memory_allocated
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        from ..utils.gpu_autoloader import memory_reserved as _memory_reserved  # type: ignore[attr-defined]
+
+        memory_reserved = _memory_reserved
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        from ..utils.gpu_autoloader import empty_cache as _empty_cache  # type: ignore[attr-defined]
+
+        empty_cache = _empty_cache
+    except (ImportError, AttributeError):
+        pass
+
+    gpu_autoloader = _gpu_autoloader  # type: ignore[assignment]
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
@@ -63,7 +84,7 @@ try:
 
     HAS_TORCH = True
 except ImportError:
-    torch = None
+    torch = None  # type: ignore[assignment]
     HAS_TORCH = False
 
 logger = get_logger(__name__)
@@ -76,7 +97,7 @@ try:
     HAS_ONNX = True
 except ImportError as e:
     logger.exception("Import error in model_format_converter: %s", e)
-    onnx = None
+    onnx = None  # type: ignore[assignment]
     ort = None
     HAS_ONNX = False
 
@@ -91,7 +112,7 @@ try:
     HAS_TF = True
 except ImportError as e:
     logger.exception("Import error in model_format_converter: %s", e)
-    tf = None
+    tf = None  # type: ignore[assignment]
     HAS_TF = False
 
 try:
@@ -100,10 +121,10 @@ try:
     HAS_TRANSFORMERS = True
 except ImportError as e:
     logger.exception("Import error in model_format_converter: %s", e)
-    AutoConfig = None
-    AutoModel = None
-    AutoModelForCausalLM = None
-    AutoTokenizer = None
+    AutoConfig = None  # type: ignore[misc, assignment]
+    AutoModel = None  # type: ignore[misc, assignment]
+    AutoModelForCausalLM = None  # type: ignore[misc, assignment]
+    AutoTokenizer = None  # type: ignore[misc, assignment]
     HAS_TRANSFORMERS = False
 
 safe_open: Any = None
@@ -317,55 +338,39 @@ class ModelFormatConverter:
 
         try:
             if source_path.is_dir():
-                if HAS_TRANSFORMERS:
-                    device = "cpu"
-                    if GPU_AUTOLOADER_AVAILABLE and get_device:
-                        device = get_device()
-                    elif HAS_TORCH and torch is not None and torch.cuda.is_available():
-                        device = "cuda"
-
-                    if AutoModelForCausalLM is None:
-                        logger.exception("AutoModelForCausalLM not available")
-                        return None
-
-                    model = AutoModelForCausalLM.from_pretrained(
-                        str(source_path),
-                        torch_dtype=torch.float32 if torch is not None else None,
-                        device_map=device if device != "cpu" else None,
-                    )
-
-                    if AutoConfig is None:
-                        logger.exception("AutoConfig not available")
-                        return None
-
-                    config = AutoConfig.from_pretrained(str(source_path))
-
-                    batch_size_val = cast("int", kwargs.get("batch_size", 1))
-                    sequence_length_val = cast("int", kwargs.get("sequence_length", 128))
-
-                    if torch is None:
-                        logger.exception("torch not available")
-                        return None
-
-                    sample_input = torch.randint(
-                        0,
-                        config.vocab_size,
-                        (batch_size_val, sequence_length_val),
-                        dtype=torch.long,
-                    )
-                else:
-                    logger.exception("transformers required for loading HF models")
+                if not HAS_TRANSFORMERS or AutoModelForCausalLM is None or AutoConfig is None or torch is None:
+                    logger.exception("transformers, AutoModelForCausalLM, AutoConfig, and torch required for HF models")
                     return None
+
+                device = "cpu"
+                if GPU_AUTOLOADER_AVAILABLE and get_device:
+                    device = get_device()
+                elif torch.cuda.is_available():
+                    device = "cuda"
+
+                model = AutoModelForCausalLM.from_pretrained(
+                    str(source_path),
+                    torch_dtype=torch.float32,
+                    device_map=device if device != "cpu" else None,
+                )
+
+                config = AutoConfig.from_pretrained(str(source_path))
+
+                batch_size_val = cast("int", kwargs.get("batch_size", 1))
+                sequence_length_val = cast("int", kwargs.get("sequence_length", 128))
+
+                sample_input = torch.randint(
+                    0,
+                    config.vocab_size,
+                    (batch_size_val, sequence_length_val),
+                    dtype=torch.long,
+                )
             else:
                 device = "cpu"
                 if GPU_AUTOLOADER_AVAILABLE and get_device:
                     device = get_device()
-                elif HAS_TORCH and torch is not None and torch.cuda.is_available():
+                elif torch.cuda.is_available():
                     device = "cuda"
-
-                if torch is None:
-                    logger.exception("torch not available")
-                    return None
 
                 model = torch.load(source_path, map_location=device)
 
@@ -377,7 +382,7 @@ class ModelFormatConverter:
                 input_shape_tuple = cast("tuple[int, ...]", input_shape_val)
                 sample_input = torch.randn(*input_shape_tuple)
 
-            model.eval()
+            model.eval()  # type: ignore[no-untyped-call]
 
             if GPU_AUTOLOADER_AVAILABLE and to_device and device != "cpu":
                 try:
@@ -389,13 +394,13 @@ class ModelFormatConverter:
 
             output_path.parent.mkdir(parents=True, exist_ok=True)
 
-            dynamic_axes_val = kwargs.get(
-                "dynamic_axes",
-                {
-                    "input_ids": {0: "batch_size", 1: "sequence"},
-                    "output": {0: "batch_size", 1: "sequence"},
-                },
-            )
+            dynamic_axes_default: dict[str, dict[int, str]] = {
+                "input_ids": {0: "batch_size", 1: "sequence"},
+                "output": {0: "batch_size", 1: "sequence"},
+            }
+            dynamic_axes_val = kwargs.get("dynamic_axes", dynamic_axes_default)
+            if not isinstance(dynamic_axes_val, dict):
+                dynamic_axes_val = dynamic_axes_default
 
             opset_version_val = cast("int", kwargs.get("opset_version", 14))
             do_constant_folding_val = cast("bool", kwargs.get("do_constant_folding", True))
@@ -405,7 +410,7 @@ class ModelFormatConverter:
 
             torch.onnx.export(
                 model,
-                sample_input,
+                (sample_input,),
                 str(output_path),
                 export_params=True,
                 opset_version=opset_version_val,
@@ -415,10 +420,6 @@ class ModelFormatConverter:
                 dynamic_axes=dynamic_axes_val,
                 verbose=verbose_val,
             )
-
-            if onnx is None:
-                logger.exception("onnx not available for verification")
-                return None
 
             onnx_model = onnx.load(str(output_path))
             onnx.checker.check_model(onnx_model)
@@ -447,15 +448,15 @@ class ModelFormatConverter:
             Path to SafeTensors file or None
 
         """
-        if not HAS_SAFETENSORS:
+        if not HAS_SAFETENSORS or save_file is None:
             logger.exception("safetensors not available for conversion")
             return None
 
-        try:
-            if torch is None:
-                logger.exception("torch not available")
-                return None
+        if not HAS_TORCH or torch is None:
+            logger.exception("torch not available for conversion")
+            return None
 
+        try:
             state_dict: dict[str, Any] = {}
             if source_path.is_dir():
                 model_files = list(source_path.glob("*.bin")) + list(source_path.glob("*.pt"))
@@ -509,9 +510,6 @@ class ModelFormatConverter:
                     logger.debug("Could not apply GPU optimizations: %s", e)
 
             metadata_val = cast("dict[str, str]", kwargs.get("metadata", {}))
-            if save_file is None:
-                logger.exception("save_file not available")
-                return None
 
             save_file(state_dict, str(output_path), metadata=metadata_val)
 
@@ -539,19 +537,15 @@ class ModelFormatConverter:
             Path to PyTorch model or None
 
         """
-        if not HAS_SAFETENSORS:
+        if not HAS_SAFETENSORS or safe_open is None:
             logger.exception("safetensors not available for conversion")
             return None
 
+        if not HAS_TORCH or torch is None:
+            logger.exception("torch not available for conversion")
+            return None
+
         try:
-            if torch is None:
-                logger.exception("torch not available")
-                return None
-
-            if safe_open is None:
-                logger.exception("safe_open not available")
-                return None
-
             device_val = cast("str", kwargs.get("device", "cpu"))
             dtype_val = kwargs.get("dtype")
             preserve_layout_val = cast("bool", kwargs.get("preserve_layout", True))
@@ -599,7 +593,7 @@ class ModelFormatConverter:
             Path to ONNX model or None
 
         """
-        if not HAS_TF or not HAS_ONNX:
+        if not HAS_TF or not HAS_ONNX or tf is None:
             logger.exception("TensorFlow and ONNX required for conversion")
             return None
 
@@ -607,12 +601,8 @@ class ModelFormatConverter:
             try:
                 import tf2onnx
 
-                if tf is None:
-                    logger.exception("TensorFlow not available")
-                    return None
-
                 if source_path.is_dir():
-                    model = tf.saved_model.load(str(source_path))
+                    model = tf.saved_model.load(str(source_path))  # type: ignore[attr-defined]
                 elif hasattr(tf, "keras"):
                     model = tf.keras.models.load_model(str(source_path))
                 else:
@@ -628,7 +618,7 @@ class ModelFormatConverter:
                         logger.exception("input_spec required for Keras models")
                         return None
 
-                    @tf.function  # type: ignore[untyped-decorator]
+                    @tf.function  # type: ignore[attr-defined, untyped-decorator]
                     def inference_func(x: Any) -> Any:
                         return model(x)
 
@@ -754,26 +744,18 @@ class ModelFormatConverter:
 
         """
         try:
-            if format == "onnx" and HAS_ONNX:
-                if ort is None:
-                    logger.exception("ort not available")
-                    return None
-
+            if format == "onnx" and HAS_ONNX and ort is not None:
                 session = ort.InferenceSession(str(model_path))
                 outputs = session.run(None, inputs)
 
                 output_names = [o.name for o in session.get_outputs()]
                 return dict(zip(output_names, outputs, strict=False))
 
-            if format == "pytorch":
-                if torch is None:
-                    logger.exception("torch not available")
-                    return None
-
+            if format == "pytorch" and HAS_TORCH and torch is not None:
                 device = "cpu"
                 if GPU_AUTOLOADER_AVAILABLE and get_device:
                     device = get_device()
-                elif HAS_TORCH and torch.cuda.is_available():
+                elif torch.cuda.is_available():
                     device = "cuda"
 
                 model = torch.load(model_path, map_location=device)
@@ -796,12 +778,8 @@ class ModelFormatConverter:
                         return {k: v.cpu().numpy() for k, v in output.items()}
                     return {"output": output.cpu().numpy()}
 
-            elif format == "tensorflow" and HAS_TF:
-                if tf is None:
-                    logger.exception("tf not available")
-                    return None
-
-                model = tf.saved_model.load(str(model_path))
+            if format == "tensorflow" and HAS_TF and tf is not None:
+                model = tf.saved_model.load(str(model_path))  # type: ignore[attr-defined]
 
                 infer = model.signatures.get("serving_default", model)
 
@@ -809,9 +787,8 @@ class ModelFormatConverter:
 
                 return {k: v.numpy() for k, v in outputs.items()}
 
-            else:
-                logger.exception("Inference not supported for format: %s", format)
-                return None
+            logger.exception("Inference not supported for format: %s", format)
+            return None
 
         except Exception as e:
             logger.exception("Inference failed: %s", e)
@@ -841,12 +818,8 @@ class ModelFormatConverter:
             total_size = sum(f.stat().st_size for f in model_path.rglob("*") if f.is_file())
             info["size_mb"] = total_size / (1024 * 1024)
 
-        if info["format"] == "onnx" and HAS_ONNX:
+        if info["format"] == "onnx" and HAS_ONNX and onnx is not None:
             try:
-                if onnx is None:
-                    logger.exception("onnx not available")
-                    return info
-
                 model = onnx.load(str(model_path))
                 params_dict: dict[str, Any] = info["parameters"]
                 params_dict["inputs"] = [
@@ -881,7 +854,7 @@ class ModelFormatConverter:
             Loaded model or None
 
         """
-        if not HAS_TRANSFORMERS or not AutoModel:
+        if not HAS_TRANSFORMERS or AutoModel is None:
             logger.exception("transformers with AutoModel required")
             return None
 
@@ -926,7 +899,7 @@ class ModelFormatConverter:
             Dictionary with architecture details or None
 
         """
-        if not HAS_TRANSFORMERS or not AutoModel or not AutoConfig:
+        if not HAS_TRANSFORMERS or AutoModel is None or AutoConfig is None:
             logger.exception("transformers with AutoModel required")
             return None
 
@@ -998,11 +971,7 @@ class ModelFormatConverter:
             output_path_obj = Path(cast("str", output_path_val))
 
         try:
-            if target_format == "onnx" and HAS_ONNX and HAS_TORCH:
-                if torch is None or AutoConfig is None:
-                    logger.exception("torch or AutoConfig not available")
-                    return None
-
+            if target_format == "onnx" and HAS_ONNX and HAS_TORCH and torch is not None and AutoConfig is not None:
                 model.eval()
 
                 config = AutoConfig.from_pretrained(str(source_path))
@@ -1020,7 +989,10 @@ class ModelFormatConverter:
                 opset_version_val = cast("int", kwargs.get("opset_version", 14))
                 input_names_val = cast("list[str]", kwargs.get("input_names", ["input"]))
                 output_names_val = cast("list[str]", kwargs.get("output_names", ["output"]))
-                dynamic_axes_val = kwargs.get("dynamic_axes", {"input": {0: "batch_size"}, "output": {0: "batch_size"}})
+                dynamic_axes_default: dict[str, dict[int, str]] = {"input": {0: "batch_size"}, "output": {0: "batch_size"}}
+                dynamic_axes_val = kwargs.get("dynamic_axes", dynamic_axes_default)
+                if not isinstance(dynamic_axes_val, dict):
+                    dynamic_axes_val = dynamic_axes_default
 
                 torch.onnx.export(
                     model,

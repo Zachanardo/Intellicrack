@@ -50,8 +50,7 @@ def mock_binary_path(tmp_path: Path) -> Path:
 @pytest.fixture
 def r2_widget(qapp: QApplication) -> R2IntegrationWidget:
     """Create R2IntegrationWidget instance."""
-    widget = R2IntegrationWidget()
-    yield widget
+    yield R2IntegrationWidget()
 
 
 class TestR2AnalysisWorkerDecompilation:

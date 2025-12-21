@@ -191,8 +191,7 @@ class TestToolDiscovery:
         common_tools = ["python", "git"] if os.name == "nt" else ["python3", "ls", "cat"]
 
         for tool in common_tools:
-            result = find_tool(tool)
-            if result:
+            if result := find_tool(tool):
                 assert isinstance(result, str)
                 assert len(result) > 0
 
@@ -288,25 +287,19 @@ class TestSystemPathDiscovery:
 
     def test_get_system_path_desktop_fallback(self) -> None:
         """get_system_path('desktop') uses fallback mechanism."""
-        desktop_path = get_system_path("desktop")
-
-        if desktop_path:
+        if desktop_path := get_system_path("desktop"):
             assert isinstance(desktop_path, str)
             assert "Desktop" in desktop_path or "desktop" in desktop_path.lower()
 
     def test_get_system_path_documents_fallback(self) -> None:
         """get_system_path('documents') uses fallback mechanism."""
-        documents_path = get_system_path("documents")
-
-        if documents_path:
+        if documents_path := get_system_path("documents"):
             assert isinstance(documents_path, str)
             assert "Documents" in documents_path or "documents" in documents_path.lower()
 
     def test_get_system_path_downloads_fallback(self) -> None:
         """get_system_path('downloads') uses fallback mechanism."""
-        downloads_path = get_system_path("downloads")
-
-        if downloads_path:
+        if downloads_path := get_system_path("downloads"):
             assert isinstance(downloads_path, str)
             assert "Downloads" in downloads_path or "downloads" in downloads_path.lower()
 

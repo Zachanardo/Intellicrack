@@ -38,7 +38,7 @@ def simple_pe_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "simple.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature = b"PE\x00\x00"
@@ -66,7 +66,7 @@ def simple_pe_binary(temp_workspace: Path) -> Path:
     section_header += struct.pack("<IIIIIIHHI", 0x1000, 0x1000, 0x200, 0x200, 0, 0, 0, 0, 0x60000020)
 
     x64_code = bytearray(512)
-    x64_code[0:7] = b"\x48\x83\xEC\x28"
+    x64_code[:7] = b"\x48\x83\xEC\x28"
     x64_code[4:8] = b"\x33\xC0"
     x64_code[8:12] = b"\x48\x83\xC4\x28"
     x64_code[12:13] = b"\xC3"
@@ -135,7 +135,7 @@ def control_flow_flattened_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "flattened.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature = b"PE\x00\x00"
@@ -150,7 +150,7 @@ def control_flow_flattened_binary(temp_workspace: Path) -> Path:
 
     dispatcher_code = bytearray(1536)
 
-    dispatcher_code[0:4] = b"\x48\x83\xEC\x28"
+    dispatcher_code[:4] = b"\x48\x83\xEC\x28"
     dispatcher_code[4:8] = b"\xC7\x45\xFC\x00\x00\x00\x00"
 
     dispatcher_offset = 20
@@ -211,7 +211,7 @@ def opaque_predicate_binary(temp_workspace: Path) -> Path:
     binary_path = temp_workspace / "opaque.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature = b"PE\x00\x00"
@@ -224,7 +224,7 @@ def opaque_predicate_binary(temp_workspace: Path) -> Path:
 
     opaque_code = bytearray(1024)
 
-    opaque_code[0:4] = b"\x48\x83\xEC\x28"
+    opaque_code[:4] = b"\x48\x83\xEC\x28"
 
     opaque_code[10:14] = b"\x33\xC0"
     opaque_code[14:18] = b"\x85\xC0"
@@ -373,10 +373,10 @@ class TestBasicBlockExtraction:
                 block_type = basic_block.block_type
                 type_counts[block_type] = type_counts.get(block_type, 0) + 1
 
-            assert len(type_counts) > 0
+            assert type_counts
             assert all(
                 block_type in ["return", "call", "branch", "sequential", "empty"]
-                for block_type in type_counts.keys()
+                for block_type in type_counts
             )
 
         except Exception:
@@ -487,7 +487,7 @@ class TestControlFlowGraphConstruction:
 
             entry_candidates = [node for node in result.original_cfg.nodes() if result.original_cfg.in_degree(node) == 0]
 
-            assert len(entry_candidates) >= 1
+            assert entry_candidates
 
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")
@@ -504,8 +504,6 @@ class TestControlFlowGraphConstruction:
                 basic_block: BasicBlock = result.original_cfg.nodes[node]["data"]
                 if basic_block.block_type == "return" or result.original_cfg.out_degree(node) == 0:
                     exit_blocks.append(node)
-
-            assert len(exit_blocks) >= 0
 
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")
@@ -526,8 +524,6 @@ class TestBranchConditionAnalysis:
                 basic_block: BasicBlock = result.original_cfg.nodes[node]["data"]
                 if basic_block.block_type == "branch":
                     branch_blocks.append(node)
-
-            assert len(branch_blocks) >= 0
 
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")
@@ -563,8 +559,7 @@ class TestBranchConditionAnalysis:
                     assert edge_type in ["conditional_true", "conditional_false"]
 
             if result.original_cfg.number_of_edges() > 1:
-                assert found_conditional or True
-
+                pass
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")
 
@@ -772,10 +767,6 @@ class TestLoopDetection:
 
             for node in result.original_cfg.nodes():
                 successors = list(result.original_cfg.successors(node))
-                for successor in successors:
-                    if successor <= node:
-                        pass
-
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")
 
@@ -801,8 +792,6 @@ class TestFunctionCallGraphExtraction:
                     if "call" in disasm:
                         call_blocks.append(node)
                         break
-
-            assert len(call_blocks) >= 0
 
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")
@@ -987,7 +976,7 @@ class TestCFGExportAndVisualization:
             output_path = temp_workspace / "cfg.dot"
             success: bool = deobfuscator.export_deobfuscated_cfg(result, output_path)
 
-            assert success is True or success is False
+            assert success or not success
 
             if success:
                 assert output_path.exists()
@@ -1011,8 +1000,6 @@ class TestBinaryPatching:
 
             if len(result.dispatcher_info) > 0:
                 nop_patches = [p for p in result.patch_info if p.get("type") == "nop_dispatcher"]
-
-                assert len(nop_patches) >= 0
 
                 for patch in nop_patches:
                     assert "address" in patch
@@ -1157,8 +1144,6 @@ class TestComplexControlFlow:
             result: DeobfuscationResult = deobfuscator.deobfuscate_function(0x1000)
 
             high_degree_blocks = [node for node in result.original_cfg.nodes() if result.original_cfg.out_degree(node) >= 3]
-
-            assert len(high_degree_blocks) >= 0
 
         except Exception:
             pytest.skip("Radare2 not available or function analysis failed")

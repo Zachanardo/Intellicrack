@@ -15,14 +15,13 @@ from intellicrack.core.analysis.cfg_explorer import CFGExplorer, log_message
 
 def create_simple_pe_binary() -> bytes:
     """Create minimal valid PE binary for testing."""
-    pe_header = (
+    return (
         b"MZ\x90\x00"
         + b"\x00" * 58
         + b"\x80\x00\x00\x00"
         + b"PE\x00\x00"
         + b"\x00" * 100
     )
-    return pe_header
 
 
 class TestAdvancedCFGPatterns:
@@ -48,8 +47,7 @@ class TestAdvancedCFGPatterns:
         explorer = CFGExplorer()
         explorer.load_binary(str(simple_pe_binary))
 
-        functions: list[str] = explorer.get_function_list()
-        if functions:
+        if functions := explorer.get_function_list():
             func_name: str = functions[0]
             explorer.set_current_function(func_name)
 
@@ -121,10 +119,10 @@ class TestCFGUtilityFunctions:
         if functions and explorer.functions:
             first_func = functions[0]
             func_data: dict[str, Any] = explorer.functions[first_func]
-            base_addr: int = func_data.get("addr", 0)
             size: int = func_data.get("size", 0)
 
             if size > 4:
+                base_addr: int = func_data.get("addr", 0)
                 mid_address: int = base_addr + 2
 
                 result: str | None = explorer._find_function_by_address(mid_address)
@@ -167,13 +165,10 @@ class TestCFGEdgeCases:
         explorer = CFGExplorer()
         explorer.load_binary(str(simple_pe_binary))
 
-        functions: list[str] = explorer.get_function_list()
-        if functions:
+        if functions := explorer.get_function_list():
             func_name: str = functions[0]
 
-            analysis: dict[str, Any] | None = explorer.analyze_function(func_name)
-
-            if analysis:
+            if analysis := explorer.analyze_function(func_name):
                 assert "num_blocks" in analysis
                 num_blocks: int = analysis["num_blocks"]
                 assert isinstance(num_blocks, int)
@@ -233,10 +228,10 @@ class TestCFGEdgeCases:
         result: bool = explorer.load_binary("nonexistent_file.exe")
 
         assert isinstance(result, bool)
-        assert result is False
+        assert not result
 
         functions: list[str] = explorer.get_function_list()
-        assert len(functions) == 0
+        assert not functions
 
     def test_analyze_binary_with_anti_analysis_checks(
         self, simple_pe_binary: Path
@@ -264,8 +259,7 @@ class TestCFGComplexityCalculations:
         explorer = CFGExplorer()
         explorer.load_binary(str(simple_pe_binary))
 
-        functions: list[str] = explorer.get_function_list()
-        if functions:
+        if functions := explorer.get_function_list():
             func_name: str = functions[0]
             func_data: dict[str, Any] = explorer.functions[func_name]
 
@@ -281,8 +275,7 @@ class TestCFGComplexityCalculations:
         explorer = CFGExplorer()
         explorer.load_binary(str(simple_pe_binary))
 
-        functions: list[str] = explorer.get_function_list()
-        if functions:
+        if functions := explorer.get_function_list():
             func_name: str = functions[0]
             explorer.set_current_function(func_name)
 
@@ -339,7 +332,7 @@ class TestCFGCallGraphAdvanced:
             centrality: dict[str, float] = call_graph_metrics["betweenness_centrality"]
             assert isinstance(centrality, dict)
 
-            for func, score in centrality.items():
+            for score in centrality.values():
                 assert isinstance(score, float)
                 assert score >= 0.0
 
@@ -352,16 +345,11 @@ class TestCFGVisualizationAdvanced:
         explorer = CFGExplorer()
         explorer.load_binary(str(simple_pe_binary))
 
-        functions: list[str] = explorer.get_function_list()
-        if functions:
+        if functions := explorer.get_function_list():
             func_name: str = functions[0]
             explorer.set_current_function(func_name)
 
-            layout: dict[int, tuple[float, float]] | None = (
-                explorer.get_graph_layout("spring")
-            )
-
-            if layout:
+            if layout := (explorer.get_graph_layout("spring")):
                 assert isinstance(layout, dict)
                 assert len(layout) > 0
 
@@ -370,8 +358,7 @@ class TestCFGVisualizationAdvanced:
         explorer = CFGExplorer()
         explorer.load_binary(str(simple_pe_binary))
 
-        functions: list[str] = explorer.get_function_list()
-        if functions:
+        if functions := explorer.get_function_list():
             func_name: str = functions[0]
             explorer.set_current_function(func_name)
 
@@ -396,7 +383,7 @@ class TestCFGErrorRecovery:
         explorer = CFGExplorer()
 
         result1: bool = explorer.load_binary("nonexistent1.exe")
-        assert result1 is False
+        assert not result1
 
         with tempfile.NamedTemporaryFile(
             mode="wb", suffix=".exe", delete=False

@@ -145,16 +145,7 @@ class FunctionalVerification:
         temp_file = self.temp_dir / f"input_{uuid.uuid4().hex[:8]}.tmp"
 
         # Generate content based on software type
-        if software_type == "image_editor":
-            # Create a simple image-like file
-            with open(temp_file, 'w') as f:
-                f.write("P3\n")
-                f.write("10 10\n")
-                f.write("255\n")
-                for i in range(10):
-                    for j in range(10):
-                        f.write(f"{i*25} {j*25} {(i+j)*12}\n")
-        elif software_type == "cad_software":
+        if software_type == "cad_software":
             # Create a simple CAD-like file
             with open(temp_file, 'w') as f:
                 f.write("LINE 0,0 100,100\n")
@@ -167,14 +158,23 @@ class FunctionalVerification:
                 f.write("b = 18;\n")
                 f.write("result = a * b + 100;\n")
                 f.write("disp(result);\n")
+        elif software_type == "image_editor":
+            # Create a simple image-like file
+            with open(temp_file, 'w') as f:
+                f.write("P3\n")
+                f.write("10 10\n")
+                f.write("255\n")
+                for i in range(10):
+                    for j in range(10):
+                        f.write(f"{i*25} {j*25} {(i+j)*12}\n")
         elif software_type == "office_suite":
             # Create a simple document
             with open(temp_file, 'w') as f:
                 f.write("Intellicrack Functional Test Document\n")
                 f.write("====================================\n\n")
                 f.write("This document was created for functional verification.\n")
-                f.write("Test ID: " + uuid.uuid4().hex[:8] + "\n")
-                f.write("Timestamp: " + datetime.now().isoformat() + "\n")
+                f.write(f"Test ID: {uuid.uuid4().hex[:8]}" + "\n")
+                f.write(f"Timestamp: {datetime.now().isoformat()}" + "\n")
         else:
             # Generic content
             with open(temp_file, 'w') as f:
@@ -205,23 +205,18 @@ class FunctionalVerification:
 
             # Monitor for the timeout period
             start_time = time.time()
-            while time.time() - start_time < timeout:
-                if process.poll() is not None:
-                    # Process has finished
-                    break
-
-                # Collect process information if psutil is available
+            while time.time() - start_time < timeout and not process.poll() is not None:
                 if psutil:
                     try:
                         p = psutil.Process(process.pid)
                         cpu_percent = p.cpu_percent()
                         memory_info = p.memory_info()
-
+            
                         monitoring_data["cpu_usage"].append({
                             "timestamp": datetime.now().isoformat(),
                             "percent": cpu_percent
                         })
-
+            
                         monitoring_data["memory_usage"].append({
                             "timestamp": datetime.now().isoformat(),
                             "rss": memory_info.rss,
@@ -232,7 +227,7 @@ class FunctionalVerification:
                         break
                     except Exception as e:
                         monitoring_data["error_messages"].append(f"Monitoring error: {e}")
-
+            
                 time.sleep(1)
 
             # Wait for process to complete or terminate it
@@ -786,12 +781,7 @@ Note: This may indicate Office is not installed or COM interface is disabled
         try:
             # Get tests for this software type
             software_config = self.software_tests.get(software_type, {})
-            tests = software_config.get("tests", [])
-
-            if not tests:
-                error_message = f"No functional tests defined for software type: {software_type}"
-                logger.warning(error_message)
-            else:
+            if tests := software_config.get("tests", []):
                 # Run each test
                 for test_config in tests:
                     test_name = test_config["name"]
@@ -859,6 +849,9 @@ Note: This may indicate Office is not installed or COM interface is disabled
                 # Determine overall success
                 overall_success = tests_passed == tests_run
 
+            else:
+                error_message = f"No functional tests defined for software type: {software_type}"
+                logger.warning(error_message)
         except Exception as e:
             error_message = str(e)
             logger.error(f"Functional verification failed for {software_name}: {e}")
@@ -963,24 +956,34 @@ Note: This may indicate Office is not installed or COM interface is disabled
         # Summary statistics
         total_tests = sum(r.tests_run for r in results)
         total_passed = sum(r.tests_passed for r in results)
-        successful_software = sum(1 for r in results if r.overall_success)
+        successful_software = sum(bool(r.overall_success)
+                              for r in results)
 
         report_lines.append("Summary:")
         report_lines.append(f"  Total Tests Run: {total_tests}")
         report_lines.append(f"  Tests Passed: {total_passed}")
         report_lines.append(f"  Success Rate: {total_passed/total_tests*100:.1f}%" if total_tests > 0 else "  Success Rate: N/A")
-        report_lines.append(f"  Software Passing All Tests: {successful_software}/{len(results)}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Software Passing All Tests: {successful_software}/{len(results)}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for result in results:
-            report_lines.append(f"Software: {result.software_name} ({result.software_type})")
-            report_lines.append(f"  Binary Hash: {result.binary_hash[:16]}...")
-            report_lines.append(f"  Tests Run: {result.tests_run}")
-            report_lines.append(f"  Tests Passed: {result.tests_passed}")
+            report_lines.extend(
+                (
+                    f"Software: {result.software_name} ({result.software_type})",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Tests Run: {result.tests_run}",
+                    f"  Tests Passed: {result.tests_passed}",
+                )
+            )
             report_lines.append(f"  Overall Success: {result.overall_success}")
 
             if result.error_message:
@@ -1024,9 +1027,7 @@ if __name__ == "__main__":
     print("Functional Verification initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = verifier.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := verifier.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

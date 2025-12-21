@@ -789,7 +789,7 @@ class TestRestoreOriginal:
 
         try:
             spoofer.restore_original()
-            assert spoofer.hooks_installed is False
+            assert not spoofer.hooks_installed
         except Exception:
             pass
 

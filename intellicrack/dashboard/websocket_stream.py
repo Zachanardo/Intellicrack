@@ -514,9 +514,7 @@ class WebSocketEventStream:
             return False
 
         # Check tag filters
-        return "tags" not in filters or any(
-            tag in event.tags for tag in filters["tags"]
-        )
+        return "tags" not in filters or any(tag in event.tags for tag in filters["tags"])
 
     def _is_rate_limited(self, client_id: str) -> bool:
         """Check if client is rate limited."""

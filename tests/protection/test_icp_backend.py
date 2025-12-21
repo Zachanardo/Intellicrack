@@ -182,7 +182,7 @@ def temp_binary_high_entropy() -> Path:
 
     import random
     random.seed(42)
-    high_entropy_data = bytes([random.randint(0, 255) for _ in range(4096)])
+    high_entropy_data = bytes(random.randint(0, 255) for _ in range(4096))
 
     temp_file.write(high_entropy_data)
     temp_file.close()
@@ -576,7 +576,7 @@ class TestICPBackend:
             backend = ICPBackend()
 
             pe_header = bytearray(300)
-            pe_header[0:2] = b"MZ"
+            pe_header[:2] = b"MZ"
             struct.pack_into("<I", pe_header, 0x3C, 0x80)
             pe_header[0x80:0x84] = b"PE\x00\x00"
             struct.pack_into("<H", pe_header, 0x84, 0x014C)
@@ -590,7 +590,7 @@ class TestICPBackend:
             backend = ICPBackend()
 
             pe_header = bytearray(300)
-            pe_header[0:2] = b"MZ"
+            pe_header[:2] = b"MZ"
             struct.pack_into("<I", pe_header, 0x3C, 0x80)
             pe_header[0x80:0x84] = b"PE\x00\x00"
             struct.pack_into("<H", pe_header, 0x84, 0x8664)

@@ -235,9 +235,7 @@ class QEMUController:
             self.qmp_socket.send(cmd_json.encode())
             response = self.qmp_socket.recv(8192).decode()
             result = json.loads(response)
-            if not isinstance(result, dict):
-                return {}
-            return result
+            return result if isinstance(result, dict) else {}
         except Exception as e:
             logger.exception("QMP command failed: %s", e)
             return {}
@@ -1126,7 +1124,7 @@ class AntiAnalysisDetector:
                     timing_checks.append(f"QueryPerformanceCounter anomaly: {elapsed_qpc:.6f}s")
 
             elif platform.system() == "Linux":
-                try:
+                with contextlib.suppress(ImportError, AttributeError):
                     import resource
 
                     rusage1 = resource.getrusage(resource.RUSAGE_SELF)  # type: ignore[attr-defined]
@@ -1136,9 +1134,6 @@ class AntiAnalysisDetector:
                     cpu_time = rusage2.ru_utime - rusage1.ru_utime
                     if cpu_time > 0.01:
                         timing_checks.append(f"CPU time anomaly: {cpu_time:.6f}s")
-                except (ImportError, AttributeError):
-                    pass
-
         except Exception as e:
             logger.exception("Timing detection failed: %s", e)
 

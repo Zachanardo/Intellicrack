@@ -453,7 +453,7 @@ class TestCoreAnalysis(IntellicrackTestBase):
             section_results = []
             suspicious = _analyze_sections(pe, section_results)
             assert isinstance(suspicious, list)
-            assert len(section_results) > 0
+            assert section_results
             section_text = "\n".join(section_results)
             assert ".text" in section_text
             assert "Entropy:" in section_text
@@ -542,7 +542,8 @@ class TestCoreAnalysis(IntellicrackTestBase):
         results = analyze_binary_internal(binary_path)
 
         # Should have detailed sections
-        section_count = sum(1 for line in results if line.startswith("  ") and ":" in line)
+        section_count = sum(bool(line.startswith("  ") and ":" in line)
+                        for line in results)
         assert section_count > 5  # Should have multiple detailed findings
 
         # Should include technical details

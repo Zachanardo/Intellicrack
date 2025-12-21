@@ -32,18 +32,22 @@ import zlib
 from collections import Counter
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
+
 
 import numpy as np
+import numpy.typing as npt
 
 
 try:
     import lzma
+    from lzma import LZMACompressor
 
     HAS_LZMA = True
+    lzma_module: Any = lzma
 except ImportError:
     HAS_LZMA = False
-    lzma = None
+    lzma_module = None
 
 
 from ..utils.logger import get_logger
@@ -52,7 +56,8 @@ from .analysis_cache import AnalysisCache, get_analysis_cache
 
 if TYPE_CHECKING:
     from .icp_backend import ICPScanResult
-    from .intellicrack_protection_advanced import AdvancedProtectionAnalysis
+    from .intellicrack_protection_advanced import AdvancedProtectionAnalysis, IntellicrackAdvancedProtection, ScanMode as ProtectionScanMode
+    from .icp_backend import ScanMode as ICPScanModeType
 
 logger = get_logger(__name__)
 
@@ -60,7 +65,7 @@ if not HAS_LZMA:
     logger.warning("LZMA module not available - using zlib compression fallback")
 
 
-def _get_advanced_protection() -> type[AdvancedProtectionAnalysis]:
+def _get_advanced_protection() -> type[IntellicrackAdvancedProtection]:
     """Get the IntellicrackAdvancedProtection class.
 
     Returns:
@@ -72,7 +77,7 @@ def _get_advanced_protection() -> type[AdvancedProtectionAnalysis]:
     return IntellicrackAdvancedProtection
 
 
-def _get_scan_mode() -> object:
+def _get_scan_mode() -> type[ProtectionScanMode]:
     """Get the ScanMode enum from protection analysis module.
 
     Returns:
@@ -84,7 +89,7 @@ def _get_scan_mode() -> object:
     return ScanMode
 
 
-def _get_icp_scan_mode() -> object:
+def _get_icp_scan_mode() -> type[ICPScanModeType]:
     """Get the ScanMode enum from ICP backend module.
 
     Returns:
@@ -96,7 +101,7 @@ def _get_icp_scan_mode() -> object:
     return ICPScanMode
 
 
-def _get_icp_backend_func() -> object:
+def _get_icp_backend_func() -> Any:
     """Get the get_icp_backend function from ICP backend module.
 
     Returns:
@@ -173,7 +178,9 @@ class UnifiedProtectionEngine:
         self.enable_heuristics = enable_heuristics
 
         # Initialize engines
-        self.protection_detector = _get_advanced_protection()() if enable_protection else None
+        self.protection_detector: IntellicrackAdvancedProtection | None = (
+            _get_advanced_protection()() if enable_protection else None
+        )
 
         # Initialize advanced cache
         if cache_config:
@@ -202,7 +209,9 @@ class UnifiedProtectionEngine:
         cached_result = self.cache.get(file_path, scan_options)
         if cached_result is not None:
             logger.debug("Using cached analysis for %s", file_path)
-            return cached_result
+            if isinstance(cached_result, UnifiedProtectionResult):
+                return cached_result
+            logger.warning("Invalid cached result type, performing fresh analysis")
 
         # Initialize result
         result = UnifiedProtectionResult(
@@ -213,7 +222,7 @@ class UnifiedProtectionEngine:
 
         # Run analyses in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
-            futures = {}
+            futures: dict[str, concurrent.futures.Future[Any]] = {}
 
             # Submit protection analysis
             if self.protection_detector:
@@ -241,19 +250,21 @@ class UnifiedProtectionEngine:
             for name, future in futures.items():
                 try:
                     if name == "heuristic":
-                        if heur_result := future.result(timeout=timeout // 3):
+                        heur_result = future.result(timeout=timeout // 3)
+                        if heur_result is not None and isinstance(heur_result, dict):
                             result.engines_used.append("Heuristic")
                             self._merge_heuristic_results(result, heur_result)
 
                     elif name == "icp":
                         icp_result = future.result(timeout=timeout)
-                        if icp_result and not icp_result.error:
+                        if icp_result is not None and hasattr(icp_result, "error") and not icp_result.error:
                             result.icp_analysis = icp_result
                             result.engines_used.append("ICP Engine")
                             self._merge_icp_results(result, icp_result)
 
                     elif name == "protection":
-                        if protection_result := future.result(timeout=timeout):
+                        protection_result = future.result(timeout=timeout)
+                        if protection_result is not None:
                             result.protection_analysis = protection_result
                             result.engines_used.append("Protection Analysis")
                             self._merge_protection_results(result, protection_result)
@@ -283,6 +294,8 @@ class UnifiedProtectionEngine:
     def _run_protection_analysis(self, file_path: str, deep_scan: bool) -> AdvancedProtectionAnalysis | None:
         """Run protection analysis."""
         try:
+            if self.protection_detector is None:
+                return None
             ScanMode = _get_scan_mode()
             scan_mode = ScanMode.DEEP if deep_scan else ScanMode.NORMAL
             return self.protection_detector.detect_protections_advanced(
@@ -298,7 +311,7 @@ class UnifiedProtectionEngine:
     def _run_heuristic_analysis(self, file_path: str) -> dict[str, Any] | None:
         """Run heuristic analysis."""
         try:
-            heuristics = {}
+            heuristics: dict[str, Any] = {}
 
             # File size heuristics
             file_size = os.path.getsize(file_path)
@@ -307,7 +320,7 @@ class UnifiedProtectionEngine:
                 heuristics["possible_dropper"] = True
 
             # Read file header
-            header = None
+            header: bytes | None = None
             try:
                 from ..ai.ai_file_tools import get_ai_file_tools
 
@@ -331,7 +344,7 @@ class UnifiedProtectionEngine:
                     header = f.read(1024)
 
             # Check for suspicious patterns
-            suspicious_patterns = [
+            suspicious_patterns: list[bytes] = [
                 b"This program cannot be run in DOS mode",
                 b"kernel32.dll",
                 b"VirtualProtect",
@@ -341,7 +354,10 @@ class UnifiedProtectionEngine:
                 b"GetProcAddress",
             ]
 
-            if found_patterns := [pattern.decode("utf-8", errors="ignore") for pattern in suspicious_patterns if pattern in header]:
+            found_patterns: list[str] = [
+                pattern.decode("utf-8", errors="ignore") for pattern in suspicious_patterns if pattern in header
+            ]
+            if found_patterns:
                 heuristics["suspicious_imports"] = found_patterns
 
             # Advanced entropy analysis with multiple techniques
@@ -382,7 +398,9 @@ class UnifiedProtectionEngine:
             logger.exception("Heuristic analysis error: %s", e)
             return None
 
-    def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis) -> None:
+    def _merge_protection_results(
+        self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis
+    ) -> None:
         """Merge protection results into unified result."""
         result.file_type = protection_analysis.file_type
         result.architecture = protection_analysis.architecture
@@ -391,7 +409,7 @@ class UnifiedProtectionEngine:
 
         # Convert detections to unified format
         for detection in protection_analysis.detections:
-            protection = {
+            protection: dict[str, Any] = {
                 "name": detection.name,
                 "type": detection.type.value,
                 "source": AnalysisSource.PROTECTION_ENGINE,
@@ -415,7 +433,7 @@ class UnifiedProtectionEngine:
         """Merge heuristic results into unified result."""
         if heuristics.get("likely_packed"):
             result.is_packed = True
-            protection = {
+            protection: dict[str, Any] = {
                 "name": "Heuristic Packing Detection",
                 "type": "packer",
                 "source": AnalysisSource.HEURISTIC,
@@ -426,14 +444,14 @@ class UnifiedProtectionEngine:
 
         if heuristics.get("suspicious_imports"):
             result.has_anti_debug = True
-            protection = {
+            protection_info: dict[str, Any] = {
                 "name": "Suspicious API Usage",
                 "type": "anti-analysis",
                 "source": AnalysisSource.HEURISTIC,
                 "confidence": 60.0,
                 "details": {"apis": heuristics["suspicious_imports"]},
             }
-            result.protections.append(protection)
+            result.protections.append(protection_info)
 
     def _run_icp_analysis(self, file_path: str, deep_scan: bool) -> ICPScanResult | None:
         """Run ICP engine analysis."""
@@ -446,9 +464,10 @@ class UnifiedProtectionEngine:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             try:
-                return loop.run_until_complete(
+                icp_result: Any = loop.run_until_complete(
                     icp_backend.analyze_file(file_path, icp_mode),
                 )
+                return cast("ICPScanResult | None", icp_result)
             finally:
                 loop.close()
         except Exception as e:
@@ -472,7 +491,7 @@ class UnifiedProtectionEngine:
             # Map ICP types to our types
             protection_type = self._map_icp_type(detection.type)
 
-            protection = {
+            protection: dict[str, Any] = {
                 "name": detection.name,
                 "type": protection_type,
                 "source": AnalysisSource.SIGNATURE,
@@ -496,7 +515,7 @@ class UnifiedProtectionEngine:
 
     def _map_icp_type(self, icp_type: str) -> str:
         """Map ICP detection types to our unified types."""
-        type_mapping = {
+        type_mapping: dict[str, str] = {
             "Packer": "packer",
             "Protector": "protector",
             "Cryptor": "cryptor",
@@ -514,7 +533,7 @@ class UnifiedProtectionEngine:
     def _consolidate_results(self, result: UnifiedProtectionResult) -> None:
         """Consolidate and deduplicate results from multiple sources."""
         # Group protections by name
-        protection_groups = {}
+        protection_groups: dict[str, list[dict[str, Any]]] = {}
         for protection in result.protections:
             name = protection["name"]
             if name not in protection_groups:
@@ -522,13 +541,13 @@ class UnifiedProtectionEngine:
             protection_groups[name].append(protection)
 
         # Merge duplicate detections
-        consolidated = []
+        consolidated: list[dict[str, Any]] = []
         for name, group in protection_groups.items():
             if len(group) == 1:
                 consolidated.append(group[0])
             else:
                 # Merge multiple detections of same protection
-                merged = {
+                merged: dict[str, Any] = {
                     "name": name,
                     "type": group[0]["type"],
                     "source": AnalysisSource.HYBRID,
@@ -538,7 +557,7 @@ class UnifiedProtectionEngine:
                 }
 
                 # Merge bypass recommendations
-                bypass_recs = []
+                bypass_recs: list[str] = []
                 for p in group:
                     if "bypass_recommendations" in p:
                         bypass_recs.extend(p.get("bypass_recommendations", []))
@@ -552,7 +571,7 @@ class UnifiedProtectionEngine:
 
     def _generate_bypass_strategies(self, result: UnifiedProtectionResult) -> None:
         """Generate comprehensive bypass strategies."""
-        strategies = []
+        strategies: list[dict[str, Any]] = []
 
         # Analyze protection combinations
         protection_types = {p["type"] for p in result.protections}
@@ -634,7 +653,7 @@ class UnifiedProtectionEngine:
             return
 
         # Weight by source reliability
-        source_weights = {
+        source_weights: dict[AnalysisSource, float] = {
             AnalysisSource.PROTECTION_ENGINE: 0.9,
             AnalysisSource.HEURISTIC: 0.5,
             AnalysisSource.SIGNATURE: 0.8,
@@ -664,7 +683,7 @@ class UnifiedProtectionEngine:
         if cached_result is None:
             cached_result = self.cache.get(file_path, "deep_scan:True,timeout:60")
 
-        if cached_result is not None:
+        if cached_result is not None and isinstance(cached_result, UnifiedProtectionResult):
             return {
                 "protected": bool(cached_result.protections),
                 "protection_count": len(cached_result.protections),
@@ -783,7 +802,7 @@ class UnifiedProtectionEngine:
             Dictionary containing results from multiple entropy analysis methods
 
         """
-        results = {
+        results: dict[str, Any] = {
             "shannon_entropy": self._calculate_shannon_entropy(data),
             "sliding_window_analysis": {},
             "kolmogorov_complexity": 0.0,
@@ -794,19 +813,21 @@ class UnifiedProtectionEngine:
             "entropy_variance": 0.0,
         }
 
-        if window_entropies := self._sliding_window_entropy(data):
+        window_entropies = self._sliding_window_entropy(data)
+        if window_entropies:
             results["sliding_window_max"] = max(window_entropies)
             results["sliding_window_min"] = min(window_entropies)
             results["sliding_window_avg"] = sum(window_entropies) / len(window_entropies)
-            results["sliding_window_std"] = np.std(window_entropies) if len(window_entropies) > 1 else 0
-            results["entropy_variance"] = np.var(window_entropies) if len(window_entropies) > 1 else 0
+            results["sliding_window_std"] = float(np.std(window_entropies)) if len(window_entropies) > 1 else 0.0
+            results["entropy_variance"] = float(np.var(window_entropies)) if len(window_entropies) > 1 else 0.0
 
         # Kolmogorov complexity estimation via compression
         results["kolmogorov_complexity"] = self._estimate_kolmogorov_complexity(data)
 
         # Compression ratio analysis
-        results["compression_ratios"] = self._analyze_compression_ratios(data)
-        results["best_compression_ratio"] = min(results["compression_ratios"].values()) if results["compression_ratios"] else 1.0
+        compression_ratios = self._analyze_compression_ratios(data)
+        results["compression_ratios"] = compression_ratios
+        results["best_compression_ratio"] = min(compression_ratios.values()) if compression_ratios else 1.0
 
         # Chi-square randomness test
         chi_result = self._chi_square_test(data)
@@ -860,7 +881,7 @@ class UnifiedProtectionEngine:
         if len(data) < window_size:
             return [self._calculate_shannon_entropy(data)]
 
-        entropies = []
+        entropies: list[float] = []
         for i in range(0, len(data) - window_size + 1, step_size):
             window_data = data[i : i + window_size]
             entropy = self._calculate_shannon_entropy(window_data)
@@ -882,8 +903,8 @@ class UnifiedProtectionEngine:
             return 0.0
 
         try:
-            if HAS_LZMA:
-                compressed = lzma.compress(data, preset=9)
+            if HAS_LZMA and lzma_module is not None:
+                compressed = lzma_module.compress(data, preset=9)
                 complexity = len(compressed) / len(data)
                 return min(1.0, complexity)
             compressed = zlib.compress(data, level=9)
@@ -911,16 +932,16 @@ class UnifiedProtectionEngine:
             return {}
 
         original_size = len(data)
-        ratios = {}
+        ratios: dict[str, float] = {}
 
-        compression_methods = [
+        compression_methods: list[tuple[str, Any]] = [
             ("zlib", lambda d: zlib.compress(d, level=9)),
             ("gzip", lambda d: zlib.compress(d, level=9)),
             ("bz2", lambda d: bz2.compress(d, compresslevel=9)),
         ]
 
-        if HAS_LZMA:
-            compression_methods.append(("lzma", lambda d: lzma.compress(d, preset=9)))
+        if HAS_LZMA and lzma_module is not None:
+            compression_methods.append(("lzma", lambda d: lzma_module.compress(d, preset=9)))
 
         for name, compress_func in compression_methods:
             try:
@@ -1027,12 +1048,12 @@ class UnifiedProtectionEngine:
             "most_common_bytes": [(byte, count / len(data)) for byte, count in most_common],
             "zero_frequency_bytes": len(least_common_bytes),
             "byte_coverage": unique_bytes / 256,
-            "frequency_variance": np.var(frequencies) if frequencies else 0,
+            "frequency_variance": float(np.var(frequencies)) if frequencies else 0.0,
         }
 
 
 # Singleton instance for easy access
-_unified_engine = None
+_unified_engine: UnifiedProtectionEngine | None = None
 
 
 def get_unified_engine() -> UnifiedProtectionEngine:

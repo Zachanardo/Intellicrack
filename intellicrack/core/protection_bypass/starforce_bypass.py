@@ -100,46 +100,46 @@ class StarForceBypass:
     def __init__(self) -> None:
         """Initialize StarForce bypass system."""
         self.logger = logging.getLogger(__name__)
-        self._advapi32 = None
-        self._kernel32 = None
-        self._ntdll = None
+        self._advapi32: ctypes.WinDLL | None = None
+        self._kernel32: ctypes.WinDLL | None = None
+        self._ntdll: ctypes.WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
         """Set up Windows API functions with proper signatures."""
         try:
-            self._advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
-            self._kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
-            self._ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
+            advapi32 = ctypes.WinDLL("advapi32", use_last_error=True)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
 
-            self._advapi32.OpenSCManagerW.argtypes = [
+            advapi32.OpenSCManagerW.argtypes = [
                 wintypes.LPCWSTR,
                 wintypes.LPCWSTR,
                 wintypes.DWORD,
             ]
-            self._advapi32.OpenSCManagerW.restype = wintypes.HANDLE
+            advapi32.OpenSCManagerW.restype = wintypes.HANDLE
 
-            self._advapi32.OpenServiceW.argtypes = [
+            advapi32.OpenServiceW.argtypes = [
                 wintypes.HANDLE,
                 wintypes.LPCWSTR,
                 wintypes.DWORD,
             ]
-            self._advapi32.OpenServiceW.restype = wintypes.HANDLE
+            advapi32.OpenServiceW.restype = wintypes.HANDLE
 
-            self._advapi32.ControlService.argtypes = [
+            advapi32.ControlService.argtypes = [
                 wintypes.HANDLE,
                 wintypes.DWORD,
                 wintypes.LPVOID,
             ]
-            self._advapi32.ControlService.restype = wintypes.BOOL
+            advapi32.ControlService.restype = wintypes.BOOL
 
-            self._advapi32.DeleteService.argtypes = [wintypes.HANDLE]
-            self._advapi32.DeleteService.restype = wintypes.BOOL
+            advapi32.DeleteService.argtypes = [wintypes.HANDLE]
+            advapi32.DeleteService.restype = wintypes.BOOL
 
-            self._advapi32.CloseServiceHandle.argtypes = [wintypes.HANDLE]
-            self._advapi32.CloseServiceHandle.restype = wintypes.BOOL
+            advapi32.CloseServiceHandle.argtypes = [wintypes.HANDLE]
+            advapi32.CloseServiceHandle.restype = wintypes.BOOL
 
-            self._kernel32.CreateFileW.argtypes = [
+            kernel32.CreateFileW.argtypes = [
                 wintypes.LPCWSTR,
                 wintypes.DWORD,
                 wintypes.DWORD,
@@ -148,9 +148,9 @@ class StarForceBypass:
                 wintypes.DWORD,
                 wintypes.HANDLE,
             ]
-            self._kernel32.CreateFileW.restype = wintypes.HANDLE
+            kernel32.CreateFileW.restype = wintypes.HANDLE
 
-            self._kernel32.DeviceIoControl.argtypes = [
+            kernel32.DeviceIoControl.argtypes = [
                 wintypes.HANDLE,
                 wintypes.DWORD,
                 wintypes.LPVOID,
@@ -160,10 +160,14 @@ class StarForceBypass:
                 ctypes.POINTER(wintypes.DWORD),
                 wintypes.LPVOID,
             ]
-            self._kernel32.DeviceIoControl.restype = wintypes.BOOL
+            kernel32.DeviceIoControl.restype = wintypes.BOOL
 
-            self._kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
-            self._kernel32.CloseHandle.restype = wintypes.BOOL
+            kernel32.CloseHandle.argtypes = [wintypes.HANDLE]
+            kernel32.CloseHandle.restype = wintypes.BOOL
+
+            self._advapi32 = advapi32
+            self._kernel32 = kernel32
+            self._ntdll = ntdll
 
         except Exception as e:
             self.logger.warning("Failed to setup Windows API functions: %s", e, exc_info=True)
@@ -175,11 +179,11 @@ class StarForceBypass:
             StarForceRemovalResult with detailed removal information
 
         """
-        errors = []
-        drivers_removed = []
-        services_stopped = []
-        registry_cleaned = []
-        files_deleted = []
+        errors: list[str] = []
+        drivers_removed: list[str] = []
+        services_stopped: list[str] = []
+        registry_cleaned: list[str] = []
+        files_deleted: list[str] = []
 
         stopped_services = self._stop_all_services()
         services_stopped.extend(stopped_services)
@@ -208,10 +212,10 @@ class StarForceBypass:
 
     def _stop_all_services(self) -> list[str]:
         """Stop all StarForce services."""
-        if not self._advapi32:
+        if self._advapi32 is None:
             return []
 
-        stopped = []
+        stopped: list[str] = []
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_STOP = 0x0020
         SERVICE_CONTROL_STOP = 1
@@ -252,10 +256,10 @@ class StarForceBypass:
 
     def _delete_all_services(self) -> list[str]:
         """Delete all StarForce services."""
-        if not self._advapi32:
+        if self._advapi32 is None:
             return []
 
-        deleted = []
+        deleted: list[str] = []
         SC_MANAGER_ALL_ACCESS = 0xF003F
         DELETE = 0x00010000
 
@@ -283,26 +287,27 @@ class StarForceBypass:
 
     def _clean_registry(self) -> list[str]:
         """Clean StarForce registry keys."""
-        return [
-            f"{root_key}\\{subkey_path}"
-            for root_key, subkey_path in self.REGISTRY_KEYS_TO_DELETE
-            if self._delete_registry_key_recursive(root_key, subkey_path)
-        ]
+        cleaned: list[str] = []
+        for root_key, subkey_path in self.REGISTRY_KEYS_TO_DELETE:
+            if isinstance(root_key, int) and self._delete_registry_key_recursive(root_key, subkey_path):
+                cleaned.append(f"{root_key}\\{subkey_path}")
+        return cleaned
 
-    def _delete_registry_key_recursive(self, root_key: int, subkey_path: str) -> bool:
+    def _delete_registry_key_recursive(self, root_key: int | winreg.HKEYType, subkey_path: str) -> bool:
         """Recursively delete a registry key and all subkeys."""
         try:
-            key = winreg.OpenKey(root_key, subkey_path, 0, winreg.KEY_ALL_ACCESS)
+            opened_key = winreg.OpenKey(root_key, subkey_path, 0, winreg.KEY_ALL_ACCESS)
 
             i = 0
             while True:
                 try:
-                    subkey_name = winreg.EnumKey(key, i)
-                    self._delete_registry_key_recursive(key, subkey_name)
+                    subkey_name = winreg.EnumKey(opened_key, i)
+                    full_subkey_path = f"{subkey_path}\\{subkey_name}"
+                    self._delete_registry_key_recursive(root_key, full_subkey_path)
                 except OSError:
                     break
 
-            winreg.CloseKey(key)
+            winreg.CloseKey(opened_key)
             winreg.DeleteKey(root_key, subkey_path)
             return True
 
@@ -311,7 +316,7 @@ class StarForceBypass:
 
     def _remove_driver_files(self) -> list[str]:
         """Remove StarForce driver files."""
-        removed = []
+        removed: list[str] = []
 
         for driver_path in self.DRIVER_PATHS:
             path = Path(driver_path)
@@ -326,7 +331,7 @@ class StarForceBypass:
 
     def _remove_application_files(self) -> list[str]:
         """Remove StarForce application files."""
-        deleted = []
+        deleted: list[str] = []
 
         sf_dirs = [
             Path(r"C:\Program Files\Common Files\StarForce"),
@@ -357,11 +362,14 @@ class StarForceBypass:
             BypassResult with bypass status
 
         """
-        errors = []
-        details = []
+        errors: list[str] = []
+        details: list[str] = []
 
         if not target_process_id:
-            target_process_id = self._kernel32.GetCurrentProcessId() if self._kernel32 else 0
+            if self._kernel32 is not None and hasattr(self._kernel32, "GetCurrentProcessId"):
+                target_process_id = self._kernel32.GetCurrentProcessId()
+            else:
+                target_process_id = 0
 
         if self._patch_peb_being_debugged(target_process_id):
             details.append("PEB BeingDebugged flag cleared")
@@ -389,13 +397,16 @@ class StarForceBypass:
 
     def _patch_peb_being_debugged(self, process_id: int) -> bool:
         """Patch PEB BeingDebugged flag."""
-        if not self._kernel32 or not self._ntdll:
+        if self._kernel32 is None or self._ntdll is None:
             return False
 
         PROCESS_VM_WRITE = 0x0020
         PROCESS_VM_OPERATION = 0x0008
 
         try:
+            if not hasattr(self._kernel32, "OpenProcess"):
+                return False
+
             process_handle = self._kernel32.OpenProcess(PROCESS_VM_WRITE | PROCESS_VM_OPERATION, False, process_id)
 
             if not process_handle:
@@ -427,7 +438,14 @@ class StarForceBypass:
                     if status == 0:
                         being_debugged_offset = 2
                         peb_address = pbi.PebBaseAddress
-                        being_debugged_address = ctypes.c_void_p(ctypes.cast(peb_address, ctypes.c_size_t).value + being_debugged_offset)
+                        if peb_address is not None:
+                            peb_addr_int = ctypes.cast(peb_address, ctypes.c_void_p).value
+                            if peb_addr_int is not None:
+                                being_debugged_address = ctypes.c_void_p(peb_addr_int + being_debugged_offset)
+                            else:
+                                return False
+                        else:
+                            return False
 
                         zero_byte = ctypes.c_byte(0)
                         bytes_written = ctypes.c_size_t()
@@ -441,9 +459,11 @@ class StarForceBypass:
                                 ctypes.byref(bytes_written),
                             )
                             return bytes_written.value == 1
+                        return False
 
             finally:
-                self._kernel32.CloseHandle(process_handle)
+                if hasattr(self._kernel32, "CloseHandle"):
+                    self._kernel32.CloseHandle(process_handle)
 
         except Exception as e:
             self.logger.warning("Failed to patch PEB BeingDebugged: %s", e, exc_info=True)
@@ -452,7 +472,7 @@ class StarForceBypass:
 
     def _clear_debug_registers(self, process_id: int) -> bool:
         """Clear hardware debug registers."""
-        if not self._kernel32:
+        if self._kernel32 is None:
             return False
 
         PROCESS_SET_CONTEXT = 0x0010
@@ -471,6 +491,9 @@ class StarForceBypass:
             ]
 
         try:
+            if not hasattr(self._kernel32, "OpenProcess"):
+                return False
+
             process_handle = self._kernel32.OpenProcess(PROCESS_SET_CONTEXT | PROCESS_GET_CONTEXT, False, process_id)
 
             if not process_handle:
@@ -490,7 +513,8 @@ class StarForceBypass:
                 return True
 
             finally:
-                self._kernel32.CloseHandle(process_handle)
+                if hasattr(self._kernel32, "CloseHandle"):
+                    self._kernel32.CloseHandle(process_handle)
 
         except Exception as e:
             self.logger.warning("Failed to clear debug registers: %s", e, exc_info=True)
@@ -519,8 +543,8 @@ class StarForceBypass:
                 errors=["pefile not available or file not found"],
             )
 
-        errors = []
-        details = []
+        errors: list[str] = []
+        details: list[str] = []
 
         if self._patch_disc_check_calls(target_exe):
             details.append("Disc check calls patched")
@@ -576,7 +600,7 @@ class StarForceBypass:
         """Configure virtual drive for disc emulation."""
         return True
 
-    def bypass_license_validation(self, target_exe: Path, license_data: dict | None = None) -> BypassResult:
+    def bypass_license_validation(self, target_exe: Path, license_data: dict[str, str] | None = None) -> BypassResult:
         """Bypass StarForce license validation.
 
         Args:
@@ -595,8 +619,8 @@ class StarForceBypass:
                 errors=["pefile not available or file not found"],
             )
 
-        errors = []
-        details = []
+        errors: list[str] = []
+        details: list[str] = []
 
         if self._patch_license_checks(target_exe):
             details.append("License validation checks patched")
@@ -670,7 +694,7 @@ class StarForceBypass:
         except Exception:
             return False
 
-    def _inject_license_data(self, target_exe: Path, license_data: dict) -> bool:
+    def _inject_license_data(self, target_exe: Path, license_data: dict[str, str]) -> bool:
         """Inject license data into executable."""
         try:
             pe = pefile.PE(str(target_exe))
@@ -715,8 +739,8 @@ class StarForceBypass:
             BypassResult with spoof status
 
         """
-        errors = []
-        details = []
+        errors: list[str] = []
+        details: list[str] = []
 
         if self._spoof_disk_serial():
             details.append("Disk serial number spoofed")

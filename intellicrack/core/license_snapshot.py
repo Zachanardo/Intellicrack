@@ -243,9 +243,7 @@ class LicenseSnapshot:
 
             for key_path in self.COMMON_LICENSE_REGISTRY_KEYS:
                 try:
-                    if key_data := self._read_registry_key_recursive(
-                        hive, key_path, max_depth=3
-                    ):
+                    if key_data := self._read_registry_key_recursive(hive, key_path, max_depth=3):
                         registry_data[hive_name][key_path] = key_data
                 except Exception as e:
                     # Log the exception with details for debugging

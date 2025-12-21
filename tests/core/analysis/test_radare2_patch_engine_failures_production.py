@@ -289,7 +289,7 @@ class TestBackupAndRestore:
             result = engine.apply_patch(patch)
 
             if not result["success"]:
-                backup_path = binary_path + ".bak"
+                backup_path = f"{binary_path}.bak"
                 if os.path.exists(backup_path):
                     with open(backup_path, "rb") as f:
                         backup_content = f.read()
@@ -297,8 +297,8 @@ class TestBackupAndRestore:
         finally:
             if os.path.exists(binary_path):
                 os.unlink(binary_path)
-            if os.path.exists(binary_path + ".bak"):
-                os.unlink(binary_path + ".bak")
+            if os.path.exists(f"{binary_path}.bak"):
+                os.unlink(f"{binary_path}.bak")
 
     def test_rollback_on_verification_failure_restores_original(self) -> None:
         """Rollback after verification failure restores original state."""
@@ -373,8 +373,10 @@ class TestBatchPatchFailures:
             results = engine.apply_patches(patches)
 
             assert len(results) == 3
-            success_count = sum(1 for r in results if r.get("success", False))
-            failure_count = sum(1 for r in results if not r.get("success", False))
+            success_count = sum(bool(r.get("success", False))
+                            for r in results)
+            failure_count = sum(bool(not r.get("success", False))
+                            for r in results)
             assert success_count + failure_count == 3
         finally:
             os.unlink(binary_path)

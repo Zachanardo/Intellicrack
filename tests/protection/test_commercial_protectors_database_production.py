@@ -706,7 +706,7 @@ class TestEncryptionLayerDetection:
         import random
         random.seed(42)
 
-        high_entropy_data = bytes([random.randint(0, 255) for _ in range(4096)])
+        high_entropy_data = bytes(random.randint(0, 255) for _ in range(4096))
 
         binary_with_encrypted = (
             self._create_minimal_pe_header() +
@@ -761,7 +761,7 @@ class TestEncryptionLayerDetection:
         import random
         random.seed(42)
 
-        encrypted_data = bytes([random.randint(0, 255) for _ in range(4096)])
+        encrypted_data = bytes(random.randint(0, 255) for _ in range(4096))
 
         unencrypted_data = b"\x00" * 4096
 
@@ -810,9 +810,7 @@ class TestFalsePositivePrevention:
         )
 
         db = CommercialProtectorsDatabase()
-        detections = db.detect_protector(binary_with_weak_match, None)
-
-        if detections:
+        if detections := db.detect_protector(binary_with_weak_match, None):
             for _, _, confidence in detections:
                 assert confidence > 30, f"Weak match not filtered: {confidence}%"
 
@@ -823,9 +821,7 @@ class TestVersionIdentification:
     def test_codevirtualizer_version_detection(self) -> None:
         """Identifies Code Virtualizer version from signature patterns."""
         db = CommercialProtectorsDatabase()
-        cv_sig = db.protectors.get("CodeVirtualizer")
-
-        if cv_sig:
+        if cv_sig := db.protectors.get("CodeVirtualizer"):
             assert len(cv_sig.version_detect) > 0, "No version detection patterns"
 
     def test_enigma_version_markers(self) -> None:

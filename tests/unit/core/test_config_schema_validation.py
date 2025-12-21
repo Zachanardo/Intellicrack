@@ -460,10 +460,11 @@ class TestConfigSchemaValidation(IntellicrackTestBase):
                 ]
                 lower_val = obj.lower()
                 for pattern in placeholder_patterns:
-                    if pattern.lower() in lower_val and path not in ["directories.temp"]:
-                        # Allow "test" in certain expected places
-                        if not ("test" in pattern.lower() and "qemu_testing" in path):
-                            pytest.fail(f"Found placeholder value at {path}: {obj}")
+                    if pattern.lower() in lower_val and path not in ["directories.temp"] and (
+                                                "test" not in pattern.lower()
+                                                or "qemu_testing" not in path
+                                            ):
+                        pytest.fail(f"Found placeholder value at {path}: {obj}")
 
         check_no_placeholders(full_config)
 

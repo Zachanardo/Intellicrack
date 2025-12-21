@@ -654,9 +654,7 @@ class TestBootWaitLogic:
 
         def mock_connection_test() -> bool:
             call_count[0] += 1
-            if call_count[0] < 3:
-                return False
-            return True
+            return call_count[0] >= 3
 
         with patch.object(manager, "_test_monitor_connection", side_effect=mock_connection_test):
             result = manager._wait_for_boot(timeout=5)

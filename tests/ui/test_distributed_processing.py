@@ -313,7 +313,7 @@ class TestFallbackPyqtSignal:
         signal.connect(lambda x: slot_called.append(x))
         signal.blockSignals(True)
         signal.emit("blocked")
-        assert slot_called == []
+        assert not slot_called
 
         signal.blockSignals(False)
         signal.emit("unblocked")
@@ -937,9 +937,9 @@ class TestDistributedProcessingDialog:
     def test_dialog_on_task_progress(self, dialog: DistributedProcessingDialog) -> None:
         """Dialog handles task progress updates."""
         dialog.add_sample_task()
-        task_id = dialog.tasks[0].task_id
-
         if HAS_PYQT6:
+            task_id = dialog.tasks[0].task_id
+
             dialog.on_task_progress(task_id, 50.0)
             assert dialog.progress_bars[task_id].value() == 50
 
@@ -1135,10 +1135,8 @@ class TestIntegrationDistributedProcessing:
                 if task := worker.get_next_task():
                     worker.process_task(task)
 
-            completed_count = sum(
-                1 for task in task_queue
-                if task.status == ProcessingStatus.COMPLETED
-            )
+            completed_count = sum(bool(task.status == ProcessingStatus.COMPLETED)
+                              for task in task_queue)
             iteration += 1
 
         for worker in workers:
@@ -1207,10 +1205,8 @@ class TestIntegrationDistributedProcessing:
                 if task := worker.get_next_task():
                     worker.process_task(task)
 
-            completed = sum(
-                1 for task in manager.tasks
-                if task.status == ProcessingStatus.COMPLETED
-            )
+            completed = sum(bool(task.status == ProcessingStatus.COMPLETED)
+                        for task in manager.tasks)
             if completed >= len(temp_binaries):
                 break
             iteration += 1

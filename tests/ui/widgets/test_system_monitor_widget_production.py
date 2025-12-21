@@ -180,7 +180,7 @@ class TestSystemMonitorWorker:
         system_monitor_worker.running = True
         system_monitor_worker.stop()
 
-        assert system_monitor_worker.running is False
+        assert not system_monitor_worker.running
 
 
 class TestSystemMonitorWidget:

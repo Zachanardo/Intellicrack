@@ -47,7 +47,7 @@ class ComparisonResult:
     tokens_generated: int
     tokens_per_second: float
     memory_used_mb: float
-    similarity_scores: dict[str, float] = None
+    similarity_scores: dict[str, float] | None = None
 
 
 @dataclass
@@ -249,7 +249,7 @@ class ModelComparison:
 
     def _analyze_outputs(self, results: list[ComparisonResult]) -> dict[str, Any]:
         """Analyze and compare outputs."""
-        analysis = {
+        analysis: dict[str, Any] = {
             "output_lengths": {},
             "performance": {},
             "consistency": {},
@@ -389,7 +389,7 @@ class ModelComparison:
 
                 for i, result in enumerate(results):
                     for j, other_result in enumerate(results):
-                        if i != j and other_result.model_id in result.similarity_scores:
+                        if i != j and result.similarity_scores is not None and other_result.model_id in result.similarity_scores:
                             sim_matrix[i][j] = result.similarity_scores[other_result.model_id]
 
                 im = ax.imshow(sim_matrix, cmap="YlOrRd", aspect="auto")
@@ -440,14 +440,17 @@ class ModelComparison:
 
         perf_summaries = {model_id: self.performance_monitor.get_metrics_summary(model_id) for model_id in model_ids}
         # Combine results
-        benchmark_results = {
+        benchmark_results: dict[str, Any] = {
             "test_suite": test_suite,
             "timestamp": datetime.now().isoformat(),
             "models": {},
         }
 
         for model_id in model_ids:
-            model_stats = batch_report.summary["models"].get(model_id, {})
+            models_dict = batch_report.summary.get("models", {})
+            if not isinstance(models_dict, dict):
+                models_dict = {}
+            model_stats = models_dict.get(model_id, {})
             perf_stats = perf_summaries.get(model_id, {})
 
             benchmark_results["models"][model_id] = {
@@ -474,12 +477,20 @@ class ModelComparison:
 
         rankings = {}
         for metric, higher_better in metrics_to_rank:
-            values = []
+            values: list[tuple[str, float]] = []
             for model_id in model_ids:
                 if metric in ["success_rate", "avg_tokens_per_second"]:
-                    value = benchmark_results["models"][model_id]["test_performance"].get(metric, 0)
+                    test_perf = benchmark_results["models"][model_id]["test_performance"]
+                    if isinstance(test_perf, dict):
+                        value = float(test_perf.get(metric, 0))
+                    else:
+                        value = 0.0
                 else:
-                    value = benchmark_results["models"][model_id]["resource_usage"].get(metric, float("inf"))
+                    resource_usage = benchmark_results["models"][model_id]["resource_usage"]
+                    if isinstance(resource_usage, dict):
+                        value = float(resource_usage.get(metric, float("inf")))
+                    else:
+                        value = float("inf")
                 values.append((model_id, value))
 
             values.sort(key=lambda x: x[1], reverse=higher_better)
@@ -495,12 +506,12 @@ class ModelComparison:
             "p95_latency": 0.2,
         }
 
-        overall_scores = {}
+        overall_scores: dict[str, float] = {}
         for model_id in model_ids:
-            score = 0
+            score = 0.0
             for metric, weight in score_weights.items():
                 rank_position = rankings[metric].index(model_id)
-                normalized_score = 1 - (rank_position / len(model_ids))
+                normalized_score = 1.0 - (rank_position / len(model_ids))
                 score += normalized_score * weight
             overall_scores[model_id] = score
 

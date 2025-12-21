@@ -25,57 +25,74 @@ import os
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar
 
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
+C = TypeVar("C", bound=type[Any])
+
 try:
     from ..llm.llm_manager import LLMManager
+    LLM_MANAGER_TYPE: type[LLMManager] | None = LLMManager
 except ImportError:
-    LLMManager = None
+    LLM_MANAGER_TYPE = None
 
 try:
-    from ..protection.unified_protection_engine import UnifiedProtectionResult, get_unified_engine
+    from ..protection.unified_protection_engine import UnifiedProtectionResult, UnifiedProtectionEngine, get_unified_engine
+    from collections.abc import Callable as CallableType
+    UNIFIED_PROTECTION_RESULT_TYPE: type[UnifiedProtectionResult] | None = UnifiedProtectionResult
+    GET_UNIFIED_ENGINE_FUNC: CallableType[[], UnifiedProtectionEngine] | None = get_unified_engine
 except ImportError:
-    UnifiedProtectionResult = None
-    get_unified_engine = None
+    UNIFIED_PROTECTION_RESULT_TYPE = None
+    GET_UNIFIED_ENGINE_FUNC = None
 
 try:
-    from ..core.analysis.yara_pattern_engine import get_yara_engine, is_yara_available
+    from ..core.analysis.yara_pattern_engine import YaraPatternEngine, get_yara_engine, is_yara_available
+    from collections.abc import Callable as CallableType
+    GET_YARA_ENGINE_FUNC: CallableType[[], YaraPatternEngine | None] | None = get_yara_engine
+    IS_YARA_AVAILABLE_FUNC: CallableType[[], bool] | None = is_yara_available
 except ImportError:
-    get_yara_engine = None
-    is_yara_available = None
+    GET_YARA_ENGINE_FUNC = None
+    IS_YARA_AVAILABLE_FUNC = None
 
 try:
-    from ..core.analysis.firmware_analyzer import get_firmware_analyzer, is_binwalk_available
+    from ..core.analysis.firmware_analyzer import FirmwareAnalyzer, get_firmware_analyzer, is_binwalk_available
+    from collections.abc import Callable as CallableType
+    GET_FIRMWARE_ANALYZER_FUNC: CallableType[[], FirmwareAnalyzer | None] | None = get_firmware_analyzer
+    IS_BINWALK_AVAILABLE_FUNC: CallableType[[], bool] | None = is_binwalk_available
 except ImportError:
-    get_firmware_analyzer = None
-    is_binwalk_available = None
+    GET_FIRMWARE_ANALYZER_FUNC = None
+    IS_BINWALK_AVAILABLE_FUNC = None
 
 try:
-    from ..core.analysis.memory_forensics_engine import get_memory_forensics_engine, is_volatility3_available
+    from ..core.analysis.memory_forensics_engine import MemoryForensicsEngine, get_memory_forensics_engine, is_volatility3_available
+    from collections.abc import Callable as CallableType
+    GET_MEMORY_FORENSICS_ENGINE_FUNC: CallableType[[], MemoryForensicsEngine | None] | None = get_memory_forensics_engine
+    IS_VOLATILITY3_AVAILABLE_FUNC: CallableType[[], bool] | None = is_volatility3_available
 except ImportError:
-    get_memory_forensics_engine = None
-    is_volatility3_available = None
+    GET_MEMORY_FORENSICS_ENGINE_FUNC = None
+    IS_VOLATILITY3_AVAILABLE_FUNC = None
 
 try:
     from ..scripting.frida_generator import FridaScriptGenerator
+    FRIDA_SCRIPT_GENERATOR_TYPE: type[FridaScriptGenerator] | None = FridaScriptGenerator
 except ImportError:
-    FridaScriptGenerator = None
+    FRIDA_SCRIPT_GENERATOR_TYPE = None
 
 try:
     from ..scripting.ghidra_generator import GhidraScriptGenerator
+    GHIDRA_SCRIPT_GENERATOR_TYPE: type[GhidraScriptGenerator] | None = GhidraScriptGenerator
 except ImportError:
-    GhidraScriptGenerator = None
+    GHIDRA_SCRIPT_GENERATOR_TYPE = None
 
 try:
     from ..utils.logger import get_logger, log_all_methods
 except ImportError:
     import logging
 
-    def get_logger(name: str) -> logging.Logger:
+    def get_logger(name: str | None = None) -> logging.Logger:
         """Create a logger instance with the given name.
 
         Args:
@@ -86,6 +103,18 @@ except ImportError:
 
         """
         return logging.getLogger(name)
+
+    def log_all_methods(cls: C) -> C:
+        """Fallback decorator that does nothing.
+
+        Args:
+            cls: The class to decorate
+
+        Returns:
+            The unmodified class
+
+        """
+        return cls
 
 
 logger = get_logger(__name__)
@@ -106,11 +135,10 @@ class WorkflowResult:
     """Result of a protection analysis workflow."""
 
     success: bool
-    # UnifiedProtectionResult if available
     protection_analysis: Any | None = None
-    bypass_scripts: dict[str, str] = None  # protection_name -> script
-    recommendations: list[str] = None
-    next_steps: list[str] = None
+    bypass_scripts: dict[str, str] | None = None
+    recommendations: list[str] | None = None
+    next_steps: list[str] | None = None
     confidence: float = 0.0
 
 
@@ -120,15 +148,15 @@ class ProtectionAnalysisWorkflow:
 
     def __init__(self) -> None:
         """Initialize workflow manager."""
-        self.engine = get_unified_engine() if get_unified_engine else None
-        self.frida_gen = FridaScriptGenerator() if FridaScriptGenerator else None
-        self.ghidra_gen = GhidraScriptGenerator() if GhidraScriptGenerator else None
-        self.llm_manager = LLMManager() if LLMManager else None
+        self.engine = GET_UNIFIED_ENGINE_FUNC() if GET_UNIFIED_ENGINE_FUNC is not None else None
+        self.frida_gen = FRIDA_SCRIPT_GENERATOR_TYPE() if FRIDA_SCRIPT_GENERATOR_TYPE is not None else None
+        self.ghidra_gen = GHIDRA_SCRIPT_GENERATOR_TYPE() if GHIDRA_SCRIPT_GENERATOR_TYPE is not None else None
+        self.llm_manager = LLM_MANAGER_TYPE() if LLM_MANAGER_TYPE is not None else None
 
         # Supplemental analysis engines
-        self.yara_engine = get_yara_engine() if get_yara_engine else None
-        self.firmware_analyzer = get_firmware_analyzer() if get_firmware_analyzer else None
-        self.memory_forensics = get_memory_forensics_engine() if get_memory_forensics_engine else None
+        self.yara_engine = GET_YARA_ENGINE_FUNC() if GET_YARA_ENGINE_FUNC is not None else None
+        self.firmware_analyzer = GET_FIRMWARE_ANALYZER_FUNC() if GET_FIRMWARE_ANALYZER_FUNC is not None else None
+        self.memory_forensics = GET_MEMORY_FORENSICS_ENGINE_FUNC() if GET_MEMORY_FORENSICS_ENGINE_FUNC is not None else None
 
         # Workflow callbacks
         self.progress_callback: Callable[[str, int], None] | None = None
@@ -153,19 +181,24 @@ class ProtectionAnalysisWorkflow:
         result = WorkflowResult(success=False)
 
         try:
+            if self.engine is None:
+                result.recommendations = ["Unified protection engine not available."]
+                return result
+
             # Step 1: Quick scan
             self._report_progress("Starting quick protection scan...", 10)
             quick_summary = self.engine.get_quick_summary(file_path)
 
-            if not quick_summary["protected"]:
+            if not quick_summary.get("protected", False):
                 result.success = True
                 result.recommendations = ["No protections detected. The binary appears to be unprotected."]
                 result.confidence = 100.0
                 return result
 
             # Step 2: Deep analysis
+            protection_count = quick_summary.get("protection_count", 0)
             self._report_progress(
-                f"Found {quick_summary['protection_count']} protections, performing deep analysis...",
+                f"Found {protection_count} protections, performing deep analysis...",
                 30,
             )
             analysis = self.engine.analyze(file_path, deep_scan=True)
@@ -183,7 +216,8 @@ class ProtectionAnalysisWorkflow:
             result.recommendations = recommendations
 
             # Step 4: Generate bypass scripts if requested
-            if auto_generate_scripts and analysis.protections:
+            protections = getattr(analysis, "protections", [])
+            if auto_generate_scripts and protections:
                 self._report_progress("Generating bypass scripts...", 75)
                 scripts = self._generate_bypass_scripts(analysis, target_protections)
                 result.bypass_scripts = scripts
@@ -193,7 +227,8 @@ class ProtectionAnalysisWorkflow:
             next_steps = self._generate_next_steps(analysis)
             result.next_steps = next_steps
 
-            result.confidence = analysis.confidence_score
+            confidence_score = getattr(analysis, "confidence_score", 0.0)
+            result.confidence = confidence_score
             result.success = True
 
             self._report_progress("Analysis complete!", 100)
@@ -218,7 +253,7 @@ class ProtectionAnalysisWorkflow:
 
         try:
             # YARA pattern analysis
-            if self.yara_engine and is_yara_available and is_yara_available():
+            if self.yara_engine and IS_YARA_AVAILABLE_FUNC is not None and IS_YARA_AVAILABLE_FUNC():
                 logger.debug("Running YARA pattern analysis...")
                 yara_result = self.yara_engine.scan_file(file_path, timeout=30)
                 if not yara_result.error:
@@ -238,7 +273,7 @@ class ProtectionAnalysisWorkflow:
 
         try:
             # Binwalk firmware analysis
-            if self.firmware_analyzer and is_binwalk_available and is_binwalk_available():
+            if self.firmware_analyzer and IS_BINWALK_AVAILABLE_FUNC is not None and IS_BINWALK_AVAILABLE_FUNC():
                 logger.debug("Running Binwalk firmware analysis...")
                 firmware_result = self.firmware_analyzer.analyze_firmware(
                     file_path=file_path,
@@ -264,7 +299,7 @@ class ProtectionAnalysisWorkflow:
 
         try:
             # Volatility3 memory forensics (for memory dumps)
-            if self.memory_forensics and is_volatility3_available and is_volatility3_available() and self._is_memory_dump(file_path):
+            if self.memory_forensics and IS_VOLATILITY3_AVAILABLE_FUNC is not None and IS_VOLATILITY3_AVAILABLE_FUNC() and self._is_memory_dump(file_path):
                 logger.debug("Running Volatility3 memory forensics...")
                 memory_result = self.memory_forensics.analyze_memory_dump(
                     dump_path=file_path,
@@ -328,31 +363,36 @@ class ProtectionAnalysisWorkflow:
             logger.debug("Memory dump detection error: %s", e)
             return False
 
-    def _generate_recommendations(self, analysis: UnifiedProtectionResult) -> list[str]:
+    def _generate_recommendations(self, analysis: Any) -> list[str]:
         """Generate actionable recommendations based on analysis."""
-        recommendations = []
+        recommendations: list[str] = []
 
         # Check protection types
-        protection_types = {p["type"] for p in analysis.protections}
+        protections = getattr(analysis, "protections", [])
+        protection_types = {p.get("type", "") for p in protections}
 
         # Priority recommendations
-        if analysis.is_packed:
+        is_packed = getattr(analysis, "is_packed", False)
+        has_anti_debug = getattr(analysis, "has_anti_debug", False)
+        has_licensing = getattr(analysis, "has_licensing", False)
+
+        if is_packed:
             recommendations.append(
                 " Priority: Unpack the binary first. The file is packed which obscures the real code.",
             )
 
-        if analysis.has_anti_debug:
+        if has_anti_debug:
             recommendations.append(
                 "WARNING️ Anti-debugging detected. Use ScyllaHide or similar tools to bypass debugger checks.",
             )
 
-        if analysis.has_licensing:
+        if has_licensing:
             recommendations.append(
                 "🔑 License protection found. Focus on identifying and patching license validation routines.",
             )
 
         # Tool recommendations
-        tools_needed = set()
+        tools_needed: set[str] = set()
         if "packer" in protection_types:
             tools_needed.update(["x64dbg", "Scylla", "Process Dump"])
         if "antidebug" in protection_types:
@@ -366,7 +406,7 @@ class ProtectionAnalysisWorkflow:
             )
 
         # Difficulty assessment
-        if len(analysis.protections) > 3:
+        if len(protections) > 3:
             recommendations.append(
                 "[FAST] Multiple protections detected. Consider tackling them one at a time, starting with the outermost layer.",
             )
@@ -377,7 +417,7 @@ class ProtectionAnalysisWorkflow:
             recommendations.extend(supplemental_recs)
 
         # AI assistance
-        if self.llm_manager.has_active_backend():
+        if self.llm_manager is not None and hasattr(self.llm_manager, "has_active_backend") and self.llm_manager.has_active_backend():
             recommendations.append(
                 " AI assistance available. Use the Script Generation feature for automated bypass script creation.",
             )
@@ -481,30 +521,30 @@ class ProtectionAnalysisWorkflow:
 
         return recommendations
 
-    def _generate_bypass_scripts(self, analysis: UnifiedProtectionResult, target_protections: list[str] | None = None) -> dict[str, str]:
+    def _generate_bypass_scripts(self, analysis: Any, target_protections: list[str] | None = None) -> dict[str, str]:
         """Generate bypass scripts for detected protections."""
-        scripts = {}
+        scripts: dict[str, str] = {}
 
         # Filter protections if targets specified
-        protections = analysis.protections
+        protections = getattr(analysis, "protections", [])
         if target_protections:
-            protections = [p for p in protections if p["name"] in target_protections]
+            protections = [p for p in protections if p.get("name") in target_protections]
 
         for protection in protections:
             try:
                 if script := self._generate_single_bypass_script(analysis, protection):
                     scripts[protection["name"]] = script
             except Exception as e:
-                logger.exception("Failed to generate script for %s: %s", protection["name"], e)
+                logger.exception("Failed to generate script for %s: %s", protection.get("name", "unknown"), e)
 
         return scripts
 
-    def _generate_single_bypass_script(self, analysis: UnifiedProtectionResult, protection: dict[str, Any]) -> str | None:
+    def _generate_single_bypass_script(self, analysis: Any, protection: dict[str, Any]) -> str | None:
         """Generate bypass script for a single protection."""
         context = {
-            "file_path": analysis.file_path,
-            "file_type": analysis.file_type,
-            "architecture": analysis.architecture,
+            "file_path": getattr(analysis, "file_path", "unknown"),
+            "file_type": getattr(analysis, "file_type", "unknown"),
+            "architecture": getattr(analysis, "architecture", "unknown"),
             "protection_name": protection["name"],
             "protection_type": protection["type"],
             "protection_details": protection.get("details", {}),
@@ -512,12 +552,15 @@ class ProtectionAnalysisWorkflow:
         }
 
         # Use AI if available
-        if self.llm_manager.has_active_backend():
+        if self.llm_manager is not None and hasattr(self.llm_manager, "has_active_backend") and self.llm_manager.has_active_backend():
             try:
                 prompt = self._build_bypass_prompt(context)
-                response = self.llm_manager.generate(prompt)
-                if response and response.get("success"):
-                    return response.get("content", "")
+                if hasattr(self.llm_manager, "generate"):
+                    response = self.llm_manager.generate(prompt)
+                    if response and isinstance(response, dict) and response.get("success"):
+                        content = response.get("content", "")
+                        if isinstance(content, str):
+                            return content
             except Exception as e:
                 logger.warning("AI generation failed: %s", e)
 
@@ -783,38 +826,38 @@ targetModule.enumerateExports().forEach(function(exp) {{
 console.log("[+] Generic bypass active for " + protectionName);
 """
 
-    def _generate_next_steps(self, analysis: UnifiedProtectionResult) -> list[str]:
+    def _generate_next_steps(self, analysis: Any) -> list[str]:
         """Generate next steps for the user."""
-        steps = []
+        steps: list[str] = []
 
-        if analysis.is_packed:
+        is_packed = getattr(analysis, "is_packed", False)
+        has_anti_debug = getattr(analysis, "has_anti_debug", False)
+        has_licensing = getattr(analysis, "has_licensing", False)
+
+        if is_packed:
             steps.extend((
                 "1. Run the unpacking script in Frida to dump the unpacked code",
                 "2. Use Scylla to rebuild the import table",
                 "3. Re-analyze the unpacked binary",
             ))
-        elif analysis.has_anti_debug:
+        elif has_anti_debug:
             steps.extend((
                 "1. Apply the anti-debug bypass script",
                 "2. Attach debugger with ScyllaHide enabled",
                 "3. Set breakpoints at key decision points",
             ))
-        elif analysis.has_licensing:
-            steps.extend(
-                (
-                    "1. Run the license bypass script to identify check locations",
-                    "2. Analyze the validation logic in Ghidra",
-                    "3. Patch the license checks or generate valid keys",
-                )
-            )
+        elif has_licensing:
+            steps.extend((
+                "1. Run the license bypass script to identify check locations",
+                "2. Analyze the validation logic in Ghidra",
+                "3. Patch the license checks or generate valid keys",
+            ))
         else:
-            steps.extend(
-                (
-                    "1. Load the binary in your preferred debugger",
-                    "2. Apply the generated bypass scripts",
-                    "3. Analyze the protection implementation",
-                )
-            )
+            steps.extend((
+                "1. Load the binary in your preferred debugger",
+                "2. Apply the generated bypass scripts",
+                "3. Analyze the protection implementation",
+            ))
         # Always add verification step
         steps.append(f"{len(steps) + 1}. Verify the bypass by testing the patched binary")
 

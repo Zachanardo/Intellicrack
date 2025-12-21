@@ -393,19 +393,11 @@ class FingerprintEngine:
                     fingerprint.import_table_hash = hashlib.sha256(import_str.encode()).hexdigest()
 
                 if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                    export_list = [
-                        exp.name.decode("utf-8", errors="ignore")
-                        for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
-                        if exp.name
-                    ]
+                    export_list = [exp.name.decode("utf-8", errors="ignore") for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols if exp.name]
                     export_str = ";".join(sorted(export_list))
                     fingerprint.export_table_hash = hashlib.sha256(export_str.encode()).hexdigest()
 
-                if code_sections := [
-                    section.get_data()
-                    for section in pe.sections
-                    if section.Characteristics & 0x20000000
-                ]:
+                if code_sections := [section.get_data() for section in pe.sections if section.Characteristics & 0x20000000]:
                     code_data = b"".join(code_sections)
                     fingerprint.code_sections_hash = hashlib.sha256(code_data).hexdigest()
 
@@ -467,9 +459,7 @@ class FingerprintEngine:
                     matches += 1
                 total_checks += 1
 
-                pattern_matches = sum(
-                    pattern in binary_data for pattern in prot_sig["code_patterns"]
-                )
+                pattern_matches = sum(pattern in binary_data for pattern in prot_sig["code_patterns"])
                 if pattern_matches > 0:
                     matches += 1
                 total_checks += 1
@@ -543,10 +533,7 @@ class FingerprintEngine:
                 matches = 0
                 total_checks = 0
 
-                import_matches = sum(
-                    any((imp in i for i in imports))
-                    for imp in compiler_sig["imports"]
-                )
+                import_matches = sum(any((imp in i for i in imports)) for imp in compiler_sig["imports"])
                 if import_matches > 0:
                     matches += import_matches
                 total_checks += len(compiler_sig["imports"])
@@ -561,9 +548,7 @@ class FingerprintEngine:
                     matches += string_matches
                 total_checks += len(compiler_sig["strings"])
 
-                pattern_matches = sum(
-                    pattern in binary_data for pattern in compiler_sig["patterns"]
-                )
+                pattern_matches = sum(pattern in binary_data for pattern in compiler_sig["patterns"])
                 if pattern_matches > 0:
                     matches += pattern_matches
                 total_checks += len(compiler_sig["patterns"])
@@ -618,11 +603,7 @@ class FingerprintEngine:
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode("utf-8", errors="ignore").lower()
-                    dll_imports = [
-                        imp.name.decode("utf-8", errors="ignore")
-                        for imp in entry.imports
-                        if imp.name
-                    ]
+                    dll_imports = [imp.name.decode("utf-8", errors="ignore") for imp in entry.imports if imp.name]
                     imports[dll_name] = dll_imports
 
             strings = self._extract_strings(binary_data)

@@ -271,7 +271,9 @@ class TestSealedKeyExtraction:
         tpm_bypass_engine: TPMBypassEngine,
     ) -> None:
         """Key extraction attempts to read from all common NVRAM indices."""
-        tpm_bypass_engine.virtualized_tpm["nvram"][0x00000:0x00020] = b"TEST_NVRAM_KEY_DATA_" + os.urandom(12)
+        tpm_bypass_engine.virtualized_tpm["nvram"][:0x00020] = (
+            b"TEST_NVRAM_KEY_DATA_" + os.urandom(12)
+        )
 
         keys: dict[str, bytes] = tpm_bypass_engine.extract_sealed_keys()
 
@@ -607,7 +609,7 @@ class TestPCRManipulation:
 
         result: bool = tpm_bypass_engine.bypass_measured_boot(target_pcr_state)
 
-        assert result is True
+        assert result
         assert tpm_bypass_engine.pcr_banks[TPM2Algorithm.SHA256].pcr_values[0] == target_pcr0
 
     def test_bypass_measured_boot_sets_secure_boot_pcr(
@@ -617,7 +619,7 @@ class TestPCRManipulation:
         """Measured boot bypass sets PCR7 for secure boot bypass."""
         result: bool = tpm_bypass_engine.bypass_measured_boot({})
 
-        assert result is True
+        assert result
         pcr7_value: bytes = tpm_bypass_engine.pcr_banks[TPM2Algorithm.SHA256].pcr_values[7]
         expected_pcr7: bytes = bytes.fromhex(
             "a7c06b3f8f927ce2276d0f72093af41c1ac8fac416236ddc88035c135f34c2bb"
@@ -638,7 +640,7 @@ class TestCommandInterception:
 
         result: bool = tpm_bypass_engine.intercept_tpm_command(TPM2CommandCode.GetRandom, test_hook)
 
-        assert result is True
+        assert result
         assert TPM2CommandCode.GetRandom in tpm_bypass_engine.command_hooks
 
     def test_intercepted_commands_logged(self, tpm_bypass_engine: TPMBypassEngine) -> None:
@@ -664,7 +666,7 @@ class TestCommandInterception:
         command: bytes = struct.pack(">HII", 0x8001, 10, TPM2CommandCode.PCR_Read)
         tpm_bypass_engine.send_tpm_command(command)
 
-        assert len(received_commands) > 0
+        assert received_commands
         assert TPM2CommandCode.PCR_Read in [
             struct.unpack(">HII", cmd[:10])[2] for cmd in received_commands if len(cmd) >= 10
         ]
@@ -841,7 +843,7 @@ class TestTPMLockoutBypass:
 
         result: bool = tpm_bypass_engine.reset_tpm_lockout()
 
-        assert result is True
+        assert result
         assert tpm_bypass_engine.virtualized_tpm["lockout_count"] == 0
 
     def test_clear_tpm_ownership_resets_hierarchy_auth(
@@ -853,7 +855,7 @@ class TestTPMLockoutBypass:
 
         result: bool = tpm_bypass_engine.clear_tpm_ownership()
 
-        assert result is True
+        assert result
         assert tpm_bypass_engine.virtualized_tpm["hierarchy_auth"][0x40000001] == b""
         assert tpm_bypass_engine.virtualized_tpm["hierarchy_auth"][0x40000009] == b""
         assert tpm_bypass_engine.virtualized_tpm["hierarchy_auth"][0x4000000C] == b""
@@ -1109,12 +1111,11 @@ class TestCommandInterceptionLogging:
 
         before_time: float = time.time()
         tpm_bypass_engine.send_tpm_command(command)
-        after_time: float = time.time()
-
-        intercepted: list = tpm_bypass_engine.intercepted_commands
-        if len(intercepted) > 0:
+        if intercepted := tpm_bypass_engine.intercepted_commands:
             last_command: dict = intercepted[-1]
             assert "timestamp" in last_command
+            after_time: float = time.time()
+
             assert before_time <= last_command["timestamp"] <= after_time
 
     def test_intercepted_commands_store_command_code(
@@ -1126,8 +1127,7 @@ class TestCommandInterceptionLogging:
 
         tpm_bypass_engine.send_tpm_command(command)
 
-        intercepted: list = tpm_bypass_engine.intercepted_commands
-        if len(intercepted) > 0:
+        if intercepted := tpm_bypass_engine.intercepted_commands:
             last_command: dict = intercepted[-1]
             assert "code" in last_command
             assert last_command["code"] == TPM2CommandCode.PCR_Read

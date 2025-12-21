@@ -41,7 +41,7 @@ TOKEN_TYPE_LICENSE_KEY = "license_key"  # noqa: S105
 try:
     import xmltodict
 except ImportError:
-    xmltodict = None  # type: ignore[assignment]
+    xmltodict = None
 
 from typing import TYPE_CHECKING, Any as FridaSession, Any as FridaScript
 

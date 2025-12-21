@@ -3,6 +3,7 @@ Comprehensive unit tests for radare2_ai_integration.py module.
 Tests validate production-ready AI-enhanced binary analysis capabilities.
 """
 
+
 import os
 import sys
 import unittest
@@ -19,7 +20,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 try:
     from intellicrack.core.analysis.radare2_ai_integration import R2AIEngine, analyze_binary_with_ai
 except ImportError as e:
-    raise ImportError(f"Failed to import radare2_ai_integration module: {e}")
+    raise ImportError(
+        f"Failed to import radare2_ai_integration module: {e}"
+    ) from e
 
 
 class TestR2AIEngineInitialization(unittest.TestCase):
@@ -356,11 +359,8 @@ class TestR2AIEngineMLModels(unittest.TestCase):
         # Should include common commercial licensing schemes
         expected_pattern_types = ["rsa", "aes", "hardware_id", "time_based", "server_validation"]
 
-        found_patterns = 0
-        for pattern_type in expected_pattern_types:
-            if any(pattern_type in key.lower() for key in patterns):
-                found_patterns += 1
-
+        found_patterns = sum(bool(any(pattern_type in key.lower() for key in patterns))
+                         for pattern_type in expected_pattern_types)
         self.assertGreaterEqual(found_patterns, 3, "Insufficient coverage of real-world license patterns")
 
     def test_vulnerability_feature_extraction_realistic(self):
@@ -374,12 +374,8 @@ class TestR2AIEngineMLModels(unittest.TestCase):
             # Should include categories that indicate real vulnerability analysis
             security_categories = ["buffer_overflow_indicators", "format_string_risks", "crypto_weaknesses", "input_validation_gaps"]
 
-            # At least some security-relevant feature categories should exist
-            relevant_features = 0
-            for category in security_categories:
-                if any(category in key.lower() for key in vuln_features):
-                    relevant_features += 1
-
+            relevant_features = sum(bool(any(category in key.lower() for key in vuln_features))
+                                for category in security_categories)
             self.assertGreater(relevant_features, 0, "No security-relevant features detected")
 
 
@@ -459,11 +455,9 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
         # Should detect various types of anomalies
         required_anomaly_types = ["statistical_outliers", "behavioral_anomalies", "structural_anomalies"]
 
-        found_anomaly_types = 0
-        for anomaly_type in required_anomaly_types:
-            if anomaly_type in anomaly_result or any(anomaly_type in key for key in anomaly_result):
-                found_anomaly_types += 1
-
+        found_anomaly_types = sum(bool(anomaly_type in anomaly_result
+                                          or any(anomaly_type in key for key in anomaly_result))
+                              for anomaly_type in required_anomaly_types)
         self.assertGreater(found_anomaly_types, 0, "No sophisticated anomaly detection categories found")
 
         # Should provide anomaly scores/indicators
@@ -478,11 +472,8 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
         # Should provide multiple bypass strategy categories
         strategy_categories = ["static_analysis_bypass", "dynamic_analysis_bypass", "anti_debug_bypass", "vm_detection_bypass"]
 
-        found_strategies = 0
-        for category in strategy_categories:
-            if any(category in key.lower() for key in bypass_suggestions):
-                found_strategies += 1
-
+        found_strategies = sum(bool(any(category in key.lower() for key in bypass_suggestions))
+                           for category in strategy_categories)
         self.assertGreater(found_strategies, 0, "No intelligent bypass strategies generated")
 
         # Each strategy should include implementation guidance
@@ -502,11 +493,8 @@ class TestR2AIEngineAdvancedAnalysis(unittest.TestCase):
         # Should provide similarity metrics and matches
         required_similarity_components = ["similarity_matrix", "similar_functions", "similarity_scores"]
 
-        found_components = 0
-        for component in required_similarity_components:
-            if component in similarity_result:
-                found_components += 1
-
+        found_components = sum(bool(component in similarity_result)
+                           for component in required_similarity_components)
         self.assertGreater(found_components, 0, "No robust similarity analysis components found")
 
         # Similarity scores should be meaningful (0-1 range typical)
@@ -645,9 +633,7 @@ class TestR2AIEngineIntegration(unittest.TestCase):
 
         # Model directory should be configured for persistence
         self.assertTrue(hasattr(engine, "model_dir"))
-        model_dir = getattr(engine, "model_dir", None)
-
-        if model_dir:
+        if model_dir := getattr(engine, "model_dir", None):
             self.assertIsInstance(model_dir, (str, Path))
             # Should be a valid path concept
             self.assertGreater(len(str(model_dir)), 0)
@@ -666,11 +652,9 @@ class TestR2AIEngineIntegration(unittest.TestCase):
 
         # Should include standard ML performance indicators
         expected_metrics = ["accuracy", "precision", "recall", "f1_score"]
-        found_metrics = 0
-        for metric in expected_metrics:
-            if metric in performance_metrics or any(metric in key.lower() for key in performance_metrics):
-                found_metrics += 1
-
+        found_metrics = sum(bool(metric in performance_metrics
+                                    or any(metric in key.lower() for key in performance_metrics))
+                        for metric in expected_metrics)
         self.assertGreater(found_metrics, 0, "No standard ML performance metrics found")
 
 

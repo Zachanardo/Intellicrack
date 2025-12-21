@@ -51,16 +51,14 @@ def run_basic_functionality_check():
 
         # Test basic traffic analysis
         test_data = b"SERVER_HEARTBEAT\x00\x01\x00\x04test"
-        result = fingerprinter.analyze_traffic(test_data, port=27000)
-
-        if result:
+        if result := fingerprinter.analyze_traffic(test_data, port=27000):
             print(f"OK Traffic analysis working - identified: {result.get('protocol_id', 'Unknown')}")
         else:
             print("! Traffic analysis returned None (may indicate learning mode or no match)")
 
-        # Test packet fingerprinting
-        fingerprint = fingerprinter.fingerprint_packet(test_data, port=27000)
-        if fingerprint:
+        if fingerprint := fingerprinter.fingerprint_packet(
+            test_data, port=27000
+        ):
             print(f"OK Packet fingerprinting working - entropy: {fingerprint.get('packet_entropy', 'Unknown')}")
         else:
             print("! Packet fingerprinting returned None")
@@ -103,7 +101,8 @@ def analyze_test_coverage():
 
         print("\nTest coverage by category:")
         for category, methods in coverage_categories.items():
-            covered = sum(1 for method in methods if method in test_methods)
+            covered = sum(bool(method in test_methods)
+                      for method in methods)
             total = len(methods)
             percentage = (covered / total) * 100 if total > 0 else 0
             print(f"  {category}: {covered}/{total} ({percentage:.1f}%)")
@@ -117,10 +116,7 @@ def analyze_test_coverage():
         print(f"\nPublic methods in ProtocolFingerprinter: {len(public_methods)}")
         print("Methods:", public_methods)
 
-        # Calculate estimated coverage
-        total_categories = len(coverage_categories)
-        covered_categories = len(coverage_categories)  # All categories have tests
-        estimated_coverage = (covered_categories / total_categories) * 100
+        estimated_coverage = 1 * 100
 
         print(f"\nEstimated test coverage: {estimated_coverage:.1f}%")
 
@@ -156,7 +152,8 @@ def validate_test_quality():
             "assert_real_output"
         ]
 
-        real_data_found = sum(1 for indicator in real_data_indicators if indicator in test_content)
+        real_data_found = sum(bool(indicator in test_content)
+                          for indicator in real_data_indicators)
         print(f"Real data indicators found: {real_data_found}/{len(real_data_indicators)}")
 
         # Check for anti-mock patterns
@@ -169,8 +166,8 @@ def validate_test_quality():
         ]
 
         import re
-        anti_mock_found = sum(1 for pattern in anti_mock_patterns
-                             if re.search(pattern, test_content, re.MULTILINE))
+        anti_mock_found = sum(bool(re.search(pattern, test_content, re.MULTILINE))
+                          for pattern in anti_mock_patterns)
         print(f"Anti-mock validation patterns found: {anti_mock_found}")
 
         # Check for production scenario testing
@@ -182,7 +179,8 @@ def validate_test_quality():
             "production-ready"
         ]
 
-        scenario_coverage = sum(1 for scenario in production_scenarios if scenario in test_content)
+        scenario_coverage = sum(bool(scenario in test_content)
+                            for scenario in production_scenarios)
         print(f"Production scenario coverage: {scenario_coverage}/{len(production_scenarios)}")
 
         # Quality score

@@ -468,13 +468,12 @@ class TestHardwareSpoofingDialog:
 
         table_identifiers = []
         for row in range(dialog.hardware_table.rowCount()):
-            item = dialog.hardware_table.item(row, 0)
-            if item:
+            if item := dialog.hardware_table.item(row, 0):
                 table_identifiers.append(item.text())
 
         for expected in expected_identifiers:
             assert any(expected in identifier for identifier in table_identifiers), \
-                f"{expected} not found in table identifiers"
+                    f"{expected} not found in table identifiers"
 
         dialog.close()
 
@@ -488,10 +487,9 @@ class TestHardwareSpoofingDialog:
 
         capture_btn = None
         for child in dialog.findChildren(type(dialog).__bases__[0]):
-            if hasattr(child, "text") and callable(child.text):
-                if "Capture" in str(child.text()):
-                    capture_btn = child
-                    break
+            if hasattr(child, "text") and callable(child.text) and "Capture" in str(child.text()):
+                capture_btn = child
+                break
 
         assert dialog.worker_thread is None
 
@@ -546,7 +544,7 @@ class TestHardwareSpoofingIntegration:
         worker_capture.run()
         qapp.processEvents()
 
-        assert len(captured) > 0
+        assert captured
 
         worker_generate = HardwareSpoofingWorker()
         worker_generate.action = "generate"
@@ -560,7 +558,7 @@ class TestHardwareSpoofingIntegration:
         worker_generate.run()
         qapp.processEvents()
 
-        assert len(generated) > 0
+        assert generated
         assert captured["cpu_id"] != generated["cpu_id"]
 
         dialog.close()

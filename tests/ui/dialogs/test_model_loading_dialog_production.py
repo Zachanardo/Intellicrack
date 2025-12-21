@@ -68,10 +68,9 @@ def test_tab_structure(dialog: ModelLoadingDialog) -> None:
     tabs = dialog.findChild(type(dialog.content_widget).__bases__[0], None)
     tab_widget = None
     for child in dialog.content_widget.findChildren(type(dialog.content_widget).__bases__[0]):
-        if hasattr(child, "count") and callable(child.count):
-            if child.count() == 3:
-                tab_widget = child
-                break
+        if hasattr(child, "count") and callable(child.count) and child.count() == 3:
+            tab_widget = child
+            break
 
     assert tab_widget is not None
     assert tab_widget.count() == 3
@@ -82,10 +81,7 @@ def test_provider_combo_populated(dialog: ModelLoadingDialog) -> None:
     combo = dialog.provider_combo
     assert combo.count() == len(LLMProvider)
 
-    providers = []
-    for i in range(combo.count()):
-        providers.append(combo.itemData(i))
-
+    providers = [combo.itemData(i) for i in range(combo.count())]
     for provider in LLMProvider:
         assert provider in providers
 

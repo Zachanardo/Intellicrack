@@ -58,7 +58,7 @@ def simple_pe_x86(temp_workspace: Path) -> Path:
     pe_path = temp_workspace / "simple_x86.exe"
 
     pe_header = bytearray(4096)
-    pe_header[0:2] = b"MZ"
+    pe_header[:2] = b"MZ"
     pe_header[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_header[0x80:0x84] = b"PE\x00\x00"
     pe_header[0x84:0x86] = struct.pack("<H", 0x14C)
@@ -74,7 +74,7 @@ def simple_pe_x86(temp_workspace: Path) -> Path:
     pe_header[file_alignment_offset : file_alignment_offset + 4] = struct.pack("<I", 0x200)
 
     code_section = bytearray(512)
-    code_section[0:10] = b"\x55\x89\xe5"
+    code_section[:10] = b"\x55\x89\xe5"
     code_section[10:20] = b"\xe8\x00\x00\x00\x00\xff\x15\x00\x10\x40\x00"
     code_section[20:30] = b"\x85\xc0"
     code_section[30:40] = b"\x75\x05"
@@ -95,7 +95,7 @@ def simple_pe_x64(temp_workspace: Path) -> Path:
     pe_path = temp_workspace / "simple_x64.exe"
 
     pe_header = bytearray(4096)
-    pe_header[0:2] = b"MZ"
+    pe_header[:2] = b"MZ"
     pe_header[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_header[0x80:0x84] = b"PE\x00\x00"
     pe_header[0x84:0x86] = struct.pack("<H", 0x8664)
@@ -111,7 +111,7 @@ def simple_pe_x64(temp_workspace: Path) -> Path:
     pe_header[file_alignment_offset : file_alignment_offset + 4] = struct.pack("<I", 0x200)
 
     code_section = bytearray(512)
-    code_section[0:10] = b"\x55\x48\x89\xe5"
+    code_section[:10] = b"\x55\x48\x89\xe5"
     code_section[10:20] = b"\xe8\x00\x00\x00\x00\xff\x15\x00\x10\x40\x00"
     code_section[20:30] = b"\x48\x85\xc0"
     code_section[30:40] = b"\x75\x05"
@@ -202,7 +202,7 @@ class TestPatternMatcher:
 
         assert len(matches) > 0
         serial_matches = [m for m in matches if m["type"] == CheckType.SERIAL_VALIDATION]
-        assert len(serial_matches) > 0
+        assert serial_matches
         assert serial_matches[0]["confidence"] >= 0.8
 
     def test_pattern_matcher_finds_online_validation(self) -> None:
@@ -221,7 +221,7 @@ class TestPatternMatcher:
 
         assert len(matches) > 0
         online_matches = [m for m in matches if m["type"] == CheckType.ONLINE_VALIDATION]
-        assert len(online_matches) > 0
+        assert online_matches
 
     def test_pattern_matcher_finds_hardware_check(self) -> None:
         """Pattern matcher detects hardware validation patterns."""
@@ -237,7 +237,7 @@ class TestPatternMatcher:
         matches = matcher.find_patterns(instructions)
 
         hardware_matches = [m for m in matches if m["type"] == CheckType.HARDWARE_CHECK]
-        assert len(hardware_matches) > 0
+        assert hardware_matches
 
     def test_pattern_matcher_wildcard_matching(self) -> None:
         """Pattern matcher handles wildcard patterns correctly."""
@@ -555,9 +555,9 @@ class TestPatchPointSelector:
             patched_bytes=b"\x90\x90\x90\x90\x90",
         )
 
-        patch_points = selector.select_optimal_patch_points(license_check, instructions)
-
-        if patch_points:
+        if patch_points := selector.select_optimal_patch_points(
+            license_check, instructions
+        ):
             for point in patch_points:
                 assert 0.0 <= point.safety_score <= 1.0
 
@@ -820,9 +820,7 @@ class TestPatchApplication:
         shutil.copy2(simple_pe_x86, test_binary)
 
         remover = LicenseCheckRemover(str(test_binary))
-        checks = remover.analyze()
-
-        if checks:
+        if checks := remover.analyze():
             remover.patch(checks[:1], create_backup=True)
 
             backup_path = Path(f"{test_binary}.bak")
@@ -837,12 +835,8 @@ class TestPatchApplication:
         original_hash = test_binary.read_bytes()
 
         remover = LicenseCheckRemover(str(test_binary))
-        checks = remover.analyze()
-
-        if checks:
-            success = remover.patch(checks[:1], create_backup=False)
-
-            if success:
+        if checks := remover.analyze():
+            if success := remover.patch(checks[:1], create_backup=False):
                 modified_hash = test_binary.read_bytes()
                 assert test_binary.stat().st_size == original_size
 
@@ -874,12 +868,8 @@ class TestPatchApplication:
         shutil.copy2(simple_pe_x86, test_binary)
 
         remover = LicenseCheckRemover(str(test_binary))
-        checks = remover.analyze()
-
-        if checks:
-            success = remover.patch(checks[:1])
-
-            if success:
+        if checks := remover.analyze():
+            if success := remover.patch(checks[:1]):
                 verified = remover.verify_patches()
                 assert isinstance(verified, bool)
 
@@ -889,9 +879,7 @@ class TestPatchApplication:
         shutil.copy2(simple_pe_x86, test_binary)
 
         remover = LicenseCheckRemover(str(test_binary))
-        checks = remover.analyze()
-
-        if checks:
+        if checks := remover.analyze():
             remover.patch(checks[:1])
 
             pe_after = pefile.PE(str(test_binary))
@@ -908,9 +896,7 @@ class TestIntelligentPatching:
         shutil.copy2(simple_pe_x86, test_binary)
 
         remover = LicenseCheckRemover(str(test_binary))
-        checks = remover.analyze()
-
-        if checks:
+        if checks := remover.analyze():
             success = remover.apply_intelligent_patches(checks[:1], use_best_point=True)
             assert isinstance(success, bool)
 
@@ -1119,7 +1105,6 @@ class TestRealWorldScenarios:
 
         if checks:
             high_confidence_checks = [c for c in checks if c.confidence >= 0.7]
-            assert len(high_confidence_checks) >= 0
 
     def test_themida_detection_and_patching(self, protected_binaries_dir: Path, temp_workspace: Path) -> None:
         """Detect and patch Themida-protected binaries."""
@@ -1264,12 +1249,10 @@ class TestIntegration:
         assert isinstance(checks, list)
 
         if checks:
-            high_confidence = [c for c in checks if c.confidence >= 0.8]
-
-            if high_confidence:
-                success = remover.patch(high_confidence[:3], create_backup=True)
-
-                if success:
+            if high_confidence := [c for c in checks if c.confidence >= 0.8]:
+                if success := remover.patch(
+                    high_confidence[:3], create_backup=True
+                ):
                     assert remover.verify_patches()
 
                     backup_path = Path(f"{test_binary}.bak")
@@ -1282,12 +1265,8 @@ class TestIntegration:
 
         remover = LicenseCheckRemover(str(test_binary))
 
-        checks = remover.analyze()
-
-        if checks:
-            validated_checks = [c for c in checks if c.validated_safe]
-
-            if validated_checks:
+        if checks := remover.analyze():
+            if validated_checks := [c for c in checks if c.validated_safe]:
                 success = remover.apply_intelligent_patches(validated_checks[:2])
                 assert isinstance(success, bool)
 

@@ -48,11 +48,10 @@ def analyze_coverage():
                     print(f"    METHOD: {item.name}")
                     print(f"      Line range: {item.lineno}-{item.end_lineno}")
 
-                    # Count decision points (if statements, loops, etc.)
-                    decision_points = 0
-                    for subnode in ast.walk(item):
-                        if isinstance(subnode, (ast.If, ast.For, ast.While, ast.Try)):
-                            decision_points += 1
+                    decision_points = sum(bool(isinstance(
+                                                                  subnode, (ast.If, ast.For, ast.While, ast.Try)
+                                                              ))
+                                      for subnode in ast.walk(item))
                     print(f"      Decision points: {decision_points}")
 
     print("\n TEST COVERAGE ANALYSIS:")
@@ -82,8 +81,8 @@ def analyze_coverage():
 
     print(f"\n COVERAGE SUMMARY:")
     print(f"   Test scenarios: {len(covered_scenarios)}")
-    print(f"   Code paths tested: 16+")
-    print(f"   Edge cases covered: 8+")
+    print("   Code paths tested: 16+")
+    print("   Edge cases covered: 8+")
 
     # Manual coverage estimation based on code analysis
     total_executable_lines = 76 - 21  # Subtract header comments
@@ -93,9 +92,9 @@ def analyze_coverage():
     print(f"   Estimated coverage: {coverage_percentage:.1f}%")
 
     if coverage_percentage >= 80:
-        print(f"   Status: OK COVERAGE TARGET ACHIEVED")
+        print("   Status: OK COVERAGE TARGET ACHIEVED")
     else:
-        print(f"   Status: FAIL COVERAGE TARGET NOT MET")
+        print("   Status: FAIL COVERAGE TARGET NOT MET")
 
     return coverage_percentage
 

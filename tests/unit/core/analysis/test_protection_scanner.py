@@ -215,8 +215,7 @@ class TestProtectionScannerRealWorldCapabilities:
         # Expect sophisticated UPX analysis
         assert 'packers' in results, "UPX packer analysis should be performed"
 
-        packer_results = results.get('packers', {})
-        if packer_results:
+        if packer_results := results.get('packers', {}):
             # Validate UPX-specific analysis
             upx_detected = any(
                 'upx' in str(key).lower() or 'upx' in str(value).lower()
@@ -310,7 +309,9 @@ class TestProtectionScannerRealWorldCapabilities:
                     # Validate sophisticated entropy analysis
                     expected_metrics = ['high_entropy_sections', 'entropy_threshold', 'packing_probability']
                     entropy_metrics = [metric for metric in expected_metrics if metric in entropy_data]
-                    assert len(entropy_metrics) >= 1, f"Entropy analysis lacks sophisticated metrics: {list(entropy_data.keys())}"
+                    assert (
+                        entropy_metrics
+                    ), f"Entropy analysis lacks sophisticated metrics: {list(entropy_data.keys())}"
 
             finally:
                 os.unlink(f.name)
@@ -364,8 +365,9 @@ class TestProtectionScannerRealWorldCapabilities:
                     detected_techniques = [tech for tech in expected_techniques if tech in anti_debug_data]
 
                     # Should detect multiple techniques or provide detailed analysis
-                    assert len(detected_techniques) >= 1 or len(anti_debug_data) >= 2, \
-                        f"Anti-debugging analysis should detect multiple techniques: {list(anti_debug_data.keys())}"
+                    assert (
+                        detected_techniques or len(anti_debug_data) >= 2
+                    ), f"Anti-debugging analysis should detect multiple techniques: {list(anti_debug_data.keys())}"
 
             finally:
                 os.unlink(f.name)
@@ -500,8 +502,9 @@ class TestProtectionScannerRealWorldCapabilities:
 
             # Enhanced scan should provide some form of bypass guidance
             if bypass_content:
-                assert len(bypass_content) >= 1, \
-                    f"Enhanced scan should provide bypass recommendations, found: {bypass_content}"
+                assert (
+                    bypass_content
+                ), f"Enhanced scan should provide bypass recommendations, found: {bypass_content}"
 
     def test_protection_scanner_integration_with_binary_analyzer(self, test_app, sample_pe_binary):
         """
@@ -628,10 +631,11 @@ class TestProtectionScannerRealWorldCapabilities:
             # Wait for all threads to complete
             for thread in threads:
                 thread.join(timeout=60.0)
-                assert not thread.is_alive(), f"Thread should complete within timeout"
+                assert not thread.is_alive(), "Thread should complete within timeout"
 
             # Verify all scans completed successfully
-            results_count = sum(1 for app in apps if app.protection_results)
+            results_count = sum(bool(app.protection_results)
+                            for app in apps)
             assert results_count >= 1, "At least one scan should provide results"
 
         finally:
@@ -765,21 +769,18 @@ class TestProtectionScannerProductionReadinessValidation:
 
         # CRITICAL: Enhanced scan must demonstrate advanced capabilities
         assert not enhanced_thread.is_alive(), \
-            "FAILURE: Enhanced scan thread did not complete - likely broken implementation"
+                "FAILURE: Enhanced scan thread did not complete - likely broken implementation"
 
         # Must show some form of enhanced processing
         has_results = bool(app.protection_results)
         has_status = bool(app.scan_status)
 
         assert has_results or has_status, \
-            "FAILURE: Enhanced scan provided no updates - likely placeholder implementation"
+                "FAILURE: Enhanced scan provided no updates - likely placeholder implementation"
 
         # If results were provided, they must show enhanced analysis
         if has_results:
-            results = app.protection_results
-
-            # Enhanced scan must provide more than basic scan
-            if results:
+            if results := app.protection_results:
                 enhanced_indicators = ['ai', 'enhanced', 'advanced', 'intelligent', 'learning', 'recommendation']
                 has_enhanced_features = any(
                     indicator in str(key).lower() or indicator in str(value).lower()
@@ -795,7 +796,7 @@ class TestProtectionScannerProductionReadinessValidation:
                 )
 
                 assert has_enhanced_features or complex_analysis, \
-                    f"FAILURE: Enhanced scan lacks sophistication - results: {list(results.keys())}"
+                        f"FAILURE: Enhanced scan lacks sophistication - results: {list(results.keys())}"
 
 
 @pytest.mark.integration

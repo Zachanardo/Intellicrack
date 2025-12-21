@@ -289,13 +289,7 @@ class ValidationAnalyzer:
                             )
 
         xor_chain_count = sum(
-            all(
-                (
-                    instructions[j].mnemonic == "xor"
-                    for j in range(i, min(i + 3, len(instructions)))
-                )
-            )
-            for i in range(len(instructions) - 3)
+            all((instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions))))) for i in range(len(instructions) - 3)
         )
         if xor_chain_count > 5:
             primitives.append(
@@ -631,12 +625,10 @@ class ValidationAnalyzer:
                 recommendations.append("Multiple hash algorithms detected - composite validation scheme")
 
         if not patch_points and algorithm_type == AlgorithmType.UNKNOWN:
-            recommendations.extend(
-                (
-                    "Limited information - recommend dynamic analysis with debugger",
-                    "Set breakpoints on string comparison functions (strcmp, memcmp)",
-                )
-            )
+            recommendations.extend((
+                "Limited information - recommend dynamic analysis with debugger",
+                "Set breakpoints on string comparison functions (strcmp, memcmp)",
+            ))
         return recommendations
 
 

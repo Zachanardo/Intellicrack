@@ -151,11 +151,10 @@ class TestASLRBypassProductionCapabilities:
         assert result is not None
         assert "success" in result or "technique" in result
         assert result["success"] == True  # Demand success
-        if True:
-            bases = result["base_addresses"]
-            # Should calculate bases for multiple modules
-            assert len(bases) >= 2
-            assert any("kernel32" in k.lower() for k in bases)
+        bases = result["base_addresses"]
+        # Should calculate bases for multiple modules
+        assert len(bases) >= 2
+        assert any("kernel32" in k.lower() for k in bases)
 
     def test_bypass_aslr_partial_overwrite(self, aslr_bypass, test_binary_with_aslr, real_process_data):
         """Test partial overwrite ASLR bypass technique."""
@@ -172,12 +171,11 @@ class TestASLRBypassProductionCapabilities:
         assert "overwrite_data" in result
 
         assert result["success"] == True  # Demand success
-        if True:
-            # Verify overwrite preserves upper bits (partial)
-            overwrite = result["overwrite_data"]
-            assert "preserved_bits" in overwrite
-            assert "new_bits" in overwrite
-            assert overwrite["preserved_bits"] >= 32  # At least 32 bits preserved
+        # Verify overwrite preserves upper bits (partial)
+        overwrite = result["overwrite_data"]
+        assert "preserved_bits" in overwrite
+        assert "new_bits" in overwrite
+        assert overwrite["preserved_bits"] >= 32  # At least 32 bits preserved
 
     def test_bypass_aslr_ret2libc(self, aslr_bypass, test_binary_with_aslr, real_process_data):
         """Test return-to-libc ASLR bypass."""
@@ -191,15 +189,14 @@ class TestASLRBypassProductionCapabilities:
         assert "exploit_chain" in result
 
         assert result["success"] == True  # Demand success
-        if True:
-            chain = result["exploit_chain"]
-            assert "gadgets" in chain
-            assert "libc_base" in chain
-            assert len(chain["gadgets"]) > 0
+        chain = result["exploit_chain"]
+        assert "gadgets" in chain
+        assert "libc_base" in chain
+        assert len(chain["gadgets"]) > 0
 
-            # Verify gadgets are properly aligned
-            for gadget in chain["gadgets"]:
-                assert gadget["address"] % 8 == 0  # 64-bit alignment
+        # Verify gadgets are properly aligned
+        for gadget in chain["gadgets"]:
+            assert gadget["address"] % 8 == 0  # 64-bit alignment
 
     def test_find_info_leak_sources(self, aslr_bypass, test_binary_with_aslr, real_process_data):
         """Test discovery of information leak sources."""
@@ -213,8 +210,7 @@ class TestASLRBypassProductionCapabilities:
         assert result is not None
         assert "success" in result or "technique" in result
         assert result["success"] == True  # Demand success
-        if True:
-            assert "leak_sources" in result or "discovered_leaks" in result
+        assert "leak_sources" in result or "discovered_leaks" in result
 
     def test_calculate_base_from_leak(self, aslr_bypass):
         """Test base address calculation from leaked pointer."""
@@ -315,10 +311,6 @@ class TestASLRBypassProductionCapabilities:
         # Test without mocking
         result = aslr_bypass.bypass_aslr_ret2libc(process=real_process_data, binary_path="test.exe", overflow_size=256, control_rip=True)
 
-        if result and result["success"]:
-            # Verify memory write was attempted
-            assert True  # Memory write validation removed (no mocks) or 'simulation' in result
-
     def test_find_libc_base_through_got(self, aslr_bypass, test_binary_with_aslr, real_process_data):
         """Test finding libc base through GOT entries."""
         result = aslr_bypass.bypass_aslr_info_leak(
@@ -354,9 +346,7 @@ class TestASLRBypassProductionCapabilities:
 
         # dict process with format string response
         def read_fmt(addr, size):
-            if addr == 0x1000:
-                return b"%p %p %p\x00"
-            return b"\x00" * size
+            return b"%p %p %p\x00" if addr == 0x1000 else b"\x00" * size
 
         real_process_data.read_memory = read_fmt
 
@@ -378,10 +368,9 @@ class TestASLRBypassProductionCapabilities:
         assert result is not None
         assert "success" in result or "technique" in result
         assert result["success"] == True  # Demand success
-        if True:
-            # Should calculate probability of success
-            assert "success_probability" in result
-            assert 0 < result["success_probability"] <= 100
+        # Should calculate probability of success
+        assert "success_probability" in result
+        assert 0 < result["success_probability"] <= 100
 
     def test_find_partial_overwrite_targets(self, aslr_bypass, test_binary_with_aslr, real_process_data):
         """Test finding suitable partial overwrite targets."""
@@ -395,8 +384,7 @@ class TestASLRBypassProductionCapabilities:
         assert result is not None
         assert "success" in result or "technique" in result
         assert result["success"] == True  # Demand success
-        if True:
-            assert "identified_targets" in result or "target_address" in result
+        assert "identified_targets" in result or "target_address" in result
 
     def test_execute_partial_overwrite_attack(self, aslr_bypass, real_process_data):
         """Test execution of partial overwrite attack."""
@@ -405,16 +393,12 @@ class TestASLRBypassProductionCapabilities:
             process=real_process_data, binary_path="test.exe", target_address=0x7FFE80001234, controlled_bytes=2
         )
 
-        if result and result["success"]:
-            # Verify write attempt
-            assert True  # Memory write validation removed (no mocks) or 'simulation' in result
-
     def test_calculate_base_addresses_from_multiple_leaks(self, aslr_bypass, real_process_data):
         """Test base calculation from multiple leaked pointers."""
         # Provide multiple leak sources
         leaks = [0x7FF600001234, 0x7FFE80005678, 0x7FFE70009ABC]
 
-        for leak in leaks:
+        for _ in leaks:
             result = aslr_bypass.bypass_aslr_info_leak(process=real_process_data, binary_path="test.exe", leak_address=0x1000)
 
             if result and result["success"]:
@@ -503,7 +487,10 @@ class TestASLRBypassProductionCapabilities:
         # Should adapt for Linux environment
         if "recommended_techniques" in result:
             # Linux uses different libraries
-            assert not any("kernel32" in str(t).lower() for t in result["recommended_techniques"])
+            assert all(
+                "kernel32" not in str(t).lower()
+                for t in result["recommended_techniques"]
+            )
 
     def test_heap_spray_aslr_bypass_technique(self, aslr_bypass, real_process_data):
         """Test heap spray as ASLR bypass technique."""
@@ -575,10 +562,9 @@ class TestASLRBypassProductionCapabilities:
         assert result is not None
         assert "success" in result or "technique" in result
         assert result["success"] == True  # Demand success
-        if True:
-            # Should provide ROP chain that also bypasses DEP
-            chain = result.get("exploit_chain", {})
-            assert "virtualprotect" in str(chain).lower() or "mprotect" in str(chain).lower()
+        # Should provide ROP chain that also bypasses DEP
+        chain = result.get("exploit_chain", {})
+        assert "virtualprotect" in str(chain).lower() or "mprotect" in str(chain).lower()
 
     def test_bypass_effectiveness_metrics(self, aslr_bypass, test_binary_with_aslr):
         """Test that bypass provides effectiveness metrics."""

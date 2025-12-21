@@ -53,7 +53,7 @@ def analyze_coverage():
         if '"""' in stripped and not in_docstring:
             in_docstring = True
             continue
-        elif '"""' in stripped and in_docstring:
+        elif '"""' in stripped:
             in_docstring = False
             continue
         elif not in_docstring and stripped and not stripped.startswith('#'):
@@ -91,11 +91,7 @@ def analyze_coverage():
             functions_found.append(node.name)
 
         elif isinstance(node, (ast.Import, ast.ImportFrom)):
-            if isinstance(node, ast.ImportFrom):
-                imports_found.extend([alias.name for alias in node.names])
-            else:
-                imports_found.extend([alias.name for alias in node.names])
-
+            imports_found.extend([alias.name for alias in node.names])
     print(f"\n CODE STRUCTURE ANALYSIS:")
     print(f"   Classes found: {len(classes_found)} -> {classes_found}")
     print(f"   Top-level functions: {len(functions_found)} -> {functions_found}")
@@ -311,7 +307,7 @@ def run_test_suite():
     passed = tests_run - failures - errors - skipped
     success_rate = (passed / tests_run * 100) if tests_run > 0 else 0
 
-    print(f" TEST SUITE RESULTS:")
+    print(" TEST SUITE RESULTS:")
     print(f"   Tests run: {tests_run}")
     print(f"   Passed: {passed}")
     print(f"   Failed: {failures}")

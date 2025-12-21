@@ -75,14 +75,14 @@ class TestNetworkIndicatorDetection:
         """Firefox binary contains multiple network protocol indicators."""
         results: list[str] = plugin.analyze(str(firefox_binary))
 
-        assert len(results) > 0
+        assert results
         assert any("Analyzing network capabilities" in r for r in results)
 
         results_text = " ".join(results)
         assert "Network indicators found:" in results_text or any(indicator in results_text for indicator in ["http://", "https://", "socket"])
 
         found_indicators = [r for r in results if "http://" in r or "https://" in r or "socket" in r]
-        assert len(found_indicators) > 0, "Firefox must contain network protocol indicators"
+        assert found_indicators, "Firefox must contain network protocol indicators"
 
     @pytest.mark.real_data
     def test_online_activation_binary_network_detection(
@@ -91,7 +91,7 @@ class TestNetworkIndicatorDetection:
         """Online activation binary contains network communication indicators."""
         results: list[str] = plugin.analyze(str(online_activation_binary))
 
-        assert len(results) > 0
+        assert results
         results_text = " ".join(results).lower()
 
         has_network_indicators = any(
@@ -111,7 +111,8 @@ class TestNetworkIndicatorDetection:
         results_text = " ".join(results).lower()
 
         winsock_indicators = ["wsastartup", "socket", "connect", "send", "recv"]
-        found_count = sum(1 for indicator in winsock_indicators if indicator in results_text)
+        found_count = sum(bool(indicator in results_text)
+                      for indicator in winsock_indicators)
 
         assert found_count > 0, "Network binary must contain Windows Socket API references"
 
@@ -129,9 +130,8 @@ class TestNetworkIndicatorDetection:
         assert "Analyzing network capabilities" in results_text
 
         explicit_no_indicators = "No obvious network indicators found" in results_text
-        minimal_indicators = "Network indicators found:" in results_text and sum(
-            1 for r in results if any(ind in r for ind in ["http://", "https://", "ftp://"])
-        ) < 2
+        minimal_indicators = "Network indicators found:" in results_text and sum(bool(any(ind in r for ind in ["http://", "https://", "ftp://"]))
+                                                                             for r in results) < 2
 
         assert explicit_no_indicators or minimal_indicators, "7zip should have minimal network indicators"
 
@@ -146,7 +146,7 @@ class TestSocketAPIDetection:
         """Detects WSAStartup and WSACleanup in Windows network binary."""
         results: list[str] = plugin.detect_socket_apis(str(firefox_binary))
 
-        assert len(results) > 0
+        assert results
         results_text = " ".join(results)
 
         assert "socket API references" in results_text.lower() or "Found" in results_text
@@ -167,7 +167,8 @@ class TestSocketAPIDetection:
         results_text = " ".join(results).lower()
 
         socket_operations = ["socket", "connect", "send", "recv", "bind", "listen"]
-        found_operations = sum(1 for op in socket_operations if op in results_text)
+        found_operations = sum(bool(op in results_text)
+                           for op in socket_operations)
 
         assert found_operations >= 2, "Network binary must have multiple socket operation references"
 
@@ -185,7 +186,7 @@ class TestSocketAPIDetection:
             for r in results
         )
 
-        assert len(results) > 0, "Must return results for Firefox binary"
+        assert results, "Must return results for Firefox binary"
 
     @pytest.mark.real_data
     def test_no_socket_apis_in_minimal_binary(
@@ -197,7 +198,7 @@ class TestSocketAPIDetection:
 
         results: list[str] = plugin.detect_socket_apis(str(dongle_app))
 
-        assert len(results) > 0
+        assert results
         results_text = " ".join(results)
 
         assert "No socket API references found" in results_text or "0 socket API" in results_text
@@ -355,7 +356,7 @@ class TestNetworkTrafficMonitoring:
         """Traffic monitoring returns formatted results."""
         results: list[str] = plugin.monitor_traffic()
 
-        assert len(results) > 0
+        assert results
         assert any("network monitoring" in r.lower() for r in results)
 
     @pytest.mark.real_data

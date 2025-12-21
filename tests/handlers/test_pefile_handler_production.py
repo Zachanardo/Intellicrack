@@ -17,20 +17,24 @@ from intellicrack.handlers import pefile_handler
 def minimal_pe32() -> bytes:
     """Create minimal valid PE32 binary."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = (128).to_bytes(4, "little")
 
     pe_header = b"PE\x00\x00"
 
     coff_header = bytearray(20)
-    coff_header[0:2] = pefile_handler.MACHINE_TYPE.IMAGE_FILE_MACHINE_I386.to_bytes(2, "little")
+    coff_header[:2] = (
+        pefile_handler.MACHINE_TYPE.IMAGE_FILE_MACHINE_I386.to_bytes(
+            2, "little"
+        )
+    )
     coff_header[2:4] = (2).to_bytes(2, "little")
     coff_header[4:8] = (0).to_bytes(4, "little")
     coff_header[16:18] = (224).to_bytes(2, "little")
     coff_header[18:20] = (pefile_handler.IMAGE_CHARACTERISTICS.IMAGE_FILE_EXECUTABLE_IMAGE).to_bytes(2, "little")
 
     optional_header = bytearray(224)
-    optional_header[0:2] = (0x10B).to_bytes(2, "little")
+    optional_header[:2] = (0x10B).to_bytes(2, "little")
     optional_header[16:20] = (0x1000).to_bytes(4, "little")
     optional_header[20:24] = (0x1000).to_bytes(4, "little")
     optional_header[24:28] = (0x2000).to_bytes(4, "little")
@@ -43,7 +47,7 @@ def minimal_pe32() -> bytes:
     optional_header[92:96] = (16).to_bytes(4, "little")
 
     section1 = bytearray(40)
-    section1[0:8] = b".text\x00\x00\x00"
+    section1[:8] = b".text\x00\x00\x00"
     section1[8:12] = (0x1000).to_bytes(4, "little")
     section1[12:16] = (0x1000).to_bytes(4, "little")
     section1[16:20] = (0x200).to_bytes(4, "little")
@@ -51,7 +55,7 @@ def minimal_pe32() -> bytes:
     section1[36:40] = (pefile_handler.SECTION_CHARACTERISTICS.IMAGE_SCN_CNT_CODE | pefile_handler.SECTION_CHARACTERISTICS.IMAGE_SCN_MEM_EXECUTE | pefile_handler.SECTION_CHARACTERISTICS.IMAGE_SCN_MEM_READ).to_bytes(4, "little")
 
     section2 = bytearray(40)
-    section2[0:8] = b".data\x00\x00\x00"
+    section2[:8] = b".data\x00\x00\x00"
     section2[8:12] = (0x1000).to_bytes(4, "little")
     section2[12:16] = (0x2000).to_bytes(4, "little")
     section2[16:20] = (0x200).to_bytes(4, "little")
@@ -284,7 +288,7 @@ def test_pe_invalid_dos_signature_raises_error() -> None:
 def test_pe_invalid_pe_signature_raises_error() -> None:
     """PE raises PEFormatError for invalid PE signature."""
     invalid_pe = bytearray(128)
-    invalid_pe[0:2] = b"MZ"
+    invalid_pe[:2] = b"MZ"
     invalid_pe[60:64] = (64).to_bytes(4, "little")
     invalid_pe += b"INVALID_PE_SIG"
 
@@ -403,26 +407,30 @@ def test_dll_characteristics_constants_available() -> None:
 def test_pe64_optional_header_parsed_correctly() -> None:
     """PE64 OPTIONAL_HEADER parses correctly for 64-bit binary."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = (128).to_bytes(4, "little")
 
     pe_header = b"PE\x00\x00"
 
     coff_header = bytearray(20)
-    coff_header[0:2] = pefile_handler.MACHINE_TYPE.IMAGE_FILE_MACHINE_AMD64.to_bytes(2, "little")
+    coff_header[:2] = (
+        pefile_handler.MACHINE_TYPE.IMAGE_FILE_MACHINE_AMD64.to_bytes(
+            2, "little"
+        )
+    )
     coff_header[2:4] = (1).to_bytes(2, "little")
     coff_header[16:18] = (240).to_bytes(2, "little")
     coff_header[18:20] = (0x0002).to_bytes(2, "little")
 
     optional_header = bytearray(240)
-    optional_header[0:2] = (0x20B).to_bytes(2, "little")
+    optional_header[:2] = (0x20B).to_bytes(2, "little")
     optional_header[16:20] = (0x1000).to_bytes(4, "little")
     optional_header[20:24] = (0x1000).to_bytes(4, "little")
     optional_header[24:32] = (0x140000000).to_bytes(8, "little")
     optional_header[108:112] = (16).to_bytes(4, "little")
 
     section = bytearray(40)
-    section[0:8] = b".text\x00\x00\x00"
+    section[:8] = b".text\x00\x00\x00"
     section[8:12] = (0x1000).to_bytes(4, "little")
     section[12:16] = (0x1000).to_bytes(4, "little")
     section[16:20] = (0x200).to_bytes(4, "little")

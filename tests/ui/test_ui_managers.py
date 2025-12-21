@@ -26,8 +26,7 @@ from tests.base_test import IntellicrackTestBase
 def qapp() -> QApplication:
     """Create QApplication instance for testing."""
     if not QApplication.instance():
-        app = QApplication(sys.argv)
-        yield app
+        yield QApplication(sys.argv)
     else:
         yield QApplication.instance()
 

@@ -67,8 +67,8 @@ def validate_production_readiness_checkpoint3():
             print("FAIL CRITICAL FAILURE: Could not find _generate_vulnerability_training_data method")
             return False
 
-        license_method_code = license_method_match.group(0)
-        vuln_method_code = vuln_method_match.group(0)
+        license_method_code = license_method_match[0]
+        vuln_method_code = vuln_method_match[0]
 
         # CRITICAL TEST: Search for forbidden synthetic data patterns
         forbidden_patterns = [
@@ -130,11 +130,8 @@ def validate_production_readiness_checkpoint3():
             "crypto_constants"
         ]
 
-        indicators_found = 0
-        for indicator in real_data_indicators:
-            if indicator in ai_source:
-                indicators_found += 1
-
+        indicators_found = sum(bool(indicator in ai_source)
+                           for indicator in real_data_indicators)
         if indicators_found < 6:
             validation_results["critical_failures"].append(f"Insufficient real data implementation indicators ({indicators_found}/7)")
             print(f"FAIL CRITICAL FAILURE: Insufficient real data implementation indicators ({indicators_found}/7)")
@@ -587,7 +584,7 @@ def validate_production_readiness_checkpoint3():
             vc = proof["vulnerability_classification"]
             print(f"   Vulnerability Classification: {vc['total_samples']} samples, {vc['vulnerability_classes']} classes")
     print()
-    print(f"OK Results saved to: day3_checkpoint3_results.json")
+    print("OK Results saved to: day3_checkpoint3_results.json")
     print("OK AUTHORIZED TO PROCEED TO DAY 4.1")
 
     return True

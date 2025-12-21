@@ -142,7 +142,8 @@ class TestFridaScriptGeneration:
             "hasp_get_info",
         ]
 
-        hooks_found = sum(1 for api in hasp_apis if api in script)
+        hooks_found = sum(bool(api in script)
+                      for api in hasp_apis)
         assert hooks_found >= 2, (
             f"Script must hook at least 2 HASP APIs, found {hooks_found}"
         )
@@ -167,7 +168,8 @@ class TestFridaScriptGeneration:
         script = result["script"]
         flexlm_functions = ["lc_checkout", "lm_checkout", "lp_checkout"]
 
-        hooks_found = sum(1 for func in flexlm_functions if func in script)
+        hooks_found = sum(bool(func in script)
+                      for func in flexlm_functions)
         assert hooks_found >= 1, "Script must hook FlexLM checkout functions"
 
         assert "LM_NOERROR" in script or "0x0" in script, (
@@ -194,7 +196,8 @@ class TestFridaScriptGeneration:
             "NtQueryInformationProcess",
         ]
 
-        hooks_found = sum(1 for api in anti_debug_apis if api in script)
+        hooks_found = sum(bool(api in script)
+                      for api in anti_debug_apis)
         assert hooks_found >= 1, (
             "Themida bypass must hook anti-debugging functions"
         )
@@ -263,7 +266,8 @@ class TestGhidraScriptGeneration:
         assert "GhidraScript" in script, "Script must extend GhidraScript class"
 
         required_methods = ["identifyHASPAPIs", "patchValidationChecks"]
-        methods_found = sum(1 for method in required_methods if method in script)
+        methods_found = sum(bool(method in script)
+                        for method in required_methods)
         assert methods_found >= 1, (
             "Ghidra script must implement protection analysis methods"
         )
@@ -314,7 +318,8 @@ class TestGhidraScriptGeneration:
             "0xEB",  # JMP instruction
         ]
 
-        patches_found = sum(1 for indicator in patching_indicators if indicator in script)
+        patches_found = sum(bool(indicator in script)
+                        for indicator in patching_indicators)
         assert patches_found >= 1, (
             "Ghidra script must include binary patching capabilities"
         )
@@ -596,7 +601,8 @@ class TestAIPromptGeneration:
                 "strategy",
             ]
 
-            found = sum(1 for indicator in technique_indicators if indicator.lower() in prompt.lower())
+            found = sum(bool(indicator.lower() in prompt.lower())
+                    for indicator in technique_indicators)
             assert found >= 1, "Prompt must suggest bypass techniques"
 
 
@@ -624,9 +630,10 @@ class TestMultiProtectionScenarios:
         assert result["success"], "Must handle layered protections"
 
         if "Total Protections Detected:" in result["script"]:
-            match = re.search(r"Total Protections Detected: (\d+)", result["script"])
-            if match:
-                protection_count = int(match.group(1))
+            if match := re.search(
+                r"Total Protections Detected: (\d+)", result["script"]
+            ):
+                protection_count = int(match[1])
                 logging.info(f"Detected {protection_count} protection(s)")
 
     def test_prioritize_primary_protection(
@@ -755,7 +762,8 @@ class TestScriptTemplateCompleteness:
 
         frida_script = flexlm_scripts["frida"]
         checkout_functions = ["lc_checkout", "lm_checkout", "lp_checkout"]
-        hooks_found = sum(1 for func in checkout_functions if func in frida_script)
+        hooks_found = sum(bool(func in frida_script)
+                      for func in checkout_functions)
 
         assert hooks_found >= 1, "Must hook at least one checkout function"
         assert "LM_NOERROR" in frida_script or "license" in frida_script.lower(), (

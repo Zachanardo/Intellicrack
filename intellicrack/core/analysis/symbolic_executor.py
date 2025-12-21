@@ -245,9 +245,18 @@ class SymbolicExecutionEngine:
             if hasattr(simgr, "active") and hasattr(simgr, "deadended") and hasattr(simgr, "errored"):
                 states_to_check = simgr.active + simgr.deadended + simgr.errored
             for state in states_to_check:
-                if hasattr(state, "heap") and hasattr(state.heap, "_freed_chunks") and (hasattr(state, "history") and hasattr(state.history, "actions")):
+                if (
+                    hasattr(state, "heap")
+                    and hasattr(state.heap, "_freed_chunks")
+                    and (hasattr(state, "history") and hasattr(state.history, "actions"))
+                ):
                     for action in state.history.actions:
-                        if hasattr(action, "type") and hasattr(action, "action") and (action.type == "mem" and action.action == "read") and (hasattr(state, "solver") and hasattr(action, "addr")):
+                        if (
+                            hasattr(action, "type")
+                            and hasattr(action, "action")
+                            and (action.type == "mem" and action.action == "read")
+                            and (hasattr(state, "solver") and hasattr(action, "addr"))
+                        ):
                             addr = state.solver.eval(action.addr)
                             if addr in state.heap._freed_chunks:
                                 vuln = {
@@ -324,11 +333,20 @@ class SymbolicExecutionEngine:
                 for func_name in ["system", "exec", "execve", "popen"]:
                     if hasattr(project, "kb") and hasattr(project.kb, "functions") and func_name in project.kb.functions:
                         func = project.kb.functions[func_name]
-                        if hasattr(state, "addr") and hasattr(func, "addr") and state.addr == func.addr and (hasattr(state, "arch") and hasattr(state.arch, "bits")):
+                        if (
+                            hasattr(state, "addr")
+                            and hasattr(func, "addr")
+                            and state.addr == func.addr
+                            and (hasattr(state, "arch") and hasattr(state.arch, "bits"))
+                        ):
                             arg_reg = "rdi" if state.arch.bits == 64 else "eax"
                             if hasattr(state, "regs") and hasattr(state.regs, arg_reg):
                                 arg_val = getattr(state.regs, arg_reg)
-                                if hasattr(state.plugins, "taint") and hasattr(state.plugins.taint, "is_tainted") and state.plugins.taint.is_tainted(arg_val):
+                                if (
+                                    hasattr(state.plugins, "taint")
+                                    and hasattr(state.plugins.taint, "is_tainted")
+                                    and state.plugins.taint.is_tainted(arg_val)
+                                ):
                                     vuln = {
                                         "type": "command_injection",
                                         "address": hex(state.addr) if hasattr(state, "addr") else "unknown",
@@ -2431,9 +2449,7 @@ int main() {{
 
         for string in strings:
             sql_count = sum(keyword in string["value"].upper() for keyword in sql_keywords)
-            injection_count = sum(
-                pattern in string["value"] for pattern in injection_patterns
-            )
+            injection_count = sum(pattern in string["value"] for pattern in injection_patterns)
 
             if sql_count > 0 or injection_count > 0:
                 severity = "high" if injection_count > 0 else "medium"

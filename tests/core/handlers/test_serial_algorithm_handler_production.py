@@ -401,7 +401,7 @@ class TestSerialPatternDetection:
         patterns = generator._detect_patterns(serials)
 
         arithmetic_patterns = [p for p in patterns if p.get("type") == "arithmetic_sequence"]
-        assert len(arithmetic_patterns) > 0
+        assert arithmetic_patterns
         if arithmetic_patterns:
             assert arithmetic_patterns[0]["difference"] == 10
 
@@ -418,7 +418,7 @@ class TestSerialPatternDetection:
         patterns = generator._detect_patterns(serials)
 
         date_patterns = [p for p in patterns if p.get("type") == "date_based"]
-        assert len(date_patterns) > 0
+        assert date_patterns
 
     def test_detect_patterns_identifies_hash_based_patterns(self) -> None:
         """Pattern detection identifies hash-based patterns."""
@@ -433,7 +433,7 @@ class TestSerialPatternDetection:
         patterns = generator._detect_patterns(serials)
 
         hash_patterns = [p for p in patterns if p.get("type") == "hash_based"]
-        assert len(hash_patterns) > 0
+        assert hash_patterns
         if hash_patterns:
             assert "md5" in hash_patterns[0]["possible_algorithms"]
 

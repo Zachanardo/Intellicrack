@@ -171,7 +171,7 @@ def high_entropy_binary(test_binary_dir: Path) -> Path:
     pe_header = b"MZ" + b"\x90" * 58 + b"\x00\x00\x00\x00" + b"PE\x00\x00"
     import random
     random.seed(42)
-    random_data = bytes([random.randint(0, 255) for _ in range(2048)])
+    random_data = bytes(random.randint(0, 255) for _ in range(2048))
 
     entropy_file.write_bytes(pe_header + random_data)
     return entropy_file
@@ -800,7 +800,7 @@ class TestCalculateEntropy:
         detector = ProtectionDetector()
         import random
         random.seed(42)
-        random_data = bytes([random.randint(0, 255) for _ in range(1000)])
+        random_data = bytes(random.randint(0, 255) for _ in range(1000))
 
         entropy = detector._calculate_entropy(random_data)
 
@@ -1351,7 +1351,7 @@ class TestEntropyCalculationAccuracy:
         detector = ProtectionDetector()
         import random
         random.seed(12345)
-        perfectly_random = bytes([random.randint(0, 255) for _ in range(10000)])
+        perfectly_random = bytes(random.randint(0, 255) for _ in range(10000))
 
         entropy = detector._calculate_entropy(perfectly_random)
 
@@ -1458,9 +1458,6 @@ class TestBypassStrategyGeneration:
         strategies = detector.get_bypass_strategies(str(upx_packed_binary))
 
         assert isinstance(strategies, list)
-        for strategy in strategies:
-            if isinstance(strategy, dict):
-                pass
 
     def test_bypass_strategies_include_tools(self, vmprotect_binary: Path) -> None:
         """get_bypass_strategies includes required tools."""

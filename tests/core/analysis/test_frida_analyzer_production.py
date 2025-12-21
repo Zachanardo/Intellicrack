@@ -249,7 +249,7 @@ class TestFridaProcessLifecycle:
             assert messages[0]["message"] == "Script loaded successfully"
 
             kernel32_msg = [m for m in messages if m.get("type") == "module_found"]
-            assert len(kernel32_msg) >= 1
+            assert kernel32_msg
             assert "kernel32" in kernel32_msg[0]["name"].lower()
 
             session.detach()
@@ -664,7 +664,7 @@ class TestStalkerMessageHandling:
 
         session._on_message(message, None)
 
-        assert len(messages) >= 1
+        assert messages
         assert any("Stalker initialized" in msg for msg in messages)
 
     def test_stalker_session_captures_api_calls(self) -> None:
@@ -967,9 +967,9 @@ class TestFridaHookingCapabilities:
             device.resume(pid)
             time.sleep(0.3)
 
-            assert len(messages) >= 1
+            assert messages
             status_msg = [m for m in messages if m.get("type") == "status"]
-            assert len(status_msg) >= 1
+            assert status_msg
             assert status_msg[0]["hook_installed"] is True
 
             session.detach()
@@ -1017,9 +1017,9 @@ class TestFridaHookingCapabilities:
             memory_info = [m for m in messages if m.get("type") == "memory_info"]
             memory_read = [m for m in messages if m.get("type") == "memory_read"]
 
-            assert len(memory_info) >= 1
+            assert memory_info
             assert "calc" in memory_info[0]["module"].lower()
-            assert len(memory_read) >= 1
+            assert memory_read
             assert memory_read[0]["success"] is True
             assert memory_read[0]["bytes_read"] == 64
 
@@ -1064,7 +1064,7 @@ class TestFridaHookingCapabilities:
             time.sleep(0.3)
 
             modules_msg = [m for m in messages if m.get("type") == "modules"]
-            assert len(modules_msg) >= 1
+            assert modules_msg
             assert modules_msg[0]["count"] >= 10
             assert modules_msg[0]["has_kernel32"] is True
             assert modules_msg[0]["has_ntdll"] is True

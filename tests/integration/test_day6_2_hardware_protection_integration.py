@@ -293,8 +293,7 @@ class MockR2VulnerabilityEngine:
 
         emulation_strategies = []
         for dongle_type in detected_dongles:
-            config = self.dongle_emulator.get_dongle_config(dongle_type)
-            if config:
+            if config := self.dongle_emulator.get_dongle_config(dongle_type):
                 emulation_strategies.append({
                     "dongle_type": dongle_type,
                     "emulation_method": config.get("method", "api_hooking"),
@@ -349,14 +348,14 @@ class TestHardwareProtectionIntegration:
             test_binary = create_test_binary_with_hardware_protections()
             engine = MockR2VulnerabilityEngine(test_binary)
 
-            # Check hardware protection modules are initialized
-            modules_present = (
-                hasattr(engine, 'tpm_bypass') and engine.tpm_bypass is not None and
-                hasattr(engine, 'dongle_emulator') and engine.dongle_emulator is not None and
-                hasattr(engine, 'protocol_fingerprinter') and engine.protocol_fingerprinter is not None
-            )
-
-            if modules_present:
+            if modules_present := (
+                hasattr(engine, 'tpm_bypass')
+                and engine.tpm_bypass is not None
+                and hasattr(engine, 'dongle_emulator')
+                and engine.dongle_emulator is not None
+                and hasattr(engine, 'protocol_fingerprinter')
+                and engine.protocol_fingerprinter is not None
+            ):
                 print("  OK PASS: Hardware protection modules initialized")
                 success = True
             else:
@@ -388,18 +387,17 @@ class TestHardwareProtectionIntegration:
                 '_analyze_dongle_bypass_opportunities'
             ]
 
-            missing_methods = []
-            for method in required_methods:
-                if not hasattr(engine, method):
-                    missing_methods.append(method)
-
-            if not missing_methods:
-                print("  OK PASS: All hardware protection analysis methods present")
-                success = True
-            else:
+            if missing_methods := [
+                method
+                for method in required_methods
+                if not hasattr(engine, method)
+            ]:
                 print(f"  FAIL FAIL: Missing methods: {missing_methods}")
                 success = False
 
+            else:
+                print("  OK PASS: All hardware protection analysis methods present")
+                success = True
             os.unlink(test_binary)
             self.test_results.append(success)
             return success
@@ -428,21 +426,18 @@ class TestHardwareProtectionIntegration:
                 'dongle_bypass_analysis'
             ]
 
-            missing_fields = []
-            for field in required_fields:
-                if field not in result:
-                    missing_fields.append(field)
+            if missing_fields := [
+                field for field in required_fields if field not in result
+            ]:
+                print(f"  FAIL FAIL: Missing fields: {missing_fields}")
+                success = False
 
-            if not missing_fields:
+            else:
                 print("  OK PASS: Hardware protection fields present in analysis results")
                 print(f"  OK INFO: Hardware analysis data: {type(result.get('hardware_protection_analysis', {}))}")
                 print(f"  OK INFO: TPM analysis data: {type(result.get('tpm_bypass_analysis', {}))}")
                 print(f"  OK INFO: Dongle analysis data: {type(result.get('dongle_bypass_analysis', {}))}")
                 success = True
-            else:
-                print(f"  FAIL FAIL: Missing fields: {missing_fields}")
-                success = False
-
             os.unlink(test_binary)
             self.test_results.append(success)
             return success

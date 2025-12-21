@@ -90,6 +90,8 @@ src\process_manager.rs:807:5: [warning] docs for function which may panic missin
 
 src\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section
 
+src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
+
 src\process_manager.rs:1153:25: [warning] variables can be used directly in the `format!` string
 
 src\process_manager.rs:1157:32: [warning] variables can be used directly in the `format!` string
@@ -99,8 +101,6 @@ src\process_manager.rs:1165:25: [warning] variables can be used directly in the 
 src\process_manager.rs:1169:29: [warning] variables can be used directly in the `format!` string
 
 src\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
-
-src\process_manager.rs:185:5: [warning] unused `async` for function with no await statements
 
 
 31 findings in src\dependencies.rs
@@ -168,7 +168,7 @@ src\dependencies.rs:590:5: [warning] unused `async` for function with no await s
 src\dependencies.rs:645:5: [warning] unused `async` for function with no await statements
 
 
-27 findings in src\environment.rs
+26 findings in src\environment.rs
 
 src\environment.rs:25:59: [warning] item in documentation is missing backticks
 
@@ -203,8 +203,6 @@ src\environment.rs:281:43: [warning] unused `self` argument
 src\environment.rs:281:5: [warning] this function's return value is unnecessary
 
 src\environment.rs:324:62: [warning] redundant closure
-
-src\environment.rs:324:66: [warning] calling `to_string` on `&&str`
 
 src\environment.rs:348:28: [warning] unused `self` argument
 
@@ -271,13 +269,13 @@ src\python_integration.rs:551:5: [warning] docs for function returning `Result` 
 
 src\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section
 
+src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
+
 src\python_integration.rs:795:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
 src\python_integration.rs:852:9: [warning] adding items after statements is confusing, since items exist from the start of the scope
 
 src\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string
-
-src\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably
 
 
 25 findings in src\diagnostics.rs
@@ -388,11 +386,11 @@ benches\startup_optimization_benchmarks.rs:225:13: [warning] passing a unit valu
 
 21 findings in src\tensorflow_validator.rs
 
-src\tensorflow_validator.rs:237:29: [warning] this `continue` expression is redundant
-
 src\tensorflow_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section
 
 src\tensorflow_validator.rs:11:5: [warning] this function has too many lines (146/100)
+
+src\tensorflow_validator.rs:237:29: [warning] this `continue` expression is redundant
 
 src\tensorflow_validator.rs:363:5: [warning] this function has too many lines (104/100)
 
@@ -431,7 +429,7 @@ src\tensorflow_validator.rs:1084:9: [warning] you seem to be trying to use `matc
 src\tensorflow_validator.rs:1127:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
 
 
-19 findings in src\tool_discovery.rs
+18 findings in src\tool_discovery.rs
 
 src\tool_discovery.rs:466:10: [warning] redundant else block
 
@@ -450,8 +448,6 @@ src\tool_discovery.rs:164:12: [warning] this method could have a `#[must_use]` a
 src\tool_discovery.rs:232:1: [warning] this function's return value is unnecessarily wrapped by `Result`
 
 src\tool_discovery.rs:359:7: [warning] item in documentation is missing backticks
-
-src\tool_discovery.rs:402:37: [warning] calling `to_string` on `&&str`
 
 src\tool_discovery.rs:432:23: [warning] item in documentation is missing backticks
 
@@ -511,7 +507,7 @@ src\lib.rs:365:1: [warning] docs for function returning `Result` missing `# Erro
 src\lib.rs:100:5: [warning] unused `async` for function with no await statements
 
 
-18 findings in src\preflight_checks.rs
+15 findings in src\preflight_checks.rs
 
 src\preflight_checks.rs:23:30: [warning] item in documentation is missing backticks
 
@@ -521,13 +517,9 @@ src\preflight_checks.rs:252:1: [warning] this function's return value is unneces
 
 src\preflight_checks.rs:260:48: [warning] redundant closure
 
-src\preflight_checks.rs:260:52: [warning] calling `to_string` on `&&str`
-
 src\preflight_checks.rs:293:1: [warning] this function's return value is unnecessarily wrapped by `Result`
 
 src\preflight_checks.rs:301:44: [warning] redundant closure
-
-src\preflight_checks.rs:301:48: [warning] calling `to_string` on `&&str`
 
 src\preflight_checks.rs:309:9: [warning] unnecessary boolean `not` operation
 
@@ -546,8 +538,6 @@ src\preflight_checks.rs:411:5: [warning] unnecessary boolean `not` operation
 src\preflight_checks.rs:417:5: [warning] unnecessary boolean `not` operation
 
 src\preflight_checks.rs:346:31: [warning] variables can be used directly in the `format!` string
-
-src\preflight_checks.rs:489:18: [warning] this expression always evaluates to false
 
 
 15 findings in tests\integration.rs
@@ -583,37 +573,6 @@ tests\integration.rs:503:5: [warning] variables can be used directly in the `for
 tests\integration.rs:526:25: [warning] useless use of `vec!`
 
 
-14 findings in src\flask_validator.rs
-
-src\flask_validator.rs:203:29: [warning] this `continue` expression is redundant
-
-src\flask_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section
-
-src\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)
-
-src\flask_validator.rs:550:45: [warning] redundant closure
-
-src\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
-
-src\flask_validator.rs:590:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
-
-src\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
-
-src\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect
-
-src\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string
-
-src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
-
-src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
-
-
 14 findings in src\security.rs
 
 src\security.rs:933:64: [warning] long literal lacking separators
@@ -643,6 +602,37 @@ src\security.rs:394:5: [warning] docs for function returning `Result` missing `#
 src\security.rs:420:17: [warning] variables can be used directly in the `format!` string
 
 src\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+
+14 findings in src\flask_validator.rs
+
+src\flask_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section
+
+src\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)
+
+src\flask_validator.rs:203:29: [warning] this `continue` expression is redundant
+
+src\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements
+
+src\flask_validator.rs:550:45: [warning] redundant closure
+
+src\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+
+src\flask_validator.rs:590:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+
+src\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`
+
+src\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect
+
+src\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string
 
 
 14 findings in src\process_optimization.rs
@@ -801,17 +791,6 @@ tests\process_optimization_tests.rs:105:76: [warning] redundant clone
 tests\process_optimization_tests.rs:127:32: [warning] redundant closure
 
 
-4 findings in src\main.rs
-
-src\main.rs:21:7: [warning] this function has too many lines (144/100)
-
-src\main.rs:39:9: [warning] variables can be used directly in the `format!` string
-
-src\main.rs:123:13: [warning] adding items after statements is confusing, since items exist from the start of the scope
-
-src\main.rs:148:9: [warning] variables can be used directly in the `format!` string
-
-
 4 findings in benches\performance_benchmarks.rs
 
 benches\performance_benchmarks.rs:116:9: [warning] binding to `_` prefixed variable with no side-effect
@@ -821,6 +800,17 @@ benches\performance_benchmarks.rs:180:78: [warning] used underscore-prefixed bin
 benches\performance_benchmarks.rs:179:17: [warning] used underscore-prefixed binding
 
 benches\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed
+
+
+4 findings in src\main.rs
+
+src\main.rs:21:7: [warning] this function has too many lines (144/100)
+
+src\main.rs:39:9: [warning] variables can be used directly in the `format!` string
+
+src\main.rs:123:13: [warning] adding items after statements is confusing, since items exist from the start of the scope
+
+src\main.rs:148:9: [warning] variables can be used directly in the `format!` string
 
 
 3 findings in src\intel_gpu.rs

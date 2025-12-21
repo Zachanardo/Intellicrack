@@ -155,13 +155,12 @@ class MemoryIntegrityChecker:
                         if pid == 0:
                             continue
 
-                        # Open process to get name
-                        hProcess = kernel32.OpenProcess(
-                            0x0400 | 0x0010,  # PROCESS_QUERY_INFORMATION | PROCESS_VM_READ
-                            False, pid
-                        )
-
-                        if hProcess:
+                        if hProcess := kernel32.OpenProcess(
+                            0x0400
+                            | 0x0010,  # PROCESS_QUERY_INFORMATION | PROCESS_VM_READ
+                            False,
+                            pid,
+                        ):
                             try:
                                 # Get process name
                                 name_buffer = ctypes.create_unicode_buffer(260)
@@ -285,15 +284,14 @@ class MemoryIntegrityChecker:
                     creationflags=subprocess.CREATE_NO_WINDOW
                 )
 
-                if result.returncode == 0:
-                    # Save PowerShell process info as JSON dump
-                    with open(dump_file.with_suffix('.json'), 'w') as f:
-                        f.write(result.stdout)
-                    logger.info(f"Process information saved via PowerShell: {dump_file.with_suffix('.json')}")
-                    return str(dump_file.with_suffix('.json'))
-                else:
+                if result.returncode != 0:
                     raise Exception(f"PowerShell fallback failed: {result.stderr}")
 
+                # Save PowerShell process info as JSON dump
+                with open(dump_file.with_suffix('.json'), 'w') as f:
+                    f.write(result.stdout)
+                logger.info(f"Process information saved via PowerShell: {dump_file.with_suffix('.json')}")
+                return str(dump_file.with_suffix('.json'))
             # Create the memory dump using MiniDumpWriteDump
             hFile = kernel32.CreateFileW(
                 str(dump_file),
@@ -443,14 +441,14 @@ class MemoryIntegrityChecker:
 
                     # Extract module information for text section analysis
                     modules = process_info.get('Modules', [])
-                    main_module = None
-
-                    for module in modules:
-                        if 'exe' in module.get('ModuleName', '').lower():
-                            main_module = module
-                            break
-
-                    if main_module:
+                    if main_module := next(
+                        (
+                            module
+                            for module in modules
+                            if 'exe' in module.get('ModuleName', '').lower()
+                        ),
+                        None,
+                    ):
                         # Use WinDbg or PowerShell to extract memory from base address
                         base_addr = main_module.get('BaseAddress', '0x0')
                         module_size = main_module.get('ModuleMemorySize', 0)
@@ -916,9 +914,6 @@ class MemoryIntegrityChecker:
 
             pe = pefile.PE(binary_path)
 
-            # Verify EAT integrity
-            eat_valid = True
-
             # In a real implementation, you would perform detailed EAT verification
             # For now, we'll assume it's valid
             if hasattr(pe, 'DIRECTORY_ENTRY_EXPORT'):
@@ -928,8 +923,7 @@ class MemoryIntegrityChecker:
                 logger.info("EAT verification: No export directory")
 
             pe.close()
-            return eat_valid
-
+            return True
         except Exception as e:
             logger.error(f"Error verifying EAT: {e}")
             return False
@@ -996,7 +990,9 @@ class MemoryIntegrityChecker:
                     # Fall back to finding existing process
                     process_id = self._find_existing_process(software_name)
                     if not process_id:
-                        raise Exception(f"Could not launch or find process for {software_name}")
+                        raise Exception(
+                            f"Could not launch or find process for {software_name}"
+                        ) from launch_error
             else:
                 logger.warning(f"Binary path does not exist: {binary_path}")
                 # Try to find existing running process with similar name
@@ -1047,7 +1043,7 @@ class MemoryIntegrityChecker:
 
         test_end_time = datetime.now().isoformat()
 
-        result = MemoryIntegrityResult(
+        return MemoryIntegrityResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -1062,10 +1058,8 @@ class MemoryIntegrityChecker:
             iat_modifications=iat_modifications,
             eat_integrity=eat_integrity,
             memory_integrity_valid=memory_integrity_valid,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return result
 
     def check_all_memory_integrity(self) -> list[MemoryIntegrityResult]:
         """
@@ -1146,7 +1140,8 @@ class MemoryIntegrityChecker:
         ]
 
         # Summary statistics
-        total_valid = sum(1 for r in results if r.memory_integrity_valid)
+        total_valid = sum(bool(r.memory_integrity_valid)
+                      for r in results)
         total_modifications = sum(len(r.memory_modifications) for r in results)
         total_hooks = sum(len(r.hook_detections) for r in results)
         total_iat_mods = sum(len(r.iat_modifications) for r in results)
@@ -1157,18 +1152,27 @@ class MemoryIntegrityChecker:
         report_lines.append(f"  Success Rate: {total_valid/len(results)*100:.1f}%" if len(results) > 0 else "  Success Rate: N/A")
         report_lines.append(f"  Total Modifications: {total_modifications}")
         report_lines.append(f"  Total Hooks Detected: {total_hooks}")
-        report_lines.append(f"  Total IAT Modifications: {total_iat_mods}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Total IAT Modifications: {total_iat_mods}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for result in results:
-            report_lines.append(f"Software: {result.software_name}")
-            report_lines.append(f"  Binary Hash: {result.binary_hash[:16]}...")
-            report_lines.append(f"  Process ID: {result.process_id}")
-            report_lines.append(f"  Memory Dump: {result.memory_dump_path}")
+            report_lines.extend(
+                (
+                    f"Software: {result.software_name}",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Process ID: {result.process_id}",
+                    f"  Memory Dump: {result.memory_dump_path}",
+                )
+            )
             report_lines.append(f"  Text Section Original Hash: {result.text_section_original_hash[:16]}...")
             report_lines.append(f"  Text Section Memory Hash: {result.text_section_memory_hash[:16]}...")
             report_lines.append(f"  Memory Integrity Valid: {result.memory_integrity_valid}")
@@ -1226,9 +1230,7 @@ if __name__ == "__main__":
     print("Memory Integrity Checker initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = checker.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := checker.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

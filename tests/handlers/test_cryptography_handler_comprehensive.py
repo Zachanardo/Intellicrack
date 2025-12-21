@@ -318,7 +318,7 @@ class TestPBKDF2KeyDerivation:
 
         try:
             kdf_verify.verify(password, derived_key)
-        except (ValueError, Exception) as e:
+        except Exception as e:
             pytest.fail(f"PBKDF2 verification failed: {e}")
 
 

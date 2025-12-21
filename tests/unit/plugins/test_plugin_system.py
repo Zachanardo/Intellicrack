@@ -377,7 +377,7 @@ class TestVMProtectionUnwrapperEffectiveness:
                 "FAILED: VM unwrapper didn't detect .vmp0 section in VMProtect-like binary"
 
 
-@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {IMPORT_ERROR if not MODULES_AVAILABLE else ''}")
+@pytest.mark.skipif(not MODULES_AVAILABLE, reason=f"Modules not available: {'' if MODULES_AVAILABLE else IMPORT_ERROR}")
 class TestPluginSystemEffectiveness:
 
     def test_plugin_discovery_and_loading(self, plugin_dir: Path) -> None:

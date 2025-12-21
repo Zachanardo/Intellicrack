@@ -114,9 +114,7 @@ class TestLocalGGUFServer:
 
         with patch("intellicrack.ai.local_gguf_server.Llama") as mock_llama:
             mock_llama.return_value = Mock()
-            result = server.load_model(str(mock_gguf_model_file))
-
-            if result:
+            if result := server.load_model(str(mock_gguf_model_file)):
                 assert server.model is not None
                 assert server.model_path == str(mock_gguf_model_file)
 
@@ -368,7 +366,7 @@ class TestServerLifecycle:
 
         server.stop_server()
 
-        assert server.is_running is False
+        assert not server.is_running
 
     def test_is_healthy_checks_running_state(self) -> None:
         """is_healthy returns False when not running."""

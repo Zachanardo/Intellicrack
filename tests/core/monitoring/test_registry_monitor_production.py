@@ -61,9 +61,7 @@ def test_registry_monitor_default_watch_keys_include_software(registry_monitor: 
 
 def test_registry_monitor_starts_successfully(registry_monitor: Any) -> None:
     """Registry monitor starts monitoring with Windows API integration."""
-    result = registry_monitor.start()
-
-    if result:
+    if result := registry_monitor.start():
         assert registry_monitor.is_monitoring is True
         assert registry_monitor._monitor_thread is not None
         assert registry_monitor._stop_event is not None
@@ -74,9 +72,7 @@ def test_registry_monitor_starts_successfully(registry_monitor: Any) -> None:
 
 def test_registry_monitor_stops_cleanly(registry_monitor: Any) -> None:
     """Registry monitor stops monitoring and cleans up resources."""
-    result = registry_monitor.start()
-
-    if result:
+    if result := registry_monitor.start():
         time.sleep(0.5)
 
         registry_monitor.stop()
@@ -91,13 +87,11 @@ def test_registry_monitor_creates_watchers_for_hives(registry_monitor: Any) -> N
     """Registry monitor creates watchers for HKCU and HKLM hives."""
     from intellicrack.core.monitoring.registry_monitor import HKEY_CURRENT_USER
 
-    watcher = registry_monitor._create_watcher(
+    if watcher := registry_monitor._create_watcher(
         HKEY_CURRENT_USER,
         "HKCU",
         r"Software",
-    )
-
-    if watcher:
+    ):
         assert "hkey" in watcher
         assert "event" in watcher
         assert "path" in watcher
@@ -215,39 +209,31 @@ def test_registry_monitor_emits_events_with_correct_details(registry_monitor: An
 
 def test_registry_monitor_multiple_watchers_concurrent(registry_monitor: Any) -> None:
     """Registry monitor handles multiple registry watchers concurrently."""
-    result = registry_monitor.start()
-
-    if result:
+    if result := registry_monitor.start():
         time.sleep(1.0)
 
         registry_monitor.stop()
 
-        assert True
     else:
         pytest.skip("Registry monitor start failed")
 
 
 def test_registry_monitor_handles_monitoring_errors(registry_monitor: Any) -> None:
     """Registry monitor handles errors during monitoring gracefully."""
-    result = registry_monitor.start()
-
-    if result:
+    if result := registry_monitor.start():
         registry_monitor._running = False
 
         time.sleep(0.5)
 
         registry_monitor.stop()
 
-        assert True
     else:
         pytest.skip("Registry monitor start failed")
 
 
 def test_registry_monitor_thread_cleanup_on_stop(registry_monitor: Any) -> None:
     """Registry monitor properly cleans up monitoring thread on stop."""
-    result = registry_monitor.start()
-
-    if result:
+    if result := registry_monitor.start():
         monitor_thread = registry_monitor._monitor_thread
 
         registry_monitor.stop()
@@ -275,9 +261,7 @@ def test_registry_monitor_watch_keys_configurable(registry_monitor: Any) -> None
 def test_registry_monitor_handles_rapid_start_stop(registry_monitor: Any) -> None:
     """Registry monitor handles rapid start/stop cycles correctly."""
     for _ in range(3):
-        result = registry_monitor.start()
-
-        if result:
+        if result := registry_monitor.start():
             time.sleep(0.2)
             registry_monitor.stop()
             time.sleep(0.1)
@@ -289,13 +273,11 @@ def test_registry_monitor_watcher_creation_with_permissions(registry_monitor: An
     """Registry monitor watcher creation respects access permissions."""
     from intellicrack.core.monitoring.registry_monitor import HKEY_LOCAL_MACHINE
 
-    watcher = registry_monitor._create_watcher(
+    if watcher := registry_monitor._create_watcher(
         HKEY_LOCAL_MACHINE,
         "HKLM",
         r"SOFTWARE\Microsoft\Windows\CurrentVersion",
-    )
-
-    if watcher:
+    ):
         import ctypes
 
         advapi32 = ctypes.windll.advapi32
@@ -304,16 +286,10 @@ def test_registry_monitor_watcher_creation_with_permissions(registry_monitor: An
         advapi32.RegCloseKey(watcher["hkey"])
         kernel32.CloseHandle(watcher["event"])
 
-        assert True
-    else:
-        assert True
-
 
 def test_registry_monitor_stop_event_signals_correctly(registry_monitor: Any) -> None:
     """Registry monitor stop event signals monitoring thread correctly."""
-    result = registry_monitor.start()
-
-    if result:
+    if result := registry_monitor.start():
         assert registry_monitor._stop_event is not None
 
         import ctypes
@@ -326,6 +302,5 @@ def test_registry_monitor_stop_event_signals_correctly(registry_monitor: Any) ->
 
         registry_monitor.stop()
 
-        assert True
     else:
         pytest.skip("Registry monitor start failed")

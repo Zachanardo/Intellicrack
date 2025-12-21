@@ -86,7 +86,7 @@ def run_cli_command(args: list[str], timeout: int = 30) -> subprocess.CompletedP
     env["DISABLE_AI_WORKERS"] = "1"
     env["DISABLE_BACKGROUND_THREADS"] = "1"
 
-    result = subprocess.run(
+    return subprocess.run(
         cmd,
         capture_output=True,
         text=True,
@@ -94,7 +94,6 @@ def run_cli_command(args: list[str], timeout: int = 30) -> subprocess.CompletedP
         cwd=str(PROJECT_ROOT),
         env=env,
     )
-    return result
 
 
 class TestCLIBasicExecution:

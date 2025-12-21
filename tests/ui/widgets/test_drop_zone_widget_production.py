@@ -382,7 +382,7 @@ def test_drop_event_no_supported_files_ignores(widget: DropZoneWidget) -> None:
         widget.dropEvent(event)
 
         event.ignore.assert_called_once()
-        assert len(signal_received) == 0
+        assert not signal_received
     finally:
         if temp_txt.exists():
             temp_txt.unlink()

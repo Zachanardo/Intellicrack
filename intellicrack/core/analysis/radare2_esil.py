@@ -366,10 +366,7 @@ class ESILAnalysisEngine:
 
             # Pattern 2: Multiple comparisons (complex validation)
             if "cmp" in instruction:
-                comparison_count = 1 + sum(
-                    "cmp" in trace[j].get("instruction", "").lower()
-                    for j in range(i + 1, min(i + 10, len(trace)))
-                )
+                comparison_count = 1 + sum("cmp" in trace[j].get("instruction", "").lower() for j in range(i + 1, min(i + 10, len(trace))))
                 if comparison_count >= 3:
                     validation_patterns.append(
                         {

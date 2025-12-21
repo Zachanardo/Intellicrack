@@ -58,9 +58,6 @@ class RealR2Session:
             # Get xrefs in JSON
             return '{"xrefs": [{"from": 4096, "to": 8192}]}'
         elif command.startswith('iz'):
-            # Get strings
-            if '~uri' in command:
-                return '["string1", "string2", "string3"]'
             return '["string1", "string2", "string3"]'
         elif command == 'axt':
             # Get xrefs to
@@ -399,7 +396,7 @@ class TestOptimizationStrategy:
             else:  # Instance-based
                 strategies = [OptimizationStrategy(), OptimizationStrategy()]
 
-            assert len(strategies) > 0  # Must have at least one strategy type
+            assert strategies
 
         except AttributeError:
             # If it's a different implementation pattern, ensure it's not a stub
@@ -434,7 +431,7 @@ class TestAnalysisLevel:
             else:  # Instance-based
                 levels = [AnalysisLevel(), AnalysisLevel()]
 
-            assert len(levels) > 0  # Must have at least one level type
+            assert levels
 
         except AttributeError:
             # If it's a different implementation pattern, ensure it's not a stub
@@ -776,7 +773,7 @@ class TestPerformanceBenchmarking:
         benchmarks = []
         commands = ['aaa', 'afll', 'pdf', 'iz', 'axj']
 
-        for i, cmd in enumerate(commands):
+        for cmd in commands:
             start_time = time.time()
             result = optimizer.optimize('benchmark_binary.exe', [cmd])
             elapsed_time = time.time() - start_time

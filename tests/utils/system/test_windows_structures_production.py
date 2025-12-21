@@ -100,7 +100,7 @@ class TestWindowsContext:
         ctx_instance = CONTEXT()
         result: bool = context.set_thread_context(0, ctx_instance)
 
-        assert result is False
+        assert not result
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only test")
     def test_get_entry_point_64bit(self) -> None:
@@ -195,7 +195,7 @@ class TestCommonLicenseDomains:
             if "adobe" in d.lower()
         ]
 
-        assert len(adobe_domains) > 0
+        assert adobe_domains
 
     def test_common_license_domains_contains_autodesk(self) -> None:
         """License domains include Autodesk licensing servers."""
@@ -204,7 +204,7 @@ class TestCommonLicenseDomains:
             if "autodesk" in d.lower()
         ]
 
-        assert len(autodesk_domains) > 0
+        assert autodesk_domains
 
     def test_common_license_domains_contains_microsoft(self) -> None:
         """License domains include Microsoft licensing servers."""
@@ -213,7 +213,7 @@ class TestCommonLicenseDomains:
             if "microsoft" in d.lower()
         ]
 
-        assert len(ms_domains) > 0
+        assert ms_domains
 
     def test_common_license_domains_all_strings(self) -> None:
         """All license domains are strings."""
@@ -293,9 +293,7 @@ class TestCreateSSLCertificateBuilder:
 
     def test_ssl_certificate_builder_has_expected_methods(self) -> None:
         """Certificate builder has expected builder methods."""
-        builder = create_ssl_certificate_builder()
-
-        if builder:
+        if builder := create_ssl_certificate_builder():
             assert hasattr(builder, "public_key")
             assert hasattr(builder, "sign")
 
@@ -361,8 +359,7 @@ class TestWindowsStructuresIntegration:
 
         parsed: list[dict] = []
         for line in lines:
-            result = parse_objdump_line(line)
-            if result:
+            if result := parse_objdump_line(line):
                 parsed.append(result)
 
         assert len(parsed) == 4

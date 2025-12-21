@@ -104,10 +104,7 @@ class CrossValidation:
         self._initialize_scanner_paths()
 
         # Initialize YARA engine
-        if HAS_INTELLICRACK_MODULES:
-            self.yara_engine = YaraPatternEngine()
-        else:
-            self.yara_engine = None
+        self.yara_engine = YaraPatternEngine() if HAS_INTELLICRACK_MODULES else None
 
     def _validate_dependencies(self) -> None:
         """Validate required dependencies are available."""
@@ -230,21 +227,24 @@ class CrossValidation:
                     # Look for version patterns: v1.0, 1.0, (v1.0), etc.
                     import re
 
-                    # Pattern 1: v followed by version number
-                    version_match = re.search(r'\bv(\d+(?:\.\d+)*(?:\.\d+)?)\b', protection_info, re.IGNORECASE)
-                    if version_match:
+                    if version_match := re.search(
+                        r'\bv(\d+(?:\.\d+)*(?:\.\d+)?)\b',
+                        protection_info,
+                        re.IGNORECASE,
+                    ):
                         version = 'v' + version_match.group(1)
                         protection_name = re.sub(r'\s*\bv\d+(?:\.\d+)*(?:\.\d+)?\b\s*', ' ', protection_info, flags=re.IGNORECASE).strip()
                     else:
-                        # Pattern 2: standalone version number after space
-                        version_match = re.search(r'\s+(\d+(?:\.\d+)+)\s*$', protection_info)
-                        if version_match:
+                        if version_match := re.search(
+                            r'\s+(\d+(?:\.\d+)+)\s*$', protection_info
+                        ):
                             version = version_match.group(1)
                             protection_name = protection_info[:version_match.start()].strip()
                         else:
-                            # Pattern 3: version in parentheses
-                            version_match = re.search(r'\(([vV]?\d+(?:\.\d+)*(?:\.\d+)?)\)', protection_info)
-                            if version_match:
+                            if version_match := re.search(
+                                r'\(([vV]?\d+(?:\.\d+)*(?:\.\d+)?)\)',
+                                protection_info,
+                            ):
                                 version = version_match.group(1)
                                 protection_name = re.sub(r'\s*\([vV]?\d+(?:\.\d+)*(?:\.\d+)?\)\s*', ' ', protection_info).strip()
 
@@ -322,17 +322,18 @@ class CrossValidation:
 
                 # Extract protection information from DIE JSON
                 if 'detects' in data:
-                    for detect in data['detects']:
-                        results.append({
+                    results.extend(
+                        {
                             'scanner': 'die',
                             'protection': detect.get('name', 'unknown'),
                             'version': detect.get('version', ''),
                             'confidence': detect.get('confidence', 0.5),
                             'type': detect.get('type', ''),
                             'raw_output': str(detect),
-                            'timestamp': time.time()
-                        })
-
+                            'timestamp': time.time(),
+                        }
+                        for detect in data['detects']
+                    )
             else:
                 # Parse text output
                 for line in output.strip().split('\n'):
@@ -435,7 +436,7 @@ class CrossValidation:
                     if 'v' in protection_name:
                         version_parts = protection_name.split('v')
                         if len(version_parts) > 1:
-                            version = 'v' + version_parts[1].split()[0]
+                            version = f'v{version_parts[1].split()[0]}'
                             protection_name = version_parts[0].strip()
 
                     results.append({
@@ -470,14 +471,16 @@ class CrossValidation:
             # Use Intellicrack's YARA engine if available
             if self.yara_engine:
                 results = self.yara_engine.scan_binary(binary_path)
-                for result in results:
-                    yara_results.append({
+                yara_results.extend(
+                    {
                         'scanner': 'yara',
                         'rule': result.get('rule'),
                         'matches': result.get('matches', []),
                         'confidence': 0.8,
-                        'timestamp': time.time()
-                    })
+                        'timestamp': time.time(),
+                    }
+                    for result in results
+                )
             else:
                 # Run YARA directly with custom rules
                 yara_results = self._run_custom_yara_rules(binary_path)
@@ -541,7 +544,7 @@ rule HASP_Sentinel {
         results = []
 
         try:
-            for _rule_name, rule_text in protection_rules.items():
+            for rule_text in protection_rules.values():
                 # Compile and run YARA rule
                 compiled_rule = yara.compile(source=rule_text)
                 matches = compiled_rule.match(str(binary_path))
@@ -665,12 +668,8 @@ rule HASP_Sentinel {
                 comparison_result['matching_criteria'].append('version_match')
                 comparison_result['confidence'] += 0.2
 
-            # Compare signatures
-            matching_sigs = 0
-            for sig in expected_signatures:
-                if self._signature_matches(sig):
-                    matching_sigs += 1
-
+            matching_sigs = sum(bool(self._signature_matches(sig))
+                            for sig in expected_signatures)
             if matching_sigs > 0:
                 comparison_result['matching_criteria'].append(f'signature_matches_{matching_sigs}')
                 comparison_result['confidence'] += min(0.4, matching_sigs * 0.1)
@@ -703,24 +702,22 @@ rule HASP_Sentinel {
             offset = signature.get('offset', 0)
             mask = signature.get('mask', 'x' * (len(hex_pattern) // 2))
 
-            # Convert hex pattern to bytes
-            if isinstance(hex_pattern, str):
-                # Handle wildcard patterns (? for unknown bytes)
-                pattern_bytes = bytearray()
-                mask_bytes = bytearray()
-
-                hex_clean = hex_pattern.replace('?', '00').replace(' ', '')
-                for i in range(0, len(hex_clean), 2):
-                    if i + 1 < len(hex_clean):
-                        byte_str = hex_clean[i:i+2]
-                        pattern_bytes.append(int(byte_str, 16))
-
-                        # Check if original had wildcard
-                        original_byte = hex_pattern[i:i+2] if i < len(hex_pattern) else '??'
-                        mask_bytes.append(0xFF if '?' not in original_byte else 0x00)
-            else:
+            if not isinstance(hex_pattern, str):
                 return False
 
+            # Handle wildcard patterns (? for unknown bytes)
+            pattern_bytes = bytearray()
+            mask_bytes = bytearray()
+
+            hex_clean = hex_pattern.replace('?', '00').replace(' ', '')
+            for i in range(0, len(hex_clean), 2):
+                if i + 1 < len(hex_clean):
+                    byte_str = hex_clean[i:i+2]
+                    pattern_bytes.append(int(byte_str, 16))
+
+                    # Check if original had wildcard
+                    original_byte = hex_pattern[i:i+2] if i < len(hex_pattern) else '??'
+                    mask_bytes.append(0xFF if '?' not in original_byte else 0x00)
             # Search for pattern in binary data with mask
             if hasattr(self, 'current_binary_data') and self.current_binary_data:
                 return self._search_pattern_with_mask(
@@ -745,12 +742,13 @@ rule HASP_Sentinel {
             return False
 
         for i in range(start_offset, search_end):
-            match_found = True
-            for j, (pattern_byte, mask_byte) in enumerate(zip(pattern, mask, strict=False)):
-                if mask_byte != 0 and (data[i + j] & mask_byte) != (pattern_byte & mask_byte):
-                    match_found = False
-                    break
-
+            match_found = not any(
+                mask_byte != 0
+                and (data[i + j] & mask_byte) != (pattern_byte & mask_byte)
+                for j, (pattern_byte, mask_byte) in enumerate(
+                    zip(pattern, mask, strict=False)
+                )
+            )
             if match_found:
                 return True
 
@@ -785,7 +783,7 @@ rule HASP_Sentinel {
         try:
             # Analyze imports for behavioral indicators
             import_patterns = self._analyze_behavioral_imports(binary_path)
-            behavior_results.update(import_patterns)
+            behavior_results |= import_patterns
 
             # Analyze strings for behavioral indicators
             string_patterns = self._analyze_behavioral_strings(binary_path)
@@ -903,7 +901,7 @@ rule HASP_Sentinel {
 
                 pe.close()
 
-            except (ImportError, Exception) as e:
+            except Exception as e:
                 self.logger.debug(f"pefile analysis failed: {e}")
 
         except Exception as e:
@@ -990,13 +988,11 @@ rule HASP_Sentinel {
                     'unauthorized copy', 'piracy detected'
                 ]
 
-                found_protection_strings = []
-                for pattern in protection_strings:
-                    if pattern in strings_output:
-                        found_protection_strings.append(pattern)
-
-                # If we found protection-related strings, likely has file access patterns
-                if found_protection_strings:
+                if found_protection_strings := [
+                    pattern
+                    for pattern in protection_strings
+                    if pattern in strings_output
+                ]:
                     behavior_data['file_access_patterns'] = True
                     behavior_data['protection_strings_found'] = found_protection_strings
 
@@ -1081,7 +1077,7 @@ rule HASP_Sentinel {
         total_consensus = 0.0
 
         if scanner_count > 0:
-            for _protection_key, data in all_detections.items():
+            for data in all_detections.values():
                 # Calculate agreement percentage
                 unique_scanners = len(set(data['scanners']))
                 agreement = unique_scanners / scanner_count

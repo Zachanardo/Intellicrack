@@ -212,7 +212,7 @@ class TestIncrementalAnalysisManager(unittest.TestCase):
 
         # Packed binary with high entropy
         self.test_binary_packed = os.path.join(self.temp_dir, "packed_binary.exe")
-        packed_content = pe_header + bytes([i % 256 for i in range(8192)])  # High entropy content
+        packed_content = pe_header + bytes(i % 256 for i in range(8192))
 
         with open(self.test_binary_packed, 'wb') as f:
             f.write(packed_content)
@@ -520,7 +520,7 @@ class TestIncrementalAnalysisManager(unittest.TestCase):
         with open(large_binary, 'wb') as f:
             # Write data in chunks to simulate large binary
             chunk_data = b"A" * self.manager.chunk_size
-            for i in range(large_size // self.manager.chunk_size):
+            for _ in range(large_size // self.manager.chunk_size):
                 f.write(chunk_data)
 
         # Analyze large binary
@@ -545,9 +545,9 @@ class TestIncrementalAnalysisManager(unittest.TestCase):
         results = {"test": "data"}
         self.manager.cache_analysis("test_type", results)
 
-        # Corrupt the cache file
-        cache_files = [f for f in os.listdir(self.cache_dir) if f.endswith('.cache')]
-        if cache_files:
+        if cache_files := [
+            f for f in os.listdir(self.cache_dir) if f.endswith('.cache')
+        ]:
             cache_file_path = os.path.join(self.cache_dir, cache_files[0])
             with open(cache_file_path, 'wb') as f:
                 f.write(b"CORRUPTED_DATA_INVALID_PICKLE")

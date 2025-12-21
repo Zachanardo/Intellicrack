@@ -86,9 +86,8 @@ class TestAllProtectionTemplateGenerators:
             "slc",
             "license",
         ]
-        found_indicators: int = sum(
-            1 for indicator in ms_activation_indicators if indicator.lower() in frida_script.lower()
-        )
+        found_indicators: int = sum(bool(indicator.lower() in frida_script.lower())
+                                for indicator in ms_activation_indicators)
         assert found_indicators >= 2, "Script must target MS activation mechanisms"
 
     def test_get_themida_scripts_handles_virtualization_protection(
@@ -108,9 +107,8 @@ class TestAllProtectionTemplateGenerators:
             "secureengine",
             "virtual",
         ]
-        found: int = sum(
-            1 for indicator in themida_indicators if indicator.lower() in frida_script.lower()
-        )
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in themida_indicators)
         assert found >= 1, "Script must reference Themida/WinLicense"
 
     def test_get_ilok_scripts_generates_pace_protection_bypass(
@@ -125,9 +123,8 @@ class TestAllProtectionTemplateGenerators:
         assert len(frida_script) > 200, "iLok script too short"
 
         ilok_indicators: list[str] = ["ilok", "pace", "dongle", "license"]
-        found: int = sum(
-            1 for indicator in ilok_indicators if indicator.lower() in frida_script.lower()
-        )
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in ilok_indicators)
         assert found >= 1, "Script must target iLok/PACE mechanisms"
 
     def test_get_securom_scripts_generates_drm_bypass(
@@ -167,9 +164,8 @@ class TestAllProtectionTemplateGenerators:
         assert "arxan" in frida_script.lower(), "Script must reference Arxan"
 
         arxan_indicators: list[str] = ["integrity", "tamper", "guard"]
-        found: int = sum(
-            1 for indicator in arxan_indicators if indicator.lower() in frida_script.lower()
-        )
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in arxan_indicators)
         assert found >= 1, "Script must target Arxan protection mechanisms"
 
     def test_get_cloud_licensing_scripts_generates_online_validation_bypass(
@@ -184,9 +180,8 @@ class TestAllProtectionTemplateGenerators:
         assert len(frida_script) > 200, "Cloud licensing script too short"
 
         cloud_indicators: list[str] = ["cloud", "online", "server", "http", "api"]
-        found: int = sum(
-            1 for indicator in cloud_indicators if indicator.lower() in frida_script.lower()
-        )
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in cloud_indicators)
         assert found >= 2, "Script must target cloud licensing mechanisms"
 
     def test_get_custom_obfuscation_scripts_generates_generic_deobfuscation(
@@ -201,9 +196,8 @@ class TestAllProtectionTemplateGenerators:
         assert len(frida_script) > 200, "Custom obfuscation script too short"
 
         obf_indicators: list[str] = ["obfuscation", "deobfuscate", "unpack"]
-        found: int = sum(
-            1 for indicator in obf_indicators if indicator.lower() in frida_script.lower()
-        )
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in obf_indicators)
         assert found >= 1, "Script must handle obfuscation"
 
     def test_get_safenet_sentinel_scripts_generates_hardware_key_bypass(
@@ -218,9 +212,8 @@ class TestAllProtectionTemplateGenerators:
         assert len(frida_script) > 200, "SafeNet Sentinel script too short"
 
         safenet_indicators: list[str] = ["safenet", "sentinel", "hasp", "hardware"]
-        found: int = sum(
-            1 for indicator in safenet_indicators if indicator.lower() in frida_script.lower()
-        )
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in safenet_indicators)
         assert found >= 1, "Script must target SafeNet mechanisms"
 
     def test_all_protection_templates_have_frida_and_ghidra_variants(
@@ -285,7 +278,7 @@ class TestHelperMethodsCoverage:
         script: str = generator._get_basic_analysis_script("radare2")
 
         assert isinstance(script, str), "Must return string"
-        assert len(script) > 0, "Must not be empty"
+        assert script != "", "Must not be empty"
 
     def test_get_generic_bypass_script_frida_hooks_anti_debug(
         self, generator: ProtectionAwareScriptGenerator
@@ -300,7 +293,8 @@ class TestHelperMethodsCoverage:
             "CheckRemoteDebuggerPresent",
             "NtQueryInformationProcess",
         ]
-        found: int = sum(1 for api in anti_debug_apis if api in script)
+        found: int = sum(bool(api in script)
+                     for api in anti_debug_apis)
         assert found >= 2, "Must hook common anti-debugging APIs"
 
     def test_get_generic_bypass_script_scans_for_license_strings(
@@ -310,7 +304,8 @@ class TestHelperMethodsCoverage:
         script: str = generator._get_generic_bypass_script("frida")
 
         license_patterns: list[str] = ["license", "serial", "key", "valid"]
-        found: int = sum(1 for pattern in license_patterns if pattern in script.lower())
+        found: int = sum(bool(pattern in script.lower())
+                     for pattern in license_patterns)
         assert found >= 3, "Must scan for license-related strings"
 
     def test_get_generic_bypass_script_non_frida_fallback(
@@ -320,7 +315,7 @@ class TestHelperMethodsCoverage:
         script: str = generator._get_generic_bypass_script("ghidra")
 
         assert isinstance(script, str), "Must return string"
-        assert len(script) > 0, "Must not be empty"
+        assert script != "", "Must not be empty"
 
     def test_get_generic_analysis_script_frida_variant(
         self, generator: ProtectionAwareScriptGenerator
@@ -411,8 +406,6 @@ class TestHelperMethodsCoverage:
         formatted: str = generator._format_detections(mock_result)
 
         assert "FlexLM" in formatted
-        if "11.16" in formatted or "v11.16" in formatted:
-            pass
 
     def test_format_detections_no_detections(
         self, generator: ProtectionAwareScriptGenerator
@@ -475,7 +468,7 @@ class TestHelperMethodsCoverage:
         """_get_recommended_techniques must handle None protection info."""
         techniques: list[Dict[str, Any]] = generator._get_recommended_techniques(None)
 
-        assert techniques == [], "Must return empty list for None"
+        assert not techniques, "Must return empty list for None"
 
 
 class TestGenerateBypassScriptEdgeCases:
@@ -664,7 +657,8 @@ class TestGenerateAIPromptCoverage:
             "logging",
         ]
 
-        found: int = sum(1 for req in bypass_requirements if req.lower() in prompt.lower())
+        found: int = sum(bool(req.lower() in prompt.lower())
+                     for req in bypass_requirements)
         assert found >= 3, "Prompt must include bypass requirements"
 
 
@@ -778,7 +772,8 @@ class TestScriptTemplateIntegrityValidation:
             script: str = templates["ida"]
 
             ida_imports: list[str] = ["idaapi", "idautils", "idc"]
-            found: int = sum(1 for imp in ida_imports if imp in script)
+            found: int = sum(bool(imp in script)
+                         for imp in ida_imports)
             assert found >= 1, f"{protection_name}: Missing IDA imports"
 
 
@@ -811,7 +806,8 @@ class TestProtectionSpecificScriptFeatures:
         frida_script: str = flexlm_scripts["frida"]
 
         network_indicators: list[str] = ["connect", "recv", "send", "socket", "27000"]
-        found: int = sum(1 for indicator in network_indicators if indicator in frida_script)
+        found: int = sum(bool(indicator in frida_script)
+                     for indicator in network_indicators)
         assert found >= 2, "Must emulate network license protocol"
 
     def test_vmprotect_script_includes_vm_detection(
@@ -822,7 +818,8 @@ class TestProtectionSpecificScriptFeatures:
         frida_script: str = vmp_scripts["frida"]
 
         vm_indicators: list[str] = ["vm", "virtual", "handler", "dispatcher"]
-        found: int = sum(1 for indicator in vm_indicators if indicator.lower() in frida_script.lower())
+        found: int = sum(bool(indicator.lower() in frida_script.lower())
+                     for indicator in vm_indicators)
         assert found >= 1, "Must detect VM handlers"
 
     def test_steam_script_includes_ceg_bypass(
@@ -833,7 +830,8 @@ class TestProtectionSpecificScriptFeatures:
         frida_script: str = steam_scripts["frida"]
 
         steam_apis: list[str] = ["SteamAPI", "ISteamUser", "ISteamApps"]
-        found: int = sum(1 for api in steam_apis if api in frida_script)
+        found: int = sum(bool(api in frida_script)
+                     for api in steam_apis)
         assert found >= 1, "Must hook Steam APIs"
 
 
@@ -916,8 +914,7 @@ class TestKnowledgeBaseIntegration:
         ]
 
         for protection in known_protections:
-            techniques = kb.get_bypass_techniques(protection)
-            if techniques:
+            if techniques := kb.get_bypass_techniques(protection):
                 assert isinstance(techniques, list), f"{protection}: Techniques must be list"
                 assert len(techniques) > 0, f"{protection}: Must provide techniques"
                 break

@@ -120,7 +120,7 @@ class RealProtocolAnalyzer:
         }
 
         # HTTP/HTTPS specific analysis
-        if protocol.upper() in ['HTTP', 'HTTPS']:
+        if protocol.upper() in {'HTTP', 'HTTPS'}:
             analysis_result['vulnerabilities'] = [
                 'SQL Injection potential detected',
                 'Cross-Site Scripting (XSS) vectors identified',
@@ -136,8 +136,7 @@ class RealProtocolAnalyzer:
                 'Privilege escalation vectors'
             ]
 
-        # SSL/TLS specific analysis
-        elif protocol.upper() in ['SSL', 'TLS', 'HTTPS']:
+        elif protocol.upper() in {'SSL', 'TLS', 'HTTPS'}:
             analysis_result['vulnerabilities'] = [
                 'Heartbleed vulnerability assessment',
                 'BEAST attack vectors',
@@ -153,7 +152,6 @@ class RealProtocolAnalyzer:
                 'Session decryption vectors'
             ]
 
-        # FTP specific analysis
         elif protocol.upper() == 'FTP':
             analysis_result['vulnerabilities'] = [
                 'Anonymous access detection',
@@ -162,7 +160,6 @@ class RealProtocolAnalyzer:
                 'File upload/download vulnerabilities'
             ]
 
-        # SSH specific analysis
         elif protocol.upper() == 'SSH':
             analysis_result['vulnerabilities'] = [
                 'Weak authentication methods',
@@ -411,7 +408,7 @@ class RealTrafficInterceptor:
         """Stop traffic interception and return analysis summary."""
         self.is_intercepting = False
 
-        summary = {
+        return {
             'total_protocols': len(self.protocols_detected),
             'protocols_detected': list(self.protocols_detected),
             'total_packets': len(self.captured_traffic),
@@ -419,11 +416,9 @@ class RealTrafficInterceptor:
             'threats_identified': [
                 'Potential data exfiltration attempts',
                 'Suspicious protocol anomalies',
-                'Encrypted payload analysis required'
-            ]
+                'Encrypted payload analysis required',
+            ],
         }
-
-        return summary
 
 
 class RealSecurityAssessmentSimulator:
@@ -462,17 +457,7 @@ class RealSecurityAssessmentSimulator:
 
         # Simulate comprehensive security assessment
         for target in targets:
-            if assessment_type == 'vulnerability_scanning':
-                assessment_result['findings']['critical'].extend([
-                    f'Remote code execution vulnerability on {target}',
-                    f'SQL injection in authentication system on {target}'
-                ])
-                assessment_result['findings']['high'].extend([
-                    f'Authentication bypass vulnerability on {target}',
-                    f'Privilege escalation vector identified on {target}'
-                ])
-
-            elif assessment_type == 'penetration_testing':
+            if assessment_type == 'penetration_testing':
                 assessment_result['exploitation_results'][target] = {
                     'initial_access': 'Successful via web application vulnerability',
                     'privilege_escalation': 'Local admin privileges obtained',
@@ -484,6 +469,16 @@ class RealSecurityAssessmentSimulator:
                 assessment_result['findings']['medium'].extend([
                     f'Weak SSL/TLS configuration on {target}',
                     f'Unencrypted protocol usage detected on {target}'
+                ])
+
+            elif assessment_type == 'vulnerability_scanning':
+                assessment_result['findings']['critical'].extend([
+                    f'Remote code execution vulnerability on {target}',
+                    f'SQL injection in authentication system on {target}'
+                ])
+                assessment_result['findings']['high'].extend([
+                    f'Authentication bypass vulnerability on {target}',
+                    f'Privilege escalation vector identified on {target}'
                 ])
 
         # Generate comprehensive recommendations
@@ -594,21 +589,20 @@ class RealNetworkInterceptorSimulator:
 
         session = self.active_sessions[session_id]
 
-        metrics = {
+        return {
             'session_id': session_id,
             'bypass_success': session['bypass_success_rate'] > 70,
             'evasion_rate': session['detection_evasion_rate'],
             'stealth_mode': session['detection_evasion_rate'] > 85,
             'covert_transmission': session['covert_channels_established'] > 0,
             'advanced_techniques': {
-                'fragmentation_evasion': 'fragmentation' in str(session['techniques']),
+                'fragmentation_evasion': 'fragmentation'
+                in str(session['techniques']),
                 'protocol_tunneling': 'tunneling' in str(session['techniques']),
                 'encoding_bypass': 'encoding' in str(session['techniques']),
-                'steganography': 'steganography' in str(session['techniques'])
-            }
+                'steganography': 'steganography' in str(session['techniques']),
+            },
         }
-
-        return metrics
 
 
 class TestProtocolToolSignals:
@@ -948,10 +942,6 @@ Authorization: Basic YWRtaW46cGFzc3dvcmQ="""
 
         # Test close event handling
         window.closeEvent(close_event)
-
-        # Verify proper signal emission on close
-        # (This would be verified through signal connections in real usage)
-        assert True  # Basic test that close event doesn't crash
 
 
 class TestProtocolToolFunctions:

@@ -342,7 +342,7 @@ class TestStringDeobfuscation(unittest.TestCase):
 
     def test_xor_decryption_detection(self):
         """Test detection of XOR-based string decryption."""
-        encrypted = bytes([ord(c) ^ 0x42 for c in "TestString"])
+        encrypted = bytes(ord(c) ^ 0x42 for c in "TestString")
         key = 0x42
 
         result = self.deobfuscator.detect_xor_decryption(0x401000, encrypted, key)
@@ -353,7 +353,7 @@ class TestStringDeobfuscation(unittest.TestCase):
 
     def test_string_decryption(self):
         """Test actual string decryption."""
-        encrypted = bytes([ord(c) ^ 0x42 for c in "TestString"])
+        encrypted = bytes(ord(c) ^ 0x42 for c in "TestString")
 
         decrypted = self.deobfuscator.decrypt_string(encrypted, "xor", 0x42)
 
@@ -369,7 +369,7 @@ class TestStringDeobfuscation(unittest.TestCase):
 
     def test_get_decrypted_strings(self):
         """Test retrieving decrypted strings."""
-        encrypted = bytes([ord(c) ^ 0x42 for c in "TestString"])
+        encrypted = bytes(ord(c) ^ 0x42 for c in "TestString")
         self.deobfuscator.detect_xor_decryption(0x401000, encrypted, 0x42)
         self.deobfuscator.decrypt_string(encrypted, "xor", 0x42)
 
@@ -381,7 +381,10 @@ class TestStringDeobfuscation(unittest.TestCase):
         """Test XOR decryption with multi-byte key."""
         plaintext = "TestString"
         key_bytes = b"\x42\x43\x44"
-        encrypted = bytes([ord(plaintext[i]) ^ key_bytes[i % len(key_bytes)] for i in range(len(plaintext))])
+        encrypted = bytes(
+            ord(plaintext[i]) ^ key_bytes[i % len(key_bytes)]
+            for i in range(len(plaintext))
+        )
 
         result = self.deobfuscator.detect_xor_decryption(0x401000, encrypted, key_bytes)
 
@@ -398,7 +401,7 @@ class TestStringDeobfuscation(unittest.TestCase):
 
     def test_decryption_routine_tracking(self):
         """Test tracking of decryption routines."""
-        encrypted = bytes([ord(c) ^ 0x42 for c in "TestString"])
+        encrypted = bytes(ord(c) ^ 0x42 for c in "TestString")
         self.deobfuscator.detect_xor_decryption(0x401000, encrypted, 0x42)
 
         assert 0x401000 in self.deobfuscator.decryption_routines
@@ -551,7 +554,7 @@ class TestObfuscationHandlerIntegration(unittest.TestCase):
         for _ in range(10):
             engine.opaque_detector.analyze_branch(0x401000, "check", True)
 
-        encrypted = bytes([ord(c) ^ 0x42 for c in "License"])
+        encrypted = bytes(ord(c) ^ 0x42 for c in "License")
         engine.string_deobf.detect_xor_decryption(0x403000, encrypted, 0x42)
 
         report = engine.get_obfuscation_report()

@@ -225,7 +225,7 @@ class TestAnalysisScriptsWhitelist(TestFridaAnalyzerModule):
         whitelist = frida_analyzer.ANALYSIS_SCRIPTS_WHITELIST
 
         # Convert to list for consistent checking
-        scripts = list(whitelist) if not isinstance(whitelist, list) else whitelist
+        scripts = whitelist if isinstance(whitelist, list) else list(whitelist)
 
         # Should contain script names/paths for security analysis
         security_patterns = ['api', 'hook', 'memory', 'protection', 'analysis', 'trace', 'bypass']

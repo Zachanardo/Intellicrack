@@ -53,9 +53,7 @@ def check_test_file():
     print(f"OK Test file exists: {test_file}")
 
     try:
-        with open(test_file) as f:
-            content = f.read()
-
+        content = Path(test_file).read_text()
         print(f"Test file size: {len(content)} characters")
         print(f"Test file lines: {len(content.splitlines())}")
 

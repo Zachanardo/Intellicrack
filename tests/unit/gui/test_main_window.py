@@ -44,10 +44,7 @@ class TestIntellicrackMainWindow:
         tab_widget = self.main_window.tab_widget
         assert tab_widget.count() >= 6  # Dashboard, Analysis, Results, Protection, AI, Settings
 
-        tab_titles = []
-        for i in range(tab_widget.count()):
-            tab_titles.append(tab_widget.tabText(i))
-
+        tab_titles = [tab_widget.tabText(i) for i in range(tab_widget.count())]
         expected_tabs = ["Dashboard", "Analysis", "Results", "Protection", "AI Assistant", "Settings"]
         for expected_tab in expected_tabs:
             assert any(expected_tab in title for title in tab_titles), f"Missing tab: {expected_tab}"
@@ -204,15 +201,13 @@ class TestIntellicrackMainWindow:
             qtbot.wait(50)
 
             if hasattr(self.main_window, "progress_bar"):
-                progress_bar = self.main_window.progress_bar
-                if progress_bar:
+                if progress_bar := self.main_window.progress_bar:
                     assert 0 <= progress_bar.value() <= 100
 
     def test_theme_and_styling_real_application(self, qtbot):
         """Test REAL theme and styling application."""
         if hasattr(self.main_window, "theme_manager"):
-            theme_manager = self.main_window.theme_manager
-            if theme_manager:
+            if theme_manager := self.main_window.theme_manager:
                 original_stylesheet = self.main_window.styleSheet()
 
                 theme_manager.apply_dark_theme()

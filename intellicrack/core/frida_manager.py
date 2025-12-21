@@ -816,12 +816,7 @@ class HookBatcher:
         """Get batching statistics."""
         return {
             "pending_hooks": self.hook_queue.qsize(),
-            "categories": {
-                cat.name: sum(
-                    h.get("category") == cat for h in list(self.hook_queue.queue)
-                )
-                for cat in HookCategory
-            },
+            "categories": {cat.name: sum(h.get("category") == cat for h in list(self.hook_queue.queue)) for cat in HookCategory},
         }
 
 

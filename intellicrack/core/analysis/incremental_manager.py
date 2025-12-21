@@ -30,7 +30,7 @@ import os
 import pickle  # noqa: S403
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.logger import logger
@@ -55,9 +55,39 @@ try:
 except ImportError as e:
     logger.exception("Import error in incremental_manager: %s", e)
     PYQT_AVAILABLE = False
+    QMessageBox = None  # type: ignore[assignment, misc]
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
+
+
+class AppProtocol(Protocol):
+    """Protocol for application interface used in run_analysis_manager."""
+
+    logger: logging.Logger
+    binary_path: str | None
+    analyze_results: Any
+    analyze_status: Any
+    incremental_analysis_manager: Any
+    performance_metrics: dict[str, Any]
+
+    def update_output(self, message: str) -> None: ...
+    def update_analysis_results(self, result: Any) -> None: ...
+
+
+if PYQT_AVAILABLE and QMessageBox is not None:
+    from PyQt6.QtWidgets import QWidget
+
+    class QAppProtocol(AppProtocol, Protocol):
+        """Protocol for PyQt6 application interface."""
+
+        def question(
+            self,
+            parent: QWidget | None,
+            title: str,
+            text: str,
+            buttons: Any,
+        ) -> int: ...
 
 
 def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
@@ -87,7 +117,7 @@ def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
 class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module: str, name: str) -> type:
+    def find_class(self, module: str, name: str) -> type[Any]:
         """Override find_class to restrict allowed classes.
 
         Args:
@@ -121,11 +151,13 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow classes from our own modules
         if module.startswith("intellicrack."):
-            return super().find_class(module, name)
+            result: type[Any] = super().find_class(module, name)
+            return result
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return super().find_class(module, name)
+            result = super().find_class(module, name)
+            return result
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
@@ -201,9 +233,9 @@ class IncrementalAnalysisManager:
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize cache
-        self.analysis_cache = {}
-        self.file_hashes = {}
-        self.chunk_cache = {}
+        self.analysis_cache: dict[str, Any] = {}
+        self.file_hashes: dict[str, str] = {}
+        self.chunk_cache: dict[str, Any] = {}
 
         # Statistics
         self.cache_hits = 0
@@ -334,9 +366,11 @@ class IncrementalAnalysisManager:
         if hasattr(os, "stat"):
             stat_info = Path(file_path).stat()
             # Ensure file is owned by current user
-            if hasattr(os, "getuid") and stat_info.st_uid != os.getuid():  # pylint: disable=no-member
-                self.logger.warning("Cache file not owned by current user, rejecting")
-                return False
+            if hasattr(os, "getuid"):
+                current_uid = os.getuid()  # type: ignore[attr-defined]
+                if stat_info.st_uid != current_uid:
+                    self.logger.warning("Cache file not owned by current user, rejecting")
+                    return False
 
         return True
 
@@ -713,7 +747,7 @@ class IncrementalAnalysisManager:
 
         return cleaned_count
 
-    def analyze_incremental(self, binary_path: str, analysis_types: list | None = None) -> dict[str, Any]:
+    def analyze_incremental(self, binary_path: str, analysis_types: list[str] | None = None) -> dict[str, Any]:
         """Perform incremental analysis on a binary file.
 
         Args:
@@ -724,7 +758,7 @@ class IncrementalAnalysisManager:
             Dictionary containing analysis results and cache information
 
         """
-        results = {
+        results: dict[str, Any] = {
             "binary_path": binary_path,
             "cache_used": False,
             "analysis_results": {},
@@ -754,7 +788,9 @@ class IncrementalAnalysisManager:
 
                 if cached_result is not None:
                     self.logger.info("Using cached results for %s analysis", analysis_type)
-                    results["analysis_results"][analysis_type] = cached_result
+                    analysis_results = results["analysis_results"]
+                    if isinstance(analysis_results, dict):
+                        analysis_results[analysis_type] = cached_result
                     results["cache_used"] = True
                 else:
                     # Perform fresh analysis
@@ -762,20 +798,28 @@ class IncrementalAnalysisManager:
                     fresh_result = self._perform_analysis(binary_path, analysis_type)
 
                     if fresh_result is not None:
-                        results["analysis_results"][analysis_type] = fresh_result
+                        analysis_results = results["analysis_results"]
+                        if isinstance(analysis_results, dict):
+                            analysis_results[analysis_type] = fresh_result
                         # Cache the fresh results
                         if self.cache_analysis(analysis_type, fresh_result):
                             self.logger.debug("Cached fresh results for %s", analysis_type)
                     else:
                         error_msg = f"Failed to perform {analysis_type} analysis"
                         self.logger.exception(error_msg)
-                        results["errors"].append(error_msg)
+                        errors = results["errors"]
+                        if isinstance(errors, list):
+                            errors.append(error_msg)
 
             # Performance metrics
             end_time = time.time()
+            analysis_results_dict = results["analysis_results"]
+            cache_hits = 0
+            if isinstance(analysis_results_dict, dict):
+                cache_hits = sum(bool(result) for result in analysis_results_dict.values())
             results["performance_metrics"] = {
                 "total_time": end_time - start_time,
-                "cache_hits": sum(bool(result) for result in results["analysis_results"].values()),
+                "cache_hits": cache_hits,
                 "cache_stats": self.get_cache_stats(),
             }
 
@@ -784,7 +828,9 @@ class IncrementalAnalysisManager:
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Incremental analysis failed: {e}"
             self.logger.exception(error_msg)
-            results["errors"].append(error_msg)
+            errors = results["errors"]
+            if isinstance(errors, list):
+                errors.append(error_msg)
 
         return results
 
@@ -903,7 +949,7 @@ class IncrementalAnalysisManager:
             }
 
 
-def run_analysis_manager(app: object) -> None:
+def run_analysis_manager(app: AppProtocol) -> None:
     """Initialize and run the incremental analysis manager.
 
     This is the main entry point for the standalone incremental analysis feature.
@@ -912,29 +958,31 @@ def run_analysis_manager(app: object) -> None:
         app: Main application instance
 
     """
-    if not PYQT_AVAILABLE:
-        app.logger.warning("PyQt6 not available. Cannot show confirmation dialogs.")
+    if not PYQT_AVAILABLE or QMessageBox is None:
+        if hasattr(app, "logger"):
+            app.logger.warning("PyQt6 not available. Cannot show confirmation dialogs.")
         return
 
     # Track feature usage
-    app.update_output.emit("[Incremental Analysis] Starting analysis manager")
+    app.update_output("[Incremental Analysis] Starting analysis manager")
 
     # Performance metrics
     start_time = time.time()
 
     # Check if binary is loaded
     if not app.binary_path:
-        app.update_output.emit("[Incremental Analysis] No binary loaded")
+        app.update_output("[Incremental Analysis] No binary loaded")
         return
 
     # Log binary details before analysis
+    binary_size: int
     try:
         binary_size = os.path.getsize(app.binary_path)
         binary_name = os.path.basename(app.binary_path)
-        app.update_output.emit(f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size / 1024:.1f} KB)")
+        app.update_output(f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size / 1024:.1f} KB)")
     except OSError as e:
         logger.exception("OS error in incremental_manager: %s", e)
-        app.update_output.emit(f"[Incremental Analysis] Error accessing binary: {e}")
+        app.update_output(f"[Incremental Analysis] Error accessing binary: {e}")
         return
 
     # Create and configure the manager
@@ -946,49 +994,51 @@ def run_analysis_manager(app: object) -> None:
         },
     )
 
-    app.update_output.emit("[Incremental Analysis] Setting binary...")
+    app.update_output("[Incremental Analysis] Setting binary...")
 
     use_cache = False
     if manager.set_binary(app.binary_path):
-        app.update_output.emit("[Incremental Analysis] Binary found in cache")
+        app.update_output("[Incremental Analysis] Binary found in cache")
 
         # Ask if user wants to use cached results
         use_cache = (
             QMessageBox.question(
-                app,
+                None,
                 "Use Cached Results",
                 "Cached analysis results found for this binary. Do you want to use them?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
-            == QMessageBox.Yes
+            == QMessageBox.StandardButton.Yes
         )
 
         if use_cache:
             # Get cached results
-            app.update_output.emit("[Incremental Analysis] Loading cached results...")
+            app.update_output("[Incremental Analysis] Loading cached results...")
 
             if basic_analysis := manager.get_cached_analysis("basic"):
-                app.update_output.emit("[Incremental Analysis] Loaded basic analysis from cache")
+                app.update_output("[Incremental Analysis] Loaded basic analysis from cache")
 
                 # Apply cached results
                 if hasattr(app, "analyze_results"):
                     app.analyze_results = basic_analysis
-                    app.update_output.emit("[Incremental Analysis] Applied cached results")
+                    app.update_output("[Incremental Analysis] Applied cached results")
 
                     # Add to analyze results
-                    app.analyze_results.append("\n=== INCREMENTAL ANALYSIS ===")
-                    app.analyze_results.append("Loaded analysis results from cache")
-                    app.analyze_results.append(f"Binary hash: {manager.current_binary_hash}")
+                    if hasattr(app.analyze_results, "append"):
+                        app.analyze_results.append("\n=== INCREMENTAL ANALYSIS ===")
+                        app.analyze_results.append("Loaded analysis results from cache")
+                        app.analyze_results.append(f"Binary hash: {manager.current_binary_hash}")
 
                     # Update UI
-                    for result in app.analyze_results:
-                        app.update_analysis_results.emit(result)
+                    if hasattr(app.analyze_results, "__iter__"):
+                        for result in app.analyze_results:
+                            app.update_analysis_results(result)
             else:
-                app.update_output.emit("[Incremental Analysis] No cached basic analysis found")
+                app.update_output("[Incremental Analysis] No cached basic analysis found")
         else:
-            app.update_output.emit("[Incremental Analysis] Not using cached results")
+            app.update_output("[Incremental Analysis] Not using cached results")
     else:
-        app.update_output.emit("[Incremental Analysis] Binary not found in cache")
+        app.update_output("[Incremental Analysis] Binary not found in cache")
 
     # Store the manager instance
     app.incremental_analysis_manager = manager
@@ -997,7 +1047,7 @@ def run_analysis_manager(app: object) -> None:
     end_time = time.time()
     elapsed_time = end_time - start_time
 
-    analysis_phases = [
+    analysis_phases: list[dict[str, Any]] = [
         {
             "phase": "total",
             "start_time": start_time,
@@ -1007,7 +1057,7 @@ def run_analysis_manager(app: object) -> None:
         }
     ]
     # Report performance metrics
-    app.update_output.emit(f"[Incremental Analysis] Analysis completed in {elapsed_time:.2f} seconds")
+    app.update_output(f"[Incremental Analysis] Analysis completed in {elapsed_time:.2f} seconds")
 
     # Save performance metrics for future optimization
     if not hasattr(app, "performance_metrics"):
@@ -1023,7 +1073,7 @@ def run_analysis_manager(app: object) -> None:
     }
 
     # Update status with performance info
-    if hasattr(app, "analyze_status"):
+    if hasattr(app, "analyze_status") and hasattr(app.analyze_status, "setText"):
         app.analyze_status.setText(f"Incremental Analysis Complete ({elapsed_time:.2f}s)")
 
 

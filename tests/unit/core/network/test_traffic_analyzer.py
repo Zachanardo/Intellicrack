@@ -355,7 +355,7 @@ class TestNetworkTrafficAnalyzer:
                 test_sock.settimeout(1.0)
                 test_sock.connect(('127.0.0.1', port))
                 test_sock.close()
-            except:
+            except Exception:
                 pass  # Expected for non-listening ports
 
         # Stop capture
@@ -604,10 +604,6 @@ class TestNetworkTrafficAnalyzer:
                 for protocol in protocols_detected
             )
 
-            # May detect SSL/TLS patterns depending on capture level
-            if has_ssl_indicators:
-                assert True, "SSL/TLS patterns detected in encrypted traffic"
-
     def test_statistical_analysis_capabilities(self, analyzer):
         """Test comprehensive statistical analysis of network traffic."""
         # Generate test traffic data
@@ -720,7 +716,7 @@ class TestNetworkTrafficAnalyzer:
         ]
 
         # Populate analyzer with suspicious connections
-        for i, pattern in enumerate(suspicious_patterns):
+        for pattern in suspicious_patterns:
             conn_key = f"{pattern['src_ip']}:{pattern['src_port']}-{pattern['dst_ip']}:{pattern['dst_port']}"
 
             conn_data = {
@@ -757,7 +753,8 @@ class TestNetworkTrafficAnalyzer:
             assert level in valid_levels, f"Invalid threat level: {level}"
 
         # Should detect high threat patterns
-        high_threat_count = sum(1 for level in threat_levels if level == 'high')
+        high_threat_count = sum(bool(level == 'high')
+                            for level in threat_levels)
         assert high_threat_count > 0, "Failed to detect high-threat patterns"
 
     def test_license_server_identification(self, analyzer):
@@ -880,10 +877,8 @@ class TestNetworkTrafficAnalyzer:
             # Check if visualization files were created
             viz_dir = Path(analyzer.config['visualization_dir'])
             if viz_dir.exists():
-                viz_files = list(viz_dir.glob("*.png"))
-
-                if viz_files:
-                    assert len(viz_files) > 0, "No visualization files generated"
+                if viz_files := list(viz_dir.glob("*.png")):
+                    assert viz_files, "No visualization files generated"
 
                     # Verify file sizes (should be non-empty)
                     for viz_file in viz_files:
@@ -1008,8 +1003,8 @@ class TestNetworkTrafficAnalyzer:
             t.join(timeout=30.0)
 
         # Verify thread safety
-        assert len(errors) == 0, f"Thread safety violations: {errors}"
-        assert len(results) > 0, "No results from concurrent analysis"
+        assert not errors, f"Thread safety violations: {errors}"
+        assert results, "No results from concurrent analysis"
 
         # Verify data integrity
         for thread_id, thread_result in results:
@@ -1020,22 +1015,21 @@ class TestNetworkTrafficAnalyzer:
 
     def _create_test_connection_data(self) -> dict[str, Any]:
         """Create realistic test connection data."""
-        connections = {}
-
-        # FlexLM connection
-        connections['10.0.0.1:12345-10.0.0.100:27000'] = {
-            'src_ip': '10.0.0.1',
-            'dst_ip': '10.0.0.100',
-            'src_port': 12345,
-            'dst_port': 27000,
-            'bytes_sent': 5000,
-            'bytes_received': 15000,
-            'start_time': time.time() - 300,
-            'last_time': time.time(),
-            'is_license': True,
-            'packets': [],
-            'packet_count': 50,
-            'packet_size': 400
+        connections = {
+            '10.0.0.1:12345-10.0.0.100:27000': {
+                'src_ip': '10.0.0.1',
+                'dst_ip': '10.0.0.100',
+                'src_port': 12345,
+                'dst_port': 27000,
+                'bytes_sent': 5000,
+                'bytes_received': 15000,
+                'start_time': time.time() - 300,
+                'last_time': time.time(),
+                'is_license': True,
+                'packets': [],
+                'packet_count': 50,
+                'packet_size': 400,
+            }
         }
 
         # HASP connection
@@ -1146,7 +1140,7 @@ class TestTrafficAnalyzerIntegration:
                 patterns_found.extend(conn.get('patterns', []))
 
             flexlm_patterns = [p for p in patterns_found if 'FLEXLM' in p or 'CHECKOUT' in p]
-            assert len(flexlm_patterns) > 0, "FlexLM workflow patterns not detected"
+            assert flexlm_patterns, "FlexLM workflow patterns not detected"
 
     def test_multi_protocol_license_environment(self):
         """Test analysis of environment with multiple license protocols."""

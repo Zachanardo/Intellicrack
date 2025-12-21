@@ -61,11 +61,7 @@ class TestBasicProcessExecution:
         """Test process execution with specific working directory."""
         import tempfile
         with tempfile.TemporaryDirectory() as tmpdir:
-            if sys.platform == "win32":
-                command = ["cmd", "/c", "cd"]
-            else:
-                command = ["pwd"]
-
+            command = ["cmd", "/c", "cd"] if sys.platform == "win32" else ["pwd"]
             terminal_widget.start_process(command, cwd=tmpdir)
             qtbot.wait(500)
 
@@ -106,11 +102,7 @@ class TestInputOutputHandling:
 
     def test_send_input(self, terminal_widget, qtbot):
         """Test sending input to running process."""
-        if sys.platform == "win32":
-            command = ["cmd"]
-        else:
-            command = ["sh"]
-
+        command = ["cmd"] if sys.platform == "win32" else ["sh"]
         terminal_widget.start_process(command)
         qtbot.wait(300)
 
@@ -225,11 +217,7 @@ class TestCopyPasteFunctionality:
 
     def test_paste_to_terminal(self, terminal_widget, qtbot):
         """Test pasting text to terminal."""
-        if sys.platform == "win32":
-            command = ["cmd"]
-        else:
-            command = ["sh"]
-
+        command = ["cmd"] if sys.platform == "win32" else ["sh"]
         terminal_widget.start_process(command)
         qtbot.wait(300)
 

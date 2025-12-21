@@ -429,7 +429,10 @@ class TestCodeModificationDialog:
 
     def test_merge_conflict_detection(self, qapp: Any) -> None:
         """Dialog detects merge conflicts in code."""
-        conflicted_code = '''def function():
+        dialog = CodeModificationDialog()
+
+        if hasattr(dialog, "detect_conflicts"):
+            conflicted_code = '''def function():
 <<<<<<< HEAD
     return True  # Version A
 =======
@@ -437,12 +440,7 @@ class TestCodeModificationDialog:
 >>>>>>> branch
 '''
 
-        dialog = CodeModificationDialog()
-
-        if hasattr(dialog, "detect_conflicts"):
             conflicts = dialog.detect_conflicts(conflicted_code)
-            assert conflicts is not None or True
-
         dialog.close()
 
     def test_line_number_display(
@@ -513,26 +511,26 @@ class TestCodeModificationEdgeCases:
 
     def test_unicode_content(self, qapp: Any) -> None:
         """Dialog handles Unicode characters in code."""
-        unicode_code = '''def function():
+        dialog = CodeModificationDialog()
+
+        if hasattr(dialog, "original_text"):
+            unicode_code = '''def function():
     # Comment with Unicode: 你好世界
     message = "Привет мир"
     return message
 '''
 
-        dialog = CodeModificationDialog()
-
-        if hasattr(dialog, "original_text"):
             dialog.original_text.setPlainText(unicode_code)
 
         dialog.close()
 
     def test_very_long_lines(self, qapp: Any) -> None:
         """Dialog handles very long lines in code."""
-        long_line_code = f'def function():\n    x = "{{"a" * 10000}}"\n    return x'
-
         dialog = CodeModificationDialog()
 
         if hasattr(dialog, "original_text"):
+            long_line_code = f'def function():\n    x = "{{"a" * 10000}}"\n    return x'
+
             dialog.original_text.setPlainText(long_line_code)
 
         dialog.close()
@@ -611,20 +609,18 @@ class TestCodeModificationEdgeCases:
         diff_time = time.time() - start_time
 
         assert diff_time < 1.0
-        assert len(diff) > 0
+        assert diff
 
     def test_copy_diff_to_clipboard(self, qapp: Any) -> None:
         """Dialog copies diff to clipboard."""
         dialog = CodeModificationDialog()
 
-        diff_text = "--- original\n+++ modified\n@@ -1 +1 @@\n-old\n+new"
-
         if hasattr(dialog, "copy_diff_to_clipboard"):
+            diff_text = "--- original\n+++ modified\n@@ -1 +1 @@\n-old\n+new"
+
             dialog.copy_diff_to_clipboard(diff_text)
             QTest.qWait(100)
 
             clipboard = qapp.clipboard()
             clipboard_text = clipboard.text()
-            assert diff_text in clipboard_text or True
-
         dialog.close()

@@ -596,7 +596,9 @@ class VMDetector(BaseDetector):
                             model = system.Model.lower()
                             for sigs in self.vm_signatures.values():
                                 hardware_list = sigs.get("hardware", [])
-                                if isinstance(hardware_list, list) and any(sig.lower() in model for sig in hardware_list if isinstance(sig, str)):
+                                if isinstance(hardware_list, list) and any(
+                                    sig.lower() in model for sig in hardware_list if isinstance(sig, str)
+                                ):
                                     detected_hw: list[str] = details["detected_hardware"]
                                     detected_hw.append(model)
 
@@ -605,7 +607,9 @@ class VMDetector(BaseDetector):
                             model = disk.Model.lower()
                             for sigs in self.vm_signatures.values():
                                 hardware_list = sigs.get("hardware", [])
-                                if isinstance(hardware_list, list) and any(sig.lower() in model for sig in hardware_list if isinstance(sig, str)):
+                                if isinstance(hardware_list, list) and any(
+                                    sig.lower() in model for sig in hardware_list if isinstance(sig, str)
+                                ):
                                     detected_hw = details["detected_hardware"]
                                     detected_hw.append(model)
 

@@ -42,8 +42,10 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSlot,
 )
 
+from typing import Any
+
 from ...utils.logger import get_logger
-from .pe_file_model import PEFileModel, create_file_model
+from .pe_file_model import BinaryFileModel, PEFileModel, create_file_model
 from .pe_structure_model import PEStructureModel
 
 
@@ -108,6 +110,8 @@ class HexViewerWidget(QWidget):
     offset_selected = pyqtSignal(int)
     #: Start, end offsets (type: int, int)
     region_highlighted = pyqtSignal(int, int)
+    #: RVA selected (type: int)
+    rva_selected = pyqtSignal(int)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize hex viewer widget with file data, PE analysis components, and UI setup."""
@@ -119,7 +123,7 @@ class HexViewerWidget(QWidget):
         self.highlighted_regions: list[tuple[int, int, QColor]] = []
 
         # PE analysis components
-        self.file_model: PEFileModel | None = None
+        self.file_model: BinaryFileModel | None = None
         self.structure_model: PEStructureModel | None = None
 
         self.init_ui()
@@ -133,27 +137,27 @@ class HexViewerWidget(QWidget):
         layout.addLayout(control_layout)
 
         # Main area with horizontal splitter
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left side: PE Structure Tree
         left_panel = self._create_structure_panel()
         main_splitter.addWidget(left_panel)
 
         # Right side: Hex view and info
-        right_splitter = QSplitter(Qt.Horizontal)
+        right_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Hex display
         self.hex_display = QTextEdit()
         self.hex_display.setReadOnly(True)
         self.hex_display.setFont(QFont("Consolas", 10))
-        self.hex_display.setLineWrapMode(QTextEdit.NoWrap)
+        self.hex_display.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         right_splitter.addWidget(self.hex_display)
 
         # ASCII display
         self.ascii_display = QTextEdit()
         self.ascii_display.setReadOnly(True)
         self.ascii_display.setFont(QFont("Consolas", 10))
-        self.ascii_display.setLineWrapMode(QTextEdit.NoWrap)
+        self.ascii_display.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
         right_splitter.addWidget(self.ascii_display)
 
         # Add context menu to hex display for string extraction
@@ -326,7 +330,9 @@ class HexViewerWidget(QWidget):
         self.interpreter_table = QTableWidget()
         self.interpreter_table.setColumnCount(2)
         self.interpreter_table.setHorizontalHeaderLabels(["Type", "Value"])
-        self.interpreter_table.horizontalHeader().setStretchLastSection(True)
+        header = self.interpreter_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
         self.interpreter_table.setAlternatingRowColors(True)
         interpreter_layout.addWidget(self.interpreter_table)
 
@@ -402,16 +408,18 @@ class HexViewerWidget(QWidget):
         self.update_display()
 
         # Update status
-        self.status_label.setText(
-            f"Loaded: {os.path.basename(self.file_path)} ({len(data):,} bytes from offset 0x{self.current_offset:X})",
-        )
+        if self.file_path is not None:
+            self.status_label.setText(
+                f"Loaded: {os.path.basename(self.file_path)} ({len(data):,} bytes from offset 0x{self.current_offset:X})",
+            )
 
     @pyqtSlot(int)
     def on_load_progress(self, progress: int) -> None:
         """Handle load progress."""
-        self.status_label.setText(
-            f"Loading {os.path.basename(self.file_path)}... {progress}%",
-        )
+        if self.file_path is not None:
+            self.status_label.setText(
+                f"Loading {os.path.basename(self.file_path)}... {progress}%",
+            )
 
     @pyqtSlot(str)
     def on_load_error(self, error: str) -> None:
@@ -681,29 +689,25 @@ class HexViewerWidget(QWidget):
         # 32-bit values
         if available >= 4:
             data = self.file_data[offset : offset + 4]
-            interpretations.extend(
-                (
-                    ("UInt32 LE", str(struct.unpack("<I", data)[0])),
-                    ("UInt32 BE", str(struct.unpack(">I", data)[0])),
-                    ("Int32 LE", str(struct.unpack("<i", data)[0])),
-                    ("Int32 BE", str(struct.unpack(">i", data)[0])),
-                    ("Float LE", f"{struct.unpack('<f', data)[0]:.6f}"),
-                    ("Float BE", f"{struct.unpack('>f', data)[0]:.6f}"),
-                )
-            )
+            interpretations.extend((
+                ("UInt32 LE", str(struct.unpack("<I", data)[0])),
+                ("UInt32 BE", str(struct.unpack(">I", data)[0])),
+                ("Int32 LE", str(struct.unpack("<i", data)[0])),
+                ("Int32 BE", str(struct.unpack(">i", data)[0])),
+                ("Float LE", f"{struct.unpack('<f', data)[0]:.6f}"),
+                ("Float BE", f"{struct.unpack('>f', data)[0]:.6f}"),
+            ))
         # 64-bit values
         if available >= 8:
             data = self.file_data[offset : offset + 8]
-            interpretations.extend(
-                (
-                    ("UInt64 LE", str(struct.unpack("<Q", data)[0])),
-                    ("UInt64 BE", str(struct.unpack(">Q", data)[0])),
-                    ("Int64 LE", str(struct.unpack("<q", data)[0])),
-                    ("Int64 BE", str(struct.unpack(">q", data)[0])),
-                    ("Double LE", f"{struct.unpack('<d', data)[0]:.10f}"),
-                    ("Double BE", f"{struct.unpack('>d', data)[0]:.10f}"),
-                )
-            )
+            interpretations.extend((
+                ("UInt64 LE", str(struct.unpack("<Q", data)[0])),
+                ("UInt64 BE", str(struct.unpack(">Q", data)[0])),
+                ("Int64 LE", str(struct.unpack("<q", data)[0])),
+                ("Int64 BE", str(struct.unpack(">q", data)[0])),
+                ("Double LE", f"{struct.unpack('<d', data)[0]:.10f}"),
+                ("Double BE", f"{struct.unpack('>d', data)[0]:.10f}"),
+            ))
         # Add to table
         for data_type, value in interpretations:
             row = self.interpreter_table.rowCount()

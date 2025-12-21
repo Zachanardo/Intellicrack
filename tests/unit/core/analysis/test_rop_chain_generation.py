@@ -198,7 +198,7 @@ class TestROPChainGeneration(IntellicrackTestBase):
         # Verify diverse gadget types identified
         assert len(pop_gadgets) >= 3  # Multiple register pops
         assert len(memory_gadgets) >= 2  # Memory read/write operations
-        assert len(call_gadgets) >= 1  # Function call capability
+        assert call_gadgets
 
         # Verify gadget structure
         for gadget in gadgets:
@@ -335,7 +335,7 @@ class TestROPChainGeneration(IntellicrackTestBase):
             dep_chain.writeprocessmemory_chain
         ]
         active_methods = [m for m in bypass_methods if m is not None]
-        assert len(active_methods) >= 1
+        assert active_methods
 
         # Verify VirtualProtect chain if available
         if dep_chain.virtualprotect_chain:
@@ -382,9 +382,7 @@ class TestROPChainGeneration(IntellicrackTestBase):
         low_quality_gadgets = [g for g in gadgets if g.utility_rating < 0.3]
 
         # Should have range of quality gadgets
-        assert len(high_quality_gadgets) > 0  # Some excellent gadgets
-        assert len(medium_quality_gadgets) >= 0  # Some average gadgets
-
+        assert high_quality_gadgets
         # Verify quality assessment criteria
         for gadget in high_quality_gadgets:
             # High quality gadgets should have useful characteristics
@@ -394,9 +392,12 @@ class TestROPChainGeneration(IntellicrackTestBase):
             # Should have reasonable instruction count
             assert len(gadget.instruction_bytes) <= 10  # Not too complex
 
-        # Verify quality correlates with usefulness
-        pop_eax_gadgets = [g for g in gadgets if 'pop' in g.assembly_text.lower() and 'eax' in g.assembly_text.lower()]
-        if pop_eax_gadgets:
+        if pop_eax_gadgets := [
+            g
+            for g in gadgets
+            if 'pop' in g.assembly_text.lower()
+            and 'eax' in g.assembly_text.lower()
+        ]:
             # pop eax; ret should be high quality
             assert max(g.utility_rating for g in pop_eax_gadgets) > 0.6
 
@@ -497,8 +498,8 @@ class TestROPChainGeneration(IntellicrackTestBase):
         library_addresses = [g.address for g in library_gadgets]
 
         # Should have non-overlapping address ranges (different modules)
-        primary_max = max(primary_addresses) if primary_addresses else 0
-        library_min = min(library_addresses) if library_addresses else float('inf')
+        primary_max = max(primary_addresses, default=0)
+        library_min = min(library_addresses, default=float('inf'))
 
         # Basic sanity check for different address spaces
         assert primary_max != library_min  # Different address ranges

@@ -204,7 +204,8 @@ class DynamicSignatureExtractor:
 
             # Update pattern tracker
             for sig in signatures:
-                self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
+                if hasattr(self.pattern_tracker, "track_pattern"):
+                    self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
 
         except Exception as e:
             logger.exception("Failed to extract signatures: %s", e)
@@ -213,7 +214,7 @@ class DynamicSignatureExtractor:
 
     def _extract_entropy_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures based on entropy analysis."""
-        signatures = []
+        signatures: list[DynamicSignature] = []
         window_size = 4096
 
         for i in range(0, len(data) - window_size, window_size // 2):
@@ -244,7 +245,7 @@ class DynamicSignatureExtractor:
 
     def _extract_section_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from PE section characteristics."""
-        signatures = []
+        signatures: list[DynamicSignature] = []
 
         if not PEFILE_AVAILABLE or data[:2] != b"MZ":
             return signatures
@@ -294,7 +295,7 @@ class DynamicSignatureExtractor:
 
     def _extract_import_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from import table patterns."""
-        signatures = []
+        signatures: list[DynamicSignature] = []
 
         if not PEFILE_AVAILABLE or data[:2] != b"MZ":
             return signatures
@@ -343,7 +344,7 @@ class DynamicSignatureExtractor:
 
     def _extract_code_signatures(self, data: bytes) -> list[DynamicSignature]:
         """Extract signatures from code pattern analysis."""
-        signatures = []
+        signatures: list[DynamicSignature] = []
 
         if not CAPSTONE_AVAILABLE:
             return signatures
@@ -480,23 +481,34 @@ class DynamicSignatureExtractor:
 
     def _evolve_signatures(self, signatures: list[DynamicSignature], data: bytes) -> list[DynamicSignature]:
         """Use pattern evolution to generate improved signatures."""
-        evolved = []
+        evolved: list[DynamicSignature] = []
 
         for sig in signatures:
             # Track pattern for evolution
-            pattern_id = self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
+            if hasattr(self.pattern_tracker, "track_pattern"):
+                pattern_id = self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
+            else:
+                continue
 
             # Get mutations
-            mutations = self.pattern_tracker.get_pattern_mutations(pattern_id)
+            if hasattr(self.pattern_tracker, "detect_pattern_mutations"):
+                mutations = self.pattern_tracker.detect_pattern_mutations(pattern_id)
+            else:
+                continue
 
             for mutation in mutations:
+                # Mutation is dict[str, Any], extract pattern string
+                mutation_pattern = mutation.get("pattern")
+                if not isinstance(mutation_pattern, str):
+                    continue
+
                 # Test mutation effectiveness
-                if self._test_mutation_effectiveness(mutation, data):
+                if self._test_mutation_effectiveness(mutation_pattern, data):
                     evolved_sig = DynamicSignature(
                         category=sig.category,
                         confidence=sig.confidence * 0.9,
-                        pattern_bytes=bytes.fromhex(mutation),
-                        mask=self._evolve_mask(sig.mask, mutation),
+                        pattern_bytes=bytes.fromhex(mutation_pattern),
+                        mask=self._evolve_mask(sig.mask, mutation_pattern),
                         context=f"Evolved from: {sig.context}",
                         metadata={
                             "parent_pattern": sig.pattern_bytes.hex(),
@@ -512,7 +524,7 @@ class DynamicSignatureExtractor:
         if not data:
             return 0.0
 
-        byte_counts = defaultdict(int)
+        byte_counts: dict[int, int] = defaultdict(int)
         for byte in data:
             byte_counts[byte] += 1
 
@@ -709,7 +721,7 @@ class DynamicSignatureExtractor:
 
     def _analyze_control_flow(self, data: bytes) -> list[tuple[bytes, ProtectionCategory, float, str]]:
         """Analyze control flow for protection patterns."""
-        patterns = []
+        patterns: list[tuple[bytes, ProtectionCategory, float, str]] = []
 
         if not CAPSTONE_AVAILABLE:
             return patterns
@@ -732,7 +744,7 @@ class DynamicSignatureExtractor:
 
     def _find_jump_chains(self, data: bytes) -> list[list[int]]:
         """Find chains of jumps in code."""
-        chains = []
+        chains: list[list[int]] = []
 
         if not CAPSTONE_AVAILABLE:
             return chains
@@ -763,7 +775,7 @@ class DynamicSignatureExtractor:
 
     def _analyze_call_depth(self, data: bytes) -> list[int]:
         """Analyze call instruction depth by tracking nested call chains."""
-        depths = []
+        depths: list[int] = []
 
         if not CAPSTONE_AVAILABLE:
             return depths
@@ -827,7 +839,7 @@ class DynamicSignatureExtractor:
 
     def _analyze_call_target(self, data: bytes, target_addr: int, current_depth: int, visited: set[int]) -> list[int]:
         """Recursively analyze call targets to find maximum call depth."""
-        depths = []
+        depths: list[int] = []
 
         if not CAPSTONE_AVAILABLE or target_addr >= len(data):
             return depths
@@ -1469,6 +1481,7 @@ class EnhancedProtectionScanner:
         self.signature_extractor = DynamicSignatureExtractor()
         self.binary_analyzer = BinaryAnalyzer()
 
+        self.yara_engine: YaraPatternEngine | None
         try:
             self.yara_engine = YaraPatternEngine()
         except ImportError:
@@ -1479,7 +1492,7 @@ class EnhancedProtectionScanner:
         self.vmprotect_detector = VMProtectDetector()
 
         # Cache for performance
-        self.cache = {}
+        self.cache: dict[str, dict[str, Any]] = {}
         self.cache_lock = Lock()
 
     def scan(self, binary_path: str, deep_scan: bool = True) -> dict[str, Any]:
@@ -1489,10 +1502,10 @@ class EnhancedProtectionScanner:
         with self.cache_lock:
             if cache_key in self.cache:
                 cached = self.cache[cache_key]
-                if time.time() - cached["timestamp"] < 3600:  # 1 hour cache
-                    return cached["results"]
+                if time.time() - float(cached["timestamp"]) < 3600:  # 1 hour cache
+                    return dict(cached["results"])
 
-        results = {
+        results: dict[str, Any] = {
             "file_path": binary_path,
             "timestamp": time.time(),
             "protections": [],
@@ -1516,18 +1529,24 @@ class EnhancedProtectionScanner:
                 category_key = f"{sig.category.value}s" if sig.category.value != "custom" else "custom"
 
                 if category_key in results:
-                    results[category_key].append({
-                        "pattern": f"{sig.pattern_bytes.hex()[:32]}...",
-                        "confidence": sig.confidence,
-                        "context": sig.context,
-                        "effectiveness": sig.effectiveness_score,
-                    })
+                    category_list = results[category_key]
+                    if isinstance(category_list, list):
+                        category_list.append({
+                            "pattern": f"{sig.pattern_bytes.hex()[:32]}...",
+                            "confidence": sig.confidence,
+                            "context": sig.context,
+                            "effectiveness": sig.effectiveness_score,
+                        })
 
                 # Update confidence scores
-                if sig.category.value not in results["confidence_scores"]:
-                    results["confidence_scores"][sig.category.value] = 0.0
+                confidence_scores = results["confidence_scores"]
+                if isinstance(confidence_scores, dict):
+                    if sig.category.value not in confidence_scores:
+                        confidence_scores[sig.category.value] = 0.0
 
-                results["confidence_scores"][sig.category.value] = max(results["confidence_scores"][sig.category.value], sig.confidence)
+                    current_score = confidence_scores[sig.category.value]
+                    if isinstance(current_score, (int, float)):
+                        confidence_scores[sig.category.value] = max(float(current_score), sig.confidence)
 
             # Use binary pattern detector for additional detection
             with open(binary_path, "rb") as f:
@@ -1538,24 +1557,31 @@ class EnhancedProtectionScanner:
             for match in binary_patterns:
                 category = match.pattern.category
 
-                if category not in results["technical_details"]:
-                    results["technical_details"][category] = []
+                technical_details = results["technical_details"]
+                if isinstance(technical_details, dict):
+                    if category not in technical_details:
+                        technical_details[category] = []
 
-                results["technical_details"][category].append(
-                    {
-                        "name": match.pattern.name,
-                        "offset": f"0x{match.offset:08x}",
-                        "confidence": match.confidence,
-                        "xrefs": len(match.xrefs),
-                        "description": match.pattern.description,
-                    },
-                )
+                    category_details = technical_details[category]
+                    if isinstance(category_details, list):
+                        category_details.append(
+                            {
+                                "name": match.pattern.name,
+                                "offset": f"0x{match.offset:08x}",
+                                "confidence": match.confidence,
+                                "xrefs": len(match.xrefs),
+                                "description": match.pattern.description,
+                            },
+                        )
 
             # Generate bypass recommendations
-            results["bypass_recommendations"] = self._generate_bypass_recommendations(
-                results["confidence_scores"],
-                results["technical_details"],
-            )
+            confidence_scores = results["confidence_scores"]
+            technical_details_final = results["technical_details"]
+            if isinstance(confidence_scores, dict) and isinstance(technical_details_final, dict):
+                results["bypass_recommendations"] = self._generate_bypass_recommendations(
+                    confidence_scores,
+                    technical_details_final,
+                )
 
             # Cache results
             with self.cache_lock:
@@ -1570,7 +1596,7 @@ class EnhancedProtectionScanner:
     def _generate_bypass_recommendations(
         self,
         confidence_scores: dict[str, float],
-        technical_details: dict[str, list],
+        technical_details: dict[str, list[Any]],
     ) -> list[dict[str, Any]]:
         """Generate specific bypass recommendations based on detections."""
         recommendations = []
@@ -1685,7 +1711,15 @@ def run_enhanced_protection_scan(main_app: object) -> None:
             main_app.update_output.emit("[Protection Scanner] Error: No binary loaded.")
         return
 
-    binary_path = main_app.current_binary if hasattr(main_app, "current_binary") else main_app.loaded_binary_path
+    binary_path: str
+    if hasattr(main_app, "current_binary"):
+        binary_path = str(main_app.current_binary)
+    elif hasattr(main_app, "loaded_binary_path"):
+        binary_path = str(main_app.loaded_binary_path)
+    else:
+        if hasattr(main_app, "update_output"):
+            main_app.update_output.emit("[Protection Scanner] Error: No binary path found.")
+        return
 
     thread = Thread(target=run_scan_thread, args=(main_app, binary_path), daemon=True)
     thread.start()

@@ -302,9 +302,7 @@ class TestKeygenGeneration(IntellicrackTestBase):
         assert hasattr(rsa_keygen, 'crack_method')
         assert hasattr(rsa_keygen, 'factorization_difficulty')
 
-        # Test key extraction
-        public_key = rsa_keygen.public_key_extracted
-        if public_key:
+        if public_key := rsa_keygen.public_key_extracted:
             assert hasattr(public_key, 'n')  # Modulus
             assert hasattr(public_key, 'e')  # Public exponent
             assert public_key.n > 0
@@ -551,8 +549,7 @@ class TestKeygenGeneration(IntellicrackTestBase):
             ('ecc', self.ecc_binary),
             ('custom', self.custom_algorithm_binary)
         ]:
-            keygen = self.agent.generate_keygen(algo_type, binary_path)
-            if keygen:
+            if keygen := self.agent.generate_keygen(algo_type, binary_path):
                 keygens.append((algo_type, keygen))
 
         assert len(keygens) >= 2  # Should have some working keygens
@@ -565,12 +562,9 @@ class TestKeygenGeneration(IntellicrackTestBase):
             if algo_type == 'serial':
                 # Serial algorithms should have high success rates
                 assert keygen.success_probability >= 0.6
-            elif algo_type in ['rsa', 'ecc']:
+            elif algo_type in ['rsa', 'ecc', 'custom']:
                 # Cryptographic algorithms should have variable success rates
                 assert keygen.success_probability >= 0.1  # At least some chance
-            elif algo_type == 'custom':
-                # Custom algorithms vary widely
-                assert keygen.success_probability >= 0.1
 
     def test_keygen_complexity_analysis(self):
         """Test keygen complexity assessment."""
@@ -629,9 +623,9 @@ class TestKeygenGeneration(IntellicrackTestBase):
 
     def test_multi_algorithm_binary_analysis(self):
         """Test analysis of binaries with multiple licensing algorithms."""
-        multi_keygen = self.agent.generate_keygen('auto_detect', self.hybrid_licensing_binary)
-
-        if multi_keygen:
+        if multi_keygen := self.agent.generate_keygen(
+            'auto_detect', self.hybrid_licensing_binary
+        ):
             # Should detect multiple algorithms
             assert hasattr(multi_keygen, 'detected_algorithms')
             detected = multi_keygen.detected_algorithms
@@ -707,10 +701,7 @@ class TestKeygenAdvanced(IntellicrackTestBase):
         """Test ML-based licensing algorithm detection."""
         agent = AutomatedPatchAgent()
 
-        # Test automatic algorithm detection
-        auto_keygen = agent.generate_keygen('auto_detect', self.serial_binary)
-
-        if auto_keygen:
+        if auto_keygen := agent.generate_keygen('auto_detect', self.serial_binary):
             assert hasattr(auto_keygen, 'confidence_scores')
             assert hasattr(auto_keygen, 'algorithm_probabilities')
 
@@ -724,9 +715,9 @@ class TestKeygenAdvanced(IntellicrackTestBase):
         # Create obfuscated licensing binary
         obfuscated_binary = self._create_obfuscated_licensing_binary()
 
-        obfuscated_keygen = self.agent.generate_keygen('auto_detect', obfuscated_binary)
-
-        if obfuscated_keygen:
+        if obfuscated_keygen := self.agent.generate_keygen(
+            'auto_detect', obfuscated_binary
+        ):
             # Should detect obfuscation
             assert hasattr(obfuscated_keygen, 'obfuscation_detected')
             assert hasattr(obfuscated_keygen, 'deobfuscation_strategy')

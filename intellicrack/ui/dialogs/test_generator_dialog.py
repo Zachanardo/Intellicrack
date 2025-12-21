@@ -18,7 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import os
 import subprocess
 import sys
-from typing import Any, Dict
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox, QFileDialog, QFont, QGroupBox, QHBoxLayout, QLabel,
@@ -69,7 +69,7 @@ class TestGenerationThread(QThread):
         self.options = options
         self.runner = PluginTestRunner()
 
-    def run(self):
+    def run(self) -> None:
         """Generate and run tests"""
         try:
             self.progress.emit("Analyzing plugin structure...")
@@ -100,20 +100,20 @@ class TestGenerationThread(QThread):
 class TestGeneratorDialog(PluginDialogBase):
     """Dialog for generating and managing plugin tests"""
 
-    def __init__(self, parent=None, plugin_path=None):
+    def __init__(self, parent: QWidget | None = None, plugin_path: str | None = None) -> None:
         """Initialize the TestGeneratorDialog with default values."""
-        self.generator = PluginTestGenerator()
-        self.test_data_generator = MockDataGenerator()
-        self.generation_thread = None
+        self.generator: PluginTestGenerator = PluginTestGenerator()
+        self.test_data_generator: MockDataGenerator = MockDataGenerator()
+        self.generation_thread: TestGenerationThread | None = None
         super().__init__(parent, plugin_path)
 
-    def init_dialog(self):
+    def init_dialog(self) -> None:
         """Initialize the test generator dialog"""
         self.setWindowTitle("Plugin Test Generator")
         self.setMinimumSize(900, 700)
         self.setup_ui()
 
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         """Set up the dialog UI"""
         layout = QVBoxLayout(self)
 
@@ -122,7 +122,7 @@ class TestGeneratorDialog(PluginDialogBase):
         layout.addLayout(plugin_layout)
 
         # Main content
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Options
         options_widget = self.create_options_panel()
@@ -334,7 +334,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         return widget
 
-    def load_plugin(self, path: str):
+    def load_plugin(self, path: str) -> bool:
         """Load a plugin for testing"""
         # Call the base class method first
         if not super().load_plugin(path):
@@ -350,7 +350,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         return True
 
-    def generate_tests(self):
+    def generate_tests(self) -> None:
         """Generate tests for the plugin"""
         if not self.plugin_path:
             return
@@ -377,14 +377,18 @@ class TestGeneratorDialog(PluginDialogBase):
             logger.error("Exception in test_generator_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to generate tests:\n{str(e)}")
 
-    def run_tests(self):
+    def run_tests(self) -> None:
         """Run the generated tests"""
         if not self.test_code_edit.toPlainText():
             QMessageBox.warning(self, "No Tests", "Please generate tests first.")
             return
 
+        if not self.plugin_path:
+            QMessageBox.warning(self, "No Plugin", "Please select a plugin first.")
+            return
+
         # Prepare options
-        options = {
+        options: dict[str, Any] = {
             'run_tests': True,
             'coverage': self.generate_coverage_cb.isChecked(),
             'stop_on_failure': self.stop_on_failure_cb.isChecked(),
@@ -415,11 +419,11 @@ class TestGeneratorDialog(PluginDialogBase):
 
         self.generation_thread.start()
 
-    def on_progress(self, message: str):
+    def on_progress(self, message: str) -> None:
         """Handle progress updates"""
         self.test_output.append(message)
 
-    def on_tests_finished(self, results: dict[str, Any]):
+    def on_tests_finished(self, results: dict[str, Any]) -> None:
         """Handle test completion"""
         # Update UI
         self.progress_bar.setVisible(False)
@@ -445,7 +449,7 @@ class TestGeneratorDialog(PluginDialogBase):
         if 'coverage' in results:
             self.update_coverage_display(results['coverage'])
 
-    def on_error(self, error: str):
+    def on_error(self, error: str) -> None:
         """Handle test errors"""
         self.progress_bar.setVisible(False)
         self.generate_btn.setEnabled(True)
@@ -453,7 +457,7 @@ class TestGeneratorDialog(PluginDialogBase):
 
         QMessageBox.critical(self, "Test Error", f"Failed to run tests:\n{error}")
 
-    def update_coverage_display(self, coverage: dict[str, Any]):
+    def update_coverage_display(self, coverage: dict[str, Any]) -> None:
         """Update coverage display"""
         # Update summary
         total = coverage.get('total_coverage', 0)
@@ -472,10 +476,14 @@ class TestGeneratorDialog(PluginDialogBase):
         for line in coverage.get('missing_lines', []):
             self.uncovered_list.addItem(f"Line {line}")
 
-    def save_tests(self):
+    def save_tests(self) -> None:
         """Save generated tests"""
         if not self.test_code_edit.toPlainText():
             QMessageBox.warning(self, "No Tests", "No tests to save.")
+            return
+
+        if not self.plugin_path:
+            QMessageBox.warning(self, "No Plugin", "Please select a plugin first.")
             return
 
         # Ask for save location
@@ -493,15 +501,15 @@ class TestGeneratorDialog(PluginDialogBase):
                 QMessageBox.information(self, "Saved", f"Tests saved to:\n{file_path}")
 
             except Exception as e:
-                self.logger.error("Exception in test_generator_dialog: %s", e)
+                logger.error("Exception in test_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save tests:\n{str(e)}")
 
-    def generate_test_binary(self):
+    def generate_test_binary(self) -> None:
         """Generate test binary data"""
         binary_data = self.test_data_generator.create_test_binary('pe')
 
         # Display hex view
-        hex_view = []
+        hex_view: list[str] = []
         for i in range(0, min(len(binary_data), 512), 16):
             hex_line = ' '.join(f'{b:02x}' for b in binary_data[i:i+16])
             ascii_line = ''.join(chr(b) if 32 <= b < 127 else '.' for b in binary_data[i:i+16])
@@ -510,21 +518,21 @@ class TestGeneratorDialog(PluginDialogBase):
         self.test_data_viewer.setPlainText('\n'.join(hex_view))
         self.test_data_viewer.append(f"\n\nTotal size: {len(binary_data)} bytes")
 
-    def generate_test_network(self):
+    def generate_test_network(self) -> None:
         """Generate test network data"""
         network_data = self.test_data_generator.create_test_network_data()
 
         import json
         self.test_data_viewer.setPlainText(json.dumps(network_data, indent=2))
 
-    def generate_test_registry(self):
+    def generate_test_registry(self) -> None:
         """Generate test registry data"""
         registry_data = self.test_data_generator.create_test_registry_data()
 
         import json
         self.test_data_viewer.setPlainText(json.dumps(registry_data, indent=2))
 
-    def save_test_data(self):
+    def save_test_data(self) -> None:
         """Save test data to file"""
         content = self.test_data_viewer.toPlainText()
         if not content:
@@ -545,5 +553,5 @@ class TestGeneratorDialog(PluginDialogBase):
                 QMessageBox.information(self, "Saved", f"Test data saved to:\n{file_path}")
 
             except Exception as e:
-                self.logger.error("Exception in test_generator_dialog: %s", e)
+                logger.error("Exception in test_generator_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to save test data:\n{str(e)}")

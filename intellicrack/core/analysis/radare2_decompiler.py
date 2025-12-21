@@ -151,7 +151,7 @@ class R2DecompilationEngine:
                         break
 
                     if addr := func.get("offset"):
-                        self.logger.info("Decompiling function %s at %s", func.get('name', 'unknown'), hex(addr))
+                        self.logger.info("Decompiling function %s at %s", func.get("name", "unknown"), hex(addr))
                         results[hex(addr)] = self.decompile_function(addr)
                         function_count += 1
 
@@ -677,7 +677,7 @@ class R2DecompilationEngine:
                 result["license_functions"].sort(key=lambda x: x["confidence_score"], reverse=True)
                 result["high_confidence_targets"].sort(key=lambda x: x["confidence"], reverse=True)
 
-                self.logger.info("Found %d license-related functions", len(result['license_functions']))
+                self.logger.info("Found %d license-related functions", len(result["license_functions"]))
 
         except R2Exception as e:
             result["error"] = str(e)

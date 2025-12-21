@@ -729,7 +729,7 @@ class TestRealWindowsBinaryDisassembly:
         md: Cs = Cs(CS_ARCH_X86, mode)
         instructions: list[CsInsn] = list(md.disasm(code, entry_rva))
 
-        assert len(instructions) > 0
+        assert instructions
         assert all(insn.size > 0 for insn in instructions)
         assert all(insn.mnemonic != "" for insn in instructions)
 
@@ -744,11 +744,7 @@ class TestRealWindowsBinaryDisassembly:
         pe_offset: int = struct.unpack("<I", data[0x3C:0x40])[0]
         is_64bit: bool = struct.unpack("<H", data[pe_offset + 0x18:pe_offset + 0x1A])[0] == 0x20B
 
-        if is_64bit:
-            entry_rva: int = struct.unpack("<I", data[pe_offset + 0x28:pe_offset + 0x2C])[0]
-        else:
-            entry_rva = struct.unpack("<I", data[pe_offset + 0x28:pe_offset + 0x2C])[0]
-
+        entry_rva = struct.unpack("<I", data[pe_offset + 0x28:pe_offset + 0x2C])[0]
         mode: int = CS_MODE_64 if is_64bit else CS_MODE_32
         md: Cs = Cs(CS_ARCH_X86, mode)
 
@@ -764,10 +760,10 @@ class TestBasicBlockIdentification:
         md: Cs = Cs(CS_ARCH_X86, CS_MODE_32)
         instructions: list[CsInsn] = list(md.disasm(code, 0x1000))
 
-        non_branch_count: int = sum(
-            1 for insn in instructions if CS_GRP_JUMP not in insn.groups and CS_GRP_RET not in insn.groups
-        )
-        branch_count: int = sum(1 for insn in instructions if CS_GRP_JUMP in insn.groups)
+        non_branch_count: int = sum(bool(CS_GRP_JUMP not in insn.groups and CS_GRP_RET not in insn.groups)
+                                for insn in instructions)
+        branch_count: int = sum(bool(CS_GRP_JUMP in insn.groups)
+                            for insn in instructions)
 
         assert non_branch_count == 3
         assert branch_count == 1
@@ -831,9 +827,12 @@ class TestInstructionGrouping:
         md: Cs = Cs(CS_ARCH_X86, CS_MODE_32)
         instructions: list[CsInsn] = list(md.disasm(code, 0x1000))
 
-        calls: int = sum(1 for insn in instructions if CS_GRP_CALL in insn.groups)
-        jumps: int = sum(1 for insn in instructions if CS_GRP_JUMP in insn.groups)
-        rets: int = sum(1 for insn in instructions if CS_GRP_RET in insn.groups)
+        calls: int = sum(bool(CS_GRP_CALL in insn.groups)
+                     for insn in instructions)
+        jumps: int = sum(bool(CS_GRP_JUMP in insn.groups)
+                     for insn in instructions)
+        rets: int = sum(bool(CS_GRP_RET in insn.groups)
+                    for insn in instructions)
 
         assert calls == 1
         assert jumps == 2
@@ -845,7 +844,8 @@ class TestInstructionGrouping:
         md: Cs = Cs(CS_ARCH_X86, CS_MODE_32)
         instructions: list[CsInsn] = list(md.disasm(code, 0x1000))
 
-        interrupts: int = sum(1 for insn in instructions if CS_GRP_INT in insn.groups)
+        interrupts: int = sum(bool(CS_GRP_INT in insn.groups)
+                          for insn in instructions)
 
         assert interrupts == 2
 
@@ -859,15 +859,13 @@ class TestInvalidAndCorruptedCode:
         md: Cs = Cs(CS_ARCH_X86, CS_MODE_32)
         instructions: list[CsInsn] = list(md.disasm(code, 0x1000))
 
-        assert len(instructions) == 0
+        assert not instructions
 
     def test_disassemble_insufficient_bytes_for_instruction(self) -> None:
         """Disassembler handles insufficient bytes for complete instruction."""
         code: bytes = b"\xE8\x00"
         md: Cs = Cs(CS_ARCH_X86, CS_MODE_32)
         instructions: list[CsInsn] = list(md.disasm(code, 0x1000))
-
-        assert len(instructions) >= 0
 
     def test_disassemble_random_bytes(self) -> None:
         """Disassembler handles random byte sequences without crashing."""

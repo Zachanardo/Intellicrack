@@ -180,14 +180,10 @@ class DetectionEvidenceCollector:
                 r2.cmd('aaa')  # Analyze all
 
                 # Get function addresses
-                functions = r2.cmdj('aflj')
-                if not functions:
-                    functions = []
+                functions = r2.cmdj('aflj') or []
 
                 # Get section information
-                sections = r2.cmdj('iSj')
-                if not sections:
-                    sections = []
+                sections = r2.cmdj('iSj') or []
 
                 # Find addresses related to protection
                 protection_addresses = []
@@ -285,10 +281,7 @@ class DetectionEvidenceCollector:
             # Convert bytes to hex string for radare2 search
             hex_pattern = signature.hex()
 
-            # Search for pattern in binary
-            results = r2.cmd(f'/x {hex_pattern}')
-
-            if results:
+            if results := r2.cmd(f'/x {hex_pattern}'):
                 for line in results.strip().split('\n'):
                     if line.startswith('0x'):
                         addr_str = line.split()[0]
@@ -427,17 +420,17 @@ class DetectionEvidenceCollector:
 
             protection_imports = []
 
-            # Define protection-related API patterns
-            protection_apis = {
-                'licensing': ['CreateMutex', 'RegOpenKey', 'RegQueryValue', 'GetComputerName'],
-                'crypto': ['CryptAcquireContext', 'CryptCreateHash', 'CryptHashData'],
-                'hardware': ['GetVolumeInformation', 'GetDiskFreeSpace', 'DeviceIoControl'],
-                'network': ['WinHttpOpen', 'InternetOpen', 'HttpSendRequest'],
-                'time': ['GetSystemTime', 'GetTickCount', 'QueryPerformanceCounter'],
-                'debug': ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent']
-            }
-
             if import_data and 'imports' in import_data:
+                # Define protection-related API patterns
+                protection_apis = {
+                    'licensing': ['CreateMutex', 'RegOpenKey', 'RegQueryValue', 'GetComputerName'],
+                    'crypto': ['CryptAcquireContext', 'CryptCreateHash', 'CryptHashData'],
+                    'hardware': ['GetVolumeInformation', 'GetDiskFreeSpace', 'DeviceIoControl'],
+                    'network': ['WinHttpOpen', 'InternetOpen', 'HttpSendRequest'],
+                    'time': ['GetSystemTime', 'GetTickCount', 'QueryPerformanceCounter'],
+                    'debug': ['IsDebuggerPresent', 'CheckRemoteDebuggerPresent']
+                }
+
                 for dll_name, functions in import_data['imports'].items():
                     for func in functions:
                         func_name = func.get('name', '')
@@ -525,13 +518,8 @@ class DetectionEvidenceCollector:
 
                 # Read bytes at address and create signature
                 with r2pipe.open(str(self.binary_path)) as r2:
-                    # Read 32 bytes at address
-                    hex_bytes = r2.cmd(f'px 32 @ {addr}')
-
-                    if hex_bytes:
-                        # Parse hex output and create signature
-                        byte_pattern = self._parse_hex_output(hex_bytes)
-                        if byte_pattern:
+                    if hex_bytes := r2.cmd(f'px 32 @ {addr}'):
+                        if byte_pattern := self._parse_hex_output(hex_bytes):
                             sig_hash = hashlib.sha256(byte_pattern).hexdigest()
 
                             signatures.append({
@@ -609,7 +597,7 @@ class DetectionEvidenceCollector:
         try:
             # Analyze strings for cryptographic indicators
             strings_data = self._extract_crypto_strings()
-            algorithm_details.update(strings_data)
+            algorithm_details |= strings_data
 
             # Analyze imports for crypto APIs
             crypto_imports = self._analyze_crypto_imports()
@@ -644,9 +632,7 @@ class DetectionEvidenceCollector:
         try:
             with r2pipe.open(str(self.binary_path)) as r2:
                 # Extract all strings
-                strings = r2.cmdj('izj')
-                if not strings:
-                    strings = []
+                strings = r2.cmdj('izj') or []
 
                 for string_info in strings:
                     string_val = string_info.get('string', '').lower()
@@ -769,10 +755,7 @@ class DetectionEvidenceCollector:
         try:
             # Collect memory addresses
             addresses = self.collect_memory_addresses(protection_name)
-            addr_list = [addr['address'] for addr in addresses]
-
-            # Capture disassembly at found addresses
-            if addr_list:
+            if addr_list := [addr['address'] for addr in addresses]:
                 self.capture_disassembly_snippets(addr_list)
 
             # Extract import table entries

@@ -165,7 +165,7 @@ class TestRealBinaryInstrumentation:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -282,7 +282,7 @@ class TestRealBinaryInstrumentation:
 
             # Verify module enumeration
             module_messages = [m for m in messages if m.get('type') == 'module']
-            assert len(module_messages) > 0, "Must enumerate modules"
+            assert module_messages, "Must enumerate modules"
 
         finally:
             # Cleanup
@@ -332,11 +332,11 @@ class TestRealBinaryInstrumentation:
 
             # Check bypass success
             bypass_messages = [m for m in messages if 'bypass' in str(m).lower()]
-            assert len(bypass_messages) > 0, "Bypasses must be triggered"
+            assert bypass_messages, "Bypasses must be triggered"
 
             # Verify no debugger detection
             detection_messages = [m for m in messages if 'detected' in str(m).lower()]
-            assert len(detection_messages) == 0, "No debugger detection should occur"
+            assert not detection_messages, "No debugger detection should occur"
 
         finally:
             frida_manager.kill_process(process_info['pid'])
@@ -389,7 +389,7 @@ class TestRealBinaryInstrumentation:
             messages = frida_manager.get_messages(session)
             api_calls = [m for m in messages if m.get('type') == 'api_call']
 
-            assert len(api_calls) > 0, "Must capture API calls"
+            assert api_calls, "Must capture API calls"
 
             # Verify call details
             for call in api_calls:
@@ -438,9 +438,9 @@ class TestRealBinaryInstrumentation:
             time.sleep(2)
 
             messages = frida_manager.get_messages(session)
-            pattern_matches = [m for m in messages if m.get('type') == 'pattern_found']
-
-            if len(pattern_matches) > 0:
+            if pattern_matches := [
+                m for m in messages if m.get('type') == 'pattern_found'
+            ]:
                 # Patch the license check
                 target_addr = pattern_matches[0]['address']
 
@@ -477,7 +477,7 @@ class TestRealBinaryInstrumentation:
                 messages = frida_manager.get_messages(session)
 
                 verify_messages = [m for m in messages if m.get('type') == 'patch_verify']
-                assert len(verify_messages) > 0, "Must verify patch"
+                assert verify_messages, "Must verify patch"
 
         finally:
             frida_manager.kill_process(process_info['pid'])
@@ -548,7 +548,7 @@ class TestRealBinaryInstrumentation:
 
             # Verify replacements
             replaced = [m for m in messages if m.get('type') == 'function_replaced']
-            assert len(replaced) > 0, "Functions must be replaced"
+            assert replaced, "Functions must be replaced"
 
             # Test replaced function
             test_script = """
@@ -644,7 +644,7 @@ class TestRealBinaryInstrumentation:
             messages = frida_manager.get_messages(session)
             trace_complete = [m for m in messages if m.get('type') == 'trace_complete']
 
-            assert len(trace_complete) > 0, "Tracing must complete"
+            assert trace_complete, "Tracing must complete"
             trace_data = trace_complete[0]
             assert trace_data['trace_count'] > 0, "Must capture some traces"
             assert 'traces' in trace_data, "Must have trace data"
@@ -766,7 +766,7 @@ class TestRealBinaryInstrumentation:
             heap_stats = [m for m in messages if m.get('type') == 'heap_stats']
             spray_detected = [m for m in messages if m.get('type') == 'heap_spray_detected']
 
-            assert len(heap_stats) > 0 or len(spray_detected) > 0, "Must capture heap activity"
+            assert heap_stats or spray_detected, "Must capture heap activity"
 
         finally:
             frida_manager.kill_process(process_info['pid'])
@@ -896,9 +896,9 @@ class TestRealBinaryInstrumentation:
             time.sleep(3)
 
             messages = frida_manager.get_messages(session)
-            decrypted = [m for m in messages if m.get('type') == 'strings_decrypted']
-
-            if len(decrypted) > 0:
+            if decrypted := [
+                m for m in messages if m.get('type') == 'strings_decrypted'
+            ]:
                 result = decrypted[0]
                 assert result['count'] > 0, "Must decrypt some strings"
 
@@ -906,7 +906,8 @@ class TestRealBinaryInstrumentation:
                 found_strings = [s['decrypted'] for s in result['strings']]
                 expected = ['Serial', 'License', 'Invalid']
 
-                matches = sum(1 for exp in expected if any(exp in s for s in found_strings))
+                matches = sum(bool(any(exp in s for s in found_strings))
+                          for exp in expected)
                 assert matches > 0, "Must decrypt at least some known strings"
 
         finally:
@@ -997,7 +998,7 @@ class TestRealBinaryInstrumentation:
 
             # Verify anti-debug bypass
             debug_checks = [c for c in hook_results['api_calls'] if c['api'] == 'IsDebuggerPresent']
-            assert len(debug_checks) > 0, "Must hook IsDebuggerPresent"
+            assert debug_checks, "Must hook IsDebuggerPresent"
 
         except Exception as e:
             # Emulation errors are expected for complex binaries
@@ -1057,7 +1058,7 @@ class TestRealBinaryInstrumentation:
                 if 'debug' in str(msg).lower():
                     preset_types.add('debug')
 
-            assert len(preset_types) > 0, "Presets must be active"
+            assert preset_types, "Presets must be active"
 
         finally:
             frida_manager.kill_process(process_info['pid'])
@@ -1105,7 +1106,7 @@ class TestRealBinaryInstrumentation:
                     if technique.replace('_', ' ') in msg_str:
                         techniques_applied.add(technique)
 
-            assert len(techniques_applied) > 0, "Some techniques must be applied"
+            assert techniques_applied, "Some techniques must be applied"
 
         finally:
             frida_manager.kill_process(process_info['pid'])

@@ -521,12 +521,7 @@ for crypto_func in crypto_functions:
 
         for pattern in self.patterns.values():
             match_score = sum(
-                any(
-                    (
-                        pattern_indicator.lower() in indicator.lower()
-                        for pattern_indicator in pattern.indicators
-                    )
-                )
+                any((pattern_indicator.lower() in indicator.lower() for pattern_indicator in pattern.indicators))
                 for indicator in indicators
             )
             if match_score > 0:

@@ -134,7 +134,7 @@ class TestRSAKeyExtractionFromRealBinaries:
         assert len(extracted_keys) > 0
 
         rsa_public_keys = [k for k in extracted_keys if k.key_type == KeyType.RSA_PUBLIC]
-        assert len(rsa_public_keys) > 0
+        assert rsa_public_keys
 
         extracted = rsa_public_keys[0]
         expected_numbers = expected_public_key.public_numbers()
@@ -157,9 +157,9 @@ class TestRSAKeyExtractionFromRealBinaries:
 
         assert len(extracted_keys) > 0
 
-        rsa_private_keys = [k for k in extracted_keys if k.key_type == KeyType.RSA_PRIVATE]
-
-        if len(rsa_private_keys) > 0:
+        if rsa_private_keys := [
+            k for k in extracted_keys if k.key_type == KeyType.RSA_PRIVATE
+        ]:
             extracted = rsa_private_keys[0]
             expected_numbers = expected_private_key.private_numbers()
 
@@ -169,7 +169,7 @@ class TestRSAKeyExtractionFromRealBinaries:
             assert "private key" in extracted.context.lower()
         else:
             rsa_public_keys = [k for k in extracted_keys if k.key_type == KeyType.RSA_PUBLIC]
-            assert len(rsa_public_keys) > 0
+            assert rsa_public_keys
 
     def test_extract_pem_encoded_rsa_key(self, tmp_path: Path) -> None:
         """Extract RSA key from PEM-encoded format embedded in binary."""
@@ -267,7 +267,7 @@ class TestECCKeyExtraction:
         assert len(extracted_keys) > 0
 
         ecc_keys = [k for k in extracted_keys if k.key_type == KeyType.ECC_PUBLIC]
-        assert len(ecc_keys) > 0
+        assert ecc_keys
 
         extracted = ecc_keys[0]
         assert extracted.curve in ["P-256", "secp256r1", "prime256v1", expected_public_key.curve.name]
@@ -291,15 +291,15 @@ class TestECCKeyExtraction:
         engine = LicenseValidationBypass()
         extracted_keys = engine.extract_ecc_keys_from_binary(str(binary_path))
 
-        ecc_private_keys = [k for k in extracted_keys if k.key_type == KeyType.ECC_PRIVATE]
-
-        if len(ecc_private_keys) > 0:
+        if ecc_private_keys := [
+            k for k in extracted_keys if k.key_type == KeyType.ECC_PRIVATE
+        ]:
             extracted = ecc_private_keys[0]
             assert extracted.curve in ["P-384", "secp384r1"]
             assert extracted.confidence > 0.8
         else:
             ecc_public_keys = [k for k in extracted_keys if k.key_type == KeyType.ECC_PUBLIC]
-            assert len(ecc_public_keys) > 0
+            assert ecc_public_keys
 
     def test_extract_multiple_curve_types(self, tmp_path: Path) -> None:
         """Extract ECC keys using different curve types from same binary."""
@@ -355,24 +355,22 @@ class TestCertificateExtraction:
             x509.NameAttribute(NameOID.COMMON_NAME, "testapp.local"),
         ])
 
-        cert = x509.CertificateBuilder().subject_name(
-            subject
-        ).issuer_name(
-            issuer
-        ).public_key(
-            private_key.public_key()
-        ).serial_number(
-            x509.random_serial_number()
-        ).not_valid_before(
-            datetime.datetime.utcnow()
-        ).not_valid_after(
-            datetime.datetime.utcnow() + datetime.timedelta(days=365)
-        ).add_extension(
-            x509.SubjectAlternativeName([x509.DNSName("testapp.local")]),
-            critical=False,
-        ).sign(private_key, hashes.SHA256(), default_backend())
-
-        return cert
+        return (
+            x509.CertificateBuilder()
+            .subject_name(subject)
+            .issuer_name(issuer)
+            .public_key(private_key.public_key())
+            .serial_number(x509.random_serial_number())
+            .not_valid_before(datetime.datetime.now(datetime.timezone.utc))
+            .not_valid_after(
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
+            )
+            .add_extension(
+                x509.SubjectAlternativeName([x509.DNSName("testapp.local")]),
+                critical=False,
+            )
+            .sign(private_key, hashes.SHA256(), default_backend())
+        )
 
     @pytest.fixture
     def binary_with_certificate(
@@ -561,7 +559,7 @@ class TestSymmetricKeyExtraction:
         symmetric_keys = all_keys["symmetric"]
 
         low_confidence_keys = [k for k in symmetric_keys if k.key_data == low_entropy]
-        assert len(low_confidence_keys) == 0
+        assert not low_confidence_keys
 
 
 class TestPEResourceExtraction:
@@ -616,7 +614,7 @@ class TestOpenSSLStructureParsing:
         engine = LicenseValidationBypass()
 
         data_10x = bytearray(64)
-        data_10x[0:4] = b"RSA\x00"
+        data_10x[:4] = b"RSA\x00"
         data_10x[16:20] = b"\x00\x00\x00\x00"
         data_10x[24:28] = b"\x00\x00\x00\x00"
 
@@ -624,14 +622,14 @@ class TestOpenSSLStructureParsing:
         assert isinstance(version, str)
 
         data_11x = bytearray(64)
-        data_11x[0:4] = b"RSA\x00"
+        data_11x[:4] = b"RSA\x00"
         data_11x[32:36] = b"\x01\x00\x00\x00"
 
         version = engine._detect_openssl_version(bytes(data_11x))
         assert isinstance(version, str)
 
         data_3x = bytearray(64)
-        data_3x[0:4] = b"RSA\x00"
+        data_3x[:4] = b"RSA\x00"
         data_3x[40:44] = b"\x03\x00\x00\x00"
 
         version = engine._detect_openssl_version(bytes(data_3x))
@@ -645,7 +643,7 @@ class TestOpenSSLStructureParsing:
         exponent_bytes = int.to_bytes(65537, 4, "little")
 
         blob = bytearray(256)
-        blob[0:4] = b"RSA1"
+        blob[:4] = b"RSA1"
         blob[4:8] = struct.pack("<I", 2048)
         blob[8:12] = struct.pack("<I", 4)
         blob[12:16] = struct.pack("<I", 4)
@@ -846,7 +844,7 @@ class TestConfidenceScoring:
         assert len(extracted_keys) > 0
 
         high_confidence_keys = [k for k in extracted_keys if k.confidence >= 0.8]
-        assert len(high_confidence_keys) > 0
+        assert high_confidence_keys
 
     def test_entropy_based_keys_have_lower_confidence(self, tmp_path: Path) -> None:
         """Keys extracted via entropy analysis have appropriately lower confidence."""
@@ -864,12 +862,11 @@ class TestConfidenceScoring:
         engine = LicenseValidationBypass()
         extracted_keys = engine.extract_rsa_keys_from_binary(str(binary_path))
 
-        entropy_based_keys = [
-            k for k in extracted_keys
+        if entropy_based_keys := [
+            k
+            for k in extracted_keys
             if "entropy" in k.context.lower() or k.confidence < 0.8
-        ]
-
-        if entropy_based_keys:
+        ]:
             assert all(k.confidence < 0.9 for k in entropy_based_keys)
 
 
@@ -898,7 +895,7 @@ class TestRealWorldScenarios:
         extracted_keys = engine.extract_rsa_keys_from_binary(str(validator_path))
 
         public_keys = [k for k in extracted_keys if k.key_type == KeyType.RSA_PUBLIC]
-        assert len(public_keys) > 0
+        assert public_keys
 
         extracted = public_keys[0]
         expected_numbers = public_key.public_numbers()
@@ -965,6 +962,6 @@ class TestRealWorldScenarios:
         extracted_keys = engine.extract_rsa_keys_from_binary(str(binary_path))
 
         public_keys = [k for k in extracted_keys if k.key_type == KeyType.RSA_PUBLIC]
-        assert len(public_keys) > 0
+        assert public_keys
 
         assert any(k.address == expected_offset for k in public_keys)

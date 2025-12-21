@@ -142,7 +142,7 @@ class CertificateExtractor:
         if self.pe is None:
             return False
 
-        if not hasattr(self.pe, 'OPTIONAL_HEADER') or not self.pe.OPTIONAL_HEADER.DATA_DIRECTORY:
+        if not hasattr(self.pe, "OPTIONAL_HEADER") or not self.pe.OPTIONAL_HEADER.DATA_DIRECTORY:
             return False
 
         # Certificate table is entry 4 in data directories
@@ -360,11 +360,11 @@ class CertificateExtractor:
             try:
                 # Key usage
                 ku_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.KEY_USAGE).value
-                if hasattr(ku_extension, 'digital_signature') and ku_extension.digital_signature:
+                if hasattr(ku_extension, "digital_signature") and ku_extension.digital_signature:
                     key_usage.append("Digital Signature")
-                if hasattr(ku_extension, 'key_cert_sign') and ku_extension.key_cert_sign:
+                if hasattr(ku_extension, "key_cert_sign") and ku_extension.key_cert_sign:
                     key_usage.append("Certificate Sign")
-                if hasattr(ku_extension, 'crl_sign') and ku_extension.crl_sign:
+                if hasattr(ku_extension, "crl_sign") and ku_extension.crl_sign:
                     key_usage.append("CRL Sign")
 
             except x509.ExtensionNotFound as e:
@@ -373,7 +373,7 @@ class CertificateExtractor:
             try:
                 # Extended key usage
                 eku_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
-                if hasattr(eku_extension, '__iter__'):
+                if hasattr(eku_extension, "__iter__"):
                     for usage in eku_extension:
                         usage_name = usage._name if hasattr(usage, "_name") else str(usage)
                         extended_key_usage.append(usage_name)
@@ -388,7 +388,7 @@ class CertificateExtractor:
             try:
                 # Subject Alternative Names
                 san_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
-                if hasattr(san_extension, '__iter__'):
+                if hasattr(san_extension, "__iter__"):
                     for name in san_extension:
                         subject_alt_names.append(str(name))
 

@@ -29,7 +29,7 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 
 if TYPE_CHECKING:
@@ -40,11 +40,9 @@ from ..utils.logger import get_logger
 
 # Try to import GPU autoloader
 GPU_AUTOLOADER_AVAILABLE = False
-get_device = None
-get_gpu_info = None
-to_device = None
-memory_allocated = None
-memory_reserved = None
+get_device: Callable[[], str] | None = None
+get_gpu_info: Callable[[], dict[str, object]] | None = None
+to_device: Callable[[Any], Any] | None = None
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
@@ -73,7 +71,7 @@ def secure_pickle_dump(obj: object, file_path: str) -> None:
 class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module: str, name: str) -> type:
+    def find_class(self, module: str, name: str) -> type[Any]:
         """Override ``find_class`` to restrict allowed classes.
 
         Args:
@@ -106,11 +104,11 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
-            return super().find_class(module, name)
+            return cast(type[Any], super().find_class(module, name))
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return super().find_class(module, name)
+            return cast(type[Any], super().find_class(module, name))
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
@@ -155,23 +153,60 @@ def secure_pickle_load(file_path: str) -> object:
         return RestrictedUnpickler(io.BytesIO(data)).load()
 
 
-empty_cache = None
-gpu_autoloader = None
+gpu_autoloader: Any = None
 
 try:
-    from ..utils.gpu_autoloader import empty_cache, get_device, get_gpu_info, gpu_autoloader, memory_allocated, memory_reserved, to_device
+    from ..utils.gpu_autoloader import get_device as _get_device
+    from ..utils.gpu_autoloader import get_gpu_info as _get_gpu_info
+    from ..utils.gpu_autoloader import gpu_autoloader as _gpu_autoloader
+    from ..utils.gpu_autoloader import to_device as _to_device
 
+    get_device = _get_device
+    get_gpu_info = _get_gpu_info
+    gpu_autoloader = _gpu_autoloader
+    to_device = _to_device
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
 
 try:
-    import torch
+    import torch as _torch_module
 
+    torch: Any = _torch_module
     HAS_TORCH = True
 except ImportError:
-    torch = None
+    torch_module: Any = None
     HAS_TORCH = False
+
+
+def empty_cache() -> None:
+    """Clear GPU cache using available frameworks."""
+    if HAS_TORCH and torch is not None:
+        if hasattr(torch, "cuda") and torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        if hasattr(torch, "xpu") and hasattr(torch.xpu, "is_available") and torch.xpu.is_available():
+            torch.xpu.empty_cache()
+
+
+def memory_allocated() -> int:
+    """Get allocated GPU memory in bytes."""
+    if HAS_TORCH and torch is not None:
+        if hasattr(torch, "cuda") and torch.cuda.is_available():
+            return int(torch.cuda.memory_allocated())
+        if hasattr(torch, "xpu") and hasattr(torch.xpu, "is_available") and torch.xpu.is_available():
+            return int(torch.xpu.memory_allocated())
+    return 0
+
+
+def memory_reserved() -> int:
+    """Get reserved GPU memory in bytes."""
+    if HAS_TORCH and torch is not None:
+        if hasattr(torch, "cuda") and torch.cuda.is_available():
+            return int(torch.cuda.memory_reserved())
+        if hasattr(torch, "xpu") and hasattr(torch.xpu, "is_available") and torch.xpu.is_available():
+            return int(torch.xpu.memory_reserved())
+    return 0
+
 
 logger = get_logger(__name__)
 
@@ -215,9 +250,10 @@ class ModelCacheManager:
         self.enable_disk_cache = enable_disk_cache
 
         if cache_dir is None:
-            cache_dir = Path.home() / ".intellicrack" / "model_memory_cache"
+            self.cache_dir = Path.home() / ".intellicrack" / "model_memory_cache"
+        else:
+            self.cache_dir = Path(cache_dir)
 
-        self.cache_dir = Path(cache_dir)
         if self.enable_disk_cache:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -244,7 +280,8 @@ class ModelCacheManager:
 
         try:
             with open(self.disk_index_file) as f:
-                return json.load(f)
+                loaded_data: dict[str, Any] = json.load(f)
+                return loaded_data
         except Exception as e:
             logger.exception("Failed to load disk cache index: %s", e)
             return {}
@@ -338,23 +375,22 @@ class ModelCacheManager:
 
         # Check disk cache
         if self.enable_disk_cache and model_id in self.disk_index:
-            if loaded := self._load_from_disk(model_id):
+            loaded = self._load_from_disk(model_id)
+            if loaded is not None:
                 return loaded
 
         # Load using provided function
-        if load_function:
+        if load_function is not None:
             start_time = time.time()
 
             try:
-                result = load_function()
+                result: tuple[object, object | None] | None = load_function()
                 if result is None:
                     return None
 
-                # Handle different return types
-                if isinstance(result, tuple):
-                    model, tokenizer = result[0], result[1] if len(result) > 1 else None
-                else:
-                    model, tokenizer = result, None
+                # Handle different return types - result is guaranteed to be a tuple here
+                assert result is not None  # Type narrowing for mypy
+                model, tokenizer = result[0], result[1] if len(result) > 1 else None
 
                 load_time = time.time() - start_time
                 self.stats["total_load_time"] += load_time
@@ -417,12 +453,23 @@ class ModelCacheManager:
 
         # Detect device
         device = "cpu"
-        if GPU_AUTOLOADER_AVAILABLE:
+        if GPU_AUTOLOADER_AVAILABLE and get_device is not None:
             device = get_device()
         elif hasattr(model, "device"):
             device = str(model.device)
         elif hasattr(model, "module") and hasattr(model.module, "device"):
             device = str(model.module.device)
+
+        # Get quantization and adapter_info with proper type checking
+        quantization_val = kwargs.get("quantization")
+        quantization_str: str | None = None
+        if quantization_val is not None and isinstance(quantization_val, str):
+            quantization_str = quantization_val
+
+        adapter_info_val = kwargs.get("adapter_info")
+        adapter_info_dict: dict[str, Any] | None = None
+        if adapter_info_val is not None and isinstance(adapter_info_val, dict):
+            adapter_info_dict = cast(dict[str, Any], adapter_info_val)
 
         # Create cache entry
         entry = CacheEntry(
@@ -436,8 +483,8 @@ class ModelCacheManager:
             access_count=1,
             load_time=load_time,
             device=device,
-            quantization=kwargs.get("quantization"),
-            adapter_info=kwargs.get("adapter_info"),
+            quantization=quantization_str,
+            adapter_info=adapter_info_dict,
         )
 
         # Add to cache
@@ -445,7 +492,7 @@ class ModelCacheManager:
         self.current_memory_usage += memory_size
 
         # Apply GPU optimization if available
-        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader and entry.device != "cpu":
+        if GPU_AUTOLOADER_AVAILABLE and gpu_autoloader is not None and entry.device != "cpu":
             try:
                 # Apply GPU optimizations to the model
                 optimized_model = gpu_autoloader(model)
@@ -481,10 +528,7 @@ class ModelCacheManager:
 
         # Clean up GPU memory if applicable
         if entry.device != "cpu":
-            if GPU_AUTOLOADER_AVAILABLE and empty_cache:
-                empty_cache()
-            elif HAS_TORCH and torch.cuda.is_available():
-                torch.cuda.empty_cache()
+            empty_cache()
         gc.collect()
 
         logger.info("Evicted model from cache: %s", model_id)
@@ -510,12 +554,12 @@ class ModelCacheManager:
 
             # Save model
             model_path = model_dir / "model.pkl"
-            secure_pickle_dump(entry.model_object, model_path)
+            secure_pickle_dump(entry.model_object, str(model_path))
 
             # Save tokenizer if present
             if entry.tokenizer_object:
                 tokenizer_path = model_dir / "tokenizer.pkl"
-                secure_pickle_dump(entry.tokenizer_object, tokenizer_path)
+                secure_pickle_dump(entry.tokenizer_object, str(tokenizer_path))
 
             # Save metadata
             metadata = {
@@ -576,19 +620,19 @@ class ModelCacheManager:
 
             # Load model
             model_path = model_dir / "model.pkl"
-            model = secure_pickle_load(model_path)
+            model = secure_pickle_load(str(model_path))
 
             # Load tokenizer if present
             tokenizer = None
             if metadata.get("has_tokenizer"):
                 tokenizer_path = model_dir / "tokenizer.pkl"
                 if tokenizer_path.exists():
-                    tokenizer = secure_pickle_load(tokenizer_path)
+                    tokenizer = secure_pickle_load(str(tokenizer_path))
 
             # Move model to appropriate device if GPU autoloader is available
-            if GPU_AUTOLOADER_AVAILABLE and to_device and metadata.get("device", "cpu") != "cpu":
+            if GPU_AUTOLOADER_AVAILABLE and to_device is not None and metadata.get("device", "cpu") != "cpu":
                 try:
-                    model = to_device(model, metadata["device"])
+                    model = to_device(model)
                     logger.info("Moved model to device: %s", metadata["device"])
                 except Exception as e:
                     logger.warning("Failed to move model to GPU, keeping on CPU: %s", e)
@@ -624,10 +668,7 @@ class ModelCacheManager:
         self.current_memory_usage = 0
 
         # Clean up GPU memory
-        if GPU_AUTOLOADER_AVAILABLE and empty_cache:
-            empty_cache()
-        elif HAS_TORCH and torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        empty_cache()
         gc.collect()
 
         # Clear disk cache if requested
@@ -690,13 +731,14 @@ class ModelCacheManager:
             self.stats["hits"] += 1
             logger.info("Cache hit for model: %s", name)
 
-            return entry.model_object
+            return cast(object, entry.model_object)
 
         self.stats["misses"] += 1
 
         if self.enable_disk_cache and name in self.disk_index:
-            if result := self._load_from_disk(name):
-                return result[0]
+            result = self._load_from_disk(name)
+            if result is not None:
+                return cast(object, result[0])
 
         return None
 
@@ -731,9 +773,9 @@ class ModelCacheManager:
         }
 
         # Add GPU memory stats if available
-        if GPU_AUTOLOADER_AVAILABLE:
+        if GPU_AUTOLOADER_AVAILABLE and get_gpu_info is not None:
             gpu_info = get_gpu_info()
-            if gpu_info and memory_allocated and memory_reserved:
+            if gpu_info is not None:
                 stats_dict["gpu_memory"] = {
                     "allocated_mb": memory_allocated() / (1024 * 1024),
                     "reserved_mb": memory_reserved() / (1024 * 1024),
@@ -776,7 +818,7 @@ class ModelCacheManager:
 
         return models
 
-    def preload_models(self, model_ids: list[str], load_functions: dict[str, callable]) -> None:
+    def preload_models(self, model_ids: list[str], load_functions: dict[str, Callable[[], tuple[object, object | None]]]) -> None:
         """Preload multiple models into cache.
 
         Args:
@@ -807,7 +849,7 @@ class ModelCacheManager:
 
 
 # Global instance
-_CACHE_MANAGER = None
+_CACHE_MANAGER: ModelCacheManager | None = None
 
 
 def get_cache_manager(max_memory_gb: float = 8.0) -> ModelCacheManager:

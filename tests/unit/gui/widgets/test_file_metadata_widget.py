@@ -151,11 +151,9 @@ class TestFileMetadataWidget:
             text = label.text().lower()
             date_indicators = ['created', 'modified', 'accessed', 'date', 'time']
 
-            if any(indicator in text for indicator in date_indicators):
-                # Should contain date/time information
-                if any(char.isdigit() for char in text):
-                    timestamp_found = True
-                    break
+            if any(indicator in text for indicator in date_indicators) and any(char.isdigit() for char in text):
+                timestamp_found = True
+                break
 
         # Timestamps should be displayed
         assert timestamp_found or len(labels) == 0, "File timestamps should be displayed"
@@ -221,11 +219,9 @@ class TestFileMetadataWidget:
                 continue
 
             hash_indicators = ['md5', 'sha1', 'sha256', 'hash', 'checksum']
-            if any(indicator in text for indicator in hash_indicators):
-                # Should contain hex characters for hash
-                if any(c in text for c in '0123456789abcdef'):
-                    hash_found = True
-                    break
+            if any(indicator in text for indicator in hash_indicators) and any(c in text for c in '0123456789abcdef'):
+                hash_found = True
+                break
 
         # Hash might be calculated
         assert hash_found or not hash_found  # Either is valid
@@ -305,10 +301,6 @@ class TestFileMetadataWidget:
 
                 self.widget.copy_metadata()
 
-                # Should attempt to copy metadata
-                if mock_clipboard_obj.setText.called:
-                    assert True
-
         # Check for copy buttons
 
         buttons = self.widget.findChildren(QPushButton)
@@ -360,9 +352,7 @@ class TestFileMetadataWidget:
 
         qtbot.wait(300)
 
-        # Check layout organization
-        layout = self.widget.layout()
-        if layout:
+        if layout := self.widget.layout():
             assert layout.count() >= 0
 
             # Check for grouped metadata sections
@@ -374,9 +364,7 @@ class TestFileMetadataWidget:
                 metadata_sections = ['file', 'size', 'date', 'permission', 'hash', 'type']
 
                 if any(section in title for section in metadata_sections):
-                    # Group should contain relevant widgets
-                    group_layout = group_box.layout()
-                    if group_layout:
+                    if group_layout := group_box.layout():
                         assert group_layout.count() > 0
 
     def test_performance_real_large_file_metadata(self, qtbot):
@@ -455,9 +443,7 @@ class TestFileMetadataWidget:
         if hasattr(self.widget, 'load_file'):
             self.widget.load_file(file_path)
 
-            # Widget should remain responsive during loading
-            labels = self.widget.findChildren(QLabel)
-            if labels:
+            if labels := self.widget.findChildren(QLabel):
                 original_text = labels[0].text()
                 labels[0].setText("Responsive test")
                 qtbot.wait(50)

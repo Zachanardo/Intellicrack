@@ -520,9 +520,7 @@ class R2SessionPool:
 
         """
         with self._lock:
-            active_sessions = sum(
-                s.state == SessionState.ACTIVE for s in self._sessions.values()
-            )
+            active_sessions = sum(s.state == SessionState.ACTIVE for s in self._sessions.values())
 
             total_commands = sum(s.metrics.commands_executed for s in self._sessions.values())
 

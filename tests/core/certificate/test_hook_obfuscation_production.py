@@ -187,18 +187,14 @@ class TestMemoryOperations:
         MEM_RESERVE = 0x2000
         PAGE_READWRITE = 0x04
 
-        buffer = kernel32.VirtualAlloc(
+        if buffer := kernel32.VirtualAlloc(
             None,
             256,
             MEM_COMMIT | MEM_RESERVE,
             PAGE_READWRITE,
-        )
-
-        if buffer:
+        ):
             test_data = b"\x90" * 16
-            result = obfuscator._write_memory(buffer, test_data)
-
-            if result:
+            if result := obfuscator._write_memory(buffer, test_data):
                 readback = obfuscator._read_memory(buffer, 16)
                 assert readback == test_data
 
@@ -315,9 +311,7 @@ class TestCodeCaveDiscovery:
         obfuscator = HookObfuscator()
 
         module_name = "kernel32.dll"
-        caves = obfuscator.find_code_caves(module_name)
-
-        if caves:
+        if caves := obfuscator.find_code_caves(module_name):
             assert module_name in obfuscator.code_caves
             assert obfuscator.code_caves[module_name] == caves
 
@@ -365,14 +359,12 @@ class TestCodeCaveDiscovery:
             MEM_RESERVE = 0x2000
             PAGE_READWRITE = 0x04
 
-            buffer = kernel32.VirtualAlloc(
+            if buffer := kernel32.VirtualAlloc(
                 None,
                 256,
                 MEM_COMMIT | MEM_RESERVE,
                 PAGE_READWRITE,
-            )
-
-            if buffer:
+            ):
                 test_data = b"\x00" * 64 + b"\x90" * 16
                 if obfuscator._write_memory(buffer, test_data):
                     size = obfuscator._get_cave_size(buffer)
@@ -431,14 +423,12 @@ class TestIndirectHookCreation:
             MEM_RESERVE = 0x2000
             PAGE_EXECUTE_READWRITE = 0x40
 
-            target_buf = kernel32.VirtualAlloc(
+            if target_buf := kernel32.VirtualAlloc(
                 None,
                 256,
                 MEM_COMMIT | MEM_RESERVE,
                 PAGE_EXECUTE_READWRITE,
-            )
-
-            if target_buf:
+            ):
                 obfuscator._write_memory(target_buf, b"\x90" * 32)
 
                 obfuscator.installed_hooks[target_buf] = HookInfo(
@@ -467,17 +457,15 @@ class TestIndirectHookCreation:
             MEM_RESERVE = 0x2000
             PAGE_EXECUTE_READWRITE = 0x40
 
-            buffer = kernel32.VirtualAlloc(
+            if buffer := kernel32.VirtualAlloc(
                 None,
                 256,
                 MEM_COMMIT | MEM_RESERVE,
                 PAGE_EXECUTE_READWRITE,
-            )
-
-            if buffer:
-                chain = obfuscator._build_trampoline_chain(buffer, 0x140001000, 3)
-
-                if chain:
+            ):
+                if chain := obfuscator._build_trampoline_chain(
+                    buffer, 0x140001000, 3
+                ):
                     assert len(chain) == 3
 
                 kernel32.VirtualFree(buffer, 0, 0x8000)
@@ -490,9 +478,7 @@ class TestIndirectHookCreation:
         """Allocate trampoline space returns valid executable memory."""
         obfuscator = HookObfuscator()
 
-        addr = obfuscator._allocate_trampoline_space(256)
-
-        if addr:
+        if addr := obfuscator._allocate_trampoline_space(256):
             assert addr > 0
 
             kernel32 = ctypes.windll.kernel32
@@ -590,14 +576,12 @@ class TestHookIntegrityMonitoring:
             MEM_RESERVE = 0x2000
             PAGE_EXECUTE_READWRITE = 0x40
 
-            buffer = kernel32.VirtualAlloc(
+            if buffer := kernel32.VirtualAlloc(
                 None,
                 256,
                 MEM_COMMIT | MEM_RESERVE,
                 PAGE_EXECUTE_READWRITE,
-            )
-
-            if buffer:
+            ):
                 original = b"\x90" * 16
                 modified = b"\xCC" * 16
 
@@ -805,14 +789,12 @@ class TestHookRemoval:
             MEM_RESERVE = 0x2000
             PAGE_EXECUTE_READWRITE = 0x40
 
-            buffer = kernel32.VirtualAlloc(
+            if buffer := kernel32.VirtualAlloc(
                 None,
                 256,
                 MEM_COMMIT | MEM_RESERVE,
                 PAGE_EXECUTE_READWRITE,
-            )
-
-            if buffer:
+            ):
                 original = b"\x90" * 16
                 obfuscator._write_memory(buffer, original)
 

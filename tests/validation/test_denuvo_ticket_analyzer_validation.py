@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Verification test for Denuvo ticket/token analyzer."""
 
+
 import hashlib
 import os
 import sys
@@ -118,14 +119,12 @@ print("\n8. Testing activation response generation...")
 try:
     request_data = b"DENUVO_ACTIVATION_REQUEST" + (b"\x00" * 1000)
 
-    response = analyzer.generate_activation_response(
+    if response := analyzer.generate_activation_response(
         request_data=request_data,
         license_type=analyzer.LICENSE_PERPETUAL,
         duration_days=36500,
-    )
-
-    if response:
-        print(f"   OK Response generated successfully")
+    ):
+        print("   OK Response generated successfully")
         print(f"   OK Response ID: {response.response_id.hex()[:32]}...")
         print(f"   OK Ticket size: {len(response.ticket)} bytes")
         print(f"   OK Token size: {len(response.token)} bytes")
@@ -145,10 +144,8 @@ try:
     test_ticket.extend(b"\xAA" * 1000)
     test_ticket.extend(b"\x00" * 256)
 
-    ticket = analyzer.parse_ticket(bytes(test_ticket))
-
-    if ticket:
-        print(f"   OK Ticket parsed successfully")
+    if ticket := analyzer.parse_ticket(bytes(test_ticket)):
+        print("   OK Ticket parsed successfully")
         print(f"   OK Magic: {ticket.header.magic.decode('latin-1')}")
         print(f"   OK Version: {ticket.header.version}")
         print(f"   OK Valid signature: {ticket.is_valid}")

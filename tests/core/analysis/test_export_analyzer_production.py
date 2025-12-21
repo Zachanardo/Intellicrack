@@ -159,11 +159,11 @@ class TestExportOrdinalHandling:
         analyzer = ExportAnalyzer(kernel32_path)
         analyzer.analyze()
 
-        ordinal_map: dict[int, str] = {}
-        for export in analyzer.exports:
-            if export.name and export.ordinal:
-                ordinal_map[export.ordinal] = export.name
-
+        ordinal_map: dict[int, str] = {
+            export.ordinal: export.name
+            for export in analyzer.exports
+            if export.name and export.ordinal
+        }
         assert len(ordinal_map) > 1000
 
         export_by_ordinal: ExportEntry | None = analyzer.get_export_by_ordinal(1)
@@ -180,11 +180,9 @@ class TestExportOrdinalHandling:
         analyzer = ExportAnalyzer(kernel32_path)
         analyzer.analyze()
 
-        ordinal_only_exports: list[ExportEntry] = [
+        if ordinal_only_exports := [
             exp for exp in analyzer.exports if not exp.name and exp.ordinal
-        ]
-
-        if ordinal_only_exports:
+        ]:
             for export in ordinal_only_exports[:10]:
                 assert export.ordinal > 0
                 if not export.is_forwarded:
@@ -208,7 +206,7 @@ class TestForwardedExportDetection:
             exp for exp in analyzer.exports if exp.is_forwarded
         ]
 
-        assert len(forwarded_exports) > 0
+        assert forwarded_exports
 
         for forwarded in forwarded_exports[:20]:
             assert forwarded.forward_name is not None
@@ -225,11 +223,9 @@ class TestForwardedExportDetection:
         analyzer = ExportAnalyzer(kernel32_path)
         analyzer.analyze()
 
-        forwarded_exports: list[ExportEntry] = [
+        if forwarded_exports := [
             exp for exp in analyzer.exports if exp.is_forwarded
-        ]
-
-        if forwarded_exports:
+        ]:
             for forwarded in forwarded_exports[:10]:
                 assert forwarded.forward_dll is not None
                 assert forwarded.forward_function is not None
@@ -285,7 +281,7 @@ class TestLicenseValidationExportDetection:
         dll_path: Path = temp_workspace / "license_check.dll"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub: bytes = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"\x00" * 50
@@ -304,13 +300,13 @@ class TestLicenseValidationExportDetection:
         )
 
         optional_header: bytearray = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         optional_header[16:20] = struct.pack("<I", 0x10000000)
         optional_header[92:96] = struct.pack("<I", 0x1000)
         optional_header[96:100] = struct.pack("<I", 0x200)
 
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".edata\x00\x00"
+        section_header[:8] = b".edata\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x400)
@@ -429,7 +425,7 @@ class TestExportNameManglingDemangling:
         dll_path: Path = temp_workspace / "cpp_exports.dll"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub: bytes = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"\x00" * 50
@@ -448,13 +444,13 @@ class TestExportNameManglingDemangling:
         )
 
         optional_header: bytearray = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         optional_header[16:20] = struct.pack("<I", 0x10000000)
         optional_header[92:96] = struct.pack("<I", 0x1000)
         optional_header[96:100] = struct.pack("<I", 0x200)
 
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".edata\x00\x00"
+        section_header[:8] = b".edata\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x400)
@@ -567,7 +563,7 @@ class TestExportTableErrorHandling:
         dll_path: Path = temp_workspace / "corrupted_exports.dll"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub: bytes = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"\x00" * 50
@@ -586,13 +582,13 @@ class TestExportTableErrorHandling:
         )
 
         optional_header: bytearray = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         optional_header[16:20] = struct.pack("<I", 0x10000000)
         optional_header[92:96] = struct.pack("<I", 0xFFFFFFFF)
         optional_header[96:100] = struct.pack("<I", 0xFFFFFFFF)
 
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".edata\x00\x00"
+        section_header[:8] = b".edata\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x400)
@@ -628,7 +624,7 @@ class TestExportTableErrorHandling:
         dll_path: Path = temp_workspace / "no_exports.dll"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub: bytes = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"\x00" * 50
@@ -647,10 +643,10 @@ class TestExportTableErrorHandling:
         )
 
         optional_header: bytearray = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".text\x00\x00\x00"
+        section_header[:8] = b".text\x00\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x200)
@@ -679,7 +675,7 @@ class TestExportTableErrorHandling:
         dll_path: Path = temp_workspace / "invalid_rva.dll"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub: bytes = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"\x00" * 50
@@ -698,13 +694,13 @@ class TestExportTableErrorHandling:
         )
 
         optional_header: bytearray = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         optional_header[16:20] = struct.pack("<I", 0x10000000)
         optional_header[92:96] = struct.pack("<I", 0x1000)
         optional_header[96:100] = struct.pack("<I", 0x200)
 
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".edata\x00\x00"
+        section_header[:8] = b".edata\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x400)
@@ -761,7 +757,7 @@ class TestAPIExportPatternAnalysis:
 
         crypto_exports: list[ExportEntry] = analyzer.get_crypto_related_exports()
 
-        assert len(crypto_exports) > 0
+        assert crypto_exports
 
         crypto_names: list[str] = [exp.name for exp in crypto_exports]
 
@@ -779,7 +775,7 @@ class TestAPIExportPatternAnalysis:
 
         registry_exports: list[ExportEntry] = analyzer.get_registry_related_exports()
 
-        assert len(registry_exports) > 0
+        assert registry_exports
 
         registry_names: list[str] = [exp.name for exp in registry_exports]
 
@@ -796,7 +792,7 @@ class TestAPIExportPatternAnalysis:
 
         network_exports: list[ExportEntry] = analyzer.get_network_related_exports()
 
-        assert len(network_exports) > 0
+        assert network_exports
 
         network_names: list[str] = [exp.name for exp in network_exports]
 
@@ -901,7 +897,7 @@ class TestFunctionalExportAnalysis:
 
         bypass_targets: list[ExportEntry] = analyzer.identify_bypass_targets()
 
-        assert len(bypass_targets) > 0
+        assert bypass_targets
 
         target_names: list[str] = [exp.name for exp in bypass_targets]
 
@@ -920,19 +916,19 @@ class TestExportComparison:
         v2_path: Path = temp_workspace / "license_v2.dll"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub: bytes = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21" + b"\x00" * 50
         pe_signature: bytes = b"PE\x00\x00"
         coff_header: bytes = struct.pack("<HHIIIHH", 0x014c, 1, 0x5F5E100C, 0, 0, 224, 0x2022)
         optional_header: bytearray = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         optional_header[16:20] = struct.pack("<I", 0x10000000)
         optional_header[92:96] = struct.pack("<I", 0x1000)
         optional_header[96:100] = struct.pack("<I", 0x200)
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".edata\x00\x00"
+        section_header[:8] = b".edata\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x400)
@@ -941,9 +937,9 @@ class TestExportComparison:
         v1_exports: list[bytes] = [b"ValidateLicense\x00", b"CheckActivation\x00", b"VerifySerial\x00"]
         v2_exports: list[bytes] = [b"ValidateLicense\x00", b"CheckActivation\x00", b"VerifySerial\x00", b"GetLicenseInfo\x00"]
 
+        export_dir_rva: int = 0x1000
         for version_path, export_names in [(v1_path, v1_exports), (v2_path, v2_exports)]:
             num_functions: int = len(export_names)
-            export_dir_rva: int = 0x1000
             names_rva: int = export_dir_rva + 40
             ordinals_rva: int = names_rva + (num_functions * 4)
             functions_rva: int = ordinals_rva + (num_functions * 2)

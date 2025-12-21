@@ -60,9 +60,7 @@ class AntiDebugBypass:
         detected = self.kernel32.IsDebuggerPresent() != 0
 
         if detected:
-            # Patch PEB to hide debugger
-            peb_addr = self._get_peb_address()
-            if peb_addr:
+            if peb_addr := self._get_peb_address():
                 # PEB + 0x02 = BeingDebugged flag
                 being_debugged_addr = peb_addr + 0x02
 
@@ -121,13 +119,9 @@ class AntiDebugBypass:
         detected = debugger_present.value
 
         if detected:
-            # Hook CheckRemoteDebuggerPresent to return false
-            check_remote_addr = self.kernel32.GetProcAddress(
-                self.kernel32._handle,
-                b"CheckRemoteDebuggerPresent"
-            )
-
-            if check_remote_addr:
+            if check_remote_addr := self.kernel32.GetProcAddress(
+                self.kernel32._handle, b"CheckRemoteDebuggerPresent"
+            ):
                 # Create hook to return false
                 hook_code = bytes([
                     0x33, 0xC0,  # xor eax, eax
@@ -192,11 +186,7 @@ class AntiDebugBypass:
             )
 
         # NtGlobalFlag is at PEB + 0x68 (32-bit) or PEB + 0xBC (64-bit)
-        if sys.maxsize > 2**32:
-            flag_offset = 0xBC
-        else:
-            flag_offset = 0x68
-
+        flag_offset = 0xBC if sys.maxsize > 2**32 else 0x68
         flag_addr = peb_addr + flag_offset
 
         # Read current flag value
@@ -369,12 +359,10 @@ class AntiVMEvasion:
         # Check for hypervisor bit using WMI (since direct CPUID is problematic)
         wmi_client = wmi.WMI()
 
-        hypervisor_detected = False
-        for processor in wmi_client.Win32_Processor():
-            if processor.VirtualizationFirmwareEnabled:
-                hypervisor_detected = True
-                break
-
+        hypervisor_detected = any(
+            processor.VirtualizationFirmwareEnabled
+            for processor in wmi_client.Win32_Processor()
+        )
         if hypervisor_detected:
             # Cannot directly patch CPUID, but can hook related APIs
             return AntiDetectionResult(
@@ -451,12 +439,9 @@ class AntiVMEvasion:
             r"C:\Windows\System32\drivers\vboxmouse.sys",
         ]
 
-        detected_files = []
-        for file_path in vm_files:
-            if os.path.exists(file_path):
-                detected_files.append(file_path)
-
-        if detected_files:
+        if detected_files := [
+            file_path for file_path in vm_files if os.path.exists(file_path)
+        ]:
             # Hook file system APIs to hide VM files
             return AntiDetectionResult(
                 technique_name="File VM Check",
@@ -488,12 +473,11 @@ class AntiVMEvasion:
             'vboxservice.exe', 'vboxtray.exe', 'xenservice.exe'
         ]
 
-        detected_processes = []
-        for proc in psutil.process_iter(['name']):
-            if proc.info['name'].lower() in [p.lower() for p in vm_processes]:
-                detected_processes.append(proc.info['name'])
-
-        if detected_processes:
+        if detected_processes := [
+            proc.info['name']
+            for proc in psutil.process_iter(['name'])
+            if proc.info['name'].lower() in [p.lower() for p in vm_processes]
+        ]:
             # Would need to hide processes or kill them
             return AntiDetectionResult(
                 technique_name="Process VM Check",
@@ -558,10 +542,11 @@ class PackerDetector:
                 section_name = section.Name.decode('utf-8', errors='ignore').strip('\x00')
 
                 for packer_name, signatures in self.known_packers.items():
-                    for sig in signatures:
-                        if sig.decode('utf-8', errors='ignore') in section_name:
-                            detected_packers.append((packer_name, f"Section: {section_name}"))
-
+                    detected_packers.extend(
+                        (packer_name, f"Section: {section_name}")
+                        for sig in signatures
+                        if sig.decode('utf-8', errors='ignore') in section_name
+                    )
             # Check for high entropy (indicates compression/encryption)
             high_entropy_sections = []
             for section in pe.sections:
@@ -576,10 +561,11 @@ class PackerDetector:
             # Check entry point
             suspicious_entry = self._check_entry_point(pe)
 
-            # Determine if packed
-            is_packed = len(detected_packers) > 0 or len(high_entropy_sections) > 2 or suspicious_entry
-
-            if is_packed:
+            if (
+                is_packed := len(detected_packers) > 0
+                or len(high_entropy_sections) > 2
+                or suspicious_entry
+            ):
                 details = []
                 if detected_packers:
                     details.append(f"Packers: {detected_packers}")
@@ -784,16 +770,19 @@ class AntiDetectionVerifier:
                 result = self.packer_detector.detect_packer(file_path)
                 results['packer_detection'].append(asdict(result))
 
-                status = "OK NOT PACKED" if not result.detected else "FAIL PACKED"
+                status = "FAIL PACKED" if result.detected else "OK NOT PACKED"
                 print(f"  {os.path.basename(file_path)}: {status}")
                 if result.detected:
                     print(f"    Details: {result.details}")
 
         # Calculate overall score
         total_tests = len(results['anti_debug']) + len(results['anti_vm']) + len(results['packer_detection'])
-        bypassed_count = sum(1 for r in results['anti_debug'] if r['bypassed'])
-        bypassed_count += sum(1 for r in results['anti_vm'] if r['bypassed'])
-        bypassed_count += sum(1 for r in results['packer_detection'] if not r['detected'])
+        bypassed_count = sum(bool(r['bypassed'])
+                         for r in results['anti_debug'])
+        bypassed_count += sum(bool(r['bypassed'])
+                          for r in results['anti_vm'])
+        bypassed_count += sum(bool(not r['detected'])
+                          for r in results['packer_detection'])
 
         results['overall_score'] = (bypassed_count / total_tests * 100) if total_tests > 0 else 0
 

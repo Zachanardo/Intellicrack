@@ -1,14 +1,26 @@
-import ghidra.app.decompiler.*;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import java.io.*;
-import java.nio.charset.*;
-import java.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.scalar.Scalar;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Map;
 
 public class StringDecryptionAutomator extends GhidraScript {
 
@@ -79,7 +91,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private boolean looksLikeDecryptionRoutine(Function function) {
-    if (function == null) return false;
+    if (function == null) {
+      return false;
+    }
 
     String funcName = function.getName().toLowerCase();
     if (funcName.contains("decrypt")
@@ -101,7 +115,7 @@ public class StringDecryptionAutomator extends GhidraScript {
       Instruction inst = instructions.next();
       String mnemonic = inst.getMnemonicString().toLowerCase();
 
-      if (mnemonic.equals("xor")) {
+      if ("xor".equals(mnemonic)) {
         xorCount++;
       } else if (mnemonic.contains("rol") || mnemonic.contains("ror")) {
         rotateCount++;
@@ -134,18 +148,17 @@ public class StringDecryptionAutomator extends GhidraScript {
         return true;
       }
 
-      if (xorCount > 10 && loopCount > 0) {
-        return true;
-      }
-
-      return (rotateCount + shiftCount) > 8 && loopCount > 0 && stringLoadCount > 2;
+      return xorCount > 10 && loopCount > 0
+          || rotateCount + shiftCount > 8 && loopCount > 0 && stringLoadCount > 2;
     }
 
     return false;
   }
 
   private DecryptionRoutine analyzeDecryptionRoutine(Function function) {
-    if (function == null) return null;
+    if (function == null) {
+      return null;
+    }
 
     DecryptionRoutine routine = new DecryptionRoutine();
     routine.address = function.getEntryPoint();
@@ -164,7 +177,7 @@ public class StringDecryptionAutomator extends GhidraScript {
       Instruction inst = instructions.next();
       String mnemonic = inst.getMnemonicString().toLowerCase();
 
-      if (mnemonic.equals("xor")) {
+      if ("xor".equals(mnemonic)) {
         xorOps++;
 
         Object[] operands = inst.getOpObjects(1);
@@ -175,9 +188,9 @@ public class StringDecryptionAutomator extends GhidraScript {
             keyCandidate = new byte[] {(byte) value};
           }
         }
-      } else if (mnemonic.equals("add")) {
+      } else if ("add".equals(mnemonic)) {
         addOps++;
-      } else if (mnemonic.equals("sub")) {
+      } else if ("sub".equals(mnemonic)) {
         subOps++;
       } else if (mnemonic.contains("rol") || mnemonic.contains("ror")) {
         rotateOps++;
@@ -203,7 +216,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   private double calculateRoutineConfidence(int xorOps, int addOps, int subOps, int rotateOps) {
     int totalOps = xorOps + addOps + subOps + rotateOps;
 
-    if (totalOps == 0) return 0.0;
+    if (totalOps == 0) {
+      return 0.0;
+    }
 
     double maxOps = Math.max(Math.max(xorOps, addOps), Math.max(subOps, rotateOps));
     double dominance = maxOps / totalOps;
@@ -222,7 +237,9 @@ public class StringDecryptionAutomator extends GhidraScript {
     MemoryBlock[] blocks = memory.getBlocks();
 
     for (MemoryBlock block : blocks) {
-      if (monitor.isCancelled()) break;
+      if (monitor.isCancelled()) {
+        break;
+      }
 
       if (block.getName().toLowerCase().contains("data")
           || block.getName().toLowerCase().contains("rdata")) {
@@ -232,7 +249,9 @@ public class StringDecryptionAutomator extends GhidraScript {
 
     ReferenceManager refManager = currentProgram.getReferenceManager();
     for (DecryptionRoutine routine : decryptionRoutines.values()) {
-      if (monitor.isCancelled()) break;
+      if (monitor.isCancelled()) {
+        break;
+      }
 
       Function function = currentProgram.getFunctionManager().getFunctionAt(routine.address);
       if (function != null) {
@@ -285,14 +304,18 @@ public class StringDecryptionAutomator extends GhidraScript {
 
   private Address findStringArgument(Address callSite) {
     Instruction inst = currentProgram.getListing().getInstructionAt(callSite);
-    if (inst == null) return null;
+    if (inst == null) {
+      return null;
+    }
 
     for (int i = 0; i < 5; i++) {
       Instruction prev = inst.getPrevious();
-      if (prev == null) break;
+      if (prev == null) {
+        break;
+      }
 
       String mnemonic = prev.getMnemonicString().toLowerCase();
-      if (mnemonic.equals("lea") || mnemonic.equals("mov") || mnemonic.equals("push")) {
+      if ("lea".equals(mnemonic) || "mov".equals(mnemonic) || "push".equals(mnemonic)) {
         Object[] operands = prev.getOpObjects(1);
         if (operands.length > 0 && operands[0] instanceof Address) {
           return (Address) operands[0];
@@ -306,14 +329,18 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private byte[] readPotentialString(Address addr) {
-    if (addr == null) return null;
+    if (addr == null) {
+      return new byte[0];
+    }
 
     try {
       Memory memory = currentProgram.getMemory();
       byte[] buffer = new byte[256];
       int bytesRead = memory.getBytes(addr, buffer);
 
-      if (bytesRead == 0) return null;
+      if (bytesRead == 0) {
+        return new byte[0];
+      }
 
       int length = 0;
       for (int i = 0; i < buffer.length; i++) {
@@ -332,12 +359,14 @@ public class StringDecryptionAutomator extends GhidraScript {
       return result;
 
     } catch (Exception e) {
-      return null;
+      return new byte[0];
     }
   }
 
   private boolean looksEncrypted(byte[] data) {
-    if (data == null || data.length < 4) return false;
+    if (data == null || data.length < 4) {
+      return false;
+    }
 
     int printableChars = 0;
     int highEntropyBytes = 0;
@@ -366,7 +395,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private double calculateEntropy(byte[] data) {
-    if (data == null || data.length == 0) return 0.0;
+    if (data == null || data.length == 0) {
+      return 0.0;
+    }
 
     int[] frequency = new int[256];
     for (byte b : data) {
@@ -386,7 +417,9 @@ public class StringDecryptionAutomator extends GhidraScript {
 
   private void attemptAutomatedDecryption() {
     for (Map.Entry<Address, EncryptedString> entry : encryptedStrings.entrySet()) {
-      if (monitor.isCancelled()) break;
+      if (monitor.isCancelled()) {
+        break;
+      }
 
       Address addr = entry.getKey();
       EncryptedString encStr = entry.getValue();
@@ -426,7 +459,11 @@ public class StringDecryptionAutomator extends GhidraScript {
 
     DecryptionRoutine genericRoutine = new DecryptionRoutine();
     genericRoutine.algorithmType = DecryptionAlgorithm.XOR_CIPHER;
-    genericRoutine.key = new byte[] {(byte) 0xFF};
+    if (encStr.data != null && encStr.data.length > 0) {
+      genericRoutine.key = new byte[] {encStr.data[0]};
+    } else {
+      genericRoutine.key = new byte[] {(byte) 0xFF};
+    }
     genericRoutine.confidence = 0.5;
 
     return genericRoutine;
@@ -469,7 +506,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private byte[] decryptXOR(byte[] data, byte[] key) {
-    if (data == null) return null;
+    if (data == null || data.length == 0) {
+      return new byte[0];
+    }
 
     if (key == null || key.length == 0) {
       key = new byte[] {(byte) 0xFF};
@@ -485,7 +524,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private byte[] decryptROT(byte[] data) {
-    if (data == null) return null;
+    if (data == null || data.length == 0) {
+      return new byte[0];
+    }
 
     byte[] result = new byte[data.length];
 
@@ -505,7 +546,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private byte[] decryptADD(byte[] data, byte[] key) {
-    if (data == null) return null;
+    if (data == null || data.length == 0) {
+      return new byte[0];
+    }
 
     if (key == null || key.length == 0) {
       key = new byte[] {1};
@@ -521,7 +564,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private byte[] attemptBruteForce(byte[] data) {
-    if (data == null || data.length == 0) return null;
+    if (data == null || data.length == 0) {
+      return new byte[0];
+    }
 
     for (int key = 1; key < 256; key++) {
       byte[] candidate = decryptXOR(data, new byte[] {(byte) key});
@@ -531,11 +576,13 @@ public class StringDecryptionAutomator extends GhidraScript {
       }
     }
 
-    return null;
+    return new byte[0];
   }
 
   private boolean looksLikeValidString(String str) {
-    if (str == null || str.length() < 3) return false;
+    if (str == null || str.length() < 3) {
+      return false;
+    }
 
     int printableCount = 0;
     int alphaCount = 0;
@@ -561,7 +608,7 @@ public class StringDecryptionAutomator extends GhidraScript {
       "the", "and", "for", "with", "from", "this", "that", "http", "www", "error", "warning",
       "file", "data"
     };
-    String lowerStr = str.toLowerCase();
+    String lowerStr = str.toLowerCase(Locale.ROOT);
 
     for (String word : commonWords) {
       if (lowerStr.contains(word)) {
@@ -573,7 +620,9 @@ public class StringDecryptionAutomator extends GhidraScript {
   }
 
   private String sanitizeForDisplay(String str) {
-    if (str == null) return "";
+    if (str == null) {
+      return "";
+    }
 
     String sanitized = str.replaceAll("[\\p{Cntrl}&&[^\n\r\t]]", "");
 
@@ -633,7 +682,7 @@ public class StringDecryptionAutomator extends GhidraScript {
     CUSTOM
   }
 
-  private class DecryptionRoutine {
+  private static final class DecryptionRoutine {
     Address address;
     String functionName;
     DecryptionAlgorithm algorithmType;
@@ -641,7 +690,7 @@ public class StringDecryptionAutomator extends GhidraScript {
     double confidence;
   }
 
-  private class EncryptedString {
+  private static final class EncryptedString {
     Address address;
     byte[] data;
     Address decryptionRoutine;

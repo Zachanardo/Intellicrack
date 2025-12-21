@@ -447,9 +447,7 @@ class ModelBatchTester:
             "successful_tests": sum(bool(r.success) for r in results),
             "failed_tests": sum(not r.success for r in results),
             "validation_passed": sum(r.passed_validation is True for r in results),
-            "validation_failed": sum(
-                r.passed_validation is False for r in results
-            ),
+            "validation_failed": sum(r.passed_validation is False for r in results),
             "models": {},
             "tests": {},
         }
@@ -462,21 +460,10 @@ class ModelBatchTester:
                 "total": len(model_results),
                 "success": sum(bool(r.success) for r in model_results),
                 "failed": sum(not r.success for r in model_results),
-                "validation_passed": sum(
-                    r.passed_validation is True for r in model_results
-                ),
-                "avg_inference_time": (
-                    sum(r.inference_time for r in model_results)
-                    / len(model_results)
-                    if model_results
-                    else 0
-                ),
+                "validation_passed": sum(r.passed_validation is True for r in model_results),
+                "avg_inference_time": (sum(r.inference_time for r in model_results) / len(model_results) if model_results else 0),
                 "avg_tokens_per_second": (
-                    sum(
-                        r.tokens_generated / r.inference_time
-                        for r in model_results
-                        if r.success and r.inference_time > 0
-                    )
+                    sum(r.tokens_generated / r.inference_time for r in model_results if r.success and r.inference_time > 0)
                     / len([r for r in model_results if r.success])
                     if any(r.success for r in model_results)
                     else 0
@@ -490,9 +477,7 @@ class ModelBatchTester:
             summary["tests"][test_case.test_id] = {
                 "total": len(test_results),
                 "success": sum(bool(r.success) for r in test_results),
-                "validation_passed": sum(
-                    r.passed_validation is True for r in test_results
-                ),
+                "validation_passed": sum(r.passed_validation is True for r in test_results),
                 "fastest_model": min(
                     (r for r in test_results if r.success),
                     key=lambda r: r.inference_time,

@@ -24,10 +24,7 @@ def env_manager(temp_env_dir: Path, monkeypatch: pytest.MonkeyPatch):
     from intellicrack.utils.env_file_manager import EnvFileManager
 
     env_file = temp_env_dir / ".env"
-    manager = EnvFileManager(env_file)
-
-    yield manager
-
+    yield EnvFileManager(env_file)
     if env_file.exists():
         env_file.unlink()
 

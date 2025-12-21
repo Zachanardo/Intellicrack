@@ -963,8 +963,6 @@ except ImportError as e:
 
             """
 
-
-
             class ARM64Disassembler:
                 """Basic ARM64 disassembler."""
 
@@ -1024,7 +1022,6 @@ except ImportError as e:
                         idx += 4
 
                     return instructions
-
 
             return ARM64Disassembler(mode)
 

@@ -319,8 +319,8 @@ def test_install_worker_emits_progress_signals() -> None:
 
             worker.run()
 
-            assert len(progress_messages) > 0
-            assert len(progress_values) > 0
+            assert progress_messages
+            assert progress_values
             assert 100 in progress_values
 
 

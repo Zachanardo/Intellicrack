@@ -352,7 +352,10 @@ class TestCodeNormalization:
         sig2 = analyzer_32bit.normalize_code_variant(code2)
         sig3 = analyzer_32bit.normalize_code_variant(code3)
 
-        assert sig1 == sig2 or sig1 == sig3, "Equivalent zero operations should normalize similarly"
+        assert sig1 in [
+            sig2,
+            sig3,
+        ], "Equivalent zero operations should normalize similarly"
 
     @pytest.mark.skipif(not CAPSTONE_AVAILABLE, reason="Capstone not available")
     def test_semantic_signature_stability(self, analyzer_32bit):

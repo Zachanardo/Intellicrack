@@ -85,7 +85,7 @@ def sample_pe_binary(tmp_path: Path) -> Generator[Path, None, None]:
     headers = dos_header + b"\x00" * (0x80 - len(dos_header)) + pe_header
 
     code_data = bytearray(0x1000)
-    code_data[0:4] = b"\x55\x8b\xec\x5d"
+    code_data[:4] = b"\x55\x8b\xec\x5d"
 
     binary_data = headers.ljust(0x200, b"\x00") + code_data
 

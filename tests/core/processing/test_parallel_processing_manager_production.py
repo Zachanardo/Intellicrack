@@ -212,9 +212,7 @@ class TestPatternSearching:
     ) -> None:
         """run_parallel_pattern_search() returns match positions."""
         patterns = [b"MZ"]
-        matches = configured_manager.run_parallel_pattern_search(patterns)
-
-        if matches:
+        if matches := configured_manager.run_parallel_pattern_search(patterns):
             assert all("position" in m for m in matches)
             assert matches[0]["position"] == 0
 
@@ -245,9 +243,7 @@ class TestEntropyAnalysis:
         self, configured_manager: ParallelProcessingManager
     ) -> None:
         """run_parallel_entropy_analysis() identifies high entropy regions."""
-        result = configured_manager.run_parallel_entropy_analysis()
-
-        if result:
+        if result := configured_manager.run_parallel_entropy_analysis():
             assert "high_entropy_regions" in result
             assert "high_entropy_count" in result
             assert isinstance(result.get("high_entropy_regions", []), list)

@@ -1,7 +1,7 @@
 {
   "tool": "clippy",
-  "generated": "2025-12-20T02:48:02.944141",
-  "total_findings": 384,
+  "generated": "2025-12-20T21:59:18.625863",
+  "total_findings": 379,
   "total_files": 25,
   "files": [
     {
@@ -324,6 +324,13 @@
           "raw": "src\\process_manager.rs:808:25: [warning] docs for function which may panic missing `# Panics` section"
         },
         {
+          "line": 185,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\process_manager.rs:185:5: [warning] unused `async` for function with no await statements"
+        },
+        {
           "line": 1153,
           "column": 25,
           "severity": "warning",
@@ -357,13 +364,6 @@
           "severity": "warning",
           "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
           "raw": "src\\process_manager.rs:1198:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
-        },
-        {
-          "line": 185,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\process_manager.rs:185:5: [warning] unused `async` for function with no await statements"
         }
       ]
     },
@@ -592,7 +592,7 @@
     },
     {
       "path": "src\\environment.rs",
-      "count": 27,
+      "count": 26,
       "findings": [
         {
           "line": 25,
@@ -712,13 +712,6 @@
           "severity": "warning",
           "message": "redundant closure",
           "raw": "src\\environment.rs:324:62: [warning] redundant closure"
-        },
-        {
-          "line": 324,
-          "column": 66,
-          "severity": "warning",
-          "message": "calling `to_string` on `&&str`",
-          "raw": "src\\environment.rs:324:66: [warning] calling `to_string` on `&&str`"
         },
         {
           "line": 348,
@@ -944,6 +937,13 @@
           "raw": "src\\python_integration.rs:564:5: [warning] docs for function returning `Result` missing `# Errors` section"
         },
         {
+          "line": 161,
+          "column": 28,
+          "severity": "warning",
+          "message": "this argument is a mutable reference, but not used mutably",
+          "raw": "src\\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably"
+        },
+        {
           "line": 795,
           "column": 9,
           "severity": "warning",
@@ -963,13 +963,6 @@
           "severity": "warning",
           "message": "variables can be used directly in the `format!` string",
           "raw": "src\\python_integration.rs:896:27: [warning] variables can be used directly in the `format!` string"
-        },
-        {
-          "line": 161,
-          "column": 28,
-          "severity": "warning",
-          "message": "this argument is a mutable reference, but not used mutably",
-          "raw": "src\\python_integration.rs:161:28: [warning] this argument is a mutable reference, but not used mutably"
         }
       ]
     },
@@ -1340,13 +1333,6 @@
       "count": 21,
       "findings": [
         {
-          "line": 237,
-          "column": 29,
-          "severity": "warning",
-          "message": "this `continue` expression is redundant",
-          "raw": "src\\tensorflow_validator.rs:237:29: [warning] this `continue` expression is redundant"
-        },
-        {
           "line": 11,
           "column": 5,
           "severity": "warning",
@@ -1359,6 +1345,13 @@
           "severity": "warning",
           "message": "this function has too many lines (146/100)",
           "raw": "src\\tensorflow_validator.rs:11:5: [warning] this function has too many lines (146/100)"
+        },
+        {
+          "line": 237,
+          "column": 29,
+          "severity": "warning",
+          "message": "this `continue` expression is redundant",
+          "raw": "src\\tensorflow_validator.rs:237:29: [warning] this `continue` expression is redundant"
         },
         {
           "line": 363,
@@ -1490,7 +1483,7 @@
     },
     {
       "path": "src\\tool_discovery.rs",
-      "count": 19,
+      "count": 18,
       "findings": [
         {
           "line": 466,
@@ -1554,13 +1547,6 @@
           "severity": "warning",
           "message": "item in documentation is missing backticks",
           "raw": "src\\tool_discovery.rs:359:7: [warning] item in documentation is missing backticks"
-        },
-        {
-          "line": 402,
-          "column": 37,
-          "severity": "warning",
-          "message": "calling `to_string` on `&&str`",
-          "raw": "src\\tool_discovery.rs:402:37: [warning] calling `to_string` on `&&str`"
         },
         {
           "line": 432,
@@ -1761,7 +1747,7 @@
     },
     {
       "path": "src\\preflight_checks.rs",
-      "count": 18,
+      "count": 15,
       "findings": [
         {
           "line": 23,
@@ -1792,13 +1778,6 @@
           "raw": "src\\preflight_checks.rs:260:48: [warning] redundant closure"
         },
         {
-          "line": 260,
-          "column": 52,
-          "severity": "warning",
-          "message": "calling `to_string` on `&&str`",
-          "raw": "src\\preflight_checks.rs:260:52: [warning] calling `to_string` on `&&str`"
-        },
-        {
           "line": 293,
           "column": 1,
           "severity": "warning",
@@ -1811,13 +1790,6 @@
           "severity": "warning",
           "message": "redundant closure",
           "raw": "src\\preflight_checks.rs:301:44: [warning] redundant closure"
-        },
-        {
-          "line": 301,
-          "column": 48,
-          "severity": "warning",
-          "message": "calling `to_string` on `&&str`",
-          "raw": "src\\preflight_checks.rs:301:48: [warning] calling `to_string` on `&&str`"
         },
         {
           "line": 309,
@@ -1881,13 +1853,6 @@
           "severity": "warning",
           "message": "variables can be used directly in the `format!` string",
           "raw": "src\\preflight_checks.rs:346:31: [warning] variables can be used directly in the `format!` string"
-        },
-        {
-          "line": 489,
-          "column": 18,
-          "severity": "warning",
-          "message": "this expression always evaluates to false",
-          "raw": "src\\preflight_checks.rs:489:18: [warning] this expression always evaluates to false"
         }
       ]
     },
@@ -2003,110 +1968,6 @@
       ]
     },
     {
-      "path": "src\\flask_validator.rs",
-      "count": 14,
-      "findings": [
-        {
-          "line": 203,
-          "column": 29,
-          "severity": "warning",
-          "message": "this `continue` expression is redundant",
-          "raw": "src\\flask_validator.rs:203:29: [warning] this `continue` expression is redundant"
-        },
-        {
-          "line": 11,
-          "column": 5,
-          "severity": "warning",
-          "message": "docs for function returning `Result` missing `# Errors` section",
-          "raw": "src\\flask_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section"
-        },
-        {
-          "line": 11,
-          "column": 5,
-          "severity": "warning",
-          "message": "this function has too many lines (114/100)",
-          "raw": "src\\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)"
-        },
-        {
-          "line": 550,
-          "column": 45,
-          "severity": "warning",
-          "message": "redundant closure",
-          "raw": "src\\flask_validator.rs:550:45: [warning] redundant closure"
-        },
-        {
-          "line": 568,
-          "column": 9,
-          "severity": "warning",
-          "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
-          "raw": "src\\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
-        },
-        {
-          "line": 590,
-          "column": 9,
-          "severity": "warning",
-          "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
-          "raw": "src\\flask_validator.rs:590:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
-        },
-        {
-          "line": 610,
-          "column": 9,
-          "severity": "warning",
-          "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
-          "raw": "src\\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
-        },
-        {
-          "line": 627,
-          "column": 13,
-          "severity": "warning",
-          "message": "binding to `_` prefixed variable with no side-effect",
-          "raw": "src\\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect"
-        },
-        {
-          "line": 682,
-          "column": 25,
-          "severity": "warning",
-          "message": "variables can be used directly in the `format!` string",
-          "raw": "src\\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string"
-        },
-        {
-          "line": 141,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 168,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 216,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 304,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements"
-        },
-        {
-          "line": 384,
-          "column": 5,
-          "severity": "warning",
-          "message": "unused `async` for function with no await statements",
-          "raw": "src\\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements"
-        }
-      ]
-    },
-    {
       "path": "src\\security.rs",
       "count": 14,
       "findings": [
@@ -2207,6 +2068,110 @@
           "severity": "warning",
           "message": "docs for function returning `Result` missing `# Errors` section",
           "raw": "src\\security.rs:431:5: [warning] docs for function returning `Result` missing `# Errors` section"
+        }
+      ]
+    },
+    {
+      "path": "src\\flask_validator.rs",
+      "count": 14,
+      "findings": [
+        {
+          "line": 11,
+          "column": 5,
+          "severity": "warning",
+          "message": "docs for function returning `Result` missing `# Errors` section",
+          "raw": "src\\flask_validator.rs:11:5: [warning] docs for function returning `Result` missing `# Errors` section"
+        },
+        {
+          "line": 11,
+          "column": 5,
+          "severity": "warning",
+          "message": "this function has too many lines (114/100)",
+          "raw": "src\\flask_validator.rs:11:5: [warning] this function has too many lines (114/100)"
+        },
+        {
+          "line": 203,
+          "column": 29,
+          "severity": "warning",
+          "message": "this `continue` expression is redundant",
+          "raw": "src\\flask_validator.rs:203:29: [warning] this `continue` expression is redundant"
+        },
+        {
+          "line": 141,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:141:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 168,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:168:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 216,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:216:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 304,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:304:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 384,
+          "column": 5,
+          "severity": "warning",
+          "message": "unused `async` for function with no await statements",
+          "raw": "src\\flask_validator.rs:384:5: [warning] unused `async` for function with no await statements"
+        },
+        {
+          "line": 550,
+          "column": 45,
+          "severity": "warning",
+          "message": "redundant closure",
+          "raw": "src\\flask_validator.rs:550:45: [warning] redundant closure"
+        },
+        {
+          "line": 568,
+          "column": 9,
+          "severity": "warning",
+          "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
+          "raw": "src\\flask_validator.rs:568:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
+        },
+        {
+          "line": 590,
+          "column": 9,
+          "severity": "warning",
+          "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
+          "raw": "src\\flask_validator.rs:590:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
+        },
+        {
+          "line": 610,
+          "column": 9,
+          "severity": "warning",
+          "message": "you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`",
+          "raw": "src\\flask_validator.rs:610:9: [warning] you seem to be trying to use `match` for destructuring a single pattern. Consider using `if let`"
+        },
+        {
+          "line": 627,
+          "column": 13,
+          "severity": "warning",
+          "message": "binding to `_` prefixed variable with no side-effect",
+          "raw": "src\\flask_validator.rs:627:13: [warning] binding to `_` prefixed variable with no side-effect"
+        },
+        {
+          "line": 682,
+          "column": 25,
+          "severity": "warning",
+          "message": "variables can be used directly in the `format!` string",
+          "raw": "src\\flask_validator.rs:682:25: [warning] variables can be used directly in the `format!` string"
         }
       ]
     },
@@ -2721,40 +2686,6 @@
       ]
     },
     {
-      "path": "src\\main.rs",
-      "count": 4,
-      "findings": [
-        {
-          "line": 21,
-          "column": 7,
-          "severity": "warning",
-          "message": "this function has too many lines (144/100)",
-          "raw": "src\\main.rs:21:7: [warning] this function has too many lines (144/100)"
-        },
-        {
-          "line": 39,
-          "column": 9,
-          "severity": "warning",
-          "message": "variables can be used directly in the `format!` string",
-          "raw": "src\\main.rs:39:9: [warning] variables can be used directly in the `format!` string"
-        },
-        {
-          "line": 123,
-          "column": 13,
-          "severity": "warning",
-          "message": "adding items after statements is confusing, since items exist from the start of the scope",
-          "raw": "src\\main.rs:123:13: [warning] adding items after statements is confusing, since items exist from the start of the scope"
-        },
-        {
-          "line": 148,
-          "column": 9,
-          "severity": "warning",
-          "message": "variables can be used directly in the `format!` string",
-          "raw": "src\\main.rs:148:9: [warning] variables can be used directly in the `format!` string"
-        }
-      ]
-    },
-    {
       "path": "benches\\performance_benchmarks.rs",
       "count": 4,
       "findings": [
@@ -2785,6 +2716,40 @@
           "severity": "warning",
           "message": "avoid using `collect()` when not needed",
           "raw": "benches\\performance_benchmarks.rs:190:18: [warning] avoid using `collect()` when not needed"
+        }
+      ]
+    },
+    {
+      "path": "src\\main.rs",
+      "count": 4,
+      "findings": [
+        {
+          "line": 21,
+          "column": 7,
+          "severity": "warning",
+          "message": "this function has too many lines (144/100)",
+          "raw": "src\\main.rs:21:7: [warning] this function has too many lines (144/100)"
+        },
+        {
+          "line": 39,
+          "column": 9,
+          "severity": "warning",
+          "message": "variables can be used directly in the `format!` string",
+          "raw": "src\\main.rs:39:9: [warning] variables can be used directly in the `format!` string"
+        },
+        {
+          "line": 123,
+          "column": 13,
+          "severity": "warning",
+          "message": "adding items after statements is confusing, since items exist from the start of the scope",
+          "raw": "src\\main.rs:123:13: [warning] adding items after statements is confusing, since items exist from the start of the scope"
+        },
+        {
+          "line": 148,
+          "column": 9,
+          "severity": "warning",
+          "message": "variables can be used directly in the `format!` string",
+          "raw": "src\\main.rs:148:9: [warning] variables can be used directly in the `format!` string"
         }
       ]
     },

@@ -318,17 +318,6 @@ intellicrack\core\resources\resource_manager.py: Unused function get_resource
 intellicrack\core\resources\resource_manager.py: Unused function get_resource_count
 
 
-4 findings in intellicrack\core\task_manager.py
-
-intellicrack\core\task_manager.py: Unused function get_task_history
-
-intellicrack\core\task_manager.py: Unused function get_thread_count
-
-intellicrack\core\task_manager.py: Unused function set_thread_count
-
-intellicrack\core\task_manager.py: Unused function wait_for_all
-
-
 4 findings in tests\utils\secure_assertions.py
 
 tests\utils\secure_assertions.py: Unused function assert_domain_in_collection
@@ -665,6 +654,11 @@ tests\validation_system\version_compatibility_verifier.py: Unused function gener
 tests\validation_system\version_compatibility_verifier.py: Unused function save_compatibility_report
 
 
+1 findings in intellicrack\ai\code_analysis_tools.py
+
+intellicrack\ai\code_analysis_tools.py: Unused function ask_ai_about_analysis
+
+
 1 findings in intellicrack\ai\integration_manager.py
 
 intellicrack\ai\integration_manager.py: Unused function add_event_handler
@@ -678,11 +672,6 @@ intellicrack\ai\llm_config_as_code.py: Unused function save_current_config
 1 findings in intellicrack\ai\local_gguf_server.py
 
 intellicrack\ai\local_gguf_server.py: Unused function unload_model_endpoint
-
-
-1 findings in intellicrack\ai\optimization_config.py
-
-intellicrack\ai\optimization_config.py: Unused function disable_rule
 
 
 1 findings in intellicrack\ai\pattern_library.py

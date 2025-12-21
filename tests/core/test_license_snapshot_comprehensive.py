@@ -124,13 +124,10 @@ class TestRegistryCapture:
 
         if "HKLM" in registry:
             for key, data in registry["HKLM"].items():
-                if "Windows NT\\CurrentVersion" in key:
-                    if "values" in data:
-                        if "ProductName" in data["values"]:
-                            actual = data["values"]["ProductName"]["data"]
-                            assert actual == expected_value
-                            found_value = True
-                            break
+                if "Windows NT\\CurrentVersion" in key and "values" in data and "ProductName" in data["values"]:
+                    assert data["values"]["ProductName"]["data"] == expected_value
+                    found_value = True
+                    break
 
         if not found_value:
             pytest.skip("ProductName not captured (may be filtered)")
@@ -391,8 +388,8 @@ class TestCertificateCapture:
 
         for cert in result:
             issuer = cert["issuer"]
-            assert not any(
-                std in issuer for std in standard_issuers
+            assert all(
+                std not in issuer for std in standard_issuers
             ), f"Standard issuer {issuer} should be filtered"
 
 

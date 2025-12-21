@@ -43,7 +43,7 @@ class TestCapstoneX86Disassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_32, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
         assert any(insn.mnemonic == "push" for insn in instructions)
         assert any(insn.mnemonic == "mov" for insn in instructions)
         assert any(insn.mnemonic == "ret" for insn in instructions)
@@ -64,7 +64,7 @@ class TestCapstoneX86Disassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_64, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
         assert any(insn.mnemonic == "push" for insn in instructions)
         assert any(insn.mnemonic == "mov" for insn in instructions)
         assert any(insn.mnemonic == "ret" for insn in instructions)
@@ -100,7 +100,7 @@ class TestCapstoneX86Disassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_32, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
         jump_insns = [i for i in instructions if i.mnemonic in ["je", "jne", "jle", "jg"]]
         assert len(jump_insns) >= 3
 
@@ -114,9 +114,9 @@ class TestCapstoneX86Disassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_32, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
         call_insns = [i for i in instructions if i.mnemonic == "call"]
-        assert len(call_insns) >= 1
+        assert call_insns
 
 
 class TestCapstoneARMDisassembly:
@@ -133,7 +133,7 @@ class TestCapstoneARMDisassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_ARM, CS_MODE_ARM, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
         assert any("str" in insn.mnemonic or "push" in insn.mnemonic for insn in instructions)
         assert any("ldr" in insn.mnemonic or "pop" in insn.mnemonic for insn in instructions)
 
@@ -148,7 +148,7 @@ class TestCapstoneARMDisassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_ARM, CS_MODE_THUMB, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
 
     def test_disassemble_arm64_basic_instructions(self) -> None:
         """Disassemble ARM64/AArch64 instructions."""
@@ -162,7 +162,7 @@ class TestCapstoneARMDisassembly:
 
         instructions = list(cs_disasm_quick(CS_ARCH_ARM64, CS_MODE_ARM, code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
 
 
 class TestCapstoneCsClass:
@@ -191,7 +191,7 @@ class TestCapstoneCsClass:
 
         instructions = list(md.disasm(code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
         for insn in instructions:
             assert isinstance(insn, CsInsn)
             assert insn.mnemonic is not None
@@ -210,7 +210,7 @@ class TestCapstoneCsClass:
 
         instructions = list(md.disasm(code, 0x1000))
 
-        assert len(instructions) > 0
+        assert instructions
 
 
 class TestCapstoneInstructionDetails:
@@ -273,7 +273,7 @@ class TestCapstoneFallbackImplementation:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_64, code, 0x1000))
 
-        assert len(instructions) >= 1
+        assert instructions
 
 
 class TestCapstoneEdgeCases:
@@ -285,7 +285,7 @@ class TestCapstoneEdgeCases:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_64, code, 0x1000))
 
-        assert len(instructions) == 0
+        assert not instructions
 
     def test_disassemble_single_byte(self) -> None:
         """Disassemble single byte instruction."""
@@ -402,7 +402,7 @@ class TestCapstoneEdgeCases:
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_64, code, 0x1000))
 
-        assert len(instructions) == 0
+        assert not instructions
 
     def test_disassemble_invalid_opcodes(self) -> None:
         """Disassembly handles invalid opcodes gracefully."""
@@ -525,7 +525,7 @@ class TestCapstoneEdgeCases:
 
     def test_disassemble_packed_code(self) -> None:
         """Disassembly attempts to handle packed/encrypted code."""
-        code = bytes([i & 0xFF for i in range(256)])
+        code = bytes(i & 0xFF for i in range(256))
 
         instructions = list(cs_disasm_quick(CS_ARCH_X86, CS_MODE_64, code, 0x1000))
 
@@ -621,7 +621,7 @@ class TestCapstoneArchitectureVariants:
 
         instructions = list(cs_disasm_quick(CS_ARCH_ARM, CS_MODE_THUMB, code, 0x1000))
 
-        assert len(instructions) >= 1
+        assert instructions
 
     def test_arm64_basic_instructions(self) -> None:
         """Disassembly handles ARM64 instructions."""
@@ -640,7 +640,7 @@ class TestCapstoneArchitectureVariants:
 
         try:
             instructions = list(cs_disasm_quick(CS_ARCH_X86, 0, code, 0x1000))
-            assert len(instructions) >= 1
+            assert instructions
         except Exception:
             pass
 

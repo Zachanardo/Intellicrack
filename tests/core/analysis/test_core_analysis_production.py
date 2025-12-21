@@ -35,7 +35,7 @@ def create_minimal_pe(
         Path to created PE file
     """
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)  # e_lfanew offset to PE header
 
     pe_signature = b"PE\x00\x00"
@@ -142,7 +142,7 @@ def packed_pe_binary(tmp_path: Path) -> Path:
     binary_path = tmp_path / "packed.exe"
     import random
     random.seed(12345)
-    high_entropy_data = bytes([random.randint(0, 255) for _ in range(512)])
+    high_entropy_data = bytes(random.randint(0, 255) for _ in range(512))
 
     sections = [
         ("UPX0", high_entropy_data),

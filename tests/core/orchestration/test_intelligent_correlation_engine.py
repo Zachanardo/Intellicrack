@@ -125,7 +125,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_result(func2)
 
         address_correlations = [c for c in engine.correlations if c.type == CorrelationType.ADDRESS_MATCH]
-        assert len(address_correlations) >= 1
+        assert address_correlations
 
         correlation = address_correlations[0]
         assert func1.id in correlation.source_results
@@ -161,7 +161,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_result(func2)
 
         address_correlations = [c for c in engine.correlations if c.type == CorrelationType.ADDRESS_MATCH]
-        assert len(address_correlations) == 0
+        assert not address_correlations
 
     def test_xref_correlation_direct_call(self, engine: IntelligentCorrelationEngine) -> None:
         """Functions with direct call relationships are correlated."""
@@ -193,7 +193,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_result(callee)
 
         xref_correlations = [c for c in engine.correlations if c.type == CorrelationType.XREF_RELATED]
-        assert len(xref_correlations) >= 1
+        assert xref_correlations
 
         correlation = xref_correlations[0]
         assert correlation.confidence >= 0.85
@@ -229,7 +229,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_result(func2)
 
         xref_correlations = [c for c in engine.correlations if c.type == CorrelationType.XREF_RELATED]
-        assert len(xref_correlations) >= 1
+        assert xref_correlations
 
         correlation = xref_correlations[0]
         assert "common_calls" in correlation.evidence
@@ -265,7 +265,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_result(string_result)
 
         string_correlations = [c for c in engine.correlations if c.type == CorrelationType.STRING_REFERENCE]
-        assert len(string_correlations) >= 1
+        assert string_correlations
 
         correlation = string_correlations[0]
         assert string_result.id in correlation.source_results
@@ -323,7 +323,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_results_batch([validate_func, check_func, invalid_str, trial_str])
 
         license_correlations = [c for c in engine.correlations if c.type == CorrelationType.LICENSE]
-        assert len(license_correlations) >= 1
+        assert license_correlations
 
         correlation = license_correlations[0]
         assert len(correlation.source_results) >= 2
@@ -358,7 +358,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_results_batch([aes_result, aes_func])
 
         crypto_correlations = [c for c in engine.correlations if c.type == CorrelationType.CRYPTO]
-        assert len(crypto_correlations) >= 1
+        assert crypto_correlations
 
         correlation = crypto_correlations[0]
         assert "algorithm" in correlation.evidence
@@ -392,7 +392,7 @@ class TestIntelligentCorrelationEngine:
         engine.add_results_batch([vmp_protection, vmp_marker])
 
         protection_correlations = [c for c in engine.correlations if c.type == CorrelationType.PROTECTION]
-        assert len(protection_correlations) >= 1
+        assert protection_correlations
 
         correlation = protection_correlations[0]
         assert "protection" in correlation.evidence
@@ -639,8 +639,6 @@ class TestIntelligentCorrelationEngine:
 
         semantic_correlations = [c for c in engine.correlations if c.type == CorrelationType.SEMANTIC]
 
-        assert len(semantic_correlations) >= 0
-
     def test_feature_vector_extraction(self, engine: IntelligentCorrelationEngine) -> None:
         """Feature vectors are correctly extracted from results."""
         func = FunctionResult(
@@ -752,4 +750,3 @@ class TestIntelligentCorrelationEngine:
         engine.add_results_batch([license_check, func])
 
         address_correlations = [c for c in engine.correlations if c.type == CorrelationType.ADDRESS_MATCH]
-        assert len(address_correlations) >= 0

@@ -1101,7 +1101,7 @@ class TestModelManagerIntegration:
                 assert remove_success is True
 
                 models_after = manager.get_available_models(repository_name="local")
-                assert not any("external.gguf" in m.name for m in models_after)
+                assert all("external.gguf" not in m.name for m in models_after)
             finally:
                 if "local" in manager.repositories:
                     local_repo = manager.repositories["local"]

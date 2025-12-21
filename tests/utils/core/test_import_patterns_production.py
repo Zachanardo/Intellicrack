@@ -67,7 +67,7 @@ def test_import_patterns_capstone_disassembles_x86_shellcode() -> None:
     shellcode = b"\x55\x89\xe5\x83\xec\x10"
     instructions = list(md.disasm(shellcode, 0x1000))
 
-    assert len(instructions) > 0
+    assert instructions
     assert all(hasattr(insn, "mnemonic") for insn in instructions)
     assert all(hasattr(insn, "address") for insn in instructions)
 
@@ -365,8 +365,7 @@ def test_import_patterns_lief_parses_pe_binary_structure() -> None:
     )
 
     try:
-        binary = lief_module.parse(list(minimal_pe))
-        if binary:
+        if binary := lief_module.parse(list(minimal_pe)):
             assert hasattr(binary, "header") or hasattr(binary, "dos_header")
     except Exception:
         pytest.skip("LIEF parse requires more complete PE structure")
@@ -390,7 +389,7 @@ def test_import_patterns_capstone_modes_correct_for_x64_analysis() -> None:
     x64_code = b"\x48\x89\xe5"
     instructions = list(md.disasm(x64_code, 0x1000))
 
-    assert len(instructions) > 0
+    assert instructions
     for insn in instructions:
         assert hasattr(insn, "mnemonic")
 

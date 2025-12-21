@@ -179,7 +179,7 @@ def analyze_coverage_results(reports_dir):
 
             coverage_percentage = (covered_lines / num_statements) * 100 if num_statements > 0 else 0
 
-            print(f" COVERAGE METRICS:")
+            print(" COVERAGE METRICS:")
             print(f"   Total Statements: {num_statements}")
             print(f"   Covered Lines: {covered_lines}")
             print(f"   Missing Lines: {missing_lines}")
@@ -189,13 +189,13 @@ def analyze_coverage_results(reports_dir):
             # Validate 80%+ target
             target_coverage = 80.0
             if coverage_percentage >= target_coverage:
-                print(f"🎉 SUCCESS: Coverage target achieved!")
+                print("🎉 SUCCESS: Coverage target achieved!")
                 print(f"   Target: {target_coverage}%")
                 print(f"   Achieved: {coverage_percentage:.2f}%")
                 print(f"   Margin: +{coverage_percentage - target_coverage:.2f}%")
                 success = True
             else:
-                print(f"WARNING COVERAGE TARGET NOT MET:")
+                print("WARNING COVERAGE TARGET NOT MET:")
                 print(f"   Target: {target_coverage}%")
                 print(f"   Achieved: {coverage_percentage:.2f}%")
                 print(f"   Shortfall: -{target_coverage - coverage_percentage:.2f}%")
@@ -203,9 +203,7 @@ def analyze_coverage_results(reports_dir):
 
             print()
 
-            # File-level analysis
-            files = coverage_data.get('files', {})
-            if files:
+            if files := coverage_data.get('files', {}):
                 print(" FILE-LEVEL COVERAGE:")
                 for file_path, file_data in files.items():
                     file_covered = file_data.get('summary', {}).get('covered_lines', 0)

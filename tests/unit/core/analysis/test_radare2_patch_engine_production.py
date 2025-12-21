@@ -389,7 +389,7 @@ class TestReturnValuePatching:
         patches_4byte = engine.patch_return_value(0x120, 0xFFFFFFFF, value_size=4)
 
         assert patches_1byte[0].patch_bytes[0] == 0xB0
-        assert patches_2byte[0].patch_bytes[0:2] == b'\x66\xb8'
+        assert patches_2byte[0].patch_bytes[:2] == b'\x66\xb8'
         assert patches_4byte[0].patch_bytes[0] == 0xB8
 
         engine.close()

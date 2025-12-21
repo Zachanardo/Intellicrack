@@ -135,9 +135,8 @@ class TestAnalyzeTestCoverageScriptExecution:
             if "=== SOURCE FILES WITH NO TEST COVERAGE ===" in line:
                 header_found = True
                 continue
-            if header_found and line.strip():
-                if not line.startswith("Total") and not line.startswith("Files"):
-                    files_after_header.append(line.strip())
+            if header_found and line.strip() and (not line.startswith("Total") and not line.startswith("Files")):
+                files_after_header.append(line.strip())
 
         assert header_found, "Coverage section header not found"
 
@@ -474,7 +473,7 @@ class TestEdgeCases:
                 rel_path = str(f).replace('\\', '/')
                 source_files.append(rel_path)
 
-        assert len(source_files) == 0
+        assert not source_files
 
     def test_handles_empty_tests_directory(
         self,
@@ -500,7 +499,7 @@ class TestEdgeCases:
                 rel_path = str(f).replace('\\', '/')
                 test_files.append(rel_path)
 
-        assert len(test_files) == 0
+        assert not test_files
 
     def test_handles_multiple_tests_for_single_module(
         self,

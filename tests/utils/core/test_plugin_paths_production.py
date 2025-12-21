@@ -303,9 +303,7 @@ class TestScriptListing:
 
     def test_list_ghidra_scripts_includes_java_and_python(self) -> None:
         """Test list_ghidra_scripts includes both .java and .py files."""
-        scripts = list_ghidra_scripts()
-
-        if scripts:
+        if scripts := list_ghidra_scripts():
             assert all(script.suffix in [".java", ".py"] for script in scripts)
 
     def test_list_plugin_modules_returns_list(self) -> None:
@@ -357,12 +355,9 @@ class TestScriptFinding:
         """Test find_script_by_name works with file extension."""
         frida_dir = get_frida_scripts_dir()
         if frida_dir.exists():
-            scripts = list(frida_dir.glob("*.js"))
-            if scripts:
+            if scripts := list(frida_dir.glob("*.js")):
                 script_name = scripts[0].name
-                result = find_script_by_name(script_name, "frida")
-
-                if result:
+                if result := find_script_by_name(script_name, "frida"):
                     assert result.exists()
                     assert result.suffix == ".js"
 
@@ -370,24 +365,18 @@ class TestScriptFinding:
         """Test find_script_by_name works without file extension."""
         frida_dir = get_frida_scripts_dir()
         if frida_dir.exists():
-            scripts = list(frida_dir.glob("*.js"))
-            if scripts:
+            if scripts := list(frida_dir.glob("*.js")):
                 script_name = scripts[0].stem
-                result = find_script_by_name(script_name, "frida")
-
-                if result:
+                if result := find_script_by_name(script_name, "frida"):
                     assert result.exists()
 
     def test_find_script_by_name_auto_type(self) -> None:
         """Test find_script_by_name with auto type detection."""
         frida_dir = get_frida_scripts_dir()
         if frida_dir.exists():
-            scripts = list(frida_dir.glob("*.js"))
-            if scripts:
+            if scripts := list(frida_dir.glob("*.js")):
                 script_name = scripts[0].stem
-                result = find_script_by_name(script_name, "auto")
-
-                if result:
+                if result := find_script_by_name(script_name, "auto"):
                     assert result.exists()
 
 
@@ -404,12 +393,9 @@ class TestLegacyCompatibility:
         """Test get_frida_script_path with existing script."""
         frida_dir = get_frida_scripts_dir()
         if frida_dir.exists():
-            scripts = list(frida_dir.glob("*.js"))
-            if scripts:
+            if scripts := list(frida_dir.glob("*.js")):
                 script_name = scripts[0].stem
-                result = get_frida_script_path(script_name)
-
-                if result:
+                if result := get_frida_script_path(script_name):
                     assert isinstance(result, str)
                     assert Path(result).exists()
 
@@ -423,12 +409,11 @@ class TestLegacyCompatibility:
         """Test get_ghidra_script_path with existing script."""
         ghidra_dir = get_ghidra_scripts_dir()
         if ghidra_dir.exists():
-            scripts = list(ghidra_dir.glob("**/*.java")) + list(ghidra_dir.glob("**/*.py"))
-            if scripts:
+            if scripts := list(ghidra_dir.glob("**/*.java")) + list(
+                ghidra_dir.glob("**/*.py")
+            ):
                 script_name = scripts[0].stem
-                result = get_ghidra_script_path(script_name)
-
-                if result:
+                if result := get_ghidra_script_path(script_name):
                     assert isinstance(result, str)
                     assert Path(result).exists()
 

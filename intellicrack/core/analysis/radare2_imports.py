@@ -1,11 +1,11 @@
 """Radare2 import/export analysis module for binary function analysis."""
 
 import logging
-from typing import Any
+from typing import Any, Union
 
 from intellicrack.utils.logger import logger
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, R2SessionPoolAdapter, r2_session
 
 
 """
@@ -55,7 +55,7 @@ class R2ImportExportAnalyzer:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.api_cache = {}
+        self.api_cache: dict[str, Any] = {}
 
     def analyze_imports_exports(self) -> dict[str, Any]:
         """Perform comprehensive import/export analysis on the binary.
@@ -64,24 +64,40 @@ class R2ImportExportAnalyzer:
             Complete import/export analysis results
 
         """
-        result = {
+        imports_list: list[dict[str, Any]] = []
+        exports_list: list[dict[str, Any]] = []
+        dll_deps_list: list[dict[str, Any]] = []
+        symbols_list: list[dict[str, Any]] = []
+        relocations_list: list[dict[str, Any]] = []
+        suspicious_apis_list: list[dict[str, Any]] = []
+        license_apis_list: list[dict[str, Any]] = []
+        crypto_apis_list: list[dict[str, Any]] = []
+        anti_analysis_apis_list: list[dict[str, Any]] = []
+        network_apis_list: list[dict[str, Any]] = []
+        file_system_apis_list: list[dict[str, Any]] = []
+        registry_apis_list: list[dict[str, Any]] = []
+        process_apis_list: list[dict[str, Any]] = []
+        memory_apis_list: list[dict[str, Any]] = []
+        debug_apis_list: list[dict[str, Any]] = []
+
+        result: dict[str, Any] = {
             "binary_path": self.binary_path,
-            "imports": [],
-            "exports": [],
-            "dll_dependencies": [],
-            "symbols": [],
-            "relocations": [],
+            "imports": imports_list,
+            "exports": exports_list,
+            "dll_dependencies": dll_deps_list,
+            "symbols": symbols_list,
+            "relocations": relocations_list,
             "api_categories": {},
-            "suspicious_apis": [],
-            "license_apis": [],
-            "crypto_apis": [],
-            "anti_analysis_apis": [],
-            "network_apis": [],
-            "file_system_apis": [],
-            "registry_apis": [],
-            "process_apis": [],
-            "memory_apis": [],
-            "debug_apis": [],
+            "suspicious_apis": suspicious_apis_list,
+            "license_apis": license_apis_list,
+            "crypto_apis": crypto_apis_list,
+            "anti_analysis_apis": anti_analysis_apis_list,
+            "network_apis": network_apis_list,
+            "file_system_apis": file_system_apis_list,
+            "registry_apis": registry_apis_list,
+            "process_apis": process_apis_list,
+            "memory_apis": memory_apis_list,
+            "debug_apis": debug_apis_list,
             "api_statistics": {},
             "security_assessment": {},
             "cross_references": {},
@@ -142,7 +158,7 @@ class R2ImportExportAnalyzer:
 
         return result
 
-    def _analyze_imports(self, r2: R2Session) -> list[dict[str, Any]]:
+    def _analyze_imports(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
         """Analyze imported functions."""
         imports = []
 
@@ -171,7 +187,8 @@ class R2ImportExportAnalyzer:
 
             # Also get import information from other radare2 commands
             try:
-                if plt_data := r2._execute_command("iP", expect_json=False):
+                plt_data = r2._execute_command("iP", expect_json=False)
+                if plt_data and isinstance(plt_data, str):
                     self._parse_plt_data(plt_data, imports)
             except R2Exception as e:
                 logger.exception("R2Exception in radare2_imports: %s", e)
@@ -181,7 +198,7 @@ class R2ImportExportAnalyzer:
 
         return imports
 
-    def _analyze_exports(self, r2: R2Session) -> list[dict[str, Any]]:
+    def _analyze_exports(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
         """Analyze exported functions."""
         exports = []
 
@@ -211,7 +228,7 @@ class R2ImportExportAnalyzer:
 
         return exports
 
-    def _analyze_dll_dependencies(self, r2: R2Session) -> list[dict[str, Any]]:
+    def _analyze_dll_dependencies(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
         """Analyze DLL dependencies and libraries."""
         dependencies = []
 
@@ -240,7 +257,7 @@ class R2ImportExportAnalyzer:
 
         return dependencies
 
-    def _analyze_symbols(self, r2: R2Session) -> list[dict[str, Any]]:
+    def _analyze_symbols(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
         """Analyze symbols in the binary."""
         symbols = []
 
@@ -270,7 +287,7 @@ class R2ImportExportAnalyzer:
 
         return symbols
 
-    def _analyze_relocations(self, r2: R2Session) -> list[dict[str, Any]]:
+    def _analyze_relocations(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
         """Analyze relocations in the binary."""
         relocations = []
 
@@ -300,7 +317,7 @@ class R2ImportExportAnalyzer:
 
     def _categorize_apis(self, imports: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
         """Categorize APIs by functionality."""
-        categories = {
+        categories: dict[str, list[dict[str, Any]]] = {
             "system_info": [],
             "file_operations": [],
             "registry_operations": [],
@@ -1341,7 +1358,8 @@ class R2ImportExportAnalyzer:
 
     def _generate_api_statistics(self, result: dict[str, Any]) -> dict[str, Any]:
         """Generate comprehensive API statistics."""
-        stats = {
+        category_distribution: dict[str, int] = {}
+        stats: dict[str, Any] = {
             "total_imports": len(result.get("imports", [])),
             "total_exports": len(result.get("exports", [])),
             "total_symbols": len(result.get("symbols", [])),
@@ -1350,23 +1368,29 @@ class R2ImportExportAnalyzer:
             "license_api_count": len(result.get("license_apis", [])),
             "crypto_api_count": len(result.get("crypto_apis", [])),
             "anti_analysis_api_count": len(result.get("anti_analysis_apis", [])),
-            "category_distribution": {},
+            "category_distribution": category_distribution,
         }
 
         # Calculate category distribution
         categories = result.get("api_categories", {})
-        for category, apis in categories.items():
-            stats["category_distribution"][category] = len(apis)
+        if isinstance(categories, dict):
+            for category, apis in categories.items():
+                if isinstance(apis, list):
+                    category_distribution[category] = len(apis)
 
         return stats
 
     def _perform_security_assessment(self, result: dict[str, Any]) -> dict[str, Any]:
         """Perform overall security assessment."""
-        assessment = {
+        security_concerns: list[str] = []
+        recommendations: list[str] = []
+        threat_indicators: dict[str, Any] = {}
+
+        assessment: dict[str, Any] = {
             "risk_level": "low",
-            "security_concerns": [],
-            "recommendations": [],
-            "threat_indicators": {},
+            "security_concerns": security_concerns,
+            "recommendations": recommendations,
+            "threat_indicators": threat_indicators,
         }
 
         # Analyze risk factors
@@ -1382,15 +1406,15 @@ class R2ImportExportAnalyzer:
 
         # Add security concerns
         if suspicious_count > 0:
-            assessment["security_concerns"].append(f"Contains {suspicious_count} suspicious API calls")
+            security_concerns.append(f"Contains {suspicious_count} suspicious API calls")
         if anti_analysis_count > 0:
-            assessment["security_concerns"].append(f"Contains {anti_analysis_count} anti-analysis techniques")
+            security_concerns.append(f"Contains {anti_analysis_count} anti-analysis techniques")
         if crypto_count > 0:
-            assessment["security_concerns"].append(f"Uses {crypto_count} cryptographic APIs - potential license protection")
+            security_concerns.append(f"Uses {crypto_count} cryptographic APIs - potential license protection")
 
         return assessment
 
-    def _get_api_cross_references(self, r2: R2Session, imports: list[dict[str, Any]]) -> dict[str, Any]:
+    def _get_api_cross_references(self, r2: R2Session | R2SessionPoolAdapter, imports: list[dict[str, Any]]) -> dict[str, Any]:
         """Get cross-references for important APIs."""
         xrefs = {}
 
@@ -1404,7 +1428,8 @@ class R2ImportExportAnalyzer:
         for api in important_apis[:10]:  # Limit for performance
             api_name = api.get("name", "")
             try:
-                if xref_data := r2._execute_command(f"axt sym.imp.{api_name}", expect_json=False):
+                xref_data = r2._execute_command(f"axt sym.imp.{api_name}", expect_json=False)
+                if xref_data and isinstance(xref_data, str):
                     xrefs[api_name] = xref_data.strip().split("\n")
             except R2Exception as e:
                 self.logger.exception("R2Exception in radare2_imports: %s", e)

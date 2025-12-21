@@ -245,7 +245,7 @@ class TestBinaryAnalyzer(IntellicrackTestBase):
         assert isinstance(strings, list)
 
         # Verify strings are real (not error messages)
-        if strings and not any("Error" in str(s) for s in strings[:3]):
+        if strings and all("Error" not in str(s) for s in strings[:3]):
             self.assert_real_output(strings)
 
             # Check string characteristics
@@ -353,7 +353,7 @@ class TestBinaryAnalyzer(IntellicrackTestBase):
         assert isinstance(security_info['recommendations'], list)
 
         # If format is executable, should have security recommendations
-        if file_format in ['PE', 'ELF']:
+        if file_format in {'PE', 'ELF'}:
             recommendations = security_info['recommendations']
             assert len(recommendations) > 0
             assert any('sandbox' in rec.lower() for rec in recommendations)

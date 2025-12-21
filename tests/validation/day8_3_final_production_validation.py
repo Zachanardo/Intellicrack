@@ -94,8 +94,9 @@ class FinalProductionValidator:
 
                         # Check each forbidden pattern
                         for pattern in self.forbidden_patterns:
-                            matches = re.findall(pattern, content, re.IGNORECASE)
-                            if matches:
+                            if matches := re.findall(
+                                pattern, content, re.IGNORECASE
+                            ):
                                 infected_files.append({
                                     "file": str(file_path.relative_to(self.project_root)),
                                     "pattern": pattern,
@@ -282,10 +283,8 @@ class FinalProductionValidator:
                         # Try getting techniques list
                         try:
                             result = {"technique": bypass.techniques[0] if hasattr(bypass, 'techniques') and bypass.techniques else "shadow_stack_pivot"}
-                        except:
+                        except Exception:
                             pass
-                            # Technique access may fail, use default
-
             if result and isinstance(result, dict) and "technique" in result:
                 print(f"  OK CET bypass technique: {result['technique']}")
                 self.results["functional"]["passed"] += 1
@@ -342,7 +341,7 @@ class FinalProductionValidator:
             # Simulate workload
             from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
 
-            for i in range(5):
+            for _ in range(5):
                 orch = AnalysisOrchestrator()
                 del orch
 
@@ -395,17 +394,15 @@ class FinalProductionValidator:
 
                 if config and isinstance(config, dict):
                     print("  OK Configuration file valid")
-                    self.results["deployment"]["passed"] += 1
                     deployment_checks.append({"check": "configuration", "passed": True})
                 else:
                     print("  WARNING Configuration file empty")
-                    self.results["deployment"]["passed"] += 1  # Not critical
                     deployment_checks.append({"check": "configuration", "passed": True, "warning": "Empty config"})
             else:
                 print("  WARNING No configuration file found (will use defaults)")
-                self.results["deployment"]["passed"] += 1  # Not critical
                 deployment_checks.append({"check": "configuration", "passed": True, "warning": "No config file"})
 
+            self.results["deployment"]["passed"] += 1
         except Exception as e:
             print(f"  FAIL Configuration test error: {e}")
             self.results["deployment"]["failed"] += 1
@@ -470,12 +467,13 @@ class FinalProductionValidator:
         }
 
         # Generate report
-        report = []
-        report.append("=" * 80)
-        report.append("FINAL PRODUCTION READINESS VALIDATION REPORT")
-        report.append("DAY 8.3 - DEPLOYMENT GATE")
-        report.append("=" * 80)
-        report.append("")
+        report = [
+            "=" * 80,
+            "FINAL PRODUCTION READINESS VALIDATION REPORT",
+            "DAY 8.3 - DEPLOYMENT GATE",
+            "=" * 80,
+            "",
+        ]
         report.append(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S')}")
         report.append("")
 

@@ -1028,11 +1028,7 @@ def start_network_capture(self: Any, interface: str | None = None, filter_str: s
 
         import threading
 
-        capture_thread = threading.Thread(
-            target=_perform_network_capture,
-            args=(self, interface, filter_str),
-            daemon=True
-        )
+        capture_thread = threading.Thread(target=_perform_network_capture, args=(self, interface, filter_str), daemon=True)
         setattr(self, "_capture_thread", capture_thread)
         capture_thread.start()
 

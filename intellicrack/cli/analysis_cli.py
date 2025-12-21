@@ -177,9 +177,7 @@ class AnalysisCLI:
                 pe_results = pe_analyzer.analyze(file_path)
                 results["metadata"]["pe_analysis"] = pe_results
                 if "imports" in pe_results:
-                    if suspicious_apis := self._check_suspicious_apis(
-                        pe_results["imports"]
-                    ):
+                    if suspicious_apis := self._check_suspicious_apis(pe_results["imports"]):
                         results["findings"].append(
                             {
                                 "type": "suspicious_api",

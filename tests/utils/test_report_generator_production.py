@@ -423,7 +423,7 @@ class TestCSVReportGeneration:
             reader = csv.reader(f)
             rows = list(reader)
 
-        assert len(rows) > 0
+        assert rows
         assert rows[0][0] == "File Information"
         assert any("protected_software.exe" in row for row in rows)
 

@@ -268,7 +268,7 @@ class TestEventHandling:
         test_task = IntegrationTask(task_id="test_task", task_type="test", params={})
         integration_manager._emit_event("test_event", test_task)
 
-        assert len(events_received) > 0
+        assert events_received
         assert "test_task" in events_received
 
     def test_multiple_handlers_for_same_event(
@@ -290,8 +290,8 @@ class TestEventHandling:
         test_task = IntegrationTask(task_id="test", task_type="test", params={})
         integration_manager._emit_event("test_event", test_task)
 
-        assert len(calls_a) > 0
-        assert len(calls_b) > 0
+        assert calls_a
+        assert calls_b
 
 
 class TestWorkflowCreation:
@@ -391,7 +391,7 @@ class TestCachingBehavior:
         """Caching can be disabled."""
         integration_manager.enable_caching = False
 
-        assert integration_manager.enable_caching is False
+        assert not integration_manager.enable_caching
 
 
 class TestParallelExecution:
@@ -409,7 +409,7 @@ class TestParallelExecution:
         """Parallel execution can be disabled."""
         integration_manager.enable_parallel_execution = False
 
-        assert integration_manager.enable_parallel_execution is False
+        assert not integration_manager.enable_parallel_execution
 
 
 class TestTaskTimeout:

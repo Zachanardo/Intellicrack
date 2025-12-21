@@ -642,12 +642,7 @@ class ConstantPropagationEngine:
         return {
             reg: reg_value
             for reg, reg_value in state1.items()
-            if reg in state2
-            and (
-                reg_value.is_constant
-                and state2[reg].is_constant
-                and reg_value.value == state2[reg].value
-            )
+            if reg in state2 and (reg_value.is_constant and state2[reg].is_constant and reg_value.value == state2[reg].value)
         }
 
     def _extract_register(self, operand: str) -> str | None:

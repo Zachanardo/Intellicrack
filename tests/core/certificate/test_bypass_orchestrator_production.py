@@ -233,12 +233,9 @@ class TestBinaryPatchBypass:
                 b'\x90' * 5,
             ]
 
-            patch_found = False
-            for pattern in x86_return_true_patterns:
-                if pattern in patched_content:
-                    patch_found = True
-                    break
-
+            patch_found = any(
+                pattern in patched_content for pattern in x86_return_true_patterns
+            )
             assert patch_found, "No return-true patch patterns found in modified binary"
 
     def test_binary_patch_verification_detects_patches(
@@ -343,9 +340,9 @@ class TestMITMProxyBypass:
             lambda: tmp_path,
         )
 
-        result = orchestrator._execute_mitm_proxy(str(online_activation_binary))
-
-        if result:
+        if result := orchestrator._execute_mitm_proxy(
+            str(online_activation_binary)
+        ):
             expected_cert_dir = tmp_path / ".intellicrack" / "mitm_certs"
             assert expected_cert_dir.exists(), "Certificate directory not created"
 
@@ -363,16 +360,16 @@ class TestMITMProxyBypass:
             lambda: tmp_path,
         )
 
-        result = orchestrator._execute_mitm_proxy(str(online_activation_binary))
-
-        if result:
+        if result := orchestrator._execute_mitm_proxy(
+            str(online_activation_binary)
+        ):
             cert_dir = tmp_path / ".intellicrack" / "mitm_certs"
             if cert_dir.exists():
                 cert_files = list(cert_dir.glob("*.pem"))
                 key_files = list(cert_dir.glob("*_key.pem"))
 
-                assert len(cert_files) > 0, "No certificate files generated"
-                assert len(key_files) > 0, "No private key files generated"
+                assert cert_files, "No certificate files generated"
+                assert key_files, "No private key files generated"
 
                 for cert_file in cert_files:
                     cert_content = cert_file.read_bytes()
@@ -455,9 +452,7 @@ class TestRollbackFunctionality:
 
             assert original_hash != modified_hash, "Binary was not modified"
 
-            rollback_success = orchestrator.rollback(result)
-
-            if rollback_success:
+            if rollback_success := orchestrator.rollback(result):
                 restored_content = temp_binary_copy.read_bytes()
                 restored_hash = hash(restored_content)
 
@@ -604,10 +599,9 @@ class TestRealWorldScenarios:
         if result.detection_report.has_validation():
             validation_count = len(result.detection_report.validation_functions)
 
-            if validation_count > 1:
-                if result.patch_result:
-                    patched_count = len(result.patch_result.patched_functions)
-                    assert patched_count > 0, "No functions patched despite multiple detections"
+            if validation_count > 1 and result.patch_result:
+                patched_count = len(result.patch_result.patched_functions)
+                assert patched_count > 0, "No functions patched despite multiple detections"
 
     def test_bypass_handles_mixed_tls_libraries(
         self,

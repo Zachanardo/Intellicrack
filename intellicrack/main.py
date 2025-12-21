@@ -21,8 +21,7 @@ import os
 import sys
 import warnings
 
-from intellicrack.utils.logger import log_function_call
-
+import intellicrack.utils.logger
 
 # Suppress pkg_resources deprecation warning from capstone
 warnings.filterwarnings("ignore", message="pkg_resources is deprecated as an API.*", category=UserWarning)
@@ -111,7 +110,7 @@ else:
 # The comprehensive logging system interferes with Qt's window display mechanisms
 
 
-@log_function_call
+@intellicrack.utils.logger.log_function_call
 def main() -> int:
     """Run the main entry point for the Intellicrack application.
 
@@ -176,7 +175,9 @@ def main() -> int:
 
         # Initialize comprehensive logging system
         try:
-            from intellicrack.core.logging.audit_logger import setup_comprehensive_logging
+            from intellicrack.core.logging.audit_logger import (
+                setup_comprehensive_logging,
+            )
 
             setup_comprehensive_logging()
             logger.info("Comprehensive logging system initialized successfully.")

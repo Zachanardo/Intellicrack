@@ -371,7 +371,7 @@ def main():
             failed += 1
 
     print(f"\n{'='*50}")
-    print(f"AI Module Test Results:")
+    print("AI Module Test Results:")
     print(f"  Passed: {passed}")
     print(f"  Failed: {failed}")
     print(f"  Total: {len(tests)}")

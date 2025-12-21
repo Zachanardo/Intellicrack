@@ -210,7 +210,7 @@ class TestBaseLLMBackend:
         backend.tools = [{"name": "test"}]
         backend.shutdown()
         assert not backend.is_initialized
-        assert backend.tools == []
+        assert not backend.tools
 
 
 class TestOpenAIBackend:

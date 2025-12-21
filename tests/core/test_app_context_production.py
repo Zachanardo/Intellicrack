@@ -112,7 +112,7 @@ class TestAppContextBinaryManagement:
         app_context.load_binary(str(temp_binary_file))
 
         if app_context.binary_loaded:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_info is not None
             assert emitted_info["name"] == temp_binary_file.name
 
@@ -132,7 +132,7 @@ class TestAppContextBinaryManagement:
         app_context.unload_binary()
 
         if app_context.binary_unloaded:
-            assert signal_emitted is True
+            assert signal_emitted
 
     def test_recent_files_tracks_loaded_binaries(self, app_context: AppContext, tmp_path: Path) -> None:
         """Recent files list tracks loaded binaries correctly."""
@@ -222,7 +222,7 @@ class TestAppContextAnalysisManagement:
         app_context.set_analysis_results("protection_scan", results)
 
         if app_context.analysis_completed:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_type == "protection_scan"
             assert emitted_results == results
 
@@ -245,7 +245,7 @@ class TestAppContextAnalysisManagement:
         app_context.start_analysis("vulnerability_scan", options)
 
         if app_context.analysis_started:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_type == "vulnerability_scan"
             assert emitted_options == options
 
@@ -267,7 +267,7 @@ class TestAppContextAnalysisManagement:
         app_context.fail_analysis("protection_scan", "Timeout exceeded")
 
         if app_context.analysis_failed:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_type == "protection_scan"
             assert emitted_error == "Timeout exceeded"
 
@@ -395,7 +395,7 @@ class TestAppContextProjectManagement:
         app_context.load_project(str(temp_project_file))
 
         if app_context.project_loaded:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_info is not None
             assert emitted_info["name"] == "Test Project"
 
@@ -416,7 +416,7 @@ class TestAppContextProjectManagement:
         app_context.save_project(str(project_path))
 
         if app_context.project_saved:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_path == str(project_path.absolute())
 
     def test_close_project_emits_signal(self, app_context: AppContext, temp_project_file: Path) -> None:
@@ -435,7 +435,7 @@ class TestAppContextProjectManagement:
         app_context.close_project()
 
         if app_context.project_closed:
-            assert signal_emitted is True
+            assert signal_emitted
 
 
 class TestAppContextPluginManagement:
@@ -481,7 +481,7 @@ class TestAppContextPluginManagement:
         app_context.register_plugin("test-plugin", plugin_info)
 
         if app_context.plugin_loaded:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_name == "test-plugin"
             assert emitted_info == plugin_info
 
@@ -503,7 +503,7 @@ class TestAppContextPluginManagement:
         app_context.unregister_plugin("test-plugin")
 
         if app_context.plugin_unloaded:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_name == "test-plugin"
 
 
@@ -605,7 +605,7 @@ class TestAppContextTaskManagement:
         app_context.register_task("task-001", "Cracking serial")
 
         if app_context.task_started:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_id == "task-001"
             assert emitted_description == "Cracking serial"
 
@@ -629,7 +629,7 @@ class TestAppContextTaskManagement:
         app_context.update_task_progress("task-001", 75)
 
         if app_context.task_progress:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_id == "task-001"
             assert emitted_progress == 75
 
@@ -653,7 +653,7 @@ class TestAppContextTaskManagement:
         app_context.complete_task("task-001", {"crack_successful": True})
 
         if app_context.task_completed:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_id == "task-001"
             assert emitted_result["crack_successful"] is True
 
@@ -677,7 +677,7 @@ class TestAppContextTaskManagement:
         app_context.fail_task("task-001", "Failed to crack protection")
 
         if app_context.task_failed:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_id == "task-001"
             assert emitted_error == "Failed to crack protection"
 
@@ -725,7 +725,7 @@ class TestAppContextSettingsManagement:
         app_context.set_setting("auto_crack", True)
 
         if app_context.settings_changed:
-            assert signal_emitted is True
+            assert signal_emitted
             assert emitted_key == "auto_crack"
             assert emitted_value is True
 

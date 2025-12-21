@@ -217,11 +217,11 @@ class TestWinTypeCreation:
 
         valid_handle: Any = HANDLE(0x12345678)
         assert valid_handle.is_valid() is True
-        assert bool(valid_handle) is True
+        assert bool(valid_handle)
 
         null_handle: Any = HANDLE(0)
         assert null_handle.is_valid() is False
-        assert bool(null_handle) is False
+        assert not bool(null_handle)
 
         invalid_handle: Any = HANDLE(-1)
         assert invalid_handle.is_valid() is False
@@ -289,14 +289,14 @@ class TestWindowsMemoryProtection:
         """Bypass successfully changes memory protection on Windows."""
         result: bool = _bypass_memory_protection_windows(test_address, 4096)
 
-        assert result is True
+        assert result
 
     def test_bypass_memory_protection_windows_allows_write(self, test_buffer: Any) -> None:
         """After bypass, memory is writable on Windows."""
         address: int = ctypes.addressof(test_buffer)
         result: bool = _bypass_memory_protection_windows(address, 1024)
 
-        assert result is True
+        assert result
 
         test_data = b"PATCHED"
         ctypes.memmove(address, test_data, len(test_data))
@@ -309,7 +309,7 @@ class TestWindowsMemoryProtection:
         invalid_address: int = 0x0
         result: bool = _bypass_memory_protection_windows(invalid_address, 4096)
 
-        assert result is False
+        assert not result
 
     def test_bypass_memory_protection_windows_custom_protection(self, test_address: int) -> None:
         """Bypass accepts custom protection flags on Windows."""
@@ -317,7 +317,7 @@ class TestWindowsMemoryProtection:
             test_address, 4096, PAGE_EXECUTE_READWRITE
         )
 
-        assert result is True
+        assert result
 
     def test_patch_memory_windows_modifies_memory(self) -> None:
         """Windows memory patching writes correct bytes."""
@@ -328,7 +328,7 @@ class TestWindowsMemoryProtection:
         patch_data = b"XXXX"
         result: bool = _patch_memory_windows(process_id, address + 4, patch_data)
 
-        assert result is True
+        assert result
 
         final_content = ctypes.string_at(address, 16)
         assert final_content == b"AAAAXXXXCCCCDDDD"
@@ -343,7 +343,7 @@ class TestWindowsMemoryProtection:
         patch_data = b"XX"
         result: bool = _patch_memory_windows(process_id, address + 5, patch_data)
 
-        assert result is True
+        assert result
 
         final = ctypes.string_at(address, len(original))
         assert final[:5] == original[:5]
@@ -354,7 +354,7 @@ class TestWindowsMemoryProtection:
         """Windows guard page handler detects PAGE_GUARD protection."""
         result: bool = _handle_guard_pages_windows(test_address, 4096)
 
-        assert result is True
+        assert result
 
     def test_handle_guard_pages_windows_removes_guard(self) -> None:
         """Windows guard page handler removes PAGE_GUARD protection."""
@@ -374,7 +374,7 @@ class TestWindowsMemoryProtection:
 
         result: bool = _handle_guard_pages_windows(address, 4096)
 
-        assert result is True
+        assert result
 
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):
             _fields_ = [
@@ -405,7 +405,7 @@ class TestUnixMemoryProtection:
         """Bypass successfully changes memory protection on Unix."""
         result: bool = _bypass_memory_protection_unix(test_address, 4096)
 
-        assert result is True
+        assert result
 
     def test_bypass_memory_protection_unix_page_alignment(self) -> None:
         """Unix bypass properly aligns addresses to page boundaries."""
@@ -416,7 +416,7 @@ class TestUnixMemoryProtection:
 
         result: bool = _bypass_memory_protection_unix(unaligned_address, 1024)
 
-        assert result is True
+        assert result
 
     def test_bypass_memory_protection_unix_rejects_prot_none(self, test_address: int) -> None:
         """Unix bypass rejects PROT_NONE protection flag."""
@@ -431,19 +431,19 @@ class TestUnixMemoryProtection:
         """Unix guard page handler validates size parameter."""
         result: bool = _handle_guard_pages_unix(test_address, 0)
 
-        assert result is False
+        assert not result
 
     def test_handle_guard_pages_unix_negative_size(self, test_address: int) -> None:
         """Unix guard page handler rejects negative sizes."""
         result: bool = _handle_guard_pages_unix(test_address, -100)
 
-        assert result is False
+        assert not result
 
     def test_handle_guard_pages_unix_processes_overlapping_regions(self, test_address: int) -> None:
         """Unix guard page handler handles overlapping memory regions."""
         result: bool = _handle_guard_pages_unix(test_address, 8192)
 
-        assert result is True
+        assert result
 
 
 class TestCrossPlatformMemoryProtection:
@@ -454,9 +454,9 @@ class TestCrossPlatformMemoryProtection:
         result: bool = bypass_memory_protection(test_address, 4096)
 
         if platform.system() == "Windows":
-            assert result is True or result is False
+            assert result or not result
         elif platform.system() in ["Linux", "Darwin"]:
-            assert result is True or result is False
+            assert result or not result
 
     def test_bypass_memory_protection_handles_custom_flags(self, test_address: int) -> None:
         """bypass_memory_protection passes custom protection flags."""
@@ -504,7 +504,7 @@ class TestDetectAndBypassGuardPages:
 
         try:
             result: bool = detect_and_bypass_guard_pages(process_handle, address, 4096)
-            assert result is True
+            assert result
         finally:
             kernel32.CloseHandle(process_handle)
 
@@ -522,7 +522,7 @@ class TestDetectAndBypassGuardPages:
 
         try:
             result: bool = detect_and_bypass_guard_pages(process_handle, address, 4096)
-            assert result is True
+            assert result
         finally:
             kernel32.CloseHandle(process_handle)
 
@@ -531,11 +531,9 @@ class TestDetectAndBypassGuardPages:
         wintypes, _ = _get_wintypes()
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-        reserved_address: int = kernel32.VirtualAlloc(
+        if reserved_address := kernel32.VirtualAlloc(
             None, 4096, 0x2000, PAGE_NOACCESS
-        )
-
-        if reserved_address:
+        ):
             try:
                 PROCESS_ALL_ACCESS: int = 0x1F0FFF
                 process_handle: int = kernel32.OpenProcess(
@@ -546,7 +544,7 @@ class TestDetectAndBypassGuardPages:
                     result: bool = detect_and_bypass_guard_pages(
                         process_handle, reserved_address, 4096
                     )
-                    assert result is False
+                    assert not result
                 finally:
                     kernel32.CloseHandle(process_handle)
             finally:
@@ -786,7 +784,7 @@ class TestMemoryPatchingEdgeCases:
         invalid_pid: int = 999999999
         result: bool = patch_memory_direct(invalid_pid, test_address, b"\x90\x90")
 
-        assert result is False
+        assert not result
 
     def test_handle_guard_pages_null_address(self) -> None:
         """Guard page handling rejects NULL address."""
@@ -803,10 +801,10 @@ class TestMemoryPatchingIntegration:
         address: int = ctypes.addressof(test_buffer)
 
         bypass_result: bool = bypass_memory_protection(address, 4096)
-        assert bypass_result is True
+        assert bypass_result
 
         guard_result: bool = handle_guard_pages(address, 4096)
-        assert guard_result is True
+        assert guard_result
 
         patch_data = b"PATCHED_DATA"
         patch_result: bool = patch_memory_direct(os.getpid(), address, patch_data)
@@ -823,11 +821,11 @@ class TestMemoryPatchingIntegration:
 
         patch1 = b"AAAA"
         result1: bool = patch_memory_direct(os.getpid(), address, patch1)
-        assert result1 is True
+        assert result1
 
         patch2 = b"BBBB"
         result2: bool = patch_memory_direct(os.getpid(), address + 10, patch2)
-        assert result2 is True
+        assert result2
 
         if result1 and result2:
             final = ctypes.string_at(address, 20)
@@ -843,7 +841,7 @@ class TestMemoryPatchingIntegration:
         expected_patch = b"\xEB\x10\x90\x90"
         result: bool = patch_memory_direct(os.getpid(), address, expected_patch)
 
-        assert result is True
+        assert result
 
         actual_data = ctypes.string_at(address, len(expected_patch))
         assert actual_data == expected_patch

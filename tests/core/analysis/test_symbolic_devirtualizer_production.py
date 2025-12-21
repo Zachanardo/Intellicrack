@@ -441,9 +441,7 @@ class TestRealProtectedBinaries:
         with open(enigma_binary, "rb") as f:
             data = f.read()
 
-        if b"\xff\x24" in data or b"\xff\x14" in data:
-            assert True
-        else:
+        if b"\xff\x24" not in data and b"\xff\x14" not in data:
             pytest.skip("No obvious dispatcher pattern in binary")
 
 

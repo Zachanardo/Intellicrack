@@ -568,13 +568,11 @@ class IntelligentCorrelationEngine:
                 float(len(result.xrefs_from)),
             ))
         elif isinstance(result, StringResult):
-            features.extend(
-                (
-                    float(result.length),
-                    float(result.entropy),
-                    float(len(result.references)),
-                )
-            )
+            features.extend((
+                float(result.length),
+                float(result.entropy),
+                float(len(result.references)),
+            ))
         # Pad or truncate to fixed size
         target_size = 10
         if len(features) < target_size:

@@ -511,7 +511,7 @@ class TestUIUpdateQueue:
 
         queue.flush(callback)
 
-        assert callback_called is False
+        assert not callback_called
 
 
 @pytest.mark.integration

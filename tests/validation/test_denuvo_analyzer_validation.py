@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Standalone test for Denuvo analyzer."""
 
+
 import sys
 import os
 
@@ -13,7 +14,7 @@ if os.path.exists(analyzer_path):
     file_size = os.path.getsize(analyzer_path)
     print(f"   OK File size: {file_size:,} bytes")
 else:
-    print(f"   FAIL File not found!")
+    print("   FAIL File not found!")
     sys.exit(1)
 
 print("\n2. Checking file integrity...")

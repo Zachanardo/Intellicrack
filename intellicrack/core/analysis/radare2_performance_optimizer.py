@@ -67,7 +67,7 @@ class PerformanceProfile:
     """Performance profile for different binary sizes and types."""
 
     name: str
-    max_file_size: int  # In bytes
+    max_file_size: int | float  # In bytes, can be inf
     analysis_level: AnalysisLevel
     memory_limit: int  # In MB
     timeout: int  # In seconds
@@ -178,7 +178,7 @@ class R2PerformanceOptimizer:
         self.system_info = self._get_system_info()
 
         # Performance monitoring
-        self.performance_metrics = {
+        self.performance_metrics: dict[str, Any] = {
             "memory_usage": [],
             "cpu_usage": [],
             "analysis_times": {},
@@ -188,10 +188,10 @@ class R2PerformanceOptimizer:
 
         # Resource monitoring
         self._monitoring = False
-        self._monitor_thread = None
+        self._monitor_thread: threading.Thread | None = None
 
         # Cache for optimized configurations
-        self._config_cache = {}
+        self._config_cache: dict[str, dict[str, Any]] = {}
 
         # Adaptive thresholds
         self.adaptive_thresholds = {
@@ -235,9 +235,10 @@ class R2PerformanceOptimizer:
         try:
             # Check cache first
             cache_key = f"{binary_path}_{Path(binary_path).stat().st_mtime}"
-            if cache_key in self._config_cache:
+            cached_config = self._config_cache.get(cache_key)
+            if cached_config is not None:
                 self.logger.debug("Using cached optimization for %s", binary_path)
-                return self._config_cache[cache_key]
+                return cached_config
 
             # Analyze binary characteristics
             binary_info = self._analyze_binary_characteristics(binary_path)
@@ -412,26 +413,34 @@ class R2PerformanceOptimizer:
         }
 
         # Adjust based on available memory
-        available_memory_mb = system_info["memory_available"] // (1024 * 1024)
-        if available_memory_mb < config["memory_limit"]:
-            config["memory_limit"] = min(available_memory_mb * 0.8, config["memory_limit"])
-            # Reduce analysis level if memory is very limited
-            if available_memory_mb < 1000:  # Less than 1GB available
-                if config["analysis_level"] == "aaaa":
-                    config["analysis_level"] = "aaa"
-                elif config["analysis_level"] == "aaa":
-                    config["analysis_level"] = "aa"
+        memory_available = system_info["memory_available"]
+        if isinstance(memory_available, int):
+            available_memory_mb = memory_available // (1024 * 1024)
+            memory_limit = config["memory_limit"]
+            if isinstance(memory_limit, int) and available_memory_mb < memory_limit:
+                config["memory_limit"] = int(min(available_memory_mb * 0.8, memory_limit))
+                # Reduce analysis level if memory is very limited
+                if available_memory_mb < 1000:  # Less than 1GB available
+                    if config["analysis_level"] == "aaaa":
+                        config["analysis_level"] = "aaa"
+                    elif config["analysis_level"] == "aaa":
+                        config["analysis_level"] = "aa"
 
         # Adjust parallel workers based on CPU count and current load
         cpu_load = system_info["cpu_percent"]
-        if cpu_load > 80:  # High CPU load
-            config["parallel_workers"] = max(1, config["parallel_workers"] // 2)
-        elif system_info["cpu_count"] < config["parallel_workers"]:
-            config["parallel_workers"] = max(1, system_info["cpu_count"] - 1)
+        parallel_workers = config["parallel_workers"]
+        cpu_count = system_info["cpu_count"]
+        if isinstance(cpu_load, (int, float)) and isinstance(parallel_workers, int) and isinstance(cpu_count, int):
+            if cpu_load > 80:  # High CPU load
+                config["parallel_workers"] = max(1, parallel_workers // 2)
+            elif cpu_count < parallel_workers:
+                config["parallel_workers"] = max(1, cpu_count - 1)
 
         # Adjust timeout based on system performance
-        if system_info["memory_percent"] > 80 or cpu_load > 80:
-            config["timeout"] = int(config["timeout"] * 1.5)
+        memory_percent = system_info["memory_percent"]
+        timeout = config["timeout"]
+        if isinstance(memory_percent, (int, float)) and isinstance(cpu_load, (int, float)) and isinstance(timeout, int) and (memory_percent > 80 or cpu_load > 80):
+            config["timeout"] = int(timeout * 1.5)
 
         return config
 
@@ -626,28 +635,38 @@ class R2PerformanceOptimizer:
                 cpu = psutil.cpu_percent(interval=0.1)
 
                 # Record metrics
-                self.performance_metrics["memory_usage"].append(memory.percent)
-                self.performance_metrics["cpu_usage"].append(cpu)
+                memory_usage_list = self.performance_metrics.get("memory_usage")
+                cpu_usage_list = self.performance_metrics.get("cpu_usage")
+                resource_peaks = self.performance_metrics.get("resource_peaks")
+
+                if isinstance(memory_usage_list, list):
+                    memory_usage_list.append(memory.percent)
+
+                if isinstance(cpu_usage_list, list):
+                    cpu_usage_list.append(cpu)
 
                 # Update peaks
-                self.performance_metrics["resource_peaks"]["memory"] = max(
-                    self.performance_metrics["resource_peaks"]["memory"],
-                    memory.percent,
-                )
-                self.performance_metrics["resource_peaks"]["cpu"] = max(
-                    self.performance_metrics["resource_peaks"]["cpu"],
-                    cpu,
-                )
+                if isinstance(resource_peaks, dict):
+                    current_memory_peak = resource_peaks.get("memory", 0)
+                    current_cpu_peak = resource_peaks.get("cpu", 0)
+                    if isinstance(current_memory_peak, (int, float)):
+                        resource_peaks["memory"] = max(current_memory_peak, memory.percent)
+                    if isinstance(current_cpu_peak, (int, float)):
+                        resource_peaks["cpu"] = max(current_cpu_peak, cpu)
 
                 # Keep only last 100 measurements
                 for metric in ["memory_usage", "cpu_usage"]:
-                    if len(self.performance_metrics[metric]) > 100:
-                        self.performance_metrics[metric] = self.performance_metrics[metric][-100:]
+                    metric_list = self.performance_metrics.get(metric)
+                    if isinstance(metric_list, list) and len(metric_list) > 100:
+                        self.performance_metrics[metric] = metric_list[-100:]
 
                 # Check for resource pressure and trigger optimization
-                if memory.percent > self.adaptive_thresholds["memory_critical"]:
+                memory_critical_threshold = self.adaptive_thresholds.get("memory_critical")
+                cpu_throttle_threshold = self.adaptive_thresholds.get("cpu_throttle")
+
+                if isinstance(memory_critical_threshold, (int, float)) and memory.percent > memory_critical_threshold:
                     self._trigger_emergency_optimization("memory_critical")
-                elif cpu > self.adaptive_thresholds["cpu_throttle"]:
+                elif isinstance(cpu_throttle_threshold, (int, float)) and cpu > cpu_throttle_threshold:
                     self._trigger_emergency_optimization("cpu_high")
 
                 time.sleep(interval)
@@ -678,7 +697,7 @@ class R2PerformanceOptimizer:
             # Reduce monitoring frequency
             time.sleep(2)
 
-    def optimize_r2_session(self, r2_session: object, config: dict[str, Any]) -> None:
+    def optimize_r2_session(self, r2_session: Any, config: dict[str, Any]) -> None:
         """Apply optimizations to active r2 session.
 
         Args:
@@ -688,13 +707,18 @@ class R2PerformanceOptimizer:
         """
         try:
             # Apply configuration flags
-            for i in range(0, len(config["r2_flags"]), 2):
-                if i + 1 < len(config["r2_flags"]):
-                    flag = config["r2_flags"][i + 1]
-                    r2_session.cmd(f"e {flag}")
+            r2_flags = config.get("r2_flags")
+            if isinstance(r2_flags, list):
+                for i in range(0, len(r2_flags), 2):
+                    if i + 1 < len(r2_flags):
+                        flag = r2_flags[i + 1]
+                        if hasattr(r2_session, "cmd") and isinstance(flag, str):
+                            r2_session.cmd(f"e {flag}")
 
             # Set memory limits
-            r2_session.cmd(f"e anal.timeout={config['timeout']}")
+            timeout = config.get("timeout")
+            if hasattr(r2_session, "cmd") and isinstance(timeout, int):
+                r2_session.cmd(f"e anal.timeout={timeout}")
 
             self.logger.debug("R2 session optimizations applied")
 
@@ -710,21 +734,26 @@ class R2PerformanceOptimizer:
 
         """
         if not hasattr(self, "profile_usage_stats"):
-            self.profile_usage_stats = {}
+            self.profile_usage_stats: dict[str, dict[str, int | float]] = {}
 
         if profile_name not in self.profile_usage_stats:
             self.profile_usage_stats[profile_name] = {
                 "usage_count": 0,
                 "total_file_size": 0,
-                "avg_file_size": 0,
+                "avg_file_size": 0.0,
             }
 
         stats = self.profile_usage_stats[profile_name]
-        stats["usage_count"] += 1
-        stats["total_file_size"] += file_size
-        stats["avg_file_size"] = stats["total_file_size"] / stats["usage_count"]
+        usage_count = stats.get("usage_count", 0)
+        total_file_size = stats.get("total_file_size", 0)
+        if isinstance(usage_count, int) and isinstance(total_file_size, int):
+            stats["usage_count"] = usage_count + 1
+            stats["total_file_size"] = total_file_size + file_size
+            stats["avg_file_size"] = stats["total_file_size"] / stats["usage_count"]
 
-        self.logger.debug("Profile %s used %d times, avg file size: %.2f bytes", profile_name, stats["usage_count"], stats["avg_file_size"])
+        avg_file_size = stats.get("avg_file_size", 0.0)
+        new_usage_count = stats.get("usage_count", 0)
+        self.logger.debug("Profile %s used %d times, avg file size: %.2f bytes", profile_name, new_usage_count, avg_file_size)
 
     def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report.
@@ -733,30 +762,46 @@ class R2PerformanceOptimizer:
             Dictionary containing system info, strategy, metrics, and recommendations.
 
         """
+        memory_usage_list = self.performance_metrics.get("memory_usage", [])
+        cpu_usage_list = self.performance_metrics.get("cpu_usage", [])
+        resource_peaks = self.performance_metrics.get("resource_peaks", {})
+        analysis_times = self.performance_metrics.get("analysis_times", {})
+        optimization_effectiveness = self.performance_metrics.get("optimization_effectiveness", {})
+
+        memory_current = 0.0
+        memory_average = 0.0
+        if isinstance(memory_usage_list, list) and len(memory_usage_list) > 0:
+            memory_current = float(memory_usage_list[-1])
+            memory_average = sum(memory_usage_list) / len(memory_usage_list)
+
+        cpu_current = 0.0
+        cpu_average = 0.0
+        if isinstance(cpu_usage_list, list) and len(cpu_usage_list) > 0:
+            cpu_current = float(cpu_usage_list[-1])
+            cpu_average = sum(cpu_usage_list) / len(cpu_usage_list)
+
+        memory_peak = 0.0
+        cpu_peak = 0.0
+        if isinstance(resource_peaks, dict):
+            memory_peak = float(resource_peaks.get("memory", 0))
+            cpu_peak = float(resource_peaks.get("cpu", 0))
+
         return {
             "system_info": self._get_system_info(),
             "strategy": self.strategy.value,
             "metrics": {
                 "memory_usage": {
-                    "current": (self.performance_metrics["memory_usage"][-1] if self.performance_metrics["memory_usage"] else 0),
-                    "average": (
-                        sum(self.performance_metrics["memory_usage"]) / len(self.performance_metrics["memory_usage"])
-                        if self.performance_metrics["memory_usage"]
-                        else 0
-                    ),
-                    "peak": self.performance_metrics["resource_peaks"]["memory"],
+                    "current": memory_current,
+                    "average": memory_average,
+                    "peak": memory_peak,
                 },
                 "cpu_usage": {
-                    "current": (self.performance_metrics["cpu_usage"][-1] if self.performance_metrics["cpu_usage"] else 0),
-                    "average": (
-                        sum(self.performance_metrics["cpu_usage"]) / len(self.performance_metrics["cpu_usage"])
-                        if self.performance_metrics["cpu_usage"]
-                        else 0
-                    ),
-                    "peak": self.performance_metrics["resource_peaks"]["cpu"],
+                    "current": cpu_current,
+                    "average": cpu_average,
+                    "peak": cpu_peak,
                 },
-                "analysis_times": self.performance_metrics["analysis_times"].copy(),
-                "optimization_effectiveness": self.performance_metrics["optimization_effectiveness"].copy(),
+                "analysis_times": analysis_times.copy() if isinstance(analysis_times, dict) else {},
+                "optimization_effectiveness": optimization_effectiveness.copy() if isinstance(optimization_effectiveness, dict) else {},
             },
             "recommendations": self._generate_recommendations(),
         }
@@ -768,24 +813,31 @@ class R2PerformanceOptimizer:
             List of optimization recommendation strings.
 
         """
-        recommendations = []
+        recommendations: list[str] = []
 
         # Memory recommendations
-        if self.performance_metrics["resource_peaks"]["memory"] > 90:
-            recommendations.extend((
-                "Consider using memory-conservative strategy for future analyses",
-                "Reduce parallel workers to decrease memory usage",
-            ))
-        # CPU recommendations
-        if self.performance_metrics["resource_peaks"]["cpu"] > 90:
-            recommendations.append("Consider reducing analysis depth for better CPU performance")
+        resource_peaks = self.performance_metrics.get("resource_peaks", {})
+        if isinstance(resource_peaks, dict):
+            memory_peak = resource_peaks.get("memory", 0)
+            cpu_peak = resource_peaks.get("cpu", 0)
+
+            if isinstance(memory_peak, (int, float)) and memory_peak > 90:
+                recommendations.extend((
+                    "Consider using memory-conservative strategy for future analyses",
+                    "Reduce parallel workers to decrease memory usage",
+                ))
+
+            # CPU recommendations
+            if isinstance(cpu_peak, (int, float)) and cpu_peak > 90:
+                recommendations.append("Consider reducing analysis depth for better CPU performance")
 
         # General recommendations
         if len(self._config_cache) > 50:
             recommendations.append("Clear configuration cache to free memory")
 
         system_info = self._get_system_info()
-        if system_info["memory_available"] < 1024 * 1024 * 1024:  # <1GB available
+        memory_available = system_info.get("memory_available")
+        if isinstance(memory_available, int) and memory_available < 1024 * 1024 * 1024:  # <1GB available
             recommendations.append("Available memory is low, consider closing other applications")
 
         return recommendations

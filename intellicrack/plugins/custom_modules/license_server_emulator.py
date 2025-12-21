@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-
 import base64
 import contextlib
 import ctypes
@@ -3144,6 +3143,7 @@ class BinaryKeyExtractor:
         if not process_handle:
             return None
         try:
+
             class MemoryBasicInformation(ctypes.Structure):
                 _fields_: ClassVar[list[tuple[str, type]]] = [
                     ("BaseAddress", ctypes.c_void_p),
@@ -4064,9 +4064,7 @@ class RuntimeKeyExtractor:
             import win32process
 
             if kernel32_base := ctypes.windll.kernel32.GetModuleHandleA(b"kernel32.dll"):
-                if isdebuggerpresent := ctypes.windll.kernel32.GetProcAddress(
-                    kernel32_base, b"IsDebuggerPresent"
-                ):
+                if isdebuggerpresent := ctypes.windll.kernel32.GetProcAddress(kernel32_base, b"IsDebuggerPresent"):
                     patch_bytes = b"3\xc0\xc3"
                     win32process.WriteProcessMemory(process_handle, isdebuggerpresent, patch_bytes, len(patch_bytes), None)
             secure_sections = []
@@ -6772,36 +6770,32 @@ class LicenseServerEmulator:
                 "Generate proper session IDs and feature IDs",
             ))
         elif protocol == LicenseType.MICROSOFT_KMS:
-            recommendations.extend(
-                (
-                    "Set up KMS server on port 1688",
-                    "Generate valid KMS client machine IDs",
-                    "Implement proper activation count responses",
-                )
-            )
+            recommendations.extend((
+                "Set up KMS server on port 1688",
+                "Generate valid KMS client machine IDs",
+                "Implement proper activation count responses",
+            ))
         elif protocol == LicenseType.ADOBE:
-            recommendations.extend(
-                (
-                    "Intercept Adobe licensing endpoints",
-                    "Generate valid device tokens",
-                    "Implement Creative Cloud API responses",
-                )
-            )
+            recommendations.extend((
+                "Intercept Adobe licensing endpoints",
+                "Generate valid device tokens",
+                "Implement Creative Cloud API responses",
+            ))
         else:
-            recommendations.extend(
-                (
-                    "Use generic HTTP/HTTPS interception",
-                    "Modify response to indicate valid license",
-                    "Consider certificate pinning bypass if HTTPS",
-                )
-            )
+            recommendations.extend((
+                "Use generic HTTP/HTTPS interception",
+                "Modify response to indicate valid license",
+                "Consider certificate pinning bypass if HTTPS",
+            ))
         return recommendations
 
     async def _handle_license_validation(self, request: LicenseRequest, client_request: Request) -> LicenseResponse:
         """Handle license validation request."""
         try:
             client_ip = client_request.client.host
-            self.db_manager.log_operation(request.license_key, "validate", client_ip, success=True, details=f"Product: {request.product_name}")
+            self.db_manager.log_operation(
+                request.license_key, "validate", client_ip, success=True, details=f"Product: {request.product_name}"
+            )
             if license_entry := self.db_manager.validate_license(request.license_key, request.product_name):
                 remaining_days = None
                 if license_entry.expiry_date:
@@ -6846,7 +6840,9 @@ class LicenseServerEmulator:
                 "timestamp": datetime.utcnow().isoformat(),
             }
             certificate = self.crypto.sign_license_data(cert_data)
-            self.db_manager.log_operation(request.license_key, "activate", client_ip, success=True, details=f"Activation ID: {activation_id}")
+            self.db_manager.log_operation(
+                request.license_key, "activate", client_ip, success=True, details=f"Activation ID: {activation_id}"
+            )
             response = ActivationResponse(
                 success=True,
                 activation_id=activation_id,

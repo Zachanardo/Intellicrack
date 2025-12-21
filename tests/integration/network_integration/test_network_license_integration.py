@@ -61,7 +61,7 @@ class TestNetworkLicenseIntegration:
             udp_header = b'\x04\xd2\x04\xd2\x00\x08\x00\x00'
 
             packet_data = []
-            for i in range(5):
+            for _ in range(5):
                 packet_header = b'\x00\x00\x00\x00\x00\x00\x00\x00'
                 packet_header += (len(ethernet_frame + ip_header + udp_header) + 8).to_bytes(4, 'little')
                 packet_header += (len(ethernet_frame + ip_header + udp_header) + 8).to_bytes(4, 'little')
@@ -74,7 +74,7 @@ class TestNetworkLicenseIntegration:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     def test_complete_license_emulation_workflow(self, test_license_packets):
@@ -167,8 +167,9 @@ class TestNetworkLicenseIntegration:
             if protocol_detection and protocol_detection.get('protocol') in test_license_packets:
                 protocol_name = protocol_detection['protocol']
 
-                extracted_payload = capture.extract_license_payload(packet, protocol_name)
-                if extracted_payload:
+                if extracted_payload := capture.extract_license_payload(
+                    packet, protocol_name
+                ):
                     analysis_result = hooker.analyze_license_packet(extracted_payload, protocol_name)
                     assert analysis_result is not None, f"License analysis must succeed for {protocol_name}"
                     assert 'packet_structure' in analysis_result, "Analysis must identify packet structure"
@@ -273,8 +274,6 @@ class TestNetworkLicenseIntegration:
 
                 try:
                     connection_test = client.test_connection('127.0.0.1', config['port'])
-                    if connection_test:
-                        assert True, f"Connection test passed for {config['name']}"
                 except Exception:
                     pass
 
@@ -321,8 +320,8 @@ class TestNetworkLicenseIntegration:
 
         end_time = time.time()
 
-        assert len(errors) == 0, f"Concurrent emulation errors: {errors}"
-        assert len(results) > 0, "Must produce concurrent emulation results"
+        assert not errors, f"Concurrent emulation errors: {errors}"
+        assert results, "Must produce concurrent emulation results"
         assert end_time - start_time < 12.0, "Concurrent emulation should complete under 12 seconds"
 
         for thread_id, protocol_name, packet_type, response_length in results:
@@ -394,8 +393,7 @@ class TestNetworkLicenseIntegration:
 
             time.sleep(2.0)
 
-            failover_triggered = failover_manager.check_failover_status()
-            if failover_triggered:
+            if failover_triggered := failover_manager.check_failover_status():
                 assert failover_triggered.get('failed_over', False), "Failover must be triggered"
                 assert failover_triggered.get('active_server') == backup_server, "Backup must be active"
 

@@ -222,7 +222,8 @@ class StatisticalRequirementsValidator:
         """6.4.2: Calculate comprehensive statistical metrics."""
         try:
             total_runs = len(test_runs)
-            successful_runs = sum(1 for run in test_runs if run.success)
+            successful_runs = sum(bool(run.success)
+                              for run in test_runs)
             success_rate = successful_runs / total_runs if total_runs > 0 else 0.0
 
             # Calculate 99% confidence interval using Wilson score interval
@@ -240,16 +241,15 @@ class StatisticalRequirementsValidator:
                 p_hat = success_rate
                 se = math.sqrt(p_null * (1 - p_null) / total_runs)
 
+                # Calculate p-value (one-tailed test)
+                df = total_runs - 1
                 if se > 0:
                     t_stat = (p_hat - p_null) / se
 
-                    # Calculate p-value (one-tailed test)
-                    df = total_runs - 1
                     p_value = stats.t.cdf(t_stat, df)
                 else:
                     t_stat = 0
                     p_value = 1.0
-                    df = total_runs - 1
             else:
                 t_stat = 0
                 p_value = 1.0
@@ -258,11 +258,19 @@ class StatisticalRequirementsValidator:
             # Calculate additional sample statistics
             execution_times = [run.execution_time_seconds for run in test_runs]
             sample_statistics = {
-                "mean_execution_time": np.mean(execution_times) if execution_times else 0,
-                "std_execution_time": np.std(execution_times, ddof=1) if len(execution_times) > 1 else 0,
-                "median_execution_time": np.median(execution_times) if execution_times else 0,
-                "min_execution_time": min(execution_times) if execution_times else 0,
-                "max_execution_time": max(execution_times) if execution_times else 0
+                "mean_execution_time": (
+                    np.mean(execution_times) if execution_times else 0
+                ),
+                "std_execution_time": (
+                    np.std(execution_times, ddof=1)
+                    if len(execution_times) > 1
+                    else 0
+                ),
+                "median_execution_time": (
+                    np.median(execution_times) if execution_times else 0
+                ),
+                "min_execution_time": min(execution_times, default=0),
+                "max_execution_time": max(execution_times, default=0),
             }
 
             return StatisticalAnalysis(
@@ -408,7 +416,8 @@ class StatisticalRequirementsValidator:
         """Conduct statistical power analysis."""
         try:
             n = len(test_runs)
-            success_rate = sum(1 for run in test_runs if run.success) / n if n > 0 else 0
+            success_rate = sum(bool(run.success)
+                           for run in test_runs) / n if n > 0 else 0
 
             # Calculate power for detecting difference from required success rate
             effect_size = abs(success_rate - self.config["required_success_rate"])
@@ -551,7 +560,7 @@ class StatisticalRequirementsValidator:
             success_values = [1 if run.success else 0 for run in test_runs]
 
             # Scatter plot with trend line
-            colors = ['red' if not success else 'green' for success in success_values]
+            colors = ['green' if success else 'red' for success in success_values]
             ax.scatter(run_numbers, success_values, c=colors, alpha=0.6, s=50)
 
             # Running average
@@ -581,7 +590,7 @@ class StatisticalRequirementsValidator:
 
     def _get_timestamp(self) -> str:
         """Get ISO timestamp."""
-        return datetime.utcnow().isoformat() + 'Z'
+        return f'{datetime.utcnow().isoformat()}Z'
 
     def generate_statistical_report(self, validation_results: list[tuple[StatisticalResult, dict[str, Any]]],
                                   output_file: Path) -> None:
@@ -593,10 +602,14 @@ class StatisticalRequirementsValidator:
                 "configuration": self.config,
                 "total_validations": len(validation_results),
                 "results_summary": {
-                    "pass": sum(1 for result, _ in validation_results if result == StatisticalResult.PASS),
-                    "fail": sum(1 for result, _ in validation_results if result == StatisticalResult.FAIL),
-                    "insufficient_data": sum(1 for result, _ in validation_results if result == StatisticalResult.INSUFFICIENT_DATA),
-                    "invalid": sum(1 for result, _ in validation_results if result == StatisticalResult.INVALID)
+                    "pass": sum(bool(result == StatisticalResult.PASS)
+                            for result, _ in validation_results),
+                    "fail": sum(bool(result == StatisticalResult.FAIL)
+                            for result, _ in validation_results),
+                    "insufficient_data": sum(bool(result == StatisticalResult.INSUFFICIENT_DATA)
+                                         for result, _ in validation_results),
+                    "invalid": sum(bool(result == StatisticalResult.INVALID)
+                               for result, _ in validation_results)
                 },
                 "detailed_results": []
             }
@@ -605,9 +618,16 @@ class StatisticalRequirementsValidator:
             all_test_runs = []
             for result, report in validation_results:
                 if "raw_data" in report:
-                    for run_data in report["raw_data"]:
-                        all_test_runs.append(TestRun(**{k: v for k, v in run_data.items() if k != 'metadata'}))
-
+                    all_test_runs.extend(
+                        TestRun(
+                            **{
+                                k: v
+                                for k, v in run_data.items()
+                                if k != 'metadata'
+                            }
+                        )
+                        for run_data in report["raw_data"]
+                    )
             if all_test_runs:
                 overall_analysis = self._calculate_statistical_metrics(all_test_runs)
                 summary["overall_statistics"] = overall_analysis.__dict__
@@ -635,11 +655,12 @@ def main():
     # Create example test runs
     test_runs = [
         TestRun(
-            run_id=i+1,
-            success=np.random.random() > 0.05,  # 95% success rate
+            run_id=i + 1,
+            success=np.random.random() > 0.05,
             execution_time_seconds=np.random.normal(30, 5),
-            timestamp=datetime.utcnow().isoformat() + 'Z'
-        ) for i in range(15)
+            timestamp=f'{datetime.utcnow().isoformat()}Z',
+        )
+        for i in range(15)
     ]
 
     # Initialize validator

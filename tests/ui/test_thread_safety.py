@@ -177,7 +177,7 @@ class TestBasicThreadSafety:
 
         assert len(results) == 1
         assert len(results[0]) == 1000
-        assert len(errors) == 0
+        assert not errors
         assert len(progress_updates) >= 10
 
     def test_worker_thread_cancellation(
@@ -198,7 +198,7 @@ class TestBasicThreadSafety:
 
         processor.wait(5000)
 
-        assert len(results) == 0 or len(results[0]) < 10000
+        assert not results or len(results[0]) < 10000
 
     def test_multiple_sequential_worker_threads(
         self, qapp: QApplication

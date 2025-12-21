@@ -22,10 +22,12 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
+from collections.abc import Hashable, Sequence
 
 import joblib
 import Levenshtein
 import numpy as np
+import numpy.typing as npt
 from sklearn.cluster import DBSCAN, KMeans
 from sklearn.ensemble import IsolationForest, RandomForestClassifier
 from sklearn.metrics.pairwise import cosine_similarity
@@ -128,7 +130,7 @@ class FuzzyMatcher:
             scores.append(mangled_score)
 
         # Weighted average
-        return np.mean(scores)
+        return float(np.mean(scores))
 
     def _clean_function_name(self, name: str) -> str:
         """Clean function name for comparison."""
@@ -208,17 +210,17 @@ class FuzzyMatcher:
             return 0.0
 
         # Compare class names
-        class_score = 0
+        class_score = 0.0
         if components1.get("class") and components2.get("class"):
             class_score = self._calculate_token_similarity([components1["class"]], [components2["class"]])
 
         # Compare method names
-        method_score = 0
+        method_score = 0.0
         if components1.get("method") and components2.get("method"):
             method_score = self._calculate_token_similarity([components1["method"]], [components2["method"]])
 
         # Compare parameters
-        param_score = 0
+        param_score = 0.0
         if components1.get("params") and components2.get("params"):
             param_score = self._compare_parameter_lists(components1["params"], components2["params"])
 
@@ -249,10 +251,7 @@ class FuzzyMatcher:
         if not params1 or not params2:
             return 0.0
 
-        matches = sum(
-            self._compare_types(p1, p2) > 0.5
-            for p1, p2 in zip(params1, params2, strict=False)
-        )
+        matches = sum(self._compare_types(p1, p2) > 0.5 for p1, p2 in zip(params1, params2, strict=False))
         return matches / max(len(params1), len(params2))
 
     def _compare_types(self, type1: str, type2: str) -> float:
@@ -344,7 +343,7 @@ class AddressTranslator:
         # Fallback to offset only
         return address + mapping.offset
 
-    def correlate_by_pattern(self, addresses1: list[int], addresses2: list[int]) -> AddressMapping:
+    def correlate_by_pattern(self, addresses1: list[int], addresses2: list[int]) -> AddressMapping | None:
         """Correlate address spaces by pattern matching."""
         if not addresses1 or not addresses2:
             return None
@@ -404,7 +403,7 @@ class ConfidenceScorer:
         if item1.tool == item2.tool:
             distance = abs(item1.address - item2.address)
             # Normalize distance (assume max meaningful distance is 1MB)
-            scores["address_proximity"] = max(0, 1 - (distance / 0x100000))
+            scores["address_proximity"] = max(0.0, 1.0 - (distance / 0x100000))
         else:
             scores["address_proximity"] = 0.5  # Neutral score for different tools
 
@@ -422,17 +421,17 @@ class ConfidenceScorer:
         scores["pattern_match"] = self._compare_patterns(item1, item2)
 
         # Calculate weighted score
-        total_score = 0
-        total_weight = 0
+        total_score = 0.0
+        total_weight = 0.0
 
         for key, weight in self.weights.items():
             if key in scores:
                 total_score += scores[key] * weight
                 total_weight += weight
 
-        return total_score / total_weight if total_weight > 0 else 0
+        return total_score / total_weight if total_weight > 0 else 0.0
 
-    def _compare_attributes(self, attrs1: dict, attrs2: dict) -> float:
+    def _compare_attributes(self, attrs1: dict[str, Any], attrs2: dict[str, Any]) -> float:
         """Compare attribute dictionaries."""
         if not attrs1 and not attrs2:
             return 1.0
@@ -464,11 +463,11 @@ class ConfidenceScorer:
         if type(val1) is not type(val2):
             return False
 
-        if isinstance(val1, (int, float)):
+        if isinstance(val1, (int, float)) and isinstance(val2, (int, float)):
             # Numeric comparison with tolerance
             return abs(val1 - val2) / max(abs(val1), abs(val2), 1) < 0.1
 
-        if isinstance(val1, str):
+        if isinstance(val1, str) and isinstance(val2, str):
             # String comparison
             return Levenshtein.jaro_winkler(val1, val2) > 0.8
 
@@ -536,40 +535,40 @@ class AnomalyDetector:
             return []
 
         # Extract features
-        features = []
+        features_list: list[npt.NDArray[np.floating[Any]]] = []
         for corr in correlations:
             feature_vector = self._extract_features(corr)
-            features.append(feature_vector)
+            features_list.append(feature_vector)
 
-        features = np.array(features)
+        features: npt.NDArray[np.floating[Any]] = np.array(features_list)
 
         # Fit isolation forest
         predictions = self.isolation_forest.fit_predict(features)
 
         return [correlations[i] for i, pred in enumerate(predictions) if pred == -1]
 
-    def _extract_features(self, correlation: CorrelationResult) -> np.array:
+    def _extract_features(self, correlation: CorrelationResult) -> npt.NDArray[np.floating[Any]]:
         """Extract numerical features from correlation."""
-        features = [
+        features: list[float] = [
             correlation.correlation_score,
             correlation.confidence,
-            len(correlation.items),
+            float(len(correlation.items)),
         ]
 
         # Address spread
         if correlation.items:
             addresses = [item.address for item in correlation.items]
-            features.append(np.std(addresses) if len(addresses) > 1 else 0)
-            features.append(max(addresses) - min(addresses) if addresses else 0)
+            features.append(float(np.std(addresses)) if len(addresses) > 1 else 0.0)
+            features.append(float(max(addresses) - min(addresses)) if addresses else 0.0)
 
         if sizes := [item.size for item in correlation.items if item.size > 0]:
-            features.append(np.mean(sizes))
-            features.append(np.std(sizes))
+            features.append(float(np.mean(sizes)))
+            features.append(float(np.std(sizes)))
         else:
-            features.extend((0, 0))
+            features.extend((0.0, 0.0))
         # Tool diversity
         tools = {item.tool for item in correlation.items}
-        features.append(len(tools))
+        features.append(float(len(tools)))
 
         return np.array(features)
 
@@ -594,7 +593,7 @@ class PatternClusterer:
     def __init__(self) -> None:
         """Initialize the PatternClusterer with clustering algorithms and scaler."""
         self.dbscan = DBSCAN(eps=0.3, min_samples=5)
-        self.kmeans = None
+        self.kmeans: KMeans | None = None
         self.scaler = StandardScaler()
 
     def cluster_patterns(self, items: list[CorrelationItem], method: str = "dbscan") -> dict[int, list[CorrelationItem]]:
@@ -603,12 +602,12 @@ class PatternClusterer:
             return {0: items}
 
         # Extract features
-        features = []
+        features_list: list[npt.NDArray[np.floating[Any]]] = []
         for item in items:
             feature_vector = self._extract_pattern_features(item)
-            features.append(feature_vector)
+            features_list.append(feature_vector)
 
-        features = np.array(features)
+        features: npt.NDArray[np.floating[Any]] = np.array(features_list)
 
         # Scale features
         features_scaled = self.scaler.fit_transform(features)
@@ -631,7 +630,7 @@ class PatternClusterer:
 
         return dict(clusters)
 
-    def _extract_pattern_features(self, item: CorrelationItem) -> np.array:
+    def _extract_pattern_features(self, item: CorrelationItem) -> npt.NDArray[np.floating[Any]]:
         """Extract pattern features from item."""
         # Data type encoding
         type_encoding = {
@@ -654,16 +653,14 @@ class PatternClusterer:
         ]
         # Name features
         name_len = len(item.name)
-        features.extend(
-            (
-                name_len,
-                1 if item.name.startswith("sub_") else 0,
-                1 if "_" in item.name else 0,
-                1 if any(c.isupper() for c in item.name) else 0,
-                item.confidence,
-                len(item.attributes),
-            )
-        )
+        features.extend((
+            name_len,
+            1 if item.name.startswith("sub_") else 0,
+            1 if "_" in item.name else 0,
+            1 if any(c.isupper() for c in item.name) else 0,
+            item.confidence,
+            len(item.attributes),
+        ))
         return np.array(features)
 
     def find_similar_patterns(
@@ -678,8 +675,8 @@ class PatternClusterer:
 
         # Extract features
         query_features = self._extract_pattern_features(query).reshape(1, -1)
-        item_features = [self._extract_pattern_features(item) for item in items]
-        item_features = np.array(item_features)
+        item_features_list: list[npt.NDArray[np.floating[Any]]] = [self._extract_pattern_features(item) for item in items]
+        item_features: npt.NDArray[np.floating[Any]] = np.array(item_features_list)
 
         # Scale features
         all_features = np.vstack([query_features, item_features])
@@ -710,8 +707,8 @@ class MachineLearningCorrelator:
         self.model_path = model_path
         self.classifier: RandomForestClassifier | None = None
         self.scaler = StandardScaler()
-        self.feature_names = []
-        self.training_data = []
+        self.feature_names: list[str] = []
+        self.training_data: list[tuple[npt.NDArray[np.floating[Any]], int]] = []
 
         if model_path and Path(model_path).exists():
             self.load_model(model_path)
@@ -748,11 +745,12 @@ class MachineLearningCorrelator:
             return
 
         # Scale features
-        X = np.array(X)
-        X_scaled = self.scaler.fit_transform(X)
+        X_array: npt.NDArray[np.floating[Any]] = np.array(X)
+        X_scaled = self.scaler.fit_transform(X_array)
 
         # Train classifier
-        self.classifier.fit(X_scaled, y)
+        if self.classifier is not None:
+            self.classifier.fit(X_scaled, y)
 
         # Store training data
         self.training_data = list(zip(X, y, strict=False))
@@ -777,9 +775,9 @@ class MachineLearningCorrelator:
 
         return bool(prediction), float(probability)
 
-    def _extract_pair_features(self, item1: CorrelationItem, item2: CorrelationItem) -> np.array:
+    def _extract_pair_features(self, item1: CorrelationItem, item2: CorrelationItem) -> npt.NDArray[np.floating[Any]]:
         """Extract features from item pair."""
-        features = []
+        features: list[float] = []
 
         # Name similarity
         fuzzy = FuzzyMatcher()
@@ -794,22 +792,17 @@ class MachineLearningCorrelator:
 
         # Address distance (normalized)
         addr_dist = abs(item1.address - item2.address) / 0x100000  # Normalize by 1MB
-        features.extend(
-            (
-                min(addr_dist, 1.0),
-                item1.confidence * item2.confidence,
-                1 if item1.tool == item2.tool else 0,
-            )
-        )
+        features.extend((
+            min(addr_dist, 1.0),
+            item1.confidence * item2.confidence,
+            1 if item1.tool == item2.tool else 0,
+        ))
         # Attribute overlap
         common_attrs = set(item1.attributes.keys()) & set(item2.attributes.keys())
         attr_overlap = len(common_attrs) / max(len(item1.attributes), len(item2.attributes), 1)
-        features.append(attr_overlap)
-
-        # Timestamp difference (normalized to hours)
-        time_diff = abs(item1.timestamp - item2.timestamp) / 3600
-        features.append(min(time_diff, 24))  # Cap at 24 hours
-
+        features.extend(
+            (attr_overlap, min(abs(item1.timestamp - item2.timestamp) / 3600, 24))
+        )
         # String length similarity
         len_ratio = min(len(item1.name), len(item2.name)) / max(len(item1.name), len(item2.name), 1)
         features.append(len_ratio)
@@ -961,7 +954,7 @@ class IntelligentCorrelator:
         pattern_results = self._correlate_pattern(items)
 
         # Merge results
-        result_map = {}
+        result_map: dict[str, list[CorrelationResult]] = {}
 
         for results in [fuzzy_results, ml_results, pattern_results]:
             for result in results:
@@ -991,7 +984,7 @@ class IntelligentCorrelator:
                 score = self.confidence_scorer.calculate_score(items[i], items[j])
                 similarities.append(score)
 
-        return np.mean(similarities) if similarities else 0.0
+        return float(np.mean(similarities)) if similarities else 0.0
 
     def _create_result_key(self, items: list[CorrelationItem]) -> str:
         """Create unique key for result items."""
@@ -1007,9 +1000,9 @@ class IntelligentCorrelator:
         # Combine scores with weights
         method_weights = {"fuzzy": 0.3, "ml": 0.4, "pattern": 0.3}
 
-        total_score = 0
-        total_weight = 0
-        metadata = {}
+        total_score = 0.0
+        total_weight = 0.0
+        metadata: dict[str, Any] = {}
 
         for result in results:
             weight = method_weights.get(result.method, 0.2)
@@ -1017,12 +1010,12 @@ class IntelligentCorrelator:
             total_weight += weight
             metadata[f"{result.method}_score"] = result.correlation_score
 
-        combined_score = total_score / total_weight if total_weight > 0 else 0
+        combined_score = total_score / total_weight if total_weight > 0 else 0.0
 
         return CorrelationResult(
             items=results[0].items,
             correlation_score=combined_score,
-            confidence=np.mean([r.confidence for r in results]),
+            confidence=float(np.mean([r.confidence for r in results])),
             method="hybrid",
             metadata=metadata,
         )

@@ -123,7 +123,7 @@ class RuntimeMonitor:
         rules in response to performance issues.
         """
         self.active = False
-        self.metrics_buffer: deque = deque(maxlen=10000)
+        self.metrics_buffer: deque[RuntimeMetric] = deque(maxlen=10000)
         self.metric_aggregates: dict[str, dict[str, float]] = defaultdict(dict)
         self.anomaly_detectors: dict[str, AnomalyDetector] = {}
         self.subscribers: list[Callable[[RuntimeMetric], None]] = []
@@ -133,10 +133,10 @@ class RuntimeMonitor:
         self.monitor_interval = 0.5  # 500ms
 
         # Metric history for trend analysis
-        self.metric_history: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+        self.metric_history: dict[str, deque[tuple[datetime, float]]] = defaultdict(lambda: deque(maxlen=1000))
 
         # Adaptation rules for real-time response
-        self.adaptation_rules: dict[str, dict] = {}
+        self.adaptation_rules: dict[str, dict[str, Any]] = {}
 
         logger.info("Runtime monitor initialized")
 
@@ -212,7 +212,7 @@ class RuntimeMonitor:
         value: float,
         source: str,
         category: str = "general",
-        metadata: dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Record a runtime metric."""
         metric = RuntimeMetric(
@@ -379,7 +379,7 @@ class AnomalyDetector:
         """
         self.metric_name = metric_name
         self.sensitivity = sensitivity
-        self.baseline_values: deque = deque(maxlen=100)
+        self.baseline_values: deque[float] = deque(maxlen=100)
         self.baseline_mean = 0.0
         self.baseline_std = 0.0
         self.calibrated = False
@@ -436,12 +436,12 @@ class DynamicHookManager:
         runtime adaptation.
         """
         self.active_hooks: dict[str, dict[str, Any]] = {}
-        self.hook_registry: dict[str, Callable] = {}
+        self.hook_registry: dict[str, dict[str, Any]] = {}
         self.hook_statistics: dict[str, dict[str, int]] = defaultdict(lambda: {"calls": 0, "modifications": 0})
 
         logger.info("Dynamic hook manager initialized")
 
-    def register_hook_point(self, hook_id: str, target_function: Callable, hook_type: str = "around") -> None:
+    def register_hook_point(self, hook_id: str, target_function: Callable[..., Any], hook_type: str = "around") -> None:
         """Register a hook point."""
         self.hook_registry[hook_id] = {
             "target": target_function,
@@ -504,7 +504,7 @@ class DynamicHookManager:
 
         return False
 
-    def _create_modified_function(self, original_function: Callable, modification: dict[str, Any]) -> Callable:
+    def _create_modified_function(self, original_function: Callable[..., Any], modification: dict[str, Any]) -> Callable[..., Any]:
         """Create modified function based on modification specification.
 
         Wraps an original function with custom modifications including
@@ -561,7 +561,9 @@ class DynamicHookManager:
 
         return modified_wrapper
 
-    def _apply_parameter_modification(self, args: tuple, kwargs: dict, modification: dict[str, Any]) -> tuple:
+    def _apply_parameter_modification(
+        self, args: tuple[Any, ...], kwargs: dict[str, Any], modification: dict[str, Any]
+    ) -> tuple[tuple[Any, ...], dict[str, Any]]:
         """Apply parameter modification."""
         mod_type = modification.get("type", "")
 
@@ -574,9 +576,9 @@ class DynamicHookManager:
             elif modification.get("position") is not None:
                 pos = modification["position"]
                 if 0 <= pos < len(args):
-                    args = list(args)
-                    args[pos] = new_value
-                    args = tuple(args)
+                    args_list = list(args)
+                    args_list[pos] = new_value
+                    args = tuple(args_list)
 
         elif mod_type == "add_parameter":
             param_name = modification.get("parameter", "")
@@ -615,7 +617,7 @@ class DynamicHookManager:
 
         return result
 
-    def _install_function_hook(self, target_function: Callable, modified_function: Callable) -> bool:
+    def _install_function_hook(self, target_function: Callable[..., Any], modified_function: Callable[..., Any]) -> bool:
         """Install function hook using monkey patching."""
         try:
             # This is a simplified implementation
@@ -637,7 +639,7 @@ class DynamicHookManager:
 
         return False
 
-    def _restore_original_function(self, target_function: Callable, original_function: Callable) -> bool:
+    def _restore_original_function(self, target_function: Callable[..., Any], original_function: Callable[..., Any]) -> bool:
         """Restore original function."""
         try:
             module = target_function.__module__
@@ -672,8 +674,8 @@ class LiveDebuggingSystem:
         """
         self.runtime_monitor = runtime_monitor
         self.active_debug_sessions: dict[str, dict[str, Any]] = {}
-        self.debug_history: deque = deque(maxlen=1000)
-        self.automated_fixes: dict[str, Callable] = {}
+        self.debug_history: deque[dict[str, Any]] = deque(maxlen=1000)
+        self.automated_fixes: dict[str, Callable[[RuntimeMetric], Any]] = {}
 
         # Subscribe to runtime metrics
         self.runtime_monitor.subscribe_to_metrics(self._analyze_metric_for_debugging)
@@ -736,12 +738,12 @@ class LiveDebuggingSystem:
 
         return True
 
-    def add_watch(self, session_id: str, expression: str, alert_condition: str = None) -> bool:
+    def add_watch(self, session_id: str, expression: str, alert_condition: str | None = None) -> bool:
         """Add a watch expression."""
         if session_id not in self.active_debug_sessions:
             return False
 
-        watch = {
+        watch: dict[str, Any] = {
             "id": f"watch_{int(datetime.now().timestamp())}",
             "expression": expression,
             "alert_condition": alert_condition,
@@ -811,7 +813,7 @@ class LiveDebuggingSystem:
             }
             self.active_debug_sessions[session_id]["events"].append(event)
 
-    def register_automated_fix(self, metric_name: str, fix_function: Callable) -> None:
+    def register_automated_fix(self, metric_name: str, fix_function: Callable[[RuntimeMetric], Any]) -> None:
         """Register automated fix for metric."""
         self.automated_fixes[metric_name] = fix_function
         logger.info("Registered automated fix for %s", metric_name)
@@ -849,7 +851,9 @@ class LiveDebuggingSystem:
                     value = watch["last_value"]
 
                     # Only allow safe comparison operators
-                    safe_operators = {
+                    from typing import cast
+
+                    safe_operators: dict[str, Callable[[Any, Any], bool]] = {
                         "==": lambda x, y: x == y,
                         "!=": lambda x, y: x != y,
                         "<": lambda x, y: x < y,
@@ -866,8 +870,8 @@ class LiveDebuggingSystem:
                                 # Use ast.literal_eval for safe parsing of the threshold value
                                 import ast
 
-                                threshold = ast.literal_eval(threshold_str)
-                                result = operator_func(value, threshold)
+                                threshold_val = ast.literal_eval(threshold_str)
+                                result = operator_func(value, threshold_val)
                                 break
                             except (ValueError, SyntaxError):
                                 continue
@@ -922,7 +926,7 @@ class RealTimeAdaptationEngine:
 
         # Adaptation configuration
         self.adaptation_rules: list[AdaptationRule] = []
-        self.adaptation_history: deque = deque(maxlen=1000)
+        self.adaptation_history: deque[AdaptationEvent] = deque(maxlen=1000)
         self.active_adaptations: dict[str, dict[str, Any]] = {}
 
         # Performance tracking
@@ -1318,7 +1322,7 @@ class RealTimeAdaptationEngine:
 
     def get_adaptation_insights(self) -> dict[str, Any]:
         """Get adaptation insights and recommendations."""
-        insights = {
+        insights: dict[str, Any] = {
             "effectiveness": {},
             "recommendations": [],
             "patterns": {},
@@ -1351,11 +1355,11 @@ class RealTimeAdaptationEngine:
             insights["recommendations"].append("High adaptation frequency - consider optimizing triggers")
 
         if recent_events := [e for e in self.adaptation_history if e.timestamp > datetime.now() - timedelta(hours=24)]:
-            trigger_patterns = defaultdict(int)
+            trigger_patterns: dict[TriggerCondition, int] = defaultdict(int)
             for event in recent_events:
                 trigger_patterns[event.trigger_condition] += 1
 
-            insights["patterns"]["common_triggers"] = dict(trigger_patterns)
+            insights["patterns"]["common_triggers"] = {k.value: v for k, v in trigger_patterns.items()}
 
         return insights
 

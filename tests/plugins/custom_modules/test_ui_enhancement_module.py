@@ -52,7 +52,7 @@ except ImportError as e:
 
 pytestmark = pytest.mark.skipif(
     not UI_ENHANCEMENT_AVAILABLE,
-    reason=f"UI enhancement module dependencies not available: {IMPORT_ERROR if not UI_ENHANCEMENT_AVAILABLE else ''}"
+    reason=f"UI enhancement module dependencies not available: {'' if UI_ENHANCEMENT_AVAILABLE else IMPORT_ERROR}"
 )
 
 
@@ -113,8 +113,7 @@ def analysis_result() -> AnalysisResult:
 @pytest.fixture
 def temp_config_file(tmp_path: Path) -> Path:
     """Create temporary configuration file."""
-    config_file = tmp_path / "ui_config.json"
-    return config_file
+    return tmp_path / "ui_config.json"
 
 
 @pytest.fixture

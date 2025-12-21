@@ -266,8 +266,7 @@ class TestCallGraphGeneration:
     def test_call_graph_main_colored_red(self, graph_generator: R2GraphGenerator) -> None:
         """Main function is colored red in call graph."""
         graph = graph_generator.generate_call_graph()
-        main_nodes = [n for n in graph.nodes if "main" in n.id.lower()]
-        if main_nodes:
+        if main_nodes := [n for n in graph.nodes if "main" in n.id.lower()]:
             assert any(node.color == "#E74C3C" for node in main_nodes)
 
     @pytest.mark.skipif(not R2PIPE_AVAILABLE, reason="r2pipe not available")
@@ -276,8 +275,7 @@ class TestCallGraphGeneration:
     ) -> None:
         """Import functions are colored blue."""
         graph = graph_generator.generate_call_graph()
-        import_nodes = [n for n in graph.nodes if "sym.imp." in n.id]
-        if import_nodes:
+        if import_nodes := [n for n in graph.nodes if "sym.imp." in n.id]:
             assert all(node.color == "#3498DB" for node in import_nodes)
 
     @pytest.mark.skipif(not R2PIPE_AVAILABLE, reason="r2pipe not available")
@@ -372,8 +370,7 @@ class TestImportDependencyGraph:
     ) -> None:
         """Import graph groups imports by library."""
         graph = graph_generator.generate_import_dependency_graph()
-        library_nodes = [n for n in graph.nodes if n.type == "library"]
-        if library_nodes:
+        if library_nodes := [n for n in graph.nodes if n.type == "library"]:
             assert all(hasattr(n, "attributes") for n in library_nodes)
 
 
@@ -462,9 +459,9 @@ class TestGraphVisualization:
         self, graph_generator: R2GraphGenerator
     ) -> None:
         """Visualization fails gracefully without dependencies."""
-        graph = GraphData()
-
         if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE:
+            graph = GraphData()
+
             result = graph_generator.visualize_graph(graph)
             assert result is False
 

@@ -348,9 +348,9 @@ class TestEdgeCases:
 
     def test_certificate_builder_none_when_cryptography_unavailable(self) -> None:
         """Certificate builder returns None when cryptography is unavailable."""
-        builder = create_certificate_builder()
-
         if not HAS_CRYPTOGRAPHY:
+            builder = create_certificate_builder()
+
             assert builder is None
 
 

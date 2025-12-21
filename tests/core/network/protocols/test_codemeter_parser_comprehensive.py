@@ -1116,7 +1116,7 @@ def test_serialize_response_creates_valid_packet(parser: CodeMeterProtocolParser
 
     assert len(serialized) >= 12
 
-    magic = struct.unpack("<I", serialized[0:4])[0]
+    magic = struct.unpack("<I", serialized[:4])[0]
     assert magic == 0x434D4554
 
     status = struct.unpack("<I", serialized[4:8])[0]
@@ -1176,7 +1176,7 @@ def test_roundtrip_parse_generate_serialize(parser: CodeMeterProtocolParser, sam
     serialized = parser.serialize_response(response)
     assert len(serialized) > 0
 
-    magic = struct.unpack("<I", serialized[0:4])[0]
+    magic = struct.unpack("<I", serialized[:4])[0]
     assert magic == 0x434D4554
 
     status = struct.unpack("<I", serialized[4:8])[0]

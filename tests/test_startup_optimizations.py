@@ -61,7 +61,7 @@ class TestLazyTensorFlowLoading:
 
             # Should only be called once
             assert import_mock.call_count == 1
-            assert tensorflow_handler._tf_initialized is True
+            assert tensorflow_handler._tf_initialized
 
     def test_fallback_objects_available_when_tensorflow_unavailable(self):
         """Test that fallback objects are available when TensorFlow is unavailable."""

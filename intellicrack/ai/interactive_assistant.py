@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from datetime import UTC
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
 from ..handlers.pyqt6_handler import QWidget
 from .ai_file_tools import get_ai_file_tools
@@ -35,6 +35,21 @@ from .ai_file_tools import get_ai_file_tools
 logger = logging.getLogger(__name__)
 
 CLI_INTERFACE_NOT_AVAILABLE = "CLI interface not available"
+
+
+class CLIInterface(Protocol):
+    """Protocol defining the interface for CLI interaction."""
+
+    def analyze_binary(self, binary_path: str, analyses: list[str] | None) -> dict[str, Any]: ...
+    def execute_command(
+        self,
+        args: list[str],
+        title: str,
+        description: str,
+    ) -> dict[str, Any]: ...
+    def suggest_patches(self, binary_path: str) -> dict[str, Any]: ...
+    def apply_patch(self, binary_path: str, patch_file: str) -> dict[str, Any]: ...
+    def print_info(self, message: str) -> None: ...
 
 
 class ToolCategory(Enum):
@@ -57,17 +72,17 @@ class Tool:
     description: str
     category: ToolCategory
     parameters: dict[str, Any]
-    risk_level: str  # low, medium, high
-    function: Callable
+    risk_level: str
+    function: Callable[..., dict[str, Any]]
     example: str | None = None
 
 
 class IntellicrackAIAssistant:
     """Enhanced AI Assistant with Claude Code-like functionality."""
 
-    def __init__(self, cli_interface: object | None = None) -> None:
+    def __init__(self, cli_interface: CLIInterface | None = None) -> None:
         """Initialize AI assistant with CLI interface and tools."""
-        self.cli_interface = cli_interface
+        self.cli_interface: CLIInterface | None = cli_interface
         self.file_tools = get_ai_file_tools(cli_interface)
         self.tools = self._initialize_tools()
         self.context: dict[str, Any] = {
@@ -339,7 +354,7 @@ You are the autonomous expert - take complete ownership of binary analysis chall
 
     def _format_tools_description(self) -> str:
         """Format tools description for the prompt."""
-        categories = {}
+        categories: dict[ToolCategory, list[Tool]] = {}
         for tool in self.tools.values():
             if tool.category not in categories:
                 categories[tool.category] = []
@@ -630,63 +645,87 @@ What security aspect interests you?"""
         return f"I understand you want help with: {message}\n\nI can:\n- Analyze binaries\n- Detect protections\n- Suggest patches\n- Explain concepts\n\nWhat would you like to do first?"
 
     # Tool implementation methods
-    def _analyze_binary(self, binary_path: str, analyses: list[str] = None) -> dict[str, Any]:
+    def _analyze_binary(self, binary_path: str, analyses: list[str] | None = None) -> dict[str, Any]:
         """Analyze a binary file."""
         if self.cli_interface:
-            return self.cli_interface.analyze_binary(binary_path, analyses)
+            result: dict[str, Any] = self.cli_interface.analyze_binary(binary_path, analyses)
+            return result
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _detect_protections(self, binary_path: str) -> dict[str, Any]:
         """Detect protection mechanisms."""
         if self.cli_interface:
-            return self.cli_interface.execute_command(
+            result: dict[str, Any] = self.cli_interface.execute_command(
                 [binary_path, "--detect-protections", "--format", "json"],
                 "Detecting all protection mechanisms",
                 "Scanning for packing, anti-debug, licensing, and other protections",
             )
+            return result
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _find_license_checks(self, binary_path: str) -> dict[str, Any]:
         """Find license validation routines."""
         if self.cli_interface:
-            return self.cli_interface.execute_command(
+            result: dict[str, Any] = self.cli_interface.execute_command(
                 [binary_path, "--license-analysis", "--format", "json"],
                 "Finding license validation routines",
                 "Searching for license checks, key validation, and activation logic",
             )
+            return result
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _suggest_patches(self, binary_path: str, target: str = "auto") -> dict[str, Any]:
         """Suggest patches for the binary."""
-        if self.cli_interface:
-            # Use target parameter to focus patch suggestions
-            if target == "license":
-                return self.cli_interface.execute_command(
-                    [binary_path, "--suggest-patches", "--focus", "license", "--format", "json"],
-                    "Generating license bypass patches",
-                    "Analyzing license validation routines and suggesting bypass strategies",
-                )
-            if target == "trial":
-                return self.cli_interface.execute_command(
-                    [binary_path, "--suggest-patches", "--focus", "trial", "--format", "json"],
-                    "Generating trial extension patches",
-                    "Analyzing time-based restrictions and suggesting extension strategies",
-                )
-            if target == "protection":
-                return self.cli_interface.execute_command(
-                    [binary_path, "--suggest-patches", "--focus", "protection", "--format", "json"],
-                    "Generating protection bypass patches",
-                    "Analyzing protection mechanisms and suggesting bypass strategies",
-                )
-            return self.cli_interface.suggest_patches(binary_path)
-        return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
+        if not self.cli_interface:
+            return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
+        result: dict[str, Any]
+        if target == "license":
+            return self.cli_interface.execute_command(
+                [
+                    binary_path,
+                    "--suggest-patches",
+                    "--focus",
+                    "license",
+                    "--format",
+                    "json",
+                ],
+                "Generating license bypass patches",
+                "Analyzing license validation routines and suggesting bypass strategies",
+            )
+        if target == "trial":
+            return self.cli_interface.execute_command(
+                [
+                    binary_path,
+                    "--suggest-patches",
+                    "--focus",
+                    "trial",
+                    "--format",
+                    "json",
+                ],
+                "Generating trial extension patches",
+                "Analyzing time-based restrictions and suggesting extension strategies",
+            )
+        if target == "protection":
+            return self.cli_interface.execute_command(
+                [
+                    binary_path,
+                    "--suggest-patches",
+                    "--focus",
+                    "protection",
+                    "--format",
+                    "json",
+                ],
+                "Generating protection bypass patches",
+                "Analyzing protection mechanisms and suggesting bypass strategies",
+            )
+        return self.cli_interface.suggest_patches(binary_path)
 
     def _apply_patch(self, binary_path: str, patch_definition: dict[str, Any]) -> dict[str, Any]:
         """Apply a patch to the binary with proper cleanup."""
         if self.cli_interface:
             import tempfile
 
-            patch_file = None
+            patch_file: str | None = None
 
             try:
                 # Save patch definition to temporary file
@@ -694,7 +733,8 @@ What security aspect interests you?"""
                     json.dump(patch_definition, f)
                     patch_file = f.name
 
-                return self.cli_interface.apply_patch(binary_path, patch_file)
+                result: dict[str, Any] = self.cli_interface.apply_patch(binary_path, patch_file)
+                return result
             except Exception as e:
                 logger.exception("Error applying patch: %s", e)
                 return {"status": "error", "message": f"Failed to apply patch: {e!s}"}
@@ -712,11 +752,12 @@ What security aspect interests you?"""
     def _analyze_network(self, binary_path: str) -> dict[str, Any]:
         """Analyze network communications."""
         if self.cli_interface:
-            return self.cli_interface.execute_command(
+            result: dict[str, Any] = self.cli_interface.execute_command(
                 [binary_path, "--protocol-fingerprint", "--format", "json"],
                 "Analyzing network protocols",
                 "Identifying network communication patterns and protocols",
             )
+            return result
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
     def _generate_bypass(self, binary_path: str, protection_type: str) -> dict[str, Any]:
@@ -731,17 +772,16 @@ What security aspect interests you?"""
         }
 
         if flag := bypass_flags.get(protection_type.lower()):
-            return (
-                self.cli_interface.execute_command(
+            if self.cli_interface:
+                result: dict[str, Any] = self.cli_interface.execute_command(
                     [binary_path, flag, "--format", "json"],
                     f"Generating {protection_type} bypass",
                     f"Creating bypass strategy for {protection_type} protection",
                 )
-                if self.cli_interface
-                else {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
-            )
-        else:
-            return {"status": "error", "message": f"Unknown protection type: {protection_type}"}
+                return result
+            return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
+
+        return {"status": "error", "message": f"Unknown protection type: {protection_type}"}
 
     def _view_hex(self, binary_path: str, address: str, size: int = 64) -> dict[str, Any]:
         """View hex dump at specific address."""
@@ -794,8 +834,7 @@ What security aspect interests you?"""
     def _disassemble(self, binary_path: str, address: str, count: int = 20) -> dict[str, Any]:
         """Disassemble code at address."""
         if self.cli_interface:
-            # Use CLI interface for disassembly
-            return self.cli_interface.execute_command(
+            result: dict[str, Any] = self.cli_interface.execute_command(
                 [
                     binary_path,
                     "--disassemble",
@@ -809,6 +848,7 @@ What security aspect interests you?"""
                 f"Disassembling {count} instructions",
                 f"Disassembling code at {address} in {binary_path}",
             )
+            return result
         # Fallback: basic disassembly attempt
         try:
             from ..hexview import LargeFileHandler
@@ -849,7 +889,7 @@ What security aspect interests you?"""
             }
 
     # File System Tool Methods
-    def _search_license_files(self, search_path: str, custom_patterns: list[str] = None) -> dict[str, Any]:
+    def _search_license_files(self, search_path: str, custom_patterns: list[str] | None = None) -> dict[str, Any]:
         """Search for license-related files with user approval."""
         try:
             result = self.file_tools.search_for_license_files(search_path, custom_patterns)
@@ -907,7 +947,7 @@ What security aspect interests you?"""
             logger.exception("Error in program directory analysis: %s", e)
             return {"status": "error", "message": str(e)}
 
-    def analyze_binary_complex(self, binary_path: str, ml_results: dict[str, Any] = None) -> dict[str, Any]:
+    def analyze_binary_complex(self, binary_path: str, ml_results: dict[str, Any] | None = None) -> dict[str, Any]:
         """Perform complex binary analysis using AI reasoning.
 
         Args:
@@ -919,12 +959,14 @@ What security aspect interests you?"""
 
         """
         try:
-            analysis = {
+            findings: list[str] = []
+            recommendations: list[str] = []
+            analysis: dict[str, Any] = {
                 "binary_path": binary_path,
                 "analysis_type": "complex_binary_analysis",
                 "confidence": 0.8,
-                "findings": [],
-                "recommendations": [],
+                "findings": findings,
+                "recommendations": recommendations,
             }
 
             # Incorporate ML results if provided
@@ -935,7 +977,7 @@ What security aspect interests you?"""
                 }
 
             # Add complex analysis findings
-            analysis["findings"].extend(
+            findings.extend(
                 [
                     "Binary structure analysis completed",
                     "Cross-referenced with ML predictions",
@@ -943,7 +985,7 @@ What security aspect interests you?"""
                 ],
             )
 
-            analysis["recommendations"].extend(
+            recommendations.extend(
                 [
                     "Further static analysis recommended",
                     "Consider dynamic analysis for runtime behavior",
@@ -1410,7 +1452,9 @@ What security aspect interests you?"""
         """Log tool usage for user visibility."""
         logger.info("[AI Tool] %s", message)
         if self.cli_interface and hasattr(self.cli_interface, "update_output"):
-            self.cli_interface.update_output.emit(f"[AI Tool] {message}")
+            update_output = getattr(self.cli_interface, "update_output", None)
+            if update_output and hasattr(update_output, "emit"):
+                update_output.emit(f"[AI Tool] {message}")
 
 
 def create_ai_assistant_widget() -> QWidget:

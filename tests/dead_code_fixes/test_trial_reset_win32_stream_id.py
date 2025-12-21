@@ -4,6 +4,7 @@ This tests that the WIN32_STREAM_ID structure is properly used with the
 BackupRead API to enumerate and scan NTFS alternate data streams.
 """
 
+
 from __future__ import annotations
 
 import ctypes
@@ -14,10 +15,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
-
 
 pytestmark = pytest.mark.skipif(
     sys.platform != "win32",
@@ -75,7 +72,7 @@ class TestWin32StreamIdBackupRead:
             test_file = Path(tmpdir) / "test_ads.txt"
             test_file.write_text("main content")
 
-            ads_path = str(test_file) + ":trial_data"
+            ads_path = f"{str(test_file)}:trial_data"
             try:
                 with open(ads_path, "w") as ads:
                     ads.write("trial information")
@@ -96,10 +93,7 @@ class TestWin32StreamIdBackupRead:
         BACKUP_DATA = 1
         BACKUP_EA_DATA = 2
         BACKUP_SECURITY_DATA = 3
-        BACKUP_ALTERNATE_DATA = 4
         BACKUP_LINK = 5
-
-        assert BACKUP_ALTERNATE_DATA == 4
 
     def test_scan_alternate_data_streams_method_exists(self) -> None:
         """Test that _scan_alternate_data_streams method exists."""
@@ -165,13 +159,11 @@ class TestWin32StreamIdBackupRead:
 
     def test_file_handle_flags_for_backup(self) -> None:
         """Test correct file handle flags for backup operations."""
-        GENERIC_READ = 0x80000000
         FILE_SHARE_READ = 0x01
         FILE_SHARE_WRITE = 0x02
         OPEN_EXISTING = 3
         FILE_FLAG_BACKUP_SEMANTICS = 0x02000000
 
-        assert GENERIC_READ == 2147483648
         assert FILE_SHARE_READ | FILE_SHARE_WRITE == 3
         assert OPEN_EXISTING == 3
         assert FILE_FLAG_BACKUP_SEMANTICS == 33554432
@@ -223,7 +215,7 @@ class TestWin32StreamIdBackupRead:
         bytes_read = wintypes.DWORD(0)
 
         should_break = bytes_read.value == 0
-        assert should_break is True
+        assert should_break
 
     def test_exception_handling_for_backup_read(self) -> None:
         """Test that BackupRead errors are properly caught."""

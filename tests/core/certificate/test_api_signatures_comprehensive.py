@@ -306,7 +306,7 @@ class TestGetSignaturesByPlatform:
         assert len(sigs) >= 15
 
         expected_libs = ["winhttp.dll", "sspicli.dll", "crypt32.dll"]
-        found_libs = set(sig.library for sig in sigs)
+        found_libs = {sig.library for sig in sigs}
 
         for expected_lib in expected_libs:
             assert expected_lib in found_libs
@@ -352,8 +352,12 @@ class TestGetSignaturesByPlatform:
         windows_sigs = get_signatures_by_platform(Platform.WINDOWS)
         linux_sigs = get_signatures_by_platform(Platform.LINUX)
 
-        windows_names = set(sig.name for sig in windows_sigs if Platform.LINUX not in sig.platforms)
-        linux_names = set(sig.name for sig in linux_sigs if Platform.WINDOWS not in sig.platforms)
+        windows_names = {
+            sig.name for sig in windows_sigs if Platform.LINUX not in sig.platforms
+        }
+        linux_names = {
+            sig.name for sig in linux_sigs if Platform.WINDOWS not in sig.platforms
+        }
 
         winhttp_only = [sig for sig in windows_sigs if sig.library == "winhttp.dll"]
         assert all(Platform.WINDOWS in sig.platforms and Platform.LINUX not in sig.platforms for sig in winhttp_only)
@@ -467,14 +471,13 @@ class TestSignatureDataIntegrity:
                 duplicates.append(key)
             seen.add(key)
 
-        assert len(duplicates) == 0, f"Found duplicate signatures: {duplicates}"
+        assert not duplicates, f"Found duplicate signatures: {duplicates}"
 
     def test_calling_conventions_match_platforms(self) -> None:
         """Calling conventions must match expected platform conventions."""
         for sig in ALL_SIGNATURES:
-            if Platform.WINDOWS in sig.platforms:
-                if sig.library.endswith(".dll") and "x64" not in sig.library.lower():
-                    assert sig.calling_convention in [CallingConvention.STDCALL, CallingConvention.CDECL, CallingConvention.X64_MS]
+            if Platform.WINDOWS in sig.platforms and (sig.library.endswith(".dll") and "x64" not in sig.library.lower()):
+                assert sig.calling_convention in [CallingConvention.STDCALL, CallingConvention.CDECL, CallingConvention.X64_MS]
 
             if Platform.LINUX in sig.platforms or Platform.ANDROID in sig.platforms:
                 assert sig.calling_convention in [CallingConvention.CDECL, CallingConvention.X64_SYSV]
@@ -491,8 +494,7 @@ class TestSignatureCoverage:
         library_types = set()
 
         for sig in ALL_SIGNATURES:
-            lib_type = get_library_type(sig.library)
-            if lib_type:
+            if lib_type := get_library_type(sig.library):
                 library_types.add(lib_type)
 
         assert "winhttp" in library_types
@@ -517,11 +519,11 @@ class TestSignatureCoverage:
             if "callback" in desc_lower or "hook" in desc_lower or "set_verify" in name_lower:
                 callback_apis.append(sig.name)
 
-        assert len(verification_apis) > 0
-        assert len(callback_apis) > 0
+        assert verification_apis
+        assert callback_apis
 
     def test_covers_chain_building_apis(self) -> None:
         """Database must include certificate chain building APIs."""
         chain_apis = [sig for sig in ALL_SIGNATURES if "chain" in sig.description.lower()]
 
-        assert len(chain_apis) > 0
+        assert chain_apis

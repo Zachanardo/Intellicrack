@@ -512,7 +512,7 @@ class TestGhidraOutputParserLicenseDetection:
             if any(kw in func.name.lower() for kw in license_keywords)
         ]
 
-        assert len(license_funcs) >= 1
+        assert license_funcs
 
     def test_detect_license_strings(self, sample_xml_output: Path) -> None:
         """Parser identifies license-related strings."""

@@ -1117,13 +1117,8 @@ class SideEffectAnalyzer:
         stack_ops = ["push", "pop", "call", "ret"]
 
         return next(
-            (
-                True
-                for insn_addr, mnem, _ops in patch_point.block.instructions
-                if mnem in stack_ops and insn_addr == patch_point.address
-            ),
-            "esp" in patch_point.registers_modified
-            or "rsp" in patch_point.registers_modified,
+            (True for insn_addr, mnem, _ops in patch_point.block.instructions if mnem in stack_ops and insn_addr == patch_point.address),
+            "esp" in patch_point.registers_modified or "rsp" in patch_point.registers_modified,
         )
 
     def _corrupts_data_dependencies(self, patch_point: PatchPoint) -> bool:
@@ -2340,12 +2335,10 @@ class LicenseCheckRemover:
             f"Total Checks Found: {len(self.detected_checks)}",
         ]
         if cfg_available := self.cfg_analyzer and self.cfg_analyzer.basic_blocks:
-            report.extend(
-                (
-                    f"Control Flow Blocks: {len(self.cfg_analyzer.basic_blocks)}",
-                    f"CFG Analysis: {'Available' if cfg_available else 'Not Available'}",
-                )
-            )
+            report.extend((
+                f"Control Flow Blocks: {len(self.cfg_analyzer.basic_blocks)}",
+                f"CFG Analysis: {'Available' if cfg_available else 'Not Available'}",
+            ))
         report.append("")
 
         by_type: dict[CheckType, list[LicenseCheck]] = {}
@@ -2355,24 +2348,17 @@ class LicenseCheckRemover:
             by_type[check.check_type].append(check)
 
         for check_type, checks in by_type.items():
-            report.extend(
-                (f"\n{check_type.value.upper()} ({len(checks)} found)", "-" * 40)
-            )
+            report.extend((f"\n{check_type.value.upper()} ({len(checks)} found)", "-" * 40))
             for check in checks[:5]:
-                report.extend(
-                    (
-                        f"  Address: 0x{check.address:08X}",
-                        f"  Confidence: {check.confidence:.1%}",
-                        f"  Strategy: {check.patch_strategy}",
-                        f"  Validated Safe: {check.validated_safe}",
-                    )
-                )
+                report.extend((
+                    f"  Address: 0x{check.address:08X}",
+                    f"  Confidence: {check.confidence:.1%}",
+                    f"  Strategy: {check.patch_strategy}",
+                    f"  Validated Safe: {check.validated_safe}",
+                ))
                 if check.instructions:
                     report.append("  Instructions:")
-                    report.extend(
-                        f"    0x{addr:08X}: {mnem} {ops}"
-                        for addr, mnem, ops in check.instructions[:3]
-                    )
+                    report.extend(f"    0x{addr:08X}: {mnem} {ops}" for addr, mnem, ops in check.instructions[:3])
                 if check.patch_points:
                     report.append(f"  Patch Points: {len(check.patch_points)}")
                     best_point = check.patch_points[0]

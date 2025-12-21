@@ -30,18 +30,17 @@ def analyze_test_file(test_file_path):
         test_classes = []
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                if node.name.startswith('Test'):
-                    test_classes.append(node.name)
-
-                    # Count methods in test class
-                    class_methods = []
-                    for item in node.body:
-                        if isinstance(item, ast.FunctionDef) and item.name.startswith('test_'):
-                            class_methods.append(item.name)
-
-                    test_methods.extend(class_methods)
-                    print(f"Found test class: {node.name} with {len(class_methods)} test methods")
+            if isinstance(node, ast.ClassDef) and node.name.startswith('Test'):
+                test_classes.append(node.name)
+            
+                class_methods = [
+                    item.name
+                    for item in node.body
+                    if isinstance(item, ast.FunctionDef)
+                    and item.name.startswith('test_')
+                ]
+                test_methods.extend(class_methods)
+                print(f"Found test class: {node.name} with {len(class_methods)} test methods")
 
         print(f"Total test classes: {len(test_classes)}")
         print(f"Total test methods: {len(test_methods)}")
@@ -151,12 +150,12 @@ def estimate_coverage(test_file_path, target_module_path):
             test_content = f.read()
 
         test_tree = ast.parse(test_content)
-        test_methods = []
-
-        for node in ast.walk(test_tree):
-            if isinstance(node, ast.FunctionDef) and node.name.startswith('test_'):
-                test_methods.append(node.name)
-
+        test_methods = [
+            node.name
+            for node in ast.walk(test_tree)
+            if isinstance(node, ast.FunctionDef)
+            and node.name.startswith('test_')
+        ]
         print(f"Test methods found: {len(test_methods)}")
 
     except Exception as e:
@@ -169,12 +168,12 @@ def estimate_coverage(test_file_path, target_module_path):
             target_content = f.read()
 
         target_tree = ast.parse(target_content)
-        target_methods = []
-
-        for node in ast.walk(target_tree):
-            if isinstance(node, ast.FunctionDef) and not node.name.startswith('_'):
-                target_methods.append(node.name)
-
+        target_methods = [
+            node.name
+            for node in ast.walk(target_tree)
+            if isinstance(node, ast.FunctionDef)
+            and not node.name.startswith('_')
+        ]
         print(f"Target methods to test: {len(target_methods)}")
 
         # Estimate coverage

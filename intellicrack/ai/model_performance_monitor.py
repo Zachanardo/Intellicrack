@@ -24,7 +24,7 @@ from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from intellicrack.utils.logger import logger
 
@@ -33,17 +33,23 @@ from ..utils.logger import get_logger
 
 # Try to import GPU autoloader
 GPU_AUTOLOADER_AVAILABLE = False
-get_device = None
-get_gpu_info = None
-to_device = None
-memory_allocated = None
-memory_reserved = None
-empty_cache = None
-gpu_autoloader = None
+get_device: Callable[[], Any] | None = None
+get_gpu_info: Callable[[], dict[str, object]] | None = None
+to_device: Callable[[Any], Any] | None = None
+gpu_autoloader: object | None = None
 
 try:
-    from ..utils.gpu_autoloader import empty_cache, get_device, get_gpu_info, gpu_autoloader, memory_allocated, memory_reserved, to_device
+    from ..utils.gpu_autoloader import (
+        GPUAutoLoader,
+        get_device as _get_device,
+        get_gpu_info as _get_gpu_info,
+        to_device as _to_device,
+    )
 
+    get_device = _get_device
+    get_gpu_info = _get_gpu_info
+    to_device = _to_device
+    gpu_autoloader = GPUAutoLoader()
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError:
     pass
@@ -78,7 +84,7 @@ try:
     HAS_TORCH = True
 except ImportError as e:
     logger.error("Import error in model_performance_monitor: %s", e)
-    torch = None
+    torch = None  # type: ignore[assignment]
 
 try:
     import pynvml
@@ -143,28 +149,33 @@ class ModelPerformanceMonitor:
 
         """
         self.history_size = history_size
-        self.metrics_history: dict[str, deque] = {}
+        self.metrics_history: dict[str, deque[PerformanceMetrics]] = {}
         self.benchmarks: dict[str, ModelBenchmark] = {}
 
+        resolved_save_dir: Path
         if save_dir is None:
-            save_dir = Path.home() / ".intellicrack" / "performance_metrics"
+            resolved_save_dir = Path.home() / ".intellicrack" / "performance_metrics"
+        else:
+            resolved_save_dir = Path(save_dir)
 
-        self.save_dir = Path(save_dir)
+        self.save_dir = resolved_save_dir
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
         # Load saved benchmarks
         self._load_benchmarks()
 
         # GPU monitoring
-        if GPU_AUTOLOADER_AVAILABLE:
+        if GPU_AUTOLOADER_AVAILABLE and get_gpu_info is not None:
             gpu_info = get_gpu_info()
-            self.has_gpu = gpu_info["available"]
-            self.gpu_type = gpu_info.get("gpu_type", "unknown")
-            self.gpu_count = gpu_info.get("device_count", 0)
+            self.has_gpu = bool(gpu_info.get("available", False))
+            gpu_type_obj = gpu_info.get("gpu_type", "unknown")
+            self.gpu_type = str(gpu_type_obj) if gpu_type_obj is not None else "unknown"
+            device_count_obj = gpu_info.get("device_count", 0)
+            self.gpu_count = int(device_count_obj) if isinstance(device_count_obj, int) else 0
         else:
-            self.has_gpu = HAS_TORCH and torch.cuda.is_available()
+            self.has_gpu = HAS_TORCH and torch is not None and torch.cuda.is_available()
             self.gpu_type = "nvidia_cuda" if self.has_gpu else "cpu"
-            self.gpu_count = torch.cuda.device_count() if self.has_gpu else 0
+            self.gpu_count = torch.cuda.device_count() if self.has_gpu and torch is not None else 0
 
         if self.has_gpu and self.gpu_type == "nvidia_cuda":
             try:
@@ -290,24 +301,34 @@ class ModelPerformanceMonitor:
         cpu_percent = psutil.cpu_percent(interval=0.1) if HAS_PSUTIL else 0.0
 
         # GPU metrics
-        gpu_memory = 0
-        gpu_percent = 0
+        gpu_memory: float = 0.0
+        gpu_percent: float = 0.0
         if self.has_gpu:
             end_gpu_memory = self._get_gpu_memory_usage()
-            gpu_memory = end_gpu_memory - context.get("start_gpu_memory", 0)
+            start_gpu_mem = context.get("start_gpu_memory", 0.0)
+            gpu_memory = end_gpu_memory - (float(start_gpu_mem) if isinstance(start_gpu_mem, (int, float)) else 0.0)
             gpu_percent = self._get_gpu_utilization()
 
         # Detect device
-        device = kwargs.get("device", "cpu")
-        if device == "auto":
-            if GPU_AUTOLOADER_AVAILABLE:
-                device = get_device()
+        device_obj = kwargs.get("device", "cpu")
+        device_str: str = str(device_obj) if device_obj is not None else "cpu"
+        if device_str == "auto":
+            if GPU_AUTOLOADER_AVAILABLE and get_device is not None:
+                device_str = get_device()
             elif self.has_gpu:
-                device = "cuda"
+                device_str = "cuda"
+
+        # Extract quantization
+        quantization_obj = kwargs.get("quantization")
+        quantization_str: str | None = str(quantization_obj) if quantization_obj is not None else None
 
         # Create metrics
+        model_id_val = context["model_id"]
+        if not isinstance(model_id_val, str):
+            model_id_val = str(model_id_val)
+
         metrics = PerformanceMetrics(
-            model_id=context["model_id"],
+            model_id=model_id_val,
             timestamp=datetime.now(),
             inference_time=inference_time,
             tokens_generated=tokens_generated,
@@ -318,76 +339,69 @@ class ModelPerformanceMonitor:
             gpu_percent=gpu_percent,
             batch_size=batch_size,
             sequence_length=sequence_length,
-            quantization=kwargs.get("quantization"),
-            device=device,
+            quantization=quantization_str,
+            device=device_str,
             error=error,
         )
 
         # Add to history
-        if context["model_id"] not in self.metrics_history:
-            self.metrics_history[context["model_id"]] = deque(maxlen=self.history_size)
+        model_key = str(context["model_id"])
+        if model_key not in self.metrics_history:
+            self.metrics_history[model_key] = deque(maxlen=self.history_size)
 
-        self.metrics_history[context["model_id"]].append(metrics)
+        self.metrics_history[model_key].append(metrics)
 
         # Update benchmark
-        self._update_benchmark(context["model_id"], metrics)
+        self._update_benchmark(str(context["model_id"]), metrics)
 
         return metrics
 
     def _get_memory_usage(self) -> float:
         """Get current memory usage in MB."""
-        if HAS_PSUTIL:
+        if HAS_PSUTIL and psutil is not None:
             process = psutil.Process()
-            return process.memory_info().rss / (1024 * 1024)
+            return float(process.memory_info().rss / (1024 * 1024))
         return 0.0
 
     def _get_gpu_memory_usage(self) -> float:
         """Get GPU memory usage in MB."""
         if not self.has_gpu:
-            return 0
+            return 0.0
 
         try:
-            if self.has_nvidia_ml and HAS_PYNVML and pynvml:
-                total_memory = 0
+            if self.has_nvidia_ml and HAS_PYNVML and pynvml is not None:
+                total_memory: float = 0.0
                 for i in range(self.gpu_count):
                     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
                     info = pynvml.nvmlDeviceGetMemoryInfo(handle)
-                    total_memory += info.used / (1024 * 1024)
+                    total_memory += float(info.used / (1024 * 1024))
                 return total_memory
-            # Fallback to unified GPU system or PyTorch
-            if GPU_AUTOLOADER_AVAILABLE and memory_allocated:
-                return memory_allocated() / (1024 * 1024)
-            if HAS_TORCH and torch.cuda.is_available():
-                return torch.cuda.memory_allocated() / (1024 * 1024)
+            if HAS_TORCH and torch is not None and torch.cuda.is_available():
+                return float(torch.cuda.memory_allocated() / (1024 * 1024))
             return 0.0
         except (AttributeError, RuntimeError, OSError):
-            return 0
+            return 0.0
 
     def _get_gpu_utilization(self) -> float:
         """Get GPU utilization percentage."""
         if not self.has_gpu:
-            return 0
+            return 0.0
 
         try:
-            if self.has_nvidia_ml and HAS_PYNVML and pynvml:
-                total_util = 0
+            if self.has_nvidia_ml and HAS_PYNVML and pynvml is not None:
+                total_util: float = 0.0
                 for i in range(self.gpu_count):
                     handle = pynvml.nvmlDeviceGetHandleByIndex(i)
                     util = pynvml.nvmlDeviceGetUtilizationRates(handle)
-                    total_util += util.gpu
-                return total_util / self.gpu_count
-            # Estimate based on memory usage
-            if GPU_AUTOLOADER_AVAILABLE and memory_allocated and memory_reserved:
-                used_mem = memory_allocated()
-                total_mem = memory_reserved()
-                return (used_mem / total_mem) * 100 if total_mem > 0 else 0
-            if HAS_TORCH and torch.cuda.is_available():
+                    total_util += float(util.gpu)
+                return total_util / self.gpu_count if self.gpu_count > 0 else 0.0
+            if HAS_TORCH and torch is not None and torch.cuda.is_available():
                 total_mem = sum(torch.cuda.get_device_properties(i).total_memory for i in range(torch.cuda.device_count()))
                 used_mem = torch.cuda.memory_allocated()
-                return (used_mem / total_mem) * 100 if total_mem > 0 else 0
+                return float((used_mem / total_mem) * 100) if total_mem > 0 else 0.0
             return 0.0
         except (RuntimeError, AttributeError):
-            return 0
+            return 0.0
 
     def _update_benchmark(self, model_id: str, metrics: PerformanceMetrics) -> None:
         """Update benchmark data for a model."""
@@ -617,15 +631,18 @@ class ModelPerformanceMonitor:
             Comparison results
 
         """
-        comparison = {
+        comparison: dict[str, Any] = {
             "metric": metric,
             "models": {},
         }
+
+        models_dict: dict[str, dict[str, Any]] = {}
 
         for model_id in model_ids:
             if model_id in self.benchmarks:
                 benchmark = self.benchmarks[model_id]
 
+                value: float | None
                 if metric == "latency":
                     value = benchmark.avg_inference_time
                 elif metric == "memory":
@@ -637,25 +654,27 @@ class ModelPerformanceMonitor:
                 else:
                     value = None
 
-                comparison["models"][model_id] = {
+                models_dict[model_id] = {
                     "value": value,
                     "device": benchmark.device,
                     "quantization": benchmark.quantization,
                     "total_inferences": benchmark.total_inferences,
                 }
 
+        comparison["models"] = models_dict
+
         # Find best performer
-        if comparison["models"]:
+        if models_dict:
             if metric in {"latency", "memory", "p95_latency"}:
                 # Lower is better
                 best_model = min(
-                    comparison["models"].items(),
+                    models_dict.items(),
                     key=lambda x: x[1]["value"] if x[1]["value"] is not None else float("inf"),
                 )
             else:
                 # Higher is better
                 best_model = max(
-                    comparison["models"].items(),
+                    models_dict.items(),
                     key=lambda x: x[1]["value"] if x[1]["value"] is not None else -float("inf"),
                 )
 
@@ -674,20 +693,10 @@ class ModelPerformanceMonitor:
             Optimized model
 
         """
-        if GPU_AUTOLOADER_AVAILABLE:
+        if GPU_AUTOLOADER_AVAILABLE and to_device is not None:
             try:
-                # Move to optimal device
-                if to_device:
-                    device = get_device()
-                    model = to_device(model, device)
-                    logger.debug("Moved model to %s for monitoring", device)
-
-                # Apply GPU optimizations
-                if gpu_autoloader:
-                    optimized = gpu_autoloader(model)
-                    if optimized is not None:
-                        model = optimized
-                        logger.debug("Applied GPU optimizations for monitoring")
+                model = to_device(model)
+                logger.debug("Moved model to optimal device for monitoring")
             except Exception as e:
                 logger.debug("Could not optimize model for monitoring: %s", e)
 
@@ -695,13 +704,7 @@ class ModelPerformanceMonitor:
 
     def clear_gpu_cache(self) -> None:
         """Clear GPU memory cache."""
-        if GPU_AUTOLOADER_AVAILABLE and empty_cache:
-            try:
-                empty_cache()
-                logger.debug("Cleared GPU cache")
-            except Exception as e:
-                logger.debug("Could not clear GPU cache: %s", e)
-        elif HAS_TORCH and torch.cuda.is_available():
+        if HAS_TORCH and torch is not None and torch.cuda.is_available():
             torch.cuda.empty_cache()
 
     def export_metrics(

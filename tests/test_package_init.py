@@ -123,7 +123,7 @@ class TestGPUInitialization:
         intellicrack._gpu_initialized = True
         device2 = intellicrack._initialize_gpu()
 
-        assert intellicrack._gpu_initialized is True
+        assert intellicrack._gpu_initialized
 
     def test_initialize_gpu_with_timeout_returns_device(self) -> None:
         import intellicrack
@@ -152,11 +152,11 @@ class TestGILSafetyInitialization:
         intellicrack._gil_safety_initialized = False
         intellicrack._initialize_gil_safety()
 
-        assert intellicrack._gil_safety_initialized is True
+        assert intellicrack._gil_safety_initialized
 
         intellicrack._initialize_gil_safety()
 
-        assert intellicrack._gil_safety_initialized is True
+        assert intellicrack._gil_safety_initialized
 
     @patch("intellicrack.utils.torch_gil_safety.initialize_gil_safety")
     def test_gil_safety_calls_initialization(

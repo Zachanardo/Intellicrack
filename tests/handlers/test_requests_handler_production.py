@@ -160,7 +160,7 @@ class TestRequestsHandlerFallbackMode:
         response = handler.get(f"{test_server}/test", timeout=5)
 
         chunks = list(response.iter_content(chunk_size=4))
-        assert len(chunks) > 0
+        assert chunks
         assert b"".join(chunks) == response.content
 
     def test_fallback_prepared_request(self) -> None:
@@ -200,10 +200,8 @@ class TestRequestsHandlerRealMode:
 
         if handler.HAS_REQUESTS:
             assert handler.REQUESTS_VERSION is not None
-            assert handler.Session is not None
             assert handler.get is not None
-        else:
-            assert handler.Session is not None
+        assert handler.Session is not None
 
     def test_all_http_methods_available(self) -> None:
         import intellicrack.handlers.requests_handler as handler

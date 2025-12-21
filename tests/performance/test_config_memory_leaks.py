@@ -138,7 +138,7 @@ class ConfigMemoryLeakTests(unittest.TestCase):
         after_creation_memory = self.get_memory_usage()
         creation_increase = after_creation_memory - baseline_memory
 
-        print(f"After creating large config:")
+        print("After creating large config:")
         print(f"  Memory usage: {creation_increase:.2f} MB")
 
         # Save and reload
@@ -162,7 +162,7 @@ class ConfigMemoryLeakTests(unittest.TestCase):
         final_memory = self.get_memory_usage()
         final_increase = final_memory - baseline_memory
 
-        print(f"After delete and reload cycle:")
+        print("After delete and reload cycle:")
         print(f"  Final memory increase: {final_increase:.2f} MB")
 
         # Most memory should be freed after deletion
@@ -270,18 +270,15 @@ class ConfigMemoryLeakTests(unittest.TestCase):
         llm_config_dir = self.config_dir / "llm_configs"
         llm_config_dir.mkdir(exist_ok=True)
 
-        # Create large legacy data
-        models_data = {}
-        for i in range(100):
-            models_data[f"model_{i}"] = {
+        models_data = {
+            f"model_{i}": {
                 "provider": "openai",
                 "model_name": f"gpt-4-{i}",
                 "api_key": f"sk-key-{i}" * 10,
-                "metadata": {
-                    "description": f"Description {i}" * 100
-                }
+                "metadata": {"description": f"Description {i}" * 100},
             }
-
+            for i in range(100)
+        }
         models_file = llm_config_dir / "models.json"
         models_file.write_text(json.dumps(models_data, indent=2))
 

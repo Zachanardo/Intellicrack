@@ -121,7 +121,7 @@ class TestFridaBasicFunctionality:
         script.load()
 
         time.sleep(0.2)
-        assert len(messages) > 0
+        assert messages
         assert messages[0]['type'] == 'send'
         assert 'test' in messages[0]['payload']
 
@@ -184,7 +184,7 @@ class TestFridaProcessSpawning:
 
         time.sleep(0.5)
 
-        assert len(messages) > 0
+        assert messages
         payload = messages[0]['payload']
         assert payload['count'] > 0
         assert 'notepad.exe' in [n.lower() for n in payload['names']]
@@ -235,7 +235,7 @@ class TestFridaFunctionHooking:
         device.resume(pid)
         time.sleep(0.5)
 
-        assert len(messages) > 0
+        assert messages
         assert any('CreateFileW' in str(m) for m in messages)
 
         device.kill(pid)
@@ -284,7 +284,7 @@ class TestFridaFunctionHooking:
 
         assert len(messages) > 1
         import_messages = [m for m in messages if m.get('payload', {}).get('type') == 'import']
-        assert len(import_messages) > 0
+        assert import_messages
 
         device.kill(pid)
         session.detach()
@@ -318,7 +318,7 @@ class TestFridaMemoryOperations:
 
         time.sleep(0.3)
 
-        assert len(messages) > 0
+        assert messages
         payload = messages[0]['payload']
         assert payload['type'] == 'memory'
         assert payload['size'] == 16
@@ -359,7 +359,7 @@ class TestFridaMemoryOperations:
 
         time.sleep(0.3)
 
-        assert len(messages) > 0
+        assert messages
         assert messages[0]['payload']['type'] == 'scan'
 
         session.detach()
@@ -403,7 +403,7 @@ class TestFridaMemoryOperations:
         device.resume(pid)
         time.sleep(0.5)
 
-        assert len(messages) > 0
+        assert messages
         payload = messages[0]['payload']
         assert payload['type'] == 'protection'
 
@@ -434,9 +434,7 @@ class TestIntellicrackFridaManager:
         scripts = manager.list_available_scripts()
 
         assert isinstance(scripts, (list, dict))
-        if isinstance(scripts, dict):
-            assert len(scripts) > 0
-        elif isinstance(scripts, list):
+        if isinstance(scripts, (dict, list)):
             assert len(scripts) > 0
 
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
@@ -582,7 +580,7 @@ class TestFridaLicensingBypass:
         device.resume(pid)
         time.sleep(0.5)
 
-        assert len(messages) > 0
+        assert messages
 
         device.kill(pid)
         session.detach()
@@ -617,7 +615,7 @@ class TestFridaLicensingBypass:
 
         time.sleep(0.3)
 
-        assert len(messages) > 0
+        assert messages
         assert any('Time check' in str(m) for m in messages)
 
         session.detach()
@@ -670,7 +668,7 @@ class TestFridaLicensingBypass:
 
         time.sleep(0.3)
 
-        assert len(messages) > 0
+        assert messages
 
         session.detach()
 
@@ -787,8 +785,8 @@ class TestFridaConcurrency:
         for thread in threads:
             thread.join(timeout=5)
 
-        assert len(errors) == 0, f"Errors occurred: {errors}"
-        assert len(sessions) >= 1
+        assert not errors, f"Errors occurred: {errors}"
+        assert sessions
 
     @pytest.mark.skipif(not FRIDA_AVAILABLE, reason="Frida library not installed")
     def test_multiple_script_loading(self) -> None:

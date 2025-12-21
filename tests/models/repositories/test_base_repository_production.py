@@ -516,7 +516,7 @@ class TestModelDownload:
         )
 
         assert success is True
-        assert len(progress_updates) > 0
+        assert progress_updates
 
     def test_download_model_nonexistent(
         self, download_repo: MockAPIRepository, tmp_path: Path

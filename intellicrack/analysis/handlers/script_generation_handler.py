@@ -21,118 +21,256 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from PyQt6.QtWidgets import QWidget
+from __future__ import annotations
 
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from logging import Logger
+
+    from PyQt6.QtCore import QObject as QObjectType
+    from PyQt6.QtCore import QRunnable as QRunnableType
+    from PyQt6.QtCore import QThreadPool as QThreadPoolType
+    from PyQt6.QtCore import QTimer as QTimerType
+    from PyQt6.QtCore import pyqtSignal as pyqtSignalType
+    from PyQt6.QtGui import QFont as QFontType
+    from PyQt6.QtGui import QTextDocument as QTextDocumentType
+    from PyQt6.QtWidgets import QDialog as QDialogType
+    from PyQt6.QtWidgets import QFileDialog as QFileDialogType
+    from PyQt6.QtWidgets import QHBoxLayout as QHBoxLayoutType
+    from PyQt6.QtWidgets import QLabel as QLabelType
+    from PyQt6.QtWidgets import QMessageBox as QMessageBoxType
+    from PyQt6.QtWidgets import QPushButton as QPushButtonType
+    from PyQt6.QtWidgets import QTextEdit as QTextEditType
+    from PyQt6.QtWidgets import QVBoxLayout as QVBoxLayoutType
+    from PyQt6.QtWidgets import QWidget as QWidgetType
+
+    from ...ai.protection_aware_script_gen import (
+        ProtectionAwareScriptGenerator as ProtectionAwareScriptGeneratorType,
+    )
+    from ...protection.unified_protection_engine import (
+        UnifiedProtectionResult as UnifiedProtectionResultType,
+    )
 
 try:
     from PyQt6.QtCore import QObject, QRunnable, QThreadPool, QTimer, pyqtSignal
     from PyQt6.QtGui import QFont, QTextDocument
-    from PyQt6.QtWidgets import QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout
+    from PyQt6.QtWidgets import QDialog, QFileDialog, QHBoxLayout, QLabel, QMessageBox, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
     PYQT6_AVAILABLE = True
 except ImportError:
-    # Fallback classes when PyQt6 is not available
-    class QObject:
+
+    class QObject:  # type: ignore[no-redef]
         """Fallback QObject class when PyQt6 is not available."""
 
-    class QRunnable:
+        pass
+
+    class QRunnable:  # type: ignore[no-redef]
         """Fallback QRunnable class when PyQt6 is not available."""
 
         def run(self) -> None:
             """Execute the runnable task."""
 
-    class QThreadPool:
+    class QThreadPool:  # type: ignore[no-redef]
         """Fallback QThreadPool class when PyQt6 is not available."""
 
         @staticmethod
-        def global_instance() -> None:
+        def globalInstance() -> QThreadPool | None:
             """Return the global thread pool instance."""
-            return
+            return QThreadPool()
 
-    class QTimer:
+        def start(self, runnable: QRunnable) -> None:
+            """Start a runnable."""
+
+    class QTimer:  # type: ignore[no-redef]
         """Fallback QTimer class when PyQt6 is not available."""
 
-    def pyqtSignal(*args: object) -> None:
-        """Fallback pyqtSignal function when PyQt6 is not available."""
-        return
+        @staticmethod
+        def singleShot(msec: int, func: Any) -> None:
+            """Single shot timer."""
 
-    class QFont:
+    class pyqtSignal:  # type: ignore[no-redef]
+        """Fallback pyqtSignal class when PyQt6 is not available."""
+
+        def __init__(self, *args: Any) -> None:
+            """Initialize signal."""
+            self._callbacks: list[Any] = []
+
+        def emit(self, *args: Any) -> None:
+            """Emit signal."""
+            for callback in self._callbacks:
+                callback(*args)
+
+        def connect(self, callback: Any) -> None:
+            """Connect signal."""
+            self._callbacks.append(callback)
+
+    class QFont:  # type: ignore[no-redef]
         """Fallback QFont class when PyQt6 is not available."""
 
-    class QTextDocument:
+        class Weight:
+            """Font weight enumeration."""
+
+            Bold: int = 75
+
+    class QTextDocument:  # type: ignore[no-redef]
         """Fallback QTextDocument class when PyQt6 is not available."""
 
-    # Fallback widget classes
-    class QDialog:
+        class FindFlag:
+            """Find flags."""
+
+            FindWholeWords: int = 2
+
+    class QDialog:  # type: ignore[no-redef]
         """Fallback QDialog class when PyQt6 is not available."""
 
-    class QFileDialog:
+        def __init__(self, parent: Any = None) -> None:
+            """Initialize dialog."""
+
+        def setWindowTitle(self, title: str) -> None:
+            """Set window title."""
+
+        def setMinimumSize(self, width: int, height: int) -> None:
+            """Set minimum size."""
+
+        def setLayout(self, layout: Any) -> None:
+            """Set layout."""
+
+        def exec(self) -> int:
+            """Execute dialog."""
+            return 0
+
+        def accept(self) -> None:
+            """Accept dialog."""
+
+    class QFileDialog:  # type: ignore[no-redef]
         """Fallback QFileDialog class when PyQt6 is not available."""
 
-    class QHBoxLayout:
+        @staticmethod
+        def getSaveFileName(
+            parent: Any = None,
+            caption: str = "",
+            directory: str = "",
+            filter: str = "",
+        ) -> tuple[str, str]:
+            """Get save file name."""
+            return ("", "")
+
+    class QHBoxLayout:  # type: ignore[no-redef]
         """Fallback QHBoxLayout class when PyQt6 is not available."""
 
-    class QLabel:
+        def addWidget(self, widget: Any) -> None:
+            """Add widget."""
+
+        def addStretch(self) -> None:
+            """Add stretch."""
+
+    class QLabel:  # type: ignore[no-redef]
         """Fallback QLabel class when PyQt6 is not available."""
 
-    class QMessageBox:
+        def __init__(self, text: str = "") -> None:
+            """Initialize label."""
+
+        def setStyleSheet(self, style: str) -> None:
+            """Set style sheet."""
+
+        def setWordWrap(self, wrap: bool) -> None:
+            """Set word wrap."""
+
+    class QMessageBox:  # type: ignore[no-redef]
         """Fallback QMessageBox class when PyQt6 is not available."""
 
-    class QPushButton:
+        @staticmethod
+        def information(parent: Any, title: str, message: str) -> None:
+            """Show information message."""
+
+        @staticmethod
+        def critical(parent: Any, title: str, message: str) -> None:
+            """Show critical message."""
+
+        @staticmethod
+        def warning(parent: Any, title: str, message: str) -> None:
+            """Show warning message."""
+
+    class QPushButton:  # type: ignore[no-redef]
         """Fallback QPushButton class when PyQt6 is not available."""
 
-    class QTextEdit:
+        def __init__(self, text: str = "") -> None:
+            """Initialize button."""
+            self.clicked: pyqtSignal = pyqtSignal()
+
+        def setText(self, text: str) -> None:
+            """Set button text."""
+
+    class QTextEdit:  # type: ignore[no-redef]
         """Fallback QTextEdit class when PyQt6 is not available."""
 
-    class QVBoxLayout:
+        def setReadOnly(self, readonly: bool) -> None:
+            """Set read only."""
+
+        def setFont(self, font: Any) -> None:
+            """Set font."""
+
+        def setPlainText(self, text: str) -> None:
+            """Set plain text."""
+
+        def textCursor(self) -> Any:
+            """Get text cursor."""
+            return None
+
+        def document(self) -> Any:
+            """Get document."""
+            return None
+
+    class QVBoxLayout:  # type: ignore[no-redef]
         """Fallback QVBoxLayout class when PyQt6 is not available."""
+
+        def addWidget(self, widget: Any) -> None:
+            """Add widget."""
+
+        def addLayout(self, layout: Any) -> None:
+            """Add layout."""
+
+    class QWidget:  # type: ignore[no-redef]
+        """Fallback QWidget class when PyQt6 is not available."""
+
+        pass
 
     PYQT6_AVAILABLE = False
 
 try:
     from ...ai.protection_aware_script_gen import ProtectionAwareScriptGenerator
 except ImportError:
-    ProtectionAwareScriptGenerator = None
+    ProtectionAwareScriptGenerator = None  # type: ignore[assignment,misc]
 
 try:
     from ...protection.unified_protection_engine import UnifiedProtectionResult
 except ImportError:
-    UnifiedProtectionResult = None
+    UnifiedProtectionResult = None  # type: ignore[assignment,misc]
 
 try:
-    from ...utils.logger import get_logger
+    from ...utils.logger import get_logger as _get_logger
+
+    logger: Logger = _get_logger(__name__)
 except ImportError:
     import logging
 
-    def get_logger(name: str) -> logging.Logger:
-        """Create a logger instance with the given name.
-
-        Args:
-            name: The name for the logger instance
-
-        Returns:
-            A logging.Logger instance
-
-        """
-        return logging.getLogger(name)
-
-
-logger = get_logger(__name__)
+    logger = logging.getLogger(__name__)
 
 
 class ScriptGenerationWorkerSignals(QObject):
     """Signals for script generation worker."""
 
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(dict)
-    progress = pyqtSignal(str)
+    finished: pyqtSignal = pyqtSignal()
+    error: pyqtSignal = pyqtSignal(tuple)
+    result: pyqtSignal = pyqtSignal(dict)
+    progress: pyqtSignal = pyqtSignal(str)
 
 
 class ScriptGenerationWorker(QRunnable):
     """Worker thread for script generation."""
 
-    def __init__(self, file_path: str, script_type: str, protections: list) -> None:
+    def __init__(self, file_path: str, script_type: str, protections: list[str]) -> None:
         """Initialize the script generation worker.
 
         Args:
@@ -142,40 +280,43 @@ class ScriptGenerationWorker(QRunnable):
 
         """
         super().__init__()
-        self.file_path = file_path
-        self.script_type = script_type
-        self.protections = protections
-        self.signals = ScriptGenerationWorkerSignals()
+        self.file_path: str = file_path
+        self.script_type: str = script_type
+        self.protections: list[str] = protections
+        self.signals: ScriptGenerationWorkerSignals = ScriptGenerationWorkerSignals()
 
     def run(self) -> None:
         """Generate the bypass script with AI enhancement."""
         try:
             self.signals.progress.emit(f"Generating {self.script_type} script...")
 
-            generator = ProtectionAwareScriptGenerator()
-
-            # Generate script based on type
-            if self.script_type.lower() == "frida":
-                result = generator.generate_bypass_script(self.file_path, "frida")
-            elif self.script_type.lower() == "ghidra":
-                result = generator.generate_bypass_script(self.file_path, "ghidra")
-            else:
-                result = {
+            result: dict[str, Any]
+            if ProtectionAwareScriptGenerator is None:
+                result = {  # type: ignore[unreachable]
                     "success": False,
-                    "error": f"Unknown script type: {self.script_type}",
+                    "error": "ProtectionAwareScriptGenerator not available",
                 }
+            else:
+                generator = ProtectionAwareScriptGenerator()
 
-            # Apply AI enhancement if script generation was successful
+                if self.script_type.lower() == "frida":
+                    result = generator.generate_bypass_script(self.file_path, "frida")
+                elif self.script_type.lower() == "ghidra":
+                    result = generator.generate_bypass_script(self.file_path, "ghidra")
+                else:
+                    result = {
+                        "success": False,
+                        "error": f"Unknown script type: {self.script_type}",
+                    }
+
             if result.get("success", False):
                 self.signals.progress.emit("Applying AI enhancements...")
 
                 try:
                     from ...ai.protection_aware_script_gen import enhance_ai_script_generation
 
-                    # Enhance the script with AI capabilities
-                    enhanced_result = enhance_ai_script_generation(None, self.file_path)
+                    enhanced_result: dict[str, Any] = enhance_ai_script_generation(None, self.file_path)
 
-                    # If enhanced script was generated, use it
                     if enhanced_result.get("enhanced_script"):
                         result["script"] = enhanced_result["enhanced_script"]
                         result["ai_enhanced"] = True
@@ -183,17 +324,15 @@ class ScriptGenerationWorker(QRunnable):
                         self.signals.progress.emit("AI enhancement complete")
 
                 except ImportError:
-                    # AI enhancement not available, continue with base script
                     self.signals.progress.emit("AI enhancement unavailable, using base script")
                 except Exception as ai_error:
-                    # Log AI enhancement error but continue with base script
                     logger.warning("AI enhancement failed: %s", ai_error)
                     self.signals.progress.emit("AI enhancement failed, using base script")
 
             self.signals.result.emit(result)
 
         except Exception as e:
-            self.logger.exception("Exception in script_generation_handler: %s", e)
+            logger.exception("Exception in script_generation_handler: %s", e)
             import traceback
 
             self.signals.error.emit((type(e), e, traceback.format_exc()))
@@ -204,7 +343,7 @@ class ScriptGenerationWorker(QRunnable):
 class ScriptDisplayDialog(QDialog):
     """Dialog for displaying and managing generated scripts."""
 
-    def __init__(self, script_data: dict, parent: QWidget | None = None) -> None:
+    def __init__(self, script_data: dict[str, Any], parent: QWidget | None = None) -> None:
         """Initialize the script display dialog.
 
         Args:
@@ -213,7 +352,11 @@ class ScriptDisplayDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.script_data = script_data
+        self.script_data: dict[str, Any] = script_data
+        self.script_text: QTextEdit
+        self.copy_btn: QPushButton
+        self.save_btn: QPushButton
+        self.close_btn: QPushButton
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -296,13 +439,20 @@ class ScriptDisplayDialog(QDialog):
 
     def _apply_syntax_highlighting(self) -> None:
         """Apply basic syntax highlighting based on script type."""
-        from PyQt6.QtGui import QColor, QFont, QTextCharFormat
+        if not PYQT6_AVAILABLE:
+            return
 
-        # This is a simplified version - could be enhanced with proper syntax highlighter
-        script_type = self.script_data.get("type", "").lower()
+        from PyQt6.QtGui import QColor, QTextCharFormat
+        from PyQt6.QtGui import QFont as QFontReal
+        from PyQt6.QtGui import QTextDocument as QTextDocumentReal
 
-        if script_type == "frida":
-            # JavaScript highlighting for Frida
+        script_type = self.script_data.get("type", "")
+        if not isinstance(script_type, str):
+            return
+
+        script_type_lower = script_type.lower()
+
+        if script_type_lower == "frida":
             keywords = [
                 "function",
                 "var",
@@ -319,8 +469,7 @@ class ScriptDisplayDialog(QDialog):
                 "undefined",
                 "new",
             ]
-        elif script_type == "ghidra":
-            # Python highlighting for Ghidra
+        elif script_type_lower == "ghidra":
             keywords = [
                 "def",
                 "class",
@@ -341,58 +490,65 @@ class ScriptDisplayDialog(QDialog):
         else:
             keywords = []
 
-        # Simple keyword highlighting (could be improved with QSyntaxHighlighter)
         cursor = self.script_text.textCursor()
+        if cursor is None:
+            return  # type: ignore[unreachable]
 
-        # Keyword format
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(QColor(0, 0, 255))
-        keyword_format.setFontWeight(QFont.Bold)
+        keyword_format.setFontWeight(QFontReal.Weight.Bold)
 
-        # String format
         string_format = QTextCharFormat()
         string_format.setForeground(QColor(0, 128, 0))
 
-        # Comment format
         comment_format = QTextCharFormat()
         comment_format.setForeground(QColor(128, 128, 128))
         comment_format.setFontItalic(True)
 
-        # Apply keyword highlighting
         cursor.beginEditBlock()
 
-        # Highlight keywords
-        for keyword in keywords:
-            # Reset cursor position
-            cursor.setPosition(0)
+        doc = self.script_text.document()
+        if doc is not None:
+            for keyword in keywords:
+                cursor.setPosition(0)
 
-            # Find all occurrences of the keyword
-            while True:
-                cursor = self.script_text.document().find(
-                    keyword,
-                    cursor,
-                    QTextDocument.FindWholeWords,
-                )
-                if cursor.isNull():
-                    break
+                while True:
+                    cursor = doc.find(
+                        keyword,
+                        cursor,
+                        QTextDocumentReal.FindFlag.FindWholeWords,
+                    )
+                    if cursor.isNull():
+                        break
 
-                cursor.mergeCharFormat(keyword_format)
+                    cursor.mergeCharFormat(keyword_format)
 
         cursor.endEditBlock()
 
     def copy_script(self) -> None:
         """Copy script to clipboard."""
+        if not PYQT6_AVAILABLE:
+            return
+
         from PyQt6.QtWidgets import QApplication
 
-        QApplication.clipboard().setText(self.script_data.get("script", ""))
+        clipboard = QApplication.clipboard()
+        if clipboard is not None:
+            script_content = self.script_data.get("script", "")
+            if isinstance(script_content, str):
+                clipboard.setText(script_content)
 
-        # Show brief confirmation
         self.copy_btn.setText("Copied!")
         QTimer.singleShot(1500, lambda: self.copy_btn.setText("Copy to Clipboard"))
 
     def save_script(self) -> None:
         """Save script to file."""
-        script_type = self.script_data.get("type", "script").lower()
+        script_type_raw = self.script_data.get("type", "script")
+        if not isinstance(script_type_raw, str):
+            script_type_raw = "script"
+
+        script_type = script_type_raw.lower()
+
         if script_type == "frida":
             default_name = "bypass_script.js"
             file_filter = "JavaScript Files (*.js);;All Files (*.*)"
@@ -412,8 +568,12 @@ class ScriptDisplayDialog(QDialog):
 
         if file_path:
             try:
+                script_content = self.script_data.get("script", "")
+                if not isinstance(script_content, str):
+                    script_content = ""
+
                 with open(file_path, "w", encoding="utf-8") as f:
-                    f.write(self.script_data.get("script", ""))
+                    f.write(script_content)
 
                 QMessageBox.information(
                     self,
@@ -436,10 +596,9 @@ class ScriptGenerationHandler(QObject):
     Frida and Ghidra scripts for bypassing detected protections.
     """
 
-    # Signals
-    script_ready = pyqtSignal(dict)
-    script_error = pyqtSignal(str)
-    script_progress = pyqtSignal(str)
+    script_ready: pyqtSignal = pyqtSignal(dict)
+    script_error: pyqtSignal = pyqtSignal(str)
+    script_progress: pyqtSignal = pyqtSignal(str)
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the script generation handler.
@@ -449,14 +608,23 @@ class ScriptGenerationHandler(QObject):
 
         """
         super().__init__(parent)
-        self.thread_pool = QThreadPool.global_instance()
-        self.current_result: UnifiedProtectionResult | None = None
-        self.parent_widget = parent
+        thread_pool_instance = QThreadPool.globalInstance()
+        if thread_pool_instance is None:
+            thread_pool_instance = QThreadPool()
+        self.thread_pool: QThreadPool = thread_pool_instance
+        self.current_result: Any | None = None
+        self.parent_widget: QWidget | None = parent
 
-    def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
-        """Handle slot when protection analysis completes."""
+    def on_analysis_complete(self, result: Any) -> None:
+        """Handle slot when protection analysis completes.
+
+        Args:
+            result: The UnifiedProtectionResult from analysis.
+
+        """
         self.current_result = result
-        logger.info("Script generation handler received analysis for: %s", result.file_path)
+        if hasattr(result, "file_path"):
+            logger.info("Script generation handler received analysis for: %s", result.file_path)
 
     def generate_script(self, script_type: str = "frida", parent_widget: QWidget | None = None) -> None:
         """Generate a bypass script of the specified type.
@@ -470,18 +638,31 @@ class ScriptGenerationHandler(QObject):
             self.script_error.emit("No analysis result available")
             return
 
-        if not self.current_result.protections:
+        if not hasattr(self.current_result, "protections"):
+            self.script_error.emit("Analysis result has no protections attribute")
+            return
+
+        protections_list = self.current_result.protections
+        if not protections_list:
             self.script_error.emit("No protections detected to bypass")
             return
 
-        # Get protection list
-        protections = [p["name"] for p in self.current_result.protections]
+        if not hasattr(self.current_result, "file_path"):
+            self.script_error.emit("Analysis result has no file_path attribute")
+            return
 
-        # Start generation in background
+        protection_names: list[str] = []
+        if isinstance(protections_list, list):
+            for p in protections_list:
+                if isinstance(p, dict) and "name" in p:
+                    name = p["name"]
+                    if isinstance(name, str):
+                        protection_names.append(name)
+
         worker = ScriptGenerationWorker(
-            self.current_result.file_path,
+            str(self.current_result.file_path),
             script_type,
-            protections,
+            protection_names,
         )
 
         worker.signals.result.connect(
@@ -492,18 +673,23 @@ class ScriptGenerationHandler(QObject):
 
         self.thread_pool.start(worker)
 
-    def _on_script_ready(self, result: dict, parent_widget: QWidget | None = None) -> None:
-        """Handle script generation completion."""
-        if result["success"]:
-            # Emit signal
+    def _on_script_ready(self, result: dict[str, Any], parent_widget: QWidget | None = None) -> None:
+        """Handle script generation completion.
+
+        Args:
+            result: The script generation result dictionary.
+            parent_widget: Optional parent widget for dialogs.
+
+        """
+        if result.get("success", False):
             self.script_ready.emit(result)
 
-            # Show dialog if we have a parent widget
             if parent_widget:
                 dialog = ScriptDisplayDialog(result, parent_widget)
                 dialog.exec()
         else:
-            error_msg = result.get("error", "Unknown error during script generation")
+            error_msg_raw = result.get("error", "Unknown error during script generation")
+            error_msg = str(error_msg_raw) if error_msg_raw is not None else "Unknown error"
             self.script_error.emit(error_msg)
 
             if parent_widget:
@@ -514,11 +700,13 @@ class ScriptGenerationHandler(QObject):
                 )
 
     def _on_worker_error(self, error_tuple: tuple[type[BaseException], BaseException, str]) -> None:
-        """Handle worker thread errors."""
+        """Handle worker thread errors.
+
+        Args:
+            error_tuple: Tuple containing exception type, value, and traceback.
+
+        """
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Script generation failed: {exc_value}"
         logger.error("%s\n%s", error_msg, exc_traceback)
         self.script_error.emit(error_msg)
-
-
-# Import for QTimer

@@ -610,27 +610,21 @@ class R2LicenseAnalyzer:
                     "Patch hardware comparison logic",
                 ))
             elif lic_func.type == LicenseType.TIME_TRIAL:
-                strategies.extend(
-                    (
-                        "Freeze or extend trial period",
-                        "Patch time comparison to always pass",
-                    )
-                )
+                strategies.extend((
+                    "Freeze or extend trial period",
+                    "Patch time comparison to always pass",
+                ))
             elif lic_func.type == LicenseType.CRYPTO_SIGNATURE:
-                strategies.extend(
-                    (
-                        "Replace public key with known key",
-                        "Patch signature verification to succeed",
-                    )
-                )
+                strategies.extend((
+                    "Replace public key with known key",
+                    "Patch signature verification to succeed",
+                ))
             # Protection level specific
             if lic_func.protection_level == ProtectionLevel.ADVANCED:
-                strategies.extend(
-                    (
-                        "May require unpacking/devirtualization first",
-                        "Consider using dynamic patching with Frida",
-                    )
-                )
+                strategies.extend((
+                    "May require unpacking/devirtualization first",
+                    "Consider using dynamic patching with Frida",
+                ))
             lic_func.bypass_strategies = strategies
 
     def export_report(self, output_file: str = "license_analysis.json") -> None:

@@ -198,7 +198,7 @@ class TestAPIObfuscator(BaseIntellicrackTest):
         # Test with various ordinals
         test_ordinals = [1, 2, 5, 10]  # Common ordinals
 
-        for ordinal in test_ordinals:
+        for _ in test_ordinals:
             address = self.obfuscator.resolve_api(dll_name, "dummy", "ordinal_lookup")
             # Address could be None if ordinal doesn't exist
             if address is not None:
@@ -298,12 +298,9 @@ class TestAPIObfuscator(BaseIntellicrackTest):
 
         # Get a real API address to test with
         kernel32 = ctypes.windll.kernel32
-        get_tick_count_addr = kernel32.GetProcAddress(
-            kernel32.GetModuleHandleW("kernel32.dll"),
-            b"GetTickCount"
-        )
-
-        if get_tick_count_addr:
+        if get_tick_count_addr := kernel32.GetProcAddress(
+            kernel32.GetModuleHandleW("kernel32.dll"), b"GetTickCount"
+        ):
             # Test indirect call with no arguments
             result = self.obfuscator._indirect_call(get_tick_count_addr)
             assert result is not None  # GetTickCount returns tick count

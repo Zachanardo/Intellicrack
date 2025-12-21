@@ -377,10 +377,9 @@ def test_browse_button_connected_to_browse_plugin(dialog: PluginDialogBase) -> N
     browse_button = None
     for i in range(layout.count()):
         widget = layout.itemAt(i).widget()
-        if widget and hasattr(widget, "text") and callable(widget.text):
-            if "Browse" in widget.text():
-                browse_button = widget
-                break
+        if widget and hasattr(widget, "text") and callable(widget.text) and "Browse" in widget.text():
+            browse_button = widget
+            break
 
     assert browse_button is not None
 

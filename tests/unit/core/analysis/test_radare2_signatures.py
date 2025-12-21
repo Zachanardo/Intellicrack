@@ -189,7 +189,7 @@ class TestBinarySignatureAnalysisFunction(unittest.TestCase):
                 # Should either return None/empty results or handle gracefully
                 if results is not None:
                     self.assertIsInstance(results, dict)
-            except (FileNotFoundError, ValueError, OSError):
+            except (ValueError, OSError):
                 # Acceptable error handling
                 pass
             except Exception as e:
@@ -757,8 +757,9 @@ class TestAntiPlaceholderValidation(unittest.TestCase):
         results_comparison = []
         for binary_path in test_binaries:
             if os.path.exists(binary_path):
-                results = analyze_binary_signatures(binary_path, {"signature_formats": ["r2_patterns"]})
-                if results:
+                if results := analyze_binary_signatures(
+                    binary_path, {"signature_formats": ["r2_patterns"]}
+                ):
                     results_comparison.append(results)
 
         # Real analysis should produce different results for different binaries

@@ -58,7 +58,7 @@ except ImportError as e:
 
 pytestmark = pytest.mark.skipif(
     not CORE_ENGINE_AVAILABLE,
-    reason=f"Core engine not available: {IMPORT_ERROR if not CORE_ENGINE_AVAILABLE else ''}",
+    reason=f"Core engine not available: {'' if CORE_ENGINE_AVAILABLE else IMPORT_ERROR}",
 )
 
 
@@ -644,7 +644,7 @@ class TestEventBus:
         await event_bus.emit(expired_event)
         await asyncio.sleep(0.2)
 
-        assert received is False
+        assert not received
 
         await event_bus.stop()
 

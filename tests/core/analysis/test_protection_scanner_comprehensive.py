@@ -187,7 +187,7 @@ class TestDynamicSignatureExtractor:
         pe_path = tmp_path / "vmprotect_sample.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
@@ -201,11 +201,11 @@ class TestDynamicSignatureExtractor:
         coff_header += struct.pack("<H", 0x0102)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         struct.pack_into("<I", optional_header, 16, 0x1000)
 
         vmp_section = bytearray(40)
-        vmp_section[0:8] = b".vmp0\x00\x00\x00"
+        vmp_section[:8] = b".vmp0\x00\x00\x00"
         struct.pack_into("<I", vmp_section, 8, 4096)
         struct.pack_into("<I", vmp_section, 12, 0x1000)
         struct.pack_into("<I", vmp_section, 16, 4096)
@@ -213,7 +213,7 @@ class TestDynamicSignatureExtractor:
         struct.pack_into("<I", vmp_section, 36, 0xE00000E0)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 2048)
         struct.pack_into("<I", text_section, 12, 0x2000)
         struct.pack_into("<I", text_section, 16, 2048)
@@ -223,7 +223,9 @@ class TestDynamicSignatureExtractor:
         padding = bytearray(0x400 - 64 - len(pe_signature) - len(coff_header) - len(optional_header) - 80)
 
         vmp_code = bytearray(4096)
-        vmp_code[0:16] = b"\x60\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8b\xec\x83\xec\x50"
+        vmp_code[:16] = (
+            b"\x60\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8b\xec\x83\xec\x50"
+        )
         vmp_code[100:116] = b"\x64\xa1\x30\x00\x00\x00\x8b\x40\x0c\x8b\x40\x14\x8b\x00\x8b\x00"
 
         for i in range(500, 1000, 64):
@@ -253,7 +255,7 @@ class TestDynamicSignatureExtractor:
         pe_path = tmp_path / "upx_sample.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
@@ -267,10 +269,10 @@ class TestDynamicSignatureExtractor:
         coff_header += struct.pack("<H", 0x0102)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         upx0_section = bytearray(40)
-        upx0_section[0:8] = b"UPX0\x00\x00\x00\x00"
+        upx0_section[:8] = b"UPX0\x00\x00\x00\x00"
         struct.pack_into("<I", upx0_section, 8, 8192)
         struct.pack_into("<I", upx0_section, 12, 0x1000)
         struct.pack_into("<I", upx0_section, 16, 0)
@@ -278,7 +280,7 @@ class TestDynamicSignatureExtractor:
         struct.pack_into("<I", upx0_section, 36, 0x80000000)
 
         upx1_section = bytearray(40)
-        upx1_section[0:8] = b"UPX1\x00\x00\x00\x00"
+        upx1_section[:8] = b"UPX1\x00\x00\x00\x00"
         struct.pack_into("<I", upx1_section, 8, 4096)
         struct.pack_into("<I", upx1_section, 12, 0x3000)
         struct.pack_into("<I", upx1_section, 16, 4096)
@@ -286,7 +288,7 @@ class TestDynamicSignatureExtractor:
         struct.pack_into("<I", upx1_section, 36, 0xE0000040)
 
         rsrc_section = bytearray(40)
-        rsrc_section[0:8] = b".rsrc\x00\x00\x00"
+        rsrc_section[:8] = b".rsrc\x00\x00\x00"
         struct.pack_into("<I", rsrc_section, 8, 512)
         struct.pack_into("<I", rsrc_section, 12, 0x4000)
         struct.pack_into("<I", rsrc_section, 16, 512)
@@ -326,17 +328,17 @@ class TestDynamicSignatureExtractor:
         pe_path = tmp_path / "anti_debug_sample.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x0102)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 2048)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 2048)
@@ -347,7 +349,7 @@ class TestDynamicSignatureExtractor:
 
         code = bytearray(2048)
 
-        code[0:6] = b"\x64\xA1\x30\x00\x00\x00"
+        code[:6] = b"\x64\xA1\x30\x00\x00\x00"
         code[10:16] = b"\x8B\x40\x02\x85\xC0\x75\x05"
         code[50:52] = b"\x0F\x31"
         code[60:62] = b"\x0F\x31"
@@ -387,10 +389,10 @@ class TestDynamicSignatureExtractor:
 
         vmp_signatures = [sig for sig in signatures if sig.category == ProtectionCategory.PROTECTOR]
 
-        assert len(vmp_signatures) > 0
+        assert vmp_signatures
 
         section_sigs = [sig for sig in vmp_signatures if ".vmp" in sig.context.lower()]
-        assert len(section_sigs) > 0
+        assert section_sigs
 
     def test_extract_upx_signatures(
         self,
@@ -404,10 +406,10 @@ class TestDynamicSignatureExtractor:
 
         packer_signatures = [sig for sig in signatures if sig.category == ProtectionCategory.PACKER]
 
-        assert len(packer_signatures) > 0
+        assert packer_signatures
 
         upx_signatures = [sig for sig in packer_signatures if "upx" in sig.context.lower()]
-        assert len(upx_signatures) > 0
+        assert upx_signatures
 
     def test_extract_anti_debug_signatures(
         self,
@@ -421,13 +423,13 @@ class TestDynamicSignatureExtractor:
 
         anti_debug_sigs = [sig for sig in signatures if sig.category == ProtectionCategory.ANTI_DEBUG]
 
-        assert len(anti_debug_sigs) > 0
+        assert anti_debug_sigs
 
         rdtsc_sigs = [sig for sig in anti_debug_sigs if "rdtsc" in sig.context.lower() or b"\x0f\x31" in sig.pattern_bytes]
 
         peb_sigs = [sig for sig in anti_debug_sigs if b"\x64\xa1\x30\x00" in sig.pattern_bytes]
 
-        assert len(rdtsc_sigs) > 0 or len(peb_sigs) > 0
+        assert rdtsc_sigs or peb_sigs
 
     def test_extract_entropy_signatures(self, extractor: DynamicSignatureExtractor, tmp_path: Path) -> None:
         """Extractor detects high entropy regions indicating packing/encryption."""
@@ -448,7 +450,7 @@ class TestDynamicSignatureExtractor:
             and "entropy" in sig.context.lower()
         ]
 
-        assert len(entropy_sigs) > 0
+        assert entropy_sigs
 
         for sig in entropy_sigs:
             assert sig.confidence > 0.7
@@ -517,7 +519,7 @@ class TestDynamicSignatureExtractor:
 
         string_sigs = [sig for sig in signatures if "string" in sig.context.lower()]
 
-        assert len(string_sigs) > 0
+        assert string_sigs
 
         categories_found = {sig.category for sig in string_sigs}
 
@@ -542,17 +544,17 @@ class TestEnhancedProtectionScanner:
         binary_path = tmp_path / "vmprotect_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x0102)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         vmp_section = bytearray(40)
-        vmp_section[0:8] = b".vmp1\x00\x00\x00"
+        vmp_section[:8] = b".vmp1\x00\x00\x00"
         struct.pack_into("<I", vmp_section, 8, 8192)
         struct.pack_into("<I", vmp_section, 12, 0x1000)
         struct.pack_into("<I", vmp_section, 16, 8192)
@@ -560,7 +562,7 @@ class TestEnhancedProtectionScanner:
         struct.pack_into("<I", vmp_section, 36, 0xE00000E0)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 2048)
         struct.pack_into("<I", text_section, 12, 0x2000)
         struct.pack_into("<I", text_section, 16, 2048)
@@ -570,7 +572,9 @@ class TestEnhancedProtectionScanner:
         padding = bytearray(0x400 - 64 - len(pe_signature) - len(coff_header) - len(optional_header) - 80)
 
         vmp_code = bytearray(8192)
-        vmp_code[0:20] = b"\x60\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8B\xEC\x83\xEC\x50\xE8\x00\x00\x00"
+        vmp_code[:20] = (
+            b"\x60\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8b\xec\x83\xec\x50\xe8\x00\x00\x00"
+        )
 
         for i in range(100, 8000, 128):
             vmp_code[i : i + 32] = os.urandom(32)
@@ -591,17 +595,17 @@ class TestEnhancedProtectionScanner:
         binary_path = tmp_path / "themida_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 2, 0, 0, 0, 224, 0x0102)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         themida_section = bytearray(40)
-        themida_section[0:8] = b".themida"
+        themida_section[:8] = b".themida"
         struct.pack_into("<I", themida_section, 8, 16384)
         struct.pack_into("<I", themida_section, 12, 0x1000)
         struct.pack_into("<I", themida_section, 16, 16384)
@@ -609,7 +613,7 @@ class TestEnhancedProtectionScanner:
         struct.pack_into("<I", themida_section, 36, 0xE00000E0)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 2048)
         struct.pack_into("<I", text_section, 12, 0x5000)
         struct.pack_into("<I", text_section, 16, 2048)
@@ -640,17 +644,17 @@ class TestEnhancedProtectionScanner:
         binary_path = tmp_path / "multi_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x0102)
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 4096)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 4096)
@@ -661,7 +665,7 @@ class TestEnhancedProtectionScanner:
 
         code = bytearray(4096)
 
-        code[0:6] = b"\x64\xA1\x30\x00\x00\x00"
+        code[:6] = b"\x64\xA1\x30\x00\x00\x00"
         code[50:52] = b"\x0F\x31"
         code[100:108] = b"VMProtect\x00"
         code[200:208] = b"license_"
@@ -742,14 +746,14 @@ class TestEnhancedProtectionScanner:
         simple_binary = tmp_path / "simple.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x0102)
         optional_header = bytearray(224)
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
 
         padding = bytearray(0x400 - 64 - 4 - 20 - 224 - 40)
         code = bytearray(512)
@@ -856,7 +860,7 @@ class TestRealWorldProtectionDetection:
         binary_path = tmp_path / "packed_and_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
@@ -864,14 +868,14 @@ class TestRealWorldProtectionDetection:
         optional_header = bytearray(224)
 
         upx_section = bytearray(40)
-        upx_section[0:8] = b"UPX1\x00\x00\x00\x00"
+        upx_section[:8] = b"UPX1\x00\x00\x00\x00"
         struct.pack_into("<I", upx_section, 8, 4096)
         struct.pack_into("<I", upx_section, 12, 0x1000)
         struct.pack_into("<I", upx_section, 16, 4096)
         struct.pack_into("<I", upx_section, 20, 0x400)
 
         vmp_section = bytearray(40)
-        vmp_section[0:8] = b".vmp0\x00\x00\x00"
+        vmp_section[:8] = b".vmp0\x00\x00\x00"
         struct.pack_into("<I", vmp_section, 8, 4096)
         struct.pack_into("<I", vmp_section, 12, 0x2000)
         struct.pack_into("<I", vmp_section, 16, 4096)
@@ -880,11 +884,13 @@ class TestRealWorldProtectionDetection:
         padding = bytearray(0x400 - 64 - 4 - 20 - 224 - 80)
 
         upx_code = bytearray(4096)
-        upx_code[0:4] = b"UPX!"
+        upx_code[:4] = b"UPX!"
         upx_code[100:132] = b"\x60\xBE\x00\x00\x00\x00\x8D\xBE\x00\x00\xFF\xFF\x57\x83\xCD\xFF\xEB\x10\x90\x90\x90\x90\x8A\x06\x46\x88\x07\x47\x01\xDB\x75\x07"
 
         vmp_code = bytearray(4096)
-        vmp_code[0:16] = b"\x60\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8b\xec\x83\xec\x50"
+        vmp_code[:16] = (
+            b"\x60\x68\x00\x00\x00\x00\x68\x00\x00\x00\x00\x8b\xec\x83\xec\x50"
+        )
 
         binary_data = dos_header + pe_signature + coff_header + optional_header + upx_section + vmp_section + padding + upx_code + vmp_code
 
@@ -904,14 +910,14 @@ class TestRealWorldProtectionDetection:
         binary_path = tmp_path / "license_protected.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
         coff_header = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 224, 0x0102)
         optional_header = bytearray(224)
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 2048)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 2048)

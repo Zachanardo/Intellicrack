@@ -792,7 +792,7 @@ class TestSuccessRateAnalyzer:
 
         assert "error" not in comparison
         assert comparison["component1"]["success_rate"] > comparison["component2"]["success_rate"]
-        assert bool(comparison["significant_difference"]) is True
+        assert bool(comparison["significant_difference"])
         assert comparison["statistical_test"]["p_value"] < 0.05
 
     def test_analyzer_get_trend_analysis(self, analyzer: SuccessRateAnalyzer) -> None:
@@ -867,7 +867,7 @@ class TestSuccessRateAnalyzer:
 
     def test_analyzer_export_data_json(self, analyzer: SuccessRateAnalyzer, tmp_path: Path) -> None:
         """Analyzer exports data to JSON correctly."""
-        for i in range(50):
+        for _ in range(50):
             analyzer.log_event(
                 event_type=EventType.BYPASS_ATTEMPT,
                 outcome=OutcomeType.SUCCESS,
@@ -892,7 +892,7 @@ class TestSuccessRateAnalyzer:
 
     def test_analyzer_export_data_csv(self, analyzer: SuccessRateAnalyzer, tmp_path: Path) -> None:
         """Analyzer exports data to CSV correctly."""
-        for i in range(50):
+        for _ in range(50):
             analyzer.log_event(
                 event_type=EventType.BYPASS_ATTEMPT,
                 outcome=OutcomeType.SUCCESS,
@@ -915,7 +915,7 @@ class TestSuccessRateAnalyzer:
 
     def test_analyzer_caching(self, analyzer: SuccessRateAnalyzer) -> None:
         """Analyzer caches expensive computations correctly."""
-        for i in range(50):
+        for _ in range(50):
             analyzer.log_event(
                 event_type=EventType.BYPASS_ATTEMPT,
                 outcome=OutcomeType.SUCCESS,
@@ -1055,7 +1055,7 @@ class TestEdgeCases:
 
     def test_hundred_percent_success_rate(self, analyzer: SuccessRateAnalyzer) -> None:
         """Analyzer handles 100% success rate correctly."""
-        for i in range(100):
+        for _ in range(100):
             analyzer.log_event(
                 event_type=EventType.BYPASS_ATTEMPT,
                 outcome=OutcomeType.SUCCESS,
@@ -1071,7 +1071,7 @@ class TestEdgeCases:
 
     def test_zero_percent_success_rate(self, analyzer: SuccessRateAnalyzer) -> None:
         """Analyzer handles 0% success rate correctly."""
-        for i in range(100):
+        for _ in range(100):
             analyzer.log_event(
                 event_type=EventType.BYPASS_ATTEMPT,
                 outcome=OutcomeType.FAILURE,
@@ -1154,8 +1154,8 @@ class TestRealWorldScenarios:
         """Analyze keygen success rates with realistic data distribution."""
         np.random.seed(42)
 
-        for i in range(500):
-            base_success_rate = 0.85
+        base_success_rate = 0.85
+        for _ in range(500):
             noise = np.random.normal(0, 0.1)
             success = np.random.random() < (base_success_rate + noise)
 
@@ -1182,7 +1182,7 @@ class TestRealWorldScenarios:
         ]
 
         for category, component, success_rate in protections:
-            for i in range(200):
+            for _ in range(200):
                 outcome = OutcomeType.SUCCESS if np.random.random() < success_rate else OutcomeType.FAILURE
                 analyzer.log_event(
                     event_type=EventType.BYPASS_ATTEMPT,
@@ -1204,7 +1204,7 @@ class TestRealWorldScenarios:
         for day in range(30):
             daily_success_rate = 0.5 + (day / 30) * 0.3
 
-            for event_num in range(20):
+            for _ in range(20):
                 outcome = OutcomeType.SUCCESS if np.random.random() < daily_success_rate else OutcomeType.FAILURE
                 analyzer.log_event(
                     event_type=EventType.BYPASS_ATTEMPT,
@@ -1227,7 +1227,7 @@ class TestRealWorldScenarios:
         ]
 
         for stage_type, category, component, success_rate in workflow_stages:
-            for i in range(100):
+            for _ in range(100):
                 outcome = OutcomeType.SUCCESS if np.random.random() < success_rate else OutcomeType.FAILURE
                 analyzer.log_event(
                     event_type=stage_type,

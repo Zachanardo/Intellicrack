@@ -9,9 +9,10 @@ Licensed under GNU General Public License v3.0
 """
 
 import json
+from collections.abc import Callable, Iterable
 from datetime import date, datetime, time, timedelta
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 from intellicrack.utils.logger import get_logger
 
@@ -22,7 +23,7 @@ logger = get_logger(__name__)
 class DateTimeEncoder(json.JSONEncoder):
     """JSON encoder that handles datetime objects."""
 
-    def default(self, obj: object) -> dict[str, object]:  # type: ignore[arg-type, return-value]
+    def default(self, obj: object) -> Any:
         """Convert non-JSON-serializable objects to JSON-compatible formats.
 
         Args:
@@ -64,22 +65,22 @@ def datetime_decoder(dct: dict[str, object]) -> object:
     if "__type__" not in dct:
         return dct
 
-    obj_type = dct["__type__"]
-    value = dct["value"]
+    obj_type: object = dct["__type__"]
+    value: object = dct["value"]
 
-    if obj_type == "datetime":
+    if obj_type == "datetime" and isinstance(value, str):
         return datetime.fromisoformat(value)
-    if obj_type == "date":
+    if obj_type == "date" and isinstance(value, str):
         return date.fromisoformat(value)
-    if obj_type == "time":
+    if obj_type == "time" and isinstance(value, str):
         return time.fromisoformat(value)
-    if obj_type == "timedelta":
+    if obj_type == "timedelta" and isinstance(value, (int, float)):
         return timedelta(seconds=value)
-    if obj_type == "Path":
+    if obj_type == "Path" and isinstance(value, str):
         return Path(value)
-    if obj_type == "bytes":
+    if obj_type == "bytes" and isinstance(value, str):
         return bytes.fromhex(value)
-    if obj_type == "set":
+    if obj_type == "set" and isinstance(value, Iterable):
         return set(value)
     if obj_type == "object":
         logger.warning("Cannot deserialize custom object of type %s", dct.get("class", "unknown"))
@@ -88,7 +89,7 @@ def datetime_decoder(dct: dict[str, object]) -> object:
     return dct
 
 
-def dumps(obj: object, **kwargs: object) -> str:
+def dumps(obj: object, **kwargs: Any) -> str:
     """Serialize object to JSON string with datetime support.
 
     Args:
@@ -104,7 +105,7 @@ def dumps(obj: object, **kwargs: object) -> str:
     return json.dumps(obj, **kwargs)
 
 
-def dump(obj: object, fp: TextIO, **kwargs: object) -> None:
+def dump(obj: object, fp: TextIO, **kwargs: Any) -> None:
     """Serialize object to JSON file with datetime support.
 
     Args:
@@ -118,7 +119,7 @@ def dump(obj: object, fp: TextIO, **kwargs: object) -> None:
     json.dump(obj, fp, **kwargs)
 
 
-def loads(s: str, **kwargs: object) -> object:
+def loads(s: str, **kwargs: Any) -> object:
     """Deserialize JSON string to Python object with datetime support.
 
     Args:
@@ -133,7 +134,7 @@ def loads(s: str, **kwargs: object) -> object:
     return json.loads(s, **kwargs)
 
 
-def load(fp: TextIO, **kwargs: object) -> object:
+def load(fp: TextIO, **kwargs: Any) -> object:
     """Deserialize JSON file to Python object with datetime support.
 
     Args:
@@ -175,6 +176,69 @@ def safe_serialize(obj: object, filepath: Path, use_pickle: bool = False) -> Non
                 pickle.dump(obj, f)
 
 
+class _RestrictedUnpickler:
+    """Custom unpickler that restricts classes to a whitelist for security."""
+
+    @staticmethod
+    def create_unpickler(file_obj: Any) -> Any:
+        """Create a restricted unpickler instance.
+
+        Args:
+            file_obj: File object for unpickling.
+
+        Returns:
+            Restricted unpickler instance.
+
+        """
+        import pickle  # noqa: S403
+
+        class SafeUnpickler(pickle.Unpickler):  # noqa: S301
+            def find_class(self, module: str, name: str) -> type[Any]:
+                """Restrict unpickling to safe classes from whitelisted modules.
+
+                Args:
+                    module: Module name.
+                    name: Class name.
+
+                Returns:
+                    The class object.
+
+                Raises:
+                    pickle.UnpicklingError: If the class is not whitelisted.
+
+                """
+                if module in {
+                    "builtins",
+                    "collections",
+                    "datetime",
+                } and name in {
+                    "dict",
+                    "list",
+                    "tuple",
+                    "set",
+                    "str",
+                    "int",
+                    "float",
+                    "bool",
+                    "NoneType",
+                    "OrderedDict",
+                    "defaultdict",
+                    "deque",
+                    "datetime",
+                    "date",
+                    "time",
+                    "timedelta",
+                }:
+                    module_obj: Any = __import__(module, level=0)
+                    cls: type[Any] = getattr(module_obj, name)
+                    return cls
+                error_msg = f"Global '{module}.{name}' is forbidden"
+                logger.error(error_msg)
+                raise pickle.UnpicklingError(error_msg)
+
+        return SafeUnpickler(file_obj)
+
+
 def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
     """Safely deserialize object from file.
 
@@ -187,114 +251,18 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
 
     """
     if use_pickle:
-        import pickle  # noqa: S403
-
         logger.warning("Loading pickle file (security risk) from %s", filepath)
         with open(filepath, "rb") as f:
-            # Use a custom Unpickler to restrict what can be unpickled
-
-            class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-                def find_class(self, module: str, name: str) -> type:
-                    """Restrict unpickling to safe classes from whitelisted modules.
-
-                    Args:
-                        module: Module name.
-                        name: Class name.
-
-                    Returns:
-                        The class object.
-
-                    Raises:
-                        pickle.UnpicklingError: If the class is not whitelisted.
-
-                    """
-                    # Only allow safe classes from specific modules
-                    if module in {
-                        "builtins",
-                        "collections",
-                        "datetime",
-                    } and name in {
-                        "dict",
-                        "list",
-                        "tuple",
-                        "set",
-                        "str",
-                        "int",
-                        "float",
-                        "bool",
-                        "NoneType",
-                        "OrderedDict",
-                        "defaultdict",
-                        "deque",
-                        "datetime",
-                        "date",
-                        "time",
-                        "timedelta",
-                    }:
-                        return getattr(__import__(module, level=0), name)
-                    # For other cases, raise an exception
-                    error_msg = f"Global '{module}.{name}' is forbidden"
-                    logger.error(error_msg)
-                    raise pickle.UnpicklingError(error_msg)
-
-            unpickler = RestrictedUnpickler(f)
+            unpickler = _RestrictedUnpickler.create_unpickler(f)
             return unpickler.load()
     else:
         try:
-            with open(filepath) as f:
+            with open(filepath, encoding="utf-8") as f:
                 return load(f)
         except (json.JSONDecodeError, UnicodeDecodeError):
             logger.warning("JSON deserialization failed, trying pickle from %s", filepath)
-            import pickle  # noqa: S403
-
             with open(filepath, "rb") as f:
-                # Use a custom Unpickler to restrict what can be unpickled
-
-                class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
-                    def find_class(self, module: str, name: str) -> type:
-                        """Restrict unpickling to safe classes from whitelisted modules.
-
-                        Args:
-                            module: Module name.
-                            name: Class name.
-
-                        Returns:
-                            The class object.
-
-                        Raises:
-                            pickle.UnpicklingError: If the class is not whitelisted.
-
-                        """
-                        # Only allow safe classes from specific modules
-                        if module in {
-                            "builtins",
-                            "collections",
-                            "datetime",
-                        } and name in {
-                            "dict",
-                            "list",
-                            "tuple",
-                            "set",
-                            "str",
-                            "int",
-                            "float",
-                            "bool",
-                            "NoneType",
-                            "OrderedDict",
-                            "defaultdict",
-                            "deque",
-                            "datetime",
-                            "date",
-                            "time",
-                            "timedelta",
-                        }:
-                            return getattr(__import__(module, level=0), name)
-                        # For other cases, raise an exception
-                        error_msg = f"Global '{module}.{name}' is forbidden"
-                        logger.exception(error_msg)
-                        raise pickle.UnpicklingError(error_msg) from None
-
-                unpickler = RestrictedUnpickler(f)
+                unpickler = _RestrictedUnpickler.create_unpickler(f)
                 return unpickler.load()
 
 

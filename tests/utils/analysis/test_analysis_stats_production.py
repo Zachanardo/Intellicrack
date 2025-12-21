@@ -420,7 +420,7 @@ class TestPerformanceTracker:
         """Performance tracker calculates average times correctly."""
         tracker = PerformanceTracker()
 
-        for i in range(5):
+        for _ in range(5):
             tracker.start_operation("check")
             time.sleep(0.02)
             tracker.end_operation("check", item_count=2)

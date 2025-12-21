@@ -3113,13 +3113,13 @@ exit 0
         if headless or not self.config.get("graphics_enabled", False):
             cmd.extend(["-nographic"])
         else:
-            vnc_port_val = self.config.get('vnc_port', 5900)
+            vnc_port_val = self.config.get("vnc_port", 5900)
             vnc_port: int = int(vnc_port_val) if isinstance(vnc_port_val, (int, float, str)) else 5900
             cmd.extend(["-vnc", f":{vnc_port - 5900}"])
 
         # Network configuration
         if self.config.get("network_enabled", True):
-            ssh_port_val = self.config.get('ssh_port', 2222)
+            ssh_port_val = self.config.get("ssh_port", 2222)
             ssh_port: int = int(ssh_port_val) if isinstance(ssh_port_val, (int, float, str)) else 2222
             cmd.extend(
                 [
@@ -3637,12 +3637,7 @@ exit 0
 
         """
         return next(
-            (
-                snapshot
-                for snapshot in self.snapshots.values()
-                if snapshot.vm_process is not None
-                and snapshot.vm_process.poll() is None
-            ),
+            (snapshot for snapshot in self.snapshots.values() if snapshot.vm_process is not None and snapshot.vm_process.poll() is None),
             None,
         )
 

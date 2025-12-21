@@ -65,21 +65,17 @@ class TestBaseNetworkAnalyzer:
         """Generate a test PCAP file with various protocol traffic."""
         pcap_path = tmp_path / "test_traffic.pcap"
 
-        # Create packets with different protocols
-        packets = []
-
         # HTTP license check request
         http_packet = Ether()/IP(dst="license.example.com")/TCP(dport=80)/\
-                     "GET /validate?key=XXXX-YYYY-ZZZZ HTTP/1.1\r\nHost: license.example.com\r\n\r\n"
-        packets.append(http_packet)
-
+                         "GET /validate?key=XXXX-YYYY-ZZZZ HTTP/1.1\r\nHost: license.example.com\r\n\r\n"
+        packets = [http_packet]
         # HTTPS/TLS license validation
         tls_packet = Ether()/IP(dst="secure.license.com")/TCP(dport=443)
         packets.append(tls_packet)
 
         # Custom protocol on non-standard port
         custom_packet = Ether()/IP(dst="10.0.0.1")/TCP(dport=31337)/\
-                       struct.pack(">HH16s", 0x4C49, 0x4345, b"LICENSE_CHECK_V2")
+                           struct.pack(">HH16s", 0x4C49, 0x4345, b"LICENSE_CHECK_V2")
         packets.append(custom_packet)
 
         # DNS query for license server
@@ -108,7 +104,7 @@ class TestBaseNetworkAnalyzer:
                     response = struct.pack(">HH32s", 0x4C43, 0x524B, os.urandom(32))
                     client.send(response)
                     client.close()
-                except:
+                except Exception:
                     break
 
         server_thread = threading.Thread(target=handle_client, daemon=True)
@@ -175,7 +171,7 @@ class TestBaseNetworkAnalyzer:
         capture_thread.join(timeout=5.0)
 
         # Verify packets were captured
-        assert len(captured_packets) > 0, "No packets captured"
+        assert captured_packets, "No packets captured"
 
         # Verify licensing communication was detected
         license_detected = any(
@@ -200,8 +196,9 @@ class TestBaseNetworkAnalyzer:
 
         # Verify common protocols are detected
         expected_protocols = {'HTTP', 'TCP', 'UDP', 'DNS'}
-        assert len(protocols_detected.intersection(expected_protocols)) > 0, \
-               f"Failed to detect expected protocols. Found: {protocols_detected}"
+        assert protocols_detected.intersection(
+            expected_protocols
+        ), f"Failed to detect expected protocols. Found: {protocols_detected}"
 
     def test_licensing_communication_detection(self, analyzer):
         """Test detection of licensing-specific communication patterns."""
@@ -261,7 +258,7 @@ class TestBaseNetworkAnalyzer:
                not iface.startswith('vEthernet')
         ]
 
-        if len(physical_interfaces) < 1:
+        if not physical_interfaces:
             pytest.skip("No suitable physical interfaces for testing")
 
         # Test analyzer can handle multiple interfaces
@@ -284,7 +281,7 @@ class TestBaseNetworkAnalyzer:
         for packet, should_analyze in test_cases:
             result = handler(bytes(packet))
             if should_analyze:
-                assert result is not None, f"Failed to analyze relevant packet"
+                assert result is not None, "Failed to analyze relevant packet"
             # Non-relevant packets may or may not return results based on config
 
     def test_protocol_state_tracking(self, analyzer):
@@ -299,17 +296,16 @@ class TestBaseNetworkAnalyzer:
         # Process handshake
         results = []
         for packet in [syn, syn_ack, ack]:
-            result = handler(bytes(packet))
-            if result:
+            if result := handler(bytes(packet)):
                 results.append(result)
 
         # Verify connection state tracking
-        assert len(results) > 0, "No state tracking results"
+        assert results, "No state tracking results"
 
         # Check if final state shows established connection
         final_state = results[-1].get('connection_state')
         assert final_state in ['ESTABLISHED', 'CONNECTED', None], \
-               f"Unexpected connection state: {final_state}"
+                   f"Unexpected connection state: {final_state}"
 
     def test_license_server_endpoint_extraction(self, analyzer):
         """Test extraction of license server endpoints from traffic."""
@@ -345,20 +341,18 @@ class TestBaseNetworkAnalyzer:
         # Analyze original
         original_results = []
         for packet in original_packets:
-            result = handler(bytes(packet))
-            if result:
+            if result := handler(bytes(packet)):
                 original_results.append(result)
 
         # Replay analysis should produce consistent results
         replay_results = []
         for packet in original_packets:
-            result = handler(bytes(packet))
-            if result:
+            if result := handler(bytes(packet)):
                 replay_results.append(result)
 
         # Results should be consistent
         assert len(replay_results) == len(original_results), \
-               "Replay analysis produced different number of results"
+                   "Replay analysis produced different number of results"
 
     def test_custom_protocol_detection(self, analyzer):
         """Test detection of custom/proprietary licensing protocols."""
@@ -441,8 +435,8 @@ class TestBaseNetworkAnalyzer:
             t.join()
 
         # Should complete without errors
-        assert len(errors) == 0, f"Thread safety errors: {errors}"
-        assert len(results) > 0, "No results from concurrent analysis"
+        assert not errors, f"Thread safety errors: {errors}"
+        assert results, "No results from concurrent analysis"
 
     def test_winpcap_integration(self, analyzer):
         """Test integration with WinPcap/Npcap on Windows."""
@@ -547,7 +541,7 @@ class TestBaseNetworkAnalyzerIntegration:
 
                     ssl_client.send(response)
                     ssl_client.close()
-                except:
+                except Exception:
                     break
 
         thread = threading.Thread(target=handle_license_request, daemon=True)
@@ -603,7 +597,7 @@ class TestBaseNetworkAnalyzerIntegration:
         capture_thread.join()
 
         # Verify complete flow was captured
-        assert len(captured_flow) > 0, "No license flow captured"
+        assert captured_flow, "No license flow captured"
 
         # Check for key elements
         flow_elements = {
@@ -656,7 +650,7 @@ class TestBaseNetworkAnalyzerIntegration:
                 bypass_detected.append(result)
 
         # Should detect bypass attempts
-        assert len(bypass_detected) > 0, "No bypass attempts detected"
+        assert bypass_detected, "No bypass attempts detected"
 
     def _generate_self_signed_cert(self, cert_path):
         """Generate a self-signed certificate for testing."""

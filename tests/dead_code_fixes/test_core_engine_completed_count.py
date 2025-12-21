@@ -4,6 +4,7 @@ This tests that the completed_count variable is properly tracked and logged
 during async handler execution using asyncio.as_completed.
 """
 
+
 from __future__ import annotations
 
 import asyncio
@@ -13,9 +14,6 @@ from typing import TYPE_CHECKING, Any, Callable
 from unittest.mock import MagicMock
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class MockEvent:
@@ -83,7 +81,8 @@ class TestCompletedCountLogging:
                 completed_count += 1
 
         assert completed_count == 3
-        exception_count = sum(1 for r in results if isinstance(r, Exception))
+        exception_count = sum(bool(isinstance(r, Exception))
+                          for r in results)
         assert exception_count == 1
 
     @pytest.mark.asyncio
@@ -164,10 +163,9 @@ class TestCompletedCountLogging:
     @pytest.mark.asyncio
     async def test_empty_tasks_list_handling(self) -> None:
         """Test handling when no tasks are created."""
-        tasks: list[asyncio.Task[Any]] = []
         completed_count = 0
 
-        if tasks:
+        if tasks := []:
             for completed_task in asyncio.as_completed(tasks, timeout=5.0):
                 await completed_task
                 completed_count += 1
@@ -211,8 +209,6 @@ class TestCompletedCountLogging:
     @pytest.mark.asyncio
     async def test_handler_type_tracking(self) -> None:
         """Test that handler types are tracked for error reporting."""
-        handler_types: list[type] = []
-
         class AnalysisHandler:
             async def __call__(self, event: MockEvent) -> str:
                 return "analyzed"
@@ -223,9 +219,7 @@ class TestCompletedCountLogging:
 
         handlers = [AnalysisHandler(), PatchHandler()]
 
-        for handler in handlers:
-            handler_types.append(type(handler))
-
+        handler_types: list[type] = [type(handler) for handler in handlers]
         assert handler_types[0].__name__ == "AnalysisHandler"
         assert handler_types[1].__name__ == "PatchHandler"
 

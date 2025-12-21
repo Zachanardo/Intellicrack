@@ -477,7 +477,7 @@ class TestNetworkForensicsEngine:
 
         # Should detect base64 patterns
         base64_artifacts = [a for a in artifacts if a['type'] == 'Base64_Data']
-        assert len(base64_artifacts) > 0
+        assert base64_artifacts
 
         # Should extract IP addresses from JSON config
         ip_artifacts = [a for a in artifacts if a['type'] == 'IP_Address']

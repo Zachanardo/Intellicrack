@@ -486,9 +486,7 @@ class SystemMonitorWidget(QWidget):
             "cpu_average": sum(cpu_values) / len(cpu_values) if cpu_values else 0,
             "cpu_max": max(cpu_values, default=0),
             "memory_current": memory_values[-1] if memory_values else 0,
-            "memory_average": (
-                sum(memory_values) / len(memory_values) if memory_values else 0
-            ),
+            "memory_average": (sum(memory_values) / len(memory_values) if memory_values else 0),
             "memory_max": max(memory_values, default=0),
         }
 

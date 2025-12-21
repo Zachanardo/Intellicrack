@@ -59,7 +59,7 @@ class TestBinaryAnalysisWorkflow:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -157,8 +157,6 @@ class TestBinaryAnalysisWorkflow:
                     assert 'method' in strategy, "Each strategy must have a method"
                     assert 'confidence' in strategy, "Each strategy must have confidence"
                     assert 'description' in strategy, "Each strategy must have description"
-        else:
-            assert True, "No protections detected - valid result for test binary"
 
     def test_analysis_to_ai_script_generation_workflow(self, test_pe_file, app_context):
         """Test REAL analysis results to AI script generation workflow."""
@@ -252,7 +250,7 @@ class TestBinaryAnalysisWorkflow:
 
         end_time = time.time()
 
-        assert len(errors) == 0, f"Concurrent analysis errors: {errors}"
+        assert not errors, f"Concurrent analysis errors: {errors}"
         assert len(results) == 3, f"Expected 3 results, got {len(results)}"
         assert end_time - start_time < 45.0, "Concurrent analysis should complete under 45 seconds"
 

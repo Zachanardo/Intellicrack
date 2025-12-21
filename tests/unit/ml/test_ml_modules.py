@@ -92,7 +92,7 @@ class TestBinaryFeatureExtractor:
         histogram = extractor.extract_opcode_histogram()
 
         assert histogram is not None
-        assert isinstance(histogram, dict) or isinstance(histogram, np.ndarray)
+        assert isinstance(histogram, (dict, np.ndarray))
 
         if isinstance(histogram, dict):
             assert len(histogram) > 0, "Should extract opcodes from real binary"
@@ -125,7 +125,7 @@ class TestBinaryFeatureExtractor:
         api_sequences = extractor.extract_api_sequences()
 
         assert api_sequences is not None
-        assert isinstance(api_sequences, list) or isinstance(api_sequences, dict)
+        assert isinstance(api_sequences, (list, dict))
 
     def test_calculate_section_entropy_on_system_dll(self, kernel32_path: str) -> None:
         """Test section entropy calculation on Windows DLL."""
@@ -134,7 +134,7 @@ class TestBinaryFeatureExtractor:
         entropy = extractor.calculate_section_entropy()
 
         assert entropy is not None
-        assert isinstance(entropy, dict) or isinstance(entropy, list)
+        assert isinstance(entropy, (dict, list))
 
         if isinstance(entropy, dict):
             for section_name, entropy_value in entropy.items():
@@ -148,7 +148,7 @@ class TestBinaryFeatureExtractor:
         string_features = extractor.extract_string_features()
 
         assert string_features is not None
-        assert isinstance(string_features, dict) or isinstance(string_features, list)
+        assert isinstance(string_features, (dict, list))
 
     def test_extract_all_features_on_notepad(self, notepad_path: str) -> None:
         """Test comprehensive feature extraction on notepad.exe."""
@@ -188,7 +188,7 @@ class TestBinaryFeatureExtractor:
             except Exception:
                 pass
 
-        assert len(results) > 0, "Should successfully extract features from at least one binary"
+        assert results, "Should successfully extract features from at least one binary"
 
         for binary_name, features in results:
             assert features is not None
@@ -199,7 +199,7 @@ class TestBinaryFeatureExtractor:
         features = extract_features_for_ml(notepad_path)
 
         assert features is not None
-        assert isinstance(features, dict) or isinstance(features, np.ndarray)
+        assert isinstance(features, (dict, np.ndarray))
 
     def test_feature_extraction_error_handling_nonexistent(self) -> None:
         """Test error handling for nonexistent binary."""
@@ -209,12 +209,10 @@ class TestBinaryFeatureExtractor:
             if extractor.data is not None:
                 features = extractor.extract_all_features()
                 assert features is not None
-            else:
-                assert True
         except FileNotFoundError:
-            assert True
+            pass
         except Exception:
-            assert True
+            pass
 
     def test_feature_extraction_on_large_dll(self) -> None:
         """Test performance on larger Windows DLL."""
@@ -267,7 +265,7 @@ class TestPatternEvolutionTracker:
         result = tracker.detect(binary_data)
 
         assert result is not None
-        assert isinstance(result, dict) or isinstance(result, list)
+        assert isinstance(result, (dict, list))
 
         tracker.shutdown()
 
@@ -279,8 +277,6 @@ class TestPatternEvolutionTracker:
         )
 
         tracker.evolve_generation()
-
-        assert True
 
         tracker.shutdown()
 
@@ -294,7 +290,7 @@ class TestPatternEvolutionTracker:
         families = tracker.cluster_into_families()
 
         assert families is not None
-        assert isinstance(families, dict) or isinstance(families, list)
+        assert isinstance(families, (dict, list))
 
         tracker.shutdown()
 
@@ -331,8 +327,6 @@ class TestPatternEvolutionTracker:
 
         tracker2.import_patterns(str(export_file))
 
-        assert True
-
         tracker.shutdown()
         tracker2.shutdown()
 
@@ -344,8 +338,6 @@ class TestPatternEvolutionTracker:
         )
 
         tracker.feedback(pattern_id=0, success=True, metrics={"accuracy": 0.85})
-
-        assert True
 
         tracker.shutdown()
 

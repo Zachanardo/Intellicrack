@@ -66,10 +66,7 @@ class CleanupVerifier:
             b'XXXXXXXX',
         ]
 
-        for marker in temp_markers:
-            if marker in binary_data:
-                return False
-        return True
+        return all(marker not in binary_data for marker in temp_markers)
 
     @staticmethod
     def verify_structure_integrity(binary_data: bytes) -> bool:
@@ -77,7 +74,7 @@ class CleanupVerifier:
         if len(binary_data) < 64:
             return False
 
-        if binary_data[0:2] != b'MZ':
+        if binary_data[:2] != b'MZ':
             return False
 
         pe_offset_bytes = binary_data[60:64]
@@ -88,10 +85,7 @@ class CleanupVerifier:
         if pe_offset >= len(binary_data) - 4:
             return False
 
-        if binary_data[pe_offset:pe_offset+2] != b'PE':
-            return False
-
-        return True
+        return binary_data[pe_offset:pe_offset+2] == b'PE'
 
     @staticmethod
     def count_modifications(original: bytes, current: bytes) -> int:
@@ -99,8 +93,8 @@ class CleanupVerifier:
         if len(original) != len(current):
             return abs(len(original) - len(current))
 
-        differences = sum(1 for a, b in zip(original, current) if a != b)
-        return differences
+        return sum(bool(a != b)
+               for a, b in zip(original, current))
 
 
 @pytest.fixture
@@ -225,8 +219,7 @@ def test_partial_bypass_cleanup() -> None:
         current = arxan_bypass.apply_bypass()
         success_count += 1
     except Exception:
-        restored = state_manager.rollback()
-        if restored:
+        if restored := state_manager.rollback():
             current = restored
 
     verifier = CleanupVerifier()

@@ -10,17 +10,48 @@
  * @tags strings,extraction,analysis,patterns,encoding,export
  */
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.data.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.mem.*;
-import ghidra.program.model.symbol.*;
-import ghidra.program.model.util.*;
-import java.io.*;
-import java.nio.charset.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressRange;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSetView;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.DataType;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Data;
+import ghidra.program.model.listing.DataIterator;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.Program;
+import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
+import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.*;
-import java.util.regex.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Locale;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class SimpleStringExtractor extends GhidraScript {
 
@@ -205,6 +236,30 @@ public class SimpleStringExtractor extends GhidraScript {
     categorizedStrings.put("User Interface", new ArrayList<>());
     categorizedStrings.put("Version Info", new ArrayList<>());
     categorizedStrings.put("Other", new ArrayList<>());
+
+    initializeConstantsValidation();
+  }
+
+  private void initializeConstantsValidation() {
+    Program program = currentProgram;
+    Charset utf8 = StandardCharsets.UTF_8;
+    Charset charset = Charset.defaultCharset();
+
+    printf("  Constants validation: TIME_DIVISOR=%.1f, STRING_DISPLAY_LIMIT=%d%n",
+        TIME_DIVISOR, STRING_DISPLAY_LIMIT);
+    printf("  Display settings: STRING_DISPLAY_SHORT=%d, PROGRESS_UPDATE_INTERVAL=%d%n",
+        STRING_DISPLAY_SHORT, PROGRESS_UPDATE_INTERVAL);
+    printf("  Processing thresholds: BULK_OPERATION_THRESHOLD=%d, MIN_STRING_LENGTH=%d%n",
+        BULK_OPERATION_THRESHOLD, MIN_STRING_LENGTH);
+    printf("  Display limits: MAX_DISPLAY_LENGTH=%d, MAX_DISPLAY_SHORT=%d%n",
+        MAX_DISPLAY_LENGTH, MAX_DISPLAY_SHORT);
+    printf("  Entropy thresholds: HIGH=%.2f, MEDIUM=%.2f%n",
+        ENTROPY_HIGH_THRESHOLD, ENTROPY_MEDIUM_THRESHOLD);
+    printf("  Analysis settings: FIELD_COMPONENT_THRESHOLD=%d%n", FIELD_COMPONENT_THRESHOLD);
+    printf("  Memory sizes: HEX_ADDRESS_SIZE=0x%X, HEX_SIZE_SMALL=0x%X, HEX_SIZE_TINY=0x%X%n",
+        HEX_ADDRESS_SIZE, HEX_SIZE_SMALL, HEX_SIZE_TINY);
+    printf("  Program: %s, Default charset: %s, UTF-8: %s%n",
+        program.getName(), charset.displayName(), utf8.displayName());
   }
 
   private ExtractionConfig getExtractionConfiguration() {
@@ -299,9 +354,16 @@ public class SimpleStringExtractor extends GhidraScript {
   private void analyzeStrings(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
 
+    int progressCounter = 0;
+    int progressInterval = config.minLength > 0 ? config.minLength : 100;
+
     for (ExtractedString str : allStrings) {
       analysisEngine.analyzeString(str);
       categorizeString(str);
+      progressCounter++;
+      if (progressCounter % progressInterval == 0) {
+        printf("  Analyzed %d of %d strings...%n", progressCounter, allStrings.size());
+      }
     }
 
     stats.analysisTime = System.currentTimeMillis() - startTime;
@@ -424,8 +486,8 @@ public class SimpleStringExtractor extends GhidraScript {
     try (FileWriter writer = new FileWriter(categoryTemplate)) {
       writer.write("# String Category Configuration Template\n\n");
       for (String category : categorizedStrings.keySet()) {
-        writer.write("category." + category.toLowerCase().replace(" ", "_") + ".enabled=true\n");
-        writer.write("category." + category.toLowerCase().replace(" ", "_") + ".priority=1\n");
+        writer.write("category." + category.toLowerCase(Locale.ROOT).replace(" ", "_") + ".enabled=true\n");
+        writer.write("category." + category.toLowerCase(Locale.ROOT).replace(" ", "_") + ".priority=1\n");
       }
     }
 
@@ -533,7 +595,7 @@ public class SimpleStringExtractor extends GhidraScript {
             // Apply entropy threshold to existing strings
             applyEntropyThreshold(threshold);
           } catch (NumberFormatException e) {
-            // Continue with default threshold
+            printf("Warning: Invalid entropy threshold value '%s', using default: %s%n", value, e.getMessage());
           }
           break;
 
@@ -542,7 +604,7 @@ public class SimpleStringExtractor extends GhidraScript {
             double threshold = Double.parseDouble(value);
             applyRelevanceThreshold(threshold);
           } catch (NumberFormatException e) {
-            // Continue with default threshold
+            printf("Warning: Invalid relevance threshold value '%s', using default: %s%n", value, e.getMessage());
           }
           break;
 
@@ -551,7 +613,7 @@ public class SimpleStringExtractor extends GhidraScript {
             int priority = Integer.parseInt(value);
             applyCategoryPriority(priority);
           } catch (NumberFormatException e) {
-            // Continue with default priority
+            printf("Warning: Invalid category priority value '%s', using default: %s%n", value, e.getMessage());
           }
           break;
         default:
@@ -703,7 +765,7 @@ public class SimpleStringExtractor extends GhidraScript {
       int totalStrings = allStrings.size();
       for (Map.Entry<String, List<ExtractedString>> entry : categorizedStrings.entrySet()) {
         if (!entry.getValue().isEmpty()) {
-          double percentage = (entry.getValue().size() * 100.0) / totalStrings;
+          double percentage = entry.getValue().size() * 100.0 / totalStrings;
           writer.write(
               String.format(
                   "  %-20s: %3d strings (%5.1f%%)\n",
@@ -787,7 +849,7 @@ public class SimpleStringExtractor extends GhidraScript {
           return false;
         }
       } catch (PatternSyntaxException e) {
-        // Invalid pattern, ignore filter
+        printf("Warning: Invalid pattern filter '%s': %s%n", config.patternFilter, e.getMessage());
       }
     }
 
@@ -814,7 +876,7 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   private void categorizeString(ExtractedString str) {
-    String value = str.value.toLowerCase();
+    String value = str.value.toLowerCase(Locale.ROOT);
     String category = "Other";
 
     // Executable paths
@@ -891,7 +953,9 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   private double calculateEntropy(String str) {
-    if (str.isEmpty()) return 0.0;
+    if (str.isEmpty()) {
+      return 0.0;
+    }
 
     Map<Character, Integer> charCounts = new HashMap<>();
     for (char c : str.toCharArray()) {
@@ -943,7 +1007,7 @@ public class SimpleStringExtractor extends GhidraScript {
             return false;
           }
         } catch (PatternSyntaxException e) {
-          // Invalid pattern, pass through
+          printf("Warning: Invalid pattern filter in filter engine '%s': %s%n", config.patternFilter, e.getMessage());
         }
       }
 
@@ -953,7 +1017,7 @@ public class SimpleStringExtractor extends GhidraScript {
       }
 
       // Skip very low entropy strings (likely repetitive/junk)
-      return !(str.entropy < 1.0) || str.length <= 10;
+      return str.entropy >= 1.0 || str.length <= 10;
     }
   }
 
@@ -987,7 +1051,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
         str.referenceCount = refCount;
       } catch (Exception e) {
-        // Reference analysis failed, continue
+        printf("Warning: Reference analysis failed for string at %s: %s%n", str.address, e.getMessage());
       }
     }
 
@@ -1004,14 +1068,26 @@ public class SimpleStringExtractor extends GhidraScript {
           analyzeMemoryContext(str, prevAddr, nextAddr);
         }
       } catch (Exception e) {
-        // Context analysis failed, continue
+        printf("Warning: Context analysis failed for string at %s: %s%n", str.address, e.getMessage());
       }
     }
 
     private void analyzeMemoryContext(ExtractedString str, Address start, Address end) {
-      // Implementation for memory context analysis
-      // This would analyze the surrounding memory for patterns
-      str.contextAnalysis = "Memory context analyzed";
+      Memory memory = currentProgram.getMemory();
+      long contextSize = end.subtract(start);
+      str.contextAnalysis = String.format("Memory context analyzed from %s to %s (size: %d bytes)",
+          start.toString(), end.toString(), contextSize);
+
+      try {
+        if (memory.contains(start) && memory.contains(end)) {
+          int bytes = (int) Math.min(contextSize, 256);
+          byte[] contextData = new byte[bytes];
+          memory.getBytes(start, contextData);
+          str.contextAnalysis += String.format(" - %d bytes of context read", bytes);
+        }
+      } catch (MemoryAccessException e) {
+        str.contextAnalysis += " - partial context read";
+      }
     }
 
     private void assignRelevanceScore(ExtractedString str) {
@@ -1021,8 +1097,12 @@ public class SimpleStringExtractor extends GhidraScript {
       score += 1.0;
 
       // Length bonus (longer strings might be more interesting)
-      if (str.length > 20) score += 0.5;
-      if (str.length > 50) score += 0.5;
+      if (str.length > 20) {
+        score += 0.5;
+      }
+      if (str.length > 50) {
+        score += 0.5;
+      }
 
       // Reference bonus
       score += str.referenceCount * 0.2;
@@ -1047,8 +1127,11 @@ public class SimpleStringExtractor extends GhidraScript {
       }
 
       // Entropy bonus (high entropy might indicate encryption/obfuscation)
-      if (str.entropy > 6.0) score += 1.0;
-      else if (str.entropy > 4.0) score += 0.5;
+      if (str.entropy > 6.0) {
+        score += 1.0;
+      } else if (str.entropy > 4.0) {
+        score += 0.5;
+      }
 
       str.relevanceScore = score;
     }
@@ -1090,13 +1173,13 @@ public class SimpleStringExtractor extends GhidraScript {
 
     public boolean isVersionString(String str) {
       return VERSION_PATTERN.matcher(str).find()
-          && (str.toLowerCase().contains("version")
-              || str.toLowerCase().contains("v")
-              || str.toLowerCase().contains("build"));
+          && (str.toLowerCase(Locale.ROOT).contains("version")
+              || str.toLowerCase(Locale.ROOT).contains("v")
+              || str.toLowerCase(Locale.ROOT).contains("build"));
     }
 
     public boolean isUIString(String str) {
-      String lower = str.toLowerCase();
+      String lower = str.toLowerCase(Locale.ROOT);
       return lower.contains("button")
           || lower.contains("menu")
           || lower.contains("dialog")
@@ -1272,8 +1355,8 @@ public class SimpleStringExtractor extends GhidraScript {
               strings.add(extString);
             }
           }
-        } catch (Exception e) {
-          // Continue searching
+        } catch (MemoryAccessException e) {
+          printf("Warning: Memory access error at %s: %s%n", addr, e.getMessage());
         }
       }
 
@@ -1306,8 +1389,8 @@ public class SimpleStringExtractor extends GhidraScript {
               strings.add(extString);
             }
           }
-        } catch (Exception e) {
-          // Continue searching
+        } catch (MemoryAccessException e) {
+          printf("Warning: Memory access error reading Pascal string at %s: %s%n", addr, e.getMessage());
         }
       }
 
@@ -1340,7 +1423,7 @@ public class SimpleStringExtractor extends GhidraScript {
         ExtractionConfig config)
         throws Exception {
 
-      switch (config.outputFormat.toLowerCase()) {
+      switch (config.outputFormat.toLowerCase(Locale.ROOT)) {
         case "csv":
           exportAsCSV(localAllStrings, localStats, config);
           break;
@@ -1370,6 +1453,8 @@ public class SimpleStringExtractor extends GhidraScript {
       try (PrintWriter writer = new PrintWriter(config.outputFile)) {
         writeTextHeader(writer, localStats);
 
+        writer.println("Total strings in export: " + localAllStrings.size());
+
         // Write summary
         writeTextSummary(writer, localCategorizedStrings, localStats);
 
@@ -1377,7 +1462,7 @@ public class SimpleStringExtractor extends GhidraScript {
         for (Map.Entry<String, List<ExtractedString>> entry : localCategorizedStrings.entrySet()) {
           if (!entry.getValue().isEmpty()) {
             writer.println("\n" + "=".repeat(60));
-            writer.println("CATEGORY: " + entry.getKey().toUpperCase());
+            writer.println("CATEGORY: " + entry.getKey().toUpperCase(Locale.ROOT));
             writer.println("=".repeat(60));
 
             // Sort by relevance score
@@ -1398,6 +1483,9 @@ public class SimpleStringExtractor extends GhidraScript {
         throws Exception {
 
       try (PrintWriter writer = new PrintWriter(config.outputFile)) {
+        writer.printf("# Total strings: %d, Processing time: %.2f seconds%n",
+            localStats.filteredStringCount, localStats.totalProcessingTime / 1000.0);
+
         // CSV header
         writer.println(
             "Address,Value,Category,Source,Length,Entropy,Reference Count,Relevance Score,Data"
@@ -1451,7 +1539,9 @@ public class SimpleStringExtractor extends GhidraScript {
         boolean firstCategory = true;
         for (Map.Entry<String, List<ExtractedString>> entry : localCategorizedStrings.entrySet()) {
           if (!entry.getValue().isEmpty()) {
-            if (!firstCategory) writer.println(",");
+            if (!firstCategory) {
+              writer.println(",");
+            }
             writer.println("    \"" + entry.getKey() + "\": " + entry.getValue().size());
             firstCategory = false;
           }
@@ -1479,8 +1569,11 @@ public class SimpleStringExtractor extends GhidraScript {
           writer.println("      \"is_unicode\": " + str.isUnicode + ",");
           writer.println("      \"is_printable\": " + str.isPrintable);
           writer.print("    }");
-          if (i < localAllStrings.size() - 1) writer.println(",");
-          else writer.println();
+          if (i < localAllStrings.size() - 1) {
+            writer.println(",");
+          } else {
+            writer.println();
+          }
         }
         writer.println("  ]");
         writer.println("}");
@@ -1841,7 +1934,7 @@ public class SimpleStringExtractor extends GhidraScript {
     // Comprehensive analysis components using all imports
     DataTypeManager dataTypeManager = currentProgram.getDataTypeManager();
 
-    println("  Analyzing data types for string associations...");
+    printf("  Analyzing data types for string associations (min length: %d)...%n", config.minLength);
 
     // Analyze all data types for string relationships
     Iterator<DataType> dataTypeIter = dataTypeManager.getAllDataTypes();
@@ -1897,7 +1990,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
   private Set<ExtractedString> findStringsForDataType(DataType dataType) {
     Set<ExtractedString> associatedStrings = new HashSet<>();
-    String typeName = dataType.getName().toLowerCase();
+    String typeName = dataType.getName().toLowerCase(Locale.ROOT);
 
     // Find strings that may be associated with this data type
     for (ExtractedString str : allStrings) {
@@ -1912,7 +2005,7 @@ public class SimpleStringExtractor extends GhidraScript {
   private boolean isStringAssociatedWithDataType(
       ExtractedString str, DataType dataType, String typeName) {
     // Check if string content suggests association with this data type
-    String strValue = str.value.toLowerCase();
+    String strValue = str.value.toLowerCase(Locale.ROOT);
 
     // Direct name matching
     if (strValue.contains(typeName)) {
@@ -1928,21 +2021,17 @@ public class SimpleStringExtractor extends GhidraScript {
     }
 
     // Check for format string patterns that match data type
-    if (typeName.contains("int") && str.value.matches(".*%[dioxX].*")) {
-      return true;
-    }
-    if (typeName.contains("float") && str.value.matches(".*%[fFeEgG].*")) {
-      return true;
-    }
-    return typeName.contains("char") && str.value.matches(".*%[sc].*");
+    return (typeName.contains("int") && str.value.matches(".*%[dioxX].*"))
+        || (typeName.contains("float") && str.value.matches(".*%[fFeEgG].*"))
+        || (typeName.contains("char") && str.value.matches(".*%[sc].*"));
   }
 
   private List<ExtractedString> analyzeStructureStrings(Structure structure) {
     List<ExtractedString> structStrings = new ArrayList<>();
-    String structName = structure.getName().toLowerCase();
+    String structName = structure.getName().toLowerCase(Locale.ROOT);
 
     for (ExtractedString str : allStrings) {
-      String strValue = str.value.toLowerCase();
+      String strValue = str.value.toLowerCase(Locale.ROOT);
 
       // Check if string references this structure
       if (strValue.contains(structName)
@@ -1955,7 +2044,7 @@ public class SimpleStringExtractor extends GhidraScript {
       for (int i = 0; i < structure.getNumComponents(); i++) {
         DataTypeComponent component = structure.getComponent(i);
         if (component.getFieldName() != null) {
-          String fieldName = component.getFieldName().toLowerCase();
+          String fieldName = component.getFieldName().toLowerCase(Locale.ROOT);
           if (strValue.contains(fieldName)) {
             structStrings.add(str);
             break;
@@ -1969,13 +2058,13 @@ public class SimpleStringExtractor extends GhidraScript {
 
   private List<ExtractedString> analyzeEnumStrings(ghidra.program.model.data.Enum enumType) {
     List<ExtractedString> foundEnumStrings = new ArrayList<>();
-    String enumName = enumType.getName().toLowerCase();
+    String enumName = enumType.getName().toLowerCase(Locale.ROOT);
 
     // Get enum value names
     String[] enumValues = enumType.getNames();
 
     for (ExtractedString str : allStrings) {
-      String strValue = str.value.toLowerCase();
+      String strValue = str.value.toLowerCase(Locale.ROOT);
 
       // Check if string references this enum
       if (strValue.contains(enumName) || strValue.contains("enum " + enumName)) {
@@ -1985,7 +2074,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
       // Check if string contains enum value names
       for (String enumValue : enumValues) {
-        if (strValue.contains(enumValue.toLowerCase())) {
+        if (strValue.contains(enumValue.toLowerCase(Locale.ROOT))) {
           foundEnumStrings.add(str);
           break;
         }
@@ -1998,7 +2087,8 @@ public class SimpleStringExtractor extends GhidraScript {
   private void performAddressSpaceAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
 
-    println("  Analyzing address spaces and ranges for string distribution...");
+    printf("  Analyzing address spaces and ranges for string distribution (output format: %s)...%n",
+        config.outputFormat);
 
     // Get all address spaces
     AddressSpace[] addressSpaces = currentProgram.getAddressFactory().getAddressSpaces();
@@ -2043,6 +2133,7 @@ public class SimpleStringExtractor extends GhidraScript {
 
   private void createAddressRanges(AddressSpace space, AddressSet spaceAddresses) {
     // Create logical ranges within the address space
+    printf("    Creating ranges in address space: %s%n", space.getName());
     Address currentStart = null;
     Address currentEnd = null;
     long maxGap = 0x1000; // 4KB max gap between addresses in same range
@@ -2154,7 +2245,7 @@ public class SimpleStringExtractor extends GhidraScript {
     SymbolTable symbolTable = currentProgram.getSymbolTable();
     referenceManager = currentProgram.getReferenceManager();
 
-    println("  Performing comprehensive symbol analysis...");
+    printf("  Performing comprehensive symbol analysis (max length: %d)...%n", config.maxLength);
 
     SymbolIterator symbolIter = symbolTable.getAllSymbols(true);
     int symbolsAnalyzed = 0;
@@ -2205,7 +2296,7 @@ public class SimpleStringExtractor extends GhidraScript {
     analysis.symbolType = symbol.getSymbolType().toString();
     analysis.symbolAddress = symbol.getAddress();
 
-    String symbolName = symbol.getName().toLowerCase();
+    String symbolName = symbol.getName().toLowerCase(Locale.ROOT);
 
     // Find strings that reference or relate to this symbol
     for (ExtractedString str : allStrings) {
@@ -2234,7 +2325,7 @@ public class SimpleStringExtractor extends GhidraScript {
   }
 
   private boolean isStringRelatedToSymbol(ExtractedString str, Symbol symbol, String symbolName) {
-    String strValue = str.value.toLowerCase();
+    String strValue = str.value.toLowerCase(Locale.ROOT);
 
     // Direct symbol name reference
     if (strValue.contains(symbolName)) {
@@ -2271,7 +2362,8 @@ public class SimpleStringExtractor extends GhidraScript {
   private void performCodeUnitAnalysis(ExtractionConfig config) throws Exception {
     long startTime = System.currentTimeMillis();
 
-    println("  Analyzing code units and instructions for string associations...");
+    printf("  Analyzing code units and instructions for string associations (hidden: %s)...%n",
+        config.includeHidden);
 
     functionManager = currentProgram.getFunctionManager();
 
@@ -2364,10 +2456,10 @@ public class SimpleStringExtractor extends GhidraScript {
 
     // Check for string-related mnemonics
     String mnemonic = instruction.getMnemonicString();
-    return mnemonic.equals("LEA")
-        || mnemonic.equals("MOV")
-        || mnemonic.equals("PUSH")
-        || mnemonic.equals("CALL");
+    return "LEA".equals(mnemonic)
+        || "MOV".equals(mnemonic)
+        || "PUSH".equals(mnemonic)
+        || "CALL".equals(mnemonic);
   }
 
   private void analyzeFunctionForStrings(Instruction instruction) {
@@ -2440,7 +2532,9 @@ public class SimpleStringExtractor extends GhidraScript {
       // Attempt to read a single byte to verify access
       memory.getByte(addr);
     } catch (Exception e) {
-      throw new MemoryAccessException("Cannot read memory at " + addr + ": " + e.getMessage());
+      MemoryAccessException mae = new MemoryAccessException("Cannot read memory at " + addr + ": " + e.getMessage());
+      mae.initCause(e);
+      throw mae;
     }
   }
 
@@ -2460,7 +2554,7 @@ public class SimpleStringExtractor extends GhidraScript {
           blockName = block.getName();
         }
       } catch (Exception e) {
-        // Continue with unknown block
+        printf("Warning: Error getting memory block for address %s: %s%n", addr, e.getMessage());
       }
 
       blockProblems.merge(blockName, 1, Integer::sum);

@@ -23,7 +23,7 @@ import hmac
 import os
 import struct
 from collections.abc import Callable
-from typing import Optional, Union
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -443,7 +443,11 @@ except ImportError as e:
             """
             self.algorithm = algorithm
             self.mode = mode
-            self.aes = FallbackAES(algorithm.key)
+            if hasattr(algorithm, "key"):
+                key: bytes = getattr(algorithm, "key")
+                self.aes = FallbackAES(key)
+            else:
+                raise ValueError("Algorithm must have key attribute")
             self._buffer: bytes = b""
 
         def update(self, data: bytes) -> bytes:
@@ -504,7 +508,11 @@ except ImportError as e:
             """
             self.algorithm = algorithm
             self.mode = mode
-            self.aes = FallbackAES(algorithm.key)
+            if hasattr(algorithm, "key"):
+                key: bytes = getattr(algorithm, "key")
+                self.aes = FallbackAES(key)
+            else:
+                raise ValueError("Algorithm must have key attribute")
             self._buffer: bytes = b""
 
         def update(self, data: bytes) -> bytes:
@@ -948,12 +956,19 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
         pass
 
-    def default_backend() -> FallbackBackend:
+    # Type variables for conditional imports
+    _backend_type: Any = None
+    _cert_loader_type: Any = None
+    _key_loader_type: Any = None
+
+    def _default_backend() -> FallbackBackend:
         """Get default backend."""
         return FallbackBackend()
 
+    default_backend = _default_backend
+
     # X.509 certificate handling
-    def load_pem_x509_certificate(data: bytes, backend: object | None = None) -> "FallbackX509Certificate":
+    def _load_pem_x509_certificate(data: bytes, backend: object | None = None) -> "FallbackX509Certificate":
         """Load PEM certificate."""
         # Parse PEM format (simplified)
         lines = data.decode().split("\n")
@@ -972,10 +987,12 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         cert_bytes = base64.b64decode(cert_data)
         return FallbackX509Certificate(cert_bytes)
 
-    def load_pem_private_key(data: bytes | str, password: bytes | None = None, backend: object | None = None) -> "FallbackRSAPrivateKey":
+    load_pem_x509_certificate = _load_pem_x509_certificate  # type: ignore[assignment]
+
+    def _load_pem_private_key(data: bytes | str, password: bytes | None = None, backend: object | None = None) -> Any:
         """Load PEM private key with proper base64 decoding."""
-        lines = data.decode() if isinstance(data, bytes) else data
-        lines = lines.split("\n")
+        data_str: str = data.decode() if isinstance(data, bytes) else data
+        lines: list[str] = data_str.split("\n")
         key_data = ""
         in_key = False
 
@@ -1021,6 +1038,8 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                 "_decoded_key": decoded_key_bytes,
             },
         )()
+
+    load_pem_private_key = _load_pem_private_key  # type: ignore[assignment]
 
     class FallbackX509Certificate:
         """X.509 certificate object for production certificate handling.
@@ -1128,9 +1147,11 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
 
             return exponent, max(modulus, 3)
 
-    # Module exports
-    Fernet = FallbackFernet
-    Cipher = FallbackCipher
+    # Module exports - using Any for type compatibility
+    Fernet: Any = FallbackFernet  # type: ignore[no-redef]
+    Cipher: Any = FallbackCipher  # type: ignore[no-redef]
+    AESGCM: Any = None  # type: ignore[no-redef]  # Not implemented in fallback
+    HKDF: Any = None  # type: ignore[no-redef]  # Not implemented in fallback
 
     # Hazmat modules
     class Hazmat:
@@ -1203,7 +1224,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
                     def __init__(self, password: bytes) -> None:
                         self.password = password
 
-    class NameOID:
+    class FallbackNameOID:
         """Object identifier constants for X509 certificate name attributes."""
 
         COMMON_NAME = "CN"
@@ -1214,31 +1235,33 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA{base64.b64encode(str(self.n).encode
         EMAIL_ADDRESS = "emailAddress"
 
     class X509:
-        load_pem_x509_certificate = staticmethod(load_pem_x509_certificate)
-        NameOID = NameOID
+        load_pem_x509_certificate = staticmethod(_load_pem_x509_certificate)
+        NameOID = FallbackNameOID
 
-    # Convenience imports
-    algorithms = Hazmat.Primitives.Ciphers.algorithms
-    modes = Hazmat.Primitives.Ciphers.modes
-    hashes = Hazmat.Primitives.hashes
-    padding = Hazmat.Primitives.padding
-    serialization = Hazmat.Primitives.Serialization
-    asym_padding = Hazmat.Primitives.Asymmetric.Padding
-    rsa = Hazmat.Primitives.Asymmetric.rsa
-    PBKDF2 = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2
-    PBKDF2HMAC = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2HMAC
+    # Convenience imports - using Any for type compatibility
+    algorithms: Any = Hazmat.Primitives.Ciphers.algorithms  # type: ignore[no-redef]
+    modes: Any = Hazmat.Primitives.Ciphers.modes  # type: ignore[no-redef]
+    hashes: Any = Hazmat.Primitives.hashes  # type: ignore[no-redef]
+    padding: Any = Hazmat.Primitives.padding  # type: ignore[no-redef]
+    serialization: Any = Hazmat.Primitives.Serialization  # type: ignore[no-redef]
+    asym_padding: Any = Hazmat.Primitives.Asymmetric.Padding  # type: ignore[no-redef]
+    rsa: Any = Hazmat.Primitives.Asymmetric.rsa  # type: ignore[no-redef]
+    PBKDF2: Any = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2  # type: ignore[no-redef]
+    PBKDF2HMAC: Any = Hazmat.Primitives.Kdf.Pbkdf2.PBKDF2HMAC  # type: ignore[no-redef]
+    NameOID: Any = FallbackNameOID  # type: ignore[no-redef]
 
-    # Compatibility aliases
-    hazmat = Hazmat
-    hazmat.backends = Hazmat.Backends
-    hazmat.primitives = Hazmat.Primitives
-    hazmat.primitives.ciphers = Hazmat.Primitives.Ciphers
-    hazmat.primitives.asymmetric = Hazmat.Primitives.Asymmetric
-    hazmat.primitives.asymmetric.padding = Hazmat.Primitives.Asymmetric.Padding
-    hazmat.primitives.kdf = Hazmat.Primitives.Kdf
-    hazmat.primitives.kdf.pbkdf2 = Hazmat.Primitives.Kdf.Pbkdf2
-    hazmat.primitives.serialization = Hazmat.Primitives.Serialization
-    x509 = X509
+    # Compatibility aliases - using Any types
+    hazmat: Any = type("hazmat", (), {})()
+    hazmat.backends = type("backends", (), {"default_backend": default_backend})()
+    hazmat.primitives = type("primitives", (), {})()
+    hazmat.primitives.hashes = hashes
+    hazmat.primitives.padding = padding
+    hazmat.primitives.ciphers = type("ciphers", (), {"algorithms": algorithms, "modes": modes, "Cipher": Cipher})()
+    hazmat.primitives.asymmetric = type("asymmetric", (), {"rsa": rsa, "padding": asym_padding})()
+    hazmat.primitives.kdf = type("kdf", (), {})()
+    hazmat.primitives.kdf.pbkdf2 = type("pbkdf2", (), {"PBKDF2": PBKDF2, "PBKDF2HMAC": PBKDF2HMAC})()
+    hazmat.primitives.serialization = serialization
+    x509: Any = X509  # type: ignore[no-redef]
 
 
 # Export all cryptography objects and availability flag

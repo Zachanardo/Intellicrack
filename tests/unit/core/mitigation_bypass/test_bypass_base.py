@@ -170,9 +170,9 @@ class TestMitigationBypassBase:
         stack_spray_difficulty = bypass.get_technique_difficulty("stack_spray")
         assert stack_spray_difficulty in ["low", "medium", "high", "expert"]
 
-        # ROP should generally be harder than stack spray
-        difficulty_levels = {"low": 1, "medium": 2, "high": 3, "expert": 4}
         if rop_difficulty and stack_spray_difficulty:
+            # ROP should generally be harder than stack spray
+            difficulty_levels = {"low": 1, "medium": 2, "high": 3, "expert": 4}
             assert difficulty_levels.get(rop_difficulty, 0) >= difficulty_levels.get(stack_spray_difficulty, 0)
 
     def test_architecture_compatibility_checking(self):
@@ -237,22 +237,7 @@ class TestROPBasedBypass:
     def create_test_binary_data(self):
         """Create realistic x86_64 binary data with potential ROP gadgets."""
         # Create binary with common ROP gadget patterns
-        gadgets = []
-
-        # ret instruction
-        gadgets.append(b'\xc3')
-
-        # pop rdi; ret
-        gadgets.append(b'\x5f\xc3')
-
-        # pop rsi; ret
-        gadgets.append(b'\x5e\xc3')
-
-        # pop rdx; ret
-        gadgets.append(b'\x5a\xc3')
-
-        # pop rax; ret
-        gadgets.append(b'\x58\xc3')
+        gadgets = [b'\xc3', b'\x5f\xc3', b'\x5e\xc3', b'\x5a\xc3', b'\x58\xc3']
 
         # syscall; ret
         gadgets.append(b'\x0f\x05\xc3')
@@ -331,7 +316,7 @@ class TestROPBasedBypass:
 
         # Should identify various gadget categories
         expected_types = {"stack_pivot", "register_pop", "memory_access", "syscall", "arithmetic", "control_flow"}
-        assert len(gadget_types.intersection(expected_types)) > 0
+        assert gadget_types.intersection(expected_types)
 
     def test_assess_rop_viability_with_sufficient_gadgets(self):
         """Test ROP viability assessment with sufficient gadgets."""
@@ -480,9 +465,7 @@ class TestROPBasedBypass:
         ]
 
         for technique in expected_techniques:
-            # Check if technique is recognized (might not all be implemented)
-            info = rop_bypass.get_technique_info(technique)
-            if info:
+            if info := rop_bypass.get_technique_info(technique):
                 assert "name" in info
                 assert "requirements" in info
 

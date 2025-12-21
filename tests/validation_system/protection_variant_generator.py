@@ -189,7 +189,7 @@ class ProtectionVariantGenerator:
                     break
 
                 # Generate random replacement of same length
-                replacement = bytes([random.randint(0, 255) for _ in range(len(constant))])
+                replacement = bytes(random.randint(0, 255) for _ in range(len(constant)))
 
                 # Store mutation info
                 mutations.append({
@@ -246,39 +246,33 @@ class ProtectionVariantGenerator:
                     code_offset = section.PointerToRawData
 
                     # Disassemble and find conditional jumps
-                    if pe.FILE_HEADER.Machine == 0x014c:  # x86
-                        cs = self.cs_x86
-                    else:  # x64
-                        cs = self.cs_x64
-
+                    cs = self.cs_x86 if pe.FILE_HEADER.Machine == 0x014c else self.cs_x64
                     for inst in cs.disasm(bytes(code_data), 0):
                         # Check for conditional jumps
-                        if inst.mnemonic in ['jz', 'jnz', 'je', 'jne', 'jg', 'jl', 'jge', 'jle']:
-                            # Randomly decide whether to invert
-                            if random.random() < 0.3:  # 30% chance
-                                original_bytes = code_data[inst.address:inst.address+inst.size]
-
-                                # Invert the condition
-                                inverted = self._invert_jump(inst.mnemonic)
-
-                                # Assemble new instruction
-                                new_inst = f"{inverted} 0x{inst.op_str}"
-                                if pe.FILE_HEADER.Machine == 0x014c:
-                                    encoding, _ = self.ks_x86.asm(new_inst)
-                                else:
-                                    encoding, _ = self.ks_x64.asm(new_inst)
-
-                                if encoding and len(encoding) == inst.size:
-                                    mutations.append({
-                                        'offset': code_offset + inst.address,
-                                        'original': original_bytes.hex(),
-                                        'replacement': bytes(encoding).hex(),
-                                        'type': 'opcode_substitution',
-                                        'instruction': f"{inst.mnemonic} -> {inverted}"
-                                    })
-
-                                    # Apply mutation
-                                    code_data[inst.address:inst.address+inst.size] = bytes(encoding)
+                        if inst.mnemonic in ['jz', 'jnz', 'je', 'jne', 'jg', 'jl', 'jge', 'jle'] and random.random() < 0.3:
+                            original_bytes = code_data[inst.address:inst.address+inst.size]
+                        
+                            # Invert the condition
+                            inverted = self._invert_jump(inst.mnemonic)
+                        
+                            # Assemble new instruction
+                            new_inst = f"{inverted} 0x{inst.op_str}"
+                            if pe.FILE_HEADER.Machine == 0x014c:
+                                encoding, _ = self.ks_x86.asm(new_inst)
+                            else:
+                                encoding, _ = self.ks_x64.asm(new_inst)
+                        
+                            if encoding and len(encoding) == inst.size:
+                                mutations.append({
+                                    'offset': code_offset + inst.address,
+                                    'original': original_bytes.hex(),
+                                    'replacement': bytes(encoding).hex(),
+                                    'type': 'opcode_substitution',
+                                    'instruction': f"{inst.mnemonic} -> {inverted}"
+                                })
+                        
+                                # Apply mutation
+                                code_data[inst.address:inst.address+inst.size] = bytes(encoding)
 
                     # Write back modified code section
                     pe.set_bytes_at_offset(code_offset, bytes(code_data))
@@ -315,11 +309,11 @@ class ProtectionVariantGenerator:
                             # Find corresponding POP
                             for j in range(i+1, min(i+20, len(code_data))):
                                 if code_data[j] == 0x58:  # POP instruction
-                                    # Check if we can swap this block
-                                    block1 = code_data[i:j+1]
-
                                     # Look for next independent block
                                     if j+1 < len(code_data) - 10 and code_data[j+1] == 0x50:
+                                        # Check if we can swap this block
+                                        block1 = code_data[i:j+1]
+
                                         for k in range(j+2, min(j+21, len(code_data))):
                                             if code_data[k] == 0x58:
                                                 block2 = code_data[j+1:k+1]
@@ -502,12 +496,12 @@ class ProtectionVariantGenerator:
                             'type': 'xor_obfuscation'
                         })
 
-                    # Add deobfuscation stub
-                    deobfuscation_stub = self._generate_deobfuscation_stub(xor_key, mutations)
-                    if deobfuscation_stub:
-                        # Find cave to insert stub
-                        cave_offset = self._find_code_cave(pe, len(deobfuscation_stub))
-                        if cave_offset:
+                    if deobfuscation_stub := self._generate_deobfuscation_stub(
+                        xor_key, mutations
+                    ):
+                        if cave_offset := self._find_code_cave(
+                            pe, len(deobfuscation_stub)
+                        ):
                             pe.set_bytes_at_offset(cave_offset, deobfuscation_stub)
                             mutations.append({
                                 'stub_offset': cave_offset,
@@ -532,9 +526,7 @@ class ProtectionVariantGenerator:
         mutations = []
 
         try:
-            # Check if UPX is available
-            upx_path = shutil.which("upx")
-            if upx_path:
+            if upx_path := shutil.which("upx"):
                 # Use real UPX if available
                 import subprocess
                 result = subprocess.run(
@@ -659,11 +651,7 @@ class ProtectionVariantGenerator:
             b'\xE8\x00\x00\x00\x00',  # CALL with 0 offset (likely relocated)
         ]
 
-        for pattern in critical_patterns:
-            if pattern in code_chunk:
-                return False
-
-        return True
+        return all(pattern not in code_chunk for pattern in critical_patterns)
 
     def _generate_deobfuscation_stub(self, xor_key: int, mutations: list) -> bytes | None:
         """Generate a deobfuscation stub."""
@@ -819,11 +807,8 @@ class ProtectionVariantGenerator:
                 b'QueryPerformanceCounter'
             ]
 
-            found_indicators = 0
-            for indicator in protection_indicators:
-                if indicator in data:
-                    found_indicators += 1
-
+            found_indicators = sum(bool(indicator in data)
+                               for indicator in protection_indicators)
             # Also check PE structure integrity
             try:
                 pe = pefile.PE(binary_path)
@@ -833,7 +818,7 @@ class ProtectionVariantGenerator:
 
                 return found_indicators > 0 and has_imports and has_valid_entry
 
-            except:
+            except Exception:
                 return False
 
         except Exception as e:
@@ -844,12 +829,9 @@ class ProtectionVariantGenerator:
         """Generate all 5 required variants for a binary."""
         logger.info(f"Generating all variants for {binary_path}")
 
-        variants = []
-
         # Variant A: Modified constants only
         variant_a = self.generate_variant(binary_path, MutationType.CONSTANT_MODIFICATION)
-        variants.append(variant_a)
-
+        variants = [variant_a]
         # Variant B: Reordered protection flow
         variant_b = self.generate_variant(binary_path, MutationType.FLOW_REORDERING)
         variants.append(variant_b)
@@ -888,13 +870,16 @@ class ProtectionVariantGenerator:
         report = ["Protection Variant Generation Report", "=" * 50, ""]
 
         for i, variant in enumerate(self.variants, 1):
-            report.append(f"Variant {i}: {variant.mutation_type.value}")
-            report.append(f"  Original Hash: {variant.original_hash[:16]}...")
-            report.append(f"  Mutated Hash:  {variant.mutated_hash[:16]}...")
-            report.append(f"  Success: {variant.success}")
-            report.append(f"  Protection Active: {variant.verification_passed}")
-            report.append(f"  Mutations Applied: {len(variant.mutations_applied)}")
-
+            report.extend(
+                (
+                    f"Variant {i}: {variant.mutation_type.value}",
+                    f"  Original Hash: {variant.original_hash[:16]}...",
+                    f"  Mutated Hash:  {variant.mutated_hash[:16]}...",
+                    f"  Success: {variant.success}",
+                    f"  Protection Active: {variant.verification_passed}",
+                    f"  Mutations Applied: {len(variant.mutations_applied)}",
+                )
+            )
             if variant.error_message:
                 report.append(f"  Error: {variant.error_message}")
 

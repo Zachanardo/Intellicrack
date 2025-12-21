@@ -162,7 +162,7 @@ class TestVMFrameworkIntegration(unittest.TestCase):
         snapshot = QEMUSnapshot(
             snapshot_id="test_snapshot",
             vm_name="test_vm",
-            disk_path=self.test_disk if self.test_disk else "/tmp/test.qcow2",
+            disk_path=self.test_disk or "/tmp/test.qcow2",
             binary_path=self.test_binary,
             ssh_host="localhost",
             ssh_port=22222,
@@ -280,7 +280,7 @@ echo "Modification complete"
         snapshot = QEMUSnapshot(
             snapshot_id="test_snapshot",
             vm_name="test_vm",
-            disk_path=self.test_disk if self.test_disk else "/tmp/test.qcow2",
+            disk_path=self.test_disk or "/tmp/test.qcow2",
             binary_path=self.test_binary,
             ssh_host="localhost",
             ssh_port=22222,
@@ -426,8 +426,14 @@ exit 0
         for pattern in hardcoded_patterns:
             matches = re.findall(pattern, source, re.IGNORECASE)
             # Filter out legitimate uses
-            filtered = [m for m in matches if not any(ok in m for ok in
-                      ['Documents', 'Intellicrack_Output', 'tmp', 'temp'])]
+            filtered = [
+                m
+                for m in matches
+                if all(
+                    ok not in m
+                    for ok in ['Documents', 'Intellicrack_Output', 'tmp', 'temp']
+                )
+            ]
             self.assertEqual(len(filtered), 0,
                            f"Found hardcoded path pattern: {pattern}")
 
@@ -445,7 +451,7 @@ exit 0
         snapshot = QEMUSnapshot(
             snapshot_id="cleanup_test",
             vm_name="cleanup_vm",
-            disk_path=self.test_disk if self.test_disk else "/tmp/test.qcow2",
+            disk_path=self.test_disk or "/tmp/test.qcow2",
             binary_path=self.test_binary,
             ssh_host="localhost",
             ssh_port=22222,
@@ -477,10 +483,7 @@ exit 0
 
     def test_prerequisites_functional_qemu(self):
         """Test that functional QEMU installation is detected."""
-        # Check QEMU availability
-        qemu_path = shutil.which("qemu-system-x86_64")
-
-        if qemu_path:
+        if qemu_path := shutil.which("qemu-system-x86_64"):
             # QEMU is available
             self.assertTrue(os.path.exists(qemu_path))
 

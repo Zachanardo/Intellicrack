@@ -585,7 +585,7 @@ class _FallbackRandom:
             return _random.randint(low, high - 1)  # noqa: S311
 
         shape: tuple[int, ...]
-        shape = (size, ) if isinstance(size, int) else size
+        shape = (size,) if isinstance(size, int) else size
         total = 1
         for dim in shape:
             total *= dim
@@ -685,7 +685,7 @@ class _FallbackFunctions:
 
         """
         final_shape: tuple[int, ...]
-        final_shape = (shape, ) if isinstance(shape, int) else shape
+        final_shape = (shape,) if isinstance(shape, int) else shape
         total = 1
         for dim in final_shape:
             total *= dim
@@ -704,7 +704,7 @@ class _FallbackFunctions:
 
         """
         final_shape: tuple[int, ...]
-        final_shape = (shape, ) if isinstance(shape, int) else shape
+        final_shape = (shape,) if isinstance(shape, int) else shape
         total = 1
         for dim in final_shape:
             total *= dim
@@ -738,7 +738,7 @@ class _FallbackFunctions:
 
         """
         final_shape: tuple[int, ...]
-        final_shape = (shape, ) if isinstance(shape, int) else shape
+        final_shape = (shape,) if isinstance(shape, int) else shape
         total = 1
         for dim in final_shape:
             total *= dim

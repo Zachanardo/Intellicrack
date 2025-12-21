@@ -547,8 +547,8 @@ class TestDetachment:
         success = hooks.detach()
 
         assert success is True
-        assert hooks._attached is False
-        assert hooks._script_loaded is False
+        assert not hooks._attached
+        assert not hooks._script_loaded
         assert hooks.session is None
         assert hooks.script is None
         mock_frida_script.unload.assert_called_once()
@@ -569,7 +569,7 @@ class TestDetachment:
         success = hooks.detach()
 
         assert success is True
-        assert hooks._attached is False
+        assert not hooks._attached
 
     def test_unload_scripts_only(self, hooks, mock_frida_script):
         """Test unloading scripts without detaching."""
@@ -579,7 +579,7 @@ class TestDetachment:
         success = hooks.unload_scripts()
 
         assert success is True
-        assert hooks._script_loaded is False
+        assert not hooks._script_loaded
         mock_frida_script.unload.assert_called_once()
 
     def test_unload_scripts_when_none_loaded(self, hooks):
@@ -602,10 +602,10 @@ class TestLogManagement:
         success = hooks.clear_logs()
 
         assert success is True
-        assert len(hooks.messages) == 0
-        assert len(hooks.intercepted_certificates) == 0
-        assert len(hooks.bypassed_connections) == 0
-        assert len(hooks.errors) == 0
+        assert not hooks.messages
+        assert not hooks.intercepted_certificates
+        assert not hooks.bypassed_connections
+        assert not hooks.errors
 
 
 class TestStateChecks:

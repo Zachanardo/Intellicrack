@@ -897,7 +897,10 @@ class R2RealtimeAnalyzer:
                     filtered_strings = [
                         s
                         for s in strings
-                        if isinstance(s, dict) and any(keyword in str(s.get("string", "")).lower() for keyword in ["license", "key", "serial", "activation", "trial"])
+                        if isinstance(s, dict)
+                        and any(
+                            keyword in str(s.get("string", "")).lower() for keyword in ["license", "key", "serial", "activation", "trial"]
+                        )
                     ]
                     result = {"strings": strings, "filtered_strings": filtered_strings}
                 else:
@@ -920,7 +923,11 @@ class R2RealtimeAnalyzer:
                         "WriteProcessMemory",
                         "CreateRemoteThread",
                     ]
-                    suspicious_imports = [imp for imp in imports if isinstance(imp, dict) and any(pattern in str(imp.get("name", "")) for pattern in suspicious_patterns)]
+                    suspicious_imports = [
+                        imp
+                        for imp in imports
+                        if isinstance(imp, dict) and any(pattern in str(imp.get("name", "")) for pattern in suspicious_patterns)
+                    ]
 
                 result = {
                     "imports": imports,
@@ -945,7 +952,8 @@ class R2RealtimeAnalyzer:
                     suspicious_funcs = [
                         f
                         for f in functions
-                        if isinstance(f, dict) and any(pattern in str(f.get("name", "")).lower() for pattern in ["decrypt", "unpack", "inject", "hook"])
+                        if isinstance(f, dict)
+                        and any(pattern in str(f.get("name", "")).lower() for pattern in ["decrypt", "unpack", "inject", "hook"])
                     ]
 
                     result = {
@@ -988,7 +996,11 @@ class R2RealtimeAnalyzer:
                 elif "net" in file_name or "sock" in file_name:
                     vuln_patterns.extend(["recv", "recvfrom"])
 
-                vuln_imports = [imp for imp in imports if isinstance(imp, dict) and any(vuln in str(imp.get("name", "")).lower() for vuln in vuln_patterns)]
+                vuln_imports = [
+                    imp
+                    for imp in imports
+                    if isinstance(imp, dict) and any(vuln in str(imp.get("name", "")).lower() for vuln in vuln_patterns)
+                ]
 
                 functions_raw = r2.cmdj("aflj")
                 functions = functions_raw if isinstance(functions_raw, list) else []
@@ -1014,13 +1026,17 @@ class R2RealtimeAnalyzer:
                 license_strings = [
                     s
                     for s in strings
-                    if isinstance(s, dict) and any(keyword in str(s.get("string", "")).lower() for keyword in ["license", "serial", "activation", "trial", "expire"])
+                    if isinstance(s, dict)
+                    and any(
+                        keyword in str(s.get("string", "")).lower() for keyword in ["license", "serial", "activation", "trial", "expire"]
+                    )
                 ]
 
                 license_imports = [
                     imp
                     for imp in imports
-                    if isinstance(imp, dict) and any(api in str(imp.get("name", "")).lower() for api in ["regquery", "regopen", "getvolume", "getsystem"])
+                    if isinstance(imp, dict)
+                    and any(api in str(imp.get("name", "")).lower() for api in ["regquery", "regopen", "getvolume", "getsystem"])
                 ]
 
                 result = {
@@ -1035,7 +1051,8 @@ class R2RealtimeAnalyzer:
                 network_imports = [
                     imp
                     for imp in imports
-                    if isinstance(imp, dict) and any(api in str(imp.get("name", "")).lower() for api in ["socket", "connect", "send", "recv", "internet", "http"])
+                    if isinstance(imp, dict)
+                    and any(api in str(imp.get("name", "")).lower() for api in ["socket", "connect", "send", "recv", "internet", "http"])
                 ]
 
                 strings_raw = r2.cmdj("izzj")
@@ -1043,7 +1060,8 @@ class R2RealtimeAnalyzer:
                 url_strings = [
                     s
                     for s in strings
-                    if isinstance(s, dict) and any(pattern in str(s.get("string", "")) for pattern in ["http://", "https://", "ftp://", "tcp://", "udp://"])
+                    if isinstance(s, dict)
+                    and any(pattern in str(s.get("string", "")) for pattern in ["http://", "https://", "ftp://", "tcp://", "udp://"])
                 ]
 
                 result = {
@@ -1058,13 +1076,17 @@ class R2RealtimeAnalyzer:
                 crypto_imports = [
                     imp
                     for imp in imports
-                    if isinstance(imp, dict) and any(api in str(imp.get("name", "")).lower() for api in ["crypt", "hash", "aes", "rsa", "encrypt", "decrypt"])
+                    if isinstance(imp, dict)
+                    and any(api in str(imp.get("name", "")).lower() for api in ["crypt", "hash", "aes", "rsa", "encrypt", "decrypt"])
                 ]
 
                 strings_raw = r2.cmdj("izzj")
                 strings = strings_raw if isinstance(strings_raw, list) else []
                 crypto_strings = [
-                    s for s in strings if isinstance(s, dict) and any(pattern in str(s.get("string", "")).lower() for pattern in ["aes", "rsa", "sha", "md5", "encrypt"])
+                    s
+                    for s in strings
+                    if isinstance(s, dict)
+                    and any(pattern in str(s.get("string", "")).lower() for pattern in ["aes", "rsa", "sha", "md5", "encrypt"])
                 ]
 
                 result = {
@@ -1133,11 +1155,7 @@ class R2RealtimeAnalyzer:
                 if license_strings := [
                     s
                     for s in strings
-                    if isinstance(s, dict)
-                    and any(
-                        keyword in str(s.get("string", "")).lower()
-                        for keyword in license_keywords
-                    )
+                    if isinstance(s, dict) and any(keyword in str(s.get("string", "")).lower() for keyword in license_keywords)
                 ]:
                     self._emit_event(
                         AnalysisUpdate(

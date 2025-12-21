@@ -312,7 +312,7 @@ class TestStatisticsCalculator:
         calculator.set_progress_callback(progress_callback)
         calculator.calculate_all(b"TEST" * 100)
 
-        assert len(progress_updates) > 0
+        assert progress_updates
 
 
 class TestRealWorldStatistics:

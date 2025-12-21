@@ -96,7 +96,7 @@ def pe_with_serial_check(temp_workspace: Path) -> Path:
     pe_path: Path = temp_workspace / "serial_check.exe"
 
     pe_header: bytearray = bytearray(4096)
-    pe_header[0:2] = b"MZ"
+    pe_header[:2] = b"MZ"
     pe_header[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_header[0x80:0x84] = b"PE\x00\x00"
     pe_header[0x84:0x86] = struct.pack("<H", 0x014C)
@@ -121,7 +121,7 @@ def pe_with_serial_check(temp_workspace: Path) -> Path:
     )
 
     code_section: bytearray = bytearray(1024)
-    code_section[0:20] = (
+    code_section[:20] = (
         b"\x55"
         b"\x89\xe5"
         b"\x83\xec\x10"
@@ -164,7 +164,7 @@ def pe_with_trial_check(temp_workspace: Path) -> Path:
     pe_path: Path = temp_workspace / "trial_check.exe"
 
     pe_header: bytearray = bytearray(4096)
-    pe_header[0:2] = b"MZ"
+    pe_header[:2] = b"MZ"
     pe_header[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_header[0x80:0x84] = b"PE\x00\x00"
     pe_header[0x84:0x86] = struct.pack("<H", 0x014C)
@@ -183,7 +183,7 @@ def pe_with_trial_check(temp_workspace: Path) -> Path:
     )
 
     code_section: bytearray = bytearray(512)
-    code_section[0:30] = (
+    code_section[:30] = (
         b"\x55"
         b"\x89\xe5"
         b"\xe8\x10\x00\x00\x00"
@@ -208,7 +208,7 @@ def pe_with_jump_checks(temp_workspace: Path) -> Path:
     pe_path: Path = temp_workspace / "jump_checks.exe"
 
     pe_header: bytearray = bytearray(4096)
-    pe_header[0:2] = b"MZ"
+    pe_header[:2] = b"MZ"
     pe_header[0x3C:0x40] = struct.pack("<I", 0x80)
     pe_header[0x80:0x84] = b"PE\x00\x00"
     pe_header[0x84:0x86] = struct.pack("<H", 0x014C)
@@ -221,7 +221,9 @@ def pe_with_jump_checks(temp_workspace: Path) -> Path:
     )
 
     code_section: bytearray = bytearray(512)
-    code_section[0:10] = b"\x85\xc0" b"\x74\x10" b"\x75\x0e" b"\x0f\x84\x20\x00\x00\x00"
+    code_section[:10] = (
+        b"\x85\xc0" b"\x74\x10" b"\x75\x0e" b"\x0f\x84\x20\x00\x00\x00"
+    )
     code_section[20:30] = b"\x0f\x85\x30\x00\x00\x00" b"\xc3"
 
     with pe_path.open("wb") as f:
@@ -281,12 +283,12 @@ class TestPatternMatcher:
         ]
 
         matches: list[dict] = matcher.find_patterns(instructions)
-        assert len(matches) > 0
+        assert matches
 
         serial_matches: list[dict] = [
             m for m in matches if m["type"] == CheckType.SERIAL_VALIDATION
         ]
-        assert len(serial_matches) > 0
+        assert serial_matches
 
     def test_pattern_matching_memcmp_serial_check(self) -> None:
         """PatternMatcher detects memcmp-based license validation."""
@@ -305,7 +307,7 @@ class TestPatternMatcher:
         serial_matches: list[dict] = [
             m for m in matches if m["type"] == CheckType.SERIAL_VALIDATION
         ]
-        assert len(serial_matches) > 0
+        assert serial_matches
 
     def test_pattern_matching_trial_check(self) -> None:
         """PatternMatcher detects trial period checks."""
@@ -319,7 +321,6 @@ class TestPatternMatcher:
         ]
 
         matches: list[dict] = matcher.find_patterns(instructions)
-        assert len(matches) >= 0
 
     def test_pattern_matching_online_validation(self) -> None:
         """PatternMatcher detects cloud license validation."""
@@ -337,7 +338,7 @@ class TestPatternMatcher:
         online_matches: list[dict] = [
             m for m in matches if m["type"] == CheckType.ONLINE_VALIDATION
         ]
-        assert len(online_matches) > 0
+        assert online_matches
 
     def test_pattern_matching_signature_check(self) -> None:
         """PatternMatcher detects cryptographic signature validation."""
@@ -351,7 +352,7 @@ class TestPatternMatcher:
 
         matches: list[dict] = matcher.find_patterns(instructions)
         sig_matches: list[dict] = [m for m in matches if m["type"] == CheckType.SIGNATURE_CHECK]
-        assert len(sig_matches) > 0
+        assert sig_matches
 
     def test_pattern_matching_hardware_check(self) -> None:
         """PatternMatcher detects hardware-based license checks."""
@@ -366,7 +367,7 @@ class TestPatternMatcher:
 
         matches: list[dict] = matcher.find_patterns(instructions)
         hw_matches: list[dict] = [m for m in matches if m["type"] == CheckType.HARDWARE_CHECK]
-        assert len(hw_matches) > 0
+        assert hw_matches
 
     def test_pattern_matching_integrity_check(self) -> None:
         """PatternMatcher detects integrity validation patterns."""
@@ -382,7 +383,7 @@ class TestPatternMatcher:
         integrity_matches: list[dict] = [
             m for m in matches if m["type"] == CheckType.INTEGRITY_CHECK
         ]
-        assert len(integrity_matches) > 0
+        assert integrity_matches
 
 
 @pytest.mark.skipif(not CAPSTONE_AVAILABLE, reason="Capstone required")
@@ -459,9 +460,7 @@ class TestLicenseCheckDetection:
         """Detected license checks contain all required fields."""
         remover: LicenseCheckRemover = LicenseCheckRemover(str(pe_with_serial_check))
 
-        checks: list[LicenseCheck] = remover.analyze()
-
-        if len(checks) > 0:
+        if checks := remover.analyze():
             check: LicenseCheck = checks[0]
             assert hasattr(check, "check_type")
             assert hasattr(check, "address")
@@ -512,7 +511,7 @@ class TestControlFlowAnalysis:
 
         blocks: dict[int, BasicBlock] = analyzer.build_cfg(instructions)
 
-        assert len(blocks) > 0
+        assert blocks
         assert all(isinstance(block, BasicBlock) for block in blocks.values())
 
     def test_identify_basic_block_leaders(self) -> None:
@@ -550,9 +549,7 @@ class TestControlFlowAnalysis:
             (0x401012, "ret", ""),
         ]
 
-        blocks: dict[int, BasicBlock] = analyzer.build_cfg(instructions)
-
-        if len(blocks) > 0:
+        if blocks := analyzer.build_cfg(instructions):
             first_block: BasicBlock = blocks[0x401000]
             assert hasattr(first_block, "successors")
             assert isinstance(first_block.successors, list)
@@ -755,7 +752,7 @@ class TestBinaryPatching:
 
         result: bool = remover.patch(checks, create_backup=True)
 
-        backup_path: Path = Path(str(pe_with_serial_check) + ".bak")
+        backup_path: Path = Path(f"{str(pe_with_serial_check)}.bak")
         if result and backup_path.exists():
             backup_data: bytes = backup_path.read_bytes()
             assert backup_data == original_data
@@ -907,7 +904,7 @@ class TestRiskAssessment:
 
         risk: str = risk_engine.assess_patch_risk(patch_point, license_check)
 
-        assert risk in ["low", "medium", "high"]
+        assert risk in {"low", "medium", "high"}
 
 
 @pytest.mark.skipif(not CAPSTONE_AVAILABLE, reason="Capstone required")
@@ -1006,7 +1003,7 @@ class TestReportGeneration:
         report: str = remover.generate_report()
 
         assert isinstance(report, str)
-        assert len(report) > 0
+        assert report != ""
 
     def test_report_contains_check_information(self, pe_with_serial_check: Path) -> None:
         """Report contains detected check information."""
@@ -1016,7 +1013,7 @@ class TestReportGeneration:
 
         report: str = remover.generate_report()
 
-        if len(checks) > 0:
+        if checks:
             assert "License Check" in report or "license" in report.lower()
 
 
@@ -1100,7 +1097,7 @@ class TestRealWorldScenarios:
 
         if patch_result:
             patched_data: bytes = pe_with_serial_check.read_bytes()
-            backup_path: Path = Path(str(pe_with_serial_check) + ".bak")
+            backup_path: Path = Path(f"{str(pe_with_serial_check)}.bak")
             if backup_path.exists():
                 backup_data: bytes = backup_path.read_bytes()
                 assert backup_data == original_data
@@ -1301,9 +1298,7 @@ class TestPatchStrategies:
         """NOP-based patch strategy for license checks."""
         remover: LicenseCheckRemover = LicenseCheckRemover(str(pe_with_serial_check))
 
-        checks: list[LicenseCheck] = remover.analyze()
-
-        if len(checks) > 0:
+        if checks := remover.analyze():
             check: LicenseCheck = checks[0]
             assert hasattr(check, "patch_strategy")
 

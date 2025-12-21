@@ -14,7 +14,7 @@ from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 from ..utils.logger import get_logger
 
@@ -79,13 +79,13 @@ ExceptionRecord._fields_ = [
 class M128A(ctypes.Structure):
     """128-bit SIMD register structure."""
 
-    _fields_ = [("Low", ctypes.c_ulonglong), ("High", ctypes.c_longlong)]
+    _fields_: ClassVar[list[tuple[str, type]]] = [("Low", ctypes.c_ulonglong), ("High", ctypes.c_longlong)]
 
 
 class CONTEXT(ctypes.Structure):
     """x64 CONTEXT structure for thread state."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("P1Home", ctypes.c_ulonglong),
         ("P2Home", ctypes.c_ulonglong),
         ("P3Home", ctypes.c_ulonglong),
@@ -138,7 +138,7 @@ class CONTEXT(ctypes.Structure):
 class ExceptionPointers(ctypes.Structure):
     """Windows EXCEPTION_POINTERS structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("ExceptionRecord", ctypes.POINTER(ExceptionRecord)),
         ("ContextRecord", ctypes.POINTER(CONTEXT)),
     ]
@@ -150,7 +150,7 @@ EXCEPTION_POINTERS = ExceptionPointers
 class EXCEPTION_DEBUG_INFO(ctypes.Structure):
     """Windows EXCEPTION_DEBUG_INFO structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("ExceptionRecord", ExceptionRecord),
         ("dwFirstChance", wintypes.DWORD),
     ]
@@ -159,7 +159,7 @@ class EXCEPTION_DEBUG_INFO(ctypes.Structure):
 class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):
     """Windows CREATE_THREAD_DEBUG_INFO structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("hThread", wintypes.HANDLE),
         ("lpThreadLocalBase", ctypes.c_void_p),
         ("lpStartAddress", ctypes.c_void_p),
@@ -169,7 +169,7 @@ class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):
 class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):
     """Windows CREATE_PROCESS_DEBUG_INFO structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("hFile", wintypes.HANDLE),
         ("hProcess", wintypes.HANDLE),
         ("hThread", wintypes.HANDLE),
@@ -186,19 +186,19 @@ class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):
 class EXIT_THREAD_DEBUG_INFO(ctypes.Structure):
     """Windows EXIT_THREAD_DEBUG_INFO structure."""
 
-    _fields_ = [("dwExitCode", wintypes.DWORD)]
+    _fields_: ClassVar[list[tuple[str, type]]] = [("dwExitCode", wintypes.DWORD)]
 
 
 class EXIT_PROCESS_DEBUG_INFO(ctypes.Structure):
     """Windows EXIT_PROCESS_DEBUG_INFO structure."""
 
-    _fields_ = [("dwExitCode", wintypes.DWORD)]
+    _fields_: ClassVar[list[tuple[str, type]]] = [("dwExitCode", wintypes.DWORD)]
 
 
 class LOAD_DLL_DEBUG_INFO(ctypes.Structure):
     """Windows LOAD_DLL_DEBUG_INFO structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("hFile", wintypes.HANDLE),
         ("lpBaseOfDll", ctypes.c_void_p),
         ("dwDebugInfoFileOffset", wintypes.DWORD),
@@ -211,13 +211,13 @@ class LOAD_DLL_DEBUG_INFO(ctypes.Structure):
 class UNLOAD_DLL_DEBUG_INFO(ctypes.Structure):
     """Windows UNLOAD_DLL_DEBUG_INFO structure."""
 
-    _fields_ = [("lpBaseOfDll", ctypes.c_void_p)]
+    _fields_: ClassVar[list[tuple[str, type]]] = [("lpBaseOfDll", ctypes.c_void_p)]
 
 
 class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):
     """Windows OUTPUT_DEBUG_STRING_INFO structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("lpDebugStringData", ctypes.c_char_p),
         ("fUnicode", wintypes.WORD),
         ("nDebugStringLength", wintypes.WORD),
@@ -227,7 +227,7 @@ class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):
 class RIP_INFO(ctypes.Structure):
     """Windows RIP_INFO structure."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("dwError", wintypes.DWORD),
         ("dwType", wintypes.DWORD),
     ]
@@ -236,7 +236,7 @@ class RIP_INFO(ctypes.Structure):
 class DEBUG_EVENT_UNION(ctypes.Union):
     """Union of all debug event info structures."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("Exception", EXCEPTION_DEBUG_INFO),
         ("CreateThread", CREATE_THREAD_DEBUG_INFO),
         ("CreateProcessInfo", CREATE_PROCESS_DEBUG_INFO),
@@ -252,7 +252,7 @@ class DEBUG_EVENT_UNION(ctypes.Union):
 class DEBUG_EVENT(ctypes.Structure):
     """Windows DEBUG_EVENT structure for debugging events."""
 
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("dwDebugEventCode", wintypes.DWORD),
         ("dwProcessId", wintypes.DWORD),
         ("dwThreadId", wintypes.DWORD),
@@ -388,7 +388,8 @@ class LicenseDebugger:
                 return False
 
             self.process_id = process_id
-            self.process_handle = self.kernel32.OpenProcess(self.PROCESS_ALL_ACCESS, False, process_id)
+            inherit_handle = False
+            self.process_handle = self.kernel32.OpenProcess(self.PROCESS_ALL_ACCESS, inherit_handle, process_id)
 
             if not self.process_handle:
                 logger.exception("Failed to get a handle for process %s.", process_id)
@@ -430,7 +431,8 @@ class LicenseDebugger:
             privilege = win32security.LookupPrivilegeValue(None, "SeDebugPrivilege")
 
             # Enable the privilege
-            win32security.AdjustTokenPrivileges(token, False, [(privilege, win32security.SE_PRIVILEGE_ENABLED)])
+            disable_all_privileges = False
+            win32security.AdjustTokenPrivileges(token, disable_all_privileges, [(privilege, win32security.SE_PRIVILEGE_ENABLED)])
 
             return True
 
@@ -506,7 +508,9 @@ class LicenseDebugger:
             logger.exception("An unexpected error occurred while setting breakpoint at %s", hex(address))
             return False
 
-    def set_conditional_breakpoint(self, address: int, condition: str, callback: Callable[..., Any] | None = None, description: str = "") -> bool:
+    def set_conditional_breakpoint(
+        self, address: int, condition: str, callback: Callable[..., Any] | None = None, description: str = ""
+    ) -> bool:
         """Set a conditional breakpoint that only triggers when condition is met.
 
         Args:
@@ -528,6 +532,7 @@ class LicenseDebugger:
         access_type: str = "execute",
         size: int = 1,
         callback: Callable[..., Any] | None = None,
+        *,
         apply_to_all_threads: bool = True,
     ) -> bool:
         """Set hardware breakpoint using debug registers.
@@ -556,7 +561,7 @@ class LicenseDebugger:
             return False
 
         # Validate size
-        if size not in [1, 2, 4, 8]:
+        if size not in {1, 2, 4, 8}:
             logger.exception("Invalid size (must be 1, 2, 4, or 8 bytes)")
             return False
 
@@ -1726,13 +1731,13 @@ class LicenseDebugger:
 
         # Change memory protection if needed
         old_protect = wintypes.DWORD()
-        PAGE_EXECUTE_READWRITE = 0x40
+        page_execute_readwrite = 0x40
 
         self.kernel32.VirtualProtectEx(
             self.process_handle,
             ctypes.c_void_p(address),
             len(data),
-            PAGE_EXECUTE_READWRITE,
+            page_execute_readwrite,
             ctypes.byref(old_protect),
         )
 
@@ -1769,7 +1774,7 @@ class LicenseDebugger:
 
         # MEMORY_BASIC_INFORMATION structure
         class MEMORY_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
-            _fields_ = [
+            _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("BaseAddress", ctypes.c_void_p),
                 ("AllocationBase", ctypes.c_void_p),
                 ("AllocationProtect", wintypes.DWORD),
@@ -1783,18 +1788,18 @@ class LicenseDebugger:
         address = 0
 
         while self.kernel32.VirtualQueryEx(self.process_handle, ctypes.c_void_p(address), ctypes.byref(mbi), ctypes.sizeof(mbi)):
-            MEM_COMMIT = 0x1000
-            PAGE_EXECUTE = 0x10
-            PAGE_EXECUTE_READ = 0x20
-            PAGE_EXECUTE_READWRITE = 0x40
+            mem_commit = 0x1000
+            page_execute = 0x10
+            page_execute_read = 0x20
+            page_execute_readwrite = 0x40
 
-            if mbi.State == MEM_COMMIT:
+            if mbi.State == mem_commit:
                 regions.append(
                     {
                         "base": mbi.BaseAddress,
                         "size": mbi.RegionSize,
                         "protection": mbi.Protect,
-                        "executable": mbi.Protect in [PAGE_EXECUTE, PAGE_EXECUTE_READ, PAGE_EXECUTE_READWRITE],
+                        "executable": mbi.Protect in {page_execute, page_execute_read, page_execute_readwrite},
                     },
                 )
 
@@ -2139,7 +2144,7 @@ class LicenseDebugger:
 
         # CONTEXT structure for x64
         class CONTEXT(ctypes.Structure):
-            _fields_ = [
+            _fields_: ClassVar[list[tuple[str, type]]] = [
                 ("P1Home", ctypes.c_uint64),
                 ("P2Home", ctypes.c_uint64),
                 ("P3Home", ctypes.c_uint64),
@@ -2455,10 +2460,10 @@ class LicenseDebugger:
         try:
             # Use NtSetInformationThread to hide debugger
             ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
-            ThreadHideFromDebugger = 0x11
+            thread_hide_from_debugger = 0x11
 
             for thread_handle in self.thread_handles.values():
-                ntdll.NtSetInformationThread(thread_handle, ThreadHideFromDebugger, None, 0)
+                ntdll.NtSetInformationThread(thread_handle, thread_hide_from_debugger, None, 0)
 
             # Hook and patch common anti-debug APIs
             anti_debug_apis = [
@@ -2477,12 +2482,12 @@ class LicenseDebugger:
             logger.exception("An unexpected error occurred while trying to hide the debugger")
             return False
 
-    def _anti_debug_callback(self, debugger: Any, debug_event: DEBUG_EVENT) -> None:
+    def _anti_debug_callback(self, _debugger: Any, _debug_event: DEBUG_EVENT) -> None:
         """Handle anti-debug API hooks callback.
 
         Args:
-            debugger: Debugger instance reference
-            debug_event: Current debug event
+            _debugger: Debugger instance reference (unused but required by callback signature)
+            _debug_event: Current debug event (unused but required by callback signature)
 
         """
         if context := self.get_registers():
@@ -2531,12 +2536,12 @@ class LicenseDebugger:
             # for the DBG_PRINTEXCEPTION_C (0x40010006) and DBG_PRINTEXCEPTION_W (0x4001000A)
             if hasattr(self, "veh_handler") and self.veh_handler:
                 # Add filter for OutputDebugString exceptions
-                def output_debug_filter(exception_record: Any, context_record: Any) -> int | None:
+                def output_debug_filter(exception_record: Any, _context_record: Any) -> int | None:
                     """Filter OutputDebugString exceptions to prevent detection.
 
                     Args:
                         exception_record: Exception record structure
-                        context_record: Thread context structure
+                        _context_record: Thread context structure (unused but required by callback signature)
 
                     Returns:
                         Exception disposition code or None to pass on
@@ -2544,7 +2549,7 @@ class LicenseDebugger:
                     """
                     exc_code = exception_record.ExceptionCode
                     # DBG_PRINTEXCEPTION_C and DBG_PRINTEXCEPTION_W
-                    if exc_code in [0x40010006, 0x4001000A]:
+                    if exc_code in {0x40010006, 0x4001000A}:
                         return -1  # EXCEPTION_CONTINUE_EXECUTION
                     return None
 
@@ -2574,18 +2579,18 @@ class LicenseDebugger:
             logger.info("OutputDebugString anti-debug bypass applied")
             return True
 
-        except Exception as e:
-            logger.exception("An unexpected error occurred while bypassing OutputDebugString detection: %s", e)
+        except Exception:
+            logger.exception("An unexpected error occurred while bypassing OutputDebugString detection")
             return False
 
-    def _output_debug_string_callback(self, debugger: Any, debug_event: DEBUG_EVENT) -> None:
+    def _output_debug_string_callback(self, _debugger: Any, _debug_event: DEBUG_EVENT) -> None:
         """Handle OutputDebugString API hooks callback.
 
         Modifies behavior to prevent debugger detection.
 
         Args:
-            debugger: Debugger instance reference
-            debug_event: Current debug event
+            _debugger: Debugger instance reference (unused but required by callback signature)
+            _debug_event: Current debug event (unused but required by callback signature)
 
         """
         try:
@@ -2597,8 +2602,8 @@ class LicenseDebugger:
                 context["rax"] = 0  # Return success
                 self.set_registers(context)
 
-        except Exception as e:
-            logger.exception("An error occurred in the OutputDebugString callback: %s", e)
+        except Exception:
+            logger.exception("An error occurred in the OutputDebugString callback")
 
     def mitigate_timing_attacks(self) -> bool:
         """Mitigate timing-based anti-debugging techniques.
@@ -2695,16 +2700,16 @@ class LicenseDebugger:
             logger.info("Timing attack mitigation applied")
             return True
 
-        except Exception as e:
-            logger.exception("Failed to mitigate timing attacks: %s", e)
+        except Exception:
+            logger.exception("Failed to mitigate timing attacks")
             return False
 
-    def _timing_api_callback(self, debugger: Any, debug_event: DEBUG_EVENT) -> None:
+    def _timing_api_callback(self, _debugger: Any, _debug_event: DEBUG_EVENT) -> None:
         """Handle timing API hooks callback to provide controlled time values.
 
         Args:
-            debugger: Debugger instance reference
-            debug_event: Current debug event
+            _debugger: Debugger instance reference (unused but required by callback signature)
+            _debug_event: Current debug event (unused but required by callback signature)
 
         """
         try:
@@ -2737,15 +2742,15 @@ class LicenseDebugger:
 
             self.set_registers(context)
 
-        except Exception as e:
-            logger.exception("Timing API callback error: %s", e)
+        except Exception:
+            logger.exception("Timing API callback error")
 
-    def _sleep_callback(self, debugger: Any, debug_event: DEBUG_EVENT) -> None:
+    def _sleep_callback(self, _debugger: Any, _debug_event: DEBUG_EVENT) -> None:
         """Handle Sleep API callback to compensate for debugging overhead.
 
         Args:
-            debugger: Debugger instance reference
-            debug_event: Current debug event
+            _debugger: Debugger instance reference (unused but required by callback signature)
+            _debug_event: Current debug event (unused but required by callback signature)
 
         """
         try:
@@ -2794,15 +2799,15 @@ class LicenseDebugger:
 
             self.set_registers(context)
 
-        except Exception as e:
-            logger.exception("Sleep callback error: %s", e)
+        except Exception:
+            logger.exception("Sleep callback error")
 
-    def _delay_execution_callback(self, debugger: Any, debug_event: DEBUG_EVENT) -> None:
+    def _delay_execution_callback(self, _debugger: Any, _debug_event: DEBUG_EVENT) -> None:
         """Speed up delays with NtDelayExecution callback.
 
         Args:
-            debugger: Debugger instance reference
-            debug_event: Current debug event
+            _debugger: Debugger instance reference (unused but required by callback signature)
+            _debug_event: Current debug event (unused but required by callback signature)
 
         """
         try:
@@ -2811,8 +2816,8 @@ class LicenseDebugger:
                 context["rax"] = 0  # STATUS_SUCCESS
                 self.set_registers(context)
 
-        except Exception as e:
-            logger.exception("Delay execution callback error: %s", e)
+        except Exception:
+            logger.exception("Delay execution callback error")
 
     def bypass_thread_enumeration(self) -> bool:
         """Bypass thread enumeration detection techniques.
@@ -2848,17 +2853,17 @@ class LicenseDebugger:
                 try:
                     # Use NtSetInformationThread to hide the thread
                     ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
-                    ThreadHideFromDebugger = 0x11
-                    ThreadBreakOnTermination = 0x1D
+                    thread_hide_from_debugger = 0x11
+                    thread_break_on_termination = 0x1D
 
                     # Hide from debugger enumeration
-                    ntdll.NtSetInformationThread(thread_handle, ThreadHideFromDebugger, None, 0)
+                    ntdll.NtSetInformationThread(thread_handle, thread_hide_from_debugger, None, 0)
 
                     # Mark as critical system thread (appears as system process thread)
                     critical = ctypes.c_ulong(1)
                     ntdll.NtSetInformationThread(
                         thread_handle,
-                        ThreadBreakOnTermination,
+                        thread_break_on_termination,
                         ctypes.byref(critical),
                         ctypes.sizeof(critical),
                     )
@@ -2900,16 +2905,16 @@ class LicenseDebugger:
             logger.info("Thread enumeration bypass applied, hiding %s threads", len(self.hidden_thread_ids))
             return True
 
-        except Exception as e:
-            logger.exception("Failed to bypass thread enumeration: %s", e)
+        except Exception:
+            logger.exception("Failed to bypass thread enumeration")
             return False
 
-    def _thread_enum_callback(self, debugger: Any, debug_event: DEBUG_EVENT) -> None:
+    def _thread_enum_callback(self, _debugger: Any, _debug_event: DEBUG_EVENT) -> None:
         """Handle thread enumeration API hooks.
 
         Args:
-            debugger: Debugger instance reference
-            debug_event: Current debug event
+            _debugger: Debugger instance reference (unused but required by callback signature)
+            _debug_event: Current debug event (unused but required by callback signature)
 
         """
         try:
@@ -2925,8 +2930,8 @@ class LicenseDebugger:
             context["rax"] = 0  # Success but no threads found
             self.set_registers(context)
 
-        except Exception as e:
-            logger.exception("Thread enumeration callback error: %s", e)
+        except Exception:
+            logger.exception("Thread enumeration callback error")
 
     def detect_suspended_threads(self) -> dict[int, dict[str, Any]]:
         """Detect suspended threads that may indicate debugging or protection.
@@ -2949,11 +2954,11 @@ class LicenseDebugger:
 
                     # Use NtQueryInformationThread
                     ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
-                    ThreadSuspendCount = 0x23
+                    thread_suspend_count = 0x23
 
                     status = ntdll.NtQueryInformationThread(
                         thread_handle,
-                        ThreadSuspendCount,
+                        thread_suspend_count,
                         ctypes.byref(suspend_count),
                         ctypes.sizeof(suspend_count),
                         None,
@@ -3023,7 +3028,7 @@ class LicenseDebugger:
             if snapshot != -1:
 
                 class THREADENTRY32(ctypes.Structure):
-                    _fields_ = [
+                    _fields_: ClassVar[list[tuple[str, type]]] = [
                         ("dwSize", ctypes.c_ulong),
                         ("cntUsage", ctypes.c_ulong),
                         ("th32ThreadID", ctypes.c_ulong),
@@ -3059,8 +3064,8 @@ class LicenseDebugger:
 
             return suspended_threads
 
-        except Exception as e:
-            logger.exception("Failed to detect suspended threads: %s", e)
+        except Exception:
+            logger.exception("Failed to detect suspended threads")
             return suspended_threads
 
     def manipulate_thread_local_storage(self, thread_id: int, tls_index: int, value: bytes) -> bool:
@@ -3086,7 +3091,7 @@ class LicenseDebugger:
             ntdll = ctypes.WinDLL("ntdll", use_last_error=True)
 
             class THREAD_BASIC_INFORMATION(ctypes.Structure):  # noqa: N801
-                _fields_ = [
+                _fields_: ClassVar[list[tuple[str, type]]] = [
                     ("ExitStatus", ctypes.c_long),
                     ("TebBaseAddress", ctypes.c_void_p),
                     ("ClientId", ctypes.c_ulonglong),
@@ -3172,8 +3177,8 @@ class LicenseDebugger:
             logger.info("Successfully manipulated TLS index %s for thread %s", tls_index, thread_id)
             return True
 
-        except Exception as e:
-            logger.exception("Failed to manipulate TLS: %s", e)
+        except Exception:
+            logger.exception("Failed to manipulate TLS")
             return False
 
     def trace_thread_execution(self, thread_id: int, max_instructions: int = 1000) -> list[dict[str, Any]]:
@@ -3301,13 +3306,13 @@ class LicenseDebugger:
                                         trace_log.append(trace_entry)
 
                                         # Check for control flow changes
-                                        if inst_bytes[0] in [
+                                        if inst_bytes[0] in {
                                             0xE8,
                                             0xE9,
                                             0xFF,
                                             0xC3,
                                             0xC2,
-                                        ]:  # CALL, JMP, RET
+                                        }:  # CALL, JMP, RET
                                             trace_entry["type"] = "control_flow"
                                         elif inst_bytes[0] & 0xF0 == 0x70:  # Conditional jumps
                                             trace_entry["type"] = "conditional_jump"
@@ -3340,8 +3345,8 @@ class LicenseDebugger:
             logger.info("Traced %s instructions for thread %s", len(trace_log), thread_id)
             return trace_log
 
-        except Exception as e:
-            logger.exception("Failed to trace thread execution: %s", e)
+        except Exception:
+            logger.exception("Failed to trace thread execution")
             return trace_log
 
     def analyze_tls_callbacks(self) -> list[int]:
@@ -3421,8 +3426,8 @@ class LicenseDebugger:
                             tls_callbacks.append(callback_addr)
                             logger.info("Found TLS callback at 0x%X", callback_addr)
 
-        except Exception as e:
-            logger.exception("Error analyzing TLS callbacks: %s", e)
+        except Exception:
+            logger.exception("Error analyzing TLS callbacks")
 
         return tls_callbacks
 
@@ -3474,17 +3479,17 @@ class LicenseDebugger:
                         instructions.append(inst_str)
 
                         # Check for common protection patterns
-                        if inst.mnemonic in ["int3", "int", "ud2"]:
+                        if inst.mnemonic in {"int3", "int", "ud2"}:
                             instructions.append("  [!] Anti-debug instruction detected")
                         elif inst.mnemonic == "cpuid":
                             instructions.append("  [!] CPU detection (VM/timing)")
                         elif inst.mnemonic == "rdtsc":
                             instructions.append("  [!] Timing check detected")
-                        elif inst.mnemonic in ["call", "jmp"] and "fs:" in inst.op_str:
+                        elif inst.mnemonic in {"call", "jmp"} and "fs:" in inst.op_str:
                             instructions.append("  [!] TEB/PEB access detected")
 
                         # Stop at return or after 50 instructions
-                        if inst.mnemonic in ["ret", "retn"] or instruction_count > 49:
+                        if inst.mnemonic in {"ret", "retn"} or instruction_count > 49:
                             break
                 else:
                     # Raw byte display
@@ -3507,8 +3512,8 @@ class LicenseDebugger:
 
             return disassembled
 
-        except Exception as e:
-            logger.exception("Failed to disassemble TLS callbacks: %s", e)
+        except Exception:
+            logger.exception("Failed to disassemble TLS callbacks")
             return disassembled
 
     def bypass_tls_callbacks(self) -> bool:
@@ -3552,8 +3557,8 @@ class LicenseDebugger:
 
                     logger.warning("Failed to bypass TLS callback at 0x%X", callback_addr)
 
-                except Exception as e:
-                    logger.exception("Error bypassing callback at 0x%X: %s", callback_addr, e, exc_info=True)
+                except Exception:
+                    logger.exception("Error bypassing callback at 0x%X", callback_addr)
 
             if modules := list(self.modules.keys()):
                 module_base = modules[0]
@@ -3592,8 +3597,8 @@ class LicenseDebugger:
             logger.info("Successfully bypassed %s/%s TLS callbacks", bypassed_count, len(callbacks))
             return bypassed_count > 0
 
-        except Exception as e:
-            logger.exception("Failed to bypass TLS callbacks: %s", e)
+        except Exception:
+            logger.exception("Failed to bypass TLS callbacks")
             return False
 
     def hook_tls_callbacks(self, callback_handler: Callable[..., Any]) -> bool:
@@ -3773,14 +3778,14 @@ class LicenseDebugger:
                     else:
                         self.kernel32.VirtualFreeEx(self.process_handle, trampoline_addr, 0, MEM_RELEASE)
 
-                except Exception as e:
-                    logger.exception("Failed to hook callback at 0x%X: %s", callback_addr, e, exc_info=True)
+                except Exception:
+                    logger.exception("Failed to hook callback at 0x%X", callback_addr)
 
             logger.info("Successfully hooked %s/%s TLS callbacks", hooked_count, len(callbacks))
             return hooked_count > 0
 
-        except Exception as e:
-            logger.exception("Failed to hook TLS callbacks: %s", e)
+        except Exception:
+            logger.exception("Failed to hook TLS callbacks")
             return False
 
     def detect_tls_protection(self) -> dict[str, Any]:
@@ -3913,15 +3918,7 @@ class LicenseDebugger:
 
             # Check which protector patterns match
             for protector, patterns in known_protectors.items():
-                match_count = sum(
-                    any(
-                        (
-                            pattern in sp.lower()
-                            for sp in protection_info["suspicious_patterns"]
-                        )
-                    )
-                    for pattern in patterns
-                )
+                match_count = sum(any(pattern in sp.lower() for sp in protection_info["suspicious_patterns"]) for pattern in patterns)
                 if match_count >= 2:  # At least 2 patterns match
                     protection_info["detected_techniques"].append(f"Possible {protector}")
 
@@ -3929,8 +3926,8 @@ class LicenseDebugger:
 
             return protection_info
 
-        except Exception as e:
-            logger.exception("Failed to detect TLS protection: %s", e)
+        except Exception:
+            logger.exception("Failed to detect TLS protection")
             return protection_info
 
     def parse_iat(self) -> dict[str, list[tuple[int, str]]]:
@@ -3963,8 +3960,8 @@ class LicenseDebugger:
                     iat_entries[dll_name] = []
                 iat_entries[dll_name].append((addr, api_name))
 
-        except Exception as e:
-            logger.exception("Error parsing IAT: %s", e)
+        except Exception:
+            logger.exception("Error parsing IAT")
 
         return iat_entries
 
@@ -4062,8 +4059,8 @@ class LicenseDebugger:
                                 if func_name:
                                     eat_entries.append((func_addr, func_name))
 
-        except Exception as e:
-            logger.exception("Error parsing EAT: %s", e)
+        except Exception:
+            logger.exception("Error parsing EAT")
 
         return eat_entries
 
@@ -4113,8 +4110,8 @@ class LicenseDebugger:
 
             return delayed_imports
 
-        except Exception as e:
-            logger.exception("Failed to parse delayed imports: %s", e)
+        except Exception:
+            logger.exception("Failed to parse delayed imports")
             return delayed_imports
 
     def _validate_pe_header(self, pe_header: bytes) -> bool:
@@ -4557,8 +4554,8 @@ class LicenseDebugger:
             self.kernel32.VirtualFreeEx(self.process_handle, trampoline, 0, MEM_RELEASE)
             return False
 
-        except Exception as e:
-            logger.exception("Failed to hook delayed import: %s", e)
+        except Exception:
+            logger.exception("Failed to hook delayed import")
             return False
 
     def assemble_x86_x64(self, mnemonic: str, operands: str, arch: str = "x64") -> bytes:
@@ -4580,8 +4577,8 @@ class LicenseDebugger:
             # Manual encoding for common instructions
             return self._manual_assemble(mnemonic, operands, arch)
 
-        except Exception as e:
-            logger.exception("Failed to assemble instruction: %s", e)
+        except Exception:
+            logger.exception("Failed to assemble instruction")
             return b""
 
     def _try_keystone_assemble(self, mnemonic: str, operands: str, arch: str) -> bytes:
@@ -5124,8 +5121,8 @@ class LicenseDebugger:
 
             return b""
 
-        except Exception as e:
-            logger.exception("Failed to generate dynamic patch: %s", e)
+        except Exception:
+            logger.exception("Failed to generate dynamic patch")
             return b""
 
     def relocate_code(self, code: bytes, old_base: int, new_base: int, reloc_offsets: list[int]) -> bytes:
@@ -5187,8 +5184,8 @@ class LicenseDebugger:
 
             return bytes(relocated)
 
-        except Exception as e:
-            logger.exception("Failed to relocate code: %s", e)
+        except Exception:
+            logger.exception("Failed to relocate code")
             return code
 
     def generate_shellcode(self, shellcode_type: str, **params: object) -> bytes:
@@ -5466,8 +5463,8 @@ class LicenseDebugger:
 
             return b""
 
-        except Exception as e:
-            logger.exception("Failed to generate shellcode: %s", e)
+        except Exception:
+            logger.exception("Failed to generate shellcode")
             return b""
 
     def generate_position_independent_code(self, operations: list[dict[str, Any]]) -> bytes:
@@ -5626,8 +5623,8 @@ class LicenseDebugger:
 
             return bytes(pic)
 
-        except Exception as e:
-            logger.exception("Failed to generate position-independent code: %s", e)
+        except Exception:
+            logger.exception("Failed to generate position-independent code")
             return b""
 
     def generate_nop_sled(self, length: int) -> bytes:
@@ -5785,8 +5782,8 @@ class LicenseDebugger:
                     # Continue searching for other handlers
                     return 0  # EXCEPTION_CONTINUE_SEARCH
 
-                except Exception as e:
-                    logger.exception("Error in VEH handler: %s", e, exc_info=True)
+                except Exception:
+                    logger.exception("Error in VEH handler")
                     return 0  # EXCEPTION_CONTINUE_SEARCH
 
             # Store handler reference to prevent garbage collection
@@ -5803,8 +5800,8 @@ class LicenseDebugger:
             logger.info("VEH handler installed %s in chain", "first" if first_handler else "last")
             return True
 
-        except Exception as e:
-            logger.exception("Error installing VEH handler: %s", e)
+        except Exception:
+            logger.exception("Error installing VEH handler")
             return False
 
     def uninstall_veh_handler(self) -> bool:
@@ -5831,8 +5828,8 @@ class LicenseDebugger:
             logger.exception("Failed to uninstall VEH handler")
             return False
 
-        except Exception as e:
-            logger.exception("Error uninstalling VEH handler: %s", e)
+        except Exception:
+            logger.exception("Error uninstalling VEH handler")
             return False
 
     def _handle_veh_breakpoint(self, exception_record: ExceptionRecord, context: CONTEXT) -> int:
@@ -5888,8 +5885,8 @@ class LicenseDebugger:
                 logger.debug("VEH: Handled hardware breakpoint at 0x%X", address)
                 return -1  # EXCEPTION_CONTINUE_EXECUTION
 
-        except Exception as e:
-            logger.exception("Error handling VEH breakpoint: %s", e)
+        except Exception:
+            logger.exception("Error handling VEH breakpoint")
 
         return 0  # EXCEPTION_CONTINUE_SEARCH
 
@@ -5945,8 +5942,8 @@ class LicenseDebugger:
                 self.trace_callback(context)
                 return -1  # EXCEPTION_CONTINUE_EXECUTION
 
-        except Exception as e:
-            logger.exception("Error handling VEH single-step: %s", e)
+        except Exception:
+            logger.exception("Error handling VEH single-step")
 
         return 0  # EXCEPTION_CONTINUE_SEARCH
 
@@ -5994,8 +5991,8 @@ class LicenseDebugger:
 
                         return -1  # EXCEPTION_CONTINUE_EXECUTION
 
-        except Exception as e:
-            logger.exception("Error handling VEH access violation: %s", e)
+        except Exception:
+            logger.exception("Error handling VEH access violation")
 
         return 0  # EXCEPTION_CONTINUE_SEARCH
 
@@ -6028,8 +6025,8 @@ class LicenseDebugger:
 
                     return -1  # EXCEPTION_CONTINUE_EXECUTION
 
-        except Exception as e:
-            logger.exception("Error handling VEH guard page: %s", e)
+        except Exception:
+            logger.exception("Error handling VEH guard page")
 
         return 0  # EXCEPTION_CONTINUE_SEARCH
 
@@ -6092,8 +6089,8 @@ class LicenseDebugger:
             logger.info("VEH handler repositioned to %s in chain", "first" if first_handler else "last")
             return True
 
-        except Exception as e:
-            logger.exception("Error manipulating VEH chain: %s", e)
+        except Exception:
+            logger.exception("Error manipulating VEH chain")
             return False
 
     def enable_single_stepping(self, thread_id: int | None = None) -> bool:
@@ -6128,8 +6125,8 @@ class LicenseDebugger:
             logger.info("Single-stepping enabled for thread %s", target_thread)
             return True
 
-        except Exception as e:
-            logger.exception("Error enabling single-stepping: %s", e)
+        except Exception:
+            logger.exception("Error enabling single-stepping")
             return False
 
     def disable_single_stepping(self, thread_id: int | None = None) -> bool:
@@ -6163,8 +6160,8 @@ class LicenseDebugger:
             logger.info("Single-stepping disabled for thread %s", target_thread)
             return True
 
-        except Exception as e:
-            logger.exception("Error disabling single-stepping: %s", e)
+        except Exception:
+            logger.exception("Error disabling single-stepping")
             return False
 
     def set_memory_breakpoint(
@@ -6192,7 +6189,7 @@ class LicenseDebugger:
         try:
             if use_guard_page:
                 # Use guard page protection for memory breakpoint
-                PAGE_GUARD = 0x100
+                page_guard = 0x100
                 old_protect = wintypes.DWORD()
 
                 # Change page protection to include guard flag
@@ -6200,7 +6197,7 @@ class LicenseDebugger:
                     self.process_handle,
                     ctypes.c_void_p(address & ~0xFFF),  # Align to page boundary
                     0x1000,  # Page size
-                    PAGE_GUARD | 0x04,  # PAGE_GUARD | PAGE_READWRITE
+                    page_guard | 0x04,  # PAGE_GUARD | PAGE_READWRITE
                     ctypes.byref(old_protect),
                 ):
                     logger.exception("Failed to set guard page protection")
@@ -6226,8 +6223,8 @@ class LicenseDebugger:
             logger.info("Set memory breakpoint at 0x%X for %s access", address, access_type)
             return True
 
-        except Exception as e:
-            logger.exception("Error setting memory breakpoint: %s", e)
+        except Exception:
+            logger.exception("Error setting memory breakpoint")
             return False
 
     def trace_execution(self, max_instructions: int = 1000, trace_callback: Callable[..., Any] | None = None) -> list[dict[str, Any]]:
@@ -6316,14 +6313,14 @@ class LicenseDebugger:
 
 # DEBUG_EVENT structure for Windows debugging
 class EXCEPTION_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("ExceptionRecord", ctypes.c_void_p),  # Simplified
         ("dwFirstChance", wintypes.DWORD),
     ]
 
 
 class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("hThread", wintypes.HANDLE),
         ("lpThreadLocalBase", ctypes.c_void_p),
         ("lpStartAddress", ctypes.c_void_p),
@@ -6331,7 +6328,7 @@ class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
 
 
 class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("hFile", wintypes.HANDLE),
         ("hProcess", wintypes.HANDLE),
         ("hThread", wintypes.HANDLE),
@@ -6346,19 +6343,19 @@ class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
 
 
 class EXIT_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("dwExitCode", wintypes.DWORD),
     ]
 
 
 class EXIT_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("dwExitCode", wintypes.DWORD),
     ]
 
 
 class LOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("hFile", wintypes.HANDLE),
         ("lpBaseOfDll", ctypes.c_void_p),
         ("dwDebugInfoFileOffset", wintypes.DWORD),
@@ -6369,13 +6366,13 @@ class LOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
 
 
 class UNLOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("lpBaseOfDll", ctypes.c_void_p),
     ]
 
 
 class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("lpDebugStringData", ctypes.c_char_p),
         ("fUnicode", wintypes.WORD),
         ("nDebugStringLength", wintypes.WORD),
@@ -6383,14 +6380,14 @@ class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):  # noqa: N801
 
 
 class RIP_INFO(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("dwError", wintypes.DWORD),
         ("dwType", wintypes.DWORD),
     ]
 
 
 class DEBUG_EVENT_UNION(ctypes.Union):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("Exception", EXCEPTION_DEBUG_INFO),
         ("CreateThread", CREATE_THREAD_DEBUG_INFO),
         ("CreateProcessInfo", CREATE_PROCESS_DEBUG_INFO),
@@ -6404,7 +6401,7 @@ class DEBUG_EVENT_UNION(ctypes.Union):  # noqa: N801
 
 
 class DEBUG_EVENT(ctypes.Structure):  # noqa: N801
-    _fields_ = [
+    _fields_: ClassVar[list[tuple[str, type]]] = [
         ("dwDebugEventCode", wintypes.DWORD),
         ("dwProcessId", wintypes.DWORD),
         ("dwThreadId", wintypes.DWORD),

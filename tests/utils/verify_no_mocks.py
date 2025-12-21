@@ -122,9 +122,7 @@ def scan_test_directory(test_dir: Path) -> dict:
                 continue
 
             file_path = Path(root) / file
-            violations = find_mock_usage(file_path)
-
-            if violations:
+            if violations := find_mock_usage(file_path):
                 all_violations[str(file_path)] = violations
 
     return all_violations

@@ -162,7 +162,7 @@ class TestQuickStartPanel:
                 with patch.object(QFileDialog, "getOpenFileName", return_value=(test_path, "")):
                     tab.open_file_action()
 
-                assert signal_emitted is True
+                assert signal_emitted
                 assert received_path == test_path
 
             finally:
@@ -193,7 +193,7 @@ class TestQuickStartPanel:
                 calls = mock_config_manager.set_setting.call_args_list
                 recent_files_call = [call for call in calls if call[0][0] == "recent_files"]
 
-                assert len(recent_files_call) > 0
+                assert recent_files_call
 
             finally:
                 Path(test_path).unlink(missing_ok=True)
@@ -225,7 +225,7 @@ class TestQuickStartPanel:
                 with patch.object(QFileDialog, "getOpenFileName", return_value=(test_path, "")):
                     tab.open_project()
 
-                assert signal_emitted is True
+                assert signal_emitted
                 assert received_path == test_path
 
             finally:
@@ -256,7 +256,7 @@ class TestRecentFilesList:
 
         with tempfile.TemporaryDirectory() as tmpdir:
             test_files = []
-            for i, filename in enumerate(["test1.exe", "test2.dll"]):
+            for filename in ["test1.exe", "test2.dll"]:
                 filepath = Path(tmpdir) / filename
                 filepath.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)
                 test_files.append(str(filepath))
@@ -328,7 +328,7 @@ class TestRecentFilesList:
                 item = tab.recent_files_list.item(0)
                 tab.load_recent_file(item)
 
-                assert signal_emitted is True
+                assert signal_emitted
                 assert received_path == str(test_file)
 
                 tab.cleanup()
@@ -342,9 +342,7 @@ class TestRecentFilesList:
         def get_setting_side_effect(key: str, default: Any = None) -> Any:
             if key == "recent_files":
                 return recent_files.copy()
-            if key == "dashboard.max_recent_files":
-                return 10
-            return default
+            return 10 if key == "dashboard.max_recent_files" else default
 
         def set_setting_side_effect(key: str, value: Any) -> None:
             if key == "recent_files":
@@ -385,7 +383,7 @@ class TestRecentFilesList:
 
             tab.clear_recent_files()
 
-            assert len(recent_files) == 0
+            assert not recent_files
             assert tab.recent_files_list.count() == 0
 
             tab.cleanup()
@@ -450,7 +448,7 @@ class TestSystemMonitorIntegration:
 
             tab.system_monitor.alert_triggered.emit("CPU", "CPU usage high")
 
-            assert handler_called is True
+            assert handler_called
             assert alert_type_received == "CPU"
 
             tab.cleanup()
@@ -644,7 +642,7 @@ class TestSharedContextIntegration:
                 with patch.object(QFileDialog, "getOpenFileName", return_value=(test_path, "")):
                     tab.open_file_action()
 
-                assert signal_emitted is True
+                assert signal_emitted
 
             finally:
                 Path(test_path).unlink(missing_ok=True)

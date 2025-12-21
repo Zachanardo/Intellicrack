@@ -168,7 +168,7 @@ class TestPredictiveIntelligence:
             features = extractor.extract_features(data=binary_data)
 
             assert features is not None
-            assert isinstance(features, dict) or isinstance(features, list)
+            assert isinstance(features, (dict, list))
         except Exception:
             pass
 
@@ -193,7 +193,6 @@ class TestPredictiveIntelligence:
 
         try:
             model.train(X=X_train, y=y_train)
-            assert True
         except Exception:
             pass
 
@@ -337,13 +336,10 @@ class TestPredictiveIntelligence:
         results = []
         for pred_input in inputs:
             try:
-                result = engine.predict(input_data=pred_input)
-                if result:
+                if result := engine.predict(input_data=pred_input):
                     results.append(result)
             except Exception:
                 pass
-
-        assert len(results) >= 0
 
     def test_global_predictive_intelligence_singleton(self) -> None:
         """Test global predictive intelligence singleton."""
@@ -591,7 +587,6 @@ class TestSemanticCodeAnalyzer:
 
         try:
             kb.add_pattern(pattern_name="vmprotect_v3", pattern_data=pattern)
-            assert True
         except Exception:
             pass
 
@@ -667,7 +662,7 @@ class TestVulnerabilityResearchIntegration:
             vulnerabilities = analyzer.detect_vulnerabilities(data=binary_data)
 
             assert vulnerabilities is not None
-            assert isinstance(vulnerabilities, list) or isinstance(vulnerabilities, dict)
+            assert isinstance(vulnerabilities, (list, dict))
         except Exception:
             pass
 
@@ -691,9 +686,7 @@ class TestIntegration:
         """
 
         try:
-            semantic_result = semantic_analyzer.analyze(code=code)
-
-            if semantic_result:
+            if semantic_result := semantic_analyzer.analyze(code=code):
                 pred_input = PredictionInput(
                     prediction_type=PredictionType.SUCCESS_PROBABILITY,
                     features={"semantic_analysis": "license_validation"},
@@ -702,7 +695,6 @@ class TestIntegration:
 
                 pred_result = predictive_engine.predict(input_data=pred_input)
 
-                assert pred_result is not None or True
         except Exception:
             pass
 
@@ -718,7 +710,6 @@ class TestIntegration:
         try:
             vuln_result = vuln_analyzer.analyze(binary_path=notepad_path)
 
-            assert vuln_result is not None or True
         except Exception:
             pass
 

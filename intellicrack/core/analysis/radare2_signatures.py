@@ -956,9 +956,7 @@ class R2SignatureAnalyzer:
                     func_addr_hex = hex(func_addr) if isinstance(func_addr, int) else str(func_addr)
                     if func_addr_hex in dangerous_calls or str(func_addr) in dangerous_calls:
                         if call_sites := [
-                            line.strip()
-                            for line in dangerous_calls.split("\n")
-                            if func_addr_hex in line or str(func_addr) in line
+                            line.strip() for line in dangerous_calls.split("\n") if func_addr_hex in line or str(func_addr) in line
                         ]:
                             r2_analysis["dangerous_call_sites"] = call_sites
                             r2_analysis["calls_unsafe_functions"] = True

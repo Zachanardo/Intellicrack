@@ -466,7 +466,7 @@ class TestLicenseAnalysisNeuralNetwork:
         eval_result = network.eval()
 
         assert eval_result["mode"] == "evaluation"
-        assert network.training is False
+        assert not network.training
 
     def test_network_predict_license_protection(self) -> None:
         """Neural network predicts license protection types from binary features."""
@@ -1176,10 +1176,10 @@ class TestModelFinetuningDialog:
 
     def test_dialog_move_to_device(self, qapp: Any) -> None:
         """Dialog moves tensors to appropriate device."""
-        dialog = ModelFinetuningDialog()
-
         if TORCH_AVAILABLE:
             import torch
+
+            dialog = ModelFinetuningDialog()
 
             tensor = torch.randn(10, 10)
 
@@ -1525,9 +1525,7 @@ class TestDatasetFormats:
 
         samples = []
         with open(dataset_path, encoding="utf-8") as f:
-            for line in f:
-                samples.append(json.loads(line.strip()))
-
+            samples.extend(json.loads(line.strip()) for line in f)
         assert len(samples) == 2
         assert samples[0]["input"] == "Test 1"
 

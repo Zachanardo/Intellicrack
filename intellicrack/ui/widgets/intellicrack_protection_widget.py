@@ -383,13 +383,11 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.extend((f"Status: {' | '.join(status_flags)}", ""))
         # Detection summary
         if analysis.detections:
-            summary_lines.extend(
-                (
-                    f"Total Detections: {len(analysis.detections)}",
-                    "",
-                    "Detected Protections:",
-                )
-            )
+            summary_lines.extend((
+                f"Total Detections: {len(analysis.detections)}",
+                "",
+                "Detected Protections:",
+            ))
             for detection in analysis.detections:
                 ver_str = f" v{detection.version}" if detection.version else ""
                 conf_str = f" ({detection.confidence:.0f}% confidence)" if detection.confidence < 100 else ""
@@ -399,12 +397,9 @@ class IntellicrackProtectionWidget(QWidget):
 
         # License files
         if hasattr(analysis, "license_files") and analysis.license_files:
+            summary_lines.extend(("", f"License Files Found: {len(analysis.license_files)}"))
             summary_lines.extend(
-                ("", f"License Files Found: {len(analysis.license_files)}")
-            )
-            summary_lines.extend(
-                f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})"
-                for file_info in analysis.license_files[:5]
+                f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})" for file_info in analysis.license_files[:5]
             )
         self.summary_text.setText("\n".join(summary_lines))
 
@@ -461,33 +456,24 @@ class IntellicrackProtectionWidget(QWidget):
 
         if detection.bypass_recommendations:
             bypass_lines.extend(("Recommended approaches:", ""))
-            bypass_lines.extend(
-                f"{i}. {recommendation}"
-                for i, recommendation in enumerate(
-                    detection.bypass_recommendations, 1
-                )
-            )
-            bypass_lines.extend(
-                (
-                    "",
-                    "Note: These are general recommendations. Actual bypass methods may vary based on:",
-                    "   Specific version of the protection",
-                    "   Target application implementation",
-                    "   Additional protections present",
-                    "   Legal and ethical considerations",
-                )
-            )
+            bypass_lines.extend(f"{i}. {recommendation}" for i, recommendation in enumerate(detection.bypass_recommendations, 1))
+            bypass_lines.extend((
+                "",
+                "Note: These are general recommendations. Actual bypass methods may vary based on:",
+                "   Specific version of the protection",
+                "   Target application implementation",
+                "   Additional protections present",
+                "   Legal and ethical considerations",
+            ))
         else:
-            bypass_lines.extend(
-                (
-                    "No specific bypass recommendations available.",
-                    "",
-                    "This protection may require:",
-                    "   Manual reverse engineering",
-                    "   Custom tool development",
-                    "   Advanced analysis techniques",
-                )
-            )
+            bypass_lines.extend((
+                "No specific bypass recommendations available.",
+                "",
+                "This protection may require:",
+                "   Manual reverse engineering",
+                "   Custom tool development",
+                "   Advanced analysis techniques",
+            ))
         self.bypass_text.setText("\n".join(bypass_lines))
 
         # Switch to bypass tab
@@ -639,27 +625,19 @@ class IntellicrackProtectionWidget(QWidget):
         # Display evidence
         if reasoning_result.get("evidence"):
             reasoning_lines.append("Evidence Found:")
-            reasoning_lines.extend(
-                f"   {evidence}" for evidence in reasoning_result["evidence"]
-            )
+            reasoning_lines.extend(f"   {evidence}" for evidence in reasoning_result["evidence"])
             reasoning_lines.append("")
 
         # Display conclusions
         if reasoning_result.get("conclusions"):
             reasoning_lines.append("Conclusions:")
-            reasoning_lines.extend(
-                f"   {conclusion}"
-                for conclusion in reasoning_result["conclusions"]
-            )
+            reasoning_lines.extend(f"   {conclusion}" for conclusion in reasoning_result["conclusions"])
             reasoning_lines.append("")
 
         # Display next steps
         if reasoning_result.get("next_steps"):
             reasoning_lines.append("Recommended Next Steps:")
-            reasoning_lines.extend(
-                f"  {i}. {step}"
-                for i, step in enumerate(reasoning_result["next_steps"], 1)
-            )
+            reasoning_lines.extend(f"  {i}. {step}" for i, step in enumerate(reasoning_result["next_steps"], 1))
             reasoning_lines.append("")
 
         # Add protection-specific reasoning
@@ -677,12 +655,10 @@ class IntellicrackProtectionWidget(QWidget):
                             "    - Suggests well-studied protection scheme",
                         ))
                     else:
-                        reasoning_lines.extend(
-                            (
-                                "    - Limited bypass options",
-                                "    - May require custom approach",
-                            )
-                        )
+                        reasoning_lines.extend((
+                            "    - Limited bypass options",
+                            "    - May require custom approach",
+                        ))
                 # Analyze protection type implications
                 if detection.type.value == "protector":
                     reasoning_lines.append("  Impact: Code obfuscation and anti-debugging expected")

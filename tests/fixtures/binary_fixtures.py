@@ -22,7 +22,7 @@ class BinaryFixtureManager:
         """Create a minimal valid PE executable for testing."""
         # DOS Header
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'  # e_magic
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 64)  # e_lfanew
 
         # DOS Stub
@@ -91,7 +91,7 @@ class BinaryFixtureManager:
 
         # Section Headers
         text_section = bytearray(40)
-        text_section[0:8] = b'.text\x00\x00\x00'
+        text_section[:8] = b'.text\x00\x00\x00'
         struct.pack_into('<I', text_section, 8, 512)  # VirtualSize
         struct.pack_into('<I', text_section, 12, 0x1000)  # VirtualAddress
         struct.pack_into('<I', text_section, 16, 512)  # SizeOfRawData
@@ -99,7 +99,7 @@ class BinaryFixtureManager:
         struct.pack_into('<I', text_section, 36, 0x60000020)  # Characteristics (CODE|EXECUTE|READ)
 
         data_section = bytearray(40)
-        data_section[0:8] = b'.data\x00\x00\x00'
+        data_section[:8] = b'.data\x00\x00\x00'
         struct.pack_into('<I', data_section, 8, 512)  # VirtualSize
         struct.pack_into('<I', data_section, 12, 0x2000)  # VirtualAddress
         struct.pack_into('<I', data_section, 16, 512)  # SizeOfRawData
@@ -116,7 +116,7 @@ class BinaryFixtureManager:
 
         # Data section
         data_section_content = bytearray(512)
-        data_section_content[0:13] = b'Hello World!\x00'
+        data_section_content[:13] = b'Hello World!\x00'
 
         # Combine all parts
         pe_file = (dos_header + dos_stub + pe_signature + coff_header +
@@ -130,7 +130,7 @@ class BinaryFixtureManager:
         """Create a minimal valid ELF executable for testing."""
         # ELF Header
         elf_header = bytearray(64)
-        elf_header[0:4] = b'\x7fELF'  # Magic
+        elf_header[:4] = b'\x7fELF'
         elf_header[4] = 2  # 64-bit
         elf_header[5] = 1  # Little endian
         elf_header[6] = 1  # Current version
@@ -184,7 +184,7 @@ class BinaryFixtureManager:
 
         # Code (exit syscall)
         code = bytearray(16)
-        code[0:7] = b'\x48\x31\xff'  # xor rdi, rdi
+        code[:7] = b'\x48\x31\xff'
         code[7:12] = b'\x48\xc7\xc0\x3c\x00'  # mov rax, 60 (exit)
         code[12:14] = b'\x0f\x05'  # syscall
 
@@ -214,12 +214,10 @@ class BinaryFixtureManager:
                 '/usr/bin/cat'
             ]
 
-        for candidate in candidates:
-            if os.path.exists(candidate):
-                return candidate
-
-        # If no system binary found, create a minimal one
-        return None
+        return next(
+            (candidate for candidate in candidates if os.path.exists(candidate)),
+            None,
+        )
 
 
 @pytest.fixture(scope='session')
@@ -237,9 +235,7 @@ def binary_fixture_dir(tmp_path_factory):
     elf_data = BinaryFixtureManager.create_minimal_elf()
     elf_path.write_bytes(elf_data)
 
-    # Copy a system binary if available
-    system_binary = BinaryFixtureManager.get_system_binary()
-    if system_binary:
+    if system_binary := BinaryFixtureManager.get_system_binary():
         system_copy = fixture_dir / Path(system_binary).name
         shutil.copy2(system_binary, system_copy)
 
@@ -249,13 +245,14 @@ def binary_fixture_dir(tmp_path_factory):
 @pytest.fixture
 def real_pe_binary(binary_fixture_dir):
     """Provide a real PE binary for testing."""
-    # First try system binary
-    for file in binary_fixture_dir.iterdir():
-        if file.suffix == '.exe' and file.name != 'minimal.exe':
-            return str(file)
-
-    # Fallback to minimal PE
-    return str(binary_fixture_dir / 'minimal.exe')
+    return next(
+        (
+            str(file)
+            for file in binary_fixture_dir.iterdir()
+            if file.suffix == '.exe' and file.name != 'minimal.exe'
+        ),
+        str(binary_fixture_dir / 'minimal.exe'),
+    )
 
 
 @pytest.fixture
@@ -307,7 +304,7 @@ def real_packed_binary(binary_fixture_dir):
             shutil.copy2(source, packed_path)
             subprocess.run(['upx', '-9', str(packed_path)],
                          capture_output=True, timeout=10)
-        except:
+        except Exception:
             # If UPX not available, simulate packed binary
             pe_data = bytearray((binary_fixture_dir / 'minimal.exe').read_bytes())
 

@@ -356,9 +356,7 @@ class DashboardTab(BaseTab):
             file_name: str = os.path.basename(file_path)
             action = self.recent_files_menu.addAction(file_name)
             if action is not None:
-                action.triggered.connect(
-                    lambda checked=False, path=file_path: self._handle_recent_file_click(checked, path)
-                )
+                action.triggered.connect(lambda checked=False, path=file_path: self._handle_recent_file_click(checked, path))
 
     def _handle_recent_file_click(self, checked: bool, path: str) -> None:
         """Handle recent file click from menu."""

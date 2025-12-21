@@ -391,6 +391,7 @@ class TestLicensingAntiDebug:
 
         results = detector.detect()
 
-        detected_count = sum(1 for result in results.values() if result)
+        detected_count = sum(bool(result)
+                         for result in results.values())
 
         assert detected_count >= 0

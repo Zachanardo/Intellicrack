@@ -23,13 +23,13 @@ class HardwareTokenBypass:
 
     def __init__(self) -> None:
         """Initialize hardware token bypass with sophisticated emulation capabilities."""
-        self.yubikey_secrets = {}
-        self.rsa_seeds = {}
-        self.smartcard_keys = {}
-        self.emulated_devices = {}
+        self.yubikey_secrets: dict[str, dict[str, Any]] = {}
+        self.rsa_seeds: dict[str, bytes] = {}
+        self.smartcard_keys: dict[str, bytes] = {}
+        self.emulated_devices: dict[str, Any] = {}
 
         # YubiKey OTP configuration
-        self.yubikey_config = {
+        self.yubikey_config: dict[str, int] = {
             "public_id_length": 12,
             "private_id_length": 6,
             "aes_key_length": 16,
@@ -41,7 +41,7 @@ class HardwareTokenBypass:
         }
 
         # RSA SecurID configuration
-        self.securid_config = {
+        self.securid_config: dict[str, Any] = {
             "token_code_length": 6,
             "token_interval": 60,  # seconds
             "drift_tolerance": 3,  # time windows
@@ -50,7 +50,7 @@ class HardwareTokenBypass:
         }
 
         # Smart card configuration
-        self.smartcard_config = {
+        self.smartcard_config: dict[str, Any] = {
             "atr_bytes": b"\x3b\xf8\x13\x00\x00\x81\x31\xfe\x45\x4a\x43\x4f\x50\x76\x32\x34\x31\xb7",
             "card_readers": [],
             "inserted_cards": {},
@@ -58,6 +58,8 @@ class HardwareTokenBypass:
         }
 
         # Windows smart card API
+        self.winscard: ctypes.WinDLL | None
+        self.kernel32: ctypes.WinDLL | None
         if os.name == "nt":
             try:
                 self.winscard = ctypes.windll.winscard
@@ -66,6 +68,9 @@ class HardwareTokenBypass:
             except (AttributeError, OSError):
                 self.winscard = None
                 self.kernel32 = None
+        else:
+            self.winscard = None
+            self.kernel32 = None
 
     def _init_scard_constants(self) -> None:
         """Initialize Windows smart card constants."""
@@ -90,7 +95,7 @@ class HardwareTokenBypass:
         self.SCARD_UNPOWER_CARD = 2
         self.SCARD_EJECT_CARD = 3
 
-    def emulate_yubikey(self, serial_number: str = None) -> dict[str, Any]:
+    def emulate_yubikey(self, serial_number: str | None = None) -> dict[str, Any]:
         """Emulate YubiKey hardware token with OTP generation.
 
         Args:
@@ -174,7 +179,7 @@ class HardwareTokenBypass:
         otp_data[12:14] = struct.pack("<H", secrets.randbelow(0xFFFF))  # Random
 
         # Calculate CRC16
-        crc = self._calculate_crc16(otp_data[:14])
+        crc = self._calculate_crc16(bytes(otp_data[:14]))
         otp_data[14:16] = struct.pack("<H", crc)
 
         # Encrypt with AES
@@ -222,7 +227,7 @@ class HardwareTokenBypass:
     def _to_modhex(self, data: bytes) -> str:
         """Convert bytes to ModHex encoding."""
         modhex_chars = "cbdefghijklnrtuv"
-        result = []
+        result: list[str] = []
         for byte in data:
             result.extend((modhex_chars[byte >> 4], modhex_chars[byte & 0x0F]))
         return "".join(result)
@@ -247,7 +252,7 @@ class HardwareTokenBypass:
             },
         }
 
-    def generate_rsa_securid_token(self, serial_number: str = None, seed: bytes = None) -> dict[str, Any]:
+    def generate_rsa_securid_token(self, serial_number: str | None = None, seed: bytes | None = None) -> dict[str, Any]:
         """Generate RSA SecurID token code.
 
         Args:
@@ -271,7 +276,8 @@ class HardwareTokenBypass:
 
         # Calculate token code using SecurID algorithm
         current_time = int(time.time())
-        time_counter = current_time // self.securid_config["token_interval"]
+        token_interval = int(self.securid_config["token_interval"])
+        time_counter = current_time // token_interval
 
         token_code = self._calculate_securid_token(seed, time_counter)
 
@@ -283,9 +289,9 @@ class HardwareTokenBypass:
             "serial_number": serial_number,
             "token_code": token_code,
             "next_token": next_token,
-            "time_remaining": self.securid_config["token_interval"] - (current_time % self.securid_config["token_interval"]),
+            "time_remaining": token_interval - (current_time % token_interval),
             "timestamp": current_time,
-            "interval": self.securid_config["token_interval"],
+            "interval": token_interval,
         }
 
     def _generate_securid_serial(self) -> str:
@@ -331,11 +337,12 @@ class HardwareTokenBypass:
         encrypted = encrypted_full[:16]  # Take first block for token calculation
 
         # Extract token digits
+        token_code_length = int(self.securid_config["token_code_length"])
         token_int = int.from_bytes(encrypted[:4], "big")
-        token_code = str(token_int % (10 ** self.securid_config["token_code_length"]))
+        token_code = str(token_int % (10**token_code_length))
 
         # Pad with zeros if needed
-        return token_code.zfill(self.securid_config["token_code_length"])
+        return token_code.zfill(token_code_length)
 
     def emulate_smartcard(self, card_type: str = "PIV") -> dict[str, Any]:
         """Emulate smart card presence and operations.
@@ -358,7 +365,9 @@ class HardwareTokenBypass:
             card_data = self._generate_generic_card_data(card_id)
 
         # Store card in emulated devices
-        self.smartcard_config["inserted_cards"][card_id] = card_data
+        inserted_cards = self.smartcard_config["inserted_cards"]
+        if isinstance(inserted_cards, dict):
+            inserted_cards[card_id] = card_data
 
         # Emulate card reader if on Windows
         if self.winscard:
@@ -523,8 +532,10 @@ class HardwareTokenBypass:
         )
 
         # Export certificate
-        cert_pem = cert.public_bytes(encoding=x509.Encoding.PEM)
-        cert_der = cert.public_bytes(encoding=x509.Encoding.DER)
+        from cryptography.hazmat.primitives.serialization import Encoding
+
+        cert_pem = cert.public_bytes(encoding=Encoding.PEM)
+        cert_der = cert.public_bytes(encoding=Encoding.DER)
 
         return {
             "common_name": cn,
@@ -554,14 +565,16 @@ class HardwareTokenBypass:
 
             if result == 0:  # SCARD_S_SUCCESS
                 # Store context for later use
-                self.smartcard_config["card_readers"].append(
-                    {
-                        "name": reader_name,
-                        "context": h_context.value,
-                        "card_id": card_id,
-                        "card_type": card_type,
-                    },
-                )
+                card_readers = self.smartcard_config["card_readers"]
+                if isinstance(card_readers, list):
+                    card_readers.append(
+                        {
+                            "name": reader_name,
+                            "context": h_context.value,
+                            "card_id": card_id,
+                            "card_type": card_type,
+                        },
+                    )
 
                 # Release context (in production, keep it for actual operations)
                 self.winscard.SCardReleaseContext(h_context)
@@ -614,6 +627,10 @@ class HardwareTokenBypass:
     def _hook_yubikey_windows(self, application: str) -> dict[str, Any]:
         """Install hook for YubiKey verification on Windows."""
         try:
+            # Check if kernel32 is available
+            if not self.kernel32:
+                return {"success": False, "error": "kernel32 not available"}
+
             # Find target process
             import psutil
 
@@ -790,7 +807,7 @@ class HardwareTokenBypass:
             },
         }
 
-    def extract_token_secrets(self, device_path: str = None) -> dict[str, Any]:
+    def extract_token_secrets(self, device_path: str | None = None) -> dict[str, Any]:
         """Extract secrets from physical hardware tokens.
 
         Args:
@@ -857,8 +874,8 @@ class HardwareTokenBypass:
 
     def _extract_smartcard_keys(self, data: bytes) -> dict[str, Any]:
         """Extract smart card keys from memory."""
-        keys = {}
-        certs = []
+        keys: dict[str, str] = {}
+        certs: list[dict[str, Any]] = []
 
         # Search for PKCS patterns
         pkcs_markers = [
@@ -905,19 +922,21 @@ class HardwareTokenBypass:
             return 0.0
 
         # Count byte frequencies
-        freq = {}
+        freq: dict[int, int] = {}
         for byte in data:
             freq[byte] = freq.get(byte, 0) + 1
 
         # Calculate entropy
+        import math
+
         entropy = 0.0
         data_len = len(data)
         for count in freq.values():
             if count > 0:
                 probability = count / data_len
-                entropy -= probability * ((probability and probability * 2) or 0)
+                entropy -= probability * math.log2(probability)
 
-        return entropy * 3.32193  # Convert to bits
+        return entropy
 
 
 def bypass_hardware_token(application: str, token_type: str) -> dict[str, Any]:

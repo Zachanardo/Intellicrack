@@ -78,7 +78,7 @@ def run_test_config_manager():
         # Get value
         retrieved = config.get_value('testing', test_key)
         assert retrieved == test_value, f"Expected {test_value}, got {retrieved}"
-        print(f"Config get/set working correctly")
+        print("Config get/set working correctly")
 
         # Test section operations
         sections = config.get_sections()
@@ -172,9 +172,7 @@ def run_test_tool_discovery():
             found = discovery.is_tool_available(tool)
             print(f"  {tool}: {'Found' if found else 'Not found'}")
 
-        # Test tool paths
-        python_path = discovery.get_tool_path('python')
-        if python_path:
+        if python_path := discovery.get_tool_path('python'):
             assert os.path.exists(python_path), f"Python path invalid: {python_path}"
             print(f"Python path: {python_path}")
 
@@ -248,8 +246,7 @@ def run_test_frida_constants():
         # Test common hooks
         common_hooks = ['function_hook', 'api_hook', 'memory_hook']
         for hook_type in common_hooks:
-            template = constants.get_template(hook_type)
-            if template:
+            if template := constants.get_template(hook_type):
                 assert len(template) > 0, f"Empty template for {hook_type}"
                 print(f"  {hook_type}: {len(template)} chars")
 
@@ -460,7 +457,7 @@ def main():
             failed += 1
 
     print(f"\n{'='*50}")
-    print(f"Additional Test Results:")
+    print("Additional Test Results:")
     print(f"  Passed: {passed}")
     print(f"  Failed: {failed}")
     print(f"  Total: {len(tests)}")

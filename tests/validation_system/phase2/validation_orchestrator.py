@@ -242,14 +242,13 @@ class ValidationOrchestrator:
         if self.config.batch_processing_enabled and len(binary_paths) > 1:
             # Use batch processing
             return await self.detection_validator.validate_batch(binary_paths, expected_protections)
-        else:
-            # Process individually
-            results = []
-            for binary_path in binary_paths:
-                expected = expected_protections.get(str(binary_path)) if expected_protections else None
-                result = await self.detection_validator.validate_detection(binary_path, expected)
-                results.append(result)
-            return results
+        # Process individually
+        results = []
+        for binary_path in binary_paths:
+            expected = expected_protections.get(str(binary_path)) if expected_protections else None
+            result = await self.detection_validator.validate_detection(binary_path, expected)
+            results.append(result)
+        return results
 
     async def _orchestrate_evidence_verification(self, detection_results: list[ValidationResult],
                                                binary_paths: list[Path]) -> list[EvidenceIntegrityReport]:
@@ -341,13 +340,18 @@ class ValidationOrchestrator:
             protections_per_binary.append(detected_count)
 
         return {
-            'average_processing_time': sum(processing_times) / max(1, len(processing_times)),
-            'min_processing_time': min(processing_times) if processing_times else 0,
-            'max_processing_time': max(processing_times) if processing_times else 0,
-            'average_consensus_score': sum(consensus_scores) / max(1, len(consensus_scores)),
-            'average_protections_per_binary': sum(protections_per_binary) / max(1, len(protections_per_binary)),
-            'validation_success_rate': sum(1 for r in detection_results if r.validation_passed) / len(detection_results),
-            'total_binaries_processed': len(detection_results)
+            'average_processing_time': sum(processing_times)
+            / max(1, len(processing_times)),
+            'min_processing_time': min(processing_times, default=0),
+            'max_processing_time': max(processing_times, default=0),
+            'average_consensus_score': sum(consensus_scores)
+            / max(1, len(consensus_scores)),
+            'average_protections_per_binary': sum(protections_per_binary)
+            / max(1, len(protections_per_binary)),
+            'validation_success_rate': sum(bool(r.validation_passed)
+                                       for r in detection_results)
+            / len(detection_results),
+            'total_binaries_processed': len(detection_results),
         }
 
     def _benchmark_evidence_performance(self, evidence_reports: list[EvidenceIntegrityReport]) -> dict[str, Any]:
@@ -371,7 +375,8 @@ class ValidationOrchestrator:
             'average_verification_time': sum(verification_times) / max(1, len(verification_times)),
             'average_integrity_score': sum(integrity_scores) / max(1, len(integrity_scores)),
             'average_anomalies_per_report': sum(anomaly_counts) / max(1, len(anomaly_counts)),
-            'authenticity_success_rate': sum(1 for r in evidence_reports if r.authenticity_verified) / len(evidence_reports),
+            'authenticity_success_rate': sum(bool(r.authenticity_verified)
+                                         for r in evidence_reports) / len(evidence_reports),
             'total_evidence_reports': len(evidence_reports)
         }
 
@@ -412,8 +417,10 @@ class ValidationOrchestrator:
         return {
             'average_consensus_accuracy': sum(consensus_scores) / max(1, len(consensus_scores)),
             'average_evidence_integrity': sum(integrity_scores) / max(1, len(integrity_scores)),
-            'high_confidence_rate': sum(1 for r in detection_results if r.consensus_score >= 0.8) / max(1, len(detection_results)),
-            'integrity_pass_rate': sum(1 for r in evidence_reports if r.integrity_score >= 0.8) / max(1, len(evidence_reports)),
+            'high_confidence_rate': sum(bool(r.consensus_score >= 0.8)
+                                    for r in detection_results) / max(1, len(detection_results)),
+            'integrity_pass_rate': sum(bool(r.integrity_score >= 0.8)
+                                   for r in evidence_reports) / max(1, len(evidence_reports)),
             'overall_accuracy_score': (
                 sum(consensus_scores + integrity_scores) / max(1, len(consensus_scores) + len(integrity_scores))
             )
@@ -446,7 +453,8 @@ class ValidationOrchestrator:
             }
 
         # Detection metrics
-        successful_validations = sum(1 for r in detection_results if r.validation_passed)
+        successful_validations = sum(bool(r.validation_passed)
+                                 for r in detection_results)
         overall_success_rate = successful_validations / len(detection_results)
 
         consensus_scores = [r.consensus_score for r in detection_results]
@@ -485,7 +493,8 @@ class ValidationOrchestrator:
         # Quality factors
         consensus_quality = sum(r.consensus_score for r in detection_results) / len(detection_results)
         integrity_quality = sum(r.integrity_score for r in evidence_reports) / max(1, len(evidence_reports))
-        success_rate_quality = sum(1 for r in detection_results if r.validation_passed) / len(detection_results)
+        success_rate_quality = sum(bool(r.validation_passed)
+                               for r in detection_results) / len(detection_results)
 
         # Confidence distribution
         confidence_distribution: dict[str, int] = {}
@@ -546,13 +555,15 @@ class ValidationOrchestrator:
             remediation_actions.append("Review validation algorithms and evidence collection methods")
 
         # Check consensus scores
-        low_consensus_count = sum(1 for r in detection_results if r.consensus_score < 0.7)
+        low_consensus_count = sum(bool(r.consensus_score < 0.7)
+                              for r in detection_results)
         if low_consensus_count > 0:
             improvement_recommendations.append(f"{low_consensus_count} binaries with low consensus scores")
             remediation_actions.append("Enhance cross-validation accuracy and consensus algorithms")
 
         # Check integrity scores
-        low_integrity_count = sum(1 for r in evidence_reports if r.integrity_score < 0.8)
+        low_integrity_count = sum(bool(r.integrity_score < 0.8)
+                              for r in evidence_reports)
         if low_integrity_count > 0:
             improvement_recommendations.append(f"{low_integrity_count} evidence reports with low integrity")
             remediation_actions.append("Improve evidence collection and cryptographic verification")
@@ -570,7 +581,8 @@ class ValidationOrchestrator:
             remediation_actions.append("Optimize validation algorithms for better performance")
 
         # Success rate recommendations
-        success_rate = sum(1 for r in detection_results if r.validation_passed) / max(1, len(detection_results))
+        success_rate = sum(bool(r.validation_passed)
+                       for r in detection_results) / max(1, len(detection_results))
         if success_rate < 0.8:
             improvement_recommendations.append(f"Validation success rate ({success_rate:.1%}) below target (80%)")
             remediation_actions.append("Review validation thresholds and detection accuracy")
@@ -659,9 +671,7 @@ class ValidationOrchestrator:
     def _estimate_hourly_throughput(self, detection_results: list[ValidationResult]) -> float:
         """Estimate hourly throughput based on current performance."""
         avg_time = self._calculate_average_processing_time(detection_results)
-        if avg_time > 0:
-            return 3600 / avg_time  # Binaries per hour
-        return 0.0
+        return 3600 / avg_time if avg_time > 0 else 0.0
 
     def _assess_scalability_rating(self, detection_results: list[ValidationResult]) -> str:
         """Assess scalability rating based on performance metrics."""
@@ -688,9 +698,7 @@ class ValidationOrchestrator:
             for r in evidence_reports
         )
 
-        if total_time > 0:
-            return total_evidence_checks * 60 / total_time
-        return 0.0
+        return total_evidence_checks * 60 / total_time if total_time > 0 else 0.0
 
     def _update_orchestration_metrics(self, processing_time: float, success: bool, binaries_count: int):
         """Update orchestration performance metrics."""

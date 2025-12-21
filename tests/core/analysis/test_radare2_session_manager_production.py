@@ -126,7 +126,7 @@ class TestR2SessionWrapperLifecycle:
 
         connected: bool = session.connect()
 
-        assert connected is True
+        assert connected
         assert session.state == SessionState.ACTIVE
         assert session.r2 is not None
         session.disconnect()
@@ -143,7 +143,7 @@ class TestR2SessionWrapperLifecycle:
         result: str = session.execute("i")
 
         assert isinstance(result, str)
-        assert len(result) > 0
+        assert result != ""
         session.disconnect()
 
     def test_session_wrapper_executes_json_commands(self, test_binary_path: str) -> None:
@@ -316,7 +316,7 @@ class TestR2SessionWrapperHealthChecks:
 
         is_alive: bool = session.is_alive()
 
-        assert is_alive is True
+        assert is_alive
         session.disconnect()
 
     def test_session_is_not_alive_when_disconnected(self, test_binary_path: str) -> None:
@@ -331,7 +331,7 @@ class TestR2SessionWrapperHealthChecks:
 
         is_alive: bool = session.is_alive()
 
-        assert is_alive is False
+        assert not is_alive
 
     def test_session_reconnects_successfully(self, test_binary_path: str) -> None:
         """Session can reconnect after being disconnected."""
@@ -345,7 +345,7 @@ class TestR2SessionWrapperHealthChecks:
 
         reconnected: bool = session.reconnect()
 
-        assert reconnected is True
+        assert reconnected
         assert session.state == SessionState.ACTIVE
         session.disconnect()
 
@@ -449,7 +449,7 @@ class TestR2SessionPoolStatistics:
 
         metrics: list[dict[str, Any]] = session_pool.get_session_metrics()
 
-        assert len(metrics) >= 1
+        assert metrics
         assert all("session_id" in m for m in metrics)
         session_pool.return_session(session)
 
@@ -466,7 +466,7 @@ class TestR2SessionPoolContextManager:
             result: str = session.execute("i")
 
             assert isinstance(result, str)
-            assert len(result) > 0
+            assert result != ""
 
     def test_pool_context_manager_returns_session_on_exit(
         self, session_pool: R2SessionPool, test_binary_path: str
@@ -555,7 +555,7 @@ class TestGlobalSessionPool:
             result: str = session.execute("i")
 
             assert isinstance(result, str)
-            assert len(result) > 0
+            assert result != ""
 
     def test_shutdown_global_pool_cleans_up(self, test_binary_path: str) -> None:
         """shutdown_global_pool properly cleans up resources."""
@@ -709,7 +709,7 @@ class TestSessionWrapperEdgeCases:
 
         assert session.flags == custom_flags
         connected: bool = session.connect()
-        assert connected is True
+        assert connected
         session.disconnect()
 
     def test_session_wrapper_reconnect_increments_metrics(self, test_binary_path: str) -> None:
@@ -786,7 +786,7 @@ class TestSessionWrapperEdgeCases:
 
         result: bool = session.connect()
 
-        assert result is True
+        assert result
         assert session.r2 is r2_instance
         session.disconnect()
 
@@ -800,7 +800,7 @@ class TestSessionWrapperEdgeCases:
                 analysis_level=level,
             )
             connected: bool = session.connect()
-            assert connected is True
+            assert connected
             assert session.analysis_level == level
             session.disconnect()
 
@@ -1000,7 +1000,7 @@ class TestSessionPoolConcurrency:
             with session_pool.session(test_binary_path) as session:
                 result: str = session.execute("i")
                 with lock:
-                    results.append(isinstance(result, str) and len(result) > 0)
+                    results.append(isinstance(result, str) and result != "")
 
         threads: list[threading.Thread] = []
         for _ in range(10):
@@ -1123,7 +1123,7 @@ class TestSessionMetricsAccuracy:
 
         success: bool = session.reconnect()
 
-        assert success is True
+        assert success
         assert session.state == SessionState.ACTIVE
         session.disconnect()
 

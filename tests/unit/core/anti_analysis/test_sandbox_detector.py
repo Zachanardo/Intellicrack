@@ -67,11 +67,13 @@ class TestSandboxDetectorInitialization(unittest.TestCase):
         # Should contain common sandbox signatures
         if isinstance(self.detector.sandbox_signatures, dict):
             expected_sandbox_types = ["vmware", "virtualbox", "cuckoo", "joe_sandbox", "fireeye"]
-            found_signatures = False
-            for sandbox_type in expected_sandbox_types:
-                if any(sandbox_type.lower() in str(key).lower() for key in self.detector.sandbox_signatures):
-                    found_signatures = True
-                    break
+            found_signatures = any(
+                any(
+                    sandbox_type.lower() in str(key).lower()
+                    for key in self.detector.sandbox_signatures
+                )
+                for sandbox_type in expected_sandbox_types
+            )
             self.assertTrue(found_signatures, "No recognized sandbox signatures found")
 
     def test_behavioral_patterns_configured(self):
@@ -773,9 +775,9 @@ class TestAggressiveDetectionMethods(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertIsInstance(result, str)
 
-        # Should return valid detection type
-        valid_types = ["environment", "behavioral", "timing", "network", "hybrid"]
         if result:
+            # Should return valid detection type
+            valid_types = ["environment", "behavioral", "timing", "network", "hybrid"]
             found_valid = any(vtype in result.lower() for vtype in valid_types)
             self.assertTrue(found_valid or result == "unknown")
 
@@ -1128,9 +1130,7 @@ class TestCoverageAndIntegration(unittest.TestCase):
             evasion_result = self.detector.generate_sandbox_evasion(primary_result)
             self.assertIsNotNone(evasion_result)
 
-            # Verify evasion quality
-            techniques = evasion_result.get("evasion_techniques", [])
-            if techniques:
+            if techniques := evasion_result.get("evasion_techniques", []):
                 # At least one technique should have substantial implementation
                 substantial_implementations = [t for t in techniques if len(t.get("implementation", "")) > 50]
                 self.assertGreater(len(substantial_implementations), 0, "Should provide at least one substantial evasion implementation")
@@ -1401,9 +1401,6 @@ class TestPerformanceAndScalability(unittest.TestCase):
             first_result = results[0]
             for result in results[1:]:
                 self.assertEqual(type(result), type(first_result), "Result types should be consistent")
-                if "detected" in first_result and "detected" in result:
-                    # Detection status should be relatively stable
-                    pass  # Allow some variation in detection
 
     def test_evasion_generation_performance(self):
         """Test evasion generation performance."""

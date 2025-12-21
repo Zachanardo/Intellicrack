@@ -26,7 +26,7 @@ def test_client_initialization():
 
         # Check actual pattern for OpenAI
         if hasattr(openai, 'OpenAI'):
-            print(f"  OK Has 'OpenAI' class (actual client class)")
+            print("  OK Has 'OpenAI' class (actual client class)")
             if os.environ.get("OPENAI_API_KEY"):
                 client = openai.OpenAI(api_key=os.environ["OPENAI_API_KEY"])
                 print(f"  OK Successfully created client: {type(client)}")
@@ -50,7 +50,7 @@ def test_client_initialization():
 
         # Check actual pattern for Anthropic
         if hasattr(anthropic, 'Anthropic'):
-            print(f"  OK Has 'Anthropic' class (actual client class)")
+            print("  OK Has 'Anthropic' class (actual client class)")
             if os.environ.get("ANTHROPIC_API_KEY"):
                 client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
                 print(f"  OK Successfully created client: {type(client)}")

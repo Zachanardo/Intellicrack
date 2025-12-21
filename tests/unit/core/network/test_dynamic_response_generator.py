@@ -673,17 +673,17 @@ class TestDynamicResponseGenerator:
             assert response.success, f"Failed to generate response for {protocol} v{version}"
 
             # Verify version-specific adaptations
-            if version == '9.0':
-                # Older version should use simpler response format
-                assert len(response.raw_data) < 200, "Response too complex for older version"
-            elif version == '14.0':
+            if version == '14.0':
                 # Newer version should support advanced features
                 assert 'extended_features' in response.metadata, "Missing extended features for newer version"
 
+            elif version == '9.0':
+                # Older version should use simpler response format
+                assert len(response.raw_data) < 200, "Response too complex for older version"
             # Version should be reflected in response
             version_in_response = struct.unpack('>H', response.raw_data[4:6])[0]
             expected_version = int(float(version) * 256)  # Convert to hex format
-            assert version_in_response == expected_version, f"Version mismatch in response"
+            assert version_in_response == expected_version, "Version mismatch in response"
 
     def test_encryption_and_ssl_tls_handling(self, response_generator, real_adobe_request):
         """Test proper encryption and SSL/TLS handling in responses."""
@@ -756,7 +756,7 @@ class TestDynamicResponseGenerator:
 
         # Check for timing variations
         timing_values = []
-        for i in range(5):
+        for _ in range(5):
             start_time = time.time()
 
             context = ResponseContext(

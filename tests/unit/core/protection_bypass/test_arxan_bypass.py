@@ -246,7 +246,7 @@ class TestArxanBypass(unittest.TestCase):
         """Test string decryption logic."""
         xor_key = 0x42
         plaintext = b"This is a secret string"
-        encrypted = bytes([b ^ xor_key for b in plaintext])
+        encrypted = bytes(b ^ xor_key for b in plaintext)
 
         binary_data = bytearray(b"\x90" * 100 + encrypted + b"\x90" * 100)
         patches = []
@@ -255,7 +255,7 @@ class TestArxanBypass(unittest.TestCase):
 
         self.bypass._decrypt_strings(binary_data, encrypted_regions, patches)
 
-        if len(patches) > 0:
+        if patches:
             self.assertEqual(patches[0].patch_type, "string_decryption")
             self.assertIn(b"secret", patches[0].patched_bytes)
 

@@ -1221,15 +1221,11 @@ class VisualizationAnalytics:
 
             results["semantic_summary"] = {
                 "total_functions_analyzed": len(function_semantics),
-                "licensing_related_functions": sum(
-                    f.get("category") == "licensing" for f in function_semantics
-                ),
+                "licensing_related_functions": sum(f.get("category") == "licensing" for f in function_semantics),
                 "protection_patterns_found": len(code_patterns),
                 "protection_indicators_count": len(protection_indicators),
                 "binary_size": binary_size,
-                "analysis_confidence": self._calculate_analysis_confidence(
-                    function_semantics, code_patterns
-                ),
+                "analysis_confidence": self._calculate_analysis_confidence(function_semantics, code_patterns),
             }
 
             logger.info(
@@ -1540,9 +1536,7 @@ class VisualizationAnalytics:
             avg_pattern_confidence = sum(p.get("confidence", 0) for p in code_patterns) / len(code_patterns)
             base_confidence += avg_pattern_confidence * 0.2
 
-        licensing_functions = sum(
-            f.get("category") == "licensing" for f in function_semantics
-        )
+        licensing_functions = sum(f.get("category") == "licensing" for f in function_semantics)
         if licensing_functions > 5:
             base_confidence += 0.1
         elif licensing_functions > 2:
@@ -1609,9 +1603,7 @@ class VisualizationAnalytics:
             {
                 "name": f"{binary_name}_license_hook.js",
                 "description": "Hook licensing functions and log validation attempts",
-                "code": self._build_license_hook_script(
-                    binary_name, semantic_results
-                ),
+                "code": self._build_license_hook_script(binary_name, semantic_results),
                 "type": "hook",
             }
         ]
@@ -1654,9 +1646,7 @@ class VisualizationAnalytics:
             {
                 "name": f"{binary_name}_LicenseAnalyzer.java",
                 "description": "Analyze and annotate licensing functions in the binary",
-                "code": self._build_ghidra_license_analyzer(
-                    binary_name, semantic_results
-                ),
+                "code": self._build_ghidra_license_analyzer(binary_name, semantic_results),
                 "type": "analysis",
             }
         ]

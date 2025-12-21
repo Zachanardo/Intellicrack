@@ -286,10 +286,7 @@ class BackgroundModelLoader:
             }
 
             if completed_tasks := list(self.completed_tasks.values()):
-                successful = sum(
-                    task.state == LoadingState.COMPLETED
-                    for task in completed_tasks
-                )
+                successful = sum(task.state == LoadingState.COMPLETED for task in completed_tasks)
                 stats["success_rate"] = float(successful) / float(len(completed_tasks))
             else:
                 stats["success_rate"] = 0.0

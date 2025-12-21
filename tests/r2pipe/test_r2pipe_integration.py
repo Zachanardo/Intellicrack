@@ -23,7 +23,9 @@ def test_r2pipe_integration():
 
     try:
         # Set environment for r2pipe to find radare2
-        os.environ["PATH"] = os.path.dirname(radare2_path) + ";" + os.environ.get("PATH", "")
+        os.environ["PATH"] = (
+            f"{os.path.dirname(radare2_path)};" + os.environ.get("PATH", "")
+        )
         # Open binary with r2pipe using explicit path
         r2 = r2pipe.open(test_binary, flags=['-q0'], radare2_path=radare2_path)
 

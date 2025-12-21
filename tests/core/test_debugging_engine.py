@@ -437,10 +437,9 @@ class TestHardwareBreakpoints:
         valid_sizes = [1, 2, 4, 8]
         for size in valid_sizes:
             debugger.hardware_breakpoints.clear()
-            result = debugger.set_hardware_breakpoint(
+            if result := debugger.set_hardware_breakpoint(
                 address, dr_index=0, access_type="write", size=size
-            )
-            if result:
+            ):
                 assert debugger.hardware_breakpoints[address]["size"] == size
 
         invalid_sizes = [3, 5, 16, 0]
@@ -471,9 +470,7 @@ class TestHardwareBreakpoints:
         ):
             pytest.skip("Hardware breakpoint setting failed")
 
-        result = debugger.remove_hardware_breakpoint(address)
-
-        if result:
+        if result := debugger.remove_hardware_breakpoint(address):
             assert address not in debugger.hardware_breakpoints
 
     def test_hardware_breakpoint_auto_selects_available_register(
@@ -495,11 +492,9 @@ class TestHardwareBreakpoints:
         addresses = [base, base + 0x100, base + 0x200, base + 0x300]
 
         for i, addr in enumerate(addresses):
-            result = debugger.set_hardware_breakpoint(
+            if result := debugger.set_hardware_breakpoint(
                 addr, dr_index=-1, access_type="execute", size=1
-            )
-
-            if result:
+            ):
                 assert addr in debugger.hardware_breakpoints
                 dr_index = debugger.hardware_breakpoints[addr]["dr_index"]
                 assert dr_index in range(4)
@@ -554,9 +549,7 @@ class TestAntiDebuggingBypass:
                 "P", pbi[ctypes.sizeof(ctypes.c_void_p) : ctypes.sizeof(ctypes.c_void_p) * 2]
             )[0]
 
-            being_debugged_byte = debugger._read_memory(peb_address + 2, 1)
-
-            if being_debugged_byte:
+            if being_debugged_byte := debugger._read_memory(peb_address + 2, 1):
                 assert being_debugged_byte == b"\x00"
 
     def test_bypass_anti_debug_patches_is_debugger_present(
@@ -613,14 +606,10 @@ class TestAntiDebuggingBypass:
                 "P", pbi[ctypes.sizeof(ctypes.c_void_p) : ctypes.sizeof(ctypes.c_void_p) * 2]
             )[0]
 
-            if ctypes.sizeof(ctypes.c_void_p) == 8:
-                offset = 0xBC
-            else:
-                offset = 0x68
-
-            ntglobalflag_bytes = debugger._read_memory(peb_address + offset, 4)
-
-            if ntglobalflag_bytes:
+            offset = 0xBC if ctypes.sizeof(ctypes.c_void_p) == 8 else 0x68
+            if ntglobalflag_bytes := debugger._read_memory(
+                peb_address + offset, 4
+            ):
                 assert ntglobalflag_bytes == b"\x00\x00\x00\x00"
 
     def test_hide_debugger_uses_thread_hide_from_debugger(
@@ -787,9 +776,7 @@ class TestMemoryOperations:
             pytest.skip("Cannot read target memory")
 
         test_data = b"\xAA\xBB\xCC\xDD"
-        write_result = debugger._write_memory(address, test_data)
-
-        if write_result:
+        if write_result := debugger._write_memory(address, test_data):
             new_data = debugger._read_memory(address, 4)
             assert new_data == test_data
 
@@ -886,9 +873,7 @@ class TestThreadContextManipulation:
         if "rax" in modified_regs:
             modified_regs["rax"] = 0x1337133713371337
 
-        result = debugger.set_registers(modified_regs)
-
-        if result:
+        if result := debugger.set_registers(modified_regs):
             debugger.set_registers(original_regs)
 
 
@@ -934,9 +919,7 @@ class TestVectoredExceptionHandler:
         if not debugger.install_veh_handler():
             pytest.skip("VEH installation failed")
 
-        result = debugger.uninstall_veh_handler()
-
-        if result:
+        if result := debugger.uninstall_veh_handler():
             assert debugger.veh_handle is None
 
     def test_register_exception_filter_stores_filter(
@@ -1000,9 +983,7 @@ class TestVectoredExceptionHandler:
         if not debugger.enable_single_stepping(debugger.main_thread_id):
             pytest.skip("Single stepping unavailable")
 
-        result = debugger.disable_single_stepping(debugger.main_thread_id)
-
-        if result:
+        if result := debugger.disable_single_stepping(debugger.main_thread_id):
             assert debugger.single_step_enabled is False
 
 
@@ -1062,9 +1043,7 @@ class TestCodeGeneration:
         ]
 
         for mnemonic, operands, expected in test_cases:
-            result = debugger.assemble_x86_x64(mnemonic, operands, arch="x64")
-
-            if result:
+            if result := debugger.assemble_x86_x64(mnemonic, operands, arch="x64"):
                 assert result == expected
 
     def test_generate_nop_sled_creates_correct_length(self) -> None:
@@ -1284,7 +1263,7 @@ class TestPEParsingAndImportAnalysis:
             "CryptVerifySignatureW",
         ]
 
-        assert len(crypto_apis) > 0
+        assert crypto_apis
 
     def test_analyze_exports_identifies_license_functions(self) -> None:
         """Export analysis identifies license validation exports."""

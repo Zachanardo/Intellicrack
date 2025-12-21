@@ -405,9 +405,9 @@ class TestSearchFunctionality:
         """search_similar_binaries includes cracking patterns in results."""
         search_engine.add_binary(str(test_binary_path), ["nop_bypass", "jmp_patch"])
 
-        results = search_engine.search_similar_binaries(str(test_binary_path), threshold=0.5)
-
-        if results:
+        if results := search_engine.search_similar_binaries(
+            str(test_binary_path), threshold=0.5
+        ):
             assert "cracking_patterns" in results[0]
             assert len(results[0]["cracking_patterns"]) == 2
 
@@ -422,7 +422,7 @@ class TestSearchFunctionality:
         results = search_engine.search_similar_binaries(str(test_binary_path), threshold=0.9)
 
         high_similarity_results = [r for r in results if r["similarity"] >= 0.9]
-        assert len(high_similarity_results) >= 1
+        assert high_similarity_results
 
     def test_find_similar_alias(self, search_engine: BinarySimilaritySearch, test_binary_path: Path) -> None:
         """find_similar is an alias for search_similar_binaries."""

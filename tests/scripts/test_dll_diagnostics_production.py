@@ -372,11 +372,7 @@ class TestDllStatusClassification:
         """Classify DLLs that are not loaded."""
         loaded_path = None
 
-        if loaded_path is None:
-            status = "NOT LOADED"
-        else:
-            status = "OTHER"
-
+        status = "NOT LOADED" if loaded_path is None else "OTHER"
         assert status == "NOT LOADED"
 
     @pytest.mark.skipif(sys.platform != "win32", reason="Windows-specific functionality")
@@ -519,8 +515,7 @@ class TestOutputFormatting:
         assert ":" in captured.out
         lines = captured.out.split('\n')
 
-        dll_lines = [line for line in lines if ".dll" in line and ":" in line]
-        if dll_lines:
+        if dll_lines := [line for line in lines if ".dll" in line and ":" in line]:
             for line in dll_lines:
                 parts = line.split(":")
                 assert len(parts) >= 2

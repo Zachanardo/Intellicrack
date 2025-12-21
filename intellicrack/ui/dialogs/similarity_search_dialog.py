@@ -133,9 +133,7 @@ class SearchThread(QThread):
     def run(self) -> None:
         """Execute binary similarity search in a separate thread."""
         try:
-            results: list[dict[str, Any]] = self.search_engine.search_similar_binaries(
-                self.binary_path, self.threshold
-            )
+            results: list[dict[str, Any]] = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
             self.result_signal.emit(results)
         except (OSError, ValueError, RuntimeError) as e:
             logger.exception("Binary similarity search failed: %s", e)
@@ -402,9 +400,7 @@ class BinarySimilaritySearchDialog(QDialog):
         pattern_to_apply: Any = None
         if len(patterns) > 1:
             pattern_items: list[str] = [f"Pattern {i + 1}" for i in range(len(patterns))]
-            result_tuple = QInputDialog.getItem(
-                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False
-            )
+            result_tuple = QInputDialog.getItem(self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
             pattern_index: str = result_tuple[0]
             ok: bool = result_tuple[1] if result_tuple[1] is not None else False
 

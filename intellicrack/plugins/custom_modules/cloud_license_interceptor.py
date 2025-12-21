@@ -65,11 +65,7 @@ try:
     from cryptography.x509 import Certificate as X509Certificate
 
     type PrivateKeyTypes = (
-        ed25519.Ed25519PrivateKey
-        | ed448.Ed448PrivateKey
-        | rsa_module.RSAPrivateKey
-        | dsa.DSAPrivateKey
-        | ec.EllipticCurvePrivateKey
+        ed25519.Ed25519PrivateKey | ed448.Ed448PrivateKey | rsa_module.RSAPrivateKey | dsa.DSAPrivateKey | ec.EllipticCurvePrivateKey
     )
     HAS_CRYPTO_TYPES = True
 except ImportError:
@@ -291,7 +287,8 @@ class CertificateManager:
                 ],
             )
             self.ca_cert = (
-                x509.CertificateBuilder()
+                x509
+                .CertificateBuilder()
                 .subject_name(
                     subject,
                 )
@@ -305,10 +302,7 @@ class CertificateManager:
                     x509.random_serial_number(),
                 )
                 .not_valid_before(datetime.datetime.now(datetime.UTC))
-                .not_valid_after(
-                    datetime.datetime.now(datetime.timezone.utc)
-                    + datetime.timedelta(days=3650)
-                )
+                .not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=3650))
                 .add_extension(
                     x509.SubjectAlternativeName(
                         [
@@ -318,9 +312,7 @@ class CertificateManager:
                     ),
                     critical=False,
                 )
-                .add_extension(
-                    x509.BasicConstraints(ca=True, path_length=None), critical=True
-                )
+                .add_extension(x509.BasicConstraints(ca=True, path_length=None), critical=True)
                 .add_extension(
                     x509.KeyUsage(
                         digital_signature=True,
@@ -384,7 +376,8 @@ class CertificateManager:
                     raise RuntimeError("CA certificate or key not initialized")
 
                 server_cert = (
-                    x509.CertificateBuilder()
+                    x509
+                    .CertificateBuilder()
                     .subject_name(
                         subject,
                     )
@@ -398,10 +391,7 @@ class CertificateManager:
                         x509.random_serial_number(),
                     )
                     .not_valid_before(datetime.datetime.now(datetime.UTC))
-                    .not_valid_after(
-                        datetime.datetime.now(datetime.timezone.utc)
-                        + datetime.timedelta(days=365)
-                    )
+                    .not_valid_after(datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(days=365))
                     .add_extension(
                         x509.SubjectAlternativeName(
                             [

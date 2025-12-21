@@ -4,15 +4,13 @@ This tests that the binary_data parameter is properly used to validate
 AI-suggested patterns, edits, and search results against actual binary content.
 """
 
+
 from __future__ import annotations
 
 import json
 from typing import TYPE_CHECKING, Any
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestAIBridgeBinaryValidation:

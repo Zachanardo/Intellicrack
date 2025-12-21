@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Simple test of QMainWindow from pyqt6_handler"""
 
+
 import sys
 from pathlib import Path
 
@@ -12,7 +13,7 @@ print("Testing QMainWindow directly from pyqt6_handler...")
 
 try:
     from intellicrack.handlers.pyqt6_handler import QMainWindow, QApplication, HAS_PYQT
-    print(f"OK Successfully imported QMainWindow")
+    print("OK Successfully imported QMainWindow")
     print(f"   HAS_PYQT: {HAS_PYQT}")
     print(f"   QMainWindow type: {type(QMainWindow)}")
     print(f"   QMainWindow module: {QMainWindow.__module__ if hasattr(QMainWindow, '__module__') else 'N/A'}")

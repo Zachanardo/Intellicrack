@@ -555,16 +555,21 @@ class TestR2JSONStandardizer:
 
     def test_batch_processing_performance(self, standardizer):
         """Test batch processing handles multiple analyses efficiently"""
-        # Create multiple sample analyses
-        analyses = []
-        for i in range(5):
-            analyses.append({
+        analyses = [
+            {
                 "data": {
-                    "functions": [{"name": f"func_{i}", "addr": f"0x40{i:04x}", "complexity": i+1}]
+                    "functions": [
+                        {
+                            "name": f"func_{i}",
+                            "addr": f"0x40{i:04x}",
+                            "complexity": i + 1,
+                        }
+                    ]
                 },
-                "type": "decompilation"
-            })
-
+                "type": "decompilation",
+            }
+            for i in range(5)
+        ]
         # Process batch
         results = []
         for analysis in analyses:
@@ -577,12 +582,11 @@ class TestR2JSONStandardizer:
             assert isinstance(result, dict)
             assert 'metadata' in result or 'error' in result
 
-        # Each should have unique analysis_id
-        analysis_ids = []
-        for result in results:
-            if 'metadata' in result:
-                analysis_ids.append(result['metadata']['analysis_id'])
-
+        analysis_ids = [
+            result['metadata']['analysis_id']
+            for result in results
+            if 'metadata' in result
+        ]
         # All IDs should be unique
         assert len(set(analysis_ids)) == len(analysis_ids)
 

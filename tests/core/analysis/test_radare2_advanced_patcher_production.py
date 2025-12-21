@@ -24,26 +24,40 @@ TEST_JUMP_ENTRY_COUNT = 4
 def create_simple_pe_binary() -> bytes:
     """Create minimal valid PE binary for testing."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     pe_header = bytearray(256)
-    pe_header[0:4] = b"PE\x00\x00"
+    pe_header[:4] = b"PE\x00\x00"
     pe_header[4:6] = b"\x64\x86"
     pe_header[20:22] = struct.pack("<H", 224)
     pe_header[22:24] = struct.pack("<H", 0x010B)
 
     code_section = bytearray(512)
-    code_section[0:20] = bytes([
-        0x55,
-        0x89, 0xe5,
-        0x83, 0xec, 0x10,
-        0xb8, 0x01, 0x00, 0x00, 0x00,
-        0x89, 0xec,
-        0x5d,
-        0xc3,
-        0x90, 0x90, 0x90, 0x90, 0x90,
-    ])
+    code_section[:20] = bytes(
+        [
+            0x55,
+            0x89,
+            0xE5,
+            0x83,
+            0xEC,
+            0x10,
+            0xB8,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0x89,
+            0xEC,
+            0x5D,
+            0xC3,
+            0x90,
+            0x90,
+            0x90,
+            0x90,
+            0x90,
+        ]
+    )
 
     return bytes(dos_header + pe_header + code_section)
 
@@ -51,7 +65,7 @@ def create_simple_pe_binary() -> bytes:
 def create_simple_elf_binary() -> bytes:
     """Create minimal valid ELF binary for testing."""
     elf_header = bytearray(64)
-    elf_header[0:4] = b"\x7fELF"
+    elf_header[:4] = b"\x7fELF"
     elf_header[4] = 2
     elf_header[5] = 1
     elf_header[6] = 1
@@ -59,14 +73,25 @@ def create_simple_elf_binary() -> bytes:
     elf_header[18:20] = struct.pack("<H", 62)
 
     code_section = bytearray(512)
-    code_section[0:15] = bytes([
-        0x55,
-        0x48, 0x89, 0xe5,
-        0x48, 0x83, 0xec, 0x10,
-        0xb8, 0x01, 0x00, 0x00, 0x00,
-        0xc9,
-        0xc3,
-    ])
+    code_section[:15] = bytes(
+        [
+            0x55,
+            0x48,
+            0x89,
+            0xE5,
+            0x48,
+            0x83,
+            0xEC,
+            0x10,
+            0xB8,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xC9,
+            0xC3,
+        ]
+    )
 
     return bytes(elf_header + code_section)
 
@@ -97,9 +122,7 @@ class TestPatcherInitialization:
 
         try:
             patcher = Radare2AdvancedPatcher(temp_path)
-            success = patcher.open(write_mode=False)
-
-            if success:
+            if success := patcher.open(write_mode=False):
                 assert patcher.r2 is not None
                 assert patcher.architecture is not None
                 patcher.r2.quit()
@@ -116,9 +139,7 @@ class TestPatcherInitialization:
 
         try:
             patcher = Radare2AdvancedPatcher(temp_path)
-            success = patcher.open(write_mode=False)
-
-            if success:
+            if success := patcher.open(write_mode=False):
                 assert patcher.architecture in {Architecture.X86, Architecture.X86_64}
                 patcher.r2.quit()
         except Exception as e:

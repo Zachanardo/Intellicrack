@@ -258,13 +258,15 @@ if __name__ == "__main__":
             success = True
             print("  OK PASS: Real-time monitoring integration validated")
 
-            self.test_results.append({
-                "test": "realtime_monitoring",
-                "success": success,
-                "components_integrated": "enhanced_strings" in components,
-                "methods_present": len(missing_methods) == 0,
-                "event_system": True
-            })
+            self.test_results.append(
+                {
+                    "test": "realtime_monitoring",
+                    "success": success,
+                    "components_integrated": "enhanced_strings" in components,
+                    "methods_present": not missing_methods,
+                    "event_system": True,
+                }
+            )
 
             return success
 
@@ -413,13 +415,14 @@ if __name__ == "__main__":
 
     def generate_production_report(self) -> dict[str, Any]:
         """Generate comprehensive production readiness report."""
-        passed_tests = sum(1 for result in self.test_results if result.get("success", False))
+        passed_tests = sum(bool(result.get("success", False))
+                       for result in self.test_results)
         total_tests = len(self.test_results)
         pass_rate = passed_tests / total_tests if total_tests > 0 else 0
 
         overall_status = "PRODUCTION_READY" if pass_rate >= 0.80 else "REQUIRES_IMPROVEMENT"
 
-        report = {
+        return {
             "checkpoint": "Day 5.3 - Production Readiness Checkpoint 5",
             "timestamp": self.validation_timestamp,
             "overall_status": overall_status,
@@ -427,12 +430,13 @@ if __name__ == "__main__":
                 "tests_passed": passed_tests,
                 "tests_failed": total_tests - passed_tests,
                 "total_tests": total_tests,
-                "pass_rate": f"{pass_rate:.2%}"
+                "pass_rate": f"{pass_rate:.2%}",
             },
             "detailed_results": self.test_results,
             "production_criteria": {
                 "license_detection_functional": any(
-                    r.get("test") == "license_key_detection" and r.get("success", False)
+                    r.get("test") == "license_key_detection"
+                    and r.get("success", False)
                     for r in self.test_results
                 ),
                 "crypto_detection_functional": any(
@@ -440,7 +444,8 @@ if __name__ == "__main__":
                     for r in self.test_results
                 ),
                 "realtime_monitoring_integrated": any(
-                    r.get("test") == "realtime_monitoring" and r.get("success", False)
+                    r.get("test") == "realtime_monitoring"
+                    and r.get("success", False)
                     for r in self.test_results
                 ),
                 "api_analysis_functional": any(
@@ -450,11 +455,9 @@ if __name__ == "__main__":
                 "performance_acceptable": any(
                     r.get("test") == "performance" and r.get("success", False)
                     for r in self.test_results
-                )
-            }
+                ),
+            },
         }
-
-        return report
 
 
 def main():

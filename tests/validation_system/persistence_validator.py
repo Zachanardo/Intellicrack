@@ -155,7 +155,7 @@ class PersistenceValidator:
         test_end_time = datetime.now().isoformat()
         test_duration = (datetime.fromisoformat(test_end_time) - datetime.fromisoformat(test_start_time)).total_seconds()
 
-        result = PersistenceTestResult(
+        return PersistenceTestResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -167,10 +167,8 @@ class PersistenceValidator:
             reboot_persistence=False,
             time_based_persistence=False,
             bypass_persistence_valid=bypass_persistence_valid,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return result
 
     def test_reboot_persistence(self, binary_path: str, software_name: str) -> PersistenceTestResult:
         """
@@ -239,10 +237,9 @@ class PersistenceValidator:
                     try:
                         for item in os.listdir(folder):
                             item_path = os.path.join(folder, item)
-                            if os.path.isfile(item_path):
-                                if software_name.lower() in item.lower():
-                                    persistence_indicators['startup_entries'].append(item_path)
-                                    logger.info(f"Found startup file: {item_path}")
+                            if os.path.isfile(item_path) and software_name.lower() in item.lower():
+                                persistence_indicators['startup_entries'].append(item_path)
+                                logger.info(f"Found startup file: {item_path}")
                     except PermissionError:
                         error_messages.append(f"Access denied reading startup folder: {folder}")
                     except Exception as e:
@@ -539,7 +536,7 @@ class PersistenceValidator:
                     except Exception as e:
                         error_messages.append(f"Error checking registry for time artifacts: {str(e)}")
 
-                if len(time_related_keys) > 0:
+                if time_related_keys:
                     logger.info(f"Found {len(time_related_keys)} time-related registry entries")
 
             except Exception as e:
@@ -565,7 +562,7 @@ class PersistenceValidator:
         test_end_time = datetime.now().isoformat()
         test_duration = (datetime.fromisoformat(test_end_time) - datetime.fromisoformat(test_start_time)).total_seconds()
 
-        result = PersistenceTestResult(
+        return PersistenceTestResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -577,10 +574,8 @@ class PersistenceValidator:
             reboot_persistence=False,
             time_based_persistence=time_based_persistence,
             bypass_persistence_valid=bypass_persistence_valid,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return result
 
     def validate_persistence(self, binary_path: str, software_name: str) -> list[PersistenceTestResult]:
         """
@@ -588,12 +583,9 @@ class PersistenceValidator:
         """
         logger.info(f"Starting full persistence validation for {software_name}")
 
-        results = []
-
         # Test 1: Long-term execution
         long_term_result = self.test_long_term_execution(binary_path, software_name)
-        results.append(long_term_result)
-
+        results = [long_term_result]
         # Test 2: Reboot persistence
         reboot_result = self.test_reboot_persistence(binary_path, software_name)
         results.append(reboot_result)
@@ -625,8 +617,8 @@ class PersistenceValidator:
                     all_results.extend(results)
                 else:
                     # Create failed results for each test type
-                    for test_type in ["long_term_execution", "reboot_persistence", "time_based_persistence"]:
-                        all_results.append(PersistenceTestResult(
+                    all_results.extend(
+                        PersistenceTestResult(
                             software_name=software_name,
                             binary_path=binary_path or "",
                             binary_hash="",
@@ -638,9 +630,14 @@ class PersistenceValidator:
                             reboot_persistence=False,
                             time_based_persistence=False,
                             bypass_persistence_valid=False,
-                            error_messages=[f"Binary not found: {binary_path}"]
-                        ))
-
+                            error_messages=[f"Binary not found: {binary_path}"],
+                        )
+                        for test_type in [
+                            "long_term_execution",
+                            "reboot_persistence",
+                            "time_based_persistence",
+                        ]
+                    )
             except Exception as e:
                 # Create failed results for each test type
                 for test_type in ["long_term_execution", "reboot_persistence", "time_based_persistence"]:

@@ -188,13 +188,11 @@ class TestTaintSourceIdentification(unittest.TestCase):
                 if sources:
                     self.assertIsInstance(sources, list)
                     for source in sources:
-                        if source:
-                            # File sources should have detailed file information
-                            if isinstance(source, dict):
-                                file_attributes = ['file_path', 'access_mode', 'data_flow', 'risk_level']
-                                for attr in file_attributes:
-                                    if attr in source:
-                                        self.assertIsNotNone(source[attr])
+                        if source and isinstance(source, dict):
+                            file_attributes = ['file_path', 'access_mode', 'data_flow', 'risk_level']
+                            for attr in file_attributes:
+                                if attr in source:
+                                    self.assertIsNotNone(source[attr])
 
     def test_analyze_network_sources_discovers_network_inputs(self):
         """Test that network source analysis discovers comprehensive network input vectors."""
@@ -238,8 +236,7 @@ class TestTaintSourceIdentification(unittest.TestCase):
             discovery_categories = ['newly_discovered', 'confirmation_needed', 'high_confidence']
             for category in discovery_categories:
                 if category in dynamic_sources:
-                    sources_list = dynamic_sources[category]
-                    if sources_list:
+                    if sources_list := dynamic_sources[category]:
                         self.assertIsInstance(sources_list, list)
 
 
@@ -432,8 +429,7 @@ class TestSinkDetectionAndVulnerabilityAnalysis(unittest.TestCase):
             vulnerability_types = ['buffer_overflow', 'format_string', 'heap_corruption', 'stack_smashing']
             for vuln_type in vulnerability_types:
                 if vuln_type in corruption_sinks:
-                    vulnerabilities = corruption_sinks[vuln_type]
-                    if vulnerabilities:
+                    if vulnerabilities := corruption_sinks[vuln_type]:
                         for vuln in vulnerabilities:
                             if isinstance(vuln, dict):
                                 vuln_fields = ['severity', 'exploitability', 'affected_buffer', 'mitigation_bypass']
@@ -459,8 +455,7 @@ class TestSinkDetectionAndVulnerabilityAnalysis(unittest.TestCase):
             disclosure_categories = ['high_risk', 'medium_risk', 'low_risk', 'false_positive']
             for category in disclosure_categories:
                 if category in disclosure_analysis:
-                    disclosures = disclosure_analysis[category]
-                    if disclosures:
+                    if disclosures := disclosure_analysis[category]:
                         for disclosure in disclosures:
                             if isinstance(disclosure, dict):
                                 disclosure_fields = ['data_type', 'sensitivity_level', 'disclosure_vector', 'impact_score']
@@ -549,15 +544,13 @@ class TestCrossFunctionTaintPropagation(unittest.TestCase):
             for component in graph_components:
                 if component in call_graph:
                     self.assertIsNotNone(call_graph[component])
-                    if isinstance(call_graph[component], (list, dict)):
-                        if call_graph[component]:  # Only validate non-empty structures
-                            if component == 'nodes':
-                                for node in list(call_graph[component])[:3]:  # Check first 3 nodes
-                                    if isinstance(node, dict):
-                                        node_fields = ['address', 'name', 'parameters', 'return_type']
-                                        for field in node_fields:
-                                            if field in node:
-                                                self.assertIsNotNone(node[field])
+                    if isinstance(call_graph[component], (list, dict)) and call_graph[component] and component == 'nodes':
+                        for node in list(call_graph[component])[:3]:  # Check first 3 nodes
+                            if isinstance(node, dict):
+                                node_fields = ['address', 'name', 'parameters', 'return_type']
+                                for field in node_fields:
+                                    if field in node:
+                                        self.assertIsNotNone(node[field])
 
     def test_propagate_taint_through_function_calls_maintains_context(self):
         """Test that taint propagation through function calls maintains calling context."""
@@ -741,8 +734,7 @@ class TestAdvancedTaintPolicies(unittest.TestCase):
             sanitization_categories = ['effective_sanitizers', 'partial_sanitizers', 'ineffective_functions']
             for category in sanitization_categories:
                 if category in sanitization_analysis:
-                    functions = sanitization_analysis[category]
-                    if functions:
+                    if functions := sanitization_analysis[category]:
                         for func in functions:
                             if isinstance(func, dict):
                                 func_fields = ['function_name', 'sanitization_effectiveness', 'bypass_potential']
@@ -1101,8 +1093,7 @@ class TestComprehensiveReporting(unittest.TestCase):
             graph_formats = ['dot_format', 'json_format', 'svg_format']
             for format_type in graph_formats:
                 if format_type in flow_graphs:
-                    graph_data = flow_graphs[format_type]
-                    if graph_data:
+                    if graph_data := flow_graphs[format_type]:
                         self.assertIsInstance(graph_data, str)
                         # Graph data should contain flow information
                         if format_type == 'dot_format' and 'digraph' in graph_data:
@@ -1150,8 +1141,7 @@ class TestComprehensiveReporting(unittest.TestCase):
             report_sections = ['executive_summary', 'detailed_findings', 'risk_assessment', 'recommendations']
             for section in report_sections:
                 if section in vulnerability_report:
-                    section_data = vulnerability_report[section]
-                    if section_data:
+                    if section_data := vulnerability_report[section]:
                         self.assertIsInstance(section_data, (dict, list, str))
                         if section == 'risk_assessment' and isinstance(section_data, dict):
                             risk_fields = ['overall_risk_score', 'critical_issues', 'exploitable_vulnerabilities']
@@ -1184,8 +1174,9 @@ class TestComprehensiveReporting(unittest.TestCase):
         export_results = {}
 
         for format_type in export_formats:
-            exported = self.analyzer.export_analysis_results(analysis_results, format_type)
-            if exported:
+            if exported := self.analyzer.export_analysis_results(
+                analysis_results, format_type
+            ):
                 export_results[format_type] = exported
 
         # Validate sophisticated export capabilities
@@ -1312,14 +1303,13 @@ class TestAntiPlaceholderValidation(unittest.TestCase):
 
             # Placeholder assessments often have generic scores
             for vuln_type, assessment in impact_assessment.items():
-                if assessment and isinstance(assessment, dict):
-                    if 'exploitability_score' in assessment:
-                        score = assessment['exploitability_score']
+                if assessment and isinstance(assessment, dict) and 'exploitability_score' in assessment:
+                    score = assessment['exploitability_score']
+                    if isinstance(score, float):
                         # Avoid obviously placeholder scores
                         placeholder_scores = [0.5, 1.0, 0.0, 0.75, 0.25]
-                        if isinstance(score, float):
-                            self.assertNotIn(score, placeholder_scores,
-                                           f"Placeholder exploitability score {score} found")
+                        self.assertNotIn(score, placeholder_scores,
+                                       f"Placeholder exploitability score {score} found")
 
     def test_flow_graph_generation_produces_actual_graph_data(self):
         """Anti-placeholder test: Flow graph generation must produce actual graph data."""
@@ -1364,16 +1354,15 @@ class TestAntiPlaceholderValidation(unittest.TestCase):
 
             # Real instrumentation should show actual hook status, not generic placeholders
             for function_name, hook_info in instrumentation_results.items():
-                if hook_info and isinstance(hook_info, dict):
-                    if 'hook_status' in hook_info:
-                        status = hook_info['hook_status']
+                if hook_info and isinstance(hook_info, dict) and 'hook_status' in hook_info:
+                    status = hook_info['hook_status']
+                    if isinstance(status, str):
                         # Placeholder implementations often return generic status strings
                         placeholder_statuses = [
                             'success', 'ok', 'hooked', 'active', 'enabled', 'true', 'false'
                         ]
-                        if isinstance(status, str):
-                            self.assertNotIn(status.lower(), [ps.lower() for ps in placeholder_statuses],
-                                           f"Placeholder hook status '{status}' found")
+                        self.assertNotIn(status.lower(), [ps.lower() for ps in placeholder_statuses],
+                                       f"Placeholder hook status '{status}' found")
 
     def test_performance_optimization_shows_measurable_improvements(self):
         """Anti-placeholder test: Performance optimization must show measurable improvements."""

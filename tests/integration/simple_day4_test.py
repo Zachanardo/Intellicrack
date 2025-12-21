@@ -63,12 +63,7 @@ def _generate_patch_bytes_for_method(bypass_method: str) -> str:
 def _generate_memory_write_instructions(address: str, value: int) -> str:
     """Generate machine code to write a value to memory."""
     try:
-        # Parse address string and convert to proper format
-        if address.startswith("0x"):
-            addr_int = int(address, 16)
-        else:
-            addr_int = int(address, 16)
-
+        addr_int = int(address, 16)
         # Generate x86 machine code for memory write
         addr_bytes = struct.pack("<I", addr_int)  # Little-endian 4 bytes
         value_bytes = struct.pack("<I", value & 0xFFFFFFFF)  # Little-endian 4 bytes
@@ -131,8 +126,7 @@ def test_enhanced_patch_instructions():
 def main():
     """Main test function."""
     try:
-        success = test_enhanced_patch_instructions()
-        if success:
+        if success := test_enhanced_patch_instructions():
             print("\n DAY 4.1 COMPLETED SUCCESSFULLY")
             print("Template patch instructions have been replaced with real implementations!")
             return 0

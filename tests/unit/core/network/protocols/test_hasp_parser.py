@@ -58,9 +58,7 @@ def test_hasp_request_response():
     request_data.extend(struct.pack("<H", 0))
     request_data.extend(struct.pack("<H", 0))
 
-    request = parser.parse_request(bytes(request_data))
-
-    if request:
+    if request := parser.parse_request(bytes(request_data)):
         print(f"OK Parsed LOGIN request for feature {request.feature_id}")
         print(f"  - Vendor code: 0x{request.vendor_code:08X}")
         print(f"  - Command: {HASPCommandType(request.command).name}")
@@ -184,7 +182,7 @@ def test_hasp_usb_emulator():
     print("\n=== Testing USB Emulator ===")
     usb_emulator = HASPUSBEmulator()
 
-    print(f"OK USB device initialized")
+    print("OK USB device initialized")
     print(f"  - Vendor ID: 0x{usb_emulator.device_info['vendor_id']:04X}")
     print(f"  - Product ID: 0x{usb_emulator.device_info['product_id']:04X}")
     print(f"  - Serial: {usb_emulator.device_info['serial_number']}")
@@ -217,7 +215,7 @@ def test_hasp_packet_analyzer():
                     print(f"  - {packet.packet_type}: {packet.source_ip}:{packet.source_port} -> {packet.dest_ip}:{packet.dest_port}")
 
                 license_info = analyzer.extract_license_info_from_capture()
-                print(f"OK Extracted license information:")
+                print("OK Extracted license information:")
                 print(f"  - Servers: {len(license_info['discovered_servers'])}")
                 print(f"  - Features: {len(license_info['discovered_features'])}")
         except ImportError:
@@ -231,7 +229,7 @@ def test_hasp_server_emulator():
     print("\n=== Testing Server Emulator ===")
     server = HASPServerEmulator("127.0.0.1", 1947)
 
-    print(f"OK Server initialized")
+    print("OK Server initialized")
     print(f"  - Bind address: {server.bind_address}:{server.port}")
     print(f"  - Server ID: {server.server_id}")
     print(f"  - Features available: {len(server.parser.features)}")

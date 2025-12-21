@@ -560,7 +560,9 @@ class TestAdvancedDynamicAnalyzer:
 
         # Verify real instrumentation attempted with live process
         frida_related_logs = [log for log in logs if "frida" in log.lower() or "attach" in log.lower()]
-        assert len(frida_related_logs) > 0, "Should attempt real Frida process attachment for instrumentation"
+        assert (
+            frida_related_logs
+        ), "Should attempt real Frida process attachment for instrumentation"
 
     def test_deep_runtime_monitoring_no_frida(self, test_binary_path):
         """Test deep runtime monitoring without Frida."""

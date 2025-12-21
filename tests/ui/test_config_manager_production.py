@@ -295,7 +295,7 @@ class TestUIConfigManager:
         config_manager.register_callback("theme", test_callback)
         config_manager.set_theme("light")
 
-        assert callback_invoked is True
+        assert callback_invoked
 
     def test_callback_unregistration(self, config_manager: UIConfigManager) -> None:
         """Callback unregistration prevents future invocations."""
@@ -399,8 +399,7 @@ class TestEdgesCases:
         """Create isolated config manager."""
         with tempfile.TemporaryDirectory() as tmpdir:
             os.environ["INTELLICRACK_CONFIG_DIR"] = str(tmpdir)
-            manager = UIConfigManager()
-            yield manager
+            yield UIConfigManager()
             if "INTELLICRACK_CONFIG_DIR" in os.environ:
                 del os.environ["INTELLICRACK_CONFIG_DIR"]
 
@@ -421,7 +420,7 @@ class TestEdgesCases:
 
         config_manager.set_theme("light")
 
-        assert callback2_invoked is True
+        assert callback2_invoked
 
     def test_empty_custom_themes_handled(self, config_manager: UIConfigManager) -> None:
         """Empty custom themes dictionary is handled correctly."""

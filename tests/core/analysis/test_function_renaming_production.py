@@ -34,7 +34,7 @@ class TestPEBinaryCreation:
             Complete PE binary as bytes
         """
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x80)
 
         dos_stub = b"\x00" * (0x80 - 64)
@@ -151,9 +151,7 @@ class TestPEBinaryCreation:
         Returns:
             Bytes representing function prolog
         """
-        if prolog_type == "stdcall":
-            return b"\x55\x8b\xec"
-        elif prolog_type == "fastcall":
+        if prolog_type == "fastcall":
             return b"\x55\x89\xe5"
         elif prolog_type == "x64":
             return b"\x48\x89\x5c\x24\x08"
@@ -209,7 +207,7 @@ class TestFunctionRenamingEngineInitialization:
     def test_init_with_corrupted_pe_signature(self, tmp_path: Path) -> None:
         """Engine rejects PE with corrupted signature."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[0x3C:0x40] = struct.pack("<I", 0x40)
         invalid_sig = dos_header + b"XX\x00\x00" + b"\x00" * 200
 
@@ -1212,12 +1210,14 @@ class TestRealWorldScenarios:
             Path(r"C:\Windows\System32\cmd.exe"),
         ]
 
-        binary_to_test = None
-        for binary_path in system_binaries:
-            if binary_path.exists():
-                binary_to_test = binary_path
-                break
-
+        binary_to_test = next(
+            (
+                binary_path
+                for binary_path in system_binaries
+                if binary_path.exists()
+            ),
+            None,
+        )
         if not binary_to_test:
             pytest.skip("No Windows system binaries available")
 

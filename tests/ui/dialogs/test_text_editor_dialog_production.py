@@ -83,8 +83,7 @@ class TestFileOperations:
         """Editor loads file content correctly."""
         dialog = TextEditorDialog(str(test_file))
         try:
-            text_edit = dialog.findChild(PyQt6.QtWidgets.QPlainTextEdit)
-            if text_edit:
+            if text_edit := dialog.findChild(PyQt6.QtWidgets.QPlainTextEdit):
                 content = text_edit.toPlainText()
                 assert "test_function" in content
         finally:
@@ -99,9 +98,7 @@ class TestTextEditing:
         self, editor_dialog: TextEditorDialog
     ) -> None:
         """Text editor allows modifications."""
-        text_edit = editor_dialog.findChild(PyQt6.QtWidgets.QPlainTextEdit)
-        if not text_edit:
-            text_edit = editor_dialog.findChild(PyQt6.QtWidgets.QTextEdit)
+        text_edit = editor_dialog.findChild(PyQt6.QtWidgets.QPlainTextEdit) or editor_dialog.findChild(PyQt6.QtWidgets.QTextEdit)
 
         if text_edit:
             test_text = "print('test')"
@@ -118,9 +115,7 @@ class TestSyntaxHighlighting:
         """Editor applies Python syntax highlighting."""
         dialog = TextEditorDialog()
         try:
-            text_edit = dialog.findChild(PyQt6.QtWidgets.QPlainTextEdit)
-            if not text_edit:
-                text_edit = dialog.findChild(PyQt6.QtWidgets.QTextEdit)
+            text_edit = dialog.findChild(PyQt6.QtWidgets.QPlainTextEdit) or dialog.findChild(PyQt6.QtWidgets.QTextEdit)
 
             if text_edit and hasattr(text_edit, 'document'):
                 document = text_edit.document()

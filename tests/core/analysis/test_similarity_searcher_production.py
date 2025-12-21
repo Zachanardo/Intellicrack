@@ -74,7 +74,7 @@ def create_pe_binary(
     coff_header = struct.pack("<HHIIIHH", 0x8664, 1, 0, 0, 0, 0x00F0, 0x0022)
 
     optional_header = bytearray(240)
-    optional_header[0:2] = struct.pack("<H", 0x020B)
+    optional_header[:2] = struct.pack("<H", 0x020B)
 
     binary_content = dos_header + dos_stub + pe_signature + coff_header + optional_header
 
@@ -571,13 +571,13 @@ def test_calculate_adaptive_weights_feature_rich_binaries(
 ) -> None:
     """Adaptive weights adjust based on feature availability."""
     features1 = {
-        "imports": ["import" + str(i) for i in range(100)],
-        "strings": ["string" + str(i) for i in range(50)],
+        "imports": [f"import{str(i)}" for i in range(100)],
+        "strings": [f"string{str(i)}" for i in range(50)],
     }
 
     features2 = {
-        "imports": ["import" + str(i) for i in range(100)],
-        "strings": ["string" + str(i) for i in range(50)],
+        "imports": [f"import{str(i)}" for i in range(100)],
+        "strings": [f"string{str(i)}" for i in range(50)],
     }
 
     weights = searcher._calculate_adaptive_weights(features1, features2)

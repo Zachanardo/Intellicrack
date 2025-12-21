@@ -4,15 +4,13 @@ This tests that the progress_callback function is properly wired to
 analysis functions to provide real-time progress updates.
 """
 
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestProgressCallbackWiring:

@@ -884,14 +884,12 @@ class PDFReportGenerator:
                 f"    <binary_path>{self._xml_escape(binary_path)}</binary_path>",
             ]
             xml_content.append(f"    <binary_name>{self._xml_escape(os.path.basename(binary_path))}</binary_name>")
-            xml_content.extend(
-                (
-                    f"    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>",
-                    "    <intellicrack_version>1.0.0</intellicrack_version>",
-                    "  </metadata>",
-                    "  <analysis_results>",
-                )
-            )
+            xml_content.extend((
+                f"    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>",
+                "    <intellicrack_version>1.0.0</intellicrack_version>",
+                "  </metadata>",
+                "  <analysis_results>",
+            ))
             xml_content.extend(self._dict_to_xml(analysis_results, indent="    "))
             xml_content.append("  </analysis_results>")
 
@@ -1186,34 +1184,31 @@ class PDFReportGenerator:
                 text_content,
                 re.IGNORECASE | re.DOTALL,
             ):
-                if title_text := re.sub(
-                    r"<[^>]+>", "", title_match.group(1)
-                ).strip():
+                if title_text := re.sub(r"<[^>]+>", "", title_match.group(1)).strip():
                     content.extend((Paragraph(title_text, styles["Title"]), Spacer(1, 0.2 * inch)))
             h1_matches = re.findall(r"<h1[^>]*>(.*?)</h1>", text_content, re.IGNORECASE | re.DOTALL)
             for h1_text in h1_matches:
                 if clean_text := re.sub(r"<[^>]+>", "", h1_text).strip():
-                    content.extend(
-                        (
-                            Paragraph(clean_text, styles["Heading1"]),
-                            Spacer(1, 0.1 * inch),
-                        )
-                    )
+                    content.extend((
+                        Paragraph(clean_text, styles["Heading1"]),
+                        Spacer(1, 0.1 * inch),
+                    ))
             h2_matches = re.findall(r"<h2[^>]*>(.*?)</h2>", text_content, re.IGNORECASE | re.DOTALL)
             for h2_text in h2_matches:
                 if clean_text := re.sub(r"<[^>]+>", "", h2_text).strip():
-                    content.extend(
-                        (
-                            Paragraph(clean_text, styles["Heading2"]),
-                            Spacer(1, 0.1 * inch),
-                        )
-                    )
+                    content.extend((
+                        Paragraph(clean_text, styles["Heading2"]),
+                        Spacer(1, 0.1 * inch),
+                    ))
             p_matches = re.findall(r"<p[^>]*>(.*?)</p>", text_content, re.IGNORECASE | re.DOTALL)
             for p_text in p_matches:
                 if clean_text := re.sub(r"<[^>]+>", "", p_text).strip():
-                    content.append(Paragraph(clean_text, styles["Normal"]))
-                    content.append(Spacer(1, 0.05 * inch))
-
+                    content.extend(
+                        (
+                            Paragraph(clean_text, styles["Normal"]),
+                            Spacer(1, 0.05 * inch),
+                        )
+                    )
             table_matches = re.findall(r"<table[^>]*>(.*?)</table>", text_content, re.IGNORECASE | re.DOTALL)
             for table_html in table_matches:
                 if table_data := self._parse_html_table(table_html):
@@ -1230,9 +1225,7 @@ class PDFReportGenerator:
                             ("GRID", (0, 0), (-1, -1), 1, colors.black),
                         ])
                     )
-                    content.append(table)
-                    content.append(Spacer(1, 0.1 * inch))
-
+                    content.extend((table, Spacer(1, 0.1 * inch)))
             if not content:
                 stripped_text = re.sub(r"<[^>]+>", " ", text_content)
                 if stripped_text := re.sub(r"\s+", " ", stripped_text).strip():

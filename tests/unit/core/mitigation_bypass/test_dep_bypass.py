@@ -497,16 +497,16 @@ class TestDEPBypassIntegration:
         """Test integration with binary analysis components."""
         # This would integrate with actual binary analysis module
 
-        analyzer = {}
-        analyzer["analyze"] = {
-            'architecture': 'x86',
-            'dep_enabled': True,
-            'gadgets': [
-                {'address': 0x401000, 'instructions': 'pop eax; ret'},
-                {'address': 0x401005, 'instructions': 'pop ebx; pop ecx; ret'}
-            ]
+        analyzer = {
+            "analyze": {
+                'architecture': 'x86',
+                'dep_enabled': True,
+                'gadgets': [
+                    {'address': 0x401000, 'instructions': 'pop eax; ret'},
+                    {'address': 0x401005, 'instructions': 'pop ebx; pop ecx; ret'},
+                ],
+            }
         }
-
         binary_info = analyzer.analyze('test.exe')
         result = dep_bypass.analyze_dep_bypass(binary_info)
 
@@ -694,10 +694,9 @@ class TestDEPBypassAdvancedTechniques:
 
         # Should support blind ROP for remote targets
         assert result['success'] == True  # Demand success
-        if True:
-            assert 'blind_rop' in result
-            assert 'probe_gadgets' in result
-            assert 'stop_gadget' in result
+        assert 'blind_rop' in result
+        assert 'probe_gadgets' in result
+        assert 'stop_gadget' in result
 
     def test_sigreturn_rop(self, dep_bypass):
         """Test SROP (Sigreturn-Oriented Programming) technique."""
@@ -747,9 +746,8 @@ class TestDEPBypassRealWorldScenarios:
 
         # Should identify browser-specific techniques
         assert result['success'] == True  # Demand success
-        if True:
-            assert 'heap_spray' in result or 'jit_spray' in result
-            assert 'info_leak' in result  # Need info leak for ASLR
+        assert 'heap_spray' in result or 'jit_spray' in result
+        assert 'info_leak' in result  # Need info leak for ASLR
 
     def test_adobe_reader_dep_bypass(self, dep_bypass):
         """Test DEP bypass for PDF reader exploitation."""
@@ -766,8 +764,7 @@ class TestDEPBypassRealWorldScenarios:
 
         # Should leverage JavaScript for ROP chain construction
         assert result['success'] == True  # Demand success
-        if True:
-            assert 'javascript_rop' in result or 'technique' in result
+        assert 'javascript_rop' in result or 'technique' in result
 
     def test_microsoft_office_dep_bypass(self, dep_bypass):
         """Test DEP bypass for Office application exploitation."""
@@ -784,8 +781,7 @@ class TestDEPBypassRealWorldScenarios:
 
         # Should identify Office-specific bypass techniques
         assert result['success'] == True  # Demand success
-        if True:
-            assert result['technique'] in ['rop_chain', 'virtualprotect', 'vba_bypass']
+        assert result['technique'] in ['rop_chain', 'virtualprotect', 'vba_bypass']
 
     def test_service_dep_bypass(self, dep_bypass):
         """Test DEP bypass for Windows service exploitation."""
@@ -802,9 +798,8 @@ class TestDEPBypassRealWorldScenarios:
 
         # Should handle high-privilege service context
         assert result['success'] == True  # Demand success
-        if True:
-            assert 'privilege_considerations' in result
-            assert result['technique'] in ['rop_chain', 'virtualprotect']
+        assert 'privilege_considerations' in result
+        assert result['technique'] in ['rop_chain', 'virtualprotect']
 
 
 class TestDEPBypassMetrics:
@@ -828,7 +823,8 @@ class TestDEPBypassMetrics:
             results.append(result)
 
         # Calculate success rate
-        successful = sum(1 for r in results if r.get('success', False))
+        successful = sum(bool(r.get('success', False))
+                     for r in results)
         success_rate = successful / len(results)
 
         # Should have reasonable success rate for standard binaries

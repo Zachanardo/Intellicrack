@@ -34,7 +34,7 @@ def temp_dir(tmp_path: Path) -> Path:
     return tmp_path
 
 
-@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {IMPORT_ERROR if not HEXVIEW_AVAILABLE else ''}")
+@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {'' if HEXVIEW_AVAILABLE else IMPORT_ERROR}")
 class TestChecksumEffectiveness:
 
     def test_crc32_known_values(self) -> None:
@@ -132,7 +132,7 @@ class TestChecksumEffectiveness:
             "FAILED: SHA512 not deterministic (same input produced different hashes)"
 
 
-@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {IMPORT_ERROR if not HEXVIEW_AVAILABLE else ''}")
+@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {'' if HEXVIEW_AVAILABLE else IMPORT_ERROR}")
 class TestDataInspectorEffectiveness:
 
     def test_interpret_uint32_little_endian(self) -> None:
@@ -217,7 +217,7 @@ class TestDataInspectorEffectiveness:
             f"FAILED: UTF-16 LE string interpretation incorrect (got {decoded_string}, expected {KNOWN_STRING})"
 
 
-@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {IMPORT_ERROR if not HEXVIEW_AVAILABLE else ''}")
+@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {'' if HEXVIEW_AVAILABLE else IMPORT_ERROR}")
 class TestFileComparisonEffectiveness:
 
     def test_identical_files_no_differences(self, temp_dir: Path) -> None:
@@ -251,16 +251,14 @@ class TestFileComparisonEffectiveness:
         differences = comparer.compare_files(str(file1), str(file2))
 
         assert len(differences) >= 1, \
-            "FAILED: Single-byte modification not detected"
+                "FAILED: Single-byte modification not detected"
 
-        found_modification_at_offset = False
-        for diff in differences:
-            if diff.offset1 == MODIFIED_OFFSET or diff.offset2 == MODIFIED_OFFSET:
-                found_modification_at_offset = True
-                break
-
+        found_modification_at_offset = any(
+            diff.offset1 == MODIFIED_OFFSET or diff.offset2 == MODIFIED_OFFSET
+            for diff in differences
+        )
         assert found_modification_at_offset, \
-            f"FAILED: Modification at offset {MODIFIED_OFFSET} not detected in differences"
+                f"FAILED: Modification at offset {MODIFIED_OFFSET} not detected in differences"
 
     def test_detect_multiple_modifications(self, temp_dir: Path) -> None:
         ORIGINAL_CONTENT = b"PROTECTION_SCHEME_ORIGINAL_DATA_CONTENT"
@@ -316,20 +314,20 @@ class TestFileComparisonEffectiveness:
         differences = comparer.compare_files(str(file1), str(file2))
 
         assert len(differences) >= 1, \
-            "FAILED: Binary patch not detected"
+                "FAILED: Binary patch not detected"
 
-        patch_detected = False
-        for diff in differences:
-            if (diff.offset1 <= KNOWN_PATCH_OFFSET < diff.offset1 + diff.length1 or
-                diff.offset2 <= KNOWN_PATCH_OFFSET < diff.offset2 + diff.length2):
-                patch_detected = True
-                break
-
+        patch_detected = any(
+            (
+                diff.offset1 <= KNOWN_PATCH_OFFSET < diff.offset1 + diff.length1
+                or diff.offset2 <= KNOWN_PATCH_OFFSET < diff.offset2 + diff.length2
+            )
+            for diff in differences
+        )
         assert patch_detected, \
-            f"FAILED: Patch at offset {KNOWN_PATCH_OFFSET} not detected in difference blocks"
+                f"FAILED: Patch at offset {KNOWN_PATCH_OFFSET} not detected in difference blocks"
 
 
-@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {IMPORT_ERROR if not HEXVIEW_AVAILABLE else ''}")
+@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {'' if HEXVIEW_AVAILABLE else IMPORT_ERROR}")
 class TestLargeFileHandlingEffectiveness:
 
     def test_handle_1mb_file(self, temp_dir: Path) -> None:
@@ -401,7 +399,7 @@ class TestLargeFileHandlingEffectiveness:
             "FAILED: Difference in large file not detected"
 
 
-@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {IMPORT_ERROR if not HEXVIEW_AVAILABLE else ''}")
+@pytest.mark.skipif(not HEXVIEW_AVAILABLE, reason=f"Hexview not available: {'' if HEXVIEW_AVAILABLE else IMPORT_ERROR}")
 class TestProtectionPatternDetectionEffectiveness:
 
     def test_detect_vmprotect_section_pattern(self) -> None:

@@ -87,7 +87,7 @@ class TestFileHashComputation:
 
         compute_file_hash(test_file, progress_signal=progress_callback)
 
-        assert len(progress_values) > 0
+        assert progress_values
         assert all(0 <= p <= 100 for p in progress_values)
         assert 100 in progress_values
 
@@ -138,7 +138,7 @@ class TestFileHashComputation:
 
         computed_hash: str = compute_file_hash(nonexistent_file)
 
-        assert computed_hash == ""
+        assert not computed_hash
 
     def test_hash_computation_invalid_algorithm_returns_empty_string(self, tmp_path: Path) -> None:
         """Hash computation returns empty string for unsupported algorithm."""
@@ -147,7 +147,7 @@ class TestFileHashComputation:
 
         computed_hash: str = compute_file_hash(test_file, algorithm="invalid_algo")
 
-        assert computed_hash == ""
+        assert not computed_hash
 
     def test_get_file_hash_wrapper_function(self, tmp_path: Path) -> None:
         """get_file_hash wrapper correctly computes hash without progress."""
@@ -178,7 +178,7 @@ class TestBinaryFormatDetection:
         """PE32/PE32+ format detected with PE signature."""
         pe_file = tmp_path / "test.exe"
         pe_data = bytearray(512)
-        pe_data[0:2] = b"MZ"
+        pe_data[:2] = b"MZ"
         pe_data[0x3C:0x40] = (0x80).to_bytes(4, "little")
         pe_data[0x80:0x84] = b"PE\x00\x00"
         pe_file.write_bytes(bytes(pe_data))
@@ -326,7 +326,7 @@ class TestBinaryFileOperations:
 
         success: bool = write_binary(test_file, test_data, create_backup=False)
 
-        assert success is True
+        assert success
         assert test_file.exists()
         assert test_file.read_bytes() == test_data
 
@@ -338,7 +338,7 @@ class TestBinaryFileOperations:
         new_data = b"New overwritten data"
         success: bool = write_binary(test_file, new_data, create_backup=False)
 
-        assert success is True
+        assert success
         assert test_file.read_bytes() == new_data
 
     def test_write_binary_creates_backup_of_existing_file(self, tmp_path: Path) -> None:
@@ -351,7 +351,7 @@ class TestBinaryFileOperations:
         success: bool = write_binary(test_file, new_data, create_backup=True)
 
         backup_file = test_file.with_suffix(".bin.bak")
-        assert success is True
+        assert success
         assert backup_file.exists()
         assert backup_file.read_bytes() == original_data
         assert test_file.read_bytes() == new_data
@@ -363,7 +363,7 @@ class TestBinaryFileOperations:
 
         success: bool = write_binary(test_file, large_data, create_backup=False)
 
-        assert success is True
+        assert success
         assert test_file.stat().st_size == 10 * 1024 * 1024
 
 
@@ -385,7 +385,7 @@ class TestFileEntropyCalculation:
 
         test_file = tmp_path / "random.bin"
         random.seed(42)
-        random_data = bytes([random.randint(0, 255) for _ in range(256)])
+        random_data = bytes(random.randint(0, 255) for _ in range(256))
         test_file.write_bytes(random_data)
 
         entropy: float = get_file_entropy(test_file, block_size=256)
@@ -439,7 +439,7 @@ class TestBinaryFileTypeDetection:
 
         is_binary: bool = is_binary_file(test_file)
 
-        assert is_binary is True
+        assert is_binary
 
     def test_text_file_without_null_bytes_not_binary(self, tmp_path: Path) -> None:
         """Text file without null bytes not detected as binary."""
@@ -448,7 +448,7 @@ class TestBinaryFileTypeDetection:
 
         is_binary: bool = is_binary_file(test_file)
 
-        assert is_binary is False
+        assert not is_binary
 
     def test_executable_detected_as_binary(self, tmp_path: Path) -> None:
         """Executable with null bytes detected as binary."""
@@ -458,7 +458,7 @@ class TestBinaryFileTypeDetection:
 
         is_binary: bool = is_binary_file(test_file)
 
-        assert is_binary is True
+        assert is_binary
 
     def test_binary_detection_custom_sample_size(self, tmp_path: Path) -> None:
         """Binary detection with custom sample size."""
@@ -467,7 +467,7 @@ class TestBinaryFileTypeDetection:
 
         is_binary: bool = is_binary_file(test_file, sample_size=10000)
 
-        assert is_binary is True
+        assert is_binary
 
 
 @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
@@ -478,9 +478,7 @@ class TestSuspiciousPESections:
     def legitimate_pe_binaries(self) -> list[Path]:
         """Provide paths to legitimate PE binaries."""
         binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
-        if not binaries_dir.exists():
-            return []
-        return list(binaries_dir.glob("*.exe"))
+        return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     def test_check_suspicious_sections_on_real_pe(self, legitimate_pe_binaries: list[Path]) -> None:
         """Suspicious section detection runs on real PE files."""
@@ -533,7 +531,7 @@ class TestSuspiciousPESections:
         pe = MockPE()
         suspicious: list[str] = check_suspicious_pe_sections(pe)
 
-        assert len(suspicious) == 0
+        assert not suspicious
 
 
 class TestBinaryPathValidation:
@@ -546,7 +544,7 @@ class TestBinaryPathValidation:
 
         is_valid: bool = validate_binary_path(str(test_file))
 
-        assert is_valid is True
+        assert is_valid
 
     def test_validate_nonexistent_binary_returns_false(self) -> None:
         """Validation returns False for nonexistent binary."""
@@ -554,13 +552,13 @@ class TestBinaryPathValidation:
 
         is_valid: bool = validate_binary_path(nonexistent)
 
-        assert is_valid is False
+        assert not is_valid
 
     def test_validate_empty_path_returns_false(self) -> None:
         """Validation returns False for empty path."""
         is_valid: bool = validate_binary_path("")
 
-        assert is_valid is False
+        assert not is_valid
 
     def test_validate_with_custom_logger(self, tmp_path: Path) -> None:
         """Validation uses custom logger when provided."""
@@ -571,7 +569,7 @@ class TestBinaryPathValidation:
 
         is_valid: bool = validate_binary_path(nonexistent, logger_instance=custom_logger)
 
-        assert is_valid is False
+        assert not is_valid
 
 
 class TestRealBinaryFileOperations:
@@ -581,9 +579,7 @@ class TestRealBinaryFileOperations:
     def legitimate_binaries(self) -> list[Path]:
         """Provide paths to legitimate binaries."""
         binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
-        if not binaries_dir.exists():
-            return []
-        return list(binaries_dir.glob("*.exe"))
+        return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     def test_hash_computation_on_real_binaries(self, legitimate_binaries: list[Path]) -> None:
         """Hash computation succeeds on real binary files."""
@@ -629,7 +625,7 @@ class TestRealBinaryFileOperations:
 
         binary_data: bytes = read_binary(binary_path)
 
-        assert len(binary_data) > 0
+        assert binary_data
         assert binary_data.startswith(b"MZ")
 
 
@@ -647,7 +643,7 @@ class TestEdgeCasesAndErrorHandling:
 
         try:
             computed_hash: str = compute_file_hash(test_file)
-            assert computed_hash == ""
+            assert not computed_hash
         finally:
             os.chmod(test_file, 0o644)
 
@@ -673,6 +669,6 @@ class TestEdgeCasesAndErrorHandling:
         try:
             test_file = readonly_dir / "test.bin"
             success: bool = write_binary(test_file, b"data", create_backup=False)
-            assert success is False
+            assert not success
         finally:
             os.chmod(readonly_dir, 0o755)

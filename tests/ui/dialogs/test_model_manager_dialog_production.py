@@ -77,10 +77,9 @@ def test_tab_structure(dialog: ModelManagerDialog) -> None:
     """Dialog contains three main tabs."""
     tabs = None
     for child in dialog.content_widget.findChildren(type(dialog.content_widget).__bases__[0]):
-        if hasattr(child, "count") and callable(child.count):
-            if child.count() == 3:
-                tabs = child
-                break
+        if hasattr(child, "count") and callable(child.count) and child.count() == 3:
+            tabs = child
+            break
 
     assert tabs is not None
     assert tabs.count() == 3

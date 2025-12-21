@@ -144,8 +144,7 @@ def live_process_pid() -> int:
                     pid_str = parts[1].strip('"')
                     return int(pid_str)
 
-        lines = result.stdout.strip().split("\n")
-        if lines:
+        if lines := result.stdout.strip().split("\n"):
             parts = lines[0].split(",")
             if len(parts) >= 2:
                 pid_str = parts[1].strip('"')
@@ -368,7 +367,7 @@ class TestStringExtraction:
                    for keyword in ["license", "serial", "registration", "activation"])
         ]
 
-        assert len(license_related) > 0
+        assert license_related
 
         for s in license_related:
             assert s.offset >= 0
@@ -1027,7 +1026,7 @@ class TestFallbackAnalysis:
                 s for s in result.memory_strings
                 if "license" in s.value.lower() or "serial" in s.value.lower()
             ]
-            assert len(license_strings) > 0
+            assert license_strings
 
 
 class TestProfileDetection:
@@ -1245,7 +1244,7 @@ class TestRealWorldScenarios:
                    for pattern in ["license", "serial", "registration", "activation", "key"])
         ]
 
-        assert len(license_patterns) > 0
+        assert license_patterns
 
     def test_network_connection_to_license_server(
         self,
@@ -1275,9 +1274,7 @@ class TestRealWorldScenarios:
             MemoryProcess(pid=9999, ppid=1000, name="crack_installer.exe"),
         ]
 
-        suspicious_count = sum(
-            1 for p in processes
-            if any(keyword in p.name.lower() for keyword in ["keygen", "patch", "crack"])
-        )
+        suspicious_count = sum(bool(any(keyword in p.name.lower() for keyword in ["keygen", "patch", "crack"]))
+                           for p in processes)
 
         assert suspicious_count == 3

@@ -266,11 +266,17 @@ class MemoryOptimizer:
 
             # Update statistics
             memory_saved_stat = self.optimization_stats["memory_saved"]
-            self.optimization_stats["memory_saved"] = int(memory_saved_stat) + memory_saved if isinstance(memory_saved_stat, (int, float)) else memory_saved
+            self.optimization_stats["memory_saved"] = (
+                int(memory_saved_stat) + memory_saved if isinstance(memory_saved_stat, (int, float)) else memory_saved
+            )
             collections_triggered = self.optimization_stats["collections_triggered"]
-            self.optimization_stats["collections_triggered"] = int(collections_triggered) + 1 if isinstance(collections_triggered, (int, float)) else 1
+            self.optimization_stats["collections_triggered"] = (
+                int(collections_triggered) + 1 if isinstance(collections_triggered, (int, float)) else 1
+            )
             total_optimizations = self.optimization_stats["total_optimizations"]
-            self.optimization_stats["total_optimizations"] = int(total_optimizations) + 1 if isinstance(total_optimizations, (int, float)) else 1
+            self.optimization_stats["total_optimizations"] = (
+                int(total_optimizations) + 1 if isinstance(total_optimizations, (int, float)) else 1
+            )
             self.optimization_stats["last_optimization_time"] = time.time()
 
             # Calculate average memory saved
@@ -278,9 +284,7 @@ class MemoryOptimizer:
             if isinstance(total_opt, (int, float)) and total_opt > 0:
                 memory_saved_total = self.optimization_stats["memory_saved"]
                 if isinstance(memory_saved_total, (int, float)):
-                    self.optimization_stats["average_memory_saved"] = (
-                        float(memory_saved_total) / float(total_opt)
-                    )
+                    self.optimization_stats["average_memory_saved"] = float(memory_saved_total) / float(total_opt)
 
             memory_saved_mb = memory_saved / (1024 * 1024)
 
@@ -474,9 +478,7 @@ class MemoryOptimizer:
 
             if hasattr(sys, "modules"):
                 if modules_with_cache := [
-                    module_name
-                    for module_name, module in sys.modules.items()
-                    if module and hasattr(module, "__pycache__")
+                    module_name for module_name, module in sys.modules.items() if module and hasattr(module, "__pycache__")
                 ]:
                     optimizations.append(f"module_caches_identified({len(modules_with_cache)})")
 

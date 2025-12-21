@@ -887,9 +887,7 @@ class HardwareSpoofingDialog(QDialog):
 
         for name, description in quick_profiles:
             btn = QPushButton(f"{name} - {description}")
-            btn.clicked.connect(
-                lambda checked, n=name: self.apply_quick_profile(n)
-            )
+            btn.clicked.connect(lambda checked, n=name: self.apply_quick_profile(n))
             quick_layout.addWidget(btn)
 
         quick_group.setLayout(quick_layout)

@@ -43,7 +43,7 @@ class BinaryStringBuilder:
 
         """
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
@@ -132,7 +132,7 @@ class BinaryStringBuilder:
         )
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 1024)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 1024)
@@ -140,7 +140,7 @@ class BinaryStringBuilder:
         struct.pack_into("<I", text_section, 36, 0x60000020)
 
         data_section = bytearray(40)
-        data_section[0:8] = b".data\x00\x00\x00"
+        data_section[:8] = b".data\x00\x00\x00"
         struct.pack_into("<I", data_section, 8, 2048)
         struct.pack_into("<I", data_section, 12, 0x2000)
         struct.pack_into("<I", data_section, 16, 2048)
@@ -148,7 +148,7 @@ class BinaryStringBuilder:
         struct.pack_into("<I", data_section, 36, 0xC0000040)
 
         rdata_section = bytearray(40)
-        rdata_section[0:8] = b".rdata\x00\x00"
+        rdata_section[:8] = b".rdata\x00\x00"
         struct.pack_into("<I", rdata_section, 8, 2048)
         struct.pack_into("<I", rdata_section, 12, 0x3000)
         struct.pack_into("<I", rdata_section, 16, 2048)
@@ -213,7 +213,7 @@ class BinaryStringBuilder:
 
         """
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
@@ -271,7 +271,7 @@ class BinaryStringBuilder:
         optional_header = magic + optional_fields
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 512)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 512)
@@ -279,7 +279,7 @@ class BinaryStringBuilder:
         struct.pack_into("<I", text_section, 36, 0x60000020)
 
         data_section = bytearray(40)
-        data_section[0:8] = b".data\x00\x00\x00"
+        data_section[:8] = b".data\x00\x00\x00"
         struct.pack_into("<I", data_section, 8, 2048)
         struct.pack_into("<I", data_section, 12, 0x2000)
         struct.pack_into("<I", data_section, 16, 2048)
@@ -592,7 +592,7 @@ class TestStringExtractionBasics:
         result: dict[str, Any] = analyzer_license.analyze_all_strings(min_length=4)
 
         license_strings: list[dict[str, Any]] = result["license_strings"]
-        assert len(license_strings) > 0
+        assert license_strings
 
         for string_data in license_strings:
             assert "content" in string_data
@@ -615,7 +615,7 @@ class TestLicenseStringDetection:
         result: dict[str, Any] = analyzer_license.analyze_all_strings(min_length=4)
 
         license_strings: list[dict[str, Any]] = result["license_strings"]
-        assert len(license_strings) > 0
+        assert license_strings
 
         license_contents: list[str] = [s["content"].lower() for s in license_strings]
         assert any("license" in content for content in license_contents)
@@ -696,7 +696,7 @@ class TestLicenseStringDetection:
         found_functions: list[str] = [
             func for func in validation_functions if any(func in s for s in all_relevant)
         ]
-        assert len(found_functions) > 0
+        assert found_functions
 
 
 @pytest.mark.skipif(not R2PIPE_AVAILABLE, reason="r2pipe not available")
@@ -760,7 +760,7 @@ class TestCryptographicStringDetection:
         found_functions: list[str] = [
             func for func in crypto_functions if any(func in s for s in all_relevant)
         ]
-        assert len(found_functions) > 0
+        assert found_functions
 
     def test_detects_pem_format_strings(self, analyzer_crypto: R2StringAnalyzer) -> None:
         """Crypto detector identifies PEM format certificate strings."""
@@ -809,7 +809,7 @@ class TestAPIStringDetection:
             api for api in process_apis if any(api in s for s in api_contents)
         ]
 
-        assert len(found_apis) > 0
+        assert found_apis
 
     def test_detects_registry_api_functions(self, analyzer_api: R2StringAnalyzer) -> None:
         """API detector identifies registry access functions."""
@@ -823,7 +823,7 @@ class TestAPIStringDetection:
             api for api in registry_apis if any(api in s for s in api_contents)
         ]
 
-        assert len(found_apis) > 0
+        assert found_apis
 
     def test_detects_native_api_functions(self, analyzer_api: R2StringAnalyzer) -> None:
         """API detector identifies native Windows API functions."""
@@ -856,8 +856,7 @@ class TestWideStringHandling:
         )
 
         if result["total_strings"] > 0:
-            license_strings: list[dict[str, Any]] = result["license_strings"]
-            if license_strings:
+            if license_strings := result["license_strings"]:
                 has_wide: bool = any(
                     s.get("encoding") == "utf-16" or s.get("is_wide") for s in license_strings
                 )
@@ -994,7 +993,7 @@ class TestSectionAnalysis:
             name for name, data in sections.items() if data.get("string_count", 0) > 0
         ]
 
-        assert len(sections_with_strings) > 0
+        assert sections_with_strings
 
     def test_section_statistics_valid(self, analyzer_license: R2StringAnalyzer) -> None:
         """Section statistics contain valid data."""
@@ -1044,7 +1043,7 @@ class TestSuspiciousPatternDetection:
             p for p in suspicious if p.get("pattern_type") == "base64_like"
         ]
 
-        assert len(base64_patterns) > 0 or result["total_strings"] > 0
+        assert base64_patterns or result["total_strings"] > 0
 
 
 @pytest.mark.skipif(not R2PIPE_AVAILABLE, reason="r2pipe not available")
@@ -1066,7 +1065,7 @@ class TestCategoryStatistics:
         result: dict[str, Any] = analyzer_license.analyze_all_strings(min_length=4)
 
         stats: dict[str, Any] = result["categorized_stats"]
-        for category, category_stats in stats.items():
+        for category_stats in stats.values():
             assert "count" in category_stats
             assert "percentage" in category_stats
             assert isinstance(category_stats["count"], int)
@@ -1125,11 +1124,10 @@ class TestRealWorldBinaryAnalysis:
             r"C:\Windows\System32\cmd.exe",
         ]
 
-        for candidate in candidates:
-            if os.path.exists(candidate):
-                return candidate
-
-        return None
+        return next(
+            (candidate for candidate in candidates if os.path.exists(candidate)),
+            None,
+        )
 
     def test_analyzes_real_windows_binary(self, system_binary_path: str | None) -> None:
         """String analyzer works on real Windows system binary."""
@@ -1151,7 +1149,7 @@ class TestRealWorldBinaryAnalysis:
         result: dict[str, Any] = analyzer.analyze_all_strings(min_length=4)
 
         api_strings: list[dict[str, Any]] = result["api_strings"]
-        assert len(api_strings) > 0
+        assert api_strings
 
     def test_real_binary_section_distribution(
         self, system_binary_path: str | None
@@ -1164,9 +1162,8 @@ class TestRealWorldBinaryAnalysis:
         result: dict[str, Any] = analyzer.analyze_all_strings(min_length=4)
 
         sections: dict[str, Any] = result["string_sections"]
-        sections_with_strings: int = sum(
-            1 for data in sections.values() if data.get("string_count", 0) > 0
-        )
+        sections_with_strings: int = sum(bool(data.get("string_count", 0) > 0)
+                                     for data in sections.values())
 
         assert sections_with_strings > 0
 

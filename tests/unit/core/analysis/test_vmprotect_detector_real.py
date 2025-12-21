@@ -175,7 +175,10 @@ class TestVMProtect3Lite:
 
         result = vmprotect_detector.detect(str(sample))
 
-        assert result.protection_level == VMProtectLevel.LITE or result.protection_level == VMProtectLevel.STANDARD
+        assert result.protection_level in [
+            VMProtectLevel.LITE,
+            VMProtectLevel.STANDARD,
+        ]
 
     def test_vmp3_lite_handlers_detected(self, vmprotect_detector: VMProtectDetector, sample_path_factory: Any) -> None:
         """Test VM handler detection in Lite protected sample."""
@@ -189,7 +192,7 @@ class TestVMProtect3Lite:
         assert all(h.confidence >= 0.7 for h in result.handlers), "All handlers should have confidence >= 0.7"
 
         handler_types = {h.handler_type for h in result.handlers}
-        assert len(handler_types) > 0, "Should detect distinct handler types"
+        assert handler_types, "Should detect distinct handler types"
 
 
 class TestVMProtect3Standard:
@@ -485,7 +488,7 @@ class TestRealWorldScenarios:
             except Exception:
                 pass
 
-        if len(results) > 0:
+        if results:
             for filename, result in results:
                 assert result is not None, f"Detection failed for {filename}"
                 assert hasattr(result, "detected")
@@ -519,7 +522,7 @@ class TestRealWorldScenarios:
         for thread in threads:
             thread.join(timeout=30)
 
-        assert len(errors) == 0, f"Concurrent analysis errors: {errors}"
+        assert not errors, f"Concurrent analysis errors: {errors}"
 
 
 def test_fixtures_directory_setup() -> None:
@@ -573,11 +576,9 @@ def test_sample_acquisition_instructions() -> None:
     SAMPLE_MANIFEST in this test file for integrity verification.
 
     CURRENT STATUS:
-    {f"Found {len([f for f in FIXTURES_DIR.glob('*.exe')])} sample(s) in {FIXTURES_DIR}" if FIXTURES_DIR.exists() else f"Fixtures directory does not exist yet: {FIXTURES_DIR}"}
+    {f"Found {len(list(FIXTURES_DIR.glob('*.exe')))} sample(s) in {FIXTURES_DIR}" if FIXTURES_DIR.exists() else f"Fixtures directory does not exist yet: {FIXTURES_DIR}"}
 
     =============================================================================
     """
 
     print(instructions)
-
-    assert True, "Sample acquisition instructions documented"

@@ -83,27 +83,21 @@ class TestSizeUnits:
     )
     def test_size_unit_selection(self, test_size: int, expected_unit: str) -> None:
         """SIZE_UNITS enables correct unit selection for various file sizes."""
-        selected_unit = None
-        for threshold, unit in SIZE_UNITS:
-            if test_size >= threshold:
-                selected_unit = unit
-                break
-
+        selected_unit = next(
+            (unit for threshold, unit in SIZE_UNITS if test_size >= threshold),
+            None,
+        )
         assert selected_unit == expected_unit
 
     def test_size_unit_selection_zero(self) -> None:
         """SIZE_UNITS handles zero size correctly."""
-        selected_unit = None
-        for threshold, unit in SIZE_UNITS:
-            if 0 >= threshold:
-                selected_unit = unit
-                break
+        selected_unit = next(
+            (unit for threshold, unit in SIZE_UNITS if threshold <= 0), None
+        )
         assert selected_unit in ("B", None)
 
     def test_size_units_immutability_requirement(self) -> None:
         """SIZE_UNITS structure supports immutable usage patterns."""
-        original_len = len(SIZE_UNITS)
         original_first = SIZE_UNITS[0]
 
-        assert len(SIZE_UNITS) == original_len
-        assert SIZE_UNITS[0] == original_first
+        assert original_first == original_first

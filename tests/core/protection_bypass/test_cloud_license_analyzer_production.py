@@ -358,7 +358,7 @@ class TestTokenExtraction:
 
         assert len(tokens) > 0
         bearer_tokens = [t for t in tokens if t.token_type in [TOKEN_TYPE_JWT, TOKEN_TYPE_BEARER]]
-        assert len(bearer_tokens) > 0
+        assert bearer_tokens
         assert test_token in [t.value for t in bearer_tokens]
 
     def test_extract_jwt_token_and_decode_payload(
@@ -380,7 +380,7 @@ class TestTokenExtraction:
         tokens = analyzer.extract_license_tokens(request, response)
 
         jwt_tokens = [t for t in tokens if t.token_type == TOKEN_TYPE_JWT]
-        assert len(jwt_tokens) > 0
+        assert jwt_tokens
 
         jwt_token_obj = jwt_tokens[0]
         assert jwt_token_obj.value == jwt_token
@@ -436,7 +436,7 @@ class TestTokenExtraction:
         tokens = analyzer.extract_license_tokens(request, response)
 
         cookie_tokens = [t for t in tokens if t.token_type == TOKEN_TYPE_COOKIE]
-        assert len(cookie_tokens) > 0
+        assert cookie_tokens
 
         cookie_values = [t.value for t in cookie_tokens]
         assert "sess_abc123def456" in cookie_values or "auth_xyz789ghi012" in cookie_values
@@ -1005,7 +1005,7 @@ class TestEdgeCases:
         tokens = analyzer.extract_license_tokens(request, response)
 
         bearer_tokens = [t for t in tokens if t.token_type == TOKEN_TYPE_BEARER]
-        assert len(bearer_tokens) > 0
+        assert bearer_tokens
 
     def test_handle_non_json_response(
         self,

@@ -88,9 +88,8 @@ class TestSecuROMv7Real(RealBinaryTestBase):
                 if not binary_path.exists():
                     self.fail(f"Manifest references missing binary: {binary_path}")
 
-                if entry.get('sha256'):
-                    if not self.verify_binary_hash(binary_path, entry['sha256']):
-                        self.fail(f"Binary hash mismatch - file may be corrupted: {binary_path}")
+                if entry.get('sha256') and not self.verify_binary_hash(binary_path, entry['sha256']):
+                    self.fail(f"Binary hash mismatch - file may be corrupted: {binary_path}")
 
                 result = self.detector.detect(binary_path)
 
@@ -100,12 +99,11 @@ class TestSecuROMv7Real(RealBinaryTestBase):
                 self.assertTrue(result.detected,
                     f"FAILED: Detector did not detect SecuROM in real binary {entry['name']}")
 
-                if entry.get('version'):
+                if entry.get('version') and result.version:
+                    actual_version = f"{result.version.major}.{result.version.minor:02d}.{result.version.build:04d}"
                     expected_version = entry['version']
-                    if result.version:
-                        actual_version = f"{result.version.major}.{result.version.minor:02d}.{result.version.build:04d}"
-                        self.assertEqual(actual_version, expected_version,
-                            f"Version mismatch for {entry['name']}: expected {expected_version}, got {actual_version}")
+                    self.assertEqual(actual_version, expected_version,
+                        f"Version mismatch for {entry['name']}: expected {expected_version}, got {actual_version}")
 
                 if entry.get('expected_drivers'):
                     for driver in entry['expected_drivers']:

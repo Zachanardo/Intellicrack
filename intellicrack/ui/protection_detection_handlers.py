@@ -86,7 +86,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Commercial protection scan complete")
-            logger.info("Commercial protection scan complete: %d found", len(results.get('protections_found', [])))
+            logger.info("Commercial protection scan complete: %d found", len(results.get("protections_found", [])))
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during commercial protection scan: {e!s}"
@@ -152,7 +152,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("TPM detection complete")
-            logger.info("TPM detection complete: Present=%s", results['tpm_present'])
+            logger.info("TPM detection complete: Present=%s", results["tpm_present"])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during TPM detection: {e!s}"
@@ -198,7 +198,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Checksum detection complete")
-            logger.info("Checksum detection complete: Detected=%s", results['checksum_verification_detected'])
+            logger.info("Checksum detection complete: Detected=%s", results["checksum_verification_detected"])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during checksum detection: {e!s}"
@@ -244,7 +244,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Self-healing code detection complete")
-            logger.info("Self-healing code detection complete: Detected=%s", results['self_healing_detected'])
+            logger.info("Self-healing code detection complete: Detected=%s", results["self_healing_detected"])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during self-healing code detection: {e!s}"
@@ -286,7 +286,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("TPM bypass attempt complete")
-            logger.info("TPM bypass complete: Success=%s", results['success'])
+            logger.info("TPM bypass complete: Success=%s", results["success"])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during TPM bypass: {e!s}"
@@ -328,7 +328,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("VM detection bypass attempt complete")
-            logger.info("VM detection bypass complete: Success=%s", results['success'])
+            logger.info("VM detection bypass complete: Success=%s", results["success"])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during VM detection bypass: {e!s}"
@@ -375,7 +375,7 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Hardware dongle emulation complete")
-            logger.info("Dongle emulation complete: Success=%s", results['success'])
+            logger.info("Dongle emulation complete: Success=%s", results["success"])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during hardware dongle emulation: {e!s}"

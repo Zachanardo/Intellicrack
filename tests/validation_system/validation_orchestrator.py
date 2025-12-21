@@ -118,8 +118,10 @@ class ValidationOrchestrator:
         }
 
         # Add success rates for each category
-        successful_statistical = sum(1 for r in test_result.statistical_analysis_results if r.success_rate >= 0.95)
-        successful_cross_environment = sum(1 for r in test_result.cross_environment_results if r.consistency_rate >= 0.90)
+        successful_statistical = sum(bool(r.success_rate >= 0.95)
+                                 for r in test_result.statistical_analysis_results)
+        successful_cross_environment = sum(bool(r.consistency_rate >= 0.90)
+                                       for r in test_result.cross_environment_results)
 
         if summary["total_statistical_tests"] > 0:
             summary["statistical_success_rate"] = successful_statistical / summary["total_statistical_tests"]

@@ -304,7 +304,7 @@ class TestKeyboardShortcuts:
         QTest.keyClick(widget, Qt.Key.Key_B, Qt.KeyboardModifier.ControlModifier)
         qapp.processEvents()
 
-        assert len(triggered) > 0
+        assert triggered
 
 
 class TestAcceleratorKeys:
@@ -344,7 +344,7 @@ class TestAcceleratorKeys:
         QTest.keyClick(widget, Qt.Key.Key_E, Qt.KeyboardModifier.AltModifier)
         qapp.processEvents()
 
-        assert len(clicked) > 0
+        assert clicked
 
 
 class TestArrowKeyNavigation:
@@ -519,7 +519,7 @@ class TestEnterReturnKeys:
         QTest.keyClick(line_edit, Qt.Key.Key_Return)
         qapp.processEvents()
 
-        assert len(clicked) > 0
+        assert clicked
 
 
 class TestEscapeKey:
@@ -688,7 +688,7 @@ class TestSpacebarActivation:
         QTest.keyClick(button, Qt.Key.Key_Space)
         qapp.processEvents()
 
-        assert len(clicked) > 0
+        assert clicked
 
     def test_spacebar_toggles_checkbox(
         self, qapp: QApplication

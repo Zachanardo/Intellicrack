@@ -94,17 +94,12 @@ class TestHexViewerWidget:
         # Check hex display output
         hex_displays = self.widget.findChildren(QTextEdit)
         for display in hex_displays:
-            text_content = display.toPlainText()
-
-            if text_content:
+            if text_content := display.toPlainText():
                 # Should contain hex representation
                 assert any(c in text_content for c in '0123456789ABCDEFabcdef')
 
-                # Check for proper hex formatting (spaces, columns)
-                lines = text_content.split('\n')
-                if lines:
-                    first_line = lines[0].strip()
-                    if first_line:
+                if lines := text_content.split('\n'):
+                    if first_line := lines[0].strip():
                         # Should have hex bytes
                         hex_parts = first_line.split()
                         for part in hex_parts[:8]:  # Check first few hex values
@@ -268,8 +263,7 @@ class TestHexViewerWidget:
                 export_path = export_file.name
 
             try:
-                exported_data = self.widget.export_selection(export_path)
-                if exported_data:
+                if exported_data := self.widget.export_selection(export_path):
                     assert len(exported_data) <= len(binary_data)
 
             finally:
@@ -338,9 +332,7 @@ class TestHexViewerWidget:
 
         qtbot.wait(300)
 
-        # Test context menu if available
-        hex_displays = self.widget.findChildren(QTextEdit)
-        if hex_displays:
+        if hex_displays := self.widget.findChildren(QTextEdit):
             hex_display = hex_displays[0]
 
             # Right-click to open context menu

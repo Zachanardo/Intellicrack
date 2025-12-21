@@ -173,7 +173,10 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
 
             logger.debug(
                 "Chunk %d/%d: Entropy=%.4f, %d windows analyzed",
-                context.chunk_number, context.total_chunks, chunk_entropy, len(windows),
+                context.chunk_number,
+                context.total_chunks,
+                chunk_entropy,
+                len(windows),
             )
 
             return {
@@ -268,7 +271,9 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
 
             logger.info(
                 "Merged %d chunk results: Global entropy=%.4f, %d high-entropy regions",
-                len(results), global_entropy, len(self.high_entropy_regions),
+                len(results),
+                global_entropy,
+                len(self.high_entropy_regions),
             )
 
             return merged
@@ -317,7 +322,9 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
 
             logger.info(
                 "Finalized entropy analysis: Packed=%s, Encrypted=%s, Randomness=%.2f%%",
-                is_packed, is_encrypted, merged_results['randomness_score'],
+                is_packed,
+                is_encrypted,
+                merged_results["randomness_score"],
             )
 
             return merged_results

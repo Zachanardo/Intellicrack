@@ -61,7 +61,7 @@ SYSTEM_BINARIES_AVAILABLE = NOTEPAD_EXE.exists() and CALC_EXE.exists()
 pytestmark = [
     pytest.mark.skipif(
         not ORCHESTRATOR_AVAILABLE,
-        reason=f"Cross-tool orchestrator not available: {IMPORT_ERROR if not ORCHESTRATOR_AVAILABLE else ''}"
+        reason=f"Cross-tool orchestrator not available: {'' if ORCHESTRATOR_AVAILABLE else IMPORT_ERROR}"
     ),
     pytest.mark.skipif(
         not SYSTEM_BINARIES_AVAILABLE,
@@ -103,7 +103,7 @@ def protected_pe_binary(temp_workspace: Path) -> Path:
     )
 
     optional_header = bytearray(248)
-    optional_header[0:2] = struct.pack('<H', 0x20B)
+    optional_header[:2] = struct.pack('<H', 0x20B)
     struct.pack_into('<Q', optional_header, 24, 0x140000000)
     struct.pack_into('<I', optional_header, 16, 0x1000)
     struct.pack_into('<Q', optional_header, 32, 0x1000)
@@ -304,7 +304,7 @@ class TestSharedMemoryIPC:
         writer.join(timeout=5)
         reader.join(timeout=5)
 
-        assert len(results) > 0
+        assert results
 
         ipc.cleanup()
 
@@ -676,7 +676,7 @@ class TestCrossToolOrchestrator:
         correlated = orchestrator._correlate_functions()
 
         assert len(correlated) > 0
-        assert any(isinstance(f, CorrelatedFunction) or isinstance(f, dict) for f in correlated)
+        assert any(isinstance(f, (CorrelatedFunction, dict)) for f in correlated)
 
     def test_correlates_string_data(self, orchestrator: CrossToolOrchestrator) -> None:
         """Orchestrator correlates string data with license-related detection."""
@@ -706,7 +706,7 @@ class TestCrossToolOrchestrator:
         assert len(correlated) > 0
 
         license_strings = [s for s in correlated if s.is_license_related]
-        assert len(license_strings) > 0
+        assert license_strings
 
     def test_identifies_protection_mechanisms(self, orchestrator: CrossToolOrchestrator) -> None:
         """Orchestrator detects anti-debug and protection mechanisms."""
@@ -917,7 +917,7 @@ class TestProtectedBinaryAnalysis:
         result = orch._correlate_results()
 
         license_related = [s for s in result.strings if s.is_license_related]
-        assert len(license_related) > 0
+        assert license_related
 
         orch.cleanup()
 
@@ -940,7 +940,7 @@ class TestProtectedBinaryAnalysis:
         protections = orch._identify_protections()
 
         anti_debug = [p for p in protections if p["type"] == "anti_debugging"]
-        assert len(anti_debug) > 0
+        assert anti_debug
 
         orch.cleanup()
 

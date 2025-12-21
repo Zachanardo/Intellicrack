@@ -33,45 +33,76 @@ import subprocess
 import sys
 import time
 from collections.abc import Callable
-from typing import Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import log_all_methods, logger
 
+if TYPE_CHECKING:
+    from typing import TypeAlias
+
 
 # Frida availability detection and import handling (must come before terminal_manager to avoid circular imports)
+HAS_FRIDA: bool = False
+FRIDA_VERSION: str | None = None
+
 try:
     import frida
 
+    HAS_FRIDA = True
+    FRIDA_VERSION = frida.__version__
+
     # Try to import individual components - they may have moved
+    Device: type[Any] | None = None
+    FileMonitor: type[Any] | None = None
+    Process: type[Any] | None = None
+    Script: type[Any] | None = None
+    Session: type[Any] | None = None
+    DeviceManager: type[Any] | None = None
+    ScriptMessage: type[Any] | None = None
+
     try:
-        from frida import Device, FileMonitor, Process, Script, Session
-    except ImportError:
-        # Create fallback references if not available
-        Device = None
-        FileMonitor = None
-        Process = None
-        Script = None
-        Session = None
+        # Try direct import first
+        if hasattr(frida, "Device"):
+            Device = frida.Device
+        if hasattr(frida, "FileMonitor"):
+            FileMonitor = frida.FileMonitor
+        if hasattr(frida, "Process"):
+            Process = frida.Process
+        if hasattr(frida, "Script"):
+            Script = frida.Script
+        if hasattr(frida, "Session"):
+            Session = frida.Session
+    except AttributeError:
+        pass
 
     # Try to import from core module
     try:
-        from frida.core import DeviceManager, ScriptMessage
-    except ImportError:
-        # Try alternative import locations
-        try:
-            DeviceManager = frida.DeviceManager if hasattr(frida, "DeviceManager") else None
-            ScriptMessage = frida.ScriptMessage if hasattr(frida, "ScriptMessage") else None
-        except Exception:
-            DeviceManager = None
-            ScriptMessage = None
+        if hasattr(frida, "core"):
+            frida_core: Any = frida.core
+            if hasattr(frida_core, "DeviceManager"):
+                DeviceManager = frida_core.DeviceManager
+            if hasattr(frida_core, "ScriptMessage"):
+                ScriptMessage = frida_core.ScriptMessage
+    except AttributeError:
+        pass
 
-    HAS_FRIDA = True
-    FRIDA_VERSION = frida.__version__
+    # Try alternative import locations if still None
+    if DeviceManager is None and hasattr(frida, "DeviceManager"):
+        DeviceManager = frida.DeviceManager
+    if ScriptMessage is None and hasattr(frida, "ScriptMessage"):
+        ScriptMessage = frida.ScriptMessage
 
 except ImportError as e:
     logger.error("Frida not available, using fallback implementations: %s", e, exc_info=True)
     HAS_FRIDA = False
     FRIDA_VERSION = None
+    Device = None
+    FileMonitor = None
+    Process = None
+    Script = None
+    Session = None
+    DeviceManager = None
+    ScriptMessage = None
 
     # Production-ready fallback implementations for Intellicrack's binary analysis needs
 
@@ -263,17 +294,23 @@ except ImportError as e:
 
                         logger.info("Spawning process in terminal: %s", cmd)
                         terminal_mgr = get_terminal_manager()
-                        session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=cwd)
+                        session_result = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True, cwd=cwd)
 
                         # Give terminal process time to start
                         time.sleep(0.5)
 
                         # Get actual PID from terminal session
-                        pid = self._get_pid_from_terminal_session(session_id)
+                        # execute_command can return str or tuple[int, str, str]
+                        if isinstance(session_result, tuple):
+                            session_id_str = session_result[1]
+                        else:
+                            session_id_str = session_result
+
+                        pid = self._get_pid_from_terminal_session(session_id_str)
                         name = program if isinstance(program, str) else program[0]
                         FallbackProcess(pid, name, None)
 
-                        logger.info("Process spawned in terminal (PID: %d, Session: %s)", pid, session_id)
+                        logger.info("Process spawned in terminal (PID: %d, Session: %s)", pid, session_id_str)
                         return pid
                     except ImportError:
                         logger.warning("Terminal manager not available, falling back to subprocess")
@@ -344,7 +381,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to kill process %d: %s", pid, e, exc_info=True)
 
-        def get_process(self, name: str) -> Optional["FallbackProcess"]:
+        def get_process(self, name: str) -> "FallbackProcess | None":
             """Get process by name.
 
             Searches for a running process by name, supporting partial
@@ -421,7 +458,7 @@ except ImportError as e:
 
                 # Get the terminal widget
                 if hasattr(terminal_mgr, "_terminal_widget") and terminal_mgr._terminal_widget:
-                    terminal_widget = terminal_mgr._terminal_widget
+                    terminal_widget = terminal_mgr._terminal_widget  # type: ignore[unreachable]
 
                     # Get active session
                     active_session = terminal_widget.get_active_session()
@@ -922,7 +959,7 @@ except ImportError as e:
             """
             return self._local_device
 
-        def get_remote_device(self, address: str) -> Optional["FallbackDevice"]:
+        def get_remote_device(self, address: str) -> "FallbackDevice | None":
             """Get remote device.
 
             Retrieves a previously registered remote device by address.
@@ -1174,7 +1211,7 @@ except ImportError as e:
         manager = get_device_manager()
         return manager.enumerate_devices()
 
-    # Assign classes
+    # Assign classes - override None values with fallback implementations
     Device = FallbackDevice
     Process = FallbackProcess
     Session = FallbackSession
@@ -1191,13 +1228,13 @@ except ImportError as e:
         the real Frida library is unavailable.
         """
 
-        Device = Device
-        Process = Process
-        Session = Session
-        Script = Script
-        DeviceManager = DeviceManager
-        FileMonitor = FileMonitor
-        ScriptMessage = ScriptMessage
+        Device: type[Any] = FallbackDevice
+        Process: type[Any] = FallbackProcess
+        Session: type[Any] = FallbackSession
+        Script: type[Any] = FallbackScript
+        DeviceManager: type[Any] = FallbackDeviceManager
+        FileMonitor: type[Any] = FallbackFileMonitor
+        ScriptMessage: type[Any] = FallbackScriptMessage
 
         get_local_device = staticmethod(get_local_device)
         get_remote_device = staticmethod(get_remote_device)
@@ -1209,17 +1246,7 @@ except ImportError as e:
         kill = staticmethod(kill)
         enumerate_devices = staticmethod(enumerate_devices)
 
-    frida = FallbackFrida()
-
-# Ensure module-level exports for both cases
-if not HAS_FRIDA:
-    Device = FallbackDevice
-    Process = FallbackProcess
-    Session = FallbackSession
-    Script = FallbackScript
-    DeviceManager = FallbackDeviceManager
-    FileMonitor = FallbackFileMonitor
-    ScriptMessage = FallbackScriptMessage
+    frida = FallbackFrida()  # type: ignore[assignment]
 
 
 # Export all Frida objects and availability flag

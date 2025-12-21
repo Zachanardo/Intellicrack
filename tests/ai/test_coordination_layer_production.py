@@ -405,7 +405,7 @@ class TestEventEmission:
         coordinator.analyze_vulnerabilities(request)
         time.sleep(0.2)
 
-        assert len(event_received) > 0
+        assert event_received
         assert event_received[0][1] == "coordination_layer"
 
 

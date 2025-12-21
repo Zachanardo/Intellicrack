@@ -65,23 +65,21 @@ class TestConfigManagerPlatformDetection:
 class TestConfigManagerToolDiscovery:
     """Test real tool discovery and path caching."""
 
-    def test_get_tool_path_discovers_real_system_tools(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_get_tool_path_discovers_real_system_tools(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """get_tool_path discovers tools actually available on the system."""
         with _isolated_config_env(tmp_path):
             config = IntellicrackConfig()
 
-            python_path = config.get_tool_path("python")
-            if python_path:
+            if python_path := config.get_tool_path("python"):
                 assert Path(python_path).exists()
                 assert Path(python_path).is_file()
 
-    def test_get_tool_path_caches_discovered_tools(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_get_tool_path_caches_discovered_tools(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """get_tool_path caches discovered tool paths in configuration."""
         with _isolated_config_env(tmp_path):
             config = IntellicrackConfig()
 
-            tool_path = config.get_tool_path("python")
-            if tool_path:
+            if tool_path := config.get_tool_path("python"):
                 cached_path = config.get("tools.python.path")
                 assert cached_path == tool_path
 
@@ -185,7 +183,7 @@ class TestConfigManagerPersistence:
 class TestConfigManagerThreadSafety:
     """Test thread-safe configuration access."""
 
-    def test_concurrent_reads_are_thread_safe(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_concurrent_reads_are_thread_safe(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Multiple threads can read configuration concurrently without race conditions."""
         with _isolated_config_env(tmp_path):
             config = IntellicrackConfig()
@@ -208,10 +206,10 @@ class TestConfigManagerThreadSafety:
             for t in threads:
                 t.join()
 
-            assert len(errors) == 0
+            assert not errors
             assert all(r == "value" for r in results)
 
-    def test_concurrent_writes_are_thread_safe(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_concurrent_writes_are_thread_safe(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Multiple threads can write configuration concurrently without corruption."""
         with _isolated_config_env(tmp_path):
             config = IntellicrackConfig()
@@ -231,14 +229,14 @@ class TestConfigManagerThreadSafety:
             for t in threads:
                 t.join()
 
-            assert len(errors) == 0
+            assert not errors
 
             for thread_id in range(5):
                 for i in range(50):
                     value = config.get(f"test.thread_{thread_id}.iteration_{i}")
                     assert value == f"value_{i}"
 
-    def test_singleton_pattern_is_thread_safe(self, tmp_path: Path) -> None:  # noqa: PLR6301
+    def test_singleton_pattern_is_thread_safe(self, tmp_path: Path) -> None:    # noqa: PLR6301
         """Singleton pattern ensures only one config instance across threads."""
         with _isolated_config_env(tmp_path):
             instances: list[IntellicrackConfig] = []
@@ -257,7 +255,7 @@ class TestConfigManagerThreadSafety:
             for t in threads:
                 t.join()
 
-            assert len(errors) == 0
+            assert not errors
             assert all(inst is instances[0] for inst in instances)
 
 

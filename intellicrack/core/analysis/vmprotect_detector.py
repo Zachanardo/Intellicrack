@@ -718,11 +718,7 @@ class VMProtectDetector:
             return VMProtectLevel.ULTRA
         region_count = len(regions)
 
-        return (
-            VMProtectLevel.STANDARD
-            if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5
-            else VMProtectLevel.LITE
-        )
+        return VMProtectLevel.STANDARD if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5 else VMProtectLevel.LITE
 
     def _detect_version(self, data: bytes, section_analysis: dict) -> str:
         """Detect VMProtect version."""
@@ -812,23 +808,19 @@ class VMProtectDetector:
                 "Success rate: 40-60% depending on code complexity",
             ))
         elif detection.protection_level == VMProtectLevel.STANDARD:
-            recommendations.extend(
-                (
-                    "Standard protection - Use pattern-based devirtualization with handler identification",
-                    "Recommended tools: x64dbg with VMProtect plugin, IDA Pro with devirtualization scripts",
-                    "Expected time: 1-3 weeks",
-                    "Success rate: 65-75%",
-                )
-            )
+            recommendations.extend((
+                "Standard protection - Use pattern-based devirtualization with handler identification",
+                "Recommended tools: x64dbg with VMProtect plugin, IDA Pro with devirtualization scripts",
+                "Expected time: 1-3 weeks",
+                "Success rate: 65-75%",
+            ))
         elif detection.protection_level == VMProtectLevel.LITE:
-            recommendations.extend(
-                (
-                    "Lite protection - Basic handler analysis and code flow reconstruction",
-                    "Recommended tools: IDA Pro, Ghidra with custom scripts",
-                    "Expected time: 3-7 days",
-                    "Success rate: 75-85%",
-                )
-            )
+            recommendations.extend((
+                "Lite protection - Basic handler analysis and code flow reconstruction",
+                "Recommended tools: IDA Pro, Ghidra with custom scripts",
+                "Expected time: 3-7 days",
+                "Success rate: 75-85%",
+            ))
         if detection.mode == VMProtectMode.MUTATION:
             recommendations.append("Mutation mode detected - Focus on pattern normalization before analysis")
 

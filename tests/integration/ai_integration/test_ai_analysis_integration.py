@@ -70,7 +70,7 @@ class TestAIAnalysisIntegration:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture

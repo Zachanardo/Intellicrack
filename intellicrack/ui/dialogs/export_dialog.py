@@ -268,10 +268,7 @@ class ExportWorker(QThread):
         if "file_info" in results:
             story.append(Paragraph("File Information", styles["Heading2"]))
 
-            file_data = [
-                [key.replace("_", " ").title(), str(value)]
-                for key, value in results["file_info"].items()
-            ]
+            file_data = [[key.replace("_", " ").title(), str(value)] for key, value in results["file_info"].items()]
             file_table = Table(file_data, colWidths=[2 * inch, 3 * inch])
             file_table.setStyle(
                 TableStyle(

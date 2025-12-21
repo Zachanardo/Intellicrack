@@ -209,8 +209,7 @@ class TestBypassPatchGeneration:
         patches = result.get("automated_patches", [])
 
         for patch in patches:
-            patch_bytes = patch.get("patch_bytes", "")
-            if patch_bytes:
+            if patch_bytes := patch.get("patch_bytes", ""):
                 assert re.match(r'^[0-9a-fA-F]+$', patch_bytes.replace(" ", ""))
 
     def test_patches_include_original_bytes(self, patchable_binary: Path) -> None:
@@ -246,8 +245,7 @@ class TestBypassPatchGeneration:
         with r2_session(str(patchable_binary)) as r2:
             funcs = r2.get_functions()
             if funcs and len(funcs) > 0:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+                if func_addr := funcs[0].get("offset", 0):
                     cfg = generator._analyze_control_flow_graph(r2, func_addr)
                     decision_points = generator._identify_decision_points(r2, func_addr, cfg)
 
@@ -317,8 +315,7 @@ class TestKeygenAlgorithmGeneration:
 
         for keygen in keygens:
             impl = keygen.get("implementation", {})
-            code = impl.get("code", "")
-            if code:
+            if code := impl.get("code", ""):
                 assert "def generate" in code or "def create" in code
                 assert "import" in code
                 assert len(code) > 100
@@ -406,8 +403,7 @@ class TestControlFlowAnalysis:
         with r2_session(str(complex_binary)) as r2:
             funcs = r2.get_functions()
             if funcs and len(funcs) > 0:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+                if func_addr := funcs[0].get("offset", 0):
                     cfg = generator._analyze_control_flow_graph(r2, func_addr)
 
                     assert isinstance(cfg, dict)
@@ -420,8 +416,7 @@ class TestControlFlowAnalysis:
         with r2_session(str(complex_binary)) as r2:
             funcs = r2.get_functions()
             if funcs and len(funcs) > 0:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+                if func_addr := funcs[0].get("offset", 0):
                     cfg = generator._analyze_control_flow_graph(r2, func_addr)
                     decision_points = generator._identify_decision_points(r2, func_addr, cfg)
 
@@ -434,8 +429,7 @@ class TestControlFlowAnalysis:
         with r2_session(str(complex_binary)) as r2:
             funcs = r2.get_functions()
             if funcs and len(funcs) > 0:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+                if func_addr := funcs[0].get("offset", 0):
                     cfg = generator._analyze_control_flow_graph(r2, func_addr)
                     decision_points = generator._identify_decision_points(r2, func_addr, cfg)
 
@@ -512,10 +506,8 @@ class TestJumpTableManipulation:
         generator = R2BypassGenerator(str(binary_with_jump_table))
 
         with r2_session(str(binary_with_jump_table)) as r2:
-            funcs = r2.get_functions()
-            if funcs:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+            if funcs := r2.get_functions():
+                if func_addr := funcs[0].get("offset", 0):
                     cfg = generator._analyze_control_flow_graph(r2, func_addr)
                     assert isinstance(cfg, dict)
 
@@ -576,8 +568,7 @@ class TestConditionalBranchFlipping:
         generator = R2BypassGenerator(str(binary_with_conditionals))
 
         with r2_session(str(binary_with_conditionals)) as r2:
-            funcs = r2.get_functions()
-            if funcs:
+            if funcs := r2.get_functions():
                 analysis = generator._analyze_license_mechanisms(r2)
                 assert isinstance(analysis, dict)
 
@@ -598,8 +589,7 @@ class TestConditionalBranchFlipping:
         patches = result.get("automated_patches", [])
 
         for patch in patches:
-            patch_bytes = patch.get("patch_bytes", "")
-            if patch_bytes:
+            if patch_bytes := patch.get("patch_bytes", ""):
                 assert len(patch_bytes) > 0
 
     def _create_conditional_branches_pe(self) -> bytes:
@@ -658,10 +648,8 @@ class TestNopSledInsertion:
         generator = R2BypassGenerator(str(binary_for_nopping))
 
         with r2_session(str(binary_for_nopping)) as r2:
-            funcs = r2.get_functions()
-            if funcs:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+            if funcs := r2.get_functions():
+                if func_addr := funcs[0].get("offset", 0):
                     original = generator._get_original_bytes(r2, func_addr)
                     assert isinstance(original, str)
 
@@ -675,7 +663,6 @@ class TestNopSledInsertion:
         for patch in patches:
             patch_bytes = patch.get("patch_bytes", "")
             if "90" in patch_bytes:
-                assert True
                 return
 
     def _create_noppable_pe(self) -> bytes:
@@ -720,10 +707,8 @@ class TestBinaryPatchingValidation:
         generator = R2BypassGenerator(str(patchable_binary))
 
         with r2_session(str(patchable_binary)) as r2:
-            funcs = r2.get_functions()
-            if funcs:
-                func_addr = funcs[0].get("offset", 0)
-                if func_addr:
+            if funcs := r2.get_functions():
+                if func_addr := funcs[0].get("offset", 0):
                     original = generator._get_original_bytes_at(r2, func_addr, 5)
                     assert len(original.replace(" ", "")) >= 0
 
@@ -736,10 +721,9 @@ class TestBinaryPatchingValidation:
 
         for patch in patches:
             addr_str = patch.get("address", "")
-            if addr_str and isinstance(addr_str, str):
-                if addr_str.startswith("0x"):
-                    addr = int(addr_str, 16)
-                    assert addr > 0
+            if addr_str and isinstance(addr_str, str) and addr_str.startswith("0x"):
+                addr = int(addr_str, 16)
+                assert addr > 0
 
     def test_patches_preserve_stack_frame(self, patchable_binary: Path) -> None:
         """Generated patches preserve function stack frames."""
@@ -749,8 +733,7 @@ class TestBinaryPatchingValidation:
         patches = result.get("automated_patches", [])
 
         for patch in patches:
-            patch_bytes = patch.get("patch_bytes", "")
-            if patch_bytes:
+            if patch_bytes := patch.get("patch_bytes", ""):
                 assert isinstance(patch_bytes, str)
 
     def _create_minimal_pe(self) -> bytes:
@@ -787,7 +770,6 @@ class TestAntiTamperBypass:
 
             for func in validation_funcs:
                 if "checksum" in str(func).lower():
-                    assert True
                     return
 
     def test_generates_bypass_for_integrity_checks(self, tamper_protected_binary: Path) -> None:
@@ -856,8 +838,7 @@ class TestMultiArchitectureSupport:
         generator = R2BypassGenerator(str(binary))
 
         with r2_session(str(binary)) as r2:
-            funcs = r2.get_functions()
-            if funcs:
+            if funcs := r2.get_functions():
                 func_addr = funcs[0].get("offset", 0)
                 if func_addr > 0:
                     instructions = generator._generate_register_set_instructions("eax", 1)
@@ -871,8 +852,7 @@ class TestMultiArchitectureSupport:
         generator = R2BypassGenerator(str(binary))
 
         with r2_session(str(binary)) as r2:
-            funcs = r2.get_functions()
-            if funcs:
+            if funcs := r2.get_functions():
                 func_addr = funcs[0].get("offset", 0)
                 if func_addr > 0:
                     instructions = generator._generate_register_set_instructions("rax", 1)
@@ -1086,8 +1066,7 @@ class TestRegistryModifications:
         reg_mods = result.get("registry_modifications", [])
 
         for mod in reg_mods:
-            path = mod.get("registry_path", "")
-            if path:
+            if path := mod.get("registry_path", ""):
                 assert "\\" in path or "/" in path
 
     def test_registry_modifications_include_value_types(self, binary_with_registry_checks: Path) -> None:
@@ -1264,9 +1243,8 @@ class TestSuccessProbabilityCalculation:
         strategies = result.get("bypass_strategies", [])
 
         for strategy in strategies:
-            if strategy.get("difficulty") == "hard":
-                if "success_rate" in strategy:
-                    assert strategy["success_rate"] < 0.9
+            if strategy.get("difficulty") == "hard" and "success_rate" in strategy:
+                assert strategy["success_rate"] < 0.9
 
     def _create_minimal_pe(self) -> bytes:
         """Create minimal PE."""
@@ -1306,9 +1284,7 @@ class TestImplementationGuideGeneration:
         generator = R2BypassGenerator(str(guide_test_binary))
 
         result = generator.generate_comprehensive_bypass()
-        guide = result.get("implementation_guide", {})
-
-        if guide:
+        if guide := result.get("implementation_guide", {}):
             assert isinstance(guide, dict)
 
     def test_guide_includes_required_tools(self, guide_test_binary: Path) -> None:
@@ -1594,7 +1570,7 @@ class TestBypassGeneratorEdgeCases:
     def _create_pe_with_obfuscated_strings(self) -> bytes:
         """Create PE with XOR-obfuscated strings."""
         pe = bytearray(self._create_minimal_pe())
-        obfuscated = bytes([b ^ 0x42 for b in b"LICENSE_KEY_VALIDATION"])
+        obfuscated = bytes(b ^ 0x42 for b in b"LICENSE_KEY_VALIDATION")
         pe.extend(obfuscated)
         return bytes(pe)
 

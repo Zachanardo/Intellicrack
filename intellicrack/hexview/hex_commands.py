@@ -913,4 +913,4 @@ class CommandManager:
 
         """
         self.auto_merge = enabled
-        logger.debug("Auto-merge %s", 'enabled' if enabled else 'disabled')
+        logger.debug("Auto-merge %s", "enabled" if enabled else "disabled")

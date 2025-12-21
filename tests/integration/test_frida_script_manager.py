@@ -135,9 +135,7 @@ class TestFridaScriptManagerInitialization:
 
     def test_script_config_loading(self, script_manager):
         """Test script configuration loading."""
-        config = script_manager.scripts.get("test_script.js")
-
-        if config:
+        if config := script_manager.scripts.get("test_script.js"):
             assert isinstance(config, FridaScriptConfig)
             assert config.script_path.exists()
             assert config.category in ScriptCategory

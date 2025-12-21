@@ -49,7 +49,7 @@ class RealBinaryGenerator:
     def create_minimal_pe() -> bytes:
         """Create minimal valid PE executable."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_signature = b"PE\x00\x00"
@@ -351,9 +351,9 @@ class TestWindowsSystemBinaryScanning:
 
         matches: list[YaraMatch] = scanner.scan_file(kernel32_path)
 
-        assert len(matches) > 0, "Should detect patterns in kernel32.dll"
+        assert matches, "Should detect patterns in kernel32.dll"
         assert any(m.category == RuleCategory.COMPILER for m in matches), \
-            "Should detect compiler signatures"
+                "Should detect compiler signatures"
 
     def test_scan_ntdll_dll(self, scanner: YaraScanner, windows_system32: Path) -> None:
         """Scanner detects patterns in ntdll.dll."""
@@ -363,7 +363,7 @@ class TestWindowsSystemBinaryScanning:
 
         matches: list[YaraMatch] = scanner.scan_file(ntdll_path)
 
-        assert len(matches) > 0, "Should detect patterns in ntdll.dll"
+        assert matches, "Should detect patterns in ntdll.dll"
 
     def test_scan_user32_dll(self, scanner: YaraScanner, windows_system32: Path) -> None:
         """Scanner processes user32.dll without errors."""
@@ -386,7 +386,7 @@ class TestWindowsSystemBinaryScanning:
                 matches = scanner.scan_file(dll_path)
                 all_matches[dll_name] = matches
 
-        assert len(all_matches) > 0, "Should scan at least one system DLL"
+        assert all_matches, "Should scan at least one system DLL"
         for dll_name, matches in all_matches.items():
             assert isinstance(matches, list), f"{dll_name} should return valid matches"
 
@@ -1011,8 +1011,10 @@ class TestCategoryFiltering:
 
         assert isinstance(matches, list), "Should return matches"
         for match in matches:
-            assert match.category == RuleCategory.PACKER or match.category == RuleCategory.CUSTOM, \
-                "All matches should be from requested category or custom"
+            assert match.category in [
+                RuleCategory.PACKER,
+                RuleCategory.CUSTOM,
+            ], "All matches should be from requested category or custom"
 
     def test_scan_with_multiple_categories(self, scanner: YaraScanner, temp_binary_dir: Path) -> None:
         """Scanner scans with multiple category filters."""

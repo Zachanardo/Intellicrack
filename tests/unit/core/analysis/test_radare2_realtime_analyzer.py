@@ -382,7 +382,7 @@ class TestAnalysisProcessingEngine:
         assert hasattr(analyzer, '_calculate_file_hash')
         hash_result = analyzer._calculate_file_hash(sample_binary)
         assert hash_result is not None
-        assert len(str(hash_result)) > 0  # Should produce a valid hash
+        assert str(hash_result) != ""
 
     def test_enhanced_string_analysis_capability(self, analyzer):
         """Test sophisticated string analysis capabilities."""
@@ -510,10 +510,6 @@ class TestPerformanceAndResourceManagement:
 
         # After cleanup, analyzer should be in clean state
         assert analyzer.running is False
-        # Worker threads should be stopped
-        if hasattr(analyzer, 'worker_threads'):
-            # Threads should be cleaned up
-            pass
 
     def test_status_reporting_capability(self, analyzer, sample_binary):
         """Test analyzer provides comprehensive status reporting."""
@@ -589,7 +585,7 @@ class TestAntiPlaceholderValidation:
         # This MUST fail if analysis is not implemented
         hash_result = analyzer._calculate_file_hash(str(binary_path))
         assert hash_result is not None
-        assert len(str(hash_result)) > 0
+        assert str(hash_result) != ""
 
         # This MUST fail if caching is not implemented
         assert hasattr(analyzer, 'file_hashes')
@@ -682,7 +678,7 @@ class TestProductionReadinessValidation:
         # Should be able to calculate file hash for real files
         file_hash = analyzer._calculate_file_hash(str(test_binary))
         assert file_hash is not None
-        assert len(str(file_hash)) > 0
+        assert str(file_hash) != ""
 
     def test_enterprise_scale_performance_requirements(self, temp_workspace):
         """Test analyzer meets enterprise-scale performance requirements."""

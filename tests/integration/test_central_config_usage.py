@@ -32,13 +32,12 @@ class ConfigAccessDetector(ast.NodeVisitor):
             if node.func.attr in ['open', 'read', 'write']:
                 # Check if any argument contains 'config' or 'settings'
                 for arg in node.args:
-                    if isinstance(arg, ast.Str):
-                        if any(pattern in arg.s.lower() for pattern in ['config', 'settings', '.json', '.ini']):
-                            self.direct_file_accesses.append({
-                                'line': node.lineno,
-                                'type': 'direct_file_access',
-                                'method': node.func.attr
-                            })
+                    if isinstance(arg, ast.Str) and any(pattern in arg.s.lower() for pattern in ['config', 'settings', '.json', '.ini']):
+                        self.direct_file_accesses.append({
+                            'line': node.lineno,
+                            'type': 'direct_file_access',
+                            'method': node.func.attr
+                        })
 
             # Check for QSettings usage (legacy)
             if hasattr(node.func.value, 'id') and node.func.value.id == 'QSettings':
@@ -49,14 +48,12 @@ class ConfigAccessDetector(ast.NodeVisitor):
                 })
 
             # Check for central config usage (good)
-            if node.func.attr in ['get', 'set', 'get_config']:
-                if hasattr(node.func.value, 'id'):
-                    if node.func.value.id in ['config', 'self.config', 'get_config']:
-                        self.central_accesses.append({
-                            'line': node.lineno,
-                            'type': 'central_config',
-                            'method': node.func.attr
-                        })
+            if node.func.attr in ['get', 'set', 'get_config'] and hasattr(node.func.value, 'id') and node.func.value.id in ['config', 'self.config', 'get_config']:
+                self.central_accesses.append({
+                    'line': node.lineno,
+                    'type': 'central_config',
+                    'method': node.func.attr
+                })
 
         self.generic_visit(node)
 
@@ -73,13 +70,12 @@ class ConfigAccessDetector(ast.NodeVisitor):
 
     def visit_ImportFrom(self, node):
         """Check for specific legacy imports."""
-        if node.module:
-            if 'PyQt' in node.module and any('QSettings' in n.name for n in node.names):
-                self.legacy_patterns.append({
-                    'line': node.lineno,
-                    'type': 'legacy_import',
-                    'module': f"{node.module}.QSettings"
-                })
+        if node.module and ('PyQt' in node.module and any('QSettings' in n.name for n in node.names)):
+            self.legacy_patterns.append({
+                'line': node.lineno,
+                'type': 'legacy_import',
+                'module': f"{node.module}.QSettings"
+            })
         self.generic_visit(node)
 
 
@@ -168,7 +164,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
             print(f"\nOK No direct config file access found in {checked_files} files")
 
         # This should pass as we've migrated to central config
-        assert len(violations) == 0, f"Found {len(violations)} direct config file accesses"
+        assert not violations, f"Found {len(violations)} direct config file accesses"
 
     def test_20_1_2_no_legacy_qsettings_usage(self):
         """Verify no legacy QSettings usage remains."""
@@ -211,7 +207,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
             print("\nOK No QSettings usage found")
 
         # We removed QSettings imports, so this should pass
-        assert len(violations) == 0, f"Found {len(violations)} QSettings references"
+        assert not violations, f"Found {len(violations)} QSettings references"
 
     def test_20_1_2_central_config_usage_patterns(self):
         """Verify proper usage of central configuration system."""
@@ -373,7 +369,7 @@ class TestCentralConfigUsage(IntellicrackTestBase):
         else:
             print("\nOK No hardcoded configuration paths found")
 
-        assert len(violations) == 0, f"Found {len(violations)} hardcoded config paths"
+        assert not violations, f"Found {len(violations)} hardcoded config paths"
 
     def test_20_1_2_config_access_performance(self):
         """Verify configuration access performance meets requirements."""

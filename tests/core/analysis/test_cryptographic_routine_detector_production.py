@@ -32,7 +32,7 @@ class RealCryptoBinaryBuilder:
         base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
 
         code_section = bytearray(2048)
-        code_section[0:256] = detector.AES_SBOX
+        code_section[:256] = detector.AES_SBOX
         code_section[512:768] = detector.AES_INV_SBOX
         code_section[1024:1034] = detector.AES_RCON
 
@@ -93,7 +93,7 @@ class RealCryptoBinaryBuilder:
 
         code_section = bytearray(2048)
         rc4_init = bytes(range(256))
-        code_section[0:256] = rc4_init
+        code_section[:256] = rc4_init
 
         swap_code = b'\x86\x87\x91\x92\x86\x87'
         code_section[512:518] = swap_code
@@ -108,7 +108,7 @@ class RealCryptoBinaryBuilder:
         base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
 
         code_section = bytearray(2048)
-        code_section[0:4] = detector.RSA_MONTGOMERY_PATTERNS[0]
+        code_section[:4] = detector.RSA_MONTGOMERY_PATTERNS[0]
         code_section[100:104] = detector.RSA_MONTGOMERY_PATTERNS[1]
 
         mod_ops = b'\xf7\xf6\x0f\xaf\x69\x6b'
@@ -126,7 +126,7 @@ class RealCryptoBinaryBuilder:
         code_section = bytearray(4096)
 
         secp256k1_prime = detector.ECC_FIELD_PRIMES["secp256k1"]
-        code_section[0:len(secp256k1_prime)] = secp256k1_prime
+        code_section[:len(secp256k1_prime)] = secp256k1_prime
 
         secp256r1_prime = detector.ECC_FIELD_PRIMES["secp256r1"]
         code_section[512:512+len(secp256r1_prime)] = secp256r1_prime
@@ -141,7 +141,7 @@ class RealCryptoBinaryBuilder:
         base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
 
         code_section = bytearray(2048)
-        code_section[0:len(detector.CHACHA20_CONSTANT)] = detector.CHACHA20_CONSTANT
+        code_section[:len(detector.CHACHA20_CONSTANT)] = detector.CHACHA20_CONSTANT
 
         quarter_round_ops = b'\x01\x03\x01\x03\x31\x33\x31\x33\xc1\xd3\xc1\xd3'
         code_section[512:524] = quarter_round_ops
@@ -156,7 +156,7 @@ class RealCryptoBinaryBuilder:
         base_pe = RealCryptoBinaryBuilder._create_minimal_pe_header()
 
         code_section = bytearray(2048)
-        code_section[0:len(detector.BLOWFISH_PI_SUBKEYS)] = detector.BLOWFISH_PI_SUBKEYS
+        code_section[:len(detector.BLOWFISH_PI_SUBKEYS)] = detector.BLOWFISH_PI_SUBKEYS
 
         return bytes(base_pe + code_section)
 
@@ -190,7 +190,7 @@ class RealCryptoBinaryBuilder:
         aesdec = b"\x66\x0f\x38\xde\xc1"
         aeskeygenassist = b"\x66\x0f\x3a\xdf\xc0\x01"
 
-        code_section[0:5] = aesenc
+        code_section[:5] = aesenc
         code_section[100:105] = aesenclast
         code_section[200:205] = aesdec
         code_section[300:306] = aeskeygenassist
@@ -209,7 +209,7 @@ class RealCryptoBinaryBuilder:
         sha256rnds2 = b"\x0f\x38\xcb\xc1"
         sha256msg1 = b"\x0f\x38\xcc\xc1"
 
-        code_section[0:4] = sha1nexte
+        code_section[:4] = sha1nexte
         code_section[100:104] = sha1msg1
         code_section[200:204] = sha256rnds2
         code_section[300:304] = sha256msg1
@@ -229,7 +229,7 @@ class RealCryptoBinaryBuilder:
         for i in range(0, 256, 20):
             obfuscated_sbox[i] = (obfuscated_sbox[i] ^ 0x01) & 0xFF
 
-        code_section[0:256] = obfuscated_sbox
+        code_section[:256] = obfuscated_sbox
 
         return bytes(base_pe + code_section)
 
@@ -242,7 +242,7 @@ class RealCryptoBinaryBuilder:
 
         code_section = bytearray(8192)
 
-        code_section[0:256] = detector.AES_SBOX
+        code_section[:256] = detector.AES_SBOX
 
         offset = 512
         for k in detector.SHA256_K:
@@ -269,7 +269,7 @@ class RealCryptoBinaryBuilder:
             feistel_code.extend(b'\x31\xc2\x31\xc3')
             feistel_code.extend(b'\x31\xc4\x31\xc5')
 
-        code_section[0:len(feistel_code)] = feistel_code
+        code_section[:len(feistel_code)] = feistel_code
 
         return bytes(base_pe + code_section)
 
@@ -282,8 +282,8 @@ class RealCryptoBinaryBuilder:
 
         import random
         random.seed(42)
-        custom_table = bytes([random.randint(0, 255) for _ in range(256)])
-        code_section[0:256] = custom_table
+        custom_table = bytes(random.randint(0, 255) for _ in range(256))
+        code_section[:256] = custom_table
 
         table_offset = len(base_pe)
         offset_bytes = struct.pack("<I", table_offset)
@@ -296,7 +296,7 @@ class RealCryptoBinaryBuilder:
     def _create_minimal_pe_header() -> bytes:
         """Create minimal valid PE header."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b'MZ'
+        dos_header[:2] = b'MZ'
         dos_header[60:64] = struct.pack('<I', 64)
 
         pe_signature = b'PE\x00\x00'
@@ -311,7 +311,7 @@ class RealCryptoBinaryBuilder:
         struct.pack_into('<H', optional_header, 0, 0x020B)
 
         section_header = bytearray(40)
-        section_header[0:8] = b'.text\x00\x00\x00'
+        section_header[:8] = b'.text\x00\x00\x00'
         struct.pack_into('<I', section_header, 8, 8192)
         struct.pack_into('<I', section_header, 12, 0x1000)
         struct.pack_into('<I', section_header, 16, 8192)
@@ -407,7 +407,7 @@ def test_detect_aes_forward_sbox_in_real_binary(detector: CryptographicRoutineDe
 
     aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and "Forward" in d.variant]
 
-    assert len(aes_detections) >= 1
+    assert aes_detections
     assert aes_detections[0].confidence >= 0.99
     assert aes_detections[0].size == 256
     assert "S-box" in aes_detections[0].variant
@@ -419,7 +419,7 @@ def test_detect_aes_inverse_sbox_in_real_binary(detector: CryptographicRoutineDe
 
     aes_inv_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and "Inverse" in d.variant]
 
-    assert len(aes_inv_detections) >= 1
+    assert aes_inv_detections
     assert aes_inv_detections[0].confidence >= 0.99
     assert aes_inv_detections[0].size == 256
 
@@ -437,7 +437,7 @@ def test_detect_sha256_round_constants_big_endian(detector: CryptographicRoutine
 
     sha256_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256]
 
-    assert len(sha256_detections) >= 1
+    assert sha256_detections
     assert sha256_detections[0].confidence >= 0.9
     assert "SHA-256" in sha256_detections[0].variant
     assert sha256_detections[0].details.get("endianness") == "big"
@@ -449,7 +449,7 @@ def test_detect_sha1_initialization_vectors(detector: CryptographicRoutineDetect
 
     sha1_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA1]
 
-    assert len(sha1_detections) >= 1
+    assert sha1_detections
     assert sha1_detections[0].confidence >= 0.9
     assert "SHA-1" in sha1_detections[0].variant
     assert sha1_detections[0].details.get("constants_found") >= 3
@@ -461,7 +461,7 @@ def test_detect_md5_sine_table_constants(detector: CryptographicRoutineDetector,
 
     md5_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.MD5]
 
-    assert len(md5_detections) >= 1
+    assert md5_detections
     assert md5_detections[0].confidence >= 0.85
     assert "MD5" in md5_detections[0].variant
     assert md5_detections[0].details.get("constants_found") >= 2
@@ -473,7 +473,7 @@ def test_detect_rc4_state_array_initialization(detector: CryptographicRoutineDet
 
     rc4_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RC4]
 
-    assert len(rc4_detections) >= 1
+    assert rc4_detections
     assert rc4_detections[0].confidence >= 0.9
     assert "RC4" in rc4_detections[0].variant
     assert rc4_detections[0].size == 256
@@ -485,7 +485,7 @@ def test_detect_rc4_ksa_pattern_nearby(detector: CryptographicRoutineDetector, r
 
     rc4_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RC4]
 
-    assert len(rc4_detections) >= 1
+    assert rc4_detections
     assert rc4_detections[0].details.get("ksa_detected") is True
 
 
@@ -495,7 +495,7 @@ def test_detect_rsa_public_exponent_65537(detector: CryptographicRoutineDetector
 
     rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
 
-    assert len(rsa_detections) >= 1
+    assert rsa_detections
     assert rsa_detections[0].confidence >= 0.85
     assert "RSA" in rsa_detections[0].variant
 
@@ -506,7 +506,7 @@ def test_detect_rsa_with_modular_operations_nearby(detector: CryptographicRoutin
 
     rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA and "Exponent" in d.variant]
 
-    assert len(rsa_detections) >= 1
+    assert rsa_detections
     assert rsa_detections[0].confidence >= 0.85
 
 
@@ -516,7 +516,7 @@ def test_detect_ecc_secp256k1_field_prime(detector: CryptographicRoutineDetector
 
     ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC and "secp256k1" in d.variant]
 
-    assert len(ecc_detections) >= 1
+    assert ecc_detections
     assert ecc_detections[0].confidence >= 0.95
     assert ecc_detections[0].details.get("curve") == "secp256k1"
 
@@ -527,7 +527,7 @@ def test_detect_ecc_secp256r1_field_prime(detector: CryptographicRoutineDetector
 
     ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC and "secp256r1" in d.variant]
 
-    assert len(ecc_detections) >= 1
+    assert ecc_detections
     assert ecc_detections[0].confidence >= 0.95
     assert ecc_detections[0].details.get("curve") == "secp256r1"
 
@@ -538,7 +538,7 @@ def test_detect_chacha20_constant_string(detector: CryptographicRoutineDetector,
 
     chacha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CHACHA20]
 
-    assert len(chacha_detections) >= 1
+    assert chacha_detections
     assert chacha_detections[0].confidence >= 0.95
     assert "ChaCha20" in chacha_detections[0].variant
 
@@ -549,7 +549,7 @@ def test_detect_chacha20_quarter_round_function(detector: CryptographicRoutineDe
 
     chacha_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CHACHA20]
 
-    assert len(chacha_detections) >= 1
+    assert chacha_detections
     assert chacha_detections[0].details.get("quarter_round_detected") is True
     assert chacha_detections[0].confidence >= 0.95
 
@@ -560,7 +560,7 @@ def test_detect_blowfish_pi_subkeys(detector: CryptographicRoutineDetector, blow
 
     blowfish_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.BLOWFISH]
 
-    assert len(blowfish_detections) >= 1
+    assert blowfish_detections
     assert blowfish_detections[0].confidence >= 0.85
     assert "Blowfish" in blowfish_detections[0].variant
 
@@ -571,7 +571,7 @@ def test_detect_des_sboxes_all_eight(detector: CryptographicRoutineDetector, des
 
     des_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES]]
 
-    assert len(des_detections) >= 1
+    assert des_detections
     assert des_detections[0].details.get("sbox_count") >= 4
     assert des_detections[0].confidence >= 0.5
 
@@ -585,7 +585,7 @@ def test_detect_aes_ni_aesenc_instruction() -> None:
 
     aesni_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES and d.details.get("hardware") is True]
 
-    assert len(aesni_detections) >= 1
+    assert aesni_detections
     assert aesni_detections[0].confidence == 1.0
     assert "AES-NI" in aesni_detections[0].variant
 
@@ -624,7 +624,7 @@ def test_detect_obfuscated_aes_sbox_fuzzy_matching() -> None:
 
     aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-    assert len(aes_detections) >= 1
+    assert aes_detections
     assert aes_detections[0].confidence >= 0.85
     assert aes_detections[0].details.get("obfuscated") is True
 
@@ -654,7 +654,7 @@ def test_detect_feistel_network_structure() -> None:
 
     feistel_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM and "Feistel" in d.variant]
 
-    assert len(feistel_detections) >= 1
+    assert feistel_detections
     assert feistel_detections[0].details.get("rounds") >= 4
     assert feistel_detections[0].details.get("xor_operations") >= 8
 
@@ -668,7 +668,7 @@ def test_detect_custom_high_entropy_crypto_table() -> None:
 
     custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
 
-    assert len(custom_detections) >= 1
+    assert custom_detections
     assert custom_detections[0].details.get("entropy") >= 7.5
     assert custom_detections[0].details.get("structure") == "lookup_table"
 
@@ -704,7 +704,7 @@ def test_detection_includes_code_references(detector: CryptographicRoutineDetect
 
     aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-    assert len(aes_detections) >= 1
+    assert aes_detections
 
 
 def test_detection_includes_data_references(detector: CryptographicRoutineDetector) -> None:
@@ -715,7 +715,7 @@ def test_detection_includes_data_references(detector: CryptographicRoutineDetect
 
     custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
 
-    assert len(custom_detections) >= 1
+    assert custom_detections
 
 
 def test_analyze_crypto_usage_provides_comprehensive_analysis(detector: CryptographicRoutineDetector) -> None:
@@ -906,7 +906,7 @@ def test_algorithm_fingerprinting_enhances_aes_detection(detector: Cryptographic
 
     aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
 
-    assert len(aes_detections) >= 1
+    assert aes_detections
     assert any(d.mode == "Hardware (AES-NI)" for d in aes_detections)
 
 
@@ -918,7 +918,7 @@ def test_algorithm_fingerprinting_enhances_hash_detection(detector: Cryptographi
 
     hash_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.SHA1, CryptoAlgorithm.SHA256]]
 
-    assert len(hash_detections) >= 1
+    assert hash_detections
     assert any(d.mode == "Hardware-accelerated" for d in hash_detections)
 
 
@@ -942,7 +942,7 @@ def test_fuzzy_matching_handles_partial_pattern_matches(detector: CryptographicR
 
 def test_entropy_calculation_identifies_high_entropy_data(detector: CryptographicRoutineDetector) -> None:
     """Entropy calculation correctly identifies high-entropy crypto data."""
-    high_entropy_data = bytes([i % 256 for i in range(256)])
+    high_entropy_data = bytes(i % 256 for i in range(256))
     low_entropy_data = b"\x00" * 256
 
     high_entropy = detector._calculate_entropy(high_entropy_data)

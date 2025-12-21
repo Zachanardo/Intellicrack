@@ -269,7 +269,7 @@ class TestLicenseHandlers:
         encrypted_medium: bytes = _handle_encrypt(medium_data, key)
         encrypted_large: bytes = _handle_encrypt(large_data, key)
 
-        assert len(encrypted_small) > 0
+        assert encrypted_small
         assert len(encrypted_medium) > len(encrypted_small)
         assert len(encrypted_large) > len(encrypted_medium)
 
@@ -690,7 +690,7 @@ class TestDataManagement:
         try:
             result: bool = _archive_data(data, archive_path)
 
-            assert result is True
+            assert result
             with open(archive_path) as f:
                 loaded_data: dict[str, Any] = json.load(f)
             assert loaded_data == data
@@ -704,7 +704,7 @@ class TestDataManagement:
 
         result: bool = _archive_data(data, invalid_path)
 
-        assert result is False
+        assert not result
 
     def test_browse_for_output_returns_current_directory(self) -> None:
         """Returns current working directory as output path."""
@@ -744,7 +744,7 @@ class TestDataManagement:
         try:
             result: bool = _export_validation_report(report, output_path)
 
-            assert result is True
+            assert result
             with open(output_path) as f:
                 loaded_report: dict[str, Any] = json.load(f)
             assert loaded_report["validation_status"] == "passed"
@@ -828,7 +828,7 @@ class TestDataManagement:
 
         matches: list[int] = _match_pattern(data, pattern)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_preview_dataset_returns_limited_items(self) -> None:
         """Returns first N items from dataset."""
@@ -846,7 +846,7 @@ class TestDataManagement:
 
         result: bool = _release_buffer(buffer_id)
 
-        assert result is True
+        assert result
 
     def test_save_patterns_saves_to_file(self) -> None:
         """Saves pattern dictionary to JSON file."""
@@ -861,7 +861,7 @@ class TestDataManagement:
         try:
             result: bool = _save_patterns(patterns, output_path)
 
-            assert result is True
+            assert result
             with open(output_path) as f:
                 loaded: dict[str, Any] = json.load(f)
             assert loaded == patterns
@@ -1192,7 +1192,7 @@ class TestEdgeCasesAndErrorHandling:
 
         matches: list[int] = _match_pattern(data, pattern)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_match_pattern_handles_pattern_longer_than_data(self) -> None:
         """Returns empty list when pattern longer than data."""
@@ -1201,7 +1201,7 @@ class TestEdgeCasesAndErrorHandling:
 
         matches: list[int] = _match_pattern(data, pattern)
 
-        assert len(matches) == 0
+        assert not matches
 
     def test_fix_dataset_issues_handles_all_empty_dataset(self) -> None:
         """Handles dataset with all empty items."""
@@ -1209,7 +1209,7 @@ class TestEdgeCasesAndErrorHandling:
 
         fixed: list[dict[str, Any]] = _fix_dataset_issues(dataset)
 
-        assert len(fixed) == 0
+        assert not fixed
 
     def test_preview_dataset_handles_limit_larger_than_dataset(self) -> None:
         """Returns all items when limit exceeds dataset size."""
@@ -1315,7 +1315,7 @@ class TestIntegrationScenarios:
 
         try:
             archive_result: bool = _archive_data(original_data, archive_path)
-            assert archive_result is True
+            assert archive_result
 
             with open(archive_path) as f:
                 retrieved_data: dict[str, Any] = json.load(f)

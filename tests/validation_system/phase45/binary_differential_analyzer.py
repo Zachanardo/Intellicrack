@@ -168,19 +168,13 @@ class DisassemblyEngine:
         for block_id, block in basic_blocks.items():
             cfg.add_node(block_id, **block)
 
-            # Add edges based on control flow
-            last_insn = block.get("last_instruction")
-            if last_insn:
+            if last_insn := block.get("last_instruction"):
                 if last_insn["mnemonic"].lower() in ['jmp', 'je', 'jne', 'jz', 'jnz']:
-                    # Extract jump target
-                    target = self._extract_jump_target(last_insn)
-                    if target:
+                    if target := self._extract_jump_target(last_insn):
                         cfg.add_edge(block_id, target, type="jump")
 
                 elif last_insn["mnemonic"].lower() == 'call':
-                    # Extract call target
-                    target = self._extract_call_target(last_insn)
-                    if target:
+                    if target := self._extract_call_target(last_insn):
                         cfg.add_edge(block_id, target, type="call")
                         # Also add fallthrough edge
                         next_block = block_id + block["size"]
@@ -234,8 +228,7 @@ class DisassemblyEngine:
 
                 # For conditional jumps, mark target as block start
                 if mnemonic in ['je', 'jne', 'jz', 'jnz']:
-                    target = self._extract_jump_target(insn)
-                    if target:
+                    if target := self._extract_jump_target(insn):
                         block_starts.add(target)
 
                 current_block = {"start": next_addr, "instructions": [], "size": 0}
@@ -528,7 +521,7 @@ class BinaryDifferentialAnalyzer:
             state_type: "original" or "modified"
         """
         try:
-            binary_name = self.target_binary_path.stem + ".exe"
+            binary_name = f"{self.target_binary_path.stem}.exe"
             processes = [p for p in psutil.process_iter(['pid', 'name'])
                         if p.info['name'].lower() == binary_name.lower()]
 
@@ -608,7 +601,7 @@ class BinaryDifferentialAnalyzer:
                         break
 
                     # Parse MEMORY_BASIC_INFORMATION
-                    base_address = struct.unpack('Q', mbi.raw[0:8])[0]
+                    base_address = struct.unpack('Q', mbi.raw[:8])[0]
                     region_size = struct.unpack('Q', mbi.raw[16:24])[0]
                     state = struct.unpack('I', mbi.raw[24:28])[0]
                     protect = struct.unpack('I', mbi.raw[28:32])[0]
@@ -782,7 +775,7 @@ class BinaryDifferentialAnalyzer:
             return "CALL -> NOP: Function call disabled"
         elif modified_byte == 0x90:
             return f"Byte NOPed: 0x{original_byte:02X} -> NOP"
-        elif original_byte == 0x90 and modified_byte != 0x90:
+        elif original_byte == 0x90:
             return f"NOP replaced: NOP -> 0x{modified_byte:02X}"
         elif abs(modified_byte - original_byte) == 1:
             return f"Single bit flip: 0x{original_byte:02X} -> 0x{modified_byte:02X}"
@@ -803,7 +796,7 @@ class BinaryDifferentialAnalyzer:
             return "nop_patch"
         elif original_byte == 0x90:
             return "nop_replacement"
-        elif original_byte in [0x74, 0x75] and modified_byte in [0x74, 0x75]:
+        elif original_byte in {0x74, 0x75} and modified_byte in {0x74, 0x75}:
             return "conditional_jump_flip"
         elif original_byte == 0xE8:
             return "call_modification"

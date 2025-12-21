@@ -102,16 +102,13 @@ def run_coverage_analysis():
         coverage_percent = 0
         status = "ANALYSIS_ERROR"
 
-    # Generate detailed analysis report
-    analysis_results = {
+    return {
         'coverage_percentage': coverage_percent,
         'test_execution_status': 'PASSED' if result == 0 else 'FAILED',
         'testing_agent_compliance': status,
         'total_test_methods': count_test_methods(),
-        'sophisticated_validation_areas': get_validation_areas()
+        'sophisticated_validation_areas': get_validation_areas(),
     }
-
-    return analysis_results
 
 
 def count_test_methods():
@@ -119,13 +116,8 @@ def count_test_methods():
     test_file = "tests/unit/core/network/test_license_server_emulator.py"
 
     try:
-        with open(test_file) as f:
-            content = f.read()
-
-        # Count test methods
-        test_methods = content.count("def test_")
-        return test_methods
-
+        content = Path(test_file).read_text()
+        return content.count("def test_")
     except Exception:
         return 0
 

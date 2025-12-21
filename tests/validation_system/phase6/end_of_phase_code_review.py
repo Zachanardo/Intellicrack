@@ -196,9 +196,7 @@ class EndOfPhaseCodeReviewer:
         """
         self.logger.info("Starting comprehensive Phase 6 code review")
 
-        # Verify all required components exist
-        missing_components = self._verify_component_completeness()
-        if missing_components:
+        if missing_components := self._verify_component_completeness():
             self.logger.critical(f"Missing required components: {missing_components}")
             # Create minimal report showing failure
             return PhaseReviewReport(
@@ -340,20 +338,21 @@ class EndOfPhaseCodeReviewer:
                     remediation="Implement actual functionality"
                 ))
 
-            if 'return None' in line_stripped and not line_stripped.startswith('#'):
-                # Check if this is a legitimate None return
-                if not any(keyword in line_stripped.lower() for keyword in ['optional', 'nullable', 'default']):
-                    issues.append(CodeIssue(
-                        issue_id=f"RETURN_NONE_{file_path.stem}_{line_num}",
-                        file_path=file_path,
-                        line_number=line_num,
-                        category=ReviewCategory.PLACEHOLDER_DETECTION,
-                        severity=ReviewSeverity.HIGH,
-                        title="Suspicious None Return",
-                        description="Found 'return None' that may indicate placeholder code",
-                        code_snippet=line_stripped,
-                        remediation="Verify this is intentional or implement proper return value"
-                    ))
+            if 'return None' in line_stripped and not line_stripped.startswith('#') and all(
+                                keyword not in line_stripped.lower()
+                                for keyword in ['optional', 'nullable', 'default']
+                            ):
+                issues.append(CodeIssue(
+                    issue_id=f"RETURN_NONE_{file_path.stem}_{line_num}",
+                    file_path=file_path,
+                    line_number=line_num,
+                    category=ReviewCategory.PLACEHOLDER_DETECTION,
+                    severity=ReviewSeverity.HIGH,
+                    title="Suspicious None Return",
+                    description="Found 'return None' that may indicate placeholder code",
+                    code_snippet=line_stripped,
+                    remediation="Verify this is intentional or implement proper return value"
+                ))
 
         return issues
 
@@ -430,24 +429,23 @@ class EndOfPhaseCodeReviewer:
         Returns:
             List of code quality issues
         """
-        issues = []
         lines = source_code.splitlines()
 
-        # Check for very long lines
-        for line_num, line in enumerate(lines, 1):
-            if len(line) > 120:
-                issues.append(CodeIssue(
-                    issue_id=f"LONG_LINE_{file_path.stem}_{line_num}",
-                    file_path=file_path,
-                    line_number=line_num,
-                    category=ReviewCategory.CODE_QUALITY,
-                    severity=ReviewSeverity.LOW,
-                    title="Line Too Long",
-                    description=f"Line length {len(line)} exceeds recommended 120 characters",
-                    code_snippet=line[:50] + "..." if len(line) > 50 else line,
-                    remediation="Break long lines for better readability"
-                ))
-
+        issues = [
+            CodeIssue(
+                issue_id=f"LONG_LINE_{file_path.stem}_{line_num}",
+                file_path=file_path,
+                line_number=line_num,
+                category=ReviewCategory.CODE_QUALITY,
+                severity=ReviewSeverity.LOW,
+                title="Line Too Long",
+                description=f"Line length {len(line)} exceeds recommended 120 characters",
+                code_snippet=f"{line[:50]}..." if len(line) > 50 else line,
+                remediation="Break long lines for better readability",
+            )
+            for line_num, line in enumerate(lines, 1)
+            if len(line) > 120
+        ]
         # Check for proper class/function naming
         try:
             tree = ast.parse(source_code)
@@ -595,7 +593,7 @@ class EndOfPhaseCodeReviewer:
                     complexity += len(node.values) - 1
 
             return complexity
-        except:
+        except Exception:
             return 0.0
 
     def _run_pylint(self, file_path: Path) -> float:
@@ -619,10 +617,10 @@ class EndOfPhaseCodeReviewer:
 
             # Extract score from output
             output = pylint_output.getvalue()
-            score_match = re.search(r'Your code has been rated at ([\d.]+)/10', output)
-
-            if score_match:
-                return float(score_match.group(1))
+            if score_match := re.search(
+                r'Your code has been rated at ([\d.]+)/10', output
+            ):
+                return float(score_match[1])
             else:
                 return 0.0
 
@@ -649,10 +647,7 @@ class EndOfPhaseCodeReviewer:
             return False
 
         # Minimum code quality requirements
-        if review.pylint_score < 6.0:
-            return False
-
-        return True
+        return review.pylint_score >= 6.0
 
     def generate_report(self, review_report: PhaseReviewReport) -> dict[str, Any]:
         """
@@ -784,7 +779,7 @@ if __name__ == "__main__":
     review_report = reviewer.conduct_comprehensive_review()
 
     # Display results
-    print(f"Phase 6 Code Review Results:")
+    print("Phase 6 Code Review Results:")
     print(f"Overall Grade: {review_report.overall_grade}")
     print(f"Production Ready: {review_report.production_ready}")
     print(f"Total Issues: {review_report.total_issues}")

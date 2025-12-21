@@ -310,12 +310,10 @@ class TestPythonCodeGeneration:
         function_found = False
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                if "Plugin" in node.name:
-                    class_found = True
-            if isinstance(node, ast.FunctionDef):
-                if node.name == "get_plugin":
-                    function_found = True
+            if isinstance(node, ast.ClassDef) and "Plugin" in node.name:
+                class_found = True
+            if isinstance(node, ast.FunctionDef) and node.name == "get_plugin":
+                function_found = True
 
         assert class_found
         assert function_found
@@ -517,7 +515,7 @@ class TestPluginSaving:
             }
 
             plugin_path.write_text(plugin_data["code"], encoding="utf-8")
-            metadata_path = plugin_path.with_name(plugin_path.stem + "_metadata.json")
+            metadata_path = plugin_path.with_name(f"{plugin_path.stem}_metadata.json")
             metadata_path.write_text(json.dumps(plugin_data["info"], indent=2), encoding="utf-8")
 
             assert plugin_path.exists()
@@ -612,9 +610,8 @@ class TestEdgeCases:
 
         assert "class" in code
 
-        class_name_match = re.search(r"class\s+(\w+)", code)
-        if class_name_match:
-            class_name = class_name_match.group(1)
+        if class_name_match := re.search(r"class\s+(\w+)", code):
+            class_name = class_name_match[1]
             assert class_name.isidentifier()
 
     def test_no_features_selected_generates_minimal_code(self, wizard: PluginCreationWizard) -> None:

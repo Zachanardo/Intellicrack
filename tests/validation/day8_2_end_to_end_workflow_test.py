@@ -310,12 +310,10 @@ class EndToEndWorkflowTest(unittest.TestCase):
         protection = all_results["protection_analysis"]
         self.assertIsNotNone(protection)
 
-        vulnerabilities = all_results["vulnerability_analysis"]
-        if vulnerabilities:
+        if vulnerabilities := all_results["vulnerability_analysis"]:
             self.assertIsInstance(vulnerabilities, list)
 
-        bypasses = all_results["bypass_generation"]
-        if bypasses:
+        if bypasses := all_results["bypass_generation"]:
             # Check for CodeMeter specific bypasses
             for bypass in bypasses:
                 if "codemeter" in str(bypass).lower():
@@ -410,8 +408,9 @@ class EndToEndWorkflowTest(unittest.TestCase):
 
             # Generate specific bypasses
             for protection in ["FlexLM", "HASP"]:
-                bypass = bypass_gen.generate_specific_bypass(protection, license_info)
-                if bypass:
+                if bypass := bypass_gen.generate_specific_bypass(
+                    protection, license_info
+                ):
                     all_bypasses.append(bypass)
 
         self.assertGreater(len(all_bypasses), 0, "Should generate at least one bypass")
@@ -609,20 +608,11 @@ class EndToEndWorkflowTest(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         """Generate final report after all tests"""
-        report = ["=" * 80]
-        report.append("END-TO-END WORKFLOW TEST REPORT")
-        report.append("=" * 80)
-        report.append("")
-
+        report = ["=" * 80, "END-TO-END WORKFLOW TEST REPORT", "=" * 80, ""]
         # Overall results
         total_tests = len(cls.performance_metrics)
-        report.append(f"Total Tests Run: {total_tests}")
-        report.append("")
-
-        # Performance Summary
-        report.append("PERFORMANCE METRICS:")
-        report.append("-" * 40)
-
+        report.extend((f"Total Tests Run: {total_tests}", ""))
+        report.extend(("PERFORMANCE METRICS:", "-" * 40))
         total_time = 0
         max_memory = 0
 

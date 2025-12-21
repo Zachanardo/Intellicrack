@@ -134,9 +134,6 @@ class TestMainEntryPoint:
         with patch("intellicrack.main.main", return_value=0) as mock_main:
             import intellicrack.__main__
 
-            if hasattr(intellicrack.__main__, "__name__"):
-                pass
-
 
 class TestEnvironmentConfiguration:
     """Production tests for environment variable configuration."""

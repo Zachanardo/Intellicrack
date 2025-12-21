@@ -155,9 +155,11 @@ def analyze_test_coverage(analyzer_class, test_module):
 
     # Calculate coverage statistics
     total_methods = len(method_coverage)
-    covered_methods = sum(1 for m in method_coverage.values() if m["covered"])
+    covered_methods = sum(bool(m["covered"])
+                      for m in method_coverage.values())
     critical_methods = [m for m in method_coverage.values() if m["is_critical"]]
-    covered_critical = sum(1 for m in critical_methods if m["covered"])
+    covered_critical = sum(bool(m["covered"])
+                       for m in critical_methods)
 
     method_coverage_pct = (covered_methods / total_methods) * 100
     critical_coverage_pct = (covered_critical / len(critical_methods)) * 100 if critical_methods else 0
@@ -166,10 +168,11 @@ def analyze_test_coverage(analyzer_class, test_module):
     print(f"  Total method coverage: {method_coverage_pct:.1f}% ({covered_methods}/{total_methods})")
     print(f"  Critical method coverage: {critical_coverage_pct:.1f}% ({covered_critical}/{len(critical_methods)})")
 
-    # Show uncovered critical methods
-    uncovered_critical = [name for name, info in method_coverage.items() if not info["covered"] and info["is_critical"]]
-
-    if uncovered_critical:
+    if uncovered_critical := [
+        name
+        for name, info in method_coverage.items()
+        if not info["covered"] and info["is_critical"]
+    ]:
         print(f"\n⚠ Uncovered critical methods ({len(uncovered_critical)}):")
         for method in uncovered_critical:
             print(f"  - {method}")
@@ -312,17 +315,17 @@ def main():
     print(f"\n{'=' * 60}")
     print("SUMMARY")
     print("=" * 60)
-    print(f"OK NetworkTrafficAnalyzer import: SUCCESS")
-    print(f"OK Test suite loading: SUCCESS")
-    print(f"OK Basic functionality: SUCCESS")
+    print("OK NetworkTrafficAnalyzer import: SUCCESS")
+    print("OK Test suite loading: SUCCESS")
+    print("OK Basic functionality: SUCCESS")
     print(f" Method coverage: {method_coverage_pct:.1f}%")
     print(f" Critical method coverage: {critical_coverage_pct:.1f}%")
     print(f" Production ready: {'YES' if production_ready else 'NEEDS IMPROVEMENT'}")
 
     if production_ready:
         print(f"\n🎉 Test suite successfully validates NetworkTrafficAnalyzer")
-        print(f"OK Meets requirements for production security research platform")
-        print(f" Provides comprehensive validation of network analysis capabilities")
+        print("OK Meets requirements for production security research platform")
+        print(" Provides comprehensive validation of network analysis capabilities")
 
     return production_ready
 

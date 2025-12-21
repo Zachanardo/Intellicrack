@@ -406,8 +406,7 @@ class TestHardwareFingerprinting:
         assert "bios_vendor" in details
 
         if detected:
-            bios_vendor = details.get("bios_vendor", "")
-            if bios_vendor:
+            if bios_vendor := details.get("bios_vendor", ""):
                 bios_vendor_lower = bios_vendor.lower()
                 bios_version = details.get("bios_version", "")
                 bios_version_lower = bios_version.lower() if bios_version else ""

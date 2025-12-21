@@ -327,11 +327,10 @@ class TestRealNetworkOperations:
 
             # Analyze protocols
             for packet in parsed['packets']:
-                protocol = capture.detect_license_protocol(packet)
-                if protocol:
+                if protocol := capture.detect_license_protocol(packet):
                     assert 'protocol' in protocol, "Must identify protocol"
                     assert protocol['protocol'] in ['flexlm', 'hasp', 'adobe'], \
-                        "Must identify known license protocol"
+                            "Must identify known license protocol"
 
                     # Extract and analyze payload
                     payload = capture.extract_license_payload(packet, protocol['protocol'])
@@ -480,15 +479,13 @@ class TestRealNetworkOperations:
 
             # Test parsing robustness
             try:
-                parsed = hooker.parse_flexlm_packet(fuzzed)
-                # If parsing succeeds, check for anomalies
-                if parsed:
+                if parsed := hooker.parse_flexlm_packet(fuzzed):
                     assert 'anomaly_detected' in parsed or 'warning' in parsed, \
-                        f"Should detect anomaly in {fuzz_name}"
+                            f"Should detect anomaly in {fuzz_name}"
             except Exception as e:
                 # Exception is expected for malformed packets
                 assert 'parse' in str(e).lower() or 'invalid' in str(e).lower(), \
-                    f"Exception should be parsing-related for {fuzz_name}"
+                        f"Exception should be parsing-related for {fuzz_name}"
 
     def test_real_license_server_rate_limiting(self, app_context):
         """Test REAL rate limiting for license server communication."""

@@ -76,10 +76,9 @@ class TestFileResolverInitialization:
             "firmware",
         }
 
-        found_categories = set()
-        for file_type in resolver.FILE_TYPES.values():
-            found_categories.add(file_type.category)
-
+        found_categories = {
+            file_type.category for file_type in resolver.FILE_TYPES.values()
+        }
         assert expected_categories.issubset(found_categories)
 
     def test_windows_executable_types(self) -> None:

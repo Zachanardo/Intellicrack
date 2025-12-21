@@ -958,7 +958,9 @@ class HexViewerDialog(QDialog):
 
                 # Add to first viewer
                 if len(self.viewers) > 0:
-                    self.viewers[0].highlighter.add_highlight(highlight.start, highlight.end, highlight.highlight_type, highlight.color, highlight.alpha, highlight.description)
+                    self.viewers[0].highlighter.add_highlight(
+                        highlight.start, highlight.end, highlight.highlight_type, highlight.color, highlight.alpha, highlight.description
+                    )
 
         # Highlight in second viewer
         for diff in differences:
@@ -978,7 +980,9 @@ class HexViewerDialog(QDialog):
 
                 # Add to second viewer
                 if len(self.viewers) > 1:
-                    self.viewers[1].highlighter.add_highlight(highlight.start, highlight.end, highlight.highlight_type, highlight.color, highlight.alpha, highlight.description)
+                    self.viewers[1].highlighter.add_highlight(
+                        highlight.start, highlight.end, highlight.highlight_type, highlight.color, highlight.alpha, highlight.description
+                    )
 
         # Refresh both viewers
         for viewer in self.viewers:

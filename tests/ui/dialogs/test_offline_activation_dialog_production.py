@@ -137,10 +137,7 @@ class TestOfflineActivationDialogInitialization:
 
             assert dialog.tabs.count() == 6
 
-            tab_names = []
-            for i in range(dialog.tabs.count()):
-                tab_names.append(dialog.tabs.tabText(i))
-
+            tab_names = [dialog.tabs.tabText(i) for i in range(dialog.tabs.count())]
             assert "Hardware Profile" in tab_names
             assert "ID Generation" in tab_names
             assert "Activation" in tab_names
@@ -156,10 +153,10 @@ class TestOfflineActivationDialogInitialization:
             assert dialog.hardware_table is not None
             assert dialog.hardware_table.columnCount() == 2
 
-            headers = []
-            for i in range(dialog.hardware_table.columnCount()):
-                headers.append(dialog.hardware_table.horizontalHeaderItem(i).text())
-
+            headers = [
+                dialog.hardware_table.horizontalHeaderItem(i).text()
+                for i in range(dialog.hardware_table.columnCount())
+            ]
             assert "Component" in headers
             assert "Value" in headers
 
@@ -617,12 +614,11 @@ class TestProfileManagement:
 
             dialog.current_profile = None
 
-            if hasattr(dialog, "load_profile") and hasattr(dialog, "profile_list"):
-                if hasattr(dialog.profile_list, "setCurrentText"):
-                    dialog.profile_list.setCurrentText("SavedProfile")
-                    dialog.load_profile()
-
-                    assert dialog.current_profile is not None
+            if hasattr(dialog, "load_profile") and hasattr(dialog, "profile_list") and hasattr(dialog.profile_list, "setCurrentText"):
+                dialog.profile_list.setCurrentText("SavedProfile")
+                dialog.load_profile()
+            
+                assert dialog.current_profile is not None
 
 
 class TestLicenseFileOperations:

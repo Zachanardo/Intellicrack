@@ -136,9 +136,8 @@ class TestReportGeneratorInitialization:
         try:
             import importlib.util
 
-            if importlib.util.find_spec("jinja2") is not None:
-                if report_generator.templates_dir.exists():
-                    assert report_generator.jinja_env is not None
+            if importlib.util.find_spec("jinja2") is not None and report_generator.templates_dir.exists():
+                assert report_generator.jinja_env is not None
         except (ImportError, ValueError):
             assert report_generator.jinja_env is None
 
@@ -438,9 +437,7 @@ class TestReportSaving:
 
         filepath = report_generator.save_report(expected_content, "txt")
 
-        with open(filepath) as f:
-            actual_content = f.read()
-
+        actual_content = Path(filepath).read_text()
         assert actual_content == expected_content
 
         Path(filepath).unlink()
@@ -453,9 +450,7 @@ class TestReportSaving:
 
         filepath = report_generator.save_report(html_content, "html")
 
-        with open(filepath) as f:
-            saved_content = f.read()
-
+        saved_content = Path(filepath).read_text()
         assert saved_content == html_content
         assert "VMProtect 3.5" in saved_content
         assert "trial_reset" in saved_content
@@ -486,9 +481,7 @@ class TestTemporaryReportCreation:
         temp_path = report_generator.create_temporary_report(expected_content, "json")
 
         try:
-            with open(temp_path) as f:
-                actual_content = f.read()
-
+            actual_content = Path(temp_path).read_text()
             assert actual_content == expected_content
         finally:
             Path(temp_path).unlink(missing_ok=True)
@@ -593,9 +586,7 @@ class TestIntegrationScenarios:
         try:
             assert Path(filepath).exists()
 
-            with open(filepath) as f:
-                saved_html = f.read()
-
+            saved_html = Path(filepath).read_text()
             assert "VMProtect 3.5" in saved_html
             assert "trial_reset" in saved_html
             assert "Exploitation Results" in saved_html

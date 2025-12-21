@@ -204,7 +204,7 @@ class TestChecksumProgressReporting:
         worker.progress.connect(track_progress)
         worker.run()
 
-        assert len(progress_updates) > 0
+        assert progress_updates
 
 
 class TestChecksumAlgorithmSupport:

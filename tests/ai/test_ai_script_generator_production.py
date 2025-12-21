@@ -432,7 +432,7 @@ class TestSpecificBypassGeneration:
         """Generates working license check bypass code."""
         bypass_code: str = script_generator._generate_license_check_bypass()
 
-        assert len(bypass_code) > 0
+        assert bypass_code != ""
         assert "RegQueryValueExW" in bypass_code
         assert "license" in bypass_code.lower()
         assert "Interceptor.attach" in bypass_code
@@ -441,28 +441,28 @@ class TestSpecificBypassGeneration:
         """Generates time manipulation bypass code."""
         time_bypass: str = script_generator._generate_time_manipulation()
 
-        assert len(time_bypass) > 0
+        assert time_bypass != ""
         assert "GetTickCount" in time_bypass or "time" in time_bypass.lower()
 
     def test_generate_network_emulation_code(self, script_generator: AIScriptGenerator) -> None:
         """Generates network emulation for online activation bypass."""
         network_bypass: str = script_generator._generate_network_emulation()
 
-        assert len(network_bypass) > 0
+        assert network_bypass != ""
         assert any(api in network_bypass for api in ["InternetOpen", "HttpSendRequest", "WinHttp"])
 
     def test_generate_hwid_spoofer_code(self, script_generator: AIScriptGenerator) -> None:
         """Generates hardware ID spoofing code."""
         hwid_bypass: str = script_generator._generate_hwid_spoofer()
 
-        assert len(hwid_bypass) > 0
+        assert hwid_bypass != ""
         assert any(api in hwid_bypass for api in ["GetVolumeInformation", "HWID", "hardware"])
 
     def test_generate_anti_debug_bypass_code(self, script_generator: AIScriptGenerator) -> None:
         """Generates anti-debugging bypass code."""
         anti_debug: str = script_generator._generate_anti_debug_bypass()
 
-        assert len(anti_debug) > 0
+        assert anti_debug != ""
         assert "IsDebuggerPresent" in anti_debug
         assert "Interceptor" in anti_debug
 
@@ -476,7 +476,7 @@ class TestDifficultyAssessment:
 
         difficulty: str = script_generator._assess_difficulty(protections)
 
-        assert difficulty in ["Easy", "Medium"]
+        assert difficulty in {"Easy", "Medium"}
 
     def test_assess_difficulty_medium_multiple_protections(
         self, script_generator: AIScriptGenerator
@@ -489,7 +489,7 @@ class TestDifficultyAssessment:
 
         difficulty: str = script_generator._assess_difficulty(protections)
 
-        assert difficulty in ["Medium", "Hard"]
+        assert difficulty in {"Medium", "Hard"}
 
     def test_assess_difficulty_hard_advanced_protections(
         self, script_generator: AIScriptGenerator
@@ -503,7 +503,7 @@ class TestDifficultyAssessment:
 
         difficulty: str = script_generator._assess_difficulty(protections)
 
-        assert difficulty in ["Hard", "Very Hard"]
+        assert difficulty in {"Hard", "Very Hard"}
 
 
 class TestSuccessProbabilityCalculation:
@@ -615,7 +615,7 @@ class TestErrorHandling:
         result: str = script_generator.generate_script("test", "console.log('test');", {})
 
         assert isinstance(result, str)
-        assert len(result) > 0
+        assert result != ""
 
     def test_generate_frida_script_handles_missing_analysis(
         self, script_generator: AIScriptGenerator

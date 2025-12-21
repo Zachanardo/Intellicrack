@@ -55,7 +55,7 @@ class TutorialStep:
     commands: list[str] = field(default_factory=list)
     explanation: str = ""
     expected_output: str | None = None
-    validation: Callable | None = None
+    validation: Callable[[str, str], bool] | None = None
     hints: list[str] = field(default_factory=list)
     prerequisites: list[str] = field(default_factory=list)
     skip_allowed: bool = True
@@ -89,13 +89,13 @@ class TutorialSystem:
         self.cli_instance = cli_instance
 
         # Tutorial state
-        self.current_tutorial = None
+        self.current_tutorial: Tutorial | None = None
         self.current_step = 0
-        self.tutorial_progress = {}
-        self.tutorial_history = []
+        self.tutorial_progress: dict[str, int] = {}
+        self.tutorial_history: list[dict[str, Any]] = []
 
         # Initialize tutorials
-        self.tutorials = {}
+        self.tutorials: dict[str, Tutorial] = {}
         self._init_tutorials()
 
     def _init_tutorials(self) -> None:
@@ -455,6 +455,8 @@ class TutorialSystem:
     def _show_tutorial_intro(self) -> None:
         """Show tutorial introduction."""
         tutorial = self.current_tutorial
+        if not tutorial:
+            return
 
         if self.console:
             intro_content = f"""[bold cyan]{tutorial.title}[/bold cyan]
@@ -549,7 +551,9 @@ class TutorialSystem:
 
     def _prompt_for_command(self) -> None:
         """Prompt user to execute the tutorial command interactively."""
-        if not self.current_tutorial or self.current_step >= len(self.current_tutorial.steps):
+        if not self.current_tutorial:
+            return
+        if self.current_step >= len(self.current_tutorial.steps):
             return
 
         step = self.current_tutorial.steps[self.current_step]
@@ -628,7 +632,9 @@ class TutorialSystem:
             Tuple of (success, message)
 
         """
-        if not self.current_tutorial or self.current_step >= len(self.current_tutorial.steps):
+        if not self.current_tutorial:
+            return False, "No active tutorial step"
+        if self.current_step >= len(self.current_tutorial.steps):
             return False, "No active tutorial step"
 
         step = self.current_tutorial.steps[self.current_step]
@@ -728,7 +734,9 @@ class TutorialSystem:
 
     def prev_step(self) -> bool:
         """Move to previous tutorial step."""
-        if not self.current_tutorial or self.current_step <= 0:
+        if not self.current_tutorial:
+            return False
+        if self.current_step <= 0:
             return False
 
         self.current_step -= 1
@@ -738,6 +746,8 @@ class TutorialSystem:
     def skip_step(self) -> bool:
         """Skip current tutorial step."""
         if not self.current_tutorial:
+            return False
+        if self.current_step >= len(self.current_tutorial.steps):
             return False
 
         step = self.current_tutorial.steps[self.current_step]
@@ -752,11 +762,12 @@ class TutorialSystem:
 
     def quit_tutorial(self) -> bool:
         """Quit current tutorial."""
-        if not self.current_tutorial:
+        tutorial = self.current_tutorial
+        if not tutorial:
             return False
 
         # Save progress
-        tutorial_name = self.current_tutorial.name
+        tutorial_name = tutorial.name
         self.tutorial_progress[tutorial_name] = max(
             self.tutorial_progress.get(tutorial_name, 0),
             self.current_step,
@@ -767,7 +778,7 @@ class TutorialSystem:
             {
                 "name": tutorial_name,
                 "completed_steps": self.current_step,
-                "total_steps": len(self.current_tutorial.steps),
+                "total_steps": len(tutorial.steps),
                 "quit_time": datetime.now(),
             },
         )
@@ -785,11 +796,11 @@ class TutorialSystem:
 
     def _complete_tutorial(self) -> None:
         """Complete current tutorial."""
-        if not self.current_tutorial:
+        tutorial = self.current_tutorial
+        if not tutorial:
             return
 
-        tutorial_name = self.current_tutorial.name
-        tutorial = self.current_tutorial
+        tutorial_name = tutorial.name
 
         # Mark as completed
         self.tutorial_progress[tutorial_name] = len(tutorial.steps)
@@ -978,11 +989,12 @@ class TutorialSystem:
             )
 
             # Check completion status
-            completion = self.tutorial_progress.get(tutorial.name, {"completed": False, "progress": 0})
-            if completion["completed"]:
+            progress = self.tutorial_progress.get(tutorial.name, 0)
+            total_steps = len(tutorial.steps)
+            if progress >= total_steps:
                 border_style = "green"
                 title_prefix = "OK "
-            elif completion["progress"] > 0:
+            elif progress > 0:
                 border_style = "yellow"
                 title_prefix = "🔄 "
             else:
@@ -1036,8 +1048,7 @@ class TutorialSystem:
         if not tutorial:
             return
 
-        progress_data = self.tutorial_progress.get(tutorial_name, {"progress": 0})
-        current_step = progress_data.get("progress", 0)
+        current_step = self.tutorial_progress.get(tutorial_name, 0)
         total_steps = len(tutorial.steps)
 
         with Progress(
@@ -1100,7 +1111,7 @@ class TutorialSystem:
 
         # Get user selection
         try:
-            selection = IntPrompt.ask(
+            selection: int = IntPrompt.ask(
                 "Select tutorial number",
                 choices=[str(i) for i in range(1, len(tutorial_names) + 1)],
             )
@@ -1126,14 +1137,14 @@ class TutorialSystem:
         if not RICH_AVAILABLE or not self.console:
             return {}
 
-        settings = {"auto_advance": Confirm.ask("Enable auto-advance to next step?", default=False)}
+        settings: dict[str, Any] = {"auto_advance": Confirm.ask("Enable auto-advance to next step?", default=False)}
 
         settings["show_hints"] = Confirm.ask("Show hints automatically?", default=True)
 
         if Confirm.ask("Set custom step timeout?", default=False):
-            settings["step_timeout"] = IntPrompt.ask("Step timeout (seconds)", default=30)
+            settings["step_timeout"] = int(IntPrompt.ask("Step timeout (seconds)", default=30))
 
-        difficulty_filter = Prompt.ask(
+        difficulty_filter: str = Prompt.ask(
             "Filter tutorials by difficulty",
             choices=["all", "beginner", "intermediate", "advanced"],
             default="all",
@@ -1157,11 +1168,12 @@ class TutorialSystem:
 
         for name, tutorial in self.tutorials.items():
             # Get completion status
-            progress_data = self.tutorial_progress.get(name, {"completed": False, "progress": 0})
-            if progress_data["completed"]:
+            progress = self.tutorial_progress.get(name, 0)
+            total_steps = len(tutorial.steps)
+            if progress >= total_steps:
                 status = "OK Complete"
-            elif progress_data["progress"] > 0:
-                status = f"🔄 {progress_data['progress']}/{len(tutorial.steps)}"
+            elif progress > 0:
+                status = f"🔄 {progress}/{total_steps}"
             else:
                 status = "📖 Not Started"
 
@@ -1198,7 +1210,8 @@ class TutorialSystem:
         steps_node = tree.add(f"📋 [bold yellow]Tutorial Steps ({len(tutorial.steps)})[/bold yellow]")
 
         for i, step in enumerate(tutorial.steps, 1):
-            step_icon = "OK" if i <= self.tutorial_progress.get(tutorial_name, {}).get("progress", 0) else "📖"
+            current_progress = self.tutorial_progress.get(tutorial_name, 0)
+            step_icon = "OK" if i <= current_progress else "📖"
             step_node = steps_node.add(f"{step_icon} [cyan]Step {i}: {step.title}[/cyan]")
 
             # Add step details

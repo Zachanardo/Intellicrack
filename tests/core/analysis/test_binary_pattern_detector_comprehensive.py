@@ -113,7 +113,7 @@ class TestWildcardPatternMatching:
         matches = detector.scan_binary(bytes(binary_data), ["anti_debug"])
 
         ntglobal_matches = [m for m in matches if m.pattern.name == "ntglobalflag_check"]
-        assert len(ntglobal_matches) >= 1
+        assert ntglobal_matches
         assert all(m.matched_bytes[:12] == base_pattern for m in ntglobal_matches)
 
     def test_wildcard_mask_application(self) -> None:
@@ -156,7 +156,7 @@ class TestProtectionDetection:
         matches = detector.scan_binary(bytes(binary_data), ["protection"])
 
         vmp_matches = [m for m in matches if "vmprotect" in m.pattern.name.lower()]
-        assert len(vmp_matches) >= 1
+        assert vmp_matches
 
         if vmp_matches:
             assert vmp_matches[0].pattern.metadata.get("version") == "3.x"
@@ -174,7 +174,7 @@ class TestProtectionDetection:
         matches = detector.scan_binary(bytes(binary_data), ["protection"])
 
         themida_matches = [m for m in matches if "themida" in m.pattern.name.lower()]
-        assert len(themida_matches) >= 1
+        assert themida_matches
 
         if themida_matches:
             assert themida_matches[0].pattern.metadata.get("vm_type") == "cisc"
@@ -192,7 +192,7 @@ class TestProtectionDetection:
         matches = detector.scan_binary(bytes(binary_data), ["packer"])
 
         upx_matches = [m for m in matches if "upx" in m.pattern.name.lower()]
-        assert len(upx_matches) >= 1
+        assert upx_matches
 
         if upx_matches:
             assert upx_matches[0].pattern.metadata.get("compression") == "lzma2"
@@ -213,7 +213,7 @@ class TestLicensingDetection:
         matches = detector.scan_binary(bytes(binary_data), ["licensing"])
 
         denuvo_matches = [m for m in matches if "denuvo" in m.pattern.name.lower()]
-        assert len(denuvo_matches) >= 1
+        assert denuvo_matches
 
         if denuvo_matches:
             assert denuvo_matches[0].pattern.metadata.get("drm_type") == "denuvo"
@@ -231,7 +231,7 @@ class TestLicensingDetection:
         matches = detector.scan_binary(bytes(binary_data), ["licensing"])
 
         steam_matches = [m for m in matches if "steam" in m.pattern.name.lower()]
-        assert len(steam_matches) >= 1
+        assert steam_matches
 
         if steam_matches:
             assert steam_matches[0].pattern.metadata.get("drm_type") == "steam_ceg"
@@ -249,7 +249,7 @@ class TestLicensingDetection:
         matches = detector.scan_binary(bytes(binary_data), ["licensing"])
 
         hasp_matches = [m for m in matches if "hasp" in m.pattern.name.lower()]
-        assert len(hasp_matches) >= 1
+        assert hasp_matches
 
         if hasp_matches:
             assert hasp_matches[0].pattern.metadata.get("license_type") == "hardware_dongle"
@@ -336,9 +336,7 @@ class TestCrossReferenceAnalysis:
         detector.add_pattern(pattern)
         binary_data[target_address:target_address+3] = pattern.pattern_bytes
 
-        matches = detector.scan_binary(bytes(binary_data), ["test"])
-
-        if matches:
+        if matches := detector.scan_binary(bytes(binary_data), ["test"]):
             assert any(ref == reference_address for ref in matches[0].xrefs)
 
 
@@ -436,7 +434,7 @@ class TestRealWorldPatternDetection:
 
         matches = detector.scan_binary(bytes(binary_data))
 
-        categories_found = set(m.pattern.category for m in matches)
+        categories_found = {m.pattern.category for m in matches}
         assert "anti_debug" in categories_found
         assert "licensing" in categories_found or "packer" in categories_found
 
@@ -471,9 +469,7 @@ class TestRealWorldPatternDetection:
         binary_data[offset:offset+len(pattern)] = pattern
         binary_data[offset+len(pattern):offset+len(pattern)+16] = context_after
 
-        matches = detector.scan_binary(bytes(binary_data), ["anti_debug"])
-
-        if matches:
+        if matches := detector.scan_binary(bytes(binary_data), ["anti_debug"]):
             match = matches[0]
             assert len(match.context_before) > 0
             assert len(match.context_after) > 0

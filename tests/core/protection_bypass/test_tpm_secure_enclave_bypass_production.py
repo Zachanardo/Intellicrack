@@ -1197,7 +1197,7 @@ class TestEnclaveMemoryAnalysis:
     def test_parse_enclave_info_extracts_measurements(self, bypass_system: Any) -> None:
         """Parsing enclave info extracts MRENCLAVE and MRSIGNER."""
         test_data = bytearray(200)
-        test_data[0:16] = secrets.token_bytes(16)
+        test_data[:16] = secrets.token_bytes(16)
         test_data[20:36] = secrets.token_bytes(16)
         test_data[36:68] = secrets.token_bytes(32)
         test_data[68:100] = secrets.token_bytes(32)
@@ -1288,11 +1288,11 @@ class TestCleanupOperations:
         bypass_system.bypass_active = True
         bypass_system.cleanup()
 
-        assert bypass_system.bypass_active is False
+        assert not bypass_system.bypass_active
 
     def test_cleanup_succeeds_when_not_active(self, bypass_system: Any) -> None:
         """Cleanup succeeds even when bypass not active."""
         bypass_system.bypass_active = False
         bypass_system.cleanup()
 
-        assert bypass_system.bypass_active is False
+        assert not bypass_system.bypass_active

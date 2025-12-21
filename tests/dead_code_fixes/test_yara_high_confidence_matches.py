@@ -4,6 +4,7 @@ This tests that the high_confidence_matches counter is properly included
 in the assessment result for protection strength scoring.
 """
 
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -11,10 +12,6 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
-
 
 class MockCategory(Enum):
     """Mock category for testing."""
@@ -71,11 +68,8 @@ class TestHighConfidenceMatchesTracking:
             MockMatch(confidence=0.5, category=MockCategory.PACKER),
         ]
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 3
 
     def test_no_high_confidence_matches_when_all_low(self) -> None:
@@ -87,11 +81,8 @@ class TestHighConfidenceMatchesTracking:
             MockMatch(confidence=0.3, category=MockCategory.ANTI_DEBUG),
         ]
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 0
 
     def test_all_high_confidence_matches(self) -> None:
@@ -103,11 +94,8 @@ class TestHighConfidenceMatchesTracking:
             MockMatch(confidence=0.80, category=MockCategory.ANTI_DEBUG),
         ]
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 4
 
     def test_security_score_formula_with_high_confidence(self) -> None:
@@ -146,11 +134,8 @@ class TestHighConfidenceMatchesTracking:
             MockMatch(confidence=0.79999, category=MockCategory.PACKER),
         ]
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 1
 
     def test_category_independence(self) -> None:
@@ -161,22 +146,16 @@ class TestHighConfidenceMatchesTracking:
             MockMatch(confidence=0.9, category=MockCategory.LICENSING),
         ]
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 3
 
     def test_empty_matches_list(self) -> None:
         """Test handling of empty matches list."""
         matches: list[MockMatch] = []
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 0
 
     def test_confidence_float_precision(self) -> None:
@@ -186,10 +165,7 @@ class TestHighConfidenceMatchesTracking:
             MockMatch(confidence=0.7999999, category=MockCategory.PACKER),
         ]
 
-        high_confidence_count = 0
-        for match in matches:
-            if match.confidence >= 0.8:
-                high_confidence_count += 1
-
+        high_confidence_count = sum(bool(match.confidence >= 0.8)
+                                for match in matches)
         assert high_confidence_count == 1
 

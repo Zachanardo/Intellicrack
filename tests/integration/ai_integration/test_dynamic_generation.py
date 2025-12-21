@@ -28,7 +28,7 @@ def test_frida_generation():
         )
 
         if result.success:
-            print(f"OK Script generated successfully!")
+            print("OK Script generated successfully!")
             print(f" Saved to: {result.file_path}")
             print(f" Content preview:\n{result.content[:500]}...")
             return True
@@ -58,7 +58,7 @@ def test_ghidra_generation():
         )
 
         if result.success:
-            print(f"OK Ghidra script generated successfully!")
+            print("OK Ghidra script generated successfully!")
             print(f" Saved to: {result.file_path}")
             print(f" Content preview:\n{result.content[:500]}...")
             return True

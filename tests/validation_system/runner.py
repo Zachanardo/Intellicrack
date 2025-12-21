@@ -96,7 +96,7 @@ class BinaryIntegrityValidator:
             modifications.append("PERMISSIONS_CHANGED")
             logger.warning("Binary permissions changed")
 
-        is_valid = len(modifications) == 0
+        is_valid = not modifications
 
         if self.whitelist_hashes and current_hash not in self.whitelist_hashes:
             is_valid = False
@@ -393,7 +393,8 @@ class StatisticalValidator:
                 "confidence_level": self.confidence_level
             }
 
-        successes = sum(1 for r in results if r["success"])
+        successes = sum(bool(r["success"])
+                    for r in results)
         failures = len(results) - successes
         success_rate = successes / len(results)
 
@@ -405,22 +406,20 @@ class StatisticalValidator:
 
         margin_of_error = z_score * (success_rate * (1 - success_rate) / len(results)) ** 0.5
 
-        confidence_interval = {
+        return {
             "success_rate": success_rate,
             "confidence_level": self.confidence_level,
             "confidence_interval": [
                 max(0, success_rate - margin_of_error),
-                min(1, success_rate + margin_of_error)
+                min(1, success_rate + margin_of_error),
             ],
             "total_runs": len(results),
             "successes": successes,
             "failures": failures,
             "mean_duration": mean_duration,
             "stdev_duration": stdev_duration,
-            "margin_of_error": margin_of_error
+            "margin_of_error": margin_of_error,
         }
-
-        return confidence_interval
 
     def perform_hypothesis_test(self, test_name: str, null_hypothesis: float = 0.5) -> dict[str, Any]:
         """
@@ -432,7 +431,8 @@ class StatisticalValidator:
         if len(results) < self.minimum_runs:
             return {"error": "Insufficient runs for hypothesis testing"}
 
-        successes = sum(1 for r in results if r["success"])
+        successes = sum(bool(r["success"])
+                    for r in results)
         n = len(results)
         observed_rate = successes / n
 
@@ -860,8 +860,7 @@ class ValidationTestRunner:
             initial_state = self.integrity_validator.capture_initial_state()
             logger.info(f"Binary integrity captured: {initial_state['hash'][:16]}...")
 
-            patches = self.integrity_validator.detect_patches()
-            if patches:
+            if patches := self.integrity_validator.detect_patches():
                 logger.warning(f"Potential patches detected: {patches}")
                 return False
 
@@ -899,15 +898,13 @@ class ValidationTestRunner:
         anti_gaming_config = self.config.get("validation_requirements", {}).get("anti_gaming_checks", {})
 
         if anti_gaming_config.get("debugger_detection", True):
-            detections = self.process_monitor.detect_anti_analysis()
-            if detections:
+            if detections := self.process_monitor.detect_anti_analysis():
                 checks_result["issues_found"].extend(detections)
                 logger.warning(f"Anti-analysis detection: {detections}")
             checks_result["checks_performed"].append("debugger_detection")
 
         if anti_gaming_config.get("vm_detection", True) and platform.system() == "Windows":
-            vm_artifacts = self._check_vm_artifacts()
-            if vm_artifacts:
+            if vm_artifacts := self._check_vm_artifacts():
                 checks_result["issues_found"].append({
                     "type": "VM_ARTIFACTS",
                     "details": vm_artifacts
@@ -916,8 +913,7 @@ class ValidationTestRunner:
             checks_result["checks_performed"].append("vm_detection")
 
         if anti_gaming_config.get("timing_anomaly_detection", True):
-            timing_check = self._check_timing_anomalies()
-            if timing_check:
+            if timing_check := self._check_timing_anomalies():
                 checks_result["issues_found"].append(timing_check)
                 logger.warning("Timing anomaly detected")
             checks_result["checks_performed"].append("timing_anomaly_detection")
@@ -926,8 +922,6 @@ class ValidationTestRunner:
 
     def _check_vm_artifacts(self) -> list[str]:
         """Check for virtual machine artifacts."""
-        artifacts = []
-
         vm_files = [
             r"C:\Windows\System32\drivers\vmmouse.sys",
             r"C:\Windows\System32\drivers\vmhgfs.sys",
@@ -936,10 +930,11 @@ class ValidationTestRunner:
             r"C:\Windows\System32\drivers\vboxsf.sys"
         ]
 
-        for vm_file in vm_files:
-            if Path(vm_file).exists():
-                artifacts.append(f"VM file detected: {vm_file}")
-
+        artifacts = [
+            f"VM file detected: {vm_file}"
+            for vm_file in vm_files
+            if Path(vm_file).exists()
+        ]
         try:
             vm_keys = [
                 (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\VMware, Inc.\VMware Tools"),
@@ -965,8 +960,6 @@ class ValidationTestRunner:
 
         for _ in range(10):
             start = time.perf_counter_ns()
-            for _ in range(1000):
-                pass
             end = time.perf_counter_ns()
             measurements.append(end - start)
 
@@ -1064,8 +1057,7 @@ class ValidationTestRunner:
 
         finally:
             self.process_monitor.stop_monitoring()
-            suspicious_events = self.process_monitor.get_suspicious_events()
-            if suspicious_events:
+            if suspicious_events := self.process_monitor.get_suspicious_events():
                 result["suspicious_events"] = suspicious_events
 
             # Deactivate environment isolation

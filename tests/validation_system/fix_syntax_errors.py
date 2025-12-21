@@ -11,8 +11,23 @@ def fix_anti_detection_verifier():
     """Fix anti_detection_verifier.py syntax and import issues."""
     filepath = Path(r"D:\Intellicrack\tests\validation_system\anti_detection_verifier.py")
 
-    # Complete rewrite of the imports section
-    new_imports = '''#!/usr/bin/env python3
+    content = filepath.read_text()
+
+    # Find where the actual code starts (after the broken imports)
+    lines = content.split('\n')
+    code_start = next(
+        (
+            i
+            for i, line in enumerate(lines)
+            if line.strip().startswith('@dataclass')
+        ),
+        -1,
+    )
+    if code_start > 0:
+        # Replace everything before the first class with fixed imports
+        remaining_code = '\n'.join(lines[code_start:])
+        # Complete rewrite of the imports section
+        new_imports = '''#!/usr/bin/env python3
 """
 Anti-Detection Verification for Intellicrack Validation System.
 
@@ -42,20 +57,6 @@ from intellicrack.handlers.wmi_handler import wmi
 logger = logging.getLogger(__name__)
 '''
 
-    content = filepath.read_text()
-
-    # Find where the actual code starts (after the broken imports)
-    lines = content.split('\n')
-    code_start = -1
-
-    for i, line in enumerate(lines):
-        if line.strip().startswith('@dataclass'):
-            code_start = i
-            break
-
-    if code_start > 0:
-        # Replace everything before the first class with fixed imports
-        remaining_code = '\n'.join(lines[code_start:])
         complete_content = new_imports + '\n' + remaining_code
         filepath.write_text(complete_content)
         print(f"Fixed {filepath.name}")
@@ -68,8 +69,22 @@ def fix_multi_environment_tester():
     """Fix multi_environment_tester.py syntax and import issues."""
     filepath = Path(r"D:\Intellicrack\tests\validation_system\multi_environment_tester.py")
 
-    # Complete rewrite of the imports section
-    new_imports = '''#!/usr/bin/env python3
+    content = filepath.read_text()
+
+    # Find where the actual code starts
+    lines = content.split('\n')
+    code_start = next(
+        (
+            i
+            for i, line in enumerate(lines)
+            if line.strip().startswith('@dataclass')
+        ),
+        -1,
+    )
+    if code_start > 0:
+        remaining_code = '\n'.join(lines[code_start:])
+        # Complete rewrite of the imports section
+        new_imports = '''#!/usr/bin/env python3
 """
 Multi-Environment Testing Matrix for Intellicrack Validation System.
 
@@ -102,19 +117,6 @@ logger = logging.getLogger(__name__)
 sys.path.insert(0, r'C:\\Intellicrack')
 '''
 
-    content = filepath.read_text()
-
-    # Find where the actual code starts
-    lines = content.split('\n')
-    code_start = -1
-
-    for i, line in enumerate(lines):
-        if line.strip().startswith('@dataclass'):
-            code_start = i
-            break
-
-    if code_start > 0:
-        remaining_code = '\n'.join(lines[code_start:])
         complete_content = new_imports + '\n' + remaining_code
         filepath.write_text(complete_content)
         print(f"Fixed {filepath.name}")
@@ -158,7 +160,19 @@ def fix_fingerprint_randomizer():
 
     # Fix the import order issue - logger shouldn't be at the very top
     if content.startswith('import logging'):
-        new_imports = '''#!/usr/bin/env python3
+        # Find where the actual code starts
+        lines = content.split('\n')
+        code_start = next(
+            (
+                i
+                for i, line in enumerate(lines)
+                if line.strip().startswith('@dataclass')
+            ),
+            -1,
+        )
+        if code_start > 0:
+            remaining_code = '\n'.join(lines[code_start:])
+            new_imports = '''#!/usr/bin/env python3
 """
 Environment Fingerprint Randomization for Intellicrack Validation System.
 
@@ -189,17 +203,6 @@ from intellicrack.handlers.wmi_handler import wmi
 logger = logging.getLogger(__name__)
 '''
 
-        # Find where the actual code starts
-        lines = content.split('\n')
-        code_start = -1
-
-        for i, line in enumerate(lines):
-            if line.strip().startswith('@dataclass'):
-                code_start = i
-                break
-
-        if code_start > 0:
-            remaining_code = '\n'.join(lines[code_start:])
             complete_content = new_imports + '\n' + remaining_code
             filepath.write_text(complete_content)
             print(f"Fixed {filepath.name}")

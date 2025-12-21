@@ -114,11 +114,9 @@ class RealLinuxSystemSimulator:
 
     def ptrace(self, request, pid, addr, data) -> int:
         """Simulate ptrace system call."""
-        if request == PTRACE_TRACEME:
-            if self.ptrace_blocked:
-                return -1  # Already being traced
-            return 0  # Success
-        elif request == PTRACE_DETACH:
+        if request == PTRACE_TRACEME and self.ptrace_blocked:
+            return -1  # Already being traced
+        elif request in [PTRACE_TRACEME, PTRACE_DETACH]:
             return 0  # Success
         return -1  # Error
 

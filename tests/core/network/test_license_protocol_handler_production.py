@@ -74,10 +74,10 @@ class TestLicenseProtocolHandlerBase:
 
         handler.clear_data()
 
-        assert len(handler.captured_requests) == 0
-        assert len(handler.captured_responses) == 0
-        assert len(handler.session_data) == 0
-        assert len(handler.client_connections) == 0
+        assert not handler.captured_requests
+        assert not handler.captured_responses
+        assert not handler.session_data
+        assert not handler.client_connections
 
     def test_clear_data_without_attributes(self) -> None:
         handler = LicenseProtocolHandler()
@@ -134,7 +134,7 @@ class TestLicenseProtocolHandlerProxyLifecycle:
 
         assert handler.running is False
         assert handler.proxy_thread is None
-        assert len(handler.captured_requests) == 0
+        assert not handler.captured_requests
 
     def test_proxy_thread_is_daemon(self) -> None:
         handler = LicenseProtocolHandler()

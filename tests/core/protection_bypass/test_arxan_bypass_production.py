@@ -237,17 +237,17 @@ def arxan_protected_pe(tmp_path: Path) -> Generator[Path, None, None]:
     code_section_data[0x1000 : 0x1000 + len(encrypted)] = encrypted
 
     data_section_data: bytearray = bytearray(0x1000)
-    data_section_data[0:4] = struct.pack("<I", 0x12345678)
+    data_section_data[:4] = struct.pack("<I", 0x12345678)
     data_section_data[0x100 : 0x100 + len(b"license")] = b"license"
     data_section_data[0x200 : 0x200 + len(b"serial")] = b"serial"
     data_section_data[0x300 : 0x300 + len(b"activation")] = b"activation"
     data_section_data[0x400 : 0x400 + len(b"registration")] = b"registration"
 
     rdata_section_data: bytearray = bytearray(0x1000)
-    rdata_section_data[0 : len(b"product_key")] = b"product_key"
+    rdata_section_data[:len(b"product_key")] = b"product_key"
 
     arxan_section_data: bytearray = bytearray(0x2000)
-    arxan_section_data[0 : len(b"TRANSFORMIT")] = b"TRANSFORMIT"
+    arxan_section_data[:len(b"TRANSFORMIT")] = b"TRANSFORMIT"
     arxan_section_data[0x100 : 0x100 + len(b"GuardIT")] = b"GuardIT"
 
     whitebox_table: bytes = bytes(range(256)) * 8
@@ -395,7 +395,7 @@ def layered_protection_binary(tmp_path: Path) -> Generator[Path, None, None]:
     code_data[0x800 : 0x800 + len(b"\x85\xc0\x75\x02\x75\x00")] = b"\x85\xc0\x75\x02\x75\x00"
 
     data_section_data: bytearray = bytearray(0x1000)
-    data_section_data[0 : len(b"license")] = b"license"
+    data_section_data[:len(b"license")] = b"license"
 
     binary_data: bytes = headers.ljust(0x400, b"\x00") + code_data + data_section_data
 
@@ -591,10 +591,9 @@ class TestArxanBypassCore:
 
         patches_modified_binary: bool = False
         for patch in result.patches_applied:
-            if patch.address < len(original_data):
-                if original_data[patch.address : patch.address + len(patch.original_bytes)] == patch.original_bytes:
-                    patches_modified_binary = True
-                    break
+            if patch.address < len(original_data) and original_data[patch.address : patch.address + len(patch.original_bytes)] == patch.original_bytes:
+                patches_modified_binary = True
+                break
 
         assert patches_modified_binary or len(result.patches_applied) > 0
 
@@ -620,12 +619,12 @@ class TestTamperCheckBypass:
         result: ArxanBypassResult = bypass.bypass(arxan_protected_pe)
 
         tamper_patches: list[BypassPatch] = [p for p in result.patches_applied if p.patch_type == "tamper_bypass"]
-        assert len(tamper_patches) > 0
+        assert tamper_patches
 
         crc32_patches: list[BypassPatch] = [
             p for p in tamper_patches if "crc" in p.description.lower() or "crc32" in p.description.lower()
         ]
-        assert len(crc32_patches) > 0
+        assert crc32_patches
 
     def test_bypass_detects_and_patches_md5_tamper_checks(self, arxan_protected_pe: Path) -> None:
         """Bypass identifies and neutralizes MD5 tamper checks."""
@@ -636,7 +635,7 @@ class TestTamperCheckBypass:
         tamper_patches: list[BypassPatch] = [p for p in result.patches_applied if p.patch_type == "tamper_bypass"]
 
         md5_patches: list[BypassPatch] = [p for p in tamper_patches if "md5" in p.description.lower()]
-        assert len(md5_patches) > 0
+        assert md5_patches
 
     def test_bypass_detects_and_patches_sha256_tamper_checks(self, arxan_protected_pe: Path) -> None:
         """Bypass identifies and neutralizes SHA256 tamper checks."""
@@ -647,7 +646,7 @@ class TestTamperCheckBypass:
         tamper_patches: list[BypassPatch] = [p for p in result.patches_applied if p.patch_type == "tamper_bypass"]
 
         sha_patches: list[BypassPatch] = [p for p in tamper_patches if "sha" in p.description.lower()]
-        assert len(sha_patches) > 0
+        assert sha_patches
 
     def test_tamper_bypass_uses_valid_x86_opcodes(self, arxan_protected_pe: Path) -> None:
         """Tamper check bypass uses valid x86 machine code."""
@@ -692,7 +691,7 @@ class TestIntegrityCheckBypass:
         integrity_patches: list[BypassPatch] = [
             p for p in result.patches_applied if p.patch_type == "integrity_bypass"
         ]
-        assert len(integrity_patches) > 0
+        assert integrity_patches
 
     def test_integrity_bypass_returns_success_codes(self, arxan_protected_pe: Path) -> None:
         """Integrity check bypass patches return success codes."""
@@ -781,7 +780,7 @@ class TestLicenseValidationBypass:
         result: ArxanBypassResult = bypass.bypass(arxan_protected_pe)
 
         license_patches: list[BypassPatch] = [p for p in result.patches_applied if p.patch_type == "license_bypass"]
-        assert len(license_patches) > 0
+        assert license_patches
 
         for patch in license_patches:
             assert "license" in patch.description.lower() or "validation" in patch.description.lower()
@@ -795,7 +794,10 @@ class TestLicenseValidationBypass:
         license_patches: list[BypassPatch] = [p for p in result.patches_applied if p.patch_type == "license_bypass"]
 
         for patch in license_patches:
-            assert patch.patched_bytes == b"\xb8\x01\x00\x00\x00\xc3" or patch.patched_bytes == b"\x33\xc0\x40\xc3"
+            assert patch.patched_bytes in [
+                b"\xb8\x01\x00\x00\x00\xc3",
+                b"\x33\xc0\x40\xc3",
+            ]
 
     def test_license_bypass_count_matches_applied_patches(self, arxan_protected_pe: Path) -> None:
         """License bypass count accurately reflects applied patches."""
@@ -888,7 +890,7 @@ class TestRASPBypass:
         result: ArxanBypassResult = bypass.bypass(arxan_protected_pe)
 
         rasp_patches: list[BypassPatch] = [p for p in result.patches_applied if p.patch_type == "rasp_bypass"]
-        assert len(rasp_patches) > 0
+        assert rasp_patches
 
     def test_rasp_bypass_uses_appropriate_opcodes(self) -> None:
         """RASP bypass uses correct opcodes for different mechanism types."""
@@ -966,12 +968,14 @@ class TestStringDecryption:
         bypass._decrypt_strings(binary_data, encrypted_regions, patches)
 
         string_patches: list[BypassPatch] = [p for p in patches if p.patch_type == "string_decryption"]
-        assert len(string_patches) > 0
+        assert string_patches
 
         decrypted_patch: BypassPatch = string_patches[0]
         assert decrypted_patch.original_bytes == encrypted
 
-        printable_count: int = sum(bool(32 <= b < 127) for b in decrypted_patch.patched_bytes)
+        printable_count: int = sum(
+            32 <= b < 127 for b in decrypted_patch.patched_bytes
+        )
         printable_ratio: float = printable_count / len(decrypted_patch.patched_bytes)
         assert printable_ratio > 0.7
 
@@ -992,7 +996,7 @@ class TestStringDecryption:
         string_patches: list[BypassPatch] = [p for p in patches if p.patch_type == "string_decryption"]
 
         for patch in string_patches:
-            printable_count: int = sum(bool(32 <= b < 127) for b in patch.patched_bytes)
+            printable_count: int = sum(32 <= b < 127 for b in patch.patched_bytes)
             printable_ratio: float = printable_count / len(patch.patched_bytes)
             assert printable_ratio > 0.7
 
@@ -1119,7 +1123,7 @@ class TestFridaBypassScriptGeneration:
 
         assert all(hex(0x400000 + i * 0x1000)[2:] in script for i in range(5))
 
-        assert not any(hex(0x400000 + i * 0x1000)[2:] in script for i in range(6, 10))
+        assert all(hex(0x400000 + i * 0x1000)[2:] not in script for i in range(6, 10))
 
 
 class TestPEUtilityFunctions:
@@ -1248,7 +1252,7 @@ class TestBypassEdgeCases:
 
         bypass._bypass_tamper_checks(binary_data, tamper_checks, patches)
 
-        assert len(patches) == 0
+        assert not patches
 
     def test_bypass_handles_overlapping_protection_mechanisms(self) -> None:
         """Bypass handles overlapping protection mechanisms."""

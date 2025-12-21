@@ -569,5 +569,5 @@ class TestIntegratedMonitoringScenario:
 
         monitor.stop()
 
-        assert len(received) > 0, "Subscriber must receive metrics"
+        assert received, "Subscriber must receive metrics"
         assert any(m.metric_name == "pipeline.test" for m in received), "Must receive test metric"

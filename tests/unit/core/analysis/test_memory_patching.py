@@ -334,11 +334,9 @@ class TestMemoryPatching(IntellicrackTestBase):
         # Create multiple hooks on the same function
         hooks = []
         for i in range(3):
-            hook = self.agent._create_hook_detours(
-                'MessageBoxA',
-                f'chain_hook_{i}'
-            )
-            if hook:
+            if hook := self.agent._create_hook_detours(
+                'MessageBoxA', f'chain_hook_{i}'
+            ):
                 hooks.append(hook)
 
         if len(hooks) >= 2:
@@ -391,7 +389,7 @@ class TestMemoryPatching(IntellicrackTestBase):
                 continue  # Method not supported
 
         # Should support at least some injection methods
-        assert len(successful_methods) >= 1
+        assert successful_methods
 
     def test_shellcode_injection_patches(self):
         """Test memory patches for shellcode injection."""
@@ -514,10 +512,8 @@ class TestMemoryPatching(IntellicrackTestBase):
                 assert patch.target_architecture == arch
 
                 # Architecture-specific characteristics
-                if arch == 'x64':
-                    # x64 patches might be larger or have different opcodes
-                    if hasattr(patch, 'patch_complexity'):
-                        assert patch.patch_complexity in ['simple', 'moderate', 'complex']
+                if arch == 'x64' and hasattr(patch, 'patch_complexity'):
+                    assert patch.patch_complexity in ['simple', 'moderate', 'complex']
 
     def test_patch_conflict_detection(self):
         """Test detection of conflicting memory patches."""
@@ -572,24 +568,19 @@ class TestMemoryPatching(IntellicrackTestBase):
         """Test robust error handling in memory patching."""
         # Test invalid process handle
         try:
-            invalid_patches = self.agent._create_memory_patches(
-                -1,  # Invalid handle
-                [0x401000]
-            )
-            # Should handle gracefully
-            if invalid_patches:
+            if invalid_patches := self.agent._create_memory_patches(
+                -1, [0x401000]  # Invalid handle
+            ):
                 assert all(hasattr(p, 'error') for p in invalid_patches)
         except Exception:
             pass  # Exception is acceptable error handling
 
         # Test invalid memory addresses
         try:
-            invalid_addr_patches = self.agent._create_memory_patches(
+            if invalid_addr_patches := self.agent._create_memory_patches(
                 self.mock_process_handle,
-                [0x0, 0xFFFFFFFFFFFFFFFF]  # Invalid addresses
-            )
-            # Should handle gracefully
-            if invalid_addr_patches:
+                [0x0, 0xFFFFFFFFFFFFFFFF],  # Invalid addresses
+            ):
                 for patch in invalid_addr_patches:
                     if hasattr(patch, 'validation_result'):
                         assert patch.validation_result.is_valid is False

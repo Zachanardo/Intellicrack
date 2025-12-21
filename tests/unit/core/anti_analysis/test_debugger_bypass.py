@@ -110,14 +110,13 @@ class TestDebuggerBypass(unittest.TestCase):
         context = CONTEXT()
         context.ContextFlags = CONTEXT_DEBUG_REGISTERS
 
-        if kernel32.GetThreadContext(current_thread, ctypes.byref(context)):
-            if result:
-                assert context.Dr0 == 0
-                assert context.Dr1 == 0
-                assert context.Dr2 == 0
-                assert context.Dr3 == 0
-                assert context.Dr6 == 0
-                assert context.Dr7 == 0
+        if kernel32.GetThreadContext(current_thread, ctypes.byref(context)) and result:
+            assert context.Dr0 == 0
+            assert context.Dr1 == 0
+            assert context.Dr2 == 0
+            assert context.Dr3 == 0
+            assert context.Dr6 == 0
+            assert context.Dr7 == 0
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-specific test")
     def test_bypass_timing_windows(self):
@@ -430,7 +429,8 @@ class TestAntiAntiDebugIntegration(unittest.TestCase):
 
         results = self.bypass.install_bypasses(methods)
 
-        successful_bypasses = sum(1 for success in results.values() if success)
+        successful_bypasses = sum(bool(success)
+                              for success in results.values())
         assert successful_bypasses > 0
 
     def test_combined_bypass_effectiveness(self):

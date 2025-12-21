@@ -160,7 +160,7 @@ class TestR2BinaryDiffAnalysis(unittest.TestCase):
         with open(path, "wb") as f:
             # Minimal PE header structure
             pe_header = bytearray(1024)
-            pe_header[0:2] = b"MZ"  # DOS signature
+            pe_header[:2] = b"MZ"
             pe_header[60] = 0x80  # PE header offset low byte
             pe_header[128:132] = b"PE\x00\x00"  # PE signature
             pe_header.extend(content)
@@ -667,7 +667,7 @@ class TestCompareBinariesFunction(unittest.TestCase):
             result = compare_binaries(nonexistent_path, self.binary2_path)
             # If no exception, should contain error information
             self.assertIn("error", str(result).lower())
-        except (FileNotFoundError, OSError, ValueError):
+        except (OSError, ValueError):
             # Expected behavior
             pass
 
@@ -781,7 +781,7 @@ if __name__ == "__main__":
     success_rate = ((total_tests - failures - errors) / total_tests * 100) if total_tests > 0 else 0
 
     print("=" * 80)
-    print(f"Test Execution Summary:")
+    print("Test Execution Summary:")
     print(f"Total Tests: {total_tests}")
     print(f"Successful: {total_tests - failures - errors}")
     print(f"Failures: {failures}")

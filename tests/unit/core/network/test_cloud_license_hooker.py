@@ -176,7 +176,7 @@ class TestCloudLicenseResponseGenerator:
 
             # For known protocols, verify correct detection
             if protocol in ['http', 'https', 'websocket', 'grpc']:
-                assert detected == protocol or detected == 'custom'
+                assert detected in [protocol, 'custom']
 
     def test_oauth_flow_manipulation(self, generator):
         """Test OAuth 2.0 flow interception and token manipulation."""
@@ -417,9 +417,7 @@ class TestCloudLicenseResponseGenerator:
         assert len(response) > 5  # Has frame header
 
         # Check for successful license validation in response
-        if b'valid' in response.lower() or b'success' in response.lower():
-            assert True
-        else:
+        if b'valid' not in response.lower() and b'success' not in response.lower():
             # Response might be binary protobuf
             assert len(response) > 10
 
@@ -508,10 +506,6 @@ class TestCloudLicenseResponseGenerator:
             assert response is not None
             assert len(response) > 0
 
-            # Verify response contains success indicators
-            if b'OK' in response or b'\x00\x00' in response or b'\x01' in response:
-                assert True  # Valid response format
-
         generator.disable_network_api_hooks()
 
     def test_multi_threaded_request_handling(self, generator):
@@ -544,7 +538,7 @@ class TestCloudLicenseResponseGenerator:
 
         # Verify all requests were handled
         assert len(results) + len(errors) == 10
-        assert len(errors) == 0  # No errors should occur
+        assert not errors
 
         # Verify each got a valid response
         for request_id, response in results:
@@ -607,8 +601,6 @@ class TestCloudLicenseResponseGenerator:
 
         # Verify response uses custom template
         assert b'200 OK' in response
-        if b'premium' in response or b'unlimited' in response:
-            assert True  # Custom template applied
 
     def test_encryption_key_management(self, generator):
         """Test management of encryption keys for license responses."""
@@ -623,9 +615,9 @@ class TestCloudLicenseResponseGenerator:
         }
 
         # Verify keys are properly formatted
-        for key_type, key_value in test_keys.items():
+        for key_value in test_keys.values():
             if key_value:
-                assert len(str(key_value)) > 0
+                assert str(key_value) != ""
                 # Keys should be substantial
                 if isinstance(key_value, bytes):
                     assert len(key_value) >= 16  # Minimum key size
@@ -731,7 +723,7 @@ class TestCloudLicenseResponseGenerator:
             try:
                 data = json.loads(response_body)
                 assert 'Success' in data or 'Valid' in data or 'Authorized' in data
-            except:
+            except Exception:
                 # Binary response is acceptable
                 assert len(response_body) > 0
 
@@ -832,8 +824,8 @@ class TestProductionReadiness:
         # Test response generation speed
         start = time.time()
 
+        test_request = b'GET /license HTTP/1.1\r\nHost: test.com\r\n\r\n'
         for _ in range(100):
-            test_request = b'GET /license HTTP/1.1\r\nHost: test.com\r\n\r\n'
             generator._handle_http_request(test_request)
 
         elapsed = time.time() - start
@@ -914,7 +906,7 @@ class TestProductionReadiness:
             thread.join()
 
         # Should have no errors from concurrent access
-        assert len(errors) == 0, f"Thread safety issues: {errors}"
+        assert not errors, f"Thread safety issues: {errors}"
 
         generator.disable_network_api_hooks()
 

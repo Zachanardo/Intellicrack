@@ -387,9 +387,7 @@ class SearchEngine:
                     if self.file_handler.insert(result.offset, replace_bytes):
                         replaced_ranges.append((result.offset, len(replace_bytes)))
                     else:
-                        if original_data := self.file_handler.read(
-                            result.offset, result.length
-                        ):
+                        if original_data := self.file_handler.read(result.offset, result.length):
                             self.file_handler.insert(result.offset, original_data)
                         error_msg = f"Failed to insert replacement at offset {result.offset:#x}"
                         logger.exception(error_msg)

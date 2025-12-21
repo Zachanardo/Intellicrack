@@ -124,11 +124,9 @@ class ProductionReadinessValidator:
                 "from ..protection_bypass.dongle_emulator import HardwareDongleEmulator"
             ]
 
-            missing_imports = []
-            for imp in required_imports:
-                if imp not in content:
-                    missing_imports.append(imp.split()[-1])
-
+            missing_imports = [
+                imp.split()[-1] for imp in required_imports if imp not in content
+            ]
             # Check for required methods
             required_methods = [
                 "_analyze_modern_protections",
@@ -139,11 +137,11 @@ class ProductionReadinessValidator:
                 "_analyze_dongle_bypass_opportunities"
             ]
 
-            missing_methods = []
-            for method in required_methods:
-                if f"def {method}" not in content:
-                    missing_methods.append(method)
-
+            missing_methods = [
+                method
+                for method in required_methods
+                if f"def {method}" not in content
+            ]
             # Check for initialization
             init_checks = [
                 "self.cet_bypass = CETBypass()",
@@ -152,11 +150,11 @@ class ProductionReadinessValidator:
                 "self.dongle_emulator = HardwareDongleEmulator()"
             ]
 
-            missing_init = []
-            for init in init_checks:
-                if init not in content:
-                    missing_init.append(init.split('=')[0].strip())
-
+            missing_init = [
+                init.split('=')[0].strip()
+                for init in init_checks
+                if init not in content
+            ]
             # Report results
             if not missing_imports and not missing_methods and not missing_init:
                 print("  OK PASS: All integration components present")
@@ -229,13 +227,11 @@ class ProductionReadinessValidator:
                     all_modules_ok = False
                     continue
 
-                # Check methods exist
-                missing_methods = []
-                for method in module['methods']:
-                    if f"def {method}" not in content:
-                        missing_methods.append(method)
-
-                if missing_methods:
+                if missing_methods := [
+                    method
+                    for method in module['methods']
+                    if f"def {method}" not in content
+                ]:
                     print(f"  FAIL {module['class']} missing methods: {missing_methods}")
                     all_modules_ok = False
                 else:
@@ -257,7 +253,7 @@ class ProductionReadinessValidator:
         file_path = get_project_root() / "intellicrack/core/analysis/radare2_vulnerability_engine.py"
 
         if not file_path.exists():
-            print(f"  FAIL FAIL: File not found")
+            print("  FAIL FAIL: File not found")
             self.test_results.append(False)
             return False
 

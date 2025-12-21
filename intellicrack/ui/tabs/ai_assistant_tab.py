@@ -4,6 +4,11 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+from __future__ import annotations
+
+from collections.abc import ItemsView
+from typing import TYPE_CHECKING, Any, cast
+
 from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -22,10 +27,15 @@ from intellicrack.handlers.pyqt6_handler import (
     Qt,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 from intellicrack.utils.logger import get_logger
 
 from .base_tab import BaseTab
+
+if TYPE_CHECKING:
+    from intellicrack.ai.api_provider_clients import BaseProviderClient
+    from intellicrack.ai.api_provider_clients import ModelInfo as APIModelInfo
 
 
 logger = get_logger(__name__)
@@ -34,7 +44,7 @@ logger = get_logger(__name__)
 class APIKeyConfigDialog(QDialog):
     """Enhanced dialog for configuring API providers with dynamic model discovery."""
 
-    def __init__(self, parent: QDialog | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the API configuration dialog.
 
         Args:
@@ -45,8 +55,8 @@ class APIKeyConfigDialog(QDialog):
         self.setWindowTitle("Configure API Model")
         self.setModal(True)
         self.setMinimumWidth(500)
-        self.current_provider_client = None
-        self.available_models = []
+        self.current_provider_client: BaseProviderClient | None = None
+        self.available_models: list[APIModelInfo] = []
         self.setup_ui()
 
     def setup_ui(self) -> None:
@@ -171,11 +181,13 @@ class APIKeyConfigDialog(QDialog):
         try:
             from intellicrack.ai.api_provider_clients import (
                 AnthropicProviderClient,
+                BaseProviderClient,
                 LMStudioProviderClient,
                 OllamaProviderClient,
                 OpenAIProviderClient,
             )
 
+            client: BaseProviderClient
             if "OpenAI" in provider_name or "Custom" in provider_name:
                 client = OpenAIProviderClient(api_key, base_url)
             elif "Anthropic" in provider_name:
@@ -255,39 +267,47 @@ class APIKeyConfigDialog(QDialog):
 
     def set_config(self, config: dict[str, object]) -> None:
         """Populate the dialog with existing configuration."""
-        if config.get("provider"):
-            index = self.provider_combo.findText(config["provider"])
+        provider = config.get("provider")
+        if provider is not None and isinstance(provider, str):
+            index = self.provider_combo.findText(provider)
             if index >= 0:
                 self.provider_combo.setCurrentIndex(index)
 
-        if config.get("api_key"):
-            self.api_key_edit.setText(config["api_key"])
+        api_key = config.get("api_key")
+        if api_key is not None and isinstance(api_key, str):
+            self.api_key_edit.setText(api_key)
 
-        if config.get("base_url"):
-            self.base_url_edit.setText(config["base_url"])
+        base_url = config.get("base_url")
+        if base_url is not None and isinstance(base_url, str):
+            self.base_url_edit.setText(base_url)
 
-        if config.get("model"):
-            self.model_combo.setEditText(config["model"])
+        model = config.get("model")
+        if model is not None and isinstance(model, str):
+            self.model_combo.setEditText(model)
 
-        if config.get("temperature") is not None:
-            self.temperature_spin.setValue(int(config["temperature"] * 100))
+        temperature = config.get("temperature")
+        if temperature is not None and isinstance(temperature, (int, float)):
+            self.temperature_spin.setValue(int(temperature * 100))
 
-        if config.get("max_tokens"):
-            self.max_tokens_spin.setValue(config["max_tokens"])
+        max_tokens = config.get("max_tokens")
+        if max_tokens is not None and isinstance(max_tokens, int):
+            self.max_tokens_spin.setValue(max_tokens)
 
 
 class AIAssistantTab(BaseTab):
     """AI Assistant tab providing AI-powered analysis and script generation."""
 
-    def __init__(self, shared_context: object | None = None, parent: object | None = None) -> None:
+    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize the AI Assistant tab."""
         super().__init__(shared_context, parent)
-        self.ai_assistant = None
-        self.model_configs = {}
+        self.ai_assistant: IntellicrackAIAssistant | None = None
+        self.model_configs: dict[str, dict[str, object]] = {}
 
     def setup_content(self) -> None:
         """Initialize the user interface."""
-        layout = self.layout()  # Use existing layout from BaseTab
+        layout = self.layout()
+        if layout is None:
+            raise RuntimeError("Layout not initialized in BaseTab")
 
         # Model selection
         model_group = QGroupBox("AI Model Configuration")
@@ -383,6 +403,8 @@ class AIAssistantTab(BaseTab):
         output_group.setLayout(output_layout)
         splitter.addWidget(output_group)
 
+        if layout is None:
+            raise RuntimeError("Layout not initialized in BaseTab")
         layout.addWidget(splitter)
 
         # Status bar
@@ -398,7 +420,8 @@ class AIAssistantTab(BaseTab):
     def setup_ai_assistant(self) -> None:
         """Initialize the AI assistant."""
         try:
-            self.ai_assistant = IntellicrackAIAssistant()
+            assistant = IntellicrackAIAssistant()
+            self.ai_assistant = assistant
             self.status_label.setText("AI Assistant initialized")
             logger.info("AI Assistant initialized successfully")
         except Exception as e:
@@ -436,7 +459,7 @@ class AIAssistantTab(BaseTab):
 
                 llm_manager = get_llm_manager()
 
-                provider_map = {
+                provider_map: dict[str, LLMProvider] = {
                     "OpenAI": LLMProvider.OPENAI,
                     "Anthropic": LLMProvider.ANTHROPIC,
                     "Ollama (Local)": LLMProvider.OLLAMA,
@@ -444,15 +467,39 @@ class AIAssistantTab(BaseTab):
                     "Custom OpenAI-Compatible": LLMProvider.LOCAL_API,
                 }
 
-                provider = provider_map.get(config["provider"], LLMProvider.OPENAI)
+                provider_val = config.get("provider")
+                if not isinstance(provider_val, str):
+                    provider_val = "OpenAI"
+                provider = provider_map.get(provider_val, LLMProvider.OPENAI)
+
+                model_name = config.get("model")
+                if not isinstance(model_name, str):
+                    model_name = None
+
+                api_key = config.get("api_key")
+                if not isinstance(api_key, str):
+                    api_key = None
+
+                api_base = config.get("base_url")
+                if not isinstance(api_base, str):
+                    api_base = None
+
+                temperature = config.get("temperature", 0.7)
+                if not isinstance(temperature, (int, float)):
+                    temperature = 0.7
+                temperature = float(temperature)
+
+                max_tokens = config.get("max_tokens", 4000)
+                if not isinstance(max_tokens, int):
+                    max_tokens = 4000
 
                 llm_config = LLMConfig(
                     provider=provider,
-                    model_name=config["model"],
-                    api_key=config.get("api_key"),
-                    api_base=config.get("base_url"),
-                    temperature=config.get("temperature", 0.7),
-                    max_tokens=config.get("max_tokens", 4000),
+                    model_name=model_name,
+                    api_key=api_key,
+                    api_base=api_base,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
                     tools_enabled=True,
                 )
 
@@ -494,10 +541,13 @@ class AIAssistantTab(BaseTab):
         self.analyze_btn.setEnabled(False)
 
         try:
-            if self.ai_assistant:
-                # Perform analysis
-                result = self.ai_assistant.analyze(input_text)
-                self.output_text.setPlainText(result)
+            if self.ai_assistant is not None:
+                response = self.ai_assistant.process_message(input_text)
+                result_text = response.get("response", "No response generated")
+                if isinstance(result_text, str):
+                    self.output_text.setPlainText(result_text)
+                else:
+                    self.output_text.setPlainText(str(result_text))
                 self.status_label.setText("Analysis complete")
                 self.export_script_btn.setEnabled(True)
             else:
@@ -522,13 +572,14 @@ class AIAssistantTab(BaseTab):
         self.generate_script_btn.setEnabled(False)
 
         try:
-            if self.ai_assistant:
-                # Generate script
-                script = self.ai_assistant.generate_script(
-                    input_text,
-                    script_type="frida",  # Default to Frida
-                )
-                self.output_text.setPlainText(script)
+            if self.ai_assistant is not None:
+                script_request = f"Generate a Frida script for: {input_text}"
+                response = self.ai_assistant.process_message(script_request)
+                script_text = response.get("response", "No script generated")
+                if isinstance(script_text, str):
+                    self.output_text.setPlainText(script_text)
+                else:
+                    self.output_text.setPlainText(str(script_text))
                 self.status_label.setText("Script generated")
                 self.export_script_btn.setEnabled(True)
             else:
@@ -566,9 +617,11 @@ class AIAssistantTab(BaseTab):
     def copy_to_clipboard(self) -> None:
         """Copy output to clipboard."""
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.output_text.toPlainText())
-
-        self.status_label.setText("Copied to clipboard")
+        if clipboard is not None:
+            clipboard.setText(self.output_text.toPlainText())
+            self.status_label.setText("Copied to clipboard")
+        else:
+            self.status_label.setText("Clipboard not available")
 
     def load_available_models(self) -> None:
         """Load all available AI models dynamically from configured providers."""
@@ -616,15 +669,26 @@ class AIAssistantTab(BaseTab):
                 logger.warning("Could not load local GGUF models: %s", e)
 
             try:
+                from intellicrack.config import get_config
                 from intellicrack.models.model_manager import ModelManager
 
-                model_manager = ModelManager()
+                config_manager = get_config()
+                config_items_view = cast(ItemsView[str, Any], config_manager.items())
+                config_items = list(config_items_view)
+                config_dict: dict[str, Any] = dict(config_items)
+                model_manager = ModelManager(config_dict)
 
                 for repo_name in ["huggingface", "lmstudio", "ollama"]:
                     try:
-                        repo_models = model_manager.list_available_models(repo_name)
-                        for model_info in repo_models:
-                            model_name = model_info.get("name", model_info.get("model_id", "Unknown"))
+                        repo_models = model_manager.get_available_models(repo_name)
+                        for model_info_item in repo_models:
+                            if hasattr(model_info_item, "name"):
+                                model_name = str(model_info_item.name)
+                            elif isinstance(model_info_item, dict):
+                                name_val = model_info_item.get("name", model_info_item.get("model_id", "Unknown"))
+                                model_name = str(name_val) if name_val is not None else "Unknown"
+                            else:
+                                model_name = "Unknown"
                             display_name = f"{repo_name.title()}: {model_name}"
                             available_models.append(display_name)
                     except Exception as repo_e:
@@ -660,19 +724,23 @@ class AIAssistantTab(BaseTab):
 
         if file_path:
             try:
-                # Import local model through model manager
+                from intellicrack.config import get_config
                 from intellicrack.models.model_manager import ModelManager
 
-                model_manager = ModelManager()
+                config_manager = get_config()
+                config_items_view = cast(ItemsView[str, Any], config_manager.items())
+                config_items = list(config_items_view)
+                config_dict: dict[str, Any] = dict(config_items)
+                model_manager = ModelManager(config_dict)
 
-                if model_info := model_manager.import_local_model(file_path):
-                    QMessageBox.information(self, "Success", f"Model '{model_info.name}' uploaded successfully!")
-                    # Refresh model list
+                model_info = model_manager.import_local_model(file_path)
+                if model_info is not None:
+                    model_name = str(model_info.name) if hasattr(model_info, "name") else "model"
+                    QMessageBox.information(self, "Success", f"Model '{model_name}' uploaded successfully!")
                     self.load_available_models()
 
-                    # Select the newly uploaded model
                     for i in range(self.model_combo.count()):
-                        if model_info.name in self.model_combo.itemText(i):
+                        if model_name in self.model_combo.itemText(i):
                             self.model_combo.setCurrentIndex(i)
                             break
                 else:
@@ -688,8 +756,7 @@ class AIAssistantTab(BaseTab):
             from intellicrack.ui.dialogs.model_manager_dialog import ModelManagerDialog
 
             dialog = ModelManagerDialog(self)
-            if dialog.exec() == dialog.Accepted:
-                # Refresh model list after model manager closes
+            if dialog.exec() == QDialog.DialogCode.Accepted:
                 self.load_available_models()
 
         except Exception as e:

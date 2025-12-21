@@ -40,19 +40,19 @@ except ImportError:
 def create_pe_binary_with_code(code_bytes: bytes, entry_offset: int = 0x1000) -> bytes:
     """Create minimal valid PE binary with injected code at entry point."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     pe_signature = b"PE\x00\x00"
 
     coff_header = bytearray(20)
-    coff_header[0:2] = struct.pack("<H", 0x014C)
+    coff_header[:2] = struct.pack("<H", 0x014C)
     coff_header[2:4] = struct.pack("<H", 1)
     coff_header[16:18] = struct.pack("<H", 224)
     coff_header[18:20] = struct.pack("<H", 0x010B)
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
     optional_header[16:20] = struct.pack("<I", entry_offset)
     optional_header[20:24] = struct.pack("<I", 0x1000)
     optional_header[24:28] = struct.pack("<I", 0x400000)
@@ -63,7 +63,7 @@ def create_pe_binary_with_code(code_bytes: bytes, entry_offset: int = 0x1000) ->
     optional_header[92:96] = struct.pack("<I", 2)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 0x1000)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 0x1000)
@@ -77,7 +77,7 @@ def create_pe_binary_with_code(code_bytes: bytes, entry_offset: int = 0x1000) ->
         pe_binary += bytes(padding_needed)
 
     section_data = bytearray(0x1000)
-    section_data[0:len(code_bytes)] = code_bytes
+    section_data[:len(code_bytes)] = code_bytes
     pe_binary += bytes(section_data)
 
     return bytes(pe_binary)
@@ -125,7 +125,7 @@ class TestLicenseCheckPatternDetection:
         pe_binary = create_pe_binary_with_code(fopen_call_pattern)
 
         assert len(pe_binary) > 0x400
-        assert pe_binary[0:2] == b"MZ"
+        assert pe_binary[:2] == b"MZ"
 
         code_section = pe_binary[0x400:0x1400]
         assert b"\x68\x00\x10\x40" in code_section
@@ -589,7 +589,8 @@ class TestNagScreenPatterns:
 
         code_section = pe_binary[0x400:0x1400]
 
-        found_count = sum(1 for s in nag_strings if s in code_section)
+        found_count = sum(bool(s in code_section)
+                      for s in nag_strings)
         assert found_count >= 3
 
 
@@ -721,7 +722,8 @@ class TestAntiPiracyMessageDetection:
 
         code_section = pe_binary[0x400:0x1400]
 
-        found_count = sum(1 for msg in piracy_strings if msg in code_section)
+        found_count = sum(bool(msg in code_section)
+                      for msg in piracy_strings)
         assert found_count >= 4
 
     def test_detect_license_validation_failure_handler(self) -> None:
@@ -929,12 +931,14 @@ class TestWindowsSystemBinaryPatterns:
 
         pe = pefile.PE(data=test_binary)
 
-        code_section = None
-        for section in pe.sections:
-            if section.Characteristics & 0x20000000:
-                code_section = section
-                break
-
+        code_section = next(
+            (
+                section
+                for section in pe.sections
+                if section.Characteristics & 0x20000000
+            ),
+            None,
+        )
         assert code_section is not None
         assert len(code_section.get_data()) > 0
 
@@ -971,7 +975,7 @@ class TestEdgeCasesAndErrorHandling:
     def test_handle_corrupted_pe_header(self) -> None:
         """Gracefully handle corrupted PE headers."""
         corrupted = bytearray(1024)
-        corrupted[0:2] = b"MZ"
+        corrupted[:2] = b"MZ"
         corrupted[60:64] = struct.pack("<I", 0xFFFFFFFF)
 
         binary = bytes(corrupted)

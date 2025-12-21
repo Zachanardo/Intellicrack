@@ -121,9 +121,7 @@ def suspended_notepad() -> Generator[int, None, None]:
     if not success:
         pytest.skip("Failed to create suspended process")
 
-    pid = process_info.dwProcessId
-    yield pid
-
+    yield process_info.dwProcessId
     try:
         ctypes.windll.kernel32.TerminateProcess(process_info.hProcess, 0)
         ctypes.windll.kernel32.CloseHandle(process_info.hProcess)
@@ -346,8 +344,9 @@ class TestMemoryOperations:
         try:
             if dbg.process_handle:
                 regions = dbg._enumerate_memory_regions()
-                valid_regions = [r for r in regions if r["base"] is not None and r["size"] > 0]
-                if len(valid_regions) > 0:
+                if valid_regions := [
+                    r for r in regions if r["base"] is not None and r["size"] > 0
+                ]:
                     region = valid_regions[0]
                     read_size = min(16, region["size"])
                     data = dbg._read_memory(region["base"], read_size)
@@ -374,7 +373,7 @@ class TestMemoryOperations:
                 assert len(regions) > 0
 
                 valid_regions = [r for r in regions if r["base"] is not None and r["size"] > 0]
-                assert len(valid_regions) > 0, "No valid memory regions found"
+                assert valid_regions, "No valid memory regions found"
 
                 for region in valid_regions:
                     assert "base" in region
@@ -403,7 +402,7 @@ class TestMemoryOperations:
                 regions = dbg._enumerate_memory_regions()
                 valid_regions = [r for r in regions if r["base"] is not None and r["size"] > 0]
                 executable_regions = [r for r in valid_regions if r["executable"]]
-                assert len(executable_regions) > 0, "No executable regions found"
+                assert executable_regions, "No executable regions found"
         finally:
             if dbg.process_handle:
                 try:
@@ -767,7 +766,7 @@ class TestDLLAnalysis:
         license_related = [s for s in strings if any(
             kw in s.lower() for kw in ["license", "trial", "registration"]
         )]
-        assert len(license_related) > 0
+        assert license_related
 
     def test_extract_full_string_handles_null_termination(self, debugger: LicenseDebugger) -> None:
         """String extraction stops at null terminator correctly."""
@@ -1014,8 +1013,7 @@ class TestIntegrationScenarios:
         dbg = LicenseDebugger()
 
         try:
-            attach_result = dbg.attach_to_process(running_notepad)
-            if attach_result:
+            if attach_result := dbg.attach_to_process(running_notepad):
                 assert dbg.process_handle is not None
                 assert dbg.debugging is True
 
@@ -1023,7 +1021,7 @@ class TestIntegrationScenarios:
 
                 regions = dbg._enumerate_memory_regions()
                 valid_regions = [r for r in regions if r["base"] is not None and r["size"] > 0]
-                assert len(valid_regions) > 0
+                assert valid_regions
 
                 dbg.debugging = False
                 if dbg.debug_thread:

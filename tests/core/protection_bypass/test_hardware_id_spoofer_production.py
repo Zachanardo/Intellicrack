@@ -49,8 +49,7 @@ def real_hardware_baseline() -> Dict[str, Any]:
 
     try:
         spoofer = HardwareIDSpoofer()
-        baseline = spoofer.collect_hardware_info()
-        return baseline
+        return spoofer.collect_hardware_info()
     except Exception as e:
         pytest.skip(f"Failed to collect hardware baseline: {e}")
 
@@ -90,10 +89,9 @@ class TestHardwareIDSpooferInitialization:
         """Spoofer initializes with functional WMI connection for hardware queries."""
         assert hardware_spoofer.wmi_connection is not None
 
-        processor_count = 0
-        for _ in hardware_spoofer.wmi_connection.Win32_Processor():
-            processor_count += 1
-
+        processor_count = sum(
+            1 for _ in hardware_spoofer.wmi_connection.Win32_Processor()
+        )
         assert processor_count > 0, "WMI connection must be functional and return processor data"
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
@@ -135,10 +133,10 @@ class TestCPUIDCollection:
         assert isinstance(cpu_info, dict)
         assert len(cpu_info) > 0
 
-        known_vendors = ["GenuineIntel", "AuthenticAMD", "CentaurHauls"]
         if "vendor" in cpu_info:
+            known_vendors = ["GenuineIntel", "AuthenticAMD", "CentaurHauls"]
             assert any(vendor in cpu_info["vendor"] for vendor in known_vendors), \
-                f"CPU vendor must be recognized: {cpu_info.get('vendor')}"
+                    f"CPU vendor must be recognized: {cpu_info.get('vendor')}"
 
     @pytest.mark.skipif(not WINDOWS_ONLY, reason="Windows-specific functionality")
     def test_get_cpu_id_includes_processor_signature(self, hardware_spoofer: HardwareIDSpoofer) -> None:
@@ -429,9 +427,9 @@ class TestMACAddressSpoofing:
         original_mac = adapters[0]["mac"]
         hardware_spoofer.original_values[f"mac_{adapter_name}"] = original_mac
 
-        result = hardware_spoofer.spoof_mac_address(adapter_name=adapter_name, new_mac=custom_mac)
-
-        if result:
+        if result := hardware_spoofer.spoof_mac_address(
+            adapter_name=adapter_name, new_mac=custom_mac
+        ):
             assert f"mac_{adapter_name}" in hardware_spoofer.spoofed_values
             assert hardware_spoofer.spoofed_values[f"mac_{adapter_name}"] == custom_mac
 
@@ -483,9 +481,9 @@ class TestDiskSerialSpoofing:
         drive = "C:\\"
         custom_serial = hardware_spoofer._generate_random_disk_serial()
 
-        result = hardware_spoofer.spoof_disk_serial(drive=drive, new_serial=custom_serial)
-
-        if result:
+        if result := hardware_spoofer.spoof_disk_serial(
+            drive=drive, new_serial=custom_serial
+        ):
             assert f"disk_{drive}" in hardware_spoofer.spoofed_values
 
 
@@ -530,13 +528,9 @@ class TestMotherboardSpoofing:
         product = "B550-GAMING"
         serial = hardware_spoofer._generate_random_serial()
 
-        result = hardware_spoofer.spoof_motherboard_serial(
-            manufacturer=manufacturer,
-            product=product,
-            serial=serial
-        )
-
-        if result:
+        if result := hardware_spoofer.spoof_motherboard_serial(
+            manufacturer=manufacturer, product=product, serial=serial
+        ):
             assert "motherboard_manufacturer" in hardware_spoofer.spoofed_values
             assert "motherboard_product" in hardware_spoofer.spoofed_values
             assert "motherboard_serial" in hardware_spoofer.spoofed_values
@@ -572,9 +566,7 @@ class TestSystemUUIDSpoofing:
         hardware_spoofer.original_values["machine_guid"] = original_guid
 
         custom_uuid = str(uuid.uuid4())
-        result = hardware_spoofer.spoof_system_uuid(new_uuid=custom_uuid)
-
-        if result:
+        if result := hardware_spoofer.spoof_system_uuid(new_uuid=custom_uuid):
             assert "system_uuid" in hardware_spoofer.spoofed_values
             assert hardware_spoofer.spoofed_values["system_uuid"] == custom_uuid
 
@@ -732,7 +724,8 @@ class TestSpoofAllOperation:
 
         results = hardware_spoofer.spoof_all(profile=profile)
 
-        successful_operations = sum(1 for result in results.values() if result)
+        successful_operations = sum(bool(result)
+                                for result in results.values())
 
         if successful_operations > 0:
             assert len(hardware_spoofer.spoofed_values) > 0
@@ -858,9 +851,7 @@ class TestIntegrationScenarios:
         """Spoofing operation changes hardware IDs that can be detected by applications."""
         custom_uuid = str(uuid.uuid4())
 
-        result = hardware_spoofer.spoof_system_uuid(new_uuid=custom_uuid)
-
-        if result:
+        if result := hardware_spoofer.spoof_system_uuid(new_uuid=custom_uuid):
             new_guid = hardware_spoofer._get_machine_guid()
             original_guid = real_hardware_baseline.get("system", {}).get("machine_guid", "")
 

@@ -36,7 +36,7 @@ except ImportError as e:
 
 pytestmark = pytest.mark.skipif(
     not UI_ENHANCEMENT_AVAILABLE,
-    reason=f"UI enhancement module not available: {IMPORT_ERROR if not UI_ENHANCEMENT_AVAILABLE else ''}"
+    reason=f"UI enhancement module not available: {'' if UI_ENHANCEMENT_AVAILABLE else IMPORT_ERROR}"
 )
 
 
@@ -389,8 +389,7 @@ class TestFileExplorerEventHandlers:
         explorer.current_path = tmp_path
         explorer.refresh_tree()
 
-        items = explorer.tree.get_children()
-        if items:
+        if items := explorer.tree.get_children():
             explorer.tree.selection_set(items[0])
             explorer.tree.focus(items[0])
 
@@ -435,8 +434,7 @@ class TestFileExplorerEventHandlers:
         explorer.current_path = tmp_path
         explorer.refresh_tree()
 
-        items = explorer.tree.get_children()
-        if items:
+        if items := explorer.tree.get_children():
             explorer.tree.selection_set(items[0])
 
             with patch.object(explorer.root, 'clipboard_clear') as mock_clear:

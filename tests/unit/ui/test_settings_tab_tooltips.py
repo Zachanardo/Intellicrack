@@ -59,8 +59,7 @@ class TestTooltipFunctionality:
         original_tooltips = WeakKeyDictionary()
 
         for widget in test_widgets:
-            tooltip = widget.toolTip()
-            if tooltip:
+            if tooltip := widget.toolTip():
                 original_tooltips[widget] = tooltip
                 widget.setToolTip("")
             widget.setToolTipDuration(0)
@@ -77,8 +76,7 @@ class TestTooltipFunctionality:
         original_tooltips = WeakKeyDictionary()
 
         for widget in test_widgets:
-            tooltip = widget.toolTip()
-            if tooltip:
+            if tooltip := widget.toolTip():
                 original_tooltips[widget] = tooltip
                 widget.setToolTip("")
 
@@ -100,8 +98,7 @@ class TestTooltipFunctionality:
         for widget in test_list:
             if widget is None:
                 continue
-            tooltip = widget.toolTip()
-            if tooltip:
+            if tooltip := widget.toolTip():
                 original_tooltips[widget] = tooltip
 
         for widget in test_list:
@@ -133,14 +130,10 @@ class TestTooltipFunctionality:
         """Test that tooltips remain consistent across multiple enable/disable cycles."""
         original_tooltips = WeakKeyDictionary()
 
-        original_values = {}
-        for widget in test_widgets[:3]:
-            original_values[id(widget)] = widget.toolTip()
-
-        for cycle in range(3):
+        original_values = {id(widget): widget.toolTip() for widget in test_widgets[:3]}
+        for _ in range(3):
             for widget in test_widgets:
-                tooltip = widget.toolTip()
-                if tooltip:
+                if tooltip := widget.toolTip():
                     original_tooltips[widget] = tooltip
                     widget.setToolTip("")
 
@@ -166,8 +159,7 @@ class TestTooltipFunctionality:
         original_tooltips = WeakKeyDictionary()
 
         for widget in test_widgets:
-            tooltip = widget.toolTip()
-            if tooltip:
+            if tooltip := widget.toolTip():
                 original_tooltips[widget] = tooltip
 
         assert len(original_tooltips) == 3
@@ -190,8 +182,7 @@ class TestTooltipFunctionality:
 
         all_widgets = [container] + buttons
         for widget in all_widgets:
-            tooltip = widget.toolTip()
-            if tooltip:
+            if tooltip := widget.toolTip():
                 original_tooltips[widget] = tooltip
                 widget.setToolTip("")
 

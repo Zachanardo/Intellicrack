@@ -301,8 +301,18 @@ class ChecksumRecalculator:
 
                     offset += 1
 
-            hmac_keys_sorted: list[dict[str, str | int]] = sorted(
-                hmac_keys,
+            hmac_keys_typed: list[dict[str, str | int]] = []
+            for key in hmac_keys:
+                typed_key: dict[str, str | int] = {}
+                for k, v in key.items():
+                    if isinstance(v, (str, int)):
+                        typed_key[k] = v
+                    elif isinstance(v, float):
+                        typed_key[k] = int(v) if v.is_integer() else str(v)
+                hmac_keys_typed.append(typed_key)
+
+            hmac_keys_sorted = sorted(
+                hmac_keys_typed,
                 key=lambda x: float(x["confidence"]) if isinstance(x["confidence"], (int, float)) else 0.0,
                 reverse=True,
             )
@@ -665,7 +675,7 @@ class IntegrityCheckDetector:
 
     def _scan_api_imports(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
         """Scan for integrity check API imports."""
-        checks = []
+        checks: list[IntegrityCheck] = []
 
         if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
             return checks
@@ -693,7 +703,7 @@ class IntegrityCheckDetector:
 
     def _scan_inline_checks(self, pe: pefile.PE, binary_path: str) -> list[IntegrityCheck]:
         """Scan for inline integrity checks."""
-        checks = []
+        checks: list[IntegrityCheck] = []
 
         for section in pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
@@ -701,21 +711,31 @@ class IntegrityCheckDetector:
                 section_name = section.Name.decode().rstrip("\x00")
 
                 for pattern_info in self.check_patterns.values():
-                    pattern = pattern_info["pattern"]
+                    pattern_val = pattern_info.get("pattern")
+                    check_type_val = pattern_info.get("type")
+                    description_val = pattern_info.get("description")
+
+                    if (
+                        not isinstance(pattern_val, bytes)
+                        or not isinstance(check_type_val, IntegrityCheckType)
+                        or not isinstance(description_val, str)
+                    ):
+                        continue
+
                     offset = 0
 
                     while True:
-                        pos = section_data.find(pattern, offset)
+                        pos = section_data.find(pattern_val, offset)
                         if pos == -1:
                             break
 
                         check = IntegrityCheck(
-                            check_type=pattern_info["type"],
+                            check_type=check_type_val,
                             address=section.VirtualAddress + pos,
-                            size=len(pattern),
+                            size=len(pattern_val),
                             expected_value=b"",
                             actual_value=b"",
-                            function_name=pattern_info["description"],
+                            function_name=description_val,
                             bypass_method="patch_inline",
                             confidence=0.7,
                             section_name=section_name,
@@ -780,12 +800,14 @@ class IntegrityCheckDetector:
 
     def _scan_elf_checks(self, binary: lief.Binary, binary_path: str) -> list[IntegrityCheck]:
         """Scan ELF binaries for integrity checks."""
-        checks = []
+        checks: list[IntegrityCheck] = []
 
         try:
             for symbol in binary.imported_functions:
-                func_name = symbol.name
-                if func_name in self.api_signatures:
+                func_name_raw = symbol.name
+                func_name = func_name_raw.decode() if isinstance(func_name_raw, bytes) else str(func_name_raw)
+
+                if isinstance(func_name, str) and func_name in self.api_signatures:
                     check = IntegrityCheck(
                         check_type=self.api_signatures[func_name],
                         address=symbol.value,
@@ -830,11 +852,11 @@ class IntegrityBypassEngine:
     def __init__(self) -> None:
         """Initialize the IntegrityBypassEngine with bypass strategies and Frida session."""
         self.bypass_strategies = self._load_bypass_strategies()
-        self.session = None
-        self.script = None
-        self.hooks_installed = []
+        self.session: frida.core.Session | None = None
+        self.script: frida.core.Script | None = None
+        self.hooks_installed: list[str] = []
         self.checksum_calc = ChecksumRecalculator()
-        self.original_bytes_cache = {}
+        self.original_bytes_cache: dict[int, bytes] = {}
 
     def _load_bypass_strategies(self) -> list[BypassStrategy]:
         """Load bypass strategies for different check types."""
@@ -1441,7 +1463,12 @@ class IntegrityBypassEngine:
             combined_script = self._build_bypass_script(checks)
 
             self.script = self.session.create_script(combined_script)
-            self.script.on("message", self._on_message)
+
+            def message_wrapper(message: Any, data: bytes | None) -> None:
+                if isinstance(message, dict):
+                    self._on_message(message, data)
+
+            self.script.on("message", message_wrapper)
             self.script.load()
 
             logger.info("Installed %d integrity check bypasses", len(checks))
@@ -1453,9 +1480,9 @@ class IntegrityBypassEngine:
 
     def _build_bypass_script(self, checks: list[IntegrityCheck]) -> str:
         """Build combined Frida script for all checks."""
-        script_parts = []
+        script_parts: list[str] = []
 
-        checks_by_type = {}
+        checks_by_type: dict[IntegrityCheckType, list[IntegrityCheck]] = {}
         for check in checks:
             if check.check_type not in checks_by_type:
                 checks_by_type[check.check_type] = []
@@ -1557,16 +1584,16 @@ class IntegrityBypassEngine:
 
     def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle Frida script messages."""
-        if message["type"] == "send":
-            logger.info("[Frida] %s", message["payload"])
-        elif message["type"] == "error":
-            logger.exception("[Frida Error] %s", message["stack"])
+        if message.get("type") == "send":
+            logger.info("[Frida] %s", message.get("payload", ""))
+        elif message.get("type") == "error":
+            logger.exception("[Frida Error] %s", message.get("stack", ""))
 
     def cleanup(self) -> None:
         """Clean up Frida session."""
-        if self.script:
+        if self.script is not None:
             self.script.unload()
-        if self.session:
+        if self.session is not None:
             self.session.detach()
 
 
@@ -1576,17 +1603,18 @@ class BinaryPatcher:
     def __init__(self) -> None:
         """Initialize the BinaryPatcher with checksum calculator."""
         self.checksum_calc = ChecksumRecalculator()
-        self.patch_history = []
+        self.patch_history: list[dict[str, int | bytes | str]] = []
 
     def patch_integrity_checks(
         self,
         binary_path: str,
         checks: list[IntegrityCheck],
-        output_path: str = None,
+        output_path: str | None = None,
     ) -> tuple[bool, ChecksumRecalculation | None]:
         """Patch binary to remove integrity checks and recalculate all checksums."""
-        if output_path is None:
-            output_path = str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
+        final_output_path = (
+            output_path if output_path is not None else str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
+        )
 
         try:
             with open(binary_path, "rb") as f:
@@ -1626,22 +1654,22 @@ class BinaryPatcher:
                             "type": check.check_type.name,
                         })
 
-            with open(output_path, "wb") as f:
+            with open(final_output_path, "wb") as f:
                 f.write(patch_data)
 
-            pe_patched = pefile.PE(output_path)
-            new_checksum = self.checksum_calc.recalculate_pe_checksum(output_path)
+            pe_patched = pefile.PE(final_output_path)
+            new_checksum = self.checksum_calc.recalculate_pe_checksum(final_output_path)
             pe_patched.OPTIONAL_HEADER.CheckSum = new_checksum
 
-            with open(output_path, "wb") as f:
+            with open(final_output_path, "wb") as f:
                 f.write(pe_patched.write())
 
             pe.close()
             pe_patched.close()
 
-            checksums = self.checksum_calc.recalculate_for_patched_binary(binary_path, output_path)
+            checksums = self.checksum_calc.recalculate_for_patched_binary(binary_path, final_output_path)
 
-            logger.info("Binary patched: %s", output_path)
+            logger.info("Binary patched: %s", final_output_path)
             logger.info("Applied %d patches", len(self.patch_history))
             logger.info("Recalculated PE checksum: %s", hex(new_checksum))
             logger.info("Original CRC32: %s", hex(checksums.original_crc32))
@@ -1687,11 +1715,12 @@ class IntegrityCheckDefeatSystem:
         self,
         binary_path: str,
         checksum_locations: list[ChecksumLocation],
-        output_path: str = None,
+        output_path: str | None = None,
     ) -> bool:
         """Patch embedded checksums in binary with recalculated values."""
-        if output_path is None:
-            output_path = str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
+        final_output_path = (
+            output_path if output_path is not None else str(Path(binary_path).with_suffix(f".patched{Path(binary_path).suffix}"))
+        )
 
         try:
             with open(binary_path, "rb") as f:
@@ -1702,10 +1731,10 @@ class IntegrityCheckDefeatSystem:
                     binary_data[location.offset : location.offset + location.size] = location.calculated_value
                     logger.info("Patched %s at offset %s", location.algorithm.name, hex(location.offset))
 
-            with open(output_path, "wb") as f:
+            with open(final_output_path, "wb") as f:
                 f.write(binary_data)
 
-            logger.info("Patched %d embedded checksums: %s", len(checksum_locations), output_path)
+            logger.info("Patched %d embedded checksums: %s", len(checksum_locations), final_output_path)
             return True
 
         except Exception as e:
@@ -1715,13 +1744,13 @@ class IntegrityCheckDefeatSystem:
     def defeat_integrity_checks(
         self,
         binary_path: str,
-        process_name: str = None,
+        process_name: str | None = None,
         patch_binary: bool = False,
     ) -> dict[str, Any]:
         """Complete integrity check defeat workflow."""
         logger.info("Detecting integrity checks: %s", binary_path)
         checks = self.detector.detect_checks(binary_path)
-        result = {
+        result: dict[str, Any] = {
             "success": False,
             "checks_bypassed": 0,
             "binary_patched": False,
@@ -1737,14 +1766,16 @@ class IntegrityCheckDefeatSystem:
         logger.info("Detected %d integrity checks", len(checks))
 
         for check in checks:
-            result["details"].append({
-                "type": check.check_type.name,
-                "address": hex(check.address),
-                "function": check.function_name,
-                "bypass_method": check.bypass_method,
-                "confidence": check.confidence,
-                "section": check.section_name,
-            })
+            details_list = result.get("details")
+            if isinstance(details_list, list):
+                details_list.append({
+                    "type": check.check_type.name,
+                    "address": hex(check.address),
+                    "function": check.function_name,
+                    "bypass_method": check.bypass_method,
+                    "confidence": check.confidence,
+                    "section": check.section_name,
+                })
 
         if process_name:
             logger.info("Applying runtime bypasses: %s", process_name)
@@ -1774,8 +1805,8 @@ class IntegrityCheckDefeatSystem:
                     "original_sha512": checksums.original_sha512,
                     "patched_sha512": checksums.patched_sha512,
                     "pe_checksum": hex(checksums.pe_checksum),
-                    "sections": checksums.sections,
-                    "hmac_keys": checksums.hmac_keys,
+                    "sections": dict(checksums.sections),
+                    "hmac_keys": list(checksums.hmac_keys),
                 }
                 result["success"] = True
 
@@ -1835,9 +1866,17 @@ def main() -> None:
         keys = defeat_system.extract_hmac_keys(args.binary)
         logger.info("=== Found %d Potential HMAC Keys ===", len(keys))
         for key in keys:
-            logger.info("- Offset: %s Size: %d bytes", hex(key["offset"]), key["size"])
-            logger.info("  Key: %s", key["key_hex"])
-            logger.info("  Entropy: %.2f Confidence: %.1f%%", key["entropy"], key["confidence"] * 100)
+            offset_val = key.get("offset")
+            size_val = key.get("size")
+            key_hex_val = key.get("key_hex")
+            entropy_val = key.get("entropy")
+            confidence_val = key.get("confidence")
+            if isinstance(offset_val, int) and isinstance(size_val, int):
+                logger.info("- Offset: %s Size: %d bytes", hex(offset_val), size_val)
+            if isinstance(key_hex_val, str):
+                logger.info("  Key: %s", key_hex_val)
+            if isinstance(entropy_val, (int, float)) and isinstance(confidence_val, (int, float)):
+                logger.info("  Entropy: %.2f Confidence: %.1f%%", float(entropy_val), float(confidence_val) * 100)
         return
 
     if args.script:
@@ -1882,12 +1921,21 @@ def main() -> None:
             logger.info("Patched SHA512:  %s", cs["patched_sha512"])
             logger.info("PE Checksum:    %s", cs["pe_checksum"])
 
-            if cs.get("hmac_keys"):
+            hmac_keys_list = cs.get("hmac_keys")
+            if isinstance(hmac_keys_list, list) and hmac_keys_list:
                 logger.info("=== Extracted HMAC Keys ===")
-                for key in cs["hmac_keys"][:5]:
-                    logger.info(
-                        "- Key at offset %s: %s... (confidence=%.1f%%)", hex(key["offset"]), key["key_hex"][:32], key["confidence"] * 100
-                    )
+                for key in hmac_keys_list[:5]:
+                    if isinstance(key, dict):
+                        offset_val = key.get("offset")
+                        key_hex_val = key.get("key_hex")
+                        confidence_val = key.get("confidence")
+                        if isinstance(offset_val, int) and isinstance(key_hex_val, str) and isinstance(confidence_val, (int, float)):
+                            logger.info(
+                                "- Key at offset %s: %s... (confidence=%.1f%%)",
+                                hex(offset_val),
+                                key_hex_val[:32],
+                                float(confidence_val) * 100,
+                            )
 
 
 if __name__ == "__main__":

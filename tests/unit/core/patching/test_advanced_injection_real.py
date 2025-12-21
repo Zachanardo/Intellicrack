@@ -63,10 +63,10 @@ class TestAdvancedInjectionProduction:
             try:
                 process.terminate()
                 process.wait(timeout=5)
-            except:
+            except Exception:
                 try:
                     process.kill()
-                except:
+                except Exception:
                     pass
         else:
             pytest.skip("Cannot find notepad.exe for testing")
@@ -116,7 +116,7 @@ class TestAdvancedInjectionProduction:
                 if sys.platform == 'win32':
                     kernel32 = ctypes.windll.kernel32
                     kernel32.TerminateProcess(process_info['handle'], 0)
-            except:
+            except Exception:
                 pass
 
     def test_early_bird_apc_queue(self, test_target_process):
@@ -164,21 +164,17 @@ class TestAdvancedInjectionProduction:
 
     def test_process_hollowing_pe_unmapping(self, test_target_process):
         """Test unmapping original PE from target process."""
-        hollower = ProcessHollowing()
-
         # Get process information
         if sys.platform == 'win32':
             # Get process handle
             kernel32 = ctypes.windll.kernel32
             PROCESS_ALL_ACCESS = 0x001F0FFF
 
-            process_handle = kernel32.OpenProcess(
-                PROCESS_ALL_ACCESS,
-                False,
-                test_target_process.pid
-            )
+            hollower = ProcessHollowing()
 
-            if process_handle:
+            if process_handle := kernel32.OpenProcess(
+                PROCESS_ALL_ACCESS, False, test_target_process.pid
+            ):
                 # Test unmapping
                 result = hollower.unmap_process(process_handle)
 

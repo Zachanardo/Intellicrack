@@ -31,8 +31,7 @@ class TestIconManager:
     def temp_icon_dir(self) -> Path:
         """Create temporary icon directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            icon_dir = Path(tmpdir)
-            yield icon_dir
+            yield Path(tmpdir)
 
     @pytest.fixture
     def icon_manager(self, temp_icon_dir: Path) -> IconManager:

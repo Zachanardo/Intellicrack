@@ -58,15 +58,13 @@ class TestProgramDiscoveryEngine:
         engine: ProgramDiscoveryEngine = ProgramDiscoveryEngine()
         programs: list[ProgramInfo] = engine.get_installed_programs()
 
-        assert len(programs) > 0
+        assert programs
 
     @pytest.mark.skipif(not IS_WINDOWS, reason="Windows-only test")
     def test_program_info_has_required_fields(self) -> None:
         """Discovered programs have all required ProgramInfo fields."""
         engine: ProgramDiscoveryEngine = ProgramDiscoveryEngine()
-        programs: list[ProgramInfo] = engine.get_installed_programs()
-
-        if programs:
+        if programs := engine.get_installed_programs():
             program: ProgramInfo = programs[0]
             assert hasattr(program, "name")
             assert hasattr(program, "display_name")
@@ -86,7 +84,7 @@ class TestProgramDiscoveryEngine:
             if "microsoft" in p.publisher.lower() or "microsoft" in p.display_name.lower()
         ]
 
-        assert len(microsoft_programs) > 0
+        assert microsoft_programs
 
     def test_analyze_program_from_path_valid_executable(self, tmp_path: Path) -> None:
         """analyze_program_from_path works with valid executable path."""
@@ -113,7 +111,7 @@ class TestProgramDiscoveryEngine:
         programs: list[ProgramInfo] = engine.discover_programs_from_path(str(tmp_path))
 
         assert isinstance(programs, list)
-        assert len(programs) == 0
+        assert not programs
 
     @pytest.mark.skipif(not IS_WINDOWS, reason="Windows-only test")
     def test_scan_executable_directories_returns_programs(self) -> None:
@@ -160,9 +158,7 @@ class TestProgramAnalysis:
         system32: str = os.path.join(os.environ.get("SYSTEMROOT", "C:\\Windows"), "System32")
 
         if os.path.exists(system32):
-            program_info: ProgramInfo | None = engine.analyze_program_from_path(system32)
-
-            if program_info:
+            if program_info := engine.analyze_program_from_path(system32):
                 assert program_info.install_location == system32
 
     def test_calculate_analysis_priority_high_priority_software(self) -> None:
@@ -200,7 +196,7 @@ class TestWindowsRegistryIntegration:
         programs: list[ProgramInfo] = engine._get_windows_programs()
 
         assert isinstance(programs, list)
-        assert len(programs) > 0
+        assert programs
 
     @pytest.mark.skipif(not IS_WINDOWS, reason="Windows-only test")
     def test_discovered_programs_have_registry_info(self) -> None:
@@ -212,15 +208,13 @@ class TestWindowsRegistryIntegration:
             p for p in programs if p.registry_key is not None
         ]
 
-        assert len(registry_programs) > 0
+        assert registry_programs
 
     @pytest.mark.skipif(not IS_WINDOWS, reason="Windows-only test")
     def test_discovery_method_set_to_windows_registry(self) -> None:
         """Programs from registry have correct discovery_method."""
         engine: ProgramDiscoveryEngine = ProgramDiscoveryEngine()
-        programs: list[ProgramInfo] = engine._get_windows_programs()
-
-        if programs:
+        if programs := engine._get_windows_programs():
             for program in programs[:10]:
                 assert program.discovery_method == "windows_registry"
 
@@ -234,7 +228,7 @@ class TestProgramDiscoveryFiltering:
 
         is_system: bool = engine._is_system_component("Security Update for Windows (KB12345)", "KB12345")
 
-        assert is_system is True
+        assert is_system
 
     def test_is_system_component_detects_redistributables(self) -> None:
         """System component detection identifies redistributables."""
@@ -242,7 +236,7 @@ class TestProgramDiscoveryFiltering:
 
         is_system: bool = engine._is_system_component("Microsoft Visual C++ Redistributable", "vcredist")
 
-        assert is_system is True
+        assert is_system
 
     def test_is_system_component_allows_regular_programs(self) -> None:
         """System component detection allows regular programs."""
@@ -250,7 +244,7 @@ class TestProgramDiscoveryFiltering:
 
         is_system: bool = engine._is_system_component("Adobe Photoshop", "photoshop")
 
-        assert is_system is False
+        assert not is_system
 
 
 class TestLicensingFileDetection:
@@ -329,7 +323,7 @@ class TestProgramDiscoveryEdgeCases:
         engine: ProgramDiscoveryEngine = ProgramDiscoveryEngine()
         programs: list[ProgramInfo] = engine.discover_programs_from_path("/nonexistent/path")
 
-        assert programs == []
+        assert not programs
 
     def test_analyze_program_from_path_directory_without_executables(self, tmp_path: Path) -> None:
         """Analyzing directory without executables works."""
@@ -337,7 +331,5 @@ class TestProgramDiscoveryEdgeCases:
         subdir.mkdir()
 
         engine: ProgramDiscoveryEngine = ProgramDiscoveryEngine()
-        result: ProgramInfo | None = engine.analyze_program_from_path(str(subdir))
-
-        if result:
+        if result := engine.analyze_program_from_path(str(subdir)):
             assert result.executable_paths == [] or len(result.executable_paths) == 0

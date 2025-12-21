@@ -310,9 +310,7 @@ class CertificateValidationDetector:
         if not validation_functions:
             return BypassMethod.NONE
 
-        high_confidence_count = sum(
-            func.confidence >= 0.7 for func in validation_functions
-        )
+        high_confidence_count = sum(func.confidence >= 0.7 for func in validation_functions)
 
         library_types = {get_library_type(lib) for lib in tls_libraries if get_library_type(lib)}
 
@@ -358,9 +356,7 @@ class CertificateValidationDetector:
         if len(validation_functions) > 5:
             return "medium"
 
-        high_confidence_count = sum(
-            func.confidence >= 0.8 for func in validation_functions
-        )
+        high_confidence_count = sum(func.confidence >= 0.8 for func in validation_functions)
 
         if high_confidence_count >= len(validation_functions) * 0.8:
             return "low"

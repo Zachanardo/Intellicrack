@@ -137,7 +137,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         new_stats = self.benchmark_operation(load_new, iterations=50)
 
         # Report results
-        print(f"Legacy JSON Loading:")
+        print("Legacy JSON Loading:")
         print(f"  Mean: {legacy_stats['mean']:.3f}ms")
         print(f"  Min/Max: {legacy_stats['min']:.3f}ms / {legacy_stats['max']:.3f}ms")
         print(f"  StdDev: {legacy_stats['stdev']:.3f}ms")
@@ -183,7 +183,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         new_stats = self.benchmark_operation(new_get, iterations=10000)
 
         # Report results
-        print(f"Legacy Dict Access (10000 operations):")
+        print("Legacy Dict Access (10000 operations):")
         print(f"  Mean: {legacy_stats['mean']:.6f}ms")
         print(f"  Total: {legacy_stats['total']:.3f}ms")
 
@@ -225,7 +225,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         nested_stats = self.benchmark_operation(nested_set, iterations=1000)
 
         # Report results
-        print(f"Simple Set (1000 operations):")
+        print("Simple Set (1000 operations):")
         print(f"  Mean: {simple_stats['mean']:.6f}ms")
         print(f"  Total: {simple_stats['total']:.3f}ms")
 
@@ -265,7 +265,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         large_stats = self.benchmark_operation(large_config.save, iterations=20)
 
         # Report results
-        print(f"Small Config Save (50 operations):")
+        print("Small Config Save (50 operations):")
         print(f"  Mean: {small_stats['mean']:.3f}ms")
 
         print(f"\nMedium Config Save (50 operations):")
@@ -329,16 +329,16 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         )
 
         # Report results
-        print(f"QSettings Write (100 operations):")
+        print("QSettings Write (100 operations):")
         print(f"  Mean: {qsettings_write_stats['mean']:.3f}ms")
 
-        print(f"Central Config Write (100 operations):")
+        print("Central Config Write (100 operations):")
         print(f"  Mean: {config_write_stats['mean']:.3f}ms")
 
         print(f"\nQSettings Read (1000 operations):")
         print(f"  Mean: {qsettings_read_stats['mean']:.6f}ms")
 
-        print(f"Central Config Read (1000 operations):")
+        print("Central Config Read (1000 operations):")
         print(f"  Mean: {config_read_stats['mean']:.6f}ms")
 
         # Central config should be competitive with QSettings
@@ -375,7 +375,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         migration_stats = self.benchmark_operation(run_migration, iterations=10)
 
         # Report results
-        print(f"LLM Config Migration (100 models, 10 iterations):")
+        print("LLM Config Migration (100 models, 10 iterations):")
         print(f"  Mean: {migration_stats['mean']:.3f}ms")
         print(f"  Min/Max: {migration_stats['min']:.3f}ms / {migration_stats['max']:.3f}ms")
 
@@ -413,7 +413,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         individual_stats = self.benchmark_operation(individual_set, iterations=10)
 
         # Report results
-        print(f"Batch Set (100 operations x 10):")
+        print("Batch Set (100 operations x 10):")
         print(f"  Mean: {batch_stats['mean']:.3f}ms")
 
         print(f"\nIndividual Set (100 operations x 10):")
@@ -455,7 +455,7 @@ class ConfigPerformanceBenchmark(unittest.TestCase):
         deep_get_stats = self.benchmark_operation(deep_get, iterations=1000)
 
         # Report results
-        print(f"Deep Set (10 levels, 100 operations):")
+        print("Deep Set (10 levels, 100 operations):")
         print(f"  Mean: {deep_set_stats['mean']:.3f}ms")
 
         print(f"\nDeep Get (10 levels, 1000 operations):")

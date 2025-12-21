@@ -622,7 +622,7 @@ class TestConcurrentAccess:
         for thread in threads:
             thread.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert len(results) == 10
         assert all(r == 1000 for r in results)
 

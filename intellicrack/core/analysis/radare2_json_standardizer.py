@@ -620,16 +620,15 @@ class R2JSONStandardizer:
 
     def _normalize_address(self, address: str | int) -> str:
         """Normalize address to standard hex string format."""
-        if isinstance(address, str):
-            if address.startswith("0x"):
-                return address
-            try:
-                return f"0x{int(address):x}"
-            except ValueError as e:
-                self.logger.exception("Value error in radare2_json_standardizer: %s", e)
-                return "0x0"
-        else:
+        if not isinstance(address, str):
             return f"0x{address:x}"
+        if address.startswith("0x"):
+            return address
+        try:
+            return f"0x{int(address):x}"
+        except ValueError as e:
+            self.logger.exception("Value error in radare2_json_standardizer: %s", e)
+            return "0x0"
 
     def _get_radare2_version(self) -> str:
         """Get radare2 version."""
@@ -1130,54 +1129,22 @@ class R2JSONStandardizer:
     def _count_process_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count process manipulation APIs."""
         process_keywords = ["createprocess", "terminateprocess", "openprocess", "thread"]
-        return sum(
-            any(
-                (
-                    keyword in imp.get("name", "").lower()
-                    for keyword in process_keywords
-                )
-            )
-            for imp in imports
-        )
+        return sum(any((keyword in imp.get("name", "").lower() for keyword in process_keywords)) for imp in imports)
 
     def _count_file_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count file operation APIs."""
         file_keywords = ["createfile", "readfile", "writefile", "deletefile", "copyfile"]
-        return sum(
-            any(
-                (
-                    keyword in imp.get("name", "").lower()
-                    for keyword in file_keywords
-                )
-            )
-            for imp in imports
-        )
+        return sum(any((keyword in imp.get("name", "").lower() for keyword in file_keywords)) for imp in imports)
 
     def _count_network_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count network operation APIs."""
         network_keywords = ["socket", "connect", "send", "recv", "internetopen", "urldownload"]
-        return sum(
-            any(
-                (
-                    keyword in imp.get("name", "").lower()
-                    for keyword in network_keywords
-                )
-            )
-            for imp in imports
-        )
+        return sum(any((keyword in imp.get("name", "").lower() for keyword in network_keywords)) for imp in imports)
 
     def _count_registry_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count registry operation APIs."""
         registry_keywords = ["regopen", "regclose", "regset", "regquery", "regdelete"]
-        return sum(
-            any(
-                (
-                    keyword in imp.get("name", "").lower()
-                    for keyword in registry_keywords
-                )
-            )
-            for imp in imports
-        )
+        return sum(any((keyword in imp.get("name", "").lower() for keyword in registry_keywords)) for imp in imports)
 
     def _count_memory_apis(self, imports: list[dict[str, Any]]) -> int:
         """Count memory operation APIs."""
@@ -1188,15 +1155,7 @@ class R2JSONStandardizer:
             "malloc",
             "heap",
         ]
-        return sum(
-            any(
-                (
-                    keyword in imp.get("name", "").lower()
-                    for keyword in memory_keywords
-                )
-            )
-            for imp in imports
-        )
+        return sum(any((keyword in imp.get("name", "").lower() for keyword in memory_keywords)) for imp in imports)
 
     def _create_histogram(self, values: list[float], bins: int = 10) -> list[int]:
         """Create histogram from values."""
@@ -2526,7 +2485,7 @@ class R2JSONStandardizer:
         measures["component_diversity"] = len(component_types)
         measures["data_density"] = total_entries / max(1, len(components))
 
-        logger.debug("Statistical measures: diversity=%d, density=%.2f", measures['component_diversity'], measures['data_density'])
+        logger.debug("Statistical measures: diversity=%d, density=%.2f", measures["component_diversity"], measures["data_density"])
 
         if components:
             measures["data_density"] = total_entries / len(components)

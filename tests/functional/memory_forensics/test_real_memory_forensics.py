@@ -142,7 +142,7 @@ class TestRealMemoryForensics:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -186,7 +186,7 @@ class TestRealMemoryForensics:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -218,7 +218,7 @@ class TestRealMemoryForensics:
 
         # Check for suspicious process detection
         suspicious_procs = [p for p in processes if p.get('suspicious', False)]
-        assert len(suspicious_procs) > 0, "Must detect suspicious processes"
+        assert suspicious_procs, "Must detect suspicious processes"
 
         # Verify suspicious indicators
         for proc in suspicious_procs:
@@ -270,7 +270,7 @@ class TestRealMemoryForensics:
         suspicious_urls = [url for url in urls if any(
             indicator in url.lower() for indicator in ['crack', 'keygen', 'patch', 'bypass']
         )]
-        assert len(suspicious_urls) > 0, "Must detect suspicious URLs"
+        assert suspicious_urls, "Must detect suspicious URLs"
 
         # Analyze network patterns
         pattern_analysis = network_forensics.analyze_network_patterns(network_result)
@@ -316,7 +316,7 @@ class TestRealMemoryForensics:
         assert isinstance(persistence, list), "Persistence must be a list"
 
         run_keys = [p for p in persistence if 'run' in p.get('key', '').lower()]
-        assert len(run_keys) > 0, "Must find Run key persistence"
+        assert run_keys, "Must find Run key persistence"
 
         for mechanism in persistence:
             assert 'key' in mechanism, "Persistence must have registry key"
@@ -484,7 +484,7 @@ class TestRealMemoryForensics:
             new_processes = diff_result['new_processes']
             assert len(new_processes) > 0, "Must detect new process"
             assert any('crack' in p.get('name', '').lower() for p in new_processes), \
-                   "Must detect crack process"
+                       "Must detect crack process"
 
             # Check modified regions
             modifications = diff_result['modified_regions']
@@ -499,7 +499,7 @@ class TestRealMemoryForensics:
         finally:
             try:
                 os.unlink(modified_dump)
-            except:
+            except Exception:
                 pass
 
     def test_real_live_memory_acquisition(self, app_context):

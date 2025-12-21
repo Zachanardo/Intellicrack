@@ -121,11 +121,7 @@ class TestScriptExecution:
         import tempfile
 
         with tempfile.TemporaryDirectory() as tmpdir:
-            if sys.platform == 'win32':
-                command = ['cmd', '/c', 'cd']
-            else:
-                command = ['pwd']
-
+            command = ['cmd', '/c', 'cd'] if sys.platform == 'win32' else ['pwd']
             session_id = terminal_manager.execute_command(
                 command=command,
                 capture_output=False,

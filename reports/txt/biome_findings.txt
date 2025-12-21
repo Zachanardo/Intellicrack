@@ -1,6 +1,8 @@
 603 findings in intellicrack/scripts/frida/universal_unpacker.js
 
-intellicrack/scripts/frida/universal_unpacker.js:20609:47: lint/correctness/useParseIntRadix 
+intellicrack/scripts/frida/universal_unpacker.js:14226:23: lint/correctness/useParseIntRadix 
+
+intellicrack/scripts/frida/universal_unpacker.js:24043:41: lint/correctness/useParseIntRadix 
 
 intellicrack/scripts/frida/universal_unpacker.js:24577:38: lint/correctness/useParseIntRadix 
 
@@ -24,15 +26,13 @@ intellicrack/scripts/frida/universal_unpacker.js:14064:31: lint/correctness/useP
 
 intellicrack/scripts/frida/universal_unpacker.js:14067:31: lint/correctness/useParseIntRadix 
 
-intellicrack/scripts/frida/universal_unpacker.js:14226:23: lint/correctness/useParseIntRadix 
-
-intellicrack/scripts/frida/universal_unpacker.js:14634:45: lint/style/useNodejsImportProtocol 
+intellicrack/scripts/frida/universal_unpacker.js:24576:37: lint/correctness/useParseIntRadix 
 
 intellicrack/scripts/frida/universal_unpacker.js:14668:41: lint/style/useNodejsImportProtocol 
 
 intellicrack/scripts/frida/universal_unpacker.js:14669:40: lint/style/useNodejsImportProtocol 
 
-intellicrack/scripts/frida/universal_unpacker.js:24576:37: lint/correctness/useParseIntRadix 
+intellicrack/scripts/frida/universal_unpacker.js:20609:47: lint/correctness/useParseIntRadix 
 
 intellicrack/scripts/frida/universal_unpacker.js:20610:47: lint/correctness/useParseIntRadix 
 
@@ -64,7 +64,7 @@ intellicrack/scripts/frida/universal_unpacker.js:21249:31: lint/correctness/useP
 
 intellicrack/scripts/frida/universal_unpacker.js:24026:32: lint/correctness/useParseIntRadix 
 
-intellicrack/scripts/frida/universal_unpacker.js:24043:41: lint/correctness/useParseIntRadix 
+intellicrack/scripts/frida/universal_unpacker.js:14634:45: lint/style/useNodejsImportProtocol 
 
 intellicrack/scripts/frida/universal_unpacker.js:20968:22: lint/correctness/noUnusedVariables 
 
@@ -842,11 +842,41 @@ intellicrack/scripts/frida/universal_unpacker.js:25166:23: lint/correctness/noUn
 
 intellicrack/scripts/frida/universal_unpacker.js:10448:23: lint/correctness/noUnusedVariables 
 
+intellicrack/scripts/frida/universal_unpacker.js:23441:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14486:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14487:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:399:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2996:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:10577:25: lint/style/useSingleVarDeclarator 
+
+intellicrack/scripts/frida/universal_unpacker.js:3003:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2598:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6051:21: lint/style/useBlockStatements 
+
 intellicrack/scripts/frida/universal_unpacker.js:14700:30: lint/style/useTemplate 
 
-intellicrack/scripts/frida/universal_unpacker.js:3788:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:11197:21: lint/style/useSingleVarDeclarator 
 
-intellicrack/scripts/frida/universal_unpacker.js:23126:17: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:11201:21: lint/style/useSingleVarDeclarator 
+
+intellicrack/scripts/frida/universal_unpacker.js:11939:33: lint/suspicious/noAssignInExpressions 
+
+intellicrack/scripts/frida/universal_unpacker.js:11959:33: lint/suspicious/noAssignInExpressions 
+
+intellicrack/scripts/frida/universal_unpacker.js:2599:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14776:30: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:12730:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:12731:21: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:12732:21: lint/style/useBlockStatements 
 
@@ -860,207 +890,43 @@ intellicrack/scripts/frida/universal_unpacker.js:13552:29: lint/style/useTemplat
 
 intellicrack/scripts/frida/universal_unpacker.js:13574:29: lint/style/useTemplate 
 
+intellicrack/scripts/frida/universal_unpacker.js:15359:21: lint/style/useSingleVarDeclarator 
+
 intellicrack/scripts/frida/universal_unpacker.js:13592:29: lint/style/useTemplate 
 
 intellicrack/scripts/frida/universal_unpacker.js:13605:25: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:3789:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:15448:17: lint/style/useSingleVarDeclarator 
 
 intellicrack/scripts/frida/universal_unpacker.js:13619:29: lint/style/useTemplate 
 
-intellicrack/scripts/frida/universal_unpacker.js:23679:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:13650:29: lint/style/useTemplate 
 
-intellicrack/scripts/frida/universal_unpacker.js:3390:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:15456:21: lint/style/useSingleVarDeclarator 
 
-intellicrack/scripts/frida/universal_unpacker.js:3479:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:13697:13: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:23686:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23122:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:24060:38: lint/style/useTemplate 
+intellicrack/scripts/frida/universal_unpacker.js:5782:39: lint/style/useTemplate 
 
 intellicrack/scripts/frida/universal_unpacker.js:13726:13: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:13785:29: lint/style/useTemplate 
 
-intellicrack/scripts/frida/universal_unpacker.js:3790:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:2393:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:13842:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:13849:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:13910:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3791:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:24285:26: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/universal_unpacker.js:3987:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:13956:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:13973:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:24286:27: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/universal_unpacker.js:24286:32: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/universal_unpacker.js:4319:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:374:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:24351:30: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:13999:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:4846:29: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14027:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:23127:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:5780:38: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:5782:39: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:5784:43: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:5788:39: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:5873:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:5912:29: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14034:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23236:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:2598:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14085:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14108:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:14117:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14163:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14176:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3242:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3787:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14186:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23250:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3258:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6048:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3264:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23253:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14187:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6049:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:24977:17: lint/suspicious/noGlobalAssign 
-
-intellicrack/scripts/frida/universal_unpacker.js:24985:17: lint/suspicious/noGlobalAssign 
-
-intellicrack/scripts/frida/universal_unpacker.js:6050:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6051:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6291:29: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6313:29: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:399:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:2599:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23285:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14253:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:608:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:1493:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14276:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:13650:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:13697:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23299:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23300:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:1575:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23301:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14436:29: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:14485:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14486:13: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6709:45: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14487:13: lint/style/useBlockStatements 
-
 intellicrack/scripts/frida/universal_unpacker.js:2600:21: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:2601:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:2602:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23101:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:14776:30: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:15359:21: lint/style/useSingleVarDeclarator 
-
-intellicrack/scripts/frida/universal_unpacker.js:6732:60: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:15448:17: lint/style/useSingleVarDeclarator 
-
-intellicrack/scripts/frida/universal_unpacker.js:15456:21: lint/style/useSingleVarDeclarator 
-
-intellicrack/scripts/frida/universal_unpacker.js:1672:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6765:33: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:23302:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6814:33: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:15566:17: lint/style/useSingleVarDeclarator 
 
 intellicrack/scripts/frida/universal_unpacker.js:15570:17: lint/style/useSingleVarDeclarator 
 
-intellicrack/scripts/frida/universal_unpacker.js:2854:25: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:3011:25: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:6834:29: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:13842:29: lint/style/useTemplate 
 
-intellicrack/scripts/frida/universal_unpacker.js:23310:17: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:608:17: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:12731:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6858:36: lint/style/useTemplate 
-
-intellicrack/scripts/frida/universal_unpacker.js:2892:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:2277:17: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:3014:25: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:16768:41: lint/style/useBlockStatements 
 
@@ -1070,29 +936,85 @@ intellicrack/scripts/frida/universal_unpacker.js:16809:53: lint/style/useBlockSt
 
 intellicrack/scripts/frida/universal_unpacker.js:16848:41: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:2996:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:3040:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:13849:13: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:17369:29: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:17372:29: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:6950:33: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:7915:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:13910:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:13956:29: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:13973:13: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:17454:25: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:2284:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:3178:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:13999:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14027:29: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:14034:13: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:18015:37: lint/suspicious/noAssignInExpressions 
 
-intellicrack/scripts/frida/universal_unpacker.js:7435:37: lint/style/useTemplate 
+intellicrack/scripts/frida/universal_unpacker.js:2602:21: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:7498:37: lint/style/useTemplate 
+intellicrack/scripts/frida/universal_unpacker.js:8922:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2854:25: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:18036:41: lint/style/useBlockStatements 
 
+intellicrack/scripts/frida/universal_unpacker.js:8927:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14085:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14108:29: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:14117:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14163:13: lint/style/useBlockStatements 
+
 intellicrack/scripts/frida/universal_unpacker.js:18037:46: lint/style/useBlockStatements 
 
+intellicrack/scripts/frida/universal_unpacker.js:14176:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:5788:39: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:14186:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14187:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2892:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:9035:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:9113:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:9157:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:24977:17: lint/suspicious/noGlobalAssign 
+
+intellicrack/scripts/frida/universal_unpacker.js:24985:17: lint/suspicious/noGlobalAssign 
+
+intellicrack/scripts/frida/universal_unpacker.js:6291:29: lint/style/useBlockStatements 
+
 intellicrack/scripts/frida/universal_unpacker.js:18101:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6313:29: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2277:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:5873:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:5912:29: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:18102:26: lint/style/useBlockStatements 
 
@@ -1100,19 +1022,23 @@ intellicrack/scripts/frida/universal_unpacker.js:18103:26: lint/style/useBlockSt
 
 intellicrack/scripts/frida/universal_unpacker.js:18104:26: lint/style/useBlockStatements 
 
+intellicrack/scripts/frida/universal_unpacker.js:2284:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6048:21: lint/style/useBlockStatements 
+
 intellicrack/scripts/frida/universal_unpacker.js:18105:21: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:18141:25: lint/style/useBlockStatements 
 
+intellicrack/scripts/frida/universal_unpacker.js:6049:21: lint/style/useBlockStatements 
+
 intellicrack/scripts/frida/universal_unpacker.js:18142:25: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:7915:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:8922:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:8927:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:6709:45: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:18143:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6732:60: lint/style/useTemplate 
 
 intellicrack/scripts/frida/universal_unpacker.js:18144:25: lint/style/useBlockStatements 
 
@@ -1120,11 +1046,75 @@ intellicrack/scripts/frida/universal_unpacker.js:18364:21: lint/style/useBlockSt
 
 intellicrack/scripts/frida/universal_unpacker.js:18365:21: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:9035:13: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:18366:21: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:9113:13: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:18367:21: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:9157:13: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:7498:37: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:3209:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:20097:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3213:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3234:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3242:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3258:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3264:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3287:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3305:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3335:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:1493:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3390:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3479:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:1575:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3787:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3788:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3789:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3790:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:21658:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:21661:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:22035:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3791:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23101:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23122:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23126:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23127:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6765:33: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23236:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23250:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23253:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23285:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23299:21: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:9222:13: lint/style/useBlockStatements 
 
@@ -1136,80 +1126,100 @@ intellicrack/scripts/frida/universal_unpacker.js:9350:68: lint/style/useTemplate
 
 intellicrack/scripts/frida/universal_unpacker.js:9743:17: lint/style/useSingleVarDeclarator 
 
+intellicrack/scripts/frida/universal_unpacker.js:2361:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2390:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6050:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:10078:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:2393:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:374:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:10558:33: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14253:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14276:29: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:23300:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:14436:29: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:23301:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23302:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:23310:17: lint/style/useBlockStatements 
+
 intellicrack/scripts/frida/universal_unpacker.js:23311:17: lint/style/useBlockStatements 
 
 intellicrack/scripts/frida/universal_unpacker.js:23312:17: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:3287:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:10078:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:2358:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3305:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:18366:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3335:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:18367:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3003:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3011:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:20097:17: lint/style/useBlockStatements 
-
 intellicrack/scripts/frida/universal_unpacker.js:23313:17: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:3014:25: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:5784:43: lint/style/useTemplate 
 
-intellicrack/scripts/frida/universal_unpacker.js:3040:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:6814:33: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:23441:17: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:6834:29: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6842:44: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:6858:36: lint/style/useTemplate 
 
 intellicrack/scripts/frida/universal_unpacker.js:23472:21: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:3178:21: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:23679:21: lint/style/useBlockStatements 
 
-intellicrack/scripts/frida/universal_unpacker.js:10558:33: lint/style/useBlockStatements 
+intellicrack/scripts/frida/universal_unpacker.js:23686:25: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:3987:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:4319:21: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:24060:38: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:24285:26: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/universal_unpacker.js:24286:27: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/universal_unpacker.js:2358:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:6950:33: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:24286:32: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/universal_unpacker.js:24351:30: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:1672:17: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:4846:29: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:5780:38: lint/style/useTemplate 
+
+intellicrack/scripts/frida/universal_unpacker.js:14485:13: lint/style/useBlockStatements 
+
+intellicrack/scripts/frida/universal_unpacker.js:7435:37: lint/style/useTemplate 
 
 intellicrack/scripts/frida/universal_unpacker.js:3196:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3209:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:3213:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:10577:25: lint/style/useSingleVarDeclarator 
-
-intellicrack/scripts/frida/universal_unpacker.js:2361:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:11197:21: lint/style/useSingleVarDeclarator 
-
-intellicrack/scripts/frida/universal_unpacker.js:3234:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:11201:21: lint/style/useSingleVarDeclarator 
-
-intellicrack/scripts/frida/universal_unpacker.js:21658:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:21661:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:22035:25: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:11939:33: lint/suspicious/noAssignInExpressions 
-
-intellicrack/scripts/frida/universal_unpacker.js:11959:33: lint/suspicious/noAssignInExpressions 
-
-intellicrack/scripts/frida/universal_unpacker.js:2390:17: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:12730:21: lint/style/useBlockStatements 
-
-intellicrack/scripts/frida/universal_unpacker.js:6842:44: lint/style/useTemplate 
 
 
 111 findings in intellicrack/scripts/frida/cloud_licensing_bypass.js
 
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1229:17: lint/style/useForOf 
+intellicrack/scripts/frida/cloud_licensing_bypass.js:800:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1619:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1683:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1744:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1747:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1810:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1813:13: lint/style/useForOf 
 
@@ -1217,11 +1227,13 @@ intellicrack/scripts/frida/cloud_licensing_bypass.js:467:42: lint/complexity/noE
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:2218:23: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/cloud_licensing_bypass.js:800:9: lint/style/useForOf 
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1680:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:832:17: lint/style/useForOf 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1205:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1229:17: lint/style/useForOf 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1454:9: lint/style/useForOf 
 
@@ -1233,165 +1245,13 @@ intellicrack/scripts/frida/cloud_licensing_bypass.js:1520:13: lint/style/useForO
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1617:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1619:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1680:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1683:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1744:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1747:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1810:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:801:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1617:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1618:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1619:18: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1621:21: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1813:18: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1814:17: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1822:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1962:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1966:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1967:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1969:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:2101:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1680:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:698:29: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1055:29: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1681:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1683:18: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1684:17: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1692:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1744:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1745:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:271:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:279:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:283:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:296:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:299:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:337:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:338:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:365:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:399:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:408:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:413:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:414:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:417:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:470:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:576:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:631:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:640:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:645:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:647:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:691:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:698:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:733:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:800:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1564:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:813:17: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1572:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:833:21: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:851:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:856:30: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:859:37: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:947:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1001:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1006:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1008:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1051:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1055:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1072:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1076:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1077:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1081:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1747:18: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1748:17: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1756:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1567:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1810:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1811:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1126:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1205:14: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1521:17: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1206:13: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1210:17: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1229:22: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1563:29: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1230:21: lint/correctness/noInnerDeclarations 
 
@@ -1423,133 +1283,317 @@ intellicrack/scripts/frida/cloud_licensing_bypass.js:1518:13: lint/correctness/n
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1520:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/cloud_licensing_bypass.js:1521:17: lint/correctness/noInnerDeclarations 
-
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1529:13: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/cloud_licensing_bypass.js:1535:29: lint/correctness/noInnerDeclarations 
 
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1563:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1564:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1567:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1572:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1617:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1618:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1619:18: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1621:21: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1680:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1681:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1683:18: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1684:17: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1692:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1744:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1745:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1747:18: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1748:17: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1756:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1810:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1811:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1813:18: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1814:17: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1822:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1962:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1966:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1967:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1969:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:2101:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:698:29: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1205:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:414:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:417:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:470:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:576:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:631:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:640:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:645:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:647:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:691:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:698:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:733:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:800:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:801:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:813:17: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:271:25: lint/correctness/noInnerDeclarations 
+
 intellicrack/scripts/frida/cloud_licensing_bypass.js:832:22: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:833:21: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:851:13: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:856:30: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:859:37: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:947:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1001:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1006:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:279:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:283:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:296:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:299:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:337:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:338:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:365:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:399:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:408:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:413:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1008:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1051:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1055:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1072:25: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1076:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1077:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1081:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1126:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/cloud_licensing_bypass.js:1055:29: lint/suspicious/noRedeclare 
 
 
 54 findings in intellicrack/scripts/frida/modular_hook_library.js
 
-intellicrack/scripts/frida/modular_hook_library.js:3336:13: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:1914:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:3392:21: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2574:21: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:4214:17: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2444:30: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/modular_hook_library.js:3315:13: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:3330:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:1997:23: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/modular_hook_library.js:3386:21: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2450:30: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/modular_hook_library.js:3531:33: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/modular_hook_library.js:3537:33: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/modular_hook_library.js:4208:17: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2212:50: lint/nursery/noShadow 
+intellicrack/scripts/frida/modular_hook_library.js:2210:50: lint/nursery/noShadow 
 
-intellicrack/scripts/frida/modular_hook_library.js:2392:53: lint/complexity/noArguments 
+intellicrack/scripts/frida/modular_hook_library.js:2386:53: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/modular_hook_library.js:1163:17: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:1633:9: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:1631:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:1690:9: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:1688:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:1779:9: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:1777:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:1810:13: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:1808:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:1916:9: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:1995:23: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/modular_hook_library.js:2026:13: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2024:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2043:13: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2041:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2227:17: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2225:17: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2458:29: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2452:29: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2565:21: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:2559:21: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2580:21: lint/style/useForOf 
+intellicrack/scripts/frida/modular_hook_library.js:3309:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/modular_hook_library.js:2227:22: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2868:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2026:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2024:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2043:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2041:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2044:17: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2042:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2228:21: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2225:22: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2867:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2226:21: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2870:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2861:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2874:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2864:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2891:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2868:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2911:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2885:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2914:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2905:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2922:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2908:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2929:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2916:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:4223:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/modular_hook_library.js:2923:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2043:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:4217:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/modular_hook_library.js:2219:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2041:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2870:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2225:26: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2874:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2864:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2891:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2885:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2914:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2908:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2922:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2916:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:2929:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2923:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/modular_hook_library.js:1757:14: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:1755:14: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:2468:41: lint/correctness/noConstantCondition 
+intellicrack/scripts/frida/modular_hook_library.js:2462:41: lint/correctness/noConstantCondition 
 
-intellicrack/scripts/frida/modular_hook_library.js:2930:59: lint/correctness/noConstAssign 
+intellicrack/scripts/frida/modular_hook_library.js:2924:59: lint/correctness/noConstAssign 
 
-intellicrack/scripts/frida/modular_hook_library.js:3019:64: lint/correctness/noConstAssign 
+intellicrack/scripts/frida/modular_hook_library.js:3013:64: lint/correctness/noConstAssign 
 
-intellicrack/scripts/frida/modular_hook_library.js:3151:26: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:3145:26: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:3281:22: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:3275:22: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:4009:22: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:4003:22: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:4108:22: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:4102:22: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:4133:22: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:4127:22: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:4176:18: lint/style/useConst 
+intellicrack/scripts/frida/modular_hook_library.js:4170:18: lint/style/useConst 
 
-intellicrack/scripts/frida/modular_hook_library.js:2227:26: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/modular_hook_library.js:2217:22: lint/suspicious/noRedeclare 
 
 
 50 findings in intellicrack/scripts/frida/drm_bypass.js
 
-intellicrack/scripts/frida/drm_bypass.js:1548:9: lint/style/useForOf 
+intellicrack/scripts/frida/drm_bypass.js:1925:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2279:17: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2428:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2431:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2593:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2755:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2831:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:3225:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:3228:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:4090:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:4148:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:4199:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2151:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2156:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:2270:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/drm_bypass.js:1205:30: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:1388:30: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:1814:36: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:1966:42: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:2836:30: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:2994:33: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:3463:23: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/drm_bypass.js:381:34: lint/nursery/noShadow 
 
 intellicrack/scripts/frida/drm_bypass.js:2683:34: lint/nursery/noShadow 
 
-intellicrack/scripts/frida/drm_bypass.js:2853:34: lint/nursery/noShadow 
+intellicrack/scripts/frida/drm_bypass.js:2852:34: lint/nursery/noShadow 
 
 intellicrack/scripts/frida/drm_bypass.js:209:9: lint/style/useForOf 
 
@@ -1587,6 +1631,8 @@ intellicrack/scripts/frida/drm_bypass.js:1373:9: lint/style/useForOf
 
 intellicrack/scripts/frida/drm_bypass.js:1376:13: lint/style/useForOf 
 
+intellicrack/scripts/frida/drm_bypass.js:1548:9: lint/style/useForOf 
+
 intellicrack/scripts/frida/drm_bypass.js:1555:17: lint/style/useForOf 
 
 intellicrack/scripts/frida/drm_bypass.js:1682:9: lint/style/useForOf 
@@ -1595,60 +1641,12 @@ intellicrack/scripts/frida/drm_bypass.js:1765:9: lint/style/useForOf
 
 intellicrack/scripts/frida/drm_bypass.js:2115:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/drm_bypass.js:2151:9: lint/style/useForOf 
+intellicrack/scripts/frida/drm_bypass.js:3984:14: lint/style/useConst 
 
-intellicrack/scripts/frida/drm_bypass.js:2156:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2270:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2279:17: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2428:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2431:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2593:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2756:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:2832:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:3226:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:3229:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:4091:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:4149:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:4200:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:1205:30: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:1388:30: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:1814:36: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:1966:42: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:2837:30: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:2995:33: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:3464:23: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/drm_bypass.js:381:34: lint/nursery/noShadow 
-
-intellicrack/scripts/frida/drm_bypass.js:1925:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/drm_bypass.js:3478:18: lint/style/useConst 
-
-intellicrack/scripts/frida/drm_bypass.js:3985:14: lint/style/useConst 
+intellicrack/scripts/frida/drm_bypass.js:3477:18: lint/style/useConst 
 
 
 35 findings in intellicrack/scripts/frida/websocket_interceptor.js
-
-intellicrack/scripts/frida/websocket_interceptor.js:3604:71: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/websocket_interceptor.js:2062:39: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -1668,6 +1666,8 @@ intellicrack/scripts/frida/websocket_interceptor.js:1219:54: lint/complexity/noA
 
 intellicrack/scripts/frida/websocket_interceptor.js:3592:64: lint/complexity/noArguments 
 
+intellicrack/scripts/frida/websocket_interceptor.js:3604:71: lint/complexity/noArguments 
+
 intellicrack/scripts/frida/websocket_interceptor.js:3623:65: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/websocket_interceptor.js:3641:64: lint/complexity/noArguments 
@@ -1686,37 +1686,37 @@ intellicrack/scripts/frida/websocket_interceptor.js:943:9: lint/style/useForOf
 
 intellicrack/scripts/frida/websocket_interceptor.js:984:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/websocket_interceptor.js:4642:17: lint/suspicious/noGlobalAssign 
-
-intellicrack/scripts/frida/websocket_interceptor.js:2365:22: lint/style/useConst 
-
-intellicrack/scripts/frida/websocket_interceptor.js:751:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/websocket_interceptor.js:767:33: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/websocket_interceptor.js:2658:22: lint/style/useConst 
-
 intellicrack/scripts/frida/websocket_interceptor.js:3899:18: lint/style/useConst 
-
-intellicrack/scripts/frida/websocket_interceptor.js:3903:26: lint/style/useConst 
-
-intellicrack/scripts/frida/websocket_interceptor.js:3991:18: lint/style/useConst 
-
-intellicrack/scripts/frida/websocket_interceptor.js:4725:14: lint/style/useConst 
-
-intellicrack/scripts/frida/websocket_interceptor.js:4751:18: lint/style/useConst 
-
-intellicrack/scripts/frida/websocket_interceptor.js:4497:13: lint/suspicious/noGlobalAssign 
 
 intellicrack/scripts/frida/websocket_interceptor.js:767:37: lint/suspicious/noRedeclare 
 
 intellicrack/scripts/frida/websocket_interceptor.js:1081:17: lint/suspicious/noGlobalAssign 
 
+intellicrack/scripts/frida/websocket_interceptor.js:3903:26: lint/style/useConst 
+
 intellicrack/scripts/frida/websocket_interceptor.js:2257:17: lint/suspicious/noGlobalAssign 
 
 intellicrack/scripts/frida/websocket_interceptor.js:2491:17: lint/suspicious/noGlobalAssign 
 
+intellicrack/scripts/frida/websocket_interceptor.js:751:33: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/websocket_interceptor.js:4497:13: lint/suspicious/noGlobalAssign 
+
+intellicrack/scripts/frida/websocket_interceptor.js:767:33: lint/correctness/noInnerDeclarations 
+
 intellicrack/scripts/frida/websocket_interceptor.js:3591:17: lint/suspicious/noGlobalAssign 
+
+intellicrack/scripts/frida/websocket_interceptor.js:2658:22: lint/style/useConst 
+
+intellicrack/scripts/frida/websocket_interceptor.js:4642:17: lint/suspicious/noGlobalAssign 
+
+intellicrack/scripts/frida/websocket_interceptor.js:3991:18: lint/style/useConst 
+
+intellicrack/scripts/frida/websocket_interceptor.js:2365:22: lint/style/useConst 
+
+intellicrack/scripts/frida/websocket_interceptor.js:4725:14: lint/style/useConst 
+
+intellicrack/scripts/frida/websocket_interceptor.js:4751:18: lint/style/useConst 
 
 
 33 findings in intellicrack/scripts/frida/anti_debugger.js
@@ -1725,74 +1725,92 @@ intellicrack/scripts/frida/anti_debugger.js:617:9: lint/style/useForOf
 
 intellicrack/scripts/frida/anti_debugger.js:452:38: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/anti_debugger.js:1894:34: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/anti_debugger.js:1892:34: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/anti_debugger.js:2683:23: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/anti_debugger.js:2681:23: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/anti_debugger.js:1766:38: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2000:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2482:21: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:1853:52: lint/correctness/noPrecisionLoss 
 
-intellicrack/scripts/frida/anti_debugger.js:2585:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:2347:21: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:2586:21: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:2372:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:2655:20: lint/correctness/noInvalidUseBeforeDeclaration 
+intellicrack/scripts/frida/anti_debugger.js:2395:21: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:1738:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2444:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:1817:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2480:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:1890:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2584:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:1944:22: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2654:13: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/anti_debugger.js:1947:30: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2371:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2002:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2372:21: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2095:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2393:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2140:22: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2395:25: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2257:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2479:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2664:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2480:21: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2702:18: lint/style/useConst 
+intellicrack/scripts/frida/anti_debugger.js:2583:22: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:1855:52: lint/correctness/noPrecisionLoss 
+intellicrack/scripts/frida/anti_debugger.js:2584:21: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/anti_debugger.js:2349:21: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:2653:20: lint/correctness/noInvalidUseBeforeDeclaration 
 
-intellicrack/scripts/frida/anti_debugger.js:2374:17: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:1736:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2397:21: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:1764:38: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2481:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:1815:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2446:17: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:1888:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2482:17: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:1942:22: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2586:17: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:1945:30: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2656:13: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/anti_debugger.js:2093:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2373:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:2138:22: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2374:21: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:2255:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2395:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:2662:18: lint/style/useConst 
 
-intellicrack/scripts/frida/anti_debugger.js:2397:25: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/anti_debugger.js:2700:18: lint/style/useConst 
 
 
 33 findings in intellicrack/scripts/frida/dynamic_script_generator.js
 
-intellicrack/scripts/frida/dynamic_script_generator.js:754:25: lint/style/useForOf 
+intellicrack/scripts/frida/dynamic_script_generator.js:670:46: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:2026:13: lint/style/useForOf 
+intellicrack/scripts/frida/dynamic_script_generator.js:894:30: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:5293:59: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:698:17: lint/nursery/noShadow 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:518:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:524:21: lint/style/useForOf 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:638:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:703:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:706:17: lint/style/useForOf 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:718:25: lint/style/useForOf 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:754:25: lint/style/useForOf 
 
 intellicrack/scripts/frida/dynamic_script_generator.js:768:17: lint/style/useForOf 
 
@@ -1802,21 +1820,11 @@ intellicrack/scripts/frida/dynamic_script_generator.js:997:25: lint/style/useFor
 
 intellicrack/scripts/frida/dynamic_script_generator.js:1055:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:698:17: lint/nursery/noShadow 
-
 intellicrack/scripts/frida/dynamic_script_generator.js:1149:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/dynamic_script_generator.js:1302:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:518:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:524:21: lint/style/useForOf 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:638:13: lint/style/useForOf 
-
 intellicrack/scripts/frida/dynamic_script_generator.js:1469:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:5295:59: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/dynamic_script_generator.js:1551:13: lint/style/useForOf 
 
@@ -1826,23 +1834,15 @@ intellicrack/scripts/frida/dynamic_script_generator.js:1673:9: lint/style/useFor
 
 intellicrack/scripts/frida/dynamic_script_generator.js:1695:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:1742:9: lint/style/useForOf 
+intellicrack/scripts/frida/dynamic_script_generator.js:1740:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:1770:9: lint/style/useForOf 
+intellicrack/scripts/frida/dynamic_script_generator.js:1768:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:2017:9: lint/style/useForOf 
+intellicrack/scripts/frida/dynamic_script_generator.js:2015:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:670:46: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/dynamic_script_generator.js:2024:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:894:30: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:703:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:706:17: lint/style/useForOf 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:718:25: lint/style/useForOf 
-
-intellicrack/scripts/frida/dynamic_script_generator.js:1124:14: lint/style/useConst 
+intellicrack/scripts/frida/dynamic_script_generator.js:971:30: lint/suspicious/noRedeclare 
 
 intellicrack/scripts/frida/dynamic_script_generator.js:704:17: lint/correctness/noInnerDeclarations 
 
@@ -1850,18 +1850,32 @@ intellicrack/scripts/frida/dynamic_script_generator.js:959:30: lint/correctness/
 
 intellicrack/scripts/frida/dynamic_script_generator.js:971:26: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:971:30: lint/suspicious/noRedeclare 
-
 intellicrack/scripts/frida/dynamic_script_generator.js:952:22: lint/style/useConst 
 
-intellicrack/scripts/frida/dynamic_script_generator.js:1886:14: lint/style/useConst 
+intellicrack/scripts/frida/dynamic_script_generator.js:1884:14: lint/style/useConst 
+
+intellicrack/scripts/frida/dynamic_script_generator.js:1124:14: lint/style/useConst 
 
 
 33 findings in intellicrack/scripts/frida/realtime_protection_detector.js
 
-intellicrack/scripts/frida/realtime_protection_detector.js:4840:9: lint/style/useForOf 
+intellicrack/scripts/frida/realtime_protection_detector.js:1860:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:1564:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:1636:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:1949:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:2132:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:2357:13: lint/style/useForOf 
 
 intellicrack/scripts/frida/realtime_protection_detector.js:2390:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:4840:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:5168:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/realtime_protection_detector.js:9597:13: lint/style/useForOf 
 
@@ -1881,33 +1895,7 @@ intellicrack/scripts/frida/realtime_protection_detector.js:1168:9: lint/style/us
 
 intellicrack/scripts/frida/realtime_protection_detector.js:1549:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/realtime_protection_detector.js:1564:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:1636:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:1860:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:1949:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:2132:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:2357:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:5168:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:4401:20: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:4403:14: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:4403:19: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:4403:29: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:4403:34: lint/suspicious/noControlCharactersInRegex 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:8725:21: lint/suspicious/useIterableCallbackReturn 
-
-intellicrack/scripts/frida/realtime_protection_detector.js:1642:18: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/realtime_protection_detector.js:4401:15: lint/suspicious/noControlCharactersInRegex 
 
 intellicrack/scripts/frida/realtime_protection_detector.js:2390:22: lint/suspicious/noRedeclare 
 
@@ -1923,20 +1911,26 @@ intellicrack/scripts/frida/realtime_protection_detector.js:2390:18: lint/correct
 
 intellicrack/scripts/frida/realtime_protection_detector.js:2391:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/realtime_protection_detector.js:4401:15: lint/suspicious/noControlCharactersInRegex 
+intellicrack/scripts/frida/realtime_protection_detector.js:4401:20: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:4403:14: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:4403:19: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:4403:29: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:4403:34: lint/suspicious/noControlCharactersInRegex 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:8725:21: lint/suspicious/useIterableCallbackReturn 
+
+intellicrack/scripts/frida/realtime_protection_detector.js:1642:18: lint/suspicious/noRedeclare 
 
 
 32 findings in intellicrack/scripts/frida/tpm_emulator.js
 
-intellicrack/scripts/frida/tpm_emulator.js:726:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/tpm_emulator.js:840:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/tpm_emulator.js:931:9: lint/style/useForOf 
+intellicrack/scripts/frida/tpm_emulator.js:1445:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/tpm_emulator.js:1427:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/tpm_emulator.js:1445:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/tpm_emulator.js:1647:9: lint/style/useForOf 
 
@@ -1944,33 +1938,11 @@ intellicrack/scripts/frida/tpm_emulator.js:608:9: lint/style/useForOf
 
 intellicrack/scripts/frida/tpm_emulator.js:717:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/tpm_emulator.js:955:14: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/tpm_emulator.js:726:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/tpm_emulator.js:637:14: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/tpm_emulator.js:840:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/tpm_emulator.js:656:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:717:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:726:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:758:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:773:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:789:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:931:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:940:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:948:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:1640:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:1647:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/tpm_emulator.js:1654:14: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/tpm_emulator.js:931:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/tpm_emulator.js:656:18: lint/suspicious/noRedeclare 
 
@@ -1992,10 +1964,44 @@ intellicrack/scripts/frida/tpm_emulator.js:1654:18: lint/suspicious/noRedeclare
 
 intellicrack/scripts/frida/tpm_emulator.js:594:14: lint/style/useConst 
 
+intellicrack/scripts/frida/tpm_emulator.js:637:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:656:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:717:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:726:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:758:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:773:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:789:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:931:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:940:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:948:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:955:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:1640:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:1647:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/tpm_emulator.js:1654:14: lint/correctness/noInnerDeclarations 
+
 
 28 findings in intellicrack/scripts/frida/behavioral_pattern_analyzer.js
 
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3388:28: lint/nursery/noShadow 
+
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2387:13: lint/nursery/noShadow 
+
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3351:40: lint/nursery/noShadow 
+
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3356:27: lint/nursery/noShadow 
 
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:707:9: lint/style/useForOf 
 
@@ -2021,11 +2027,7 @@ intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2186:9: lint/style/use
 
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2591:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2387:13: lint/nursery/noShadow 
-
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3351:40: lint/nursery/noShadow 
-
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:3356:27: lint/nursery/noShadow 
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2305:18: lint/suspicious/noRedeclare 
 
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:779:14: lint/correctness/noInnerDeclarations 
 
@@ -2035,42 +2037,26 @@ intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2290:13: lint/correctn
 
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:462:25: lint/correctness/noInvalidUseBeforeDeclaration 
 
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:790:18: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2305:18: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:1901:14: lint/style/useConst 
-
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2140:14: lint/style/useConst 
-
-intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2288:14: lint/style/useConst 
 
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2249:14: lint/style/useConst 
 
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2288:14: lint/style/useConst 
+
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2373:14: lint/style/useConst 
 
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:790:18: lint/suspicious/noRedeclare 
+
 intellicrack/scripts/frida/behavioral_pattern_analyzer.js:2503:14: lint/style/useConst 
+
+intellicrack/scripts/frida/behavioral_pattern_analyzer.js:1901:14: lint/style/useConst 
 
 
 28 findings in intellicrack/scripts/frida/central_orchestrator.js
 
+intellicrack/scripts/frida/central_orchestrator.js:2472:54: lint/nursery/noShadow 
+
 intellicrack/scripts/frida/central_orchestrator.js:2552:60: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:1852:38: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2587:46: lint/nursery/noShadow 
-
-intellicrack/scripts/frida/central_orchestrator.js:2070:37: lint/style/useForOf 
-
-intellicrack/scripts/frida/central_orchestrator.js:2376:38: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2406:59: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2431:50: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2511:34: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2177:50: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/central_orchestrator.js:2702:34: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2078,11 +2064,31 @@ intellicrack/scripts/frida/central_orchestrator.js:2739:74: lint/complexity/noEx
 
 intellicrack/scripts/frida/central_orchestrator.js:3031:38: lint/complexity/noExcessiveCognitiveComplexity 
 
+intellicrack/scripts/frida/central_orchestrator.js:2070:37: lint/style/useForOf 
+
+intellicrack/scripts/frida/central_orchestrator.js:1415:38: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:2587:46: lint/nursery/noShadow 
+
+intellicrack/scripts/frida/central_orchestrator.js:1558:43: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:1852:38: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:2054:34: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:2177:50: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:2376:38: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:2406:59: lint/complexity/noExcessiveCognitiveComplexity 
+
 intellicrack/scripts/frida/central_orchestrator.js:3336:47: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/central_orchestrator.js:3401:36: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/central_orchestrator.js:3595:38: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/central_orchestrator.js:2431:50: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/central_orchestrator.js:3706:39: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2092,17 +2098,7 @@ intellicrack/scripts/frida/central_orchestrator.js:2412:54: lint/nursery/noShado
 
 intellicrack/scripts/frida/central_orchestrator.js:2422:54: lint/nursery/noShadow 
 
-intellicrack/scripts/frida/central_orchestrator.js:2472:54: lint/nursery/noShadow 
-
-intellicrack/scripts/frida/central_orchestrator.js:1415:38: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:1558:43: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2054:34: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/central_orchestrator.js:2412:50: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/central_orchestrator.js:2422:54: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/central_orchestrator.js:2511:34: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/central_orchestrator.js:2385:38: lint/correctness/noInnerDeclarations 
 
@@ -2110,10 +2106,18 @@ intellicrack/scripts/frida/central_orchestrator.js:2422:50: lint/correctness/noI
 
 intellicrack/scripts/frida/central_orchestrator.js:2518:34: lint/correctness/noInnerDeclarations 
 
+intellicrack/scripts/frida/central_orchestrator.js:2412:50: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/central_orchestrator.js:2422:54: lint/suspicious/noRedeclare 
+
 
 27 findings in intellicrack/scripts/frida/ntp_blocker.js
 
-intellicrack/scripts/frida/ntp_blocker.js:754:50: lint/complexity/noArguments 
+intellicrack/scripts/frida/ntp_blocker.js:2257:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/ntp_blocker.js:2698:29: lint/style/useForOf 
+
+intellicrack/scripts/frida/ntp_blocker.js:2275:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/ntp_blocker.js:1783:26: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2121,7 +2125,11 @@ intellicrack/scripts/frida/ntp_blocker.js:2142:19: lint/complexity/noExcessiveCo
 
 intellicrack/scripts/frida/ntp_blocker.js:729:52: lint/complexity/noArguments 
 
+intellicrack/scripts/frida/ntp_blocker.js:754:50: lint/complexity/noArguments 
+
 intellicrack/scripts/frida/ntp_blocker.js:2158:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/ntp_blocker.js:2660:33: lint/style/useForOf 
 
 intellicrack/scripts/frida/ntp_blocker.js:2199:9: lint/style/useForOf 
 
@@ -2129,17 +2137,7 @@ intellicrack/scripts/frida/ntp_blocker.js:2200:13: lint/style/useForOf
 
 intellicrack/scripts/frida/ntp_blocker.js:2221:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/ntp_blocker.js:2257:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/ntp_blocker.js:2275:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/ntp_blocker.js:2660:33: lint/style/useForOf 
-
-intellicrack/scripts/frida/ntp_blocker.js:2698:29: lint/style/useForOf 
-
-intellicrack/scripts/frida/ntp_blocker.js:2239:45: lint/suspicious/noAssignInExpressions 
-
-intellicrack/scripts/frida/ntp_blocker.js:709:22: lint/style/useConst 
+intellicrack/scripts/frida/ntp_blocker.js:2275:14: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/ntp_blocker.js:1670:29: lint/correctness/noInnerDeclarations 
 
@@ -2149,11 +2147,9 @@ intellicrack/scripts/frida/ntp_blocker.js:2158:14: lint/correctness/noInnerDecla
 
 intellicrack/scripts/frida/ntp_blocker.js:2199:14: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/ntp_blocker.js:739:22: lint/style/useConst 
+intellicrack/scripts/frida/ntp_blocker.js:2239:45: lint/suspicious/noAssignInExpressions 
 
 intellicrack/scripts/frida/ntp_blocker.js:2257:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/ntp_blocker.js:2275:14: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/ntp_blocker.js:736:13: lint/suspicious/noGlobalAssign 
 
@@ -2167,28 +2163,26 @@ intellicrack/scripts/frida/ntp_blocker.js:628:34: lint/style/useConst
 
 intellicrack/scripts/frida/ntp_blocker.js:676:30: lint/style/useConst 
 
+intellicrack/scripts/frida/ntp_blocker.js:709:22: lint/style/useConst 
+
+intellicrack/scripts/frida/ntp_blocker.js:739:22: lint/style/useConst 
+
 
 26 findings in intellicrack/scripts/frida/certificate_pinning_bypass.js
 
-intellicrack/scripts/frida/certificate_pinning_bypass.js:5912:46: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/certificate_pinning_bypass.js:7349:81: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/certificate_pinning_bypass.js:7504:94: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/certificate_pinning_bypass.js:7830:56: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/certificate_pinning_bypass.js:8019:56: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/certificate_pinning_bypass.js:8296:83: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/certificate_pinning_bypass.js:8433:91: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/certificate_pinning_bypass.js:8625:56: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/certificate_pinning_bypass.js:6227:33: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/certificate_pinning_bypass.js:6234:93: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/certificate_pinning_bypass.js:6516:75: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/certificate_pinning_bypass.js:6804:56: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/certificate_pinning_bypass.js:7200:52: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/certificate_pinning_bypass.js:7349:81: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/certificate_pinning_bypass.js:470:32: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2212,11 +2206,17 @@ intellicrack/scripts/frida/certificate_pinning_bypass.js:5011:89: lint/complexit
 
 intellicrack/scripts/frida/certificate_pinning_bypass.js:5541:33: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/certificate_pinning_bypass.js:7504:94: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/certificate_pinning_bypass.js:5912:46: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/certificate_pinning_bypass.js:7830:56: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/certificate_pinning_bypass.js:6227:33: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/certificate_pinning_bypass.js:8019:56: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/certificate_pinning_bypass.js:6234:93: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/certificate_pinning_bypass.js:6516:75: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/certificate_pinning_bypass.js:6804:56: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/certificate_pinning_bypass.js:7200:52: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/certificate_pinning_bypass.js:2303:13: lint/correctness/noInnerDeclarations 
 
@@ -2225,9 +2225,13 @@ intellicrack/scripts/frida/certificate_pinning_bypass.js:2306:13: lint/correctne
 
 24 findings in intellicrack/scripts/frida/bypass_success_tracker.js
 
+intellicrack/scripts/frida/bypass_success_tracker.js:364:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/bypass_success_tracker.js:233:9: lint/style/useForOf 
+
 intellicrack/scripts/frida/bypass_success_tracker.js:345:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/bypass_success_tracker.js:364:9: lint/style/useForOf 
+intellicrack/scripts/frida/bypass_success_tracker.js:320:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/bypass_success_tracker.js:390:9: lint/style/useForOf 
 
@@ -2249,44 +2253,38 @@ intellicrack/scripts/frida/bypass_success_tracker.js:1534:9: lint/style/useForOf
 
 intellicrack/scripts/frida/bypass_success_tracker.js:2056:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/bypass_success_tracker.js:233:9: lint/style/useForOf 
-
 intellicrack/scripts/frida/bypass_success_tracker.js:294:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/bypass_success_tracker.js:320:9: lint/style/useForOf 
+intellicrack/scripts/frida/bypass_success_tracker.js:1534:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/bypass_success_tracker.js:1536:13: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/bypass_success_tracker.js:1534:18: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/bypass_success_tracker.js:1512:17: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/bypass_success_tracker.js:1535:17: lint/suspicious/noRedeclare 
 
 intellicrack/scripts/frida/bypass_success_tracker.js:1536:17: lint/suspicious/noRedeclare 
 
+intellicrack/scripts/frida/bypass_success_tracker.js:1535:13: lint/correctness/noInnerDeclarations 
+
 intellicrack/scripts/frida/bypass_success_tracker.js:1508:18: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/bypass_success_tracker.js:1509:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/bypass_success_tracker.js:1512:17: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/bypass_success_tracker.js:1534:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/bypass_success_tracker.js:1535:13: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/bypass_success_tracker.js:1536:13: lint/correctness/noInnerDeclarations 
-
 
 24 findings in intellicrack/scripts/frida/memory_dumper.js
 
-intellicrack/scripts/frida/memory_dumper.js:5620:13: lint/style/useForOf 
+intellicrack/scripts/frida/memory_dumper.js:12734:55: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/memory_dumper.js:1234:27: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/memory_dumper.js:1912:23: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/memory_dumper.js:2190:23: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/memory_dumper.js:3649:34: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/memory_dumper.js:5732:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/memory_dumper.js:8600:25: lint/style/useForOf 
-
-intellicrack/scripts/frida/memory_dumper.js:8635:25: lint/style/useForOf 
-
-intellicrack/scripts/frida/memory_dumper.js:9332:25: lint/style/useForOf 
 
 intellicrack/scripts/frida/memory_dumper.js:3738:24: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2302,7 +2300,7 @@ intellicrack/scripts/frida/memory_dumper.js:9866:32: lint/complexity/noExcessive
 
 intellicrack/scripts/frida/memory_dumper.js:9946:56: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/memory_dumper.js:12734:55: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/memory_dumper.js:9332:25: lint/style/useForOf 
 
 intellicrack/scripts/frida/memory_dumper.js:13103:46: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2314,20 +2312,24 @@ intellicrack/scripts/frida/memory_dumper.js:4576:13: lint/style/useForOf
 
 intellicrack/scripts/frida/memory_dumper.js:5372:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/memory_dumper.js:1234:27: lint/complexity/noExcessiveCognitiveComplexity 
-
-intellicrack/scripts/frida/memory_dumper.js:1912:23: lint/complexity/noExcessiveCognitiveComplexity 
-
 intellicrack/scripts/frida/memory_dumper.js:5545:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/memory_dumper.js:2190:23: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/memory_dumper.js:5620:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/memory_dumper.js:5732:13: lint/style/useForOf 
+
+intellicrack/scripts/frida/memory_dumper.js:8600:25: lint/style/useForOf 
+
+intellicrack/scripts/frida/memory_dumper.js:8635:25: lint/style/useForOf 
 
 intellicrack/scripts/frida/memory_dumper.js:9179:25: lint/nursery/noFloatingPromises 
 
 
 20 findings in intellicrack/scripts/frida/http3_quic_interceptor.js
 
-intellicrack/scripts/frida/http3_quic_interceptor.js:2371:73: lint/complexity/noExcessiveCognitiveComplexity 
+intellicrack/scripts/frida/http3_quic_interceptor.js:2377:33: lint/style/useForOf 
+
+intellicrack/scripts/frida/http3_quic_interceptor.js:2889:29: lint/style/useForOf 
 
 intellicrack/scripts/frida/http3_quic_interceptor.js:356:31: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2336,6 +2338,8 @@ intellicrack/scripts/frida/http3_quic_interceptor.js:597:27: lint/complexity/noE
 intellicrack/scripts/frida/http3_quic_interceptor.js:667:31: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/http3_quic_interceptor.js:714:26: lint/complexity/noExcessiveCognitiveComplexity 
+
+intellicrack/scripts/frida/http3_quic_interceptor.js:2371:73: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/http3_quic_interceptor.js:2448:40: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2349,11 +2353,13 @@ intellicrack/scripts/frida/http3_quic_interceptor.js:860:13: lint/style/useForOf
 
 intellicrack/scripts/frida/http3_quic_interceptor.js:1473:17: lint/style/useForOf 
 
-intellicrack/scripts/frida/http3_quic_interceptor.js:2377:33: lint/style/useForOf 
-
 intellicrack/scripts/frida/http3_quic_interceptor.js:2453:33: lint/style/useForOf 
 
-intellicrack/scripts/frida/http3_quic_interceptor.js:2889:29: lint/style/useForOf 
+intellicrack/scripts/frida/http3_quic_interceptor.js:2305:22: lint/style/useConst 
+
+intellicrack/scripts/frida/http3_quic_interceptor.js:2275:26: lint/style/useConst 
+
+intellicrack/scripts/frida/http3_quic_interceptor.js:2064:65: lint/correctness/noInvalidUseBeforeDeclaration 
 
 intellicrack/scripts/frida/http3_quic_interceptor.js:2083:25: lint/correctness/noInnerDeclarations 
 
@@ -2361,38 +2367,22 @@ intellicrack/scripts/frida/http3_quic_interceptor.js:2329:33: lint/suspicious/no
 
 intellicrack/scripts/frida/http3_quic_interceptor.js:2063:38: lint/correctness/noInvalidUseBeforeDeclaration 
 
-intellicrack/scripts/frida/http3_quic_interceptor.js:2064:65: lint/correctness/noInvalidUseBeforeDeclaration 
-
-intellicrack/scripts/frida/http3_quic_interceptor.js:2275:26: lint/style/useConst 
-
-intellicrack/scripts/frida/http3_quic_interceptor.js:2305:22: lint/style/useConst 
-
 
 15 findings in intellicrack/dashboard/static/js/graph_visualization.js
-
-intellicrack/dashboard/static/js/graph_visualization.js:345:30: lint/correctness/noUnusedFunctionParameters 
-
-intellicrack/dashboard/static/js/graph_visualization.js:644:29: lint/correctness/noUnusedFunctionParameters 
 
 intellicrack/dashboard/static/js/graph_visualization.js:11:7: lint/correctness/noUnusedVariables 
 
 intellicrack/dashboard/static/js/graph_visualization.js:453:15: lint/style/useExplicitLengthCheck 
 
-intellicrack/dashboard/static/js/graph_visualization.js:462:27: lint/style/useTemplate 
+intellicrack/dashboard/static/js/graph_visualization.js:345:30: lint/correctness/noUnusedFunctionParameters 
 
-intellicrack/dashboard/static/js/graph_visualization.js:414:17: lint/style/useBlockStatements 
-
-intellicrack/dashboard/static/js/graph_visualization.js:444:9: lint/style/useBlockStatements 
-
-intellicrack/dashboard/static/js/graph_visualization.js:445:16: lint/style/useTemplate 
+intellicrack/dashboard/static/js/graph_visualization.js:644:29: lint/correctness/noUnusedFunctionParameters 
 
 intellicrack/dashboard/static/js/graph_visualization.js:461:28: lint/style/useTemplate 
 
+intellicrack/dashboard/static/js/graph_visualization.js:462:27: lint/style/useTemplate 
+
 intellicrack/dashboard/static/js/graph_visualization.js:507:28: lint/style/useTemplate 
-
-intellicrack/dashboard/static/js/graph_visualization.js:818:13: lint/style/useBlockStatements 
-
-intellicrack/dashboard/static/js/graph_visualization.js:590:23: lint/suspicious/useIterableCallbackReturn 
 
 intellicrack/dashboard/static/js/graph_visualization.js:508:27: lint/style/useTemplate 
 
@@ -2400,69 +2390,79 @@ intellicrack/dashboard/static/js/graph_visualization.js:109:29: lint/style/useTe
 
 intellicrack/dashboard/static/js/graph_visualization.js:405:17: lint/style/useBlockStatements 
 
+intellicrack/dashboard/static/js/graph_visualization.js:414:17: lint/style/useBlockStatements 
+
+intellicrack/dashboard/static/js/graph_visualization.js:444:9: lint/style/useBlockStatements 
+
+intellicrack/dashboard/static/js/graph_visualization.js:445:16: lint/style/useTemplate 
+
+intellicrack/dashboard/static/js/graph_visualization.js:590:23: lint/suspicious/useIterableCallbackReturn 
+
+intellicrack/dashboard/static/js/graph_visualization.js:818:13: lint/style/useBlockStatements 
+
 
 15 findings in intellicrack/scripts/frida/enhanced_hardware_spoofer.js
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:331:29: lint/style/useForOf 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:232:33: lint/style/useForOf 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:386:29: lint/style/useForOf 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:389:29: lint/style/useForOf 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:229:33: lint/style/useForOf 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:334:29: lint/style/useForOf 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:353:33: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:230:29: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:331:34: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:360:37: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:229:38: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:361:37: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:357:37: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:362:37: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:358:37: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:388:29: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:359:37: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:385:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:386:34: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:330:29: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:389:34: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/enhanced_hardware_spoofer.js:119:13: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:140:33: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:144:29: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/enhanced_hardware_spoofer.js:227:29: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:232:38: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:333:29: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:334:34: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/enhanced_hardware_spoofer.js:356:33: lint/correctness/noInnerDeclarations 
 
 
 14 findings in intellicrack/scripts/frida/kernel_mode_bypass.js
 
-intellicrack/scripts/frida/kernel_mode_bypass.js:2448:45: lint/complexity/noArguments 
-
-intellicrack/scripts/frida/kernel_mode_bypass.js:2445:53: lint/complexity/noArguments 
+intellicrack/scripts/frida/kernel_mode_bypass.js:2063:74: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/kernel_mode_bypass.js:1628:23: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/kernel_mode_bypass.js:2063:74: lint/complexity/noArguments 
+intellicrack/scripts/frida/kernel_mode_bypass.js:2445:53: lint/complexity/noArguments 
+
+intellicrack/scripts/frida/kernel_mode_bypass.js:2448:45: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/kernel_mode_bypass.js:305:29: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/kernel_mode_bypass.js:1658:18: lint/style/useConst 
-
-intellicrack/scripts/frida/kernel_mode_bypass.js:1696:18: lint/style/useConst 
-
-intellicrack/scripts/frida/kernel_mode_bypass.js:311:33: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/kernel_mode_bypass.js:2312:44: lint/correctness/noPrecisionLoss 
-
-intellicrack/scripts/frida/kernel_mode_bypass.js:2368:39: lint/correctness/noPrecisionLoss 
-
-intellicrack/scripts/frida/kernel_mode_bypass.js:312:33: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/kernel_mode_bypass.js:306:29: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/kernel_mode_bypass.js:311:29: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/kernel_mode_bypass.js:312:29: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/kernel_mode_bypass.js:306:29: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/kernel_mode_bypass.js:2312:44: lint/correctness/noPrecisionLoss 
+
+intellicrack/scripts/frida/kernel_mode_bypass.js:2368:39: lint/correctness/noPrecisionLoss 
+
+intellicrack/scripts/frida/kernel_mode_bypass.js:311:33: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/kernel_mode_bypass.js:312:33: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/kernel_mode_bypass.js:1658:18: lint/style/useConst 
+
+intellicrack/scripts/frida/kernel_mode_bypass.js:1696:18: lint/style/useConst 
 
 
 14 findings in intellicrack/scripts/frida/keygen_generator.js
@@ -2498,50 +2498,50 @@ intellicrack/scripts/frida/keygen_generator.js:5736:45: lint/security/noGlobalEv
 
 13 findings in intellicrack/scripts/frida/code_integrity_bypass.js
 
-intellicrack/scripts/frida/code_integrity_bypass.js:537:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/code_integrity_bypass.js:405:9: lint/style/useForOf 
-
 intellicrack/scripts/frida/code_integrity_bypass.js:231:33: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/code_integrity_bypass.js:1545:23: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/code_integrity_bypass.js:1233:29: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/code_integrity_bypass.js:405:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/code_integrity_bypass.js:1263:29: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/code_integrity_bypass.js:1556:18: lint/style/useConst 
+intellicrack/scripts/frida/code_integrity_bypass.js:537:13: lint/style/useForOf 
 
 intellicrack/scripts/frida/code_integrity_bypass.js:1243:29: lint/correctness/noInnerDeclarations 
 
+intellicrack/scripts/frida/code_integrity_bypass.js:1263:29: lint/correctness/noInnerDeclarations 
+
 intellicrack/scripts/frida/code_integrity_bypass.js:1243:33: lint/suspicious/noRedeclare 
 
-intellicrack/scripts/frida/code_integrity_bypass.js:1253:29: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/code_integrity_bypass.js:1556:18: lint/style/useConst 
 
-intellicrack/scripts/frida/code_integrity_bypass.js:1263:33: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/code_integrity_bypass.js:1253:29: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/code_integrity_bypass.js:1590:18: lint/style/useConst 
 
 intellicrack/scripts/frida/code_integrity_bypass.js:1253:33: lint/suspicious/noRedeclare 
 
+intellicrack/scripts/frida/code_integrity_bypass.js:1263:33: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/code_integrity_bypass.js:1233:29: lint/correctness/noInnerDeclarations 
+
 
 13 findings in intellicrack/scripts/frida/wasm_protection_bypass.js
 
-intellicrack/scripts/frida/wasm_protection_bypass.js:1158:45: lint/complexity/noArguments 
-
-intellicrack/scripts/frida/wasm_protection_bypass.js:1192:45: lint/complexity/noArguments 
-
-intellicrack/scripts/frida/wasm_protection_bypass.js:1967:45: lint/complexity/noArguments 
-
-intellicrack/scripts/frida/wasm_protection_bypass.js:1352:42: lint/complexity/noArguments 
+intellicrack/scripts/frida/wasm_protection_bypass.js:1101:66: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/wasm_protection_bypass.js:509:22: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/wasm_protection_bypass.js:1101:66: lint/complexity/noArguments 
-
 intellicrack/scripts/frida/wasm_protection_bypass.js:1130:46: lint/complexity/noArguments 
 
+intellicrack/scripts/frida/wasm_protection_bypass.js:1158:45: lint/complexity/noArguments 
+
 intellicrack/scripts/frida/wasm_protection_bypass.js:1187:52: lint/complexity/noArguments 
+
+intellicrack/scripts/frida/wasm_protection_bypass.js:1192:45: lint/complexity/noArguments 
+
+intellicrack/scripts/frida/wasm_protection_bypass.js:1352:42: lint/complexity/noArguments 
+
+intellicrack/scripts/frida/wasm_protection_bypass.js:1967:45: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/wasm_protection_bypass.js:1474:13: lint/suspicious/noGlobalAssign 
 
@@ -2556,15 +2556,11 @@ intellicrack/scripts/frida/wasm_protection_bypass.js:1952:30: lint/security/noGl
 
 12 findings in intellicrack/scripts/frida/hook_effectiveness_monitor.js
 
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:3519:9: lint/style/useForOf 
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:3511:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:1761:13: lint/style/useForOf 
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:1740:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:1748:13: lint/style/useForOf 
-
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:307:21: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:1761:22: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:1753:13: lint/style/useForOf 
 
 intellicrack/scripts/frida/hook_effectiveness_monitor.js:276:17: lint/correctness/noInnerDeclarations 
 
@@ -2574,35 +2570,41 @@ intellicrack/scripts/frida/hook_effectiveness_monitor.js:300:17: lint/correctnes
 
 intellicrack/scripts/frida/hook_effectiveness_monitor.js:307:17: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:1748:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:1740:18: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/hook_effectiveness_monitor.js:1761:18: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:1753:18: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/hook_effectiveness_monitor.js:283:21: lint/suspicious/noRedeclare 
 
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:307:21: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/hook_effectiveness_monitor.js:1753:22: lint/suspicious/noRedeclare 
+
 
 9 findings in intellicrack/scripts/frida/ml_license_detector.js
-
-intellicrack/scripts/frida/ml_license_detector.js:1080:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/ml_license_detector.js:297:13: lint/style/useForOf 
 
 intellicrack/scripts/frida/ml_license_detector.js:340:13: lint/style/useForOf 
 
-intellicrack/scripts/frida/ml_license_detector.js:479:14: lint/style/useConst 
-
-intellicrack/scripts/frida/ml_license_detector.js:494:14: lint/style/useConst 
+intellicrack/scripts/frida/ml_license_detector.js:1080:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/ml_license_detector.js:512:14: lint/style/useConst 
 
 intellicrack/scripts/frida/ml_license_detector.js:1060:14: lint/style/useConst 
 
-intellicrack/scripts/frida/ml_license_detector.js:1108:14: lint/style/useConst 
+intellicrack/scripts/frida/ml_license_detector.js:479:14: lint/style/useConst 
 
-intellicrack/scripts/frida/ml_license_detector.js:1443:18: lint/style/useConst 
+intellicrack/scripts/frida/ml_license_detector.js:1107:14: lint/style/useConst 
+
+intellicrack/scripts/frida/ml_license_detector.js:1442:18: lint/style/useConst 
+
+intellicrack/scripts/frida/ml_license_detector.js:494:14: lint/style/useConst 
 
 
 9 findings in intellicrack/scripts/frida/obfuscation_detector.js
+
+intellicrack/scripts/frida/obfuscation_detector.js:3086:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/obfuscation_detector.js:1661:57: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2614,34 +2616,32 @@ intellicrack/scripts/frida/obfuscation_detector.js:1811:27: lint/nursery/noShado
 
 intellicrack/scripts/frida/obfuscation_detector.js:128:17: lint/style/useForOf 
 
-intellicrack/scripts/frida/obfuscation_detector.js:3086:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/obfuscation_detector.js:133:22: lint/style/useConst 
+intellicrack/scripts/frida/obfuscation_detector.js:1750:13: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/obfuscation_detector.js:3091:14: lint/style/useConst 
 
-intellicrack/scripts/frida/obfuscation_detector.js:1750:13: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/obfuscation_detector.js:133:22: lint/style/useConst 
 
 
 9 findings in intellicrack/scripts/frida/time_bomb_defuser.js
 
+intellicrack/scripts/frida/time_bomb_defuser.js:1494:25: lint/style/useForOf 
+
+intellicrack/scripts/frida/time_bomb_defuser.js:1218:61: lint/complexity/noArguments 
+
+intellicrack/scripts/frida/time_bomb_defuser.js:1758:17: lint/nursery/noShadow 
+
 intellicrack/scripts/frida/time_bomb_defuser.js:914:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/time_bomb_defuser.js:1220:61: lint/complexity/noArguments 
+intellicrack/scripts/frida/time_bomb_defuser.js:1156:25: lint/complexity/noArguments 
 
-intellicrack/scripts/frida/time_bomb_defuser.js:1499:25: lint/style/useForOf 
+intellicrack/scripts/frida/time_bomb_defuser.js:1159:49: lint/complexity/noArguments 
 
-intellicrack/scripts/frida/time_bomb_defuser.js:1763:17: lint/nursery/noShadow 
-
-intellicrack/scripts/frida/time_bomb_defuser.js:1158:25: lint/complexity/noArguments 
-
-intellicrack/scripts/frida/time_bomb_defuser.js:1161:49: lint/complexity/noArguments 
-
-intellicrack/scripts/frida/time_bomb_defuser.js:1186:61: lint/complexity/noArguments 
+intellicrack/scripts/frida/time_bomb_defuser.js:1184:61: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/time_bomb_defuser.js:374:14: lint/style/useConst 
 
-intellicrack/scripts/frida/time_bomb_defuser.js:1843:18: lint/style/useConst 
+intellicrack/scripts/frida/time_bomb_defuser.js:1838:18: lint/style/useConst 
 
 
 9 findings in intellicrack/scripts/frida/virtualization_bypass.js
@@ -2654,37 +2654,41 @@ intellicrack/scripts/frida/virtualization_bypass.js:3595:23: lint/complexity/noE
 
 intellicrack/scripts/frida/virtualization_bypass.js:4241:30: lint/complexity/noExcessiveCognitiveComplexity 
 
+intellicrack/scripts/frida/virtualization_bypass.js:3642:18: lint/style/useConst 
+
+intellicrack/scripts/frida/virtualization_bypass.js:3858:22: lint/style/useConst 
+
 intellicrack/scripts/frida/virtualization_bypass.js:4451:34: lint/style/useConst 
 
 intellicrack/scripts/frida/virtualization_bypass.js:4766:34: lint/style/useConst 
 
 intellicrack/scripts/frida/virtualization_bypass.js:3616:18: lint/style/useConst 
 
-intellicrack/scripts/frida/virtualization_bypass.js:3642:18: lint/style/useConst 
-
-intellicrack/scripts/frida/virtualization_bypass.js:3858:22: lint/style/useConst 
-
 
 8 findings in intellicrack/scripts/frida/kernel_bridge.js
 
-intellicrack/scripts/frida/kernel_bridge.js:2025:43: lint/nursery/noShadow 
+intellicrack/scripts/frida/kernel_bridge.js:2024:43: lint/nursery/noShadow 
 
-intellicrack/scripts/frida/kernel_bridge.js:1085:14: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/kernel_bridge.js:2007:25: lint/correctness/noInnerDeclarations 
-
-intellicrack/scripts/frida/kernel_bridge.js:705:18: lint/suspicious/noRedeclare 
-
-intellicrack/scripts/frida/kernel_bridge.js:1085:18: lint/suspicious/noRedeclare 
+intellicrack/scripts/frida/kernel_bridge.js:2006:25: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/kernel_bridge.js:701:14: lint/correctness/noInnerDeclarations 
 
 intellicrack/scripts/frida/kernel_bridge.js:705:14: lint/correctness/noInnerDeclarations 
 
-intellicrack/scripts/frida/kernel_bridge.js:1080:14: lint/correctness/noInnerDeclarations 
+intellicrack/scripts/frida/kernel_bridge.js:1079:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/kernel_bridge.js:1084:14: lint/correctness/noInnerDeclarations 
+
+intellicrack/scripts/frida/kernel_bridge.js:705:18: lint/suspicious/noRedeclare 
+
+intellicrack/scripts/frida/kernel_bridge.js:1084:18: lint/suspicious/noRedeclare 
 
 
 8 findings in intellicrack/scripts/frida/memory_integrity_bypass.js
+
+intellicrack/scripts/frida/memory_integrity_bypass.js:2029:17: lint/style/useForOf 
+
+intellicrack/scripts/frida/memory_integrity_bypass.js:2393:17: lint/style/useForOf 
 
 intellicrack/scripts/frida/memory_integrity_bypass.js:1532:23: lint/complexity/noExcessiveCognitiveComplexity 
 
@@ -2692,26 +2696,22 @@ intellicrack/scripts/frida/memory_integrity_bypass.js:2863:70: lint/complexity/n
 
 intellicrack/scripts/frida/memory_integrity_bypass.js:462:9: lint/style/useForOf 
 
-intellicrack/scripts/frida/memory_integrity_bypass.js:2029:17: lint/style/useForOf 
-
-intellicrack/scripts/frida/memory_integrity_bypass.js:2393:17: lint/style/useForOf 
-
-intellicrack/scripts/frida/memory_integrity_bypass.js:1561:18: lint/style/useConst 
+intellicrack/scripts/frida/memory_integrity_bypass.js:1600:18: lint/style/useConst 
 
 intellicrack/scripts/frida/memory_integrity_bypass.js:2441:14: lint/style/useConst 
 
-intellicrack/scripts/frida/memory_integrity_bypass.js:1600:18: lint/style/useConst 
+intellicrack/scripts/frida/memory_integrity_bypass.js:1561:18: lint/style/useConst 
 
 
 7 findings in intellicrack/scripts/frida/dotnet_bypass_suite.js
 
-intellicrack/scripts/frida/dotnet_bypass_suite.js:1179:9: lint/style/useForOf 
-
-intellicrack/scripts/frida/dotnet_bypass_suite.js:1201:9: lint/style/useForOf 
-
 intellicrack/scripts/frida/dotnet_bypass_suite.js:1325:25: lint/style/useForOf 
 
 intellicrack/scripts/frida/dotnet_bypass_suite.js:1415:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/dotnet_bypass_suite.js:1179:9: lint/style/useForOf 
+
+intellicrack/scripts/frida/dotnet_bypass_suite.js:1201:9: lint/style/useForOf 
 
 intellicrack/scripts/frida/dotnet_bypass_suite.js:1130:17: lint/correctness/noInnerDeclarations 
 
@@ -2739,26 +2739,26 @@ intellicrack/scripts/frida/registry_monitor.js:2260:14: lint/complexity/noExcess
 
 5 findings in intellicrack/scripts/frida/binary_patcher_advanced.js
 
+intellicrack/scripts/frida/binary_patcher_advanced.js:396:13: lint/style/useForOf 
+
 intellicrack/scripts/frida/binary_patcher_advanced.js:492:30: lint/complexity/noExcessiveCognitiveComplexity 
 
 intellicrack/scripts/frida/binary_patcher_advanced.js:2248:40: lint/complexity/noExcessiveCognitiveComplexity 
 
-intellicrack/scripts/frida/binary_patcher_advanced.js:396:13: lint/style/useForOf 
+intellicrack/scripts/frida/binary_patcher_advanced.js:1116:37: lint/security/noGlobalEval 
 
 intellicrack/scripts/frida/binary_patcher_advanced.js:1125:37: lint/security/noGlobalEval 
-
-intellicrack/scripts/frida/binary_patcher_advanced.js:1116:37: lint/security/noGlobalEval 
 
 
 4 findings in intellicrack/scripts/frida/blockchain_license_bypass.js
 
-intellicrack/scripts/frida/blockchain_license_bypass.js:636:63: lint/complexity/noArguments 
+intellicrack/scripts/frida/blockchain_license_bypass.js:215:54: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/blockchain_license_bypass.js:494:34: lint/complexity/noArguments 
 
 intellicrack/scripts/frida/blockchain_license_bypass.js:553:62: lint/complexity/noArguments 
 
-intellicrack/scripts/frida/blockchain_license_bypass.js:215:54: lint/complexity/noArguments 
+intellicrack/scripts/frida/blockchain_license_bypass.js:636:63: lint/complexity/noArguments 
 
 
 2 findings in intellicrack/scripts/frida/hwid_spoofer.js

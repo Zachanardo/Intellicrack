@@ -462,8 +462,7 @@ if __name__ == "__main__":
     logger.info("Ground truth directory: %s", manager.ground_truth_dir)
     logger.info("Integrity directory: %s", manager.integrity_dir)
 
-    binaries = manager.list_acquired_binaries()
-    if binaries:
+    if binaries := manager.list_acquired_binaries():
         logger.info("Acquired binaries: %d", len(binaries))
         for binary in binaries:
             hash_preview = binary.get("sha256", "")[:16] if binary.get("sha256") else "N/A"

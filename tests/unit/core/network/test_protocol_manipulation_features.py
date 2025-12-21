@@ -61,7 +61,7 @@ Content-Type: application/json\r
             }
         }
 
-        for scenario_name, scenario_data in manipulation_scenarios.items():
+        for scenario_data in manipulation_scenarios.values():
             manipulated_request = self._manipulate_http_request(
                 original_request,
                 scenario_data['modifications']
@@ -149,7 +149,7 @@ Content-Type: application/json\r
             }
         }
 
-        for scenario_name, scenario_data in payload_generation_scenarios.items():
+        for scenario_data in payload_generation_scenarios.values():
             generated_payloads = self._generate_protocol_payloads(
                 scenario_data['target_protocol'],
                 scenario_data['vulnerability_type'],
@@ -255,7 +255,7 @@ Content-Type: application/json\r
             }
         }
 
-        for scenario_name, scenario_data in packet_crafting_scenarios.items():
+        for scenario_data in packet_crafting_scenarios.values():
             crafted_packets = self._craft_protocol_packets(scenario_data)
 
             # Must generate multiple packets for attack volume
@@ -395,7 +395,7 @@ Content-Type: application/json\r
             }
         }
 
-        for scenario_name, scenario_data in encoding_scenarios.items():
+        for scenario_data in encoding_scenarios.values():
             encoded_payload = self._apply_protocol_encoding(
                 scenario_data['original_payload'],
                 scenario_data['encoding_type']
@@ -415,7 +415,7 @@ Content-Type: application/json\r
     def _apply_protocol_encoding(self, payload: str, encoding_type: str) -> str:
         """Expected protocol encoding functionality"""
         encoding_functions = {
-            'URL_ENCODE': lambda p: ''.join(f'%{ord(c):02X}' if not c.isalnum() else c for c in p),
+            'URL_ENCODE': lambda p: ''.join(c if c.isalnum() else f'%{ord(c):02X}' for c in p),
             'BASE64': lambda p: base64.b64encode(p.encode()).decode(),
             'HEX_ENCODE': lambda p: p.encode().hex(),
             'UNICODE': lambda p: p.encode('unicode_escape').decode()
@@ -466,7 +466,7 @@ class TestAdvancedProtocolManipulation:
             }
         }
 
-        for chain_name, chain_data in attack_chain_scenarios.items():
+        for chain_data in attack_chain_scenarios.values():
             execution_result = self._execute_protocol_chain(chain_data['stages'])
 
             # Must successfully execute all stages

@@ -211,7 +211,7 @@ class TestAutomatedPatchAgent(IntellicrackTestBase):
         assert actual_bytes == patch_point.target_bytes
 
         # Verify backup was created
-        backup_path = self.protected_binary + '.backup'
+        backup_path = f'{self.protected_binary}.backup'
         assert os.path.exists(backup_path)
 
     def test_rop_chain_generation(self):
@@ -271,7 +271,10 @@ class TestAutomatedPatchAgent(IntellicrackTestBase):
 
         # Verify position-independent code characteristics
         # Should not contain absolute addresses in first segment
-        assert not any(addr in process_shell for addr in [b'\x00\x40\x00\x00', b'\x00\x10\x00\x00'])
+        assert all(
+            addr not in process_shell
+            for addr in [b'\x00\x40\x00\x00', b'\x00\x10\x00\x00']
+        )
 
     def test_keygen_generation_comprehensive(self):
         """Test comprehensive keygen generation for various algorithms."""
@@ -726,7 +729,7 @@ class TestAutomatedPatchAgentPerformance(IntellicrackTestBase):
         agent = AutomatedPatchAgent()
 
         # Perform multiple analyses
-        for i in range(20):
+        for _ in range(20):
             result = agent.analyze_binary(self.pe_binary)
             assert result is not None
 

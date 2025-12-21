@@ -430,9 +430,7 @@ class TestRealBinaryPatching:
         patcher = Radare2AdvancedPatcher(str(test_copy))
 
         try:
-            success = patcher.open(write_mode=True)
-
-            if success:
+            if success := patcher.open(write_mode=True):
                 assert patcher.architecture in [Architecture.X86, Architecture.X86_64]
                 assert patcher.bits in [32, 64]
         finally:

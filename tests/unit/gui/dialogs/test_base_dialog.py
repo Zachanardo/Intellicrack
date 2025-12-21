@@ -79,8 +79,7 @@ class TestBaseDialog:
 
     def test_dialog_layout_real_widget_hierarchy(self, qtbot):
         """Test REAL dialog layout and widget hierarchy."""
-        layout = self.dialog.layout()
-        if layout:
+        if layout := self.dialog.layout():
             assert layout.parent() == self.dialog
             assert layout.count() >= 0
 
@@ -106,7 +105,7 @@ class TestBaseDialog:
         new_size = self.dialog.size()
 
         # Should be able to resize unless fixed size
-        if not self.dialog.minimumSize() == self.dialog.maximumSize():
+        if self.dialog.minimumSize() != self.dialog.maximumSize():
             assert new_size != original_size or new_size.width() == 400
 
     def test_dialog_window_flags_real_behavior(self, qtbot):

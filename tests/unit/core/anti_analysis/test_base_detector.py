@@ -105,7 +105,7 @@ class TestBaseDetector(unittest.TestCase):
                     self.assertIsInstance(process, dict)
                     self.assertIn("name", process)
                     self.assertIn("pid", process)
-        except (subprocess.CalledProcessError, OSError, PermissionError) as e:
+        except (subprocess.CalledProcessError, OSError) as e:
             # Handle potential subprocess errors gracefully
             self.assertIsInstance(e, (subprocess.CalledProcessError, OSError, PermissionError))
 
@@ -137,12 +137,10 @@ class TestBaseDetector(unittest.TestCase):
                     self.assertIn("pid", process)
                     self.assertIsInstance(process["name"], str)
                     self.assertIsInstance(process["pid"], int)
-        else:
-            # For other platforms, just ensure basic structure
-            if processes:
-                for process in processes:
-                    self.assertIn("name", process)
-                    self.assertIn("pid", process)
+        elif processes:
+            for process in processes:
+                self.assertIn("name", process)
+                self.assertIn("pid", process)
 
     def test_run_detection_loop_basic_functionality(self):
         """Test basic functionality of run_detection_loop."""
@@ -331,7 +329,8 @@ class TestBaseDetector(unittest.TestCase):
         expected_categories = ["debugger", "vm", "sandbox", "analysis", "monitor"]
         method_names = " ".join(methods.keys()).lower()
 
-        found_categories = sum(1 for category in expected_categories if category in method_names)
+        found_categories = sum(bool(category in method_names)
+                           for category in expected_categories)
         self.assertGreaterEqual(found_categories, 2, "Should cover multiple categories of anti-analysis detection")
 
     def test_real_world_scenario_vm_detection(self):
@@ -343,10 +342,7 @@ class TestBaseDetector(unittest.TestCase):
         self.assertIsInstance(results, dict)
         self.assertIn("detections", results)
 
-        # If running in a VM, should detect it
-        # This tests against real environment characteristics
-        detections = results["detections"]
-        if detections:
+        if detections := results["detections"]:
             for detection in detections:
                 self.assertIn("method", detection)
                 self.assertIn("detected", detection)

@@ -93,7 +93,7 @@ class TestEnhancedPEAnalysis:
         result: dict[str, Any] = analyzer.analyze(notepad_path)
 
         sections: list[dict[str, Any]] = result["format_analysis"]["sections"]
-        assert len(sections) > 0
+        assert sections
 
         section_names: list[str] = [s["name"] for s in sections]
         common_sections: set[str] = {".text", ".data", ".rdata", ".rsrc"}
@@ -128,7 +128,9 @@ class TestEnhancedPEAnalysis:
         sections: list[dict[str, Any]] = result["format_analysis"]["sections"]
         rsrc_found: bool = any(s["name"] == ".rsrc" for s in sections)
 
-        assert rsrc_found or len(sections) > 0, "PE should have resource section or other sections"
+        assert (
+            rsrc_found or sections
+        ), "PE should have resource section or other sections"
 
     def test_streaming_analysis_large_binary(self, analyzer: BinaryAnalyzer, kernel32_path: Path) -> None:
         """Analyzer uses streaming mode for large binaries."""
@@ -269,7 +271,7 @@ class TestEntropyAnalysis:
         binary_path: Path = tmp_path / "high_entropy.bin"
 
         import random
-        random_data: bytes = bytes([random.randint(0, 255) for _ in range(10000)])
+        random_data: bytes = bytes(random.randint(0, 255) for _ in range(10000))
 
         binary_path.write_bytes(random_data)
         return binary_path
@@ -383,7 +385,7 @@ class TestStringExtraction:
         """Analyzer scans for license patterns using streaming mode."""
         license_matches: list[dict[str, Any]] = analyzer.scan_for_license_strings_streaming(license_strings_binary)
 
-        assert len(license_matches) > 0, "Must find license-related strings"
+        assert license_matches, "Must find license-related strings"
 
         patterns_found: set[str] = {match.get("pattern_matched", "") for match in license_matches}
         expected_patterns: set[str] = {"license", "trial", "serial", "activation"}
@@ -648,7 +650,9 @@ class TestSectionAnalysis:
         binary_path: Path = tmp_path / "entropy_sections.bin"
 
         import random
-        high_entropy_section: bytes = bytes([random.randint(0, 255) for _ in range(1000)])
+        high_entropy_section: bytes = bytes(
+            random.randint(0, 255) for _ in range(1000)
+        )
         low_entropy_section: bytes = b"\x00" * 1000
         text_section: bytes = b"This is readable text content " * 30
 
@@ -740,7 +744,7 @@ class TestCheckpointSupport:
 
         success: bool = analyzer.save_analysis_checkpoint(analysis_results, checkpoint_path)
 
-        assert success is True
+        assert success
         assert checkpoint_path.exists()
 
     def test_load_analysis_checkpoint(self, analyzer: BinaryAnalyzer, tmp_path: Path) -> None:
@@ -800,7 +804,7 @@ class TestProgressTracking:
         result: dict[str, Any] = analyzer.analyze_with_progress(binary_path, progress_callback)
 
         assert result["analysis_status"] == "completed"
-        assert len(progress_calls) > 0, "Progress callback must be invoked"
+        assert progress_calls, "Progress callback must be invoked"
 
     def test_progress_tracking_stages(self, analyzer: BinaryAnalyzer, tmp_path: Path) -> None:
         """Analyzer reports progress through all analysis stages."""

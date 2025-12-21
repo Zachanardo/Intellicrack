@@ -437,7 +437,7 @@ class TestClearCache:
 
         cert_dirs = [d for d in temp_cache_dir.iterdir() if d.is_dir()]
 
-        assert len(cert_dirs) == 0
+        assert not cert_dirs
 
 
 class TestThreadSafety:

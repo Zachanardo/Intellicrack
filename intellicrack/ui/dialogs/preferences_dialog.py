@@ -19,13 +19,17 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 
-from intellicrack.core.config_manager import get_config
+from typing import Any, cast
+
+from intellicrack.core.config_manager import IntellicrackConfig, get_config
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QComboBox,
+    QDialogButtonBox,
     QFormLayout,
     QGroupBox,
     QLineEdit,
+    QPushButton,
     QSpinBox,
     QTabWidget,
     QVBoxLayout,
@@ -46,29 +50,31 @@ class PreferencesDialog(BaseDialog):
 
     preferences_changed = pyqtSignal()
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the PreferencesDialog with default values."""
         super().__init__(parent, "Preferences")
-        self.config = get_config()
+        self.config: IntellicrackConfig = get_config()
         self.resize(600, 500)
-        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
+        existing_layout = self.content_widget.layout()
+        if isinstance(existing_layout, QVBoxLayout):
+            vbox_layout: QVBoxLayout = existing_layout
+        else:
+            vbox_layout = QVBoxLayout(self.content_widget)
+        self.setup_content(vbox_layout)
         self.load_preferences()
 
-        # Connect BaseDialog buttons to custom handlers
-        self.button_box.button(self.button_box.StandardButton.Ok).clicked.disconnect()
-        self.button_box.button(self.button_box.StandardButton.Ok).clicked.connect(self.accept_preferences)
+        ok_button: QPushButton | None = self.button_box.button(self.button_box.StandardButton.Ok)
+        if ok_button is not None:
+            ok_button.clicked.disconnect()
+            ok_button.clicked.connect(self.accept_preferences)
 
-        # Add Apply button
-        self.apply_btn = self.button_box.addButton("Apply", self.button_box.ButtonRole.ApplyRole)
-        self.apply_btn.clicked.connect(self.apply_preferences)
+        apply_button: QPushButton | None = self.button_box.addButton("Apply", self.button_box.ButtonRole.ApplyRole)
+        if apply_button is not None:
+            self.apply_btn: QPushButton = apply_button
+            self.apply_btn.clicked.connect(self.apply_preferences)
 
-    def setup_content(self, layout: object | None) -> None:
+    def setup_content(self, layout: QVBoxLayout) -> None:
         """Set up the preferences UI."""
-        if not layout:
-            layout = QVBoxLayout()
-            self.content_widget.setLayout(layout)
-
-        # Tab widget for different preference categories
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
@@ -231,7 +237,7 @@ class PreferencesDialog(BaseDialog):
         model_layout.addRow("Default AI model:", self.default_model_combo)
 
         self.api_key_edit = QLineEdit()
-        self.api_key_edit.setEchoMode(QLineEdit.Password)
+        self.api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
         model_layout.addRow("API Key:", self.api_key_edit)
 
         self.max_tokens_spin = QSpinBox()
@@ -271,7 +277,8 @@ class PreferencesDialog(BaseDialog):
         self.hex_bytes_per_row = QSpinBox()
         self.hex_bytes_per_row.setRange(8, 32)
         self.hex_bytes_per_row.setSingleStep(8)
-        self.hex_bytes_per_row.setValue(self.config.get("hex_viewer.ui.bytes_per_row", 16))
+        bytes_per_row: Any = self.config.get("hex_viewer.ui.bytes_per_row", 16)
+        self.hex_bytes_per_row.setValue(int(bytes_per_row) if isinstance(bytes_per_row, (int, float, str)) else 16)
         self.hex_bytes_per_row.valueChanged.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow("Bytes per row:", self.hex_bytes_per_row)
 
@@ -283,17 +290,20 @@ class PreferencesDialog(BaseDialog):
         display_layout.addRow("Group size:", self.hex_group_size)
 
         self.hex_uppercase = QCheckBox("Use uppercase hex")
-        self.hex_uppercase.setChecked(self.config.get("hex_viewer.ui.uppercase_hex", True))
+        uppercase_hex: Any = self.config.get("hex_viewer.ui.uppercase_hex", True)
+        self.hex_uppercase.setChecked(bool(uppercase_hex) if uppercase_hex is not None else True)
         self.hex_uppercase.toggled.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow(self.hex_uppercase)
 
         self.hex_show_address = QCheckBox("Show address column")
-        self.hex_show_address.setChecked(self.config.get("hex_viewer.ui.show_address", True))
+        show_address: Any = self.config.get("hex_viewer.ui.show_address", True)
+        self.hex_show_address.setChecked(bool(show_address) if show_address is not None else True)
         self.hex_show_address.toggled.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow(self.hex_show_address)
 
         self.hex_show_ascii = QCheckBox("Show ASCII column")
-        self.hex_show_ascii.setChecked(self.config.get("hex_viewer.ui.show_ascii", True))
+        show_ascii: Any = self.config.get("hex_viewer.ui.show_ascii", True)
+        self.hex_show_ascii.setChecked(bool(show_ascii) if show_ascii is not None else True)
         self.hex_show_ascii.toggled.connect(self.on_hex_viewer_setting_changed)
         display_layout.addRow(self.hex_show_ascii)
 
@@ -306,14 +316,15 @@ class PreferencesDialog(BaseDialog):
 
         self.hex_font_family = QComboBox()
         self.hex_font_family.addItems(["Consolas", "Courier New", "Monaco", "Menlo", "DejaVu Sans Mono"])
-        current_font = self.config.get("hex_viewer.ui.font_family", "Consolas")
-        self.hex_font_family.setCurrentText(current_font)
+        current_font: Any = self.config.get("hex_viewer.ui.font_family", "Consolas")
+        self.hex_font_family.setCurrentText(str(current_font) if current_font else "Consolas")
         self.hex_font_family.currentTextChanged.connect(self.on_hex_viewer_setting_changed)
         font_layout.addRow("Font family:", self.hex_font_family)
 
         self.hex_font_size = QSpinBox()
         self.hex_font_size.setRange(8, 24)
-        self.hex_font_size.setValue(self.config.get("hex_viewer.ui.font_size", 11))
+        font_size: Any = self.config.get("hex_viewer.ui.font_size", 11)
+        self.hex_font_size.setValue(int(font_size) if isinstance(font_size, (int, float, str)) else 11)
         self.hex_font_size.valueChanged.connect(self.on_hex_viewer_setting_changed)
         font_layout.addRow("Font size:", self.hex_font_size)
 
@@ -327,26 +338,30 @@ class PreferencesDialog(BaseDialog):
         self.hex_max_memory = QSpinBox()
         self.hex_max_memory.setRange(50, 2000)
         self.hex_max_memory.setSuffix(" MB")
-        self.hex_max_memory.setValue(self.config.get("hex_viewer.performance.max_memory_mb", 500))
+        max_memory: Any = self.config.get("hex_viewer.performance.max_memory_mb", 500)
+        self.hex_max_memory.setValue(int(max_memory) if isinstance(max_memory, (int, float, str)) else 500)
         self.hex_max_memory.valueChanged.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow("Max memory usage:", self.hex_max_memory)
 
         self.hex_cache_size = QSpinBox()
         self.hex_cache_size.setRange(10, 500)
         self.hex_cache_size.setSuffix(" MB")
-        self.hex_cache_size.setValue(self.config.get("hex_viewer.performance.cache_size_mb", 100))
+        cache_size: Any = self.config.get("hex_viewer.performance.cache_size_mb", 100)
+        self.hex_cache_size.setValue(int(cache_size) if isinstance(cache_size, (int, float, str)) else 100)
         self.hex_cache_size.valueChanged.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow("Cache size:", self.hex_cache_size)
 
         self.hex_chunk_size = QSpinBox()
         self.hex_chunk_size.setRange(16, 512)
         self.hex_chunk_size.setSuffix(" KB")
-        self.hex_chunk_size.setValue(self.config.get("hex_viewer.performance.chunk_size_kb", 64))
+        chunk_size: Any = self.config.get("hex_viewer.performance.chunk_size_kb", 64)
+        self.hex_chunk_size.setValue(int(chunk_size) if isinstance(chunk_size, (int, float, str)) else 64)
         self.hex_chunk_size.valueChanged.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow("Chunk size:", self.hex_chunk_size)
 
         self.hex_lazy_load = QCheckBox("Enable lazy loading for large files")
-        self.hex_lazy_load.setChecked(self.config.get("hex_viewer.performance.lazy_load", True))
+        lazy_load: Any = self.config.get("hex_viewer.performance.lazy_load", True)
+        self.hex_lazy_load.setChecked(bool(lazy_load) if lazy_load is not None else True)
         self.hex_lazy_load.toggled.connect(self.on_hex_viewer_setting_changed)
         performance_layout.addRow(self.hex_lazy_load)
 
@@ -359,24 +374,28 @@ class PreferencesDialog(BaseDialog):
 
         self.hex_search_history = QSpinBox()
         self.hex_search_history.setRange(10, 200)
-        self.hex_search_history.setValue(self.config.get("hex_viewer.search.history_max_entries", 50))
+        search_history: Any = self.config.get("hex_viewer.search.history_max_entries", 50)
+        self.hex_search_history.setValue(int(search_history) if isinstance(search_history, (int, float, str)) else 50)
         self.hex_search_history.valueChanged.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow("Search history size:", self.hex_search_history)
 
         self.hex_search_chunk = QSpinBox()
         self.hex_search_chunk.setRange(64, 1024)
         self.hex_search_chunk.setSuffix(" KB")
-        self.hex_search_chunk.setValue(self.config.get("hex_viewer.search.search_chunk_size_kb", 256))
+        search_chunk: Any = self.config.get("hex_viewer.search.search_chunk_size_kb", 256)
+        self.hex_search_chunk.setValue(int(search_chunk) if isinstance(search_chunk, (int, float, str)) else 256)
         self.hex_search_chunk.valueChanged.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow("Search chunk size:", self.hex_search_chunk)
 
         self.hex_incremental_search = QCheckBox("Enable incremental search")
-        self.hex_incremental_search.setChecked(self.config.get("hex_viewer.search.incremental_search", True))
+        incremental_search: Any = self.config.get("hex_viewer.search.incremental_search", True)
+        self.hex_incremental_search.setChecked(bool(incremental_search) if incremental_search is not None else True)
         self.hex_incremental_search.toggled.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow(self.hex_incremental_search)
 
         self.hex_highlight_all = QCheckBox("Highlight all matches")
-        self.hex_highlight_all.setChecked(self.config.get("hex_viewer.search.highlight_all_matches", True))
+        highlight_all: Any = self.config.get("hex_viewer.search.highlight_all_matches", True)
+        self.hex_highlight_all.setChecked(bool(highlight_all) if highlight_all is not None else True)
         self.hex_highlight_all.toggled.connect(self.on_hex_viewer_setting_changed)
         search_layout.addRow(self.hex_highlight_all)
 
@@ -423,75 +442,67 @@ class PreferencesDialog(BaseDialog):
 
     def load_preferences(self) -> None:
         """Load preferences from central config."""
-        # General
-        self.theme_combo.setCurrentText(
-            self.config.get("general_preferences.theme", "Dark"),
-        )
-        self.auto_save_checkbox.setChecked(
-            self.config.get("general_preferences.auto_save", True),
-        )
-        self.backup_checkbox.setChecked(
-            self.config.get("general_preferences.create_backups", True),
-        )
+        theme: Any = self.config.get("general_preferences.theme", "Dark")
+        self.theme_combo.setCurrentText(str(theme) if theme else "Dark")
 
-        # Execution
-        qemu_pref = self.config.get("qemu_testing.default_preference", "ask")
+        auto_save: Any = self.config.get("general_preferences.auto_save", True)
+        self.auto_save_checkbox.setChecked(bool(auto_save) if auto_save is not None else True)
+
+        create_backups: Any = self.config.get("general_preferences.create_backups", True)
+        self.backup_checkbox.setChecked(bool(create_backups) if create_backups is not None else True)
+
+        qemu_pref: Any = self.config.get("qemu_testing.default_preference", "ask")
         if qemu_pref == "ask":
             self.qemu_preference_combo.setCurrentIndex(0)
         elif qemu_pref == "always":
             self.qemu_preference_combo.setCurrentIndex(1)
-        else:  # never
+        else:
             self.qemu_preference_combo.setCurrentIndex(2)
 
-        self.qemu_timeout_spin.setValue(
-            self.config.get("qemu_testing.qemu_timeout", 60),
-        )
-        self.qemu_memory_spin.setValue(
-            self.config.get("qemu_testing.qemu_memory", 2048),
-        )
-        self.script_timeout_spin.setValue(
-            self.config.get("general_preferences.execution_timeout", 120),
-        )
-        self.capture_output_checkbox.setChecked(
-            self.config.get("analysis_settings.save_intermediate_results", True),
-        )
-        self.verbose_output_checkbox.setChecked(
-            self.config.get("logging.debug_mode", False),
-        )
+        qemu_timeout: Any = self.config.get("qemu_testing.qemu_timeout", 60)
+        self.qemu_timeout_spin.setValue(int(qemu_timeout) if isinstance(qemu_timeout, (int, float, str)) else 60)
 
-        # Security
-        self.warn_dangerous_checkbox.setChecked(
-            self.config.get("general_preferences.security_checks_enabled", True),
-        )
-        self.confirm_patches_checkbox.setChecked(
-            self.config.get("patching.verify_patches", True),
-        )
-        self.sandbox_default_checkbox.setChecked(
-            self.config.get("security.sandbox_analysis", False),
-        )
-        self.auto_detect_checkbox.setChecked(
-            self.config.get("general_preferences.auto_detect_protections", True),
-        )
-        self.ml_analysis_checkbox.setChecked(
-            self.config.get("general_preferences.use_ml_analysis", True),
-        )
+        qemu_memory: Any = self.config.get("qemu_testing.qemu_memory", 2048)
+        self.qemu_memory_spin.setValue(int(qemu_memory) if isinstance(qemu_memory, (int, float, str)) else 2048)
 
-        # AI
-        self.default_model_combo.setCurrentText(
-            self.config.get("ai_models.model_preferences.script_generation", "GPT-4"),
-        )
-        self.api_key_edit.setText(
-            self.config.get("secrets.api_keys.openai", ""),
-        )
-        self.max_tokens_spin.setValue(
-            self.config.get("ai_models.max_tokens", 2000),
-        )
-        self.auto_refine_checkbox.setChecked(
-            self.config.get("general_preferences.ai_auto_refine", False),
-        )
-        self.explain_scripts_checkbox.setChecked(
-            self.config.get("general_preferences.ai_explain_scripts", True),
-        )
+        execution_timeout: Any = self.config.get("general_preferences.execution_timeout", 120)
+        self.script_timeout_spin.setValue(int(execution_timeout) if isinstance(execution_timeout, (int, float, str)) else 120)
+
+        save_intermediate: Any = self.config.get("analysis_settings.save_intermediate_results", True)
+        self.capture_output_checkbox.setChecked(bool(save_intermediate) if save_intermediate is not None else True)
+
+        debug_mode: Any = self.config.get("logging.debug_mode", False)
+        self.verbose_output_checkbox.setChecked(bool(debug_mode) if debug_mode is not None else False)
+
+        security_checks: Any = self.config.get("general_preferences.security_checks_enabled", True)
+        self.warn_dangerous_checkbox.setChecked(bool(security_checks) if security_checks is not None else True)
+
+        verify_patches: Any = self.config.get("patching.verify_patches", True)
+        self.confirm_patches_checkbox.setChecked(bool(verify_patches) if verify_patches is not None else True)
+
+        sandbox_analysis: Any = self.config.get("security.sandbox_analysis", False)
+        self.sandbox_default_checkbox.setChecked(bool(sandbox_analysis) if sandbox_analysis is not None else False)
+
+        auto_detect: Any = self.config.get("general_preferences.auto_detect_protections", True)
+        self.auto_detect_checkbox.setChecked(bool(auto_detect) if auto_detect is not None else True)
+
+        ml_analysis: Any = self.config.get("general_preferences.use_ml_analysis", True)
+        self.ml_analysis_checkbox.setChecked(bool(ml_analysis) if ml_analysis is not None else True)
+
+        script_generation: Any = self.config.get("ai_models.model_preferences.script_generation", "GPT-4")
+        self.default_model_combo.setCurrentText(str(script_generation) if script_generation else "GPT-4")
+
+        openai_key: Any = self.config.get("secrets.api_keys.openai", "")
+        self.api_key_edit.setText(str(openai_key) if openai_key else "")
+
+        max_tokens: Any = self.config.get("ai_models.max_tokens", 2000)
+        self.max_tokens_spin.setValue(int(max_tokens) if isinstance(max_tokens, (int, float, str)) else 2000)
+
+        ai_auto_refine: Any = self.config.get("general_preferences.ai_auto_refine", False)
+        self.auto_refine_checkbox.setChecked(bool(ai_auto_refine) if ai_auto_refine is not None else False)
+
+        ai_explain: Any = self.config.get("general_preferences.ai_explain_scripts", True)
+        self.explain_scripts_checkbox.setChecked(bool(ai_explain) if ai_explain is not None else True)
 
     def validate_preferences(self) -> tuple[bool, str]:
         """Validate preference values before saving.

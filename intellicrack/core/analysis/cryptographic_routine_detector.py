@@ -1617,9 +1617,7 @@ class CryptographicRoutineDetector:
 
     def _check_sbox_pattern(self, data: bytes, reference: bytes) -> bool:
         """Check if data matches an S-box pattern."""
-        matches = sum(
-            data[i] == reference[i] for i in range(min(len(data), len(reference)))
-        )
+        matches = sum(data[i] == reference[i] for i in range(min(len(data), len(reference))))
         return matches >= len(reference) * 0.85
 
     def _calculate_sbox_confidence(self, data: bytes, reference: bytes) -> float:

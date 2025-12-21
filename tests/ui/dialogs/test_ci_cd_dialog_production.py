@@ -487,7 +487,7 @@ def test_github_workflow_save_creates_directory_structure(
     assert workflows_dir.is_dir()
 
     workflow_files = list(workflows_dir.glob("*.yml"))
-    assert len(workflow_files) > 0
+    assert workflow_files
 
 
 def test_github_workflow_file_content_is_valid(
@@ -499,7 +499,7 @@ def test_github_workflow_file_content_is_valid(
     workflows_dir = temp_plugin_dir.parent / ".github" / "workflows"
     workflow_files = list(workflows_dir.glob("*.yml"))
 
-    assert len(workflow_files) > 0
+    assert workflow_files
     workflow_content = workflow_files[0].read_text()
 
     assert "name:" in workflow_content
@@ -558,11 +558,8 @@ def test_multiple_stage_completions_track_correctly(ci_dialog: CICDDialog) -> No
     for idx, stage in enumerate(stages, 1):
         ci_dialog.on_stage_completed(stage, {"success": True})
 
-        completed_count = sum(
-            1
-            for w in ci_dialog.stage_widgets.values()
-            if w.status_label.text() in ["OK", "ERROR"]
-        )
+        completed_count = sum(bool(w.status_label.text() in ["OK", "ERROR"])
+                          for w in ci_dialog.stage_widgets.values())
         assert completed_count == idx
 
 

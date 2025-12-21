@@ -44,7 +44,7 @@ def check_pyqt6_consolidation():
                     'count': len(matches),
                     'type': 'UNAUTHORIZED'
                 })
-            elif matches and is_allowed:
+            elif matches:
                 # This is expected - verify it's the right kind
                 rel_path = py_file.relative_to(Path.cwd())
 
@@ -106,11 +106,17 @@ def check_pyqt6_consolidation():
 
         total_classes = 0
         if qtcore_match:
-            total_classes += len([c.strip() for c in qtcore_match.group(1).split(',') if c.strip()])
+            total_classes += len(
+                [c.strip() for c in qtcore_match[1].split(',') if c.strip()]
+            )
         if qtgui_match:
-            total_classes += len([c.strip() for c in qtgui_match.group(1).split(',') if c.strip()])
+            total_classes += len(
+                [c.strip() for c in qtgui_match[1].split(',') if c.strip()]
+            )
         if qtwidgets_match:
-            total_classes += len([c.strip() for c in qtwidgets_match.group(1).split(',') if c.strip()])
+            total_classes += len(
+                [c.strip() for c in qtwidgets_match[1].split(',') if c.strip()]
+            )
 
         print("\n Common imports statistics:")
         print(f"   - Total PyQt6 classes consolidated: {total_classes}")

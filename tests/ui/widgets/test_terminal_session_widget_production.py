@@ -209,7 +209,7 @@ class TestTerminalSessionWidget:
 
         QTest.qWait(100)
 
-        assert len(active_sessions) > 0
+        assert active_sessions
 
         widget.close()
 
@@ -323,11 +323,7 @@ class TestTerminalSessionExecution:
                 terminal = session["widget"]
 
                 if hasattr(terminal, "execute_command"):
-                    if sys.platform == "win32":
-                        terminal.execute_command("echo Test Output")
-                    else:
-                        terminal.execute_command("echo Test Output")
-
+                    terminal.execute_command("echo Test Output")
                     QTest.qWait(1000)
 
         widget.close()
@@ -425,8 +421,6 @@ class TestTerminalSessionProcessManagement:
         """Terminal emits signal when process starts."""
         widget = TerminalSessionWidget()
 
-        process_pids: list[int] = []
-
         session_id = widget.create_new_session()
 
         if hasattr(widget, "get_session"):
@@ -435,14 +429,12 @@ class TestTerminalSessionProcessManagement:
                 terminal = session["widget"]
 
                 if hasattr(terminal, "process_started"):
+                    process_pids: list[int] = []
+
                     terminal.process_started.connect(lambda pid: process_pids.append(pid))
 
                 if hasattr(terminal, "execute_command"):
-                    if sys.platform == "win32":
-                        terminal.execute_command("echo Test")
-                    else:
-                        terminal.execute_command("echo Test")
-
+                    terminal.execute_command("echo Test")
                     QTest.qWait(1000)
 
         widget.close()
@@ -450,8 +442,6 @@ class TestTerminalSessionProcessManagement:
     def test_process_finished_signal(self, qapp: Any) -> None:
         """Terminal emits signal when process finishes."""
         widget = TerminalSessionWidget()
-
-        finished_processes: list[tuple[int, int]] = []
 
         session_id = widget.create_new_session()
 
@@ -461,16 +451,14 @@ class TestTerminalSessionProcessManagement:
                 terminal = session["widget"]
 
                 if hasattr(terminal, "process_finished"):
+                    finished_processes: list[tuple[int, int]] = []
+
                     terminal.process_finished.connect(
                         lambda pid, code: finished_processes.append((pid, code))
                     )
 
                 if hasattr(terminal, "execute_command"):
-                    if sys.platform == "win32":
-                        terminal.execute_command("echo Done")
-                    else:
-                        terminal.execute_command("echo Done")
-
+                    terminal.execute_command("echo Done")
                     QTest.qWait(1500)
 
         widget.close()
@@ -520,11 +508,7 @@ class TestTerminalSessionProcessManagement:
                     QTest.qWait(1000)
 
                 if hasattr(terminal, "execute_command"):
-                    if sys.platform == "win32":
-                        terminal.execute_command("echo Recovered")
-                    else:
-                        terminal.execute_command("echo Recovered")
-
+                    terminal.execute_command("echo Recovered")
                     QTest.qWait(1000)
 
         widget.close()
@@ -546,7 +530,7 @@ class TestTerminalSessionEdgeCases:
         widget = TerminalSessionWidget()
 
         session_ids = []
-        for i in range(3):
+        for _ in range(3):
             session_id = widget.create_new_session()
             session_ids.append(session_id)
 
@@ -628,7 +612,7 @@ class TestTerminalSessionEdgeCases:
         """Widget cleans up resources on close."""
         widget = TerminalSessionWidget()
 
-        for i in range(5):
+        for _ in range(5):
             widget.create_new_session()
 
         widget.close()

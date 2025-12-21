@@ -63,13 +63,10 @@ def test_gui_fixes():
     print("\n2. Testing CPU status widget...")
     cpu_widget = CPUStatusWidget()
 
-    # Check for scroll area
-    scroll_found = False
-    for child in cpu_widget.children():
-        if child.__class__.__name__ == "QScrollArea":
-            scroll_found = True
-            break
-
+    scroll_found = any(
+        child.__class__.__name__ == "QScrollArea"
+        for child in cpu_widget.children()
+    )
     if scroll_found:
         print("OK CPU status widget has scroll area")
     else:
@@ -79,13 +76,10 @@ def test_gui_fixes():
     print("\n3. Testing GPU status widget...")
     gpu_widget = GPUStatusWidget()
 
-    # Check for scroll area
-    scroll_found = False
-    for child in gpu_widget.children():
-        if child.__class__.__name__ == "QScrollArea":
-            scroll_found = True
-            break
-
+    scroll_found = any(
+        child.__class__.__name__ == "QScrollArea"
+        for child in gpu_widget.children()
+    )
     if scroll_found:
         print("OK GPU status widget has scroll area")
     else:
@@ -124,9 +118,7 @@ def test_gui_fixes():
     test_binary = Path(__file__).parent / "test_binary.exe"
     test_binary.write_bytes(b"MZ\x90\x00" + b"\x00" * 100)  # Minimal PE header
 
-    # Load binary via app_context
-    success = app_context.load_binary(str(test_binary))
-    if success:
+    if success := app_context.load_binary(str(test_binary)):
         print("OK Binary loaded successfully")
 
         # Check if tabs received the binary

@@ -22,10 +22,11 @@ for asynchronous operations and distributed processing.
 import logging
 import traceback
 import uuid
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import QObject, QRunnable, QThreadPool, pyqtSignal, pyqtSlot
 from intellicrack.utils.logger import get_logger
@@ -57,102 +58,180 @@ class FallbackSignals:
         self.finished = None
 
 
-class TaskSignals(QObject if QObject is not None else object):
-    """Signals for task communication."""
+if QObject is not None:
 
-    #: Signal emitted when task starts (type: task_id: str)
-    started = pyqtSignal(str)
-    #: Signal emitted when task progress updates (type: task_id: str, percentage: int, message: str)
-    progress = pyqtSignal(str, int, str)
-    #: Signal emitted when task returns result (type: task_id: str, result: object)
-    result = pyqtSignal(str, object)
-    #: Signal emitted when task error occurs (type: task_id: str, error_type: str, error_message: str)
-    error = pyqtSignal(str, str, str)
-    #: Signal emitted when task finishes (type: task_id: str)
-    finished = pyqtSignal(str)
+    class TaskSignals(QObject):
+        """Signals for task communication."""
+
+        started = pyqtSignal(str)
+        progress = pyqtSignal(str, int, str)
+        result = pyqtSignal(str, object)
+        error = pyqtSignal(str, str, str)
+        finished = pyqtSignal(str)
+
+else:
+
+    class TaskSignals(object):  # type: ignore[no-redef,unreachable]
+        """Fallback signals implementation when PyQt6 is not available."""
+
+        def __init__(self) -> None:
+            """Initialize fallback signals."""
+            self.started = None
+            self.progress = None
+            self.result = None
+            self.error = None
+            self.finished = None
 
 
-# Create a metaclass that resolves the conflict between QRunnable and ABC
-class TaskMeta(type(QRunnable), type(ABC)):
-    """Metaclass to resolve conflicts between QRunnable and ABC."""
+if QRunnable is not None:
 
-    pass
+    class TaskMeta(type(QRunnable), ABCMeta):  # type: ignore[misc]
+        """Metaclass to resolve conflicts between QRunnable and ABC."""
 
+        pass
 
-class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
-    """Base class for all background tasks."""
+    class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
+        """Base class for all background tasks."""
 
-    def __init__(self, task_id: str | None = None, description: str = "") -> None:
-        """Initialize the base task with ID, description, and status tracking.
+        def __init__(self, task_id: str | None = None, description: str = "") -> None:
+            """Initialize the base task with ID, description, and status tracking.
 
-        Args:
-            task_id: Optional unique identifier for the task
-            description: Description of what the task does
+            Args:
+                task_id: Optional unique identifier for the task
+                description: Description of what the task does
 
-        """
-        super().__init__()
-        self.task_id = task_id or str(uuid.uuid4())
-        self.description = description
-        self.status = TaskStatus.PENDING
-        self.result = None
-        self.error = None
-        self.start_time = None
-        self.end_time = None
-        self.progress = 0
-        self.should_stop = False
-        self.logger = logging.getLogger(__name__)
-        self.signals = TaskSignals()
-        self._is_cancelled = False
-        self._started_at: datetime | None = None
-        self._finished_at: datetime | None = None
+            """
+            super().__init__()
+            self.task_id = task_id or str(uuid.uuid4())
+            self.description = description
+            self.status = TaskStatus.PENDING
+            self.result: Any = None
+            self.error: Any = None
+            self.start_time: datetime | None = None
+            self.end_time: datetime | None = None
+            self.progress = 0
+            self.should_stop = False
+            self.logger = logging.getLogger(__name__)
+            self.signals = TaskSignals()
+            self._is_cancelled = False
+            self._started_at: datetime | None = None
+            self._finished_at: datetime | None = None
 
-    def run(self) -> None:
-        """Execute the task."""
-        try:
-            self._started_at = datetime.now()
-            self.signals.started.emit(self.task_id)
-            logger.info("Task started: %s - %s", self.task_id, self.description)
+        def run(self) -> None:
+            """Execute the task."""
+            try:
+                self._started_at = datetime.now()
+                self.signals.started.emit(self.task_id)
+                logger.info("Task started: %s - %s", self.task_id, self.description)
 
-            # Execute the actual task
-            result = self.execute()
+                result = self.execute()
 
+                if not self._is_cancelled:
+                    self.signals.result.emit(self.task_id, result)
+                    logger.info("Task completed: %s", self.task_id)
+                else:
+                    logger.info("Task cancelled: %s", self.task_id)
+
+            except Exception as e:
+                error_type = type(e).__name__
+                error_msg = str(e)
+                error_traceback = traceback.format_exc()
+
+                logger.exception("Task failed: %s - %s: %s", self.task_id, error_type, error_msg)
+                logger.debug("Traceback: %s", error_traceback)
+
+                self.signals.error.emit(self.task_id, error_type, error_msg)
+
+            finally:
+                self._finished_at = datetime.now()
+                self.signals.finished.emit(self.task_id)
+
+        @abstractmethod
+        def execute(self) -> Any:
+            """Execute the task logic. Must be implemented by subclasses."""
+
+        def cancel(self) -> None:
+            """Cancel the task."""
+            self._is_cancelled = True
+            logger.info("Task cancellation requested: %s", self.task_id)
+
+        def is_cancelled(self) -> bool:
+            """Check if the task has been cancelled."""
+            return self._is_cancelled
+
+        def emit_progress(self, percentage: int, message: str = "") -> None:
+            """Emit progress update."""
             if not self._is_cancelled:
-                self.signals.result.emit(self.task_id, result)
-                logger.info("Task completed: %s", self.task_id)
-            else:
-                logger.info("Task cancelled: %s", self.task_id)
+                self.signals.progress.emit(self.task_id, percentage, message)
 
-        except Exception as e:
-            error_type = type(e).__name__
-            error_msg = str(e)
-            error_traceback = traceback.format_exc()
+else:
 
-            logger.exception("Task failed: %s - %s: %s", self.task_id, error_type, error_msg)
-            logger.debug("Traceback: %s", error_traceback)
+    class BaseTask(ABC):  # type: ignore[no-redef,unreachable]
+        """Base class for all background tasks (fallback)."""
 
-            self.signals.error.emit(self.task_id, error_type, error_msg)
+        def __init__(self, task_id: str | None = None, description: str = "") -> None:
+            """Initialize the base task with ID, description, and status tracking.
 
-        finally:
-            self._finished_at = datetime.now()
-            self.signals.finished.emit(self.task_id)
+            Args:
+                task_id: Optional unique identifier for the task
+                description: Description of what the task does
 
-    @abstractmethod
-    def execute(self) -> object:
-        """Execute the task logic. Must be implemented by subclasses."""
+            """
+            self.task_id = task_id or str(uuid.uuid4())
+            self.description = description
+            self.status = TaskStatus.PENDING
+            self.result: Any = None
+            self.error: Any = None
+            self.start_time: datetime | None = None
+            self.end_time: datetime | None = None
+            self.progress = 0
+            self.should_stop = False
+            self.logger = logging.getLogger(__name__)
+            self.signals = TaskSignals()
+            self._is_cancelled = False
+            self._started_at: datetime | None = None
+            self._finished_at: datetime | None = None
 
-    def cancel(self) -> None:
-        """Cancel the task."""
-        self._is_cancelled = True
-        logger.info("Task cancellation requested: %s", self.task_id)
+        def run(self) -> None:
+            """Execute the task."""
+            try:
+                self._started_at = datetime.now()
+                logger.info("Task started: %s - %s", self.task_id, self.description)
 
-    def is_cancelled(self) -> bool:
-        """Check if the task has been cancelled."""
-        return self._is_cancelled
+                result = self.execute()
 
-    def emit_progress(self, percentage: int, message: str = "") -> None:
-        """Emit progress update."""
-        if not self._is_cancelled:
-            self.signals.progress.emit(self.task_id, percentage, message)
+                if not self._is_cancelled:
+                    logger.info("Task completed: %s", self.task_id)
+                else:
+                    logger.info("Task cancelled: %s", self.task_id)
+
+            except Exception as e:
+                error_type = type(e).__name__
+                error_msg = str(e)
+                error_traceback = traceback.format_exc()
+
+                logger.exception("Task failed: %s - %s: %s", self.task_id, error_type, error_msg)
+                logger.debug("Traceback: %s", error_traceback)
+
+            finally:
+                self._finished_at = datetime.now()
+
+        @abstractmethod
+        def execute(self) -> Any:
+            """Execute the task logic. Must be implemented by subclasses."""
+
+        def cancel(self) -> None:
+            """Cancel the task."""
+            self._is_cancelled = True
+            logger.info("Task cancellation requested: %s", self.task_id)
+
+        def is_cancelled(self) -> bool:
+            """Check if the task has been cancelled."""
+            return self._is_cancelled
+
+        def emit_progress(self, percentage: int, message: str = "") -> None:
+            """Emit progress update."""
+            pass
 
 
 class CallableTask(BaseTask):
@@ -160,9 +239,9 @@ class CallableTask(BaseTask):
 
     def __init__(
         self,
-        func: Callable,
-        args: tuple = (),
-        kwargs: dict = None,
+        func: Callable[..., Any],
+        args: tuple[Any, ...] = (),
+        kwargs: dict[str, Any] | None = None,
         task_id: str | None = None,
         description: str = "",
     ) -> None:
@@ -179,11 +258,10 @@ class CallableTask(BaseTask):
         super().__init__(task_id, description)
         self.func = func
         self.args = args
-        self.kwargs = kwargs or {}
+        self.kwargs = kwargs if kwargs is not None else {}
 
-    def execute(self) -> object:
+    def execute(self) -> Any:
         """Execute the wrapped callable."""
-        # If the function expects a task parameter, pass self
         import inspect
 
         sig = inspect.signature(self.func)
@@ -193,167 +271,225 @@ class CallableTask(BaseTask):
         return self.func(*self.args, **self.kwargs)
 
 
-class TaskManager(QObject):
-    """Manages background tasks using QThreadPool."""
+if QObject is not None and QThreadPool is not None:
 
-    # Signals for task manager events
-    #: Signal emitted when a task is submitted (type: task_id: str, description: str)
-    task_submitted = pyqtSignal(str, str)
-    #: Signal emitted when all tasks complete (type: no parameters)
-    all_tasks_completed = pyqtSignal()
-    #: Signal emitted when active task count changes (type: count: int)
-    active_task_count_changed = pyqtSignal(int)
+    class TaskManager(QObject):
+        """Manages background tasks using QThreadPool."""
 
-    def __init__(self, max_thread_count: int | None = None) -> None:
-        """Initialize the task manager.
+        task_submitted = pyqtSignal(str, str)
+        all_tasks_completed = pyqtSignal()
+        active_task_count_changed = pyqtSignal(int)
 
-        Sets up the Qt thread pool-based task management system for handling
-        concurrent background operations. Configures thread pool settings,
-        task tracking, and signal connections for progress monitoring.
+        def __init__(self, max_thread_count: int | None = None) -> None:
+            """Initialize the task manager.
 
-        Args:
-            max_thread_count: Maximum number of concurrent threads. If None, uses Qt default.
+            Sets up the Qt thread pool-based task management system for handling
+            concurrent background operations. Configures thread pool settings,
+            task tracking, and signal connections for progress monitoring.
 
-        """
-        super().__init__()
-        self.thread_pool = QThreadPool.globalInstance()
+            Args:
+                max_thread_count: Maximum number of concurrent threads. If None, uses Qt default.
 
-        if max_thread_count:
-            self.thread_pool.setMaxThreadCount(max_thread_count)
+            """
+            super().__init__()
+            self.thread_pool = QThreadPool.globalInstance()
 
-        self._active_tasks: dict[str, BaseTask] = {}
-        self._task_history: list[dict[str, object]] = []
-        self._task_results: dict[str, object] = {}
+            if max_thread_count is not None and self.thread_pool is not None:
+                self.thread_pool.setMaxThreadCount(max_thread_count)
 
-        logger.info("TaskManager initialized with %d threads", self.thread_pool.maxThreadCount())
+            self._active_tasks: dict[str, BaseTask] = {}
+            self._task_history: list[dict[str, Any]] = []
+            self._task_results: dict[str, Any] = {}
 
-    def submit_task(self, task: BaseTask) -> str:
-        """Submit a task for execution."""
-        # Connect task signals
-        task.signals.started.connect(self._on_task_started)
-        task.signals.progress.connect(self._on_task_progress)
-        task.signals.result.connect(self._on_task_result)
-        task.signals.error.connect(self._on_task_error)
-        task.signals.finished.connect(self._on_task_finished)
+            if self.thread_pool is not None:
+                logger.info("TaskManager initialized with %d threads", self.thread_pool.maxThreadCount())
+            else:
+                logger.warning("TaskManager initialized without thread pool")
 
-        # Track the task
-        self._active_tasks[task.task_id] = task
+        def submit_task(self, task: BaseTask) -> str:
+            """Submit a task for execution."""
+            task.signals.started.connect(self._on_task_started)
+            task.signals.progress.connect(self._on_task_progress)
+            task.signals.result.connect(self._on_task_result)
+            task.signals.error.connect(self._on_task_error)
+            task.signals.finished.connect(self._on_task_finished)
 
-        # Submit to thread pool
-        self.thread_pool.start(task)
+            self._active_tasks[task.task_id] = task
 
-        # Emit signals
-        self.task_submitted.emit(task.task_id, task.description)
-        self.active_task_count_changed.emit(len(self._active_tasks))
+            if self.thread_pool is not None:
+                self.thread_pool.start(task)
 
-        logger.info("Task submitted: %s - %s", task.task_id, task.description)
-        return task.task_id
-
-    def submit_callable(
-        self,
-        func: Callable,
-        args: tuple = (),
-        kwargs: dict = None,
-        task_id: str | None = None,
-        description: str = "",
-    ) -> str:
-        """Submit a callable as a task."""
-        task = CallableTask(func, args, kwargs, task_id, description)
-        return self.submit_task(task)
-
-    def cancel_task(self, task_id: str) -> bool:
-        """Cancel a task by ID."""
-        if task_id in self._active_tasks:
-            task = self._active_tasks[task_id]
-            task.cancel()
-            logger.info("Task cancelled: %s", task_id)
-            return True
-        return False
-
-    def cancel_all_tasks(self) -> None:
-        """Cancel all active tasks."""
-        for task_id in list(self._active_tasks):
-            self.cancel_task(task_id)
-
-    def wait_for_all(self, timeout_ms: int = -1) -> bool:
-        """Wait for all tasks to complete."""
-        return self.thread_pool.waitForDone(timeout_ms)
-
-    def get_active_tasks(self) -> dict[str, str]:
-        """Get dictionary of active task IDs to descriptions."""
-        return {task_id: task.description for task_id, task in self._active_tasks.items()}
-
-    def get_task_result(self, task_id: str) -> object | None:
-        """Get the result of a completed task."""
-        return self._task_results.get(task_id)
-
-    def get_task_history(self) -> list[dict]:
-        """Get the history of all tasks."""
-        return self._task_history.copy()
-
-    def get_thread_count(self) -> int:
-        """Get the maximum thread count."""
-        return self.thread_pool.maxThreadCount()
-
-    def set_thread_count(self, count: int) -> None:
-        """Set the maximum thread count."""
-        self.thread_pool.setMaxThreadCount(count)
-        logger.info("Thread count set to %d", count)
-
-    # Private slot methods
-    @pyqtSlot(str)
-    def _on_task_started(self, task_id: str) -> None:
-        """Handle task start."""
-        logger.debug("Task started signal received: %s", task_id)
-
-    @pyqtSlot(str, int, str)
-    def _on_task_progress(self, task_id: str, percentage: int, message: str) -> None:
-        """Handle task progress update."""
-        logger.debug("Task progress: %s - %d%% - %s", task_id, percentage, message)
-
-    @pyqtSlot(str, object)
-    def _on_task_result(self, task_id: str, result: object) -> None:
-        """Handle task result."""
-        self._task_results[task_id] = result
-        logger.debug("Task result received: %s", task_id)
-
-    @pyqtSlot(str, str, str)
-    def _on_task_error(self, task_id: str, error_type: str, error_message: str) -> None:
-        """Handle task error."""
-        logger.error("Task error: %s - %s: %s", task_id, error_type, error_message)
-
-    @pyqtSlot(str)
-    def _on_task_finished(self, task_id: str) -> None:
-        """Handle task completion."""
-        if task_id in self._active_tasks:
-            task = self._active_tasks.pop(task_id)
-
-            # Add to history
-            history_entry = {
-                "task_id": task_id,
-                "description": task.description,
-                "started_at": task._started_at.isoformat() if task._started_at else None,
-                "finished_at": task._finished_at.isoformat() if task._finished_at else None,
-                "cancelled": task._is_cancelled,
-            }
-            self._task_history.append(history_entry)
-
-            # Keep history size manageable
-            if len(self._task_history) > 100:
-                self._task_history = self._task_history[-100:]
-
-            # Emit count change
+            self.task_submitted.emit(task.task_id, task.description)
             self.active_task_count_changed.emit(len(self._active_tasks))
 
-            # Check if all tasks completed
-            if not self._active_tasks:
-                self.all_tasks_completed.emit()
+            logger.info("Task submitted: %s - %s", task.task_id, task.description)
+            return task.task_id
 
-        logger.debug("Task finished: %s", task_id)
+        def submit_callable(
+            self,
+            func: Callable[..., Any],
+            args: tuple[Any, ...] = (),
+            kwargs: dict[str, Any] | None = None,
+            task_id: str | None = None,
+            description: str = "",
+        ) -> str:
+            """Submit a callable as a task."""
+            task = CallableTask(func, args, kwargs, task_id, description)
+            return self.submit_task(task)
+
+        def cancel_task(self, task_id: str) -> bool:
+            """Cancel a task by ID."""
+            if task_id in self._active_tasks:
+                task = self._active_tasks[task_id]
+                task.cancel()
+                logger.info("Task cancelled: %s", task_id)
+                return True
+            return False
+
+        def cancel_all_tasks(self) -> None:
+            """Cancel all active tasks."""
+            for task_id in list(self._active_tasks):
+                self.cancel_task(task_id)
+
+        def wait_for_all(self, timeout_ms: int = -1) -> bool:
+            """Wait for all tasks to complete."""
+            if self.thread_pool is not None:
+                return self.thread_pool.waitForDone(timeout_ms)
+            return True
+
+        def get_active_tasks(self) -> dict[str, str]:
+            """Get dictionary of active task IDs to descriptions."""
+            return {task_id: task.description for task_id, task in self._active_tasks.items()}
+
+        def get_task_result(self, task_id: str) -> Any:
+            """Get the result of a completed task."""
+            return self._task_results.get(task_id)
+
+        def get_task_history(self) -> list[dict[str, Any]]:
+            """Get the history of all tasks."""
+            return self._task_history.copy()
+
+        def get_thread_count(self) -> int:
+            """Get the maximum thread count."""
+            if self.thread_pool is not None:
+                return self.thread_pool.maxThreadCount()
+            return 0
+
+        def set_thread_count(self, count: int) -> None:
+            """Set the maximum thread count."""
+            if self.thread_pool is not None:
+                self.thread_pool.setMaxThreadCount(count)
+                logger.info("Thread count set to %d", count)
+
+        @pyqtSlot(str)
+        def _on_task_started(self, task_id: str) -> None:
+            """Handle task start."""
+            logger.debug("Task started signal received: %s", task_id)
+
+        @pyqtSlot(str, int, str)
+        def _on_task_progress(self, task_id: str, percentage: int, message: str) -> None:
+            """Handle task progress update."""
+            logger.debug("Task progress: %s - %d%% - %s", task_id, percentage, message)
+
+        @pyqtSlot(str, object)
+        def _on_task_result(self, task_id: str, result: Any) -> None:
+            """Handle task result."""
+            self._task_results[task_id] = result
+            logger.debug("Task result received: %s", task_id)
+
+        @pyqtSlot(str, str, str)
+        def _on_task_error(self, task_id: str, error_type: str, error_message: str) -> None:
+            """Handle task error."""
+            logger.error("Task error: %s - %s: %s", task_id, error_type, error_message)
+
+        @pyqtSlot(str)
+        def _on_task_finished(self, task_id: str) -> None:
+            """Handle task completion."""
+            if task_id in self._active_tasks:
+                task = self._active_tasks.pop(task_id)
+
+                history_entry: dict[str, Any] = {
+                    "task_id": task_id,
+                    "description": task.description,
+                    "started_at": task._started_at.isoformat() if task._started_at else None,
+                    "finished_at": task._finished_at.isoformat() if task._finished_at else None,
+                    "cancelled": task._is_cancelled,
+                }
+                self._task_history.append(history_entry)
+
+                if len(self._task_history) > 100:
+                    self._task_history = self._task_history[-100:]
+
+                self.active_task_count_changed.emit(len(self._active_tasks))
+
+                if not self._active_tasks:
+                    self.all_tasks_completed.emit()
+
+            logger.debug("Task finished: %s", task_id)
+
+else:
+
+    class TaskManager(object):  # type: ignore[no-redef,unreachable]
+        """Fallback TaskManager when PyQt6 is not available."""
+
+        def __init__(self, max_thread_count: int | None = None) -> None:
+            """Initialize the task manager fallback."""
+            self._active_tasks: dict[str, BaseTask] = {}
+            self._task_history: list[dict[str, Any]] = []
+            self._task_results: dict[str, Any] = {}
+            logger.warning("TaskManager initialized in fallback mode without PyQt6")
+
+        def submit_task(self, task: BaseTask) -> str:
+            """Submit a task for execution (fallback)."""
+            logger.warning("TaskManager fallback: cannot submit task %s", task.task_id)
+            return task.task_id
+
+        def submit_callable(
+            self,
+            func: Callable[..., Any],
+            args: tuple[Any, ...] = (),
+            kwargs: dict[str, Any] | None = None,
+            task_id: str | None = None,
+            description: str = "",
+        ) -> str:
+            """Submit a callable as a task (fallback)."""
+            logger.warning("TaskManager fallback: cannot submit callable")
+            return task_id or str(uuid.uuid4())
+
+        def cancel_task(self, task_id: str) -> bool:
+            """Cancel a task by ID (fallback)."""
+            return False
+
+        def cancel_all_tasks(self) -> None:
+            """Cancel all active tasks (fallback)."""
+            pass
+
+        def wait_for_all(self, timeout_ms: int = -1) -> bool:
+            """Wait for all tasks to complete (fallback)."""
+            return True
+
+        def get_active_tasks(self) -> dict[str, str]:
+            """Get dictionary of active task IDs to descriptions (fallback)."""
+            return {}
+
+        def get_task_result(self, task_id: str) -> Any:
+            """Get the result of a completed task (fallback)."""
+            return None
+
+        def get_task_history(self) -> list[dict[str, Any]]:
+            """Get the history of all tasks (fallback)."""
+            return []
+
+        def get_thread_count(self) -> int:
+            """Get the maximum thread count (fallback)."""
+            return 0
+
+        def set_thread_count(self, count: int) -> None:
+            """Set the maximum thread count (fallback)."""
+            pass
 
 
-# Global instance
-_task_manager_instance = None
+_task_manager_instance: TaskManager | None = None
 
 
 def get_task_manager() -> TaskManager:

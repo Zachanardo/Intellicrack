@@ -171,9 +171,7 @@ def real_ticket_v7(
     signature = hmac.new(hmac_key, data_to_sign, hashlib.sha256).digest()
     signature_padded = signature + (b"\x00" * (256 - len(signature)))
 
-    ticket_data = header_packed + encrypted_payload + signature_padded
-
-    return ticket_data
+    return header_packed + encrypted_payload + signature_padded
 
 
 @pytest.fixture

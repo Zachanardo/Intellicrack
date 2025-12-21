@@ -237,10 +237,10 @@ class TestR2SessionPool:
         pool = R2SessionPool(max_sessions=2)
 
         session1 = pool.get_session(test_binary)
-        session2 = pool.get_session(test_binary + ".2")
+        session2 = pool.get_session(f"{test_binary}.2")
 
         with pytest.raises(RuntimeError, match="Session limit reached"):
-            pool.get_session(test_binary + ".3")
+            pool.get_session(f"{test_binary}.3")
 
         pool.return_session(session1)
         pool.return_session(session2)

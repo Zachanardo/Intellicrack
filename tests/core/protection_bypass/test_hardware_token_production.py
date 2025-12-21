@@ -856,7 +856,7 @@ class TestSecretExtractionFromMemoryDumps:
         certificates = result.get("certificates", [])
         der_certs = [c for c in certificates if c["format"] == "DER"]
 
-        assert len(der_certs) > 0
+        assert der_certs
 
         for cert in der_certs:
             assert "offset" in cert
@@ -872,7 +872,7 @@ class TestSecretExtractionFromMemoryDumps:
         certificates = result.get("certificates", [])
         pem_certs = [c for c in certificates if c["format"] == "PEM"]
 
-        assert len(pem_certs) > 0
+        assert pem_certs
 
         for cert in pem_certs:
             pem_data = cert["data"]

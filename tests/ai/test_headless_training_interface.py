@@ -256,7 +256,7 @@ class TestTrainingLifecycle:
         while training_interface.is_training:
             time.sleep(0.3)
 
-        assert len(progress_values) > 0
+        assert progress_values
         assert all(0 <= p <= 100 for p in progress_values)
 
     def test_training_invokes_status_callback(
@@ -279,7 +279,7 @@ class TestTrainingLifecycle:
         while training_interface.is_training:
             time.sleep(0.3)
 
-        assert len(status_messages) > 0
+        assert status_messages
         assert any("started" in msg.lower() for msg in status_messages)
 
 
@@ -778,7 +778,7 @@ class TestModelPersistence:
         models_dir = Path(basic_training_config["output_directory"])
         model_files = list(models_dir.glob("*.json")) if models_dir.exists() else []
 
-        assert len(model_files) > 0
+        assert model_files
 
     def test_saved_model_contains_metadata(
         self, training_interface: HeadlessTrainingInterface,
@@ -1016,8 +1016,8 @@ class TestRealWorldTrainingWorkflow:
 
         training_interface.stop_training()
 
-        assert len(progress_updates) > 0
-        assert len(status_updates) > 0
+        assert progress_updates
+        assert status_updates
         assert final_metrics["epoch"] > 0
         assert "train_loss" in final_metrics
         assert "val_accuracy" in final_metrics

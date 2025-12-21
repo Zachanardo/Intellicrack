@@ -152,9 +152,9 @@ class StatisticalAnalysis:
                     # Check if the cracked binary exists and works
                     cracked_binary = run_temp_dir / f"cracked_{binary_name}"
                     if cracked_binary.exists():
-                        # Test the cracked binary
-                        test_result = self._test_cracked_binary(str(cracked_binary))
-                        if test_result:
+                        if test_result := self._test_cracked_binary(
+                            str(cracked_binary)
+                        ):
                             return (True, "")
                         else:
                             return (False, "Cracked binary failed functionality test")
@@ -195,10 +195,7 @@ class StatisticalAnalysis:
             if result.returncode == 0:
                 # Check output for success indicators
                 output = result.stdout.lower()
-                if "success" in output or "licensed" in output or "activated" in output:
-                    return True
-                else:
-                    return False
+                return "success" in output or "licensed" in output or "activated" in output
             else:
                 return False
 
@@ -375,7 +372,7 @@ class StatisticalAnalysis:
         run_end_time = datetime.now().isoformat()
         run_duration = (datetime.fromisoformat(run_end_time) - datetime.fromisoformat(run_start_time)).total_seconds()
 
-        result = StatisticalTestResult(
+        return StatisticalTestResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -388,10 +385,8 @@ class StatisticalAnalysis:
             random_seed=random_seed,
             environment_variation=environment_variation or {},
             success_rate=success_rate,
-            error_message=error_message
+            error_message=error_message,
         )
-
-        return result
 
     def run_statistical_analysis(self, binary_path: str, software_name: str, test_type: str = "general",
                                 min_runs: int = 10, max_runs: int = 20) -> StatisticalAnalysisResult:
@@ -439,7 +434,8 @@ class StatisticalAnalysis:
                 runs_data.append(test_result)
 
             # Analyze results
-            successful_runs = sum(1 for run in runs_data if run.test_passed)
+            successful_runs = sum(bool(run.test_passed)
+                              for run in runs_data)
             success_rates = [run.success_rate for run in runs_data]
             durations = [run.run_duration_seconds for run in runs_data]
 
@@ -485,7 +481,7 @@ class StatisticalAnalysis:
             duration_std_dev = 0.0
             statistical_power = 0.0
 
-        result = StatisticalAnalysisResult(
+        return StatisticalAnalysisResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -505,10 +501,8 @@ class StatisticalAnalysis:
             duration_std_dev=duration_std_dev,
             environment_variations=environment_variations,
             statistical_power=statistical_power,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return result
 
     def run_all_statistical_analyses(self) -> list[StatisticalAnalysisResult]:
         """
@@ -608,18 +602,27 @@ class StatisticalAnalysis:
         report_lines.append(f"  Total Test Runs: {total_runs}")
         report_lines.append(f"  Successful Runs: {total_successful}")
         report_lines.append(f"  Average Success Rate: {avg_success_rate:.3f}")
-        report_lines.append(f"  Average Confidence Interval Width: {avg_confidence:.3f}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Average Confidence Interval Width: {avg_confidence:.3f}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for result in results:
-            report_lines.append(f"Software: {result.software_name}")
-            report_lines.append(f"  Binary Hash: {result.binary_hash[:16]}...")
-            report_lines.append(f"  Test Type: {result.test_type}")
-            report_lines.append(f"  Total Runs: {result.total_runs}")
+            report_lines.extend(
+                (
+                    f"Software: {result.software_name}",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Test Type: {result.test_type}",
+                    f"  Total Runs: {result.total_runs}",
+                )
+            )
             report_lines.append(f"  Successful Runs: {result.successful_runs}")
             report_lines.append(f"  Success Rate: {result.success_rate:.3f}")
             report_lines.append(f"  Standard Deviation: {result.standard_deviation:.3f}")
@@ -663,9 +666,7 @@ if __name__ == "__main__":
     print("Statistical Analysis initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = analyzer.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := analyzer.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

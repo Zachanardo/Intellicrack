@@ -31,8 +31,7 @@ def qapp(qapp: QApplication) -> QApplication:
 @pytest.fixture
 def entropy_visualizer(qapp: QApplication) -> EntropyVisualizer:
     """Create EntropyVisualizer widget for testing."""
-    visualizer = EntropyVisualizer()
-    return visualizer
+    return EntropyVisualizer()
 
 
 @pytest.fixture
@@ -281,14 +280,14 @@ class TestSuspiciousRegionDetection:
         entropy_visualizer.load_data(packed_binary, block_size=512)
         suspicious = entropy_visualizer.find_suspicious_regions()
         high_entropy_regions = [s for s in suspicious if "encryption" in s[1].lower() or "compression" in s[1].lower()]
-        assert len(high_entropy_regions) > 0
+        assert high_entropy_regions
 
     def test_find_suspicious_regions_low_entropy(self, entropy_visualizer: EntropyVisualizer, mixed_data: bytes) -> None:
         """Detects low entropy sections indicating padding."""
         entropy_visualizer.load_data(mixed_data, block_size=512)
         suspicious = entropy_visualizer.find_suspicious_regions()
         low_entropy_regions = [s for s in suspicious if "padding" in s[1].lower() or "null" in s[1].lower()]
-        assert len(low_entropy_regions) > 0
+        assert low_entropy_regions
 
     def test_find_suspicious_regions_empty_data(self, entropy_visualizer: EntropyVisualizer) -> None:
         """Returns empty list for empty data."""
@@ -364,7 +363,8 @@ class TestRealWorldBinaryAnalysis:
         """UPX packed sections have very high entropy."""
         upx_signature = b"UPX0" + b"UPX1" + bytes((i * 73) % 256 for i in range(2048))
         entropy_visualizer.load_data(upx_signature, block_size=512)
-        high_entropy_count = sum(1 for e in entropy_visualizer.entropy_data if e > 7.0)
+        high_entropy_count = sum(bool(e > 7.0)
+                             for e in entropy_visualizer.entropy_data)
         assert high_entropy_count > 0
 
     def test_code_section_medium_entropy(self, entropy_visualizer: EntropyVisualizer) -> None:
@@ -386,7 +386,7 @@ class TestRealWorldBinaryAnalysis:
         entropy_visualizer.load_data(encrypted, block_size=256)
         suspicious = entropy_visualizer.find_suspicious_regions()
         encryption_regions = [s for s in suspicious if "encryption" in s[1].lower()]
-        assert len(encryption_regions) > 0
+        assert encryption_regions
 
 
 class TestEntropyBlockSizes:

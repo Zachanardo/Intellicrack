@@ -84,9 +84,7 @@ if __name__ == "__main__":
     print("Running Debugger Detector Tests and Coverage Analysis...")
     print("="*60)
 
-    success = run_coverage_analysis()
-
-    if success:
+    if success := run_coverage_analysis():
         print("\nOK Test and coverage analysis completed successfully!")
         sys.exit(0)
     else:

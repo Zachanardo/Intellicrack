@@ -47,7 +47,8 @@ def main():
     print(f"  Current Arch: {current['architecture']}")
     print(f"  Is VM: {current['is_vm']}")
 
-    compatible_count = sum(1 for c in compat_report['compatibility_matrix'] if c['compatible'])
+    compatible_count = sum(bool(c['compatible'])
+                       for c in compat_report['compatibility_matrix'])
     print(f"\n  Compatible environments: {compatible_count}/{len(tester.environments)}")
 
     print("\nOK Multi-Environment Tester Test Complete!")

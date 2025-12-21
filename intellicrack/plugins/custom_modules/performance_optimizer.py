@@ -36,7 +36,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
@@ -407,7 +407,9 @@ class ThreadPoolOptimizer:
 
         """
         start_time = time.time()
-        queue_depth = len(self.executor._threads) - len([t for t in self.executor._threads if not getattr(t, '_tstate_lock', None) or not t._tstate_lock.acquire(False)])  # type: ignore[attr-defined]
+        queue_depth = len(self.executor._threads) - len([
+            t for t in self.executor._threads if not hasattr(t, "_tstate_lock") or getattr(t, "_tstate_lock", None) is None or not getattr(t, "_tstate_lock").acquire(False)
+        ])
 
         with self.lock:
             self.queue_depths.append(queue_depth)
@@ -475,17 +477,24 @@ class GPUOptimizer:
 
     def __init__(self) -> None:
         """Initialize GPU optimizer with device detection and memory tracking."""
-        self.gpu_available = TORCH_AVAILABLE and torch.cuda.is_available()
-        self.device_count = torch.cuda.device_count() if self.gpu_available else 0
+        self.gpu_available: bool = False
+        self.device_count: int = 0
+        self.torch_is_available: bool = TORCH_AVAILABLE and torch is not None
+
+        if self.torch_is_available and torch is not None:
+            self.gpu_available = torch.cuda.is_available()  # type: ignore[unreachable]
+            if self.gpu_available:
+                self.device_count = torch.cuda.device_count()
+
         self.memory_usage: dict[int, dict[str, float | int]] = {}
         self.optimal_batch_sizes: dict[str, int] = {}
 
     def get_optimal_batch_size(self, model_name: str, input_shape: tuple[int, ...]) -> int:
         """Calculate optimal batch size for GPU processing."""
-        if not self.gpu_available:
+        if not self.gpu_available or not self.torch_is_available or torch is None:
             return 1
 
-        cache_key = f"{model_name}_{input_shape}"
+        cache_key = f"{model_name}_{input_shape}"  # type: ignore[unreachable]
         if cache_key in self.optimal_batch_sizes:
             return self.optimal_batch_sizes[cache_key]
 
@@ -494,25 +503,25 @@ class GPUOptimizer:
         available_memory = total_memory - torch.cuda.memory_allocated(device)
 
         # Estimate memory per sample (rough approximation)
-        sample_memory = np.prod(input_shape) * 4  # 4 bytes per float32
+        sample_memory = int(np.prod(input_shape)) * 4  # 4 bytes per float32
 
         # Use 80% of available memory for safety
         safe_memory = available_memory * 0.8
         optimal_batch = int(safe_memory / (sample_memory * 2))  # 2x for gradients
 
         # Ensure batch size is power of 2 for efficiency
-        optimal_batch = 2 ** int(np.log2(max(1, optimal_batch)))
+        optimal_batch = int(2 ** int(np.log2(max(1, optimal_batch))))
 
         self.optimal_batch_sizes[cache_key] = optimal_batch
         return optimal_batch
 
     def optimize_memory(self) -> None:
         """Optimize GPU memory usage."""
-        if not self.gpu_available:
+        if not self.gpu_available or not self.torch_is_available or torch is None:
             return
 
         # Clear cache
-        torch.cuda.empty_cache()
+        torch.cuda.empty_cache()  # type: ignore[unreachable]
 
         # Collect memory statistics
         for device_id in range(self.device_count):
@@ -533,10 +542,10 @@ class GPUOptimizer:
         if not self.gpu_available:
             return {"gpu_available": False}
 
-        stats = {"gpu_available": True, "device_count": self.device_count}
+        stats: dict[str, object] = {"gpu_available": True, "device_count": self.device_count}
 
         for device_id in range(self.device_count):
-            device_stats = self.memory_usage.get(device_id, {})
+            device_stats: dict[str, float | int] = self.memory_usage.get(device_id, {})
             stats[f"device_{device_id}"] = device_stats
 
         return stats
@@ -879,11 +888,11 @@ class PerformanceProfiler:
                 io_read_bytes = getattr(io_counters, "read_bytes", 0) if io_counters else 0
                 io_write_bytes = getattr(io_counters, "write_bytes", 0) if io_counters else 0
 
-                # GPU metrics
-                gpu_stats = {}
-                if TORCH_AVAILABLE and torch.cuda.is_available():
-                    for device_id in range(torch.cuda.device_count()):
-                        gpu_stats[f"gpu_{device_id}_memory"] = torch.cuda.memory_allocated(device_id)
+                # GPU metrics (unused for now but kept for potential future use)
+                if TORCH_AVAILABLE and torch is not None:
+                    if torch.cuda.is_available():  # type: ignore[unreachable]
+                        for device_id in range(torch.cuda.device_count()):
+                            _ = torch.cuda.memory_allocated(device_id)
 
                 timestamp = time.time()
 
@@ -1016,7 +1025,9 @@ class AdaptiveOptimizer:
         # Calculate average of best configurations
         new_config: dict[str, int] = {}
         for key in self.current_config:
-            if values := [cast("dict[str, int]", config["config"])[key] for config in best_configs if key in cast("dict[str, int]", config["config"])]:
+            if values := [
+                cast("dict[str, int]", config["config"])[key] for config in best_configs if key in cast("dict[str, int]", config["config"])
+            ]:
                 new_config[key] = int(np.mean(values))
 
         # Apply gradual learning

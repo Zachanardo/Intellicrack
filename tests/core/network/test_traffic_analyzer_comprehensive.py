@@ -645,9 +645,6 @@ class TestTrafficAnalysis:
             setattr(mock_packet, "tcp", mock_packet.tcp)
             setattr(mock_packet, "ip", mock_packet.ip)
             success = analyzer._process_pyshark_packet(mock_packet)
-            if success:
-                pass
-
         results = analyzer.analyze_traffic()
 
         assert results is not None
@@ -771,7 +768,7 @@ class TestCaptureControl:
         result = analyzer.stop_capture()
 
         assert result is True
-        assert analyzer.capturing is False
+        assert not analyzer.capturing
 
     def test_stop_capture_logs_statistics(
         self, analyzer: NetworkTrafficAnalyzer
@@ -807,8 +804,8 @@ class TestCaptureControl:
         result = analyzer.stop_capture()
 
         assert result is True
-        assert len(analyzer.packets) > 0
-        assert len(analyzer.connections) > 0
+        assert analyzer.packets
+        assert analyzer.connections
 
 
 class TestResultsAndStatistics:
@@ -998,15 +995,14 @@ class TestResultsAndStatistics:
         analyzer.packets = []
         for minute in range(5):
             packet_count = 10 if minute == 2 else 3
-            for _ in range(packet_count):
-                analyzer.packets.append(
-                    {
-                        "timestamp": base_time + minute * 60,
-                        "src_ip": "1.1.1.1",
-                        "dst_ip": "2.2.2.2",
-                    }
-                )
-
+            analyzer.packets.extend(
+                {
+                    "timestamp": base_time + minute * 60,
+                    "src_ip": "1.1.1.1",
+                    "dst_ip": "2.2.2.2",
+                }
+                for _ in range(packet_count)
+            )
         peak_time = analyzer._identify_peak_traffic_time()
 
         assert peak_time is not None
@@ -1239,8 +1235,7 @@ class TestRealWorldScenarios:
         assert results["total_packets"] == 100
         assert len(results["license_conn_details"]) >= 1
 
-        license_conn_details = results.get("license_conn_details", [])
-        if license_conn_details:
+        if license_conn_details := results.get("license_conn_details", []):
             conn = license_conn_details[0]
             assert conn["packets"] == 100
             assert conn["duration"] > 9
@@ -1274,8 +1269,7 @@ class TestRealWorldScenarios:
         results = analyzer.analyze_traffic()
 
         assert results is not None
-        license_conn_details = results.get("license_conn_details", [])
-        if license_conn_details:
+        if license_conn_details := results.get("license_conn_details", []):
             conn = license_conn_details[0]
             assert conn["bytes_sent"] > 0
             assert conn["bytes_received"] > 0

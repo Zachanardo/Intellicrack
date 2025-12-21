@@ -111,15 +111,19 @@ class TestAdvancedProtocolAnalysis:
         # Expected sophisticated analysis results
         return {
             'vulnerability_detected': True,
-            'risk_level': 'HIGH' if scenario in ['heartbleed_vulnerability', 'protocol_downgrade'] else 'MEDIUM',
+            'risk_level': (
+                'HIGH'
+                if scenario in {'heartbleed_vulnerability', 'protocol_downgrade'}
+                else 'MEDIUM'
+            ),
             'exploitation_vectors': [
                 'man_in_the_middle_attack',
                 'certificate_spoofing',
                 'traffic_decryption',
-                'session_hijacking'
+                'session_hijacking',
             ],
             'mitigation_strategy': f'Address {scenario} by updating configuration',
-            'technical_details': data
+            'technical_details': data,
         }
 
     def test_ftp_protocol_security_assessment(self):
@@ -143,7 +147,7 @@ class TestAdvancedProtocolAnalysis:
             }
         }
 
-        for test_name, test_data in ftp_security_tests.items():
+        for test_data in ftp_security_tests.values():
             result = self._analyze_ftp_security(test_data['command'])
             assert result['vulnerability_found']
             assert test_data['expected_vuln'].lower() in result['description'].lower()
@@ -158,12 +162,14 @@ class TestAdvancedProtocolAnalysis:
             'PORT': 'ftp bounce attack vector'
         }
 
-        detected_vuln = None
-        for pattern, vuln in vulnerabilities.items():
-            if pattern in ftp_command:
-                detected_vuln = vuln
-                break
-
+        detected_vuln = next(
+            (
+                vuln
+                for pattern, vuln in vulnerabilities.items()
+                if pattern in ftp_command
+            ),
+            None,
+        )
         return {
             'vulnerability_found': detected_vuln is not None,
             'description': detected_vuln or 'no vulnerability detected',
@@ -205,7 +211,7 @@ class TestAdvancedProtocolAnalysis:
             }
         }
 
-        for attack_type, attack_data in smtp_attack_vectors.items():
+        for attack_data in smtp_attack_vectors.values():
             analysis = self._perform_smtp_analysis(attack_data['commands'])
             assert analysis['threat_detected']
             assert attack_data['expected_detection'] in analysis['threat_description'].lower()
@@ -221,13 +227,14 @@ class TestAdvancedProtocolAnalysis:
         }
 
         full_command = ' '.join(smtp_commands)
-        detected_threat = 'no threat detected'
-
-        for pattern, threat in threat_patterns.items():
-            if pattern.replace('.*', '') in full_command:
-                detected_threat = threat
-                break
-
+        detected_threat = next(
+            (
+                threat
+                for pattern, threat in threat_patterns.items()
+                if pattern.replace('.*', '') in full_command
+            ),
+            'no threat detected',
+        )
         return {
             'threat_detected': detected_threat != 'no threat detected',
             'threat_description': detected_threat,
@@ -494,22 +501,28 @@ Connection: keep-alive\r
             'tcp_packet': {
                 'parsing_successful': True,
                 'protocol_fields': {
-                    'src_port': struct.unpack('>H', packet_data[0:2])[0],
+                    'src_port': struct.unpack('>H', packet_data[:2])[0],
                     'dst_port': struct.unpack('>H', packet_data[2:4])[0],
                     'seq_number': struct.unpack('>I', packet_data[4:8])[0],
-                    'flags': 'PSH+ACK'
+                    'flags': 'PSH+ACK',
                 },
-                'security_analysis': ['port_scanning_detection', 'connection_hijacking_risk']
+                'security_analysis': [
+                    'port_scanning_detection',
+                    'connection_hijacking_risk',
+                ],
             },
             'udp_packet': {
                 'parsing_successful': True,
                 'protocol_fields': {
-                    'src_port': struct.unpack('>H', packet_data[0:2])[0],
+                    'src_port': struct.unpack('>H', packet_data[:2])[0],
                     'dst_port': struct.unpack('>H', packet_data[2:4])[0],
-                    'length': struct.unpack('>H', packet_data[4:6])[0]
+                    'length': struct.unpack('>H', packet_data[4:6])[0],
                 },
-                'security_analysis': ['dns_tunneling_potential', 'amplification_attack_vector']
-            }
+                'security_analysis': [
+                    'dns_tunneling_potential',
+                    'amplification_attack_vector',
+                ],
+            },
         }
 
         return parsing_results.get(protocol_type, {

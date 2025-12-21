@@ -83,8 +83,12 @@ def large_conversation_history() -> list[dict[str, str]]:
     """Generate large conversation history for testing."""
     history = []
     for i in range(1000):
-        history.append({"role": "user", "content": f"Question {i}"})
-        history.append({"role": "assistant", "content": f"Answer {i}"})
+        history.extend(
+            (
+                {"role": "user", "content": f"Question {i}"},
+                {"role": "assistant", "content": f"Answer {i}"},
+            )
+        )
     return history
 
 
@@ -271,7 +275,7 @@ class TestChatFunctionality:
         if hasattr(widget, "clear_conversation"):
             widget.clear_conversation()
 
-            assert len(widget.conversation_history) == 0
+            assert not widget.conversation_history
 
         widget.close()
 
@@ -326,7 +330,8 @@ class TestScriptGeneration:
         """Widget validates generated script syntax."""
         widget = AIAssistantWidget()
 
-        test_script = '''import frida
+        if hasattr(widget, "validate_script_syntax"):
+            test_script = '''import frida
 
 def main():
     session = frida.attach("target.exe")
@@ -343,7 +348,6 @@ def main():
     script.load()
 '''
 
-        if hasattr(widget, "validate_script_syntax"):
             is_valid = widget.validate_script_syntax(test_script, "python")
             assert isinstance(is_valid, bool) or is_valid is None
 
@@ -374,9 +378,7 @@ class TestCodeAnalysis:
         widget = AIAssistantWidget()
 
         if hasattr(widget, "identify_license_checks"):
-            results = widget.identify_license_checks(sample_python_code)
-
-            if results:
+            if results := widget.identify_license_checks(sample_python_code):
                 assert isinstance(results, (list, dict))
 
         widget.close()
@@ -388,9 +390,7 @@ class TestCodeAnalysis:
         widget = AIAssistantWidget()
 
         if hasattr(widget, "suggest_bypass"):
-            suggestions = widget.suggest_bypass(sample_python_code)
-
-            if suggestions:
+            if suggestions := widget.suggest_bypass(sample_python_code):
                 assert isinstance(suggestions, (list, str))
 
         widget.close()
@@ -402,9 +402,7 @@ class TestCodeAnalysis:
         widget = AIAssistantWidget()
 
         if hasattr(widget, "analyze_complexity"):
-            complexity = widget.analyze_complexity(sample_python_code)
-
-            if complexity:
+            if complexity := widget.analyze_complexity(sample_python_code):
                 assert isinstance(complexity, (int, float, dict))
 
         widget.close()
@@ -426,9 +424,7 @@ class TestKeygenGeneration:
         }
 
         if hasattr(widget, "suggest_keygen_algorithm"):
-            suggestion = widget.suggest_keygen_algorithm(binary_info)
-
-            if suggestion:
+            if suggestion := widget.suggest_keygen_algorithm(binary_info):
                 assert isinstance(suggestion, str)
 
         widget.close()
@@ -456,14 +452,14 @@ class TestKeygenGeneration:
         """Widget validates generated keygen code."""
         widget = AIAssistantWidget()
 
-        test_keygen = '''def generate_key():
+        if hasattr(widget, "validate_keygen"):
+            test_keygen = '''def generate_key():
     import random
     import string
     key = ''.join(random.choices(string.ascii_uppercase + string.digits, k=20))
     return key
 '''
 
-        if hasattr(widget, "validate_keygen"):
             is_valid = widget.validate_keygen(test_keygen)
             assert isinstance(is_valid, bool) or is_valid is None
 
@@ -581,12 +577,12 @@ class TestEdgeCases:
         """Widget handles code with special characters."""
         widget = AIAssistantWidget()
 
-        code_with_special = '''def test():
+        if hasattr(widget, "analyze_code"):
+            code_with_special = '''def test():
     s = "String with \\" quotes \\\\ backslashes"
     return s
 '''
 
-        if hasattr(widget, "analyze_code"):
             widget.analyze_code(code_with_special)
             QTest.qWait(200)
 
@@ -634,9 +630,9 @@ class TestEdgeCases:
         """Widget handles context window overflow."""
         widget = AIAssistantWidget()
 
-        very_large_context = "A" * 100000
-
         if hasattr(widget, "set_context"):
+            very_large_context = "A" * 100000
+
             widget.set_context(very_large_context)
             QTest.qWait(200)
 

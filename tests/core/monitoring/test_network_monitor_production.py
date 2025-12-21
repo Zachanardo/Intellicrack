@@ -57,10 +57,7 @@ def test_network_monitor_scapy_availability_detection(network_monitor: Any) -> N
     """Network monitor detects scapy availability correctly."""
     from intellicrack.core.monitoring.network_monitor import SCAPY_AVAILABLE
 
-    if SCAPY_AVAILABLE:
-        assert network_monitor._sniff_thread is None
-    else:
-        assert network_monitor._sniff_thread is None
+    assert network_monitor._sniff_thread is None
 
 
 def test_network_monitor_starts_with_scapy_available(network_monitor: Any) -> None:
@@ -70,9 +67,7 @@ def test_network_monitor_starts_with_scapy_available(network_monitor: Any) -> No
     if not SCAPY_AVAILABLE:
         pytest.skip("Scapy not available for packet capture")
 
-    result = network_monitor.start()
-
-    if result:
+    if result := network_monitor.start():
         assert network_monitor.is_monitoring is True
         assert network_monitor._sniff_thread is not None
         network_monitor.stop()
@@ -99,9 +94,7 @@ def test_network_monitor_stops_cleanly(network_monitor: Any) -> None:
     if not SCAPY_AVAILABLE:
         pytest.skip("Scapy not available")
 
-    result = network_monitor.start()
-
-    if result:
+    if result := network_monitor.start():
         time.sleep(0.5)
         network_monitor.stop()
 
@@ -224,7 +217,7 @@ def test_network_monitor_ignores_non_ip_packets(network_monitor: Any) -> None:
 
     network_monitor._process_packet(non_ip_packet)
 
-    assert len(events_captured) == 0
+    assert not events_captured
 
 
 def test_network_monitor_extracts_packet_payload_size(network_monitor: Any) -> None:
@@ -290,7 +283,7 @@ def test_network_monitor_thread_safety(network_monitor: Any) -> None:
     for thread in threads:
         thread.join()
 
-    assert len(events_captured) >= 0
+    assert True
 
 
 def test_network_monitor_event_severity_classification(network_monitor: Any) -> None:

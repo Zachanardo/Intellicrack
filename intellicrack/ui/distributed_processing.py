@@ -1206,16 +1206,14 @@ class DistributedWorkerThread(QThread):
 
         # Common patterns
         for base in bases:
-            passwords.extend(
-                (
-                    base,
-                    f"{base}123",
-                    f"{base}1234",
-                    f"{base}12345",
-                    base.capitalize(),
-                    base.upper(),
-                )
-            )
+            passwords.extend((
+                base,
+                f"{base}123",
+                f"{base}1234",
+                f"{base}12345",
+                base.capitalize(),
+                base.upper(),
+            ))
             # Add year patterns
             passwords.extend(f"{base}{year}" for year in range(2020, 2026))
             # Add special char patterns
@@ -1681,9 +1679,7 @@ class DistributedWorkerThread(QThread):
                 "Implement anti-tampering measures",
             ))
         else:
-            recommendations.extend(
-                ("Consider adding obfuscation", "Monitor for suspicious activity")
-            )
+            recommendations.extend(("Consider adding obfuscation", "Monitor for suspicious activity"))
         return recommendations
 
     def process_license_analysis(self, task: DistributedTask) -> dict[str, Any]:

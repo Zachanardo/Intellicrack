@@ -144,6 +144,7 @@ class FileTreeWidget(QTreeWidget):
                 if item.is_dir():
                     try:
                         from PyQt6.QtWidgets import QStyle
+
                         if style := self.style():
                             tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_DirIcon))
                     except (ImportError, AttributeError):
@@ -154,6 +155,7 @@ class FileTreeWidget(QTreeWidget):
                 elif item.suffix.lower() in self.supported_extensions:
                     try:
                         from PyQt6.QtWidgets import QStyle
+
                         if style := self.style():
                             tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_FileIcon))
                     except (ImportError, AttributeError):
@@ -161,6 +163,7 @@ class FileTreeWidget(QTreeWidget):
                 else:
                     try:
                         from PyQt6.QtWidgets import QStyle
+
                         if style := self.style():
                             tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
                     except (ImportError, AttributeError):
@@ -489,10 +492,8 @@ class ChatWidget(QWidget):
                         self.model_combo.insertSeparator(self.model_combo.count())
                         self.model_combo.addItem(f"── {provider_name} API Models ──")
                         combo_model = self.model_combo.model()
-                        if combo_model and hasattr(combo_model, 'item'):
-                            if item := combo_model.item(
-                                self.model_combo.count() - 1
-                            ):
+                        if combo_model and hasattr(combo_model, "item"):
+                            if item := combo_model.item(self.model_combo.count() - 1):
                                 item.setEnabled(False)
 
                         for model_info in models:
@@ -3205,9 +3206,7 @@ This research is for strengthening software protection mechanisms."""
             # Get AI response with license research context
             try:
                 if self.ai_tools and hasattr(self.ai_tools, "generate_response"):
-                    if response := self.ai_tools.generate_response(
-                        enhanced_message, context
-                    ):
+                    if response := self.ai_tools.generate_response(enhanced_message, context):
                         formatted_response = self._format_license_research_response(response)
                         if hasattr(self, "chat_widget"):
                             self.chat_widget.add_message("AI", formatted_response)
@@ -3335,12 +3334,12 @@ WARNING️  All research should be conducted on your own software in controlled 
             "",
             "import os",
             "import sys",
+            "import ctypes",
+            "import struct",
+            "import logging",
+            "from typing import Any, Dict, Optional",
+            "",
         ]
-        bypass_code.append("import ctypes")
-        bypass_code.append("import struct")
-        bypass_code.append("import logging")
-        bypass_code.append("from typing import Any, Dict, Optional")
-        bypass_code.append("")
         bypass_code.append("logging.basicConfig(level=logging.INFO)")
         bypass_code.append("logger = logging.getLogger(__name__)")
         bypass_code.append("")
@@ -3912,8 +3911,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
 
             try:
                 # Get quick AI response
-                ai_response = self.ai_tools.ask_question(
-            quick_prompt)
+                ai_response = self.ai_tools.ask_question(quick_prompt)
 
                 if ai_response and ai_response.strip():
                     # Format quick response
@@ -4408,7 +4406,12 @@ class AICodingAssistantDialog(QDialog):
         """Save all modified files."""
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
-            if editor and hasattr(editor, "is_modified") and getattr(editor, "is_modified", False) and (hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None))):
+            if (
+                editor
+                and hasattr(editor, "is_modified")
+                and getattr(editor, "is_modified", False)
+                and (hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)))
+            ):
                 cast("Any", editor).save_file()
 
         self.update_modified_status()
@@ -4497,8 +4500,7 @@ class AICodingAssistantDialog(QDialog):
                 code_snippet = context["selected_text"][:500]  # Limit code length
                 question = f"Please explain this code:\n```\n{code_snippet}\n```"
                 if self.ai_tools:
-                    return self.ai_tools.ask_question(
-            question)
+                    return self.ai_tools.ask_question(question)
             if "generate" in message.lower():
                 # Handle code generation requests
                 script_type = self.script_type_combo.currentText()
@@ -4521,13 +4523,13 @@ class AICodingAssistantDialog(QDialog):
                 # Handle debugging requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Help me debug this code:\n```\n{code_snippet}\n```"
-                response = self.ai_tools.ask_question(  # type: ignore[union-attr]
-            question)
-                return response
-
+                return self.ai_tools.ask_question(  # type: ignore[union-attr]
+                    question
+                )
             # For general questions, use ask_question directly
             response = self.ai_tools.ask_question(  # type: ignore[union-attr]
-            message)
+                message
+            )
             return response
 
         except Exception as e:

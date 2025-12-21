@@ -40,10 +40,10 @@ class TestAESSBoxDetection:
         detections: list[CryptoDetection] = detector.detect_all(bytes(binary_data), base_addr=0x400000)
 
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
-        assert len(aes_detections) >= 1
+        assert aes_detections
 
         forward_sbox = [d for d in aes_detections if "Forward" in d.variant]
-        assert len(forward_sbox) >= 1
+        assert forward_sbox
         assert forward_sbox[0].confidence >= 0.85
         assert forward_sbox[0].offset == 0x400000 + sbox_offset
         assert forward_sbox[0].size == 256
@@ -61,7 +61,7 @@ class TestAESSBoxDetection:
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
         inverse_sbox = [d for d in aes_detections if "Inverse" in d.variant]
 
-        assert len(inverse_sbox) >= 1
+        assert inverse_sbox
         assert inverse_sbox[0].confidence >= 0.85
         assert inverse_sbox[0].offset == 0x10000000 + sbox_offset
         assert inverse_sbox[0].details["sbox_type"] == "inverse"
@@ -79,8 +79,9 @@ class TestAESSBoxDetection:
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(binary_data), base_addr=0)
 
-        aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
-        if len(aes_detections) > 0:
+        if aes_detections := [
+            d for d in detections if d.algorithm == CryptoAlgorithm.AES
+        ]:
             assert aes_detections[0].confidence < 1.0
             assert aes_detections[0].confidence >= 0.85
             assert aes_detections[0].details.get("obfuscated", False)
@@ -95,7 +96,7 @@ class TestAESSBoxDetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0x1000)
 
         aesni_detections = [d for d in detections if "AES-NI" in d.variant]
-        assert len(aesni_detections) >= 1
+        assert aesni_detections
         assert aesni_detections[0].algorithm == CryptoAlgorithm.AES
         assert aesni_detections[0].confidence == 1.0
         assert aesni_detections[0].details["hardware"] is True
@@ -111,7 +112,7 @@ class TestAESSBoxDetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
         keygen_detections = [d for d in detections if "AESKEYGENASSIST" in d.variant]
-        assert len(keygen_detections) >= 1
+        assert keygen_detections
         assert keygen_detections[0].confidence == 1.0
         assert keygen_detections[0].details["instruction"] == "AESKEYGENASSIST"
 
@@ -126,7 +127,7 @@ class TestAESSBoxDetection:
 
         assert len(detector.constant_cache) > 0
         rcon_constants = [c for c in detector.constant_cache.values() if "AES_RCON" in c.constant_type]
-        assert len(rcon_constants) >= 1
+        assert rcon_constants
         assert rcon_constants[0].algorithm == CryptoAlgorithm.AES
 
 
@@ -143,7 +144,7 @@ class TestRSADetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
         rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
-        assert len(rsa_detections) >= 1
+        assert rsa_detections
         assert rsa_detections[0].details["exponent"] == 65537
         assert rsa_detections[0].confidence >= 0.85
         assert "Public Exponent" in rsa_detections[0].variant
@@ -158,7 +159,7 @@ class TestRSADetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0x2000)
 
         rsa_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RSA]
-        assert len(rsa_detections) >= 1
+        assert rsa_detections
         assert rsa_detections[0].details["exponent"] == 3
         assert rsa_detections[0].confidence >= 0.85
 
@@ -167,14 +168,14 @@ class TestRSADetection:
         detector = CryptographicRoutineDetector()
 
         montgomery_code = bytearray(1024)
-        montgomery_code[0:3] = b"\x48\x0f\xaf"
+        montgomery_code[:3] = b"\x48\x0f\xaf"
         montgomery_code[100:102] = b"\x48\xf7"
         montgomery_code[200:203] = b"\x4c\x0f\xaf"
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(montgomery_code), base_addr=0)
 
         montgomery_detections = [d for d in detections if "Montgomery" in d.variant]
-        assert len(montgomery_detections) >= 1
+        assert montgomery_detections
         assert montgomery_detections[0].algorithm == CryptoAlgorithm.RSA
         assert montgomery_detections[0].details["operation"] == "montgomery_mul"
 
@@ -192,7 +193,7 @@ class TestECCDetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
         ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC]
-        assert len(ecc_detections) >= 1
+        assert ecc_detections
         assert "secp256k1" in ecc_detections[0].variant
         assert ecc_detections[0].confidence >= 0.95
         assert ecc_detections[0].details["curve"] == "secp256k1"
@@ -211,7 +212,7 @@ class TestECCDetection:
         ecc_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.ECC]
         secp256r1 = [d for d in ecc_detections if "secp256r1" in d.variant]
 
-        assert len(secp256r1) >= 1
+        assert secp256r1
         assert secp256r1[0].details["curve"] == "secp256r1"
         assert secp256r1[0].details["field_size"] == 256
 
@@ -230,8 +231,9 @@ class TestECCDetection:
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(ecc_point_code), base_addr=0, quick_mode=False)
 
-        point_op_detections = [d for d in detections if "Point Operations" in d.variant]
-        if len(point_op_detections) > 0:
+        if point_op_detections := [
+            d for d in detections if "Point Operations" in d.variant
+        ]:
             assert point_op_detections[0].algorithm == CryptoAlgorithm.ECC
             assert point_op_detections[0].details["multiplications"] >= 6
             assert point_op_detections[0].details["additions"] >= 4
@@ -252,7 +254,7 @@ class TestHashAlgorithmDetection:
         detections: list[CryptoDetection] = detector.detect_all(bytes(binary_data), base_addr=0)
 
         sha256_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA256]
-        assert len(sha256_detections) >= 1
+        assert sha256_detections
         assert sha256_detections[0].confidence >= 0.9
         assert "Round Constants" in sha256_detections[0].variant
         assert sha256_detections[0].details["endianness"] == "big"
@@ -270,7 +272,7 @@ class TestHashAlgorithmDetection:
         detections: list[CryptoDetection] = detector.detect_all(bytes(binary_data), base_addr=0x8000)
 
         sha1_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.SHA1]
-        assert len(sha1_detections) >= 1
+        assert sha1_detections
         assert sha1_detections[0].confidence >= 0.9
         assert "Initialization Vector" in sha1_detections[0].variant
         assert sha1_detections[0].details["constants_found"] >= 3
@@ -287,7 +289,7 @@ class TestHashAlgorithmDetection:
         detections: list[CryptoDetection] = detector.detect_all(bytes(binary_data), base_addr=0)
 
         md5_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.MD5]
-        assert len(md5_detections) >= 1
+        assert md5_detections
         assert md5_detections[0].confidence >= 0.85
         assert "Sine Table" in md5_detections[0].variant
         assert md5_detections[0].details["constants_found"] >= 2
@@ -308,8 +310,8 @@ class TestHashAlgorithmDetection:
         sha256_hw = [d for d in sha_hw_detections if d.algorithm == CryptoAlgorithm.SHA256]
         sha1_hw = [d for d in sha_hw_detections if d.algorithm == CryptoAlgorithm.SHA1]
 
-        assert len(sha256_hw) >= 1
-        assert len(sha1_hw) >= 1
+        assert sha256_hw
+        assert sha1_hw
         assert sha256_hw[0].confidence == 1.0
         assert sha1_hw[0].confidence == 1.0
 
@@ -329,8 +331,11 @@ class TestOtherCryptoDetection:
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(binary_data), base_addr=0)
 
-        des_detections = [d for d in detections if d.algorithm in [CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES]]
-        if len(des_detections) > 0:
+        if des_detections := [
+            d
+            for d in detections
+            if d.algorithm in [CryptoAlgorithm.DES, CryptoAlgorithm.TRIPLE_DES]
+        ]:
             assert des_detections[0].confidence >= 0.5
             assert des_detections[0].details["sbox_count"] >= 4
 
@@ -343,7 +348,7 @@ class TestOtherCryptoDetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
         blowfish_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.BLOWFISH]
-        assert len(blowfish_detections) >= 1
+        assert blowfish_detections
         assert "Pi Subkeys" in blowfish_detections[0].variant
         assert blowfish_detections[0].confidence >= 0.95
 
@@ -357,7 +362,7 @@ class TestOtherCryptoDetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
         twofish_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.TWOFISH]
-        assert len(twofish_detections) >= 1
+        assert twofish_detections
         assert "Q" in twofish_detections[0].variant
         assert twofish_detections[0].confidence >= 0.9
 
@@ -370,7 +375,7 @@ class TestOtherCryptoDetection:
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
         chacha20_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CHACHA20]
-        assert len(chacha20_detections) >= 1
+        assert chacha20_detections
         assert chacha20_detections[0].confidence >= 0.95
         assert chacha20_detections[0].details["constant"] == "expand 32-byte k"
 
@@ -384,8 +389,9 @@ class TestOtherCryptoDetection:
 
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0)
 
-        rc4_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.RC4]
-        if len(rc4_detections) > 0:
+        if rc4_detections := [
+            d for d in detections if d.algorithm == CryptoAlgorithm.RC4
+        ]:
             assert rc4_detections[0].confidence >= 0.9
             assert "State Array" in rc4_detections[0].variant
             assert rc4_detections[0].details["ksa_detected"] is True
@@ -400,16 +406,18 @@ class TestCustomCryptoDetection:
 
         import random
         random.seed(42)
-        high_entropy_table = bytes([random.randint(0, 255) for _ in range(256)])
+        high_entropy_table = bytes(random.randint(0, 255) for _ in range(256))
 
         binary_data = b"\x00" * 100 + high_entropy_table + b"\x00" * 200
 
         detections: list[CryptoDetection] = detector.detect_all(binary_data, base_addr=0, quick_mode=False)
 
-        custom_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM]
-        if len(custom_detections) > 0:
-            table_detections = [d for d in custom_detections if "Table" in d.variant]
-            if len(table_detections) > 0:
+        if custom_detections := [
+            d for d in detections if d.algorithm == CryptoAlgorithm.CUSTOM
+        ]:
+            if table_detections := [
+                d for d in custom_detections if "Table" in d.variant
+            ]:
                 assert table_detections[0].details["entropy"] > 7.5
                 assert table_detections[0].details["structure"] == "lookup_table"
 
@@ -418,14 +426,13 @@ class TestCustomCryptoDetection:
         detector = CryptographicRoutineDetector()
 
         xor_chain_code = bytearray()
-        for i in range(10):
+        for _ in range(10):
             xor_chain_code += b"\x48\x31\xc8"
         xor_chain_code += b"\x90" * (512 - len(xor_chain_code))
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(xor_chain_code), base_addr=0, quick_mode=False)
 
-        xor_detections = [d for d in detections if "XOR" in d.variant]
-        if len(xor_detections) > 0:
+        if xor_detections := [d for d in detections if "XOR" in d.variant]:
             assert xor_detections[0].algorithm == CryptoAlgorithm.CUSTOM
             assert xor_detections[0].details["xor_operations"] >= 8
 
@@ -441,8 +448,7 @@ class TestCustomCryptoDetection:
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(feistel_code), base_addr=0, quick_mode=False)
 
-        feistel_detections = [d for d in detections if "Feistel" in d.variant]
-        if len(feistel_detections) > 0:
+        if feistel_detections := [d for d in detections if "Feistel" in d.variant]:
             assert feistel_detections[0].algorithm == CryptoAlgorithm.CUSTOM
             assert feistel_detections[0].details["rounds"] >= 4
             assert feistel_detections[0].details["xor_operations"] >= 8
@@ -459,8 +465,7 @@ class TestCustomCryptoDetection:
 
         detections: list[CryptoDetection] = detector.detect_all(bytes(lfsr_code), base_addr=0, quick_mode=False)
 
-        lfsr_detections = [d for d in detections if "LFSR" in d.variant]
-        if len(lfsr_detections) > 0:
+        if lfsr_detections := [d for d in detections if "LFSR" in d.variant]:
             assert lfsr_detections[0].algorithm == CryptoAlgorithm.CUSTOM
             assert lfsr_detections[0].details["shift_operations"] >= 4
             assert lfsr_detections[0].details["xor_operations"] >= 4
@@ -484,7 +489,7 @@ class TestDataFlowAnalysis:
         detections: list[CryptoDetection] = detector.detect_all(bytes(crypto_code), base_addr=0, quick_mode=False)
 
         aes_detections = [d for d in detections if d.algorithm == CryptoAlgorithm.AES]
-        if len(aes_detections) > 0 and len(aes_detections[0].data_flows) > 0:
+        if aes_detections and len(aes_detections[0].data_flows) > 0:
             assert "register_usage" in aes_detections[0].details
             assert aes_detections[0].details["data_flow_complexity"] > 0
 
@@ -498,7 +503,7 @@ class TestDataFlowAnalysis:
 
         flow_nodes: list[DataFlowNode] = detector._analyze_data_flow_region(code, 0x1000)
 
-        assert len(flow_nodes) >= 1
+        assert flow_nodes
         assert flow_nodes[0].address == 0x1000
         assert flow_nodes[0].mnemonic in ["mov", "movabs"]
         assert len(flow_nodes[0].constants) > 0 or len(flow_nodes[0].writes) > 0
@@ -544,7 +549,7 @@ class TestCryptoUsageAnalysis:
 
         import random
         random.seed(123)
-        custom_table = bytes([random.randint(0, 255) for _ in range(256)])
+        custom_table = bytes(random.randint(0, 255) for _ in range(256))
         binary_data = b"\x00" * 100 + custom_table + b"\x00" * 1000
 
         detections = detector.detect_all(binary_data, base_addr=0, quick_mode=False)
@@ -620,7 +625,7 @@ class TestRealBinaryDetection:
 
             assert isinstance(detections, list)
 
-            if len(detections) > 0:
+            if detections:
                 for detection in detections:
                     assert detection.confidence >= 0.65
                     assert detection.algorithm in CryptoAlgorithm
@@ -659,7 +664,7 @@ class TestEdgeCases:
 
         detections: list[CryptoDetection] = detector.detect_all(b"", base_addr=0)
 
-        assert detections == []
+        assert not detections
 
     def test_very_small_binary(self) -> None:
         """Detector handles binaries smaller than crypto constants."""

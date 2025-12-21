@@ -88,7 +88,7 @@ def simple_executable(temp_dir: Path) -> Path:
     )
 
     optional_header = bytearray(240)
-    optional_header[0:2] = struct.pack("<H", 0x020B)
+    optional_header[:2] = struct.pack("<H", 0x020B)
     struct.pack_into("<I", optional_header, 16, 0x1000)
     struct.pack_into("<Q", optional_header, 24, 0x400000)
     struct.pack_into("<I", optional_header, 32, 0x1000)
@@ -96,7 +96,7 @@ def simple_executable(temp_dir: Path) -> Path:
     struct.pack_into("<H", optional_header, 68, 0x0140)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     struct.pack_into("<I", section_header, 8, 0x1000)
     struct.pack_into("<I", section_header, 12, 0x1000)
     struct.pack_into("<I", section_header, 16, 0x200)
@@ -138,13 +138,13 @@ def license_check_executable(temp_dir: Path) -> Path:
     coff_header = struct.pack("<HHIIIHH", 0x8664, 1, 0, 0, 0, 0x00F0, 0x0022)
 
     optional_header = bytearray(240)
-    optional_header[0:2] = struct.pack("<H", 0x020B)
+    optional_header[:2] = struct.pack("<H", 0x020B)
     struct.pack_into("<I", optional_header, 16, 0x2000)
     struct.pack_into("<Q", optional_header, 24, 0x400000)
     struct.pack_into("<I", optional_header, 32, 0x1000)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     struct.pack_into("<I", section_header, 8, 0x2000)
     struct.pack_into("<I", section_header, 12, 0x1000)
     struct.pack_into("<I", section_header, 16, 0x1000)
@@ -315,9 +315,7 @@ def test_frida_runtime_analysis_detects_license_strings(license_check_executable
 
     if result.get("success"):
         analysis_data = result.get("analysis_data", {})
-        string_refs = analysis_data.get("stringReferences", [])
-
-        if string_refs:
+        if string_refs := analysis_data.get("stringReferences", []):
             license_related = any(
                 "license" in str(ref).lower() or
                 "activation" in str(ref).lower()
@@ -387,10 +385,9 @@ def test_memory_scan_finds_embedded_license_keywords(license_check_executable: P
     result: dict[str, Any] = analyzer.scan_memory_for_keywords(keywords)
 
     if result["status"] == "success":
-        matches = result["matches"]
-        if matches:
+        if matches := result["matches"]:
             found_keywords = {match["keyword"] for match in matches}
-            assert len(found_keywords) > 0
+            assert found_keywords
 
 
 def test_memory_scan_returns_match_context(license_check_executable: Path) -> None:
@@ -461,9 +458,7 @@ def test_fallback_memory_scan_locates_keywords_in_binary(license_check_executabl
     result: dict[str, Any] = analyzer._fallback_memory_scan(keywords, None)
 
     assert result["status"] == "success"
-    matches = result["matches"]
-
-    if matches:
+    if matches := result["matches"]:
         found = any("checklicense" in match["keyword"].lower() for match in matches)
         assert found
 
@@ -492,7 +487,7 @@ def test_deep_runtime_monitoring_tracks_api_calls(system_binary: Path) -> None:
     logs: list[str] = deep_runtime_monitoring(str(system_binary), timeout=3000)
 
     assert isinstance(logs, list)
-    assert len(logs) > 0
+    assert logs
     assert any("Starting runtime monitoring" in log for log in logs)
 
 
@@ -502,7 +497,7 @@ def test_deep_runtime_monitoring_detects_file_operations(system_binary: Path) ->
     logs: list[str] = deep_runtime_monitoring(str(system_binary), timeout=5000)
 
     assert isinstance(logs, list)
-    assert len(logs) > 0
+    assert logs
 
 
 def test_memory_scan_handles_case_insensitive_matching(license_check_executable: Path) -> None:
@@ -675,7 +670,6 @@ def test_memory_scan_match_deduplication(license_check_executable: Path) -> None
 
     if result["status"] == "success" and result["matches"]:
         addresses = [m["address"] for m in result["matches"]]
-        assert len(addresses) >= 0
 
 
 def test_analyzer_path_accepts_string_input(system_binary: Path) -> None:

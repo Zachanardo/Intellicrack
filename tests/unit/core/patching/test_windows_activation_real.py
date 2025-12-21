@@ -51,17 +51,13 @@ class TestWindowsActivationProduction:
             'slc': system32 / "slc.dll"
         }
 
-        # Check which files exist
-        existing_files = {}
-        for name, path in files.items():
-            if path.exists():
-                existing_files[name] = str(path)
-
-        return existing_files
+        return {name: str(path) for name, path in files.items() if path.exists()}
 
     @pytest.fixture
     def kms_test_server(self):
         """Create a test KMS server for validation."""
+
+
         class TestKMSServer:
             def __init__(self):
                 self.port = 1688  # Standard KMS port
@@ -92,14 +88,14 @@ class TestWindowsActivationProduction:
                         kms_response = self._generate_kms_response()
                         client.send(kms_response)
                         client.close()
-                    except:
+                    except Exception:
                         break
 
             def _generate_kms_response(self):
                 """Generate a KMS activation response packet."""
                 # KMS v6 response structure
                 response = bytearray(256)
-                response[0:4] = struct.pack('<I', 0x00000006)  # Version
+                response[:4] = struct.pack('<I', 0x00000006)
                 response[4:8] = struct.pack('<I', 0x00000000)  # Status OK
                 response[8:24] = os.urandom(16)  # Request ID
                 response[24:40] = os.urandom(16)  # Client Machine ID
@@ -112,6 +108,7 @@ class TestWindowsActivationProduction:
                     self.server_socket.close()
                 if self.thread:
                     self.thread.join(timeout=1)
+
 
         server = TestKMSServer()
         yield server
@@ -208,7 +205,7 @@ class TestWindowsActivationProduction:
             'Windows 11 Enterprise': 'NPPR9-FWDCX-D2C8J-H872K-2YT43'
         }
 
-        for edition, key in kms_keys.items():
+        for key in kms_keys.values():
             result = activator.validate_product_key(key)
             assert result is not None
             assert 'valid' in result
@@ -277,7 +274,6 @@ class TestWindowsActivationProduction:
                 # Try to open registry key (read-only)
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path, 0, winreg.KEY_READ)
                 winreg.CloseKey(key)
-                assert True  # Key exists
             except OSError:
                 # Key might not exist on all systems
                 pass
@@ -419,7 +415,7 @@ class TestWindowsActivationProduction:
         vamt_data = activator.generate_vamt_export()
 
         assert vamt_data is not None
-        assert isinstance(vamt_data, str) or isinstance(vamt_data, bytes)
+        assert isinstance(vamt_data, (str, bytes))
 
         # Should be valid XML format for VAMT
         if isinstance(vamt_data, str):

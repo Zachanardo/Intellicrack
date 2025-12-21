@@ -251,7 +251,7 @@ def test_concurrent_cache_access_safety(
         for t in threads:
             t.join()
 
-        assert len(errors) == 0
+        assert not errors
         assert all(r == "value" for r in results)
 
 

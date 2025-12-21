@@ -111,7 +111,7 @@ class TestRealBinaryAnalysis:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -155,7 +155,7 @@ class TestRealBinaryAnalysis:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -209,7 +209,7 @@ class TestRealBinaryAnalysis:
 
         try:
             os.unlink(temp_file.name)
-        except:
+        except Exception:
             pass
 
     @pytest.fixture
@@ -331,13 +331,15 @@ class TestRealBinaryAnalysis:
             assert isinstance(functions, list), "Functions must be a list"
 
             if len(functions) > 0:
-                main_function = None
-                for func in functions:
-                    if 'main' in func.get('name', '') or func.get('address') == binary_info.get('entry_point'):
-                        main_function = func
-                        break
-
-                if main_function:
+                if main_function := next(
+                    (
+                        func
+                        for func in functions
+                        if 'main' in func.get('name', '')
+                        or func.get('address') == binary_info.get('entry_point')
+                    ),
+                    None,
+                ):
                     disasm = r2_integration.disassemble_function(session, main_function['name'])
                     assert disasm is not None, "Must disassemble main function"
                     assert len(disasm) > 0, "Disassembly must contain instructions"
@@ -387,7 +389,7 @@ class TestRealBinaryAnalysis:
         assert len(entropy_blocks) > 0, "Must analyze entropy blocks"
 
         high_entropy_blocks = [e for e in entropy_blocks if e > 7.0]
-        assert len(high_entropy_blocks) > 0, "Packed binary should have high-entropy blocks"
+        assert high_entropy_blocks, "Packed binary should have high-entropy blocks"
 
     def test_multi_format_analysis_functionality(self, real_pe_executable, real_elf_binary, app_context):
         """Test REAL multi-format analysis functionality."""

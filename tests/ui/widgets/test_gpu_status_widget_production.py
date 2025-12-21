@@ -241,7 +241,7 @@ class TestGPUMonitorWorker:
             worker.update_interval = 100
             worker.start_monitoring()
 
-        assert len(emitted_data) > 0
+        assert emitted_data
         assert "gpus" in emitted_data[0]
 
     def test_monitoring_stop_functionality(self, qapp: Any) -> None:
@@ -251,7 +251,7 @@ class TestGPUMonitorWorker:
 
         worker.stop_monitoring()
 
-        assert worker.running is False
+        assert not worker.running
 
     def test_error_signal_emission(self, qapp: Any) -> None:
         """Worker emits error signal on exception."""
@@ -271,7 +271,7 @@ class TestGPUMonitorWorker:
             worker.update_interval = 100
             worker.start_monitoring()
 
-        assert len(error_messages) > 0
+        assert error_messages
 
     def test_amd_gpu_detection_windows(self, qapp: Any) -> None:
         """Worker detects AMD GPUs on Windows."""
@@ -284,9 +284,7 @@ class TestGPUMonitorWorker:
                 stdout="AMD Radeon RX 7900 XTX, 60, 75, 12288, 24576, 200.0"
             )
 
-            gpus = worker._get_amd_gpu_info()
-
-            if gpus:
+            if gpus := worker._get_amd_gpu_info():
                 assert "AMD" in gpus[0].get("name", "") or gpus[0].get("vendor") == "AMD"
 
     def test_intel_arc_detection_windows(self, qapp: Any) -> None:
@@ -300,9 +298,7 @@ class TestGPUMonitorWorker:
                 stdout="Intel Arc A770, 55, 60, 8192, 16384, 150.0"
             )
 
-            gpus = worker._get_intel_arc_info()
-
-            if gpus:
+            if gpus := worker._get_intel_arc_info():
                 assert "Intel" in gpus[0].get("name", "") or gpus[0].get("vendor") == "Intel"
 
     def test_gpu_metrics_validation(
@@ -345,24 +341,24 @@ class TestGPUStatusWidget:
         """Widget updates GPU information display."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "NVIDIA GeForce RTX 4090",
-                    "vendor": "NVIDIA",
-                    "utilization": 75.0,
-                    "memory_used": 8192.0,
-                    "memory_total": 24576.0,
-                    "temperature": 65.0,
-                    "power_draw": 250.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "NVIDIA GeForce RTX 4090",
+                        "vendor": "NVIDIA",
+                        "utilization": 75.0,
+                        "memory_used": 8192.0,
+                        "memory_total": 24576.0,
+                        "temperature": 65.0,
+                        "power_draw": 250.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(gpu_data)
             QTest.qWait(100)
 
@@ -372,34 +368,34 @@ class TestGPUStatusWidget:
         """Widget displays multiple GPUs correctly."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "GPU 0",
-                    "vendor": "NVIDIA",
-                    "utilization": 50.0,
-                    "memory_used": 4096.0,
-                    "memory_total": 10240.0,
-                    "temperature": 60.0,
-                    "power_draw": 150.0,
-                },
-                {
-                    "index": 1,
-                    "name": "GPU 1",
-                    "vendor": "NVIDIA",
-                    "utilization": 80.0,
-                    "memory_used": 8192.0,
-                    "memory_total": 24576.0,
-                    "temperature": 70.0,
-                    "power_draw": 300.0,
-                },
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "GPU 0",
+                        "vendor": "NVIDIA",
+                        "utilization": 50.0,
+                        "memory_used": 4096.0,
+                        "memory_total": 10240.0,
+                        "temperature": 60.0,
+                        "power_draw": 150.0,
+                    },
+                    {
+                        "index": 1,
+                        "name": "GPU 1",
+                        "vendor": "NVIDIA",
+                        "utilization": 80.0,
+                        "memory_used": 8192.0,
+                        "memory_total": 24576.0,
+                        "temperature": 70.0,
+                        "power_draw": 300.0,
+                    },
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(gpu_data)
             QTest.qWait(100)
 
@@ -409,24 +405,24 @@ class TestGPUStatusWidget:
         """Widget displays GPU utilization in progress bar."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Test GPU",
-                    "vendor": "NVIDIA",
-                    "utilization": 85.0,
-                    "memory_used": 8000.0,
-                    "memory_total": 10000.0,
-                    "temperature": 75.0,
-                    "power_draw": 200.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Test GPU",
+                        "vendor": "NVIDIA",
+                        "utilization": 85.0,
+                        "memory_used": 8000.0,
+                        "memory_total": 10000.0,
+                        "temperature": 75.0,
+                        "power_draw": 200.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(gpu_data)
             QTest.qWait(100)
 
@@ -436,24 +432,24 @@ class TestGPUStatusWidget:
         """Widget displays GPU memory usage correctly."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Test GPU",
-                    "vendor": "NVIDIA",
-                    "utilization": 50.0,
-                    "memory_used": 12288.0,
-                    "memory_total": 24576.0,
-                    "temperature": 60.0,
-                    "power_draw": 150.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Test GPU",
+                        "vendor": "NVIDIA",
+                        "utilization": 50.0,
+                        "memory_used": 12288.0,
+                        "memory_total": 24576.0,
+                        "temperature": 60.0,
+                        "power_draw": 150.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(gpu_data)
             QTest.qWait(100)
 
@@ -463,24 +459,24 @@ class TestGPUStatusWidget:
         """Widget color-codes temperature display based on threshold."""
         widget = GPUStatusWidget()
 
-        high_temp_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Hot GPU",
-                    "vendor": "NVIDIA",
-                    "utilization": 100.0,
-                    "memory_used": 10000.0,
-                    "memory_total": 10000.0,
-                    "temperature": 85.0,
-                    "power_draw": 350.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            high_temp_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Hot GPU",
+                        "vendor": "NVIDIA",
+                        "utilization": 100.0,
+                        "memory_used": 10000.0,
+                        "memory_total": 10000.0,
+                        "temperature": 85.0,
+                        "power_draw": 350.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(high_temp_data)
             QTest.qWait(100)
 
@@ -490,13 +486,13 @@ class TestGPUStatusWidget:
         """Widget displays error when no GPU detected."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [],
-            "platform": "Windows",
-            "error": "No supported GPUs detected",
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [],
+                "platform": "Windows",
+                "error": "No supported GPUs detected",
+            }
+
             widget.update_gpu_display(gpu_data)
             QTest.qWait(100)
 
@@ -529,16 +525,16 @@ class TestGPUStatusWidget:
         """Widget provides GPU selection for multi-GPU systems."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [
-                {"index": 0, "name": "GPU 0", "vendor": "NVIDIA", "utilization": 50.0, "memory_used": 4096.0, "memory_total": 10240.0, "temperature": 60.0, "power_draw": 150.0},
-                {"index": 1, "name": "GPU 1", "vendor": "NVIDIA", "utilization": 75.0, "memory_used": 8192.0, "memory_total": 24576.0, "temperature": 70.0, "power_draw": 250.0},
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [
+                    {"index": 0, "name": "GPU 0", "vendor": "NVIDIA", "utilization": 50.0, "memory_used": 4096.0, "memory_total": 10240.0, "temperature": 60.0, "power_draw": 150.0},
+                    {"index": 1, "name": "GPU 1", "vendor": "NVIDIA", "utilization": 75.0, "memory_used": 8192.0, "memory_total": 24576.0, "temperature": 70.0, "power_draw": 250.0},
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(gpu_data)
             QTest.qWait(100)
 
@@ -552,24 +548,24 @@ class TestGPUStatusEdgeCases:
         """Widget detects GPU memory exhaustion."""
         widget = GPUStatusWidget()
 
-        exhausted_gpu_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Exhausted GPU",
-                    "vendor": "NVIDIA",
-                    "utilization": 100.0,
-                    "memory_used": 24576.0,
-                    "memory_total": 24576.0,
-                    "temperature": 85.0,
-                    "power_draw": 400.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            exhausted_gpu_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Exhausted GPU",
+                        "vendor": "NVIDIA",
+                        "utilization": 100.0,
+                        "memory_used": 24576.0,
+                        "memory_total": 24576.0,
+                        "temperature": 85.0,
+                        "power_draw": 400.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(exhausted_gpu_data)
             QTest.qWait(100)
 
@@ -579,24 +575,24 @@ class TestGPUStatusEdgeCases:
         """Widget handles invalid GPU metric values."""
         widget = GPUStatusWidget()
 
-        invalid_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Invalid GPU",
-                    "vendor": "NVIDIA",
-                    "utilization": -10.0,
-                    "memory_used": -1000.0,
-                    "memory_total": 0.0,
-                    "temperature": 200.0,
-                    "power_draw": -50.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            invalid_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Invalid GPU",
+                        "vendor": "NVIDIA",
+                        "utilization": -10.0,
+                        "memory_used": -1000.0,
+                        "memory_total": 0.0,
+                        "temperature": 200.0,
+                        "power_draw": -50.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(invalid_data)
             QTest.qWait(100)
 
@@ -606,15 +602,15 @@ class TestGPUStatusEdgeCases:
         """Widget handles rapid successive update requests."""
         widget = GPUStatusWidget()
 
-        gpu_data = {
-            "gpus": [
-                {"index": 0, "name": "Test GPU", "vendor": "NVIDIA", "utilization": 50.0, "memory_used": 5000.0, "memory_total": 10000.0, "temperature": 60.0, "power_draw": 150.0}
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            gpu_data = {
+                "gpus": [
+                    {"index": 0, "name": "Test GPU", "vendor": "NVIDIA", "utilization": 50.0, "memory_used": 5000.0, "memory_total": 10000.0, "temperature": 60.0, "power_draw": 150.0}
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             for i in range(20):
                 gpu_data["gpus"][0]["utilization"] = 50.0 + i
                 widget.update_gpu_display(gpu_data)
@@ -626,19 +622,19 @@ class TestGPUStatusEdgeCases:
         """Widget handles GPU data with missing fields."""
         widget = GPUStatusWidget()
 
-        incomplete_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Incomplete GPU",
-                    "vendor": "NVIDIA",
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            incomplete_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Incomplete GPU",
+                        "vendor": "NVIDIA",
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(incomplete_data)
             QTest.qWait(100)
 
@@ -652,13 +648,13 @@ class TestGPUStatusEdgeCases:
             widget.start_monitoring()
             QTest.qWait(200)
 
-        error_data = {
-            "gpus": [],
-            "platform": "Windows",
-            "error": "GPU no longer available",
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            error_data = {
+                "gpus": [],
+                "platform": "Windows",
+                "error": "GPU no longer available",
+            }
+
             widget.update_gpu_display(error_data)
             QTest.qWait(100)
 
@@ -678,24 +674,24 @@ class TestGPUStatusEdgeCases:
         """Widget handles zero memory total gracefully."""
         widget = GPUStatusWidget()
 
-        zero_mem_data = {
-            "gpus": [
-                {
-                    "index": 0,
-                    "name": "Zero Memory GPU",
-                    "vendor": "NVIDIA",
-                    "utilization": 0.0,
-                    "memory_used": 0.0,
-                    "memory_total": 0.0,
-                    "temperature": 30.0,
-                    "power_draw": 10.0,
-                }
-            ],
-            "platform": "Windows",
-            "error": None,
-        }
-
         if hasattr(widget, "update_gpu_display"):
+            zero_mem_data = {
+                "gpus": [
+                    {
+                        "index": 0,
+                        "name": "Zero Memory GPU",
+                        "vendor": "NVIDIA",
+                        "utilization": 0.0,
+                        "memory_used": 0.0,
+                        "memory_total": 0.0,
+                        "temperature": 30.0,
+                        "power_draw": 10.0,
+                    }
+                ],
+                "platform": "Windows",
+                "error": None,
+            }
+
             widget.update_gpu_display(zero_mem_data)
             QTest.qWait(100)
 

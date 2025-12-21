@@ -388,7 +388,7 @@ class TestFridaPerformanceOptimizer:
         optimizer.baseline_memory = 1
 
         current_mem = optimizer.process.memory_info().rss
-        if (current_mem - optimizer.baseline_memory) / 1024 / 1024 > 500:
+        if current_mem - optimizer.baseline_memory > 524288000:
             should_hook = optimizer.should_hook_function(
                 "user32.dll", "MessageBoxA", HookCategory.LOW
             )

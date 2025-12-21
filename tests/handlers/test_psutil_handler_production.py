@@ -207,11 +207,7 @@ def test_swap_memory_returns_swap_info() -> None:
 
 def test_disk_usage_for_root_path() -> None:
     """disk_usage() returns disk usage for root path."""
-    if os.name == "nt":
-        path = "C:\\"
-    else:
-        path = "/"
-
+    path = "C:\\" if os.name == "nt" else "/"
     usage = psutil_handler.disk_usage(path)
 
     assert hasattr(usage, "total")

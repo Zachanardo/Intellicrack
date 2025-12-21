@@ -22,7 +22,7 @@ def test_end_to_end():
         print("   Set OPENAI_API_KEY or ANTHROPIC_API_KEY to test")
         return
 
-    print(f"OK LLM backend initialized")
+    print("OK LLM backend initialized")
     print(f"   Backend info: {interface.llm_backend}")
 
     # Check if it's a properly wrapped backend
@@ -57,7 +57,7 @@ def test_end_to_end():
         }"""
 
         result = interface.generate_script(request, prompt)
-        print(f"OK Generation successful!")
+        print("OK Generation successful!")
         print(f"   Result type: {type(result)}")
         print(f"   Script content length: {len(result[0]) if isinstance(result, tuple) else 'N/A'}")
         print(f"   File extension: {result[1] if isinstance(result, tuple) and len(result) > 1 else 'N/A'}")

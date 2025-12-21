@@ -315,7 +315,7 @@ class TestVMContext:
         assert "CF" in context.flags
         assert "SF" in context.flags
         assert "OF" in context.flags
-        assert all(not flag for flag in context.flags.values())
+        assert not any(context.flags.values())
 
     def test_vm_context_stack_pointer_initialized(self) -> None:
         """VM context initializes stack pointer to valid address."""

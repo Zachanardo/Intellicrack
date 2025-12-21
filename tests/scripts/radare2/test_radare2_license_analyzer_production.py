@@ -68,8 +68,7 @@ def protected_binary() -> Path:
 def license_analyzer(sample_binary: Path) -> R2LicenseAnalyzer:
     """Initialize R2LicenseAnalyzer with sample binary."""
     r2 = r2pipe.open(str(sample_binary))
-    analyzer = R2LicenseAnalyzer(r2=r2)
-    yield analyzer
+    yield R2LicenseAnalyzer(r2=r2)
     r2.quit()
 
 

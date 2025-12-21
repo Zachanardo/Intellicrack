@@ -182,7 +182,7 @@ for string in strings:
         import shutil
         try:
             shutil.rmtree(temp_dir)
-        except:
+        except Exception:
             pass
 
     def test_real_plugin_loading_and_initialization(self, test_plugin_code, plugin_directory, app_context):
@@ -338,12 +338,14 @@ for string in strings:
             }
         }
 
-        # Test pattern matching
-        functions_found = []
-        for func in ghidra_context['currentProgram']['functions']:
-            if any(pattern in func['name'].lower() for pattern in ['license', 'check', 'validate']):
-                functions_found.append(func)
-
+        functions_found = [
+            func
+            for func in ghidra_context['currentProgram']['functions']
+            if any(
+                pattern in func['name'].lower()
+                for pattern in ['license', 'check', 'validate']
+            )
+        ]
         assert len(functions_found) >= 2, "Should find license-related functions"
 
     def test_real_radare2_plugin_operations(self, app_context):
@@ -590,9 +592,7 @@ class DangerousPlugin(BasePlugin):
         plugin_system.add_plugin_directory(plugin_directory)
         plugin_system.discover_plugins()
 
-        # Test loading with sandbox
-        loaded = plugin_system.load_plugin('DangerousPlugin', sandboxed=True)
-        if loaded:
+        if loaded := plugin_system.load_plugin('DangerousPlugin', sandboxed=True):
             # Test restricted operations
             file_result = plugin_system.execute_plugin_method(
                 'DangerousPlugin',

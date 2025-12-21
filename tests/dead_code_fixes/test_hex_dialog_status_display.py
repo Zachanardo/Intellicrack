@@ -4,15 +4,13 @@ This tests that the hex_str variable is properly displayed in the status
 bar alongside interpreted values for complete selection information.
 """
 
+
 from __future__ import annotations
 
 import struct
 from typing import TYPE_CHECKING
 
 import pytest
-
-if TYPE_CHECKING:
-    pass
 
 
 class TestHexDialogStatusDisplay:
@@ -119,20 +117,14 @@ class TestHexDialogStatusDisplay:
         for size in selection_sizes:
             should_display_hex = size <= 8
             if size <= 8:
-                assert should_display_hex is True
+                assert should_display_hex
             else:
-                assert should_display_hex is False
+                assert not should_display_hex
 
     def test_empty_data_handling(self) -> None:
         """Test handling of empty data."""
-        data = b""
-
-        if data:
-            hex_str = " ".join(f"{b:02X}" for b in data)
-        else:
-            hex_str = ""
-
-        assert hex_str == ""
+        hex_str = " ".join(f"{b:02X}" for b in data) if (data := b"") else ""
+        assert not hex_str
 
     def test_maximum_display_size(self) -> None:
         """Test maximum display size constraint."""
@@ -140,7 +132,7 @@ class TestHexDialogStatusDisplay:
         selection_size = len(data)
 
         should_display_hex = selection_size <= 8
-        assert should_display_hex is False
+        assert not should_display_hex
 
     def test_struct_unpack_alignment(self) -> None:
         """Test struct unpacking with correct alignment."""

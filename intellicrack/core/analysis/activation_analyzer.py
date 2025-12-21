@@ -422,11 +422,7 @@ class ActivationAnalyzer:
         end = min(len(self.binary_data), offset + window)
         context = self.binary_data[start:end]
 
-        api_calls: list[str] = [
-            api.decode("utf-8", errors="ignore")
-            for api in self.ACTIVATION_APIS
-            if api in context
-        ]
+        api_calls: list[str] = [api.decode("utf-8", errors="ignore") for api in self.ACTIVATION_APIS if api in context]
         return list(set(api_calls))
 
     def _determine_activation_type(self, strings: list[str], api_calls: list[str]) -> ActivationType:
@@ -532,11 +528,7 @@ class ActivationAnalyzer:
                     return f"registry:{s}"
 
         return next(
-            (
-                f"file:{s}"
-                for s in context_strings
-                if ".dat" in s or ".cfg" in s or ".ini" in s
-            ),
+            (f"file:{s}" for s in context_strings if ".dat" in s or ".cfg" in s or ".ini" in s),
             None,
         )
 
@@ -615,10 +607,7 @@ class ActivationAnalyzer:
             (
                 s
                 for s in strings
-                if any(
-                    ext in s.lower() for ext in [".lic", ".key", ".dat", "license"]
-                )
-                and ("\\" in s or "/" in s or ":" in s)
+                if any(ext in s.lower() for ext in [".lic", ".key", ".dat", "license"]) and ("\\" in s or "/" in s or ":" in s)
             ),
             None,
         )

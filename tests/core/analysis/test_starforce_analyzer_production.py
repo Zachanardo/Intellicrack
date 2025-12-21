@@ -35,7 +35,7 @@ class TestBinaryFactory:
     def create_dos_stub() -> bytes:
         """Create minimal DOS stub."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
         return bytes(dos_header)
 
@@ -45,7 +45,7 @@ class TestBinaryFactory:
         pe_signature = b"PE\x00\x00"
 
         machine_type = 0x014C
-        characteristics = 0x0102 if not is_driver else 0x2102
+        characteristics = 0x2102 if is_driver else 0x0102
 
         coff_header = struct.pack(
             "<HHIIIHH",
@@ -59,7 +59,7 @@ class TestBinaryFactory:
         )
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
         optional_header[16:20] = struct.pack("<I", 0x1000)
         optional_header[20:24] = struct.pack("<I", 0x400000)
 
@@ -71,7 +71,7 @@ class TestBinaryFactory:
     ) -> bytes:
         """Create PE section header."""
         header = bytearray(40)
-        header[0:8] = name.ljust(8, b"\x00")[:8]
+        header[:8] = name.ljust(8, b"\x00")[:8]
         header[8:12] = struct.pack("<I", virtual_size)
         header[12:16] = struct.pack("<I", virtual_address)
         header[16:20] = struct.pack("<I", raw_size)
@@ -91,7 +91,7 @@ class TestBinaryFactory:
 
         text_data = bytearray(0x2000)
 
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
         text_data[20:32] = b"SF_DRIVER_V5"
         text_data[50:57] = b"5.3.0.0"
 
@@ -199,10 +199,10 @@ class TestBinaryFactory:
         text_data[4004:4008] = struct.pack("<I", 0x401000)
 
         data_data = bytearray(0x1000)
-        data_data[0:20] = b"StarForce_Data\x00"
+        data_data[:20] = b"StarForce_Data\x00"
 
         init_data = bytearray(0x1000)
-        init_data[0:20] = b"StarForce_Init\x00"
+        init_data[:20] = b"StarForce_Init\x00"
 
         binary = dos_stub + pe_header + text_section + data_section + init_section
         binary = binary.ljust(0x400, b"\x00")
@@ -224,7 +224,7 @@ class TestBinaryFactory:
         data_section = cls.create_section_header(b".data", 0x1000, 0x2000, 0x1000, 0x1400)
 
         text_data = bytearray(0x1000)
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
         text_data[20:32] = b"SF_DRIVER_V4"
         text_data[50:57] = b"4.7.2.0"
 
@@ -250,7 +250,7 @@ class TestBinaryFactory:
         text_data[800:803] = b"AES"
 
         data_data = bytearray(0x1000)
-        data_data[0:20] = b"StarForce_V4_Data\x00"
+        data_data[:20] = b"StarForce_V4_Data\x00"
 
         binary = dos_stub + pe_header + text_section + data_section
         binary = binary.ljust(0x400, b"\x00")
@@ -269,7 +269,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x1000, 0x1000, 0x1000, 0x400)
 
         text_data = bytearray(0x1000)
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
         text_data[20:32] = b"SF_DRIVER_V3"
         text_data[50:57] = b"3.9.1.0"
 
@@ -300,7 +300,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x1000, 0x1000, 0x1000, 0x400)
 
         text_data = bytearray(0x1000)
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
         text_data[100:104] = struct.pack("<I", 0x80002000)
         text_data[200:202] = b"\x0f\x31"
 
@@ -316,7 +316,7 @@ class TestBinaryFactory:
         dos_stub = cls.create_dos_stub()
 
         text_data = bytearray(0x1000)
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
         text_data[20:32] = b"CORRUPTED!!!"
 
         return dos_stub + bytes(text_data)
@@ -330,7 +330,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x1000, 0x1000, 0x1000, 0x400)
 
         text_data = bytearray(0x1000)
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
 
         text_data[100:102] = b"\x81\x7d"
         text_data[102:106] = struct.pack("<I", 0x80003000)
@@ -356,7 +356,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x2000, 0x1000, 0x2000, 0x400)
 
         text_data = bytearray(0x2000)
-        text_data[0:10] = b"StarForce"
+        text_data[:10] = b"StarForce"
 
         text_data[100:106] = b"VMware"
         text_data[200:208] = b"\x56\x4d\x58\x68"
@@ -686,43 +686,43 @@ class TestStarForceVMDetection:
         """Detects VMware detection mechanisms."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         vmware_methods = [m for m in vm_methods if "vmware" in m.lower()]
-        assert len(vmware_methods) >= 1
+        assert vmware_methods
 
     def test_detect_virtualbox_detection(self, analyzer: StarForceAnalyzer, multi_vm_driver: Path) -> None:
         """Detects VirtualBox detection mechanisms."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         vbox_methods = [m for m in vm_methods if "virtualbox" in m.lower()]
-        assert len(vbox_methods) >= 1
+        assert vbox_methods
 
     def test_detect_qemu_detection(self, analyzer: StarForceAnalyzer, multi_vm_driver: Path) -> None:
         """Detects QEMU detection mechanisms."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         qemu_methods = [m for m in vm_methods if "qemu" in m.lower()]
-        assert len(qemu_methods) >= 1
+        assert qemu_methods
 
     def test_detect_hyperv_detection(self, analyzer: StarForceAnalyzer, multi_vm_driver: Path) -> None:
         """Detects Hyper-V detection mechanisms."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         hyperv_methods = [m for m in vm_methods if "hyperv" in m.lower() or "hyper-v" in m.lower()]
-        assert len(hyperv_methods) >= 1
+        assert hyperv_methods
 
     def test_detect_cpuid_vm_detection(self, analyzer: StarForceAnalyzer, multi_vm_driver: Path) -> None:
         """Detects CPUID-based VM detection."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         cpuid_methods = [m for m in vm_methods if "cpuid" in m.lower()]
-        assert len(cpuid_methods) >= 1
+        assert cpuid_methods
 
     def test_detect_sidt_sgdt_detection(self, analyzer: StarForceAnalyzer, multi_vm_driver: Path) -> None:
         """Detects SIDT/SGDT VM detection."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         sidt_methods = [m for m in vm_methods if "sidt" in m.lower() or "sgdt" in m.lower()]
-        assert len(sidt_methods) >= 1
+        assert sidt_methods
 
     def test_detect_registry_vm_detection(self, analyzer: StarForceAnalyzer, multi_vm_driver: Path) -> None:
         """Detects registry-based VM detection."""
         vm_methods = analyzer._detect_vm_checks(multi_vm_driver)
         registry_methods = [m for m in vm_methods if "registry" in m.lower()]
-        assert len(registry_methods) >= 1
+        assert registry_methods
 
     def test_vm_detection_comprehensive(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Comprehensive VM detection in v5 driver."""
@@ -742,37 +742,37 @@ class TestStarForceDiscAuthentication:
         """Detects SCSI command-based authentication."""
         mechanisms = analyzer._analyze_disc_auth(starforce_v5_driver)
         scsi_mechs = [m for m in mechanisms if "scsi" in m.lower()]
-        assert len(scsi_mechs) >= 1
+        assert scsi_mechs
 
     def test_detect_toc_verification(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects CD-ROM TOC verification."""
         mechanisms = analyzer._analyze_disc_auth(starforce_v5_driver)
         toc_mechs = [m for m in mechanisms if "toc" in m.lower()]
-        assert len(toc_mechs) >= 1
+        assert toc_mechs
 
     def test_detect_capacity_validation(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects disc capacity validation."""
         mechanisms = analyzer._analyze_disc_auth(starforce_v5_driver)
         capacity_mechs = [m for m in mechanisms if "capacity" in m.lower()]
-        assert len(capacity_mechs) >= 1
+        assert capacity_mechs
 
     def test_detect_raw_sector_reading(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects raw sector reading for fingerprinting."""
         mechanisms = analyzer._analyze_disc_auth(starforce_v5_driver)
         sector_mechs = [m for m in mechanisms if "sector" in m.lower() or "fingerprint" in m.lower()]
-        assert len(sector_mechs) >= 1
+        assert sector_mechs
 
     def test_detect_geometry_verification(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects drive geometry verification."""
         mechanisms = analyzer._analyze_disc_auth(starforce_v5_driver)
         geometry_mechs = [m for m in mechanisms if "geometry" in m.lower()]
-        assert len(geometry_mechs) >= 1
+        assert geometry_mechs
 
     def test_detect_subchannel_analysis(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects subchannel data analysis."""
         mechanisms = analyzer._analyze_disc_auth(starforce_v5_driver)
         subchannel_mechs = [m for m in mechanisms if "subchannel" in m.lower()]
-        assert len(subchannel_mechs) >= 1
+        assert subchannel_mechs
 
     def test_disc_auth_comprehensive_v5(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """v5 driver has comprehensive disc authentication."""
@@ -799,7 +799,7 @@ class TestStarForceKernelHooks:
         """Detects DeviceIoControl hooks."""
         hooks = analyzer._detect_kernel_hooks(starforce_v5_driver)
         ioctl_hooks = [h for h in hooks if "DeviceIoControl" in h[0]]
-        assert len(ioctl_hooks) >= 1
+        assert ioctl_hooks
 
     def test_detect_query_hooks(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects system information query hooks."""
@@ -1015,31 +1015,31 @@ class TestStarForceCryptoDetection:
         """Detects MD5 constants."""
         algorithms = analyzer._identify_crypto(starforce_v5_driver)
         md5_algos = [a for a in algorithms if "md5" in a.lower()]
-        assert len(md5_algos) >= 1
+        assert md5_algos
 
     def test_detect_sha1_constants(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects SHA-1 constants."""
         algorithms = analyzer._identify_crypto(starforce_v5_driver)
         sha1_algos = [a for a in algorithms if "sha-1" in a.lower()]
-        assert len(sha1_algos) >= 1
+        assert sha1_algos
 
     def test_detect_sha256_constants(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects SHA-256 constants."""
         algorithms = analyzer._identify_crypto(starforce_v5_driver)
         sha256_algos = [a for a in algorithms if "sha-256" in a.lower()]
-        assert len(sha256_algos) >= 1
+        assert sha256_algos
 
     def test_detect_aes_constants(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects AES constants."""
         algorithms = analyzer._identify_crypto(starforce_v5_driver)
         aes_algos = [a for a in algorithms if "aes" in a.lower()]
-        assert len(aes_algos) >= 1
+        assert aes_algos
 
     def test_detect_aes_sbox(self, analyzer: StarForceAnalyzer, starforce_v5_driver: Path) -> None:
         """Detects AES S-box."""
         algorithms = analyzer._identify_crypto(starforce_v5_driver)
         sbox_algos = [a for a in algorithms if "s-box" in a.lower()]
-        assert len(sbox_algos) >= 1
+        assert sbox_algos
 
 
 class TestStarForcePerformance:

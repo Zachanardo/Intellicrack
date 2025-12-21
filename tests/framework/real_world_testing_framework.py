@@ -269,10 +269,7 @@ class RealWorldTestingFramework:
         rdata_content += b"ExitProcess\x00"
         rdata_content += b"\x00" * (0x200 - len(rdata_content))
 
-        # Combine all sections
-        binary = headers + text_code + data_content + rdata_content
-
-        return binary
+        return headers + text_code + data_content + rdata_content
 
     def _generate_flexlm_binary(self) -> bytes:
         """Generate a FlexLM-protected test binary"""
@@ -399,7 +396,7 @@ class RealWorldTestingFramework:
         if sandbox_path.parent.exists():
             try:
                 shutil.rmtree(sandbox_path.parent)
-            except:
+            except Exception:
                 pass  # Non-critical cleanup failure
 
     def _verify_simple_license_bypass(self, binary_path: Path) -> dict[str, Any]:
@@ -556,7 +553,7 @@ class RealWorldTestingFramework:
                 text=True
             )
             return "RUNNING" in result.stdout
-        except:
+        except Exception:
             return False
 
     def _save_test_report(self, report: dict[str, Any]):
@@ -593,7 +590,7 @@ class RealWorldTestingFramework:
 
                 # Create test binary if it doesn't exist
                 if not test_info["path"].exists():
-                    print(f"    Creating test binary...")
+                    print("    Creating test binary...")
                     self.create_test_binary(
                         test_info["path"].name,
                         test_info["protections"][0]
@@ -680,7 +677,7 @@ class RealWorldTestingFramework:
                 from intellicrack.core.analysis.radare2_vulnerability_engine import Radare2VulnerabilityEngine
                 engine = Radare2VulnerabilityEngine()
                 engine.analyze_vulnerabilities(binary_path)
-            except:
+            except Exception:
                 pass
 
             end = time.perf_counter()
@@ -788,13 +785,13 @@ Generated: {datetime.now().isoformat()}
 
 ## Performance Metrics
 - Average Bypass Time: {self.test_metrics['average_bypass_time']:.3f}s
-- Success Rate: {(self.test_metrics['successful_bypasses'] / self.test_metrics['total_tests'] * 100) if self.test_metrics['total_tests'] > 0 else 0:.1f}%
+- Success Rate: {self.test_metrics['successful_bypasses'] / self.test_metrics['total_tests'] * 100 if self.test_metrics['total_tests'] > 0 else 0:.1f}%
 
 ## Protection Types Tested
-{chr(10).join('- ' + p for p in self.test_metrics['protection_types_tested'])}
+{chr(10).join(f'- {p}' for p in self.test_metrics['protection_types_tested'])}
 
 ## Bypass Techniques Used
-{chr(10).join('- ' + t for t in self.test_metrics['bypass_techniques_used'])}
+{chr(10).join(f'- {t}' for t in self.test_metrics['bypass_techniques_used'])}
 
 ## Test Environment
 - Test Binaries Directory: {self.test_binaries_dir}

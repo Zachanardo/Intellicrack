@@ -48,7 +48,7 @@ class TestSourceModuleDiscovery:
             modules = get_source_modules()
 
             core_modules = [name for name in modules.keys() if "core" in modules[name]]
-            assert len(core_modules) > 0
+            assert core_modules
         finally:
             os.chdir(original_dir)
 
@@ -206,12 +206,11 @@ class TestCoverageAnalysis:
             all_sources = set(source_modules.keys())
             uncovered = all_sources - covered
 
-            assert len(all_sources) > 0
-            assert len(covered) >= 0
+            assert all_sources
             assert len(uncovered) >= 0
             assert len(covered) + len(uncovered) >= len(all_sources) - len(covered & uncovered)
 
-            if len(all_sources) > 0:
+            if all_sources:
                 coverage_rate = len(covered) / len(all_sources) * 100
                 assert 0 <= coverage_rate <= 100
         finally:
@@ -246,9 +245,8 @@ class TestCoverageAnalysis:
             critical_uncovered = []
             for module_name in uncovered:
                 module_path = source_modules.get(module_name, "")
-                score = sum(
-                    1 for kw in critical_keywords if kw in module_name.lower() or kw in module_path.lower()
-                )
+                score = sum(bool(kw in module_name.lower() or kw in module_path.lower())
+                        for kw in critical_keywords)
                 if score > 0:
                     critical_uncovered.append((score, module_name, module_path))
 
@@ -350,9 +348,7 @@ class TestCoverageReporting:
             test_targets = get_test_targets()
 
             covered = set(test_targets.keys())
-            all_sources = set(source_modules.keys())
-
-            if len(all_sources) > 0:
+            if all_sources := set(source_modules.keys()):
                 coverage_rate = len(covered) / len(all_sources) * 100
                 assert isinstance(coverage_rate, float)
                 assert 0.0 <= coverage_rate <= 100.0
@@ -419,9 +415,8 @@ class TestCriticalModuleScoring:
             ]
 
             for module_name, module_path in list(source_modules.items())[:20]:
-                score = sum(
-                    1 for kw in critical_keywords if kw in module_name.lower() or kw in module_path.lower()
-                )
+                score = sum(bool(kw in module_name.lower() or kw in module_path.lower())
+                        for kw in critical_keywords)
                 assert isinstance(score, int)
                 assert score >= 0
                 assert score <= len(critical_keywords)
@@ -447,9 +442,8 @@ class TestCriticalModuleScoring:
             high_priority = []
             for module_name in uncovered:
                 module_path = source_modules.get(module_name, "")
-                score = sum(
-                    1 for kw in critical_keywords if kw in module_name.lower() or kw in module_path.lower()
-                )
+                score = sum(bool(kw in module_name.lower() or kw in module_path.lower())
+                        for kw in critical_keywords)
                 if score >= 2:
                     high_priority.append((score, module_name, module_path))
 

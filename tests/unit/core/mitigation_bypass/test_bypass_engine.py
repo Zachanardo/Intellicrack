@@ -136,12 +136,8 @@ class TestBypassCapabilityAnalysis(unittest.TestCase):
 
         # Should analyze multiple protection layers
         if isinstance(result, dict):
-            # Production engine must handle all protection types
-            protections_analyzed = 0
-            for protection in ['aslr', 'dep', 'cfi', 'cet', 'canary', 'stack']:
-                if protection in str(result).lower():
-                    protections_analyzed += 1
-
+            protections_analyzed = sum(bool(protection in str(result).lower())
+                                   for protection in ['aslr', 'dep', 'cfi', 'cet', 'canary', 'stack'])
             self.assertGreater(protections_analyzed, 0,
                              "Must analyze at least some protection mechanisms")
 
@@ -192,8 +188,8 @@ class TestBypassRegistry(unittest.TestCase):
             bypasses_lower = [str(b).lower() for b in bypasses]
 
             # Should have at least some standard bypasses
-            found_standard = sum(1 for exp in expected_bypasses
-                               if any(exp.lower() in b for b in bypasses_lower))
+            found_standard = sum(bool(any(exp.lower() in b for b in bypasses_lower))
+                             for exp in expected_bypasses)
 
             self.assertGreater(found_standard, 0,
                              "Should include standard bypass techniques")
@@ -216,7 +212,8 @@ class TestBypassRegistry(unittest.TestCase):
                              'requirements', 'implementation']
 
             # Should have at least some informational fields
-            has_info_fields = sum(1 for field in expected_fields if field in info)
+            has_info_fields = sum(bool(field in info)
+                              for field in expected_fields)
             self.assertGreater(has_info_fields, 0,
                              "Bypass info must contain technique details")
 
@@ -241,14 +238,12 @@ class TestBypassRegistry(unittest.TestCase):
         info = self.engine.get_bypass_info('NONEXISTENT_BYPASS_XYZ123')
 
         # Should handle gracefully - return None, empty dict, or error message
-        if info is not None:
-            if isinstance(info, dict):
-                # Should indicate technique not found
-                self.assertTrue(
-                    len(info) == 0 or 'not found' in str(info).lower() or
-                    'unknown' in str(info).lower() or 'error' in str(info).lower(),
-                    "Should indicate unknown bypass technique"
-                )
+        if info is not None and isinstance(info, dict):
+            self.assertTrue(
+                len(info) == 0 or 'not found' in str(info).lower() or
+                'unknown' in str(info).lower() or 'error' in str(info).lower(),
+                "Should indicate unknown bypass technique"
+            )
 
 
 class TestBypassRecommendations(unittest.TestCase):
@@ -430,8 +425,10 @@ class TestBypassChaining(unittest.TestCase):
             # DEP bypass typically uses ROP
             rop_mentioned = 'rop' in rec_str or 'gadget' in rec_str
 
-            self.assertTrue(rop_mentioned or len(str(recommendations)) > 0,
-                          "DEP bypass should involve ROP or similar technique")
+            self.assertTrue(
+                rop_mentioned or str(recommendations) != "",
+                "DEP bypass should involve ROP or similar technique",
+            )
 
 
 class TestPlatformSpecificBypasses(unittest.TestCase):
@@ -520,8 +517,10 @@ class TestExploitIntegration(unittest.TestCase):
                              'mprotect', 'rwx', 'executable']
             suggests_execution = any(tech in rec_str for tech in exec_techniques)
 
-            self.assertTrue(suggests_execution or len(str(recommendations)) > 0,
-                          "Should recommend bypasses for shellcode execution")
+            self.assertTrue(
+                suggests_execution or str(recommendations) != "",
+                "Should recommend bypasses for shellcode execution",
+            )
 
     def test_bypass_for_process_injection(self):
         """Test bypass for process injection scenarios."""
@@ -709,8 +708,10 @@ class TestAdvancedBypassTechniques(unittest.TestCase):
             heap_techniques = ['heap', 'spray', 'massage', 'feng shui', 'groom']
             suggests_heap = any(tech in rec_str for tech in heap_techniques)
 
-            self.assertTrue(suggests_heap or len(str(recommendations)) > 0,
-                          "Should consider heap techniques for UAF + ASLR")
+            self.assertTrue(
+                suggests_heap or str(recommendations) != "",
+                "Should consider heap techniques for UAF + ASLR",
+            )
 
     def test_info_leak_chaining(self):
         """Test bypass using information leaks."""
@@ -736,8 +737,10 @@ class TestAdvancedBypassTechniques(unittest.TestCase):
             leak_usage = ['leak', 'disclosure', 'read', 'address', 'base']
             uses_leak = any(term in rec_str for term in leak_usage)
 
-            self.assertTrue(uses_leak or len(str(recommendations)) > 0,
-                          "Should leverage information leak for bypasses")
+            self.assertTrue(
+                uses_leak or str(recommendations) != "",
+                "Should leverage information leak for bypasses",
+            )
 
     def test_jop_bypass_recommendation(self):
         """Test Jump-Oriented Programming bypass techniques."""
@@ -815,8 +818,10 @@ class TestBypassEngineIntegration(unittest.TestCase):
 
         # Verify complete workflow produces actionable output
         all_outputs = [analysis, recommendations]
-        self.assertTrue(all(output for output in all_outputs),
-                      "Complete workflow must produce comprehensive bypass strategy")
+        self.assertTrue(
+            all(all_outputs),
+            "Complete workflow must produce comprehensive bypass strategy",
+        )
 
     def test_performance_with_large_binary(self):
         """Test performance with large binary analysis."""

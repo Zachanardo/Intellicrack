@@ -26,14 +26,12 @@ def validate_test_file(test_file_path: Path) -> bool:
         test_methods = []
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                if node.name.startswith("Test"):
-                    test_classes.append(node.name)
-
-                    for item in node.body:
-                        if isinstance(item, ast.FunctionDef):
-                            if item.name.startswith("test_"):
-                                test_methods.append(f"{node.name}.{item.name}")
+            if isinstance(node, ast.ClassDef) and node.name.startswith("Test"):
+                test_classes.append(node.name)
+            
+                for item in node.body:
+                    if isinstance(item, ast.FunctionDef) and item.name.startswith("test_"):
+                        test_methods.append(f"{node.name}.{item.name}")
 
         print(f"\nValidation Results:")
         print(f"  Test Classes: {len(test_classes)}")
@@ -50,15 +48,15 @@ def validate_test_file(test_file_path: Path) -> bool:
             print(f"    ... and {len(test_methods) - 10} more")
 
         print(f"\nVALIDATION: SUCCESS")
-        print(f"  - File has valid Python syntax")
+        print("  - File has valid Python syntax")
         print(f"  - Contains {len(test_classes)} test classes")
         print(f"  - Contains {len(test_methods)} test methods")
-        print(f"  - All test classes follow pytest conventions")
+        print("  - All test classes follow pytest conventions")
 
         return True
 
     except SyntaxError as e:
-        print(f"ERROR: Syntax error in test file")
+        print("ERROR: Syntax error in test file")
         print(f"  Line {e.lineno}: {e.msg}")
         print(f"  {e.text}")
         return False
@@ -72,10 +70,7 @@ def main() -> int:
     """Main validation entry point."""
     test_file = Path(__file__).parent / "test_license_check_remover.py"
 
-    if validate_test_file(test_file):
-        return 0
-    else:
-        return 1
+    return 0 if validate_test_file(test_file) else 1
 
 
 if __name__ == "__main__":

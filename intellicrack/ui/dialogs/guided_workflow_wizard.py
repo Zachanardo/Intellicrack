@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import datetime
 import os
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -40,11 +40,24 @@ from intellicrack.handlers.pyqt6_handler import (
     Qt,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
     QWizard,
     QWizardPage,
 )
 from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
+
+if TYPE_CHECKING:
+    from typing import Protocol
+
+    class ParentWidget(Protocol):
+        binary_path: str
+
+        def update_output(self) -> Any: ...
+        def load_binary(self, path: str) -> None: ...
+        def run_static_analysis(self) -> None: ...
+        def run_dynamic_analysis(self) -> None: ...
+        def switch_tab(self) -> Any: ...
 
 
 """
@@ -87,7 +100,7 @@ class GuidedWorkflowWizard(QWizard):
     binary analysis and patching operations.
     """
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the guided workflow wizard.
 
         Args:
@@ -95,11 +108,12 @@ class GuidedWorkflowWizard(QWizard):
 
         """
         super().__init__(parent)
-        self.parent = parent
+        self._parent_widget: QWidget | None = parent
+        self.summary_text: QTextEdit
 
         # Set up wizard properties
         self.setWindowTitle("Intellicrack Guided Workflow")
-        self.setWizardStyle(QWizard.ModernStyle)
+        self.setWizardStyle(QWizard.WizardStyle.ModernStyle)
 
         icon_path = get_resource_path("assets/icon.ico")
         if os.path.exists(icon_path):
@@ -148,13 +162,20 @@ class GuidedWorkflowWizard(QWizard):
         splash_path = get_resource_path("assets/splash.png")
         if os.path.exists(splash_path):
             image_label = QLabel()
-            pixmap = QPixmap(splash_path).scaled(400, 300, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            pixmap = QPixmap(splash_path).scaled(
+                400,
+                300,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
             image_label.setPixmap(pixmap)
-            image_label.setAlignment(Qt.AlignCenter)
+            image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             layout.addWidget(image_label)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         page.setLayout(layout)
         return page
@@ -203,7 +224,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(hint_label)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("binary_path*", self.file_path_edit)
@@ -267,7 +290,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(hint_label)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("detect_commercial", self.detect_commercial_cb)
@@ -338,7 +363,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(advanced_group)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("static_analysis", self.static_analysis_cb)
@@ -410,7 +437,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(targets_group)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("auto_patch", self.auto_patch_cb)
@@ -488,7 +517,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(tools_group)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("cfg_analysis", self.cfg_analysis_cb)
@@ -554,7 +585,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(exploit_group)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("static_vuln_scan", self.static_vuln_scan_cb)
@@ -616,7 +649,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(hint_label)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("traffic_capture", self.traffic_capture_cb)
@@ -683,7 +718,9 @@ class GuidedWorkflowWizard(QWizard):
         layout.addWidget(processing_group)
 
         # Add spacer
-        layout.addItem(QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(
+            QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+        )
 
         # Register fields
         page.registerField("ai_comprehensive", self.ai_comprehensive_cb)
@@ -699,35 +736,37 @@ class GuidedWorkflowWizard(QWizard):
 
     def create_conclusion_page(self) -> QWizardPage:
         """Create the conclusion page."""
-        page = QWizardPage()
-        page.setTitle("Ready to Start")
-        page.setSubTitle("Your workflow has been configured and is ready to start")
 
-        layout = QVBoxLayout()
+        class ConclusionPage(QWizardPage):
+            def __init__(self, wizard: GuidedWorkflowWizard) -> None:
+                super().__init__()
+                self._wizard = wizard
+                self.setTitle("Ready to Start")
+                self.setSubTitle("Your workflow has been configured and is ready to start")
 
-        # Summary label
-        summary_label = QLabel("Summary of your selections:")
-        layout.addWidget(summary_label)
+                layout = QVBoxLayout()
 
-        # Summary text
-        self.summary_text = QTextEdit()
-        self.summary_text.setReadOnly(True)
-        layout.addWidget(self.summary_text)
+                summary_label = QLabel("Summary of your selections:")
+                layout.addWidget(summary_label)
 
-        # Connect page-shown signal to update summary
-        page.initializePage = self.update_summary
+                wizard.summary_text = QTextEdit()
+                wizard.summary_text.setReadOnly(True)
+                layout.addWidget(wizard.summary_text)
 
-        # Add final instructions
-        instructions_label = QLabel(
-            "Click 'Finish' to begin analyzing and patching the selected binary. "
-            "The application will guide you through the rest of the process and "
-            "show you the results of each step.",
-        )
-        instructions_label.setWordWrap(True)
-        layout.addWidget(instructions_label)
+                instructions_label = QLabel(
+                    "Click 'Finish' to begin analyzing and patching the selected binary. "
+                    "The application will guide you through the rest of the process and "
+                    "show you the results of each step.",
+                )
+                instructions_label.setWordWrap(True)
+                layout.addWidget(instructions_label)
 
-        page.setLayout(layout)
-        return page
+                self.setLayout(layout)
+
+            def initializePage(self) -> None:
+                self._wizard.update_summary()
+
+        return ConclusionPage(self)
 
     def _build_protection_section(self) -> str:
         """Build the Protection Detection section."""
@@ -943,11 +982,15 @@ class GuidedWorkflowWizard(QWizard):
 
     def on_finished(self, result: int) -> None:
         """Handle wizard completion."""
-        if result != QDialog.Accepted or not self.parent:
+        if result != QDialog.DialogCode.Accepted or self._parent_widget is None:
             return
-        # Collect all the settings from the wizard fields
-        settings = {
-            "binary_path": self.field("binary_path"),
+
+        binary_path_value = self.field("binary_path")
+        if not isinstance(binary_path_value, str):
+            return
+
+        settings: dict[str, Any] = {
+            "binary_path": binary_path_value,
             "analysis": {
                 "static": self.field("static_analysis"),
                 "dynamic": self.field("dynamic_analysis"),
@@ -971,48 +1014,65 @@ class GuidedWorkflowWizard(QWizard):
             },
         }
 
-        # Apply settings to parent app
-        binary_path = settings["binary_path"]
-        if os.path.exists(binary_path):
-            self.parent.binary_path = binary_path
+        if not os.path.exists(binary_path_value):
+            return
 
-            # Emit signals if available
-            if hasattr(self.parent, "update_output"):
-                self.parent.update_output.emit(f"[Wizard] Set binary path: {binary_path}")
+        if hasattr(self._parent_widget, "binary_path"):
+            setattr(self._parent_widget, "binary_path", binary_path_value)
 
-            # Load the binary in the UI
-            if hasattr(self.parent, "load_binary"):
-                self.parent.load_binary(binary_path)
+        if hasattr(self._parent_widget, "update_output"):
+            update_output_attr = getattr(self._parent_widget, "update_output")
+            if hasattr(update_output_attr, "emit"):
+                update_output_attr.emit(f"[Wizard] Set binary path: {binary_path_value}")
 
-            # Configure analysis options
-            if hasattr(self.parent, "update_output"):
-                self.parent.update_output.emit("[Wizard] Configured analysis options")
+        if hasattr(self._parent_widget, "load_binary"):
+            load_binary_method = getattr(self._parent_widget, "load_binary")
+            if callable(load_binary_method):
+                load_binary_method(binary_path_value)
 
-            # Start analysis if auto-analyze is enabled
-            if settings["analysis"]["static"] and hasattr(self.parent, "run_static_analysis"):
-                if hasattr(self.parent, "update_output"):
-                    self.parent.update_output.emit("[Wizard] Starting static analysis...")
-                self.parent.run_static_analysis()
+        if hasattr(self._parent_widget, "update_output"):
+            update_output_attr = getattr(self._parent_widget, "update_output")
+            if hasattr(update_output_attr, "emit"):
+                update_output_attr.emit("[Wizard] Configured analysis options")
 
-            if settings["analysis"]["dynamic"] and hasattr(self.parent, "run_dynamic_analysis"):
-                if hasattr(self.parent, "update_output"):
-                    self.parent.update_output.emit("[Wizard] Starting dynamic analysis...")
-                self.parent.run_dynamic_analysis()
+        analysis_settings = settings.get("analysis")
+        if isinstance(analysis_settings, dict) and analysis_settings.get("static") and hasattr(
+            self._parent_widget, "run_static_analysis"
+        ):
+            if hasattr(self._parent_widget, "update_output"):
+                update_output_attr = getattr(self._parent_widget, "update_output")
+                if hasattr(update_output_attr, "emit"):
+                    update_output_attr.emit("[Wizard] Starting static analysis...")
+            run_static = getattr(self._parent_widget, "run_static_analysis")
+            if callable(run_static):
+                run_static()
 
-            # Switch to the Analysis tab if available
-            if hasattr(self.parent, "switch_tab"):
-                self.parent.switch_tab.emit(1)  # Assuming Analysis tab is index 1
+        if isinstance(analysis_settings, dict) and analysis_settings.get("dynamic") and hasattr(
+            self._parent_widget, "run_dynamic_analysis"
+        ):
+            if hasattr(self._parent_widget, "update_output"):
+                update_output_attr = getattr(self._parent_widget, "update_output")
+                if hasattr(update_output_attr, "emit"):
+                    update_output_attr.emit("[Wizard] Starting dynamic analysis...")
+            run_dynamic = getattr(self._parent_widget, "run_dynamic_analysis")
+            if callable(run_dynamic):
+                run_dynamic()
 
-            # Record that the guided workflow has been completed
-            if hasattr(self.parent, "update_output"):
-                self.parent.update_output.emit("[Wizard] Guided workflow completed")
+        if hasattr(self._parent_widget, "switch_tab"):
+            switch_tab_attr = getattr(self._parent_widget, "switch_tab")
+            if hasattr(switch_tab_attr, "emit"):
+                switch_tab_attr.emit(1)
 
-            # Show notification
-            QMessageBox.information(
-                self.parent,
-                "Guided Workflow",
-                "The guided workflow has been set up and started.\nYou can monitor the analysis progress in the output panel.",
-            )
+        if hasattr(self._parent_widget, "update_output"):
+            update_output_attr = getattr(self._parent_widget, "update_output")
+            if hasattr(update_output_attr, "emit"):
+                update_output_attr.emit("[Wizard] Guided workflow completed")
+
+        QMessageBox.information(
+            self._parent_widget,
+            "Guided Workflow",
+            "The guided workflow has been set up and started.\nYou can monitor the analysis progress in the output panel.",
+        )
 
     def get_settings(self) -> dict[str, Any]:
         """Get the current wizard settings.
@@ -1047,7 +1107,7 @@ class GuidedWorkflowWizard(QWizard):
         }
 
 
-def create_guided_workflow_wizard(parent: object | None = None) -> GuidedWorkflowWizard:
+def create_guided_workflow_wizard(parent: QWidget | None = None) -> GuidedWorkflowWizard:
     """Create a GuidedWorkflowWizard.
 
     Args:

@@ -178,7 +178,7 @@ class TestIteratePEImportsWithDLL:
 
         results = list(iterate_pe_imports_with_dll(pe, callback))
 
-        assert results == []
+        assert not results
 
     def test_handles_imports_without_names(self) -> None:
         """Import iterator skips imports with None names."""

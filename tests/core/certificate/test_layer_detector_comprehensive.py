@@ -343,8 +343,7 @@ class TestOSLevelDetection:
         """Detect OS level identifies CryptoAPI imports."""
         detector = ValidationLayerDetector()
 
-        binary = lief.parse(str(sample_pe_with_crypto))
-        if binary:
+        if binary := lief.parse(str(sample_pe_with_crypto)):
             layer_info = detector._detect_os_level(binary)
 
             assert layer_info is not None
@@ -376,9 +375,7 @@ class TestOSLevelDetection:
         pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
         pe.add_library("crypt32.dll")
 
-        layer_info = detector._detect_os_level(pe)
-
-        if layer_info:
+        if layer_info := detector._detect_os_level(pe):
             assert len(layer_info.evidence) > 0
             assert any("crypt32.dll" in e.lower() for e in layer_info.evidence)
 
@@ -404,8 +401,7 @@ class TestLibraryLevelDetection:
         """Detect library level identifies OpenSSL imports."""
         detector = ValidationLayerDetector()
 
-        binary = lief.parse(str(sample_pe_with_openssl))
-        if binary:
+        if binary := lief.parse(str(sample_pe_with_openssl)):
             layer_info = detector._detect_library_level(binary)
 
             assert layer_info is not None
@@ -419,9 +415,7 @@ class TestLibraryLevelDetection:
         pe = lief.PE.Binary("test", lief.PE.PE_TYPE.PE32)
         pe.add_library("libssl.dll")
 
-        layer_info = detector._detect_library_level(pe)
-
-        if layer_info:
+        if layer_info := detector._detect_library_level(pe):
             assert len(layer_info.evidence) > 0
 
     def test_detect_library_level_no_tls_libs_returns_none(self) -> None:
@@ -446,8 +440,7 @@ class TestApplicationLevelDetection:
         """Detect application level identifies certificate pinning indicators."""
         detector = ValidationLayerDetector()
 
-        binary = lief.parse(str(sample_pe_with_cert_pinning))
-        if binary:
+        if binary := lief.parse(str(sample_pe_with_cert_pinning)):
             layer_info = detector._detect_application_level(binary, sample_pe_with_cert_pinning)
 
             assert layer_info is not None
@@ -460,11 +453,10 @@ class TestApplicationLevelDetection:
         """Detect application level identifies embedded certificates."""
         detector = ValidationLayerDetector()
 
-        binary = lief.parse(str(sample_pe_with_embedded_cert))
-        if binary:
-            layer_info = detector._detect_application_level(binary, sample_pe_with_embedded_cert)
-
-            if layer_info:
+        if binary := lief.parse(str(sample_pe_with_embedded_cert)):
+            if layer_info := detector._detect_application_level(
+                binary, sample_pe_with_embedded_cert
+            ):
                 assert layer_info.confidence > 0.0
 
     def test_contains_certificate_hashes_sha256(self) -> None:
@@ -552,11 +544,8 @@ class TestServerLevelDetection:
         pe.write(str(temp_path))
 
         try:
-            binary = lief.parse(str(temp_path))
-            if binary:
-                layer_info = detector._detect_server_level(binary, temp_path)
-
-                if layer_info:
+            if binary := lief.parse(str(temp_path)):
+                if layer_info := detector._detect_server_level(binary, temp_path):
                     assert layer_info.layer_type == ValidationLayer.SERVER_LEVEL
         finally:
             if temp_path.exists():

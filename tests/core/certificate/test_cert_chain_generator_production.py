@@ -689,7 +689,7 @@ class TestCertificateExport:
         cert_blocks = pem_chain.split("-----BEGIN CERTIFICATE-----")[1:]
         loaded_certs = []
         for block in cert_blocks:
-            cert_pem = "-----BEGIN CERTIFICATE-----" + block
+            cert_pem = f"-----BEGIN CERTIFICATE-----{block}"
             cert = x509.load_pem_x509_certificate(cert_pem.encode())
             loaded_certs.append(cert)
 

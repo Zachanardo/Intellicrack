@@ -116,11 +116,10 @@ class TestRealToolDiscovery:
         found_tools = []
         for tool in common_tools:
             if shutil.which(tool):
-                path = pd.find_tool(tool)
-                if path:
+                if path := pd.find_tool(tool):
                     found_tools.append(tool)
 
-        assert len(found_tools) > 0
+        assert found_tools
 
     def test_find_tool_caching(self) -> None:
         """Tool discovery results are cached for performance."""
@@ -128,9 +127,7 @@ class TestRealToolDiscovery:
 
         tool_name = "python"
 
-        first_result = pd.find_tool(tool_name)
-
-        if first_result:
+        if first_result := pd.find_tool(tool_name):
             cache_key = f"{tool_name}:"
             assert cache_key in pd.cache
 
@@ -249,9 +246,7 @@ class TestEnvironmentVariableSearch:
 
         monkeypatch.setenv("TOOL_DIR", str(tool_dir))
 
-        result = pd._search_env_vars(["TOOL_DIR"])
-
-        if result:
+        if result := pd._search_env_vars(["TOOL_DIR"]):
             assert os.path.exists(result)
 
 
@@ -309,9 +304,7 @@ class TestToolValidation:
         """Validate Python installation."""
         pd = PathDiscovery()
 
-        python_path = shutil.which("python") or shutil.which("python3")
-
-        if python_path:
+        if python_path := shutil.which("python") or shutil.which("python3"):
             is_valid = pd._validate_python(python_path)
             assert is_valid is True
 
@@ -319,9 +312,7 @@ class TestToolValidation:
         """Validate radare2 installation if available."""
         pd = PathDiscovery()
 
-        r2_path = shutil.which("radare2") or shutil.which("r2")
-
-        if r2_path:
+        if r2_path := shutil.which("radare2") or shutil.which("r2"):
             is_valid = pd._validate_radare2(r2_path)
             assert isinstance(is_valid, bool)
 
@@ -329,9 +320,7 @@ class TestToolValidation:
         """Validate Frida installation if available."""
         pd = PathDiscovery()
 
-        frida_path = shutil.which("frida")
-
-        if frida_path:
+        if frida_path := shutil.which("frida"):
             is_valid = pd._validate_frida(frida_path)
             assert isinstance(is_valid, bool)
 
@@ -378,9 +367,7 @@ class TestWindowsRegistrySearch:
         """Search registry for commonly installed software."""
         pd = PathDiscovery()
 
-        result = pd._search_registry("git")
-
-        if result:
+        if result := pd._search_registry("git"):
             assert os.path.exists(result)
 
 
@@ -391,9 +378,7 @@ class TestCUDAPathDiscovery:
         """get_cuda_path returns valid path or None."""
         pd = PathDiscovery()
 
-        cuda_path = pd.get_cuda_path()
-
-        if cuda_path:
+        if cuda_path := pd.get_cuda_path():
             assert os.path.exists(cuda_path)
             assert Path(cuda_path).is_dir()
 
@@ -402,9 +387,7 @@ class TestCUDAPathDiscovery:
         """Windows CUDA path discovery checks expected locations."""
         pd = PathDiscovery()
 
-        cuda_path = pd.get_cuda_path()
-
-        if cuda_path:
+        if cuda_path := pd.get_cuda_path():
             assert "CUDA" in cuda_path or "cuda" in cuda_path
 
 
@@ -415,9 +398,7 @@ class TestEnsureToolAvailable:
         """ensure_tool_available returns path for found tool."""
         pd = PathDiscovery()
 
-        python_path = pd.ensure_tool_available("python")
-
-        if python_path:
+        if python_path := pd.ensure_tool_available("python"):
             assert os.path.exists(python_path)
             assert os.path.isfile(python_path)
 
@@ -443,9 +424,7 @@ class TestModuleLevelFunctions:
 
     def test_find_tool_module_function(self) -> None:
         """Module-level find_tool works correctly."""
-        result = find_tool("python")
-
-        if result:
+        if result := find_tool("python"):
             assert os.path.exists(result)
 
     def test_get_system_path_module_function(self) -> None:
@@ -457,9 +436,7 @@ class TestModuleLevelFunctions:
 
     def test_ensure_tool_available_module_function(self) -> None:
         """Module-level ensure_tool_available works correctly."""
-        result = ensure_tool_available("python")
-
-        if result:
+        if result := ensure_tool_available("python"):
             assert os.path.exists(result)
 
 
@@ -474,8 +451,7 @@ class TestPlatformSpecificBehavior:
         assert pd.is_windows
 
         for tool_name, spec in pd.tool_specs.items():
-            win_executables = spec["executables"].get("win32", [])
-            if win_executables:
+            if win_executables := spec["executables"].get("win32", []):
                 assert any(exe.endswith((".exe", ".bat", ".cmd")) for exe in win_executables)
 
     @pytest.mark.skipif(sys.platform != "linux", reason="Linux-specific test")
@@ -488,8 +464,7 @@ class TestPlatformSpecificBehavior:
         common_unix_paths = ["/usr/bin", "/usr/local/bin", "/opt"]
 
         for tool_name, spec in pd.tool_specs.items():
-            linux_paths = spec["search_paths"].get("linux", [])
-            if linux_paths:
+            if linux_paths := spec["search_paths"].get("linux", []):
                 assert any(any(unix_path in path for unix_path in common_unix_paths) for path in linux_paths)
 
     @pytest.mark.skipif(sys.platform != "darwin", reason="macOS-specific test")
@@ -502,8 +477,7 @@ class TestPlatformSpecificBehavior:
         homebrew_paths = ["/opt/homebrew", "/usr/local"]
 
         for tool_name, spec in pd.tool_specs.items():
-            darwin_paths = spec["search_paths"].get("darwin", [])
-            if darwin_paths:
+            if darwin_paths := spec["search_paths"].get("darwin", []):
                 assert any(
                     any(brew_path in path for brew_path in homebrew_paths) for path in darwin_paths
                 ), f"Tool {tool_name} missing Homebrew paths"
@@ -520,22 +494,19 @@ class TestRealWorldScenarios:
 
         found_tools = {}
         for tool in tools_to_find:
-            path = pd.find_tool(tool)
-            if path:
+            if path := pd.find_tool(tool):
                 found_tools[tool] = path
 
-        assert len(found_tools) > 0
+        assert found_tools
 
-        for tool_name, tool_path in found_tools.items():
+        for tool_path in found_tools.values():
             assert os.path.exists(tool_path)
 
     def test_tool_discovery_with_validation(self) -> None:
         """Tool discovery with validation ensures executable works."""
         pd = PathDiscovery()
 
-        python_path = pd.find_tool("python")
-
-        if python_path:
+        if python_path := pd.find_tool("python"):
             result = subprocess.run(
                 [python_path, "--version"],
                 capture_output=True,
@@ -552,13 +523,12 @@ class TestRealWorldScenarios:
 
         system_paths = {}
         for path_type in pd.system_paths.keys():
-            path = pd.get_system_path(path_type)
-            if path:
+            if path := pd.get_system_path(path_type):
                 system_paths[path_type] = path
 
-        assert len(system_paths) > 0
+        assert system_paths
 
-        for path_type, path_value in system_paths.items():
+        for path_value in system_paths.values():
             if path_value:
                 assert isinstance(path_value, str)
 

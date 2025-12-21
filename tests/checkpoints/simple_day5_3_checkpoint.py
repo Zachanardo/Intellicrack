@@ -80,18 +80,15 @@ class ProductionStringAnalyzer:
         if len(content) >= 16 and content.replace('+', '').replace('/', '').replace('=', '').isalnum():
             try:
                 import base64
-                decoded = base64.b64decode(content + '==')  # Add padding
+                decoded = base64.b64decode(f'{content}==')
                 if len(decoded) >= 8:  # Minimum license data size
                     return True
-            except:
+            except Exception:
                 pass
 
         # Prefixed format (AES256:, LICENSE:, etc.)
         prefix_pattern = re.compile(r'^[A-Z]+[0-9]*:[A-Z0-9]+$', re.IGNORECASE)
-        if prefix_pattern.match(content) and len(content) >= 12:
-            return True
-
-        return False
+        return bool(prefix_pattern.match(content) and len(content) >= 12)
 
     def _detect_cryptographic_data(self, content):
         """Production cryptographic pattern detection."""
@@ -166,8 +163,7 @@ class ProductionRealtimeAnalyzer:
 
     def _determine_analysis_components(self, binary_path, trigger_event):
         """Determine analysis components - enhanced_strings must be included."""
-        base_components = ["strings", "enhanced_strings", "imports", "functions"]
-        return base_components
+        return ["strings", "enhanced_strings", "imports", "functions"]
 
     def _perform_enhanced_string_analysis(self, r2_session, binary_path):
         """Production enhanced string analysis implementation."""
@@ -231,58 +227,51 @@ class ProductionRealtimeAnalyzer:
             detected_patterns = len(license_keys) + len(crypto_strings) + len(api_strings)
             detection_accuracy = detected_patterns / total_patterns if total_patterns > 0 else 0
 
-            result = {
+            return {
                 "timestamp": datetime.now().isoformat(),
                 "total_analyzed": total_patterns,
                 "categorization": {
                     "license_keys": license_keys,
                     "crypto_strings": crypto_strings,
                     "api_strings": api_strings,
-                    "regular_strings": regular_strings
+                    "regular_strings": regular_strings,
                 },
                 "metrics": {
                     "license_count": len(license_keys),
                     "crypto_count": len(crypto_strings),
                     "api_count": len(api_strings),
                     "detection_accuracy": detection_accuracy,
-                    "high_value_patterns": len(license_keys) + len(crypto_strings)
+                    "high_value_patterns": len(license_keys) + len(crypto_strings),
                 },
                 "production_features": {
                     "entropy_analysis": True,
                     "pattern_recognition": True,
                     "real_time_capable": True,
-                    "api_detection": True
-                }
+                    "api_detection": True,
+                },
             }
-
-            return result
-
         except Exception as e:
             return {"error": str(e), "production_ready": False}
 
     def _monitor_dynamic_string_patterns(self, r2_session, binary_path):
         """Monitor for dynamic string generation during execution."""
         try:
-            # Mock dynamic analysis results (would interface with radare2 in production)
-            dynamic_results = {
+            return {
                 "memory_monitoring": {
                     "active": True,
                     "regions_scanned": 5,
-                    "dynamic_strings_found": 3
+                    "dynamic_strings_found": 3,
                 },
                 "api_hooking": {
                     "string_apis_hooked": ["strlen", "strcpy", "malloc"],
-                    "dynamic_calls_detected": 7
+                    "dynamic_calls_detected": 7,
                 },
                 "pattern_evolution": {
                     "license_generation_detected": True,
-                    "crypto_operations_detected": True
+                    "crypto_operations_detected": True,
                 },
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
             }
-
-            return dynamic_results
-
         except Exception as e:
             return {"error": str(e), "dynamic_monitoring": False}
 

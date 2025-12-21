@@ -574,7 +574,7 @@ class TestContextManager:
         with BinaryScanner(str(legitimate_firefox)) as scanner:
             scanner.r2_handle = True
 
-        assert scanner.r2_handle is None or scanner.r2_handle is True
+        assert scanner.r2_handle is None or scanner.r2_handle
 
 
 class TestEdgeCases:

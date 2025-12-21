@@ -357,13 +357,11 @@ class DependencyFeedback:
                 report_lines.extend((status["message"], ""))
         # Optional dependencies
         if optional_deps:
-            report_lines.extend(
-                (
-                    "🟡 OPTIONAL MISSING DEPENDENCIES:",
-                    "These provide enhanced functionality.",
-                    "",
-                )
-            )
+            report_lines.extend((
+                "🟡 OPTIONAL MISSING DEPENDENCIES:",
+                "These provide enhanced functionality.",
+                "",
+            ))
             for dep_name in optional_deps:
                 status = self.get_dependency_status(dep_name)
                 report_lines.extend((status["message"], ""))

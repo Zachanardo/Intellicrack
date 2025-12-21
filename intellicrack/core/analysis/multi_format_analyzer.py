@@ -1310,9 +1310,7 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
     if binary_format == "PE":
         analyze_results.append(f"Machine: {results['machine']}")
         analyze_results.append(f"Timestamp: {results['timestamp']}")
-        analyze_results.extend(
-            (f"Characteristics: {results['characteristics']}", "\nSections:")
-        )
+        analyze_results.extend((f"Characteristics: {results['characteristics']}", "\nSections:"))
         for section in results["sections"]:
             entropy_str = f", Entropy: {section['entropy']:.2f}" if "entropy" in section else ""
             analyze_results.append(
@@ -1331,9 +1329,7 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         analyze_results.append(f"Machine: {results['machine']}")
         analyze_results.append(f"Class: {results['class']}")
         analyze_results.append(f"Type: {results['type']}")
-        analyze_results.extend(
-            (f"Entry Point: {results['entry_point']}", "\nSections:")
-        )
+        analyze_results.extend((f"Entry Point: {results['entry_point']}", "\nSections:"))
         for section in results["sections"]:
             entropy_str = f", Entropy: {section['entropy']:.2f}" if "entropy" in section else ""
             analyze_results.append(f"  {section['name']} - Addr: {section['address']}, Size: {section['size']}{entropy_str}")
@@ -1344,16 +1340,12 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
 
     elif binary_format == "MACHO":
         analyze_results.append(f"CPU Type: {results['headers'][0]['cpu_type']}")
-        analyze_results.extend(
-            (f"File Type: {results['headers'][0]['file_type']}", "\nSegments:")
-        )
+        analyze_results.extend((f"File Type: {results['headers'][0]['file_type']}", "\nSegments:"))
         for segment in results["segments"]:
-            analyze_results.extend(
-                (
-                    f"  {segment['name']} - Addr: {segment['address']}, Size: {segment['size']}",
-                    "  Sections:",
-                )
-            )
+            analyze_results.extend((
+                f"  {segment['name']} - Addr: {segment['address']}, Size: {segment['size']}",
+                "  Sections:",
+            ))
             for section in segment["sections"]:
                 analyze_results.append(f"    {section['name']} - Addr: {section['address']}, Size: {section['size']}")
 
@@ -1392,12 +1384,10 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
             analyze_results.append(f"  Created By: {manifest.get('created_by', 'Unknown')}")
 
     elif binary_format == "MSI":
-        analyze_results.extend(
-            (
-                f"File Size: {results['file_size']} bytes",
-                "Format: Compound Document",
-            )
-        )
+        analyze_results.extend((
+            f"File Size: {results['file_size']} bytes",
+            "Format: Compound Document",
+        ))
         analyze_results.append(f"Version: {results['major_version']}.{results['minor_version']}")
         analyze_results.append(f"Sector Size: {results['sector_size']} bytes")
 
@@ -1412,50 +1402,53 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
     # Add recommendations based on format
     analyze_results.append("\nRecommendations:")
     if binary_format == "PE":
-        analyze_results.extend(
-            (
-                "- Use standard Windows PE analysis techniques",
-                "- Check for high-entropy sections that may indicate packing or encryption",
-            )
-        )
+        analyze_results.extend((
+            "- Use standard Windows PE analysis techniques",
+            "- Check for high-entropy sections that may indicate packing or encryption",
+        ))
     elif binary_format == "ELF":
-        analyze_results.extend(
-            (
-                "- Use specialized ELF analysis tools for deeper inspection",
-                "- Consider using dynamic analysis with Linux-specific tools",
-            )
-        )
+        analyze_results.extend((
+            "- Use specialized ELF analysis tools for deeper inspection",
+            "- Consider using dynamic analysis with Linux-specific tools",
+        ))
     elif binary_format == "MACHO":
-        analyze_results.extend(
-            (
-                "- Use macOS-specific analysis tools for deeper inspection",
-                "- Check for code signing and entitlements",
-            )
-        )
+        analyze_results.extend((
+            "- Use macOS-specific analysis tools for deeper inspection",
+            "- Check for code signing and entitlements",
+        ))
     elif binary_format == "DEX":
-        analyze_results.extend(
-            (
-                "- Use Android-specific analysis tools like JADX or dex2jar",
-                "- Consider using dynamic analysis with Android emulators",
-            )
-        )
+        analyze_results.extend((
+            "- Use Android-specific analysis tools like JADX or dex2jar",
+            "- Consider using dynamic analysis with Android emulators",
+        ))
     elif binary_format == "APK":
         analyze_results.extend(
             (
                 "- Extract and analyze DEX files for code analysis",
                 "- Check native libraries for potential security issues",
+                "- Verify certificate signatures and permissions",
             )
         )
-        analyze_results.append("- Verify certificate signatures and permissions")
     elif binary_format == "JAR":
-        analyze_results.append("- Decompile class files for source code analysis")
-        analyze_results.append("- Check for dependency vulnerabilities")
-        analyze_results.append("- Verify manifest security attributes")
+        analyze_results.extend(
+            (
+                "- Decompile class files for source code analysis",
+                "- Check for dependency vulnerabilities",
+                "- Verify manifest security attributes",
+            )
+        )
     elif binary_format == "MSI":
-        analyze_results.append("- Use specialized MSI analysis tools for full inspection")
-        analyze_results.append("- Check for custom actions and embedded scripts")
+        analyze_results.extend(
+            (
+                "- Use specialized MSI analysis tools for full inspection",
+                "- Check for custom actions and embedded scripts",
+            )
+        )
     elif binary_format == "COM":
-        analyze_results.append("- Use 16-bit disassemblers for code analysis")
-        analyze_results.append("- Consider DOS-era analysis techniques and tools")
-
+        analyze_results.extend(
+            (
+                "- Use 16-bit disassemblers for code analysis",
+                "- Consider DOS-era analysis techniques and tools",
+            )
+        )
     return results

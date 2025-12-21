@@ -79,7 +79,7 @@ def create_elf_binary(path: Path) -> Path:
         Path to created ELF binary
     """
     elf_header = bytearray(64)
-    elf_header[0:4] = b"\x7fELF"
+    elf_header[:4] = b"\x7fELF"
     elf_header[4] = 1
     elf_header[5] = 1
     elf_header[6] = 1
@@ -247,7 +247,7 @@ class TestBasicFirmwareAnalysis:
 
         filesystem_signatures = [s for s in result.signatures if s.is_filesystem]
         if BINWALK_AVAILABLE:
-            assert len(filesystem_signatures) > 0
+            assert filesystem_signatures
 
     def test_analyze_iot_firmware(self, iot_firmware: Path) -> None:
         """Analyzer processes IoT device firmware."""
@@ -325,13 +325,15 @@ class TestSecurityAnalysis:
 
         assert result is not None
 
-        credential_findings = [
+        if credential_findings := [
             f
             for f in result.security_findings
-            if f.finding_type in [SecurityFindingType.HARDCODED_CREDENTIALS, SecurityFindingType.DEFAULT_CREDENTIALS]
-        ]
-
-        if len(credential_findings) > 0:
+            if f.finding_type
+            in [
+                SecurityFindingType.HARDCODED_CREDENTIALS,
+                SecurityFindingType.DEFAULT_CREDENTIALS,
+            ]
+        ]:
             assert any(f.severity in ["critical", "high"] for f in credential_findings)
 
     def test_detect_private_keys(self, vulnerable_firmware: Path) -> None:
@@ -341,9 +343,11 @@ class TestSecurityAnalysis:
 
         assert result is not None
 
-        key_findings = [f for f in result.security_findings if f.finding_type == SecurityFindingType.PRIVATE_KEY]
-
-        if len(key_findings) > 0:
+        if key_findings := [
+            f
+            for f in result.security_findings
+            if f.finding_type == SecurityFindingType.PRIVATE_KEY
+        ]:
             assert any("PRIVATE KEY" in f.evidence for f in key_findings)
 
     def test_security_scan_on_basic_firmware(self, basic_firmware: Path) -> None:
@@ -373,7 +377,7 @@ class TestEntropyAnalysis:
         random.seed(42)
 
         firmware_path = tmp_path / "encrypted_firmware.bin"
-        encrypted_data = bytes([random.randint(0, 255) for _ in range(4096)])
+        encrypted_data = bytes(random.randint(0, 255) for _ in range(4096))
 
         firmware_data = b"\x00" * 1024 + encrypted_data + b"\x00" * 1024
         firmware_path.write_bytes(firmware_data)

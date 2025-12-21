@@ -60,7 +60,7 @@ class TestTrialResetEngineProduction:
         finally:
             try:
                 winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-            except (OSError, FileNotFoundError):
+            except OSError:
                 pass
 
     def test_engine_initialization_with_trial_locations(self, engine: TrialResetEngine) -> None:
@@ -409,7 +409,7 @@ class TestTrialResetEngineProduction:
 
     def test_automated_trial_reset_with_nonexistent_product(self) -> None:
         """Automated trial reset handles nonexistent products gracefully."""
-        result = automated_trial_reset("NonexistentProduct_" + str(int(time.time())))
+        result = automated_trial_reset(f"NonexistentProduct_{int(time.time())}")
 
         assert result is False, "Must return False for nonexistent product"
 
@@ -434,9 +434,7 @@ class TestTrialResetEngineProduction:
                 winreg.SetValueEx(key, "UsageCount", 0, winreg.REG_DWORD, 100)
 
             full_path = f"HKEY_CURRENT_USER\\{key_path}"
-            result = engine._reset_registry_values(full_path)
-
-            if result:
+            if result := engine._reset_registry_values(full_path):
                 with winreg.OpenKey(winreg.HKEY_CURRENT_USER, key_path) as key:
                     trial_days, _ = winreg.QueryValueEx(key, "TrialDays")
                     usage_count, _ = winreg.QueryValueEx(key, "UsageCount")
@@ -447,7 +445,7 @@ class TestTrialResetEngineProduction:
         finally:
             try:
                 winreg.DeleteKey(winreg.HKEY_CURRENT_USER, key_path)
-            except (OSError, FileNotFoundError):
+            except OSError:
                 pass
 
     def test_clear_prefetch_data(
@@ -467,7 +465,7 @@ class TestTrialResetEngineProduction:
 
         assert len(sha_hash) == 32, "SHA256 hash must be 32 characters"
         assert reversed_name == "tcudorPtseT", "Reversed encoding must work"
-        assert len(hex_name) > 0, "Hex encoding must work"
+        assert hex_name != "", "Hex encoding must work"
 
     def test_scan_directory_for_ads(
         self,
@@ -498,7 +496,7 @@ class TestTrialResetEngineProduction:
 
     def test_kill_processes_terminates_test_processes(self, engine: TrialResetEngine) -> None:
         """Kill processes attempts to terminate specified processes."""
-        nonexistent_process = "NonexistentProcess_" + str(int(time.time())) + ".exe"
+        nonexistent_process = f"NonexistentProcess_{int(time.time())}.exe"
 
         engine._kill_processes([nonexistent_process])
 

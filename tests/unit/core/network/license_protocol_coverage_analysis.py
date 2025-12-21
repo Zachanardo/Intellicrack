@@ -206,11 +206,13 @@ def analyze_coverage():
         print(f"  FAIL COVERAGE TARGET NOT MET: {overall_coverage:.1f}% < 80%")
 
     print(f"\n TEST QUALITY METRICS:")
-    print(f"   Production-ready tests: OK All tests validate real functionality")
-    print(f"   No mocks/stubs: OK All tests use genuine protocol implementations")
-    print(f"   Real protocol data: OK Tests use actual FlexLM/HASP protocol structures")
-    print(f"   Exploitation scenarios: OK Advanced attack simulations included")
-    print(f"   Concurrent testing: OK Thread safety and performance validated")
+    print("   Production-ready tests: OK All tests validate real functionality")
+    print("   No mocks/stubs: OK All tests use genuine protocol implementations")
+    print(
+        "   Real protocol data: OK Tests use actual FlexLM/HASP protocol structures"
+    )
+    print("   Exploitation scenarios: OK Advanced attack simulations included")
+    print("   Concurrent testing: OK Thread safety and performance validated")
     print(f"   Error handling: OK Malformed input and edge cases covered")
     print(f"   Security validation: OK Timing attacks and crypto analysis included")
 

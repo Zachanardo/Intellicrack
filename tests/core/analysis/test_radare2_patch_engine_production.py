@@ -292,8 +292,8 @@ class TestReturnValuePatching:
 
         patches = patch_engine_readonly.patch_return_value(0x1000, 0x42, value_size=4)
 
-        patch_bytes = patches[0].patch_bytes
         if patch_engine_readonly.architecture in ["x86", "x86_64"]:
+            patch_bytes = patches[0].patch_bytes
             assert b"\xb8" in patch_bytes or b"\xb0" in patch_bytes
             assert b"\xc3" in patch_bytes
 

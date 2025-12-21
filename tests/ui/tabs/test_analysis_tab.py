@@ -119,8 +119,7 @@ class TestAnalysisTabInitialization:
         """Create AnalysisTab instance for testing."""
         from intellicrack.ui.tabs.analysis_tab import AnalysisTab
 
-        tab = AnalysisTab(shared_context=mock_context)
-        return tab
+        return AnalysisTab(shared_context=mock_context)
 
     def test_analysis_tab_initialization(self, analysis_tab: Any) -> None:
         """AnalysisTab initializes with correct default state."""

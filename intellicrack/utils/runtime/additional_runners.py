@@ -1960,9 +1960,7 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 b"NtQueryInformationProcess",
             ]
 
-            debug_protection_found = sum(
-                pattern in binary_data for pattern in anti_debug_patterns
-            )
+            debug_protection_found = sum(pattern in binary_data for pattern in anti_debug_patterns)
 
             if debug_protection_found == 0:
                 result["protections"].append("Anti-debugging protection appears bypassed")
@@ -1992,9 +1990,7 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
         # Protection 3: Check for integrity checks bypass
         try:
             integrity_patterns = [b"CRC", b"checksum", b"hash", b"MD5", b"SHA"]
-            integrity_checks_found = sum(
-                pattern in binary_data for pattern in integrity_patterns
-            )
+            integrity_checks_found = sum(pattern in binary_data for pattern in integrity_patterns)
 
             # If integrity checks are found but binary still runs, they may be bypassed
             if integrity_checks_found > 0:
@@ -2047,9 +2043,7 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
                 b"\xb8\x01\x00\x00\x00\xc3",  # MOV EAX, 1; RET
             ]
 
-            bypass_patterns_found = sum(
-                pattern in binary_data for pattern in bypass_patterns
-            )
+            bypass_patterns_found = sum(pattern in binary_data for pattern in bypass_patterns)
 
             if bypass_patterns_found > 0:
                 result["license_checks"].append(f"Found {bypass_patterns_found} potential license bypass pattern(s)")
@@ -2501,15 +2495,9 @@ def run_vulnerability_scan(binary_path: str) -> dict[str, Any]:
             "vulnerabilities": vulnerabilities,
             "summary": {
                 "total": len(vulnerabilities),
-                "high": sum(
-                    v.get("severity") == "high" for v in vulnerabilities
-                ),
-                "medium": sum(
-                    v.get("severity") == "medium" for v in vulnerabilities
-                ),
-                "low": sum(
-                    v.get("severity") == "low" for v in vulnerabilities
-                ),
+                "high": sum(v.get("severity") == "high" for v in vulnerabilities),
+                "medium": sum(v.get("severity") == "medium" for v in vulnerabilities),
+                "low": sum(v.get("severity") == "low" for v in vulnerabilities),
             },
         }
 

@@ -128,8 +128,8 @@ class TestReportGenerationThread:
 
         thread.run()
 
-        assert len(progress_values) > 0
-        assert len(status_messages) > 0
+        assert progress_values
+        assert status_messages
         assert output.exists()
 
     def test_analyzes_binary_metadata(self, sample_binary: Path) -> None:
@@ -294,19 +294,22 @@ class TestDialogUIIntegration:
         """Generate button initiates report creation."""
         buttons = report_manager.findChildren(QPushButton)
 
-        generate_btn = None
-        for btn in buttons:
-            if "generate" in btn.text().lower() or "create" in btn.text().lower():
-                generate_btn = btn
-                break
-
+        generate_btn = next(
+            (
+                btn
+                for btn in buttons
+                if "generate" in btn.text().lower()
+                or "create" in btn.text().lower()
+            ),
+            None,
+        )
         assert generate_btn is not None
 
     def test_progress_bar_updates(self, report_manager: ReportManagerDialog) -> None:
         """Progress bar shows generation progress."""
-        progress_bars = report_manager.findChildren(PyQt6.QtWidgets.QProgressBar)
-
-        if progress_bars:
+        if progress_bars := report_manager.findChildren(
+            PyQt6.QtWidgets.QProgressBar
+        ):
             assert progress_bars[0].minimum() == 0
             assert progress_bars[0].maximum() >= 100
 

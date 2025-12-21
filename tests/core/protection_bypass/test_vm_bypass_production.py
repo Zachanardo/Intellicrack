@@ -73,7 +73,7 @@ def vm_protected_binary(tmp_path: Path) -> Path:
 
     binary_data: bytearray = bytearray(16384)
 
-    binary_data[0:2] = b"\x4D\x5A"
+    binary_data[:2] = b"\x4D\x5A"
     binary_data[60:64] = struct.pack("<I", 0x80)
 
     pe_offset: int = 0x80
@@ -118,7 +118,7 @@ def vmware_specific_binary(tmp_path: Path) -> Path:
     binary_path: Path = tmp_path / "vmware_check.exe"
 
     binary_data: bytearray = bytearray(8192)
-    binary_data[0:2] = b"\x4D\x5A"
+    binary_data[:2] = b"\x4D\x5A"
     binary_data[60:64] = struct.pack("<I", 0x80)
 
     code_offset: int = 0x200
@@ -149,7 +149,7 @@ def virtualbox_specific_binary(tmp_path: Path) -> Path:
     binary_path: Path = tmp_path / "vbox_check.exe"
 
     binary_data: bytearray = bytearray(8192)
-    binary_data[0:2] = b"\x4D\x5A"
+    binary_data[:2] = b"\x4D\x5A"
     binary_data[60:64] = struct.pack("<I", 0x80)
 
     code_offset: int = 0x200
@@ -180,7 +180,7 @@ def clean_binary(tmp_path: Path) -> Path:
     binary_path: Path = tmp_path / "clean.exe"
 
     binary_data: bytearray = bytearray(4096)
-    binary_data[0:2] = b"\x4D\x5A"
+    binary_data[:2] = b"\x4D\x5A"
     binary_data[60:64] = struct.pack("<I", 0x80)
     binary_data[0x80:0x84] = b"PE\x00\x00"
 
@@ -398,7 +398,7 @@ class TestVMDetectorBypassGeneration:
         script: str = result["implementation_script"]
 
         assert isinstance(script, str)
-        assert len(script) > 0
+        assert script != ""
         assert "import" in script
         assert "def apply_vm_bypass" in script
         assert "VMware" in script
@@ -662,12 +662,14 @@ class TestVirtualizationDetectionBypassReal:
         if FRIDA_AVAILABLE:
             assert len(bypass.hooks) > initial_hook_count
 
-            vm_hook: Dict[str, Any] = next(
-                (hook for hook in bypass.hooks if "VM Detection APIs" in hook["target"]),
-                {}
-            )
-
-            if vm_hook:
+            if vm_hook := next(
+                (
+                    hook
+                    for hook in bypass.hooks
+                    if "VM Detection APIs" in hook["target"]
+                ),
+                {},
+            ):
                 script: str = vm_hook["script"]
                 assert "RegQueryValueExA" in script or "regQueryValueExA" in script
                 assert "VirtualBox" in script
@@ -683,12 +685,14 @@ class TestVirtualizationDetectionBypassReal:
         if FRIDA_AVAILABLE:
             assert len(bypass.hooks) > initial_hook_count
 
-            timing_hook: Dict[str, Any] = next(
-                (hook for hook in bypass.hooks if "Timing Functions" in hook.get("target", "")),
-                {}
-            )
-
-            if timing_hook:
+            if timing_hook := next(
+                (
+                    hook
+                    for hook in bypass.hooks
+                    if "Timing Functions" in hook.get("target", "")
+                ),
+                {},
+            ):
                 script: str = timing_hook["script"]
                 assert "GetTickCount" in script or "QueryPerformanceCounter" in script
                 assert "RDTSC" in script or "rdtsc" in script.lower()
@@ -726,7 +730,7 @@ class TestVirtualizationDetectionBypassReal:
             script: str = bypass.generate_bypass_script()
 
             assert isinstance(script, str)
-            assert len(script) > 0
+            assert script != ""
             assert "VM Detection Bypass Script" in script or "Intellicrack" in script
 
             for hook in bypass.hooks:
@@ -854,7 +858,7 @@ class TestRealWorldBypassScenarios:
         binary_path: Path = tmp_path / "multilayer.exe"
 
         binary_data: bytearray = bytearray(16384)
-        binary_data[0:2] = b"\x4D\x5A"
+        binary_data[:2] = b"\x4D\x5A"
         binary_data[60:64] = struct.pack("<I", 0x80)
 
         code_offset: int = 0x200
@@ -939,7 +943,7 @@ class TestEdgeCasesAndErrorHandling:
         large_binary: Path = tmp_path / "large.exe"
 
         large_data: bytearray = bytearray(10 * 1024 * 1024)
-        large_data[0:2] = b"\x4D\x5A"
+        large_data[:2] = b"\x4D\x5A"
         large_data[5000000:5000002] = b"\x0F\xA2"
         large_data[7500000:7500002] = b"\x0F\x31"
 

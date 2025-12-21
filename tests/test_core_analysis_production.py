@@ -214,17 +214,13 @@ class TestRealBinaryAnalysis:
     def legitimate_pe_binaries(self) -> list[Path]:
         """Provide paths to legitimate PE binaries."""
         binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/legitimate")
-        if not binaries_dir.exists():
-            return []
-        return list(binaries_dir.glob("*.exe"))
+        return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     @pytest.fixture
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected PE binaries."""
         binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
-        if not binaries_dir.exists():
-            return []
-        return list(binaries_dir.glob("*.exe"))
+        return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     def test_binary_analysis_parses_pe_header(self, legitimate_pe_binaries: list[Path]) -> None:
         """Binary analysis correctly parses PE header from real executables."""
@@ -235,7 +231,7 @@ class TestRealBinaryAnalysis:
 
         results: list[str] = analyze_binary_internal(str(binary_path))
 
-        assert len(results) > 0
+        assert results
         assert any("PE Header" in r for r in results)
         assert any("Machine:" in r for r in results)
         assert any("Number of sections:" in r for r in results)
@@ -249,7 +245,7 @@ class TestRealBinaryAnalysis:
             results: list[str] = analyze_binary_internal(str(binary_path))
 
             machine_lines = [r for r in results if "Machine:" in r]
-            assert len(machine_lines) > 0
+            assert machine_lines
 
             machine_line = machine_lines[0]
             assert any(arch in machine_line for arch in ["x86", "x64", "ARM"])
@@ -277,7 +273,7 @@ class TestRealBinaryAnalysis:
             results: list[str] = analyze_binary_internal(str(binary_path))
 
             magic_lines = [r for r in results if "Magic:" in r]
-            assert len(magic_lines) > 0
+            assert magic_lines
 
             magic_line = magic_lines[0]
             assert "PE32" in magic_line
@@ -305,7 +301,7 @@ class TestRealBinaryAnalysis:
         results: list[str] = analyze_binary_internal(str(binary_path))
 
         entropy_lines = [r for r in results if "Entropy:" in r]
-        assert len(entropy_lines) > 0
+        assert entropy_lines
 
         for entropy_line in entropy_lines:
             assert any(char.isdigit() for char in entropy_line)
@@ -331,7 +327,7 @@ class TestRealBinaryAnalysis:
         results: list[str] = analyze_binary_internal(str(binary_path))
 
         characteristics_lines = [r for r in results if "Characteristics:" in r]
-        assert len(characteristics_lines) > 0
+        assert characteristics_lines
 
         characteristics_line = characteristics_lines[0]
         assert "0x" in characteristics_line
@@ -348,8 +344,9 @@ class TestRealBinaryAnalysis:
 
         results: list[str] = analyze_binary_internal(str(binary_path))
 
-        characteristics_lines = [r for r in results if "Characteristics:" in r]
-        if len(characteristics_lines) > 0:
+        if characteristics_lines := [
+            r for r in results if "Characteristics:" in r
+        ]:
             assert any("DLL" in r for r in characteristics_lines)
 
     def test_binary_analysis_parses_timestamp(self, legitimate_pe_binaries: list[Path]) -> None:
@@ -362,7 +359,7 @@ class TestRealBinaryAnalysis:
         results: list[str] = analyze_binary_internal(str(binary_path))
 
         timestamp_lines = [r for r in results if "Time date stamp:" in r]
-        assert len(timestamp_lines) > 0
+        assert timestamp_lines
 
         timestamp_line = timestamp_lines[0]
         assert "0x" in timestamp_line
@@ -378,7 +375,7 @@ class TestRealBinaryAnalysis:
         results: list[str] = analyze_binary_internal(str(binary_path))
 
         size_lines = [r for r in results if "File size:" in r]
-        assert len(size_lines) > 0
+        assert size_lines
 
         size_line = size_lines[0]
         assert "bytes" in size_line
@@ -394,7 +391,7 @@ class TestBinaryAnalysisEdgeCases:
 
         results: list[str] = analyze_binary_internal(nonexistent_path)
 
-        assert len(results) > 0
+        assert results
         assert any("ERROR" in r for r in results)
 
     def test_binary_analysis_handles_invalid_pe_file(self, tmp_path: Path) -> None:
@@ -404,7 +401,7 @@ class TestBinaryAnalysisEdgeCases:
 
         results: list[str] = analyze_binary_internal(str(invalid_pe))
 
-        assert len(results) > 0
+        assert results
         assert any("ERROR" in r or "invalid" in r.lower() for r in results)
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
@@ -415,7 +412,7 @@ class TestBinaryAnalysisEdgeCases:
 
         results: list[str] = analyze_binary_internal(str(empty_file))
 
-        assert len(results) > 0
+        assert results
         assert any("ERROR" in r or "invalid" in r.lower() for r in results)
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
@@ -438,9 +435,7 @@ class TestLicenseRelatedImportDetection:
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected binaries."""
         binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
-        if not binaries_dir.exists():
-            return []
-        return list(binaries_dir.glob("*.exe"))
+        return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
     def test_binary_analysis_identifies_imports(self, protected_binaries: list[Path]) -> None:
@@ -452,7 +447,7 @@ class TestLicenseRelatedImportDetection:
             results: list[str] = analyze_binary_internal(str(binary_path))
 
             assert isinstance(results, list)
-            assert len(results) > 0
+            assert results
 
 
 class TestSectionEntropyAnalysis:
@@ -462,9 +457,7 @@ class TestSectionEntropyAnalysis:
     def protected_binaries(self) -> list[Path]:
         """Provide paths to protected binaries."""
         binaries_dir = Path("D:/Intellicrack/tests/fixtures/binaries/pe/protected")
-        if not binaries_dir.exists():
-            return []
-        return list(binaries_dir.glob("*.exe"))
+        return list(binaries_dir.glob("*.exe")) if binaries_dir.exists() else []
 
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
     def test_high_entropy_detection_in_protected_binaries(self, protected_binaries: list[Path]) -> None:
@@ -481,9 +474,6 @@ class TestSectionEntropyAnalysis:
                 high_entropy_found = True
                 break
 
-        if high_entropy_found:
-            assert True
-
     @pytest.mark.skipif(not PEFILE_AVAILABLE, reason="pefile library not available")
     def test_entropy_values_within_valid_range(self, protected_binaries: list[Path]) -> None:
         """Entropy values fall within valid range (0.0 to 8.0)."""
@@ -494,7 +484,7 @@ class TestSectionEntropyAnalysis:
 
         results: list[str] = analyze_binary_internal(str(binary_path))
 
-        entropy_lines = [r for r in results if "Entropy:" in r and not "WARNING" in r]
+        entropy_lines = [r for r in results if "Entropy:" in r and "WARNING" not in r]
 
         for entropy_line in entropy_lines:
             parts = entropy_line.split(":")

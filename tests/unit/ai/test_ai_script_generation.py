@@ -259,7 +259,7 @@ class TestScriptGenerationPrompts:
             template = library.get_template(category=PromptCategory.API_HOOKING)
 
             assert template is not None
-            assert isinstance(template, PromptTemplate) or isinstance(template, str)
+            assert isinstance(template, (PromptTemplate, str))
         except Exception:
             pass
 
@@ -720,9 +720,9 @@ class TestIntegration:
         library = ScriptPromptLibrary()
 
         try:
-            template = library.get_template(category=PromptCategory.API_HOOKING)
-
-            if template:
+            if template := library.get_template(
+                category=PromptCategory.API_HOOKING
+            ):
                 request = ScriptGenerationRequest(
                     language=ScriptLanguage.JAVASCRIPT,
                     purpose=ScriptPurpose.API_HOOKING,

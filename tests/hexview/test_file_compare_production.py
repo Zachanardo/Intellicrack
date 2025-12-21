@@ -263,7 +263,7 @@ class TestBinaryComparerPerformance:
         comparer.set_progress_callback(progress_callback)
         comparer.compare_files(str(file1), str(file2))
 
-        assert len(progress_updates) > 0
+        assert progress_updates
 
 
 class TestRealWorldComparison:

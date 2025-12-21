@@ -44,7 +44,7 @@ class BinaryGenerator:
     def create_pe_with_signature(signature_bytes: bytes, section_name: bytes = b".text") -> bytes:
         """Create minimal PE with embedded signature."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
@@ -132,7 +132,7 @@ class BinaryGenerator:
         )
 
         text_section = bytearray(40)
-        text_section[0:8] = section_name.ljust(8, b"\x00")
+        text_section[:8] = section_name.ljust(8, b"\x00")
         struct.pack_into("<I", text_section, 8, 1024)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 1024)
@@ -150,7 +150,7 @@ class BinaryGenerator:
         padding = bytearray(0x400 - header_size)
 
         code_section = bytearray(1024)
-        code_section[0:len(signature_bytes)] = signature_bytes
+        code_section[:len(signature_bytes)] = signature_bytes
         code_section[len(signature_bytes)] = 0xC3
 
         pe_file = (
@@ -294,8 +294,7 @@ class BinaryGenerator:
 def yara_scanner() -> YaraScanner:
     """Provide YaraScanner instance with built-in rules."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        scanner = YaraScanner(rules_dir=Path(tmpdir))
-        return scanner
+        return YaraScanner(rules_dir=Path(tmpdir))
 
 
 @pytest.fixture
@@ -590,8 +589,8 @@ class TestProtectionDetectionWorkflow:
 
         matches = yara_scanner.scan_file(binary_path, categories=[RuleCategory.PROTECTOR])
 
-        detected_protections = set(match.rule_name for match in matches)
-        assert len(detected_protections) >= 1
+        detected_protections = {match.rule_name for match in matches}
+        assert detected_protections
 
 
 class TestCustomRuleCreation:
@@ -642,7 +641,7 @@ rule Custom_Pattern_Match {
         matches = yara_scanner.scan_file(binary_path)
 
         custom_matches = [m for m in matches if m.category == RuleCategory.CUSTOM]
-        assert len(custom_matches) > 0
+        assert custom_matches
         assert any("Custom_Pattern_Match" in m.rule_name for m in custom_matches)
 
     def test_add_rule_validates_syntax(self, yara_scanner: YaraScanner) -> None:
@@ -898,7 +897,7 @@ class TestMatchCaching:
 
         yara_scanner.clear_match_cache()
 
-        assert len(yara_scanner._match_cache) == 0
+        assert not yara_scanner._match_cache
 
 
 class TestRuleOptimization:
@@ -1622,9 +1621,7 @@ class TestCompilerDetection:
         matches = yara_scanner.scan_file(binary_path, categories=[RuleCategory.COMPILER])
 
         compiler_detected = any("MSVC" in match.rule_name or "Microsoft" in match.rule_name for match in matches)
-        if compiler_detected:
-            assert True
-        else:
+        if not compiler_detected:
             assert len(matches) >= 0
 
     def test_detects_gcc_compiler(

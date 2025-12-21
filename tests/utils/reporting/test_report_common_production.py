@@ -300,13 +300,9 @@ class TestDefaultReportGeneration:
 
             nested_path.parent.mkdir(parents=True, exist_ok=True)
 
-            result = _generate_default_report(
-                str(nested_path),
-                "Nested Report",
-                "data"
-            )
-
-            if result:
+            if result := _generate_default_report(
+                str(nested_path), "Nested Report", "data"
+            ):
                 assert Path(result).exists()
 
 
@@ -386,7 +382,7 @@ class TestCustomGeneratorFunction:
                 if original_show:
                     ui_common.show_file_dialog = original_show
 
-                assert len(called) > 0
+                assert called
             else:
                 pytest.skip("UI common not available")
 

@@ -286,9 +286,7 @@ class TestHTMLExport:
         """HTML export creates HTML file."""
         output_file = tmp_path / "report.html"
 
-        success = exporter_instance.export_html_report(str(output_file))
-
-        if success:
+        if success := exporter_instance.export_html_report(str(output_file)):
             assert output_file.exists()
             content = output_file.read_text()
             assert "<!DOCTYPE html>" in content or "<html>" in content
@@ -299,9 +297,7 @@ class TestHTMLExport:
         """HTML export contains analysis data."""
         output_file = tmp_path / "report.html"
 
-        success = exporter_instance.export_html_report(str(output_file))
-
-        if success:
+        if success := exporter_instance.export_html_report(str(output_file)):
             content = output_file.read_text()
             assert "Intellicrack" in content or "Analysis" in content
 
@@ -406,9 +402,7 @@ class TestYAMLExport:
         """YAML export creates file if YAML available."""
         output_file = tmp_path / "config.yaml"
 
-        success = exporter_instance.export_yaml_config(str(output_file))
-
-        if success:
+        if success := exporter_instance.export_yaml_config(str(output_file)):
             assert output_file.exists()
 
     def test_export_yaml_config_handles_unavailable_yaml(
@@ -431,9 +425,7 @@ class TestExcelExport:
         """Excel export creates file if xlsxwriter available."""
         output_file = tmp_path / "report.xlsx"
 
-        success = exporter_instance.export_excel_workbook(str(output_file))
-
-        if success:
+        if success := exporter_instance.export_excel_workbook(str(output_file)):
             assert output_file.exists()
 
     def test_export_excel_workbook_handles_unavailable_xlsxwriter(

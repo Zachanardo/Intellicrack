@@ -39,14 +39,14 @@ class TestOSDetectionMixin:
         test_obj: TestClass = TestClass()
         detected_os: str = test_obj._detect_os()
 
-        assert detected_os in ["windows", "linux", "unknown"]
+        assert detected_os in {"windows", "linux", "unknown"}
 
     def test_mixin_detect_target_os_returns_valid_os(self) -> None:
         """Mixin _detect_target_os returns valid operating system."""
         test_obj: TestClass = TestClass()
         target_os: str = test_obj._detect_target_os()
 
-        assert target_os in ["windows", "linux", "unknown"]
+        assert target_os in {"windows", "linux", "unknown"}
 
     def test_mixin_detect_os_matches_detect_target_os(self) -> None:
         """_detect_os and _detect_target_os return same value."""
@@ -91,7 +91,7 @@ class TestOSDetectionMixin:
         test_obj: TestClass = TestClass()
         platform: str = test_obj.detect_platform()
 
-        assert platform in ["windows", "linux", "unknown"]
+        assert platform in {"windows", "linux", "unknown"}
 
     def test_mixin_detect_platform_matches_private_detect_os(self) -> None:
         """Public detect_platform matches private _detect_os."""

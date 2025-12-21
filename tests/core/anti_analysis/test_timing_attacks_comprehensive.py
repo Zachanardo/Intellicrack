@@ -495,7 +495,8 @@ class TestTimingDefenseCodeGeneration:
             "clock()",
         ]
 
-        found_sources = sum(1 for source in timing_sources if source in code)
+        found_sources = sum(bool(source in code)
+                        for source in timing_sources)
         assert found_sources >= 2, "Code should use multiple timing sources for verification"
 
     def test_generated_code_detects_timing_anomalies(self, timing_defense: TimingAttackDefense) -> None:
@@ -662,9 +663,7 @@ class TestInstructionTimingAnalysis:
         iterations = 100000
 
         start = time.perf_counter_ns()
-        result = 0
-        for i in range(iterations):
-            result += i
+        result = sum(range(iterations))
         elapsed_add = time.perf_counter_ns() - start
 
         start = time.perf_counter_ns()
@@ -750,11 +749,8 @@ class TestTimingAttackIntegrationScenarios:
 
     def test_complete_anti_debugging_timing_sequence(self, timing_defense: TimingAttackDefense) -> None:
         """Execute complete anti-debugging timing check sequence."""
-        steps_completed = []
-
         rdtsc_result = timing_defense.rdtsc_timing_check()
-        steps_completed.append(("rdtsc", rdtsc_result))
-
+        steps_completed = [("rdtsc", rdtsc_result)]
         sleep_result = timing_defense.secure_sleep(0.1)
         steps_completed.append(("secure_sleep", sleep_result))
 
@@ -776,13 +772,8 @@ class TestTimingAttackIntegrationScenarios:
         if not sleep_normal:
             return
 
-        debugger_present = timing_defense._quick_debugger_check()
-        if debugger_present:
+        if debugger_present := timing_defense._quick_debugger_check():
             return
-
-        license_valid = True
-
-        assert license_valid is True, "License validation should complete when timing is normal"
 
     @pytest.mark.skipif(platform.system() != "Windows", reason="Requires Windows")
     def test_windows_timing_defense_integration(self, timing_defense_windows_only: TimingAttackDefense) -> None:

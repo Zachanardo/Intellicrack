@@ -810,9 +810,7 @@ class ProtectionAnalyzerTool:
                 )
         if tools := analysis.get("tool_recommendations", []):
             output.append("\nRecommended Tools:")
-            for tool in tools:
-                output.append(f"  - {tool['name']}: {tool['purpose']}")
-
+            output.extend(f"  - {tool['name']}: {tool['purpose']}" for tool in tools)
         license_files = analysis.get("license_files_found", {})
         if license_files.get("files_found"):
             output.append("\nLicense Files Found:")

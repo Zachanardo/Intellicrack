@@ -52,11 +52,7 @@ class TestExecutableValidation:
 
     def test_validate_executable_resolves_relative_path(self) -> None:
         """validate_executable resolves relative paths to absolute paths."""
-        if sys.platform == "win32":
-            executable = "cmd"
-        else:
-            executable = "python3"
-
+        executable = "cmd" if sys.platform == "win32" else "python3"
         validated_path = SecureSubprocess.validate_executable(executable)
 
         assert os.path.isabs(validated_path)
@@ -79,8 +75,7 @@ class TestExecutableValidation:
     def test_validate_executable_strips_extension_for_validation(self) -> None:
         """validate_executable strips .exe/.bat/.sh for whitelist check."""
         if sys.platform == "win32":
-            cmd_path = shutil.which("cmd.exe")
-            if cmd_path:
+            if cmd_path := shutil.which("cmd.exe"):
                 validated = SecureSubprocess.validate_executable(cmd_path)
                 assert os.path.exists(validated)
 
@@ -221,11 +216,7 @@ class TestSecureRun:
 
     def test_secure_run_validates_working_directory(self, tmp_path: Path) -> None:
         """SecureSubprocess.run validates and uses working directory."""
-        if sys.platform == "win32":
-            command = ["cmd", "/c", "cd"]
-        else:
-            command = ["pwd"]
-
+        command = ["cmd", "/c", "cd"] if sys.platform == "win32" else ["pwd"]
         result = SecureSubprocess.run(command, capture_output=True, text=True, cwd=str(tmp_path))
 
         assert result.returncode == 0
@@ -392,11 +383,7 @@ class TestRealWorldScenarios:
 
     def test_execute_process_listing_for_protection_detection(self) -> None:
         """Secure execution of process listing for anti-debug detection."""
-        if sys.platform == "win32":
-            command = ["tasklist"]
-        else:
-            command = ["ps", "aux"]
-
+        command = ["tasklist"] if sys.platform == "win32" else ["ps", "aux"]
         result = SecureSubprocess.run(command, capture_output=True, text=True)
 
         assert result.returncode == 0
@@ -421,11 +408,7 @@ class TestShellExecutionWarnings:
 
     def test_secure_run_warns_about_shell_execution(self, caplog: pytest.LogCaptureFixture) -> None:
         """SecureSubprocess.run logs warning when shell=True requested."""
-        if sys.platform == "win32":
-            command = "echo test"
-        else:
-            command = "echo test"
-
+        command = "echo test"
         SecureSubprocess.run(command, shell=True, capture_output=True, text=True)
 
     def test_secure_popen_warns_about_shell_execution(self, caplog: pytest.LogCaptureFixture) -> None:

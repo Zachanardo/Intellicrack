@@ -54,7 +54,7 @@ class ProtectedBinaryGenerator:
     def create_pe_header(size_of_image: int = 0x3000) -> bytes:
         """Create valid PE header structure."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         dos_stub = b"\x0e\x1f\xba\x0e\x00\xb4\x09\xcd\x21\xb8\x01\x4c\xcd\x21"
@@ -142,7 +142,7 @@ class ProtectedBinaryGenerator:
         )
 
         text_section = bytearray(40)
-        text_section[0:8] = b".text\x00\x00\x00"
+        text_section[:8] = b".text\x00\x00\x00"
         struct.pack_into("<I", text_section, 8, 1024)
         struct.pack_into("<I", text_section, 12, 0x1000)
         struct.pack_into("<I", text_section, 16, 1024)
@@ -150,7 +150,7 @@ class ProtectedBinaryGenerator:
         struct.pack_into("<I", text_section, 36, 0x60000020)
 
         data_section = bytearray(40)
-        data_section[0:8] = b".data\x00\x00\x00"
+        data_section[:8] = b".data\x00\x00\x00"
         struct.pack_into("<I", data_section, 8, 512)
         struct.pack_into("<I", data_section, 12, 0x2000)
         struct.pack_into("<I", data_section, 16, 512)
@@ -185,13 +185,13 @@ class ProtectedBinaryGenerator:
         pe_header = ProtectedBinaryGenerator.create_pe_header()
 
         code_section = bytearray(1024)
-        code_section[0:9] = b"\x56\x4d\x50\x72\x6f\x74\x65\x63\x74"
+        code_section[:9] = b"\x56\x4d\x50\x72\x6f\x74\x65\x63\x74"
         code_section[100:105] = b"\x2e\x76\x6d\x70\x30"
         code_section[200:205] = b"\x2e\x76\x6d\x70\x31"
         code_section[300:311] = b"\x68\x00\x00\x00\x00\xe8\x00\x00\x00\x00\x00"
 
         data_section = bytearray(512)
-        data_section[0:5] = b"\x2e\x76\x6d\x70\x32"
+        data_section[:5] = b"\x2e\x76\x6d\x70\x32"
 
         return bytes(pe_header + code_section + data_section)
 
@@ -201,7 +201,7 @@ class ProtectedBinaryGenerator:
         pe_header = ProtectedBinaryGenerator.create_pe_header()
 
         code_section = bytearray(1024)
-        code_section[0:7] = b"\x54\x68\x65\x6d\x69\x64\x61"
+        code_section[:7] = b"\x54\x68\x65\x6d\x69\x64\x61"
         code_section[100:110] = b"\x2e\x74\x68\x65\x6d\x69\x64\x61"
         code_section[200:210] = b"\xb8\x00\x00\x00\x00\x60\x0b\xc0\x74\x58"
         code_section[300:308] = b"\xb8\x00\x00\x00\x00\x60\x0b\xc0"
@@ -216,13 +216,13 @@ class ProtectedBinaryGenerator:
         pe_header = ProtectedBinaryGenerator.create_pe_header()
 
         code_section = bytearray(1024)
-        code_section[0:4] = b"\x55\x50\x58\x21"
+        code_section[:4] = b"\x55\x50\x58\x21"
         code_section[100:104] = b"\x55\x50\x58\x30"
         code_section[200:204] = b"\x55\x50\x58\x31"
         code_section[300:312] = b"\x60\xbe\x00\x00\x00\x00\x8d\xbe\x00\x00\x00\x00"
 
         data_section = bytearray(512)
-        data_section[0:4] = b"\x55\x50\x58\x32"
+        data_section[:4] = b"\x55\x50\x58\x32"
 
         return bytes(pe_header + code_section + data_section)
 
@@ -232,7 +232,7 @@ class ProtectedBinaryGenerator:
         pe_header = ProtectedBinaryGenerator.create_pe_header()
 
         code_section = bytearray(1024)
-        code_section[0:6] = b"\x44\x65\x6e\x75\x76\x6f"
+        code_section[:6] = b"\x44\x65\x6e\x75\x76\x6f"
         code_section[100:105] = b"\x2e\x64\x65\x6e\x75"
         code_section[200:211] = b"\x48\x8d\x05\x00\x00\x00\x00\x48\x89\x45\x00"
 
@@ -246,7 +246,7 @@ class ProtectedBinaryGenerator:
         pe_header = ProtectedBinaryGenerator.create_pe_header()
 
         code_section = bytearray(1024)
-        code_section[0:9] = b"\x41\x53\x50\x72\x6f\x74\x65\x63\x74"
+        code_section[:9] = b"\x41\x53\x50\x72\x6f\x74\x65\x63\x74"
         code_section[100:105] = b"\x2e\x61\x73\x70\x72"
         code_section[200:209] = b"\x60\xe8\x03\x00\x00\x00\xe9\xeb\x04"
         code_section[300:306] = b"\x60\xe8\x03\x00\x00\x00"
@@ -261,7 +261,7 @@ class ProtectedBinaryGenerator:
         pe_header = ProtectedBinaryGenerator.create_pe_header()
 
         code_section = bytearray(1024)
-        code_section[0:12] = b"CheckLicense"
+        code_section[:12] = b"CheckLicense"
         code_section[50:15 + 50] = b"ValidateLicense"
         code_section[100:15 + 100] = b"VerifyLicense"
         code_section[200:16 + 200] = b"ValidateSerial"
@@ -271,7 +271,7 @@ class ProtectedBinaryGenerator:
         code_section[400:20 + 400] = b"ABCD-1234-EFGH-5678"
 
         data_section = bytearray(512)
-        data_section[0:13] = b"trial expired"
+        data_section[:13] = b"trial expired"
         data_section[50:13 + 50] = b"GetSystemTime"
         data_section[100:12 + 100] = b"SOFTWARE\\Trial"
         data_section[150:11 + 150] = b"InstallDate"
@@ -288,7 +288,7 @@ class ProtectedBinaryGenerator:
             0x63, 0x7C, 0x77, 0x7B, 0xF2, 0x6B, 0x6F, 0xC5,
             0x30, 0x01, 0x67, 0x2B, 0xFE, 0xD7, 0xAB, 0x76,
         ])
-        code_section[0:16] = aes_sbox
+        code_section[:16] = aes_sbox
         code_section[100:110] = b"CryptEncrypt"
         code_section[150:163] = b"CryptDecrypt"
         code_section[200:210] = b"BCryptEncrypt"
@@ -470,7 +470,7 @@ class TestProtectionSignatureDetection:
 
         pe_header = ProtectedBinaryGenerator.create_pe_header()
         code_section = bytearray(2048)
-        code_section[0:9] = b"\x56\x4d\x50\x72\x6f\x74\x65\x63\x74"
+        code_section[:9] = b"\x56\x4d\x50\x72\x6f\x74\x65\x63\x74"
         code_section[500:504] = b"\x55\x50\x58\x21"
         code_section[1000:1007] = b"\x54\x68\x65\x6d\x69\x64\x61"
 
@@ -793,7 +793,7 @@ class TestMultiCategoryScanning:
         assert len(matches) > 0, "No matches found in multi-category scan"
 
         categories_found = {m.category for m in matches}
-        assert len(categories_found) >= 1, "Expected matches from multiple categories"
+        assert categories_found, "Expected matches from multiple categories"
 
     def test_scan_all_categories_when_none_specified(
         self, temp_binary_dir: Path

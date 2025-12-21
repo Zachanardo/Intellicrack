@@ -1052,7 +1052,11 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     if hasattr(model, "parameters"):
                         params = model.parameters()
                         first_param = next(params, None)
-                        if first_param is not None and not first_param.is_cuda and (hasattr(torch, "quantization") and hasattr(torch.quantization, "quantize_dynamic")):
+                        if (
+                            first_param is not None
+                            and not first_param.is_cuda
+                            and (hasattr(torch, "quantization") and hasattr(torch.quantization, "quantize_dynamic"))
+                        ):
                             quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
                             logger.info("Applied quantization to %s", model_id)
                             return quantized
@@ -1371,12 +1375,10 @@ Interceptor.attach(IsDebuggerPresent, {
             features.append(self._calculate_entropy(chunk))
 
         strings = self._extract_strings(binary_data[:10000])
-        features.extend(
-            (
-                float(len(strings)),
-                float(np.mean([len(s) for s in strings])) if strings else 0.0,
-            )
-        )
+        features.extend((
+            float(len(strings)),
+            float(np.mean([len(s) for s in strings])) if strings else 0.0,
+        ))
         expected_size = 1024
         if len(features) < expected_size:
             features.extend([0.0] * (expected_size - len(features)))

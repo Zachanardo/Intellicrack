@@ -224,9 +224,7 @@ class TestProtectionDetection:
         """Test _detect_protections returns detections with proper structure."""
         analyzer = ProtectionAnalyzer()
 
-        detections = analyzer._detect_protections(upx_packed_data)
-
-        if detections:
+        if detections := analyzer._detect_protections(upx_packed_data):
             detection = detections[0]
             assert "name" in detection
             assert "type" in detection

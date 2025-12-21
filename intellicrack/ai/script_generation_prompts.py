@@ -440,21 +440,17 @@ Return validation results in structured JSON format.""",
                     "- Monitor trial timer mechanisms",
                 ))
             elif "network" in ptype.lower():
-                requirements.extend(
-                    (
-                        "- Intercept network validation calls",
-                        "- Inject custom license server responses",
-                        "- Block outbound license verification",
-                    )
-                )
+                requirements.extend((
+                    "- Intercept network validation calls",
+                    "- Inject custom license server responses",
+                    "- Block outbound license verification",
+                ))
             elif "debug" in ptype.lower():
-                requirements.extend(
-                    (
-                        "- Bypass debugger detection mechanisms",
-                        "- Hook IsDebuggerPresent and related functions",
-                        "- Manipulate PEB flags and debug registers",
-                    )
-                )
+                requirements.extend((
+                    "- Bypass debugger detection mechanisms",
+                    "- Hook IsDebuggerPresent and related functions",
+                    "- Manipulate PEB flags and debug registers",
+                ))
         if not requirements:
             requirements = [
                 "- Analyze binary for protection mechanisms",
@@ -499,13 +495,11 @@ Return validation results in structured JSON format.""",
                     "- Replace time-based jumps with unconditional success",
                 ))
             elif "network" in ptype.lower():
-                objectives.extend(
-                    (
-                        "- Patch network calls to return success",
-                        "- Modify validation responses",
-                        "- Bypass online license requirements",
-                    )
-                )
+                objectives.extend((
+                    "- Patch network calls to return success",
+                    "- Modify validation responses",
+                    "- Bypass online license requirements",
+                ))
         if not objectives:
             objectives = [
                 "- Identify and patch protection mechanisms",

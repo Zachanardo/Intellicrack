@@ -39,7 +39,7 @@ class TestBinaryFactory:
     def create_dos_stub() -> bytes:
         """Create minimal DOS stub."""
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
         return bytes(dos_header)
 
@@ -60,7 +60,7 @@ class TestBinaryFactory:
         )
 
         optional_header = bytearray(224)
-        optional_header[0:2] = struct.pack("<H", 0x010B)
+        optional_header[:2] = struct.pack("<H", 0x010B)
 
         return pe_signature + coff_header + bytes(optional_header)
 
@@ -70,7 +70,7 @@ class TestBinaryFactory:
     ) -> bytes:
         """Create PE section header."""
         header = bytearray(40)
-        header[0:8] = name.ljust(8, b"\x00")[:8]
+        header[:8] = name.ljust(8, b"\x00")[:8]
         header[8:12] = struct.pack("<I", virtual_size)
         header[12:16] = struct.pack("<I", virtual_address)
         header[16:20] = struct.pack("<I", raw_size)
@@ -88,7 +88,7 @@ class TestBinaryFactory:
         data_section = cls.create_section_header(b".data", 0x1000, 0x2000, 0x1000, 0x1400)
 
         text_data = bytearray(0x1000)
-        text_data[0:20] = b"UserAccess8\x00SR8\x00SecuROM"
+        text_data[:20] = b"UserAccess8\x00SR8\x00SecuROM"
 
         if include_activation:
             text_data[100:115] = b"OnlineActivation"
@@ -121,7 +121,7 @@ class TestBinaryFactory:
         text_data[2000:2008] = b"\x6a\x09\xe6\x67\xbb\x67\xae\x85"
 
         data_data = bytearray(0x1000)
-        data_data[0:40] = b"SOFTWARE\\SecuROM\\Activation\\Data\x00"
+        data_data[:40] = b"SOFTWARE\\SecuROM\\Activation\\Data\x00"
         data_data[100:140] = b"SOFTWARE\\Sony DADC\\Protection\x00"
 
         binary = dos_stub + pe_header + text_section + data_section
@@ -140,7 +140,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x1000, 0x1000, 0x1000, 0x400)
 
         text_data = bytearray(0x1000)
-        text_data[0:20] = b"UserAccess7\x00SR7\x00SecuROM"
+        text_data[:20] = b"UserAccess7\x00SR7\x00SecuROM"
         text_data[100:115] = b"ProductActivation"
         text_data[200:215] = b"DiscFingerprint"
         text_data[300:318] = b"ValidateOnline\x00"
@@ -159,7 +159,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x1000, 0x1000, 0x1000, 0x400)
 
         text_data = bytearray(0x1000)
-        text_data[0:7] = b"SecuROM"
+        text_data[:7] = b"SecuROM"
         text_data[100:110] = b"ProductKey"
 
         binary = dos_stub + pe_header + text_section
@@ -176,7 +176,7 @@ class TestBinaryFactory:
         text_section = cls.create_section_header(b".text", 0x1000, 0x1000, 0x1000, 0x400)
 
         text_data = bytearray(0x1000)
-        text_data[0:15] = b"Regular Binary\x00"
+        text_data[:15] = b"Regular Binary\x00"
 
         binary = dos_stub + pe_header + text_section
         binary = binary.ljust(0x400, b"\x00")
@@ -342,7 +342,7 @@ class TestActivationMechanismAnalysis:
 
         assert len(mechanisms) > 0
         urls = [m.activation_server_url for m in mechanisms if m.activation_server_url]
-        assert len(urls) > 0
+        assert urls
         assert any("https://" in url for url in urls)
         assert any("activation.securom.com" in url for url in urls)
 
@@ -499,8 +499,7 @@ class TestProductKeyExtraction:
         keys = analyzer._extract_product_key_info(securom_v8_binary)
 
         assert len(keys) > 0
-        checksums = [k.checksum_type for k in keys if k.checksum_type]
-        if checksums:
+        if checksums := [k.checksum_type for k in keys if k.checksum_type]:
             assert all(c in ["CRC32", "MD5", "SHA", "Custom Checksum"] for c in checksums)
 
 
@@ -519,7 +518,7 @@ class TestDiscAuthenticationAnalysis:
 
         assert len(routines) > 0
         scsi_commands = [cmd for routine in routines for cmd in routine.scsi_commands]
-        assert len(scsi_commands) > 0
+        assert scsi_commands
         valid_commands = [
             "INQUIRY",
             "READ_10",
@@ -537,8 +536,9 @@ class TestDiscAuthenticationAnalysis:
         routines = analyzer._analyze_disc_authentication(securom_v8_binary)
 
         assert len(routines) > 0
-        signature_checks = [check for routine in routines for check in routine.signature_checks]
-        if signature_checks:
+        if signature_checks := [
+            check for routine in routines for check in routine.signature_checks
+        ]:
             valid_checks = [
                 "Digital Signature Verification",
                 "Table of Contents Check",
@@ -589,7 +589,7 @@ class TestPhoneHomeMechanisms:
 
         assert len(mechanisms) > 0
         urls = [url for m in mechanisms for url in m.server_urls]
-        assert len(urls) > 0
+        assert urls
         assert any("https://" in url for url in urls)
 
     def test_identify_transmitted_data(self, analyzer: SecuROMAnalyzer, securom_v8_binary: Path) -> None:
@@ -597,8 +597,7 @@ class TestPhoneHomeMechanisms:
         mechanisms = analyzer._detect_phone_home(securom_v8_binary)
 
         assert len(mechanisms) > 0
-        data_items = [item for m in mechanisms for item in m.data_transmitted]
-        if data_items:
+        if data_items := [item for m in mechanisms for item in m.data_transmitted]:
             valid_items = [
                 "Machine ID",
                 "Product Key",
@@ -718,8 +717,9 @@ class TestLicenseValidationMapping:
         functions = analyzer._map_license_validation(securom_v8_binary)
 
         assert len(functions) > 0
-        all_checks = [check for func in functions for check in func.checks_performed]
-        if all_checks:
+        if all_checks := [
+            check for func in functions for check in func.checks_performed
+        ]:
             valid_checks = [
                 "Registry Check",
                 "File Existence Check",

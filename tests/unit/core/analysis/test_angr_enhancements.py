@@ -22,7 +22,7 @@ def create_minimal_pe_binary():
     """
     with tempfile.NamedTemporaryFile(delete=False, suffix=".exe", mode='wb') as f:
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         struct.pack_into("<H", dos_header, 0x3C, 0x80)
 
         pe_offset = 0x80
@@ -548,11 +548,7 @@ class TestStateMerger(unittest.TestCase):
 
         states = [project.factory.entry_state() for _ in range(6)]
         for i, state in enumerate(states):
-            if i % 2 == 0:
-                state.regs.ip = 0x401000
-            else:
-                state.regs.ip = 0x402000
-
+            state.regs.ip = 0x401000 if i % 2 == 0 else 0x402000
         mergeable_groups = self.merger._identify_mergeable_states(states)
 
         assert isinstance(mergeable_groups, list)
@@ -622,11 +618,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.r8 = 0x3000
         state.regs.r9 = 0x40
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_virtual_free_tracking(self):
@@ -644,11 +636,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.rdx = 0x1000
         state.regs.r8 = 0x8000
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_nt_query_information_process_anti_debug(self):
@@ -667,11 +655,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.r8 = 0x400000
         state.regs.r9 = 4
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_message_box_symbolic_handling(self):
@@ -690,11 +674,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.r8 = 0x401000
         state.regs.r9 = 0
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_socket_operations_network_licensing(self):
@@ -712,11 +692,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.rdx = 1
         state.regs.r8 = 6
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_connect_symbolic_server(self):
@@ -735,11 +711,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.rdx = 0x400000
         state.regs.r8 = 16
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_send_license_data(self):
@@ -758,11 +730,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.r8 = 256
         state.regs.r9 = 0
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_recv_symbolic_response(self):
@@ -781,11 +749,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.r8 = 512
         state.regs.r9 = 0
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
     def test_reg_open_key_symbolic_path(self):
@@ -805,11 +769,7 @@ class TestAdditionalWindowsSimProcedures(unittest.TestCase):
         state.regs.r8 = 0
         state.regs.r9 = 0x20019
 
-        if hasattr(proc, "execute"):
-            result = proc.execute(state)
-        else:
-            result = proc.run()
-
+        result = proc.execute(state) if hasattr(proc, "execute") else proc.run()
         assert result is not None
 
 

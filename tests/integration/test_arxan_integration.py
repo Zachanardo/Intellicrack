@@ -150,9 +150,9 @@ class TestArxanIntegration(unittest.TestCase):
             len(analysis_result.integrity_checks)
         )
 
-        bypass_result = self.bypass.bypass(binary)
-
         if total_protections > 0:
+            bypass_result = self.bypass.bypass(binary)
+
             self.assertGreater(len(bypass_result.patches_applied), 0)
 
     def test_bypass_preserves_binary_structure(self):

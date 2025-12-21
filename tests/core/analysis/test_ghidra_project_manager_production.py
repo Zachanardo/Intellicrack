@@ -580,7 +580,7 @@ class TestProjectExportImport:
 
         with zipfile.ZipFile(export_path, 'r') as zf:
             version_files = [f for f in zf.namelist() if f.startswith("versions/")]
-            assert len(version_files) >= 1
+            assert version_files
 
     def test_import_project_restores_structure(self, manager: GhidraProjectManager, test_binary: Path, sample_analysis_result: GhidraAnalysisResult, tmp_path: Path) -> None:
         """import_project restores exported project."""

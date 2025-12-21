@@ -245,12 +245,10 @@ class TestPluginDiscovery:
         has_get_plugin = False
 
         for node in ast.walk(tree):
-            if isinstance(node, ast.ClassDef):
-                if "Plugin" in node.name:
-                    has_class = True
-            if isinstance(node, ast.FunctionDef):
-                if node.name == "get_plugin":
-                    has_get_plugin = True
+            if isinstance(node, ast.ClassDef) and "Plugin" in node.name:
+                has_class = True
+            if isinstance(node, ast.FunctionDef) and node.name == "get_plugin":
+                has_get_plugin = True
 
         assert has_class, "Plugin missing required Plugin class"
         assert has_get_plugin, "Plugin missing get_plugin() function"
@@ -431,7 +429,7 @@ class TestPluginRunner:
         runner.start()
         runner.wait(5000)
 
-        assert len(results) > 0
+        assert results
         assert results[0]["status"] == "success"
 
     def test_plugin_runner_handles_long_execution(
@@ -472,7 +470,7 @@ def get_plugin() -> Any:
         runner.start()
         runner.wait(10000)
 
-        assert len(results) > 0
+        assert results
         assert results[0]["status"] == "success"
 
 
@@ -491,8 +489,7 @@ class TestPluginManagerDialog:
 
         plugin_names = []
         for row in range(plugin_list.rowCount()):
-            name_item = plugin_list.item(row, 0)
-            if name_item:
+            if name_item := plugin_list.item(row, 0):
                 plugin_names.append(name_item.text())
 
         assert any("Simple Analyzer" in name or "simple_analyzer" in name for name in plugin_names)

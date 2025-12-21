@@ -740,7 +740,7 @@ class TestSymbolicExecutor(IntellicrackTestBase):
         assert 'solver_time_breakdown' in resource_usage
 
         # Validate monitoring events were collected
-        assert len(monitoring_results) > 0
+        assert monitoring_results
 
         for event in monitoring_results:
             assert isinstance(event, dict)
@@ -1557,7 +1557,10 @@ class TestSymbolicExecutorIntegration(IntellicrackTestBase):
         except Exception as e:
             # Exception handling is acceptable, but should not be placeholder
             error_msg = str(e).lower()
-            assert not any(indicator in error_msg for indicator in ['todo', 'not implemented', 'placeholder'])
+            assert all(
+                indicator not in error_msg
+                for indicator in ['todo', 'not implemented', 'placeholder']
+            )
 
         # Test with corrupted binary
         with tempfile.NamedTemporaryFile(suffix='.exe', delete=False) as f:
@@ -1741,7 +1744,7 @@ class TestSymbolicExecutorPerformance(IntellicrackTestBase):
                     memory_usage = process.memory_info().rss / 1024 / 1024  # MB
                     memory_samples.append(memory_usage)
                     time.sleep(1)
-                except:
+                except Exception:
                     break
 
         # Start memory monitoring

@@ -151,9 +151,7 @@ class TestSimilaritySearcher(IntellicrackTestBase):
         assert isinstance(features['entropy'], float), "Entropy should be float"
         assert 0.0 <= features['entropy'] <= 8.0, "Entropy should be in valid range"
 
-        # Sections should contain real structural analysis
-        sections = features['sections']
-        if sections:  # If binary parsing succeeded
+        if sections := features['sections']:
             for section in sections:
                 assert 'name' in section, "Section should have name"
                 assert 'entropy' in section, "Section should have entropy analysis"
@@ -400,7 +398,7 @@ class TestSimilaritySearcher(IntellicrackTestBase):
             # Similarity should not be obvious placeholder values
             placeholder_values = [0.0, 0.25, 0.5, 0.75, 1.0]
             assert similarity not in placeholder_values, \
-                f"Similarity {similarity} appears to be placeholder value"
+                    f"Similarity {similarity} appears to be placeholder value"
 
         # Test 4: Database operations must persist real data
         if self.pe_binaries or self.elf_binaries:
@@ -427,8 +425,6 @@ class TestSimilaritySearcher(IntellicrackTestBase):
         if len(self.searcher.database['binaries']) > 0:
             assert stats['total_binaries'] > 0, "Statistics don't reflect actual database contents"
 
-        # Test 6: Search functionality must return sorted, relevant results
-        if len(self.searcher.database['binaries']) > 0:
             search_results = self.searcher.search_similar_binaries(
                 self.sample_binary, threshold=0.0
             )
@@ -445,4 +441,4 @@ class TestSimilaritySearcher(IntellicrackTestBase):
                 if len(search_results) > 1:
                     similarities = [r['similarity'] for r in search_results]
                     assert similarities == sorted(similarities, reverse=True), \
-                        "Search results not properly sorted - indicates placeholder search implementation"
+                            "Search results not properly sorted - indicates placeholder search implementation"

@@ -101,7 +101,7 @@ class TestFridaProcessEnumeration:
         processes = device.enumerate_processes()
         python_processes = [p for p in processes if "python" in p.name.lower()]
 
-        assert len(python_processes) > 0
+        assert python_processes
 
     def test_find_process_by_pid(self) -> None:
         """Find process by PID."""
@@ -256,7 +256,7 @@ class TestFridaScriptCommunication:
             time.sleep(0.5)
             script.unload()
 
-            assert len(messages) > 0
+            assert messages
         except Exception as e:
             pytest.skip(f"Message handling test failed: {e}")
 
@@ -561,7 +561,7 @@ class TestFridaErrorHandling:
             script.load()
             time.sleep(0.2)
 
-            assert len(messages) > 0
+            assert messages
             if messages[0].get("type") == "send":
                 payload = messages[0].get("payload", {})
                 assert payload.get("type") == "error"
@@ -649,7 +649,7 @@ class TestFridaEdgeCases:
             script.load()
             time.sleep(0.3)
 
-            assert len(messages) > 0
+            assert messages
             if messages[0].get("type") == "send":
                 payload = messages[0].get("payload", {})
                 assert len(payload.get("data", "")) > 1000
@@ -696,7 +696,7 @@ class TestFridaEdgeCases:
 
             time.sleep(0.2)
 
-            assert len(messages1) > 0 or len(messages2) > 0
+            assert messages1 or messages2
 
             script1.unload()
             script2.unload()

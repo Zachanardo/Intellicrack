@@ -153,32 +153,30 @@ class ReportGenerator:
                 "<h2>Binary Information</h2>",
                 "<table>",
             ))
-            for key, value in data["binary_info"].items():
-                html_parts.append(f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>")
+            html_parts.extend(
+                f"<tr><td><strong>{key}:</strong></td><td>{value}</td></tr>"
+                for key, value in data["binary_info"].items()
+            )
             html_parts.extend(("</table>", "</section>"))
         # Add protection analysis
         if "protections" in data:
-            html_parts.extend(
-                (
-                    "<section class='protections'>",
-                    "<h2>Protection Analysis</h2>",
-                    "<ul>",
-                )
-            )
+            html_parts.extend((
+                "<section class='protections'>",
+                "<h2>Protection Analysis</h2>",
+                "<ul>",
+            ))
             for protection in data["protections"]:
                 status = "OK" if protection.get("bypassed") else "FAIL"
                 html_parts.append(f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>")
             html_parts.extend(("</ul>", "</section>"))
         # Add vulnerabilities
         if "vulnerabilities" in data:
-            html_parts.extend(
-                (
-                    "<section class='vulnerabilities'>",
-                    "<h2>Vulnerabilities Found</h2>",
-                    "<table>",
-                    "<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>",
-                )
-            )
+            html_parts.extend((
+                "<section class='vulnerabilities'>",
+                "<h2>Vulnerabilities Found</h2>",
+                "<table>",
+                "<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>",
+            ))
             for vuln in data["vulnerabilities"]:
                 severity_class = vuln.get("severity", "unknown").lower()
                 html_parts.append(f"<tr class='severity-{severity_class}'>")
@@ -189,9 +187,7 @@ class ReportGenerator:
             html_parts.extend(("</table>", "</section>"))
         # Add exploitation results
         if "exploitation" in data:
-            html_parts.extend(
-                ("<section class='exploitation'>", "<h2>Exploitation Results</h2>")
-            )
+            html_parts.extend(("<section class='exploitation'>", "<h2>Exploitation Results</h2>"))
             for exploit in data["exploitation"]:
                 html_parts.append("<div class='exploit-result'>")
                 html_parts.append(f"<h3>{exploit.get('technique', 'Unknown Technique')}</h3>")
@@ -209,14 +205,11 @@ class ReportGenerator:
                 (
                     "<section class='recommendations'>",
                     "<h2>Security Recommendations</h2>",
+                    "<ol>",
                 )
             )
-            html_parts.append("<ol>")
-            for rec in data["recommendations"]:
-                html_parts.append(f"<li>{rec}</li>")
-            html_parts.append("</ol>")
-            html_parts.append("</section>")
-
+            html_parts.extend(f"<li>{rec}</li>" for rec in data["recommendations"])
+            html_parts.extend(("</ol>", "</section>"))
         html_parts.extend(["</div>", "</body>", "</html>"])
 
         return "\n".join(html_parts)
@@ -385,8 +378,9 @@ class ReportGenerator:
 
         if "recommendations" in data:
             lines.extend(("SECURITY RECOMMENDATIONS", "-" * 40))
-            for i, rec in enumerate(data["recommendations"], 1):
-                lines.append(f"  {i}. {rec}")
+            lines.extend(
+                f"  {i}. {rec}" for i, rec in enumerate(data["recommendations"], 1)
+            )
             lines.append("")
 
         lines.extend(("=" * 80, "END OF REPORT", "=" * 80))

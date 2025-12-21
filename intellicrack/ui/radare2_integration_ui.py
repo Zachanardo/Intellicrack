@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import logging
 import os
-from typing import Any, Protocol
+from typing import Any, Protocol, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -66,7 +66,7 @@ from ..core.analysis.radare2_strings import R2StringAnalyzer
 from ..core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
 
 
-class R2AnalysisWorker(QThread if QThread is not None else object):
+class R2AnalysisWorker(QThread):
     """Worker thread for radare2 analysis operations."""
 
     progress_updated = pyqtSignal(int)
@@ -119,14 +119,14 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
 
     def _run_comprehensive_analysis(self) -> dict[str, Any]:
         """Run comprehensive radare2 analysis."""
-        results = {
+        results: dict[str, Any] = {
             "binary_path": self.binary_path,
             "analysis_type": "comprehensive",
             "components": {},
         }
 
         # Initialize all engines
-        engines = {
+        engines: dict[str, object] = {
             "decompiler": R2DecompilationEngine(self.binary_path),
             "vulnerability": R2VulnerabilityEngine(self.binary_path),
             "strings": R2StringAnalyzer(self.binary_path),
@@ -143,25 +143,26 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
             try:
                 self.status_updated.emit(f"Running {name} analysis...")
 
-                result = None  # Initialize result
-                if name == "decompiler":
+                result: Any = None
+                if name == "decompiler" and hasattr(engine, "analyze_license_functions"):
                     result = engine.analyze_license_functions()
-                elif name == "vulnerability":
+                elif name == "vulnerability" and hasattr(engine, "analyze_vulnerabilities"):
                     result = engine.analyze_vulnerabilities()
-                elif name == "strings":
+                elif name == "strings" and hasattr(engine, "analyze_all_strings"):
                     result = engine.analyze_all_strings()
-                elif name == "imports":
+                elif name == "imports" and hasattr(engine, "analyze_imports_exports"):
                     result = engine.analyze_imports_exports()
-                elif name == "ai":
+                elif name == "ai" and hasattr(engine, "analyze_with_ai"):
                     result = engine.analyze_with_ai()
-                elif name == "cfg":
+                elif name == "cfg" and hasattr(engine, "analyze_cfg"):
                     result = engine.analyze_cfg()
-                elif name == "scripting":
+                elif name == "scripting" and hasattr(engine, "execute_license_analysis_workflow"):
                     result = engine.execute_license_analysis_workflow()
                 else:
                     result = f"Unknown analysis component: {name}"
 
-                results["components"][name] = result
+                components = cast(dict[str, Any], results["components"])
+                components[name] = result
 
                 # Update progress
                 current_progress = 10 + int((i + 1) / total_components * 80)
@@ -169,7 +170,8 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
 
             except Exception as e:
                 self.logger.warning("Component %s failed: %s", name, e)
-                results["components"][name] = {"error": str(e)}
+                components = cast(dict[str, Any], results["components"])
+                components[name] = {"error": str(e)}
 
         return results
 
@@ -216,7 +218,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
         return engine.generate_comprehensive_bypass()
 
 
-class R2ConfigurationDialog(QDialog if QDialog is not None else object):
+class R2ConfigurationDialog(QDialog):
     """Dialog for configuring radare2 analysis options."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -224,7 +226,7 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
         super().__init__(parent)
         self.setWindowTitle("Radare2 Analysis Configuration")
         self.setMinimumSize(500, 600)
-        self.config = {}
+        self.config: dict[str, Any] = {}
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -305,7 +307,9 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
         layout.addWidget(advanced_group)
 
         # Dialog buttons
-        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel
+        )
         buttons.accepted.connect(self.accept)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
@@ -328,13 +332,14 @@ class R2ConfigurationDialog(QDialog if QDialog is not None else object):
         }
 
 
-class R2ResultsViewer(QWidget if QWidget is not None else object):
+class R2ResultsViewer(QWidget):
     """Widget for displaying comprehensive radare2 analysis results."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the radare2 results viewer with UI components."""
         super().__init__(parent)
-        self.results_data = {}
+        self.logger = logging.getLogger(__name__)
+        self.results_data: dict[str, Any] = {}
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -456,9 +461,8 @@ class R2ResultsViewer(QWidget if QWidget is not None else object):
         table.setColumnCount(4)
         table.setHorizontalHeaderLabels(["Type", "Function", "Address", "Severity"])
 
-        vulnerabilities = []
+        vulnerabilities: list[dict[str, str]] = []
 
-        # Collect vulnerabilities from different categories
         for category in [
             "buffer_overflows",
             "format_string_bugs",
@@ -669,16 +673,16 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
                 QMessageBox.critical(self, "Export Error", f"Failed to export results: {e}")
 
 
-class R2IntegrationWidget(QWidget if QWidget is not None else object):
+class R2IntegrationWidget(QWidget):
     """Run widget for radare2 integration UI."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the radare2 integration widget with UI components and analysis functionality."""
         super().__init__(parent)
         self.logger = logging.getLogger(__name__)
-        self.binary_path = None
-        self.current_worker = None
-        self.analysis_config = {}
+        self.binary_path: str | None = None
+        self.current_worker: R2AnalysisWorker | None = None
+        self.analysis_config: dict[str, Any] = {}
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -720,7 +724,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
         actions_group = QGroupBox("Quick Analysis")
         actions_layout = QGridLayout(actions_group)
 
-        self.buttons = {}
+        self.buttons: dict[str, QPushButton] = {}
 
         button_configs = [
             ("Comprehensive", "comprehensive", "Run complete radare2 analysis"),
@@ -737,9 +741,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
             button = QPushButton(name)
             button.setToolTip(tooltip)
             button.clicked.connect(
-                lambda checked, t=analysis_type: (
-                    self.logger.debug("Radare2 action clicked, checked state: %s for type: %s", checked, t) or self._start_analysis(t)
-                )
+                lambda checked, t=analysis_type: self._start_analysis(t)
             )
             button.setEnabled(False)
 
@@ -792,7 +794,7 @@ class R2IntegrationWidget(QWidget if QWidget is not None else object):
     def _configure_analysis(self) -> None:
         """Open configuration dialog."""
         dialog = R2ConfigurationDialog(self)
-        if dialog.exec() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             self.analysis_config = dialog.get_configuration()
             self.status_label.setText("Configuration updated")
 
@@ -860,17 +862,14 @@ class _MainAppProtocol(Protocol):
 def integrate_with_main_app(main_app: _MainAppProtocol) -> bool:
     """Integrate radare2 UI with main application."""
     try:
-        # Add radare2 tab to main application
-        if hasattr(main_app, "tab_widget"):
-            r2_widget = R2IntegrationWidget(main_app)
-            main_app.tab_widget.addTab(r2_widget, "Radare2 Analysis")
+        if hasattr(main_app, "tab_widget") and hasattr(main_app.tab_widget, "addTab"):
+            r2_widget = R2IntegrationWidget(None)
+            cast(Any, main_app.tab_widget).addTab(r2_widget, "Radare2 Analysis")
 
-            # Connect binary path updates
-            if hasattr(main_app, "binary_path"):
+            if hasattr(main_app, "binary_path") and main_app.binary_path is not None:
                 r2_widget.set_binary_path(main_app.binary_path)
 
-            # Store reference for future updates
-            main_app.radare2_widget = r2_widget
+            setattr(main_app, "radare2_widget", r2_widget)
 
             return True
     except Exception as e:

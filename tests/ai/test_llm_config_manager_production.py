@@ -372,8 +372,7 @@ class TestBackendSwitching:
     def test_switch_backend_with_openai(self, manager: LLMConfigManager) -> None:
         """switch_backend works with OpenAI provider."""
         try:
-            success = manager.switch_backend("openai")
-            if success:
+            if success := manager.switch_backend("openai"):
                 assert "openai_default" in manager.configs
         except (AttributeError, KeyError):
             pytest.skip("Backend switching not fully implemented")
@@ -535,8 +534,7 @@ class TestRealWorldScenarios:
         """Backend switching for different deployment environments."""
         try:
             manager.switch_backend("openai")
-            openai_config = manager.load_model_config("openai_default")
-            if openai_config:
+            if openai_config := manager.load_model_config("openai_default"):
                 assert openai_config.provider == LLMProvider.OPENAI
         except (AttributeError, KeyError):
             pytest.skip("Backend switching not fully implemented")
@@ -590,7 +588,7 @@ class TestErrorHandling:
 
         try:
             manager.export_config(str(export_path))
-        except (FileNotFoundError, OSError):
+        except OSError:
             pass
 
     def test_import_handles_nonexistent_file(self, manager: LLMConfigManager) -> None:

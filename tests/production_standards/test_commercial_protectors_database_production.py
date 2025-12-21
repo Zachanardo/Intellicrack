@@ -592,7 +592,7 @@ class TestEncryptionLayerDetection:
     ) -> None:
         import random
 
-        high_entropy_data = bytes([random.randint(0, 255) for _ in range(4096)])
+        high_entropy_data = bytes(random.randint(0, 255) for _ in range(4096))
 
         layers = protectors_db.detect_encryption_layers(high_entropy_data)
 

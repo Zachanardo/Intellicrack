@@ -518,8 +518,7 @@ class TestFileExplorerPanel:
         explorer.current_path = temp_directory
         explorer.refresh_tree()
 
-        tree_children = explorer.tree.get_children()
-        if tree_children:
+        if tree_children := explorer.tree.get_children():
             explorer.tree.selection_set(tree_children[0])
             explorer.copy_path()
 
@@ -930,8 +929,7 @@ class TestWidgetInteractions:
 
         viewer.update_details(sample_analysis_result)
 
-        tree_children = viewer.details_tree.get_children()
-        if tree_children:
+        if tree_children := viewer.details_tree.get_children():
             viewer.details_tree.selection_set(tree_children[0])
 
             event = MagicMock()

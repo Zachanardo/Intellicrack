@@ -410,8 +410,7 @@ class TestFlexLMProtocolParser:
         packet.extend(struct.pack(">I", 50))
         packet.extend(b"\xff\xfe\xfd\x00")
 
-        request = parser.parse_request(bytes(packet))
-        if request:
+        if request := parser.parse_request(bytes(packet)):
             assert isinstance(request.client_id, str)
 
     def test_additional_data_parsing(self, parser: FlexLMProtocolParser) -> None:
@@ -490,7 +489,7 @@ class TestFlexLMProtocolParser:
         )
 
         response = parser.generate_response(request)
-        assert response.status == 0x00 or response.status == 0x01
+        assert response.status in [0x00, 0x01]
 
     def test_checkout_key_generation(self, parser: FlexLMProtocolParser) -> None:
         """Test checkout key generation is unique and deterministic."""

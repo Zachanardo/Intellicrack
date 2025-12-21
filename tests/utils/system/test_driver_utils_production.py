@@ -90,7 +90,7 @@ class TestDriverPathResolution:
         driver_path: str = get_driver_path("fallback.sys")
 
         assert driver_path is not None
-        assert len(driver_path) > 0
+        assert driver_path != ""
         assert "fallback.sys" in driver_path
 
     def test_get_driver_path_different_extensions(self) -> None:
@@ -185,7 +185,7 @@ class TestDriverPathEdgeCases:
         path: str = get_driver_path(driver_name)
 
         assert isinstance(path, str)
-        assert len(path) > 0
+        assert path != ""
 
     def test_get_driver_path_long_driver_name(self) -> None:
         """Driver path handles very long driver names."""

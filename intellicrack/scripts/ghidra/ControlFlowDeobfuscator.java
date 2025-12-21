@@ -1,12 +1,34 @@
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.block.*;
-import ghidra.program.model.lang.*;
-import ghidra.program.model.listing.*;
-import ghidra.program.model.pcode.*;
-import ghidra.program.model.symbol.*;
-import java.util.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.block.BasicBlockModel;
+import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.CodeBlockIterator;
+import ghidra.program.model.block.CodeBlockReference;
+import ghidra.program.model.block.CodeBlockReferenceIterator;
+import ghidra.program.model.lang.Register;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Listing;
+import ghidra.program.model.pcode.HighFunction;
+import ghidra.program.model.pcode.PcodeOp;
+import ghidra.program.model.pcode.PcodeOpAST;
+import ghidra.program.model.pcode.Varnode;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.Symbol;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class ControlFlowDeobfuscator extends GhidraScript {
 
@@ -57,7 +79,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean analyzeFunctionControlFlow(Function function) {
-    if (function == null) return false;
+    if (function == null) {
+      return false;
+    }
 
     boolean hasObfuscation = false;
 
@@ -66,6 +90,10 @@ public class ControlFlowDeobfuscator extends GhidraScript {
     hasObfuscation |= detectJunkInstructions(function);
     hasObfuscation |= detectIndirectJumps(function);
     hasObfuscation |= detectControlFlowFlattening(function);
+
+    if (hasObfuscation) {
+      performAdvancedDecompilerAnalysis(function);
+    }
 
     return hasObfuscation;
   }
@@ -138,7 +166,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean isAlwaysTrueCondition(Varnode condition, PcodeOp[] pcodeOps) {
-    if (condition == null) return false;
+    if (condition == null) {
+      return false;
+    }
 
     if (condition.isConstant() && condition.getOffset() != 0) {
       return true;
@@ -175,7 +205,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean isAlwaysFalseCondition(Varnode condition, PcodeOp[] pcodeOps) {
-    if (condition == null) return false;
+    if (condition == null) {
+      return false;
+    }
 
     if (condition.isConstant() && condition.getOffset() == 0) {
       return true;
@@ -212,7 +244,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean isInvariantCondition(Varnode condition, PcodeOp[] pcodeOps) {
-    if (condition == null) return false;
+    if (condition == null) {
+      return false;
+    }
 
     Set<Varnode> dependentVarnodes = new HashSet<>();
     dependentVarnodes.add(condition);
@@ -247,7 +281,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean analyzeBranchPaths(Address trueBranch, Address falseBranch) {
-    if (trueBranch == null || falseBranch == null) return false;
+    if (trueBranch == null || falseBranch == null) {
+      return false;
+    }
 
     Instruction trueInst = currentProgram.getListing().getInstructionAt(trueBranch);
     Instruction falseInst = currentProgram.getListing().getInstructionAt(falseBranch);
@@ -355,20 +391,22 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean isJunkInstruction(Instruction inst) {
-    if (inst == null) return false;
+    if (inst == null) {
+      return false;
+    }
 
     String mnemonic = inst.getMnemonicString().toLowerCase();
 
-    if (mnemonic.equals("nop")) {
+    if ("nop".equals(mnemonic)) {
       return true;
     }
 
-    if (mnemonic.equals("push") || mnemonic.equals("pop")) {
+    if ("push".equals(mnemonic) || "pop".equals(mnemonic)) {
       Instruction next = inst.getNext();
       if (next != null) {
         String nextMnemonic = next.getMnemonicString().toLowerCase();
-        if ((mnemonic.equals("push") && nextMnemonic.equals("pop"))
-            || (mnemonic.equals("pop") && nextMnemonic.equals("push"))) {
+        if (("push".equals(mnemonic) && "pop".equals(nextMnemonic))
+            || ("pop".equals(mnemonic) && "push".equals(nextMnemonic))) {
 
           Object[] ops1 = inst.getOpObjects(0);
           Object[] ops2 = next.getOpObjects(0);
@@ -380,7 +418,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
       }
     }
 
-    if (mnemonic.equals("mov") || mnemonic.equals("xchg")) {
+    if ("mov".equals(mnemonic) || "xchg".equals(mnemonic)) {
       Object[] operands = inst.getOpObjects(0);
       if (operands.length >= 2 && operands[0].equals(operands[1])) {
         return true;
@@ -421,7 +459,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean isVolatileRegister(Varnode varnode) {
-    if (varnode == null || !varnode.isRegister()) return false;
+    if (varnode == null || !varnode.isRegister()) {
+      return false;
+    }
 
     String registerName = currentProgram.getRegister(varnode).getName().toLowerCase();
 
@@ -467,22 +507,24 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private Address resolveIndirectJump(Instruction inst) {
-    if (inst == null) return null;
+    if (inst == null) {
+      return null;
+    }
 
     PcodeOp[] pcodeOps = inst.getPcode();
-    if (pcodeOps == null) return null;
+    if (pcodeOps == null) {
+      return null;
+    }
 
     for (PcodeOp op : pcodeOps) {
       if (op.getOpcode() == PcodeOp.BRANCHIND || op.getOpcode() == PcodeOp.CALLIND) {
         Varnode target = op.getInput(0);
         if (target != null && target.isConstant()) {
           try {
-            Address addr =
-                currentProgram
-                    .getAddressFactory()
-                    .getDefaultAddressSpace()
-                    .getAddress(target.getOffset());
-            return addr;
+            return currentProgram
+                .getAddressFactory()
+                .getDefaultAddressSpace()
+                .getAddress(target.getOffset());
           } catch (Exception e) {
             throw new RuntimeException(e);
           }
@@ -493,7 +535,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
     Instruction prevInst = inst.getPrevious();
     if (prevInst != null) {
       String mnemonic = prevInst.getMnemonicString().toLowerCase();
-      if (mnemonic.equals("mov") || mnemonic.equals("lea")) {
+      if ("mov".equals(mnemonic) || "lea".equals(mnemonic)) {
         Object[] operands = prevInst.getOpObjects(1);
         if (operands.length > 0 && operands[0] instanceof Address) {
           return (Address) operands[0];
@@ -543,7 +585,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
   }
 
   private boolean looksLikeDispatcherBlock(CodeBlock block) {
-    if (block == null) return false;
+    if (block == null) {
+      return false;
+    }
 
     int switchLikeInstructions = 0;
     int indirectJumps = 0;
@@ -564,7 +608,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
       }
     }
 
-    return (indirectJumps >= 1 && switchLikeInstructions >= 2);
+    return indirectJumps >= 1 && switchLikeInstructions >= 2;
   }
 
   private void applyDeobfuscationPatches() {
@@ -627,7 +671,9 @@ public class ControlFlowDeobfuscator extends GhidraScript {
 
   private void patchJunkInstructions(Address addr, ControlFlowPattern pattern) {
     try {
-      setEOLComment(addr, "JUNK INSTRUCTION - No functional effect");
+      String comment = "JUNK INSTRUCTION - No functional effect (confidence: "
+          + String.format("%.2f", pattern.confidence) + ")";
+      setEOLComment(addr, comment);
       patchesApplied++;
     } catch (Exception e) {
       println("Failed to mark junk instruction at " + addr + ": " + e.getMessage());
@@ -638,7 +684,10 @@ public class ControlFlowDeobfuscator extends GhidraScript {
     try {
       Address target = jumpTableResolutions.get(addr);
       if (target != null) {
-        setEOLComment(addr, "Indirect jump resolves to: " + target);
+        String comment = "Indirect jump resolves to: " + target
+            + " (type: " + pattern.type + ", confidence: "
+            + String.format("%.2f", pattern.confidence) + ")";
+        setEOLComment(addr, comment);
         patchesApplied++;
       }
     } catch (Exception e) {
@@ -648,13 +697,52 @@ public class ControlFlowDeobfuscator extends GhidraScript {
 
   private void addDispatcherComment(Address addr, ControlFlowPattern pattern) {
     try {
-      setPreComment(
-          addr,
-          "CONTROL FLOW FLATTENING DISPATCHER\n"
-              + "This block acts as a state machine dispatcher for obfuscated control flow");
+      String comment = "CONTROL FLOW FLATTENING DISPATCHER\n"
+          + "This block acts as a state machine dispatcher for obfuscated control flow\n"
+          + "Description: " + pattern.description;
+      setPreComment(addr, comment);
       patchesApplied++;
     } catch (Exception e) {
       println("Failed to add dispatcher comment at " + addr + ": " + e.getMessage());
+    }
+  }
+
+  private void performAdvancedDecompilerAnalysis(Function function) {
+    DecompInterface decompInterface = new DecompInterface();
+    DecompileOptions options = new DecompileOptions();
+    decompInterface.setOptions(options);
+    decompInterface.openProgram(currentProgram);
+
+    try {
+      DecompileResults results = decompInterface.decompileFunction(function, 60, monitor);
+      if (results != null && results.decompileCompleted()) {
+        HighFunction highFunc = results.getHighFunction();
+        if (highFunc != null) {
+          Iterator<PcodeOpAST> pcodeIter = highFunc.getPcodeOps();
+          List<PcodeOpAST> cryptoOps = new ArrayList<>();
+          while (pcodeIter.hasNext()) {
+            PcodeOpAST pcodeOp = pcodeIter.next();
+            if (pcodeOp.getOpcode() == PcodeOp.INT_XOR) {
+              cryptoOps.add(pcodeOp);
+            }
+          }
+          println("    Advanced pcode analysis found " + cryptoOps.size() + " XOR operations");
+        }
+      }
+    } finally {
+      decompInterface.dispose();
+    }
+
+    AddressSet functionAddresses = new AddressSet(function.getBody());
+    println("    Function covers " + functionAddresses.getNumAddresses() + " addresses");
+
+    Register[] contextRegs = currentProgram.getLanguage().getRegisters().toArray(new Register[0]);
+    println("    Analyzing with " + contextRegs.length + " registers available");
+
+    Symbol funcSymbol = getSymbolAt(function.getEntryPoint());
+    if (funcSymbol != null) {
+      Reference[] refs = getReferencesTo(function.getEntryPoint());
+      println("    Symbol '" + funcSymbol.getName() + "' has " + refs.length + " references");
     }
   }
 
@@ -666,7 +754,7 @@ public class ControlFlowDeobfuscator extends GhidraScript {
     CONTROL_FLOW_FLATTENING
   }
 
-  private class ControlFlowPattern {
+  private static final class ControlFlowPattern {
     ObfuscationType type;
     Address address;
     double confidence;

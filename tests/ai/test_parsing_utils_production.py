@@ -56,9 +56,7 @@ class TestParseLinesBySections:
 
         def remove_dash(line: str, section: str) -> str | None:
             """Remove leading dash from lines."""
-            if line.startswith("-"):
-                return line[1:].strip()
-            return line
+            return line[1:].strip() if line.startswith("-") else line
 
         result = ResponseLineParser.parse_lines_by_sections(
             response,

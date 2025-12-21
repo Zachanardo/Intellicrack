@@ -273,9 +273,7 @@ class TestBinaryPatching:
             result = patcher.patch_certificate_validation(detection_report)
 
             if result.success and result.backup_path:
-                rollback_success = patcher.rollback_patches(result)
-
-                if rollback_success:
+                if rollback_success := patcher.rollback_patches(result):
                     restored_content = working_binary.read_bytes()
                     assert restored_content == original_content
         except Exception:

@@ -36,9 +36,9 @@ class TestGPUAcceleratorInitialization:
         original_env = os.environ.get("INTELLICRACK_GPU_TYPE")
         try:
             os.environ["INTELLICRACK_GPU_TYPE"] = "intel"
-            accelerator = GPUAccelerator()
-
             if XPU_AVAILABLE:
+                accelerator = GPUAccelerator()
+
                 assert accelerator.framework == "xpu", "Should prefer Intel XPU when available"
         finally:
             if original_env:
@@ -52,9 +52,9 @@ class TestGPUAcceleratorInitialization:
         try:
             os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
             os.environ.pop("INTELLICRACK_GPU_TYPE", None)
-            accelerator = GPUAccelerator()
-
             if not XPU_AVAILABLE:
+                accelerator = GPUAccelerator()
+
                 assert accelerator.framework == "cpu", "Should fall back to CPU when CUDA disabled"
         finally:
             if original_env:
@@ -195,7 +195,7 @@ class TestGPUEntropyCalculation:
         accelerator = GPUAccelerator()
 
         normal_string = b"LICENSE_KEY=12345" * 64
-        obfuscated_string = bytes([b ^ 0xAA for b in normal_string])
+        obfuscated_string = bytes(b ^ 0xAA for b in normal_string)
 
         data = normal_string + obfuscated_string
 

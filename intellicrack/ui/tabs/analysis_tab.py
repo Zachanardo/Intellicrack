@@ -1810,8 +1810,14 @@ class AnalysisTab(BaseTab):
 
                 # Disassemble
                 disasm_output = [f"; Disassembly of {os.path.basename(self.current_file_path or '')}"]
-                disasm_output.extend((f"; Architecture: {cs.arch}", f"; Mode: {cs.mode}"))
-                disasm_output.extend(("; " + "=" * 60, ""))
+                disasm_output.extend(
+                    (
+                        f"; Architecture: {cs.arch}",
+                        f"; Mode: {cs.mode}",
+                        "; " + "=" * 60,
+                        "",
+                    )
+                )
                 for instruction in cs.disasm(code_data, base_address):
                     hex_bytes = " ".join(f"{b:02x}" for b in instruction.bytes)
                     disasm_output.append(f"0x{instruction.address:08x}:  {hex_bytes:<20}  {instruction.mnemonic:<8} {instruction.op_str}")
@@ -2470,9 +2476,7 @@ class AnalysisTab(BaseTab):
             # License protection assessment
             analysis_results += "LICENSE PROTECTION ASSESSMENT:\n"
             total_high_entropy = sum(
-                self.calculate_shannon_entropy(file_data[block : block + 1024])
-                > 7.5
-                for block in range(0, len(file_data) - 1024 + 1, 1024)
+                self.calculate_shannon_entropy(file_data[block : block + 1024]) > 7.5 for block in range(0, len(file_data) - 1024 + 1, 1024)
             )
 
             protection_level = "NONE"
@@ -3065,9 +3069,7 @@ class AnalysisTab(BaseTab):
                     b"registration key",
                 ]
                 license_checks_found.extend(
-                    f"Registry Check: {pattern.decode('utf-8', errors='ignore')}"
-                    for pattern in registry_patterns
-                    if pattern in file_data
+                    f"Registry Check: {pattern.decode('utf-8', errors='ignore')}" for pattern in registry_patterns if pattern in file_data
                 )
             # Display results
             if license_checks_found:
@@ -3994,7 +3996,11 @@ class AnalysisTab(BaseTab):
             for string in all_strings:
                 string_lower = string.lower()
 
-                if any(pattern in string_lower for pattern in license_file_patterns) and ("\\" in string or "/" in string or "." in string) and (len(string) < 260 and string not in seen_ops):
+                if (
+                    any(pattern in string_lower for pattern in license_file_patterns)
+                    and ("\\" in string or "/" in string or "." in string)
+                    and (len(string) < 260 and string not in seen_ops)
+                ):
                     seen_ops.add(string)
                     if any(ext in string_lower for ext in [".lic", ".key", ".license"]):
                         file_ops.append(f"[LICENSE FILE] {string}")
@@ -4089,7 +4095,9 @@ class AnalysisTab(BaseTab):
                 try:
                     ip = ip_bytes.decode("utf-8")
                     parts = ip.split(".")
-                    if all(0 <= int(p) <= 255 for p in parts) and (ip not in seen_ips and not ip.startswith("0.") and not ip.startswith("255.")):
+                    if all(0 <= int(p) <= 255 for p in parts) and (
+                        ip not in seen_ips and not ip.startswith("0.") and not ip.startswith("255.")
+                    ):
                         seen_ips.add(ip)
                         if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172."):
                             net_activity.append(f"[PRIVATE IP] {ip}")

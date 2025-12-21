@@ -141,7 +141,7 @@ class TestHardwareTokenBypassInitialization:
         atr = token_bypass.smartcard_config["atr_bytes"]
         assert isinstance(atr, bytes)
         assert len(atr) >= 2
-        assert atr[0] == 0x3B or atr[0] == 0x3F
+        assert atr[0] in [0x3B, 0x3F]
         assert atr[1] == 0xF8
 
     @pytest.mark.skipif(os.name != "nt", reason="Windows-specific smart card API")
@@ -212,7 +212,7 @@ class TestYubiKeyEmulationAndOTPGeneration:
         serial = "11111111"
 
         results = []
-        for i in range(5):
+        for _ in range(5):
             result = token_bypass.emulate_yubikey(serial)
             results.append(result)
 
@@ -808,7 +808,7 @@ class TestTokenSecretExtraction:
 
         certs = result["certificates"]
         pem_certs = [c for c in certs if c["format"] == "PEM"]
-        assert len(pem_certs) >= 1
+        assert pem_certs
 
     def test_entropy_calculation_correctness(self, token_bypass: HardwareTokenBypass) -> None:
         """Shannon entropy calculation produces correct values."""

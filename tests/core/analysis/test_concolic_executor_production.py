@@ -61,7 +61,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     binary_path: Path = tmp_path / "minimal.exe"
 
     dos_header: bytearray = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature: bytes = b"PE\x00\x00"
@@ -105,7 +105,7 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     )
 
     section_header: bytearray = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 4096)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 512)
@@ -113,11 +113,20 @@ def minimal_pe_binary(tmp_path: Path) -> Path:
     section_header[36:40] = struct.pack("<I", 0x60000020)
 
     code_section: bytearray = bytearray(512)
-    code_section[0:10] = bytes([
-        0x90,
-        0xB8, 0x01, 0x00, 0x00, 0x00,
-        0xB9, 0x02, 0x00, 0x00,
-    ])
+    code_section[:10] = bytes(
+        [
+            0x90,
+            0xB8,
+            0x01,
+            0x00,
+            0x00,
+            0x00,
+            0xB9,
+            0x02,
+            0x00,
+            0x00,
+        ]
+    )
     code_section[10:11] = bytes([0xC3])
 
     binary_data: bytes = (
@@ -135,7 +144,7 @@ def license_check_binary(tmp_path: Path) -> Path:
     binary_path: Path = tmp_path / "license_app.exe"
 
     dos_header: bytearray = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature: bytes = b"PE\x00\x00"
@@ -147,7 +156,7 @@ def license_check_binary(tmp_path: Path) -> Path:
     )
 
     section_header: bytearray = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 4096)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 512)
@@ -164,7 +173,7 @@ def license_check_binary(tmp_path: Path) -> Path:
         0xB8, 0x01, 0x00, 0x00, 0x00,
         0xC3,
     ]
-    code_section[0:len(license_check_code)] = bytes(license_check_code)
+    code_section[:len(license_check_code)] = bytes(license_check_code)
 
     license_string: bytes = b"license key validation"
     code_section[100:100 + len(license_string)] = license_string
@@ -184,7 +193,7 @@ def branching_binary(tmp_path: Path) -> Path:
     binary_path: Path = tmp_path / "branches.exe"
 
     dos_header: bytearray = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 128)
 
     pe_signature: bytes = b"PE\x00\x00"
@@ -196,7 +205,7 @@ def branching_binary(tmp_path: Path) -> Path:
     )
 
     section_header: bytearray = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 4096)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 512)
@@ -215,7 +224,7 @@ def branching_binary(tmp_path: Path) -> Path:
         0xB8, 0x01, 0x00, 0x00, 0x00,
         0xC3,
     ]
-    code_section[0:len(complex_branches)] = bytes(complex_branches)
+    code_section[:len(complex_branches)] = bytes(complex_branches)
 
     binary_data: bytes = (
         dos_header + pe_signature + coff_header +
@@ -434,7 +443,7 @@ class TestManticoreNativeImplementationProduction:
 
         m.run(procs=1)
 
-        assert len(hook_executions) > 0
+        assert hook_executions
         assert m.entry_point in hook_executions
 
     def test_manticore_tracks_terminated_states(self, minimal_pe_binary: Path) -> None:
@@ -446,7 +455,7 @@ class TestManticoreNativeImplementationProduction:
         m.run(procs=1)
 
         terminated_states: List[NativeConcolicState] = m.get_terminated_states()
-        assert len(terminated_states) > 0
+        assert terminated_states
 
         for state in terminated_states:
             assert state.is_terminated() is True
@@ -700,14 +709,8 @@ class TestPathExplorationProduction:
         m.run(procs=1)
 
         states: List[NativeConcolicState] = m.get_all_states()
-        constraint_found: bool = False
-
-        for state in states:
-            if len(state.constraints) > 0:
-                constraint_found = True
-                break
-
-        assert len(states) > 0
+        constraint_found: bool = any(len(state.constraints) > 0 for state in states)
+        assert states
 
     def test_path_exploration_handles_loops(self, minimal_pe_binary: Path) -> None:
         """Path exploration handles loops without infinite execution."""
@@ -843,7 +846,7 @@ class TestRealWorldBinaryAnalysis:
         large_binary: Path = tmp_path / "large.exe"
 
         dos_header: bytearray = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 128)
 
         pe_signature: bytes = b"PE\x00\x00"
@@ -855,7 +858,7 @@ class TestRealWorldBinaryAnalysis:
         )
 
         section_header: bytearray = bytearray(40)
-        section_header[0:8] = b".text\x00\x00\x00"
+        section_header[:8] = b".text\x00\x00\x00"
         section_header[8:12] = struct.pack("<I", 8192)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 1024)
@@ -863,7 +866,7 @@ class TestRealWorldBinaryAnalysis:
         section_header[36:40] = struct.pack("<I", 0x60000020)
 
         code_section: bytearray = bytearray(1024)
-        code_section[0:10] = bytes([0x90] * 10)
+        code_section[:10] = bytes([0x90] * 10)
 
         binary_data: bytes = (
             dos_header + pe_signature + coff_header +

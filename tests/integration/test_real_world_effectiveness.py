@@ -80,12 +80,10 @@ class TestProtectionDetectionEffectiveness:
         db = CommercialProtectorsDatabase()
         result = db.analyze_binary(str(vmprotect_binary))
 
-        vmprotect_detected = False
-        for detection in result.get("detections", []):
-            if "vmprotect" in detection.get("name", "").lower():
-                vmprotect_detected = True
-                break
-
+        vmprotect_detected = any(
+            "vmprotect" in detection.get("name", "").lower()
+            for detection in result.get("detections", [])
+        )
         assert vmprotect_detected, (
             f"FAILED: VMProtect detection did not identify VMProtect in known "
             f"protected binary {vmprotect_binary.name}. This indicates the "
@@ -169,11 +167,11 @@ class TestBinaryPatchingEffectiveness:
         binary_path = tmp_path / "license_check.exe"
 
         dos_header = bytearray(64)
-        dos_header[0:2] = b"MZ"
+        dos_header[:2] = b"MZ"
         dos_header[60:64] = struct.pack("<I", 64)
 
         pe_header = bytearray(248)
-        pe_header[0:4] = b"PE\x00\x00"
+        pe_header[:4] = b"PE\x00\x00"
         pe_header[4:6] = struct.pack("<H", 0x14C)
         pe_header[6:8] = struct.pack("<H", 1)
         pe_header[20:22] = struct.pack("<H", 224)
@@ -188,7 +186,7 @@ class TestBinaryPatchingEffectiveness:
         pe_header[84:88] = struct.pack("<I", 0x1000)
 
         section_header = bytearray(40)
-        section_header[0:8] = b".text\x00\x00\x00"
+        section_header[:8] = b".text\x00\x00\x00"
         section_header[8:12] = struct.pack("<I", 0x1000)
         section_header[12:16] = struct.pack("<I", 0x1000)
         section_header[16:20] = struct.pack("<I", 0x200)

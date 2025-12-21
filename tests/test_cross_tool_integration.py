@@ -502,7 +502,7 @@ class TestCrossToolOrchestrator:
             f.write(b'MZ')  # DOS header
             f.write(b'\x00' * 58)
             f.write(b'\x40\x00\x00\x00')  # PE offset
-            f.write(b'\x00' * (0x40 - 64))
+            f.write(b'\x00' * 0)
             f.write(b'PE\x00\x00')  # PE signature
 
             # Add code patterns
@@ -788,7 +788,7 @@ class TestIntegrationScenarios:
             f.write(b'MZ')
             f.write(b'\x00' * 58)
             f.write(b'\x40\x00\x00\x00')
-            f.write(b'\x00' * (0x40 - 64))
+            f.write(b'\x00' * 0)
             f.write(b'PE\x00\x00')
 
             # Code section with patterns
@@ -908,7 +908,7 @@ class TestIntegrationScenarios:
             bypass_types = {s.protection_type for s in result.bypass_strategies}
 
             # At least some protections should have bypasses
-            assert len(bypass_types) > 0
+            assert bypass_types
 
         finally:
             os.unlink(test_binary)

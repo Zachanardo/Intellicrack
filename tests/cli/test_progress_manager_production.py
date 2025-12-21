@@ -273,5 +273,3 @@ def test_progress_manager_live_display_starts_and_stops(progress_manager: Any, t
 
     live_display = progress_manager.live
     live_display.stop()
-
-    assert True

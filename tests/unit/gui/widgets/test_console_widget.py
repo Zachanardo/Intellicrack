@@ -44,9 +44,7 @@ class TestConsoleWidget:
 
     def test_log_output_real_text_display(self, qtbot):
         """Test REAL log output and text display functionality."""
-        text_displays = self.widget.findChildren(QTextEdit)
-
-        if text_displays:
+        if text_displays := self.widget.findChildren(QTextEdit):
             console_display = text_displays[0]
 
             # Test adding log messages
@@ -141,16 +139,16 @@ class TestConsoleWidget:
 
     def test_search_functionality_real_text_search(self, qtbot):
         """Test REAL search functionality within console output."""
-        # Add searchable content
-        test_content = [
-            "Starting binary analysis of target.exe",
-            "PE header found at offset 0x80",
-            "Import table contains kernel32.dll",
-            "String analysis reveals suspicious patterns",
-            "Analysis completed successfully"
-        ]
-
         if hasattr(self.widget, 'append_output'):
+            # Add searchable content
+            test_content = [
+                "Starting binary analysis of target.exe",
+                "PE header found at offset 0x80",
+                "Import table contains kernel32.dll",
+                "String analysis reveals suspicious patterns",
+                "Analysis completed successfully"
+            ]
+
             for content in test_content:
                 self.widget.append_output(content)
                 qtbot.wait(50)
@@ -180,12 +178,12 @@ class TestConsoleWidget:
 
     def test_clear_functionality_real_content_removal(self, qtbot):
         """Test REAL clear functionality for console content."""
-        # Add content first
-        test_output = "This is test console output\nLine 2\nLine 3"
-
         text_displays = self.widget.findChildren(QTextEdit)
         if text_displays:
             console_display = text_displays[0]
+
+            # Add content first
+            test_output = "This is test console output\nLine 2\nLine 3"
 
             if hasattr(self.widget, 'append_output'):
                 self.widget.append_output(test_output)
@@ -220,26 +218,24 @@ class TestConsoleWidget:
 
     def test_syntax_highlighting_real_code_formatting(self, qtbot):
         """Test REAL syntax highlighting for different content types."""
-        text_displays = self.widget.findChildren(QTextEdit)
-
-        if text_displays:
-            console_display = text_displays[0]
-
-            # Test different types of content
-            code_content = [
-                "# Python comment",
-                "import os",
-                "def function():",
-                "    return True",
-                "/* C comment */",
-                "#include <stdio.h>",
-                "int main() { return 0; }"
-            ]
-
+        if text_displays := self.widget.findChildren(QTextEdit):
             if hasattr(self.widget, 'append_output'):
+                # Test different types of content
+                code_content = [
+                    "# Python comment",
+                    "import os",
+                    "def function():",
+                    "    return True",
+                    "/* C comment */",
+                    "#include <stdio.h>",
+                    "int main() { return 0; }"
+                ]
+
                 for content in code_content:
                     self.widget.append_output(content)
                     qtbot.wait(50)
+
+                console_display = text_displays[0]
 
                 # Check that content is displayed
                 displayed_text = console_display.toPlainText()
@@ -261,36 +257,28 @@ class TestConsoleWidget:
             self.widget.append_output(timestamped_message)
             qtbot.wait(100)
 
-            # Verify timestamp is displayed
-            text_displays = self.widget.findChildren(QTextEdit)
-            if text_displays:
+            if text_displays := self.widget.findChildren(QTextEdit):
                 displayed_text = text_displays[0].toPlainText()
                 assert current_time in displayed_text or "Test message" in displayed_text
 
     def test_auto_scroll_real_behavior(self, qtbot):
         """Test REAL auto-scroll behavior with new content."""
-        text_displays = self.widget.findChildren(QTextEdit)
-
-        if text_displays:
-            console_display = text_displays[0]
-
+        if text_displays := self.widget.findChildren(QTextEdit):
             # Add many lines to test scrolling
             if hasattr(self.widget, 'append_output'):
                 for i in range(50):
                     self.widget.append_output(f"Line {i}: Test console output")
                     qtbot.wait(10)
 
-                # Check scroll position
-                scrollbar = console_display.verticalScrollBar()
-                if scrollbar:
+                console_display = text_displays[0]
+
+                if scrollbar := console_display.verticalScrollBar():
                     # Should auto-scroll to bottom
                     assert scrollbar.value() >= scrollbar.maximum() - 10
 
     def test_copy_functionality_real_clipboard_operations(self, qtbot):
         """Test REAL copy functionality for console content."""
-        text_displays = self.widget.findChildren(QTextEdit)
-
-        if text_displays:
+        if text_displays := self.widget.findChildren(QTextEdit):
             console_display = text_displays[0]
 
             # Add test content
@@ -317,15 +305,15 @@ class TestConsoleWidget:
 
     def test_export_functionality_real_file_output(self, qtbot):
         """Test REAL export functionality for console logs."""
-        # Add content to export
-        export_content = [
-            "Console log export test",
-            "Line 1: Analysis started",
-            "Line 2: Processing binary",
-            "Line 3: Analysis completed"
-        ]
-
         if hasattr(self.widget, 'append_output'):
+            # Add content to export
+            export_content = [
+                "Console log export test",
+                "Line 1: Analysis started",
+                "Line 2: Processing binary",
+                "Line 3: Analysis completed"
+            ]
+
             for content in export_content:
                 self.widget.append_output(content)
                 qtbot.wait(50)
@@ -388,7 +376,7 @@ class TestConsoleWidget:
                 if hasattr(self.widget, 'append_output') and invalid_input is not None:
                     self.widget.append_output(str(invalid_input))
                     qtbot.wait(50)
-            except (TypeError, ValueError, UnicodeError):
+            except (TypeError, ValueError):
                 pass  # Expected for some invalid inputs
 
         # Widget should remain functional
@@ -421,22 +409,21 @@ class TestConsoleWidget:
     def test_memory_management_real_log_rotation(self, qtbot):
         """Test REAL memory management with log rotation."""
         # Test memory usage with continuous logging
-        if hasattr(self.widget, 'set_max_lines'):
-            self.widget.set_max_lines(100)  # Limit to 100 lines
+        if not hasattr(self.widget, 'set_max_lines'):
+            return
+        self.widget.set_max_lines(100)  # Limit to 100 lines
 
             # Add more than max lines
-            if hasattr(self.widget, 'append_output'):
-                for i in range(200):
-                    self.widget.append_output(f"Log rotation test line {i}")
-                    if i % 50 == 0:
-                        qtbot.wait(10)
+        if hasattr(self.widget, 'append_output'):
+            for i in range(200):
+                self.widget.append_output(f"Log rotation test line {i}")
+                if i % 50 == 0:
+                    qtbot.wait(10)
 
-                # Check that old lines are removed
-                text_displays = self.widget.findChildren(QTextEdit)
-                if text_displays:
-                    displayed_text = text_displays[0].toPlainText()
-                    lines = displayed_text.split('\n')
-                    assert len(lines) <= 120  # Allow some buffer
+            if text_displays := self.widget.findChildren(QTextEdit):
+                displayed_text = text_displays[0].toPlainText()
+                lines = displayed_text.split('\n')
+                assert len(lines) <= 120  # Allow some buffer
 
     def test_thread_safety_real_concurrent_logging(self, qtbot):
         """Test REAL thread safety for concurrent log operations."""
@@ -455,7 +442,6 @@ class TestConsoleWidget:
             # Widget should remain stable
             assert self.widget.isVisible()
 
-            text_displays = self.widget.findChildren(QTextEdit)
-            if text_displays:
+            if text_displays := self.widget.findChildren(QTextEdit):
                 displayed_text = text_displays[0].toPlainText()
                 assert "Concurrent log" in displayed_text

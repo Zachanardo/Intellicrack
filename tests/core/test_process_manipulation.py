@@ -192,7 +192,7 @@ class TestMemoryRegionEnumeration:
 
         assert len(regions) > 0
         executable_regions = [r for r in regions if r["is_executable"]]
-        assert len(executable_regions) > 0
+        assert executable_regions
         analyzer.detach()
 
     def test_query_memory_returns_valid_information(self) -> None:
@@ -392,9 +392,7 @@ class TestLicenseCheckDetection:
         test_buffer = ctypes.create_string_buffer(test_code, len(test_code))
         address = ctypes.addressof(test_buffer)
 
-        context = analyzer._analyze_license_check_context(address + 51)
-
-        if context:
+        if context := analyzer._analyze_license_check_context(address + 51):
             assert "type" in context
             assert "jumps" in context
             assert isinstance(context["jumps"], list)
@@ -537,9 +535,7 @@ class TestPEBManipulation:
         analyzer = LicenseAnalyzer()
         analyzer.attach(str(os.getpid()))
 
-        peb_addr = analyzer.get_peb_address()
-
-        if peb_addr:
+        if peb_addr := analyzer.get_peb_address():
             assert isinstance(peb_addr, int)
             assert peb_addr > 0
         analyzer.detach()
@@ -549,9 +545,7 @@ class TestPEBManipulation:
         analyzer = LicenseAnalyzer()
         analyzer.attach(str(os.getpid()))
 
-        peb = analyzer.read_peb()
-
-        if peb:
+        if peb := analyzer.read_peb():
             assert isinstance(peb, Peb)
         analyzer.detach()
 
@@ -646,9 +640,7 @@ class TestCodeCaveDetection:
             {"address": 0x3000, "size": 32, "score": 3, "type": "test"},
         ]
 
-        best_cave = analyzer.select_optimal_cave(test_caves, required_size=32)
-
-        if best_cave:
+        if best_cave := analyzer.select_optimal_cave(test_caves, required_size=32):
             assert "final_score" in best_cave
             assert best_cave["size"] >= 32
         analyzer.detach()
@@ -730,7 +722,7 @@ class TestSignatureGeneration:
 
         sample_code = b"\x55\x8B\xEC\x83\xEC\x20"
         samples = []
-        for i in range(5):
+        for _ in range(5):
             buf = ctypes.create_string_buffer(sample_code, len(sample_code))
             samples.append(ctypes.addressof(buf))
 
@@ -859,8 +851,7 @@ class TestProcessEnumeration:
         analyzer.attach(str(os.getpid()))
 
         if sys.platform == "win32":
-            base_addr = analyzer.get_module_base("kernel32.dll")
-            if base_addr:
+            if base_addr := analyzer.get_module_base("kernel32.dll"):
                 assert isinstance(base_addr, (int, str))
 
         analyzer.detach()
@@ -879,8 +870,7 @@ class TestMemoryAllocation:
         if allocated_addr > 0:
             assert isinstance(allocated_addr, int)
             test_data = b"TEST"
-            write_success = analyzer.write_memory(allocated_addr, test_data)
-            if write_success:
+            if write_success := analyzer.write_memory(allocated_addr, test_data):
                 read_data = analyzer.read_memory(allocated_addr, len(test_data))
                 assert read_data == test_data
 

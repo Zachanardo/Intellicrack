@@ -96,13 +96,13 @@ def sample_pe_binary(temp_workspace: Path) -> Path:
     )
 
     optional_header = bytearray(248)
-    optional_header[0:2] = struct.pack('<H', 0x20B)
+    optional_header[:2] = struct.pack('<H', 0x20B)
     struct.pack_into('<Q', optional_header, 24, 0x140000000)
     struct.pack_into('<I', optional_header, 16, 0x1000)
     struct.pack_into('<I', optional_header, 20, 0x1000)
 
     text_section_header = bytearray(40)
-    text_section_header[0:5] = b'.text'
+    text_section_header[:5] = b'.text'
     struct.pack_into('<IIIIIHHI',
         text_section_header, 8,
         0x1000,
@@ -114,7 +114,7 @@ def sample_pe_binary(temp_workspace: Path) -> Path:
     )
 
     rdata_section_header = bytearray(40)
-    rdata_section_header[0:6] = b'.rdata'
+    rdata_section_header[:6] = b'.rdata'
     struct.pack_into('<IIIIIHHI',
         rdata_section_header, 8,
         0x1000,
@@ -259,7 +259,7 @@ class TestVariableRecovery:
         assert all(isinstance(var, RecoveredVariable) for var in variables)
 
         local_vars = [v for v in variables if v.scope == "local"]
-        assert len(local_vars) > 0
+        assert local_vars
 
         for var in local_vars:
             assert var.name.startswith("local_")
@@ -274,7 +274,7 @@ class TestVariableRecovery:
         variables = analyzer.recover_variables(sample_ghidra_function)
 
         params = [v for v in variables if v.scope == "parameter"]
-        assert len(params) > 0
+        assert params
 
         for param in params:
             assert param.name.startswith("param_")
@@ -288,7 +288,7 @@ class TestVariableRecovery:
         variables = analyzer.recover_variables(sample_ghidra_function)
 
         pointers = [v for v in variables if v.is_pointer]
-        assert len(pointers) > 0
+        assert pointers
 
         for ptr in pointers:
             assert "*" in ptr.type or ptr.is_pointer
@@ -465,8 +465,9 @@ mov [rcx+0x10], rsi""",
         structures = analyzer.recover_structures(analysis_result)
 
         if len(structures) > 0:
-            vtable_structs = [s for s in structures if s.vtable_offset is not None]
-            if len(vtable_structs) > 0:
+            if vtable_structs := [
+                s for s in structures if s.vtable_offset is not None
+            ]:
                 assert vtable_structs[0].vtable_offset == 0
 
     def test_structure_size_calculation(self, sample_pe_binary: Path) -> None:
@@ -534,8 +535,7 @@ class TestVTableAnalysis:
 
         vtables = analyzer.analyze_vtables(sample_analysis_result)
 
-        valid_vtables = [v for v in vtables if len(v.functions) >= 3]
-        if len(valid_vtables) > 0:
+        if valid_vtables := [v for v in vtables if len(v.functions) >= 3]:
             for vtable in valid_vtables:
                 assert len(vtable.functions) >= 3
                 for func_addr in vtable.functions:
@@ -672,7 +672,7 @@ class TestCustomDataTypeCreation:
         assert len(datatypes) > 0
 
         struct_types = [dt for dt in datatypes if dt.category == "struct"]
-        assert len(struct_types) > 0
+        assert struct_types
 
         struct_type = struct_types[0]
         assert isinstance(struct_type, GhidraDataType)
@@ -697,7 +697,7 @@ class TestCustomDataTypeCreation:
         datatypes = analyzer.create_custom_datatypes(structures)
 
         pointer_types = [dt for dt in datatypes if dt.category == "pointer"]
-        assert len(pointer_types) > 0
+        assert pointer_types
 
         ptr_type = pointer_types[0]
         assert ptr_type.size == 8
@@ -719,7 +719,7 @@ class TestCustomDataTypeCreation:
         datatypes = analyzer.create_custom_datatypes(structures)
 
         array_types = [dt for dt in datatypes if dt.category == "array"]
-        assert len(array_types) > 0
+        assert array_types
 
         for array_type in array_types:
             assert array_type.base_type == "Element"

@@ -1490,20 +1490,16 @@ class FridaProtectionBypasser:
             by_type[protection.type].append(protection)
 
         for prot_type, protections in by_type.items():
-            report.extend(
-                (
-                    f"\n{prot_type.value.upper()} ({len(protections)} detected)",
-                    "-" * 40,
-                )
-            )
+            report.extend((
+                f"\n{prot_type.value.upper()} ({len(protections)} detected)",
+                "-" * 40,
+            ))
             for i, prot in enumerate(protections, 1):
-                report.extend(
-                    (
-                        f"  [{i}] Location: {prot.location}",
-                        f"      Confidence: {prot.confidence:.1%}",
-                        f"      Bypass Available: {'Yes' if prot.bypass_available else 'No'}",
-                    )
-                )
+                report.extend((
+                    f"  [{i}] Location: {prot.location}",
+                    f"      Confidence: {prot.confidence:.1%}",
+                    f"      Bypass Available: {'Yes' if prot.bypass_available else 'No'}",
+                ))
                 for key, value in prot.details.items():
                     report.append(f"      {key}: {value}")
 
@@ -1511,24 +1507,21 @@ class FridaProtectionBypasser:
 
         report.extend(("\n" + "=" * 60, "RECOMMENDATIONS", "=" * 60))
         if self.detected_protections:
-            report.extend(
-                (
-                    "1. Apply all available bypasses using apply_all_bypasses()",
-                    "2. Monitor application behavior after bypass",
-                    "3. Use memory dumps for further analysis",
-                    "4. Consider using automated unpacking for packed binaries",
-                )
-            )
+            report.extend((
+                "1. Apply all available bypasses using apply_all_bypasses()",
+                "2. Monitor application behavior after bypass",
+                "3. Use memory dumps for further analysis",
+                "4. Consider using automated unpacking for packed binaries",
+            ))
         else:
             report.extend(
                 (
                     "No protections detected. The target may use:",
                     "- Custom protection mechanisms",
+                    "- Obfuscation without standard patterns",
+                    "- Server-side license validation",
                 )
             )
-            report.append("- Obfuscation without standard patterns")
-            report.append("- Server-side license validation")
-
         return "\n".join(report)
 
 

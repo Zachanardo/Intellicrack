@@ -151,15 +151,10 @@ class WindowsActivator:
                 ))
             # Network adapter MAC addresses (physical adapters only)
             hardware_info.extend(
-                nic.MACAddress.replace(":", "")
-                for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True)
-                if nic.MACAddress
+                nic.MACAddress.replace(":", "") for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True) if nic.MACAddress
             )
             # System UUID
-            hardware_info.extend(
-                system.UUID.strip() if system.UUID else ""
-                for system in c.Win32_ComputerSystemProduct()
-            )
+            hardware_info.extend(system.UUID.strip() if system.UUID else "" for system in c.Win32_ComputerSystemProduct())
             # Combine all hardware info
             combined_info = "|".join(filter(None, hardware_info))
 

@@ -203,8 +203,10 @@ def test_polymorphic_detection_patterns():
     code_zmist = bytes([0x60, 0x50, 0x53, 0x51, 0x52, 0x5A, 0x59, 0x5B, 0x58, 0x61])
 
     mnemonics_zmist = ["pushad", "push", "push", "push", "push", "pop", "pop", "pop", "pop", "popad"]
-    push_count = sum(1 for m in mnemonics_zmist if "push" in m)
-    pop_count = sum(1 for m in mnemonics_zmist if "pop" in m)
+    push_count = sum(bool("push" in m)
+                 for m in mnemonics_zmist)
+    pop_count = sum(bool("pop" in m)
+                for m in mnemonics_zmist)
 
     print(f"\nOK Zmist pattern detection:")
     print(f"  - PUSH count: {push_count}")

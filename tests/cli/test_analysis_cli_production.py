@@ -131,8 +131,11 @@ class TestBinaryAnalysis:
         assert results["metadata"]["strings_count"] > 0
 
         if "findings" in results:
-            string_findings = [f for f in results["findings"] if f.get("type") == "interesting_strings"]
-            if string_findings:
+            if string_findings := [
+                f
+                for f in results["findings"]
+                if f.get("type") == "interesting_strings"
+            ]:
                 assert "details" in string_findings[0]
                 assert isinstance(string_findings[0]["details"], list)
 
@@ -409,7 +412,7 @@ class TestFindingsFormatting:
         findings = AnalysisCLI._format_findings(data, "Complex Analysis")
 
         string_findings = [f for f in findings if isinstance(f.get("description"), str) and "string_value" in f["description"]]
-        assert len(string_findings) > 0
+        assert string_findings
 
 
 class TestCLIIntegration:

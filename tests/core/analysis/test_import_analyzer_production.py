@@ -172,7 +172,7 @@ class TestRealWindowsBinaryImportParsing:
 
         has_system_dlls: bool = any(dll in dll_names for dll in ["kernel32.dll", "ntdll.dll", "user32.dll"])
 
-        assert has_system_dlls or len(dll_names) > 0
+        assert has_system_dlls or dll_names
 
 
 class TestDLLDependencyTracking:
@@ -208,7 +208,7 @@ class TestDLLDependencyTracking:
 
         dll_names: list[str] = [dep["name"].lower() for dep in result["dll_dependencies"]]
 
-        assert any("kernel32" in name for name in dll_names) or len(dll_names) > 0
+        assert any("kernel32" in name for name in dll_names) or dll_names
 
     def test_dll_dependencies_categorization(self, notepad_path: str) -> None:
         """Validates DLL dependencies are properly categorized."""
@@ -218,7 +218,7 @@ class TestDLLDependencyTracking:
             dep for dep in result["dll_dependencies"] if dep["library_type"] == "system"
         ]
 
-        assert len(system_dlls) > 0
+        assert system_dlls
 
 
 class TestLicenseRelatedAPIDetection:
@@ -264,7 +264,7 @@ class TestLicenseRelatedAPIDetection:
 
         registry_apis: list[dict[str, Any]] = result.get("registry_apis", [])
 
-        assert len(registry_apis) > 0
+        assert registry_apis
 
         for api in registry_apis:
             assert "api" in api
@@ -376,9 +376,7 @@ class TestCryptographicAPIDetection:
         analyzer = R2ImportExportAnalyzer(notepad_path)
         result: dict[str, Any] = analyzer.analyze_imports_exports()
 
-        crypto_apis: list[dict[str, Any]] = result.get("crypto_apis", [])
-
-        if len(crypto_apis) > 0:
+        if crypto_apis := result.get("crypto_apis", []):
             for api in crypto_apis:
                 assert api["security_strength"] in ["weak", "medium", "strong"]
                 assert api["algorithm_type"] in ["AES", "DES", "RSA", "Hash", "Unknown"]
@@ -413,9 +411,7 @@ class TestNetworkAPIDetection:
         analyzer = R2ImportExportAnalyzer(notepad_path)
         result: dict[str, Any] = analyzer.analyze_imports_exports()
 
-        network_apis: list[dict[str, Any]] = result.get("network_apis", [])
-
-        if len(network_apis) > 0:
+        if network_apis := result.get("network_apis", []):
             for api in network_apis:
                 assert api["protocol"] in ["TCP", "UDP", "HTTP", "Unknown"]
 
@@ -482,9 +478,7 @@ class TestAPICategorization:
 
         assert "suspicious_apis" in result
 
-        suspicious: list[dict[str, Any]] = result["suspicious_apis"]
-
-        if len(suspicious) > 0:
+        if suspicious := result["suspicious_apis"]:
             for api in suspicious:
                 assert "api" in api
                 assert "category" in api
@@ -546,7 +540,8 @@ class TestExportAnalysis:
 
         expected_exports: list[str] = ["CreateFileA", "CreateFileW", "ReadFile", "WriteFile", "VirtualAlloc"]
 
-        found_exports: int = sum(1 for exp in expected_exports if exp in export_names)
+        found_exports: int = sum(bool(exp in export_names)
+                             for exp in expected_exports)
 
         assert found_exports > 0 or len(export_names) > 100
 
@@ -558,7 +553,8 @@ class TestExportAnalysis:
 
         expected_exports: list[str] = ["MessageBoxA", "MessageBoxW", "CreateWindowExA", "ShowWindow"]
 
-        found_exports: int = sum(1 for exp in expected_exports if exp in export_names)
+        found_exports: int = sum(bool(exp in export_names)
+                             for exp in expected_exports)
 
         assert found_exports > 0 or len(export_names) > 100
 
@@ -746,7 +742,7 @@ class TestCrossReferenceAnalysis:
 
         assert isinstance(xrefs, dict)
 
-        if len(xrefs) > 0:
+        if xrefs:
             for api_name, refs in xrefs.items():
                 assert isinstance(api_name, str)
                 assert isinstance(refs, list)
@@ -1054,7 +1050,7 @@ class TestRegistryOperationIdentification:
         analyzer = R2ImportExportAnalyzer(notepad_path)
 
         usage: str = analyzer._identify_registry_usage("RegOpenKeyEx")
-        assert len(usage) > 0
+        assert usage != ""
 
         usage = analyzer._identify_registry_usage("RegQueryValueEx_license")
         assert len(usage) > 0

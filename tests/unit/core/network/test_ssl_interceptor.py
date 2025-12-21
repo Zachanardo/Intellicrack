@@ -117,7 +117,7 @@ class RealCryptographySimulator:
         try:
             cert = x509.load_pem_x509_certificate(cert_pem)
             return True
-        except:
+        except Exception:
             return False
 
     def validate_private_key(self, key_pem: bytes) -> bool:
@@ -125,7 +125,7 @@ class RealCryptographySimulator:
         try:
             key = serialization.load_pem_private_key(key_pem, password=None)
             return isinstance(key, rsa.RSAPrivateKey)
-        except:
+        except Exception:
             return False
 
     def set_unavailable(self):
@@ -151,7 +151,8 @@ class RealProcessSimulator:
         process_id = self.process_counter
         self.process_counter += 1
 
-        # Create realistic process mock
+
+
         class RealProcessMock:
             def __init__(self, pid: int, command: list[str]):
                 self.pid = pid
@@ -171,9 +172,7 @@ class RealProcessSimulator:
 
             def poll(self):
                 """Check if process is still running."""
-                if self.terminated:
-                    return self.return_code
-                return None
+                return self.return_code if self.terminated else None
 
             def wait(self, timeout=None):
                 """Wait for process to complete."""
@@ -182,6 +181,7 @@ class RealProcessSimulator:
                     self.terminated = True
                     self.return_code = 0
                 return self.return_code
+
 
         process = RealProcessMock(process_id, command)
         self.processes[process_id] = process
@@ -249,9 +249,7 @@ class RealFileSystemSimulator:
 
     def read_temp_file(self, fd: int) -> str:
         """Read content from temporary file."""
-        if fd in self.temp_files:
-            return self.temp_files[fd]['content']
-        return ''
+        return self.temp_files[fd]['content'] if fd in self.temp_files else ''
 
     def close_temp_file(self, fd: int):
         """Close temporary file."""

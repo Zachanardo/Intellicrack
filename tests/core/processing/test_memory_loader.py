@@ -190,7 +190,7 @@ class TestMemoryOptimizedBinaryLoader:
 
         chunks = list(loader.iterate_file(chunk_size=128))
 
-        assert len(chunks) > 0
+        assert chunks
 
         for offset, chunk in chunks:
             assert isinstance(offset, int)
@@ -203,10 +203,9 @@ class TestMemoryOptimizedBinaryLoader:
         """File iteration covers entire file."""
         loader.load_file(str(sample_pe_binary))
 
-        total_bytes = 0
-        for _offset, chunk in loader.iterate_file(chunk_size=256):
-            total_bytes += len(chunk)
-
+        total_bytes = sum(
+            len(chunk) for _offset, chunk in loader.iterate_file(chunk_size=256)
+        )
         assert total_bytes == loader.file_size
 
         loader.close()
@@ -330,9 +329,7 @@ class TestMemoryOptimizedBinaryLoader:
         loader.load_file(str(large_binary))
 
         start = time.time()
-        chunk_count = 0
-        for _offset, _chunk in loader.iterate_file():
-            chunk_count += 1
+        chunk_count = sum(1 for _offset, _chunk in loader.iterate_file())
         elapsed = time.time() - start
 
         assert chunk_count > 0
@@ -501,7 +498,7 @@ class TestMemoryOptimizedAnalysis:
 
         assert "sections" in results
         suspicious = [s for s in results["sections"] if "packed" in s.get("flags", [])]
-        assert len(suspicious) > 0
+        assert suspicious
 
     def test_analysis_entropy_statistics(self, packed_binary: Path) -> None:
         """Analysis calculates accurate entropy statistics."""

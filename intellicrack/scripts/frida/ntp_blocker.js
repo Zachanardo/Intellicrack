@@ -1143,7 +1143,7 @@ const NtpBlocker = {
         // iOS-specific blocking (if on iOS with Frida)
         if (ObjC.available) {
             // Block iOS automatic time setting
-            const {NSTimeZone} = ObjC.classes;
+            const { NSTimeZone } = ObjC.classes;
             if (NSTimeZone) {
                 Interceptor.attach(NSTimeZone['- setDefaultTimeZone:'].implementation, {
                     onEnter: _args => {
@@ -2147,8 +2147,11 @@ const NtpBlocker = {
         hostname = hostname.toLowerCase().trim();
 
         // Validate hostname format first (prevents regex injection)
-        if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(hostname) && !/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)) {
-              return false;
+        if (
+            !/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(hostname) &&
+            !/^(\d{1,3}\.){3}\d{1,3}$/.test(hostname)
+        ) {
+            return false;
         }
 
         // Check exact matches and proper subdomain matching

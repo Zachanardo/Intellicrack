@@ -3071,9 +3071,7 @@ class AIAgent:
             f"Execution time: {execution_time_ms}ms",
         ))
         if result.messages:
-            output_lines.extend(
-                str(msg.get("payload", msg)) for msg in result.messages[:50]
-            )
+            output_lines.extend(str(msg.get("payload", msg)) for msg in result.messages[:50])
         if result.data:
             output_lines.append(f"Data collected: {len(result.data)} items")
 
@@ -3093,9 +3091,7 @@ class AIAgent:
         """
         output_lines.append(f"ERROR: Frida script execution failed: {error_msg}")
         if result.messages:
-            output_lines.extend(
-                str(msg.get("payload", msg)) for msg in result.messages[:20]
-            )
+            output_lines.extend(str(msg.get("payload", msg)) for msg in result.messages[:20])
 
     def _append_frida_script_output(self, output: str, output_lines: list[str], max_lines: int, prefix: str = "Script Output:") -> None:
         """Append Frida script output with line limit.
@@ -3248,9 +3244,7 @@ class AIAgent:
         execution_time_ms = int((result.end_time - result.start_time) * 1000)
         output_lines.extend(("Execution successful", f"Time: {execution_time_ms}ms"))
         if result.messages:
-            output_lines.extend(
-                str(msg.get("payload", msg)) for msg in result.messages[:50]
-            )
+            output_lines.extend(str(msg.get("payload", msg)) for msg in result.messages[:50])
         if result.data:
             output_lines.append(f"Data collected: {len(result.data)} items")
 
@@ -3269,9 +3263,7 @@ class AIAgent:
         error_msg = "; ".join(result.errors) if result.errors else "Unknown error"
         output_lines.append(f"ERROR: Execution failed: {error_msg}")
         if result.messages:
-            output_lines.extend(
-                str(msg.get("payload", msg)) for msg in result.messages[:20]
-            )
+            output_lines.extend(str(msg.get("payload", msg)) for msg in result.messages[:20])
 
     def _validate_generic_script(self, target_binary: str, temp_dir: str) -> tuple[bool, list[str]]:
         """Validate generic script.

@@ -21,7 +21,7 @@ import pytest
 def create_dos_header() -> bytes:
     """Create minimal DOS header for PE binary."""
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 0x80)
     return bytes(dos_header)
 
@@ -45,7 +45,7 @@ def create_section_table(name: bytes, virtual_size: int, virtual_addr: int,
                          raw_size: int, raw_addr: int, characteristics: int) -> bytes:
     """Create PE section table entry."""
     section = bytearray(40)
-    section[0:8] = name.ljust(8, b"\x00")
+    section[:8] = name.ljust(8, b"\x00")
     section[8:12] = struct.pack("<I", virtual_size)
     section[12:16] = struct.pack("<I", virtual_addr)
     section[16:20] = struct.pack("<I", raw_size)
@@ -445,7 +445,7 @@ def create_obfuscated_license_check_binary() -> bytes:
     data.extend(b"XorDecrypt")
     data.extend(b"\x00")
 
-    obfuscated_string = bytes([x ^ 0xAA for x in b"CheckLicense"])
+    obfuscated_string = bytes(x ^ 0xAA for x in b"CheckLicense")
     data.extend(obfuscated_string)
     data.extend(b"\x00")
 
@@ -569,9 +569,12 @@ class LicenseAnalyzer:
             b"SOFTWARE\\",
         ]
 
-        time_api_found = sum(1 for p in time_api_patterns if p in self.binary_data)
-        trial_str_found = sum(1 for p in trial_strings if p in self.binary_data)
-        registry_found = sum(1 for p in registry_patterns if p in self.binary_data)
+        time_api_found = sum(bool(p in self.binary_data)
+                         for p in time_api_patterns)
+        trial_str_found = sum(bool(p in self.binary_data)
+                          for p in trial_strings)
+        registry_found = sum(bool(p in self.binary_data)
+                         for p in registry_patterns)
 
         detected = time_api_found > 0 and trial_str_found > 0
 
@@ -611,9 +614,12 @@ class LicenseAnalyzer:
             b"----",
         ]
 
-        reg_found = sum(1 for p in reg_patterns if p in self.binary_data)
-        crypto_found = sum(1 for p in crypto_patterns if p in self.binary_data)
-        format_found = sum(1 for p in key_format_patterns if p in self.binary_data)
+        reg_found = sum(bool(p in self.binary_data)
+                    for p in reg_patterns)
+        crypto_found = sum(bool(p in self.binary_data)
+                       for p in crypto_patterns)
+        format_found = sum(bool(p in self.binary_data)
+                       for p in key_format_patterns)
 
         detected = reg_found > 0 or (crypto_found > 0 and format_found > 0)
 
@@ -647,8 +653,10 @@ class LicenseAnalyzer:
             b"HardwareIDMatch",
         ]
 
-        api_found = sum(1 for p in hwid_api if p in self.binary_data)
-        str_found = sum(1 for p in hwid_strings if p in self.binary_data)
+        api_found = sum(bool(p in self.binary_data)
+                    for p in hwid_api)
+        str_found = sum(bool(p in self.binary_data)
+                    for p in hwid_strings)
 
         detected = api_found > 0 and str_found > 0
 
@@ -690,9 +698,12 @@ class LicenseAnalyzer:
             b"HTTP/1.1",
         ]
 
-        api_found = sum(1 for p in internet_api if p in self.binary_data)
-        activation_found = sum(1 for p in activation_patterns if p in self.binary_data)
-        protocol_found = sum(1 for p in protocol_patterns if p in self.binary_data)
+        api_found = sum(bool(p in self.binary_data)
+                    for p in internet_api)
+        activation_found = sum(bool(p in self.binary_data)
+                           for p in activation_patterns)
+        protocol_found = sum(bool(p in self.binary_data)
+                         for p in protocol_patterns)
 
         detected = api_found > 0 and activation_found > 0
 
@@ -732,9 +743,12 @@ class LicenseAnalyzer:
             b"ValidateLicense",
         ]
 
-        api_found = sum(1 for p in file_api if p in self.binary_data)
-        files_found = sum(1 for p in license_files if p in self.binary_data)
-        parse_found = sum(1 for p in parsing_funcs if p in self.binary_data)
+        api_found = sum(bool(p in self.binary_data)
+                    for p in file_api)
+        files_found = sum(bool(p in self.binary_data)
+                      for p in license_files)
+        parse_found = sum(bool(p in self.binary_data)
+                      for p in parsing_funcs)
 
         detected = api_found > 0 and files_found > 0
 
@@ -774,9 +788,12 @@ class LicenseAnalyzer:
             b"BEGIN RSA",
         ]
 
-        api_found = sum(1 for p in crypto_api if p in self.binary_data)
-        algo_found = sum(1 for p in algorithms if p in self.binary_data)
-        key_found = sum(1 for p in key_patterns if p in self.binary_data)
+        api_found = sum(bool(p in self.binary_data)
+                    for p in crypto_api)
+        algo_found = sum(bool(p in self.binary_data)
+                     for p in algorithms)
+        key_found = sum(bool(p in self.binary_data)
+                    for p in key_patterns)
 
         detected = api_found > 0 and algo_found > 0
 
@@ -807,8 +824,10 @@ class LicenseAnalyzer:
             b"Decrypt",
         ]
 
-        junk_found = sum(1 for p in junk_patterns if p in self.binary_data)
-        func_found = sum(1 for p in deobfuscate_funcs if p in self.binary_data)
+        junk_found = sum(bool(p in self.binary_data)
+                     for p in junk_patterns)
+        func_found = sum(bool(p in self.binary_data)
+                     for p in deobfuscate_funcs)
 
         detected = junk_found > 2 or func_found > 0
 
@@ -1231,7 +1250,7 @@ class TestBypassPointIdentification:
         bypass_points = analyzer.identify_bypass_points()
 
         test_patterns = [p for p in bypass_points if "test_eax" in p["pattern"]]
-        assert len(test_patterns) > 0
+        assert test_patterns
 
     def test_bypass_point_offset_accuracy(self, temp_workspace: Path) -> None:
         """Bypass point offsets are accurate in real binary."""
@@ -1314,8 +1333,8 @@ class TestRealWorldScenarios:
         analyzer = LicenseAnalyzer(str(binary_path))
         results = analyzer.analyze_comprehensive()
 
-        detected_schemes = sum(1 for k, v in results.items()
-                              if isinstance(v, dict) and v.get("detected", False))
+        detected_schemes = sum(bool(isinstance(v, dict) and v.get("detected", False))
+                           for k, v in results.items())
         assert detected_schemes >= 1
 
     def test_analyze_obfuscated_commercial_license(self, temp_workspace: Path) -> None:
@@ -1380,8 +1399,8 @@ class TestEdgeCases:
         analyzer = LicenseAnalyzer(str(binary_path))
         results = analyzer.analyze_comprehensive()
 
-        detected_count = sum(1 for k, v in results.items()
-                           if isinstance(v, dict) and v.get("detected", False))
+        detected_count = sum(bool(isinstance(v, dict) and v.get("detected", False))
+                         for k, v in results.items())
         assert detected_count == 0
 
     def test_analyze_large_binary_performance(self, temp_workspace: Path) -> None:
@@ -1418,7 +1437,7 @@ class TestBypassStrategyGeneration:
 
         conditional_jumps = [p for p in bypass_points
                            if "jump" in p["pattern"].lower()]
-        assert len(conditional_jumps) > 0
+        assert conditional_jumps
 
     def test_identify_trial_reset_strategy(self, temp_workspace: Path) -> None:
         """Bypass identifier finds trial check modifications."""

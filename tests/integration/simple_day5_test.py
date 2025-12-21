@@ -52,10 +52,7 @@ class SimpleStringAnalyzer:
         base32_pattern = re.compile(r'^[A-Z2-7]{16,40}$')
         if base32_pattern.match(content.upper()):
             # Check for repetitive patterns - avoid false positives
-            if self._is_repetitive_pattern(content.upper()):
-                return False
-            return True
-
+            return not self._is_repetitive_pattern(content.upper())
         # Pattern 4: Microsoft product key format (25 characters)
         if len(content) == 25 and re.match(r'^[BCDFGHJKMPQRTVWXY2-9]{25}$', content.upper()):
             return True
@@ -69,8 +66,10 @@ class SimpleStringAnalyzer:
             entropy = self._calculate_shannon_entropy(content.upper())
             if 2.5 <= entropy <= 4.5:  # Typical range for license keys
                 # Check character distribution
-                digits = sum(1 for c in content if c.isdigit())
-                letters = sum(1 for c in content if c.isalpha())
+                digits = sum(bool(c.isdigit())
+                         for c in content)
+                letters = sum(bool(c.isalpha())
+                          for c in content)
                 total = len(content)
 
                 digit_ratio = digits / total
@@ -124,15 +123,13 @@ class SimpleStringAnalyzer:
                 decoded = binascii.a2b_base64(content)
                 if len(decoded) >= 4:  # Valid decoded data
                     return True
-            except:
+            except Exception:
                 pass
 
         # Pattern 2: Hexadecimal crypto data
         hex_pattern = re.compile(r'^[0-9A-F]+$', re.IGNORECASE)
-        if hex_pattern.match(content) and len(content) % 2 == 0:
-            # Common hash lengths
-            if len(content) in [32, 40, 64, 96, 128]:  # MD5, SHA1, SHA256, SHA384, SHA512
-                return True
+        if hex_pattern.match(content) and len(content) % 2 == 0 and len(content) in {32, 40, 64, 96, 128}:
+            return True
 
         # Pattern 3: PEM format markers
         pem_markers = [
@@ -154,10 +151,7 @@ class SimpleStringAnalyzer:
             '67452301EFCDAB89', 'DEADBEEF', 'CAFEBABE',      # Common debug/crypto values
             'SHA1', 'SHA256', 'AES', 'RSA'
         ]
-        if any(const in content_upper for const in crypto_constants):
-            return True
-
-        return False
+        return any((const in content_upper for const in crypto_constants))
 
     def _analyze_api_function_patterns(self, content: str) -> bool:
         """Enhanced API call string analysis."""

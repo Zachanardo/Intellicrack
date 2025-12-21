@@ -20,12 +20,28 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import time
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.handlers.numpy_handler import numpy as np
 
 
 logger = logging.getLogger(__name__)
+
+
+class AppProtocol(Protocol):
+    """Protocol for application objects with update_output signal."""
+
+    def update_output(self) -> Any:
+        """Return signal for updating output."""
+        ...
+
+
+class GPUFrameworksProtocol(Protocol):
+    """Protocol for GPU frameworks configuration."""
+
+    def get(self, key: str, default: bool = False) -> bool:
+        """Get GPU framework availability."""
+        ...
 
 
 def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, Any]:
@@ -82,11 +98,15 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
                     f"({result['execution_time']:.3f}s via {result['method']})",
                 )
 
-        results["analyses"]["pattern_search"] = pattern_results
+        analyses_dict = results["analyses"]
+        if isinstance(analyses_dict, dict):
+            analyses_dict["pattern_search"] = pattern_results
 
         # Perform entropy calculation
         entropy_result = accelerator.entropy_calculation(binary_data, block_size=4096)
-        results["analyses"]["entropy"] = entropy_result
+        analyses_dict_for_entropy = results["analyses"]
+        if isinstance(analyses_dict_for_entropy, dict):
+            analyses_dict_for_entropy["entropy"] = entropy_result
 
         if hasattr(app, "update_output"):
             app.update_output.emit(
@@ -113,7 +133,9 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
 
         # Perform hash computation
         hash_result = accelerator.hash_computation(binary_data, ["crc32", "adler32"])
-        results["analyses"]["hashes"] = hash_result
+        analyses_dict_for_hashes = results["analyses"]
+        if isinstance(analyses_dict_for_hashes, dict):
+            analyses_dict_for_hashes["hashes"] = hash_result
 
         if hasattr(app, "update_output"):
             for algo, hash_val in hash_result["hashes"].items():
@@ -147,10 +169,14 @@ def run_gpu_accelerated_analysis(app: object, binary_data: bytes) -> dict[str, A
                 app.update_output.emit(
                     f"[GPU] Total GPU time: {total_gpu_time:.3f}s, Estimated speedup: {speedup:.1f}x",
                 )
-                app.update_output.emit(
-                    f"[GPU] Processed {results['performance']['data_processed_mb']:.1f} MB "
-                    f"at {results['performance']['data_processed_mb'] / total_gpu_time:.1f} MB/s",
-                )
+                perf_info = results["performance"]
+                if isinstance(perf_info, dict):
+                    data_mb = perf_info["data_processed_mb"]
+                    if isinstance(data_mb, (int, float)) and total_gpu_time > 0:
+                        app.update_output.emit(
+                            f"[GPU] Processed {data_mb:.1f} MB "
+                            f"at {data_mb / total_gpu_time:.1f} MB/s",
+                        )
 
     except ImportError as e:
         logger.exception("GPU acceleration module not available: %s", e, exc_info=True)
@@ -180,7 +206,7 @@ def _generate_test_data(test_sizes: list[int]) -> dict[int, bytes]:
     return test_data
 
 
-def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+def _benchmark_cupy_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
     """Benchmark CuPy framework."""
     try:
         import cupy as cp
@@ -208,7 +234,7 @@ def _benchmark_cupy_framework(framework_results: dict, test_data: dict[int, byte
         logger.exception("CuPy benchmark failed: %s", e, exc_info=True)
 
 
-def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+def _benchmark_numba_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
     """Benchmark Numba framework."""
     try:
         from numba import cuda as numba_cuda
@@ -230,7 +256,7 @@ def _benchmark_numba_framework(framework_results: dict, test_data: dict[int, byt
             # Perform pattern search operation using GPU acceleration
             search_start = time.time()
 
-            @numba_cuda.jit
+            @numba_cuda.jit  # type: ignore[misc]
             def pattern_search_kernel(
                 data: numba_cuda.uint8[:],
                 pattern: numba_cuda.uint8[:],

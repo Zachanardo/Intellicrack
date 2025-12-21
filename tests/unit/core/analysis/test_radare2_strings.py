@@ -140,16 +140,15 @@ class TestStringExtractionEngine:
         # Should detect strings in various encodings
         all_strings = result.get("all_strings", [])
 
-        # Validate encoding detection and classification
-        encodings_found = set()
-        for string_data in all_strings:
-            if "encoding" in string_data:
-                encodings_found.add(string_data["encoding"])
-
+        encodings_found = {
+            string_data["encoding"]
+            for string_data in all_strings
+            if "encoding" in string_data
+        }
         # Should support multiple encoding types
         expected_encodings = {"ascii", "utf-8", "utf-16", "wide"}
         # At least some encoding detection should occur
-        assert len(encodings_found) > 0, "No encoding detection found"
+        assert encodings_found, "No encoding detection found"
 
     def test_minimum_length_filtering(self, analyzer):
         """Test analyzer respects minimum string length requirements."""
@@ -234,14 +233,9 @@ class TestStringClassificationEngine:
             crypto_data = result.get("categories", {}).get("crypto_data", [])
             assert len(crypto_data) > 0, "No cryptographic data detected"
 
-            # Should detect different types of crypto data
-            crypto_types = set()
-            for crypto in crypto_data:
-                if "type" in crypto:
-                    crypto_types.add(crypto["type"])
-
+            crypto_types = {crypto["type"] for crypto in crypto_data if "type" in crypto}
             # Should identify various crypto formats
-            assert len(crypto_types) > 0, "No crypto type classification"
+            assert crypto_types, "No crypto type classification"
 
     def test_api_function_classification(self, analyzer):
         """Test analyzer classifies Windows and POSIX API functions."""
@@ -261,16 +255,11 @@ class TestStringClassificationEngine:
             api_functions = result.get("categories", {}).get("api_functions", [])
             assert len(api_functions) > 0, "No API functions detected"
 
-            # Should classify by API type
-            api_types = set()
-            for api in api_functions:
-                if "api_type" in api:
-                    api_types.add(api["api_type"])
-
+            api_types = {api["api_type"] for api in api_functions if "api_type" in api}
             # Should distinguish between Windows and POSIX APIs
             expected_types = {"windows", "posix", "library"}
             found_types = api_types.intersection(expected_types)
-            assert len(found_types) > 0, "No API type classification found"
+            assert found_types, "No API type classification found"
 
     def test_network_and_url_detection(self, analyzer):
         """Test analyzer detects network-related strings."""
@@ -343,7 +332,7 @@ class TestObfuscationDetectionEngine:
             crypto_data = result.get("categories", {}).get("crypto_data", [])
             base64_strings = [s for s in crypto_data if s.get("encoding") == "base64"]
 
-            assert len(base64_strings) > 0, "No base64 strings detected"
+            assert base64_strings, "No base64 strings detected"
 
             # Should include decoded content where possible
             for b64_string in base64_strings:
@@ -364,7 +353,7 @@ class TestObfuscationDetectionEngine:
             crypto_data = result.get("categories", {}).get("crypto_data", [])
             hex_strings = [s for s in crypto_data if "hex" in s.get("type", "").lower()]
 
-            assert len(hex_strings) > 0, "No hex-encoded data detected"
+            assert hex_strings, "No hex-encoded data detected"
 
     def test_xor_obfuscation_detection(self, analyzer):
         """Test analyzer detects potential XOR obfuscated strings."""
@@ -536,11 +525,10 @@ class TestPerformanceAndScalability:
 
     def test_large_binary_string_analysis_performance(self, analyzer):
         """Test analyzer handles large binaries efficiently."""
-        # Create large mock string dataset
-        large_string_set = []
-        for i in range(1000):
-            large_string_set.append({"content": f"String_{i}_" + "x" * 50, "address": 0x1000 + i * 0x10})
-
+        large_string_set = [
+            {"content": f"String_{i}_" + "x" * 50, "address": 0x1000 + i * 0x10}
+            for i in range(1000)
+        ]
         with patch.object(analyzer, "_get_comprehensive_strings") as mock_strings:
             mock_strings.return_value = large_string_set
 
@@ -631,12 +619,10 @@ class TestAntiPlaceholderValidation:
             # Should have at least basic API function detection
             api_functions = categories.get("api_functions", [])
             if not api_functions:
-                # Alternative: check if CreateFileA was processed in any category
-                found_createfile = False
-                for category in categories.values():
-                    if any("CreateFileA" in str(item) for item in category):
-                        found_createfile = True
-                        break
+                found_createfile = any(
+                    any("CreateFileA" in str(item) for item in category)
+                    for category in categories.values()
+                )
                 assert found_createfile, "API function detection not functional"
 
     def test_entropy_analysis_requires_real_calculation(self):
@@ -763,11 +749,13 @@ class TestProductionReadinessValidation:
         """Test analyzer manages memory efficiently with large string datasets."""
         analyzer = R2StringAnalyzer("test.exe")
 
-        # Create very large mock dataset
-        huge_strings = []
-        for i in range(5000):  # Large number of strings
-            huge_strings.append({"content": f"Large_string_content_{i}_" + "x" * 100, "address": 0x10000 + i * 0x100})
-
+        huge_strings = [
+            {
+                "content": f"Large_string_content_{i}_" + "x" * 100,
+                "address": 0x10000 + i * 0x100,
+            }
+            for i in range(5000)
+        ]
         with patch.object(analyzer, "_get_comprehensive_strings") as mock_strings:
             mock_strings.return_value = huge_strings
 

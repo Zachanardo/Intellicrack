@@ -299,7 +299,7 @@ class TestShellcodeGeneration(IntellicrackTestBase):
                 )
                 if payload is not None:
                     obfuscated_payloads[method] = payload
-            except:
+            except Exception:
                 continue  # Skip unsupported methods
 
         # Should have at least some obfuscation methods working
@@ -497,11 +497,9 @@ class TestShellcodeAdvanced(IntellicrackTestBase):
         # Generate multiple metamorphic variants
         variants = []
         for i in range(5):
-            variant = agent._generate_shellcode_templates(
-                'x86', 'reverse_shell',
-                metamorphic=True, seed=i
-            )
-            if variant:
+            if variant := agent._generate_shellcode_templates(
+                'x86', 'reverse_shell', metamorphic=True, seed=i
+            ):
                 variants.append(variant)
 
         # All variants should be different but functionally equivalent
@@ -515,16 +513,14 @@ class TestShellcodeAdvanced(IntellicrackTestBase):
         """Test combinations of evasion techniques."""
         agent = AutomatedPatchAgent()
 
-        # Test combined evasion techniques
-        multi_evasion = agent._generate_shellcode_templates(
-            'x64', 'bind_shell',
+        if multi_evasion := agent._generate_shellcode_templates(
+            'x64',
+            'bind_shell',
             encoding='xor',
             obfuscation='ror',
             anti_analysis=True,
-            polymorphic=True
-        )
-
-        if multi_evasion:
+            polymorphic=True,
+        ):
             # Combined techniques should produce larger, more complex shellcode
             simple_shellcode = agent._generate_shellcode_templates('x64', 'bind_shell')
             assert len(multi_evasion) > len(simple_shellcode)
@@ -541,11 +537,8 @@ class TestShellcodeAdvanced(IntellicrackTestBase):
             'encryption': 'aes256'
         }
 
-        custom_payload = agent._generate_shellcode_templates(
-            'x86', 'custom_template',
-            template=custom_template
-        )
-
-        if custom_payload:
+        if custom_payload := agent._generate_shellcode_templates(
+            'x86', 'custom_template', template=custom_template
+        ):
             assert len(custom_payload) > 50  # Custom templates should be substantial
             assert isinstance(custom_payload, bytes)

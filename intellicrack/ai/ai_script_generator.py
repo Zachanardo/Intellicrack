@@ -1988,19 +1988,33 @@ DateSpoofer.spoofAllDateSources();
         imports = analysis_data.get("imports", [])
         import_str = " ".join(str(i) for i in imports).lower()
 
-        if ProtectionType.LICENSE_CHECK not in protection_types and any(api in import_str for api in ["regqueryvalue", "regopen", "regenumkey"]):
+        if ProtectionType.LICENSE_CHECK not in protection_types and any(
+            api in import_str for api in ["regqueryvalue", "regopen", "regenumkey"]
+        ):
             protection_types.append(ProtectionType.LICENSE_CHECK)
 
-        if any(api in import_str for api in ["gettickcount", "getsystemtime", "queryperf"]) and ProtectionType.TRIAL_LIMITATION not in protection_types:
+        if (
+            any(api in import_str for api in ["gettickcount", "getsystemtime", "queryperf"])
+            and ProtectionType.TRIAL_LIMITATION not in protection_types
+        ):
             protection_types.append(ProtectionType.TRIAL_LIMITATION)
 
-        if any(api in import_str for api in ["winhttp", "wininet", "urldownload", "internetopen"]) and ProtectionType.ONLINE_ACTIVATION not in protection_types:
+        if (
+            any(api in import_str for api in ["winhttp", "wininet", "urldownload", "internetopen"])
+            and ProtectionType.ONLINE_ACTIVATION not in protection_types
+        ):
             protection_types.append(ProtectionType.ONLINE_ACTIVATION)
 
-        if any(api in import_str for api in ["getvolume", "getadapters", "wmi", "deviceio"]) and ProtectionType.HARDWARE_BINDING not in protection_types:
+        if (
+            any(api in import_str for api in ["getvolume", "getadapters", "wmi", "deviceio"])
+            and ProtectionType.HARDWARE_BINDING not in protection_types
+        ):
             protection_types.append(ProtectionType.HARDWARE_BINDING)
 
-        if any(api in import_str for api in ["isdebuggerpresent", "checkremote", "ntqueryinfo"]) and ProtectionType.ANTI_DEBUG not in protection_types:
+        if (
+            any(api in import_str for api in ["isdebuggerpresent", "checkremote", "ntqueryinfo"])
+            and ProtectionType.ANTI_DEBUG not in protection_types
+        ):
             protection_types.append(ProtectionType.ANTI_DEBUG)
 
         if not protection_types:

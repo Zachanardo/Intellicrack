@@ -43,7 +43,7 @@ class TestGPUDeviceDetectionProduction:
 
         assert isinstance(devices, list), "Must return list of devices"
 
-        if len(devices) > 0:
+        if devices:
             for device in devices:
                 assert isinstance(device, GPUDeviceInfo), "Each device must be GPUDeviceInfo instance"
                 assert device.device_id >= 0, "Device ID must be non-negative"
@@ -58,14 +58,14 @@ class TestGPUDeviceDetectionProduction:
 
         assert isinstance(devices, list), "Must return list even when no GPU"
 
-        if len(devices) == 0:
+        if not devices:
             pytest.skip("No GPU devices available, test passes with empty list")
 
     def test_gpu_device_info_properties_accurate(self) -> None:
         """GPUDeviceInfo reports accurate hardware properties."""
         devices: list[GPUDeviceInfo] = detect_gpu_devices()
 
-        if len(devices) == 0:
+        if not devices:
             pytest.skip("No GPU available for testing")
 
         device: GPUDeviceInfo = devices[0]
@@ -106,7 +106,7 @@ class TestGPUAcceleratorProduction:
         devices: list[GPUDeviceInfo] = accelerator.get_available_devices()
         assert isinstance(devices, list), "Must return device list"
 
-        if len(devices) == 0:
+        if not devices:
             assert not accelerator.is_gpu_available(), "Should report no GPU when none detected"
         else:
             assert accelerator.is_gpu_available(), "Should report GPU available when detected"
@@ -115,7 +115,7 @@ class TestGPUAcceleratorProduction:
         """GPUAccelerator can select specific GPU devices."""
         devices: list[GPUDeviceInfo] = accelerator.get_available_devices()
 
-        if len(devices) == 0:
+        if not devices:
             pytest.skip("No GPU available for device selection test")
 
         device_id: int = devices[0].device_id
@@ -150,7 +150,7 @@ class TestGPUAcceleratorProduction:
             pytest.skip("No GPU available for OOM test")
 
         devices: list[GPUDeviceInfo] = accelerator.get_available_devices()
-        if len(devices) == 0:
+        if not devices:
             pytest.skip("No GPU devices available")
 
         excessive_size: int = devices[0].total_memory * 10
@@ -182,7 +182,7 @@ class TestModelGPUPreparationProduction:
 
         if result["status"] == "success":
             assert "device" in result, "Must report target device on success"
-            assert result["device"] == 0 or result["device"] == "cuda:0", "Must use requested device"
+            assert result["device"] in [0, "cuda:0"], "Must use requested device"
             assert "model" in result or "model_loaded" in result, "Must indicate model loaded"
 
         elif result["status"] == "no_gpu":
@@ -248,7 +248,7 @@ class TestGPUOptimizationProduction:
         """get_optimal_batch_size calculates batch size based on GPU memory."""
         devices: list[GPUDeviceInfo] = detect_gpu_devices()
 
-        if len(devices) == 0:
+        if not devices:
             batch_size: int = get_optimal_batch_size(model_size=50 * 1024 * 1024, available_memory=0)
             assert batch_size > 0, "Must return positive batch size even without GPU"
             pytest.skip("No GPU for optimal batch size calculation")
@@ -330,7 +330,7 @@ class TestGPUIntegrationEndToEnd:
 
         devices: list[GPUDeviceInfo] = detect_gpu_devices()
 
-        if len(devices) == 0:
+        if not devices:
             pytest.skip("No GPU for concurrency test")
 
         results: list[bool] = []

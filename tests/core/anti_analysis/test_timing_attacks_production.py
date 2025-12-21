@@ -419,7 +419,7 @@ class TestAntiAccelerationLoop:
                 defense.anti_acceleration_loop(0.3)
 
                 heavy_stalling = [call for call in stalling_calls if call[0] >= 0.5]
-                assert len(heavy_stalling) > 0
+                assert heavy_stalling
 
 
 class TestDebuggerDetection:

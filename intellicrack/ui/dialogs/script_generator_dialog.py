@@ -369,13 +369,11 @@ class TestScriptDialog(BaseDialog):
                 elif isinstance(node, ast.ClassDef):
                     classes_list.append(node.name)
 
-            tests_list.extend(
-                (
-                    f"OK Found {len(imports_list)} imports",
-                    f"OK Found {len(functions_list)} functions",
-                    f"OK Found {len(classes_list)} classes",
-                )
-            )
+            tests_list.extend((
+                f"OK Found {len(imports_list)} imports",
+                f"OK Found {len(functions_list)} functions",
+                f"OK Found {len(classes_list)} classes",
+            ))
         except SyntaxError as e:
             validation_results["syntax_valid"] = False
             parse_errors: list[str] = validation_results["parse_errors"]
@@ -492,11 +490,7 @@ class TestScriptDialog(BaseDialog):
 
         suspicious = ["eval(", "exec(", "system(", "shell(", "cmd.exe", "powershell.exe"]
         suspicious_list: list[str] = checks["suspicious_patterns"]
-        suspicious_list.extend(
-            pattern
-            for pattern in suspicious
-            if pattern in self.script_content.lower()
-        )
+        suspicious_list.extend(pattern for pattern in suspicious if pattern in self.script_content.lower())
         return checks
 
     def test_security(self) -> None:
@@ -592,11 +586,7 @@ class TestScriptDialog(BaseDialog):
         }
 
         bottlenecks_list: list[str] = performance_results["bottlenecks"]
-        bottlenecks_list.extend(
-            bottleneck.replace("_", " ").title()
-            for bottleneck, detected in bottleneck_patterns.items()
-            if detected
-        )
+        bottlenecks_list.extend(bottleneck.replace("_", " ").title() for bottleneck, detected in bottleneck_patterns.items() if detected)
         optimizations_list: list[str] = performance_results["optimizations"]
         if "import" in self.script_content and len([line for line in self.script_content.split("\n") if "import" in line]) > 10:
             optimizations_list.append("Consider lazy imports for better startup time")

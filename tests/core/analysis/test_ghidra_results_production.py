@@ -59,8 +59,7 @@ def create_test_analysis_result(**kwargs: Any) -> Any:
         "image_base": 0x400000,
         "vtables": {},
         "exception_handlers": [],
-    }
-    defaults.update(kwargs)
+    } | kwargs
     return GhidraAnalysisResult(**defaults)
 
 
@@ -149,9 +148,8 @@ class TestGhidraResultsCompatibility:
         from intellicrack.core.analysis.ghidra_analyzer import GhidraFunction, GhidraDataType
         from intellicrack.core.analysis.ghidra_results import GhidraAnalysisResult
 
-        functions_dict = {}
-        for addr, func_data in mock_ghidra_result["functions"].items():
-            functions_dict[addr] = GhidraFunction(
+        functions_dict = {
+            addr: GhidraFunction(
                 name=func_data["name"],
                 address=func_data["address"],
                 size=func_data["size"],
@@ -165,17 +163,18 @@ class TestGhidraResultsCompatibility:
                 xrefs_from=[0x401100, 0x401200],
                 comments={0: "Entry point", 10: "Return"},
             )
-
-        data_types_dict = {}
-        for name, dt_data in mock_ghidra_result["data_types"].items():
-            data_types_dict[name] = GhidraDataType(
+            for addr, func_data in mock_ghidra_result["functions"].items()
+        }
+        data_types_dict = {
+            name: GhidraDataType(
                 name=dt_data["name"],
                 size=dt_data["size"],
                 category=dt_data["category"],
                 members=dt_data["members"],
                 alignment=dt_data["alignment"],
             )
-
+            for name, dt_data in mock_ghidra_result["data_types"].items()
+        }
         result = GhidraAnalysisResult(
             binary_path=mock_ghidra_result["binary_path"],
             architecture=mock_ghidra_result["architecture"],

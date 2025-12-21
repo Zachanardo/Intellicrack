@@ -92,7 +92,7 @@ class TestAnalyzeNetworkAPIs:
 
         analyze_network_apis(pe_binary, network_apis, logger_func=logger)
 
-        assert len(log_calls) >= 1
+        assert log_calls
         assert any("socket" in call.lower() or "connect" in call.lower() for call in log_calls)
 
     def test_limits_logger_calls_per_category(self) -> None:
@@ -372,9 +372,7 @@ class TestEdgeCases:
 
         network_apis = {"test": ["socket测试"]}
 
-        detected = analyze_network_apis(pe, network_apis)
-
-        if detected:
+        if detected := analyze_network_apis(pe, network_apis):
             assert "test" in detected
 
     def test_summarizes_empty_detection(self) -> None:

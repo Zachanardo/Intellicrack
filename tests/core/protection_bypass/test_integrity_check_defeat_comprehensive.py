@@ -82,19 +82,19 @@ def minimal_pe_binary(temp_dir: Path) -> str:
     pe_path = temp_dir / "minimal.exe"
 
     dos_header = bytearray(64)
-    dos_header[0:2] = b"MZ"
+    dos_header[:2] = b"MZ"
     dos_header[60:64] = struct.pack("<I", 64)
 
     pe_signature = b"PE\x00\x00"
 
     coff_header = bytearray(20)
-    coff_header[0:2] = struct.pack("<H", 0x014C)
+    coff_header[:2] = struct.pack("<H", 0x014C)
     coff_header[2:4] = struct.pack("<H", 1)
     coff_header[16:18] = struct.pack("<H", 224)
     coff_header[18:20] = struct.pack("<H", 0x010B)
 
     optional_header = bytearray(224)
-    optional_header[0:2] = struct.pack("<H", 0x010B)
+    optional_header[:2] = struct.pack("<H", 0x010B)
     optional_header[2] = 14
     optional_header[3] = 0
     optional_header[4:8] = struct.pack("<I", 0x1000)
@@ -112,7 +112,7 @@ def minimal_pe_binary(temp_dir: Path) -> str:
     optional_header[70:72] = struct.pack("<H", 0)
 
     section_header = bytearray(40)
-    section_header[0:8] = b".text\x00\x00\x00"
+    section_header[:8] = b".text\x00\x00\x00"
     section_header[8:12] = struct.pack("<I", 0x1000)
     section_header[12:16] = struct.pack("<I", 0x1000)
     section_header[16:20] = struct.pack("<I", 0x200)
@@ -120,7 +120,7 @@ def minimal_pe_binary(temp_dir: Path) -> str:
     section_header[36:40] = struct.pack("<I", 0x60000020)
 
     section_data = bytearray(512)
-    section_data[0:2] = b"\xC3\x90"
+    section_data[:2] = b"\xC3\x90"
 
     binary = dos_header + pe_signature + coff_header + optional_header + section_header + section_data
 
@@ -136,10 +136,10 @@ def pe_with_crc32_check(temp_dir: Path, minimal_pe_binary: str) -> str:
     with open(minimal_pe_binary, "rb") as f:
         binary = bytearray(f.read())
 
-    crc32_pattern = b"\xc1\xe8\x08\x33\x81"
-
     if len(binary) >= 512:
         insert_offset = 450
+        crc32_pattern = b"\xc1\xe8\x08\x33\x81"
+
         binary[insert_offset : insert_offset + len(crc32_pattern)] = crc32_pattern
 
     pe_path.write_bytes(binary)
@@ -154,10 +154,10 @@ def pe_with_md5_pattern(temp_dir: Path, minimal_pe_binary: str) -> str:
     with open(minimal_pe_binary, "rb") as f:
         binary = bytearray(f.read())
 
-    md5_init_pattern = b"\x67\x45\x23\x01"
-
     if len(binary) >= 512:
         insert_offset = 460
+        md5_init_pattern = b"\x67\x45\x23\x01"
+
         binary[insert_offset : insert_offset + len(md5_init_pattern)] = md5_init_pattern
 
     pe_path.write_bytes(binary)
@@ -172,10 +172,10 @@ def pe_with_sha256_pattern(temp_dir: Path, minimal_pe_binary: str) -> str:
     with open(minimal_pe_binary, "rb") as f:
         binary = bytearray(f.read())
 
-    sha256_pattern = b"\x6a\x09\xe6\x67"
-
     if len(binary) >= 512:
         insert_offset = 470
+        sha256_pattern = b"\x6a\x09\xe6\x67"
+
         binary[insert_offset : insert_offset + len(sha256_pattern)] = sha256_pattern
 
     pe_path.write_bytes(binary)
@@ -535,7 +535,7 @@ class TestIntegrityCheckDetector:
         assert isinstance(checks, list)
 
         crc32_checks = [c for c in checks if c.check_type == IntegrityCheckType.CRC32]
-        assert len(crc32_checks) > 0
+        assert crc32_checks
 
         for check in crc32_checks:
             assert isinstance(check, IntegrityCheck)
@@ -555,7 +555,7 @@ class TestIntegrityCheckDetector:
         assert isinstance(checks, list)
 
         md5_checks = [c for c in checks if c.check_type == IntegrityCheckType.MD5_HASH]
-        assert len(md5_checks) > 0
+        assert md5_checks
 
         for check in md5_checks:
             assert check.check_type == IntegrityCheckType.MD5_HASH
@@ -572,7 +572,7 @@ class TestIntegrityCheckDetector:
         assert isinstance(checks, list)
 
         sha256_checks = [c for c in checks if c.check_type == IntegrityCheckType.SHA256_HASH]
-        assert len(sha256_checks) > 0
+        assert sha256_checks
 
         for check in sha256_checks:
             assert check.check_type == IntegrityCheckType.SHA256_HASH
@@ -594,9 +594,7 @@ class TestIntegrityCheckDetector:
         pe_with_crc32_check: str,
     ) -> None:
         """Detected checks include complete metadata."""
-        checks = integrity_detector.detect_checks(pe_with_crc32_check)
-
-        if checks:
+        if checks := integrity_detector.detect_checks(pe_with_crc32_check):
             check = checks[0]
             assert hasattr(check, "check_type")
             assert hasattr(check, "address")
@@ -638,7 +636,7 @@ class TestIntegrityBypassEngine:
             if IntegrityCheckType.CRC32 in s.check_types
         ]
 
-        assert len(crc32_strategies) > 0
+        assert crc32_strategies
 
         strategy = crc32_strategies[0]
         assert "RtlComputeCrc32" in strategy.frida_script or "crc32" in strategy.frida_script
@@ -657,7 +655,7 @@ class TestIntegrityBypassEngine:
             or IntegrityCheckType.SHA256_HASH in s.check_types
         ]
 
-        assert len(hash_strategies) > 0
+        assert hash_strategies
 
         strategy = hash_strategies[0]
         assert "CryptHashData" in strategy.frida_script or "BCryptHashData" in strategy.frida_script
@@ -673,7 +671,7 @@ class TestIntegrityBypassEngine:
             if IntegrityCheckType.AUTHENTICODE in s.check_types
         ]
 
-        assert len(authenticode_strategies) > 0
+        assert authenticode_strategies
 
         strategy = authenticode_strategies[0]
         assert "WinVerifyTrust" in strategy.frida_script
@@ -709,9 +707,7 @@ class TestIntegrityBypassEngine:
         bypass_engine: IntegrityBypassEngine,
     ) -> None:
         """Best strategy selection chooses highest priority strategy."""
-        strategy = bypass_engine._get_best_strategy(IntegrityCheckType.CRC32)
-
-        if strategy:
+        if strategy := bypass_engine._get_best_strategy(IntegrityCheckType.CRC32):
             assert isinstance(strategy, BypassStrategy)
             assert IntegrityCheckType.CRC32 in strategy.check_types
 
@@ -963,7 +959,7 @@ class TestIntegrityCheckDefeatSystem:
 
         binary_data = bytearray(b"\x00" * 2000)
 
-        high_entropy_key = bytes([i % 256 for i in range(32)])
+        high_entropy_key = bytes(i % 256 for i in range(32))
         binary_data[1000:1032] = high_entropy_key
 
         binary_path.write_bytes(binary_data)

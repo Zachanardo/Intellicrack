@@ -297,7 +297,6 @@ class TestModelDownloadManager:
 
         try:
             manager.cancel_download(model_name="test_model")
-            assert True
         except Exception:
             pass
 
@@ -360,7 +359,6 @@ class TestModelFormatConverter:
                 output_path=output_file,
             )
 
-            assert result is not None or True
         except Exception:
             pass
 
@@ -378,7 +376,6 @@ class TestModelFormatConverter:
                 output_path=output_file,
             )
 
-            assert result is not None or True
         except Exception:
             pass
 
@@ -394,7 +391,7 @@ class TestModelFormatConverter:
                 output_path=temp_dir / "output.pt",
             )
         except FormatConversionError:
-            assert True
+            pass
         except Exception:
             pass
 
@@ -458,14 +455,12 @@ class TestModelSharding:
         manager = ModelShardingManager()
 
         try:
-            shards = manager.shard_model(
+            if shards := manager.shard_model(
                 model_path=mock_model_file,
                 num_shards=2,
                 strategy=ShardingStrategy.SIZE_BASED,
                 output_dir=temp_dir / "shards",
-            )
-
-            if shards:
+            ):
                 loaded_model = manager.load_sharded_model(shards=shards)
 
                 assert loaded_model is not None
@@ -484,7 +479,6 @@ class TestModelSharding:
                 output_dir=temp_dir / "distributed_shards",
             )
 
-            assert shards is not None or True
         except Exception:
             pass
 
@@ -537,7 +531,6 @@ class TestQuantizationManager:
                 output_path=temp_dir / "quantized_int8.bin",
             )
 
-            assert quantized_model is not None or True
         except Exception:
             pass
 
@@ -554,7 +547,6 @@ class TestQuantizationManager:
                 output_path=temp_dir / "quantized_fp16.bin",
             )
 
-            assert quantized_model is not None or True
         except Exception:
             pass
 
@@ -571,7 +563,6 @@ class TestQuantizationManager:
                 output_path=temp_dir / "quantized_dynamic.bin",
             )
 
-            assert quantized_model is not None or True
         except Exception:
             pass
 
@@ -650,7 +641,6 @@ class TestLoRAAdapterManager:
         try:
             adapter = manager.load_adapter(adapter_path=adapter_path)
 
-            assert adapter is not None or True
         except Exception:
             pass
 
@@ -668,7 +658,6 @@ class TestLoRAAdapterManager:
                 output_path=temp_dir / "adapted_model.bin",
             )
 
-            assert result is not None or True
         except Exception:
             pass
 
@@ -689,7 +678,6 @@ class TestLoRAAdapterManager:
                 output_path=temp_dir / "merged_adapter.bin",
             )
 
-            assert merged is not None or True
         except Exception:
             pass
 
@@ -699,7 +687,6 @@ class TestLoRAAdapterManager:
 
         try:
             manager.unload_adapter(adapter_id="test_adapter")
-            assert True
         except Exception:
             pass
 

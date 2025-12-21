@@ -41,7 +41,7 @@ class TestFridaStealthInitialization:
         assert stealth.platform == platform.system()
         assert isinstance(stealth.active_techniques, dict)
         assert len(stealth.active_techniques) == 5
-        assert all(not v for v in stealth.active_techniques.values())
+        assert not any(stealth.active_techniques.values())
 
     def test_initialization_creates_empty_thread_tracking(self) -> None:
         """FridaStealth initializes with empty thread name tracking."""
@@ -540,7 +540,7 @@ class TestOriginalStateRestoration:
         result = stealth.restore_original_state()
 
         assert result is True
-        assert all(not v for v in stealth.active_techniques.values())
+        assert not any(stealth.active_techniques.values())
 
     def test_restore_original_state_clears_thread_names(self) -> None:
         """Restore original state clears original thread name tracking."""
@@ -564,8 +564,7 @@ class TestOriginalStateRestoration:
         task_dir = f"/proc/{current_pid}/task"
 
         if os.path.exists(task_dir):
-            threads = os.listdir(task_dir)
-            if threads:
+            if threads := os.listdir(task_dir):
                 first_tid = int(threads[0])
                 stealth._original_thread_names[first_tid] = "test_thread"
 
@@ -642,7 +641,7 @@ class TestStealthIntegrationWorkflows:
 
         final_status = stealth.get_stealth_status()
 
-        assert all(not v for v in final_status["active_techniques"].values())
+        assert not any(final_status["active_techniques"].values())
         assert final_status["stealth_level"] == "none"
 
     def test_repeated_activation_is_idempotent(self) -> None:

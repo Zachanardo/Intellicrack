@@ -64,7 +64,10 @@ def fix_anti_detection_undefined_names():
 
     # Add the ProcessBasicInformation class definition
     if 'class ProcessBasicInformation' not in content:
-        class_def = """
+        # Insert before the AntiDetectionBypass class
+        insertion_point = content.find('class AntiDetectionBypass:')
+        if insertion_point > 0:
+            class_def = """
 
 class ProcessBasicInformation(ctypes.Structure):
     \"\"\"Windows PROCESS_BASIC_INFORMATION structure.\"\"\"
@@ -77,9 +80,6 @@ class ProcessBasicInformation(ctypes.Structure):
     ]
 
 """
-        # Insert before the AntiDetectionBypass class
-        insertion_point = content.find('class AntiDetectionBypass:')
-        if insertion_point > 0:
             content = content[:insertion_point] + class_def + content[insertion_point:]
 
     # Replace PROCESS_BASIC_INFORMATION with ProcessBasicInformation
@@ -127,16 +127,6 @@ def fix_commercial_binary_manager():
 
     content = filepath.read_text()
 
-    # Add safe extraction for tarfile and zipfile
-    # Replace tarfile.extractall with safe extraction
-    safe_extract_code = '''def safe_extract(archive, path):
-        """Safely extract archive avoiding path traversal."""
-        for member in archive.getmembers() if hasattr(archive, 'getmembers') else archive.infolist():
-            name = member.name if hasattr(member, 'name') else member.filename
-            if '..' in name or name.startswith('/') or ':' in name:
-                continue
-            archive.extract(member, path)'''
-
     # Insert the safe extraction function
     if 'def safe_extract' not in content:
         # Find a good place to insert (before first method)
@@ -144,6 +134,16 @@ def fix_commercial_binary_manager():
         if class_start > 0:
             method_start = content.find('    def', class_start)
             if method_start > 0:
+                # Add safe extraction for tarfile and zipfile
+                # Replace tarfile.extractall with safe extraction
+                safe_extract_code = '''def safe_extract(archive, path):
+        """Safely extract archive avoiding path traversal."""
+        for member in archive.getmembers() if hasattr(archive, 'getmembers') else archive.infolist():
+            name = member.name if hasattr(member, 'name') else member.filename
+            if '..' in name or name.startswith('/') or ':' in name:
+                continue
+            archive.extract(member, path)'''
+
                 content = content[:method_start] + safe_extract_code + '\n\n    ' + content[method_start+4:]
 
     # Replace unsafe extraction calls

@@ -138,14 +138,13 @@ class CrossEnvironmentValidator:
     def _get_cpu_info(self) -> tuple[str, int]:
         """Get CPU information."""
         try:
-            if psutil:
-                cpu_count = psutil.cpu_count(logical=False) or psutil.cpu_count()
-                cpu_freq = psutil.cpu_freq()
-                cpu_info = f"{platform.processor()} @ {cpu_freq.max}MHz" if cpu_freq else platform.processor()
-                return (cpu_info, cpu_count)
-            else:
+            if not psutil:
                 # Fallback to platform info
                 return (platform.processor(), os.cpu_count())
+            cpu_count = psutil.cpu_count(logical=False) or psutil.cpu_count()
+            cpu_freq = psutil.cpu_freq()
+            cpu_info = f"{platform.processor()} @ {cpu_freq.max}MHz" if cpu_freq else platform.processor()
+            return (cpu_info, cpu_count)
         except Exception as e:
             logger.warning(f"Failed to get CPU info: {e}")
             return ("Unknown CPU", os.cpu_count() or 1)
@@ -153,11 +152,7 @@ class CrossEnvironmentValidator:
     def _get_memory_info(self) -> float:
         """Get total memory in GB."""
         try:
-            if psutil:
-                return psutil.virtual_memory().total / (1024**3)
-            else:
-                # Fallback - estimate from os
-                return 8.0  # Assume 8GB as default
+            return psutil.virtual_memory().total / (1024**3) if psutil else 8.0
         except Exception as e:
             logger.warning(f"Failed to get memory info: {e}")
             return 8.0
@@ -167,8 +162,7 @@ class CrossEnvironmentValidator:
         try:
             if wmi:
                 c = wmi.WMI()
-                gpus = c.Win32_VideoController()
-                if gpus:
+                if gpus := c.Win32_VideoController():
                     return gpus[0].Name
                 else:
                     return "No GPU detected"
@@ -180,11 +174,8 @@ class CrossEnvironmentValidator:
                         capture_output=True, text=True, timeout=10
                     )
                     lines = result.stdout.strip().split('\n')
-                    if len(lines) > 1:
-                        return lines[1].strip()
-                    else:
-                        return "Unknown GPU"
-                except:
+                    return lines[1].strip() if len(lines) > 1 else "Unknown GPU"
+                except Exception:
                     return "Unknown GPU"
         except Exception as e:
             logger.warning(f"Failed to get GPU info: {e}")
@@ -206,16 +197,19 @@ class CrossEnvironmentValidator:
                     capture_output=True, text=True, timeout=10
                 )
                 output = result.stdout.lower()
-                if 'virtual' in output or 'vmware' in output or 'virtualbox' in output:
-                    if 'vmware' in output:
-                        return "VMware"
-                    elif 'virtualbox' in output:
-                        return "VirtualBox"
-                    else:
-                        return "Unknown Virtual Machine"
-                else:
+                if (
+                    'virtual' not in output
+                    and 'vmware' not in output
+                    and 'virtualbox' not in output
+                ):
                     return "Physical Machine"
-            except:
+                if 'vmware' in output:
+                    return "VMware"
+                elif 'virtualbox' in output:
+                    return "VirtualBox"
+                else:
+                    return "Unknown Virtual Machine"
+            except Exception:
                 return "Unknown Platform"
         except Exception as e:
             logger.warning(f"Failed to get virtualization info: {e}")
@@ -226,17 +220,17 @@ class CrossEnvironmentValidator:
         security_software = []
 
         try:
-            # Check for common security software processes
-            common_security_processes = [
-                "msmpeng.exe",  # Windows Defender
-                "avp.exe",      # Kaspersky
-                "avast.exe",    # Avast
-                "avg.exe",      # AVG
-                "mcshield.exe", # McAfee
-                "nod32krn.exe"  # ESET
-            ]
-
             if psutil:
+                # Check for common security software processes
+                common_security_processes = [
+                    "msmpeng.exe",  # Windows Defender
+                    "avp.exe",      # Kaspersky
+                    "avast.exe",    # Avast
+                    "avg.exe",      # AVG
+                    "mcshield.exe", # McAfee
+                    "nod32krn.exe"  # ESET
+                ]
+
                 for proc in psutil.process_iter(['name']):
                     try:
                         if proc.info['name'].lower() in common_security_processes:
@@ -488,10 +482,7 @@ class CrossEnvironmentValidator:
             if result.returncode == 0:
                 # Check output for success indicators
                 output = result.stdout.lower()
-                if "success" in output or "licensed" in output or "activated" in output:
-                    return True
-                else:
-                    return False
+                return "success" in output or "licensed" in output or "activated" in output
             else:
                 return False
 
@@ -624,11 +615,9 @@ class CrossEnvironmentValidator:
                 if config["os_version"] != current_env.os_version:
                     logger.info(f"Testing in real {config['name']} environment")
 
-                    # Create real sandbox environment for testing
-                    sandbox_result = self._test_in_sandbox_environment(
+                    if sandbox_result := self._test_in_sandbox_environment(
                         binary_path, software_name, config
-                    )
-                    if sandbox_result:
+                    ):
                         environment_results.append(sandbox_result)
 
             # Real virtualization platform testing using Hyper-V and containers
@@ -651,14 +640,14 @@ class CrossEnvironmentValidator:
             # Real security software testing using PowerShell DSC and Group Policy
             logger.info("Testing with real security software configurations")
 
-            security_test_result = self._test_with_security_variations(
+            if security_test_result := self._test_with_security_variations(
                 binary_path, software_name, current_env
-            )
-            if security_test_result:
+            ):
                 environment_results.extend(security_test_result)
 
             # Analyze consistency across environments
-            environments_passed = sum(1 for r in environment_results if r.test_passed)
+            environments_passed = sum(bool(r.test_passed)
+                                  for r in environment_results)
             consistency_rate, inconsistent_behaviors = self._compare_environments(environment_results)
 
             logger.info(f"Cross-environment validation completed for {software_name}")
@@ -676,7 +665,7 @@ class CrossEnvironmentValidator:
             consistency_rate = 0.0
             inconsistent_behaviors = []
 
-        result = CrossEnvironmentResult(
+        return CrossEnvironmentResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -685,10 +674,8 @@ class CrossEnvironmentValidator:
             consistency_rate=consistency_rate,
             environment_results=environment_results,
             inconsistent_behaviors=inconsistent_behaviors,
-            error_messages=error_messages
+            error_messages=error_messages,
         )
-
-        return result
 
     def validate_all_cross_environment(self) -> list[CrossEnvironmentResult]:
         """
@@ -765,18 +752,27 @@ class CrossEnvironmentValidator:
         report_lines.append(f"  Total Environments Tested: {total_environments}")
         report_lines.append(f"  Environments Passed: {total_passed}")
         report_lines.append(f"  Success Rate: {total_passed/total_environments*100:.1f}%" if total_environments > 0 else "  Success Rate: N/A")
-        report_lines.append(f"  Average Consistency Rate: {avg_consistency:.3f}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Average Consistency Rate: {avg_consistency:.3f}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for result in results:
-            report_lines.append(f"Software: {result.software_name}")
-            report_lines.append(f"  Binary Hash: {result.binary_hash[:16]}...")
-            report_lines.append(f"  Environments Tested: {result.environments_tested}")
-            report_lines.append(f"  Environments Passed: {result.environments_passed}")
+            report_lines.extend(
+                (
+                    f"Software: {result.software_name}",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Environments Tested: {result.environments_tested}",
+                    f"  Environments Passed: {result.environments_passed}",
+                )
+            )
             report_lines.append(f"  Consistency Rate: {result.consistency_rate:.3f}")
             report_lines.append(f"  Inconsistent Behaviors: {len(result.inconsistent_behaviors)}")
 
@@ -956,9 +952,7 @@ if __name__ == "__main__":
     print("Cross-Environment Validator initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = validator.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := validator.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

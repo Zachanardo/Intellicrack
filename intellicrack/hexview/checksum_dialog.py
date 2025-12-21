@@ -279,9 +279,7 @@ class ChecksumDialog(QDialog):
                 start = getattr(self.hex_viewer, "selection_start", -1)
                 end = getattr(self.hex_viewer, "selection_end", -1)
                 if start != -1 and end != -1:
-                    if file_handler := getattr(
-                        self.hex_viewer, "file_handler", None
-                    ):
+                    if file_handler := getattr(self.hex_viewer, "file_handler", None):
                         data = file_handler.read_data(start, end - start)
                         if data is None:
                             self.results_text.setPlainText("Failed to read selected data.")

@@ -805,10 +805,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                         "new_size": r2.get("size"),
                     }
                     for r2 in regions2
-                    if r1.get("address") == r2.get("address")
-                    and r1.get("size") != r2.get("size")
+                    if r1.get("address") == r2.get("address") and r1.get("size") != r2.get("size")
                 )
-            heap_growth = sum(mapping.get("size", 0) for mapping in new_mappings if mapping.get("type") and "heap" in str(mapping.get("type")).lower())
+            heap_growth = sum(
+                mapping.get("size", 0) for mapping in new_mappings if mapping.get("type") and "heap" in str(mapping.get("type")).lower()
+            )
             # Check for stack changes
             stack_changes = any(r.get("type") and "stack" in str(r.get("type")).lower() for r in regions_changed)
 
@@ -1747,7 +1748,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 continue  # type: ignore[unreachable]
                             dst_port = conn.get("dst_port")
                             if self._connection_id(conn) in new_conn_ids and (
-                                (isinstance(dst_port, int) and dst_port in license_ports) or any(host in str(conn.get("dst_ip", "")) for host in license_hosts)
+                                (isinstance(dst_port, int) and dst_port in license_ports)
+                                or any(host in str(conn.get("dst_ip", "")) for host in license_hosts)
                             ):
                                 likely_license = isinstance(dst_port, int) and dst_port in [27000, 27001, 1947]
                                 new_connections.append(
@@ -1773,9 +1775,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 if not isinstance(query, dict):
                                     continue  # type: ignore[unreachable]
                                 query_str = query.get("query", "")
-                                if query_str not in baseline_queries and any(
-                                    host in str(query_str) for host in license_hosts
-                                ):
+                                if query_str not in baseline_queries and any(host in str(query_str) for host in license_hosts):
                                     dns_queries.append(
                                         {
                                             "query": query_str,
@@ -1847,7 +1847,9 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         if isinstance(fs_changes, dict):
             files_list = fs_changes.get("files_created", []) + fs_changes.get("files_modified", [])
             for file_path in files_list:
-                if isinstance(file_path, str) and any(keyword in file_path.lower() for keyword in ["license", "activation", "serial", "key"]):
+                if isinstance(file_path, str) and any(
+                    keyword in file_path.lower() for keyword in ["license", "activation", "serial", "key"]
+                ):
                     files_accessed = license_indicators.get("license_files_accessed")
                     if isinstance(files_accessed, list):
                         files_accessed.append(file_path)
@@ -2375,9 +2377,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     proc_output = stdout.read().decode("utf-8", errors="ignore")
                     if proc_output.strip():
                         processes_created.extend(
-                            {"pid": int(pid), "name": binary_name}
-                            for pid in proc_output.strip().split("\n")
-                            if pid.isdigit()
+                            {"pid": int(pid), "name": binary_name} for pid in proc_output.strip().split("\n") if pid.isdigit()
                         )
                 if stdin:
                     stdin.close()
@@ -2633,11 +2633,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                             {
                                 "type": "dns_server_detected",
                                 "query": "DNS_SERVER_LISTENING",
-                                "server": (
-                                    line.split()[4]
-                                    if len(line.split()) > 4
-                                    else "unknown"
-                                ),
+                                "server": (line.split()[4] if len(line.split()) > 4 else "unknown"),
                                 "timestamp": time.time(),
                                 "source": "network_analysis",
                             }

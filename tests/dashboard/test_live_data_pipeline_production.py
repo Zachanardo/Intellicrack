@@ -144,11 +144,8 @@ class TestLiveDataPipeline:
 
         time.sleep(0.5)
 
-        critical_added = sum(
-            1
-            for _ in range(pipeline.event_queues[DataPriority.CRITICAL].qsize())
-            if not pipeline.event_queues[DataPriority.CRITICAL].empty()
-        )
+        critical_added = sum(bool(not pipeline.event_queues[DataPriority.CRITICAL].empty())
+                         for _ in range(pipeline.event_queues[DataPriority.CRITICAL].qsize()))
 
         assert critical_added >= 0
 
@@ -184,7 +181,7 @@ class TestLiveDataPipeline:
         events = pipeline.get_historical_events(start_time, end_time, source="history_source")
 
         matching = [e for e in events if e["source"] == "history_source"]
-        assert len(matching) >= 1
+        assert matching
 
     def test_get_historical_events_with_filters(self, pipeline: LiveDataPipeline) -> None:
         """Historical events can be filtered by source and type."""
@@ -223,8 +220,8 @@ class TestLiveDataPipeline:
 
         pipeline.stop()
 
-        assert callback_invoked is True
-        assert len(received_events) > 0
+        assert callback_invoked
+        assert received_events
 
     def test_alert_callback_invocation(self, pipeline: LiveDataPipeline) -> None:
         """Alert callbacks are invoked for alert conditions."""
@@ -323,7 +320,7 @@ class TestLiveDataPipeline:
         events = pipeline.get_historical_events(time.time() - 10, time.time(), source="corr_source")
 
         correlated = [e for e in events if e.get("correlation_id") == "corr-123"]
-        assert len(correlated) >= 1
+        assert correlated
 
 
 class TestBufferingAndFlushing:
@@ -380,7 +377,7 @@ class TestBufferingAndFlushing:
 
         pipeline.stop()
 
-        assert callback_invoked is True
+        assert callback_invoked
 
 
 class TestAggregation:

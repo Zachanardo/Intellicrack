@@ -425,10 +425,9 @@ class TestCPUIDDetection:
         analyzer = HardwareIDAnalyzer(create_cpuid_binary)
         results = analyzer.analyze_hwid_protection()
 
-        assert results["has_hwid_protection"] is True, (
-            f"FAILED: Binary contains CPUID instructions but analyzer reported "
-            f"no HWID protection. The analyzer is NOT detecting CPU ID collection."
-        )
+        assert (
+            results["has_hwid_protection"] is True
+        ), 'FAILED: Binary contains CPUID instructions but analyzer reported no HWID protection. The analyzer is NOT detecting CPU ID collection.'
 
         assert "cpu_id" in results["hwid_types_detected"], (
             f"FAILED: Analyzer detected HWID protection but missed CPU_ID type. "
@@ -436,10 +435,9 @@ class TestCPUIDDetection:
         )
 
         cpuid_checks = [c for c in analyzer.hwid_checks if c.hwid_type == HWIDType.CPU_ID]
-        assert len(cpuid_checks) > 0, (
-            f"FAILED: Analyzer reported CPU_ID in results but has 0 CPUID checks. "
-            f"The detection is not creating concrete check objects."
-        )
+        assert (
+            cpuid_checks
+        ), 'FAILED: Analyzer reported CPU_ID in results but has 0 CPUID checks. The detection is not creating concrete check objects.'
 
         analyzer.close()
 
@@ -463,10 +461,9 @@ class TestCPUIDDetection:
 
         cpuid_checks = [c for c in analyzer.hwid_checks if c.hwid_type == HWIDType.CPU_ID]
 
-        assert len(cpuid_checks) >= 1, (
-            f"FAILED: Binary has multiple CPUID calls but analyzer found {len(cpuid_checks)}. "
-            f"Missing CPUID detection."
-        )
+        assert (
+            cpuid_checks
+        ), f"FAILED: Binary has multiple CPUID calls but analyzer found {len(cpuid_checks)}. Missing CPUID detection."
 
         analyzer.close()
 
@@ -487,9 +484,9 @@ class TestWMIQueryDetection:
         assert "cpu_id" in results["hwid_types_detected"]
 
         wmi_checks = [c for c in analyzer.hwid_checks if c.algorithm == HWIDAlgorithm.WMI_QUERY]
-        assert len(wmi_checks) > 0, (
-            f"FAILED: Binary contains WMI query strings but analyzer found 0 WMI checks"
-        )
+        assert (
+            wmi_checks
+        ), "FAILED: Binary contains WMI query strings but analyzer found 0 WMI checks"
 
         analyzer.close()
 
@@ -503,7 +500,7 @@ class TestWMIQueryDetection:
             if c.hwid_type == HWIDType.MOTHERBOARD_SERIAL and c.algorithm == HWIDAlgorithm.WMI_QUERY
         ]
 
-        assert len(baseboard_checks) > 0, "Failed to detect Win32_BaseBoard WMI query"
+        assert baseboard_checks, "Failed to detect Win32_BaseBoard WMI query"
 
         analyzer.close()
 
@@ -517,7 +514,7 @@ class TestWMIQueryDetection:
             if c.hwid_type == HWIDType.BIOS_SERIAL and c.algorithm == HWIDAlgorithm.WMI_QUERY
         ]
 
-        assert len(bios_checks) > 0, "Failed to detect Win32_BIOS WMI query"
+        assert bios_checks, "Failed to detect Win32_BIOS WMI query"
 
         analyzer.close()
 
@@ -551,7 +548,7 @@ class TestRegistryAccessDetection:
         assert "machine_guid" in results["hwid_types_detected"]
 
         registry_checks = [c for c in analyzer.hwid_checks if c.algorithm == HWIDAlgorithm.REGISTRY_READ]
-        assert len(registry_checks) > 0, "Failed to detect registry access for MachineGuid"
+        assert registry_checks, "Failed to detect registry access for MachineGuid"
 
         analyzer.close()
 
@@ -600,7 +597,9 @@ class TestDiskSerialDetection:
         assert "disk_serial" in results["hwid_types_detected"]
 
         ioctl_checks = [c for c in analyzer.hwid_checks if c.algorithm == HWIDAlgorithm.DEVICEIOCONTROL]
-        assert len(ioctl_checks) > 0, "Failed to detect DeviceIoControl IOCTL codes for disk serial"
+        assert (
+            ioctl_checks
+        ), "Failed to detect DeviceIoControl IOCTL codes for disk serial"
 
         analyzer.close()
 
@@ -611,9 +610,9 @@ class TestDiskSerialDetection:
 
         ioctl_checks = [c for c in analyzer.hwid_checks if c.algorithm == HWIDAlgorithm.DEVICEIOCONTROL]
 
-        assert len(ioctl_checks) >= 1, (
-            f"FAILED: Binary contains multiple IOCTL codes but found {len(ioctl_checks)}"
-        )
+        assert (
+            ioctl_checks
+        ), f"FAILED: Binary contains multiple IOCTL codes but found {len(ioctl_checks)}"
 
         analyzer.close()
 
@@ -650,9 +649,9 @@ class TestNodeLockDetection:
             f"is NOT detecting node-lock patterns."
         )
 
-        assert len(analyzer.node_lock_patterns) > 0, (
-            f"FAILED: Results claim node_locked=True but node_lock_patterns list is empty"
-        )
+        assert (
+            len(analyzer.node_lock_patterns) > 0
+        ), "FAILED: Results claim node_locked=True but node_lock_patterns list is empty"
 
         analyzer.close()
 
@@ -712,9 +711,7 @@ class TestSystemHardwareExtraction:
 
         analyzer = HardwareIDAnalyzer(analyzer_binary)
 
-        cpu_id = analyzer.extract_hwid_from_system(HWIDType.CPU_ID)
-
-        if cpu_id:
+        if cpu_id := analyzer.extract_hwid_from_system(HWIDType.CPU_ID):
             assert len(cpu_id) > 0, "CPU ID extracted but empty string returned"
             assert isinstance(cpu_id, str)
             logger.info(f"Extracted real CPU ID: {cpu_id}")
@@ -731,9 +728,7 @@ class TestSystemHardwareExtraction:
 
         analyzer = HardwareIDAnalyzer(analyzer_binary)
 
-        mac_address = analyzer.extract_hwid_from_system(HWIDType.MAC_ADDRESS)
-
-        if mac_address:
+        if mac_address := analyzer.extract_hwid_from_system(HWIDType.MAC_ADDRESS):
             assert len(mac_address) > 0
             assert ":" in mac_address or "-" in mac_address
             logger.info(f"Extracted real MAC: {mac_address}")
@@ -748,9 +743,9 @@ class TestSystemHardwareExtraction:
 
         analyzer = HardwareIDAnalyzer(analyzer_binary)
 
-        volume_serial = analyzer.extract_hwid_from_system(HWIDType.VOLUME_SERIAL)
-
-        if volume_serial:
+        if volume_serial := analyzer.extract_hwid_from_system(
+            HWIDType.VOLUME_SERIAL
+        ):
             assert len(volume_serial) == 8
             assert all(c in "0123456789ABCDEF" for c in volume_serial)
             logger.info(f"Extracted volume serial: {volume_serial}")
@@ -765,9 +760,9 @@ class TestSystemHardwareExtraction:
 
         analyzer = HardwareIDAnalyzer(analyzer_binary)
 
-        machine_guid = analyzer.extract_hwid_from_system(HWIDType.MACHINE_GUID)
-
-        if machine_guid:
+        if machine_guid := analyzer.extract_hwid_from_system(
+            HWIDType.MACHINE_GUID
+        ):
             assert len(machine_guid) > 0
             assert "-" in machine_guid
             parts = machine_guid.split("-")

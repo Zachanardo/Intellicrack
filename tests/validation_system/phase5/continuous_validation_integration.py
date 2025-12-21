@@ -324,12 +324,6 @@ class CIPlatformIntegration:
                 self.config["url"],
                 private_token=self.config["token"]
             )
-        elif self.platform == "azure_devops":
-            # Would use azure-devops library
-            pass
-        elif self.platform == "circleci":
-            # Would use CircleCI API
-            pass
 
     def trigger_validation(self, trigger_data: dict) -> str:
         """Trigger validation job on CI platform."""
@@ -406,7 +400,7 @@ class CIPlatformIntegration:
                 }
             else:
                 return {"status": "PENDING"}
-        except:
+        except Exception:
             return {"status": "UNKNOWN"}
 
 
@@ -587,13 +581,11 @@ class ContinuousValidationIntegration:
 
     def _setup_ci_integrations(self) -> dict:
         """Set up CI platform integrations."""
-        integrations = {}
-
-        for platform, config in self.config.get("ci_platforms", {}).items():
-            if config.get("enabled"):
-                integrations[platform] = CIPlatformIntegration(platform, config)
-
-        return integrations
+        return {
+            platform: CIPlatformIntegration(platform, config)
+            for platform, config in self.config.get("ci_platforms", {}).items()
+            if config.get("enabled")
+        }
 
     async def start(self):
         """Start continuous validation system."""
@@ -707,27 +699,28 @@ class ContinuousValidationIntegration:
 
     async def _handle_list_jobs(self, request: web.Request) -> web.Response:
         """List validation jobs."""
-        jobs = []
-
-        # Add active jobs
-        for job in self.scheduler.active_jobs.values():
-            jobs.append({
-                "job_id": job.job_id,
-                "status": job.status.value,
-                "trigger_type": job.trigger_type.value,
-                "created_at": job.created_at.isoformat()
-            })
-
-        # Add recent completed jobs
-        for job in self.scheduler.completed_jobs[-20:]:
-            jobs.append({
+        jobs = [
+            {
                 "job_id": job.job_id,
                 "status": job.status.value,
                 "trigger_type": job.trigger_type.value,
                 "created_at": job.created_at.isoformat(),
-                "completed_at": job.completed_at.isoformat() if job.completed_at else None
-            })
-
+            }
+            for job in self.scheduler.active_jobs.values()
+        ]
+        # Add recent completed jobs
+        jobs.extend(
+            {
+                "job_id": job.job_id,
+                "status": job.status.value,
+                "trigger_type": job.trigger_type.value,
+                "created_at": job.created_at.isoformat(),
+                "completed_at": (
+                    job.completed_at.isoformat() if job.completed_at else None
+                ),
+            }
+            for job in self.scheduler.completed_jobs[-20:]
+        )
         return web.json_response({"jobs": jobs})
 
     async def _handle_metrics(self, request: web.Request) -> web.Response:
@@ -817,7 +810,7 @@ class ContinuousValidationIntegration:
             return False
 
         secret = self.config.get("webhooks", {}).get("github_secret", "").encode()
-        expected = "sha256=" + hmac.new(secret, body, hashlib.sha256).hexdigest()
+        expected = f"sha256={hmac.new(secret, body, hashlib.sha256).hexdigest()}"
 
         return hmac.compare_digest(signature, expected)
 
@@ -915,7 +908,7 @@ class ContinuousValidationIntegration:
                         TriggerType.API,
                         data
                     )
-                except:
+                except Exception:
                     pass
                     # Message parsing may fail, continue processing other messages
 

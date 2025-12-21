@@ -37,12 +37,10 @@ def analyze_test_file(file_path: Path) -> dict[str, Any]:
     test_functions = [f for f in functions if f.name.startswith("test_")]
     fixtures = re.findall(r"@pytest\.fixture[^\n]*\ndef (\w+)", content)
 
-    functions_with_return = sum(1 for f in test_functions if f.returns is not None)
-    functions_with_params = sum(
-        1
-        for f in test_functions
-        if all(arg.annotation is not None for arg in f.args.args if arg.arg != "self")
-    )
+    functions_with_return = sum(bool(f.returns is not None)
+                            for f in test_functions)
+    functions_with_params = sum(bool(all(arg.annotation is not None for arg in f.args.args if arg.arg != "self"))
+                            for f in test_functions)
 
     forbidden_patterns = [
         ("mock", "Mock/MagicMock"),
@@ -60,9 +58,8 @@ def analyze_test_file(file_path: Path) -> dict[str, Any]:
     violations = []
     for pattern, name in forbidden_patterns:
         for i, line in enumerate(lines, 1):
-            if pattern.lower() in line.lower():
-                if not line.strip().startswith("#"):
-                    violations.append((i, name, line.strip()[:80]))
+            if pattern.lower() in line.lower() and not line.strip().startswith("#"):
+                violations.append((i, name, line.strip()[:80]))
 
     real_binary_patterns = [
         r"C:\\Windows\\System32",

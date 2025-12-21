@@ -94,9 +94,7 @@ class SecurityEnforcement:
             from intellicrack.core.config_manager import IntellicrackConfig
 
             config_manager_instance = IntellicrackConfig()
-            config_data: dict[str, Any] = (
-                config_manager_instance._config if hasattr(config_manager_instance, "_config") else {}
-            )
+            config_data: dict[str, Any] = config_manager_instance._config if hasattr(config_manager_instance, "_config") else {}
             logger.debug("SecurityEnforcement: IntellicrackConfig loaded. Config data keys: %s", list(config_data.keys()))
 
             if "security" not in config_data:
@@ -481,7 +479,9 @@ def _secure_pickle_dumps(
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for pickle.dumps.")
-        return cast("bytes", sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback))
+        return cast(
+            "bytes", sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
+        )
 
     if sec.security_config.get("serialization", {}).get("restrict_pickle", True):
         logger.warning("Pickle dumps attempted with restrict_pickle=True, consider using JSON")

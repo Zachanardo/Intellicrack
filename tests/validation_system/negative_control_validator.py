@@ -194,9 +194,9 @@ class NegativeControlValidator:
 
                 # Analyze captured data using netsh trace report
                 try:
-                    # Find the most recent ETL file
-                    etl_files = list(self.evidence_dir.glob("network_capture_*.etl"))
-                    if etl_files:
+                    if etl_files := list(
+                        self.evidence_dir.glob("network_capture_*.etl")
+                    ):
                         latest_etl = max(etl_files, key=lambda x: x.stat().st_mtime)
 
                         # Convert ETL to readable format using netsh
@@ -230,15 +230,16 @@ class NegativeControlValidator:
 
                             import re
                             for i, line in enumerate(report_content.split('\n')):
-                                for pattern in license_patterns:
-                                    if re.search(pattern, line):
-                                        network_attempts.append({
-                                            "timestamp": datetime.now().isoformat(),
-                                            "type": "potential_license_activity",
-                                            "line_number": i + 1,
-                                            "details": line.strip()[:200]
-                                        })
-
+                                network_attempts.extend(
+                                    {
+                                        "timestamp": datetime.now().isoformat(),
+                                        "type": "potential_license_activity",
+                                        "line_number": i + 1,
+                                        "details": line.strip()[:200],
+                                    }
+                                    for pattern in license_patterns
+                                    if re.search(pattern, line)
+                                )
                             # Also look for DNS queries that might be license-related
                             dns_pattern = r'(?i)dns.*query.*'
                             for i, line in enumerate(report_content.split('\n')):
@@ -459,7 +460,7 @@ class NegativeControlValidator:
             metadata_path = self.screenshots_dir / f"{base_name}_metadata.txt"
             with open(metadata_path, 'w') as f:
                 f.write(f"Screenshot capture attempted at {datetime.now().isoformat()}\n")
-                f.write(f"PowerShell result: {result.stderr if result.stderr else 'No error output'}\n")
+                f.write(f"PowerShell result: {result.stderr or 'No error output'}\n")
                 f.write("All screenshot methods failed - screen capture not available\n")
                 resolution_x = screen_width if 'screen_width' in locals() else 'Unknown'
                 resolution_y = screen_height if 'screen_height' in locals() else 'Unknown'
@@ -493,23 +494,18 @@ class NegativeControlValidator:
 
             # Monitor for the timeout period
             start_time = time.time()
-            while time.time() - start_time < timeout:
-                if process.poll() is not None:
-                    # Process has finished
-                    break
-
-                # Collect process information if psutil is available
+            while time.time() - start_time < timeout and not process.poll() is not None:
                 if psutil:
                     try:
                         p = psutil.Process(process.pid)
                         cpu_percent = p.cpu_percent()
                         memory_info = p.memory_info()
-
+            
                         monitoring_data["cpu_usage"].append({
                             "timestamp": datetime.now().isoformat(),
                             "percent": cpu_percent
                         })
-
+            
                         monitoring_data["memory_usage"].append({
                             "timestamp": datetime.now().isoformat(),
                             "rss": memory_info.rss,
@@ -520,7 +516,7 @@ class NegativeControlValidator:
                         break
                     except Exception as e:
                         monitoring_data["error_messages"].append(f"Monitoring error: {e}")
-
+            
                 time.sleep(1)
 
             # Wait for process to complete or terminate it
@@ -591,9 +587,7 @@ class NegativeControlValidator:
 
         # Check Windows Event Log for application errors
         try:
-            # Use PowerShell to query Windows Event Log
-            process_id = process_monitoring_data.get("process_id")
-            if process_id:
+            if process_id := process_monitoring_data.get("process_id"):
                 ps_script = f'''
                 $filter = @{{LogName='Application'; Level=2,3; StartTime=(Get-Date).AddMinutes(-5)}}
                 $events = Get-WinEvent -FilterHashtable $filter -ErrorAction SilentlyContinue
@@ -682,8 +676,9 @@ class NegativeControlValidator:
                     for pattern in license_temp_patterns:
                         try:
                             import glob
-                            matches = glob.glob(os.path.join(temp_path, pattern))
-                            if matches:
+                            if matches := glob.glob(
+                                os.path.join(temp_path, pattern)
+                            ):
                                 logger.info(f"License error temp files found: {len(matches)} files")
                                 license_error_detected = True
                                 break
@@ -694,12 +689,8 @@ class NegativeControlValidator:
         except Exception as temp_error:
             logger.warning(f"Failed to check temporary files for license errors: {temp_error}")
 
-        # Analyze process memory usage patterns that might indicate license checking
-        memory_usage = process_monitoring_data.get("memory_usage", [])
-        if memory_usage:
-            # Look for sudden memory spikes that might indicate license validation
-            memory_values = [entry.get("rss", 0) for entry in memory_usage]
-            if memory_values:
+        if memory_usage := process_monitoring_data.get("memory_usage", []):
+            if memory_values := [entry.get("rss", 0) for entry in memory_usage]:
                 max_memory = max(memory_values)
                 min_memory = min(memory_values)
 
@@ -709,9 +700,7 @@ class NegativeControlValidator:
                     if final_memory < max_memory * 0.5:
                         logger.info("Memory usage pattern suggests possible license validation failure")
 
-        # Check CPU usage patterns
-        cpu_usage = process_monitoring_data.get("cpu_usage", [])
-        if cpu_usage:
+        if cpu_usage := process_monitoring_data.get("cpu_usage", []):
             # Brief high CPU followed by process termination might indicate license check failure
             cpu_values = [entry.get("percent", 0) for entry in cpu_usage]
             if cpu_values and len(cpu_values) < 10:  # Process ran briefly
@@ -806,7 +795,7 @@ class NegativeControlValidator:
 
         test_end_time = datetime.now().isoformat()
 
-        result = NegativeControlResult(
+        return NegativeControlResult(
             software_name=software_name,
             binary_path=binary_path,
             binary_hash=binary_hash,
@@ -818,10 +807,8 @@ class NegativeControlValidator:
             screenshot_path=screenshot_path,
             process_monitoring_data=process_monitoring_data,
             test_valid=test_valid,
-            error_message=error_message
+            error_message=error_message,
         )
-
-        return result
 
     def validate_all_negative_controls(self) -> list[NegativeControlResult]:
         """
@@ -896,25 +883,37 @@ class NegativeControlValidator:
         ]
 
         # Summary statistics
-        refused_execution_count = sum(1 for r in results if r.software_refused_execution)
-        license_error_count = sum(1 for r in results if r.license_error_detected)
-        valid_tests = sum(1 for r in results if r.test_valid)
+        refused_execution_count = sum(bool(r.software_refused_execution)
+                                  for r in results)
+        license_error_count = sum(bool(r.license_error_detected)
+                              for r in results)
+        valid_tests = sum(bool(r.test_valid)
+                      for r in results)
 
         report_lines.append("Summary:")
         report_lines.append(f"  Software Refused Execution: {refused_execution_count}/{len(results)}")
         report_lines.append(f"  License Errors Detected: {license_error_count}/{len(results)}")
-        report_lines.append(f"  Valid Tests: {valid_tests}/{len(results)}")
-        report_lines.append("")
-
-        # Detailed results
-        report_lines.append("Detailed Results:")
-        report_lines.append("-" * 30)
-
+        report_lines.extend(
+            (
+                f"  Valid Tests: {valid_tests}/{len(results)}",
+                "",
+                "Detailed Results:",
+                "-" * 30,
+            )
+        )
         for result in results:
-            report_lines.append(f"Software: {result.software_name}")
-            report_lines.append(f"  Binary Hash: {result.binary_hash[:16]}...")
-            report_lines.append(f"  Test Duration: {result.test_end_time} - {result.test_start_time}")
-            report_lines.append(f"  Software Refused Execution: {result.software_refused_execution}")
+            report_lines.extend(
+                (
+                    f"Software: {result.software_name}",
+                    f"  Binary Hash: {result.binary_hash[:16]}...",
+                )
+            )
+            report_lines.extend(
+                (
+                    f"  Test Duration: {result.test_end_time} - {result.test_start_time}",
+                    f"  Software Refused Execution: {result.software_refused_execution}",
+                )
+            )
             report_lines.append(f"  License Error Detected: {result.license_error_detected}")
             report_lines.append(f"  Network Attempts: {len(result.network_attempts_logged)}")
             report_lines.append(f"  Screenshot: {result.screenshot_path}")
@@ -953,9 +952,7 @@ if __name__ == "__main__":
     print("Negative Control Validator initialized")
     print("Available binaries:")
 
-    # Get available binaries
-    binaries = validator.binary_manager.list_acquired_binaries()
-    if binaries:
+    if binaries := validator.binary_manager.list_acquired_binaries():
         for binary in binaries:
             print(f"  - {binary.get('software_name')}: {binary.get('protection')} {binary.get('version')}")
 

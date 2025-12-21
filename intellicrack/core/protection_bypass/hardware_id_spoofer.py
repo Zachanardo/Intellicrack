@@ -362,9 +362,7 @@ class HardwareIDSpoofer:
                 None,
                 None,
                 None,
-            ) or self.advapi32.OpenServiceW(
-                h_scm, service_name, SERVICE_ALL_ACCESS
-            ):
+            ) or self.advapi32.OpenServiceW(h_scm, service_name, SERVICE_ALL_ACCESS):
                 self.advapi32.StartServiceW(h_service, 0, None)
                 self.advapi32.CloseServiceHandle(h_service)
 
@@ -999,16 +997,22 @@ objInstance.Put_
 
         cpu_vendor = profile_to_use.get("cpu_vendor")
         cpu_id = profile_to_use.get("cpu_id")
-        results = {"cpu": self.spoof_cpu_id(str(cpu_vendor) if cpu_vendor is not None else None, str(cpu_id) if cpu_id is not None else None)}
+        results = {
+            "cpu": self.spoof_cpu_id(str(cpu_vendor) if cpu_vendor is not None else None, str(cpu_id) if cpu_id is not None else None)
+        }
         for mac_entry in profile_to_use.get("mac_addresses", []):
             adapter = mac_entry.get("adapter")
             mac = mac_entry.get("mac")
-            results[f"mac_{adapter}"] = self.spoof_mac_address(str(adapter) if adapter is not None else None, str(mac) if mac is not None else None)
+            results[f"mac_{adapter}"] = self.spoof_mac_address(
+                str(adapter) if adapter is not None else None, str(mac) if mac is not None else None
+            )
 
         for disk_entry in profile_to_use.get("disk_serials", []):
             drive = disk_entry.get("drive")
             serial = disk_entry.get("serial")
-            results[f"disk_{drive}"] = self.spoof_disk_serial(str(drive) if drive is not None else None, str(serial) if serial is not None else None)
+            results[f"disk_{drive}"] = self.spoof_disk_serial(
+                str(drive) if drive is not None else None, str(serial) if serial is not None else None
+            )
 
         mb_manufacturer = profile_to_use.get("motherboard_manufacturer")
         mb_product = profile_to_use.get("motherboard_product")
@@ -1041,10 +1045,7 @@ objInstance.Put_
         }
 
         adapters = self._get_mac_addresses()
-        mac_addresses_list.extend(
-            {"adapter": adapter["name"], "mac": self._generate_random_mac()}
-            for adapter in adapters[:2]
-        )
+        mac_addresses_list.extend({"adapter": adapter["name"], "mac": self._generate_random_mac()} for adapter in adapters[:2])
         disks = self._get_disk_serials()
         for disk in disks[:2]:
             drive = disk.get("drive", "C:\\")

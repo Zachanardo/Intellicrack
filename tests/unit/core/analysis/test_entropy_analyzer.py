@@ -83,7 +83,7 @@ class TestEntropyCalculation(unittest.TestCase):
     def test_encrypted_data_entropy(self):
         """Test entropy of encrypted-like random data."""
         random.seed(42)
-        data = bytes([random.randint(0, 255) for _ in range(1024)])
+        data = bytes(random.randint(0, 255) for _ in range(1024))
         entropy = self.analyzer.calculate_entropy(data)
         self.assertGreater(entropy, 7.5)
 
@@ -148,7 +148,7 @@ class TestEntropyCalculation(unittest.TestCase):
 
     def test_large_data_entropy_accuracy(self):
         """Test entropy calculation accuracy on large data."""
-        data = bytes([i % 256 for i in range(1000000)])
+        data = bytes(i % 256 for i in range(1000000))
         entropy = self.analyzer.calculate_entropy(data)
         self.assertAlmostEqual(entropy, 8.0, places=5)
 
@@ -231,7 +231,7 @@ class TestBinaryFileAnalysis(unittest.TestCase):
         """Test analysis of high entropy file."""
         test_file = Path(self.temp_dir) / "random.bin"
         random.seed(42)
-        test_data = bytes([random.randint(0, 255) for _ in range(4096)])
+        test_data = bytes(random.randint(0, 255) for _ in range(4096))
         test_file.write_bytes(test_data)
 
         result = self.analyzer.analyze_entropy(test_file)
@@ -293,7 +293,7 @@ class TestBinaryFileAnalysis(unittest.TestCase):
         chunks = []
         for i in range(10):
             random.seed(i)
-            chunks.append(bytes([random.randint(0, 255) for _ in range(chunk_size)]))
+            chunks.append(bytes(random.randint(0, 255) for _ in range(chunk_size)))
         test_data = b"".join(chunks)
         test_file.write_bytes(test_data)
 
@@ -312,12 +312,12 @@ class TestBinaryFileAnalysis(unittest.TestCase):
         coff_header = struct.pack("<HHIIIHH", 0x14C, 3, 0, 0, 0, 224, 0x102)
         optional_header = b"\x0B\x01" + b"\x00" * 222
 
-        sections = []
-        sections.append(b".text\x00\x00\x00" + b"\x00" * 32)
-        sections.append(b".data\x00\x00\x00" + b"\x00" * 32)
-        sections.append(b".rsrc\x00\x00\x00" + b"\x00" * 32)
-
-        random_code = bytes([random.randint(0, 255) for _ in range(4096)])
+        sections = [
+            b".text\x00\x00\x00" + b"\x00" * 32,
+            b".data\x00\x00\x00" + b"\x00" * 32,
+            b".rsrc\x00\x00\x00" + b"\x00" * 32,
+        ]
+        random_code = bytes(random.randint(0, 255) for _ in range(4096))
 
         pe_data = (
             dos_header
@@ -478,7 +478,7 @@ class TestPerformanceAndScalability(unittest.TestCase):
         max_times = [0.001, 0.01, 0.1, 1.0]
 
         for size, max_time in zip(sizes, max_times):
-            data = bytes([i % 256 for i in range(size)])
+            data = bytes(i % 256 for i in range(size))
 
             start = time.time()
             entropy = self.analyzer.calculate_entropy(data)
@@ -492,7 +492,7 @@ class TestPerformanceAndScalability(unittest.TestCase):
         import time
 
         test_file = Path(self.temp_dir) / "perf_test.bin"
-        test_data = bytes([i % 256 for i in range(1024 * 1024)])
+        test_data = bytes(i % 256 for i in range(1024 * 1024))
         test_file.write_bytes(test_data)
 
         start = time.time()
@@ -507,7 +507,7 @@ class TestPerformanceAndScalability(unittest.TestCase):
         import tracemalloc
 
         test_file = Path(self.temp_dir) / "memory_test.bin"
-        test_data = bytes([i % 256 for i in range(10 * 1024 * 1024)])
+        test_data = bytes(i % 256 for i in range(10 * 1024 * 1024))
         test_file.write_bytes(test_data)
 
         tracemalloc.start()
@@ -530,7 +530,7 @@ class TestPerformanceAndScalability(unittest.TestCase):
         for i in range(5):
             test_file = Path(self.temp_dir) / f"concurrent_{i}.bin"
             random.seed(i)
-            test_data = bytes([random.randint(0, 255) for _ in range(100 * 1024)])
+            test_data = bytes(random.randint(0, 255) for _ in range(100 * 1024))
             test_file.write_bytes(test_data)
             test_files.append(test_file)
 
@@ -656,7 +656,7 @@ class TestEdgeCasesAndErrorRecovery(unittest.TestCase):
             (b"", 0.0, "low"),
             (bytes(range(256)), 8.0, "high"),
             (b"\x00" * 1000000, 0.0, "low"),
-            (bytes([random.randint(0, 255) for _ in range(1000)]), None, "high"),
+            (bytes(random.randint(0, 255) for _ in range(1000)), None, "high"),
         ]
 
         for data, expected_entropy, expected_class in test_cases:
@@ -702,7 +702,7 @@ class TestMathematicalAccuracy(unittest.TestCase):
             b"ABAB",
             b"ABCDEFGH",
             bytes(range(256)),
-            bytes([random.randint(0, 255) for _ in range(1000)]),
+            bytes(random.randint(0, 255) for _ in range(1000)),
         ]
 
         for data in test_data_sets:
@@ -717,7 +717,7 @@ class TestMathematicalAccuracy(unittest.TestCase):
             b"A",
             b"A" * 1000,
             bytes(range(256)),
-            bytes([random.randint(0, 255) for _ in range(10000)]),
+            bytes(random.randint(0, 255) for _ in range(10000)),
         ]
 
         for data in test_cases:
@@ -743,10 +743,10 @@ class TestMathematicalAccuracy(unittest.TestCase):
 
     def test_floating_point_precision(self):
         """Test floating point precision in calculations."""
-        data = bytes([i % 17 for i in range(1000)])
+        data = bytes(i % 17 for i in range(1000))
         entropy1 = self.analyzer.calculate_entropy(data)
 
-        data = bytes([i % 17 for i in range(1000)])
+        data = bytes(i % 17 for i in range(1000))
         entropy2 = self.analyzer.calculate_entropy(data)
 
         self.assertEqual(entropy1, entropy2)
@@ -759,7 +759,7 @@ class TestMathematicalAccuracy(unittest.TestCase):
             b"A" * 1000,
             b"ABCABC" * 100,
             b"The quick brown fox jumps over the lazy dog" * 10,
-            bytes([random.randint(0, 255) for _ in range(1000)]),
+            bytes(random.randint(0, 255) for _ in range(1000)),
         ]
 
         for data in test_strings:
@@ -793,7 +793,7 @@ class TestIntegrationScenarios(unittest.TestCase):
         test_file = Path(self.temp_dir) / "suspicious.exe"
 
         pe_header = b"MZ" + b"\x00" * 100
-        encrypted_payload = bytes([random.randint(0, 255) for _ in range(4096)])
+        encrypted_payload = bytes(random.randint(0, 255) for _ in range(4096))
         normal_code = b"\x90" * 1000 + b"\xC3" * 100
 
         suspicious_binary = pe_header + encrypted_payload + normal_code
@@ -809,7 +809,7 @@ class TestIntegrationScenarios(unittest.TestCase):
         test_file = Path(self.temp_dir) / "licensed.exe"
 
         license_check = b"LICENSE_KEY_CHECK" + b"\x00" * 16
-        encrypted_key = bytes([i ^ 0xAA for i in range(256)])
+        encrypted_key = bytes(i ^ 0xAA for i in range(256))
         validation_code = b"\x48\x8B\x45\x08" * 100
 
         binary_data = license_check + encrypted_key + validation_code
@@ -845,7 +845,7 @@ class TestIntegrationScenarios(unittest.TestCase):
 
         xor_key = 0x5A
         original_code = b"mov eax, 1234h\npush ebx\ncall function\n" * 100
-        obfuscated = bytes([b ^ xor_key for b in original_code])
+        obfuscated = bytes(b ^ xor_key for b in original_code)
 
         binary_data = b"MZ\x90\x00" + obfuscated
         test_file.write_bytes(binary_data)
@@ -860,8 +860,8 @@ class TestIntegrationScenarios(unittest.TestCase):
         test_file = Path(self.temp_dir) / "protected.exe"
 
         checksum_data = struct.pack("<IIII", 0xDEADBEEF, 0xCAFEBABE, 0x1337C0DE, 0xFEEDFACE)
-        integrity_check = bytes([i for i in range(256)])
-        encrypted_section = bytes([random.randint(0, 255) for _ in range(2048)])
+        integrity_check = bytes(list(range(256)))
+        encrypted_section = bytes(random.randint(0, 255) for _ in range(2048))
 
         protected_binary = checksum_data + integrity_check + encrypted_section
         test_file.write_bytes(protected_binary)

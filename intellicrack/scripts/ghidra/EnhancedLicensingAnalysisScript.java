@@ -2,16 +2,40 @@
 // It analyzes each function, using decompilation, P-code, CFG, and cross-reference analysis,
 // and then outputs a JSON object that Intellicrack can capture and send to Mixtral.
 
-import ghidra.app.decompiler.*;
+import ghidra.app.decompiler.DecompInterface;
+import ghidra.app.decompiler.DecompileOptions;
+import ghidra.app.decompiler.DecompileResults;
 import ghidra.app.script.GhidraScript;
-import ghidra.program.model.address.*;
-import ghidra.program.model.block.*;
-import ghidra.program.model.listing.*;
+import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
+import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.block.BasicBlockModel;
+import ghidra.program.model.block.CodeBlock;
+import ghidra.program.model.block.CodeBlockIterator;
+import ghidra.program.model.listing.CodeUnit;
+import ghidra.program.model.listing.Function;
+import ghidra.program.model.listing.FunctionIterator;
+import ghidra.program.model.listing.FunctionManager;
+import ghidra.program.model.listing.Instruction;
+import ghidra.program.model.listing.InstructionIterator;
+import ghidra.program.model.listing.Program;
 import ghidra.program.model.pcode.HighFunction;
 import ghidra.program.model.pcode.PcodeOp;
-import ghidra.program.model.symbol.*;
-import java.io.*;
-import java.util.*;
+import ghidra.program.model.symbol.Reference;
+import ghidra.program.model.symbol.ReferenceIterator;
+import ghidra.program.model.symbol.ReferenceManager;
+import ghidra.program.model.symbol.Symbol;
+import ghidra.program.model.symbol.SymbolIterator;
+import ghidra.program.model.symbol.SymbolTable;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 public class EnhancedLicensingAnalysisScript extends GhidraScript {
 
@@ -74,7 +98,7 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
       DecompileResults decompResults = decompInterface.decompileFunction(func, 60, monitor);
       if (decompResults != null && decompResults.decompileCompleted()) {
         String decompiledCode = decompResults.getDecompiledFunction().getC();
-        if (!isSuspect && decompiledCode.toLowerCase().contains("license")) {
+        if (!isSuspect && decompiledCode.toLowerCase(Locale.ROOT).contains("license")) {
           isSuspect = true;
         }
         // Take a snippet (first 300 characters).
@@ -152,7 +176,7 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
           funcData.put("cfg_edges", edgeCount);
         }
       } catch (Exception ex) {
-        // If CFG analysis fails, skip adding CFG info.
+        printf("    Warning: CFG analysis failed for function: %s%n", ex.getMessage());
       }
     }
 
@@ -354,6 +378,13 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
    */
   private void generateComprehensiveReports(List<Map<String, Object>> flaggedFunctions) {
     try {
+      // Log summary of flagged functions using StringWriter for serialization
+      StringWriter summaryWriter = new StringWriter();
+      summaryWriter.write("Flagged Functions Summary: ");
+      summaryWriter.write(String.valueOf(flaggedFunctions.size()));
+      summaryWriter.write(" functions flagged for license analysis\n");
+      println(summaryWriter.toString());
+
       // Create reports directory
       File reportsDir = new File(program.getExecutablePath()).getParentFile();
       if (reportsDir == null) {
@@ -454,7 +485,9 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
         writer.println("  Type: " + codeUnit.getClass().getSimpleName());
         writer.println("  Length: " + codeUnit.getLength());
         count++;
-        if (count >= 10) break;
+        if (count >= 10) {
+          break;
+        }
       }
     }
   }
@@ -528,10 +561,18 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
   }
 
   private String determineLicenseCategory(String symbolName) {
-    if (symbolName.contains("trial")) return "TRIAL";
-    if (symbolName.contains("serial")) return "SERIAL";
-    if (symbolName.contains("activation")) return "ACTIVATION";
-    if (symbolName.contains("registration")) return "REGISTRATION";
+    if (symbolName.contains("trial")) {
+      return "TRIAL";
+    }
+    if (symbolName.contains("serial")) {
+      return "SERIAL";
+    }
+    if (symbolName.contains("activation")) {
+      return "ACTIVATION";
+    }
+    if (symbolName.contains("registration")) {
+      return "REGISTRATION";
+    }
     return "GENERAL_LICENSE";
   }
 
@@ -583,14 +624,14 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
   private boolean analyzeCodeUnitForLicense(CodeUnit codeUnit) {
     // Analyze individual code unit for license-related content
     String comment = codeUnit.getComment(CodeUnit.EOL_COMMENT);
-    if (comment != null && containsLicenseKeywords(comment.toLowerCase())) {
+    if (comment != null && containsLicenseKeywords(comment.toLowerCase(Locale.ROOT))) {
       return true;
     }
 
     // Check labels
     Symbol[] symbols = symbolTable.getSymbols(codeUnit.getAddress());
     for (Symbol symbol : symbols) {
-      if (containsLicenseKeywords(symbol.getName().toLowerCase())) {
+      if (containsLicenseKeywords(symbol.getName().toLowerCase(Locale.ROOT))) {
         return true;
       }
     }
@@ -603,10 +644,12 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
     try {
       byte[] data = new byte[16];
       int bytesRead = program.getMemory().getBytes(address, data);
-      if (bytesRead < 16) return false;
+      if (bytesRead < 16) {
+        return false;
+      }
 
       // Look for common license validation patterns
-      String dataStr = new String(data).toLowerCase();
+      String dataStr = new String(data).toLowerCase(Locale.ROOT);
       return containsLicenseKeywords(dataStr);
     } catch (Exception e) {
       return false;
@@ -618,11 +661,17 @@ public class EnhancedLicensingAnalysisScript extends GhidraScript {
     try {
       byte[] data = new byte[32];
       program.getMemory().getBytes(address, data);
-      String dataStr = new String(data).toLowerCase();
+      String dataStr = new String(data).toLowerCase(Locale.ROOT);
 
-      if (dataStr.contains("trial")) return "TRIAL_PATTERN";
-      if (dataStr.contains("license")) return "LICENSE_PATTERN";
-      if (dataStr.contains("serial")) return "SERIAL_PATTERN";
+      if (dataStr.contains("trial")) {
+        return "TRIAL_PATTERN";
+      }
+      if (dataStr.contains("license")) {
+        return "LICENSE_PATTERN";
+      }
+      if (dataStr.contains("serial")) {
+        return "SERIAL_PATTERN";
+      }
       return "GENERAL_PATTERN";
     } catch (Exception e) {
       return "UNKNOWN_PATTERN";

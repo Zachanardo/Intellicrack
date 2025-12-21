@@ -55,11 +55,11 @@ def analyze_ssl_interceptor_coverage():
         for node in ast.walk(source_tree):
             if isinstance(node, ast.ClassDef):
                 classes.append(node.name)
-                # Get methods within class
-                methods = []
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef):
-                        methods.append(item.name)
+                methods = [
+                    item.name
+                    for item in node.body
+                    if isinstance(item, ast.FunctionDef)
+                ]
                 print(f" Class: {node.name}")
                 for method in methods:
                     print(f"   └── Method: {method}")
@@ -91,12 +91,12 @@ def analyze_ssl_interceptor_coverage():
         for node in ast.walk(test_tree):
             if isinstance(node, ast.ClassDef):
                 test_classes.append(node.name)
-                # Get test methods within class
-                methods = []
-                for item in node.body:
-                    if isinstance(item, ast.FunctionDef) and item.name.startswith('test_'):
-                        methods.append(item.name)
-
+                methods = [
+                    item.name
+                    for item in node.body
+                    if isinstance(item, ast.FunctionDef)
+                    and item.name.startswith('test_')
+                ]
                 print(f"🧪 Test Class: {node.name}")
                 for method in methods:
                     print(f"   └── Test: {method}")

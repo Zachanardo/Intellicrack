@@ -276,7 +276,7 @@ class TestKeygenWorker:
         stop_thread.join()
 
         assert len(result_keys) < 1000
-        assert len(result_keys) > 0
+        assert result_keys
 
     def test_binary_analysis_operation(
         self, qapp: Any, temp_binary_file: Path
@@ -307,7 +307,7 @@ class TestKeygenWorker:
         worker.error_occurred.connect(lambda msg: error_messages.append(msg))
         worker.run()
 
-        assert len(error_messages) > 0
+        assert error_messages
 
     def test_batch_generation_with_custom_length(
         self, qapp: Any, temp_binary_file: Path
@@ -400,8 +400,7 @@ class TestKeygenDialog:
                 assert row_count > 0
 
                 for row in range(min(5, row_count)):
-                    key_item = dialog.batch_table.item(row, 1)
-                    if key_item:
+                    if key_item := dialog.batch_table.item(row, 1):
                         assert len(key_item.text()) > 0
 
         dialog.close()
@@ -480,7 +479,7 @@ class TestKeygenDialog:
             dialog.batch_clear_btn.click()
             QTest.qWait(100)
 
-        assert len(dialog.generated_keys) == 0
+        assert not dialog.generated_keys
         if dialog.batch_table:
             assert dialog.batch_table.rowCount() == 0
 

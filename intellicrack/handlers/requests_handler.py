@@ -630,11 +630,7 @@ except ImportError as e:
         if cookies:
             if cookie_header := "; ".join(f"{k}={v}" for k, v in cookies.items()):
                 current_cookie = req_headers.get("Cookie", "")
-                req_headers["Cookie"] = (
-                    f"{current_cookie}; {cookie_header}"
-                    if current_cookie
-                    else cookie_header
-                )
+                req_headers["Cookie"] = f"{current_cookie}; {cookie_header}" if current_cookie else cookie_header
 
         body: bytes | None = None
         if json_data is not None:

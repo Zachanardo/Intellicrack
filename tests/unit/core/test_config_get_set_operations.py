@@ -590,10 +590,10 @@ class TestConfigGetSetOperations(unittest.TestCase):
             thread.join()
 
         # Verify no errors occurred
-        assert len(errors) == 0, f"Concurrent access errors: {errors}"
+        assert not errors, f"Concurrent access errors: {errors}"
 
         # Verify some data was written and read
-        assert len(results) > 0
+        assert results
 
         # Verify data integrity
         for i in range(3):

@@ -110,7 +110,7 @@ class TestLicenseFileHandler:
         event = FileCreatedEvent("/path/to/document.pdf")
         handler.on_created(event)
 
-        assert len(captured_events) == 0
+        assert not captured_events
 
     def test_directory_events_ignored(self, handler: LicenseFileHandler, captured_events: list[tuple[EventType, str, str]]) -> None:
         """Directory events are ignored."""
@@ -119,7 +119,7 @@ class TestLicenseFileHandler:
         event = DirCreatedEvent("/path/to/license_dir")
         handler.on_created(event)
 
-        assert len(captured_events) == 0
+        assert not captured_events
 
 
 class TestFileMonitor:
@@ -192,7 +192,7 @@ class TestFileMonitor:
 
         matching_events = [e for e in captured_events if e.event_type == EventType.CREATE and "test_license.lic" in str(e.details)]
 
-        assert len(matching_events) > 0
+        assert matching_events
 
     def test_file_modification_detected(self, monitor: FileMonitor, temp_watch_dir: Path) -> None:
         """File modification is detected and emitted as event."""
@@ -217,7 +217,7 @@ class TestFileMonitor:
 
         matching_events = [e for e in captured_events if e.event_type == EventType.MODIFY and "modify_test.key" in str(e.details)]
 
-        assert len(matching_events) > 0
+        assert matching_events
 
     def test_file_deletion_detected(self, monitor: FileMonitor, temp_watch_dir: Path) -> None:
         """File deletion is detected and emitted as event."""
@@ -242,7 +242,7 @@ class TestFileMonitor:
 
         matching_events = [e for e in captured_events if e.event_type == EventType.DELETE and "delete_test.lic" in str(e.details)]
 
-        assert len(matching_events) > 0
+        assert matching_events
 
     def test_event_source_is_file(self, monitor: FileMonitor, temp_watch_dir: Path) -> None:
         """Events have correct source set to FILE."""
@@ -287,7 +287,7 @@ class TestFileMonitor:
 
         critical_events = [e for e in captured_events if e.severity == EventSeverity.CRITICAL]
 
-        assert len(critical_events) > 0
+        assert critical_events
 
     def test_multiple_files_monitored(self, monitor: FileMonitor, temp_watch_dir: Path) -> None:
         """Multiple file events are all captured."""
@@ -370,7 +370,7 @@ class TestEdgeCases:
 
         monitor.stop()
 
-        assert len(captured_events) > 0
+        assert captured_events
 
     def test_unicode_filename_handling(self, temp_watch_dir: Path) -> None:
         """Monitor handles Unicode filenames."""
@@ -392,7 +392,7 @@ class TestEdgeCases:
 
         monitor.stop()
 
-        assert len(captured_events) > 0
+        assert captured_events
 
     def test_start_stop_multiple_times(self, temp_watch_dir: Path) -> None:
         """Monitor can be started and stopped multiple times."""
