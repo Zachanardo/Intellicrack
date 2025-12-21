@@ -82,17 +82,18 @@ class CommercialLicenseAnalyzer:
 
         """
         self.binary_path = binary_path
-        self._flexlm_parser = None  # Lazy loaded
-        self._dongle_emulator = None  # Lazy loaded
-        self._protocol_fingerprinter = None  # Lazy loaded
+        self._flexlm_parser: Any = None  # Lazy loaded
+        self._dongle_emulator: Any = None  # Lazy loaded
+        self._protocol_fingerprinter: Any = None  # Lazy loaded
+        self._binary_data: bytes | None = None  # Cached binary data
 
         # Detection results
-        self.detected_systems = []
-        self.license_servers = []
-        self.protection_features = {}
+        self.detected_systems: list[str] = []
+        self.license_servers: list[dict[str, Any]] = []
+        self.protection_features: dict[str, Any] = {}
 
         # Bypass strategies
-        self.bypass_strategies = {}
+        self.bypass_strategies: dict[str, Any] = {}
 
     @property
     def flexlm_parser(self) -> object:
@@ -146,13 +147,17 @@ class CommercialLicenseAnalyzer:
         if binary_path:
             self.binary_path = binary_path
 
-        results = {
+        from typing import cast
+
+        results: dict[str, Any] = {
             "detected_systems": [],
             "license_servers": [],
             "protection_features": {},
             "bypass_strategies": {},
             "confidence": 0.0,
         }
+        detected_systems = cast(list[str], results["detected_systems"])
+        bypass_strategies = cast(dict[str, Any], results["bypass_strategies"])
 
         if not self.binary_path or not Path(self.binary_path).exists():
             logger.warning("Binary path invalid: %s", self.binary_path)
@@ -160,18 +165,18 @@ class CommercialLicenseAnalyzer:
 
         if flexlm_detected := self._detect_flexlm():
             logger.debug("FlexLM detected: %s", flexlm_detected)
-            results["detected_systems"].append("FlexLM")
-            results["bypass_strategies"]["flexlm"] = self._generate_flexlm_bypass()
+            detected_systems.append("FlexLM")
+            bypass_strategies["flexlm"] = self._generate_flexlm_bypass()
 
         if hasp_detected := self._detect_hasp():
             logger.debug("HASP detected: %s", hasp_detected)
-            results["detected_systems"].append("HASP")
-            results["bypass_strategies"]["hasp"] = self._generate_hasp_bypass()
+            detected_systems.append("HASP")
+            bypass_strategies["hasp"] = self._generate_hasp_bypass()
 
         if codemeter_detected := self._detect_codemeter():
             logger.debug("CodeMeter detected: %s", codemeter_detected)
-            results["detected_systems"].append("CodeMeter")
-            results["bypass_strategies"]["codemeter"] = self._generate_codemeter_bypass()
+            detected_systems.append("CodeMeter")
+            bypass_strategies["codemeter"] = self._generate_codemeter_bypass()
 
         # Analyze network protocols
         protocol_analysis = self._analyze_network_protocols()
@@ -219,6 +224,8 @@ class CommercialLicenseAnalyzer:
         ]
 
         try:
+            if self.binary_path is None:
+                return False
             with open(self.binary_path, "rb") as f:
                 binary_data = f.read()
 
@@ -235,7 +242,7 @@ class CommercialLicenseAnalyzer:
                     return True
 
         except Exception as e:
-            logger.error("Error detecting FlexLM: %s", e, exc_info=True)
+            logger.exception("Error detecting FlexLM: %s", e)
 
         return False
 
@@ -268,6 +275,8 @@ class CommercialLicenseAnalyzer:
         ]
 
         try:
+            if self.binary_path is None:
+                return False
             with open(self.binary_path, "rb") as f:
                 binary_data = f.read()
 
@@ -284,7 +293,7 @@ class CommercialLicenseAnalyzer:
                     return True
 
         except Exception as e:
-            logger.error("Error detecting HASP: %s", e, exc_info=True)
+            logger.exception("Error detecting HASP: %s", e)
 
         return False
 
@@ -318,6 +327,8 @@ class CommercialLicenseAnalyzer:
         ]
 
         try:
+            if self.binary_path is None:
+                return False
             with open(self.binary_path, "rb") as f:
                 binary_data = f.read()
 
@@ -334,7 +345,7 @@ class CommercialLicenseAnalyzer:
                     return True
 
         except Exception as e:
-            logger.error("Error detecting CodeMeter: %s", e, exc_info=True)
+            logger.exception("Error detecting CodeMeter: %s", e)
 
         return False
 
@@ -345,11 +356,14 @@ class CommercialLicenseAnalyzer:
             Network protocol analysis results
 
         """
-        analysis = {"servers": [], "features": {}, "protocols": []}
+        analysis: dict[str, Any] = {"servers": [], "features": {}, "protocols": []}
 
         # Use protocol fingerprinter to detect license servers
         if self.binary_path:
-            fingerprint = self.protocol_fingerprinter.fingerprint_packet(b"", {"binary_path": self.binary_path})
+            from typing import cast
+
+            pf = cast(Any, self.protocol_fingerprinter)
+            fingerprint = pf.fingerprint_packet(b"", {"binary_path": self.binary_path})
 
             if fingerprint and fingerprint.get("protocol_type") in [
                 "FlexLM",
@@ -382,7 +396,9 @@ class CommercialLicenseAnalyzer:
         """
         import re
 
-        bypass = {
+        from typing import cast
+
+        bypass: dict[str, Any] = {
             "method": "flexlm_emulation",
             "server_port": 27000,  # Default FlexLM port
             "vendor_daemon": "vendor",
@@ -391,16 +407,22 @@ class CommercialLicenseAnalyzer:
             "hooks": [],
             "emulation_script": "",
         }
+        hooks = cast(list[Any], bypass["hooks"])
+        patches = cast(list[Any], bypass["patches"])
 
         # Analyze binary for FlexLM patterns
+        binary_data: bytes
         if self.binary_path and hasattr(self, "_binary_data"):
-            binary_data = self._binary_data
+            binary_data = cast(bytes, self._binary_data)
         else:
             # Load binary for analysis
             try:
-                with open(self.binary_path, "rb") as f:
-                    binary_data = f.read()
-                    self._binary_data = binary_data
+                if self.binary_path is None:
+                    binary_data = b""
+                else:
+                    with open(self.binary_path, "rb") as f:
+                        binary_data = f.read()
+                        self._binary_data = binary_data
             except OSError:
                 binary_data = b""
 
@@ -477,7 +499,7 @@ class CommercialLicenseAnalyzer:
                             "description": f"Dynamic hook for {api_name}",
                         }
 
-                    bypass["hooks"].append(hook)
+                    hooks.append(hook)
 
         # Find and patch license validation checks dynamically
         check_patterns = [
@@ -510,7 +532,7 @@ class CommercialLicenseAnalyzer:
                         "replacement": replacement.hex(),
                         "description": f"Patch license check at {hex(index)}",
                     }
-                    bypass["patches"].append(patch)
+                    patches.append(patch)
 
                 pos = index + 1
 
@@ -520,7 +542,7 @@ class CommercialLicenseAnalyzer:
 
         # Generate dynamic emulation script
         bypass["emulation_script"] = self._generate_flexlm_script()
-        bypass["frida_script"] = self._generate_dynamic_flexlm_frida_script(bypass["hooks"], bypass["patches"])
+        bypass["frida_script"] = self._generate_dynamic_flexlm_frida_script(hooks, patches)
 
         return bypass
 
@@ -564,7 +586,8 @@ class CommercialLicenseAnalyzer:
             if b"\x68" in push_pattern:  # push imm32
                 idx = push_pattern.rfind(b"\x68")
                 if idx >= 0 and idx + 5 <= len(push_pattern):
-                    return struct.unpack("<I", push_pattern[idx + 1 : idx + 5])[0]
+                    unpacked = struct.unpack("<I", push_pattern[idx + 1 : idx + 5])
+                    return int(unpacked[0])
         return 0
 
     def _generate_checkout_hook(self, feature_id: int, version: str) -> bytes:
@@ -624,13 +647,13 @@ class CommercialLicenseAnalyzer:
 
         return any(indicator in context for indicator in license_indicators)
 
-    def _extract_flexlm_features(self, binary_data: bytes) -> list:
+    def _extract_flexlm_features(self, binary_data: bytes) -> list[str]:
         """Extract FlexLM features from binary."""
         # Look for FEATURE lines
         feature_pattern = rb"FEATURE\s+(\w+)\s+\w+\s+[\d.]+\s+"
         return [match.group(1).decode("latin-1", errors="ignore") for match in re.finditer(feature_pattern, binary_data)]
 
-    def _generate_dynamic_flexlm_frida_script(self, hooks: list, patches: list) -> str:
+    def _generate_dynamic_flexlm_frida_script(self, hooks: list[Any], patches: list[Any]) -> str:
         """Generate Frida script for dynamic hooking."""
         script = "// Dynamic FlexLM bypass script\n"
 
@@ -667,7 +690,9 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         """
         import re
 
-        bypass = {
+        from typing import cast
+
+        bypass: dict[str, Any] = {
             "method": "hasp_emulation",
             "dongle_type": "HASP HL",
             "vendor_id": 0x0529,
@@ -677,15 +702,21 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             "virtual_device": {},
             "emulation_script": "",
         }
+        hooks_hasp = cast(list[Any], bypass["hooks"])
+        patches_hasp = cast(list[Any], bypass.get("patches", []))
 
         # Load and analyze binary
-        if self.binary_path and hasattr(self, "_binary_data"):
+        binary_data: bytes
+        if self.binary_path and hasattr(self, "_binary_data") and self._binary_data is not None:
             binary_data = self._binary_data
         else:
             try:
-                with open(self.binary_path, "rb") as f:
-                    binary_data = f.read()
-                    self._binary_data = binary_data
+                if self.binary_path is None:
+                    binary_data = b""
+                else:
+                    with open(self.binary_path, "rb") as f:
+                        binary_data = f.read()
+                        self._binary_data = binary_data
             except OSError:
                 binary_data = b""
 
@@ -702,7 +733,8 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             bypass["product_id"] = product_id
 
         # Get dynamic dongle configuration
-        dongle_config = self.dongle_emulator.get_dongle_config("hasp")
+        dongle_emu = cast(Any, self.dongle_emulator)
+        dongle_config = dongle_emu.get_dongle_config("hasp")
         dongle_config["vendor_id"] = bypass["vendor_id"]
         dongle_config["product_id"] = bypass["product_id"]
 
@@ -788,7 +820,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                             "description": f"Dynamic hook for {api_name}",
                         }
 
-                    bypass["hooks"].append(hook)
+                    hooks_hasp.append(hook)
 
         # Find and patch HASP validation checks
         validation_patterns = [
@@ -802,6 +834,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         ]
 
         bypass["patches"] = []
+        patches_hasp = cast(list[Any], bypass["patches"])
         for pattern, replacement in validation_patterns:
             pos = 0
             while True:
@@ -816,7 +849,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
                         "replacement": replacement.hex(),
                         "description": f"Patch HASP check at {hex(index)}",
                     }
-                    bypass["patches"].append(patch)
+                    patches_hasp.append(patch)
 
                 pos = index + 1
 
@@ -838,7 +871,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
 
         # Generate emulation scripts
         bypass["emulation_script"] = self._generate_hasp_script()
-        bypass["frida_script"] = self._generate_dynamic_hasp_frida_script(bypass["hooks"], bypass["patches"])
+        bypass["frida_script"] = self._generate_dynamic_hasp_frida_script(hooks_hasp, patches_hasp)
         bypass["api_hooks"] = bypass["hooks"]  # Alias for compatibility
 
         return bypass
@@ -876,8 +909,10 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         if match := re.search(usb_pattern, binary_data):
             data = match.group()
             if len(data) >= 4:
-                vendor_id = struct.unpack("<H", data[:2])[0]
-                product_id = struct.unpack("<H", data[2:4])[0]
+                vendor_unpacked = struct.unpack("<H", data[:2])
+                product_unpacked = struct.unpack("<H", data[2:4])
+                vendor_id = int(vendor_unpacked[0])
+                product_id = int(product_unpacked[0])
 
         return vendor_id, product_id
 
@@ -891,7 +926,8 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             if b"\x68" in search_area:  # push imm32
                 idx = search_area.rfind(b"\x68")
                 if idx >= 0 and idx + 5 <= len(search_area):
-                    vendor_code = struct.unpack("<I", search_area[idx + 1 : idx + 5])[0]
+                    vendor_unpacked = struct.unpack("<I", search_area[idx + 1 : idx + 5])
+                    vendor_code = int(vendor_unpacked[0])
                     if vendor_code not in {0, 4294967295}:
                         return vendor_code
 
@@ -1057,7 +1093,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
 
         return any(indicator in context for indicator in hasp_indicators)
 
-    def _extract_hasp_features(self, binary_data: bytes) -> list:
+    def _extract_hasp_features(self, binary_data: bytes) -> list[int]:
         """Extract HASP features from binary."""
         features = []
 
@@ -1101,16 +1137,16 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
 
         return 4096  # Default
 
-    def _generate_dynamic_hasp_frida_script(self, hooks: list, patches: list) -> str:
+    def _generate_dynamic_hasp_frida_script(self, hooks: list[Any], patches: list[Any]) -> str:
         """Generate Frida script for dynamic HASP hooking."""
-        script = "// Dynamic HASP bypass script\n// Generated based on binary analysis\n\n"
-        # Add module loading
-        script += """
+        script = (
+            "// Dynamic HASP bypass script\n// Generated based on binary analysis\n\n"
+            + """
 var hasp_module = Process.getModuleByName(Process.platform === 'windows' ? 'hasp_windows.dll' : 'libhasp.so');
 var base = hasp_module.base;
 
 """
-
+        )
         # Add hooks
         for hook in hooks:
             script += f"""
@@ -1150,7 +1186,9 @@ console.log('[HASP] Patched at {patch["offset"]}');
         """
         import re
 
-        bypass = {
+        from typing import cast
+
+        bypass: dict[str, Any] = {
             "method": "codemeter_emulation",
             "container_type": "CmStick",
             "firm_code": 100000,
@@ -1160,15 +1198,21 @@ console.log('[HASP] Patched at {patch["offset"]}');
             "patches": [],
             "emulation_script": "",
         }
+        hooks_cm = cast(list[Any], bypass["hooks"])
+        patches_cm = cast(list[Any], bypass["patches"])
 
         # Load and analyze binary
-        if self.binary_path and hasattr(self, "_binary_data"):
+        binary_data: bytes
+        if self.binary_path and hasattr(self, "_binary_data") and self._binary_data is not None:
             binary_data = self._binary_data
         else:
             try:
-                with open(self.binary_path, "rb") as f:
-                    binary_data = f.read()
-                    self._binary_data = binary_data
+                if self.binary_path is None:
+                    binary_data = b""
+                else:
+                    with open(self.binary_path, "rb") as f:
+                        binary_data = f.read()
+                        self._binary_data = binary_data
             except OSError:
                 binary_data = b""
 
@@ -1187,7 +1231,8 @@ console.log('[HASP] Patched at {patch["offset"]}');
             bypass["product_code"] = product_code
 
         # Get dynamic dongle configuration
-        dongle_config = self.dongle_emulator.get_dongle_config("codemeter")
+        dongle_emu_cm = cast(Any, self.dongle_emulator)
+        dongle_config = dongle_emu_cm.get_dongle_config("codemeter")
         dongle_config["firm_code"] = bypass["firm_code"]
         dongle_config["product_code"] = bypass["product_code"]
 
@@ -1286,7 +1331,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                             "description": f"Dynamic hook for {api_name}",
                         }
 
-                    bypass["hooks"].append(hook)
+                    hooks_cm.append(hook)
 
         # Find and patch CodeMeter validation checks dynamically
         validation_patterns = [
@@ -1301,7 +1346,6 @@ console.log('[HASP] Patched at {patch["offset"]}');
             (b"\x3d\x00\x02\x00\x00", b"\x31\xc0\x90\x90\x90"),  # cmp eax,200h (CM_OK)
         ]
 
-        bypass["patches"] = []
         for pattern, replacement in validation_patterns:
             pos = 0
             while True:
@@ -1316,7 +1360,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                         "replacement": replacement.hex(),
                         "description": f"Patch CodeMeter check at {hex(index)}",
                     }
-                    bypass["patches"].append(patch)
+                    patches_cm.append(patch)
 
                 pos = index + 1
 
@@ -1341,7 +1385,8 @@ console.log('[HASP] Patched at {patch["offset"]}');
 
         # Generate emulation scripts
         bypass["emulation_script"] = self._generate_codemeter_script()
-        bypass["frida_script"] = self._generate_dynamic_cm_frida_script(bypass["hooks"], bypass["patches"], bypass["virtual_container"])
+        virtual_container = cast(dict[Any, Any], bypass["virtual_container"])
+        bypass["frida_script"] = self._generate_dynamic_cm_frida_script(hooks_cm, patches_cm, virtual_container)
 
         return bypass
 
@@ -1402,7 +1447,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
         product_pattern = rb'ProductCode["\s]*[:=]\s*(\d+)'
         if match := re.search(product_pattern, binary_data):
             with contextlib.suppress(ValueError, AttributeError):
-                product_code = int(match.group(1))
+                product_code = int(match[1])
 
         return firm_code, product_code
 
@@ -1760,10 +1805,10 @@ console.log('[HASP] Patched at {patch["offset"]}');
 
         return any(indicator in context for indicator in cm_indicators)
 
-    def _extract_cm_features(self, binary_data: bytes) -> tuple[list, list]:
+    def _extract_cm_features(self, binary_data: bytes) -> tuple[list[int], list[int]]:
         """Extract CodeMeter features and product items."""
-        features = []
-        product_items = []
+        features: list[int] = []
+        product_items: list[int] = []
 
         # Look for feature codes
         feature_pattern = rb'FeatureCode["\s]*[:=]\s*(\d+)'
@@ -1814,7 +1859,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
                 return int(match[1])
         return 0x7FFFFFFF  # Default: max units
 
-    def _generate_dynamic_cm_frida_script(self, hooks: list, patches: list, container: dict) -> str:
+    def _generate_dynamic_cm_frida_script(self, hooks: list[Any], patches: list[Any], container: dict[Any, Any]) -> str:
         """Generate Frida script for dynamic CodeMeter hooking."""
         script = "// Dynamic CodeMeter bypass script\n"
         script += f"// Container: {container['type']}\n"
@@ -1918,8 +1963,8 @@ try {{
 
         return script
 
-    def _generate_hasp_info_response(self) -> bytes:
-        """Generate dynamic HASP info response bytes based on binary analysis.
+    def _generate_hasp_info_response_v2(self) -> bytes:
+        """Generate dynamic HASP info response bytes based on binary analysis (v2).
 
         Returns:
             Binary response for hasp_get_info
@@ -2021,8 +2066,8 @@ try {{
 
         return info
 
-    def _generate_codemeter_license_info(self) -> bytes:
-        """Generate dynamic CodeMeter license info response based on binary analysis.
+    def _generate_codemeter_license_info_v2(self) -> bytes:
+        """Generate dynamic CodeMeter license info response based on binary analysis (v2).
 
         Returns:
             Binary response for CmGetLicenseInfo
@@ -2158,8 +2203,8 @@ try {{
 
         return info
 
-    def _generate_hasp_encrypt_patch(self) -> bytes:
-        """Generate x86-64 assembly patch for HASP encryption.
+    def _generate_hasp_encrypt_patch_v2(self) -> bytes:
+        """Generate x86-64 assembly patch for HASP encryption (v2).
 
         Returns:
             Binary patch bytes for XOR encryption with dynamic key

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import io
 import struct
-from typing import TYPE_CHECKING, Any, BinaryIO, Optional, Union
+from typing import TYPE_CHECKING, Any, BinaryIO, cast
 
 from intellicrack.utils.logger import logger
 
@@ -38,6 +38,9 @@ implementations for essential operations used in Intellicrack.
 """
 
 # PyElfTools availability detection and import handling
+HAS_PYELFTOOLS: bool
+PYELFTOOLS_VERSION: str | None
+
 try:
     from elftools.common.exceptions import DWARFError, ELFError, ELFParseError
 
@@ -70,14 +73,15 @@ try:
             """
             return s.encode("utf-8") if isinstance(s, str) else s
 
-    from elftools.construct import Container, Struct
-
-    # Try to import DWARF constants - they may have moved or changed
     try:
-        from elftools.dwarf.constants import DW_TAG_compile_unit
-    except ImportError:
-        # Create fallback if not available
-        DW_TAG_compile_unit = 0x11  # Standard DWARF value
+        from elftools.construct import Container, Struct  # type: ignore[attr-defined]
+    except (ImportError, AttributeError):
+        from construct import Container, Struct  # type: ignore[no-redef]
+
+    try:
+        from elftools.dwarf.constants import DW_TAG_compile_unit  # type: ignore[attr-defined]
+    except (ImportError, AttributeError):
+        DW_TAG_compile_unit: int = 0x11  # type: ignore[no-redef]
 
     from elftools.dwarf.die import DIE
     from elftools.dwarf.dwarfinfo import DWARFInfo
@@ -86,43 +90,41 @@ try:
     from elftools.elf.dynamic import Dynamic, DynamicSection, DynamicSegment
     from elftools.elf.elffile import ELFFile
 
-    # Try to import enums - they may have changed structure
     try:
-        from elftools.elf.enums import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE
-    except ImportError:
-        # Create fallback enums if not available
-        ENUM_D_TAG = None
-        ENUM_E_TYPE = None
-        ENUM_SH_TYPE = None
+        from elftools.elf.enums import ENUM_D_TAG, ENUM_E_TYPE, ENUM_SH_TYPE  # type: ignore[attr-defined]
+    except (ImportError, AttributeError):
+        ENUM_D_TAG: Any = None  # type: ignore[no-redef]
+        ENUM_E_TYPE: Any = None  # type: ignore[no-redef]
+        ENUM_SH_TYPE: Any = None  # type: ignore[no-redef]
 
     from elftools.elf.relocation import Relocation, RelocationSection
     from elftools.elf.sections import NoteSection, Section, StringTableSection, Symbol, SymbolTableSection
     from elftools.elf.segments import InterpSegment, NoteSegment, Segment
 
-    HAS_PYELFTOOLS: bool = True
+    HAS_PYELFTOOLS = True
     import elftools
 
-    PYELFTOOLS_VERSION: str = getattr(elftools, "__version__", "unknown")
+    PYELFTOOLS_VERSION = getattr(elftools, "__version__", "unknown")
 
 except ImportError as e:
     logger.error("PyElfTools not available, using fallback implementations: %s", e)
-    HAS_PYELFTOOLS: bool = False
-    PYELFTOOLS_VERSION: str | None = None
+    HAS_PYELFTOOLS = False
+    PYELFTOOLS_VERSION = None
 
     # Production-ready fallback ELF parsing implementations
 
     # ELF constants
-    class E_FLAGS:  # noqa: N801
+    class E_FLAGS:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """ELF header flags."""
 
-    class P_FLAGS:  # noqa: N801
+    class P_FLAGS:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """Program header flags."""
 
         PF_X = 0x1  # Execute
         PF_W = 0x2  # Write
         PF_R = 0x4  # Read
 
-    class SH_FLAGS:  # noqa: N801
+    class SH_FLAGS:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """Section header flags."""
 
         SHF_WRITE = 0x1
@@ -136,7 +138,7 @@ except ImportError as e:
         SHF_GROUP = 0x200
         SHF_TLS = 0x400
 
-    class SHN_INDICES:  # noqa: N801
+    class SHN_INDICES:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """Special section indices."""
 
         SHN_UNDEF = 0
@@ -144,7 +146,7 @@ except ImportError as e:
         SHN_COMMON = 0xFFF2
         SHN_XINDEX = 0xFFFF
 
-    class ENUM_E_TYPE:  # noqa: N801
+    class ENUM_E_TYPE:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """ELF file types."""
 
         ET_NONE = 0
@@ -153,7 +155,7 @@ except ImportError as e:
         ET_DYN = 3
         ET_CORE = 4
 
-    class ENUM_SH_TYPE:  # noqa: N801
+    class ENUM_SH_TYPE:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """Section types."""
 
         SHT_NULL = 0
@@ -169,7 +171,7 @@ except ImportError as e:
         SHT_SHLIB = 10
         SHT_DYNSYM = 11
 
-    class ENUM_D_TAG:  # noqa: N801
+    class ENUM_D_TAG:  # type: ignore[no-redef]  # noqa: N801, RUF100
         """Dynamic section tags."""
 
         DT_NULL = 0
@@ -198,13 +200,13 @@ except ImportError as e:
         DT_JMPREL = 23
 
     # Exception classes
-    class ELFError(Exception):
+    class ELFError(Exception):  # type: ignore[no-redef]
         """Base ELF error."""
 
-    class ELFParseError(ELFError):
+    class ELFParseError(ELFError):  # type: ignore[no-redef]
         """ELF parsing error."""
 
-    class DWARFError(Exception):
+    class DWARFError(Exception):  # type: ignore[no-redef]
         """DWARF error."""
 
     # Utility functions
@@ -233,7 +235,7 @@ except ImportError as e:
         return data.encode("latin-1") if isinstance(data, str) else data
 
     # Container class for construct compatibility
-    class Container(dict):
+    class Container(dict[str, Any]):  # type: ignore[no-redef]
         """Container for parsed structures."""
 
         def __init__(self, **kwargs: object) -> None:
@@ -246,7 +248,7 @@ except ImportError as e:
             super().__init__(**kwargs)
             self.__dict__.update(kwargs)
 
-    class Struct:
+    class Struct:  # type: ignore[no-redef]
         """Structure parser."""
 
         name: str
@@ -514,6 +516,7 @@ except ImportError as e:
             for i, sh in enumerate(self._section_headers):
                 name = self._get_string(sh.sh_name) if self._string_table else f".section{i}"
 
+                section: Any
                 if sh.sh_type == ENUM_SH_TYPE.SHT_STRTAB:
                     section = FallbackStringTableSection(sh, name, self.stream)
                 elif sh.sh_type in (ENUM_SH_TYPE.SHT_SYMTAB, ENUM_SH_TYPE.SHT_DYNSYM):
@@ -703,7 +706,7 @@ except ImportError as e:
                 Size of the section data in bytes.
 
             """
-            return self.header.sh_size
+            return int(self.header.sh_size)
 
         @property
         def data_alignment(self) -> int:
@@ -713,7 +716,7 @@ except ImportError as e:
                 Alignment requirement for the section in bytes.
 
             """
-            return self.header.sh_addralign
+            return int(self.header.sh_addralign)
 
     class FallbackStringTableSection(FallbackSection):
         """String table section."""
@@ -1041,7 +1044,8 @@ except ImportError as e:
             while offset + entry_size <= len(data):
                 d_tag, d_val = struct.unpack(entry_format, data[offset : offset + entry_size])
 
-                if d_tag == ENUM_D_TAG.DT_NULL:
+                dt_null = getattr(ENUM_D_TAG, "DT_NULL", 0)
+                if d_tag == dt_null:
                     break
 
                 dyn = FallbackDynamic(d_tag, d_val)
@@ -1082,7 +1086,7 @@ except ImportError as e:
             data = self.data()
             offset = 0
 
-            while offset < len(data) and not offset + 12 > len(data):
+            while offset < len(data) and offset + 12 <= len(data):
                 n_namesz, n_descsz, n_type = struct.unpack("<III", data[offset : offset + 12])
                 offset += 12
 
@@ -1135,7 +1139,7 @@ except ImportError as e:
                 Segment type value.
 
             """
-            return self.header.p_type
+            return int(self.header.p_type)
 
         @property
         def p_flags(self) -> int:
@@ -1145,7 +1149,7 @@ except ImportError as e:
                 Segment flags value.
 
             """
-            return self.header.p_flags
+            return int(self.header.p_flags)
 
         @property
         def p_offset(self) -> int:
@@ -1155,7 +1159,7 @@ except ImportError as e:
                 Offset in file where segment data begins.
 
             """
-            return self.header.p_offset
+            return int(self.header.p_offset)
 
         @property
         def p_vaddr(self) -> int:
@@ -1165,7 +1169,7 @@ except ImportError as e:
                 Virtual address where segment should be loaded.
 
             """
-            return self.header.p_vaddr
+            return int(self.header.p_vaddr)
 
         @property
         def p_paddr(self) -> int:
@@ -1175,7 +1179,7 @@ except ImportError as e:
                 Physical address for segment loading.
 
             """
-            return self.header.p_paddr
+            return int(self.header.p_paddr)
 
         @property
         def p_filesz(self) -> int:
@@ -1185,7 +1189,7 @@ except ImportError as e:
                 Size of segment data in file.
 
             """
-            return self.header.p_filesz
+            return int(self.header.p_filesz)
 
         @property
         def p_memsz(self) -> int:
@@ -1195,7 +1199,7 @@ except ImportError as e:
                 Size of segment in memory.
 
             """
-            return self.header.p_memsz
+            return int(self.header.p_memsz)
 
         @property
         def p_align(self) -> int:
@@ -1205,7 +1209,7 @@ except ImportError as e:
                 Alignment requirement for the segment.
 
             """
-            return self.header.p_align
+            return int(self.header.p_align)
 
     class FallbackInterpSegment(FallbackSegment):
         """Interpreter segment."""
@@ -1234,7 +1238,7 @@ except ImportError as e:
             data = self.data()
             offset = 0
 
-            while offset < len(data) and not offset + 12 > len(data):
+            while offset < len(data) and offset + 12 <= len(data):
                 n_namesz, n_descsz, n_type = struct.unpack("<III", data[offset : offset + 12])
                 offset += 12
 
@@ -1324,26 +1328,33 @@ except ImportError as e:
             """
             return iter([])
 
-    def describe_e_type(e_type: int) -> str:
+    def describe_e_type(e_type: Any, elffile: Any = None) -> str:  # type: ignore[misc]
         """Describe ELF file type.
 
         Args:
             e_type: ELF file type value.
+            elffile: Optional ELF file object (for compatibility).
 
         Returns:
             Human-readable description of the ELF file type.
 
         """
+        et_none = getattr(ENUM_E_TYPE, "ET_NONE", 0)
+        et_rel = getattr(ENUM_E_TYPE, "ET_REL", 1)
+        et_exec = getattr(ENUM_E_TYPE, "ET_EXEC", 2)
+        et_dyn = getattr(ENUM_E_TYPE, "ET_DYN", 3)
+        et_core = getattr(ENUM_E_TYPE, "ET_CORE", 4)
+
         types = {
-            ENUM_E_TYPE.ET_NONE: "NONE (No file type)",
-            ENUM_E_TYPE.ET_REL: "REL (Relocatable file)",
-            ENUM_E_TYPE.ET_EXEC: "EXEC (Executable file)",
-            ENUM_E_TYPE.ET_DYN: "DYN (Shared object file)",
-            ENUM_E_TYPE.ET_CORE: "CORE (Core file)",
+            et_none: "NONE (No file type)",
+            et_rel: "REL (Relocatable file)",
+            et_exec: "EXEC (Executable file)",
+            et_dyn: "DYN (Shared object file)",
+            et_core: "CORE (Core file)",
         }
         return types.get(e_type, f"Unknown type {e_type}")
 
-    def describe_p_type(p_type: int) -> str:
+    def describe_p_type(p_type: Any) -> str:  # type: ignore[misc]
         """Describe program header type.
 
         Args:
@@ -1365,7 +1376,7 @@ except ImportError as e:
         }
         return types.get(p_type, f"Unknown type {p_type}")
 
-    def describe_sh_type(sh_type: int) -> str:
+    def describe_sh_type(sh_type: Any) -> str:  # type: ignore[misc]
         """Describe section header type.
 
         Args:
@@ -1375,57 +1386,72 @@ except ImportError as e:
             Human-readable description of the section header type.
 
         """
+        sht_null = getattr(ENUM_SH_TYPE, "SHT_NULL", 0)
+        sht_progbits = getattr(ENUM_SH_TYPE, "SHT_PROGBITS", 1)
+        sht_symtab = getattr(ENUM_SH_TYPE, "SHT_SYMTAB", 2)
+        sht_strtab = getattr(ENUM_SH_TYPE, "SHT_STRTAB", 3)
+        sht_rela = getattr(ENUM_SH_TYPE, "SHT_RELA", 4)
+        sht_hash = getattr(ENUM_SH_TYPE, "SHT_HASH", 5)
+        sht_dynamic = getattr(ENUM_SH_TYPE, "SHT_DYNAMIC", 6)
+        sht_note = getattr(ENUM_SH_TYPE, "SHT_NOTE", 7)
+        sht_nobits = getattr(ENUM_SH_TYPE, "SHT_NOBITS", 8)
+        sht_rel = getattr(ENUM_SH_TYPE, "SHT_REL", 9)
+        sht_shlib = getattr(ENUM_SH_TYPE, "SHT_SHLIB", 10)
+        sht_dynsym = getattr(ENUM_SH_TYPE, "SHT_DYNSYM", 11)
+
         types = {
-            ENUM_SH_TYPE.SHT_NULL: "NULL",
-            ENUM_SH_TYPE.SHT_PROGBITS: "PROGBITS",
-            ENUM_SH_TYPE.SHT_SYMTAB: "SYMTAB",
-            ENUM_SH_TYPE.SHT_STRTAB: "STRTAB",
-            ENUM_SH_TYPE.SHT_RELA: "RELA",
-            ENUM_SH_TYPE.SHT_HASH: "HASH",
-            ENUM_SH_TYPE.SHT_DYNAMIC: "DYNAMIC",
-            ENUM_SH_TYPE.SHT_NOTE: "NOTE",
-            ENUM_SH_TYPE.SHT_NOBITS: "NOBITS",
-            ENUM_SH_TYPE.SHT_REL: "REL",
-            ENUM_SH_TYPE.SHT_SHLIB: "SHLIB",
-            ENUM_SH_TYPE.SHT_DYNSYM: "DYNSYM",
+            sht_null: "NULL",
+            sht_progbits: "PROGBITS",
+            sht_symtab: "SYMTAB",
+            sht_strtab: "STRTAB",
+            sht_rela: "RELA",
+            sht_hash: "HASH",
+            sht_dynamic: "DYNAMIC",
+            sht_note: "NOTE",
+            sht_nobits: "NOBITS",
+            sht_rel: "REL",
+            sht_shlib: "SHLIB",
+            sht_dynsym: "DYNSYM",
         }
         return types.get(sh_type, f"Unknown type {sh_type}")
 
     # DWARF constants
     DW_TAG_compile_unit = 0x11
 
-    # Assign classes
-    ELFFile = FallbackELFFile
-    Section = FallbackSection
-    StringTableSection = FallbackStringTableSection
-    SymbolTableSection = FallbackSymbolTableSection
-    Symbol = FallbackSymbol
-    RelocationSection = FallbackRelocationSection
-    Relocation = FallbackRelocation
-    DynamicSection = FallbackDynamicSection
-    Dynamic = FallbackDynamic
-    NoteSection = FallbackNoteSection
-    Segment = FallbackSegment
-    InterpSegment = FallbackInterpSegment
-    NoteSegment = FallbackNoteSegment
-    DynamicSegment = FallbackSegment  # Alias
-    DWARFInfo = FallbackDWARFInfo
-    DIE = FallbackDIE
+    ELFFile = cast(type[Any], FallbackELFFile)  # type: ignore[misc]
+    Section = cast(type[Any], FallbackSection)  # type: ignore[misc]
+    StringTableSection = cast(type[Any], FallbackStringTableSection)  # type: ignore[misc]
+    SymbolTableSection = cast(type[Any], FallbackSymbolTableSection)  # type: ignore[misc]
+    Symbol = cast(type[Any], FallbackSymbol)  # type: ignore[misc]
+    RelocationSection = cast(type[Any], FallbackRelocationSection)  # type: ignore[misc]
+    Relocation = cast(type[Any], FallbackRelocation)  # type: ignore[misc]
+    DynamicSection = cast(type[Any], FallbackDynamicSection)  # type: ignore[misc]
+    Dynamic = cast(type[Any], FallbackDynamic)  # type: ignore[misc]
+    NoteSection = cast(type[Any], FallbackNoteSection)  # type: ignore[misc]
+    Segment = cast(type[Any], FallbackSegment)  # type: ignore[misc]
+    InterpSegment = cast(type[Any], FallbackInterpSegment)  # type: ignore[misc]
+    NoteSegment = cast(type[Any], FallbackNoteSegment)  # type: ignore[misc]
+    DynamicSegment = cast(type[Any], FallbackSegment)  # type: ignore[misc]
+    DWARFInfo = cast(type[Any], FallbackDWARFInfo)  # type: ignore[misc]
+    DIE = cast(type[Any], FallbackDIE)  # type: ignore[misc]
 
     # Create module references for compatibility
     class FallbackElftools:
         """Fallback elftools module."""
 
-    elftools = FallbackElftools()
-    elffile = ELFFile  # Alias for compatibility
+    elftools_fallback: Any = FallbackElftools()
+    elffile_fallback: Any = FallbackELFFile
 
 # Ensure exports are available at module level
-elftools: Any
-elffile: type[ELFFile]
+elftools_instance: Any
+elffile_instance: Any
 
-if not HAS_PYELFTOOLS:
-    elftools = elftools if "elftools" in locals() else None
-elffile = ELFFile
+if HAS_PYELFTOOLS:
+    elftools_instance = elftools
+    elffile_instance = ELFFile
+else:
+    elftools_instance = elftools_fallback
+    elffile_instance = elffile_fallback
 # Export all pyelftools objects and availability flag
 __all__ = [
     "Container",
@@ -1463,7 +1489,7 @@ __all__ = [
     "describe_e_type",
     "describe_p_type",
     "describe_sh_type",
-    "elffile",
-    "elftools",
+    "elffile_instance",
+    "elftools_instance",
     "str2bytes",
 ]

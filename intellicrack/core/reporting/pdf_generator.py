@@ -55,7 +55,7 @@ try:
 
     REPORTLAB_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in pdf_generator: %s", e)
+    logger.exception("Import error in pdf_generator: %s", e)
     REPORTLAB_AVAILABLE = False
 
 # Import matplotlib and pdfkit from common imports
@@ -67,7 +67,7 @@ try:
 
     PYQT_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in pdf_generator: %s", e)
+    logger.exception("Import error in pdf_generator: %s", e)
     PYQT_AVAILABLE = False
     QWidget = object  # type: ignore
 
@@ -200,7 +200,7 @@ class PDFReportGenerator:
             }
             self.sections[section_index]["subsections"].append(subsection)
         else:
-            self.logger.error("Invalid section index: %s", section_index)
+            self.logger.exception("Invalid section index: %s", section_index)
 
     def generate_report(
         self,
@@ -274,7 +274,7 @@ class PDFReportGenerator:
             try:
                 from reportlab.lib import colors
             except ImportError as e:
-                self.logger.error("Import error in pdf_generator: %s", e)
+                self.logger.exception("Import error in pdf_generator: %s", e)
                 # Fallback when reportlab is not available
                 return None
 
@@ -451,8 +451,8 @@ class PDFReportGenerator:
             return output_path
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating comprehensive PDF report: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Error generating comprehensive PDF report: %s", e)
+            self.logger.exception(traceback.format_exc())
             return None
 
     def _generate_vulnerability_report(
@@ -543,7 +543,7 @@ class PDFReportGenerator:
                     pe.close()
                 else:
                     error_msg = "pefile not available"
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
                     raise ImportError(error_msg)
 
             except (OSError, ValueError, RuntimeError) as e:
@@ -592,7 +592,7 @@ class PDFReportGenerator:
                         chart.legend.fontName = "Helvetica"
                         chart.legend.fontSize = 8
                 except AttributeError as e:
-                    logger.error("Attribute error in pdf_generator: %s", e)
+                    logger.exception("Attribute error in pdf_generator: %s", e)
             chart.categoryAxis.labels.angle = 30
             chart.categoryAxis.labels.fontSize = 8
 
@@ -618,8 +618,8 @@ class PDFReportGenerator:
             )
             return False
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in PE section analysis: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Error in PE section analysis: %s", e)
+            self.logger.exception(traceback.format_exc())
             return False
 
     def generate_html_report(self, binary_path: str, analysis_results: dict[str, Any], report_type: str = "comprehensive") -> str | None:
@@ -766,14 +766,14 @@ class PDFReportGenerator:
                     self.logger.info("Converted HTML report to PDF: %s", pdf_path)
                     return pdf_path
                 except (OSError, ValueError, RuntimeError) as e:
-                    self.logger.error("Error converting HTML to PDF: %s", e)
+                    self.logger.exception("Error converting HTML to PDF: %s", e)
                     return report_path
 
             return report_path
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating HTML report: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Error generating HTML report: %s", e)
+            self.logger.exception(traceback.format_exc())
             return None
 
     def export_analysis(
@@ -804,7 +804,7 @@ class PDFReportGenerator:
                 analysis_results = getattr(self.app, "analyze_results", {})
 
             if not binary_path or not analysis_results:
-                self.logger.error("Missing binary path or analysis results for export")
+                self.logger.exception("Missing binary path or analysis results for export")
                 return False
 
             # Generate appropriate export based on format
@@ -825,11 +825,11 @@ class PDFReportGenerator:
             if format_type.lower() == "csv":
                 return self._export_csv(binary_path, analysis_results, output_path)
 
-            self.logger.error(f"Unsupported export format: {format_type}")
+            self.logger.exception("Unsupported export format: %s", format_type)
             return False
 
         except Exception as e:
-            self.logger.error(f"Export error: {e}")
+            self.logger.exception("Export error: %s", e)
             return False
 
     def _export_json(self, binary_path: str, analysis_results: dict[str, Any], output_path: str | None = None) -> bool:
@@ -860,11 +860,11 @@ class PDFReportGenerator:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(export_data, f, indent=2, default=str, ensure_ascii=False)
 
-            self.logger.info(f"JSON export completed: {output_path}")
+            self.logger.info("JSON export completed: %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"JSON export error: {e}")
+            self.logger.exception("JSON export error: %s", e)
             return False
 
     def _export_xml(self, binary_path: str, analysis_results: dict[str, Any], output_path: str | None = None) -> bool:
@@ -884,11 +884,14 @@ class PDFReportGenerator:
                 f"    <binary_path>{self._xml_escape(binary_path)}</binary_path>",
             ]
             xml_content.append(f"    <binary_name>{self._xml_escape(os.path.basename(binary_path))}</binary_name>")
-            xml_content.extend((
-                f"    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>",
-                "    <intellicrack_version>1.0.0</intellicrack_version>",
-            ))
-            xml_content.extend(("  </metadata>", "  <analysis_results>"))
+            xml_content.extend(
+                (
+                    f"    <export_timestamp>{datetime.datetime.now().isoformat()}</export_timestamp>",
+                    "    <intellicrack_version>1.0.0</intellicrack_version>",
+                    "  </metadata>",
+                    "  <analysis_results>",
+                )
+            )
             xml_content.extend(self._dict_to_xml(analysis_results, indent="    "))
             xml_content.append("  </analysis_results>")
 
@@ -896,19 +899,16 @@ class PDFReportGenerator:
             summary = self._generate_analysis_summary(analysis_results)
             xml_content.append("  <summary>")
             xml_content.extend(self._dict_to_xml(summary, indent="    "))
-            xml_content.append("  </summary>")
-
-            xml_content.append("</intellicrack_analysis>")
-
+            xml_content.extend(("  </summary>", "</intellicrack_analysis>"))
             # Write XML file
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write("\n".join(xml_content))
 
-            self.logger.info(f"XML export completed: {output_path}")
+            self.logger.info("XML export completed: %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"XML export error: {e}")
+            self.logger.exception("XML export error: %s", e)
             return False
 
     def _export_csv(self, binary_path: str, analysis_results: dict[str, Any], output_path: str | None = None) -> bool:
@@ -965,11 +965,11 @@ class PDFReportGenerator:
                 writer = csv.writer(f)
                 writer.writerows(csv_data)
 
-            self.logger.info(f"CSV export completed: {output_path}")
+            self.logger.info("CSV export completed: %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"CSV export error: {e}")
+            self.logger.exception("CSV export error: %s", e)
             return False
 
     def _sanitize_for_json(self, obj: object) -> object:
@@ -1078,11 +1078,10 @@ class PDFReportGenerator:
 
         if self.pdfkit_available:
             try:
-                wkhtmltopdf_path = self._find_wkhtmltopdf()
-                config = None
-                if wkhtmltopdf_path:
+                if wkhtmltopdf_path := self._find_wkhtmltopdf():
                     config = pdfkit.configuration(wkhtmltopdf=wkhtmltopdf_path)
-
+                else:
+                    config = None
                 options = {
                     "page-size": self.report_config.get("page_size", "letter").upper(),
                     "margin-top": "0.75in",
@@ -1109,9 +1108,9 @@ class PDFReportGenerator:
             try:
                 return self._convert_html_to_pdf_reportlab(html_content, output_path)
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("ReportLab HTML conversion failed: %s", e)
+                self.logger.exception("ReportLab HTML conversion failed: %s", e)
 
-        self.logger.error("No PDF generation backend available for HTML conversion")
+        self.logger.exception("No PDF generation backend available for HTML conversion")
         return None
 
     def _find_wkhtmltopdf(self) -> str | None:
@@ -1123,8 +1122,7 @@ class PDFReportGenerator:
         """
         import shutil
 
-        wkhtmltopdf_path = shutil.which("wkhtmltopdf")
-        if wkhtmltopdf_path:
+        if wkhtmltopdf_path := shutil.which("wkhtmltopdf"):
             return wkhtmltopdf_path
 
         if platform.system() == "Windows":
@@ -1133,27 +1131,17 @@ class PDFReportGenerator:
                 r"C:\Program Files (x86)\wkhtmltopdf\bin\wkhtmltopdf.exe",
                 os.path.expanduser(r"~\AppData\Local\wkhtmltopdf\bin\wkhtmltopdf.exe"),
             ]
-            for path in common_paths:
-                if os.path.isfile(path):
-                    return path
         elif platform.system() == "Darwin":
             common_paths = [
                 "/usr/local/bin/wkhtmltopdf",
                 "/opt/homebrew/bin/wkhtmltopdf",
             ]
-            for path in common_paths:
-                if os.path.isfile(path):
-                    return path
         else:
             common_paths = [
                 "/usr/bin/wkhtmltopdf",
                 "/usr/local/bin/wkhtmltopdf",
             ]
-            for path in common_paths:
-                if os.path.isfile(path):
-                    return path
-
-        return None
+        return next((path for path in common_paths if os.path.isfile(path)), None)
 
     def _convert_html_to_pdf_reportlab(self, html_content: str, output_path: str) -> str | None:
         """Convert HTML to PDF using ReportLab as fallback.
@@ -1193,38 +1181,42 @@ class PDFReportGenerator:
             text_content = re.sub(r"<style[^>]*>.*?</style>", "", html_content, flags=re.DOTALL | re.IGNORECASE)
             text_content = re.sub(r"<script[^>]*>.*?</script>", "", text_content, flags=re.DOTALL | re.IGNORECASE)
 
-            title_match = re.search(r"<title[^>]*>(.*?)</title>", text_content, re.IGNORECASE | re.DOTALL)
-            if title_match:
-                title_text = re.sub(r"<[^>]+>", "", title_match.group(1)).strip()
-                if title_text:
-                    content.append(Paragraph(title_text, styles["Title"]))
-                    content.append(Spacer(1, 0.2 * inch))
-
+            if title_match := re.search(
+                r"<title[^>]*>(.*?)</title>",
+                text_content,
+                re.IGNORECASE | re.DOTALL,
+            ):
+                if title_text := re.sub(
+                    r"<[^>]+>", "", title_match.group(1)
+                ).strip():
+                    content.extend((Paragraph(title_text, styles["Title"]), Spacer(1, 0.2 * inch)))
             h1_matches = re.findall(r"<h1[^>]*>(.*?)</h1>", text_content, re.IGNORECASE | re.DOTALL)
             for h1_text in h1_matches:
-                clean_text = re.sub(r"<[^>]+>", "", h1_text).strip()
-                if clean_text:
-                    content.append(Paragraph(clean_text, styles["Heading1"]))
-                    content.append(Spacer(1, 0.1 * inch))
-
+                if clean_text := re.sub(r"<[^>]+>", "", h1_text).strip():
+                    content.extend(
+                        (
+                            Paragraph(clean_text, styles["Heading1"]),
+                            Spacer(1, 0.1 * inch),
+                        )
+                    )
             h2_matches = re.findall(r"<h2[^>]*>(.*?)</h2>", text_content, re.IGNORECASE | re.DOTALL)
             for h2_text in h2_matches:
-                clean_text = re.sub(r"<[^>]+>", "", h2_text).strip()
-                if clean_text:
-                    content.append(Paragraph(clean_text, styles["Heading2"]))
-                    content.append(Spacer(1, 0.1 * inch))
-
+                if clean_text := re.sub(r"<[^>]+>", "", h2_text).strip():
+                    content.extend(
+                        (
+                            Paragraph(clean_text, styles["Heading2"]),
+                            Spacer(1, 0.1 * inch),
+                        )
+                    )
             p_matches = re.findall(r"<p[^>]*>(.*?)</p>", text_content, re.IGNORECASE | re.DOTALL)
             for p_text in p_matches:
-                clean_text = re.sub(r"<[^>]+>", "", p_text).strip()
-                if clean_text:
+                if clean_text := re.sub(r"<[^>]+>", "", p_text).strip():
                     content.append(Paragraph(clean_text, styles["Normal"]))
                     content.append(Spacer(1, 0.05 * inch))
 
             table_matches = re.findall(r"<table[^>]*>(.*?)</table>", text_content, re.IGNORECASE | re.DOTALL)
             for table_html in table_matches:
-                table_data = self._parse_html_table(table_html)
-                if table_data:
+                if table_data := self._parse_html_table(table_html):
                     table = Table(table_data)
                     table.setStyle(
                         TableStyle([
@@ -1243,8 +1235,7 @@ class PDFReportGenerator:
 
             if not content:
                 stripped_text = re.sub(r"<[^>]+>", " ", text_content)
-                stripped_text = re.sub(r"\s+", " ", stripped_text).strip()
-                if stripped_text:
+                if stripped_text := re.sub(r"\s+", " ", stripped_text).strip():
                     content.append(Paragraph(stripped_text, styles["Normal"]))
 
             if content:
@@ -1256,7 +1247,7 @@ class PDFReportGenerator:
             return None
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("ReportLab HTML-to-PDF conversion error: %s", e)
+            self.logger.exception("ReportLab HTML-to-PDF conversion error: %s", e)
             return None
 
     def _parse_html_table(self, table_html: str) -> list[list[str]]:
@@ -1314,16 +1305,16 @@ class PDFReportGenerator:
                         vuln_count = summary.get("vulnerabilities_found", 0)
                         summary["vulnerabilities_found"] = cast("int", vuln_count) + 1
 
-            # Look for license checks
-            license_keywords = ["license", "activation", "serial", "key"]
             if isinstance(analysis_results, dict):
+                # Look for license checks
+                license_keywords = ["license", "activation", "serial", "key"]
                 for key, value in analysis_results.items():
                     if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in license_keywords):
                         license_count = summary.get("license_checks", 0)
                         summary["license_checks"] = cast("int", license_count) + 1
 
         except Exception as e:
-            logger.error("Exception in pdf_generator: %s", e)
+            logger.exception("Exception in pdf_generator: %s", e)
 
         return summary
 
@@ -1468,7 +1459,7 @@ def run_report_generation(app: ApplicationInstance) -> None:
 
                 app.update_output.emit(f"[Report] Opened report: {report_path}")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in pdf_generator: %s", e)
+                logger.exception("Error in pdf_generator: %s", e)
                 app.update_output.emit(f"[Report] Error opening report: {e}")
     else:
         app.update_output.emit("[Report] Failed to generate report")

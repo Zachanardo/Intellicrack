@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 try:
     from intellicrack.handlers.psutil_handler import psutil
 except ImportError as e:
-    logger.error("Import error in system_utils: %s", e)
+    logger.exception("Import error in system_utils: %s", e)
     psutil = None
 
 try:
@@ -45,7 +45,7 @@ try:
 
     PIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in system_utils: %s", e)
+    logger.exception("Import error in system_utils: %s", e)
     Image = None
     ImageDraw = None
     PIL_AVAILABLE = False
@@ -66,7 +66,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
 
     """
     if psutil is None:
-        logger.error("psutil is not installed. Cannot search for processes.")
+        logger.exception("psutil is not installed. Cannot search for processes.")
         return None
 
     target_name = os.path.basename(binary_path).lower()
@@ -99,7 +99,7 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
                         },
                     )
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error iterating processes: %s", e)
+        logger.exception("Error iterating processes: %s", e)
         return None
 
     if not potential_pids:
@@ -222,16 +222,16 @@ def run_command(
         )
 
         if result.returncode != 0:
-            logger.error("Command failed with return code %s", result.returncode)
-            logger.error("stderr: %s", result.stderr)
+            logger.exception("Command failed with return code %s", result.returncode)
+            logger.exception("stderr: %s", result.stderr)
 
         return result
 
     except subprocess.TimeoutExpired:
-        logger.error("Command timed out after %s seconds: %s", timeout, command, exc_info=True)
+        logger.exception("Command timed out after %s seconds: %s", timeout, command)
         raise
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running command '%s': %s", command, e, exc_info=True)
+        logger.exception("Error running command '%s': %s", command, e)
         raise
 
 
@@ -273,7 +273,7 @@ def kill_process(pid: int, force: bool = False) -> bool:
 
     """
     if psutil is None:
-        logger.error("psutil is not installed. Cannot kill process.")
+        logger.exception("psutil is not installed. Cannot kill process.")
         return False
 
     try:
@@ -290,10 +290,10 @@ def kill_process(pid: int, force: bool = False) -> bool:
         logger.warning("Process %s does not exist", pid)
         return False
     except psutil.AccessDenied:
-        logger.error("Access denied when trying to kill process %s", pid, exc_info=True)
+        logger.exception("Access denied when trying to kill process %s", pid)
         return False
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error killing process %s: %s", pid, e, exc_info=True)
+        logger.exception("Error killing process %s: %s", pid, e)
         return False
 
 
@@ -396,7 +396,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             ps_command = f'Start-Process -FilePath "cmd" -ArgumentList "/c {command}" -Verb RunAs -Wait'
             powershell_path = shutil.which("powershell")
             if not powershell_path:
-                logger.error("PowerShell not found in PATH")
+                logger.exception("PowerShell not found in PATH")
                 return False, "PowerShell not available"
 
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
@@ -416,7 +416,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
         return result.returncode == 0
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running command as admin: %s", e, exc_info=True)
+        logger.exception("Error running command as admin: %s", e)
         return False
 
 
@@ -437,7 +437,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
             return None
 
         if not os.path.exists(exe_path):
-            logger.error("Executable not found: %s", exe_path)
+            logger.exception("Executable not found: %s", exe_path)
             return None
 
         # Default output path
@@ -502,7 +502,7 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
             except ImportError:
                 logger.warning("win32api not available, trying alternative method")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Windows icon extraction failed: %s", e, exc_info=True)
+                logger.exception("Windows icon extraction failed: %s", e)
 
         # Cross-platform fallback: Try to extract from PE file
         try:
@@ -534,12 +534,12 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
                                     logger.info("Icon extracted to: %s", output_path)
                                     return output_path
                                 except (OSError, ValueError, RuntimeError) as e:
-                                    logger.error("Failed to convert ICO to PNG: %s", e, exc_info=True)
+                                    logger.exception("Failed to convert ICO to PNG: %s", e)
 
         except ImportError:
-            logger.error("pefile not available for icon extraction")
+            logger.exception("pefile not available for icon extraction")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("PE icon extraction failed: %s", e, exc_info=True)
+            logger.exception("PE icon extraction failed: %s", e)
 
         # If all methods fail, create a default icon
         logger.warning("All icon extraction methods failed, creating default icon")
@@ -553,10 +553,10 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
                 img.save(output_path, "PNG")
                 return output_path
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Failed to create default icon: %s", e, exc_info=True)
+                logger.exception("Failed to create default icon: %s", e)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Icon extraction failed: %s", e, exc_info=True)
+        logger.exception("Icon extraction failed: %s", e)
         return None
 
 
@@ -625,7 +625,7 @@ def optimize_memory_usage() -> dict[str, Any]:
 
             logger.debug("Cache clearing: %d successful, %d failed", cleared_count, failed_count)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.warning("Error clearing caches: %s", e, exc_info=True)
+        logger.warning("Error clearing caches: %s", e)
 
     # Get final memory stats
     if psutil:

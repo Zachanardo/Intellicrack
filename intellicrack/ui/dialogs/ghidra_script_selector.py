@@ -528,7 +528,7 @@ class GhidraScriptSelector(QDialog):
             else:  # Linux and others
                 subprocess.run(["xdg-open", user_scripts_dir], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         except Exception as e:
-            logger.error(f"Failed to open folder: {e}")
+            logger.exception("Failed to open folder: %s", e)
             QMessageBox.warning(
                 self,
                 "Error",

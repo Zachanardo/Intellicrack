@@ -117,7 +117,7 @@ class R2StringAnalyzer:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"String analysis failed: {e}")
+            self.logger.exception("String analysis failed: %s", e)
 
         return result
 
@@ -142,10 +142,11 @@ class R2StringAnalyzer:
 
             # Get strings with minimum length filter
             if min_length > 4:
-                filtered_strings = []
-                for string_data in all_strings:
-                    if string_data.get("length", 0) >= min_length:
-                        filtered_strings.append(string_data)
+                filtered_strings = [
+                    string_data
+                    for string_data in all_strings
+                    if string_data.get("length", 0) >= min_length
+                ]
                 all_strings = filtered_strings
 
             # Apply encoding-specific string extraction
@@ -163,10 +164,10 @@ class R2StringAnalyzer:
                             if wide_string.get("vaddr", 0) not in existing_addrs:
                                 all_strings.append(wide_string)
                 except R2Exception as e:
-                    logger.error("R2Exception in radare2_strings: %s", e)
+                    logger.exception("R2Exception in radare2_strings: %s", e)
 
             # For specific encodings, filter strings accordingly
-            if encoding in ["ascii", "utf8"] and encoding != "auto":
+            if encoding in {"ascii", "utf8"} and encoding != "auto":
                 filtered_strings = []
                 for string_data in all_strings:
                     string_content = string_data.get("string", "")
@@ -178,7 +179,7 @@ class R2StringAnalyzer:
                         string_data["encoding"] = encoding
                         filtered_strings.append(string_data)
                     except UnicodeEncodeError as e:
-                        logger.error("UnicodeEncodeError in radare2_strings: %s", e)
+                        logger.exception("UnicodeEncodeError in radare2_strings: %s", e)
                         continue
                 all_strings = filtered_strings
 
@@ -191,7 +192,7 @@ class R2StringAnalyzer:
             return normalized_strings
 
         except R2Exception as e:
-            self.logger.error(f"Failed to extract strings: {e}")
+            self.logger.exception("Failed to extract strings: %s", e)
             return []
 
     def _normalize_string_data(self, string_data: dict[str, Any]) -> dict[str, Any] | None:
@@ -239,7 +240,7 @@ class R2StringAnalyzer:
                         "strings": [],
                     }
         except R2Exception as e:
-            self.logger.error("R2Exception in radare2_strings: %s", e)
+            self.logger.exception("R2Exception in radare2_strings: %s", e)
 
         # Distribute strings to sections
         for string_data in strings:
@@ -441,7 +442,10 @@ class R2StringAnalyzer:
         if max_char_freq > 0.4:
             return False
 
-        alternations = sum(bool(content[i].isdigit() != content[i + 1].isdigit()) for i in range(len(content) - 1))
+        alternations = sum(
+            content[i].isdigit() != content[i + 1].isdigit()
+            for i in range(len(content) - 1)
+        )
         alternation_ratio = alternations / max(1, len(content) - 1)
         return 0.3 <= alternation_ratio <= 0.8  # Moderate alternation suggests structure
 
@@ -1092,7 +1096,7 @@ class R2StringAnalyzer:
                             "references": xref_data,
                         }
                 except R2Exception as e:
-                    self.logger.error("R2Exception in radare2_strings: %s", e)
+                    self.logger.exception("R2Exception in radare2_strings: %s", e)
                     continue
 
         return xrefs
@@ -1273,10 +1277,10 @@ class R2StringAnalyzer:
                                                 },
                                             )
                                     except R2Exception as e:
-                                        logger.error("R2Exception in radare2_strings: %s", e)
+                                        logger.exception("R2Exception in radare2_strings: %s", e)
                                         continue
                     except R2Exception as e:
-                        logger.error("R2Exception in radare2_strings: %s", e)
+                        logger.exception("R2Exception in radare2_strings: %s", e)
                         continue
 
                 return {
@@ -1286,7 +1290,7 @@ class R2StringAnalyzer:
                 }
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_strings: %s", e)
+            logger.exception("R2Exception in radare2_strings: %s", e)
             return {"error": str(e)}
 
     def get_strings(self, min_length: int = 4) -> dict[str, Any]:
@@ -1329,7 +1333,7 @@ class R2StringAnalyzer:
                     "binary_path": self.binary_path,
                 }
         except R2Exception as e:
-            self.logger.error(f"Failed to get strings: {e}")
+            self.logger.exception("Failed to get strings: %s", e)
             return {"strings": [], "error": str(e)}
 
 

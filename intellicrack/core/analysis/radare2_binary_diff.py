@@ -22,7 +22,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 import json
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 
 try:
@@ -92,34 +92,34 @@ class R2BinaryDiff:
         self.primary_path = primary_path
         self.secondary_path = secondary_path
         self.logger = logger
+        self.r2_primary: Any | None = None
+        self.r2_secondary: Any | None = None
 
         if r2pipe is None:
             self.logger.warning("r2pipe not available, diff functionality limited")
             self.r2pipe_available = False
-            self.r2_primary = None
-            self.r2_secondary = None
         else:
             self.r2pipe_available = True
-            self.r2_primary = None
-            self.r2_secondary = None
             self._initialize_r2_sessions()
 
     def _initialize_r2_sessions(self) -> None:
         """Initialize r2pipe sessions for both binaries."""
-        if not self.r2pipe_available:
+        if not self.r2pipe_available or r2pipe is None:
             return
 
         try:
             self.r2_primary = r2pipe.open(self.primary_path)
-            self.r2_primary.cmd("aaa")  # Analyze all
-            self.logger.info("Initialized r2 session for primary: %s", self.primary_path)
+            if self.r2_primary is not None:
+                self.r2_primary.cmd("aaa")
+                self.logger.info("Initialized r2 session for primary: %s", self.primary_path)
 
             if self.secondary_path:
                 self.r2_secondary = r2pipe.open(self.secondary_path)
-                self.r2_secondary.cmd("aaa")  # Analyze all
-                self.logger.info("Initialized r2 session for secondary: %s", self.secondary_path)
+                if self.r2_secondary is not None:
+                    self.r2_secondary.cmd("aaa")
+                    self.logger.info("Initialized r2 session for secondary: %s", self.secondary_path)
         except Exception as e:
-            self.logger.error("Failed to initialize r2 sessions: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize r2 sessions: %s", e)
             self.r2_primary = None
             self.r2_secondary = None
 
@@ -138,13 +138,14 @@ class R2BinaryDiff:
             except Exception as e:
                 self.logger.warning("Failed to close previous r2 session: %s", e)
 
-        if self.r2pipe_available:
+        if self.r2pipe_available and r2pipe is not None:
             try:
                 self.r2_secondary = r2pipe.open(secondary_path)
-                self.r2_secondary.cmd("aaa")
-                self.logger.info("Set secondary binary: %s", secondary_path)
+                if self.r2_secondary is not None:
+                    self.r2_secondary.cmd("aaa")
+                    self.logger.info("Set secondary binary: %s", secondary_path)
             except Exception as e:
-                self.logger.error("Failed to set secondary binary: %s", e, exc_info=True)
+                self.logger.exception("Failed to set secondary binary: %s", e)
                 self.r2_secondary = None
 
     def get_function_diffs(self) -> list[FunctionDiff]:
@@ -154,11 +155,11 @@ class R2BinaryDiff:
             List of FunctionDiff objects describing differences
 
         """
-        if not self.r2_primary or not self.r2_secondary:
-            self.logger.error("Both binaries must be loaded for diff")
+        if self.r2_primary is None or self.r2_secondary is None:
+            self.logger.exception("Both binaries must be loaded for diff")
             return []
 
-        diffs = []
+        diffs: list[FunctionDiff] = []
 
         try:
             # Get functions from both binaries
@@ -230,7 +231,7 @@ class R2BinaryDiff:
             self.logger.info("Found %d function differences", len(diffs))
 
         except Exception as e:
-            self.logger.error("Failed to get function diffs: %s", e, exc_info=True)
+            self.logger.exception("Failed to get function diffs: %s", e)
 
         return diffs
 
@@ -244,11 +245,11 @@ class R2BinaryDiff:
             List of BasicBlockDiff objects
 
         """
-        if not self.r2_primary or not self.r2_secondary:
-            self.logger.error("Both binaries must be loaded for diff")
+        if self.r2_primary is None or self.r2_secondary is None:
+            self.logger.exception("Both binaries must be loaded for diff")
             return []
 
-        diffs = []
+        diffs: list[BasicBlockDiff] = []
 
         try:
             # Get basic blocks for the function in both binaries
@@ -307,7 +308,7 @@ class R2BinaryDiff:
             self.logger.info("Found %d basic block differences in %s", len(diffs), function_name)
 
         except Exception as e:
-            self.logger.error("Failed to get basic block diffs: %s", e, exc_info=True)
+            self.logger.exception("Failed to get basic block diffs: %s", e)
 
         return diffs
 
@@ -318,11 +319,11 @@ class R2BinaryDiff:
             List of StringDiff objects
 
         """
-        if not self.r2_primary or not self.r2_secondary:
-            self.logger.error("Both binaries must be loaded for diff")
+        if self.r2_primary is None or self.r2_secondary is None:
+            self.logger.exception("Both binaries must be loaded for diff")
             return []
 
-        diffs = []
+        diffs: list[StringDiff] = []
 
         try:
             # Get strings from both binaries
@@ -381,7 +382,7 @@ class R2BinaryDiff:
             self.logger.info("Found %d string differences", len(diffs))
 
         except Exception as e:
-            self.logger.error("Failed to get string diffs: %s", e, exc_info=True)
+            self.logger.exception("Failed to get string diffs: %s", e)
 
         return diffs
 
@@ -392,10 +393,10 @@ class R2BinaryDiff:
             List of import differences
 
         """
-        if not self.r2_primary or not self.r2_secondary:
+        if self.r2_primary is None or self.r2_secondary is None:
             return []
 
-        diffs = []
+        diffs: list[dict[str, Any]] = []
 
         try:
             # Get imports
@@ -426,7 +427,7 @@ class R2BinaryDiff:
                     })
 
         except Exception as e:
-            self.logger.error("Failed to get import diffs: %s", e, exc_info=True)
+            self.logger.exception("Failed to get import diffs: %s", e)
 
         return diffs
 
@@ -451,7 +452,7 @@ class R2BinaryDiff:
             },
         }
 
-    def _calculate_function_similarity(self, func_name: str, primary_func: dict, secondary_func: dict) -> float:
+    def _calculate_function_similarity(self, func_name: str, primary_func: dict[str, Any], secondary_func: dict[str, Any]) -> float:
         """Calculate similarity score between two functions.
 
         Args:
@@ -463,15 +464,17 @@ class R2BinaryDiff:
             Similarity score between 0 and 1
 
         """
+        if self.r2_primary is None or self.r2_secondary is None:
+            return 0.0
+
         try:
-            # Get disassembly for both functions
             self.r2_primary.cmd(f"s {primary_func.get('offset', 0)}")
-            primary_ops = self.r2_primary.cmd(f"pdfj @ {func_name}")
-            primary_ops = json.loads(primary_ops) if primary_ops else {}
+            primary_ops_str = self.r2_primary.cmd(f"pdfj @ {func_name}")
+            primary_ops = json.loads(primary_ops_str) if primary_ops_str else {}
 
             self.r2_secondary.cmd(f"s {secondary_func.get('offset', 0)}")
-            secondary_ops = self.r2_secondary.cmd(f"pdfj @ {func_name}")
-            secondary_ops = json.loads(secondary_ops) if secondary_ops else {}
+            secondary_ops_str = self.r2_secondary.cmd(f"pdfj @ {func_name}")
+            secondary_ops = json.loads(secondary_ops_str) if secondary_ops_str else {}
 
             # Extract opcodes
             primary_opcodes = [op.get("opcode", "") for op in primary_ops.get("ops", [])]
@@ -488,7 +491,7 @@ class R2BinaryDiff:
 
             return 1.0 - (distance / max_len) if max_len > 0 else 1.0
         except Exception as e:
-            self.logger.error("Failed to calculate similarity: %s", e, exc_info=True)
+            self.logger.exception("Failed to calculate similarity: %s", e)
             return 0.0
 
     def _levenshtein_distance(self, s1: list[str], s2: list[str]) -> int:
@@ -499,9 +502,9 @@ class R2BinaryDiff:
         if not s2:
             return len(s1)
 
-        previous_row = range(len(s2) + 1)
+        previous_row: list[int] = list(range(len(s2) + 1))
         for i, c1 in enumerate(s1):
-            current_row = [i + 1]
+            current_row: list[int] = [i + 1]
             for j, c2 in enumerate(s2):
                 insertions = previous_row[j + 1] + 1
                 deletions = current_row[j] + 1
@@ -524,19 +527,24 @@ class R2BinaryDiff:
 
     def _count_opcode_changes(self, func_name: str) -> int:
         """Count number of opcode changes in a function."""
+        if self.r2_primary is None or self.r2_secondary is None:
+            return 0
+
         try:
-            # Get opcodes from both versions
             self.r2_primary.cmd(f"s {func_name}")
-            primary_ops = json.loads(self.r2_primary.cmd("pdfj") or "{}")
+            primary_ops_str = self.r2_primary.cmd("pdfj")
+            primary_ops = json.loads(primary_ops_str or "{}")
 
             self.r2_secondary.cmd(f"s {func_name}")
-            secondary_ops = json.loads(self.r2_secondary.cmd("pdfj") or "{}")
+            secondary_ops_str = self.r2_secondary.cmd("pdfj")
+            secondary_ops = json.loads(secondary_ops_str or "{}")
 
             primary_opcodes = [op.get("opcode", "") for op in primary_ops.get("ops", [])]
             secondary_opcodes = [op.get("opcode", "") for op in secondary_ops.get("ops", [])]
 
             changes = sum(
-                bool(primary_opcodes[i] != secondary_opcodes[i]) for i in range(min(len(primary_opcodes), len(secondary_opcodes)))
+                primary_opcodes[i] != secondary_opcodes[i]
+                for i in range(min(len(primary_opcodes), len(secondary_opcodes)))
             )
             # Add difference in lengths
             changes += abs(len(primary_opcodes) - len(secondary_opcodes))
@@ -544,20 +552,22 @@ class R2BinaryDiff:
             return changes
 
         except Exception as e:
-            self.logger.error("Failed to count opcode changes: %s", e, exc_info=True)
+            self.logger.exception("Failed to count opcode changes: %s", e)
             return 0
 
     def _get_call_changes(self, func_name: str) -> list[str]:
         """Get list of changed function calls."""
+        if self.r2_primary is None or self.r2_secondary is None:
+            return []
+
         try:
-            # Get calls from both versions
             self.r2_primary.cmd(f"s {func_name}")
-            primary_calls = self.r2_primary.cmd("afxj")
-            primary_calls = json.loads(primary_calls) if primary_calls else []
+            primary_calls_str = self.r2_primary.cmd("afxj")
+            primary_calls = json.loads(primary_calls_str) if primary_calls_str else []
 
             self.r2_secondary.cmd(f"s {func_name}")
-            secondary_calls = self.r2_secondary.cmd("afxj")
-            secondary_calls = json.loads(secondary_calls) if secondary_calls else []
+            secondary_calls_str = self.r2_secondary.cmd("afxj")
+            secondary_calls = json.loads(secondary_calls_str) if secondary_calls_str else []
 
             # Extract call targets
             primary_targets = {c.get("ref", "") for c in primary_calls if c.get("type", "") == "call"}
@@ -572,10 +582,10 @@ class R2BinaryDiff:
             return changes
 
         except Exception as e:
-            self.logger.error("Failed to get call changes: %s", e, exc_info=True)
+            self.logger.exception("Failed to get call changes: %s", e)
             return []
 
-    def _match_basic_blocks(self, primary_blocks: list[dict], secondary_blocks: list[dict]) -> dict[int, int]:
+    def _match_basic_blocks(self, primary_blocks: list[dict[str, Any]], secondary_blocks: list[dict[str, Any]]) -> dict[int, int]:
         """Match basic blocks between two versions of a function."""
         return {
             primary_bb.get("addr", 0): secondary_blocks[i].get("addr", 0)
@@ -583,7 +593,7 @@ class R2BinaryDiff:
             if i < len(secondary_blocks)
         }
 
-    def _blocks_differ(self, bb1: dict, bb2: dict) -> bool:
+    def _blocks_differ(self, bb1: dict[str, Any], bb2: dict[str, Any]) -> bool:
         """Check if two basic blocks differ significantly."""
         # Compare sizes
         if bb1.get("size", 0) != bb2.get("size", 0):
@@ -598,7 +608,7 @@ class R2BinaryDiff:
             return True
         return bb1.get("fail", 0) != bb2.get("fail", 0)
 
-    def _get_string_xrefs(self, r2_session: object | None, address: int) -> list[int]:
+    def _get_string_xrefs(self, r2_session: Any | None, address: int) -> list[int]:
         """Get cross-references to a string.
 
         Args:
@@ -609,16 +619,19 @@ class R2BinaryDiff:
             List of cross-reference addresses where this string is referenced.
 
         """
+        if r2_session is None:
+            return []
+
         try:
             r2_session.cmd(f"s {address}")
-            xrefs = r2_session.cmd("axtj")
-            xrefs = json.loads(xrefs) if xrefs else []
+            xrefs_str = r2_session.cmd("axtj")
+            xrefs = json.loads(xrefs_str) if xrefs_str else []
             return [x.get("from", 0) for x in xrefs]
         except Exception as e:
             self.logger.warning("Failed to get xrefs for address %s: %s", hex(address), e)
             return []
 
-    def _get_file_hash(self, r2_session: object | None) -> str:
+    def _get_file_hash(self, r2_session: Any | None) -> str:
         """Get file hash from binary using radare2.
 
         Args:
@@ -628,15 +641,17 @@ class R2BinaryDiff:
             MD5 hash of the binary file, or empty string if computation fails.
 
         """
+        if r2_session is None:
+            return ""
+
         try:
-            if r2_session:
-                result = r2_session.cmd("!rahash2 -a md5 -q $F")
-                return result.strip() if result else ""
+            result = r2_session.cmd("!rahash2 -a md5 -q $F")
+            return result.strip() if result else ""
         except Exception as e:
             self.logger.warning("Failed to compute file hash: %s", e)
-        return ""
+            return ""
 
-    def _get_file_size(self, r2_session: object | None) -> int:
+    def _get_file_size(self, r2_session: Any | None) -> int:
         """Get file size in bytes using radare2 information.
 
         Args:
@@ -646,22 +661,24 @@ class R2BinaryDiff:
             File size in bytes, or 0 if retrieval fails.
 
         """
+        if r2_session is None:
+            return 0
+
         try:
-            if r2_session:
-                result = r2_session.cmd("i~size[1]")
-                return int(result.strip()) if result and result.strip().isdigit() else 0
+            result = r2_session.cmd("i~size[1]")
+            return int(result.strip()) if result and result.strip().isdigit() else 0
         except Exception as e:
             self.logger.warning("Failed to get file size: %s", e)
-        return 0
+            return 0
 
     def cleanup(self) -> None:
         """Clean up r2 sessions."""
-        if self.r2_primary:
+        if self.r2_primary is not None:
             try:
                 self.r2_primary.quit()
             except Exception as e:
                 self.logger.warning("Error closing primary r2 session: %s", e)
-        if self.r2_secondary:
+        if self.r2_secondary is not None:
             try:
                 self.r2_secondary.quit()
             except Exception as e:
@@ -686,7 +703,7 @@ class R2BinaryDiff:
         return self.get_comprehensive_diff()
 
 
-def compare_binaries(primary_path: str, secondary_path: str) -> dict:
+def compare_binaries(primary_path: str, secondary_path: str) -> dict[str, Any]:
     """Compare two binaries.
 
     Args:

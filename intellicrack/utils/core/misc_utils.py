@@ -103,7 +103,7 @@ def validate_path(path: str | Path, must_exist: bool = True) -> bool:
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error validating path %s: %s", path, e)
+        logger.exception("Error validating path %s: %s", path, e)
         return False
 
 
@@ -163,7 +163,7 @@ def safe_str(obj: object, max_length: int = 100) -> str:
         result = str(obj)
         return truncate_string(result, max_length)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in misc_utils: %s", e)
+        logger.exception("Error in misc_utils: %s", e)
         return "<str_conversion_failed>"
 
 
@@ -196,7 +196,7 @@ def parse_size_string(size_str: str) -> int:
     match = re.match(r"^([\d.]+)\s*([KMGTP]?B)?$", size_str)
     if not match:
         error_msg = f"Invalid size string: {size_str}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise ValueError(error_msg)
 
     number = float(match[1])
@@ -204,7 +204,7 @@ def parse_size_string(size_str: str) -> int:
 
     if unit not in units:
         error_msg = f"Unknown unit: {unit}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise ValueError(error_msg)
 
     return int(number * units[unit])
@@ -241,7 +241,7 @@ def ensure_directory_exists(directory: str | Path) -> bool:
         path.mkdir(parents=True, exist_ok=True)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to create directory %s: %s", directory, e)
+        logger.exception("Failed to create directory %s: %s", directory, e)
         return False
 
 
@@ -287,7 +287,7 @@ def is_valid_port(port: str | int) -> bool:
         port_num = int(port)
         return 1 <= port_num <= 65535
     except (ValueError, TypeError) as e:
-        logger.error("Error in misc_utils: %s", e)
+        logger.exception("Error in misc_utils: %s", e)
         return False
 
 

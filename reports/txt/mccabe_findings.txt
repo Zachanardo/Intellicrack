@@ -77,65 +77,65 @@ tests\validation_system\phase2\detection_depth_validator.py:6369:1: C901 'main' 
 
 intellicrack\plugins\custom_modules\license_server_emulator.py:925:5: C901 'HASPEmulator.hasp_write' is too complex (11)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1405:5: C901 'HardwareFingerprintGenerator._get_ram_size' is too complex (12)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1406:5: C901 'HardwareFingerprintGenerator._get_ram_size' is too complex (12)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1562:5: C901 'ProtocolAnalyzer.analyze_traffic' is too complex (12)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1563:5: C901 'ProtocolAnalyzer.analyze_traffic' is too complex (12)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1611:5: C901 'ProtocolAnalyzer._parse_http_request' is too complex (14)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1612:5: C901 'ProtocolAnalyzer._parse_http_request' is too complex (14)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1666:5: C901 'ProtocolAnalyzer._parse_flexlm_data' is too complex (13)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1667:5: C901 'ProtocolAnalyzer._parse_flexlm_data' is too complex (13)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1737:5: C901 'BinaryKeyExtractor._extract_adobe_private_key_from_memory' is too complex (12)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1738:5: C901 'BinaryKeyExtractor._extract_adobe_private_key_from_memory' is too complex (12)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1816:5: C901 'BinaryKeyExtractor._extract_key_with_advanced_patterns' is too complex (15)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1817:5: C901 'BinaryKeyExtractor._extract_key_with_advanced_patterns' is too complex (15)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1954:5: C901 'BinaryKeyExtractor._extract_key_via_entropy_analysis' is too complex (12)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1955:5: C901 'BinaryKeyExtractor._extract_key_via_entropy_analysis' is too complex (12)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1995:5: C901 'BinaryKeyExtractor._extract_key_via_crypto_structure_detection' is too complex (13)
+intellicrack\plugins\custom_modules\license_server_emulator.py:1996:5: C901 'BinaryKeyExtractor._extract_key_via_crypto_structure_detection' is too complex (13)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:2924:5: C901 'BinaryKeyExtractor._extract_openssl_components' is too complex (21)
+intellicrack\plugins\custom_modules\license_server_emulator.py:2925:5: C901 'BinaryKeyExtractor._extract_openssl_components' is too complex (21)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3097:5: C901 'BinaryKeyExtractor._extract_key_from_process_memory' is too complex (19)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3098:5: C901 'BinaryKeyExtractor._extract_key_from_process_memory' is too complex (19)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3223:5: C901 'BinaryKeyExtractor.extract_flexlm_keys' is too complex (25)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3224:5: C901 'BinaryKeyExtractor.extract_flexlm_keys' is too complex (25)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3306:5: C901 'BinaryKeyExtractor.extract_hasp_keys' is too complex (24)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3307:5: C901 'BinaryKeyExtractor.extract_hasp_keys' is too complex (24)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3384:5: C901 'BinaryKeyExtractor.extract_adobe_keys' is too complex (26)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3385:5: C901 'BinaryKeyExtractor.extract_adobe_keys' is too complex (26)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3565:5: C901 'BinaryKeyExtractor._analyze_validation_function' is too complex (11)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3566:5: C901 'BinaryKeyExtractor._analyze_validation_function' is too complex (11)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3843:5: C901 'RuntimeKeyExtractor._scan_windows_memory' is too complex (18)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3844:5: C901 'RuntimeKeyExtractor._scan_windows_memory' is too complex (18)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3891:5: C901 'RuntimeKeyExtractor._scan_unix_memory' is too complex (13)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3892:5: C901 'RuntimeKeyExtractor._scan_unix_memory' is too complex (13)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3946:5: C901 'RuntimeKeyExtractor._detect_memory_protection' is too complex (13)
+intellicrack\plugins\custom_modules\license_server_emulator.py:3947:5: C901 'RuntimeKeyExtractor._detect_memory_protection' is too complex (13)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4012:5: C901 'RuntimeKeyExtractor._handle_vmprotect' is too complex (17)
+intellicrack\plugins\custom_modules\license_server_emulator.py:4013:5: C901 'RuntimeKeyExtractor._handle_vmprotect' is too complex (17)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4066:5: C901 'RuntimeKeyExtractor._handle_themida' is too complex (13)
+intellicrack\plugins\custom_modules\license_server_emulator.py:4067:5: C901 'RuntimeKeyExtractor._handle_themida' is too complex (13)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4106:5: C901 'RuntimeKeyExtractor._handle_obsidium' is too complex (12)
+intellicrack\plugins\custom_modules\license_server_emulator.py:4107:5: C901 'RuntimeKeyExtractor._handle_obsidium' is too complex (12)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4433:5: C901 'RuntimeKeyExtractor._reconstruct_vmprotect_iat' is too complex (16)
+intellicrack\plugins\custom_modules\license_server_emulator.py:4434:5: C901 'RuntimeKeyExtractor._reconstruct_vmprotect_iat' is too complex (16)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4574:5: C901 'RuntimeKeyExtractor._hook_inline_apis' is too complex (21)
+intellicrack\plugins\custom_modules\license_server_emulator.py:4575:5: C901 'RuntimeKeyExtractor._hook_inline_apis' is too complex (21)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5106:5: C901 'ProtocolStateMachine.hasp_state_machine' is too complex (11)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5107:5: C901 'ProtocolStateMachine.hasp_state_machine' is too complex (11)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5732:5: C901 'ProxyInterceptor._extract_xml_features' is too complex (11)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5733:5: C901 'ProxyInterceptor._extract_xml_features' is too complex (11)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5767:5: C901 'ProxyInterceptor._generate_text_response' is too complex (18)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5768:5: C901 'ProxyInterceptor._generate_text_response' is too complex (18)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5880:5: C901 'ProxyInterceptor._find_binary_by_process' is too complex (12)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5881:5: C901 'ProxyInterceptor._find_binary_by_process' is too complex (12)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6102:5: C901 'ProxyInterceptor._extract_kms_data' is too complex (29)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6103:5: C901 'ProxyInterceptor._extract_kms_data' is too complex (29)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6562:5: C901 'ProxyInterceptor.modify_response' is too complex (19)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6563:5: C901 'ProxyInterceptor.modify_response' is too complex (19)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6671:5: C901 'LicenseServerEmulator._setup_routes' is too complex (16)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6672:5: C901 'LicenseServerEmulator._setup_routes' is too complex (16)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7012:5: C901 'LicenseServerEmulator._handle_dns_query' is too complex (13)
+intellicrack\plugins\custom_modules\license_server_emulator.py:7013:5: C901 'LicenseServerEmulator._handle_dns_query' is too complex (13)
 
 
 26 findings in intellicrack\core\debugging_engine.py
@@ -720,15 +720,15 @@ intellicrack\ai\qemu_manager.py:1842:5: C901 'QEMUManager.rollback_snapshot' is 
 
 intellicrack\ai\qemu_manager.py:2192:5: C901 'QEMUManager.optimize_snapshot_storage' is too complex (16)
 
-intellicrack\ai\qemu_manager.py:2415:5: C901 'QEMUManager.cleanup_old_snapshots' is too complex (15)
+intellicrack\ai\qemu_manager.py:2418:5: C901 'QEMUManager.cleanup_old_snapshots' is too complex (15)
 
-intellicrack\ai\qemu_manager.py:2601:5: C901 'QEMUManager.perform_snapshot_maintenance' is too complex (13)
+intellicrack\ai\qemu_manager.py:2608:5: C901 'QEMUManager.perform_snapshot_maintenance' is too complex (13)
 
-intellicrack\ai\qemu_manager.py:3124:5: C901 'QEMUManager._send_qmp_command' is too complex (13)
+intellicrack\ai\qemu_manager.py:3134:5: C901 'QEMUManager._send_qmp_command' is too complex (13)
 
-intellicrack\ai\qemu_manager.py:3413:5: C901 'QEMUManager.copy_file_to_vm' is too complex (15)
+intellicrack\ai\qemu_manager.py:3423:5: C901 'QEMUManager.copy_file_to_vm' is too complex (15)
 
-intellicrack\ai\qemu_manager.py:3934:5: C901 'QEMUManager.test_frida_script_with_callback' is too complex (12)
+intellicrack\ai\qemu_manager.py:3944:5: C901 'QEMUManager.test_frida_script_with_callback' is too complex (12)
 
 
 9 findings in intellicrack\core\analysis\multi_format_analyzer.py
@@ -1098,15 +1098,15 @@ intellicrack\core\analysis\control_flow_deobfuscation.py:203:5: C901 'ControlFlo
 
 intellicrack\core\analysis\control_flow_deobfuscation.py:242:5: C901 'ControlFlowDeobfuscator._initialize_disassembler' is too complex (13)
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:770:5: C901 'ControlFlowDeobfuscator._detect_opaque_predicates' is too complex (16)
+intellicrack\core\analysis\control_flow_deobfuscation.py:771:5: C901 'ControlFlowDeobfuscator._detect_opaque_predicates' is too complex (16)
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:873:5: C901 'ControlFlowDeobfuscator._remove_opaque_predicates' is too complex (12)
+intellicrack\core\analysis\control_flow_deobfuscation.py:875:5: C901 'ControlFlowDeobfuscator._remove_opaque_predicates' is too complex (12)
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:953:5: C901 'ControlFlowDeobfuscator._eliminate_dead_code' is too complex (11)
+intellicrack\core\analysis\control_flow_deobfuscation.py:961:5: C901 'ControlFlowDeobfuscator._eliminate_dead_code' is too complex (11)
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:1014:5: C901 'ControlFlowDeobfuscator._collapse_linear_chains' is too complex (11)
+intellicrack\core\analysis\control_flow_deobfuscation.py:1022:5: C901 'ControlFlowDeobfuscator._collapse_linear_chains' is too complex (11)
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:1372:5: C901 'ControlFlowDeobfuscator.export_deobfuscated_cfg' is too complex (11)
+intellicrack\core\analysis\control_flow_deobfuscation.py:1380:5: C901 'ControlFlowDeobfuscator.export_deobfuscated_cfg' is too complex (11)
 
 
 7 findings in intellicrack\core\analysis\radare2_signatures.py
@@ -1706,13 +1706,13 @@ tests\validation_system\unknown_pattern_tester.py:1567:5: C901 'UnknownPatternTe
 
 4 findings in intellicrack\ai\predictive_intelligence.py
 
-intellicrack\ai\predictive_intelligence.py:443:5: C901 'LinearRegressionModel.train' is too complex (11)
+intellicrack\ai\predictive_intelligence.py:441:5: C901 'LinearRegressionModel.train' is too complex (11)
 
-intellicrack\ai\predictive_intelligence.py:530:5: C901 'SuccessProbabilityPredictor._initialize_model' is too complex (18)
+intellicrack\ai\predictive_intelligence.py:528:5: C901 'SuccessProbabilityPredictor._initialize_model' is too complex (18)
 
-intellicrack\ai\predictive_intelligence.py:823:5: C901 'ExecutionTimePredictor._initialize_model' is too complex (27)
+intellicrack\ai\predictive_intelligence.py:821:5: C901 'ExecutionTimePredictor._initialize_model' is too complex (27)
 
-intellicrack\ai\predictive_intelligence.py:1128:5: C901 'VulnerabilityPredictor._initialize_model' is too complex (24)
+intellicrack\ai\predictive_intelligence.py:1126:5: C901 'VulnerabilityPredictor._initialize_model' is too complex (24)
 
 
 4 findings in intellicrack\cli\ai_chat_interface.py
@@ -1750,13 +1750,13 @@ intellicrack\core\analysis\cross_tool_orchestrator.py:1582:5: C901 'CrossToolOrc
 
 4 findings in intellicrack\core\analysis\firmware_analyzer.py
 
-intellicrack\core\analysis\firmware_analyzer.py:387:5: C901 'FirmwareAnalyzer._determine_firmware_type' is too complex (13)
+intellicrack\core\analysis\firmware_analyzer.py:389:5: C901 'FirmwareAnalyzer._determine_firmware_type' is too complex (13)
 
-intellicrack\core\analysis\firmware_analyzer.py:422:5: C901 'FirmwareAnalyzer._analyze_entropy' is too complex (13)
+intellicrack\core\analysis\firmware_analyzer.py:424:5: C901 'FirmwareAnalyzer._analyze_entropy' is too complex (13)
 
-intellicrack\core\analysis\firmware_analyzer.py:510:5: C901 'FirmwareAnalyzer._extract_embedded_files' is too complex (14)
+intellicrack\core\analysis\firmware_analyzer.py:512:5: C901 'FirmwareAnalyzer._extract_embedded_files' is too complex (14)
 
-intellicrack\core\analysis\firmware_analyzer.py:883:5: C901 'FirmwareAnalyzer.generate_icp_supplemental_data' is too complex (11)
+intellicrack\core\analysis\firmware_analyzer.py:885:5: C901 'FirmwareAnalyzer.generate_icp_supplemental_data' is too complex (11)
 
 
 4 findings in intellicrack\core\analysis\memory_forensics_engine.py
@@ -1875,9 +1875,9 @@ intellicrack\hexview\file_handler.py:247:5: C901 'VirtualFileAccess.__init__' is
 
 intellicrack\hexview\file_handler.py:441:5: C901 'VirtualFileAccess.read' is too complex (13)
 
-intellicrack\hexview\file_handler.py:624:5: C901 'VirtualFileAccess.insert' is too complex (14)
+intellicrack\hexview\file_handler.py:627:5: C901 'VirtualFileAccess.insert' is too complex (14)
 
-intellicrack\hexview\file_handler.py:713:5: C901 'VirtualFileAccess.delete' is too complex (15)
+intellicrack\hexview\file_handler.py:716:5: C901 'VirtualFileAccess.delete' is too complex (15)
 
 
 4 findings in intellicrack\plugins\custom_modules\network_analysis_plugin.py
@@ -2162,9 +2162,9 @@ intellicrack\core\analysis\radare2_advanced_patcher.py:1367:1: C901 'main' is to
 
 intellicrack\core\analysis\radare2_graph_view.py:126:5: C901 'R2GraphGenerator.generate_control_flow_graph' is too complex (11)
 
-intellicrack\core\analysis\radare2_graph_view.py:229:5: C901 'R2GraphGenerator.generate_call_graph' is too complex (12)
+intellicrack\core\analysis\radare2_graph_view.py:231:5: C901 'R2GraphGenerator.generate_call_graph' is too complex (12)
 
-intellicrack\core\analysis\radare2_graph_view.py:518:5: C901 'R2GraphGenerator.visualize_graph' is too complex (12)
+intellicrack\core\analysis\radare2_graph_view.py:520:5: C901 'R2GraphGenerator.visualize_graph' is too complex (12)
 
 
 3 findings in intellicrack\core\analysis\radare2_imports.py
@@ -2216,9 +2216,9 @@ intellicrack\core\analysis\radare2_strings.py:1231:5: C901 'R2StringAnalyzer.sea
 
 intellicrack\core\anti_analysis\api_obfuscation.py:166:5: C901 'APIObfuscator._resolve_by_hash' is too complex (14)
 
-intellicrack\core\anti_analysis\api_obfuscation.py:258:5: C901 'APIObfuscator._resolve_by_ordinal' is too complex (15)
+intellicrack\core\anti_analysis\api_obfuscation.py:262:5: C901 'APIObfuscator._resolve_by_ordinal' is too complex (15)
 
-intellicrack\core\anti_analysis\api_obfuscation.py:1154:5: C901 'APIObfuscator._resolve_delayed_imports' is too complex (14)
+intellicrack\core\anti_analysis\api_obfuscation.py:1158:5: C901 'APIObfuscator._resolve_delayed_imports' is too complex (14)
 
 
 3 findings in intellicrack\core\certificate\multilayer_bypass.py
@@ -2595,9 +2595,9 @@ intellicrack\ai\local_gguf_server.py:394:5: C901 'LocalGGUFServer._setup_routes'
 
 2 findings in intellicrack\ai\lora_adapter_manager.py
 
-intellicrack\ai\lora_adapter_manager.py:470:5: C901 'LoRAAdapterManager.compare_adapter_configs' is too complex (19)
+intellicrack\ai\lora_adapter_manager.py:472:5: C901 'LoRAAdapterManager.compare_adapter_configs' is too complex (19)
 
-intellicrack\ai\lora_adapter_manager.py:646:5: C901 'LoRAAdapterManager.validate_adapter_config' is too complex (14)
+intellicrack\ai\lora_adapter_manager.py:648:5: C901 'LoRAAdapterManager.validate_adapter_config' is too complex (14)
 
 
 2 findings in intellicrack\ai\model_cache_manager.py
@@ -2875,9 +2875,9 @@ intellicrack\models\repositories\base.py:505:5: C901 'APIRepositoryBase.download
 
 2 findings in intellicrack\plugins\custom_modules\cloud_license_interceptor.py
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:516:5: C901 'RequestClassifier._detect_auth_type' is too complex (15)
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:518:5: C901 'RequestClassifier._detect_auth_type' is too complex (15)
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:549:5: C901 'RequestClassifier._detect_request_type' is too complex (22)
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:551:5: C901 'RequestClassifier._detect_request_type' is too complex (22)
 
 
 2 findings in intellicrack\plugins\remote_executor.py
@@ -3526,7 +3526,7 @@ intellicrack\core\protection_bypass\arxan_bypass.py:141:5: C901 'ArxanBypass.byp
 
 1 findings in intellicrack\core\protection_bypass\cloud_license_analyzer.py
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:575:5: C901 'CloudLicenseAnalyzer._extract_tokens_from_json' is too complex (16)
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:577:5: C901 'CloudLicenseAnalyzer._extract_tokens_from_json' is too complex (16)
 
 
 1 findings in intellicrack\core\protection_bypass\dongle_emulator.py
@@ -3691,7 +3691,7 @@ intellicrack\hexview\statistics_dialog.py:263:5: C901 'StatisticsDialog.display_
 
 1 findings in intellicrack\main.py
 
-intellicrack\main.py:110:1: C901 'main' is too complex (20)
+intellicrack\main.py:115:1: C901 'main' is too complex (20)
 
 
 1 findings in intellicrack\ml\license_protection_neural_network.py

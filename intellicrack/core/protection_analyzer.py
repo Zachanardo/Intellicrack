@@ -152,21 +152,21 @@ class ProtectionAnalyzer:
 
     def analyze(self, file_path: str | Path) -> dict[str, Any]:
         """Perform comprehensive protection analysis on a binary file."""
-        self.logger.info(f"Starting protection analysis for {file_path}")
+        self.logger.info("Starting protection analysis for %s", file_path)
         try:
             file_path = Path(file_path)
             if not file_path.exists():
-                self.logger.error(f"File not found: {file_path}")
+                self.logger.error("File not found: %s", file_path)
                 return {"error": f"File not found: {file_path}"}
 
-            self.logger.debug(f"Reading file: {file_path}")
+            self.logger.debug("Reading file: %s", file_path)
             try:
                 with open(file_path, "rb") as f:
                     file_data = f.read()
             except OSError as e:
-                self.logger.exception(f"Failed to read file {file_path}: {e}")
+                self.logger.exception("Failed to read file %s: %s", file_path, e)
                 return {"error": f"Failed to read file: {e}"}
-            self.logger.debug(f"File size: {len(file_data)} bytes")
+            self.logger.debug("File size: %d bytes", len(file_data))
 
             self.logger.info("Step 1: Getting file info.")
             file_info = self._get_file_info(file_path, file_data)
@@ -174,7 +174,7 @@ class ProtectionAnalyzer:
 
             self.logger.info("Step 2: Detecting protections.")
             detected_protections = self._detect_protections(file_data)
-            self.logger.info(f"Found {len(detected_protections)} protection(s).")
+            self.logger.info("Found %d protection(s).", len(detected_protections))
             self.logger.info("Step 2: Completed.")
 
             self.logger.info("Step 3: Analyzing entropy.")
@@ -200,15 +200,15 @@ class ProtectionAnalyzer:
                 section_analysis,
                 anti_analysis,
             )
-            self.logger.info(f"Generated {len(recommendations)} recommendation(s).")
+            self.logger.info("Generated %d recommendation(s).", len(recommendations))
             self.logger.info("Step 7: Completed.")
 
             self.logger.info("Step 8: Calculating risk score.")
             risk_score = self._calculate_risk_score(detected_protections, entropy_analysis, anti_analysis)
-            self.logger.info(f"Calculated risk score: {risk_score}")
+            self.logger.info("Calculated risk score: %s", risk_score)
             self.logger.info("Step 8: Completed.")
 
-            self.logger.info(f"Protection analysis for {file_path} completed successfully.")
+            self.logger.info("Protection analysis for %s completed successfully.", file_path)
             return {
                 "file_info": file_info,
                 "detected_protections": detected_protections,
@@ -222,7 +222,7 @@ class ProtectionAnalyzer:
             }
 
         except Exception as e:
-            self.logger.exception(f"An unexpected error occurred during protection analysis for {file_path}: {e}")
+            self.logger.exception("An unexpected error occurred during protection analysis for %s: %s", file_path, e)
             return {"error": str(e)}
 
     def _get_file_info(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
@@ -320,7 +320,7 @@ class ProtectionAnalyzer:
                     for section in pe.sections
                 )
             except Exception as e:
-                self.logger.warning(f"Failed to parse PE sections: {e}")
+                self.logger.warning("Failed to parse PE sections: %s", e)
 
         return {
             "sections": sections,
@@ -356,7 +356,7 @@ class ProtectionAnalyzer:
                                 if any(api in func_name for api in suspicious_apis):
                                     suspicious_imports.append(f"{dll_name}!{func_name}")
             except Exception as e:
-                self.logger.warning(f"Failed to parse PE imports: {e}")
+                self.logger.warning("Failed to parse PE imports: %s", e)
 
         return {
             "imports": imports[:100],

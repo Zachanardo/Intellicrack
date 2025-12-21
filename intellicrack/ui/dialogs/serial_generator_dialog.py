@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QInputDialog,
     QLabel,
     QLineEdit,
@@ -160,9 +161,13 @@ class SerialGeneratorDialog(QDialog):
         """Initialize the SerialNumberGeneratorDialog with an optional parent."""
         super().__init__(parent)
         self.generator = SerialNumberGenerator()
-        self.generated_serials = []
-        self.analyzed_pattern = None
-        self.worker = None
+        self.generated_serials: list[Any] = []
+        self.analyzed_pattern: dict[str, Any] | None = None
+        self.worker: SerialGeneratorWorker | None = None
+
+        self.samples_input: QPlainTextEdit
+        self.patterns_table: QTableWidget
+        self.presets_list: QListWidget
 
         self.init_ui()
         self.load_presets()
@@ -581,7 +586,8 @@ class SerialGeneratorDialog(QDialog):
 
         self.patterns_table = QTableWidget(0, 4)
         self.patterns_table.setHorizontalHeaderLabels(["Software", "Format", "Length", "Algorithm"])
-        self.patterns_table.horizontalHeader().setStretchLastSection(True)
+        if header := self.patterns_table.horizontalHeader():
+            header.setStretchLastSection(True)
         self.patterns_table.setAlternatingRowColors(True)
 
         # Add known patterns
@@ -782,10 +788,16 @@ class SerialGeneratorDialog(QDialog):
         if not self.analyzed_pattern:
             return
 
+        length_data = self.analyzed_pattern.get("length", {})
+        if isinstance(length_data, dict):
+            length = length_data.get("most_common", 16)
+        else:
+            length = 16
+
         # Build constraints from analyzed pattern
         constraints = SerialConstraints(
-            length=self.analyzed_pattern["length"]["most_common"],
-            format=self.analyzed_pattern["format"],
+            length=length,
+            format=self.analyzed_pattern.get("format", SerialFormat.ALPHANUMERIC),
             checksum_algorithm=self.analyzed_pattern.get("checksum", {}).get("algorithm"),
         )
 
@@ -848,9 +860,9 @@ class SerialGeneratorDialog(QDialog):
     def copy_serial(self) -> None:
         """Copy generated serial to clipboard."""
         if serial := self.serial_output.text():
-            clipboard = QApplication.clipboard()
-            clipboard.setText(serial)
-            self.log("Serial copied to clipboard")
+            if clipboard := QApplication.clipboard():
+                clipboard.setText(serial)
+                self.log("Serial copied to clipboard")
 
     def save_serial(self) -> None:
         """Save generated serial to file."""
@@ -958,8 +970,15 @@ class SerialGeneratorDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please select a pattern")
             return
 
-        format_str = self.patterns_table.item(current_row, 1).text()
-        length_str = self.patterns_table.item(current_row, 2).text()
+        format_item = self.patterns_table.item(current_row, 1)
+        length_item = self.patterns_table.item(current_row, 2)
+        software_item = self.patterns_table.item(current_row, 0)
+
+        if not format_item or not length_item or not software_item:
+            return
+
+        format_str = format_item.text()
+        length_str = length_item.text()
 
         # Switch to generation tab
         self.tabs.setCurrentIndex(0)
@@ -973,19 +992,24 @@ class SerialGeneratorDialog(QDialog):
         # Set length
         self.length_spin.setValue(int(length_str))
 
-        self.log(f"Applied pattern for {self.patterns_table.item(current_row, 0).text()}")
+        self.log(f"Applied pattern for {software_item.text()}")
 
     def export_patterns(self) -> None:
         """Export patterns to file."""
-        patterns = [
-            {
-                "software": self.patterns_table.item(row, 0).text(),
-                "format": self.patterns_table.item(row, 1).text(),
-                "length": self.patterns_table.item(row, 2).text(),
-                "algorithm": self.patterns_table.item(row, 3).text(),
-            }
-            for row in range(self.patterns_table.rowCount())
-        ]
+        patterns: list[dict[str, str]] = []
+        for row in range(self.patterns_table.rowCount()):
+            software_item = self.patterns_table.item(row, 0)
+            format_item = self.patterns_table.item(row, 1)
+            length_item = self.patterns_table.item(row, 2)
+            algorithm_item = self.patterns_table.item(row, 3)
+
+            if software_item and format_item and length_item and algorithm_item:
+                patterns.append({
+                    "software": software_item.text(),
+                    "format": format_item.text(),
+                    "length": length_item.text(),
+                    "algorithm": algorithm_item.text(),
+                })
         file_path, _ = QFileDialog.getSaveFileName(self, "Export Patterns", "serial_patterns.json", "JSON Files (*.json);;All Files (*.*)")
 
         if file_path:
@@ -1062,7 +1086,7 @@ class SerialGeneratorDialog(QDialog):
                 self.load_presets()
                 self.log(f"Preset '{name}' saved")
             except Exception as e:
-                logger.error("save_preset: Failed to save preset: %s", e, exc_info=True)
+                logger.exception("save_preset: Failed to save preset: %s", e)
                 self.handle_worker_error(f"Failed to save preset: {e}")
 
     def load_preset(self) -> None:
@@ -1106,7 +1130,7 @@ class SerialGeneratorDialog(QDialog):
 
                     self.log(f"Preset '{name}' loaded")
             except Exception as e:
-                logger.error("load_preset: Failed to load preset: %s", e, exc_info=True)
+                logger.exception("load_preset: Failed to load preset: %s", e)
                 self.handle_worker_error(f"Failed to load preset: {e}")
 
     def delete_preset(self) -> None:
@@ -1141,7 +1165,7 @@ class SerialGeneratorDialog(QDialog):
                         self.load_presets()
                         self.log(f"Preset '{name}' deleted")
                 except Exception as e:
-                    logger.error("delete_preset: Failed to delete preset: %s", e, exc_info=True)
+                    logger.exception("delete_preset: Failed to delete preset: %s", e)
                     self.handle_worker_error(f"Failed to delete preset: {e}")
 
     def load_presets(self) -> None:
@@ -1181,55 +1205,64 @@ class SerialGeneratorDialog(QDialog):
             except (json.JSONDecodeError, TypeError, AttributeError) as e:
                 logger.debug("on_preset_selected: Error loading preset details: %s", e)
 
-    def handle_worker_result(self, result: dict) -> None:
+    def handle_worker_result(self, result: dict[str, Any]) -> None:
         """Handle worker thread results."""
         operation = result.get("operation")
         data = result.get("data")
 
-        if operation == "single_serial":
+        if operation == "single_serial" and data is not None:
             serial = data
-            self.serial_output.setText(serial.serial)
+            if hasattr(serial, "serial"):
+                self.serial_output.setText(serial.serial)
 
-            details = f"""Format: {serial.format.value}
-Algorithm: {serial.algorithm_used}
-Confidence: {serial.confidence:.1%}
-Validation: {json.dumps(serial.validation_data, indent=2)}"""
+                details = f"""Format: {serial.format.value if hasattr(serial, "format") else "Unknown"}
+Algorithm: {serial.algorithm_used if hasattr(serial, "algorithm_used") else "Unknown"}
+Confidence: {serial.confidence:.1% if hasattr(serial, "confidence") else "N/A"}
+Validation: {json.dumps(serial.validation_data if hasattr(serial, "validation_data") else {}, indent=2)}"""
 
-            self.serial_details.setText(details)
-            self.btn_copy.setEnabled(True)
-            self.btn_save.setEnabled(True)
-            self.log(f"Generated serial: {serial.serial}")
+                self.serial_details.setText(details)
+                self.btn_copy.setEnabled(True)
+                self.btn_save.setEnabled(True)
+                self.log(f"Generated serial: {serial.serial}")
 
-        elif operation == "analysis":
+        elif operation == "analysis" and data is not None and isinstance(data, dict):
             self.analyzed_pattern = data
+
+            format_value = "Unknown"
+            if "format" in data and data["format"] is not None and hasattr(data["format"], "value"):
+                format_value = data["format"].value
 
             output = f"""Serial Pattern Analysis:
 =====================================
-Format: {data["format"].value if data["format"] else "Unknown"}
-Length: {data["length"]}
-Structure: {json.dumps(data["structure"], indent=2)}
-Checksum: {json.dumps(data["checksum"], indent=2)}
-Patterns: {json.dumps(data["patterns"], indent=2)}
-Confidence: {data["confidence"]:.1%}
+Format: {format_value}
+Length: {data.get("length", "Unknown")}
+Structure: {json.dumps(data.get("structure", {}), indent=2)}
+Checksum: {json.dumps(data.get("checksum", {}), indent=2)}
+Patterns: {json.dumps(data.get("patterns", {}), indent=2)}
+Confidence: {data.get("confidence", 0.0):.1%}
 """
             self.analysis_output.setText(output)
             self.btn_generate_from_analysis.setEnabled(True)
             self.log("Serial pattern analysis complete")
 
-        elif operation == "batch_serials":
+        elif operation == "batch_serials" and data is not None and isinstance(data, list):
             serials = data
             self.generated_serials = serials
 
-            output = [f"{i:04d}: {serial.serial}" for i, serial in enumerate(serials, 1)]
-            self.batch_output.setPlainText("\n".join(output))
+            output_list: list[str] = [
+                f"{i:04d}: {serial.serial}"
+                for i, serial in enumerate(serials, 1)
+                if hasattr(serial, "serial")
+            ]
+            self.batch_output.setPlainText("\n".join(output_list))
             self.batch_stats.setText(f"Generated {len(serials)} unique serials")
             self.btn_export_batch.setEnabled(True)
             self.log(f"Generated {len(serials)} serials")
 
-        elif operation == "validation":
-            serial = data["serial"]
-            is_valid = data["is_valid"]
-            details = data["details"]
+        elif operation == "validation" and data is not None and isinstance(data, dict):
+            serial = data.get("serial", "")
+            is_valid = data.get("is_valid", False)
+            details = data.get("details", {})
 
             output = f"""Serial Validation Result:
 =====================================
@@ -1242,20 +1275,32 @@ Details:
             self.validation_output.setText(output)
             self.log(f"Validation result: {is_valid}")
 
-        elif operation == "pattern_crack":
-            analysis = data["analysis"]
-            test_serials = data["generated_serials"]
+        elif operation == "pattern_crack" and data is not None and isinstance(data, dict):
+            analysis = data.get("analysis", {})
+            test_serials = data.get("generated_serials", [])
+
+            format_value = "Unknown"
+            if isinstance(analysis, dict):
+                format_obj = analysis.get("format")
+                if format_obj is not None and hasattr(format_obj, "value"):
+                    format_value = format_obj.value
+
+            confidence = 0.0
+            if isinstance(analysis, dict) and "confidence" in analysis:
+                confidence = float(analysis["confidence"])
 
             output = f"""Pattern Cracking Results:
 =====================================
-Detected Format: {analysis["format"].value if analysis["format"] else "Unknown"}
-Algorithm: {analysis.get("algorithm", "Unknown")}
-Confidence: {analysis["confidence"]:.1%}
+Detected Format: {format_value}
+Algorithm: {analysis.get("algorithm", "Unknown") if isinstance(analysis, dict) else "Unknown"}
+Confidence: {confidence:.1%}
 
 Generated Test Serials:
 """
-            for serial in test_serials:
-                output += f"\n  {serial.serial}"
+            if isinstance(test_serials, list):
+                for serial in test_serials:
+                    if hasattr(serial, "serial"):
+                        output += f"\n  {serial.serial}"
 
             self.analysis_output.setText(output)
             self.log("Pattern cracking complete")
@@ -1270,9 +1315,8 @@ Generated Test Serials:
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")
 
-        # Auto-scroll to bottom
-        scrollbar = self.console.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        if scrollbar := self.console.verticalScrollBar():
+            scrollbar.setValue(scrollbar.maximum())
 
 
 if __name__ == "__main__":

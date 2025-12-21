@@ -652,15 +652,13 @@ class _FallbackPE:
             import_desc.Name = struct.unpack("<I", data[12:16])[0]
             import_desc.FirstThunk = struct.unpack("<I", data[16:20])[0]
 
-            name_offset = self.get_offset_from_rva(import_desc.Name)
-            if name_offset:
+            if name_offset := self.get_offset_from_rva(import_desc.Name):
                 dll_name = self._get_string(name_offset)
                 import_desc.dll = dll_name
                 import_desc.imports = []
 
                 thunk_rva = import_desc.OriginalFirstThunk or import_desc.FirstThunk
-                thunk_offset = self.get_offset_from_rva(thunk_rva)
-                if thunk_offset:
+                if thunk_offset := self.get_offset_from_rva(thunk_rva):
                     self._parse_import_thunks(import_desc, thunk_offset)
 
                 self.DIRECTORY_ENTRY_IMPORT.append(import_desc)
@@ -699,8 +697,7 @@ class _FallbackPE:
                 import_data.name = None
             else:
                 name_rva = thunk & 0x7FFFFFFF
-                name_offset = self.get_offset_from_rva(name_rva)
-                if name_offset:
+                if name_offset := self.get_offset_from_rva(name_rva):
                     import_data.hint = struct.unpack("<H", self._data[name_offset : name_offset + 2])[0]
                     import_data.name = self._get_string(name_offset + 2)
                     import_data.ordinal = None
@@ -742,8 +739,7 @@ class _FallbackPE:
         export.AddressOfNames = struct.unpack("<I", data[32:36])[0]
         export.AddressOfNameOrdinals = struct.unpack("<I", data[36:40])[0]
 
-        name_file_offset = self.get_offset_from_rva(export.Name)
-        if name_file_offset:
+        if name_file_offset := self.get_offset_from_rva(export.Name):
             export.name = self._get_string(name_file_offset)
 
         export.symbols = []
@@ -764,8 +760,7 @@ class _FallbackPE:
                     name_rva = struct.unpack("<I", self._data[names_offset + i * 4 : names_offset + i * 4 + 4])[0]
                     ordinal = struct.unpack("<H", self._data[ordinal_offset + i * 2 : ordinal_offset + i * 2 + 2])[0]
 
-                    name_str_offset = self.get_offset_from_rva(name_rva)
-                    if name_str_offset:
+                    if name_str_offset := self.get_offset_from_rva(name_rva):
                         func_name = self._get_string(name_str_offset)
                         name_ordinals[ordinal] = func_name
 
@@ -784,8 +779,9 @@ class _FallbackPE:
                         symbol.forwarder = None
 
                         if export_dir.VirtualAddress <= func_rva < export_dir.VirtualAddress + export_dir.Size:
-                            forwarder_offset = self.get_offset_from_rva(func_rva)
-                            if forwarder_offset:
+                            if forwarder_offset := self.get_offset_from_rva(
+                                func_rva
+                            ):
                                 symbol.forwarder = self._get_string(forwarder_offset)
 
                         export.symbols.append(symbol)

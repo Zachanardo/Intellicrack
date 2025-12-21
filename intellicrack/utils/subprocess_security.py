@@ -16,9 +16,10 @@ import os
 import shlex
 import subprocess
 from pathlib import Path
+from typing import Any
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Define allowed executable patterns for security research tools
 ALLOWED_TOOLS = {
@@ -99,7 +100,7 @@ class SecureSubprocess:
 
         # Check if tool is in allowed list
         if base_name not in ALLOWED_TOOLS and all(tool not in executable.lower() for tool in ALLOWED_TOOLS):
-            logger.warning(f"Attempting to execute non-whitelisted tool: {executable}")
+            logger.warning("Attempting to execute non-whitelisted tool: %s", executable)
 
         # Resolve to absolute path
         if Path(executable).is_absolute():
@@ -108,10 +109,10 @@ class SecureSubprocess:
             # Try to find in PATH
             import shutil
 
-            abs_path = shutil.which(executable)
-            if not abs_path and os.name == "nt":
-                system_root = os.environ.get("SYSTEMROOT", "C:\\Windows")
-                possible_paths = [
+            abs_path_result: str | None = shutil.which(executable)
+            if not abs_path_result and os.name == "nt":
+                system_root: str = os.environ.get("SYSTEMROOT", "C:\\Windows")
+                possible_paths: list[str] = [
                     os.path.join(system_root, "System32", executable),
                     os.path.join(system_root, "System32", f"{executable}.exe"),
                     os.path.join(system_root, "SysWOW64", executable),
@@ -119,11 +120,14 @@ class SecureSubprocess:
                 ]
                 for path in possible_paths:
                     if os.path.exists(path):
-                        abs_path = path
+                        abs_path_result = path
                         break
 
+            if abs_path_result:
+                abs_path = abs_path_result
+
         if not abs_path or not os.path.exists(abs_path):
-            error_msg = f"Executable not found: {executable}"
+            error_msg: str = f"Executable not found: {executable}"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
@@ -144,22 +148,16 @@ class SecureSubprocess:
             ValueError: If argument contains dangerous characters
 
         """
-        # Convert to string if needed
-        if not isinstance(arg, str):
-            arg = str(arg)
-
-        # Check for shell metacharacters
-        dangerous_chars = SHELL_METACHARACTERS.copy()
+        dangerous_chars: set[str] = SHELL_METACHARACTERS.copy()
         if allow_wildcards:
             dangerous_chars -= {"*", "?"}
 
-        # Check for command injection attempts
         if any(char in arg for char in dangerous_chars) and (
             not arg.startswith("-")
             and not arg.startswith("/")
             and ("=" not in arg or any(char in arg for char in ["`", "$", ";", "|", "&"]))
         ):
-            error_msg = f"Potentially dangerous argument: {arg}"
+            error_msg: str = f"Potentially dangerous argument: {arg}"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
@@ -181,15 +179,13 @@ class SecureSubprocess:
 
         """
         if not command:
-            error_msg = "Empty command"
+            error_msg: str = "Empty command"
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        validated = [SecureSubprocess.validate_executable(command[0])]
+        validated: list[str] = [SecureSubprocess.validate_executable(command[0])]
 
-        # Validate remaining arguments
         for arg in command[1:]:
-            # Skip validation for file paths that exist
             if os.path.exists(arg):
                 validated.append(os.path.abspath(arg))
             else:
@@ -207,8 +203,8 @@ class SecureSubprocess:
         check: bool = False,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-        **kwargs: object,
-    ) -> subprocess.CompletedProcess:
+        **kwargs: Any,
+    ) -> subprocess.CompletedProcess[Any]:
         """Secure subprocess.run wrapper with validation.
 
         Args:
@@ -226,36 +222,32 @@ class SecureSubprocess:
             CompletedProcess instance
 
         """
-        # Force shell=False for security unless explicitly required
+        validated_command: list[str] | str
+
         if shell:
             logger.warning("Shell execution requested - this reduces security")
-            # Convert to string for shell execution
-            if isinstance(command, list):
-                command = " ".join(command)
+            validated_command = " ".join(command) if isinstance(command, list) else command
+        elif isinstance(command, str):
+            validated_command = SecureSubprocess.validate_command(shlex.split(command))
         else:
-            # Validate command for non-shell execution
-            if isinstance(command, str):
-                # Split string command safely
-                command = shlex.split(command)
-            command = SecureSubprocess.validate_command(command)
+            validated_command = SecureSubprocess.validate_command(command)
 
-        # Validate working directory if provided
+        validated_cwd: str | None = None
         if cwd:
-            cwd = os.path.abspath(cwd)
-            if not Path(cwd).is_dir():
-                error_msg = f"Invalid working directory: {cwd}"
+            validated_cwd = os.path.abspath(cwd)
+            if not Path(validated_cwd).is_dir():
+                error_msg: str = f"Invalid working directory: {validated_cwd}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 
-        # Execute with security flags
         return subprocess.run(
-            command,
+            validated_command,
             shell=shell,
             capture_output=capture_output,
             text=text,
             timeout=timeout,
             check=check,
-            cwd=cwd,
+            cwd=validated_cwd,
             env=env,
             **kwargs,
         )
@@ -264,13 +256,13 @@ class SecureSubprocess:
     def popen(
         command: list[str] | str,
         shell: bool = False,
-        stdout: object = None,
-        stderr: object = None,
-        stdin: object = None,
+        stdout: Any = None,
+        stderr: Any = None,
+        stdin: Any = None,
         cwd: str | None = None,
         env: dict[str, str] | None = None,
-        **kwargs: object,
-    ) -> subprocess.Popen:
+        **kwargs: Any,
+    ) -> subprocess.Popen[Any]:
         """Secure subprocess.Popen wrapper with validation.
 
         Args:
@@ -287,64 +279,111 @@ class SecureSubprocess:
             Popen instance
 
         """
-        # Force shell=False for security unless explicitly required
+        validated_command: list[str] | str
+
         if shell:
             logger.warning("Shell execution requested - this reduces security")
-            # Convert to string for shell execution
-            if isinstance(command, list):
-                command = " ".join(command)
+            validated_command = " ".join(command) if isinstance(command, list) else command
+        elif isinstance(command, str):
+            validated_command = SecureSubprocess.validate_command(shlex.split(command))
         else:
-            # Validate command for non-shell execution
-            if isinstance(command, str):
-                # Split string command safely
-                command = shlex.split(command)
-            command = SecureSubprocess.validate_command(command)
+            validated_command = SecureSubprocess.validate_command(command)
 
-        # Validate working directory if provided
+        validated_cwd: str | None = None
         if cwd:
-            cwd = os.path.abspath(cwd)
-            if not Path(cwd).is_dir():
-                error_msg = f"Invalid working directory: {cwd}"
+            validated_cwd = os.path.abspath(cwd)
+            if not Path(validated_cwd).is_dir():
+                error_msg: str = f"Invalid working directory: {validated_cwd}"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 
-        # Execute with security flags
         return subprocess.Popen(
-            command,
+            validated_command,
             shell=shell,
             stdout=stdout,
             stderr=stderr,
             stdin=stdin,
-            cwd=cwd,
+            cwd=validated_cwd,
             env=env,
             **kwargs,
         )
 
 
 # Convenience functions for drop-in replacement
-def secure_run(*args: object, **kwargs: object) -> subprocess.CompletedProcess:
+def secure_run(
+    command: list[str] | str,
+    shell: bool = False,
+    capture_output: bool = True,
+    text: bool = True,
+    timeout: int | None = None,
+    check: bool = False,
+    cwd: str | None = None,
+    env: dict[str, str] | None = None,
+    **kwargs: Any,
+) -> subprocess.CompletedProcess[Any]:
     """Drop-in replacement for subprocess.run with security validation.
 
     Args:
-        *args: Positional arguments passed to SecureSubprocess.run
-        **kwargs: Keyword arguments passed to SecureSubprocess.run
+        command: Command to execute
+        shell: Whether to use shell (strongly discouraged)
+        capture_output: Whether to capture stdout/stderr
+        text: Whether to return text instead of bytes
+        timeout: Timeout in seconds
+        check: Whether to raise on non-zero exit
+        cwd: Working directory
+        env: Environment variables
+        **kwargs: Additional arguments passed to SecureSubprocess.run
 
     Returns:
         CompletedProcess instance from the secure subprocess execution
 
     """
-    return SecureSubprocess.run(*args, **kwargs)
+    return SecureSubprocess.run(
+        command=command,
+        shell=shell,
+        capture_output=capture_output,
+        text=text,
+        timeout=timeout,
+        check=check,
+        cwd=cwd,
+        env=env,
+        **kwargs,
+    )
 
 
-def secure_popen(*args: object, **kwargs: object) -> subprocess.Popen:
+def secure_popen(
+    command: list[str] | str,
+    shell: bool = False,
+    stdout: Any = None,
+    stderr: Any = None,
+    stdin: Any = None,
+    cwd: str | None = None,
+    env: dict[str, str] | None = None,
+    **kwargs: Any,
+) -> subprocess.Popen[Any]:
     """Drop-in replacement for subprocess.Popen with security validation.
 
     Args:
-        *args: Positional arguments passed to SecureSubprocess.popen
-        **kwargs: Keyword arguments passed to SecureSubprocess.popen
+        command: Command to execute
+        shell: Whether to use shell (strongly discouraged)
+        stdout: stdout configuration
+        stderr: stderr configuration
+        stdin: stdin configuration
+        cwd: Working directory
+        env: Environment variables
+        **kwargs: Additional arguments passed to SecureSubprocess.popen
 
     Returns:
         Popen instance from the secure subprocess execution
 
     """
-    return SecureSubprocess.popen(*args, **kwargs)
+    return SecureSubprocess.popen(
+        command=command,
+        shell=shell,
+        stdout=stdout,
+        stderr=stderr,
+        stdin=stdin,
+        cwd=cwd,
+        env=env,
+        **kwargs,
+    )

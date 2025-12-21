@@ -138,7 +138,7 @@ class R2ImportExportAnalyzer:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Import/Export analysis failed: {e}")
+            self.logger.exception("Import/Export analysis failed: %s", e)
 
         return result
 
@@ -174,10 +174,10 @@ class R2ImportExportAnalyzer:
                 if plt_data := r2._execute_command("iP", expect_json=False):
                     self._parse_plt_data(plt_data, imports)
             except R2Exception as e:
-                logger.error("R2Exception in radare2_imports: %s", e)
+                logger.exception("R2Exception in radare2_imports: %s", e)
 
         except R2Exception as e:
-            self.logger.error(f"Failed to analyze imports: {e}")
+            self.logger.exception("Failed to analyze imports: %s", e)
 
         return imports
 
@@ -207,7 +207,7 @@ class R2ImportExportAnalyzer:
                     exports.append(normalized_export)
 
         except R2Exception as e:
-            self.logger.error(f"Failed to analyze exports: {e}")
+            self.logger.exception("Failed to analyze exports: %s", e)
 
         return exports
 
@@ -236,7 +236,7 @@ class R2ImportExportAnalyzer:
                     dependencies.append(dependency)
 
         except R2Exception as e:
-            self.logger.error(f"Failed to analyze DLL dependencies: {e}")
+            self.logger.exception("Failed to analyze DLL dependencies: %s", e)
 
         return dependencies
 
@@ -266,7 +266,7 @@ class R2ImportExportAnalyzer:
                     symbols.append(symbol)
 
         except R2Exception as e:
-            self.logger.error(f"Failed to analyze symbols: {e}")
+            self.logger.exception("Failed to analyze symbols: %s", e)
 
         return symbols
 
@@ -294,7 +294,7 @@ class R2ImportExportAnalyzer:
                     relocations.append(relocation)
 
         except R2Exception as e:
-            self.logger.error(f"Failed to analyze relocations: {e}")
+            self.logger.exception("Failed to analyze relocations: %s", e)
 
         return relocations
 
@@ -1407,7 +1407,7 @@ class R2ImportExportAnalyzer:
                 if xref_data := r2._execute_command(f"axt sym.imp.{api_name}", expect_json=False):
                     xrefs[api_name] = xref_data.strip().split("\n")
             except R2Exception as e:
-                self.logger.error("R2Exception in radare2_imports: %s", e)
+                self.logger.exception("R2Exception in radare2_imports: %s", e)
                 continue
 
         return xrefs
@@ -1445,7 +1445,7 @@ class R2ImportExportAnalyzer:
                     "binary_path": self.binary_path,
                 }
         except R2Exception as e:
-            self.logger.error(f"Failed to get imports: {e}")
+            self.logger.exception("Failed to get imports: %s", e)
             return {"imports": [], "error": str(e)}
 
 

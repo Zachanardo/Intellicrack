@@ -202,7 +202,8 @@ class TLSInterceptor:
             ])
 
             self.ca_cert = (
-                x509.CertificateBuilder()
+                x509
+                .CertificateBuilder()
                 .subject_name(subject)
                 .issuer_name(issuer)
                 .public_key(self.ca_key.public_key())
@@ -266,7 +267,8 @@ class TLSInterceptor:
         ])
 
         cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(self.ca_cert.subject)
             .public_key(private_key.public_key())
@@ -1076,9 +1078,7 @@ class MITMProxyAddon:
     def _get_request_json(self, flow: http.HTTPFlow) -> dict[Any, Any]:
         try:
             result = json.loads(flow.request.text)
-            if isinstance(result, dict):
-                return result
-            return {}
+            return result if isinstance(result, dict) else {}
         except Exception as e:
             logger.debug("Failed to parse request JSON: %s", e, exc_info=True)
             return {}
@@ -1182,7 +1182,7 @@ class CloudLicenseProtocolHandler:
         try:
             master.run()
         except Exception as e:
-            logger.error("MITM proxy error: %s", e, exc_info=True)
+            logger.exception("MITM proxy error: %s", e)
             self.running = False
 
     def stop_interception(self) -> dict[str, Any]:
@@ -1294,15 +1294,15 @@ class CloudLicenseProtocolHandler:
             Statistics dictionary
 
         """
-        protocols: dict[str, dict[str, Any]] = {}
-        for host, sm in self.state_machines.items():
-            protocols[host] = {
+        protocols: dict[str, dict[str, Any]] = {
+            host: {
                 "protocol": sm.protocol_type.value,
                 "state": sm.state.value,
                 "tokens": len(sm.tokens),
                 "session_data_keys": list(sm.session_data.keys()),
             }
-
+            for host, sm in self.state_machines.items()
+        }
         stats: dict[str, Any] = {
             "running": self.running,
             "active_sessions": len(self.state_machines),

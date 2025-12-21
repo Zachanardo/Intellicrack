@@ -237,7 +237,7 @@ const KernelModeBypass = {
                     // Hide suspicious kernel modules
                     if (this.systemInformationLength >= 8) {
                         const moduleInfo = this.systemInformation;
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
 
                         // Parse SYSTEM_MODULE_INFORMATION structure
                         const numberOfModules = moduleInfo.readU32();
@@ -628,7 +628,7 @@ const KernelModeBypass = {
                             });
                         } else if (retval.toInt32() !== -1) {
                             // Valid handle returned - track it
-                            const config = this.parent.parent.config;
+                            const {config} = this.parent.parent;
                             config.driverComm.deviceNames.push(this.deviceName);
                             send({
                                 type: 'info',
@@ -770,7 +770,7 @@ const KernelModeBypass = {
                 },
 
                 isProtectionDriverPath: function (path) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     return config.protectionDrivers.some(driver =>
                         path.toLowerCase().includes(driver)
                     );

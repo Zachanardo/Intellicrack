@@ -92,7 +92,7 @@ class ChecksumRecalculation:
     patched_sha512: str
     pe_checksum: int
     sections: dict[str, dict[str, str]] = field(default_factory=dict)
-    hmac_keys: list[dict[str, str]] = field(default_factory=list)
+    hmac_keys: list[dict[str, str | int]] = field(default_factory=list)
 
 
 @dataclass
@@ -242,7 +242,7 @@ class ChecksumRecalculator:
             return checksum & 0xFFFFFFFF
 
         except Exception as e:
-            logger.error("PE checksum calculation failed: %s", e, exc_info=True)
+            logger.exception("PE checksum calculation failed: %s", e, exc_info=True)
             return 0
 
     def recalculate_section_hashes(self, binary_path: str) -> dict[str, dict[str, str]]:
@@ -269,7 +269,7 @@ class ChecksumRecalculator:
             pe.close()
 
         except Exception as e:
-            logger.error("Section hash calculation failed: %s", e, exc_info=True)
+            logger.exception("Section hash calculation failed: %s", e, exc_info=True)
 
         return section_hashes
 
@@ -301,11 +301,15 @@ class ChecksumRecalculator:
 
                     offset += 1
 
-            hmac_keys.sort(key=lambda x: x["confidence"], reverse=True)
-            return hmac_keys[:10]
+            hmac_keys_sorted: list[dict[str, str | int]] = sorted(
+                hmac_keys,
+                key=lambda x: float(x["confidence"]) if isinstance(x["confidence"], (int, float)) else 0.0,
+                reverse=True,
+            )
+            return hmac_keys_sorted[:10]
 
         except Exception as e:
-            logger.error("HMAC key extraction failed: %s", e, exc_info=True)
+            logger.exception("HMAC key extraction failed: %s", e, exc_info=True)
             return []
 
     def _calculate_key_entropy(self, data: bytes) -> float:
@@ -315,7 +319,7 @@ class ChecksumRecalculator:
 
         import math
 
-        frequency_map = {}
+        frequency_map: dict[int, int] = {}
         for byte in data:
             frequency_map[byte] = frequency_map.get(byte, 0) + 1
 
@@ -353,7 +357,7 @@ class ChecksumRecalculator:
         if b"\x00" * 4 not in data and b"\xff" * 4 not in data:
             confidence += 0.2
 
-        printable_count = sum(bool(32 <= b <= 126) for b in data)
+        printable_count = sum(32 <= b <= 126 for b in data)
         if printable_count < len(data) * 0.2:
             confidence += 0.1
 
@@ -441,7 +445,7 @@ class ChecksumRecalculator:
             pe.close()
 
         except Exception as e:
-            logger.error("Checksum location identification failed: %s", e, exc_info=True)
+            logger.exception("Checksum location identification failed: %s", e, exc_info=True)
 
         return locations
 
@@ -517,7 +521,7 @@ class IntegrityCheckDetector:
         self.check_patterns = self._load_check_patterns()
         self.api_signatures = self._load_api_signatures()
 
-    def _load_check_patterns(self) -> dict[str, dict]:
+    def _load_check_patterns(self) -> dict[str, dict[str, bytes | IntegrityCheckType | str]]:
         """Load patterns for detecting integrity checks."""
         return {
             "crc32": {
@@ -634,7 +638,7 @@ class IntegrityCheckDetector:
 
     def detect_checks(self, binary_path: str) -> list[IntegrityCheck]:
         """Detect integrity checks in binary."""
-        checks = []
+        checks: list[IntegrityCheck] = []
 
         try:
             if binary_path.lower().endswith((".exe", ".dll", ".sys")):
@@ -650,11 +654,12 @@ class IntegrityCheckDetector:
                 checks.extend(antitamper_checks)
 
                 pe.close()
-            elif binary := lief.parse(binary_path):
-                checks.extend(self._scan_elf_checks(binary, binary_path))
+            elif parsed_binary := lief.parse(binary_path):
+                if isinstance(parsed_binary, lief.Binary):
+                    checks.extend(self._scan_elf_checks(parsed_binary, binary_path))
 
         except Exception as e:
-            logger.error("Integrity check detection failed: %s", e, exc_info=True)
+            logger.exception("Integrity check detection failed: %s", e, exc_info=True)
 
         return checks
 
@@ -668,9 +673,9 @@ class IntegrityCheckDetector:
         for entry in pe.DIRECTORY_ENTRY_IMPORT:
             for imp in entry.imports:
                 if imp.name:
-                    func_name = imp.name.decode() if isinstance(imp.name, bytes) else imp.name
+                    func_name = imp.name.decode() if isinstance(imp.name, bytes) else str(imp.name)
 
-                    if func_name in self.api_signatures:
+                    if isinstance(func_name, str) and func_name in self.api_signatures:
                         check = IntegrityCheck(
                             check_type=self.api_signatures[func_name],
                             address=imp.address,
@@ -801,11 +806,11 @@ class IntegrityCheckDetector:
     def _calculate_entropy(self, data: bytes) -> float:
         """Calculate Shannon entropy."""
         if not data:
-            return 0
+            return 0.0
 
         import math
 
-        frequency_map = {}
+        frequency_map: dict[int, int] = {}
         for byte in data:
             frequency_map[byte] = frequency_map.get(byte, 0) + 1
 
@@ -1443,7 +1448,7 @@ class IntegrityBypassEngine:
             return True
 
         except Exception as e:
-            logger.error("Failed to bypass integrity checks: %s", e, exc_info=True)
+            logger.exception("Failed to bypass integrity checks: %s", e, exc_info=True)
             return False
 
     def _build_bypass_script(self, checks: list[IntegrityCheck]) -> str:
@@ -1555,7 +1560,7 @@ class IntegrityBypassEngine:
         if message["type"] == "send":
             logger.info("[Frida] %s", message["payload"])
         elif message["type"] == "error":
-            logger.error("[Frida Error] %s", message["stack"])
+            logger.exception("[Frida Error] %s", message["stack"])
 
     def cleanup(self) -> None:
         """Clean up Frida session."""
@@ -1645,7 +1650,7 @@ class BinaryPatcher:
             return True, checksums
 
         except Exception as e:
-            logger.error("Binary patching failed: %s", e, exc_info=True)
+            logger.exception("Binary patching failed: %s", e, exc_info=True)
             return False, None
 
     def _rva_to_offset(self, pe: pefile.PE, rva: int) -> int | None:
@@ -1704,7 +1709,7 @@ class IntegrityCheckDefeatSystem:
             return True
 
         except Exception as e:
-            logger.error("Failed to patch embedded checksums: %s", e, exc_info=True)
+            logger.exception("Failed to patch embedded checksums: %s", e, exc_info=True)
             return False
 
     def defeat_integrity_checks(
@@ -1748,7 +1753,7 @@ class IntegrityCheckDefeatSystem:
                 result["success"] = True
                 logger.info("Successfully installed runtime bypasses")
             else:
-                logger.error("Runtime bypass installation failed")
+                logger.exception("Runtime bypass installation failed")
 
         if patch_binary:
             logger.info("Patching binary to remove integrity checks")

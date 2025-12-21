@@ -203,14 +203,14 @@ class ModelLoadingDialog(BaseDialog):
                 config=config,
                 priority=priority,
             ):
-                logger.debug(f"Background loading task created for {model_id}: {task}")
-                logger.info(f"Submitted loading task for: {model_id}")
+                logger.debug("Background loading task created for %s: %s", model_id, task)
+                logger.info("Submitted loading task for: %s", model_id)
                 QMessageBox.information(self, "Success", f"Model loading task submitted:\n{model_id}")
             else:
                 QMessageBox.critical(self, "Error", "Failed to submit loading task")
 
         except Exception as e:
-            logger.error(f"Error loading model: {e}")
+            logger.exception("Error loading model: %s", e)
             QMessageBox.critical(self, "Error", f"Error loading model:\n{e!s}")
 
     def get_next_id(self) -> int:

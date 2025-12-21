@@ -139,7 +139,7 @@ class StarForceDetector:
             self._advapi32.CloseServiceHandle.restype = wintypes.BOOL
 
         except Exception as e:
-            self.logger.debug(f"Failed to setup Windows API functions: {e}")
+            self.logger.debug("Failed to setup Windows API functions: %s", e)
 
     def _compile_yara_rules(self) -> object | None:
         """Compile YARA rules for StarForce signature detection."""
@@ -302,7 +302,7 @@ class StarForceDetector:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error detecting StarForce services: {e}")
+            self.logger.debug("Error detecting StarForce services: %s", e)
 
         return detected
 
@@ -342,7 +342,7 @@ class StarForceDetector:
             pe.close()
 
         except Exception as e:
-            self.logger.debug(f"Error analyzing PE sections: {e}")
+            self.logger.debug("Error analyzing PE sections: %s", e)
 
         return detected
 
@@ -374,7 +374,7 @@ class StarForceDetector:
             pe.close()
 
         except Exception as e:
-            self.logger.debug(f"Error detecting StarForce version: {e}")
+            self.logger.debug("Error detecting StarForce version: %s", e)
 
         return None
 
@@ -413,7 +413,7 @@ class StarForceDetector:
                 for match in results
             )
         except Exception as e:
-            self.logger.debug(f"Error in YARA signature detection: {e}")
+            self.logger.debug("Error in YARA signature detection: %s", e)
 
         return matches
 
@@ -509,7 +509,7 @@ class StarForceDetector:
                 self._advapi32.CloseServiceHandle(sc_manager)
 
         except Exception as e:
-            self.logger.debug(f"Error querying service status: {e}")
+            self.logger.debug("Error querying service status: %s", e)
 
         return status_info
 

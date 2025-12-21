@@ -39,7 +39,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in optimization_config: %s", e)
+    logger.exception("Import error in optimization_config: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -212,7 +212,7 @@ class OptimizationManager:
         """Execute optimization action."""
         with self.lock:
             try:
-                logger.info(f"Executing optimization rule '{rule.name}' for {metric_name}={value}")
+                logger.info("Executing optimization rule '%s' for %s=%s", rule.name, metric_name, value)
 
                 if rule.action == "gc":
                     self._execute_garbage_collection()
@@ -228,7 +228,7 @@ class OptimizationManager:
                 self._update_optimization_stats(rule.name, "executed")
 
             except Exception as e:
-                logger.error(f"Error executing optimization rule '{rule.name}': {e}")
+                logger.exception("Error executing optimization rule '%s': %s", rule.name, e)
                 self._update_optimization_stats(rule.name, "error")
 
     def _execute_garbage_collection(self) -> None:
@@ -257,9 +257,9 @@ class OptimizationManager:
             self.gc_stats["objects_collected"] += collected
             self.gc_stats["memory_freed_mb"] += memory_freed_mb
 
-            logger.info(f"GC collected {collected} objects, freed {memory_freed_mb:.2f}MB")
+            logger.info("GC collected %d objects, freed %.2fMB", collected, memory_freed_mb)
         except Exception as e:
-            logger.warning(f"Error during garbage collection monitoring: {e}")
+            logger.warning("Error during garbage collection monitoring: %s", e)
             # Fallback - just run GC without monitoring
             collected = gc.collect()
             self.gc_stats["collections"] += 1
@@ -275,7 +275,7 @@ class OptimizationManager:
         self.cache_stats["evictions"] += cleared_entries
         self.cache_stats["size"] = 0
 
-        logger.info(f"Cleared {cleared_entries} cache entries")
+        logger.info("Cleared %d cache entries", cleared_entries)
 
     def _execute_logging(self, rule: OptimizationRule, metric_name: str, level: str, value: float) -> None:
         """Execute logging optimization action."""
@@ -310,27 +310,27 @@ class OptimizationManager:
                 self._create_rule_handler(rule),
             )
 
-        logger.info(f"Added custom optimization rule: {rule.name}")
+        logger.info("Added custom optimization rule: %s", rule.name)
 
     def enable_rule(self, rule_name: str) -> None:
         """Enable optimization rule."""
         for rule in self.config.optimization_rules:
             if rule.name == rule_name:
                 rule.enabled = True
-                logger.info(f"Enabled optimization rule: {rule_name}")
+                logger.info("Enabled optimization rule: %s", rule_name)
                 return
 
-        logger.warning(f"Optimization rule not found: {rule_name}")
+        logger.warning("Optimization rule not found: %s", rule_name)
 
     def disable_rule(self, rule_name: str) -> None:
         """Disable optimization rule."""
         for rule in self.config.optimization_rules:
             if rule.name == rule_name:
                 rule.enabled = False
-                logger.info(f"Disabled optimization rule: {rule_name}")
+                logger.info("Disabled optimization rule: %s", rule_name)
                 return
 
-        logger.warning(f"Optimization rule not found: {rule_name}")
+        logger.warning("Optimization rule not found: %s", rule_name)
 
     def get_optimization_summary(self) -> dict[str, Any]:
         """Get optimization summary."""
@@ -391,7 +391,7 @@ class OptimizationManager:
             baseline_memory = process.memory_info().rss
             baseline_objects = len(gc.get_objects())
 
-            logger.debug(f"Baseline measurement: {baseline_memory} bytes memory, {baseline_objects} objects")
+            logger.debug("Baseline measurement: %d bytes memory, %d objects", baseline_memory, baseline_objects)
 
             memory_load_data: list[dict[str, str]] = [{f"key_{i}": f"value_{i}" * 100} for i in range(1000)]
             load_data_size = sum(len(str(k)) + len(str(v)) for d in memory_load_data for k, v in d.items())
@@ -471,7 +471,7 @@ class OptimizationManager:
         with open(file_path, "w") as f:
             json.dump(config_data, f, indent=2)
 
-        logger.info(f"Optimization config exported to {file_path}")
+        logger.info("Optimization config exported to %s", file_path)
 
     def import_config(self, file_path: Path) -> None:
         """Import optimization configuration."""
@@ -512,10 +512,10 @@ class OptimizationManager:
             # Re-setup optimization rules
             self._setup_optimization_rules()
 
-            logger.info(f"Optimization config imported from {file_path}")
+            logger.info("Optimization config imported from %s", file_path)
 
         except Exception as e:
-            logger.error(f"Failed to import optimization config: {e}")
+            logger.exception("Failed to import optimization config: %s", e)
 
     def get_recommendations(self) -> list[str]:
         """Get optimization recommendations."""

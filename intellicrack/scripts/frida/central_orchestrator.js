@@ -804,7 +804,7 @@ const CentralOrchestrator = {
 
     // Monitor behavior
     monitorBehavior: function () {
-        const behavioral = this.config.automation.behavioral;
+        const {behavioral} = this.config.automation;
 
         // Registry to time bomb
         if (
@@ -2069,7 +2069,7 @@ const CentralOrchestrator = {
                                     // Check against all YARA signatures
                                     for (let i = 0; i < yaraSignatures.length; i++) {
                                         const sig = yaraSignatures[i];
-                                        const pattern = sig.pattern;
+                                        const {pattern} = sig;
                                         let matchFound = false;
 
                                         // Check if either buffer contains the signature
@@ -3464,7 +3464,7 @@ const CentralOrchestrator = {
             // iOS-specific coordination
             if (ObjC.available) {
                 try {
-                    const UIDevice = ObjC.classes.UIDevice;
+                    const {UIDevice} = ObjC.classes;
                     if (UIDevice) {
                         const systemName = UIDevice.currentDevice().systemName();
 

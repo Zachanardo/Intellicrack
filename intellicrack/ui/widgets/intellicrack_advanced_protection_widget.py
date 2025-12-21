@@ -101,7 +101,7 @@ class AdvancedAnalysisThread(QThread):
             self.analysis_complete.emit(analysis)
 
         except Exception as e:
-            self.logger.error("Exception in intellicrack_advanced_protection_widget: %s", e)
+            self.logger.exception("Exception in intellicrack_advanced_protection_widget: %s", e)
             self.analysis_error.emit(str(e))
 
 
@@ -999,7 +999,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                     f"Results exported to:\n{file_path}",
                 )
             except Exception as e:
-                logger.error("Exception in intellicrack_advanced_protection_widget: %s", e)
+                logger.exception("Exception in intellicrack_advanced_protection_widget: %s", e)
                 QMessageBox.critical(
                     self,
                     "Export Error",

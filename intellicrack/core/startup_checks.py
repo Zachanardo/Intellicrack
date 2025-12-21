@@ -25,6 +25,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from intellicrack.utils.logger import log_function_call
 
@@ -38,12 +39,12 @@ os.environ["MKL_THREADING_LAYER"] = "GNU"
 
 # Import TensorFlow handler ONCE at module level to avoid duplicate imports
 _tf_import_attempted = False
-_tf_module = None
+_tf_module: Any = None
 _tf_available = False
 
 
 @log_function_call
-def _get_tensorflow() -> tuple[object, bool]:
+def _get_tensorflow() -> tuple[Any, bool]:
     """Get TensorFlow module, importing only once.
 
     Returns:
@@ -97,7 +98,7 @@ def check_dependencies() -> dict[str, bool]:
 
         # Verify Flask can handle basic routing
         @validation_app.route("/test")
-        def validation_route() -> object:
+        def validation_route() -> Any:
             return flask.jsonify({"status": "ok"})
 
         # Validate the app context
@@ -125,7 +126,7 @@ def check_dependencies() -> dict[str, bool]:
         else:
             logger.warning("QEMU not found in system PATH. QEMU functionality will be limited.")
     except Exception as e:
-        logger.error("An unexpected error occurred during QEMU check: %s", e, exc_info=True)
+        logger.exception("An unexpected error occurred during QEMU check: %s", e)
         dependencies["QEMU"] = False
 
     # Check TensorFlow
@@ -207,7 +208,7 @@ def check_dependencies() -> dict[str, bool]:
                 logger.info("llama-cpp-python: Basic parameter manipulation validated.")
             except Exception as param_error:
                 dependencies["llama-cpp-python"] = False
-                logger.error("llama-cpp-python: Parameter validation failed: %s", param_error, exc_info=True)
+                logger.exception("llama-cpp-python: Parameter validation failed: %s", param_error)
         else:
             dependencies["llama-cpp-python"] = False
             logger.error("llama-cpp-python: Parameters missing required attributes (n_gpu_layers or n_ctx).")
@@ -336,7 +337,7 @@ def create_minimal_qemu_disk() -> Path | None:
         return None
 
     except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        logger.error("'qemu-img' command not found or failed: %s. QEMU must be installed for emulation features.", e, exc_info=True)
+        logger.exception("'qemu-img' command not found or failed: %s. QEMU must be installed for emulation features.", e)
         logger.info("Install QEMU: https://www.qemu.org/download/")
         return None
 
@@ -349,7 +350,7 @@ def check_protection_models() -> bool:
 
 
 @log_function_call
-def validate_tensorflow_models() -> dict[str, any]:
+def validate_tensorflow_models() -> dict[str, Any]:
     """Validate TensorFlow and check model compatibility."""
     logger.info("Validating TensorFlow installation and model compatibility.")
     try:
@@ -432,7 +433,7 @@ def validate_tensorflow_models() -> dict[str, any]:
 
 
 @log_function_call
-def perform_startup_checks() -> dict[str, any]:
+def perform_startup_checks() -> dict[str, Any]:
     """Perform all startup checks."""
     logger.info("Initiating all Intellicrack startup checks.")
     # Validate configuration first
@@ -448,7 +449,7 @@ def perform_startup_checks() -> dict[str, any]:
     deps = check_dependencies()
     paths = check_data_paths()
 
-    results = {
+    results: dict[str, Any] = {
         "dependencies": deps,
         "paths": paths,
         "config_valid": config_valid,
@@ -493,10 +494,10 @@ def perform_startup_checks() -> dict[str, any]:
 
 
 @log_function_call
-def get_system_health_report() -> dict[str, any]:
+def get_system_health_report() -> dict[str, Any]:
     """Generate a comprehensive system health report using all available dependencies."""
     logger.info("Generating comprehensive system health report.")
-    report = {
+    report: dict[str, Any] = {
         "timestamp": sys.version,
         "platform": sys.platform,
         "python_version": sys.version.split()[0],

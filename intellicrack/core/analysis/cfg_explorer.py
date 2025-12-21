@@ -91,7 +91,7 @@ try:
         numpy as np,
     )
 except ImportError as e:
-    logger.error("Import error in cfg_explorer: %s", e)
+    logger.exception("Import error in cfg_explorer: %s", e)
     np = None
     NUMPY_AVAILABLE = False
 
@@ -199,8 +199,11 @@ except ImportError as e:
                                             if neighbor is not None:
                                                 self._nodes[neighbor] = True
                                                 self._edges[node].add(neighbor)
-                                                edge_attrs = {k: v for k, v in neighbor_info.items() if k not in ("id", "node")}
-                                                if edge_attrs:
+                                                if edge_attrs := {
+                                                    k: v
+                                                    for k, v in neighbor_info.items()
+                                                    if k not in ("id", "node")
+                                                }:
                                                     self._edge_attrs[node, neighbor] = edge_attrs
                                         else:
                                             self._nodes[neighbor_info] = True
@@ -266,14 +269,14 @@ except ImportError as e:
                 if data:
                     edges_with_data: list[tuple[object, object, dict[str, object]]] = []
                     for u, neighbors in self._edges.items():
-                        for v in neighbors:
-                            edges_with_data.append((u, v, self._edge_attrs.get((u, v), {})))
+                        edges_with_data.extend(
+                            (u, v, self._edge_attrs.get((u, v), {})) for v in neighbors
+                        )
                     return edges_with_data
                 else:
                     edges_no_data: list[tuple[object, object]] = []
                     for u, neighbors in self._edges.items():
-                        for v in neighbors:
-                            edges_no_data.append((u, v))
+                        edges_no_data.extend((u, v) for v in neighbors)
                     return edges_no_data
 
             def number_of_nodes(self) -> int:
@@ -304,7 +307,7 @@ except ImportError as e:
                     Number of edges pointing to this node
 
                 """
-                return sum(bool(node in neighbors) for neighbors in self._edges.values())
+                return sum(node in neighbors for neighbors in self._edges.values())
 
             def successors(self, node: object) -> list[object]:
                 """Return successors of node.
@@ -786,9 +789,13 @@ except ImportError as e:
                         G.add_nodes_from(graph.nodes())
                         G.add_edges_from(graph.edges())
                         G.layout(prog=prog)
-                        pos = {}
-                        for node in G.nodes():
-                            pos[node] = (float(node.attr["pos"].split(",")[0]), float(node.attr["pos"].split(",")[1]))
+                        pos = {
+                            node: (
+                                float(node.attr["pos"].split(",")[0]),
+                                float(node.attr["pos"].split(",")[1]),
+                            )
+                            for node in G.nodes()
+                        }
                         logger.info("Used graphviz layout with prog '%s'", prog)
                         return pos
                     except ImportError:
@@ -809,7 +816,7 @@ try:
 
     MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
-    logger.error("Import error in cfg_explorer: %s", e)
+    logger.exception("Import error in cfg_explorer: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
     plt = None
@@ -819,7 +826,7 @@ try:
 
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cfg_explorer: %s", e)
+    logger.exception("Import error in cfg_explorer: %s", e)
     capstone = None
     CS_ARCH_X86 = CS_MODE_32 = CS_MODE_64 = Cs = None
     CAPSTONE_AVAILABLE = False
@@ -829,7 +836,7 @@ try:
 
     PEFILE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cfg_explorer: %s", e)
+    logger.exception("Import error in cfg_explorer: %s", e)
     pefile = None
     PEFILE_AVAILABLE = False
 
@@ -840,7 +847,7 @@ try:
 
     SUBPROCESS_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cfg_explorer: %s", e)
+    logger.exception("Import error in cfg_explorer: %s", e)
     SUBPROCESS_AVAILABLE = False
 
 # UI dependencies
@@ -849,7 +856,7 @@ try:
 
     PYQT_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in cfg_explorer: %s", e)
+    logger.exception("Import error in cfg_explorer: %s", e)
     PYQT_AVAILABLE = False
 
 
@@ -906,7 +913,7 @@ class CFGExplorer:
             self.scripting_engine = R2ScriptingEngine(self.binary_path, self.radare2_path)
             self.logger.info("Initialized advanced analysis engines")
         except Exception as e:
-            self.logger.warning("Failed to initialize some analysis engines: %s", e, exc_info=True)
+            self.logger.warning("Failed to initialize some analysis engines: %s", e)
 
     def load_binary(self, binary_path: str | None = None) -> bool:
         """Load a binary file and extract its enhanced CFG with advanced analysis."""
@@ -915,12 +922,12 @@ class CFGExplorer:
             self._initialize_analysis_engines()
 
         if not self.binary_path:
-            self.logger.error("No binary path specified")
+            self.logger.exception("No binary path specified")
             self._show_error_dialog("No binary path specified", "Please specify a valid binary file path.")
             return False
 
         if not NETWORKX_AVAILABLE:
-            self.logger.error("NetworkX not available - please install networkx")
+            self.logger.exception("NetworkX not available - please install networkx")
             self._show_error_dialog("Missing Dependency", "NetworkX not available - please install networkx package.")
             return False
 
@@ -991,7 +998,7 @@ class CFGExplorer:
                 return True
 
         except (R2Exception, OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error loading binary with advanced analysis: %s", e, exc_info=True)
+            self.logger.exception("Error loading binary with advanced analysis: %s", e)
             return False
 
     def _create_enhanced_function_graph(self, graph_data: dict[str, Any], r2: Any, function_addr: int) -> Any:
@@ -1005,7 +1012,7 @@ class CFGExplorer:
                     function_graph.graph["function_size"] = func_info[0].get("realsz", 0)
                     function_graph.graph["function_addr"] = function_addr
             except Exception as e:
-                self.logger.error("Exception in cfg_explorer: %s", e, exc_info=True)
+                self.logger.exception("Exception in cfg_explorer: %s", e)
                 function_graph.graph["function_addr"] = function_addr
                 function_graph.graph["function_name"] = f"func_{function_addr:x}"
 
@@ -1023,10 +1030,24 @@ class CFGExplorer:
             has_return = any("ret" in op.get("disasm", "") for op in block_ops)
 
             # Analyze for security-relevant instructions
-            crypto_ops = sum(bool(any(kw in op.get("disasm", "").lower() for kw in ["aes", "crypt", "hash", "rsa"])) for op in block_ops)
+            crypto_ops = sum(
+                any(
+                    (
+                        kw in op.get("disasm", "").lower()
+                        for kw in ["aes", "crypt", "hash", "rsa"]
+                    )
+                )
+                for op in block_ops
+            )
 
             license_ops = sum(
-                bool(any(kw in op.get("disasm", "").lower() for kw in ["license", "valid", "check", "trial", "serial"])) for op in block_ops
+                any(
+                    (
+                        kw in op.get("disasm", "").lower()
+                        for kw in ["license", "valid", "check", "trial", "serial"]
+                    )
+                )
+                for op in block_ops
             )
 
             # Add enhanced node with comprehensive metadata
@@ -1176,7 +1197,7 @@ class CFGExplorer:
             self.logger.info("Completed advanced analysis")
 
         except Exception as e:
-            self.logger.warning("Advanced analysis partially failed: %s", e, exc_info=True)
+            self.logger.warning("Advanced analysis partially failed: %s", e)
 
     def _calculate_function_similarities(self) -> None:
         """Calculate similarities between functions using graph metrics."""
@@ -1232,7 +1253,7 @@ class CFGExplorer:
             self.current_function = function_name
             self.graph = self.functions[function_name]["graph"]
             return True
-        self.logger.error("Function %s not found", function_name)
+        self.logger.exception("Function %s not found", function_name)
         return False
 
     def get_functions(self) -> list[dict[str, Any]]:
@@ -1294,17 +1315,17 @@ class CFGExplorer:
                 "cyclomatic_complexity": len(list(nx.simple_cycles(self.graph))) + 1,
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in cfg_explorer: %s", e, exc_info=True)
+            self.logger.exception("Error in cfg_explorer: %s", e)
             return {"error": str(e)}
 
     def get_graph_layout(self, layout_type: str = "spring") -> dict[Any, Any] | None:
         """Get a layout for the current function graph."""
         if not self.graph:
-            self.logger.error("No graph loaded")
+            self.logger.exception("No graph loaded")
             return None
 
         if not NETWORKX_AVAILABLE:
-            self.logger.error("NetworkX not available")
+            self.logger.exception("NetworkX not available")
             return None
 
         if layout_type == "circular":
@@ -1323,12 +1344,12 @@ class CFGExplorer:
     def get_graph_data(self, layout_type: str = "spring") -> dict[str, Any] | None:
         """Get graph data for visualization."""
         if not self.graph:
-            self.logger.error("No graph loaded", exc_info=True)
+            self.logger.exception("No graph loaded")
             return None
 
         layout = self.get_graph_layout(layout_type)
         if layout is None:
-            self.logger.error("Failed to get graph layout", exc_info=True)
+            self.logger.exception("Failed to get graph layout")
             return None
 
         nodes: list[dict[str, Any]] = []
@@ -1622,7 +1643,7 @@ class CFGExplorer:
     def find_license_check_patterns(self) -> list[dict[str, Any]]:
         """Find potential license check patterns in the CFG."""
         if not self.graph:
-            self.logger.error("No graph loaded", exc_info=True)
+            self.logger.exception("No graph loaded")
             return []
 
         license_patterns = []
@@ -1881,13 +1902,13 @@ class CFGExplorer:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating HTML visualization: %s", e, exc_info=True)
+            self.logger.exception("Error generating HTML visualization: %s", e)
             return False
 
     def export_graph_image(self, output_file: str, format: str = "png") -> bool:  # pylint: disable=redefined-builtin
         """Export the CFG as an image file."""
         if not MATPLOTLIB_AVAILABLE or not NETWORKX_AVAILABLE:
-            self.logger.error("Matplotlib or NetworkX not available for image export", exc_info=True)
+            self.logger.exception("Matplotlib or NetworkX not available for image export")
             return False
 
         try:
@@ -1923,20 +1944,20 @@ class CFGExplorer:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error exporting graph image: %s", e, exc_info=True)
+            self.logger.exception("Error exporting graph image: %s", e)
             return False
 
     def export_dot_file(self, output_file: str) -> bool:
         """Export the CFG as a DOT file."""
         if not NETWORKX_AVAILABLE:
-            self.logger.error("NetworkX not available for DOT export", exc_info=True)
+            self.logger.exception("NetworkX not available for DOT export")
             return False
 
         try:
             nx.drawing.nx_pydot.write_dot(self.graph, output_file)
             return True
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error exporting DOT file: %s", e, exc_info=True)
+            self.logger.exception("Error exporting DOT file: %s", e)
             return False
 
     def analyze_cfg(self, binary_path: str | None = None) -> dict[str, Any]:
@@ -1970,7 +1991,7 @@ class CFGExplorer:
 
             if not self.binary_path:
                 error_msg = "No binary path specified for advanced CFG analysis"
-                self.logger.error(error_msg, exc_info=True)
+                self.logger.exception(error_msg)
                 errors_list = results.get("errors")
                 if isinstance(errors_list, list):
                     errors_list.append(error_msg)
@@ -1978,7 +1999,7 @@ class CFGExplorer:
 
             if not self.load_binary(self.binary_path):
                 error_msg = f"Failed to load binary for advanced CFG analysis: {self.binary_path}"
-                self.logger.error(error_msg, exc_info=True)
+                self.logger.exception(error_msg)
                 errors_list = results.get("errors")
                 if isinstance(errors_list, list):
                     errors_list.append(error_msg)
@@ -2035,8 +2056,7 @@ class CFGExplorer:
                 self.logger.debug("Error getting similarity analysis: %s", e)
 
             try:
-                ai_cache = self.analysis_cache.get("ai_analysis", {})
-                if ai_cache:
+                if ai_cache := self.analysis_cache.get("ai_analysis", {}):
                     results["ai_analysis"] = ai_cache
             except Exception as e:
                 self.logger.debug("Error getting AI analysis: %s", e)
@@ -2074,7 +2094,7 @@ class CFGExplorer:
 
         except Exception as e:
             error_msg = f"Advanced CFG analysis failed: {e}"
-            self.logger.error("Advanced CFG analysis failed: %s", e, exc_info=True)
+            self.logger.exception("Advanced CFG analysis failed: %s", e)
             errors_list = results.get("errors")
             if isinstance(errors_list, list):
                 errors_list.append(error_msg)
@@ -2216,8 +2236,8 @@ class CFGExplorer:
             try:
                 QMessageBox.critical(None, title, message)
             except Exception as e:
-                self.logger.error("Failed to show error dialog: %s", e, exc_info=True)
-        self.logger.error("%s: %s", title, message, exc_info=True)
+                self.logger.exception("Failed to show error dialog: %s", e)
+        self.logger.exception("%s: %s", title, message)
 
     def export_json(self, output_path: str) -> bool:
         """Export comprehensive CFG analysis to JSON format.
@@ -2363,7 +2383,7 @@ class CFGExplorer:
                     "cross_reference_analysis": self.get_cross_reference_analysis(),
                 }
             except Exception as e:
-                self.logger.warning("Failed to export some metrics: %s", e, exc_info=True)
+                self.logger.warning("Failed to export some metrics: %s", e)
 
             def json_serializable(obj: object) -> object:
                 """Convert non-serializable objects to JSON-friendly format.
@@ -2402,11 +2422,11 @@ class CFGExplorer:
 
                 self.logger.info("Export statistics: %s functions, %s blocks, %.2f KB", num_functions, num_blocks, file_size_kb)
                 return True
-            self.logger.error("Export file verification failed", exc_info=True)
+            self.logger.exception("Export file verification failed")
             return False
 
         except Exception as e:
-            self.logger.error("Failed to export CFG to JSON: %s", e, exc_info=True)
+            self.logger.exception("Failed to export CFG to JSON: %s", e)
             self.logger.debug("Export error traceback: %s", traceback.format_exc())
             return False
 
@@ -2498,7 +2518,7 @@ def run_deep_cfg_analysis(app: Any) -> None:
                         jump_target = int(insn.op_str.split("0x")[1], 16)
                         G.add_edge(insn.address, jump_target, type="jump")
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in cfg_explorer: %s", e, exc_info=True)
+                    logger.exception("Error in cfg_explorer: %s", e)
                     _emit_output(f"[CFG Analysis] Error parsing jump: {e}")
 
         _emit_output("[CFG Analysis] Saving CFG visualization...")
@@ -2506,7 +2526,7 @@ def run_deep_cfg_analysis(app: Any) -> None:
         try:
             nx.drawing.nx_pydot.write_dot(G, "full_cfg.dot")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in cfg_explorer: %s", e, exc_info=True)
+            logger.exception("Error in cfg_explorer: %s", e)
             _emit_output(f"[CFG Analysis] Could not write DOT file: {e}")
 
         _emit_output("[CFG Analysis] Analyzing for license checks...")
@@ -2540,7 +2560,7 @@ def run_deep_cfg_analysis(app: Any) -> None:
             try:
                 nx.drawing.nx_pydot.write_dot(license_subgraph, "license_cfg.dot")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in cfg_explorer: %s", e, exc_info=True)
+                logger.exception("Error in cfg_explorer: %s", e)
                 _emit_output(f"[CFG Analysis] Could not write license DOT file: {e}")
 
             try:
@@ -2555,14 +2575,14 @@ def run_deep_cfg_analysis(app: Any) -> None:
                     else:
                         _emit_output("[CFG Analysis] GraphViz 'dot' command not found in PATH")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in cfg_explorer: %s", e, exc_info=True)
+                logger.exception("Error in cfg_explorer: %s", e)
                 _emit_output(f"[CFG Analysis] Could not generate SVG: {e}")
 
         _emit_output("[CFG Analysis] Analysis complete")
         _set_status("CFG analysis complete")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in cfg_explorer: %s", e, exc_info=True)
+        logger.exception("Error in cfg_explorer: %s", e)
         _emit_output(f"[CFG Analysis] Error: {e}")
         _set_status(f"CFG analysis error: {e}")
 

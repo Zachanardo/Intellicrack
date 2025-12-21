@@ -119,11 +119,10 @@ except ImportError:
                     if isinstance(children, list):
                         children.remove(self)
             self._parent = parent
-            if parent is not None:
-                if hasattr(parent, "_children"):
-                    children = parent._children
-                    if isinstance(children, list):
-                        children.append(self)
+            if parent is not None and hasattr(parent, "_children"):
+                children = parent._children
+                if isinstance(children, list):
+                    children.append(self)
 
         def parent(self) -> object | None:
             """Get parent object in hierarchy.
@@ -363,11 +362,10 @@ except ImportError:
             self._style_sheet: str = ""
             self._object_name: str = ""
 
-            if parent is not None:
-                if hasattr(parent, "_children"):
-                    children = parent._children
-                    if isinstance(children, list):
-                        children.append(self)
+            if parent is not None and hasattr(parent, "_children"):
+                children = parent._children
+                if isinstance(children, list):
+                    children.append(self)
 
         def setParent(self, parent: object | None) -> None:
             """Set parent widget for hierarchy management.
@@ -383,11 +381,10 @@ except ImportError:
                     if isinstance(children, list):
                         children.remove(self)
             self._parent = parent
-            if parent is not None:
-                if hasattr(parent, "_children"):
-                    children = parent._children
-                    if isinstance(children, list):
-                        children.append(self)
+            if parent is not None and hasattr(parent, "_children"):
+                children = parent._children
+                if isinstance(children, list):
+                    children.append(self)
 
         def parent(self) -> object | None:
             """Get parent widget in hierarchy.
@@ -1209,28 +1206,24 @@ class DistributedWorkerThread(QThread):
 
         # Common patterns
         for base in bases:
-            passwords.extend((
-                base,
-                base + "123",
-                base + "1234",
-                base + "12345",
-                base.capitalize(),
-                base.upper(),
-            ))
+            passwords.extend(
+                (
+                    base,
+                    f"{base}123",
+                    f"{base}1234",
+                    f"{base}12345",
+                    base.capitalize(),
+                    base.upper(),
+                )
+            )
             # Add year patterns
-            for year in range(2020, 2026):
-                passwords.append(f"{base}{year}")
-
+            passwords.extend(f"{base}{year}" for year in range(2020, 2026))
             # Add special char patterns
             for char in ["!", "@", "#", "$"]:
-                passwords.append(f"{base}{char}")
-                passwords.append(f"{base}123{char}")
-
+                passwords.extend((f"{base}{char}", f"{base}123{char}"))
         # Add numeric passwords
         for i in range(100):
-            passwords.append(str(i).zfill(4))
-            passwords.append(str(i).zfill(6))
-
+            passwords.extend((str(i).zfill(4), str(i).zfill(6)))
         # Add keyboard patterns
         passwords.extend(["qwerty", "asdfgh", "12345678", "123456789", "abcdef"])
 
@@ -1688,9 +1681,9 @@ class DistributedWorkerThread(QThread):
                 "Implement anti-tampering measures",
             ))
         else:
-            recommendations.append("Consider adding obfuscation")
-            recommendations.append("Monitor for suspicious activity")
-
+            recommendations.extend(
+                ("Consider adding obfuscation", "Monitor for suspicious activity")
+            )
         return recommendations
 
     def process_license_analysis(self, task: DistributedTask) -> dict[str, Any]:

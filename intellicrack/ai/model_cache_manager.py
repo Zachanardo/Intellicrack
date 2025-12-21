@@ -246,7 +246,7 @@ class ModelCacheManager:
             with open(self.disk_index_file) as f:
                 return json.load(f)
         except Exception as e:
-            logger.error("Failed to load disk cache index: %s", e)
+            logger.exception("Failed to load disk cache index: %s", e)
             return {}
 
     def _save_disk_index(self) -> None:
@@ -258,7 +258,7 @@ class ModelCacheManager:
             with open(self.disk_index_file, "w") as f:
                 json.dump(self.disk_index, f, indent=2, default=str)
         except Exception as e:
-            logger.error("Failed to save disk cache index: %s", e)
+            logger.exception("Failed to save disk cache index: %s", e)
 
     def _estimate_model_memory(self, model: object) -> int:
         """Estimate memory usage of a model.
@@ -370,7 +370,7 @@ class ModelCacheManager:
                 return model, tokenizer
 
             except Exception as e:
-                logger.error("Failed to load model %s: %s", model_id, e)
+                logger.exception("Failed to load model %s: %s", model_id, e)
                 return None
 
         return None
@@ -548,7 +548,7 @@ class ModelCacheManager:
             return True
 
         except Exception as e:
-            logger.error("Failed to save model to disk: %s", e)
+            logger.exception("Failed to save model to disk: %s", e)
             return False
 
     def _load_from_disk(self, model_id: str) -> tuple[Any, Any | None] | None:
@@ -589,7 +589,7 @@ class ModelCacheManager:
             if GPU_AUTOLOADER_AVAILABLE and to_device and metadata.get("device", "cpu") != "cpu":
                 try:
                     model = to_device(model, metadata["device"])
-                    logger.info("Moved model to device: %s", metadata['device'])
+                    logger.info("Moved model to device: %s", metadata["device"])
                 except Exception as e:
                     logger.warning("Failed to move model to GPU, keeping on CPU: %s", e)
 
@@ -609,7 +609,7 @@ class ModelCacheManager:
             return model, tokenizer
 
         except Exception as e:
-            logger.error("Failed to load model from disk: %s", e)
+            logger.exception("Failed to load model from disk: %s", e)
             return None
 
     def clear(self, clear_disk: bool = False) -> None:
@@ -640,7 +640,7 @@ class ModelCacheManager:
                 self.disk_index = {}
                 self._save_disk_index()
             except Exception as e:
-                logger.error("Failed to clear disk cache: %s", e)
+                logger.exception("Failed to clear disk cache: %s", e)
 
         logger.info("Cleared model cache")
 
@@ -695,8 +695,7 @@ class ModelCacheManager:
         self.stats["misses"] += 1
 
         if self.enable_disk_cache and name in self.disk_index:
-            result = self._load_from_disk(name)
-            if result:
+            if result := self._load_from_disk(name):
                 return result[0]
 
         return None

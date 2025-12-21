@@ -79,7 +79,7 @@ class AIAssistant:
                 "analysis_timestamp": self._get_timestamp(),
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Code analysis failed: %s", e, exc_info=True)
+            logger.exception("Code analysis failed: %s", e)
             return {"status": "error", "error": str(e)}
 
     def _detect_language(self, code: str) -> str:
@@ -230,7 +230,7 @@ class AIAssistant:
                     else:
                         return {"ai_enabled": False, "insights": [], "suggestions": []}
                 except (ImportError, AttributeError, ValueError, TypeError) as e:
-                    logger.debug(LLM_INIT_FAILURE_MSG, e, exc_info=True)
+                    logger.debug(LLM_INIT_FAILURE_MSG, e)
                     return {"ai_enabled": False, "insights": [], "suggestions": []}
 
             # Create analysis prompt
@@ -270,7 +270,7 @@ class AIAssistant:
                 }
 
         except (ConnectionError, TimeoutError, AttributeError, ValueError) as e:
-            logger.debug("AI code analysis failed: %s", e, exc_info=True)
+            logger.debug("AI code analysis failed: %s", e)
 
         return {"ai_enabled": False, "insights": [], "suggestions": []}
 
@@ -360,7 +360,7 @@ class AIAssistant:
                 return self._handle_legacy_llm_manager_question(question)
             return self._handle_vulnerability_engine_question(question)
         except (AttributeError, TypeError, ValueError) as e:
-            logger.error("AI question failed: %s", e, exc_info=True)
+            logger.exception("AI question failed: %s", e)
             return f"Unable to process question: {question}"
 
     def _is_llm_manager_available(self) -> bool:
@@ -397,7 +397,7 @@ class AIAssistant:
             vuln_engine = VulnerabilityEngine()
             return self._analyze_question_with_vulnerability_engine(question, context, vuln_engine)
         except Exception as e:
-            logger.error("Vulnerability engine error: %s", e, exc_info=True)
+            logger.exception("Vulnerability engine error: %s", e)
             return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
 
     def _get_binary_analysis_context(self) -> str:
@@ -412,26 +412,28 @@ class AIAssistant:
         question_lower = question.lower()
         if "license" in question_lower or "activation" in question_lower:
             if hasattr(vuln_engine, "analyze_license_patterns"):
-                result = vuln_engine.analyze_license_patterns(question, context)
-                if result:
+                if result := vuln_engine.analyze_license_patterns(
+                    question, context
+                ):
                     return str(result)
             return "Consider analyzing license validation routines, checking for activation key algorithms, and examining trial period limitations."
         if "protection" in question_lower or "security" in question_lower:
             if hasattr(vuln_engine, "analyze_protection_mechanisms"):
-                result = vuln_engine.analyze_protection_mechanisms(question, context)
-                if result:
+                if result := vuln_engine.analyze_protection_mechanisms(
+                    question, context
+                ):
                     return str(result)
             return "Look for anti-debugging techniques, packing detection, and code obfuscation patterns."
         if "vulnerability" in question_lower or "exploit" in question_lower:
             if hasattr(vuln_engine, "find_vulnerabilities"):
-                result = vuln_engine.find_vulnerabilities(question, context)
-                if result:
+                if result := vuln_engine.find_vulnerabilities(question, context):
                     return str(result)
             return "Focus on buffer overflow analysis, input validation checks, and privilege escalation vectors."
         if "network" in question_lower or "communication" in question_lower:
             if hasattr(vuln_engine, "analyze_network_behavior"):
-                result = vuln_engine.analyze_network_behavior(question, context)
-                if result:
+                if result := vuln_engine.analyze_network_behavior(
+                    question, context
+                ):
                     return str(result)
             return "Monitor network traffic, analyze protocol communications, and check SSL/TLS implementations."
         return f"To answer '{question}', I recommend starting with binary structure analysis and examining protection mechanisms."
@@ -532,7 +534,7 @@ class CodeAnalyzer:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Binary analysis failed: %s", e, exc_info=True)
+            logger.exception("Binary analysis failed: %s", e)
             return {"error": str(e), "file_path": file_path}
 
     def analyze_assembly(self, assembly_code: str) -> dict[str, Any]:
@@ -586,7 +588,7 @@ class CodeAnalyzer:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Assembly analysis failed: %s", e, exc_info=True)
+            logger.exception("Assembly analysis failed: %s", e)
             return {"error": str(e)}
 
     def ask_ai_about_analysis(self, question: str, context: dict[str, Any] | None = None) -> str:
@@ -619,7 +621,7 @@ class CodeAnalyzer:
             return self.ai_assistant.ask_question(full_question)
 
         except (AttributeError, TypeError, ValueError) as e:
-            logger.error("AI question failed: %s", e, exc_info=True)
+            logger.exception("AI question failed: %s", e)
             return f"Error processing question: {e!s}"
 
     def get_analysis_suggestions(self, analysis_result: dict[str, Any]) -> list[str]:
@@ -663,7 +665,7 @@ class CodeAnalyzer:
             return base_suggestions + specific_suggestions
 
         except (AttributeError, TypeError, ValueError) as e:
-            logger.error("Getting analysis suggestions failed: %s", e, exc_info=True)
+            logger.exception("Getting analysis suggestions failed: %s", e)
             return ["Continue with manual analysis"]
 
     def _get_timestamp(self) -> str:
@@ -733,7 +735,7 @@ class CodeAnalyzer:
             return result
 
         except OSError as e:
-            logger.debug("Basic binary analysis error: %s", e, exc_info=True)
+            logger.debug("Basic binary analysis error: %s", e)
             result["findings"].append(f"File access error: {e!s}")
             return result
 
@@ -749,7 +751,7 @@ class CodeAnalyzer:
             self._analyze_pe_format(file_path, result)
             self._analyze_cross_platform_format(file_path, result)
         except (FileNotFoundError, PermissionError, RuntimeError) as e:
-            logger.debug("Format-specific analysis error: %s", e, exc_info=True)
+            logger.debug("Format-specific analysis error: %s", e)
             result["findings"].append(f"Analysis error: {e!s}")
 
         return result
@@ -773,33 +775,33 @@ class CodeAnalyzer:
 
     def _analyze_pe_imports(self, pe: Any, result: dict[str, Any]) -> None:
         """Analyze PE imports for protections."""
-        if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
-            imports_list = []
-            for imp in pe.DIRECTORY_ENTRY_IMPORT:
-                if hasattr(imp, "dll"):
-                    dll_name = imp.dll
-                    if isinstance(dll_name, bytes):
-                        imports_list.append(dll_name.decode(errors="ignore"))
-                    else:
-                        imports_list.append(str(dll_name))
+        if not hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
+            return
+        imports_list = []
+        for imp in pe.DIRECTORY_ENTRY_IMPORT:
+            if hasattr(imp, "dll"):
+                dll_name = imp.dll
+                if isinstance(dll_name, bytes):
+                    imports_list.append(dll_name.decode(errors="ignore"))
+                else:
+                    imports_list.append(str(dll_name))
 
-            if any("crypt" in imp.lower() for imp in imports_list):
-                result["protection_mechanisms"].append("Cryptographic libraries detected")
-            if any("debug" in imp.lower() for imp in imports_list):
-                result["findings"].append("Debugging libraries imported")
+        if any("crypt" in imp.lower() for imp in imports_list):
+            result["protection_mechanisms"].append("Cryptographic libraries detected")
+        if any("debug" in imp.lower() for imp in imports_list):
+            result["findings"].append("Debugging libraries imported")
 
     def _analyze_pe_sections(self, pe: Any, result: dict[str, Any]) -> None:
         """Analyze PE sections for security issues."""
         if hasattr(pe, "sections"):
             for section in pe.sections:
-                if hasattr(section, "Characteristics") and hasattr(section, "Name"):
-                    if section.Characteristics & 0x20000000 and section.Characteristics & 0x80000000:
-                        section_name = section.Name
-                        if isinstance(section_name, bytes):
-                            section_name = section_name.decode("utf-8", errors="ignore").strip("\x00")
-                        else:
-                            section_name = str(section_name).strip("\x00")
-                        result["security_issues"].append(f"Writable and executable section: {section_name}")
+                if hasattr(section, "Characteristics") and hasattr(section, "Name") and (section.Characteristics & 0x20000000 and section.Characteristics & 0x80000000):
+                    section_name = section.Name
+                    if isinstance(section_name, bytes):
+                        section_name = section_name.decode("utf-8", errors="ignore").strip("\x00")
+                    else:
+                        section_name = str(section_name).strip("\x00")
+                    result["security_issues"].append(f"Writable and executable section: {section_name}")
 
     def _analyze_cross_platform_format(self, file_path: str, result: dict[str, Any]) -> None:
         """Analyze cross-platform binary formats."""
@@ -865,7 +867,7 @@ class CodeAnalyzer:
                         }
                     self._llm_manager = llm_manager
                 except (ImportError, AttributeError, ValueError, TypeError) as e:
-                    logger.debug(LLM_INIT_FAILURE_MSG, e, exc_info=True)
+                    logger.debug(LLM_INIT_FAILURE_MSG, e)
                     return {
                         "ai_enabled": True,
                         "findings": ai_suggestions[:3],
@@ -915,7 +917,7 @@ class CodeAnalyzer:
                 }
 
         except (ConnectionError, TimeoutError, AttributeError, ValueError) as e:
-            logger.debug("AI binary analysis failed: %s", e, exc_info=True)
+            logger.debug("AI binary analysis failed: %s", e)
 
         return {"ai_enabled": False}
 
@@ -1037,7 +1039,7 @@ class CodeAnalyzer:
                         }
                     self._llm_manager = llm_manager
                 except (ImportError, AttributeError, ValueError, TypeError) as e:
-                    logger.debug(LLM_INIT_FAILURE_MSG, e, exc_info=True)
+                    logger.debug(LLM_INIT_FAILURE_MSG, e)
                     # Return AI assistant analysis if LLM fails
                     return {
                         "ai_enabled": True,
@@ -1089,7 +1091,7 @@ class CodeAnalyzer:
                 }
 
         except (ConnectionError, TimeoutError, AttributeError, ValueError) as e:
-            logger.debug("AI assembly analysis failed: %s", e, exc_info=True)
+            logger.debug("AI assembly analysis failed: %s", e)
 
         return {"ai_enabled": False}
 
@@ -1146,7 +1148,7 @@ def analyze_with_ai(data: object, analysis_type: str = "general") -> dict[str, A
             "summary": "AI analysis requires specific implementation for this data type",
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("AI analysis failed: %s", e, exc_info=True)
+        logger.exception("AI analysis failed: %s", e)
         return {"error": str(e)}
 
 
@@ -1180,7 +1182,7 @@ def get_ai_suggestions(context: str, domain: str = "security") -> list[str]:
         return base_suggestions + domain_suggestions.get(domain, [])
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Getting AI suggestions failed: %s", e, exc_info=True)
+        logger.exception("Getting AI suggestions failed: %s", e)
         return [f"Error getting suggestions: {e}"]
 
 
@@ -1211,7 +1213,7 @@ def explain_code(code: str, language: str = "auto", detail_level: str = "medium"
         return explanation
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Code explanation failed: %s", e, exc_info=True)
+        logger.exception("Code explanation failed: %s", e)
         return f"Error explaining code: {e}"
 
 
@@ -1366,7 +1368,7 @@ def _analyze_code_structure(code: str, language: str) -> dict[str, Any]:
         _determine_complexity(lines, result)
 
     except (AttributeError, TypeError, ValueError) as e:
-        logger.debug("Code structure analysis error: %s", e, exc_info=True)
+        logger.debug("Code structure analysis error: %s", e)
 
     return result
 
@@ -1482,6 +1484,6 @@ def _get_ai_code_explanation(code: str, language: str) -> str:
             return response.content.strip()
 
     except (ImportError, ConnectionError, TimeoutError, AttributeError, ValueError) as e:
-        logger.debug("AI code explanation failed: %s", e, exc_info=True)
+        logger.debug("AI code explanation failed: %s", e)
 
     return ""

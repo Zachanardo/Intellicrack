@@ -28,7 +28,7 @@ from enum import Enum
 from typing import Any
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
+from .learning_engine import get_learning_engine
 from .performance_monitor_simple import profile_ai_operation
 
 
@@ -39,7 +39,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in realtime_adaptation_engine: %s", e, exc_info=True)
+    logger.exception("Import error in realtime_adaptation_engine: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -178,7 +178,7 @@ class RuntimeMonitor:
                 time.sleep(self.monitor_interval)
 
             except Exception as e:
-                logger.error("Error in monitoring loop: %s", e, exc_info=True)
+                logger.exception("Error in monitoring loop: %s", e)
                 time.sleep(1.0)
 
     def _collect_system_metrics(self) -> None:
@@ -204,7 +204,7 @@ class RuntimeMonitor:
             self.record_metric("process.memory_vms", process_info.vms, "process")
 
         except Exception as e:
-            logger.error("Error collecting system metrics: %s", e, exc_info=True)
+            logger.exception("Error collecting system metrics: %s", e)
 
     def record_metric(
         self,
@@ -232,7 +232,7 @@ class RuntimeMonitor:
             try:
                 subscriber(metric)
             except Exception as e:
-                logger.error("Error notifying metric subscriber: %s", e, exc_info=True)
+                logger.exception("Error notifying metric subscriber: %s", e)
 
     def _process_metrics_buffer(self) -> None:
         """Process metrics buffer and update aggregates."""
@@ -303,7 +303,7 @@ class RuntimeMonitor:
         try:
             rule = self.adaptation_rules.get(rule_id)
             if not rule:
-                logger.error("Adaptation rule %s not found", rule_id)
+                logger.exception("Adaptation rule %s not found", rule_id)
                 return
 
             action_type = rule.get("action_type", "log")
@@ -324,7 +324,7 @@ class RuntimeMonitor:
                 logger.debug("Unknown adaptation action: %s", action_type)
 
         except Exception as e:
-            logger.error("Error executing adaptation rule %s: %s", rule_id, e, exc_info=True)
+            logger.exception("Error executing adaptation rule %s: %s", rule_id, e)
 
     def subscribe_to_metrics(self, callback: Callable[[RuntimeMetric], None]) -> None:
         """Subscribe to real-time metrics."""
@@ -456,7 +456,7 @@ class DynamicHookManager:
     def install_hook(self, hook_id: str, modification: dict[str, Any]) -> bool:
         """Install a hook modification."""
         if hook_id not in self.hook_registry:
-            logger.error("Hook point %s not registered", hook_id)
+            logger.exception("Hook point %s not registered", hook_id)
             return False
 
         try:
@@ -478,7 +478,7 @@ class DynamicHookManager:
                 return True
 
         except Exception as e:
-            logger.error("Failed to install hook %s: %s", hook_id, e, exc_info=True)
+            logger.exception("Failed to install hook %s: %s", hook_id, e)
 
         return False
 
@@ -500,7 +500,7 @@ class DynamicHookManager:
                 return True
 
         except Exception as e:
-            logger.error("Failed to remove hook %s: %s", hook_id, e, exc_info=True)
+            logger.exception("Failed to remove hook %s: %s", hook_id, e)
 
         return False
 
@@ -555,7 +555,7 @@ class DynamicHookManager:
                 return result
 
             except Exception as e:
-                logger.error("Error in hook modification %s: %s", hook_id, e, exc_info=True)
+                logger.exception("Error in hook modification %s: %s", hook_id, e)
                 # Fall back to original function
                 return original_function(*args, **kwargs)
 
@@ -633,7 +633,7 @@ class DynamicHookManager:
                 return True
 
         except Exception as e:
-            logger.error("Failed to install function hook: %s", e, exc_info=True)
+            logger.exception("Failed to install function hook: %s", e)
 
         return False
 
@@ -650,7 +650,7 @@ class DynamicHookManager:
                 return True
 
         except Exception as e:
-            logger.error("Failed to restore original function: %s", e, exc_info=True)
+            logger.exception("Failed to restore original function: %s", e)
 
         return False
 
@@ -791,7 +791,7 @@ class LiveDebuggingSystem:
                         },
                     )
                 except Exception as e:
-                    logger.error("Exception in realtime_adaptation_engine: %s", e, exc_info=True)
+                    logger.exception("Exception in realtime_adaptation_engine: %s", e)
                     self._log_debug_event(
                         debug_session_id,
                         "automated_fix_failed",
@@ -1133,7 +1133,7 @@ class RealTimeAdaptationEngine:
             self.adaptation_history.append(event)
             self.adaptation_stats["failed_adaptations"] += 1
 
-            logger.error("Adaptation failed: %s - %s", rule.name, e, exc_info=True)
+            logger.exception("Adaptation failed: %s - %s", rule.name, e)
 
     def _execute_adaptation_action(self, rule: AdaptationRule, trigger_metric: RuntimeMetric, adaptation_id: str) -> bool:
         """Execute the adaptation action."""
@@ -1169,7 +1169,7 @@ class RealTimeAdaptationEngine:
             return False
 
         except Exception as e:
-            logger.error("Error executing adaptation action %s: %s", action, e, exc_info=True)
+            logger.exception("Error executing adaptation action %s: %s", action, e)
             return False
 
     def _reduce_system_concurrency(self) -> bool:
@@ -1184,7 +1184,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error("Failed to reduce concurrency: %s", e, exc_info=True)
+            logger.exception("Failed to reduce concurrency: %s", e)
             return False
 
     def _trigger_garbage_collection(self) -> bool:
@@ -1196,7 +1196,7 @@ class RealTimeAdaptationEngine:
             logger.info("Garbage collection triggered, collected %s objects", collected)
             return True
         except Exception as e:
-            logger.error("Failed to trigger garbage collection: %s", e, exc_info=True)
+            logger.exception("Failed to trigger garbage collection: %s", e)
             return False
 
     def _enable_fallback_mode(self, adaptation_id: str) -> bool:
@@ -1230,7 +1230,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error("Failed to enable fallback mode: %s", e, exc_info=True)
+            logger.exception("Failed to enable fallback mode: %s", e)
             return False
 
     def _optimize_algorithm_selection(self) -> bool:
@@ -1244,7 +1244,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error("Failed to optimize algorithm selection: %s", e, exc_info=True)
+            logger.exception("Failed to optimize algorithm selection: %s", e)
             return False
 
     def _increase_timeout_values(self) -> bool:
@@ -1257,7 +1257,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error("Failed to increase timeout values: %s", e, exc_info=True)
+            logger.exception("Failed to increase timeout values: %s", e)
             return False
 
     def _reduce_cache_size(self) -> bool:
@@ -1272,7 +1272,7 @@ class RealTimeAdaptationEngine:
 
             return True
         except Exception as e:
-            logger.error("Failed to reduce cache size: %s", e, exc_info=True)
+            logger.exception("Failed to reduce cache size: %s", e)
             return False
 
     def _measure_adaptation_impact(self, trigger_metric: RuntimeMetric) -> dict[str, float]:

@@ -137,7 +137,7 @@ class LicenseCheck:
     original_bytes: bytes
     patched_bytes: bytes
     patch_points: list[PatchPoint] = field(default_factory=list)
-    control_flow_context: dict | None = None
+    control_flow_context: dict[str, Any] | None = None
     data_flow_context: DataFlowInfo | None = None
     critical_path: bool = False
     validated_safe: bool = False
@@ -152,7 +152,7 @@ class PatternMatcher:
         self.obfuscation_patterns = self._initialize_obfuscation_patterns()
         self.vm_patterns = self._initialize_vm_patterns()
 
-    def _initialize_patterns(self) -> dict[str, dict]:
+    def _initialize_patterns(self) -> dict[str, dict[str, Any]]:
         """Initialize comprehensive license check patterns for modern software."""
         return {
             "serial_cmp": {
@@ -259,7 +259,7 @@ class PatternMatcher:
             },
         }
 
-    def _initialize_obfuscation_patterns(self) -> dict[str, dict]:
+    def _initialize_obfuscation_patterns(self) -> dict[str, dict[str, Any]]:
         """Initialize patterns for obfuscated license checks."""
         return {
             "cff_license": {
@@ -297,7 +297,7 @@ class PatternMatcher:
             },
         }
 
-    def _initialize_vm_patterns(self) -> dict[str, dict]:
+    def _initialize_vm_patterns(self) -> dict[str, dict[str, Any]]:
         """Initialize patterns for virtualized license checks."""
         return {
             "vmprotect_check": {
@@ -324,9 +324,9 @@ class PatternMatcher:
             },
         }
 
-    def find_patterns(self, instructions: list[tuple[int, str, str]]) -> list[dict]:
+    def find_patterns(self, instructions: list[tuple[int, str, str]]) -> list[dict[str, Any]]:
         """Find all types of license check patterns including obfuscated ones."""
-        matches = []
+        matches: list[dict[str, Any]] = []
 
         for pattern_name, pattern_data in self.patterns.items():
             pattern = pattern_data["pattern"]
@@ -412,20 +412,20 @@ class DataFlowAnalyzer:
 
         """
         self.cfg_analyzer = cfg_analyzer
-        self.reaching_defs = {}
-        self.live_vars = {}
-        self.taint_sources = set()
-        self.tainted_data = defaultdict(set)
+        self.reaching_defs: dict[int, set[tuple[str, int]]] = {}
+        self.live_vars: dict[int, set[str]] = {}
+        self.taint_sources: set[str] = set()
+        self.tainted_data: dict[str, set[int]] = defaultdict(set)
 
     def analyze_data_flow(self, instructions: list[tuple[int, str, str]]) -> DataFlowInfo:
         """Perform comprehensive data flow analysis."""
-        if not self.cfg_analyzer.basic_blocks:
+        if not hasattr(self.cfg_analyzer, "basic_blocks") or not getattr(self.cfg_analyzer, "basic_blocks", None):
             return self._create_empty_dataflow_info()
 
         definitions = defaultdict(set)
         uses = defaultdict(set)
 
-        for block in self.cfg_analyzer.basic_blocks.values():
+        for block in getattr(self.cfg_analyzer, "basic_blocks", {}).values():
             for insn_addr, mnem, ops in block.instructions:
                 defined_regs = self._get_defined_registers(mnem, ops)
                 used_regs = self._get_used_registers(mnem, ops)
@@ -498,7 +498,7 @@ class DataFlowAnalyzer:
                 if reg in operands.lower():
                     defined.add(reg)
 
-        if mnemonic in ["call", "syscall"]:
+        if mnemonic in {"call", "syscall"}:
             defined.update(["eax", "rax", "ecx", "rcx", "edx", "rdx"])
 
         return defined
@@ -557,9 +557,9 @@ class DataFlowAnalyzer:
 
     def _compute_reaching_definitions(self, definitions: dict[str, set[int]]) -> dict[int, set[tuple[str, int]]]:
         """Compute reaching definitions for each instruction."""
-        reaching = defaultdict(set)
+        reaching: dict[int, set[tuple[str, int]]] = defaultdict(set)
 
-        for addr, block in self.cfg_analyzer.basic_blocks.items():
+        for addr, block in getattr(self.cfg_analyzer, "basic_blocks", {}).items():
             gen_set = set()
             kill_set = set()
 
@@ -576,13 +576,14 @@ class DataFlowAnalyzer:
 
         changed = True
         iterations = 0
-        max_iterations = len(self.cfg_analyzer.basic_blocks) * 10
+        basic_blocks = getattr(self.cfg_analyzer, "basic_blocks", {})
+        max_iterations = len(basic_blocks) * 10
 
         while changed and iterations < max_iterations:
             changed = False
             iterations += 1
 
-            for addr, block in self.cfg_analyzer.basic_blocks.items():
+            for addr, block in basic_blocks.items():
                 in_set = set()
                 for pred in block.predecessors:
                     if pred in reaching:
@@ -607,14 +608,15 @@ class DataFlowAnalyzer:
 
     def _compute_live_variables(self, uses: dict[str, set[int]], definitions: dict[str, set[int]]) -> dict[int, set[str]]:
         """Compute live variables at each program point."""
-        live = defaultdict(set)
+        live: dict[int, set[str]] = defaultdict(set)
+        basic_blocks = getattr(self.cfg_analyzer, "basic_blocks", {})
 
-        for addr, block in self.cfg_analyzer.basic_blocks.items():
+        for addr, block in basic_blocks.items():
             out_set = set()
 
             for succ in block.successors:
-                if succ in self.cfg_analyzer.basic_blocks:
-                    for _insn_addr, mnem, ops in self.cfg_analyzer.basic_blocks[succ].instructions:
+                if succ in basic_blocks:
+                    for _insn_addr, mnem, ops in basic_blocks[succ].instructions:
                         used_regs = self._get_used_registers(mnem, ops)
                         out_set.update(used_regs)
 
@@ -622,13 +624,13 @@ class DataFlowAnalyzer:
 
         changed = True
         iterations = 0
-        max_iterations = len(self.cfg_analyzer.basic_blocks) * 10
+        max_iterations = len(basic_blocks) * 10
 
         while changed and iterations < max_iterations:
             changed = False
             iterations += 1
 
-            for addr, block in self.cfg_analyzer.basic_blocks.items():
+            for addr, block in basic_blocks.items():
                 old_live = live[addr].copy()
 
                 out_set = set()
@@ -753,10 +755,10 @@ class ControlFlowAnalyzer:
 
         """
         self.disassembler = disassembler
-        self.basic_blocks = {}
-        self.cfg_graph = nx.DiGraph() if NETWORKX_AVAILABLE else None
-        self.dominator_tree = {}
-        self.post_dominator_tree = {}
+        self.basic_blocks: dict[int, BasicBlock] = {}
+        self.cfg_graph: Any | None = nx.DiGraph() if NETWORKX_AVAILABLE else None
+        self.dominator_tree: dict[int, set[int]] = {}
+        self.post_dominator_tree: dict[int, set[int]] = {}
 
     def build_cfg(self, instructions: list[tuple[int, str, str]]) -> dict[int, BasicBlock]:
         """Build comprehensive control flow graph from instructions."""
@@ -806,18 +808,19 @@ class ControlFlowAnalyzer:
 
     def _construct_basic_blocks(self, instructions: list[tuple[int, str, str]], leaders: set[int]) -> dict[int, BasicBlock]:
         """Construct basic blocks from instructions and leaders."""
-        blocks = {}
-        current_block_insns = []
-        current_start = None
+        blocks: dict[int, BasicBlock] = {}
+        current_block_insns: list[tuple[int, str, str]] = []
+        current_start: int | None = None
 
         for addr, mnem, ops in instructions:
             if addr in leaders and current_block_insns:
-                block = BasicBlock(
-                    start_addr=current_start,
-                    end_addr=current_block_insns[-1][0],
-                    instructions=current_block_insns,
-                )
-                blocks[current_start] = block
+                if current_start is not None:
+                    block = BasicBlock(
+                        start_addr=current_start,
+                        end_addr=current_block_insns[-1][0],
+                        instructions=current_block_insns,
+                    )
+                    blocks[current_start] = block
                 current_block_insns = []
                 current_start = None
 
@@ -827,16 +830,17 @@ class ControlFlowAnalyzer:
             current_block_insns.append((addr, mnem, ops))
 
             if (mnem in ["ret", "retn", "jmp"] or (mnem.startswith("j") and mnem != "jmp")) and current_block_insns:
-                block = BasicBlock(
-                    start_addr=current_start,
-                    end_addr=addr,
-                    instructions=current_block_insns,
-                )
-                blocks[current_start] = block
+                if current_start is not None:
+                    block = BasicBlock(
+                        start_addr=current_start,
+                        end_addr=addr,
+                        instructions=current_block_insns,
+                    )
+                    blocks[current_start] = block
                 current_block_insns = []
                 current_start = None
 
-        if current_block_insns:
+        if current_block_insns and current_start is not None:
             block = BasicBlock(
                 start_addr=current_start,
                 end_addr=current_block_insns[-1][0],
@@ -878,7 +882,8 @@ class ControlFlowAnalyzer:
         try:
             idx = sorted_addrs.index(current_addr)
             if idx + 1 < len(sorted_addrs):
-                return sorted_addrs[idx + 1]
+                next_addr: int = sorted_addrs[idx + 1]
+                return next_addr
         except ValueError:
             pass
         return None
@@ -988,7 +993,7 @@ class ControlFlowAnalyzer:
 
     def _build_networkx_graph(self) -> None:
         """Build NetworkX graph for advanced analysis."""
-        if not NETWORKX_AVAILABLE:
+        if not NETWORKX_AVAILABLE or self.cfg_graph is None:
             return
 
         for addr, block in self.basic_blocks.items():
@@ -1060,7 +1065,7 @@ class SideEffectAnalyzer:
         self.cfg_analyzer = cfg_analyzer
         self.data_flow_analyzer = data_flow_analyzer
 
-    def analyze_side_effects(self, patch_point: PatchPoint, context_instructions: list[tuple[int, str, str]]) -> dict:
+    def analyze_side_effects(self, patch_point: PatchPoint, context_instructions: list[tuple[int, str, str]]) -> dict[str, Any]:
         """Analyze comprehensive side effects of patching at this point."""
         side_effects = {
             "breaks_functionality": False,
@@ -1081,16 +1086,22 @@ class SideEffectAnalyzer:
         if self._breaks_stack_integrity(patch_point):
             side_effects["breaks_stack"] = True
             side_effects["risk_level"] = "critical"
-            side_effects["mitigation_strategies"].append("preserve_stack_pointer")
+            mitigation_strategies = side_effects["mitigation_strategies"]
+            if isinstance(mitigation_strategies, list):
+                mitigation_strategies.append("preserve_stack_pointer")
 
         if self._corrupts_data_dependencies(patch_point):
             side_effects["corrupts_data"] = True
             side_effects["risk_level"] = "high"
-            side_effects["mitigation_strategies"].append("preserve_data_flow")
+            mitigation_strategies = side_effects["mitigation_strategies"]
+            if isinstance(mitigation_strategies, list):
+                mitigation_strategies.append("preserve_data_flow")
 
         if self._breaks_control_flow_assumptions(patch_point):
             side_effects["invalidates_assumptions"] = True
-            side_effects["mitigation_strategies"].append("redirect_control_flow")
+            mitigation_strategies = side_effects["mitigation_strategies"]
+            if isinstance(mitigation_strategies, list):
+                mitigation_strategies.append("redirect_control_flow")
 
         return side_effects
 
@@ -1105,11 +1116,15 @@ class SideEffectAnalyzer:
         """Check if patching would break stack integrity."""
         stack_ops = ["push", "pop", "call", "ret"]
 
-        for insn_addr, mnem, _ops in patch_point.block.instructions:
-            if mnem in stack_ops and insn_addr == patch_point.address:
-                return True
-
-        return "esp" in patch_point.registers_modified or "rsp" in patch_point.registers_modified
+        return next(
+            (
+                True
+                for insn_addr, mnem, _ops in patch_point.block.instructions
+                if mnem in stack_ops and insn_addr == patch_point.address
+            ),
+            "esp" in patch_point.registers_modified
+            or "rsp" in patch_point.registers_modified,
+        )
 
     def _corrupts_data_dependencies(self, patch_point: PatchPoint) -> bool:
         """Check if patching would corrupt data dependencies."""
@@ -1234,8 +1249,8 @@ class PatchPointSelector:
         self.cfg_analyzer = cfg_analyzer
         self.disassembler = disassembler
         self.data_flow_analyzer = DataFlowAnalyzer(cfg_analyzer)
-        self.side_effect_analyzer = None
-        self.risk_assessor = None
+        self.side_effect_analyzer: SideEffectAnalyzer | None = None
+        self.risk_assessor: Any | None = None
 
     def select_optimal_patch_points(self, license_check: LicenseCheck, instructions: list[tuple[int, str, str]]) -> list[PatchPoint]:
         """Select optimal patch points for a license check with safety analysis."""
@@ -1262,18 +1277,20 @@ class PatchPointSelector:
         return_points = self._analyze_return_modification_points(check_block, check_addr, data_flow)
         patch_points.extend(return_points)
 
-        if post_dom := self.cfg_analyzer.find_common_post_dominator([check_block.start_addr]):
-            convergence_points = self._analyze_convergence_points(post_dom, data_flow)
-            patch_points.extend(convergence_points)
+        if hasattr(self.cfg_analyzer, "find_common_post_dominator"):
+            if post_dom := self.cfg_analyzer.find_common_post_dominator([check_block.start_addr]):
+                convergence_points = self._analyze_convergence_points(post_dom, data_flow)
+                patch_points.extend(convergence_points)
 
-        for point in patch_points:
-            side_effects = self.side_effect_analyzer.analyze_side_effects(point, instructions)
-            point.risk_assessment = self.risk_assessor.assess_patch_risk(point, license_check)
+        if self.side_effect_analyzer is not None and self.risk_assessor is not None:
+            for point in patch_points:
+                side_effects = self.side_effect_analyzer.analyze_side_effects(point, instructions)
+                point.risk_assessment = self.risk_assessor.assess_patch_risk(point, license_check)
 
-            if side_effects["risk_level"] == "critical":
-                point.safety_score *= 0.5
-            elif side_effects["risk_level"] == "high":
-                point.safety_score *= 0.7
+                if side_effects["risk_level"] == "critical":
+                    point.safety_score *= 0.5
+                elif side_effects["risk_level"] == "high":
+                    point.safety_score *= 0.7
 
         patch_points.sort(key=lambda p: p.safety_score, reverse=True)
 
@@ -1281,8 +1298,9 @@ class PatchPointSelector:
 
     def _find_containing_block(self, address: int) -> BasicBlock | None:
         """Find the basic block containing the given address."""
+        basic_blocks = getattr(self.cfg_analyzer, "basic_blocks", {})
         return next(
-            (block for block in self.cfg_analyzer.basic_blocks.values() if block.start_addr <= address <= block.end_addr),
+            (block for block in basic_blocks.values() if block.start_addr <= address <= block.end_addr),
             None,
         )
 
@@ -1335,7 +1353,7 @@ class PatchPointSelector:
 
             if mnem.startswith("j") and mnem != "jmp":
                 side_effects = ["control_flow_redirect"]
-                regs_modified = set()
+                regs_modified: set[str] = set()
                 flags_modified = False
 
                 safety_score = 0.9 if len(block.successors) == 2 else 0.85
@@ -1404,11 +1422,12 @@ class PatchPointSelector:
     def _analyze_convergence_points(self, post_dom_addr: int, data_flow: DataFlowInfo) -> list[PatchPoint]:
         """Analyze convergence points (post-dominators)."""
         convergence_points = []
+        basic_blocks = getattr(self.cfg_analyzer, "basic_blocks", {})
 
-        if post_dom_addr not in self.cfg_analyzer.basic_blocks:
+        if post_dom_addr not in basic_blocks:
             return []
 
-        block = self.cfg_analyzer.basic_blocks[post_dom_addr]
+        block = basic_blocks[post_dom_addr]
 
         first_insn = block.instructions[0] if block.instructions else None
         if first_insn:
@@ -1525,29 +1544,36 @@ class LicenseCheckRemover:
     def __init__(self, binary_path: str) -> None:
         """Initialize the license check remover."""
         self.binary_path = binary_path
-        self.pe = None
-        self.disassembler = None
-        self.assembler = None
+        self.pe: Any | None = None
+        self.disassembler: Any | None = None
+        self.assembler: Any | None = None
         self.pattern_matcher = PatternMatcher()
-        self.detected_checks = []
+        self.detected_checks: list[LicenseCheck] = []
         self.backup_created = False
         self.is_dotnet = False
         self.is_packed = False
         self.has_antidebug = False
         self.virtualization_detected = False
 
-        self.control_flow_graph = {}
-        self.data_flow_tracking = {}
-        self.symbolic_execution_paths = []
-        self.taint_analysis_results = {}
-        self.cfg_analyzer = None
-        self.patch_selector = None
+        self.control_flow_graph: dict[int, dict[str, Any]] = {}
+        self.data_flow_tracking: dict[int, set[str]] = {}
+        self.symbolic_execution_paths: list[list[int]] = []
+        self.taint_analysis_results: dict[int, list[str]] = {}
+        self.cfg_analyzer: ControlFlowAnalyzer | None = None
+        self.patch_selector: Any | None = None
 
         self._initialize_engines()
         self._detect_binary_characteristics()
 
     def _initialize_engines(self) -> None:
         """Initialize Capstone disassembler and Keystone assembler."""
+        if not PEFILE_AVAILABLE or pefile is None:
+            raise ImportError("pefile is required but not available")
+        if not CAPSTONE_AVAILABLE or capstone is None:
+            raise ImportError("capstone is required but not available")
+        if not KEYSTONE_AVAILABLE or keystone is None:
+            raise ImportError("keystone is required but not available")
+
         try:
             self.pe = pefile.PE(self.binary_path)
 
@@ -1566,7 +1592,7 @@ class LicenseCheckRemover:
             self.patch_selector = PatchPointSelector(self.cfg_analyzer, self.disassembler)
 
         except Exception as e:
-            logger.error("Failed to initialize engines: %s", e, exc_info=True)
+            logger.exception("Failed to initialize engines: %s", e)
             raise
 
     def _detect_binary_characteristics(self) -> None:
@@ -1626,8 +1652,8 @@ class LicenseCheckRemover:
 
     def _build_control_flow_graph(self, instructions: list[tuple[int, str, str]]) -> None:
         """Build control flow graph for advanced analysis."""
-        cfg = {}
-        current_block = []
+        cfg: dict[int, dict[str, Any]] = {}
+        current_block: list[tuple[int, str, str]] = []
         block_start = 0
 
         for i, (addr, mnem, ops) in enumerate(instructions):
@@ -1694,6 +1720,9 @@ class LicenseCheckRemover:
 
         self.detected_checks = []
 
+        if self.pe is None:
+            raise ValueError("PE file not initialized")
+
         for section in self.pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
                 self._analyze_section(section)
@@ -1713,8 +1742,11 @@ class LicenseCheckRemover:
             section: PE section object from pefile library.
 
         """
-        section_data = section.get_data()
-        section_va = self.pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress
+        if self.pe is None or self.disassembler is None or self.cfg_analyzer is None:
+            return
+
+        section_data = getattr(section, "get_data", lambda: b"")()
+        section_va = self.pe.OPTIONAL_HEADER.ImageBase + getattr(section, "VirtualAddress", 0)
 
         instructions = [(insn.address, insn.mnemonic, insn.op_str) for insn in self.disassembler.disasm(section_data, section_va)]
         if not instructions:
@@ -1722,7 +1754,7 @@ class LicenseCheckRemover:
 
         try:
             cfg_blocks = self.cfg_analyzer.build_cfg(instructions)
-            logger.info("Built CFG with %d basic blocks for section %s", len(cfg_blocks), section.Name)
+            logger.info("Built CFG with %d basic blocks for section %s", len(cfg_blocks), getattr(section, "Name", b"unknown"))
         except Exception as e:
             logger.warning("CFG analysis failed: %s", e, exc_info=True)
             cfg_blocks = {}
@@ -1778,6 +1810,9 @@ class LicenseCheckRemover:
 
     def _analyze_imports(self) -> None:
         """Analyze import table for license-related functions."""
+        if self.pe is None:
+            return
+
         if hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             license_apis = {
                 "IsDebuggerPresent": CheckType.INTEGRITY_CHECK,
@@ -1806,6 +1841,9 @@ class LicenseCheckRemover:
 
     def _find_import_references(self, import_address: int, check_type: CheckType) -> None:
         """Find references to an imported function."""
+        if self.pe is None:
+            return
+
         for section in self.pe.sections:
             if section.IMAGE_SCN_MEM_EXECUTE:
                 section_data = section.get_data()
@@ -1846,6 +1884,9 @@ class LicenseCheckRemover:
 
     def _analyze_strings(self) -> None:
         """Analyze string references for license-related checks."""
+        if self.pe is None:
+            return
+
         license_strings = [
             "Invalid license",
             "License expired",
@@ -1871,6 +1912,9 @@ class LicenseCheckRemover:
 
     def _find_string_references(self, string_address: int, string_content: str) -> None:
         """Find references to a string address."""
+        if self.pe is None:
+            return
+
         addr_bytes = struct.pack("<I", string_address)
 
         for section in self.pe.sections:
@@ -1915,6 +1959,9 @@ class LicenseCheckRemover:
 
     def _generate_patch(self, check_type: CheckType, instructions: list[tuple[int, str, str]], size: int) -> bytes:
         """Generate sophisticated patch bytes for modern license checks."""
+        if self.pe is None:
+            return b"\x90" * size
+
         is_x64 = self.pe.FILE_HEADER.Machine == 0x8664
 
         if check_type == CheckType.SERIAL_VALIDATION:
@@ -2067,6 +2114,9 @@ class LicenseCheckRemover:
 
     def patch(self, checks: list[LicenseCheck] | None = None, create_backup: bool = True) -> bool:
         """Apply patches to remove license checks."""
+        if self.pe is None:
+            raise ValueError("PE file not initialized")
+
         if not checks:
             checks = self.detected_checks
 
@@ -2104,7 +2154,7 @@ class LicenseCheckRemover:
             return True
 
         except Exception as e:
-            logger.error("Patching failed: %s", e, exc_info=True)
+            logger.exception("Patching failed: %s", e)
 
             if self.backup_created:
                 backup_path = f"{self.binary_path}.bak"
@@ -2115,6 +2165,9 @@ class LicenseCheckRemover:
 
     def _rva_to_offset(self, rva: int) -> int | None:
         """Convert RVA to file offset."""
+        if self.pe is None:
+            return None
+
         return next(
             (
                 section.PointerToRawData + (rva - section.VirtualAddress)
@@ -2126,6 +2179,9 @@ class LicenseCheckRemover:
 
     def _update_checksum(self) -> None:
         """Update PE checksum after patching."""
+        if not PEFILE_AVAILABLE or pefile is None:
+            return
+
         try:
             pe = pefile.PE(self.binary_path)
 
@@ -2140,6 +2196,9 @@ class LicenseCheckRemover:
 
     def verify_patches(self) -> bool:
         """Verify that patches were applied successfully."""
+        if not PEFILE_AVAILABLE or pefile is None or self.pe is None:
+            return False
+
         try:
             pe_verify = pefile.PE(self.binary_path)
 
@@ -2159,11 +2218,14 @@ class LicenseCheckRemover:
             return True
 
         except Exception as e:
-            logger.error("Patch verification failed: %s", e, exc_info=True)
+            logger.exception("Patch verification failed: %s", e)
             return False
 
     def apply_intelligent_patches(self, checks: list[LicenseCheck] | None = None, use_best_point: bool = True) -> bool:
         """Apply intelligent patches using optimal patch points."""
+        if self.pe is None:
+            raise ValueError("PE file not initialized")
+
         if not checks:
             checks = self.detected_checks
 
@@ -2220,7 +2282,7 @@ class LicenseCheckRemover:
             return True
 
         except Exception as e:
-            logger.error("Intelligent patching failed: %s", e, exc_info=True)
+            logger.exception("Intelligent patching failed: %s", e)
 
             if self.backup_created:
                 backup_path = f"{self.binary_path}.bak"
@@ -2231,6 +2293,9 @@ class LicenseCheckRemover:
 
     def _generate_intelligent_patch(self, patch_point: PatchPoint, check: LicenseCheck) -> bytes:
         """Generate patch bytes based on patch point type and safety analysis."""
+        if self.pe is None:
+            return b"\x90" * 5
+
         is_x64 = self.pe.FILE_HEADER.Machine == 0x8664
 
         if patch_point.patch_type == "nop":
@@ -2263,42 +2328,51 @@ class LicenseCheckRemover:
 
     def generate_report(self) -> str:
         """Generate detailed report of detected checks and patches."""
+        if self.pe is None:
+            return "Error: PE file not initialized"
+
         report = [
             "=" * 80,
             "LICENSE CHECK REMOVAL REPORT",
             "=" * 80,
             f"Binary: {self.binary_path}",
+            f"Architecture: {'x64' if self.pe.FILE_HEADER.Machine == 34404 else 'x86'}",
+            f"Total Checks Found: {len(self.detected_checks)}",
         ]
-        report.append(f"Architecture: {'x64' if self.pe.FILE_HEADER.Machine == 0x8664 else 'x86'}")
-        report.append(f"Total Checks Found: {len(self.detected_checks)}")
-
         if cfg_available := self.cfg_analyzer and self.cfg_analyzer.basic_blocks:
-            report.append(f"Control Flow Blocks: {len(self.cfg_analyzer.basic_blocks)}")
-            report.append(f"CFG Analysis: {'Available' if cfg_available else 'Not Available'}")
-
+            report.extend(
+                (
+                    f"Control Flow Blocks: {len(self.cfg_analyzer.basic_blocks)}",
+                    f"CFG Analysis: {'Available' if cfg_available else 'Not Available'}",
+                )
+            )
         report.append("")
 
-        by_type = {}
+        by_type: dict[CheckType, list[LicenseCheck]] = {}
         for check in self.detected_checks:
             if check.check_type not in by_type:
                 by_type[check.check_type] = []
             by_type[check.check_type].append(check)
 
         for check_type, checks in by_type.items():
-            report.append(f"\n{check_type.value.upper()} ({len(checks)} found)")
-            report.append("-" * 40)
-
+            report.extend(
+                (f"\n{check_type.value.upper()} ({len(checks)} found)", "-" * 40)
+            )
             for check in checks[:5]:
-                report.append(f"  Address: 0x{check.address:08X}")
-                report.append(f"  Confidence: {check.confidence:.1%}")
-                report.append(f"  Strategy: {check.patch_strategy}")
-                report.append(f"  Validated Safe: {check.validated_safe}")
-
+                report.extend(
+                    (
+                        f"  Address: 0x{check.address:08X}",
+                        f"  Confidence: {check.confidence:.1%}",
+                        f"  Strategy: {check.patch_strategy}",
+                        f"  Validated Safe: {check.validated_safe}",
+                    )
+                )
                 if check.instructions:
                     report.append("  Instructions:")
-                    for addr, mnem, ops in check.instructions[:3]:
-                        report.append(f"    0x{addr:08X}: {mnem} {ops}")
-
+                    report.extend(
+                        f"    0x{addr:08X}: {mnem} {ops}"
+                        for addr, mnem, ops in check.instructions[:3]
+                    )
                 if check.patch_points:
                     report.append(f"  Patch Points: {len(check.patch_points)}")
                     best_point = check.patch_points[0]

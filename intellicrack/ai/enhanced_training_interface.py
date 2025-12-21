@@ -71,8 +71,8 @@ try:
 
     PYQT6_AVAILABLE = HAS_PYQT
 except ImportError as e:
-    logger.error("Import error in enhanced_training_interface: %s", e)
-    logger.error("PyQt6 is required for GUI functionality. Install with: pip install PyQt6")
+    logger.exception("Import error in enhanced_training_interface: %s", e)
+    logger.exception("PyQt6 is required for GUI functionality. Install with: pip install PyQt6")
     PYQT6_AVAILABLE = False
 
     # Raise error immediately when PyQt6 is not available
@@ -96,7 +96,7 @@ try:
     _matplotlib_imports = {"FigureCanvas": FigureCanvas, "Figure": Figure}
     _numpy_module = np
 except ImportError as e:
-    logger.error("Import error in enhanced_training_interface: %s", e)
+    logger.exception("Import error in enhanced_training_interface: %s", e)
     MATPLOTLIB_AVAILABLE = False
 
 PYQTGRAPH_AVAILABLE = False
@@ -110,7 +110,7 @@ try:
     PlotWidget = _PyQtGraphPlotWidget
     PYQTGRAPH_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error for pyqtgraph in enhanced_training_interface: %s", e)
+    logger.exception("Import error for pyqtgraph in enhanced_training_interface: %s", e)
     PYQTGRAPH_AVAILABLE = False
 
     from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, Figure, mpl
@@ -246,7 +246,7 @@ except ImportError as e:
             try:
                 self.figure.canvas.draw()
             except Exception as e:
-                logger.debug(f"PlotWidget display update: {e}")
+                logger.debug("PlotWidget display update: %s", e)
 
         def export(self, filename: str, dpi: int = 100) -> bool:
             """Export plot to file."""
@@ -514,7 +514,7 @@ class TrainingThread(QThread):
                 self.log_message.emit("Training stopped by user")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in enhanced_training_interface: %s", e)
+            logger.exception("Error in enhanced_training_interface: %s", e)
             self.error_occurred.emit(str(e))
 
     def stop_training(self) -> None:
@@ -631,7 +631,7 @@ class TrainingThread(QThread):
                         correct_predictions += 1
 
                 except Exception as e:
-                    logger.debug(f"Skipping validation sample due to error: {e}")
+                    logger.debug("Skipping validation sample due to error: %s", e)
                     continue
 
             val_loss = total_loss / total_samples
@@ -941,7 +941,7 @@ class TrainingThread(QThread):
             return float(output[0])
 
         except Exception as e:
-            logger.debug(f"Forward pass error: {e}")
+            logger.debug("Forward pass error: %s", e)
             return 0.5
 
     def _initialize_model_weights(self, input_size: int) -> None:
@@ -1811,7 +1811,7 @@ class HyperparameterOptimizationWidget(QWidget):
             return max(0.0, avg_accuracy), max(0.001, avg_loss)
 
         except Exception as e:
-            logger.error(f"Hyperparameter evaluation error: {e}")
+            logger.exception("Hyperparameter evaluation error: %s", e)
             # Return reasonable defaults on error
             return 0.5, 1.0
 
@@ -2458,7 +2458,7 @@ class EnhancedTrainingInterface(QDialog):
         try:
             self.pause_btn.clicked.disconnect()
         except (AttributeError, TypeError) as e:
-            logger.error("Error in enhanced_training_interface: %s", e)
+            logger.exception("Error in enhanced_training_interface: %s", e)
         self.pause_btn.clicked.connect(self.pause_training)
 
     def update_config_from_ui(self) -> None:
@@ -2516,7 +2516,7 @@ class EnhancedTrainingInterface(QDialog):
                     json.dump(asdict(self.config), f, indent=2)
                 QMessageBox.information(self, "Configuration Saved", f"Configuration saved to {file_path}")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in enhanced_training_interface: %s", e)
+                logger.exception("Error in enhanced_training_interface: %s", e)
                 QMessageBox.critical(self, "Save Error", f"Error saving configuration: {e}")
 
     def load_configuration(self) -> None:
@@ -2543,7 +2543,7 @@ class EnhancedTrainingInterface(QDialog):
 
                 QMessageBox.information(self, "Configuration Loaded", f"Configuration loaded from {file_path}")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in enhanced_training_interface: %s", e)
+                logger.exception("Error in enhanced_training_interface: %s", e)
                 QMessageBox.critical(self, "Load Error", f"Error loading configuration: {e}")
 
     def update_ui_from_config(self) -> None:

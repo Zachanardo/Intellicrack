@@ -122,7 +122,7 @@ class OpenAIRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from OpenAI: {error_message}")
+            logger.error("Failed to get models from OpenAI: %s", error_message)
             return []
 
         models = []
@@ -142,7 +142,7 @@ class OpenAIRepository(APIRepositoryBase):
             return models
 
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing OpenAI models response: {e}")
+            logger.exception("Error parsing OpenAI models response: %s", e)
             return []
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
@@ -173,7 +173,7 @@ class OpenAIRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get model details for {model_id}: {error_message}")
+            logger.error("Failed to get model details for %s: %s", model_id, error_message)
             return None
 
         try:
@@ -204,7 +204,7 @@ class OpenAIRepository(APIRepositoryBase):
                 local_path=None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error creating ModelInfo for {model_id}: {e}")
+            logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
     def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
@@ -214,5 +214,5 @@ class OpenAIRepository(APIRepositoryBase):
             Always returns (False, "OpenAI doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning("Download requested for %s to %s, but not supported", model_id, destination_path)
         return False, "OpenAI doesn't support model downloads for this model"

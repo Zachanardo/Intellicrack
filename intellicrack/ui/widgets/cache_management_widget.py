@@ -139,7 +139,7 @@ class CacheStatsWidget(QWidget):
             self.size_progress.setValue(int(size_percentage))
 
         except Exception as e:
-            logger.error(f"Failed to update cache stats: {e}")
+            logger.exception("Failed to update cache stats: %s", e)
 
 
 class CacheTopEntriesWidget(QWidget):
@@ -358,7 +358,7 @@ class CacheManagementWidget(QWidget):
             self.update_details(stats)
 
         except Exception as e:
-            logger.error(f"Failed to refresh cache stats: {e}")
+            logger.exception("Failed to refresh cache stats: %s", e)
 
     def update_details(self, stats: dict[str, Any]) -> None:
         """Update cache details text.
@@ -374,23 +374,19 @@ class CacheManagementWidget(QWidget):
 
         stats_data = stats.get("stats", {})
 
-        details.extend((
-            f"Cache Directory: {stats.get('cache_directory', 'Unknown')}",
-            f"Total Entries: {stats_data.get('total_entries', 0)}",
-        ))
-        details.extend((
-            f"Cache Hits: {stats_data.get('cache_hits', 0)}",
-            f"Cache Misses: {stats_data.get('cache_misses', 0)}",
-        ))
-        details.extend((
-            f"Cache Invalidations: {stats_data.get('cache_invalidations', 0)}",
-            f"Hit Rate: {stats_data.get('hit_rate', 0):.2f}%",
-        ))
-        details.extend((
-            f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB",
-            f"Max Entries: {stats.get('max_entries', 0)}",
-            f"Max Size: {stats.get('max_size_mb', 0):.1f} MB",
-        ))
+        details.extend(
+            (
+                f"Cache Directory: {stats.get('cache_directory', 'Unknown')}",
+                f"Total Entries: {stats_data.get('total_entries', 0)}",
+                f"Cache Hits: {stats_data.get('cache_hits', 0)}",
+                f"Cache Misses: {stats_data.get('cache_misses', 0)}",
+                f"Cache Invalidations: {stats_data.get('cache_invalidations', 0)}",
+                f"Hit Rate: {stats_data.get('hit_rate', 0):.2f}%",
+                f"Total Size: {stats_data.get('total_size_bytes', 0) / 1024 / 1024:.2f} MB",
+                f"Max Entries: {stats.get('max_entries', 0)}",
+                f"Max Size: {stats.get('max_size_mb', 0):.1f} MB",
+            )
+        )
         # Add AI coordination layer performance statistics if available
         try:
             main_window = None
@@ -401,21 +397,41 @@ class CacheManagementWidget(QWidget):
 
             if main_window and hasattr(main_window.ai_coordinator, "get_performance_stats"):
                 ai_stats = main_window.ai_coordinator.get_performance_stats()
-                details.append("")
-                details.append("=== AI Coordination Layer Performance ===")
-                details.append(f"ML Analysis Calls: {ai_stats.get('ml_calls', 0)}")
-                details.append(f"LLM Analysis Calls: {ai_stats.get('llm_calls', 0)}")
-                details.append(f"Escalations: {ai_stats.get('escalations', 0)}")
-                details.append(f"AI Cache Hits: {ai_stats.get('cache_hits', 0)}")
-                details.append(f"AI Cache Size: {ai_stats.get('cache_size', 0)} entries")
-                details.append(f"Average ML Time: {ai_stats.get('avg_ml_time', 0):.2f}s")
-                details.append(f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s")
-                details.append("Components Available:")
+                details.extend(
+                    (
+                        "",
+                        "=== AI Coordination Layer Performance ===",
+                        f"ML Analysis Calls: {ai_stats.get('ml_calls', 0)}",
+                        f"LLM Analysis Calls: {ai_stats.get('llm_calls', 0)}",
+                    )
+                )
+                details.extend(
+                    (
+                        f"Escalations: {ai_stats.get('escalations', 0)}",
+                        f"AI Cache Hits: {ai_stats.get('cache_hits', 0)}",
+                    )
+                )
+                details.extend(
+                    (
+                        f"AI Cache Size: {ai_stats.get('cache_size', 0)} entries",
+                        f"Average ML Time: {ai_stats.get('avg_ml_time', 0):.2f}s",
+                    )
+                )
+                details.extend(
+                    (
+                        f"Average LLM Time: {ai_stats.get('avg_llm_time', 0):.2f}s",
+                        "Components Available:",
+                    )
+                )
                 components = ai_stats.get("components_available", {})
-                details.append(f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}")
-                details.append(f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}")
+                details.extend(
+                    (
+                        f"  - ML Predictor: {'Yes' if components.get('ml_predictor', False) else 'No'}",
+                        f"  - Model Manager: {'Yes' if components.get('model_manager', False) else 'No'}",
+                    )
+                )
         except Exception as e:
-            logger.debug(f"Could not retrieve AI coordination stats: {e}")
+            logger.debug("Could not retrieve AI coordination stats: %s", e)
 
         oldest = stats_data.get("oldest_entry", 0)
         newest = stats_data.get("newest_entry", 0)
@@ -454,7 +470,7 @@ class CacheManagementWidget(QWidget):
             self.refresh_stats()
 
         except Exception as e:
-            self.logger.error("Exception in cache_management_widget: %s", e, exc_info=True)
+            self.logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Cleanup Error",
@@ -477,7 +493,7 @@ class CacheManagementWidget(QWidget):
             )
 
         except Exception as e:
-            self.logger.error("Exception in cache_management_widget: %s", e, exc_info=True)
+            self.logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Save Error",
@@ -528,7 +544,7 @@ class CacheManagementWidget(QWidget):
                 self.refresh_stats()
 
             except Exception as e:
-                logger.error("Exception in cache_management_widget: %s", e, exc_info=True)
+                logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Clear Error",

@@ -177,8 +177,9 @@ class AnalysisCLI:
                 pe_results = pe_analyzer.analyze(file_path)
                 results["metadata"]["pe_analysis"] = pe_results
                 if "imports" in pe_results:
-                    suspicious_apis = self._check_suspicious_apis(pe_results["imports"])
-                    if suspicious_apis:
+                    if suspicious_apis := self._check_suspicious_apis(
+                        pe_results["imports"]
+                    ):
                         results["findings"].append(
                             {
                                 "type": "suspicious_api",
@@ -211,8 +212,7 @@ class AnalysisCLI:
             try:
                 strings = self._extract_strings(file_path)
                 results["metadata"]["strings_count"] = len(strings)
-                interesting = self._find_interesting_strings(strings)
-                if interesting:
+                if interesting := self._find_interesting_strings(strings):
                     results["findings"].append(
                         {
                             "type": "interesting_strings",
@@ -276,10 +276,7 @@ class AnalysisCLI:
 
         found = []
         for funcs in imports.values():
-            for func in funcs:
-                if func in suspicious_apis:
-                    found.append(func)
-
+            found.extend(func for func in funcs if func in suspicious_apis)
         return found
 
     @staticmethod

@@ -85,7 +85,7 @@ class ELFAnalyzer:
             return True
 
         except Exception as e:
-            logger.error("Failed to load ELF binary %s: %s", self.file_path, e, exc_info=True)
+            logger.exception("Failed to load ELF binary %s: %s", self.file_path, e)
             return False
 
     def _validate_elf(self) -> bool:
@@ -531,5 +531,5 @@ def extract_elf_strings(file_path: str | Path, min_length: int = 4) -> list[str]
         return strings
 
     except Exception as e:
-        logger.error("Error extracting strings from %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error extracting strings from %s: %s", file_path, e)
         return []

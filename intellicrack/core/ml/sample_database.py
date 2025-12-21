@@ -163,7 +163,7 @@ class SampleDatabase:
             return True, file_hash
 
         except Exception as e:
-            self.logger.error("Failed to add sample: %s", e)
+            self.logger.exception("Failed to add sample: %s", e)
             return False, str(e)
 
     def get_sample_path(self, file_hash: str) -> Path | None:
@@ -256,7 +256,7 @@ class SampleDatabase:
                 labels_list.append(metadata.protection_type)
 
             except Exception as e:
-                self.logger.error("Failed to extract features from %s: %s", sample_path.name, e)
+                self.logger.exception("Failed to extract features from %s: %s", sample_path.name, e)
                 continue
 
         if not features_list:
@@ -373,7 +373,7 @@ class SampleDatabase:
                     sample_path.unlink()
                     self.logger.info("Deleted sample file: %s", sample_path)
                 except Exception as e:
-                    self.logger.error("Failed to delete sample file: %s", e)
+                    self.logger.exception("Failed to delete sample file: %s", e)
 
         del self.index[file_hash]
         self._save_index()
@@ -429,7 +429,7 @@ class SampleDatabase:
                     + 1
                 )
             except Exception as e:
-                self.logger.error("Failed to copy %s: %s", sample_path, e)
+                self.logger.exception("Failed to copy %s: %s", sample_path, e)
 
         self.logger.info("Exported %d samples to %s", sum(export_counts.values()), output_dir)
 
@@ -465,7 +465,7 @@ class SampleDatabase:
                 self.logger.info("Loaded index with %d samples", len(self.index))
 
             except Exception as e:
-                self.logger.error("Failed to load index: %s", e)
+                self.logger.exception("Failed to load index: %s", e)
                 self.index = {}
 
     def _save_index(self) -> None:
@@ -477,4 +477,4 @@ class SampleDatabase:
                 json.dump(data, f, indent=2)
 
         except Exception as e:
-            self.logger.error("Failed to save index: %s", e)
+            self.logger.exception("Failed to save index: %s", e)

@@ -324,7 +324,7 @@ class PolymorphicAnalyzer:
                 if len(instructions) >= max_instructions:
                     break
         except Exception as e:
-            logger.error(f"Disassembly error: {e}")
+            logger.exception("Disassembly error: %s", e)
 
         if not instructions:
             return CodeBlock(

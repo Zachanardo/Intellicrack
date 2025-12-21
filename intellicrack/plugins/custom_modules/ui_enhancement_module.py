@@ -2232,7 +2232,7 @@ class UIEnhancementModule:
             }
             return UIConfig.from_dict(data)
         except Exception as e:
-            self.logger.warning(f"Failed to load config from universal config: {e}")
+            self.logger.warning("Failed to load config from universal config: %s", e)
             return UIConfig()
 
     def save_config(self) -> None:
@@ -2249,7 +2249,7 @@ class UIEnhancementModule:
             cfg.set("ui.enhancement.show_tooltips", self.config.show_tooltips, save=False)
             cfg.set("ui.enhancement.panel_weights", list(self.config.panel_weights), save=True)
         except Exception as e:
-            self.logger.error(f"Failed to save config to universal config: {e}")
+            self.logger.exception("Failed to save config to universal config: %s", e)
 
     def apply_theme(self) -> None:
         """Apply selected theme."""
@@ -3636,7 +3636,7 @@ if __name__ == "__main__":
                     pos += int(total_width * weights[i] / total_weight)
                     self.main_paned.sash_place(i, pos, 0)
         except Exception:
-            self.logger.error("Failed to reset layout", exc_info=True)
+            self.logger.exception("Failed to reset layout")
 
     def show_preferences(self) -> None:
         """Show preferences dialog."""

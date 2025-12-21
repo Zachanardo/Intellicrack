@@ -88,7 +88,8 @@ def generate_self_signed_cert(
 
         # Create certificate
         cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(
                 subject,
             )
@@ -108,7 +109,8 @@ def generate_self_signed_cert(
 
         not_valid_before, not_valid_after = get_certificate_validity_dates(valid_days)
         cert = (
-            cert.not_valid_before(not_valid_before)
+            cert
+            .not_valid_before(not_valid_before)
             .not_valid_after(not_valid_after)
             .add_extension(
                 x509.SubjectAlternativeName(
@@ -153,7 +155,7 @@ def generate_self_signed_cert(
         return cert_pem, key_pem
 
     except Exception as e:
-        logger.error("Failed to generate self-signed certificate: %s", e, exc_info=True)
+        logger.exception("Failed to generate self-signed certificate: %s", e)
         return None
 
 
@@ -182,7 +184,7 @@ def load_certificate_from_file(cert_path: str) -> x509.Certificate | None:
         return cert
 
     except Exception as e:
-        logger.error("Failed to load certificate from %s: %s", cert_path, e, exc_info=True)
+        logger.exception("Failed to load certificate from %s: %s", cert_path, e)
         return None
 
 

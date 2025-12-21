@@ -40,7 +40,7 @@ try:
 
     CRYPTOGRAPHY_AVAILABLE = importlib.util.find_spec("cryptography") is not None
 except ImportError as e:
-    logger.error("Import error in ssl_interceptor: %s", e, exc_info=True)
+    logger.exception("Import error in ssl_interceptor: %s", e)
     CRYPTOGRAPHY_AVAILABLE = False
 
 
@@ -93,7 +93,7 @@ class SSLTLSInterceptor:
 
         """
         if not CRYPTOGRAPHY_AVAILABLE:
-            self.logger.error("cryptography library not available - cannot generate CA certificate")
+            self.logger.exception("cryptography library not available - cannot generate CA certificate")
             return None, None
 
         try:
@@ -107,11 +107,11 @@ class SSLTLSInterceptor:
                 valid_days=3650,
             ):
                 return cert_result
-            self.logger.error("Failed to generate CA certificate")
+            self.logger.exception("Failed to generate CA certificate")
             return None, None
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating CA certificate: %s", e, exc_info=True)
+            self.logger.exception("Error generating CA certificate: %s", e)
             return None, None
 
     def start(self) -> bool:
@@ -140,7 +140,7 @@ class SSLTLSInterceptor:
 
                     self.logger.info("CA certificate saved to %s", self.config["ca_cert_path"])
                 else:
-                    self.logger.error("Failed to generate CA certificate")
+                    self.logger.exception("Failed to generate CA certificate")
                     return False
 
             if mitmdump_path := self._find_executable("mitmdump"):
@@ -271,7 +271,7 @@ def response(flow: http.HTTPFlow) -> None:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error starting SSL/TLS interceptor: %s", e, exc_info=True)
+            self.logger.exception("Error starting SSL/TLS interceptor: %s", e)
             return False
 
     def stop(self) -> bool:
@@ -291,7 +291,7 @@ def response(flow: http.HTTPFlow) -> None:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error stopping SSL/TLS interceptor: %s", e, exc_info=True)
+            self.logger.exception("Error stopping SSL/TLS interceptor: %s", e)
             return False
 
     def _find_executable(self, executable: str) -> str | None:
@@ -396,7 +396,7 @@ def response(flow: http.HTTPFlow) -> None:
             if "listen_port" in config:
                 port = config["listen_port"]
                 if not isinstance(port, int) or port < 1 or port > 65535:
-                    self.logger.error("Invalid port number: %s", port)
+                    self.logger.exception("Invalid port number: %s", port)
                     return False
 
             if "listen_ip" in config:
@@ -407,11 +407,11 @@ def response(flow: http.HTTPFlow) -> None:
                 try:
                     socket.inet_aton(ip)
                 except OSError:
-                    self.logger.error("Invalid IP address: %s", ip, exc_info=True)
+                    self.logger.exception("Invalid IP address: %s", ip)
                     return False
 
             if "target_hosts" in config and not isinstance(config["target_hosts"], list):
-                self.logger.error("target_hosts must be a list")
+                self.logger.exception("target_hosts must be a list")
                 return False
 
             # Check if interceptor is running
@@ -434,12 +434,12 @@ def response(flow: http.HTTPFlow) -> None:
                     self.logger.info("Generating new CA certificate")
                     cert, key = self.generate_ca_certificate()
                     if not cert or not key:
-                        self.logger.error("Failed to generate CA certificate")
+                        self.logger.exception("Failed to generate CA certificate")
                         self.config = old_config  # Restore old config
                         return False
 
                 if not os.path.exists(ca_key_path):
-                    self.logger.error("CA key not found at %s", ca_key_path)
+                    self.logger.exception("CA key not found at %s", ca_key_path)
                     self.config = old_config
                     return False
 
@@ -458,7 +458,7 @@ def response(flow: http.HTTPFlow) -> None:
             if was_running:
                 self.logger.info("Restarting interceptor with new configuration")
                 if not self.start():
-                    self.logger.error("Failed to restart interceptor")
+                    self.logger.exception("Failed to restart interceptor")
                     self.config = old_config  # Restore old config
                     return False
 
@@ -469,7 +469,7 @@ def response(flow: http.HTTPFlow) -> None:
             return True
 
         except Exception as e:
-            self.logger.error("Error configuring SSL/TLS interceptor: %s", e, exc_info=True)
+            self.logger.exception("Error configuring SSL/TLS interceptor: %s", e)
             return False
 
     def get_config(self) -> dict[str, Any]:

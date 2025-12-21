@@ -134,20 +134,18 @@ const EnhancedHardwareSpoofer = {
                     this.bufferLength = args[2].toInt32();
                 },
                 onLeave: function (retval) {
-                    if (retval.toInt32() === 0) {
-                        if (this.infoClass === 1 && this.buffer && !this.buffer.isNull()) {
-                            try {
-                                var _processorInfo = this.buffer;
-                                self.stats.cpuidHooks++;
-                                self.stats.totalBypasses++;
-                                send({
-                                    type: 'bypass',
-                                    target: 'cpuid',
-                                    action: 'processor_info_queried',
-                                    infoClass: this.infoClass,
-                                });
-                            } catch (_e) {}
-                        }
+                    if (retval.toInt32() === 0 && (this.infoClass === 1 && this.buffer && !this.buffer.isNull())) {
+                          try {
+                              var _processorInfo = this.buffer;
+                              self.stats.cpuidHooks++;
+                              self.stats.totalBypasses++;
+                              send({
+                                  type: 'bypass',
+                                  target: 'cpuid',
+                                  action: 'processor_info_queried',
+                                  infoClass: this.infoClass,
+                              });
+                          } catch (_e) {}
                     }
                 },
             });

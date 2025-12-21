@@ -37,7 +37,7 @@ if WINDOWS_AVAILABLE:
 
         STRUCTURES_AVAILABLE = True
     except ImportError as e:
-        logger.error("Import error in windows_structures: %s", e)
+        logger.exception("Import error in windows_structures: %s", e)
         STRUCTURES_AVAILABLE = False
 else:
     STRUCTURES_AVAILABLE = False
@@ -140,7 +140,7 @@ class WindowsContext:
             return CONTEXT, CONTEXT_FULL
 
         except Exception as e:
-            logger.error("Failed to create CONTEXT structure: %s", e, exc_info=True)
+            logger.exception("Failed to create CONTEXT structure: %s", e, exc_info=True)
             return None, None
 
     def get_thread_context(self, thread_handle: int) -> ctypes.Structure | None:
@@ -159,13 +159,13 @@ class WindowsContext:
             success = self.kernel32.GetThreadContext(thread_handle, ctypes.byref(context))
             if not success:
                 error = ctypes.get_last_error()
-                logger.error("GetThreadContext failed: %s", error)
+                logger.exception("GetThreadContext failed: %s", error)
                 return None
 
             return context
 
         except Exception as e:
-            logger.error("Failed to get thread context: %s", e, exc_info=True)
+            logger.exception("Failed to get thread context: %s", e, exc_info=True)
             return None
 
     def set_thread_context(self, thread_handle: int, context: ctypes.Structure) -> bool:
@@ -177,11 +177,11 @@ class WindowsContext:
             success = self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context))
             if not success:
                 error = ctypes.get_last_error()
-                logger.error("SetThreadContext failed: %s", error)
+                logger.exception("SetThreadContext failed: %s", error)
                 return False
             return True
         except Exception as e:
-            logger.error("Failed to set thread context: %s", e, exc_info=True)
+            logger.exception("Failed to set thread context: %s", e, exc_info=True)
             return False
 
     def get_entry_point(self, context: ctypes.Structure) -> int:
@@ -189,7 +189,7 @@ class WindowsContext:
         try:
             return context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
         except Exception as e:
-            logger.error("Failed to get entry point: %s", e, exc_info=True)
+            logger.exception("Failed to get entry point: %s", e, exc_info=True)
             return 0
 
 
@@ -281,7 +281,7 @@ class WindowsProcessStructures:
 
             if not success:
                 error = ctypes.get_last_error()
-                logger.error("CreateProcess failed: %s", error)
+                logger.exception("CreateProcess failed: %s", error)
                 return None
 
             return {
@@ -292,7 +292,7 @@ class WindowsProcessStructures:
             }
 
         except Exception as e:
-            logger.error("Failed to create suspended process: %s", e, exc_info=True)
+            logger.exception("Failed to create suspended process: %s", e, exc_info=True)
             return None
 
 
@@ -336,7 +336,7 @@ def parse_objdump_line(line: str) -> dict[str, Any] | None:
                     "bytes": addr_part.strip(),
                 }
         except (ValueError, IndexError) as e:
-            logger.error("Error in windows_structures: %s", e)
+            logger.exception("Error in windows_structures: %s", e)
     return None
 
 
@@ -350,7 +350,8 @@ def create_ssl_certificate_builder() -> object | None:
         from cryptography.x509.oid import NameOID
 
         return (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(
                 x509.Name(
                     [
@@ -388,5 +389,5 @@ def create_ssl_certificate_builder() -> object | None:
             )
         )
     except ImportError as e:
-        logger.error("Import error in windows_structures: %s", e)
+        logger.exception("Import error in windows_structures: %s", e)
         return None

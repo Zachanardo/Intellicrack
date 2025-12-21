@@ -20,7 +20,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections import defaultdict
-
+from collections.abc import Callable
+from typing import Any
 
 try:
     import capstone
@@ -47,12 +48,12 @@ class OpaquePredicateDetector:
 
         """
         self.logger = logging.getLogger(__name__)
-        self.detected_predicates = {}
-        self.detected_opaques = {}
-        self.branch_outcomes = defaultdict(list)
+        self.detected_predicates: dict[str, dict[str, Any]] = {}
+        self.detected_opaques: dict[str, dict[str, Any]] = {}
+        self.branch_outcomes: defaultdict[str, list[bool]] = defaultdict(list)
         self.confidence_threshold = confidence_threshold
 
-    def analyze_branch(self, address: int, condition: str, taken: bool) -> dict:
+    def analyze_branch(self, address: int, condition: str, taken: bool) -> dict[str, Any]:
         """Analyze a conditional branch to detect opaque predicates.
 
         Args:
@@ -83,7 +84,8 @@ class OpaquePredicateDetector:
                     "samples": total_count,
                 }
                 self.logger.info(
-                    f"Opaque predicate detected at 0x{address:x}: always TRUE (confidence: {taken_ratio:.2%}, samples: {total_count})",
+                    "Opaque predicate detected at 0x%x: always TRUE (confidence: %.2f%%, samples: %d)",
+                    address, taken_ratio * 100, total_count,
                 )
                 return {
                     "opaque": True,
@@ -101,7 +103,8 @@ class OpaquePredicateDetector:
                     "samples": total_count,
                 }
                 self.logger.info(
-                    f"Opaque predicate detected at 0x{address:x}: always FALSE (confidence: {1 - taken_ratio:.2%}, samples: {total_count})",
+                    "Opaque predicate detected at 0x%x: always FALSE (confidence: %.2f%%, samples: %d)",
+                    address, (1 - taken_ratio) * 100, total_count,
                 )
                 return {
                     "opaque": True,
@@ -112,7 +115,7 @@ class OpaquePredicateDetector:
 
         return {"opaque": False}
 
-    def is_opaque_predicate(self, address: int, condition: str) -> dict:
+    def is_opaque_predicate(self, address: int, condition: str) -> dict[str, Any]:
         """Check if a branch is a known opaque predicate.
 
         Args:
@@ -128,15 +131,19 @@ class OpaquePredicateDetector:
             return self.detected_predicates[branch_key]
         return {}
 
-    def get_statistics(self) -> dict:
+    def get_statistics(self) -> dict[str, Any]:
         """Get detection statistics.
 
         Returns:
             dict: Statistics about detected opaque predicates
 
         """
-        always_true = sum(bool(p["type"] == "always_true") for p in self.detected_predicates.values())
-        always_false = sum(bool(p["type"] == "always_false") for p in self.detected_predicates.values())
+        always_true = sum(
+            p["type"] == "always_true" for p in self.detected_predicates.values()
+        )
+        always_false = sum(
+            p["type"] == "always_false" for p in self.detected_predicates.values()
+        )
 
         return {
             "total_detected": len(self.detected_predicates),
@@ -145,7 +152,7 @@ class OpaquePredicateDetector:
             "predicates": list(self.detected_predicates.values()),
         }
 
-    def get_detected_opaques(self) -> dict:
+    def get_detected_opaques(self) -> dict[str, dict[str, Any]]:
         """Get all detected opaque predicates.
 
         Returns:
@@ -172,15 +179,15 @@ class ControlFlowFlatteningHandler:
     def __init__(self) -> None:
         """Initialize control flow flattening detection system."""
         self.logger = logging.getLogger(__name__)
-        self.dispatcher_candidates = {}
-        self.dispatcher_blocks = set()
-        self.state_variables = set()
-        self.state_transitions = defaultdict(set)
+        self.dispatcher_candidates: dict[int, dict[str, Any]] = {}
+        self.dispatcher_blocks: set[int] = set()
+        self.state_variables: set[int] = set()
+        self.state_transitions: defaultdict[int, set[int]] = defaultdict(set)
         self.dispatcher_detected = False
-        self.dispatcher_address = None
+        self.dispatcher_address: int | None = None
         self.state_variable = None
 
-    def analyze_block(self, address: int, instructions: list) -> dict:
+    def analyze_block(self, address: int, instructions: list[Any]) -> dict[str, Any]:
         """Analyze a basic block for control flow flattening patterns.
 
         Args:
@@ -230,7 +237,8 @@ class ControlFlowFlatteningHandler:
                 self.dispatcher_detected = True
                 self.dispatcher_address = address
                 self.logger.info(
-                    f"Control flow flattening dispatcher detected at 0x{address:x} (score: {switch_pattern_score})",
+                    "Control flow flattening dispatcher detected at 0x%x (score: %d)",
+                    address, switch_pattern_score,
                 )
                 return {
                     "is_dispatcher": True,
@@ -250,7 +258,7 @@ class ControlFlowFlatteningHandler:
         """
         self.state_transitions[from_state].add(to_state)
 
-    def get_control_flow_graph(self) -> dict:
+    def get_control_flow_graph(self) -> dict[str, Any]:
         """Reconstruct original control flow from observed transitions.
 
         Returns:
@@ -264,7 +272,7 @@ class ControlFlowFlatteningHandler:
             "is_flattened": self.dispatcher_detected,
         }
 
-    def get_dispatcher_blocks(self) -> set:
+    def get_dispatcher_blocks(self) -> set[int]:
         """Get all detected dispatcher blocks.
 
         Returns:
@@ -285,14 +293,14 @@ class VirtualizationDetector:
     def __init__(self) -> None:
         """Initialize virtualization detection system."""
         self.logger = logging.getLogger(__name__)
-        self.vm_candidates = []
-        self.bytecode_handlers = {}
+        self.vm_candidates: list[dict[str, Any]] = []
+        self.bytecode_handlers: dict[int, str] = {}
         self.vm_handlers = self.bytecode_handlers
-        self.dispatch_loop = None
+        self.dispatch_loop: int | None = None
         self.vm_context = None
         self.vm_detected = False
 
-    def analyze_loop(self, loop_address: int, loop_body: list) -> dict:
+    def analyze_loop(self, loop_address: int, loop_body: list[Any]) -> dict[str, Any]:
         """Analyze a loop for VM dispatch pattern.
 
         Args:
@@ -347,7 +355,8 @@ class VirtualizationDetector:
             })
 
             self.logger.info(
-                f"VM dispatch loop detected at 0x{loop_address:x} (score: {total_score}, indicators: {vm_indicators})",
+                "VM dispatch loop detected at 0x%x (score: %d, indicators: %s)",
+                loop_address, total_score, vm_indicators,
             )
 
             return {
@@ -368,9 +377,9 @@ class VirtualizationDetector:
 
         """
         self.bytecode_handlers[address] = handler_type
-        self.logger.debug(f"Bytecode handler registered: 0x{address:x} -> {handler_type}")
+        self.logger.debug("Bytecode handler registered: 0x%x -> %s", address, handler_type)
 
-    def analyze_handler(self, address: int, handler_code: list) -> None:
+    def analyze_handler(self, address: int, handler_code: list[Any]) -> None:
         """Analyze a potential bytecode handler.
 
         Args:
@@ -382,9 +391,9 @@ class VirtualizationDetector:
             return
 
         self.bytecode_handlers[address] = "generic_handler"
-        self.logger.debug(f"VM handler analyzed at 0x{address:x}")
+        self.logger.debug("VM handler analyzed at 0x%x", address)
 
-    def get_vm_context(self) -> dict:
+    def get_vm_context(self) -> dict[str, Any]:
         """Get detected VM context information.
 
         Returns:
@@ -409,11 +418,11 @@ class StringDeobfuscation:
     def __init__(self) -> None:
         """Initialize string deobfuscation system."""
         self.logger = logging.getLogger(__name__)
-        self.decryption_routines = {}
-        self.decrypted_strings = {}
-        self.xor_keys = set()
+        self.decryption_routines: dict[int, dict[str, Any]] = {}
+        self.decrypted_strings: dict[str, str] = {}
+        self.xor_keys: set[int] = set()
 
-    def analyze_decryption_routine(self, address: int, instructions: list) -> dict:
+    def analyze_decryption_routine(self, address: int, instructions: list[Any]) -> dict[str, Any]:
         """Analyze a function for string decryption patterns.
 
         Args:
@@ -451,7 +460,7 @@ class StringDeobfuscation:
                 "has_loop": loop_detected,
             }
 
-            self.logger.info(f"String decryption routine detected at 0x{address:x} (XOR-based)")
+            self.logger.info("String decryption routine detected at 0x%x (XOR-based)", address)
 
             return {
                 "is_decryptor": True,
@@ -461,7 +470,7 @@ class StringDeobfuscation:
 
         return {"is_decryptor": False}
 
-    def decrypt_string(self, encrypted_bytes: bytes, encryption_type: str, key: int | bytes) -> str:
+    def decrypt_string(self, encrypted_bytes: bytes, encryption_type: str, key: int | bytes) -> str | None:
         """Decrypt an encrypted string using detected algorithm.
 
         Args:
@@ -493,7 +502,7 @@ class StringDeobfuscation:
 
         return decrypted.hex()
 
-    def get_decrypted_strings(self) -> dict:
+    def get_decrypted_strings(self) -> dict[str, str]:
         """Get all decrypted strings.
 
         Returns:
@@ -502,7 +511,7 @@ class StringDeobfuscation:
         """
         return self.decrypted_strings.copy()
 
-    def detect_xor_decryption(self, address: int, encrypted_data: bytes, key: int | bytes) -> dict:
+    def detect_xor_decryption(self, address: int, encrypted_data: bytes, key: int | bytes) -> dict[str, Any]:
         """Detect XOR-based string decryption.
 
         Args:
@@ -560,7 +569,7 @@ class ObfuscationAwareConcolicEngine:
 
         self.logger.info("Obfuscation-aware concolic engine initialized")
 
-    def analyze_branch_obfuscation(self, address: int, condition: str, taken: bool) -> dict:
+    def analyze_branch_obfuscation(self, address: int, condition: str, taken: bool) -> dict[str, Any]:
         """Analyze a conditional branch for obfuscation patterns.
 
         Args:
@@ -594,10 +603,10 @@ class ObfuscationAwareConcolicEngine:
         opaque_info = self.opaque_detector.is_opaque_predicate(address, condition)
 
         if opaque_info and opaque_info.get("type") == "always_true":
-            self.logger.debug(f"Skipping false path at 0x{address:x} (opaque predicate: always true)")
+            self.logger.debug("Skipping false path at 0x%x (opaque predicate: always true)", address)
             return False
         if opaque_info and opaque_info.get("type") == "always_false":
-            self.logger.debug(f"Skipping true path at 0x{address:x} (opaque predicate: always false)")
+            self.logger.debug("Skipping true path at 0x%x (opaque predicate: always false)", address)
             return False
 
         return True
@@ -621,7 +630,7 @@ class ObfuscationAwareConcolicEngine:
             or (opaque_info and opaque_info.get("type") == "always_false" and taken)
         )
 
-    def analyze_basic_block_obfuscation(self, address: int, instructions: list) -> dict:
+    def analyze_basic_block_obfuscation(self, address: int, instructions: list[Any]) -> dict[str, Any]:
         """Comprehensive obfuscation analysis for a basic block.
 
         Args:
@@ -632,7 +641,7 @@ class ObfuscationAwareConcolicEngine:
             dict: Comprehensive obfuscation analysis
 
         """
-        results = {
+        results: dict[str, Any] = {
             "address": address,
             "obfuscation_detected": False,
             "techniques": [],
@@ -641,27 +650,30 @@ class ObfuscationAwareConcolicEngine:
         cff_analysis = self.cff_handler.analyze_block(address, instructions)
         if cff_analysis["is_dispatcher"]:
             results["obfuscation_detected"] = True
-            results["techniques"].append("control_flow_flattening")
+            techniques_list: list[str] = results["techniques"]
+            techniques_list.append("control_flow_flattening")
             results["dispatcher"] = cff_analysis
             self.obfuscation_stats["flattened_blocks_recovered"] += 1
 
         string_analysis = self.string_deobf.analyze_decryption_routine(address, instructions)
         if string_analysis["is_decryptor"]:
             results["obfuscation_detected"] = True
-            results["techniques"].append("string_encryption")
+            techniques_list = results["techniques"]
+            techniques_list.append("string_encryption")
             results["decryptor"] = string_analysis
 
         if len(instructions) > 50:
             vm_analysis = self.vm_detector.analyze_loop(address, instructions)
             if vm_analysis["is_vm"]:
                 results["obfuscation_detected"] = True
-                results["techniques"].append("virtualization")
+                techniques_list = results["techniques"]
+                techniques_list.append("virtualization")
                 results["vm_context"] = vm_analysis
                 self.obfuscation_stats["vm_handlers_identified"] += 1
 
         return results
 
-    def get_execution_strategy(self, obfuscation_type: str) -> dict:
+    def get_execution_strategy(self, obfuscation_type: str) -> dict[str, Any]:
         """Get specialized execution strategy for obfuscation type.
 
         Args:
@@ -671,7 +683,7 @@ class ObfuscationAwareConcolicEngine:
             dict: Execution strategy configuration
 
         """
-        strategies = {
+        strategies: dict[str, dict[str, Any]] = {
             "control_flow_flattening": {
                 "prioritize_state_changes": True,
                 "track_state_variable": True,
@@ -696,15 +708,14 @@ class ObfuscationAwareConcolicEngine:
             },
         }
 
-        return strategies.get(
-            obfuscation_type,
-            {
-                "default": True,
-                "conservative_exploration": True,
-            },
-        )
+        default_strategy: dict[str, Any] = {
+            "default": True,
+            "conservative_exploration": True,
+        }
 
-    def get_obfuscation_report(self) -> dict:
+        return strategies.get(obfuscation_type, default_strategy)
+
+    def get_obfuscation_report(self) -> dict[str, Any]:
         """Generate comprehensive obfuscation analysis report.
 
         Returns:
@@ -745,7 +756,7 @@ class ObfuscationAwareConcolicEngine:
         """
         return address in self.cff_handler.dispatcher_blocks
 
-    def execute_with_obfuscation_handling(self, start_address: int, end_address: int) -> list:
+    def execute_with_obfuscation_handling(self, start_address: int, end_address: int) -> list[Any]:
         """Execute with obfuscation-aware analysis.
 
         Args:
@@ -758,7 +769,7 @@ class ObfuscationAwareConcolicEngine:
         """
         return self.base_engine.explore() if hasattr(self.base_engine, "explore") else []
 
-    def analyze_obfuscation(self) -> dict:
+    def analyze_obfuscation(self) -> dict[str, Any]:
         """Analyze detected obfuscation techniques.
 
         Returns:

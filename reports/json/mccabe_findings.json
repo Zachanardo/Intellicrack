@@ -1,6 +1,6 @@
 {
   "tool": "mccabe",
-  "generated": "2025-12-20T00:10:37.058230",
+  "generated": "2025-12-20T02:56:43.284379",
   "total_findings": 1432,
   "total_files": 479,
   "files": [
@@ -311,244 +311,244 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:925:5: C901 'HASPEmulator.hasp_write' is too complex (11)"
         },
         {
-          "line": 1405,
+          "line": 1406,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'HardwareFingerprintGenerator._get_ram_size' is too complex (12)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1405:5: C901 'HardwareFingerprintGenerator._get_ram_size' is too complex (12)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1406:5: C901 'HardwareFingerprintGenerator._get_ram_size' is too complex (12)"
         },
         {
-          "line": 1562,
+          "line": 1563,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'ProtocolAnalyzer.analyze_traffic' is too complex (12)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1562:5: C901 'ProtocolAnalyzer.analyze_traffic' is too complex (12)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1563:5: C901 'ProtocolAnalyzer.analyze_traffic' is too complex (12)"
         },
         {
-          "line": 1611,
+          "line": 1612,
           "column": 5,
           "code": "C901",
           "complexity": 14,
           "message": "'ProtocolAnalyzer._parse_http_request' is too complex (14)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1611:5: C901 'ProtocolAnalyzer._parse_http_request' is too complex (14)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1612:5: C901 'ProtocolAnalyzer._parse_http_request' is too complex (14)"
         },
         {
-          "line": 1666,
+          "line": 1667,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'ProtocolAnalyzer._parse_flexlm_data' is too complex (13)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1666:5: C901 'ProtocolAnalyzer._parse_flexlm_data' is too complex (13)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1667:5: C901 'ProtocolAnalyzer._parse_flexlm_data' is too complex (13)"
         },
         {
-          "line": 1737,
+          "line": 1738,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'BinaryKeyExtractor._extract_adobe_private_key_from_memory' is too complex (12)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1737:5: C901 'BinaryKeyExtractor._extract_adobe_private_key_from_memory' is too complex (12)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1738:5: C901 'BinaryKeyExtractor._extract_adobe_private_key_from_memory' is too complex (12)"
         },
         {
-          "line": 1816,
+          "line": 1817,
           "column": 5,
           "code": "C901",
           "complexity": 15,
           "message": "'BinaryKeyExtractor._extract_key_with_advanced_patterns' is too complex (15)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1816:5: C901 'BinaryKeyExtractor._extract_key_with_advanced_patterns' is too complex (15)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1817:5: C901 'BinaryKeyExtractor._extract_key_with_advanced_patterns' is too complex (15)"
         },
         {
-          "line": 1954,
+          "line": 1955,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'BinaryKeyExtractor._extract_key_via_entropy_analysis' is too complex (12)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1954:5: C901 'BinaryKeyExtractor._extract_key_via_entropy_analysis' is too complex (12)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1955:5: C901 'BinaryKeyExtractor._extract_key_via_entropy_analysis' is too complex (12)"
         },
         {
-          "line": 1995,
+          "line": 1996,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'BinaryKeyExtractor._extract_key_via_crypto_structure_detection' is too complex (13)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1995:5: C901 'BinaryKeyExtractor._extract_key_via_crypto_structure_detection' is too complex (13)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1996:5: C901 'BinaryKeyExtractor._extract_key_via_crypto_structure_detection' is too complex (13)"
         },
         {
-          "line": 2924,
+          "line": 2925,
           "column": 5,
           "code": "C901",
           "complexity": 21,
           "message": "'BinaryKeyExtractor._extract_openssl_components' is too complex (21)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:2924:5: C901 'BinaryKeyExtractor._extract_openssl_components' is too complex (21)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:2925:5: C901 'BinaryKeyExtractor._extract_openssl_components' is too complex (21)"
         },
         {
-          "line": 3097,
+          "line": 3098,
           "column": 5,
           "code": "C901",
           "complexity": 19,
           "message": "'BinaryKeyExtractor._extract_key_from_process_memory' is too complex (19)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3097:5: C901 'BinaryKeyExtractor._extract_key_from_process_memory' is too complex (19)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3098:5: C901 'BinaryKeyExtractor._extract_key_from_process_memory' is too complex (19)"
         },
         {
-          "line": 3223,
+          "line": 3224,
           "column": 5,
           "code": "C901",
           "complexity": 25,
           "message": "'BinaryKeyExtractor.extract_flexlm_keys' is too complex (25)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3223:5: C901 'BinaryKeyExtractor.extract_flexlm_keys' is too complex (25)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3224:5: C901 'BinaryKeyExtractor.extract_flexlm_keys' is too complex (25)"
         },
         {
-          "line": 3306,
+          "line": 3307,
           "column": 5,
           "code": "C901",
           "complexity": 24,
           "message": "'BinaryKeyExtractor.extract_hasp_keys' is too complex (24)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3306:5: C901 'BinaryKeyExtractor.extract_hasp_keys' is too complex (24)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3307:5: C901 'BinaryKeyExtractor.extract_hasp_keys' is too complex (24)"
         },
         {
-          "line": 3384,
+          "line": 3385,
           "column": 5,
           "code": "C901",
           "complexity": 26,
           "message": "'BinaryKeyExtractor.extract_adobe_keys' is too complex (26)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3384:5: C901 'BinaryKeyExtractor.extract_adobe_keys' is too complex (26)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3385:5: C901 'BinaryKeyExtractor.extract_adobe_keys' is too complex (26)"
         },
         {
-          "line": 3565,
+          "line": 3566,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'BinaryKeyExtractor._analyze_validation_function' is too complex (11)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3565:5: C901 'BinaryKeyExtractor._analyze_validation_function' is too complex (11)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3566:5: C901 'BinaryKeyExtractor._analyze_validation_function' is too complex (11)"
         },
         {
-          "line": 3843,
+          "line": 3844,
           "column": 5,
           "code": "C901",
           "complexity": 18,
           "message": "'RuntimeKeyExtractor._scan_windows_memory' is too complex (18)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3843:5: C901 'RuntimeKeyExtractor._scan_windows_memory' is too complex (18)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3844:5: C901 'RuntimeKeyExtractor._scan_windows_memory' is too complex (18)"
         },
         {
-          "line": 3891,
+          "line": 3892,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'RuntimeKeyExtractor._scan_unix_memory' is too complex (13)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3891:5: C901 'RuntimeKeyExtractor._scan_unix_memory' is too complex (13)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3892:5: C901 'RuntimeKeyExtractor._scan_unix_memory' is too complex (13)"
         },
         {
-          "line": 3946,
+          "line": 3947,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'RuntimeKeyExtractor._detect_memory_protection' is too complex (13)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3946:5: C901 'RuntimeKeyExtractor._detect_memory_protection' is too complex (13)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3947:5: C901 'RuntimeKeyExtractor._detect_memory_protection' is too complex (13)"
         },
         {
-          "line": 4012,
+          "line": 4013,
           "column": 5,
           "code": "C901",
           "complexity": 17,
           "message": "'RuntimeKeyExtractor._handle_vmprotect' is too complex (17)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4012:5: C901 'RuntimeKeyExtractor._handle_vmprotect' is too complex (17)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4013:5: C901 'RuntimeKeyExtractor._handle_vmprotect' is too complex (17)"
         },
         {
-          "line": 4066,
+          "line": 4067,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'RuntimeKeyExtractor._handle_themida' is too complex (13)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4066:5: C901 'RuntimeKeyExtractor._handle_themida' is too complex (13)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4067:5: C901 'RuntimeKeyExtractor._handle_themida' is too complex (13)"
         },
         {
-          "line": 4106,
+          "line": 4107,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'RuntimeKeyExtractor._handle_obsidium' is too complex (12)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4106:5: C901 'RuntimeKeyExtractor._handle_obsidium' is too complex (12)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4107:5: C901 'RuntimeKeyExtractor._handle_obsidium' is too complex (12)"
         },
         {
-          "line": 4433,
+          "line": 4434,
           "column": 5,
           "code": "C901",
           "complexity": 16,
           "message": "'RuntimeKeyExtractor._reconstruct_vmprotect_iat' is too complex (16)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4433:5: C901 'RuntimeKeyExtractor._reconstruct_vmprotect_iat' is too complex (16)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4434:5: C901 'RuntimeKeyExtractor._reconstruct_vmprotect_iat' is too complex (16)"
         },
         {
-          "line": 4574,
+          "line": 4575,
           "column": 5,
           "code": "C901",
           "complexity": 21,
           "message": "'RuntimeKeyExtractor._hook_inline_apis' is too complex (21)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4574:5: C901 'RuntimeKeyExtractor._hook_inline_apis' is too complex (21)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4575:5: C901 'RuntimeKeyExtractor._hook_inline_apis' is too complex (21)"
         },
         {
-          "line": 5106,
+          "line": 5107,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'ProtocolStateMachine.hasp_state_machine' is too complex (11)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5106:5: C901 'ProtocolStateMachine.hasp_state_machine' is too complex (11)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5107:5: C901 'ProtocolStateMachine.hasp_state_machine' is too complex (11)"
         },
         {
-          "line": 5732,
+          "line": 5733,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'ProxyInterceptor._extract_xml_features' is too complex (11)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5732:5: C901 'ProxyInterceptor._extract_xml_features' is too complex (11)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5733:5: C901 'ProxyInterceptor._extract_xml_features' is too complex (11)"
         },
         {
-          "line": 5767,
+          "line": 5768,
           "column": 5,
           "code": "C901",
           "complexity": 18,
           "message": "'ProxyInterceptor._generate_text_response' is too complex (18)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5767:5: C901 'ProxyInterceptor._generate_text_response' is too complex (18)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5768:5: C901 'ProxyInterceptor._generate_text_response' is too complex (18)"
         },
         {
-          "line": 5880,
+          "line": 5881,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'ProxyInterceptor._find_binary_by_process' is too complex (12)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5880:5: C901 'ProxyInterceptor._find_binary_by_process' is too complex (12)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5881:5: C901 'ProxyInterceptor._find_binary_by_process' is too complex (12)"
         },
         {
-          "line": 6102,
+          "line": 6103,
           "column": 5,
           "code": "C901",
           "complexity": 29,
           "message": "'ProxyInterceptor._extract_kms_data' is too complex (29)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6102:5: C901 'ProxyInterceptor._extract_kms_data' is too complex (29)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6103:5: C901 'ProxyInterceptor._extract_kms_data' is too complex (29)"
         },
         {
-          "line": 6562,
+          "line": 6563,
           "column": 5,
           "code": "C901",
           "complexity": 19,
           "message": "'ProxyInterceptor.modify_response' is too complex (19)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6562:5: C901 'ProxyInterceptor.modify_response' is too complex (19)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6563:5: C901 'ProxyInterceptor.modify_response' is too complex (19)"
         },
         {
-          "line": 6671,
+          "line": 6672,
           "column": 5,
           "code": "C901",
           "complexity": 16,
           "message": "'LicenseServerEmulator._setup_routes' is too complex (16)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6671:5: C901 'LicenseServerEmulator._setup_routes' is too complex (16)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6672:5: C901 'LicenseServerEmulator._setup_routes' is too complex (16)"
         },
         {
-          "line": 7012,
+          "line": 7013,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'LicenseServerEmulator._handle_dns_query' is too complex (13)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7012:5: C901 'LicenseServerEmulator._handle_dns_query' is too complex (13)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7013:5: C901 'LicenseServerEmulator._handle_dns_query' is too complex (13)"
         }
       ]
     },
@@ -2769,44 +2769,44 @@
           "raw": "intellicrack\\ai\\qemu_manager.py:2192:5: C901 'QEMUManager.optimize_snapshot_storage' is too complex (16)"
         },
         {
-          "line": 2415,
+          "line": 2418,
           "column": 5,
           "code": "C901",
           "complexity": 15,
           "message": "'QEMUManager.cleanup_old_snapshots' is too complex (15)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:2415:5: C901 'QEMUManager.cleanup_old_snapshots' is too complex (15)"
+          "raw": "intellicrack\\ai\\qemu_manager.py:2418:5: C901 'QEMUManager.cleanup_old_snapshots' is too complex (15)"
         },
         {
-          "line": 2601,
+          "line": 2608,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'QEMUManager.perform_snapshot_maintenance' is too complex (13)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:2601:5: C901 'QEMUManager.perform_snapshot_maintenance' is too complex (13)"
+          "raw": "intellicrack\\ai\\qemu_manager.py:2608:5: C901 'QEMUManager.perform_snapshot_maintenance' is too complex (13)"
         },
         {
-          "line": 3124,
+          "line": 3134,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'QEMUManager._send_qmp_command' is too complex (13)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:3124:5: C901 'QEMUManager._send_qmp_command' is too complex (13)"
+          "raw": "intellicrack\\ai\\qemu_manager.py:3134:5: C901 'QEMUManager._send_qmp_command' is too complex (13)"
         },
         {
-          "line": 3413,
+          "line": 3423,
           "column": 5,
           "code": "C901",
           "complexity": 15,
           "message": "'QEMUManager.copy_file_to_vm' is too complex (15)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:3413:5: C901 'QEMUManager.copy_file_to_vm' is too complex (15)"
+          "raw": "intellicrack\\ai\\qemu_manager.py:3423:5: C901 'QEMUManager.copy_file_to_vm' is too complex (15)"
         },
         {
-          "line": 3934,
+          "line": 3944,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'QEMUManager.test_frida_script_with_callback' is too complex (12)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:3934:5: C901 'QEMUManager.test_frida_script_with_callback' is too complex (12)"
+          "raw": "intellicrack\\ai\\qemu_manager.py:3944:5: C901 'QEMUManager.test_frida_script_with_callback' is too complex (12)"
         }
       ]
     },
@@ -4161,44 +4161,44 @@
           "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:242:5: C901 'ControlFlowDeobfuscator._initialize_disassembler' is too complex (13)"
         },
         {
-          "line": 770,
+          "line": 771,
           "column": 5,
           "code": "C901",
           "complexity": 16,
           "message": "'ControlFlowDeobfuscator._detect_opaque_predicates' is too complex (16)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:770:5: C901 'ControlFlowDeobfuscator._detect_opaque_predicates' is too complex (16)"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:771:5: C901 'ControlFlowDeobfuscator._detect_opaque_predicates' is too complex (16)"
         },
         {
-          "line": 873,
+          "line": 875,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'ControlFlowDeobfuscator._remove_opaque_predicates' is too complex (12)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:873:5: C901 'ControlFlowDeobfuscator._remove_opaque_predicates' is too complex (12)"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:875:5: C901 'ControlFlowDeobfuscator._remove_opaque_predicates' is too complex (12)"
         },
         {
-          "line": 953,
+          "line": 961,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'ControlFlowDeobfuscator._eliminate_dead_code' is too complex (11)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:953:5: C901 'ControlFlowDeobfuscator._eliminate_dead_code' is too complex (11)"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:961:5: C901 'ControlFlowDeobfuscator._eliminate_dead_code' is too complex (11)"
         },
         {
-          "line": 1014,
+          "line": 1022,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'ControlFlowDeobfuscator._collapse_linear_chains' is too complex (11)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1014:5: C901 'ControlFlowDeobfuscator._collapse_linear_chains' is too complex (11)"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1022:5: C901 'ControlFlowDeobfuscator._collapse_linear_chains' is too complex (11)"
         },
         {
-          "line": 1372,
+          "line": 1380,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'ControlFlowDeobfuscator.export_deobfuscated_cfg' is too complex (11)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1372:5: C901 'ControlFlowDeobfuscator.export_deobfuscated_cfg' is too complex (11)"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1380:5: C901 'ControlFlowDeobfuscator.export_deobfuscated_cfg' is too complex (11)"
         }
       ]
     },
@@ -6341,36 +6341,36 @@
       "count": 4,
       "findings": [
         {
-          "line": 443,
+          "line": 441,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'LinearRegressionModel.train' is too complex (11)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:443:5: C901 'LinearRegressionModel.train' is too complex (11)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:441:5: C901 'LinearRegressionModel.train' is too complex (11)"
         },
         {
-          "line": 530,
+          "line": 528,
           "column": 5,
           "code": "C901",
           "complexity": 18,
           "message": "'SuccessProbabilityPredictor._initialize_model' is too complex (18)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:530:5: C901 'SuccessProbabilityPredictor._initialize_model' is too complex (18)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:528:5: C901 'SuccessProbabilityPredictor._initialize_model' is too complex (18)"
         },
         {
-          "line": 823,
+          "line": 821,
           "column": 5,
           "code": "C901",
           "complexity": 27,
           "message": "'ExecutionTimePredictor._initialize_model' is too complex (27)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:823:5: C901 'ExecutionTimePredictor._initialize_model' is too complex (27)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:821:5: C901 'ExecutionTimePredictor._initialize_model' is too complex (27)"
         },
         {
-          "line": 1128,
+          "line": 1126,
           "column": 5,
           "code": "C901",
           "complexity": 24,
           "message": "'VulnerabilityPredictor._initialize_model' is too complex (24)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1128:5: C901 'VulnerabilityPredictor._initialize_model' is too complex (24)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1126:5: C901 'VulnerabilityPredictor._initialize_model' is too complex (24)"
         }
       ]
     },
@@ -6493,36 +6493,36 @@
       "count": 4,
       "findings": [
         {
-          "line": 387,
+          "line": 389,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'FirmwareAnalyzer._determine_firmware_type' is too complex (13)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:387:5: C901 'FirmwareAnalyzer._determine_firmware_type' is too complex (13)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:389:5: C901 'FirmwareAnalyzer._determine_firmware_type' is too complex (13)"
         },
         {
-          "line": 422,
+          "line": 424,
           "column": 5,
           "code": "C901",
           "complexity": 13,
           "message": "'FirmwareAnalyzer._analyze_entropy' is too complex (13)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:422:5: C901 'FirmwareAnalyzer._analyze_entropy' is too complex (13)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:424:5: C901 'FirmwareAnalyzer._analyze_entropy' is too complex (13)"
         },
         {
-          "line": 510,
+          "line": 512,
           "column": 5,
           "code": "C901",
           "complexity": 14,
           "message": "'FirmwareAnalyzer._extract_embedded_files' is too complex (14)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:510:5: C901 'FirmwareAnalyzer._extract_embedded_files' is too complex (14)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:512:5: C901 'FirmwareAnalyzer._extract_embedded_files' is too complex (14)"
         },
         {
-          "line": 883,
+          "line": 885,
           "column": 5,
           "code": "C901",
           "complexity": 11,
           "message": "'FirmwareAnalyzer.generate_icp_supplemental_data' is too complex (11)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:883:5: C901 'FirmwareAnalyzer.generate_icp_supplemental_data' is too complex (11)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:885:5: C901 'FirmwareAnalyzer.generate_icp_supplemental_data' is too complex (11)"
         }
       ]
     },
@@ -6927,20 +6927,20 @@
           "raw": "intellicrack\\hexview\\file_handler.py:441:5: C901 'VirtualFileAccess.read' is too complex (13)"
         },
         {
-          "line": 624,
+          "line": 627,
           "column": 5,
           "code": "C901",
           "complexity": 14,
           "message": "'VirtualFileAccess.insert' is too complex (14)",
-          "raw": "intellicrack\\hexview\\file_handler.py:624:5: C901 'VirtualFileAccess.insert' is too complex (14)"
+          "raw": "intellicrack\\hexview\\file_handler.py:627:5: C901 'VirtualFileAccess.insert' is too complex (14)"
         },
         {
-          "line": 713,
+          "line": 716,
           "column": 5,
           "code": "C901",
           "complexity": 15,
           "message": "'VirtualFileAccess.delete' is too complex (15)",
-          "raw": "intellicrack\\hexview\\file_handler.py:713:5: C901 'VirtualFileAccess.delete' is too complex (15)"
+          "raw": "intellicrack\\hexview\\file_handler.py:716:5: C901 'VirtualFileAccess.delete' is too complex (15)"
         }
       ]
     },
@@ -7901,20 +7901,20 @@
           "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:126:5: C901 'R2GraphGenerator.generate_control_flow_graph' is too complex (11)"
         },
         {
-          "line": 229,
+          "line": 231,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'R2GraphGenerator.generate_call_graph' is too complex (12)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:229:5: C901 'R2GraphGenerator.generate_call_graph' is too complex (12)"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:231:5: C901 'R2GraphGenerator.generate_call_graph' is too complex (12)"
         },
         {
-          "line": 518,
+          "line": 520,
           "column": 5,
           "code": "C901",
           "complexity": 12,
           "message": "'R2GraphGenerator.visualize_graph' is too complex (12)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:518:5: C901 'R2GraphGenerator.visualize_graph' is too complex (12)"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:520:5: C901 'R2GraphGenerator.visualize_graph' is too complex (12)"
         }
       ]
     },
@@ -8081,20 +8081,20 @@
           "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:166:5: C901 'APIObfuscator._resolve_by_hash' is too complex (14)"
         },
         {
-          "line": 258,
+          "line": 262,
           "column": 5,
           "code": "C901",
           "complexity": 15,
           "message": "'APIObfuscator._resolve_by_ordinal' is too complex (15)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:258:5: C901 'APIObfuscator._resolve_by_ordinal' is too complex (15)"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:262:5: C901 'APIObfuscator._resolve_by_ordinal' is too complex (15)"
         },
         {
-          "line": 1154,
+          "line": 1158,
           "column": 5,
           "code": "C901",
           "complexity": 14,
           "message": "'APIObfuscator._resolve_delayed_imports' is too complex (14)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:1154:5: C901 'APIObfuscator._resolve_delayed_imports' is too complex (14)"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:1158:5: C901 'APIObfuscator._resolve_delayed_imports' is too complex (14)"
         }
       ]
     },
@@ -9339,20 +9339,20 @@
       "count": 2,
       "findings": [
         {
-          "line": 470,
+          "line": 472,
           "column": 5,
           "code": "C901",
           "complexity": 19,
           "message": "'LoRAAdapterManager.compare_adapter_configs' is too complex (19)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:470:5: C901 'LoRAAdapterManager.compare_adapter_configs' is too complex (19)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:472:5: C901 'LoRAAdapterManager.compare_adapter_configs' is too complex (19)"
         },
         {
-          "line": 646,
+          "line": 648,
           "column": 5,
           "code": "C901",
           "complexity": 14,
           "message": "'LoRAAdapterManager.validate_adapter_config' is too complex (14)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:646:5: C901 'LoRAAdapterManager.validate_adapter_config' is too complex (14)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:648:5: C901 'LoRAAdapterManager.validate_adapter_config' is too complex (14)"
         }
       ]
     },
@@ -10219,20 +10219,20 @@
       "count": 2,
       "findings": [
         {
-          "line": 516,
+          "line": 518,
           "column": 5,
           "code": "C901",
           "complexity": 15,
           "message": "'RequestClassifier._detect_auth_type' is too complex (15)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:516:5: C901 'RequestClassifier._detect_auth_type' is too complex (15)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:518:5: C901 'RequestClassifier._detect_auth_type' is too complex (15)"
         },
         {
-          "line": 549,
+          "line": 551,
           "column": 5,
           "code": "C901",
           "complexity": 22,
           "message": "'RequestClassifier._detect_request_type' is too complex (22)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:549:5: C901 'RequestClassifier._detect_request_type' is too complex (22)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:551:5: C901 'RequestClassifier._detect_request_type' is too complex (22)"
         }
       ]
     },
@@ -12169,12 +12169,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 575,
+          "line": 577,
           "column": 5,
           "code": "C901",
           "complexity": 16,
           "message": "'CloudLicenseAnalyzer._extract_tokens_from_json' is too complex (16)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:575:5: C901 'CloudLicenseAnalyzer._extract_tokens_from_json' is too complex (16)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:577:5: C901 'CloudLicenseAnalyzer._extract_tokens_from_json' is too complex (16)"
         }
       ]
     },
@@ -12631,12 +12631,12 @@
       "count": 1,
       "findings": [
         {
-          "line": 110,
+          "line": 115,
           "column": 1,
           "code": "C901",
           "complexity": 20,
           "message": "'main' is too complex (20)",
-          "raw": "intellicrack\\main.py:110:1: C901 'main' is too complex (20)"
+          "raw": "intellicrack\\main.py:115:1: C901 'main' is too complex (20)"
         }
       ]
     },

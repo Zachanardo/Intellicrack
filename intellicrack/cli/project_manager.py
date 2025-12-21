@@ -344,7 +344,7 @@ def main() -> int:
             logger.info("Imported project: %s", project_name)
 
     except Exception as e:
-        logger.error("Error: %s", e, exc_info=True)
+        logger.exception("Error: %s", e)
         return 1
 
     return 0

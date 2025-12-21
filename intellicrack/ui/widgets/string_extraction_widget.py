@@ -104,7 +104,7 @@ class StringExtractionThread(QThread):
             self.strings_found.emit(strings)
 
         except Exception as e:
-            logger.error("Exception in string_extraction_widget: %s", e)
+            logger.exception("Exception in string_extraction_widget: %s", e)
             self.error_occurred.emit(str(e))
 
     def _extract_ascii_strings(self, data: bytes) -> list[tuple[int, str]]:
@@ -709,7 +709,7 @@ class StringExtractionWidget(QWidget):
             )
 
         except Exception as e:
-            logger.error("Exception in string_extraction_widget: %s", e)
+            logger.exception("Exception in string_extraction_widget: %s", e)
             QMessageBox.critical(
                 self,
                 "Export Error",

@@ -73,13 +73,13 @@ class FridaProtectionBypasser:
             elif self.process_name:
                 self.session = frida.attach(self.process_name)
             else:
-                logger.error("No process name or PID provided")
+                logger.exception("No process name or PID provided")
                 return False
 
             logger.info("Attached to process: %s", self.process_name or self.pid)
             return True
         except Exception as e:
-            logger.error("Failed to attach: %s", e, exc_info=True)
+            logger.exception("Failed to attach: %s", e, exc_info=True)
             return False
 
     def detect_anti_debug(self) -> list[ProtectionInfo]:
@@ -296,7 +296,7 @@ class FridaProtectionBypasser:
             time.sleep(2)  # Wait for detections
             script.unload()
         except Exception as e:
-            logger.error("Anti-debug detection failed: %s", e, exc_info=True)
+            logger.exception("Anti-debug detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -462,7 +462,7 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
         except Exception as e:
-            logger.error("Certificate pinning detection failed: %s", e, exc_info=True)
+            logger.exception("Certificate pinning detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -647,7 +647,7 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
         except Exception as e:
-            logger.error("Integrity check detection failed: %s", e, exc_info=True)
+            logger.exception("Integrity check detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -857,7 +857,7 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
         except Exception as e:
-            logger.error("VM detection failed: %s", e, exc_info=True)
+            logger.exception("VM detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -1034,7 +1034,7 @@ class FridaProtectionBypasser:
             script.unload()
 
         except Exception as e:
-            logger.error("Packer detection failed: %s", e, exc_info=True)
+            logger.exception("Packer detection failed: %s", e, exc_info=True)
 
         return detections
 
@@ -1431,7 +1431,7 @@ class FridaProtectionBypasser:
                 if message["type"] == "send":
                     logger.info("Bypass result: %s", message["payload"])
                 elif message["type"] == "error":
-                    logger.error("Bypass error: %s", message, exc_info=True)
+                    logger.exception("Bypass error: %s", message, exc_info=True)
 
             self.script.on("message", on_message)
             self.script.load()
@@ -1440,7 +1440,7 @@ class FridaProtectionBypasser:
             return True
 
         except Exception as e:
-            logger.error("Failed to apply bypasses: %s", e, exc_info=True)
+            logger.exception("Failed to apply bypasses: %s", e, exc_info=True)
             return False
 
     def detect_all_protections(self) -> list[ProtectionInfo]:
@@ -1465,7 +1465,7 @@ class FridaProtectionBypasser:
                 all_detections.extend(detections)
                 logger.info("Found %s %s protections", len(detections), name)
             except Exception as e:
-                logger.error("Failed to detect %s: %s", name, e, exc_info=True)
+                logger.exception("Failed to detect %s: %s", name, e, exc_info=True)
 
         self.detected_protections = all_detections
         logger.info("Total protections detected: %s", len(all_detections))
@@ -1480,9 +1480,8 @@ class FridaProtectionBypasser:
             "=" * 60,
             f"Target: {self.process_name or f'PID {self.pid}'}",
             f"Total Protections Detected: {len(self.detected_protections)}",
+            "",
         ]
-        report.append("")
-
         # Group by protection type
         by_type = {}
         for protection in self.detected_protections:
@@ -1491,31 +1490,42 @@ class FridaProtectionBypasser:
             by_type[protection.type].append(protection)
 
         for prot_type, protections in by_type.items():
-            report.append(f"\n{prot_type.value.upper()} ({len(protections)} detected)")
-            report.append("-" * 40)
-
+            report.extend(
+                (
+                    f"\n{prot_type.value.upper()} ({len(protections)} detected)",
+                    "-" * 40,
+                )
+            )
             for i, prot in enumerate(protections, 1):
-                report.append(f"  [{i}] Location: {prot.location}")
-                report.append(f"      Confidence: {prot.confidence:.1%}")
-                report.append(f"      Bypass Available: {'Yes' if prot.bypass_available else 'No'}")
-
+                report.extend(
+                    (
+                        f"  [{i}] Location: {prot.location}",
+                        f"      Confidence: {prot.confidence:.1%}",
+                        f"      Bypass Available: {'Yes' if prot.bypass_available else 'No'}",
+                    )
+                )
                 for key, value in prot.details.items():
                     report.append(f"      {key}: {value}")
 
                 report.append("")
 
-        report.append("\n" + "=" * 60)
-        report.append("RECOMMENDATIONS")
-        report.append("=" * 60)
-
+        report.extend(("\n" + "=" * 60, "RECOMMENDATIONS", "=" * 60))
         if self.detected_protections:
-            report.append("1. Apply all available bypasses using apply_all_bypasses()")
-            report.append("2. Monitor application behavior after bypass")
-            report.append("3. Use memory dumps for further analysis")
-            report.append("4. Consider using automated unpacking for packed binaries")
+            report.extend(
+                (
+                    "1. Apply all available bypasses using apply_all_bypasses()",
+                    "2. Monitor application behavior after bypass",
+                    "3. Use memory dumps for further analysis",
+                    "4. Consider using automated unpacking for packed binaries",
+                )
+            )
         else:
-            report.append("No protections detected. The target may use:")
-            report.append("- Custom protection mechanisms")
+            report.extend(
+                (
+                    "No protections detected. The target may use:",
+                    "- Custom protection mechanisms",
+                )
+            )
             report.append("- Obfuscation without standard patterns")
             report.append("- Server-side license validation")
 
@@ -1543,7 +1553,7 @@ def main() -> None:
 
     # Attach to process
     if not bypasser.attach():
-        logger.error("Failed to attach to process")
+        logger.exception("Failed to attach to process")
         return
 
     # Detect all protections
@@ -1565,7 +1575,7 @@ def main() -> None:
         if bypasser.apply_all_bypasses():
             logger.info("All bypasses applied successfully")
         else:
-            logger.error("Failed to apply some bypasses")
+            logger.exception("Failed to apply some bypasses")
 
     # Keep script running
     if bypasser.script:

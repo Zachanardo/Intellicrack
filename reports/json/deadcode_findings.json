@@ -1,8 +1,8 @@
 {
   "tool": "deadcode",
-  "generated": "2025-12-20T00:14:00.688680",
-  "total_findings": 3093,
-  "total_files": 715,
+  "generated": "2025-12-20T02:59:39.043695",
+  "total_findings": 3090,
+  "total_files": 716,
   "files": [
     {
       "path": "intellicrack\\core\\protection_bypass\\tpm_bypass.py",
@@ -3375,166 +3375,166 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:725:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mHASP_TIME_ERROR\u001b[0m` is never used"
         },
         {
-          "line": 3097,
+          "line": 3098,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_extract_key_from_process_memory\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3097:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_extract_key_from_process_memory\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3098:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_extract_key_from_process_memory\u001b[0m` is never used"
         },
         {
-          "line": 3629,
+          "line": 3630,
           "column": null,
           "message": "0: \u001b[91mDC03\u001b[0m Class `\u001b[1mRuntimeKeyExtractor\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3629:0: \u001b[91mDC03\u001b[0m Class `\u001b[1mRuntimeKeyExtractor\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3630:0: \u001b[91mDC03\u001b[0m Class `\u001b[1mRuntimeKeyExtractor\u001b[0m` is never used"
         },
         {
-          "line": 3638,
+          "line": 3639,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mattach_and_extract\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3638:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mattach_and_extract\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3639:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mattach_and_extract\u001b[0m` is never used"
         },
         {
-          "line": 3824,
+          "line": 3825,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mscan_memory_for_keys\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3824:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mscan_memory_for_keys\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3825:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mscan_memory_for_keys\u001b[0m` is never used"
         },
         {
-          "line": 3925,
+          "line": 3926,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mhook_api_calls\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3925:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mhook_api_calls\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3926:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mhook_api_calls\u001b[0m` is never used"
         },
         {
-          "line": 4574,
+          "line": 4575,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_hook_inline_apis\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4574:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_hook_inline_apis\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4575:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_hook_inline_apis\u001b[0m` is never used"
         },
         {
-          "line": 4808,
+          "line": 4809,
           "column": null,
           "message": "0: \u001b[91mDC03\u001b[0m Class `\u001b[1mFridaKeyExtractor\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4808:0: \u001b[91mDC03\u001b[0m Class `\u001b[1mFridaKeyExtractor\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4809:0: \u001b[91mDC03\u001b[0m Class `\u001b[1mFridaKeyExtractor\u001b[0m` is never used"
         },
         {
-          "line": 4822,
+          "line": 4823,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1minject_extraction_script\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4822:4: \u001b[91mDC04\u001b[0m Method `\u001b[1minject_extraction_script\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4823:4: \u001b[91mDC04\u001b[0m Method `\u001b[1minject_extraction_script\u001b[0m` is never used"
         },
         {
-          "line": 4856,
+          "line": 4857,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mextract_flexlm_runtime\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4856:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mextract_flexlm_runtime\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4857:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mextract_flexlm_runtime\u001b[0m` is never used"
         },
         {
-          "line": 4895,
+          "line": 4896,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mextract_hasp_runtime\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4895:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mextract_hasp_runtime\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4896:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mextract_hasp_runtime\u001b[0m` is never used"
         },
         {
-          "line": 4934,
+          "line": 4935,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mmonitor_license_validation\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4934:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mmonitor_license_validation\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4935:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mmonitor_license_validation\u001b[0m` is never used"
         },
         {
-          "line": 4957,
+          "line": 4958,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mdetach_all\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4957:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mdetach_all\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4958:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mdetach_all\u001b[0m` is never used"
         },
         {
-          "line": 5380,
+          "line": 5381,
           "column": null,
           "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mtransparent_mode\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5380:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mtransparent_mode\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5381:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mtransparent_mode\u001b[0m` is never used"
         },
         {
-          "line": 5384,
+          "line": 5385,
           "column": null,
           "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1msession_states\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5384:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1msession_states\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5385:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1msession_states\u001b[0m` is never used"
         },
         {
-          "line": 6311,
+          "line": 6312,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_generate_kms_confirmation_id\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6311:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_generate_kms_confirmation_id\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6312:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_generate_kms_confirmation_id\u001b[0m` is never used"
         },
         {
-          "line": 6325,
+          "line": 6326,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_generate_kms_product_key_from_binary\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6325:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_generate_kms_product_key_from_binary\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6326:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_generate_kms_product_key_from_binary\u001b[0m` is never used"
         },
         {
-          "line": 6364,
+          "line": 6365,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mset_target_binary\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6364:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mset_target_binary\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6365:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mset_target_binary\u001b[0m` is never used"
         },
         {
-          "line": 6382,
+          "line": 6383,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1manalyze_binary_for_protection\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6382:4: \u001b[91mDC04\u001b[0m Method `\u001b[1manalyze_binary_for_protection\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6383:4: \u001b[91mDC04\u001b[0m Method `\u001b[1manalyze_binary_for_protection\u001b[0m` is never used"
         },
         {
-          "line": 6687,
+          "line": 6688,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mactivate_license\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6687:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mactivate_license\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6688:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mactivate_license\u001b[0m` is never used"
         },
         {
-          "line": 6691,
+          "line": 6692,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mget_license_status\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6691:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mget_license_status\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6692:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mget_license_status\u001b[0m` is never used"
         },
         {
-          "line": 6695,
+          "line": 6696,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mflexlm_checkout\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6695:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mflexlm_checkout\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6696:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mflexlm_checkout\u001b[0m` is never used"
         },
         {
-          "line": 6703,
+          "line": 6704,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mkms_activate\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6703:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mkms_activate\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6704:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mkms_activate\u001b[0m` is never used"
         },
         {
-          "line": 6707,
+          "line": 6708,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1madobe_validate\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6707:8: \u001b[91mDC02\u001b[0m Function `\u001b[1madobe_validate\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6708:8: \u001b[91mDC02\u001b[0m Function `\u001b[1madobe_validate\u001b[0m` is never used"
         },
         {
-          "line": 6725,
+          "line": 6726,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mhandle_proxy_intercept\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6725:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mhandle_proxy_intercept\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6726:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mhandle_proxy_intercept\u001b[0m` is never used"
         },
         {
-          "line": 6747,
+          "line": 6748,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mget_proxy_stats\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6747:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mget_proxy_stats\u001b[0m` is never used"
-        },
-        {
-          "line": 7093,
-          "column": null,
-          "message": "12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mcheck_hostname\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7093:12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mcheck_hostname\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6748:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mget_proxy_stats\u001b[0m` is never used"
         },
         {
           "line": 7094,
           "column": null,
+          "message": "12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mcheck_hostname\u001b[0m` is never used",
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7094:12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mcheck_hostname\u001b[0m` is never used"
+        },
+        {
+          "line": 7095,
+          "column": null,
           "message": "12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mverify_mode\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7094:12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mverify_mode\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7095:12: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mverify_mode\u001b[0m` is never used"
         }
       ]
     },
@@ -6837,34 +6837,34 @@
           "raw": "intellicrack\\ai\\lora_adapter_manager.py:113:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1madapter_configs\u001b[0m` is never used"
         },
         {
-          "line": 359,
+          "line": 361,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mprepare_model_for_qlora\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:359:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mprepare_model_for_qlora\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:361:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mprepare_model_for_qlora\u001b[0m` is never used"
         },
         {
-          "line": 395,
+          "line": 397,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mlist_adapters\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:395:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mlist_adapters\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:397:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mlist_adapters\u001b[0m` is never used"
         },
         {
-          "line": 470,
+          "line": 472,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcompare_adapter_configs\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:470:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcompare_adapter_configs\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:472:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcompare_adapter_configs\u001b[0m` is never used"
         },
         {
-          "line": 554,
+          "line": 556,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mdownload_adapter\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:554:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mdownload_adapter\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:556:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mdownload_adapter\u001b[0m` is never used"
         },
         {
-          "line": 646,
+          "line": 648,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mvalidate_adapter_config\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:646:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mvalidate_adapter_config\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:648:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mvalidate_adapter_config\u001b[0m` is never used"
         }
       ]
     },
@@ -8193,10 +8193,10 @@
           "raw": "intellicrack\\ai\\model_sharding.py:722:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_pipeline_parallel_groups\u001b[0m` is never used"
         },
         {
-          "line": 763,
+          "line": 765,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mprofile_model_distribution\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\model_sharding.py:763:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mprofile_model_distribution\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\model_sharding.py:765:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mprofile_model_distribution\u001b[0m` is never used"
         }
       ]
     },
@@ -11907,28 +11907,28 @@
           "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:123:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1menable_ssl_interception\u001b[0m` is never used"
         },
         {
-          "line": 653,
+          "line": 655,
           "column": null,
           "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mtoken_cache\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:653:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mtoken_cache\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:655:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mtoken_cache\u001b[0m` is never used"
         },
         {
-          "line": 1227,
+          "line": 1229,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_check_network_connectivity\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1227:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_check_network_connectivity\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1229:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_check_network_connectivity\u001b[0m` is never used"
         },
         {
-          "line": 1265,
+          "line": 1267,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_compress_cache_data\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1265:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_compress_cache_data\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1267:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_compress_cache_data\u001b[0m` is never used"
         },
         {
-          "line": 1275,
+          "line": 1277,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_analyze_response_content\u001b[0m` is never used",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1275:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_analyze_response_content\u001b[0m` is never used"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1277:4: \u001b[91mDC04\u001b[0m Method `\u001b[1m_analyze_response_content\u001b[0m` is never used"
         }
       ]
     },
@@ -12351,16 +12351,16 @@
           "raw": "intellicrack\\ai\\predictive_intelligence.py:379:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mmodel_parameters\u001b[0m` is never used"
         },
         {
-          "line": 1122,
+          "line": 1120,
           "column": null,
           "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mpattern_weights\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1122:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mpattern_weights\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1120:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mpattern_weights\u001b[0m` is never used"
         },
         {
-          "line": 1123,
+          "line": 1121,
           "column": null,
           "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mdiscovery_history\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1123:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mdiscovery_history\u001b[0m` is never used"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1121:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mdiscovery_history\u001b[0m` is never used"
         }
       ]
     },
@@ -13589,36 +13589,6 @@
       ]
     },
     {
-      "path": "intellicrack\\ai\\llm_config_as_code.py",
-      "count": 4,
-      "findings": [
-        {
-          "line": 735,
-          "column": null,
-          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mgenerate_config_files\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\llm_config_as_code.py:735:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mgenerate_config_files\u001b[0m` is never used"
-        },
-        {
-          "line": 788,
-          "column": null,
-          "message": "0: \u001b[91mDC02\u001b[0m Function `\u001b[1mload_config_file\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\llm_config_as_code.py:788:0: \u001b[91mDC02\u001b[0m Function `\u001b[1mload_config_file\u001b[0m` is never used"
-        },
-        {
-          "line": 809,
-          "column": null,
-          "message": "0: \u001b[91mDC02\u001b[0m Function `\u001b[1msave_current_config\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\llm_config_as_code.py:809:0: \u001b[91mDC02\u001b[0m Function `\u001b[1msave_current_config\u001b[0m` is never used"
-        },
-        {
-          "line": 822,
-          "column": null,
-          "message": "0: \u001b[91mDC02\u001b[0m Function `\u001b[1mcreate_config_template\u001b[0m` is never used",
-          "raw": "intellicrack\\ai\\llm_config_as_code.py:822:0: \u001b[91mDC02\u001b[0m Function `\u001b[1mcreate_config_template\u001b[0m` is never used"
-        }
-      ]
-    },
-    {
       "path": "intellicrack\\ai\\local_gguf_server.py",
       "count": 4,
       "findings": [
@@ -13915,36 +13885,6 @@
           "column": null,
           "message": "4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mFIRMWARE\u001b[0m` is never used",
           "raw": "intellicrack\\core\\shared\\result_types.py:49:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mFIRMWARE\u001b[0m` is never used"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack\\dashboard\\dashboard_manager.py",
-      "count": 4,
-      "findings": [
-        {
-          "line": 45,
-          "column": null,
-          "message": "4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mCROSS_TOOL\u001b[0m` is never used",
-          "raw": "intellicrack\\dashboard\\dashboard_manager.py:45:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mCROSS_TOOL\u001b[0m` is never used"
-        },
-        {
-          "line": 98,
-          "column": null,
-          "message": "4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mrefresh_rate\u001b[0m` is never used",
-          "raw": "intellicrack\\dashboard\\dashboard_manager.py:98:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mrefresh_rate\u001b[0m` is never used"
-        },
-        {
-          "line": 131,
-          "column": null,
-          "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mupdate_lock\u001b[0m` is never used",
-          "raw": "intellicrack\\dashboard\\dashboard_manager.py:131:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mupdate_lock\u001b[0m` is never used"
-        },
-        {
-          "line": 423,
-          "column": null,
-          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mexport_dashboard_state\u001b[0m` is never used",
-          "raw": "intellicrack\\dashboard\\dashboard_manager.py:423:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mexport_dashboard_state\u001b[0m` is never used"
         }
       ]
     },
@@ -15375,46 +15315,22 @@
       "count": 3,
       "findings": [
         {
-          "line": 745,
+          "line": 747,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mverify_license\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:745:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mverify_license\u001b[0m` is never used"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:747:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mverify_license\u001b[0m` is never used"
         },
         {
-          "line": 760,
+          "line": 762,
           "column": null,
           "message": "8: \u001b[91mDC02\u001b[0m Function `\u001b[1mactivate_license\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:760:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mactivate_license\u001b[0m` is never used"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:762:8: \u001b[91mDC02\u001b[0m Function `\u001b[1mactivate_license\u001b[0m` is never used"
         },
         {
-          "line": 930,
+          "line": 932,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mbypass_license_check\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:930:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mbypass_license_check\u001b[0m` is never used"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack\\core\\reporting\\report_generator.py",
-      "count": 3,
-      "findings": [
-        {
-          "line": 427,
-          "column": null,
-          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_temporary_report\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\reporting\\report_generator.py:427:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_temporary_report\u001b[0m` is never used"
-        },
-        {
-          "line": 469,
-          "column": null,
-          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_format_mime_types\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\reporting\\report_generator.py:469:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_format_mime_types\u001b[0m` is never used"
-        },
-        {
-          "line": 483,
-          "column": null,
-          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_template_from_string\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\reporting\\report_generator.py:483:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_template_from_string\u001b[0m` is never used"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:932:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mbypass_license_check\u001b[0m` is never used"
         }
       ]
     },
@@ -15463,6 +15379,30 @@
           "column": null,
           "message": "16: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mwMilliseconds\u001b[0m` is never used",
           "raw": "intellicrack\\core\\trial_reset_engine.py:1446:16: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mwMilliseconds\u001b[0m` is never used"
+        }
+      ]
+    },
+    {
+      "path": "intellicrack\\dashboard\\dashboard_manager.py",
+      "count": 3,
+      "findings": [
+        {
+          "line": 45,
+          "column": null,
+          "message": "4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mCROSS_TOOL\u001b[0m` is never used",
+          "raw": "intellicrack\\dashboard\\dashboard_manager.py:45:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mCROSS_TOOL\u001b[0m` is never used"
+        },
+        {
+          "line": 98,
+          "column": null,
+          "message": "4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mrefresh_rate\u001b[0m` is never used",
+          "raw": "intellicrack\\dashboard\\dashboard_manager.py:98:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mrefresh_rate\u001b[0m` is never used"
+        },
+        {
+          "line": 131,
+          "column": null,
+          "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mupdate_lock\u001b[0m` is never used",
+          "raw": "intellicrack\\dashboard\\dashboard_manager.py:131:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mupdate_lock\u001b[0m` is never used"
         }
       ]
     },
@@ -16685,6 +16625,24 @@
       ]
     },
     {
+      "path": "intellicrack\\ai\\llm_config_as_code.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 788,
+          "column": null,
+          "message": "0: \u001b[91mDC02\u001b[0m Function `\u001b[1mload_config_file\u001b[0m` is never used",
+          "raw": "intellicrack\\ai\\llm_config_as_code.py:788:0: \u001b[91mDC02\u001b[0m Function `\u001b[1mload_config_file\u001b[0m` is never used"
+        },
+        {
+          "line": 809,
+          "column": null,
+          "message": "0: \u001b[91mDC02\u001b[0m Function `\u001b[1msave_current_config\u001b[0m` is never used",
+          "raw": "intellicrack\\ai\\llm_config_as_code.py:809:0: \u001b[91mDC02\u001b[0m Function `\u001b[1msave_current_config\u001b[0m` is never used"
+        }
+      ]
+    },
+    {
       "path": "intellicrack\\ai\\model_discovery_service.py",
       "count": 2,
       "findings": [
@@ -17127,10 +17085,10 @@
           "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:119:4: \u001b[91mDC01\u001b[0m Variable `\u001b[1mADOBE_IMS\u001b[0m` is never used"
         },
         {
-          "line": 1095,
+          "line": 1097,
           "column": null,
           "message": "8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mmitm_proxy\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1095:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mmitm_proxy\u001b[0m` is never used"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1097:8: \u001b[91mDC05\u001b[0m Attribute `\u001b[1mmitm_proxy\u001b[0m` is never used"
         }
       ]
     },
@@ -18211,6 +18169,24 @@
           "column": null,
           "message": "12: \u001b[91mDC01\u001b[0m Variable `\u001b[1mbinary_info_received\u001b[0m` is never used",
           "raw": "tests\\core\\test_app_context_production.py:61:12: \u001b[91mDC01\u001b[0m Variable `\u001b[1mbinary_info_received\u001b[0m` is never used"
+        }
+      ]
+    },
+    {
+      "path": "tests\\core\\test_subscription_validation_bypass_production.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 22,
+          "column": null,
+          "message": "4: \u001b[91mDC07\u001b[0m Import `\u001b[1mJWTPayload\u001b[0m` is never used",
+          "raw": "tests\\core\\test_subscription_validation_bypass_production.py:22:4: \u001b[91mDC07\u001b[0m Import `\u001b[1mJWTPayload\u001b[0m` is never used"
+        },
+        {
+          "line": 35,
+          "column": null,
+          "message": "0: \u001b[91mDC01\u001b[0m Variable `\u001b[1mONE_YEAR\u001b[0m` is never used",
+          "raw": "tests\\core\\test_subscription_validation_bypass_production.py:35:0: \u001b[91mDC01\u001b[0m Variable `\u001b[1mONE_YEAR\u001b[0m` is never used"
         }
       ]
     },
@@ -19877,6 +19853,18 @@
       ]
     },
     {
+      "path": "intellicrack\\core\\reporting\\report_generator.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 483,
+          "column": null,
+          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_template_from_string\u001b[0m` is never used",
+          "raw": "intellicrack\\core\\reporting\\report_generator.py:483:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mcreate_template_from_string\u001b[0m` is never used"
+        }
+      ]
+    },
+    {
       "path": "intellicrack\\core\\security_enforcement.py",
       "count": 1,
       "findings": [
@@ -19909,18 +19897,6 @@
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_bypasses_by_difficulty\u001b[0m` is never used",
           "raw": "intellicrack\\core\\shared\\bypass_config.py:102:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_bypasses_by_difficulty\u001b[0m` is never used"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack\\core\\vulnerability_research\\base_analyzer.py",
-      "count": 1,
-      "findings": [
-        {
-          "line": 88,
-          "column": null,
-          "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mfinalize_analysis_result\u001b[0m` is never used",
-          "raw": "intellicrack\\core\\vulnerability_research\\base_analyzer.py:88:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mfinalize_analysis_result\u001b[0m` is never used"
         }
       ]
     },
@@ -19965,10 +19941,10 @@
       "count": 1,
       "findings": [
         {
-          "line": 78,
+          "line": 76,
           "column": null,
           "message": "0: \u001b[91mDC02\u001b[0m Function `\u001b[1m__getattr__\u001b[0m` is never used",
-          "raw": "intellicrack\\dashboard\\__init__.py:78:0: \u001b[91mDC02\u001b[0m Function `\u001b[1m__getattr__\u001b[0m` is never used"
+          "raw": "intellicrack\\dashboard\\__init__.py:76:0: \u001b[91mDC02\u001b[0m Function `\u001b[1m__getattr__\u001b[0m` is never used"
         }
       ]
     },
@@ -20025,10 +20001,10 @@
       "count": 1,
       "findings": [
         {
-          "line": 805,
+          "line": 808,
           "column": null,
           "message": "4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_modification_time\u001b[0m` is never used",
-          "raw": "intellicrack\\hexview\\file_handler.py:805:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_modification_time\u001b[0m` is never used"
+          "raw": "intellicrack\\hexview\\file_handler.py:808:4: \u001b[91mDC04\u001b[0m Method `\u001b[1mget_modification_time\u001b[0m` is never used"
         }
       ]
     },
@@ -20881,6 +20857,18 @@
           "column": null,
           "message": "0: \u001b[91mDC01\u001b[0m Variable `\u001b[1mpytestmark\u001b[0m` is never used",
           "raw": "tests\\core\\analysis\\test_symbolic_devirtualizer_production.py:34:0: \u001b[91mDC01\u001b[0m Variable `\u001b[1mpytestmark\u001b[0m` is never used"
+        }
+      ]
+    },
+    {
+      "path": "tests\\core\\anti_analysis\\test_advanced_debugger_bypass_production.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 30,
+          "column": null,
+          "message": "0: \u001b[91mDC01\u001b[0m Variable `\u001b[1mpytestmark\u001b[0m` is never used",
+          "raw": "tests\\core\\anti_analysis\\test_advanced_debugger_bypass_production.py:30:0: \u001b[91mDC01\u001b[0m Variable `\u001b[1mpytestmark\u001b[0m` is never used"
         }
       ]
     },

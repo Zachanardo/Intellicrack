@@ -126,7 +126,7 @@ class TerminalManager:
             tab_text = tabs.tabText(i)
             if "terminal" in tab_text.lower():
                 tabs.setCurrentIndex(i)
-                logger.info(f"Switched to Terminal tab (index {i})")
+                logger.info("Switched to Terminal tab (index %d)", i)
 
                 if self._terminal_widget:
                     _session_id, terminal = self._terminal_widget.get_active_session()
@@ -200,7 +200,7 @@ class TerminalManager:
 
         resolved_path = self._resolve_script_path(script_path)
 
-        logger.info(f"Executing script: {resolved_path}")
+        logger.info("Executing script: %s", resolved_path)
 
         if cwd is None:
             cwd = str(resolved_path.parent)
@@ -225,7 +225,7 @@ class TerminalManager:
             command = ["node", str(resolved_path)]
 
         else:
-            logger.warning(f"Unknown script type: {suffix}, attempting direct execution")
+            logger.warning("Unknown script type: %s, attempting direct execution", suffix)
             command = [str(resolved_path)]
 
         if auto_switch:
@@ -238,7 +238,7 @@ class TerminalManager:
             session_id, terminal = self._terminal_widget.get_active_session()
 
         if pid := terminal.start_process(command, cwd=cwd):
-            logger.info(f"Script started in terminal session {session_id} with PID {pid}")
+            logger.info("Script started in terminal session %s with PID %s", session_id, pid)
         else:
             logger.error("Failed to start script in terminal")
 
@@ -271,7 +271,7 @@ class TerminalManager:
             command = command.split()
 
         if capture_output:
-            logger.info(f"Executing command with capture: {' '.join(command)}")
+            logger.info("Executing command with capture: %s", " ".join(command))
 
             try:
                 # Validate that command and cwd contain only safe values to prevent command injection
@@ -285,11 +285,11 @@ class TerminalManager:
                 return (result.returncode, result.stdout, result.stderr)
 
             except subprocess.TimeoutExpired:
-                logger.error("Command execution timed out")
+                logger.exception("Command execution timed out")
                 return (1, "", "Command timed out")
 
             except Exception as e:
-                logger.error(f"Error executing command: {e}")
+                logger.exception("Error executing command: %s", e)
                 return (1, "", str(e))
 
         else:
@@ -298,7 +298,7 @@ class TerminalManager:
                 logger.error(error_msg)
                 raise RuntimeError(error_msg)
 
-            logger.info(f"Executing command in terminal: {' '.join(command)}")
+            logger.info("Executing command in terminal: %s", " ".join(command))
 
             if auto_switch:
                 self._switch_to_terminal_tab()
@@ -310,7 +310,7 @@ class TerminalManager:
                 session_id, terminal = self._terminal_widget.get_active_session()
 
             if pid := terminal.start_process(command, cwd=cwd):
-                logger.info(f"Command started in terminal session {session_id} with PID {pid}")
+                logger.info("Command started in terminal session %s with PID %s", session_id, pid)
             else:
                 logger.error("Failed to start command in terminal")
 
@@ -349,11 +349,11 @@ class TerminalManager:
                     formatted_message = f"[{level}] {message}\n"
                     terminal.write_output(formatted_message)
                 else:
-                    logger.debug(f"Terminal widget available but session not ready: {message}")
+                    logger.debug("Terminal widget available but session not ready: %s", message)
             except Exception as e:
-                logger.warning(f"Failed to log to terminal widget: {e}")
+                logger.warning("Failed to log to terminal widget: %s", e)
         else:
-            logger.debug(f"Terminal widget not available, logging to logger: {message}")
+            logger.debug("Terminal widget not available, logging to logger: %s", message)
 
 
 def get_terminal_manager() -> TerminalManager:

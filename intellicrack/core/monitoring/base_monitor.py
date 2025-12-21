@@ -207,7 +207,7 @@ class BaseMonitor(ABC):
                     return True
                 return False
             except Exception as e:
-                logger.error("[%s] Failed to start: %s", self.name, e, exc_info=True)
+                logger.exception("[%s] Failed to start: %s", self.name, e)
                 return False
 
     def stop(self) -> None:
@@ -219,7 +219,7 @@ class BaseMonitor(ABC):
             try:
                 self._stop_monitoring()
             except Exception as e:
-                logger.error("[%s] Error stopping: %s", self.name, e, exc_info=True)
+                logger.exception("[%s] Error stopping: %s", self.name, e)
             finally:
                 self._running = False
 
@@ -267,7 +267,7 @@ class BaseMonitor(ABC):
             try:
                 callback(event)
             except Exception as e:
-                logger.error("[%s] Error in callback: %s", self.name, e, exc_info=True)
+                logger.exception("[%s] Error in callback: %s", self.name, e)
 
     def _handle_error(self, error: Exception) -> bool:
         """Handle monitoring error.
@@ -280,7 +280,7 @@ class BaseMonitor(ABC):
 
         """
         self._error_count += 1
-        logger.error("[%s] Error (%s/%s): %s", self.name, self._error_count, self._max_errors, error, exc_info=True)
+        logger.exception("[%s] Error (%s/%s): %s", self.name, self._error_count, self._max_errors, error)
 
         if self._error_count >= self._max_errors:
             logger.warning("[%s] Max errors reached, stopping monitor", self.name)

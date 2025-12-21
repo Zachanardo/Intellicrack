@@ -365,7 +365,7 @@ class AuditLogger:
             try:
                 return hash_file.read_text().strip()
             except Exception as e:
-                logger.error("Failed to load hash chain: %s", e)
+                logger.exception("Failed to load hash chain: %s", e)
         return None
 
     def _save_hash(self, hash_value: str) -> None:
@@ -386,7 +386,7 @@ class AuditLogger:
             if platform.system() != "Windows":
                 Path(hash_file).chmod(0o600)
         except Exception as e:
-            logger.error("Failed to save hash chain: %s", e)
+            logger.exception("Failed to save hash chain: %s", e)
 
     def _get_current_log_file(self) -> Path:
         """Get the current log file path.
@@ -499,14 +499,14 @@ class AuditLogger:
                 if event.severity == AuditSeverity.CRITICAL:
                     logger.critical(log_msg)
                 elif event.severity == AuditSeverity.HIGH:
-                    logger.error(log_msg)
+                    logger.exception(log_msg)
                 elif event.severity == AuditSeverity.MEDIUM:
                     logger.warning(log_msg)
                 else:
                     logger.info(log_msg)
 
             except Exception as e:
-                logger.error("Failed to write audit log: %s", e)
+                logger.exception("Failed to write audit log: %s", e)
 
     def log_exploit_attempt(
         self,
@@ -746,7 +746,7 @@ class AuditLogger:
                         if previous_hash:
                             stored_prev = event_data.get("details", {}).get("previous_hash")
                             if stored_prev != previous_hash:
-                                logger.error("Hash chain broken at line %d", line_num)
+                                logger.exception("Hash chain broken at line %d", line_num)
                                 return False
 
                         if stored_hash := event_data.get("details", {}).get("hash"):
@@ -762,23 +762,23 @@ class AuditLogger:
                             ).hexdigest()
 
                             if calculated_hash != stored_hash:
-                                logger.error("Hash mismatch at line %d", line_num)
+                                logger.exception("Hash mismatch at line %d", line_num)
                                 return False
 
                             previous_hash = stored_hash
 
                     except json.JSONDecodeError:
-                        logger.error("Invalid JSON at line %d", line_num)
+                        logger.exception("Invalid JSON at line %d", line_num)
                         return False
                     except Exception as e:
-                        logger.error("Error verifying line %d: %s", line_num, e)
+                        logger.exception("Error verifying line %d: %s", line_num, e)
                         return False
 
             logger.info("Log file %s integrity verified", log_file)
             return True
 
         except Exception as e:
-            logger.error("Failed to verify log integrity: %s", e)
+            logger.exception("Failed to verify log integrity: %s", e)
             return False
 
     def search_events(
@@ -860,7 +860,7 @@ class AuditLogger:
                             logger.debug("Error parsing log entry: %s", e)
 
             except Exception as e:
-                logger.error("Error reading log file %s: %s", log_file, e)
+                logger.exception("Error reading log file %s: %s", log_file, e)
 
         return results
 
@@ -1239,7 +1239,7 @@ class TelemetryCollector:
                 self._collect_and_export()
                 time.sleep(self.export_interval)
             except Exception as e:
-                logger.error("Telemetry export error: %s", e)
+                logger.exception("Telemetry export error: %s", e)
                 time.sleep(60)  # Wait before retrying
 
     def _collect_and_export(self) -> None:
@@ -1287,7 +1287,7 @@ class TelemetryCollector:
             self._log_telemetry_summary(metrics)
 
         except Exception as e:
-            logger.error("Failed to collect telemetry: %s", e)
+            logger.exception("Failed to collect telemetry: %s", e)
 
     def _log_telemetry_summary(self, metrics: dict[str, Any]) -> None:
         """Log telemetry summary.
@@ -1385,7 +1385,7 @@ class TelemetryCollector:
             logger.info("Telemetry data exported to %s", filepath)
 
         except Exception as e:
-            logger.error("Failed to export telemetry: %s", e)
+            logger.exception("Failed to export telemetry: %s", e)
 
 
 class ContextualLogger:
@@ -1477,7 +1477,7 @@ class ContextualLogger:
             **kwargs: Additional context key-value pairs.
 
         """
-        self.logger.error(self._format_message(message), extra=kwargs)
+        self.logger.exception(self._format_message(message), extra=kwargs)
 
         # Also audit log errors
         if self.audit_logger:
@@ -1587,7 +1587,7 @@ def setup_comprehensive_logging() -> None:
         logger.info("Comprehensive logging and monitoring system initialized")
 
     except Exception as e:
-        logger.error("Failed to setup comprehensive logging: %s", e)
+        logger.exception("Failed to setup comprehensive logging: %s", e)
 
 
 # Note: Call setup_comprehensive_logging() explicitly from main application

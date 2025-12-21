@@ -27,7 +27,7 @@ try:
 
     logger.debug("ScriptExecutionManager imported successfully")
 except ImportError as e:
-    logger.error(f"Execution manager import failed: {e}")
+    logger.exception("Execution manager import failed: %s", e)
 
 __all__ = ["ScriptExecutionManager"]
 

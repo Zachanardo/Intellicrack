@@ -105,7 +105,7 @@ class EnvFileManager:
                         logger.debug("Skipping invalid line %s in .env file: %s", line_num, line)
 
         except Exception as e:
-            logger.error("Error reading .env file: %s", e, exc_info=True)
+            logger.exception("Error reading .env file: %s", e)
 
         return env_vars
 
@@ -173,7 +173,7 @@ class EnvFileManager:
                 raise
 
         except Exception as e:
-            logger.error("Error writing .env file: %s", e, exc_info=True)
+            logger.exception("Error writing .env file: %s", e)
             # Restore from backup
             if backup_path and backup_path.exists():
                 shutil.copy2(backup_path, self.env_path)

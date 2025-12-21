@@ -39,6 +39,8 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 logger = logging.getLogger("IntellicrackLogger.CLI")
 
+HIGH_CONFIDENCE_THRESHOLD: float = 0.85
+MODERATE_CONFIDENCE_THRESHOLD: float = 0.65
 
 """
 Intellicrack Command Line Interface
@@ -78,7 +80,7 @@ try:
 
     Architecture = _Architecture
 except ImportError as e:
-    logger.debug("Architecture import not available: %s", e, exc_info=True)
+    logger.debug("Architecture import not available: %s", e)
 
 try:
     from intellicrack.core.exploitation.bypass_engine import BypassEngine
@@ -87,7 +89,7 @@ try:
     PayloadTemplates = None
     PayloadType = None
 except ImportError as e:
-    logger.debug("BypassEngine import not available: %s", e, exc_info=True)
+    logger.debug("BypassEngine import not available: %s", e)
 
 except ImportError as e:
     logger.exception("Import error in cli: %s", e)
@@ -190,15 +192,26 @@ def scan(binary_path: str, *, vulns: bool, output: str | None, verbose: bool) ->
     """Scan binary for vulnerabilities and security issues."""
     try:
         click.echo(f"Scanning binary: {binary_path}")
+        scan_results: dict[str, Any] = {
+            "binary_path": binary_path,
+            "scan_type": "vulnerability" if vulns else "basic_security",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+        }
 
         if vulns:
-            _perform_vulnerability_scan_cli(binary_path, verbose)
+            vuln_results = _perform_vulnerability_scan_cli(binary_path, verbose)
+            scan_results["vulnerabilities"] = vuln_results.get("vulnerabilities", [])
+            scan_results["vulnerability_count"] = len(scan_results["vulnerabilities"])
+            scan_results["severity_summary"] = _compute_severity_summary(scan_results["vulnerabilities"])
         else:
-            _perform_basic_security_scan_cli(binary_path, verbose)
+            security_results = _perform_basic_security_scan_cli(binary_path, verbose)
+            scan_results["security_analysis"] = security_results
+
+        scan_results["success"] = True
 
         if output:
             with open(output, "w", encoding="utf-8") as f:
-                json.dump({"binary_path": binary_path, "vulns": vulns, "verbose": verbose}, f, indent=2)  # Placeholder for actual result
+                json.dump(scan_results, f, indent=2, default=str)
             click.echo(f"\nResults saved to: {output}")
 
     except Exception as e:
@@ -207,8 +220,27 @@ def scan(binary_path: str, *, vulns: bool, output: str | None, verbose: bool) ->
         sys.exit(1)
 
 
-def _perform_vulnerability_scan_cli(binary_path: str, verbose: bool) -> None:
-    """Helper to perform and display vulnerability scan results."""
+def _compute_severity_summary(vulnerabilities: list[dict[str, Any]]) -> dict[str, int]:
+    """Compute severity counts from vulnerability list."""
+    return {
+        "critical": sum(1 for v in vulnerabilities if v.get("severity") == "critical"),
+        "high": sum(1 for v in vulnerabilities if v.get("severity") == "high"),
+        "medium": sum(1 for v in vulnerabilities if v.get("severity") == "medium"),
+        "low": sum(1 for v in vulnerabilities if v.get("severity") == "low"),
+        "info": sum(1 for v in vulnerabilities if v.get("severity") == "info"),
+    }
+
+
+def _perform_vulnerability_scan_cli(binary_path: str, verbose: bool) -> dict[str, Any]:
+    """Perform and display vulnerability scan results.
+
+    Args:
+        binary_path: Path to binary file to scan.
+        verbose: Whether to show detailed output.
+
+    Returns:
+        Dictionary containing scan results with vulnerabilities list.
+    """
     click.echo("Performing vulnerability scan...")
     from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
@@ -221,6 +253,8 @@ def _perform_vulnerability_scan_cli(binary_path: str, verbose: bool) -> None:
         _display_vulnerability_summary_cli(vulnerabilities, verbose)
     else:
         click.echo(f"Scan failed: {result.get('error', 'Unknown error')}")
+
+    return result
 
 
 def _display_vulnerability_summary_cli(vulnerabilities: list[dict[str, Any]], verbose: bool) -> None:
@@ -253,8 +287,16 @@ def _display_vulnerability_summary_cli(vulnerabilities: list[dict[str, Any]], ve
                 click.echo(f"  - {vuln.get('type', 'Unknown')}: {vuln.get('description', '')}")
 
 
-def _perform_basic_security_scan_cli(binary_path: str, verbose: bool) -> None:
-    """Helper to perform and display basic security scan results."""
+def _perform_basic_security_scan_cli(binary_path: str, verbose: bool) -> dict[str, Any]:
+    """Perform and display basic security scan results.
+
+    Args:
+        binary_path: Path to binary file to scan.
+        verbose: Whether to show detailed output.
+
+    Returns:
+        Dictionary containing security analysis results.
+    """
     click.echo("Performing basic security scan...")
     from intellicrack.utils.analysis.binary_analysis import analyze_binary
 
@@ -268,6 +310,8 @@ def _perform_basic_security_scan_cli(binary_path: str, verbose: bool) -> None:
         for protection, enabled in result["protections"].items():
             status = "OK" if enabled else "FAIL"
             click.echo(f"  {status} {protection}")
+
+    return result
 
 
 @_typed_decorator
@@ -292,11 +336,9 @@ def strings(binary_path: str, min_length: int, output: str | None, filter_patter
 
         cli_analyzer = AnalysisCLI()
 
-        extracted_strings = cli_analyzer._extract_strings(binary_path, min_length=min_length)
-        STRINGS_DISPLAY_LIMIT = 20
-        HIGH_CONFIDENCE_THRESHOLD = 0.8
-        MODERATE_CONFIDENCE_THRESHOLD = 0.5
-        if extracted_strings:
+        if extracted_strings := cli_analyzer._extract_strings(
+            binary_path, min_length=min_length
+        ):
             # Apply filter if provided
             if filter_pattern:
                 import re
@@ -311,6 +353,7 @@ def strings(binary_path: str, min_length: int, output: str | None, filter_patter
                     f.writelines(string + "\n" for string in extracted_strings)
                 click.echo(f"Strings saved to: {output}")
             else:
+                STRINGS_DISPLAY_LIMIT = 20
                 # Display first {STRINGS_DISPLAY_LIMIT} strings to console
                 for string in extracted_strings[:STRINGS_DISPLAY_LIMIT]:
                     click.echo(f"  {string}")
@@ -714,8 +757,7 @@ def _handle_symbolic_execution(binary_path: str, *, symbolic_execution: bool) ->
         from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
 
         engine = SymbolicExecutionEngine(binary_path)
-        vulnerabilities = engine.discover_vulnerabilities()
-        if vulnerabilities:
+        if vulnerabilities := engine.discover_vulnerabilities():
             click.echo(f"{execution_type.capitalize()} execution completed - found {len(vulnerabilities)} issues")
         else:
             click.echo(f"{execution_type.capitalize()} execution completed - no issues found")
@@ -1112,7 +1154,7 @@ def patch(
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("Patching failed: %s", e, exc_info=True)
+        logger.exception("Patching failed: %s", e)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -1648,7 +1690,7 @@ def ai_generate(
                     ConnectionError,
                     TimeoutError,
                 ) as e:
-                    logger.error("Error in cli: %s", e, exc_info=True)
+                    logger.exception("Error in cli: %s", e)
                     click.echo(f"ERROR Failed to save script: {e}", err=True)
 
         else:
@@ -1667,7 +1709,7 @@ def ai_generate(
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("AI script generation failed: %s", e, exc_info=True)
+        logger.exception("AI script generation failed: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -1762,7 +1804,7 @@ def test(script_path: str, binary: str | None, environment: str, timeout: int, v
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("Script testing failed: %s", e, exc_info=True)
+        logger.exception("Script testing failed: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -1909,7 +1951,7 @@ def ai_analyze(binary_path: str, output: str | None, output_format: str, deep: b
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("AI analysis failed: %s", e, exc_info=True)
+        logger.exception("AI analysis failed: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -1994,7 +2036,7 @@ def autonomous(
                         ConnectionError,
                         TimeoutError,
                     ) as e:
-                        logger.error("Error in cli: %s", e, exc_info=True)
+                        logger.exception("Error in cli: %s", e)
                         click.echo(f"      Save failed: {e}")
 
             # Show analysis if verbose
@@ -2021,7 +2063,7 @@ def autonomous(
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("Autonomous workflow failed: %s", e, exc_info=True)
+        logger.exception("Autonomous workflow failed: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -2054,18 +2096,17 @@ def save_session(binary_path: str, output: str | None, include_ui: bool) -> None
                 import intellicrack.ui.main_app as main_app_module
 
                 get_history_func = getattr(main_app_module, "get_conversation_history", None)
-                if get_history_func is not None:
-                    if ui_history := get_history_func():
-                        save_options["ui_conversation_history"] = ui_history
-                        click.echo(f"  Added {len(ui_history)} UI conversation entries")
-                    else:
-                        click.echo("  No UI conversation history available")
-                else:
+                if get_history_func is None:
                     click.echo("  UI conversation history function not available")
+                elif ui_history := get_history_func():
+                    save_options["ui_conversation_history"] = ui_history
+                    click.echo(f"  Added {len(ui_history)} UI conversation entries")
+                else:
+                    click.echo("  No UI conversation history available")
             except ImportError:
                 click.echo("  UI module not available, skipping UI history")
             except Exception as e:
-                logger.error("Could not retrieve UI history: %s", e, exc_info=True)
+                logger.exception("Could not retrieve UI history: %s", e)
                 click.echo(f"  Warning: Could not retrieve UI history: {e}")
 
         # Save session data with options
@@ -2108,7 +2149,7 @@ def save_session(binary_path: str, output: str | None, include_ui: bool) -> None
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("Failed to save session: %s", e, exc_info=True)
+        logger.exception("Failed to save session: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -2150,7 +2191,7 @@ def reset(confirm: bool) -> None:
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("Failed to reset agent: %s", e, exc_info=True)
+        logger.exception("Failed to reset agent: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -2246,7 +2287,7 @@ def task(
         ConnectionError,
         TimeoutError,
     ) as e:
-        logger.error("Task execution failed: %s", e, exc_info=True)
+        logger.exception("Task execution failed: %s", e)
         click.echo(f"ERROR Error: {e}", err=True)
         sys.exit(1)
 
@@ -2309,7 +2350,7 @@ def frida_list(category: str | None, verbose: bool) -> None:
         click.echo(" Use 'intellicrack frida run <script_name> <binary>' to execute\n")
 
     except Exception as e:
-        logger.error("Failed to list Frida scripts: %s", e, exc_info=True)
+        logger.exception("Failed to list Frida scripts: %s", e)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -2350,7 +2391,7 @@ def frida_info(script_name: str) -> None:
         click.echo()
 
     except Exception as e:
-        logger.error("Failed to get script info: %s", e, exc_info=True)
+        logger.exception("Failed to get script info: %s", e)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -2400,7 +2441,7 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
             try:
                 parameters = json.loads(params)
             except json.JSONDecodeError as e:
-                logger.error("Invalid JSON parameters: %s", e, exc_info=True)
+                logger.exception("Invalid JSON parameters: %s", e)
                 click.echo(f"FAIL Invalid JSON parameters: {e}")
                 sys.exit(1)
 
@@ -2434,8 +2475,7 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
                 if len(result.messages) > 10:
                     click.echo(f"  ... and {len(result.messages) - 10} more messages")
 
-            hooks_triggered = result.data.get("hooks_triggered", [])
-            if hooks_triggered:
+            if hooks_triggered := result.data.get("hooks_triggered", []):
                 click.echo(f"\n🎣 Hooks triggered: {hooks_triggered}")
 
             if result.data:
@@ -2470,7 +2510,7 @@ def frida_run(script_name: str, binary_path: str, mode: str, params: str | None,
             sys.exit(1)
 
     except Exception as e:
-        logger.error("Failed to execute Frida script: %s", e, exc_info=True)
+        logger.exception("Failed to execute Frida script: %s", e)
         click.echo(f"Error: {e}", err=True)
         sys.exit(1)
 
@@ -2547,11 +2587,11 @@ def cert_detect(target: str, report: str | None, verbose: bool, min_confidence: 
             click.echo(f" Report saved to: {report}")
 
     except FileNotFoundError as e:
-        logger.error("Target not found: %s", e, exc_info=True)
+        logger.exception("Target not found: %s", e)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except Exception as e:
-        logger.error("Certificate detection failed: %s", e, exc_info=True)
+        logger.exception("Certificate detection failed: %s", e)
         click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
@@ -2667,16 +2707,16 @@ def cert_bypass(target: str, method: str, verify: bool, report: str | None, forc
             click.echo(f" Report saved to: {report}")
 
     except FileNotFoundError as e:
-        logger.error("Target not found: %s", e, exc_info=True)
+        logger.exception("Target not found: %s", e)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except PermissionError as e:
-        logger.error("Permission denied: %s", e, exc_info=True)
+        logger.exception("Permission denied: %s", e)
         click.echo(f"FAIL Error: Permission denied - {e}", err=True)
         click.echo("   Try running with administrator/root privileges", err=True)
         sys.exit(1)
     except Exception as e:
-        logger.error("Certificate bypass failed: %s", e, exc_info=True)
+        logger.exception("Certificate bypass failed: %s", e)
         click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
@@ -2762,7 +2802,7 @@ def cert_test(target: str, url: str, timeout: int) -> None:
                     click.echo("   Bypass may be partially effective")
 
         except urllib.error.URLError as e:
-            logger.error("Certificate test URL error: %s", e, exc_info=True)
+            logger.exception("Certificate test URL error: %s", e)
             click.echo()
             click.echo("FAIL Test FAILED")
             click.echo(f"   Connection error: {e.reason}")
@@ -2774,11 +2814,11 @@ def cert_test(target: str, url: str, timeout: int) -> None:
             sys.exit(1)
 
     except FileNotFoundError as e:
-        logger.error("Target not found: %s", e, exc_info=True)
+        logger.exception("Target not found: %s", e)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except Exception as e:
-        logger.error("Certificate test failed: %s", e, exc_info=True)
+        logger.exception("Certificate test failed: %s", e)
         click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
@@ -2890,7 +2930,7 @@ def cert_rollback(target: str, force: bool) -> None:
         except ImportError:
             click.echo("  WARNING  psutil not available, skipping process check")
         except Exception as hook_error:
-            logger.warning("Failed to detach hooks: %s", hook_error, exc_info=True)
+            logger.warning("Failed to detach hooks: %s", hook_error)
             click.echo(f"  WARNING  Hook detachment failed: {hook_error}")
 
         click.echo()
@@ -2907,16 +2947,16 @@ def cert_rollback(target: str, force: bool) -> None:
             sys.exit(1)
 
     except FileNotFoundError as e:
-        logger.error("Target not found: %s", e, exc_info=True)
+        logger.exception("Target not found: %s", e)
         click.echo(f"FAIL Error: Target not found - {e}", err=True)
         sys.exit(1)
     except PermissionError as e:
-        logger.error("Permission denied: %s", e, exc_info=True)
+        logger.exception("Permission denied: %s", e)
         click.echo(f"FAIL Error: Permission denied - {e}", err=True)
         click.echo("   Try running with administrator/root privileges", err=True)
         sys.exit(1)
     except Exception as e:
-        logger.error("Certificate rollback failed: %s", e, exc_info=True)
+        logger.exception("Certificate rollback failed: %s", e)
         click.echo(f"FAIL Error: {e}", err=True)
         sys.exit(1)
 
@@ -2945,7 +2985,7 @@ def main() -> int:
                 click.echo("GUI main function not available", err=True)
                 return 1
         except ImportError as e:
-            logger.error("Failed to import GUI module: %s", e, exc_info=True)
+            logger.exception("Failed to import GUI module: %s", e)
             click.echo(f"Failed to import GUI module: {e}", err=True)
             return 1
         return 0

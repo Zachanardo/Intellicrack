@@ -615,14 +615,18 @@ class GPUStatusWidget(QWidget):
                 "NVENC: Yes",
             ))
         elif gpu["vendor"] == "Intel":
-            caps_text.append("Intel Xe Architecture")
-            caps_text.append("AV1 Encoding: Yes")
-            caps_text.append("XeSS Support: Yes")
-            caps_text.append("Ray Tracing: Hardware Accelerated")
+            caps_text.extend(
+                (
+                    "Intel Xe Architecture",
+                    "AV1 Encoding: Yes",
+                    "XeSS Support: Yes",
+                    "Ray Tracing: Hardware Accelerated",
+                )
+            )
         elif gpu["vendor"] == "AMD":
-            caps_text.append("ROCm Support: Detecting...")
-            caps_text.append("Ray Accelerators: Detecting...")
-
+            caps_text.extend(
+                ("ROCm Support: Detecting...", "Ray Accelerators: Detecting...")
+            )
         caps_text.extend((
             "\nCompute Units: Detecting...",
             "Max Clock: Detecting...",

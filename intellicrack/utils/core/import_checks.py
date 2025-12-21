@@ -34,7 +34,7 @@ try:
 
     PEFILE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     PEFILE_AVAILABLE = False
     pefile = None
 
@@ -43,7 +43,7 @@ try:
 
     LIEF_AVAILABLE = HAS_LIEF
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     LIEF_AVAILABLE = False
     HAS_LIEF = False
     lief = None
@@ -53,7 +53,7 @@ try:
 
     CAPSTONE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     CAPSTONE_AVAILABLE = False
     capstone = None
 
@@ -62,7 +62,7 @@ try:
 
     PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     PYELFTOOLS_AVAILABLE = False
     HAS_PYELFTOOLS = False
     ELFFile = None
@@ -74,7 +74,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     PSUTIL_AVAILABLE = False
     psutil = None
 
@@ -85,7 +85,7 @@ try:
     HAS_FRIDA = True
     FRIDA_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     FRIDA_AVAILABLE = False
     HAS_FRIDA = False
     frida = None
@@ -96,7 +96,7 @@ try:
 
     MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
     plt = None
@@ -107,7 +107,7 @@ try:
 
     PDFKIT_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     PDFKIT_AVAILABLE = False
     pdfkit = None
 
@@ -128,7 +128,7 @@ try:
     tf.config.set_visible_devices([], "GPU")
     TENSORFLOW_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     TENSORFLOW_AVAILABLE = False
     tf = None
 
@@ -139,7 +139,7 @@ try:
     _ = PyQt6.__name__  # Verify PyQt6 is properly imported and available
     HAS_PYQT = True
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     HAS_PYQT = False
 
 # Numerical computing
@@ -149,7 +149,7 @@ try:
         numpy as np,
     )
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     HAS_NUMPY = False
     np = None
 
@@ -163,7 +163,7 @@ try:
         WINREG_AVAILABLE = False
         winreg = None
 except ImportError as e:
-    logger.error("Import error in import_checks: %s", e)
+    logger.exception("Import error in import_checks: %s", e)
     WINREG_AVAILABLE = False
     winreg = None
 

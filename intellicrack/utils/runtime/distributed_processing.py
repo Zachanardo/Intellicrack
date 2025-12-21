@@ -75,7 +75,7 @@ try:
         numpy as np,
     )
 except ImportError as e:
-    logger.error("Import error in distributed_processing: %s", e)
+    logger.exception("Import error in distributed_processing: %s", e)
     NUMPY_AVAILABLE = False
     np = None
 
@@ -85,7 +85,7 @@ _get_gpu_info: Callable[[], dict[str, Any]] | None = None
 _to_device: Callable[[Any], Any] | None = None
 _gpu_autoloader: Any = None
 
-try:
+with contextlib.suppress(ImportError):
     from ..gpu_autoloader import (
         get_device as _imported_get_device,
         get_gpu_info as _imported_get_gpu_info,
@@ -98,8 +98,6 @@ try:
     _get_gpu_info = cast("Callable[[], dict[str, Any]]", _imported_get_gpu_info)
     _to_device = cast("Callable[[Any], Any]", _imported_to_device)
     _gpu_autoloader = _imported_gpu_autoloader
-except ImportError:
-    pass
 
 
 def _get_torch_memory_allocated() -> int:
@@ -207,7 +205,7 @@ def process_binary_chunks(
                     chunk_results_list.append(chunk_result)
                     results["chunks_processed"] = cast("int", results["chunks_processed"]) + 1
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error processing chunk %s: %s", chunk["index"], e, exc_info=True)
+                    logger.exception("Error processing chunk %s: %s", chunk["index"], e)
                     chunk_results_list.append(
                         {
                             "chunk": chunk,
@@ -234,7 +232,7 @@ def process_binary_chunks(
         results["aggregated"] = _aggregate_chunk_results(chunk_results_list)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary chunk processing: %s", e)
+        logger.exception("Error in binary chunk processing: %s", e)
         results["error"] = str(e)
 
         _torch_empty_cache()
@@ -272,7 +270,7 @@ def process_chunk(
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in distributed_processing: %s", e)
+        logger.exception("Error in distributed_processing: %s", e)
         return {
             "chunk": chunk_info,
             "error": str(e),
@@ -392,7 +390,7 @@ def run_distributed_analysis(
                 try:
                     analyses_dict[task] = future.result()
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error in %s analysis: %s", task, e)
+                    logger.exception("Error in %s analysis: %s", task, e)
                     analyses_dict[task] = {"error": str(e)}
 
         results["end_time"] = time.time()
@@ -401,7 +399,7 @@ def run_distributed_analysis(
         _torch_empty_cache()
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in distributed analysis: %s", e)
+        logger.exception("Error in distributed analysis: %s", e)
         results["error"] = str(e)
 
         _torch_empty_cache()
@@ -463,7 +461,7 @@ def run_distributed_entropy_analysis(
                 "average_entropy": sum(entropies) / len(entropies),
                 "max_entropy": max(entropies),
                 "min_entropy": min(entropies),
-                "high_entropy_chunks": sum(bool(e > 7.0) for e in entropies),
+                "high_entropy_chunks": sum(e > 7.0 for e in entropies),
             }
 
             if results["statistics"]["average_entropy"] > 7.0:
@@ -617,7 +615,7 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
             info["format"] = "Unknown"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error extracting binary info: %s", e)
+        logger.exception("Error extracting binary info: %s", e)
         info["error"] = str(e)
 
     return info
@@ -652,7 +650,7 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
         features["strings_count"] = strings_result.get("total_strings", 0)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error extracting features: %s", e)
+        logger.exception("Error extracting features: %s", e)
         features["error"] = str(e)
 
     return features
@@ -703,7 +701,7 @@ def run_gpu_accelerator(
             results["error"] = f"Unsupported GPU task type: {task_type}"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("GPU acceleration error: %s", e)
+        logger.exception("GPU acceleration error: %s", e)
         results["error"] = str(e)
         results["cpu_result"] = _run_cpu_fallback(task_type, data)
 
@@ -755,7 +753,7 @@ def run_incremental_analysis(
                 cached_data = json.load(f)
 
             if cached_data.get("file_size") == os.path.getsize(binary_path):
-                cached_results_dict.update(cached_data.get("analyses", {}))
+                cached_results_dict |= cached_data.get("analyses", {})
                 results["cache_hits"] = len(cached_results_dict)
 
         except (OSError, ValueError, RuntimeError) as e:
@@ -776,9 +774,9 @@ def run_incremental_analysis(
             analysis_type="comprehensive",
         )
 
-        new_results_dict.update(new_analyses.get("analyses", {}))
+        new_results_dict |= new_analyses.get("analyses", {})
 
-        all_results: dict[str, Any] = {**cached_results_dict, **new_results_dict}
+        all_results: dict[str, Any] = cached_results_dict | new_results_dict
 
         cache_data = {
             "file_hash": file_hash,
@@ -791,9 +789,9 @@ def run_incremental_analysis(
             with open(cache_file, "w", encoding="utf-8") as f:
                 json.dump(cache_data, f, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error saving cache: %s", e)
+            logger.exception("Error saving cache: %s", e)
 
-    results["all_results"] = {**cached_results_dict, **new_results_dict}
+    results["all_results"] = cached_results_dict | new_results_dict
 
     return results
 
@@ -880,11 +878,11 @@ def run_pdf_report_generator(
         results["message"] = f"Report generated: {output_path}"
 
     except ImportError as e:
-        logger.error("Import error in distributed_processing: %s", e)
+        logger.exception("Import error in distributed_processing: %s", e)
         results["status"] = "error"
         results["message"] = "PDF generation not available"
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error generating PDF report: %s", e)
+        logger.exception("Error generating PDF report: %s", e)
         results["status"] = "error"
         results["message"] = str(e)
 
@@ -905,7 +903,7 @@ def _default_chunk_processor(data: bytes, chunk_info: dict[str, Any]) -> dict[st
     return {
         "size": len(data),
         "offset": chunk_info["offset"],
-        "non_zero_bytes": sum(bool(b != 0) for b in data),
+        "non_zero_bytes": sum(b != 0 for b in data),
     }
 
 
@@ -1071,7 +1069,7 @@ def _distributed_hash_calculation(
                 hashes_dict[algo] = hash_value
             except (OSError, ValueError, RuntimeError) as e:
                 algo = future_to_algo[future]
-                logger.error("Error calculating %s: %s", algo, e)
+                logger.exception("Error calculating %s: %s", algo, e)
 
     return results
 
@@ -1238,7 +1236,7 @@ def _gpu_pattern_matching(
             backend = "cpu"
 
     except ImportError as e:
-        logger.error("Import error in distributed_processing: %s", e)
+        logger.exception("Import error in distributed_processing: %s", e)
         patterns_list: list[bytes] = config.get("patterns", [])
         search_bytes: bytes = data.get("data", b"")
 
@@ -1288,7 +1286,7 @@ def _gpu_crypto_operations(
             result_str = hashlib.sha256(input_data).hexdigest()
         backend = "cuda"
     except ImportError as e:
-        logger.error("Import error in distributed_processing: %s", e)
+        logger.exception("Import error in distributed_processing: %s", e)
         result_str = hashlib.sha256(input_data).hexdigest()
         backend = "cpu"
 
@@ -1525,7 +1523,7 @@ def run_dask_distributed_analysis(
         results["success"] = True
 
     except Exception as e:
-        logger.error("Dask distributed analysis error: %s", e, exc_info=True)
+        logger.exception("Dask distributed analysis error: %s", e)
         results["error"] = str(e)
         results["success"] = False
 
@@ -1634,7 +1632,7 @@ def run_celery_distributed_analysis(
             results["patterns_found"] = list(set(all_patterns))
 
     except Exception as e:
-        logger.error("Celery distributed analysis error: %s", e, exc_info=True)
+        logger.exception("Celery distributed analysis error: %s", e)
         results["error"] = str(e)
         results["success"] = False
         results["suggestion"] = "Ensure Celery broker (Redis/RabbitMQ) is running"
@@ -1708,7 +1706,7 @@ def run_joblib_parallel_analysis(
 
         results["analyses"] = analysis_results
         results["successful_analyses"] = sum(bool(r["success"]) for r in analysis_results)
-        results["failed_analyses"] = sum(bool(not r["success"]) for r in analysis_results)
+        results["failed_analyses"] = sum(not r["success"] for r in analysis_results)
 
         aggregated: dict[str, Any] = {}
         for result_item in analysis_results:
@@ -1721,7 +1719,7 @@ def run_joblib_parallel_analysis(
         results["success"] = True
 
     except Exception as e:
-        logger.error("Joblib parallel analysis error: %s", e, exc_info=True)
+        logger.exception("Joblib parallel analysis error: %s", e)
         results["error"] = str(e)
         results["success"] = False
 
@@ -1834,7 +1832,7 @@ def run_joblib_mmap_analysis(
         results["success"] = True
 
     except Exception as e:
-        logger.error("Joblib mmap analysis error: %s", e, exc_info=True)
+        logger.exception("Joblib mmap analysis error: %s", e)
         results["error"] = str(e)
         results["success"] = False
 

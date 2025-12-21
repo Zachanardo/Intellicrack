@@ -74,7 +74,7 @@ def __getattr__(name: str) -> object:
                     "ProtectionType": ProtectionTypeAlias,
                 }
             except ImportError as e:
-                logger.warning(f"Failed to import intellicrack_protection_core: {e}")
+                logger.warning("Failed to import intellicrack_protection_core: %s", e)
                 _lazy_imports["core_module"] = {
                     "DetectionResult": None,
                     "IntellicrackProtectionCore": None,
@@ -105,7 +105,7 @@ def __getattr__(name: str) -> object:
                     "quick_analyze": qa,
                 }
             except ImportError as e:
-                logger.warning(f"Failed to import protection_detector: {e}")
+                logger.warning("Failed to import protection_detector: %s", e)
                 _lazy_imports["detector_module"] = {
                     "ProtectionDetector": None,
                     "deep_analyze": None,
@@ -122,7 +122,7 @@ def __getattr__(name: str) -> object:
 try:
     from .unified_protection_engine import UnifiedProtectionEngine, UnifiedProtectionResult, get_unified_engine
 except ImportError as e:
-    logger.warning(f"Failed to import unified_protection_engine: {e}")
+    logger.warning("Failed to import unified_protection_engine: %s", e)
     UnifiedProtectionEngine = None
     UnifiedProtectionResult = None
     get_unified_engine = None
@@ -138,7 +138,7 @@ try:
         VMHandler,
     )
 except ImportError as e:
-    logger.warning(f"Failed to import themida_analyzer: {e}")
+    logger.warning("Failed to import themida_analyzer: %s", e)
     ThemidaAnalysisResult = None
     ThemidaAnalyzer = None
     VMArchitecture = None

@@ -637,7 +637,7 @@ const websocketInterceptor = {
         ws.addEventListener(
             'message',
             event => {
-                const data = event.data;
+                const {data} = event;
                 send({
                     type: 'info',
                     target: 'websocket_interceptor',
@@ -4659,7 +4659,7 @@ const websocketInterceptor = {
                         if (result.execute) {
                             const originalExecute = result.execute;
                             result.execute = function (args) {
-                                const document = args.document;
+                                const {document} = args;
                                 const variables = args.variableValues || {};
 
                                 if (document?.definitions) {

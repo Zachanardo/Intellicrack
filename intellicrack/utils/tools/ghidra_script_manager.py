@@ -100,8 +100,7 @@ class GhidraScript:
                 if docstring_match := re.search(
                     r'"""(.+?)"""', content, re.DOTALL
                 ):
-                    lines = docstring_match[1].strip().split("\n")
-                    if lines:
+                    if lines := docstring_match[1].strip().split("\n"):
                         self.description = lines[0].strip()
 
                 # Look for # @metadata comments

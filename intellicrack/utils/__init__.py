@@ -411,7 +411,7 @@ def __getattr__(name: str) -> object:
             _lazy_imports[name] = result
             return result
         except (ImportError, AttributeError) as e:
-            _init_logger.warning(f"Failed to import {name} from {module_path}: {e}")
+            _init_logger.warning("Failed to import %s from %s: %s", name, module_path, e)
             _lazy_imports[name] = None
             return None
 

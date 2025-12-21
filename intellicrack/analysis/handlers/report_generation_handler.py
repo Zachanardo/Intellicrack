@@ -167,7 +167,7 @@ class ReportGeneratorWorker(QRunnable):
             )
 
         except Exception as e:
-            logger.error("Exception in report_generation_handler: %s", e)
+            logger.exception("Exception in report_generation_handler: %s", e)
             import traceback
 
             self.signals.error.emit((type(e), e, traceback.format_exc()))
@@ -304,7 +304,7 @@ class ReportGenerationHandler(QObject):
     def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
         """Handle slot when protection analysis completes."""
         self.current_result = result
-        logger.info(f"Report generation handler received analysis for: {result.file_path}")
+        logger.info("Report generation handler received analysis for: %s", result.file_path)
 
     def generate_report(self, parent_widget: QObject | None = None) -> None:
         """Show options dialog and generate report based on user selection."""
@@ -370,5 +370,5 @@ class ReportGenerationHandler(QObject):
         """Handle worker thread errors."""
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Report generation failed: {exc_value}"
-        logger.error(f"{error_msg}\n{exc_traceback}")
+        logger.error("%s\n%s", error_msg, exc_traceback)
         self.report_error.emit(error_msg)

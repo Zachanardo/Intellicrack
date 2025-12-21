@@ -150,7 +150,8 @@ class CertificateChainGenerator:
         ])
 
         root_cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(issuer)
             .public_key(root_key.public_key())
@@ -212,7 +213,8 @@ class CertificateChainGenerator:
         ])
 
         intermediate_cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(root_ca.subject)
             .public_key(intermediate_key.public_key())
@@ -286,7 +288,8 @@ class CertificateChainGenerator:
             san_entries.append(x509.DNSName(f"*.{domain}"))
 
         leaf_cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(intermediate_ca.subject)
             .public_key(leaf_key.public_key())

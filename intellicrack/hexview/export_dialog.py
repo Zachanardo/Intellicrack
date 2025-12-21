@@ -284,7 +284,7 @@ class ExportDialog(QDialog):
             self.accept()
 
         except Exception as e:
-            logger.error(f"Export failed: {e}")
+            logger.exception("Export failed: %s", e)
             QMessageBox.critical(self, "Export Failed", f"Failed to export data:\n{e!s}")
 
     def get_export_data(self) -> bytes | None:

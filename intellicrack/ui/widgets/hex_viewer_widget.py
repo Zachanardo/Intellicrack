@@ -96,7 +96,7 @@ class HexViewerThread(QThread):
                 self.data_loaded.emit(bytes(data))
 
         except Exception as e:
-            logger.error("Exception in hex_viewer_widget: %s", e)
+            logger.exception("Exception in hex_viewer_widget: %s", e)
             self.error_occurred.emit(str(e))
 
 
@@ -601,7 +601,7 @@ class HexViewerWidget(QWidget):
                 )
 
         except Exception as e:
-            logger.error("Exception in hex_viewer_widget: %s", e)
+            logger.exception("Exception in hex_viewer_widget: %s", e)
             QMessageBox.warning(
                 self,
                 "Search Error",
@@ -681,23 +681,29 @@ class HexViewerWidget(QWidget):
         # 32-bit values
         if available >= 4:
             data = self.file_data[offset : offset + 4]
-            interpretations.append(("UInt32 LE", str(struct.unpack("<I", data)[0])))
-            interpretations.append(("UInt32 BE", str(struct.unpack(">I", data)[0])))
-            interpretations.append(("Int32 LE", str(struct.unpack("<i", data)[0])))
-            interpretations.append(("Int32 BE", str(struct.unpack(">i", data)[0])))
-            interpretations.append(("Float LE", f"{struct.unpack('<f', data)[0]:.6f}"))
-            interpretations.append(("Float BE", f"{struct.unpack('>f', data)[0]:.6f}"))
-
+            interpretations.extend(
+                (
+                    ("UInt32 LE", str(struct.unpack("<I", data)[0])),
+                    ("UInt32 BE", str(struct.unpack(">I", data)[0])),
+                    ("Int32 LE", str(struct.unpack("<i", data)[0])),
+                    ("Int32 BE", str(struct.unpack(">i", data)[0])),
+                    ("Float LE", f"{struct.unpack('<f', data)[0]:.6f}"),
+                    ("Float BE", f"{struct.unpack('>f', data)[0]:.6f}"),
+                )
+            )
         # 64-bit values
         if available >= 8:
             data = self.file_data[offset : offset + 8]
-            interpretations.append(("UInt64 LE", str(struct.unpack("<Q", data)[0])))
-            interpretations.append(("UInt64 BE", str(struct.unpack(">Q", data)[0])))
-            interpretations.append(("Int64 LE", str(struct.unpack("<q", data)[0])))
-            interpretations.append(("Int64 BE", str(struct.unpack(">q", data)[0])))
-            interpretations.append(("Double LE", f"{struct.unpack('<d', data)[0]:.10f}"))
-            interpretations.append(("Double BE", f"{struct.unpack('>d', data)[0]:.10f}"))
-
+            interpretations.extend(
+                (
+                    ("UInt64 LE", str(struct.unpack("<Q", data)[0])),
+                    ("UInt64 BE", str(struct.unpack(">Q", data)[0])),
+                    ("Int64 LE", str(struct.unpack("<q", data)[0])),
+                    ("Int64 BE", str(struct.unpack(">q", data)[0])),
+                    ("Double LE", f"{struct.unpack('<d', data)[0]:.10f}"),
+                    ("Double BE", f"{struct.unpack('>d', data)[0]:.10f}"),
+                )
+            )
         # Add to table
         for data_type, value in interpretations:
             row = self.interpreter_table.rowCount()
@@ -783,7 +789,7 @@ class HexViewerWidget(QWidget):
                 f"Failed to write file: {e!s}",
             )
         except Exception as e:
-            logger.error("Export error: %s", e, exc_info=True)
+            logger.exception("Export error: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Export Error",
@@ -1157,7 +1163,7 @@ class HexViewerWidget(QWidget):
             dialog.exec()
 
         except Exception as e:
-            logger.error("String extraction failed: %s", e, exc_info=True)
+            logger.exception("String extraction failed: %s", e, exc_info=True)
             QMessageBox.critical(self, "Extraction Error", f"Failed to extract strings: {e!s}")
 
     def _extract_unicode_strings(self, data: bytes, min_length: int = 5) -> list[str]:
@@ -1206,7 +1212,7 @@ class HexViewerWidget(QWidget):
             self.file_data = original_data
 
         except Exception as e:
-            logger.error("Failed to read file for string extraction: %s", e, exc_info=True)
+            logger.exception("Failed to read file for string extraction: %s", e, exc_info=True)
             QMessageBox.critical(self, "Read Error", f"Failed to read file: {e!s}")
 
     def _find_license_patterns(self) -> None:
@@ -1296,7 +1302,7 @@ class HexViewerWidget(QWidget):
             dialog.exec()
 
         except Exception as e:
-            logger.error("Pattern search failed: %s", e, exc_info=True)
+            logger.exception("Pattern search failed: %s", e, exc_info=True)
             QMessageBox.critical(self, "Search Error", f"Failed to search patterns: {e!s}")
 
     def _copy_hex_selection(self) -> None:

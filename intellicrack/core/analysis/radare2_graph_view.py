@@ -120,7 +120,7 @@ class R2GraphGenerator:
             self.r2.cmd("aaa")  # Analyze all
             self.logger.info("Initialized r2 session for graph generation: %s", self.binary_path)
         except Exception as e:
-            self.logger.error("Failed to initialize r2 session: %s", e)
+            self.logger.exception("Failed to initialize r2 session: %s", e)
             self.r2 = None
 
     def generate_control_flow_graph(self, function_name: str) -> GraphData:
@@ -134,7 +134,7 @@ class R2GraphGenerator:
 
         """
         if not self.r2:
-            self.logger.error("R2 session not initialized")
+            self.logger.exception("R2 session not initialized")
             return GraphData()
 
         graph_data = GraphData(metadata={"type": "control_flow", "function": function_name, "binary": self.binary_path})
@@ -219,10 +219,12 @@ class R2GraphGenerator:
                     )
                     graph_data.edges.append(edge)
 
-            self.logger.info("Generated CFG with %d blocks and %d edges for %s", len(graph_data.nodes), len(graph_data.edges), function_name)
+            self.logger.info(
+                "Generated CFG with %d blocks and %d edges for %s", len(graph_data.nodes), len(graph_data.edges), function_name
+            )
 
         except Exception as e:
-            self.logger.error("Failed to generate CFG: %s", e)
+            self.logger.exception("Failed to generate CFG: %s", e)
 
         return graph_data
 
@@ -237,7 +239,7 @@ class R2GraphGenerator:
 
         """
         if not self.r2:
-            self.logger.error("R2 session not initialized")
+            self.logger.exception("R2 session not initialized")
             return GraphData()
 
         graph_data = GraphData(metadata={"type": "call_graph", "max_depth": max_depth, "binary": self.binary_path})
@@ -301,7 +303,7 @@ class R2GraphGenerator:
             self.logger.info("Generated call graph with %d functions and %d calls", len(graph_data.nodes), len(graph_data.edges))
 
         except Exception as e:
-            self.logger.error("Failed to generate call graph: %s", e)
+            self.logger.exception("Failed to generate call graph: %s", e)
 
         return graph_data
 
@@ -316,7 +318,7 @@ class R2GraphGenerator:
 
         """
         if not self.r2:
-            self.logger.error("R2 session not initialized")
+            self.logger.exception("R2 session not initialized")
             return GraphData()
 
         graph_data = GraphData(metadata={"type": "xref_graph", "address": address, "binary": self.binary_path})
@@ -393,7 +395,7 @@ class R2GraphGenerator:
             self.logger.info("Generated xref graph with %d nodes and %d references", len(graph_data.nodes), len(graph_data.edges))
 
         except Exception as e:
-            self.logger.error("Failed to generate xref graph: %s", e)
+            self.logger.exception("Failed to generate xref graph: %s", e)
 
         return graph_data
 
@@ -405,7 +407,7 @@ class R2GraphGenerator:
 
         """
         if not self.r2:
-            self.logger.error("R2 session not initialized")
+            self.logger.exception("R2 session not initialized")
             return GraphData()
 
         graph_data = GraphData(metadata={"type": "import_dependency", "binary": self.binary_path})
@@ -477,7 +479,7 @@ class R2GraphGenerator:
             self.logger.info("Generated import dependency graph with %d nodes", len(graph_data.nodes))
 
         except Exception as e:
-            self.logger.error("Failed to generate import dependency graph: %s", e)
+            self.logger.exception("Failed to generate import dependency graph: %s", e)
 
         return graph_data
 
@@ -513,7 +515,7 @@ class R2GraphGenerator:
             self.logger.info("Exported graph to DOT format: %s", output_path)
 
         except Exception as e:
-            self.logger.error("Failed to export to DOT: %s", e)
+            self.logger.exception("Failed to export to DOT: %s", e)
 
     def visualize_graph(self, graph_data: GraphData, output_path: str | None = None, layout: str = "spring") -> bool:
         """Visualize graph using matplotlib/networkx.
@@ -528,7 +530,7 @@ class R2GraphGenerator:
 
         """
         if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE:
-            self.logger.error("NetworkX or Matplotlib not available for visualization")
+            self.logger.exception("NetworkX or Matplotlib not available for visualization")
             return False
 
         try:
@@ -591,7 +593,7 @@ class R2GraphGenerator:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to visualize graph: %s", e)
+            self.logger.exception("Failed to visualize graph: %s", e)
             return False
 
     def cleanup(self) -> None:

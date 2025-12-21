@@ -167,7 +167,7 @@ class AIScriptGenerator:
             ],
         }
 
-    def generate_script(self, prompt: str, base_script: str, context: dict) -> str:
+    def generate_script(self, _prompt: str, base_script: str, context: dict) -> str:
         """Generate enhanced bypass script using AI techniques.
 
         Args:
@@ -207,8 +207,8 @@ class AIScriptGenerator:
         except Exception as e:
             import traceback
 
-            logger.error(f"Error generating enhanced script: {e}")
-            logger.error(traceback.format_exc())
+            logger.exception("Error generating enhanced script: %s", e)
+            logger.exception(traceback.format_exc())
             # In development, re-raise to aid debugging
             import os
 
@@ -1662,9 +1662,8 @@ DateSpoofer.spoofAllDateSources();
                     if isinstance(p, dict):
                         ptype = p.get("type", "").lower()
                         for pt in ProtectionType:
-                            if pt.value in ptype or ptype in pt.value:
-                                if pt not in protection_types:
-                                    protection_types.append(pt)
+                            if (pt.value in ptype or ptype in pt.value) and pt not in protection_types:
+                                protection_types.append(pt)
 
             base_script = self._generate_frida_base_script(binary_path, analysis_data, protection_types)
 
@@ -1705,7 +1704,7 @@ DateSpoofer.spoofAllDateSources();
             )
 
         except Exception as e:
-            logger.error("Failed to generate Frida script: %s", e, exc_info=True)
+            logger.exception("Failed to generate Frida script: %s", e)
             return None
 
     def generate_ghidra_script(
@@ -1744,9 +1743,8 @@ DateSpoofer.spoofAllDateSources();
                     if isinstance(p, dict):
                         ptype = p.get("type", "").lower()
                         for pt in ProtectionType:
-                            if pt.value in ptype or ptype in pt.value:
-                                if pt not in protection_types:
-                                    protection_types.append(pt)
+                            if (pt.value in ptype or ptype in pt.value) and pt not in protection_types:
+                                protection_types.append(pt)
 
             ghidra_script = self._generate_ghidra_analysis_script(binary_path, analysis_data, protection_types)
 
@@ -1775,7 +1773,7 @@ DateSpoofer.spoofAllDateSources();
             )
 
         except Exception as e:
-            logger.error("Failed to generate Ghidra script: %s", e, exc_info=True)
+            logger.exception("Failed to generate Ghidra script: %s", e)
             return None
 
     def save_script(
@@ -1818,7 +1816,7 @@ DateSpoofer.spoofAllDateSources();
             f.write(header)
             f.write(script.content)
 
-        metadata_path = filepath.with_suffix(filepath.suffix + ".meta.json")
+        metadata_path = filepath.with_suffix(f"{filepath.suffix}.meta.json")
         import json as json_module
 
         metadata_dict = {
@@ -1929,7 +1927,7 @@ DateSpoofer.spoofAllDateSources();
             )
 
         except Exception as e:
-            logger.error("Failed to refine script: %s", e, exc_info=True)
+            logger.exception("Failed to refine script: %s", e)
             return None
 
     def _analyze_binary_for_scripting(self, binary_path: str) -> dict[str, Any]:
@@ -1953,9 +1951,8 @@ DateSpoofer.spoofAllDateSources();
 
         if self.binary_analyzer:
             try:
-                detailed = self.binary_analyzer.analyze(binary_path)
-                if detailed:
-                    analysis.update(detailed)
+                if detailed := self.binary_analyzer.analyze(binary_path):
+                    analysis |= detailed
             except Exception as e:
                 logger.warning("Binary analyzer failed: %s", e)
 
@@ -1991,25 +1988,20 @@ DateSpoofer.spoofAllDateSources();
         imports = analysis_data.get("imports", [])
         import_str = " ".join(str(i) for i in imports).lower()
 
-        if any(api in import_str for api in ["regqueryvalue", "regopen", "regenumkey"]):
-            if ProtectionType.LICENSE_CHECK not in protection_types:
-                protection_types.append(ProtectionType.LICENSE_CHECK)
+        if ProtectionType.LICENSE_CHECK not in protection_types and any(api in import_str for api in ["regqueryvalue", "regopen", "regenumkey"]):
+            protection_types.append(ProtectionType.LICENSE_CHECK)
 
-        if any(api in import_str for api in ["gettickcount", "getsystemtime", "queryperf"]):
-            if ProtectionType.TRIAL_LIMITATION not in protection_types:
-                protection_types.append(ProtectionType.TRIAL_LIMITATION)
+        if any(api in import_str for api in ["gettickcount", "getsystemtime", "queryperf"]) and ProtectionType.TRIAL_LIMITATION not in protection_types:
+            protection_types.append(ProtectionType.TRIAL_LIMITATION)
 
-        if any(api in import_str for api in ["winhttp", "wininet", "urldownload", "internetopen"]):
-            if ProtectionType.ONLINE_ACTIVATION not in protection_types:
-                protection_types.append(ProtectionType.ONLINE_ACTIVATION)
+        if any(api in import_str for api in ["winhttp", "wininet", "urldownload", "internetopen"]) and ProtectionType.ONLINE_ACTIVATION not in protection_types:
+            protection_types.append(ProtectionType.ONLINE_ACTIVATION)
 
-        if any(api in import_str for api in ["getvolume", "getadapters", "wmi", "deviceio"]):
-            if ProtectionType.HARDWARE_BINDING not in protection_types:
-                protection_types.append(ProtectionType.HARDWARE_BINDING)
+        if any(api in import_str for api in ["getvolume", "getadapters", "wmi", "deviceio"]) and ProtectionType.HARDWARE_BINDING not in protection_types:
+            protection_types.append(ProtectionType.HARDWARE_BINDING)
 
-        if any(api in import_str for api in ["isdebuggerpresent", "checkremote", "ntqueryinfo"]):
-            if ProtectionType.ANTI_DEBUG not in protection_types:
-                protection_types.append(ProtectionType.ANTI_DEBUG)
+        if any(api in import_str for api in ["isdebuggerpresent", "checkremote", "ntqueryinfo"]) and ProtectionType.ANTI_DEBUG not in protection_types:
+            protection_types.append(ProtectionType.ANTI_DEBUG)
 
         if not protection_types:
             protection_types.append(ProtectionType.UNKNOWN)
@@ -2021,16 +2013,14 @@ DateSpoofer.spoofAllDateSources();
         high_difficulty = {ProtectionType.VM_PROTECTION, ProtectionType.ANTI_TAMPER, ProtectionType.OBFUSCATION}
         medium_difficulty = {ProtectionType.ONLINE_ACTIVATION, ProtectionType.HARDWARE_BINDING, ProtectionType.ANTI_DEBUG}
 
-        high_count = sum(1 for pt in protection_types if pt in high_difficulty)
-        medium_count = sum(1 for pt in protection_types if pt in medium_difficulty)
+        high_count = sum(pt in high_difficulty for pt in protection_types)
+        medium_count = sum(pt in medium_difficulty for pt in protection_types)
 
         if high_count >= 2 or (high_count >= 1 and medium_count >= 2):
             return "Very Hard"
         if high_count >= 1 or medium_count >= 2:
             return "Hard"
-        if medium_count >= 1 or len(protection_types) >= 3:
-            return "Medium"
-        return "Easy"
+        return "Medium" if medium_count >= 1 or len(protection_types) >= 3 else "Easy"
 
     def _calculate_success_probability(self, protection_types: list[ProtectionType], analysis_data: dict[str, Any]) -> float:
         """Calculate estimated success probability."""
@@ -2059,7 +2049,7 @@ DateSpoofer.spoofAllDateSources();
     def _generate_frida_base_script(
         self,
         binary_path: str,
-        analysis_data: dict[str, Any],
+        _analysis_data: dict[str, Any],
         protection_types: list[ProtectionType],
     ) -> str:
         """Generate base Frida script targeting detected protections."""
@@ -2200,13 +2190,13 @@ antiDebugBypass.init();
     def _generate_ghidra_analysis_script(
         self,
         binary_path: str,
-        analysis_data: dict[str, Any],
+        _analysis_data: dict[str, Any],
         protection_types: list[ProtectionType],
     ) -> str:
         """Generate Ghidra analysis and patching script."""
         protections_str = ", ".join(pt.value for pt in protection_types)
 
-        script = f"""// Ghidra script for: {Path(binary_path).name}
+        return f"""// Ghidra script for: {Path(binary_path).name}
 // Generated: {datetime.now(tz=UTC).isoformat()}
 // Target protections: {protections_str}
 // @category Intellicrack.Analysis
@@ -2313,7 +2303,6 @@ public class IntellicrackAnalysis extends GhidraScript {{
     }}
 }}
 """
-        return script
 
     def _extract_hooks_from_script(self, script_content: str) -> list[dict[str, Any]]:
         """Extract hook information from Frida script."""
@@ -2321,22 +2310,24 @@ public class IntellicrackAnalysis extends GhidraScript {{
 
         interceptor_pattern = r"Interceptor\.attach\s*\(\s*([^,]+)"
         matches = re.findall(interceptor_pattern, script_content)
-        for match in matches:
-            hooks.append({
+        hooks.extend(
+            {
                 "type": "interceptor",
                 "target": match.strip(),
                 "mode": "attach",
-            })
-
+            }
+            for match in matches
+        )
         replace_pattern = r"Interceptor\.replace\s*\(\s*([^,]+)"
         matches = re.findall(replace_pattern, script_content)
-        for match in matches:
-            hooks.append({
+        hooks.extend(
+            {
                 "type": "interceptor",
                 "target": match.strip(),
                 "mode": "replace",
-            })
-
+            }
+            for match in matches
+        )
         return hooks
 
     def _extract_patches_from_ghidra_script(self, script_content: str) -> list[dict[str, Any]]:
@@ -2345,12 +2336,13 @@ public class IntellicrackAnalysis extends GhidraScript {{
 
         patch_pattern = r"\[PATCH\]\s*([^\n]+)"
         matches = re.findall(patch_pattern, script_content)
-        for match in matches:
-            patches.append({
+        patches.extend(
+            {
                 "description": match.strip(),
                 "type": "recommended",
-            })
-
+            }
+            for match in matches
+        )
         return patches
 
     def _generate_script_header(self, script: GeneratedScript) -> str:
@@ -2406,21 +2398,20 @@ function safeCall(fn, fallback) {
             refined = null_check + refined
             improvements.append("Added null safety wrapper for function calls")
 
-        if "access" in all_errors.lower() or "permission" in all_errors.lower():
-            if script_type == ScriptType.FRIDA:
-                memory_safety = """
-// Memory access safety
-function safeReadPointer(addr) {
-    try {
-        return Memory.readPointer(addr);
-    } catch(e) {
-        console.log('[!] Safe read failed at: ' + addr);
-        return ptr(0);
-    }
-}
-"""
-                refined = memory_safety + refined
-                improvements.append("Added memory access safety wrappers")
+        if ("access" in all_errors.lower() or "permission" in all_errors.lower()) and script_type == ScriptType.FRIDA:
+            memory_safety = """
+        // Memory access safety
+        function safeReadPointer(addr) {
+            try {
+                return Memory.readPointer(addr);
+            } catch(e) {
+                console.log('[!] Safe read failed at: ' + addr);
+                return ptr(0);
+            }
+        }
+        """
+            refined = memory_safety + refined
+            improvements.append("Added memory access safety wrappers")
 
         if "module" in all_errors.lower() or "export" in all_errors.lower():
             module_check = """
@@ -2443,10 +2434,9 @@ function findExportSafe(moduleName, exportName) {
     def _improve_hook_targeting(
         self,
         script_content: str,
-        analysis_data: dict[str, Any],
+        _analysis_data: dict[str, Any],
     ) -> tuple[str, list[str]]:
         """Improve hook targeting when no hooks are triggered."""
-        improvements: list[str] = []
         refined = script_content
 
         dynamic_discovery = """
@@ -2485,14 +2475,13 @@ discoveredTargets.forEach(function(t) {
 });
 """
         refined = dynamic_discovery + "\n" + refined
-        improvements.append("Added dynamic function discovery")
-
+        improvements: list[str] = ["Added dynamic function discovery"]
         return refined, improvements
 
     def _strengthen_bypass_logic(
         self,
         script_content: str,
-        analysis_data: dict[str, Any],
+        _analysis_data: dict[str, Any],
         script_type: ScriptType,
     ) -> tuple[str, list[str]]:
         """Strengthen bypass logic when protection is not bypassed."""
@@ -2533,7 +2522,7 @@ function forceReturnTrue(funcName, moduleName) {
     def _add_evasion_techniques(
         self,
         script_content: str,
-        protection_evasion: dict[str, Any],
+        _protection_evasion: dict[str, Any],
         script_type: ScriptType,
     ) -> tuple[str, list[str]]:
         """Add evasion techniques when protection detection is triggered."""

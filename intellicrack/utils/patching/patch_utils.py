@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 try:
     from intellicrack.handlers.pefile_handler import pefile
 except ImportError as e:
-    logger.error("Import error in patch_utils: %s", e, exc_info=True)
+    logger.exception("Import error in patch_utils: %s", e)
     pefile = None
 
 
@@ -117,7 +117,7 @@ def parse_patch_instructions(text: str) -> list[dict[str, Any]]:
                 exc_info=True,
             )
         except (OSError, RuntimeError) as e:
-            logger.error("Unexpected error parsing line %s: %s", lines_processed, e, exc_info=True)
+            logger.exception("Unexpected error parsing line %s: %s", lines_processed, e)
 
     # Log summary
     if not potential_matches:
@@ -189,7 +189,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
     file_path = Path(file_path)
 
     if not file_path.exists():
-        logger.error("File not found: %s", file_path)
+        logger.exception("File not found: %s", file_path)
         return False, None
 
     if not patches:
@@ -203,7 +203,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
             shutil.copy2(file_path, backup_path)
             logger.info("Created backup: %s", backup_path)
         except OSError as e:
-            logger.error("Failed to create backup: %s", e, exc_info=True)
+            logger.exception("Failed to create backup: %s", e)
             return False, None
 
     # Create patched file
@@ -238,7 +238,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
                         description,
                     )
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Failed to apply patch %s: %s", i + 1, e, exc_info=True)
+                    logger.exception("Failed to apply patch %s: %s", i + 1, e)
 
         if applied_count > 0:
             logger.info("Successfully applied %s patches to %s", applied_count, patched_path)
@@ -249,7 +249,7 @@ def apply_patch(file_path: str | Path, patches: list[dict[str, Any]], create_bac
         return False, None
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error during patching: %s", e, exc_info=True)
+        logger.exception("Error during patching: %s", e)
         # Clean up on error
         if patched_path.exists():
             patched_path.unlink(missing_ok=True)
@@ -270,7 +270,7 @@ def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool
     file_path = Path(file_path)
 
     if not file_path.exists():
-        logger.error("File not found for validation: %s", file_path)
+        logger.exception("File not found for validation: %s", file_path)
         return False
 
     try:
@@ -283,7 +283,7 @@ def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool
                 actual_bytes = f.read(len(expected_bytes))
 
                 if actual_bytes != expected_bytes:
-                    logger.error(
+                    logger.exception(
                         "Patch %s validation failed at 0x%X: Expected %s, got %s",
                         i + 1,
                         address,
@@ -297,7 +297,7 @@ def validate_patch(file_path: str | Path, patches: list[dict[str, Any]]) -> bool
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error during patch validation: %s", e, exc_info=True)
+        logger.exception("Error during patch validation: %s", e)
         return False
 
 
@@ -313,7 +313,7 @@ def convert_rva_to_offset(file_path: str | Path, rva: int) -> int | None:
 
     """
     if pefile is None:
-        logger.error("pefile module not available")
+        logger.exception("pefile module not available")
         return None
 
     try:
@@ -322,7 +322,7 @@ def convert_rva_to_offset(file_path: str | Path, rva: int) -> int | None:
         pe.close()
         return offset
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error converting RVA to offset: %s", e, exc_info=True)
+        logger.exception("Error converting RVA to offset: %s", e)
         return None
 
 
@@ -337,7 +337,7 @@ def get_section_info(file_path: str | Path) -> list[dict[str, Any]]:
 
     """
     if pefile is None:
-        logger.error("pefile module not available")
+        logger.exception("pefile module not available")
         return []
 
     sections = []
@@ -359,7 +359,7 @@ def get_section_info(file_path: str | Path) -> list[dict[str, Any]]:
         pe.close()
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error reading section info: %s", e, exc_info=True)
+        logger.exception("Error reading section info: %s", e)
 
     return sections
 

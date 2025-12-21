@@ -109,7 +109,7 @@ class ToolValidator:
                         validation["version"] = version_match[1]
 
             except Exception as e:
-                logger.error("Exception in tool_discovery: %s", e)
+                logger.exception("Exception in tool_discovery: %s", e)
                 validation["issues"].append(f"Version check failed: {e}")
 
             validation["capabilities"].extend(
@@ -123,7 +123,7 @@ class ToolValidator:
             validation["valid"] = True
 
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -177,10 +177,10 @@ class ToolValidator:
                 validation["issues"].append(f"Tool execution failed: {result.stderr}")
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in tool_discovery: %s", e)
+            logger.exception("Subprocess timeout in tool_discovery: %s", e)
             validation["issues"].append("Tool validation timed out")
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -230,7 +230,7 @@ class ToolValidator:
                 validation["issues"].append("Python version check failed")
 
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -281,7 +281,7 @@ class ToolValidator:
                 validation["issues"].append("Frida execution failed")
 
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -336,7 +336,7 @@ class ToolValidator:
                 validation["issues"].append("QEMU execution failed")
 
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -391,7 +391,7 @@ class ToolValidator:
         except subprocess.TimeoutExpired:
             validation["issues"].append("NASM validation timed out")
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -447,7 +447,7 @@ class ToolValidator:
         except subprocess.TimeoutExpired:
             validation["issues"].append("MASM validation timed out")
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -505,7 +505,7 @@ class ToolValidator:
         except subprocess.TimeoutExpired:
             validation["issues"].append("AccessChk validation timed out")
         except Exception as e:
-            logger.error("Exception in tool_discovery: %s", e)
+            logger.exception("Exception in tool_discovery: %s", e)
             validation["issues"].append(f"Validation error: {e}")
 
         return validation
@@ -626,7 +626,7 @@ class AdvancedToolDiscovery:
                 results[tool_name] = tool_info
 
                 if tool_info["available"]:
-                    logger.info("OK %s found: %s", tool_name, tool_info['path'])
+                    logger.info("OK %s found: %s", tool_name, tool_info["path"])
                     if HAS_TERMINAL_MANAGER:
                         try:
                             terminal_manager = get_terminal_manager()
@@ -644,7 +644,7 @@ class AdvancedToolDiscovery:
                             logger.debug("Could not log to terminal manager: %s", e)
 
             except Exception as e:
-                logger.error("Error discovering %s: %s", tool_name, e)
+                logger.exception("Error discovering %s: %s", tool_name, e)
                 if HAS_TERMINAL_MANAGER:
                     try:
                         terminal_manager = get_terminal_manager()
@@ -875,17 +875,17 @@ class AdvancedToolDiscovery:
                                             if install_location and os.path.exists(install_location):
                                                 return install_location
                                     except FileNotFoundError as e:
-                                        logger.error("File not found in tool_discovery: %s", e)
+                                        logger.exception("File not found in tool_discovery: %s", e)
                                         continue
                             except OSError as e:
-                                logger.error("OS error in tool_discovery: %s", e)
+                                logger.exception("OS error in tool_discovery: %s", e)
                                 continue
                 except OSError as e:
-                    logger.error("OS error in tool_discovery: %s", e)
+                    logger.exception("OS error in tool_discovery: %s", e)
                     continue
 
         except ImportError as e:
-            logger.error("Import error in tool_discovery: %s", e)
+            logger.exception("Import error in tool_discovery: %s", e)
         except Exception as e:
             logger.debug("Registry search failed: %s", e)
 
@@ -1085,9 +1085,7 @@ class AdvancedToolDiscovery:
         """
         if tool_name in self.discovered_tools:
             caps = self.discovered_tools[tool_name].get("capabilities", [])
-            if isinstance(caps, list):
-                return list(caps)
-            return []
+            return list(caps) if isinstance(caps, list) else []
         return []
 
     def is_tool_compatible(self, tool_name: str, required_capabilities: list[str]) -> bool:
@@ -1116,7 +1114,7 @@ class AdvancedToolDiscovery:
 
         """
         if not os.path.exists(tool_path):
-            logger.error("Cannot set manual override: path %s does not exist", tool_path)
+            logger.exception("Cannot set manual override: path %s does not exist", tool_path)
             return False
 
         if not os.access(tool_path, os.X_OK):

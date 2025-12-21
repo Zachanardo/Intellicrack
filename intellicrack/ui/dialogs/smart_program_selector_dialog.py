@@ -93,7 +93,7 @@ class ProgramDiscoveryWorker(QThread):
                 all_programs.extend(programs)
                 self.progress_updated.emit(f"Found {len(programs)} programs in {path}")
             except Exception as e:
-                self.logger.error("Exception in smart_program_selector_dialog: %s", e)
+                self.logger.exception("Exception in smart_program_selector_dialog: %s", e)
                 self.progress_updated.emit(f"Error scanning {path}: {e!s}")
 
         self.programs_found.emit(all_programs)

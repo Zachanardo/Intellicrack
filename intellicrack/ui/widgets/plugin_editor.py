@@ -21,8 +21,8 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import ast
 import os
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QKeySequence, QSyntaxHighlighter, QTextCursor
+from PyQt6.QtCore import QPoint, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QColor, QFont, QKeySequence, QTextCursor, QTextDocument
 from PyQt6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -90,11 +90,18 @@ class PluginEditor(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize plugin editor with validation and UI setup."""
         super().__init__(parent)
-        self.current_file = None
-        self.validator = PluginValidator()
-        self.validation_timer = QTimer()
+        self.current_file: str | None = None
+        self.validator: PluginValidator = PluginValidator()
+        self.validation_timer: QTimer = QTimer()
         self.validation_timer.timeout.connect(self.perform_validation)
         self.validation_timer.setSingleShot(True)
+        self.file_label: QLabel
+        self.syntax_combo: QComboBox
+        self.editor: QTextEdit
+        self.highlighter: PythonHighlighter | JavaScriptHighlighter | None
+        self.validation_list: QListWidget
+        self.outline_list: QListWidget
+        self.status_bar: QStatusBar
         self.setup_ui()
 
     def setup_ui(self) -> None:
@@ -105,36 +112,36 @@ class PluginEditor(QWidget):
         # Toolbar
         toolbar = QToolBar()
 
-        # File actions
-        new_action = toolbar.addAction("📄 New")
-        new_action.triggered.connect(self.new_file)
+        if new_action := toolbar.addAction("📄 New"):
+            new_action.triggered.connect(self.new_file)
 
-        open_action = toolbar.addAction("📂 Open")
-        open_action.triggered.connect(self.open_file)
+        if open_action := toolbar.addAction("📂 Open"):
+            open_action.triggered.connect(self.open_file)
 
-        save_action = toolbar.addAction(" Save")
-        save_action.setShortcut(QKeySequence.Save)
-        save_action.triggered.connect(self.save_file)
+        if save_action := toolbar.addAction(" Save"):
+            save_action.setShortcut(QKeySequence.StandardKey.Save)
+            save_action.triggered.connect(self.save_file)
 
         toolbar.addSeparator()
 
         # Edit actions
-        undo_action = toolbar.addAction("↶ Undo")
-        undo_action.setShortcut(QKeySequence.Undo)
+        undo_action: QAction | None = toolbar.addAction("↶ Undo")
+        if undo_action:
+            undo_action.setShortcut(QKeySequence.StandardKey.Undo)
 
-        redo_action = toolbar.addAction("↷ Redo")
-        redo_action.setShortcut(QKeySequence.Redo)
+        redo_action: QAction | None = toolbar.addAction("↷ Redo")
+        if redo_action:
+            redo_action.setShortcut(QKeySequence.StandardKey.Redo)
 
         toolbar.addSeparator()
 
-        # Validation action
-        validate_action = toolbar.addAction("OK Validate")
-        validate_action.triggered.connect(self.perform_validation)
+        if validate_action := toolbar.addAction("OK Validate"):
+            validate_action.triggered.connect(self.perform_validation)
 
         layout.addWidget(toolbar)
 
         # Main content area
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Code editor
         editor_widget = QWidget()
@@ -160,8 +167,10 @@ class PluginEditor(QWidget):
         self.editor.textChanged.connect(self.on_text_changed)
 
         # Connect undo/redo
-        undo_action.triggered.connect(self.editor.undo)
-        redo_action.triggered.connect(self.editor.redo)
+        if undo_action:
+            undo_action.triggered.connect(self.editor.undo)
+        if redo_action:
+            redo_action.triggered.connect(self.editor.redo)
 
         # Set up syntax highlighter
         self.highlighter = PythonHighlighter(self.editor.document())
@@ -202,21 +211,22 @@ class PluginEditor(QWidget):
         layout.addWidget(self.status_bar)
 
         # Set up context menu
-        self.editor.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.editor.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.editor.customContextMenuRequested.connect(self.show_context_menu)
 
     def new_file(self) -> None:
         """Create a new file."""
-        if self.editor.document().isModified():
+        doc: QTextDocument | None = self.editor.document()
+        if doc and doc.isModified():
             reply = QMessageBox.question(
                 self,
                 "Unsaved Changes",
                 "Do you want to save your changes?",
-                QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel,
             )
-            if reply == QMessageBox.Yes:
+            if reply == QMessageBox.StandardButton.Yes:
                 self.save_file()
-            elif reply == QMessageBox.Cancel:
+            elif reply == QMessageBox.StandardButton.Cancel:
                 return
 
         self.editor.clear()
@@ -235,7 +245,7 @@ class PluginEditor(QWidget):
 
         if file_path:
             try:
-                with open(file_path) as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
                 self.editor.setPlainText(content)
@@ -249,7 +259,8 @@ class PluginEditor(QWidget):
                     self.syntax_combo.setCurrentText("Python")
 
                 self.status_bar.showMessage(f"Opened {file_path}")
-                self.editor.document().setModified(False)
+                if doc := self.editor.document():
+                    doc.setModified(False)
 
             except Exception as e:
                 logger.error("Exception in plugin_editor: %s", e)
@@ -269,12 +280,13 @@ class PluginEditor(QWidget):
             self.current_file = file_path
 
         try:
-            with open(self.current_file, "w") as f:
+            with open(self.current_file, "w", encoding="utf-8") as f:
                 f.write(self.editor.toPlainText())
 
             self.file_label.setText(os.path.basename(self.current_file))
             self.status_bar.showMessage(f"Saved {self.current_file}")
-            self.editor.document().setModified(False)
+            if doc := self.editor.document():
+                doc.setModified(False)
             self.save_requested.emit(self.current_file)
 
         except Exception as e:
@@ -294,10 +306,13 @@ class PluginEditor(QWidget):
 
     def change_syntax(self, syntax: str) -> None:
         """Change syntax highlighting."""
+        doc: QTextDocument | None = self.editor.document()
+        if not doc:
+            return
         if syntax == "Python":
-            self.highlighter = PythonHighlighter(self.editor.document())
+            self.highlighter = PythonHighlighter(doc)
         elif syntax == "JavaScript":
-            self.highlighter = JavaScriptHighlighter(self.editor.document())
+            self.highlighter = JavaScriptHighlighter(doc)
         else:
             self.highlighter = None
 
@@ -364,13 +379,13 @@ class PluginEditor(QWidget):
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.ClassDef):
-                    item = QListWidgetItem(f" {node.name}")
-                    self.outline_list.addItem(item)
+                    class_item = QListWidgetItem(f" {node.name}")
+                    self.outline_list.addItem(class_item)
 
                     # Add methods
-                    for item in node.body:
-                        if isinstance(item, ast.FunctionDef):
-                            method_item = QListWidgetItem(f"   {item.name}")
+                    for body_item in node.body:
+                        if isinstance(body_item, ast.FunctionDef):
+                            method_item = QListWidgetItem(f"   {body_item.name}")
                             self.outline_list.addItem(method_item)
 
                 elif isinstance(node, ast.FunctionDef) and node.col_offset == 0:
@@ -380,31 +395,29 @@ class PluginEditor(QWidget):
         except Exception as e:
             logger.debug("Failed to parse code for outline: %s", e)
 
-    def show_context_menu(self, position: object) -> None:
+    def show_context_menu(self, position: QPoint) -> None:
         """Show context menu."""
         menu = QMenu(self)
 
-        # Add actions
-        cut_action = menu.addAction("Cut")
-        cut_action.setShortcut(QKeySequence.Cut)
-        cut_action.triggered.connect(self.editor.cut)
+        if cut_action := menu.addAction("Cut"):
+            cut_action.setShortcut(QKeySequence.StandardKey.Cut)
+            cut_action.triggered.connect(self.editor.cut)
 
-        copy_action = menu.addAction("Copy")
-        copy_action.setShortcut(QKeySequence.Copy)
-        copy_action.triggered.connect(self.editor.copy)
+        if copy_action := menu.addAction("Copy"):
+            copy_action.setShortcut(QKeySequence.StandardKey.Copy)
+            copy_action.triggered.connect(self.editor.copy)
 
-        paste_action = menu.addAction("Paste")
-        paste_action.setShortcut(QKeySequence.Paste)
-        paste_action.triggered.connect(self.editor.paste)
+        if paste_action := menu.addAction("Paste"):
+            paste_action.setShortcut(QKeySequence.StandardKey.Paste)
+            paste_action.triggered.connect(self.editor.paste)
 
         menu.addSeparator()
 
-        # Find/Replace
-        find_action = menu.addAction("Find...")
-        find_action.setShortcut(QKeySequence.Find)
-        find_action.triggered.connect(self.show_find_dialog)
+        if find_action := menu.addAction("Find..."):
+            find_action.setShortcut(QKeySequence.StandardKey.Find)
+            find_action.triggered.connect(self.show_find_dialog)
 
-        menu.exec_(self.editor.mapToGlobal(position))
+        menu.exec(self.editor.mapToGlobal(position))
 
     def show_find_dialog(self) -> None:
         """Show find/replace dialog."""
@@ -413,11 +426,11 @@ class PluginEditor(QWidget):
 
         text, ok = QInputDialog.getText(self, "Find", "Find text:")
         if ok and text:
-            cursor = self.editor.textCursor()
-            found = self.editor.find(text)
+            cursor: QTextCursor = self.editor.textCursor()
+            found: bool = self.editor.find(text)
             if not found:
                 # Try from beginning
-                cursor.movePosition(QTextCursor.Start)
+                cursor.movePosition(QTextCursor.MoveOperation.Start)
                 self.editor.setTextCursor(cursor)
                 self.editor.find(text)
 

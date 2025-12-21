@@ -19,6 +19,154 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from intellicrack.ai.ai_script_generator import AIScriptGenerator, ScriptType
+    from intellicrack.ai.api_provider_clients import (
+        AnthropicProviderClient,
+        BaseProviderClient,
+        LMStudioProviderClient,
+        LocalProviderClient,
+        ModelInfo,
+        OllamaProviderClient,
+        OpenAIProviderClient,
+        ProviderManager,
+        get_provider_manager,
+    )
+    from intellicrack.ai.code_analysis_tools import (
+        AIAssistant,
+        CodeAnalyzer,
+        analyze_with_ai,
+        explain_code,
+        get_ai_suggestions,
+    )
+    from intellicrack.ai.coordination_layer import (
+        AICoordinationLayer,
+        AnalysisRequest,
+        AnalysisStrategy,
+        CoordinatedResult as CoordinatedResult,
+        comprehensive_analysis,
+        quick_vulnerability_scan,
+    )
+    from intellicrack.ai.integration_manager import (
+        IntegrationManager,
+        IntegrationTask,
+        WorkflowResult,
+    )
+    from intellicrack.ai.intelligent_code_modifier import (
+        ChangeStatus,
+        CodeChange,
+        IntelligentCodeModifier,
+        ModificationRequest as ModificationRequest,
+        ModificationType as ModificationType,
+    )
+    from intellicrack.ai.interactive_assistant import (
+        IntellicrackAIAssistant,
+        Tool,
+        ToolCategory,
+    )
+    from intellicrack.ai.learning_engine import (
+        AILearningEngine as AILearningEngine,
+        FailureAnalysis,
+        LearningRecord,
+        PatternRule,
+        get_learning_engine,
+    )
+    from intellicrack.ai.llm_backends import (
+        LLMBackend,
+        LLMConfig,
+        LLMManager,
+        LLMMessage,
+        LLMProvider,
+        LLMResponse,
+        create_anthropic_config,
+        create_gguf_config,
+        create_ollama_config,
+        create_openai_config,
+        get_llm_manager,
+        shutdown_llm_manager,
+    )
+    from intellicrack.ai.llm_config_manager import (
+        LLMConfigManager,
+        get_llm_config_manager,
+    )
+    from intellicrack.ai.model_discovery_service import (
+        ModelDiscoveryService,
+        get_model_discovery_service,
+    )
+    from intellicrack.ai.model_manager_module import (
+        ModelBackend,
+        ModelManager,
+        ONNXBackend,
+        PyTorchBackend,
+        SklearnBackend,
+        TensorFlowBackend,
+        configure_ai_provider,
+        list_available_models,
+        load_model,
+        save_model,
+    )
+    from intellicrack.ai.multi_agent_system import (
+        AgentMessage,
+        AgentRole,
+        AgentTask,
+        MessageType,
+        MultiAgentSystem,
+        TaskPriority,
+    )
+    from intellicrack.ai.optimization_config import (
+        OptimizationManager,
+        OptimizationRule,
+        PerformanceConfig,
+        benchmark_ai_optimizations,
+        get_performance_recommendations,
+        optimization_manager,
+        optimize_ai_performance,
+    )
+    from intellicrack.ai.orchestrator import (
+        AIEventBus,
+        AIOrchestrator,
+        AIResult,
+        AISharedContext,
+        AITask,
+        AITaskType,
+        AnalysisComplexity,
+        get_orchestrator,
+        shutdown_orchestrator,
+    )
+    from intellicrack.ai.parsing_utils import ResponseLineParser
+    from intellicrack.ai.performance_monitor import (
+        PerformanceMetric,
+        PerformanceMonitor,
+        PerformanceProfile,
+        monitor_memory_usage,
+        performance_monitor,
+        profile_ai_operation,
+    )
+    from intellicrack.ai.qemu_manager import QEMUManager
+    from intellicrack.ai.realtime_adaptation_engine import (
+        AdaptationRule,
+        AdaptationType,
+        RealTimeAdaptationEngine as RealTimeAdaptationEngine,
+        RuntimeMetric,
+        TriggerCondition,
+    )
+    from intellicrack.ai.semantic_code_analyzer import (
+        BusinessLogicPattern,
+        SemanticCodeAnalyzer,
+        SemanticIntent,
+        SemanticNode,
+        SemanticRelationship,
+    )
+    from intellicrack.ai.vulnerability_research_integration import (
+        LicensingProtectionAnalyzer,
+    )
+
+    QemuTestManager = QEMUManager
+
+    def learning_engine() -> AILearningEngine:
+        return get_learning_engine()
 
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -96,11 +244,11 @@ def __getattr__(name: str) -> object:
             "vulnerability_research_integration",
             "LicensingProtectionAnalyzer",
         ),
-        "AILearningEngine": ("learning_engine_simple", "AILearningEngine"),
-        "FailureAnalysis": ("learning_engine_simple", "FailureAnalysis"),
-        "LearningRecord": ("learning_engine_simple", "LearningRecord"),
-        "PatternRule": ("learning_engine_simple", "PatternRule"),
-        "get_learning_engine": ("learning_engine_simple", "get_learning_engine"),
+        "AILearningEngine": ("learning_engine", "AILearningEngine"),
+        "FailureAnalysis": ("learning_engine", "FailureAnalysis"),
+        "LearningRecord": ("learning_engine", "LearningRecord"),
+        "PatternRule": ("learning_engine", "PatternRule"),
+        "get_learning_engine": ("learning_engine", "get_learning_engine"),
         "AgentMessage": ("multi_agent_system", "AgentMessage"),
         "AgentRole": ("multi_agent_system", "AgentRole"),
         "AgentTask": ("multi_agent_system", "AgentTask"),
@@ -188,7 +336,7 @@ def __getattr__(name: str) -> object:
 
     special_cases = {
         "QemuTestManager": ("qemu_manager", "QEMUManager"),
-        "learning_engine": ("learning_engine_simple", "get_learning_engine"),
+        "learning_engine": ("learning_engine", "get_learning_engine"),
     }
 
     if name in {"MLVulnerabilityPredictor", "VulnerabilityPredictor"}:
@@ -211,7 +359,7 @@ def __getattr__(name: str) -> object:
             _lazy_imports[name] = result
             return result
         except (ImportError, AttributeError) as e:
-            logger.warning(f"Failed to import {name} from {module_name}: {e}")
+            logger.warning("Failed to import %s from %s: %s", name, module_name, e)
             _lazy_imports[name] = None
             return None
 
@@ -223,7 +371,7 @@ def __getattr__(name: str) -> object:
             _lazy_imports[name] = result
             return result
         except (ImportError, AttributeError) as e:
-            logger.warning(f"Failed to import {name} from {module_name}: {e}")
+            logger.warning("Failed to import %s from %s: %s", name, module_name, e)
             _lazy_imports[name] = None
             return None
 

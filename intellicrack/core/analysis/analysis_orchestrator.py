@@ -35,12 +35,13 @@ from intellicrack.handlers.pyqt6_handler import QObject, pyqtSignal
 
 logger = logging.getLogger(__name__)
 
+from ...ai.common_types import ExecutionResult
 from ...ai.qemu_manager import QEMUManager
-from ...utils.tools.ghidra_script_manager import GhidraScriptManager
+from ...utils.tools.ghidra_script_manager import GhidraScript, GhidraScriptManager
 from .binary_analyzer import BinaryAnalyzer
 from .entropy_analyzer import EntropyAnalyzer
 from .multi_format_analyzer import MultiFormatBinaryAnalyzer as MultiFormatAnalyzer
-from .vulnerability_engine import VulnerabilityEngine
+from .vulnerability_engine import AdvancedVulnerabilityEngine as VulnerabilityEngine
 from .yara_pattern_engine import YaraPatternEngine
 
 
@@ -124,16 +125,16 @@ class AnalysisOrchestrator(QObject):
         self.binary_analyzer = BinaryAnalyzer()
         self.entropy_analyzer = EntropyAnalyzer()
         self.multi_format_analyzer = MultiFormatAnalyzer()
-        self.dynamic_analyzer = None
+        self.dynamic_analyzer: Any = None
         self.vulnerability_engine = VulnerabilityEngine()
         self.yara_engine = YaraPatternEngine()
-        self.radare2 = None
+        self.radare2: Any = None
 
         self.ghidra_script_manager = GhidraScriptManager()
-        self.qemu_manager = None
+        self.qemu_manager: QEMUManager | None = None
 
-        self.enabled_phases = list(AnalysisPhase)
-        self.timeout_per_phase = 300
+        self.enabled_phases: list[AnalysisPhase] = list(AnalysisPhase)
+        self.timeout_per_phase: int = 300
 
     def orchestrate(self) -> OrchestrationResult:
         """Execute orchestrated analysis using the configured binary path.
@@ -280,9 +281,7 @@ class AnalysisOrchestrator(QObject):
                 if signatures_data := components.get("signatures"):
                     result["signatures"] = signatures_data
 
-                # Include ESIL analysis for advanced static analysis
-                esil_data = components.get("esil")
-                if esil_data:
+                if esil_data := components.get("esil"):
                     result["esil_analysis"] = esil_data
 
             if errors := analysis_result.get("errors"):
@@ -302,7 +301,7 @@ class AnalysisOrchestrator(QObject):
         4. Parsing and returning the results
         """
         try:
-            result = {
+            result: dict[str, Any] = {
                 "ghidra_executed": False,
                 "script_used": None,
                 "analysis_results": {},
@@ -312,63 +311,74 @@ class AnalysisOrchestrator(QObject):
             # Initialize QEMU Test Manager on demand
             if self.qemu_manager is None:
                 try:
-                    self.qemu_manager = QEMUManager(vm_name="ghidra_analysis_vm", vm_type="ubuntu", memory="4096", cpu_cores=2)
+                    self.qemu_manager = QEMUManager()
                     # Start the VM if not already running
-                    if not self.qemu_manager.is_vm_running():
+                    if self.qemu_manager is not None and not self.qemu_manager.is_vm_running():
                         vm_started = self.qemu_manager.start_vm(timeout=120)
                         if not vm_started:
-                            result["errors"].append("Failed to start QEMU VM for Ghidra analysis")
+                            errors = result.get("errors")
+                            if isinstance(errors, list):
+                                errors.append("Failed to start QEMU VM for Ghidra analysis")
                             return result
                 except Exception as vm_error:
-                    result["errors"].append(f"QEMU VM initialization failed: {vm_error!s}")
+                    errors = result.get("errors")
+                    if isinstance(errors, list):
+                        errors.append(f"QEMU VM initialization failed: {vm_error!s}")
                     return result
 
             if selected_script := self._select_ghidra_script(binary_path):
                 result["script_used"] = selected_script.name
 
                 vm_binary_path = f"{tempfile.gettempdir()}/analysis_{os.path.basename(binary_path)}"
-                if copy_success := self.qemu_manager.copy_file_to_vm(binary_path, vm_binary_path):
-                    logger.debug(f"Binary copied to VM successfully: {copy_success}")
-                    ghidra_command = self._build_ghidra_command(selected_script.path, vm_binary_path)
+                if self.qemu_manager is not None:
+                    if copy_success := self.qemu_manager.copy_file_to_vm(
+                        binary_path, vm_binary_path
+                    ):
+                        logger.debug("Binary copied to VM successfully: %s", copy_success)
+                        ghidra_command = self._build_ghidra_command(selected_script.path, vm_binary_path)
 
-                    execution_result = self.qemu_manager.execute_in_vm(
-                        ghidra_command,
-                        timeout=300,  # 5 minutes for Ghidra analysis
-                    )
+                        execution_result: ExecutionResult | None = self.qemu_manager.execute_in_vm(
+                            ghidra_command,
+                            timeout=300,
+                        )
 
-                    if execution_result and execution_result.success:
-                        result["ghidra_executed"] = True
-                        # Parse Ghidra output
-                        parsed_results = self._parse_ghidra_output(execution_result.output)
-                        result["analysis_results"] = parsed_results
+                        if execution_result and execution_result.success:
+                            result["ghidra_executed"] = True
+                            parsed_results = self._parse_ghidra_output(execution_result.output)
+                            result["analysis_results"] = parsed_results
 
-                        # Extract key findings
-                        if "license_checks" in parsed_results:
-                            result["license_validation_found"] = True
-                            result["license_checks"] = parsed_results["license_checks"]
+                            if "license_checks" in parsed_results:
+                                result["license_validation_found"] = True
+                                result["license_checks"] = parsed_results["license_checks"]
 
-                        if "crypto_routines" in parsed_results:
-                            result["cryptographic_analysis"] = parsed_results["crypto_routines"]
+                            if "crypto_routines" in parsed_results:
+                                result["cryptographic_analysis"] = parsed_results["crypto_routines"]
 
-                        if "protection_mechanisms" in parsed_results:
-                            result["detected_protections"] = parsed_results["protection_mechanisms"]
+                            if "protection_mechanisms" in parsed_results:
+                                result["detected_protections"] = parsed_results["protection_mechanisms"]
 
-                        if "keygen_patterns" in parsed_results:
-                            result["keygen_candidates"] = parsed_results["keygen_patterns"]
+                            if "keygen_patterns" in parsed_results:
+                                result["keygen_candidates"] = parsed_results["keygen_patterns"]
+                        else:
+                            error_msg = execution_result.error if execution_result else "Unknown execution error"
+                            errors = result.get("errors")
+                            if isinstance(errors, list):
+                                errors.append(f"Ghidra script execution failed: {error_msg}")
                     else:
-                        error_msg = execution_result.error if execution_result else "Unknown execution error"
-                        result["errors"].append(f"Ghidra script execution failed: {error_msg}")
-                else:
-                    result["errors"].append("Failed to copy binary to VM")
+                        errors = result.get("errors")
+                        if isinstance(errors, list):
+                            errors.append("Failed to copy binary to VM")
             else:
-                result["errors"].append("No suitable Ghidra script found for this binary type")
+                errors = result.get("errors")
+                if isinstance(errors, list):
+                    errors.append("No suitable Ghidra script found for this binary type")
 
             return result
 
         except Exception as e:
             return {"error": str(e), "ghidra_executed": False}
 
-    def _select_ghidra_script(self, binary_path: str) -> object | None:
+    def _select_ghidra_script(self, binary_path: str) -> GhidraScript | None:
         """Select the most appropriate Ghidra script for the binary.
 
         Analyzes binary characteristics and selects the best matching
@@ -440,7 +450,7 @@ class AnalysisOrchestrator(QObject):
         Extracts meaningful information from Ghidra analysis output
         and structures it for integration into the analysis pipeline.
         """
-        parsed = {
+        parsed: dict[str, Any] = {
             "raw_output": output,
             "functions_analyzed": 0,
             "license_checks": [],
@@ -459,46 +469,58 @@ class AnalysisOrchestrator(QObject):
                     "LICENSE_CHECK" not in line and "license" in line.lower() and "Function:" in line
                 ):
                     func_match = line.split("Function:")[1].strip()
-                    parsed["license_checks"].append(
-                        {
-                            "function": func_match,
-                            "address": self._extract_address(line),
-                            "confidence": "high" if "LICENSE_CHECK" in line else "medium",
-                        },
-                    )
+                    license_checks = parsed.get("license_checks")
+                    if isinstance(license_checks, list):
+                        license_checks.append(
+                            {
+                                "function": func_match,
+                                "address": self._extract_address(line),
+                                "confidence": "high" if "LICENSE_CHECK" in line else "medium",
+                            },
+                        )
 
                 # Parse cryptographic routine detection
                 if any(crypto in line.lower() for crypto in ["aes", "rsa", "crypto", "hash", "md5", "sha"]):
-                    parsed["crypto_routines"].append(
-                        {
-                            "type": self._identify_crypto_type(line),
-                            "location": self._extract_address(line),
-                            "details": line.strip(),
-                        },
-                    )
+                    crypto_routines = parsed.get("crypto_routines")
+                    if isinstance(crypto_routines, list):
+                        crypto_routines.append(
+                            {
+                                "type": self._identify_crypto_type(line),
+                                "location": self._extract_address(line),
+                                "details": line.strip(),
+                            },
+                        )
 
                 # Parse protection mechanism detection
                 if any(prot in line.lower() for prot in ["anti-debug", "obfuscat", "pack", "encrypt", "protect"]):
-                    parsed["protection_mechanisms"].append({"type": self._identify_protection_type(line), "details": line.strip()})
+                    protection_mechanisms = parsed.get("protection_mechanisms")
+                    if isinstance(protection_mechanisms, list):
+                        protection_mechanisms.append({"type": self._identify_protection_type(line), "details": line.strip()})
 
                 # Parse potential keygen patterns
                 if "keygen" in line.lower() or "serial" in line.lower() or "algorithm" in line.lower():
-                    parsed["keygen_patterns"].append(
-                        {
-                            "pattern": line.strip(),
-                            "type": "algorithmic" if "algorithm" in line.lower() else "serial",
-                        },
-                    )
+                    keygen_patterns = parsed.get("keygen_patterns")
+                    if isinstance(keygen_patterns, list):
+                        keygen_patterns.append(
+                            {
+                                "pattern": line.strip(),
+                                "type": "algorithmic" if "algorithm" in line.lower() else "serial",
+                            },
+                        )
 
                 # Count analyzed functions
                 if "Function analyzed:" in line or "Function:" in line:
-                    parsed["functions_analyzed"] += 1
+                    functions_analyzed = parsed.get("functions_analyzed")
+                    if isinstance(functions_analyzed, int):
+                        parsed["functions_analyzed"] = functions_analyzed + 1
 
                 # Extract interesting strings
                 if "String:" in line and len(line) > 20:
                     string_val = line.split("String:")[1].strip()
                     if self._is_interesting_string(string_val):
-                        parsed["interesting_strings"].append(string_val)
+                        interesting_strings = parsed.get("interesting_strings")
+                        if isinstance(interesting_strings, list):
+                            interesting_strings.append(string_val)
 
         except Exception as parse_error:
             parsed["parse_error"] = str(parse_error)
@@ -606,7 +628,8 @@ class AnalysisOrchestrator(QObject):
     def _scan_vulnerabilities(self, binary_path: str) -> dict[str, Any]:
         """Scan for vulnerabilities."""
         try:
-            return self.vulnerability_engine.scan(binary_path)
+            vulnerabilities = self.vulnerability_engine.scan_binary(binary_path)
+            return {"vulnerabilities": vulnerabilities}
         except Exception as e:
             return {"error": str(e)}
 
@@ -638,15 +661,25 @@ class AnalysisOrchestrator(QObject):
                     }
 
             # Check if dynamic analysis is available
-            if hasattr(self.dynamic_analyzer, "is_available") and self.dynamic_analyzer.is_available():
-                return self.dynamic_analyzer.analyze(binary_path)
+            if hasattr(self.dynamic_analyzer, "is_available") and callable(getattr(self.dynamic_analyzer, "is_available", None)):
+                is_available_method = getattr(self.dynamic_analyzer, "is_available")
+                if is_available_method():
+                    analyze_method = getattr(self.dynamic_analyzer, "analyze", None)
+                    if analyze_method is not None and callable(analyze_method):
+                        analysis_result: dict[str, Any] = analyze_method(binary_path)
+                        return analysis_result
+            elif hasattr(self.dynamic_analyzer, "run_comprehensive_analysis") and callable(getattr(self.dynamic_analyzer, "run_comprehensive_analysis", None)):
+                run_method = getattr(self.dynamic_analyzer, "run_comprehensive_analysis")
+                if callable(run_method):
+                    comprehensive_result: dict[str, Any] = run_method()
+                    return comprehensive_result
             return {"status": "skipped", "reason": "Dynamic analysis not available"}
         except Exception as e:
             return {"error": str(e)}
 
     def _finalize_analysis(self, result: OrchestrationResult) -> dict[str, Any]:
         """Finalize and summarize analysis."""
-        summary = {
+        summary: dict[str, Any] = {
             "total_phases": len(self.enabled_phases),
             "completed_phases": len(result.phases_completed),
             "errors": len(result.errors),
@@ -654,7 +687,7 @@ class AnalysisOrchestrator(QObject):
         }
 
         # Add key findings
-        findings = []
+        findings: list[str] = []
 
         # Check entropy results
         if AnalysisPhase.ENTROPY_ANALYSIS in result.phases_completed:
@@ -665,8 +698,11 @@ class AnalysisOrchestrator(QObject):
         # Check vulnerability results
         if AnalysisPhase.VULNERABILITY_SCAN in result.phases_completed:
             vuln_data = result.results.get("vulnerability_scan", {})
-            if vuln_data.get("vulnerabilities"):
-                findings.append(f"Found {len(vuln_data['vulnerabilities'])} potential vulnerabilities")
+            if vulnerabilities := vuln_data.get("vulnerabilities"):
+                if isinstance(vulnerabilities, list):
+                    findings.append(f"Found {len(vulnerabilities)} potential vulnerabilities")
+                else:
+                    findings.append("Vulnerabilities detected")
 
         summary["key_findings"] = findings
         return summary

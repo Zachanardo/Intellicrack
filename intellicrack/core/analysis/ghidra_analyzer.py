@@ -31,10 +31,11 @@ try:
     import defusedxml.ElementTree as ET  # noqa: N817
 except ImportError:
     import xml.etree.ElementTree as ET  # noqa: S405
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
-from typing import Any
+from typing import Any, Protocol
 
 
 try:
@@ -44,6 +45,24 @@ except ImportError:
 
 from intellicrack.core.config_manager import get_config
 from intellicrack.utils.subprocess_security import secure_popen
+
+
+class SignalProtocol(Protocol):
+    """Protocol for Qt signal."""
+
+    def emit(self, arg: str) -> None:
+        """Emit signal with string argument."""
+        pass
+
+
+class MainAppProtocol(Protocol):
+    """Protocol for main application interface."""
+
+    current_binary: str
+    update_output: SignalProtocol
+    ghidra_analysis_result: GhidraAnalysisResult | None
+    ghidra_scripts_used: list[dict[str, Any]]
+    analysis_completed: SignalProtocol
 
 
 @dataclass
@@ -368,7 +387,7 @@ class GhidraOutputParser:
         except Exception as e:
             raise ValueError(f"Failed to parse JSON output: {e}") from e
 
-    def _parse_json_function(self, func_data: dict) -> GhidraFunction:
+    def _parse_json_function(self, func_data: dict[str, Any]) -> GhidraFunction:
         """Parse function data from JSON."""
         return GhidraFunction(
             name=func_data.get("name", "unknown"),
@@ -388,7 +407,7 @@ class GhidraOutputParser:
             calling_convention=func_data.get("callingConvention", "__cdecl"),
         )
 
-    def _parse_json_datatype(self, dt_data: dict) -> GhidraDataType:
+    def _parse_json_datatype(self, dt_data: dict[str, Any]) -> GhidraDataType:
         """Parse data type from JSON."""
         return GhidraDataType(
             name=dt_data.get("name", "unknown"),
@@ -549,7 +568,7 @@ class GhidraOutputParser:
         )
 
 
-def _run_ghidra_thread(main_app: object, command: list[str], temp_dir: str) -> None:
+def _run_ghidra_thread(main_app: MainAppProtocol, command: list[str], temp_dir: str) -> None:
     """Run the Ghidra command in a background thread and clean up afterward."""
     try:
         main_app.update_output.emit(f"[Ghidra] Running command: {' '.join(command)}")
@@ -737,10 +756,11 @@ class GhidraScriptManager:
 
     def _parse_script_metadata(self, script_file: Path) -> dict[str, Any]:
         """Parse script metadata from comments."""
-        metadata = {
+        params: dict[str, str] = {}
+        metadata: dict[str, Any] = {
             "name": script_file.name,
             "path": str(script_file),
-            "params": {},
+            "params": params,
             "output_format": "text",
             "description": "",
         }
@@ -749,12 +769,12 @@ class GhidraScriptManager:
             content = script_file.read_text(encoding="utf-8", errors="ignore")
             lines = content.split("\n")
 
-            for line in lines[:50]:  # Check first 50 lines for metadata
+            for line in lines[:50]:
                 if "@description" in line:
                     metadata["description"] = line.split("@description")[-1].strip()
                 elif "@param" in line:
                     if param_match := re.match(r".*@param\s+(\w+)\s+(.+)", line):
-                        metadata["params"][param_match[1]] = param_match[2]
+                        params[param_match[1]] = param_match[2]
                 elif "@output" in line:
                     metadata["output_format"] = line.split("@output")[-1].strip()
         except (IndexError, ValueError):
@@ -812,7 +832,7 @@ class GhidraScriptManager:
         return script_args
 
 
-def run_advanced_ghidra_analysis(main_app: object, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
+def run_advanced_ghidra_analysis(main_app: MainAppProtocol, analysis_type: str = "comprehensive", scripts: list[str] | None = None) -> None:
     """Launch a Ghidra headless analysis session with intelligent script selection."""
     if not main_app.current_binary:
         main_app.update_output.emit("[Ghidra] Error: No binary loaded.")
@@ -972,7 +992,7 @@ def _identify_licensing_functions(result: GhidraAnalysisResult) -> list[tuple[in
 
 def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format: str = "json") -> Path:
     """Export Ghidra analysis results in various formats."""
-    output_path = Path(output_path)
+    output_path_obj = Path(output_path)
 
     if format == "json":
         export_data = {
@@ -1000,7 +1020,7 @@ def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format
             "exports": [{"name": name, "address": hex(addr)} for name, addr in result.exports],
         }
 
-        with open(output_path, "w", encoding="utf-8") as f:
+        with open(output_path_obj, "w", encoding="utf-8") as f:
             json.dump(export_data, f, indent=2)
 
     elif format == "xml":
@@ -1025,6 +1045,6 @@ def export_ghidra_results(result: GhidraAnalysisResult, output_path: str, format
                 decomp_elem.text = func.decompiled_code
 
         tree = ET.ElementTree(root)
-        tree.write(output_path, encoding="utf-8", xml_declaration=True)
+        tree.write(output_path_obj, encoding="utf-8", xml_declaration=True)
 
-    return output_path
+    return output_path_obj

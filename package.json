@@ -72,6 +72,7 @@
         "eslint-plugin-unicorn": "*",
         "eslint-plugin-yml": "*",
         "knip": "*",
+        "playwright": "^1.57.0",
         "prettier": "*",
         "prettier-plugin-toml": "*",
         "typescript": "*"

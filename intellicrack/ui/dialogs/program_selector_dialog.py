@@ -297,7 +297,7 @@ class AnalysisPage(QWizardPage):
                             break
 
         except Exception as e:
-            logger.error(f"Error analyzing installation folder: {e}")
+            logger.exception("Error analyzing installation folder: %s", e)
 
     def add_licensing_file_to_tree(self, file_path: str | Path, file_type: str, priority: int) -> None:
         """Add a licensing file to the tree widget.
@@ -339,7 +339,7 @@ class AnalysisPage(QWizardPage):
             self.licensing_tree.addTopLevelItem(item)
 
         except Exception as e:
-            logger.error(f"Error adding licensing file to tree: {e}")
+            logger.exception("Error adding licensing file to tree: %s", e)
 
     def format_file_size(self, size: float) -> str:
         """Format file size in human-readable format.
@@ -400,7 +400,7 @@ class AnalysisPage(QWizardPage):
                         shell=False,
                     )
         except Exception as e:
-            logger.error(f"Error opening licensing file: {e}")
+            logger.exception("Error opening licensing file: %s", e)
             QMessageBox.warning(self, "Error", f"Could not open file: {e}")
 
 

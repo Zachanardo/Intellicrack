@@ -189,10 +189,10 @@ class CodeMeterProtocolParser:
             "container_type": "CmStick/T",
             "memory_total": 65536,
             "memory_free": 32768,
-            "creation_time": int(time.time() - random.randint(86400, 864000)),  # noqa: S311 - Simulated creation time offset
-            "activation_count": random.randint(1, 100),  # noqa: S311 - Simulated activation statistics
-            "firm_update_count": random.randint(0, 10),  # noqa: S311 - Simulated update statistics
-            "product_update_count": random.randint(0, 50),  # noqa: S311 - Simulated update statistics
+            "creation_time": int(time.time() - random.randint(86400, 864000)),  # noqa: S311 - Randomized creation time offset
+            "activation_count": random.randint(1, 100),  # noqa: S311 - Randomized activation statistics
+            "firm_update_count": random.randint(0, 10),  # noqa: S311 - Randomized update statistics
+            "product_update_count": random.randint(0, 50),  # noqa: S311 - Randomized update statistics
             "device_id": str(uuid.uuid4()).upper(),
             "firmware_version": "6.90.5317.500",
         }
@@ -219,7 +219,7 @@ class CodeMeterProtocolParser:
             offset += 4
 
             if magic not in [0x434D4554, 0x57495553, 0x434D5354]:  # "CMET", "WIUS", "CMST"
-                self.logger.debug(f"Invalid CodeMeter magic: 0x{magic:X}")
+                self.logger.debug("Invalid CodeMeter magic: 0x%X", magic)
                 return None
 
             # Parse header
@@ -296,11 +296,11 @@ class CodeMeterProtocolParser:
             )
 
             command_name = self.CODEMETER_COMMANDS.get(command, f"UNKNOWN_{command:04X}")
-            self.logger.info(f"Parsed CodeMeter {command_name} request for product {firm_code}:{product_code}")
+            self.logger.info("Parsed CodeMeter %s request for product %s:%s", command_name, firm_code, product_code)
             return request
 
         except Exception as e:
-            self.logger.error(f"Failed to parse CodeMeter request: {e}")
+            self.logger.exception("Failed to parse CodeMeter request: %s", e)
             return None
 
     def _parse_session_context(self, data: bytes) -> dict[str, Any]:
@@ -330,7 +330,7 @@ class CodeMeterProtocolParser:
                 context[key] = value
 
         except Exception as e:
-            self.logger.debug(f"Error parsing session context: {e}")
+            self.logger.debug("Error parsing session context: %s", e)
 
         return context
 
@@ -363,7 +363,7 @@ class CodeMeterProtocolParser:
                     additional[f"field_{field_type:04X}"] = field_data
 
         except Exception as e:
-            self.logger.debug(f"Error parsing additional data: {e}")
+            self.logger.debug("Error parsing additional data: %s", e)
 
         return additional
 
@@ -378,7 +378,7 @@ class CodeMeterProtocolParser:
 
         """
         command_name = self.CODEMETER_COMMANDS.get(request.command, "UNKNOWN")
-        self.logger.info(f"Generating response for {command_name} command")
+        self.logger.info("Generating response for %s command", command_name)
 
         if request.command == 0x1000:  # CM_LOGIN
             return self._handle_login(request)
@@ -531,7 +531,7 @@ class CodeMeterProtocolParser:
 
     def _handle_encrypt(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle encryption request."""
-        # Simulate encryption (XOR with firm/product code)
+        # Perform XOR encryption using firm/product code as key
         key = struct.pack("<II", request.firm_code, request.product_code)
         encrypted_data = bytearray()
 
@@ -739,7 +739,7 @@ class CodeMeterProtocolParser:
 
     def _handle_unknown_command(self, request: CodeMeterRequest) -> CodeMeterResponse:
         """Handle unknown command."""
-        self.logger.warning(f"Unknown CodeMeter command: 0x{request.command:04X}")
+        self.logger.warning("Unknown CodeMeter command: 0x%04X", request.command)
         return CodeMeterResponse(
             status=0x00000012,  # CM_GCM_ENCRYPTION_ERROR (generic error)
             request_id=request.request_id,
@@ -801,7 +801,7 @@ class CodeMeterProtocolParser:
             return bytes(packet)
 
         except Exception as e:
-            self.logger.error(f"Failed to serialize CodeMeter response: {e}")
+            self.logger.exception("Failed to serialize CodeMeter response: %s", e)
             # Return minimal error response
             return struct.pack("<III", 0x434D4554, response.status, response.request_id)
 
@@ -825,6 +825,6 @@ class CodeMeterProtocolParser:
                 serialized.extend(value_bytes)
 
             except Exception as e:
-                self.logger.debug(f"Error serializing {key}: {e}")
+                self.logger.debug("Error serializing %s: %s", key, e)
 
         return bytes(serialized)

@@ -62,7 +62,7 @@ try:
 
     PYSHARK_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in traffic_analyzer: %s", e, exc_info=True)
+    logger.exception("Import error in traffic_analyzer: %s", e)
     PYSHARK_AVAILABLE = False
 
 try:
@@ -70,7 +70,7 @@ try:
 
     SCAPY_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in traffic_analyzer: %s", e, exc_info=True)
+    logger.exception("Import error in traffic_analyzer: %s", e)
     SCAPY_AVAILABLE = False
 
 # Visualization dependencies
@@ -79,7 +79,7 @@ try:
 
     MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
-    logger.error("Import error in traffic_analyzer: %s", e, exc_info=True)
+    logger.exception("Import error in traffic_analyzer: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
     plt = None
@@ -228,7 +228,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 try:
                     self._capture_packets(interface)
                 except Exception as e:
-                    self.logger.error("Error in capture thread: %s", e, exc_info=True)
+                    self.logger.exception("Error in capture thread: %s", e)
 
             # Start capture in a separate thread
             thread = threading.Thread(target=capture_thread)
@@ -239,7 +239,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return True
 
         except Exception as e:
-            self.logger.error("Error starting capture: %s", e, exc_info=True)
+            self.logger.exception("Error starting capture: %s", e)
             return False
 
     def _capture_packets(self, interface: str | None = None) -> None:
@@ -261,9 +261,9 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             if PACKET_CAPTURE_LIB == "socket":
                 self._capture_with_socket(interface)
                 return
-            self.logger.error("No packet capture library available")
+            self.logger.exception("No packet capture library available")
         except Exception as e:
-            self.logger.error("Packet capture failed: %s", e, exc_info=True)
+            self.logger.exception("Packet capture failed: %s", e)
 
     def _capture_with_socket(
         self,
@@ -322,11 +322,11 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         except Exception as e:
                             self.logger.warning("Could not bind to interface %s: %s", interface, e)
             except PermissionError:
-                self.logger.error("Permission denied: Raw socket capture requires administrator/root privileges")
+                self.logger.exception("Permission denied: Raw socket capture requires administrator/root privileges")
                 raise
             except OSError as e:
                 if "access" in str(e).lower() or "permission" in str(e).lower():
-                    self.logger.error("Permission denied: Raw socket capture requires administrator/root privileges")
+                    self.logger.exception("Permission denied: Raw socket capture requires administrator/root privileges")
                 raise
 
             # Set timeout if specified
@@ -389,7 +389,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 except TimeoutError:
                     self.logger.info("Packet capture timeout reached")
                 except Exception as e:
-                    self.logger.error("Error during packet capture: %s", e, exc_info=True)
+                    self.logger.exception("Error during packet capture: %s", e)
                 finally:
                     # Clean up
                     capture_stats["packets_total"] = packets_captured
@@ -401,7 +401,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                             if hasattr(socket, "SIO_RCVALL") and hasattr(socket, "RCVALL_OFF"):
                                 s.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
                         except (OSError, AttributeError) as e:
-                            self.logger.error("Error disabling promiscuous mode: %s", e, exc_info=True)
+                            self.logger.exception("Error disabling promiscuous mode: %s", e)
 
                     s.close()
 
@@ -419,7 +419,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         out_file.write(f"# Intellicrack socket capture started at {datetime.datetime.now()}\n".encode())
                         perform_capture(out_file)
                 except Exception as e:
-                    self.logger.error("Failed to open output file: %s", e, exc_info=True)
+                    self.logger.exception("Failed to open output file: %s", e)
                     # Continue capture without output file
                     perform_capture(None)
             else:
@@ -429,7 +429,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return capture_stats
 
         except Exception as e:
-            self.logger.error("Failed to initialize socket for packet capture: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize socket for packet capture: %s", e)
             raise
 
     def _process_captured_packet(self, packet_data: bytes) -> None:
@@ -471,7 +471,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                     except Exception as e:
                         self.logger.debug("Error extracting TCP ports: %s", e)
         except Exception as e:
-            self.logger.error("Error processing packet: %s", e, exc_info=True)
+            self.logger.exception("Error processing packet: %s", e)
 
     def _capture_with_pyshark(
         self,
@@ -492,7 +492,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         """
         if not PYSHARK_AVAILABLE:
-            self.logger.error("pyshark not available - please install pyshark")
+            self.logger.exception("pyshark not available - please install pyshark")
             return
 
         try:
@@ -603,7 +603,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                         )
 
                 except Exception as packet_ex:
-                    self.logger.error("Error processing packet: %s", packet_ex, exc_info=True)
+                    self.logger.exception("Error processing packet: %s", packet_ex)
                     capture_stats["errors"] += 1
                     # Continue capturing despite errors in individual packets
                     continue
@@ -629,7 +629,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 self.logger.info("Capture saved to file: %s", output_file)
 
         except Exception as e:
-            self.logger.error("Failed to capture packets: %s", e, exc_info=True)
+            self.logger.exception("Failed to capture packets: %s", e)
             raise
 
     def _process_pyshark_packet(self, packet: object) -> bool:
@@ -746,7 +746,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
                 return True
 
         except Exception as e:
-            self.logger.error("Error processing packet: %s", e, exc_info=True)
+            self.logger.exception("Error processing packet: %s", e)
             return False
 
         return False
@@ -784,7 +784,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
 
         """
         if not SCAPY_AVAILABLE:
-            self.logger.error("scapy not available - please install scapy")
+            self.logger.exception("scapy not available - please install scapy")
             return
 
         self.logger.info("Starting packet capture using Scapy...")
@@ -911,7 +911,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.info("Scapy capture completed")
 
         except Exception as e:
-            self.logger.error("Scapy capture failed: %s", e, exc_info=True)
+            self.logger.exception("Scapy capture failed: %s", e)
             self.logger.info("Falling back to socket capture")
             self._capture_with_socket(interface)
 
@@ -975,7 +975,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return results
 
         except Exception as e:
-            self.logger.error("Error analyzing traffic: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing traffic: %s", e)
             return None
 
     def _generate_visualizations(self, results: dict[str, Any]) -> None:
@@ -1060,7 +1060,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             self.logger.info("Generated visualizations in %s", self.config["visualization_dir"])
 
         except Exception as e:
-            self.logger.error("Error generating visualizations: %s", e, exc_info=True)
+            self.logger.exception("Error generating visualizations: %s", e)
 
     def get_results(self) -> dict[str, Any]:
         """Get network analysis results.
@@ -1317,18 +1317,19 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             dict[str, float]: Dictionary with keys 'min', 'max', 'avg', 'total' containing duration statistics
 
         """
-        durations = [
-            conn["last_time"] - conn["start_time"] for conn in self.connections.values() if "last_time" in conn and "start_time" in conn
-        ]
-        if not durations:
+        if durations := [
+            conn["last_time"] - conn["start_time"]
+            for conn in self.connections.values()
+            if "last_time" in conn and "start_time" in conn
+        ]:
+            return {
+                "min": min(durations),
+                "max": max(durations),
+                "avg": sum(durations) / len(durations),
+                "total": len(durations),
+            }
+        else:
             return {"min": 0, "max": 0, "avg": 0, "total": 0}
-
-        return {
-            "min": min(durations),
-            "max": max(durations),
-            "avg": sum(durations) / len(durations),
-            "total": len(durations),
-        }
 
     def stop_capture(self) -> bool:
         """Stop the packet capture process.
@@ -1365,7 +1366,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return True
 
         except Exception as e:
-            self.logger.error("Error stopping capture: %s", e, exc_info=True)
+            self.logger.exception("Error stopping capture: %s", e)
             return False
 
     def generate_report(self, filename: str | None = None) -> bool:
@@ -1383,7 +1384,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             results = self.analyze_traffic()
 
             if not results:
-                self.logger.error("No analysis results available")
+                self.logger.exception("No analysis results available")
                 return False
 
             # Use default filename if not provided
@@ -1474,7 +1475,7 @@ class NetworkTrafficAnalyzer(BaseNetworkAnalyzer):
             return True
 
         except Exception as e:
-            self.logger.error("Error generating report: %s", e, exc_info=True)
+            self.logger.exception("Error generating report: %s", e)
             return False
 
 

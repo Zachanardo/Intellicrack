@@ -124,7 +124,11 @@ class BypassStrategySelector:
         risk_level = detection_report.risk_level
 
         logger.info(
-            f"Selecting strategy: {num_functions} functions, {num_libraries} libraries, {risk_level} risk, {target_state} state",
+            "Selecting strategy: %d functions, %d libraries, %s risk, %s state",
+            num_functions,
+            num_libraries,
+            risk_level,
+            target_state,
         )
 
         if target_state == "static":
@@ -168,7 +172,10 @@ class BypassStrategySelector:
             return BypassMethod.HYBRID
 
         if num_functions <= 3 and risk_level == "low":
-            high_confidence = sum(bool(func.confidence >= 0.8) for func in detection_report.validation_functions)
+            high_confidence = sum(
+                func.confidence >= 0.8
+                for func in detection_report.validation_functions
+            )
             if high_confidence == num_functions:
                 logger.info("Simple validation with high confidence, using binary patch")
                 return BypassMethod.BINARY_PATCH
@@ -221,7 +228,9 @@ class BypassStrategySelector:
         if hasattr(detection_report, "is_packed"):
             return detection_report.is_packed
 
-        low_confidence_count = sum(bool(func.confidence < 0.5) for func in detection_report.validation_functions)
+        low_confidence_count = sum(
+            func.confidence < 0.5 for func in detection_report.validation_functions
+        )
 
         return low_confidence_count > len(detection_report.validation_functions) * 0.5
 
@@ -283,7 +292,7 @@ class BypassStrategySelector:
         for func in detection_report.validation_functions:
             context_lower = func.context.lower() if func.context else ""
             if any(keyword in context_lower for keyword in critical_keywords):
-                logger.debug(f"High risk: Critical keyword in {func.api_name}")
+                logger.debug("High risk: Critical keyword in %s", func.api_name)
                 return "high"
 
         if len(detection_report.validation_functions) > 10:
@@ -320,8 +329,8 @@ class BypassStrategySelector:
         fallback = fallback_chain.get(failed_method)
 
         if fallback:
-            logger.info(f"Fallback from {failed_method.value} to {fallback.value}")
+            logger.info("Fallback from %s to %s", failed_method.value, fallback.value)
         else:
-            logger.warning(f"No fallback available for {failed_method.value}")
+            logger.warning("No fallback available for %s", failed_method.value)
 
         return fallback

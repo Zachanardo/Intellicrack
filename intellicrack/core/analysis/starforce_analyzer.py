@@ -745,9 +745,9 @@ class StarForceAnalyzer:
                     ctypes.byref(bytes_returned),
                     None,
                 ):
-                    self.logger.debug(f"DeviceIoControl succeeded: result={result}, bytes={bytes_returned.value}")
+                    self.logger.debug("DeviceIoControl succeeded: result=%s, bytes=%d", result, bytes_returned.value)
                     return output_buffer.raw[: bytes_returned.value]
-                self.logger.debug(f"DeviceIoControl failed: result={result}")
+                self.logger.debug("DeviceIoControl failed: result=%s", result)
 
             finally:
                 self._kernel32.CloseHandle(handle)

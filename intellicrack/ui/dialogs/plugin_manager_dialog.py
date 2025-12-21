@@ -47,9 +47,9 @@ from intellicrack.handlers.pyqt6_handler import (
     QTimer,
     QVBoxLayout,
     QWidget,
-    logger,
     pyqtSignal,
 )
+from intellicrack.utils.logger import logger
 
 
 # Additional imports specific to plugin manager
@@ -117,7 +117,7 @@ if not HAS_PYQT:
 
 else:
 
-    class PluginInstallThread(QThread):
+    class PluginInstallThread(QThread):  # type: ignore[no-redef]
         """Thread for installing plugins without blocking the UI."""
 
         progress_updated = pyqtSignal(int)
@@ -160,10 +160,10 @@ else:
                 logger.error("Error in plugin_manager_dialog: %s", e, exc_info=True)
                 self.installation_finished.emit(False, f"Installation failed: {e!s}")
 
-    class PluginManagerDialog(QDialog):
+    class PluginManagerDialog(QDialog):  # type: ignore[no-redef]
         """Dialog for managing Intellicrack plugins."""
 
-        def __init__(self, parent: object | None = None, app_context: object | None = None) -> None:
+        def __init__(self, parent: QWidget | None = None, app_context: object | None = None) -> None:
             """Initialize plugin manager dialog with plugin discovery and management capabilities."""
             super().__init__(parent)
             self.setWindowTitle("Plugin Manager")
@@ -186,7 +186,7 @@ else:
             }
 
             # Plugin management
-            self.installed_plugins = {}
+            self.installed_plugins: list[dict[str, object]] = []
             self.plugin_categories = [
                 "Analysis",
                 "Exploitation",
@@ -195,14 +195,14 @@ else:
                 "Utilities",
                 "Tools",
             ]
-            self.plugin_configs = {}
+            self.plugin_configs: dict[str, object] = {}
 
             # Threading
-            self.install_thread = None
-            self.discovery_thread = None
+            self.install_thread: PluginInstallThread | None = None
+            self.discovery_thread: QThread | None = None
 
             # Current state
-            self.current_plugin = None
+            self.current_plugin: str | None = None
             self.filter_category = "All"
             self.search_text = ""
 
@@ -329,14 +329,17 @@ else:
                 # Check each installed plugin for updates
                 for plugin_info in self.installed_plugins:
                     try:
-                        plugin_name = plugin_info.get("name", "")
-                        current_version = plugin_info.get("version", "1.0.0")
+                        plugin_name_raw = plugin_info.get("name", "")
+                        plugin_name = str(plugin_name_raw) if plugin_name_raw else ""
+                        current_version_raw = plugin_info.get("version", "1.0.0")
+                        current_version = str(current_version_raw) if current_version_raw else "1.0.0"
 
                         if repo_url := self._get_plugin_repository_url(plugin_info):
                             logger.debug("Checking updates for %s from %s", plugin_name, repo_url)
 
                             if latest_version_info := self._fetch_latest_version(repo_url, plugin_name):
-                                latest_version = latest_version_info.get("version", current_version)
+                                latest_version_raw = latest_version_info.get("version", current_version)
+                                latest_version = str(latest_version_raw) if latest_version_raw else current_version
 
                                 # Compare versions using semantic versioning
                                 try:
@@ -376,11 +379,13 @@ else:
             except Exception as e:
                 logger.warning("Update check failed: %s", e)
 
-        def _get_plugin_repository_url(self, plugin_info: dict) -> str | None:
+        def _get_plugin_repository_url(self, plugin_info: dict[str, object]) -> str | None:
             """Determine repository URL for a plugin."""
             try:
-                plugin_name = plugin_info.get("name", "")
-                plugin_path = plugin_info.get("path", "")
+                plugin_name_raw = plugin_info.get("name", "")
+                plugin_name = str(plugin_name_raw) if plugin_name_raw else ""
+                plugin_path_raw = plugin_info.get("path", "")
+                plugin_path = str(plugin_path_raw) if plugin_path_raw else ""
 
                 # Try to read repository URL from plugin metadata
                 if plugin_path.endswith(".py") and os.path.exists(plugin_path):
@@ -408,7 +413,7 @@ else:
                 logger.debug("Failed to determine repository URL for plugin %s: %s", plugin_info.get("name", "unknown"), e)
                 return None
 
-        def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict | None:
+        def _fetch_latest_version(self, repo_url: str, plugin_name: str) -> dict[str, object] | None:
             """Fetch latest version information from repository."""
             try:
                 from urllib.parse import urlparse
@@ -489,7 +494,7 @@ else:
 
                 return None
 
-            except requests.RequestError as req_error:
+            except requests.RequestException as req_error:
                 logger.debug("Network error fetching version for %s: %s", plugin_name, req_error)
                 return None
             except Exception as e:
@@ -500,7 +505,7 @@ else:
             """Show welcome message for first-time users."""
             welcome_msg = QMessageBox(self)
             welcome_msg.setWindowTitle("Welcome to Plugin Manager")
-            welcome_msg.setIcon(QMessageBox.Information)
+            welcome_msg.setIcon(QMessageBox.Icon.Information)
             welcome_msg.setText(
                 "Welcome to the Intellicrack Plugin Manager!\n\n"
                 "Here you can:\n"
@@ -510,7 +515,7 @@ else:
                 " Create and test your own plugins\n\n"
                 "Get started by exploring the available tabs above.",
             )
-            welcome_msg.addButton("Get Started", QMessageBox.AcceptRole)
+            welcome_msg.addButton("Get Started", QMessageBox.ButtonRole.AcceptRole)
             welcome_msg.exec()
 
         def load_settings(self) -> None:
@@ -530,7 +535,7 @@ else:
             except Exception as e:
                 logger.debug("Failed to load plugin settings: %s", e)
 
-        def setup_installed_tab(self, tab: object) -> None:
+        def setup_installed_tab(self, tab: QWidget) -> None:
             """Set up the installed plugins tab."""
             layout = QVBoxLayout(tab)
 
@@ -579,7 +584,7 @@ else:
             # Connect selection change
             self.installed_list.itemSelectionChanged.connect(self.on_installed_selection_changed)
 
-        def setup_install_tab(self, tab: object) -> None:
+        def setup_install_tab(self, tab: QWidget) -> None:
             """Set up the install from file tab."""
             layout = QVBoxLayout(tab)
 
@@ -629,7 +634,7 @@ else:
 
             layout.addStretch()
 
-        def setup_development_tab(self, tab: object) -> None:
+        def setup_development_tab(self, tab: QWidget) -> None:
             """Set up the plugin development tab."""
             layout = QVBoxLayout(tab)
 
@@ -703,7 +708,7 @@ else:
                             plugin_info = self.get_plugin_info(item_path)
                             self.installed_plugins.append(plugin_info)
 
-                            list_item = QListWidgetItem(plugin_info["name"])
+                            list_item = QListWidgetItem(str(plugin_info["name"]))
                             list_item.setData(0, plugin_info)
 
                             # Color code based on status
@@ -718,9 +723,9 @@ else:
             except Exception as e:
                 logger.error("Error loading installed plugins: %s", e, exc_info=True)
 
-        def get_plugin_info(self, plugin_path: str) -> dict:
+        def get_plugin_info(self, plugin_path: str) -> dict[str, object]:
             """Extract information about a plugin."""
-            info = {
+            info: dict[str, object] = {
                 "name": os.path.basename(plugin_path),
                 "path": plugin_path,
                 "type": "file" if os.path.isfile(plugin_path) else "directory",
@@ -801,10 +806,10 @@ Description: {plugin_info.get("description", "No description available")}"""
                     self,
                     "Confirm Removal",
                     f"Are you sure you want to remove plugin '{plugin_info['name']}'?",
-                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
 
-                if reply == QMessageBox.Yes:
+                if reply == QMessageBox.StandardButton.Yes:
                     try:
                         if os.path.isfile(plugin_info["path"]):
                             os.remove(plugin_info["path"])
@@ -837,8 +842,9 @@ Description: {plugin_info.get("description", "No description available")}"""
                 form_layout = QFormLayout(form_group)
 
                 # Load existing configuration
-                plugin_config = self.plugin_configs.get(plugin_name, {})
-                config_widgets = {}
+                plugin_config_raw = self.plugin_configs.get(plugin_name, {})
+                plugin_config: dict[str, object] = plugin_config_raw if isinstance(plugin_config_raw, dict) else {}
+                config_widgets: dict[str, QCheckBox | QSpinBox | QComboBox | QLineEdit | QTextEdit] = {}
 
                 # Common configuration options
                 config_options = [
@@ -939,6 +945,7 @@ Description: {plugin_info.get("description", "No description available")}"""
 
                 # Create widgets for each option
                 for key, label, widget_type, default_value in config_options:
+                    widget: QCheckBox | QSpinBox | QComboBox | QLineEdit
                     if widget_type == "checkbox":
                         widget = QCheckBox()
                         widget.setChecked(bool(default_value))
@@ -969,7 +976,8 @@ Description: {plugin_info.get("description", "No description available")}"""
                 advanced_layout.addWidget(QLabel("Custom Arguments:"))
                 custom_args_edit = QTextEdit()
                 custom_args_edit.setMaximumHeight(100)
-                custom_args_edit.setPlainText(plugin_config.get("custom_args", ""))
+                custom_args_raw = plugin_config.get("custom_args", "")
+                custom_args_edit.setPlainText(str(custom_args_raw) if custom_args_raw else "")
                 advanced_layout.addWidget(custom_args_edit)
                 config_widgets["custom_args"] = custom_args_edit
 
@@ -1000,14 +1008,14 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 def reset_defaults() -> None:
                     for key, _label, widget_type, default_value in config_options:
                         widget = config_widgets[key]
-                        if widget_type == "checkbox":
+                        if widget_type == "checkbox" and isinstance(widget, QCheckBox):
                             widget.setChecked(bool(default_value))
-                        elif widget_type == "spinbox":
+                        elif widget_type == "spinbox" and isinstance(widget, QSpinBox):
                             widget.setValue(int(default_value) if isinstance(default_value, (int, float)) else 0)
-                        elif widget_type == "combo":
+                        elif widget_type == "combo" and isinstance(widget, QComboBox):
                             if isinstance(default_value, str):
                                 widget.setCurrentText(default_value)
-                        else:  # text
+                        elif isinstance(widget, QLineEdit):  # text
                             widget.setText(str(default_value) if default_value else "")
                     custom_args_edit.clear()
 
@@ -1022,7 +1030,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
                 def save_configuration() -> None:
                     # Save configuration
-                    new_config = {}
+                    new_config: dict[str, object] = {}
                     for key, widget in config_widgets.items():
                         if isinstance(widget, QCheckBox):
                             new_config[key] = widget.isChecked()
@@ -1072,7 +1080,7 @@ Path: {plugin_info.get("path", "Unknown")}"""
             """Install the selected available plugin - functionality removed."""
             QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
 
-        def _check_dependencies(self, dependencies: list) -> list:
+        def _check_dependencies(self, dependencies: list[str]) -> list[str]:
             """Check which dependencies are missing."""
             missing = []
 
@@ -1127,14 +1135,16 @@ Path: {plugin_info.get("path", "Unknown")}"""
                     missing.append(dep)
             return missing
 
-        def _start_remote_plugin_installation(self, plugin_info: dict) -> None:
+        def _start_remote_plugin_installation(self, plugin_info: dict[str, object]) -> None:
             """Start the remote plugin installation process."""
-            plugin_name = plugin_info["name"]
+            plugin_name_raw = plugin_info["name"]
+            plugin_name = str(plugin_name_raw) if plugin_name_raw else "unnamed"
             source = plugin_info.get("source", "remote")
 
             if source == "local":
                 # Copy local plugin
-                src_path = plugin_info.get("install_path")
+                src_path_raw = plugin_info.get("install_path")
+                src_path = str(src_path_raw) if src_path_raw else ""
                 if not src_path or not os.path.exists(src_path):
                     QMessageBox.critical(self, "Error", "Local plugin file not found")
                     return
@@ -1160,7 +1170,8 @@ Path: {plugin_info.get("path", "Unknown")}"""
 
             else:
                 # Download and install remote plugin
-                download_url = plugin_info.get("download_url")
+                download_url_raw = plugin_info.get("download_url")
+                download_url = str(download_url_raw) if download_url_raw else ""
 
                 if not download_url:
                     # Create a realistic plugin file for fallback plugins
@@ -1279,17 +1290,22 @@ Path: {plugin_info.get("path", "Unknown")}"""
                 # Start installation after dialog shows
                 QTimer.singleShot(500, perform_installation)
 
-                if install_dialog.exec() == QDialog.Accepted:
+                if install_dialog.exec() == QDialog.DialogCode.Accepted:
                     self.load_installed_plugins()
                     QMessageBox.information(self, "Success", f"Plugin '{plugin_name}' has been installed successfully!")
 
-        def _create_fallback_plugin(self, plugin_info: dict) -> None:
+        def _create_fallback_plugin(self, plugin_info: dict[str, object]) -> None:
             """Create a realistic plugin file for fallback plugins."""
-            plugin_name = plugin_info["name"]
-            plugin_version = plugin_info.get("version", "1.0.0")
-            plugin_author = plugin_info.get("author", "Unknown")
-            plugin_desc = plugin_info.get("description", "No description available")
-            plugin_category = plugin_info.get("category", "Utilities")
+            plugin_name_raw = plugin_info["name"]
+            plugin_name = str(plugin_name_raw) if plugin_name_raw else "unnamed"
+            plugin_version_raw = plugin_info.get("version", "1.0.0")
+            plugin_version = str(plugin_version_raw) if plugin_version_raw else "1.0.0"
+            plugin_author_raw = plugin_info.get("author", "Unknown")
+            plugin_author = str(plugin_author_raw) if plugin_author_raw else "Unknown"
+            plugin_desc_raw = plugin_info.get("description", "No description available")
+            plugin_desc = str(plugin_desc_raw) if plugin_desc_raw else "No description available"
+            plugin_category_raw = plugin_info.get("category", "Utilities")
+            plugin_category = str(plugin_category_raw) if plugin_category_raw else "Utilities"
 
             # Generate plugin code based on category
             if plugin_category.lower() == "analysis":
@@ -1794,7 +1810,7 @@ PLUGIN_INFO = {{
             """Preview the selected available plugin - functionality removed."""
             QMessageBox.information(self, "Information", "Available plugins functionality has been removed.")
 
-        def _install_from_preview(self, plugin_info: dict, preview_dialog: object) -> None:
+        def _install_from_preview(self, plugin_info: dict[str, object], preview_dialog: object) -> None:
             """Install plugin directly from preview dialog - functionality removed."""
 
         def _generate_preview_analysis_code(self, plugin_name: str) -> str:
@@ -1973,14 +1989,14 @@ def create_plugin():
             install_dir = os.path.join(self.plugins_dir, os.path.splitext(os.path.basename(plugin_file))[0])
             os.makedirs(install_dir, exist_ok=True)
 
-            self.install_thread = PluginInstallThread(plugin_file, install_dir)
-            self.install_thread.progress_updated.connect(self.progress_bar.setValue)
-            self.install_thread.status_updated.connect(self.status_label.setText)
-            self.install_thread.installation_finished.connect(self.on_installation_finished)
+            self.install_thread = PluginInstallThread(plugin_file, install_dir)  # type: ignore[call-arg]
+            self.install_thread.progress_updated.connect(self.progress_bar.setValue)  # type: ignore[attr-defined]
+            self.install_thread.status_updated.connect(self.status_label.setText)  # type: ignore[attr-defined]
+            self.install_thread.installation_finished.connect(self.on_installation_finished)  # type: ignore[attr-defined]
 
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-            self.install_thread.start()
+            self.install_thread.start()  # type: ignore[attr-defined]
 
         def on_installation_finished(self, success: bool, message: str) -> None:
             """Handle installation completion."""

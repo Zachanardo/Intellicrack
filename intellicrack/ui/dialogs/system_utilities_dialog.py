@@ -835,8 +835,8 @@ class SystemUtilitiesDialog(QDialog):
         """Handle process selection change."""
         if self.process_table is None:
             return
-        has_selection = len(self.process_table.selectedItems()) > 0
         if self.process_kill_btn is not None:
+            has_selection = len(self.process_table.selectedItems()) > 0
             self.process_kill_btn.setEnabled(has_selection)
 
     def kill_selected_process(self) -> None:

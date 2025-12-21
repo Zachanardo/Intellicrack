@@ -22,7 +22,7 @@ import datetime
 import os
 import sys
 from pathlib import Path
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar, cast
 
 from intellicrack.handlers.pyqt6_handler import QMessageBox
 
@@ -34,20 +34,20 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
+class SignalEmitter(Protocol):
+    """Protocol for Qt signal emitter."""
+
+    def emit(self, *args: object) -> None:
+        """Emit signal with arbitrary arguments."""
+        pass
+
+
 class ApplicationInterface(Protocol):
     """Protocol for application interface used in patching operations."""
 
     binary_path: str
     potential_patches: list[dict[str, object]]
-
-    def update_output(self) -> object:
-        """Signal for updating UI output.
-
-        Returns:
-            Signal object or callable for emitting updates.
-
-        """
-        pass
+    update_output: SignalEmitter
 
 
 logger.debug("%s", "Importing pyqt6_handler...")
@@ -61,7 +61,7 @@ logger.debug("%s", "Getting logger...")
 logger.debug("%s", "logger obtained OK")
 
 
-def _create_dword_type(ctypes_module: object) -> type:
+def _create_dword_type(ctypes_module: Any) -> type:
     """Create Windows DWORD type implementation.
 
     Args:
@@ -75,10 +75,10 @@ def _create_dword_type(ctypes_module: object) -> type:
         automatically by ctypes (32-bit unsigned wrapping).
 
     """
-    return ctypes_module.c_uint32  # type: ignore[return-value]
+    return cast("type", ctypes_module.c_uint32)
 
 
-def _create_bool_type(ctypes_module: object) -> type:
+def _create_bool_type(ctypes_module: Any) -> type:
     """Create Windows BOOL type implementation.
 
     Args:
@@ -92,10 +92,10 @@ def _create_bool_type(ctypes_module: object) -> type:
         by checking if value != 0.
 
     """
-    return ctypes_module.c_int32  # type: ignore[return-value]
+    return cast("type", ctypes_module.c_int32)
 
 
-def _create_word_type(ctypes_module: object) -> type:
+def _create_word_type(ctypes_module: Any) -> type:
     """Create Windows WORD type implementation.
 
     Args:
@@ -109,10 +109,10 @@ def _create_word_type(ctypes_module: object) -> type:
         automatically by ctypes (16-bit unsigned wrapping).
 
     """
-    return ctypes_module.c_uint16  # type: ignore[return-value]
+    return cast("type", ctypes_module.c_uint16)
 
 
-def _create_byte_type(ctypes_module: object) -> type:
+def _create_byte_type(ctypes_module: Any) -> type:
     """Create Windows BYTE type implementation.
 
     Args:
@@ -126,10 +126,10 @@ def _create_byte_type(ctypes_module: object) -> type:
         automatically by ctypes (8-bit unsigned wrapping).
 
     """
-    return ctypes_module.c_uint8  # type: ignore[return-value]
+    return cast("type", ctypes_module.c_uint8)
 
 
-def _create_handle_types(ctypes_module: object) -> tuple[type, type, type, type]:
+def _create_handle_types(ctypes_module: Any) -> tuple[type, type, type, type]:
     """Create Windows HANDLE and related types.
 
     Args:
@@ -140,7 +140,7 @@ def _create_handle_types(ctypes_module: object) -> tuple[type, type, type, type]
 
     """
 
-    class HANDLE(ctypes_module.c_void_p):  # type: ignore[name-defined]
+    class HANDLE(ctypes_module.c_void_p):  # type: ignore[misc]
         """Real Windows HANDLE type implementation."""
 
         def __init__(self, value: int | None = None) -> None:
@@ -204,7 +204,7 @@ def _create_handle_types(ctypes_module: object) -> tuple[type, type, type, type]
     return HANDLE, HWND, HDC, HINSTANCE
 
 
-def _create_pointer_types(ctypes_module: object) -> tuple[type, type, type]:
+def _create_pointer_types(ctypes_module: Any) -> tuple[type, type, type]:
     """Create Windows pointer types.
 
     Args:
@@ -215,7 +215,7 @@ def _create_pointer_types(ctypes_module: object) -> tuple[type, type, type]:
 
     """
 
-    class LPVOID(ctypes_module.c_void_p):  # type: ignore[name-defined]
+    class LPVOID(ctypes_module.c_void_p):  # type: ignore[misc]
         """Real Windows LPVOID type implementation."""
 
         def __str__(self) -> str:
@@ -224,7 +224,7 @@ def _create_pointer_types(ctypes_module: object) -> tuple[type, type, type]:
         def __repr__(self) -> str:
             return f"LPVOID({self.value})"
 
-    class SIZE_T(ctypes_module.c_size_t):  # type: ignore[name-defined]  # noqa: N801
+    class SIZE_T(ctypes_module.c_size_t):  # type: ignore[misc]  # noqa: N801
         """Real Windows SIZE_T type implementation."""
 
         def __str__(self) -> str:
@@ -233,7 +233,7 @@ def _create_pointer_types(ctypes_module: object) -> tuple[type, type, type]:
         def __repr__(self) -> str:
             return f"SIZE_T({self.value})"
 
-    class ULONG_PTR(ctypes_module.c_void_p):  # type: ignore[name-defined]  # noqa: N801
+    class ULONG_PTR(ctypes_module.c_void_p):  # type: ignore[misc]  # noqa: N801
         """Real Windows ULONG_PTR type implementation."""
 
         def __str__(self) -> str:
@@ -506,9 +506,15 @@ if __name__ == "__main__":
     # Handle patches format conversion
     patches_formatted = []
     for patch in app.potential_patches:
+        new_bytes_value = patch.get("new_bytes", b"")
+        if isinstance(new_bytes_value, bytes):
+            new_bytes_list = list(new_bytes_value)
+        else:
+            new_bytes_list = cast("list[int]", new_bytes_value) if new_bytes_value else []
+
         patch_dict = {
             "address": patch.get("address", 0),
-            "new_bytes": list(patch.get("new_bytes", b"")) if isinstance(patch.get("new_bytes"), bytes) else patch.get("new_bytes", []),
+            "new_bytes": new_bytes_list,
             "description": patch.get("description", "Unknown patch"),
         }
         patches_formatted.append(patch_dict)
@@ -542,7 +548,7 @@ if __name__ == "__main__":
         return launcher_path
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in memory_patcher: %s", e, exc_info=True)
+        logger.exception("Error in memory_patcher: %s", e, exc_info=True)
         app.update_output.emit(log_message(f"[Launcher] Error creating launcher script: {e}"))
         return None
 
@@ -636,7 +642,7 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
 
 
 # Export functions
-def bypass_memory_protection(address: int, size: int, protection: int = None) -> bool:
+def bypass_memory_protection(address: int, size: int, protection: int | None = None) -> bool:
     """Bypass memory protection using VirtualProtect (Windows) or mprotect (Unix).
 
     Args:
@@ -656,11 +662,11 @@ def bypass_memory_protection(address: int, size: int, protection: int = None) ->
         return _bypass_memory_protection_windows(address, size, protection)
     if system in ["Linux", "Darwin"]:
         return _bypass_memory_protection_unix(address, size, protection)
-    logger.error("Unsupported platform for memory protection bypass: %s", system)
+    logger.exception("Unsupported platform for memory protection bypass: %s", system)
     return False
 
 
-def _bypass_memory_protection_windows(address: int, size: int, protection: int = None) -> bool:
+def _bypass_memory_protection_windows(address: int, size: int, protection: int | None = None) -> bool:
     """Bypass memory protection on Windows using VirtualProtect.
 
     Args:
@@ -706,15 +712,15 @@ def _bypass_memory_protection_windows(address: int, size: int, protection: int =
             logger.info("Old protection: %s, New protection: %s", hex(old_protection.value), hex(protection))
             return True
         error = ctypes.get_last_error()
-        logger.error("VirtualProtect failed with error code: %s", error)
+        logger.exception("VirtualProtect failed with error code: %s", error)
         return False
 
     except Exception as e:
-        logger.error("Exception during Windows memory protection bypass: %s", e, exc_info=True)
+        logger.exception("Exception during Windows memory protection bypass: %s", e, exc_info=True)
         return False
 
 
-def _bypass_memory_protection_unix(address: int, size: int, protection: int = None) -> bool:
+def _bypass_memory_protection_unix(address: int, size: int, protection: int | None = None) -> bool:
     """Bypass memory protection on Unix-like systems using mprotect.
 
     Args:
@@ -776,11 +782,11 @@ def _bypass_memory_protection_unix(address: int, size: int, protection: int = No
             logger.info("Protection flags: %s", hex(protection))
             return True
         errno = ctypes.get_errno()
-        logger.error("mprotect failed with errno: %s", errno)
+        logger.exception("mprotect failed with errno: %s", errno)
         return False
 
     except Exception as e:
-        logger.error("Exception during Unix memory protection bypass: %s", e, exc_info=True)
+        logger.exception("Exception during Unix memory protection bypass: %s", e, exc_info=True)
         return False
 
 
@@ -804,7 +810,7 @@ def patch_memory_direct(process_id: int, address: int, data: bytes) -> bool:
         return _patch_memory_windows(process_id, address, data)
     if system in ["Linux", "Darwin"]:
         return _patch_memory_unix(process_id, address, data)
-    logger.error("Unsupported platform for memory patching: %s", system)
+    logger.exception("Unsupported platform for memory patching: %s", system)
     return False
 
 
@@ -833,7 +839,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
         # Open process
         process_handle = kernel32.OpenProcess(PROCESS_ALL_ACCESS, False, process_id)
         if not process_handle:
-            logger.error("Failed to open process %s", process_id)
+            logger.exception("Failed to open process %s", process_id)
             return False
 
         try:
@@ -848,7 +854,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
             )
 
             if not success:
-                logger.error("Failed to change memory protection")
+                logger.exception("Failed to change memory protection")
                 return False
 
             # Write memory
@@ -874,7 +880,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
                 )
 
                 return True
-            logger.error("Failed to write process memory")
+            logger.exception("Failed to write process memory")
             return False
 
         finally:
@@ -882,7 +888,7 @@ def _patch_memory_windows(process_id: int, address: int, data: bytes) -> bool:
             kernel32.CloseHandle(process_handle)
 
     except Exception as e:
-        logger.error("Exception during Windows memory patching: %s", e, exc_info=True)
+        logger.exception("Exception during Windows memory patching: %s", e, exc_info=True)
         return False
 
 
@@ -925,7 +931,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
 
         # Attach to process
         if ptrace(PTRACE_ATTACH, process_id, None, None) < 0:
-            logger.error("Failed to attach to process with ptrace")
+            logger.exception("Failed to attach to process with ptrace")
             return False
 
         try:
@@ -945,7 +951,7 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
                     )
                     < 0
                 ):
-                    logger.error("Failed to write at offset %s", i)
+                    logger.exception("Failed to write at offset %s", i)
                     return False
 
             logger.info("Successfully patched %s bytes at %s via ptrace", len(data), hex(address))
@@ -956,12 +962,12 @@ def _patch_memory_unix(process_id: int, address: int, data: bytes) -> bool:
             ptrace(PTRACE_DETACH, process_id, None, None)
 
     except Exception as e:
-        logger.error("Exception during Unix memory patching: %s", e, exc_info=True)
+        logger.exception("Exception during Unix memory patching: %s", e, exc_info=True)
         return False
 
 
 # Export functions
-def handle_guard_pages(address: int, size: int, process_handle: int = None) -> bool:
+def handle_guard_pages(address: int, size: int, process_handle: int | None = None) -> bool:
     """Handle PAGE_GUARD protected memory regions.
 
     Args:
@@ -981,11 +987,11 @@ def handle_guard_pages(address: int, size: int, process_handle: int = None) -> b
         return _handle_guard_pages_windows(address, size, process_handle)
     if system in ["Linux", "Darwin"]:
         return _handle_guard_pages_unix(address, size, process_handle)
-    logger.error("Unsupported platform for guard page handling: %s", system)
+    logger.exception("Unsupported platform for guard page handling: %s", system)
     return False
 
 
-def _handle_guard_pages_windows(address: int, size: int, process_handle: int = None) -> bool:
+def _handle_guard_pages_windows(address: int, size: int, process_handle: int | None = None) -> bool:
     """Handle PAGE_GUARD on Windows.
 
     Args:
@@ -1038,7 +1044,7 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
 
         if not result:
             error = ctypes.get_last_error()
-            logger.error("VirtualQuery failed with error: %s", error)
+            logger.exception("VirtualQuery failed with error: %s", error)
             return False
 
         # Check if PAGE_GUARD is set
@@ -1077,21 +1083,21 @@ def _handle_guard_pages_windows(address: int, size: int, process_handle: int = N
                         guard_trigger_byte = ctypes.c_byte()
                         ctypes.memmove(ctypes.byref(guard_trigger_byte), address, 1)
                     except Exception as e:
-                        logger.error("Error in memory_patcher: %s", e, exc_info=True)
+                        logger.exception("Error in memory_patcher: %s", e, exc_info=True)
 
                 return True
             error = ctypes.get_last_error()
-            logger.error("Failed to remove PAGE_GUARD: %s", error)
+            logger.exception("Failed to remove PAGE_GUARD: %s", error)
             return False
         logger.debug("No PAGE_GUARD at %s", hex(address))
         return True
 
     except Exception as e:
-        logger.error("Exception handling guard pages: %s", e, exc_info=True)
+        logger.exception("Exception handling guard pages: %s", e, exc_info=True)
         return False
 
 
-def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None) -> bool:
+def _handle_guard_pages_unix(address: int, size: int, process_handle: int | None = None) -> bool:
     """Handle guard pages on Unix-like systems.
 
     Args:
@@ -1109,7 +1115,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
 
         # Validate size parameter
         if size <= 0:
-            logger.error("Invalid size parameter: %s", size)
+            logger.exception("Invalid size parameter: %s", size)
             return False
 
         # Calculate the full range that needs to be handled
@@ -1174,7 +1180,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
                                 if result == 0:
                                     logger.info("Successfully removed guard page protection for %s bytes", aligned_size)
                                     return True
-                                logger.error("Failed to change guard page permissions")
+                                logger.exception("Failed to change guard page permissions")
                                 return False
 
         except OSError as e:
@@ -1183,7 +1189,7 @@ def _handle_guard_pages_unix(address: int, size: int, process_handle: int = None
         return True
 
     except Exception as e:
-        logger.error("Exception handling Unix guard pages: %s", e, exc_info=True)
+        logger.exception("Exception handling Unix guard pages: %s", e, exc_info=True)
         return False
 
 
@@ -1238,18 +1244,18 @@ def detect_and_bypass_guard_pages(process_handle: int, address: int, size: int) 
                 logger.debug("VirtualQueryEx returned %s bytes", result)
                 MEM_COMMIT = 0x1000
                 if not (mbi.State & MEM_COMMIT):
-                    logger.error("Memory not committed")
+                    logger.exception("Memory not committed")
                     return False
 
                 # Check for NO_ACCESS
                 if mbi.Protect == PAGE_NOACCESS:
-                    logger.error("Memory has PAGE_NOACCESS protection")
+                    logger.exception("Memory has PAGE_NOACCESS protection")
                     return False
 
         return True
 
     except Exception as e:
-        logger.error("Error detecting guard pages: %s", e, exc_info=True)
+        logger.exception("Error detecting guard pages: %s", e, exc_info=True)
         return False
 
 

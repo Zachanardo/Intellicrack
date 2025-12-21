@@ -32,10 +32,11 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 import msgpack
 import zmq
+import zmq.asyncio
 
 
 logger = logging.getLogger(__name__)
@@ -93,7 +94,11 @@ class IPCMessage:
 
     def to_bytes(self) -> bytes:
         """Serialize message to bytes using msgpack."""
-        return msgpack.packb(asdict(self))
+        data_dict = asdict(self)
+        data_dict["source"] = self.source.value
+        data_dict["destination"] = self.destination.value if self.destination else None
+        data_dict["message_type"] = self.message_type.value
+        return cast(bytes, msgpack.packb(data_dict))
 
     @classmethod
     def from_bytes(cls, data: bytes) -> "IPCMessage":
@@ -115,29 +120,29 @@ class ToolCommunicationBridge:
         self.auth_key = auth_key or self._generate_auth_key()
 
         # ZeroMQ context and sockets
-        self.context = zmq.Context()
-        self.publisher = None
-        self.subscriber = None
-        self.router = None
-        self.dealer_sockets: dict[ToolType, zmq.Socket] = {}
+        self.context: zmq.Context[zmq.Socket[bytes]] = zmq.Context()
+        self.publisher: zmq.Socket[bytes] | None = None
+        self.subscriber: zmq.Socket[bytes] | None = None
+        self.router: zmq.Socket[bytes] | None = None
+        self.dealer_sockets: dict[ToolType, zmq.Socket[bytes]] = {}
 
         # Message handling
-        self.message_handlers: dict[MessageType, list[Callable]] = defaultdict(list)
-        self.pending_responses: dict[str, asyncio.Future] = {}
+        self.message_handlers: dict[MessageType, list[Callable[[IPCMessage], Any]]] = defaultdict(list)
+        self.pending_responses: dict[str, asyncio.Future[IPCMessage]] = {}
         self.message_history: list[IPCMessage] = []
         self.tool_registry: dict[ToolType, dict[str, Any]] = {}
 
         # Thread management
         self.running = False
-        self.router_thread = None
-        self.subscriber_thread = None
+        self.router_thread: threading.Thread | None = None
+        self.subscriber_thread: threading.Thread | None = None
 
         # Performance metrics
-        self.message_stats = defaultdict(int)
-        self.latency_stats = defaultdict(list)
+        self.message_stats: dict[MessageType, int] = defaultdict(int)
+        self.latency_stats: dict[MessageType, list[float]] = defaultdict(list)
 
         # Timeout configuration
-        self.response_timeout: float = 30.0  # Default response timeout in seconds
+        self.response_timeout: float = 30.0
 
     def _generate_auth_key(self) -> str:
         """Generate secure authentication key for IPC."""
@@ -148,24 +153,29 @@ class ToolCommunicationBridge:
         self.running = True
 
         # Setup publisher socket for broadcasting
-        self.publisher = self.context.socket(zmq.PUB)
-        self.publisher.bind(f"tcp://127.0.0.1:{self.orchestrator_port}")
+        pub_socket: zmq.Socket[bytes] = self.context.socket(zmq.PUB)
+        pub_socket.bind(f"tcp://127.0.0.1:{self.orchestrator_port}")
+        self.publisher = pub_socket
 
         # Setup router socket for request-reply
-        self.router = self.context.socket(zmq.ROUTER)
-        self.router.bind(f"tcp://127.0.0.1:{self.orchestrator_port + 1}")
+        router_socket: zmq.Socket[bytes] = self.context.socket(zmq.ROUTER)
+        router_socket.bind(f"tcp://127.0.0.1:{self.orchestrator_port + 1}")
+        self.router = router_socket
 
         # Setup subscriber for receiving broadcasts
-        self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(f"tcp://127.0.0.1:{self.orchestrator_port}")
-        self.subscriber.setsockopt_string(zmq.SUBSCRIBE, "")
+        sub_socket: zmq.Socket[bytes] = self.context.socket(zmq.SUB)
+        sub_socket.connect(f"tcp://127.0.0.1:{self.orchestrator_port}")
+        sub_socket.setsockopt_string(zmq.SUBSCRIBE, "")
+        self.subscriber = sub_socket
 
         # Start message processing threads
-        self.router_thread = threading.Thread(target=self._router_loop, daemon=True)
-        self.router_thread.start()
+        router_thread = threading.Thread(target=self._router_loop, daemon=True)
+        router_thread.start()
+        self.router_thread = router_thread
 
-        self.subscriber_thread = threading.Thread(target=self._subscriber_loop, daemon=True)
-        self.subscriber_thread.start()
+        subscriber_thread = threading.Thread(target=self._subscriber_loop, daemon=True)
+        subscriber_thread.start()
+        self.subscriber_thread = subscriber_thread
 
         logger.info("Communication bridge started on port %d", self.orchestrator_port)
 
@@ -173,12 +183,11 @@ class ToolCommunicationBridge:
         """Stop the communication bridge."""
         self.running = False
 
-        # Close all sockets
-        if self.publisher:
+        if self.publisher is not None:
             self.publisher.close()
-        if self.subscriber:
+        if self.subscriber is not None:
             self.subscriber.close()
-        if self.router:
+        if self.router is not None:
             self.router.close()
 
         for socket in self.dealer_sockets.values():
@@ -240,12 +249,10 @@ class ToolCommunicationBridge:
                 logger.debug("Sent %s to %s", message.message_type.value, message.destination.value)
 
                 if message.requires_response:
-                    # Create future for response
-                    future = asyncio.Future()
+                    future: asyncio.Future[IPCMessage] = asyncio.Future()
                     self.pending_responses[message.id] = future
                     return message.id
-        else:
-            # Broadcast message
+        elif self.publisher is not None:
             self.publisher.send_multipart([message.source.value.encode(), message.to_bytes()])
             logger.debug("Broadcast %s from %s", message.message_type.value, message.source.value)
 
@@ -272,7 +279,7 @@ class ToolCommunicationBridge:
         expected_auth = self._generate_message_auth(message)
         return hmac.compare_digest(message.payload["auth"], expected_auth)
 
-    def add_message_handler(self, message_type: MessageType, handler: Callable) -> None:
+    def add_message_handler(self, message_type: MessageType, handler: Callable[[IPCMessage], Any]) -> None:
         """Add a message handler for a specific message type."""
         if message_type not in self.message_handlers:
             self.message_handlers[message_type] = []
@@ -287,7 +294,7 @@ class ToolCommunicationBridge:
             try:
                 future = self.pending_responses[msg_id]
                 async with asyncio.timeout(self.response_timeout):
-                    response = await future
+                    response: IPCMessage = await future
                 del self.pending_responses[msg_id]
                 return response
             except TimeoutError:
@@ -297,13 +304,17 @@ class ToolCommunicationBridge:
 
         return None
 
-    def register_handler(self, message_type: MessageType, handler: Callable) -> None:
+    def register_handler(self, message_type: MessageType, handler: Callable[[IPCMessage], Any]) -> None:
         """Register a message handler for specific message type."""
         self.message_handlers[message_type].append(handler)
         logger.debug("Registered handler for %s", message_type.value)
 
     def _router_loop(self) -> None:
         """Process request-reply messages."""
+        if self.router is None:
+            logger.error("Router socket is not initialized")
+            return
+
         poller = zmq.Poller()
         poller.register(self.router, zmq.POLLIN)
 
@@ -312,56 +323,45 @@ class ToolCommunicationBridge:
                 sockets = dict(poller.poll(100))
 
                 if self.router in sockets:
-                    # Receive message with identity
                     identity = self.router.recv()
                     empty = self.router.recv()
                     msg_bytes = self.router.recv()
 
-                    # Validate ZeroMQ router protocol (empty delimiter frame)
                     if empty != b"":
                         logger.warning("Invalid ZeroMQ router protocol: expected empty delimiter, got %s", empty[:20])
-                        # Send error response
-                        error_msg = IPCMessage(
-                            type=MessageType.RESPONSE,
-                            data={"error": "Protocol violation: non-empty delimiter"},
-                            sender="bridge",
-                        )
-                        self.router.send_multipart([identity, b"", error_msg.to_bytes()])
                         continue
 
-                    # Deserialize message
                     message = IPCMessage.from_bytes(msg_bytes)
 
-                    # Verify authentication
                     if not self._verify_message_auth(message):
                         logger.warning("Authentication failed for message %s", message.id)
                         continue
 
-                    # Handle message
                     self._handle_message(message, identity)
 
             except Exception as e:
-                logger.error("Router loop error: %s", e)
+                logger.exception("Router loop error: %s", e)
 
     def _subscriber_loop(self) -> None:
         """Process broadcast messages."""
+        if self.subscriber is None:
+            logger.error("Subscriber socket is not initialized")
+            return
+
         while self.running:
             try:
                 if self.subscriber.poll(100):
-                    # Receive broadcast
                     _topic, msg_bytes = self.subscriber.recv_multipart()
                     message = IPCMessage.from_bytes(msg_bytes)
 
-                    # Verify authentication
                     if not self._verify_message_auth(message):
                         logger.warning("Authentication failed for broadcast %s", message.id)
                         continue
 
-                    # Handle broadcast
                     self._handle_message(message, None)
 
             except Exception as e:
-                logger.error("Subscriber loop error: %s", e)
+                logger.exception("Subscriber loop error: %s", e)
 
     def _handle_message(self, message: IPCMessage, identity: bytes | None) -> None:
         """Handle incoming message."""
@@ -379,7 +379,7 @@ class ToolCommunicationBridge:
                 response = handler(message)
 
                 # Send response if required
-                if message.requires_response and response and identity:
+                if message.requires_response and response and identity and self.router is not None:
                     response_msg = IPCMessage(
                         id=str(uuid.uuid4()),
                         source=ToolType.ORCHESTRATOR,
@@ -391,12 +391,11 @@ class ToolCommunicationBridge:
                         requires_response=False,
                     )
 
-                    # Add auth and send
                     response_msg.payload["auth"] = self._generate_message_auth(response_msg)
                     self.router.send_multipart([identity, b"", response_msg.to_bytes()])
 
             except Exception as e:
-                logger.error("Handler error for %s: %s", message.message_type.value, e)
+                logger.exception("Handler error for %s: %s", message.message_type.value, e)
 
         # Record latency
         latency = time.time() - start_time
@@ -479,7 +478,7 @@ class ToolCommunicationBridge:
         loop.close()
 
         if not verification or not verification.payload.get("valid", False):
-            logger.error("Patch verification failed")
+            logger.exception("Patch verification failed")
             return False
 
         # Apply patches
@@ -509,37 +508,41 @@ class ToolCommunicationBridge:
 
     def get_tool_status(self) -> dict[ToolType, dict[str, Any]]:
         """Get status of all registered tools."""
-        status = {}
+        status: dict[ToolType, dict[str, Any]] = {}
         current_time = time.time()
 
         for tool_type, info in self.tool_registry.items():
             heartbeat_age = current_time - info["last_heartbeat"]
+            total_messages = sum(
+                count for msg_type, count in self.message_stats.items()
+            )
             status[tool_type] = {
                 "id": info["id"],
                 "status": "active" if heartbeat_age < 30 else "inactive",
                 "capabilities": info["capabilities"],
                 "last_heartbeat": heartbeat_age,
-                "message_count": self.message_stats.get(tool_type, 0),
+                "message_count": total_messages,
             }
 
         return status
 
     def get_performance_metrics(self) -> dict[str, Any]:
         """Get communication performance metrics."""
-        metrics = {
+        average_latency: dict[str, dict[str, float]] = {
+            msg_type.value: {
+                "avg": sum(latencies) / len(latencies),
+                "min": min(latencies),
+                "max": max(latencies),
+            }
+            for msg_type, latencies in self.latency_stats.items()
+            if latencies
+        }
+        metrics: dict[str, Any] = {
             "total_messages": sum(self.message_stats.values()),
             "message_types": dict(self.message_stats),
-            "average_latency": {},
+            "average_latency": average_latency,
             "tools_connected": len(self.tool_registry),
         }
-
-        for msg_type, latencies in self.latency_stats.items():
-            if latencies:
-                metrics["average_latency"][msg_type.value] = {
-                    "avg": sum(latencies) / len(latencies),
-                    "min": min(latencies),
-                    "max": max(latencies),
-                }
 
         return metrics
 
@@ -552,30 +555,30 @@ class ToolConnector:
         self.tool_type = tool_type
         self.bridge_host = bridge_host
         self.bridge_port = bridge_port
-        self.tool_id = None
+        self.tool_id: str | None = None
 
-        self.context = zmq.Context()
-        self.dealer = None
-        self.subscriber = None
-        self.message_handlers = defaultdict(list)
+        self.context: zmq.Context[zmq.Socket[bytes]] = zmq.Context()
+        self.dealer: zmq.Socket[bytes] | None = None
+        self.subscriber: zmq.Socket[bytes] | None = None
+        self.message_handlers: dict[MessageType, list[Callable[[IPCMessage], Any]]] = defaultdict(list)
         self.running = False
 
     def connect(self) -> str:
         """Connect to the communication bridge."""
-        # Setup dealer socket for request-reply
-        self.dealer = self.context.socket(zmq.DEALER)
-        self.tool_id = str(uuid.uuid4())
-        self.dealer.setsockopt_string(zmq.IDENTITY, self.tool_id)
-        self.dealer.connect(f"tcp://{self.bridge_host}:{self.bridge_port + 1}")
+        dealer_socket: zmq.Socket[bytes] = self.context.socket(zmq.DEALER)
+        tool_id = str(uuid.uuid4())
+        dealer_socket.setsockopt_string(zmq.IDENTITY, tool_id)
+        dealer_socket.connect(f"tcp://{self.bridge_host}:{self.bridge_port + 1}")
+        self.dealer = dealer_socket
+        self.tool_id = tool_id
 
-        # Setup subscriber for broadcasts
-        self.subscriber = self.context.socket(zmq.SUB)
-        self.subscriber.connect(f"tcp://{self.bridge_host}:{self.bridge_port}")
-        self.subscriber.setsockopt_string(zmq.SUBSCRIBE, "")
+        subscriber_socket: zmq.Socket[bytes] = self.context.socket(zmq.SUB)
+        subscriber_socket.connect(f"tcp://{self.bridge_host}:{self.bridge_port}")
+        subscriber_socket.setsockopt_string(zmq.SUBSCRIBE, "")
+        self.subscriber = subscriber_socket
 
         self.running = True
 
-        # Start message processing
         threading.Thread(target=self._process_messages, daemon=True).start()
 
         logger.info("Tool %s connected with ID %s", self.tool_type.value, self.tool_id)
@@ -585,15 +588,19 @@ class ToolConnector:
         """Disconnect from bridge."""
         self.running = False
 
-        if self.dealer:
+        if self.dealer is not None:
             self.dealer.close()
-        if self.subscriber:
+        if self.subscriber is not None:
             self.subscriber.close()
 
         self.context.term()
 
     def send_result(self, result_type: MessageType, data: dict[str, Any]) -> None:
         """Send analysis result to bridge."""
+        if self.dealer is None:
+            logger.error("Dealer socket is not initialized")
+            return
+
         message = IPCMessage(
             id=str(uuid.uuid4()),
             source=self.tool_type,
@@ -607,6 +614,10 @@ class ToolConnector:
 
     def _process_messages(self) -> None:
         """Process incoming messages."""
+        if self.dealer is None or self.subscriber is None:
+            logger.error("Sockets are not initialized")
+            return
+
         poller = zmq.Poller()
         poller.register(self.dealer, zmq.POLLIN)
         poller.register(self.subscriber, zmq.POLLIN)
@@ -615,20 +626,18 @@ class ToolConnector:
             try:
                 sockets = dict(poller.poll(100))
 
-                # Handle dealer messages
                 if self.dealer in sockets:
                     msg_bytes = self.dealer.recv()
                     message = IPCMessage.from_bytes(msg_bytes)
                     self._handle_message(message)
 
-                # Handle broadcast messages
                 if self.subscriber in sockets:
                     _topic, msg_bytes = self.subscriber.recv_multipart()
                     message = IPCMessage.from_bytes(msg_bytes)
                     self._handle_message(message)
 
             except Exception as e:
-                logger.error("Message processing error: %s", e)
+                logger.exception("Message processing error: %s", e)
 
     def _handle_message(self, message: IPCMessage) -> None:
         """Handle incoming message."""
@@ -636,8 +645,8 @@ class ToolConnector:
             try:
                 handler(message)
             except Exception as e:
-                logger.error("Handler error: %s", e)
+                logger.exception("Handler error: %s", e)
 
-    def register_handler(self, message_type: MessageType, handler: Callable) -> None:
+    def register_handler(self, message_type: MessageType, handler: Callable[[IPCMessage], Any]) -> None:
         """Register message handler."""
         self.message_handlers[message_type].append(handler)

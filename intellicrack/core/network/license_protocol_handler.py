@@ -248,7 +248,7 @@ class LicenseProtocolHandler:
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("Proxy server error: %s", e, exc_info=True)
+                        self.logger.exception("Proxy server error: %s", e)
 
         finally:
             server_socket.close()
@@ -267,7 +267,7 @@ class LicenseProtocolHandler:
             if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
-            self.logger.error("Error handling client %s: %s", client_addr, e, exc_info=True)
+            self.logger.exception("Error handling client %s: %s", client_addr, e)
         finally:
             client_socket.close()
 
@@ -290,7 +290,7 @@ class LicenseProtocolHandler:
             socket.send(response)
             self.log_response(response, "client")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to send response: %s", e, exc_info=True)
+            self.logger.exception("Failed to send response: %s", e)
 
     def generate_response(self, request_data: bytes) -> bytes:
         """Generate a protocol-specific response.
@@ -410,7 +410,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("FlexLM proxy error: %s", e, exc_info=True)
+                        self.logger.exception("FlexLM proxy error: %s", e)
 
         finally:
             server_socket.close()
@@ -433,7 +433,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             socket.send(response)
             self.log_response(response, "FlexLM client")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to send FlexLM response: %s", e, exc_info=True)
+            self.logger.exception("Failed to send FlexLM response: %s", e)
 
     def _handle_flexlm_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual FlexLM client connection.
@@ -447,7 +447,7 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
             if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
-            self.logger.error("Error handling FlexLM client %s: %s", client_addr, e, exc_info=True)
+            self.logger.exception("Error handling FlexLM client %s: %s", client_addr, e)
         finally:
             client_socket.close()
 
@@ -600,7 +600,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("HASP proxy error: %s", e, exc_info=True)
+                        self.logger.exception("HASP proxy error: %s", e)
 
         finally:
             server_socket.close()
@@ -622,7 +622,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             socket.send(response)
             self.log_response(response, "HASP client")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to send HASP response: %s", e, exc_info=True)
+            self.logger.exception("Failed to send HASP response: %s", e)
 
     def _handle_hasp_client(self, client_socket: socket.socket, client_addr: tuple[str, int]) -> None:
         """Handle individual HASP client connection.
@@ -636,7 +636,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
             if initial_data := client_socket.recv(4096):
                 self.handle_connection(client_socket, initial_data)
         except Exception as e:
-            self.logger.error("Error handling HASP client %s: %s", client_addr, e, exc_info=True)
+            self.logger.exception("Error handling HASP client %s: %s", client_addr, e)
         finally:
             client_socket.close()
 
@@ -735,7 +735,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                             decrypted = decryptor.update(data_to_decrypt) + decryptor.finalize()
                         else:
                             # No key established yet
-                            self.logger.error("No encryption key established for decryption")
+                            self.logger.exception("No encryption key established for decryption")
                             decrypted = data_to_decrypt
 
                         return struct.pack("<I", 0x00000000) + decrypted
@@ -783,7 +783,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
 
                     return struct.pack("<I", 0x00000000) + license_data
                 except struct.error as e:
-                    self.logger.error("struct.error in license_protocol_handler: %s", e, exc_info=True)
+                    self.logger.exception("struct.error in license_protocol_handler: %s", e)
                     return struct.pack("<I", 0x00000001)
 
             elif command_id == 0x07:  # HASP_WRITE
@@ -806,7 +806,7 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 return struct.pack("<I", 0x00000000)
 
         except struct.error as e:
-            self.logger.error("struct.error in license_protocol_handler: %s", e, exc_info=True)
+            self.logger.exception("struct.error in license_protocol_handler: %s", e)
             return b"\xff\xff\xff\xff"
 
 

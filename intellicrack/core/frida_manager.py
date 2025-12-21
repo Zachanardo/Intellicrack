@@ -23,7 +23,7 @@ import queue
 import threading
 import time
 from collections import defaultdict, deque
-from collections.abc import Callable
+from collections.abc import Callable, Generator
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -74,7 +74,7 @@ class FridaOperationLogger:
 
     """
 
-    def __init__(self, log_dir: str = None) -> None:
+    def __init__(self, log_dir: str | None = None) -> None:
         """Initialize the Frida operation logger.
 
         Args:
@@ -103,9 +103,9 @@ class FridaOperationLogger:
         self.bypass_log = self.log_dir / f"bypasses_{datetime.now().strftime('%Y%m%d_%H%M%S')}.log"
 
         # In-memory buffers for real-time analysis
-        self.operation_buffer = deque(maxlen=10000)
-        self.hook_buffer = deque(maxlen=50000)
-        self.performance_metrics = defaultdict(list)
+        self.operation_buffer: deque[dict[str, Any]] = deque(maxlen=10000)
+        self.hook_buffer: deque[dict[str, Any]] = deque(maxlen=50000)
+        self.performance_metrics: dict[str, list[float]] = defaultdict(list)
 
         # Statistics tracking
         self.stats = {
@@ -179,7 +179,7 @@ class FridaOperationLogger:
         self.bypass_logger.addHandler(bypass_handler)
         self.bypass_logger.setLevel(logging.INFO)
 
-    def log_operation(self, operation: str, details: dict[str, Any], success: bool = True, error: str = None) -> None:
+    def log_operation(self, operation: str, details: dict[str, Any], success: bool = True, error: str | None = None) -> None:
         """Log a Frida operation with comprehensive details.
 
         Records operation details to both file and in-memory buffer,
@@ -287,7 +287,7 @@ class FridaOperationLogger:
         entry["readable_msg"] = f"Hook: {module}!{function_name} | Modified: {modified}"
         self.hook_logger.log(level, json.dumps(entry, default=str))
 
-    def log_performance(self, metric_name: str, value: float, unit: str = "ms", metadata: dict = None) -> None:
+    def log_performance(self, metric_name: str, value: float, unit: str = "ms", metadata: dict[str, Any] | None = None) -> None:
         """Log performance metrics.
 
         Records performance measurements for analysis and optimization.
@@ -339,7 +339,7 @@ class FridaOperationLogger:
         protection_type: ProtectionType,
         technique: str,
         success: bool,
-        details: dict[str, Any] = None,
+        details: dict[str, Any] | None = None,
     ) -> None:
         """Log bypass attempts with classification.
 
@@ -432,7 +432,7 @@ class FridaOperationLogger:
 
         return stats
 
-    def export_logs(self, output_dir: str = None) -> str:
+    def export_logs(self, output_dir: str | None = None) -> str:
         """Export all logs to a directory.
 
         Creates a complete export of all logs, statistics, and buffers
@@ -525,11 +525,11 @@ class ProtectionDetector:
             - Initializes empty detection maps
             - Prepares adaptation callback list
         """
-        self.detected_protections = defaultdict(set)
+        self.detected_protections: dict[ProtectionType, set[str]] = defaultdict(set)
         self.protection_signatures = self._load_signatures()
-        self.adaptation_callbacks = []
+        self.adaptation_callbacks: list[Callable[[ProtectionType, dict[str, Any] | set[str]], None]] = []
 
-    def _load_signatures(self) -> dict[ProtectionType, list[dict]]:
+    def _load_signatures(self) -> dict[ProtectionType, list[dict[str, Any]]]:
         r"""Load protection signatures for classification.
 
         Returns a comprehensive database of signatures for detecting
@@ -666,7 +666,7 @@ class ProtectionDetector:
                         0x04,
                     ]:
                         detected.add(ProtectionType.MEMORY_PROTECTION)
-                        self.detected_protections[ProtectionType.MEMORY_PROTECTION].add(f"Memory protection flag: {hex(arg)}")
+                        self.detected_protections[ProtectionType.MEMORY_PROTECTION].add(f"Memory protection flag: {hex(int(arg))}")
 
         return detected
 
@@ -688,7 +688,7 @@ class ProtectionDetector:
 
         return detected
 
-    def register_adaptation_callback(self, callback: Callable) -> None:
+    def register_adaptation_callback(self, callback: Callable[[ProtectionType, dict[str, Any] | set[str]], None]) -> None:
         """Register callback for protection detection events."""
         self.adaptation_callbacks.append(callback)
 
@@ -744,9 +744,9 @@ class HookBatcher:
         self.logger = logging.getLogger(f"{__name__}.HookBatcher")
         self.max_batch_size = max_batch_size
         self.batch_timeout_ms = batch_timeout_ms
-        self.pending_hooks = defaultdict(list)
-        self.hook_queue = queue.Queue()
-        self.batch_thread = None
+        self.pending_hooks: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.hook_queue: queue.Queue[dict[str, Any]] = queue.Queue()
+        self.batch_thread: threading.Thread | None = None
         self.running = False
 
     def add_hook(self, category: HookCategory, hook_spec: dict[str, Any]) -> None:
@@ -785,10 +785,10 @@ class HookBatcher:
         if self.batch_thread:
             self.batch_thread.join()
 
-    def _batch_processor(self) -> None:
+    def _batch_processor(self) -> Generator[tuple[str, list[dict[str, Any]]], None, None]:
         """Process hooks in batches."""
         while self.running:
-            batch = []
+            batch: list[dict[str, Any]] = []
             deadline = time.time() + (self.batch_timeout_ms / 1000.0)
 
             # Collect hooks until batch is full or timeout
@@ -805,18 +805,23 @@ class HookBatcher:
                 batch.sort(key=lambda h: h["category"].value)
 
                 # Group by module for efficiency
-                module_groups = defaultdict(list)
+                module_groups: dict[str, list[dict[str, Any]]] = defaultdict(list)
                 for hook in batch:
                     module_groups[hook.get("module", "unknown")].append(hook)
 
                 # Return batched hooks
                 yield from module_groups.items()
 
-    def get_batch_stats(self) -> dict[str, int]:
+    def get_batch_stats(self) -> dict[str, Any]:
         """Get batching statistics."""
         return {
             "pending_hooks": self.hook_queue.qsize(),
-            "categories": {cat.name: sum(bool(h.get("category") == cat) for h in list(self.hook_queue.queue)) for cat in HookCategory},
+            "categories": {
+                cat.name: sum(
+                    h.get("category") == cat for h in list(self.hook_queue.queue)
+                )
+                for cat in HookCategory
+            },
         }
 
 
@@ -857,9 +862,9 @@ class FridaPerformanceOptimizer:
         self.baseline_memory = 0
         self.baseline_cpu = 0
         self.optimization_enabled = True
-        self.selective_hooks = {}
-        self.hook_cache = {}
-        self.performance_history = deque(maxlen=100)
+        self.selective_hooks: dict[str, dict[str, Any]] = {}
+        self.hook_cache: dict[str, str] = {}
+        self.performance_history: deque[dict[str, float]] = deque(maxlen=100)
 
     def measure_baseline(self) -> None:
         """Measure baseline resource usage."""
@@ -917,7 +922,7 @@ class FridaPerformanceOptimizer:
 
         # High CPU usage - be very selective
         if usage["cpu_percent"] > 80:
-            return importance == HookCategory.CRITICAL
+            return importance == HookCategory.CRITICAL  # type: ignore[comparison-overlap]
 
         # Check if this hook is frequently called
         hook_key = f"{module}!{function}"
@@ -1037,10 +1042,10 @@ class DynamicScriptGenerator:
         self.protection_handlers = self._init_protection_handlers()
         self.hook_strategies = self._init_hook_strategies()
         self.obfuscation_engine = self._init_obfuscation()
-        self.script_cache = {}
-        self.success_metrics = defaultdict(float)
+        self.script_cache: dict[str, str] = {}
+        self.success_metrics: dict[str, float] = defaultdict(float)
 
-    def _init_protection_handlers(self) -> dict:
+    def _init_protection_handlers(self) -> dict[ProtectionType, Callable[[dict[str, Any]], str]]:
         """Initialize protection-specific script generators."""
         return {
             ProtectionType.ANTI_DEBUG: self._gen_antidebug_script,
@@ -1054,7 +1059,7 @@ class DynamicScriptGenerator:
             ProtectionType.KERNEL: self._gen_kernel_script,
         }
 
-    def _init_hook_strategies(self) -> dict:
+    def _init_hook_strategies(self) -> dict[str, Callable[[dict[str, Any]], str]]:
         """Initialize adaptive hooking strategies."""
         return {
             "aggressive": self._aggressive_hooks,
@@ -1064,7 +1069,7 @@ class DynamicScriptGenerator:
             "comprehensive": self._comprehensive_hooks,
         }
 
-    def _init_obfuscation(self) -> dict:
+    def _init_obfuscation(self) -> dict[str, bool]:
         """Initialize script obfuscation engine."""
         return {
             "variable_renaming": True,
@@ -1076,8 +1081,8 @@ class DynamicScriptGenerator:
 
     def generate_script(
         self,
-        target_info: dict,
-        detected_protections: list,
+        target_info: dict[str, Any],
+        detected_protections: list[ProtectionType],
         strategy: str = "adaptive",
         obfuscate: bool = True,
     ) -> str:
@@ -1289,7 +1294,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_antidebug_script(self, target_info: dict) -> str:
+    def _gen_antidebug_script(self, target_info: dict[str, Any]) -> str:
         """Generate anti-debug bypass script."""
         return """
 // Anti-debug bypass implementation
@@ -1385,7 +1390,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_antivm_script(self, target_info: dict) -> str:
+    def _gen_antivm_script(self, target_info: dict[str, Any]) -> str:
         """Generate anti-VM bypass script."""
         return """
 // Anti-VM bypass implementation
@@ -1485,7 +1490,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_license_script(self, target_info: dict) -> str:
+    def _gen_license_script(self, target_info: dict[str, Any]) -> str:
         """Generate license bypass script."""
         return """
 // License bypass implementation
@@ -1638,7 +1643,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_integrity_script(self, target_info: dict) -> str:
+    def _gen_integrity_script(self, target_info: dict[str, Any]) -> str:
         """Generate integrity check bypass script."""
         return """
 // Integrity check bypass implementation
@@ -1744,7 +1749,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_hardware_script(self, target_info: dict) -> str:
+    def _gen_hardware_script(self, target_info: dict[str, Any]) -> str:
         """Generate hardware ID spoofing script."""
         return """
 // Hardware ID spoofing implementation
@@ -1828,7 +1833,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_cloud_script(self, target_info: dict) -> str:
+    def _gen_cloud_script(self, target_info: dict[str, Any]) -> str:
         """Generate cloud license bypass script."""
         return """
 // Cloud license bypass implementation
@@ -1906,7 +1911,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_time_script(self, target_info: dict) -> str:
+    def _gen_time_script(self, target_info: dict[str, Any]) -> str:
         """Generate time-based protection bypass script."""
         return """
 // Time-based protection bypass
@@ -1977,7 +1982,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_memory_script(self, target_info: dict) -> str:
+    def _gen_memory_script(self, target_info: dict[str, Any]) -> str:
         """Generate memory protection bypass script."""
         return """
 // Memory protection bypass
@@ -2051,7 +2056,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _gen_kernel_script(self, target_info: dict) -> str:
+    def _gen_kernel_script(self, target_info: dict[str, Any]) -> str:
         """Generate kernel-level protection bypass script."""
         return """
 // Kernel protection bypass
@@ -2195,7 +2200,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _aggressive_hooks(self, target_info: dict) -> str:
+    def _aggressive_hooks(self, target_info: dict[str, Any]) -> str:
         """Generate aggressive hooking strategy."""
         return """
 // Aggressive hooking strategy
@@ -2227,7 +2232,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _stealthy_hooks(self, target_info: dict) -> str:
+    def _stealthy_hooks(self, target_info: dict[str, Any]) -> str:
         """Generate stealthy hooking strategy."""
         return """
 // Stealthy hooking strategy
@@ -2260,7 +2265,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _adaptive_hooks(self, target_info: dict) -> str:
+    def _adaptive_hooks(self, target_info: dict[str, Any]) -> str:
         """Generate adaptive hooking strategy."""
         return """
 // Adaptive hooking strategy
@@ -2377,7 +2382,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _minimal_hooks(self, target_info: dict) -> str:
+    def _minimal_hooks(self, target_info: dict[str, Any]) -> str:
         """Generate minimal hooking strategy."""
         return """
 // Minimal hooking strategy - only essential bypasses
@@ -2400,7 +2405,7 @@ function installHook(target, handler, options = {}) {
 })();
 """
 
-    def _comprehensive_hooks(self, target_info: dict) -> str:
+    def _comprehensive_hooks(self, target_info: dict[str, Any]) -> str:
         """Generate comprehensive hooking strategy."""
         return """
 // Comprehensive hooking strategy - maximum coverage
@@ -2628,7 +2633,7 @@ class FridaManager:
 
     """
 
-    def __init__(self, log_dir: str = None, script_dir: str = None) -> None:
+    def __init__(self, log_dir: str | None = None, script_dir: str | None = None) -> None:
         """Initialize the Frida manager.
 
         Args:
@@ -2654,10 +2659,10 @@ class FridaManager:
         self.optimizer = FridaPerformanceOptimizer()
         self.script_generator = DynamicScriptGenerator()  # Add dynamic script generator
 
-        self.device = None
-        self.sessions = {}
-        self.scripts = {}
-        self.script_outputs = {}  # Store script outputs for persistence
+        self.device: Any | None = None
+        self.sessions: dict[str, Any] = {}
+        self.scripts: dict[str, Any] = {}
+        self.script_outputs: dict[str, Any] = {}
 
         # Use consistent absolute path for scripts
         if script_dir:
@@ -2771,7 +2776,7 @@ class FridaManager:
             self.logger.log_performance("attach_time", attach_time, "ms", {"process": process_name})
 
             # Set up session handlers
-            session.on("detached", lambda reason: self._on_session_detached(session_id, reason))
+            session.on("detached", lambda reason, crash: self._on_session_detached(session_id, reason))
 
             return True
 
@@ -2860,7 +2865,7 @@ class FridaManager:
 
         return scripts
 
-    def load_script(self, session_id: str, script_name: str, options: dict[str, Any] = None) -> bool:
+    def load_script(self, session_id: str, script_name: str, options: dict[str, Any] | None = None) -> bool:
         """Load and inject a Frida script with optimization."""
         try:
             start_time = time.time()
@@ -2942,8 +2947,8 @@ class FridaManager:
     def load_dynamic_script(
         self,
         session_id: str,
-        target_info: dict = None,
-        detected_protections: list = None,
+        target_info: dict[str, Any] | None = None,
+        detected_protections: list[ProtectionType] | None = None,
         strategy: str = "adaptive",
         obfuscate: bool = True,
     ) -> bool:
@@ -3048,7 +3053,7 @@ class FridaManager:
             logger.exception("Failed to load dynamic script: %s", e)
             return False
 
-    def _detect_protections_for_session(self, session_id: str) -> list:
+    def _detect_protections_for_session(self, session_id: str) -> list[ProtectionType]:
         """Auto-detect protections for a session by analyzing the target process."""
         detected = []
         try:
@@ -3092,7 +3097,7 @@ class FridaManager:
             detection = session.create_script(detection_script)
             protections_found = []
 
-            def on_message(message: dict, data: bytes | bytearray) -> None:
+            def on_message(message: dict[str, Any], data: bytes | bytearray) -> None:
                 if message["type"] == "send":
                     payload = message.get("payload", {})
                     if payload.get("type") == "protections":
@@ -3130,9 +3135,9 @@ class FridaManager:
 
         return detected
 
-    def _analyze_target(self, session_id: str) -> dict:
+    def _analyze_target(self, session_id: str) -> dict[str, Any]:
         """Analyze target process to gather information for script generation."""
-        target_info = {
+        target_info: dict[str, Any] = {
             "arch": "unknown",
             "platform": "windows",
             "modules": [],
@@ -3175,7 +3180,7 @@ class FridaManager:
             # Create temporary analysis script
             analyzer = session.create_script(analysis_script)
 
-            def on_message(message: dict, data: bytes | bytearray) -> None:
+            def on_message(message: dict[str, Any], data: bytes | bytearray) -> None:
                 if message["type"] == "send":
                     payload = message.get("payload", {})
                     if payload.get("type") == "target_info":
@@ -3298,7 +3303,7 @@ class FridaManager:
 
         return instrumentation + "\n" + script_code
 
-    def _on_script_message(self, session_id: str, script_name: str, message: dict, data: bytes | bytearray) -> None:
+    def _on_script_message(self, session_id: str, script_name: str, message: dict[str, Any], data: bytes | bytearray | None) -> None:
         """Handle messages from Frida scripts including binary data."""
         msg_type = message.get("type")
         payload = message.get("payload", {})
@@ -3364,21 +3369,28 @@ class FridaManager:
 
                 if payload_type == "hook":
                     # Log hook execution
-                    self.logger.log_hook(
-                        payload.get("function"),
-                        payload.get("module"),
-                        payload.get("args", []),
-                        payload.get("retval"),
-                        payload.get("modified", False),
-                    )
+                    function = payload.get("function", "")
+                    module = payload.get("module", "")
+                    if isinstance(function, str) and isinstance(module, str):
+                        self.logger.log_hook(
+                            function,
+                            module,
+                            payload.get("args", []),
+                            payload.get("retval"),
+                            payload.get("modified", False),
+                        )
 
                     # Track performance
                     if "elapsed" in payload:
-                        self.optimizer.track_hook_performance(
-                            payload.get("module"),
-                            payload.get("function"),
-                            payload.get("elapsed"),
-                        )
+                        module_perf = payload.get("module", "")
+                        function_perf = payload.get("function", "")
+                        elapsed = payload.get("elapsed", 0.0)
+                        if isinstance(module_perf, str) and isinstance(function_perf, str) and isinstance(elapsed, (int, float)):
+                            self.optimizer.track_hook_performance(
+                                module_perf,
+                                function_perf,
+                                float(elapsed),
+                            )
 
                 elif payload_type == "protection_detected":
                     # Handle protection detection
@@ -3438,14 +3450,15 @@ class FridaManager:
         for key in script_keys:
             del self.scripts[key]
 
-    def _on_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any]) -> None:
+    def _on_protection_detected(self, protection_type: ProtectionType, details: dict[str, Any] | set[str]) -> None:
         """Handle protection detection events."""
         # Log detection
+        details_dict = details if isinstance(details, dict) else {"evidence": list(details)}
         self.logger.log_bypass_attempt(
             protection_type,
             "detection",
             True,
-            details,
+            details_dict,
         )
 
         # Apply adaptation if available
@@ -3457,8 +3470,10 @@ class FridaManager:
                 logger.exception("Adaptation failed for %s: %s", protection_type, e)
 
     # Protection adaptation methods
-    def _adapt_anti_debug(self, details: dict[str, Any]) -> None:
+    def _adapt_anti_debug(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to anti-debugging protections."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3480,8 +3495,10 @@ class FridaManager:
             {"method": "script_injection"},
         )
 
-    def _adapt_anti_vm(self, details: dict[str, Any]) -> None:
+    def _adapt_anti_vm(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to anti-VM protections."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3503,8 +3520,10 @@ class FridaManager:
             {"method": "hardware_spoofing"},
         )
 
-    def _adapt_license(self, details: dict[str, Any]) -> None:
+    def _adapt_license(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to license verification."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3532,8 +3551,10 @@ class FridaManager:
             {"method": "api_hooking", "script": script_name},
         )
 
-    def _adapt_integrity(self, details: dict[str, Any]) -> None:
+    def _adapt_integrity(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to integrity checks."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3555,8 +3576,10 @@ class FridaManager:
             {"method": "checksum_patching"},
         )
 
-    def _adapt_hardware(self, details: dict[str, Any]) -> None:
+    def _adapt_hardware(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to hardware binding."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3564,6 +3587,7 @@ class FridaManager:
         # Load hardware spoofer
         self.load_script(
             session_id,
+            "hardware_spoofer",
             {
                 "spoof_all": True,
                 "persistent": True,
@@ -3577,8 +3601,10 @@ class FridaManager:
             {"method": "hwid_spoofing"},
         )
 
-    def _adapt_cloud(self, details: dict[str, Any]) -> None:
+    def _adapt_cloud(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to cloud verification."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3605,8 +3631,10 @@ class FridaManager:
             {"method": "network_interception"},
         )
 
-    def _adapt_time(self, details: dict[str, Any]) -> None:
+    def _adapt_time(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to time-based protections."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3628,8 +3656,10 @@ class FridaManager:
             {"method": "time_manipulation"},
         )
 
-    def _adapt_memory(self, details: dict[str, Any]) -> None:
+    def _adapt_memory(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to memory protections."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3651,8 +3681,10 @@ class FridaManager:
             {"method": "memory_patching"},
         )
 
-    def _adapt_kernel(self, details: dict[str, Any]) -> None:
+    def _adapt_kernel(self, details: dict[str, Any] | set[str]) -> None:
         """Adapt to kernel-mode protections."""
+        if isinstance(details, set):
+            details = {"evidence": list(details)}
         session_id = details.get("session")
         if not session_id:
             return
@@ -3699,12 +3731,10 @@ class FridaManager:
 
         try:
             # Write binary data to file
-            if isinstance(data, (bytes, bytearray)):
-                with open(dump_file, "wb") as f:
+            with open(dump_file, "wb") as f:
+                if isinstance(data, bytes):
                     f.write(data)
-            else:
-                # Convert to bytes if necessary
-                with open(dump_file, "wb") as f:
+                else:
                     f.write(bytes(data))
 
             # Analyze memory dump for patterns
@@ -3877,7 +3907,7 @@ class FridaManager:
             data = bytes(data)
 
         # Look for common patterns
-        patterns = {
+        patterns: dict[str, list[bytes]] = {
             "license_key": [b"LICENSE", b"KEY", b"SERIAL", b"ACTIVATION"],
             "crypto_keys": [b"RSA", b"AES", b"-----BEGIN", b"-----END"],
             "urls": [b"http://", b"https://", b"ftp://"],
@@ -3885,7 +3915,7 @@ class FridaManager:
             "interesting_strings": [b"trial", b"expired", b"registered", b"cracked"],
         }
 
-        findings = {}
+        findings: dict[str, list[dict[str, Any]]] = {}
         for category, pattern_list in patterns.items():
             for pattern in pattern_list:
                 if pattern in data:
@@ -3917,7 +3947,7 @@ class FridaManager:
     def _analyze_screenshot(self, data: bytes | bytearray, payload: dict[str, Any]) -> None:
         """Analyze screenshot for UI elements or text."""
         # Analyze screenshot data for UI elements
-        analysis_results = {
+        analysis_results: dict[str, Any] = {
             "ui_elements": [],
             "text_content": [],
             "coordinates": {},
@@ -3955,7 +3985,7 @@ class FridaManager:
                             )
 
             except Exception as e:
-                self.logger.error("Data analysis failed: %s", e, exc_info=True)
+                self.logger.exception("Data analysis failed: %s", e)
                 analysis_results["error"] = str(e)
 
         # Log analysis results with data info
@@ -4253,7 +4283,7 @@ class FridaManager:
             "scripts": len(self.scripts),
         }
 
-    def export_analysis(self, output_path: str = None) -> str:
+    def export_analysis(self, output_path: str | None = None) -> str:
         """Export complete analysis results including script outputs."""
         # Export logs
         log_dir = self.logger.export_logs(output_path)
@@ -4292,7 +4322,7 @@ class FridaManager:
 
         return log_dir
 
-    def save_script_output(self, script_name: str, output: dict) -> None:
+    def save_script_output(self, script_name: str, output: dict[str, Any]) -> None:
         """Save script output for persistence.
 
         Args:
@@ -4329,7 +4359,7 @@ class FridaManager:
         with open(output_file, "w") as f:
             json.dump(output_with_metadata, f, indent=2)
 
-    def load_previous_results(self, script_name: str) -> list[dict]:
+    def load_previous_results(self, script_name: str) -> list[dict[str, Any]]:
         """Load previous results for a given script.
 
         Args:

@@ -1799,8 +1799,7 @@ const tpmEmulator = {
         // Randomize response timing to avoid fingerprinting
         if (this.antiDetection.timingRandomization) {
             this.randomizeTimingDelay = () => {
-                const delay = Math.floor(Math.random() * this.antiDetection.responseJitter);
-                return delay;
+                return Math.floor(Math.random() * this.antiDetection.responseJitter);
             };
         }
 

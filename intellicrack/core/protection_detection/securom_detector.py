@@ -977,7 +977,7 @@ class SecuROMDetector:
                 b"InternetOpenUrl",
             ]
 
-            return sum(bool(indicator in data) for indicator in activation_indicators) >= 2
+            return sum(indicator in data for indicator in activation_indicators) >= 2
 
         except Exception:
             return False

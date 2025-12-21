@@ -422,7 +422,7 @@ const virtualizationBypass = {
 
                 spoofBiosInfo: function () {
                     try {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.vmDetection.virtualBox.spoofBios) {
                             const biosData = this.firmwareTableBuffer.readByteArray(
                                 Math.min(this.bufferSize, 1024)
@@ -727,7 +727,7 @@ const virtualizationBypass = {
 
                 spoofVmwareMacs: function (adapterInfo) {
                     try {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.vmDetection.vmware.spoofMacAddresses) {
                             // IP_ADAPTER_INFO structure parsing
                             let currentAdapter = adapterInfo;
@@ -852,7 +852,7 @@ const virtualizationBypass = {
                 },
 
                 onLeave: function (_retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (
                         config.vmDetection.hyperV.hideHyperVFeatures &&
                         (this.feature === 20 || this.feature === 21)
@@ -2459,7 +2459,7 @@ const virtualizationBypass = {
                             // Hook CPUID instruction (0F A2)
                             Interceptor.attach(address, {
                                 onEnter: function (_args) {
-                                    const eax = this.context.eax;
+                                    const {eax} = this.context;
                                     const _ecx = this.context.ecx;
 
                                     // Hypervisor detection leaf
@@ -3657,7 +3657,7 @@ const virtualizationBypass = {
                 action: 'active_protection_summary_start',
             });
 
-            const config = this.config;
+            const {config} = this;
             if (config.vmDetection.enabled) {
                 send({
                     type: 'summary',
@@ -3835,7 +3835,7 @@ const virtualizationBypass = {
         // Analyze memory access patterns for VM detection
         Process.setExceptionHandler(details => {
             if (details.type === 'access-violation') {
-                const address = details.address;
+                const {address} = details;
                 // Check if this is a VM-specific memory region
                 const vmRegions = [
                     {
@@ -3890,7 +3890,7 @@ const virtualizationBypass = {
 
         // Hook CPUID instruction execution
         const _cpuidHook = function (context) {
-            const eax = context.eax;
+            const {eax} = context;
             const _ecx = context.ecx;
             const key = `${eax}:${ecx}`;
 

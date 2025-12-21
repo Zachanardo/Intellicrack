@@ -436,7 +436,7 @@ class BaseDialog(QDialog):
         """
         self._error_state = True
         self.show_status(message, "error")
-        self.logger.error(f"Dialog error: {message}")
+        self.logger.error("Dialog error: %s", message)
 
     def show_success(self, message: str) -> None:
         """Show a success message in the dialog.
@@ -744,4 +744,4 @@ class BaseDialog(QDialog):
         Args:
             file_path: Path to the selected binary file.
         """
-        self.logger.debug(f"Binary selected: {file_path}")
+        self.logger.debug("Binary selected: %s", file_path)

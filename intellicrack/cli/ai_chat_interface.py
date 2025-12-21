@@ -542,12 +542,14 @@ class AITerminalChat:
         intermediate_count = sum(1 for msg in user_messages for term in intermediate_terms if term in msg)
 
         ADVANCED_THRESHOLD = 2
-        INTERMEDIATE_THRESHOLD = 1
         if advanced_count > ADVANCED_THRESHOLD:
             return "advanced"
-        if intermediate_count > INTERMEDIATE_THRESHOLD or advanced_count > 0:
-            return "intermediate"
-        return "beginner"
+        INTERMEDIATE_THRESHOLD = 1
+        return (
+            "intermediate"
+            if intermediate_count > INTERMEDIATE_THRESHOLD or advanced_count > 0
+            else "beginner"
+        )
 
     def _build_context(self) -> dict[str, Any]:
         """Build context for AI responses."""
@@ -683,10 +685,7 @@ class AITerminalChat:
         if text_after.strip():
             result_parts.append(text_after)
 
-        if result_parts:
-            return result_parts[0]
-
-        return response
+        return result_parts[0] if result_parts else response
 
     def _display_analysis_summary(self) -> None:
         """Display analysis summary using columns layout."""
@@ -940,7 +939,7 @@ class AITerminalChat:
     def _handle_backend_switch_logic(self, backend_name: str, available_backends: list[str]) -> str | None:
         """Helper to handle the logic for switching AI backend."""
         if backend_name not in available_backends:
-            error_msg = "Backend '{}' not available. Available backends: {}".format(backend_name, ", ".join(available_backends))
+            error_msg = f"""Backend '{backend_name}' not available. Available backends: {", ".join(available_backends)}"""
             logger.warning("Invalid backend requested: %s", backend_name)
             if self.console:
                 self.console.print(f"[red]{error_msg}[/red]")

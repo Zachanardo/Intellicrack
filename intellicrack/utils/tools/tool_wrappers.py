@@ -25,7 +25,8 @@ import platform
 import subprocess
 import time
 import traceback
-from typing import Any, Dict, List
+from types import ModuleType
+from typing import Any
 
 try:
     import capstone
@@ -50,7 +51,7 @@ def log_message(message: str) -> str:
     return f"[{time.strftime('%H:%M:%S')}] {message}"
 
 
-def wrapper_find_file(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_find_file(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_find_file.
     Searches for files based on filename.
 
@@ -92,7 +93,7 @@ def wrapper_find_file(app_instance, parameters: dict[str, Any]) -> dict[str, Any
         return {"status": "error", "message": f"Error searching for file: {str(e)}"}
 
 
-def wrapper_load_binary(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_load_binary(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_load_binary.
     Loads a binary file for analysis.
 
@@ -136,7 +137,7 @@ def wrapper_load_binary(app_instance, parameters: dict[str, Any]) -> dict[str, A
         return {"status": "error", "message": f"Error loading binary: {str(e)}"}
 
 
-def wrapper_list_relevant_files(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_list_relevant_files(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_list_relevant_files.
     Lists files relevant to the current binary.
 
@@ -181,7 +182,7 @@ def wrapper_list_relevant_files(app_instance, parameters: dict[str, Any]) -> dic
         return {"status": "error", "message": f"Error listing files: {str(e)}"}
 
 
-def wrapper_read_file_chunk(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_read_file_chunk(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_read_file_chunk.
     Reads a chunk of data from a file.
 
@@ -228,7 +229,7 @@ def wrapper_read_file_chunk(app_instance, parameters: dict[str, Any]) -> dict[st
         return {"status": "error", "message": f"Error reading file: {str(e)}"}
 
 
-def wrapper_get_file_metadata(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_get_file_metadata(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_get_file_metadata.
     Gets metadata information about a file.
 
@@ -278,7 +279,7 @@ def wrapper_get_file_metadata(app_instance, parameters: dict[str, Any]) -> dict[
         return {"status": "error", "message": f"Error getting metadata: {str(e)}"}
 
 
-def wrapper_run_static_analysis(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_run_static_analysis(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_run_static_analysis.
     Runs static analysis on the loaded binary.
 
@@ -308,7 +309,7 @@ def wrapper_run_static_analysis(app_instance, parameters: dict[str, Any]) -> dic
         return {"status": "error", "message": f"Error in static analysis: {str(e)}"}
 
 
-def wrapper_deep_license_analysis(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_deep_license_analysis(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_deep_license_analysis.
     Runs deep license analysis on the loaded binary.
 
@@ -334,7 +335,7 @@ def wrapper_deep_license_analysis(app_instance, parameters: dict[str, Any]) -> d
         return {"status": "error", "message": f"Error in license analysis: {str(e)}"}
 
 
-def wrapper_detect_protections(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_detect_protections(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_detect_protections.
     Detects protections in the loaded binary.
 
@@ -367,7 +368,7 @@ def wrapper_detect_protections(app_instance, parameters: dict[str, Any]) -> dict
         return {"status": "error", "message": f"Error detecting protections: {str(e)}"}
 
 
-def wrapper_disassemble_address(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_disassemble_address(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_disassemble_address.
     Disassembles instructions at a given address.
 
@@ -481,7 +482,7 @@ def wrapper_disassemble_address(app_instance, parameters: dict[str, Any]) -> dic
         return {"status": "error", "message": f"Disassembly error: {str(e)}"}
 
 
-def wrapper_get_cfg(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_get_cfg(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_get_cfg.
     Gets control flow graph for a function.
 
@@ -528,7 +529,7 @@ def wrapper_get_cfg(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
         return {"status": "error", "message": f"CFG generation error: {str(e)}"}
 
 
-def wrapper_launch_target(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_launch_target(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_launch_target.
     Launches the target process for dynamic analysis.
 
@@ -637,7 +638,10 @@ def wrapper_launch_target(app_instance, parameters: dict[str, Any]) -> dict[str,
                 # Use ptrace to suspend on Unix
                 import signal
 
-                process = subprocess.Popen([binary_path] + args, preexec_fn=lambda: os.kill(os.getpid(), signal.SIGSTOP))
+                if not hasattr(signal, "SIGSTOP"):
+                    return {"status": "error", "message": "SIGSTOP not available on this platform"}
+                sig_value = getattr(signal, "SIGSTOP")
+                process = subprocess.Popen([binary_path] + args, preexec_fn=lambda: os.kill(os.getpid(), sig_value))
             else:
                 process = subprocess.Popen([binary_path] + args)
 
@@ -653,7 +657,7 @@ def wrapper_launch_target(app_instance, parameters: dict[str, Any]) -> dict[str,
         return {"status": "error", "message": f"Launch error: {str(e)}"}
 
 
-def wrapper_attach_target(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_attach_target(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_attach_target.
     Attaches to a running target process.
 
@@ -737,7 +741,7 @@ def wrapper_attach_target(app_instance, parameters: dict[str, Any]) -> dict[str,
         return {"status": "error", "message": f"Attach error: {str(e)}"}
 
 
-def wrapper_run_frida_script(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_run_frida_script(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_run_frida_script.
     Runs a Frida script on the target process.
 
@@ -768,13 +772,13 @@ def wrapper_run_frida_script(app_instance, parameters: dict[str, Any]) -> dict[s
         # Real Frida script execution
         if frida is None:
             # Fallback to subprocess if Frida module not available
-            try:
-                # Execute using frida CLI tool
-                cmd = ["frida"]
-                if process_id:
-                    cmd.extend(["-p", str(process_id)])
-                cmd.extend(["-l", script_path])
+            # Execute using frida CLI tool
+            cmd = ["frida"]
+            if process_id:
+                cmd.extend(["-p", str(process_id)])
+            cmd.extend(["-l", script_path])
 
+            try:
                 result = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
                 if result.returncode == 0:
                     output_lines = result.stdout or "Script executed"
@@ -792,7 +796,7 @@ def wrapper_run_frida_script(app_instance, parameters: dict[str, Any]) -> dict[s
             except FileNotFoundError:
                 return {"status": "error", "message": "Frida CLI not found. Please install Frida."}
 
-        # Use Frida Python API
+        # Use Frida Python API (when frida is available)
         try:
             # Read script content
             with open(script_path) as f:
@@ -822,13 +826,14 @@ def wrapper_run_frida_script(app_instance, parameters: dict[str, Any]) -> dict[s
             script = session.create_script(script_content)
 
             # Collect output messages
-            output_messages = []
+            output_messages: list[str] = []
 
-            def on_message(message, data):
-                if message["type"] == "send":
-                    output_messages.append(str(message.get("payload", "")))
-                elif message["type"] == "error":
-                    output_messages.append(f"Error: {message.get('description', '')}")
+            def on_message(message: Any, data: Any) -> None:
+                if isinstance(message, dict):
+                    if message.get("type") == "send":
+                        output_messages.append(str(message.get("payload", "")))
+                    elif message.get("type") == "error":
+                        output_messages.append(f"Error: {message.get('description', '')}")
 
             script.on("message", on_message)
             script.load()
@@ -864,7 +869,7 @@ def wrapper_run_frida_script(app_instance, parameters: dict[str, Any]) -> dict[s
         return {"status": "error", "message": f"Script execution error: {str(e)}"}
 
 
-def wrapper_detach(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_detach(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_detach.
     Detaches from the target process.
 
@@ -948,7 +953,7 @@ def wrapper_detach(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
         return {"status": "error", "message": f"Detach error: {str(e)}"}
 
 
-def wrapper_propose_patch(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_propose_patch(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_propose_patch.
     Proposes patches based on analysis results.
 
@@ -1206,13 +1211,13 @@ def _try_pefile_import_analysis(binary_path: str) -> list[dict[str, Any]]:
     return patches
 
 
-def _extract_import_patches(pe, detected_apis) -> list[dict[str, Any]]:
+def _extract_import_patches(pe: Any, detected_apis: dict[str, list[str]]) -> list[dict[str, Any]]:
     """Extract import patches from PE analysis."""
     patches = []
 
     from ..binary.pe_common import iterate_pe_imports_with_dll
 
-    def check_import_patch(dll_name, func_name, imp):
+    def check_import_patch(dll_name: str, func_name: str, imp: Any) -> dict[str, Any] | None:
         # Check if this function was detected
         for _, funcs in detected_apis.items():
             if func_name in funcs:
@@ -1229,8 +1234,11 @@ def _extract_import_patches(pe, detected_apis) -> list[dict[str, Any]]:
         return None
 
     # Use the common function to iterate imports
-    for patch in iterate_pe_imports_with_dll(pe, check_import_patch, include_import_obj=True):
-        patches.append(patch)
+    import_results = iterate_pe_imports_with_dll(pe, check_import_patch, include_import_obj=True)
+    if hasattr(import_results, "__iter__"):
+        for patch_result in import_results:
+            if patch_result is not None:
+                patches.append(patch_result)
 
     return patches
 
@@ -1293,7 +1301,7 @@ def _analyze_disassembly(binary_path: str) -> list[dict[str, Any]]:
     return patches[:15]  # Limit disassembly patches
 
 
-def _convert_vulnerabilities_to_patches(vulnerabilities: list[dict]) -> list[dict[str, Any]]:
+def _convert_vulnerabilities_to_patches(vulnerabilities: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Convert vulnerability findings to patch proposals."""
     return [
         {
@@ -1437,7 +1445,7 @@ def _generate_fallback_patches(binary_path: str) -> dict[str, Any]:
     }
 
 
-def wrapper_get_proposed_patches(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_get_proposed_patches(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_get_proposed_patches.
     Gets the list of currently proposed patches.
 
@@ -1489,7 +1497,7 @@ def wrapper_get_proposed_patches(app_instance, parameters: dict[str, Any]) -> di
         return {"status": "error", "message": f"Error retrieving patches: {str(e)}"}
 
 
-def wrapper_apply_confirmed_patch(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_apply_confirmed_patch(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_apply_confirmed_patch.
     Applies a confirmed patch to the binary.
 
@@ -1601,7 +1609,7 @@ def wrapper_apply_confirmed_patch(app_instance, parameters: dict[str, Any]) -> d
         return {"status": "error", "message": f"Patch application error: {str(e)}"}
 
 
-def wrapper_generate_launcher_script(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_generate_launcher_script(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for tool_generate_launcher_script.
     Generates a launcher script for the patched binary.
 
@@ -1645,7 +1653,7 @@ pause
         return {"status": "error", "message": f"Script generation error: {str(e)}"}
 
 
-def dispatch_tool(app_instance, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
+def dispatch_tool(app_instance: Any, tool_name: str, parameters: dict[str, Any]) -> dict[str, Any]:
     """Central dispatcher for tool wrapper functions.
 
     Args:
@@ -1691,12 +1699,12 @@ def dispatch_tool(app_instance, tool_name: str, parameters: dict[str, Any]) -> d
         return {"status": "error", "message": f"Tool execution failed: {str(e)}"}
 
 
-def run_external_tool(args):
+def run_external_tool(args: list[str]) -> str:
     """Run an external tool with the given arguments."""
     import subprocess
 
     logger.info(f"Running external tool: {' '.join(args)}")
-    results = f"Running external tool: {' '.join(args)}\n"
+    results: str = f"Running external tool: {' '.join(args)}\n"
 
     try:
         # Run the command
@@ -1728,7 +1736,7 @@ def run_external_tool(args):
     return results
 
 
-def wrapper_deep_runtime_monitoring(app_instance, parameters: dict[str, Any]) -> dict[str, Any]:
+def wrapper_deep_runtime_monitoring(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
     """Wrap for deep runtime monitoring functionality.
 
     Args:
@@ -1773,21 +1781,22 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: dict[str, Any]) ->
         }
 
         # Extract logs from result
+        final_logs: list[str]
         if isinstance(result, dict) and "logs" in result:
-            logs = result["logs"]
+            final_logs = result["logs"]
         else:
-            logs = result
+            final_logs = logs
 
         # Update UI if available
         if app_instance and hasattr(app_instance, "update_output"):
-            for log in logs:
+            for log in final_logs:
                 app_instance.update_output.emit(f"[Runtime Monitor] {log}")
 
         return {
             "status": "success",
             "binary_path": binary_path,
             "timeout": timeout,
-            "logs": logs,
+            "logs": final_logs,
             "monitoring_complete": True,
         }
 
@@ -1803,10 +1812,10 @@ def wrapper_deep_runtime_monitoring(app_instance, parameters: dict[str, Any]) ->
 
 def run_ghidra_headless(
     binary_path: str,
-    script_path: str = None,
-    output_dir: str = None,
-    project_name: str = None,
-    options: dict[str, Any] = None,
+    script_path: str | None = None,
+    output_dir: str | None = None,
+    project_name: str | None = None,
+    options: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Run comprehensive Ghidra headless analysis on a binary.
 
@@ -1879,12 +1888,13 @@ def run_ghidra_headless(
         # Validate binary exists
         if not os.path.exists(binary_path):
             results["status"] = "error"
-            results["errors"].append(f"Binary file not found: {binary_path}")
+            if isinstance(results["errors"], list):
+                results["errors"].append(f"Binary file not found: {binary_path}")
             return results
 
         # Find Ghidra installation
         # Use dynamic path discovery
-        ghidra_executable = None
+        ghidra_executable: str | None = None
         try:
             from ...core.path_discovery import find_tool
 
@@ -1934,7 +1944,8 @@ def run_ghidra_headless(
 
         if not ghidra_executable:
             results["status"] = "error"
-            results["errors"].append("Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable.")
+            if isinstance(results["errors"], list):
+                results["errors"].append("Ghidra executable not found. Please install Ghidra and set GHIDRA_INSTALL_DIR environment variable.")
             return results
 
         # Setup project directory
@@ -2001,11 +2012,14 @@ def run_ghidra_headless(
         process = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, cwd=output_dir, check=False)
 
         analysis_time = time.time() - start_time
-        results["analysis_results"]["analysis_time"] = analysis_time
+        analysis_results = results.get("analysis_results")
+        if isinstance(analysis_results, dict):
+            analysis_results["analysis_time"] = analysis_time
 
         # Process output
         if process.stdout:
-            results["output"] = process.stdout.split("\n")
+            if isinstance(results["output"], list):
+                results["output"] = process.stdout.split("\n")
             # Parse analysis results from output
             results = _parse_ghidra_output(results, process.stdout)
 
@@ -2013,7 +2027,7 @@ def run_ghidra_headless(
             stderr_lines = process.stderr.split("\n")
             # Separate warnings from errors
             for line in stderr_lines:
-                if line.strip():
+                if line.strip() and (isinstance(results["warnings"], list) and isinstance(results["errors"], list)):
                     if "WARN" in line or "WARNING" in line:
                         results["warnings"].append(line)
                     else:
@@ -2038,24 +2052,28 @@ def run_ghidra_headless(
 
         # Save project if requested
         if not save_results:
-            try:
-                shutil.rmtree(results["project_path"])
-            except OSError as e:
-                logger.debug("Failed to remove project directory: %s", e)
+            project_path = results.get("project_path")
+            if isinstance(project_path, str):
+                try:
+                    shutil.rmtree(project_path)
+                except OSError as e:
+                    logger.debug("Failed to remove project directory: %s", e)
 
     except subprocess.TimeoutExpired as e:
         logger.error("Subprocess timeout in tool_wrappers: %s", e)
         results["status"] = "error"
-        results["errors"].append(f"Ghidra analysis timed out after {timeout} seconds")
+        if isinstance(results["errors"], list):
+            results["errors"].append(f"Ghidra analysis timed out after {timeout} seconds")
     except (OSError, ValueError, RuntimeError) as e:
         results["status"] = "error"
-        results["errors"].append(str(e))
+        if isinstance(results["errors"], list):
+            results["errors"].append(str(e))
         logger.error("Error running Ghidra headless: %s", e)
 
     return results
 
 
-def _create_comprehensive_analysis_script(output_dir: str, export_format: str, export_selection: list, params: dict) -> str:
+def _create_comprehensive_analysis_script(output_dir: str, export_format: str, export_selection: list[str], params: dict[str, Any]) -> str:
     """Create a comprehensive Ghidra analysis script."""
     logger.debug(f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}")
     script_content = (
@@ -2299,7 +2317,7 @@ println("Analysis complete. Results exported.")
     return script_file
 
 
-def _parse_ghidra_output(results: dict, output: str) -> dict:
+def _parse_ghidra_output(results: dict[str, Any], output: str) -> dict[str, Any]:
     """Parse Ghidra analysis output for key information."""
     lines = output.split("\n")
 
@@ -2334,7 +2352,7 @@ def _parse_ghidra_output(results: dict, output: str) -> dict:
     return results
 
 
-def _load_analysis_exports(results: dict, output_dir: str, export_format: str) -> dict:
+def _load_analysis_exports(results: dict[str, Any], output_dir: str, export_format: str) -> dict[str, Any]:
     """Load exported analysis results from files."""
     logger.debug(f"Loading analysis exports from {output_dir} with format: {export_format}")
     export_files = [

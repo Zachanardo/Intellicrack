@@ -481,7 +481,7 @@ class ConsoleWidget(QWidget):
                     f.write(self.output.toPlainText())
                 self.append_success(f"Log exported to: {filename}")
             except Exception as e:
-                logger.error("Failed to export log: %s", e, exc_info=True)
+                logger.exception("Failed to export log: %s", e)
                 self.append_error(f"Failed to export log: {e}")
 
     def process_command(self) -> None:
@@ -636,14 +636,14 @@ class ConsoleWidget(QWidget):
         self.filters = filter_patterns
         self._is_filtered = True
 
-        source_content = self._original_content if self._original_content else current_content
+        source_content = self._original_content or current_content
         lines = source_content.split("\n")
 
-        filtered_lines: list[str] = []
-        for line in lines:
-            if any(pattern in line for pattern in filter_patterns):
-                filtered_lines.append(line)
-
+        filtered_lines: list[str] = [
+            line
+            for line in lines
+            if any(pattern in line for pattern in filter_patterns)
+        ]
         self.output.clear()
         if filtered_lines:
             self.output.setPlainText("\n".join(filtered_lines))

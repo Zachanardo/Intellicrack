@@ -243,8 +243,9 @@ class LicenseSnapshot:
 
             for key_path in self.COMMON_LICENSE_REGISTRY_KEYS:
                 try:
-                    key_data = self._read_registry_key_recursive(hive, key_path, max_depth=3)
-                    if key_data:
+                    if key_data := self._read_registry_key_recursive(
+                        hive, key_path, max_depth=3
+                    ):
                         registry_data[hive_name][key_path] = key_data
                 except Exception as e:
                     # Log the exception with details for debugging
@@ -536,7 +537,9 @@ class LicenseSnapshot:
                         win32api.CertCloseStore(store, 0)
 
                         # Filter for non-standard certificates
-                        for cert_info in certs_in_store:
+                        certificates.extend(
+                            cert_info
+                            for cert_info in certs_in_store
                             if all(
                                 std not in cert_info["issuer"]
                                 for std in [
@@ -545,8 +548,8 @@ class LicenseSnapshot:
                                     "Verisign",
                                     "DigiCert",
                                 ]
-                            ):
-                                certificates.append(cert_info)
+                            )
+                        )
                 except (KeyError, TypeError) as e:
                     logger.debug(f"Failed to process certificate: {e}")
         except OSError as e:

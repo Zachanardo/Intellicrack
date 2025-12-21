@@ -2,7 +2,7 @@
 
 import ast
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 """
 Plugin Unit Test Generator for Intellicrack.
@@ -27,7 +27,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 class PluginTestGenerator:
     """Generates unit tests for Intellicrack plugins"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize plugin test generator with test templates and configurations."""
         self.test_template = '''"""
 Unit tests for {plugin_name}.
@@ -104,16 +104,14 @@ if __name__ == '__main__':
         """Test {method_name} edge cases"""
         {edge_test_body}'''
 
-    def generate_tests_for_file(self, file_path):
+    def generate_tests_for_file(self, file_path: str) -> str:
         """Generate tests for a plugin file"""
-        # Implementation would analyze the file and generate appropriate tests
         import os
         from datetime import datetime
 
         plugin_name = os.path.basename(file_path).replace(".py", "")
         class_name = "".join(word.capitalize() for word in plugin_name.split("_"))
 
-        # Parse actual file to extract methods and generate real tests
         test_methods = self._extract_and_generate_tests(file_path, plugin_name, class_name)
 
         return self.test_template.format(
@@ -124,7 +122,7 @@ if __name__ == '__main__':
             test_methods=test_methods,
         )
 
-    def _extract_and_generate_tests(self, file_path, plugin_name, class_name):
+    def _extract_and_generate_tests(self, file_path: str, plugin_name: str, class_name: str) -> str:
         """Extract methods from plugin file and generate appropriate tests with comprehensive analysis"""
         import ast
 
@@ -133,11 +131,10 @@ if __name__ == '__main__':
                 content = f.read()
                 tree = ast.parse(content, filename=file_path)
 
-            class_node = None
-            parent_classes = []
-            imports = []
+            class_node: ast.ClassDef | None = None
+            parent_classes: list[str] = []
+            imports: list[str] = []
 
-            # First pass: collect imports and find the main class
             for node in ast.walk(tree):
                 if isinstance(node, ast.Import):
                     for alias in node.names:
@@ -146,16 +143,19 @@ if __name__ == '__main__':
                     if node.module:
                         imports.append(node.module)
                 elif isinstance(node, ast.ClassDef):
-                    # Find the main plugin class or any class matching the expected name
-                    if node.name == class_name or (class_name == "" and "Plugin" in node.name):
+                    if (
+                        node.name == class_name
+                        or not class_name
+                        and "Plugin" in node.name
+                    ):
                         class_node = node
                         ast.get_docstring(node)
-                        # Extract parent classes
                         for base in node.bases:
                             if isinstance(base, ast.Name):
                                 parent_classes.append(base.id)
                             elif isinstance(base, ast.Attribute):
-                                parent_classes.append(f"{base.value.id}.{base.attr}")
+                                if isinstance(base.value, ast.Name):
+                                    parent_classes.append(f"{base.value.id}.{base.attr}")
 
             # If no class found, try to find any class with Plugin in the name
             if not class_node:
@@ -166,7 +166,7 @@ if __name__ == '__main__':
                         ast.get_docstring(node)
                         break
 
-            test_methods = [
+            test_methods: list[str] = [
                 """
     def test_initialize(self):
         \"\"\"Test plugin initialization\"\"\"
@@ -176,17 +176,14 @@ if __name__ == '__main__':
         self.assertIsInstance(self.plugin.version, str)"""
             ]
             if class_node:
-                # Analyze class attributes and methods
-                class_attributes = {}
-                methods_info = []
+                class_attributes: dict[str, str] = {}
+                methods_info: list[dict[str, Any]] = []
 
                 for item in class_node.body:
                     if isinstance(item, ast.Assign):
-                        # Class attributes
                         for target in item.targets:
                             if isinstance(target, ast.Name):
                                 attr_name = target.id
-                                # Try to infer type from value
                                 if isinstance(item.value, ast.Constant):
                                     class_attributes[attr_name] = type(item.value.value).__name__
                                 elif isinstance(item.value, ast.List):
@@ -194,7 +191,7 @@ if __name__ == '__main__':
                                 elif isinstance(item.value, ast.Dict):
                                     class_attributes[attr_name] = "dict"
                                 elif isinstance(item.value, ast.Call):
-                                    if hasattr(item.value.func, "id"):
+                                    if isinstance(item.value.func, ast.Name):
                                         class_attributes[attr_name] = item.value.func.id
 
                     elif isinstance(item, ast.FunctionDef):
@@ -240,16 +237,14 @@ if __name__ == '__main__':
             # Enhanced fallback with error information
             return self._generate_error_aware_fallback_tests(str(e))
 
-    def _generate_test_for_method(self, method_name, args):
+    def _generate_test_for_method(self, method_name: str, args: ast.arguments) -> str:
         """Generate test method for a specific plugin method"""
-        # Skip self parameter
         params = [arg.arg for arg in args.args[1:]]
 
         test_body = [
             f"\n    def test_{method_name}(self):",
             f'        """Test {method_name} method"""',
         ]
-        # Generate appropriate test parameters based on parameter names
         test_params = []
         for param in params:
             if "binary" in param or "file" in param:
@@ -265,19 +260,17 @@ if __name__ == '__main__':
             else:
                 test_params.append("None")
 
-        # Generate method call
         if test_params:
             params_str = ", ".join(test_params)
             test_body.append(f"        result = self.plugin.{method_name}({params_str})")
         else:
             test_body.append(f"        result = self.plugin.{method_name}()")
 
-        # Add assertions
         test_body.append("        self.assertIsNotNone(result)")
 
         return "\n".join(test_body)
 
-    def _get_default_value(self, node):
+    def _get_default_value(self, node: ast.expr) -> str | None:
         """Extract default value from AST node"""
         if isinstance(node, ast.Constant):
             return repr(node.value)
@@ -287,27 +280,27 @@ if __name__ == '__main__':
             return "[]"
         elif isinstance(node, ast.Dict):
             return "{}"
-        elif node is None:
-            return None
         else:
             return "None"
 
-    def _get_decorator_name(self, decorator):
+    def _get_decorator_name(self, decorator: ast.expr) -> str:
         """Extract decorator name from AST node"""
         if isinstance(decorator, ast.Name):
             return decorator.id
         elif isinstance(decorator, ast.Attribute):
-            return f"{decorator.value.id}.{decorator.attr}"
+            if isinstance(decorator.value, ast.Name):
+                return f"{decorator.value.id}.{decorator.attr}"
         elif isinstance(decorator, ast.Call):
             if isinstance(decorator.func, ast.Name):
                 return decorator.func.id
             elif isinstance(decorator.func, ast.Attribute):
-                return f"{decorator.func.value.id}.{decorator.func.attr}"
+                if isinstance(decorator.func.value, ast.Name):
+                    return f"{decorator.func.value.id}.{decorator.func.attr}"
         return "unknown_decorator"
 
-    def _analyze_return_type(self, func_node):
+    def _analyze_return_type(self, func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
         """Analyze function return type from AST"""
-        returns = []
+        returns: list[str] = []
         for node in ast.walk(func_node):
             if isinstance(node, ast.Return):
                 if node.value:
@@ -320,36 +313,35 @@ if __name__ == '__main__':
                     elif isinstance(node.value, ast.List):
                         returns.append("list")
                     elif isinstance(node.value, ast.Call):
-                        if hasattr(node.value.func, "id"):
+                        if isinstance(node.value.func, ast.Name):
                             returns.append(node.value.func.id)
                 else:
                     returns.append("None")
         return list(set(returns)) if returns else ["unknown"]
 
-    def _analyze_exceptions(self, func_node):
+    def _analyze_exceptions(self, func_node: ast.FunctionDef | ast.AsyncFunctionDef) -> list[str]:
         """Analyze exceptions that might be raised"""
-        exceptions = []
+        exceptions: list[str] = []
         for node in ast.walk(func_node):
             if isinstance(node, ast.Raise) and node.exc:
-                if isinstance(node.exc, ast.Call) and hasattr(node.exc.func, "id"):
+                if isinstance(node.exc, ast.Call) and isinstance(node.exc.func, ast.Name):
                     exceptions.append(node.exc.func.id)
                 elif isinstance(node.exc, ast.Name):
                     exceptions.append(node.exc.id)
         return list(set(exceptions))
 
-    def _generate_comprehensive_test_for_method(self, method_info, class_attributes, imports):
+    def _generate_comprehensive_test_for_method(self, method_info: dict[str, Any], class_attributes: dict[str, str], imports: list[str]) -> str:
         """Generate comprehensive test for a method based on its analysis"""
-        method_name = method_info["name"]
-        args = method_info["args"][1:]  # Skip self
+        method_name = cast(str, method_info["name"])
+        args = cast(list[str], method_info["args"][1:])
         docstring = method_info["docstring"] or f"Test {method_name} method"
-        is_async = method_info["is_async"]
-        returns = method_info["returns"]
-        raises = method_info["raises"]
+        is_async = cast(bool, method_info["is_async"])
+        returns = cast(list[str], method_info["returns"])
+        raises = cast(list[str], method_info["raises"])
 
-        test_lines = []
+        test_lines: list[str] = []
         test_name = f"test_{method_name}"
 
-        # Handle async methods
         if is_async:
             test_lines.append(f"\n    async def {test_name}(self):")
         else:
@@ -357,26 +349,22 @@ if __name__ == '__main__':
 
         test_lines.append(f'        """{docstring}"""')
 
-        # Generate test parameters based on comprehensive analysis
-        test_params = []
+        test_params: list[str] = []
         for arg in args:
             param_value = self._generate_smart_test_param(arg, class_attributes, imports)
             test_params.append(param_value)
 
-        # Method call
         if test_params:
             params_str = ", ".join(test_params)
             if is_async:
                 test_lines.append(f"        result = await self.plugin.{method_name}({params_str})")
             else:
                 test_lines.append(f"        result = self.plugin.{method_name}({params_str})")
+        elif is_async:
+            test_lines.append(f"        result = await self.plugin.{method_name}()")
         else:
-            if is_async:
-                test_lines.append(f"        result = await self.plugin.{method_name}()")
-            else:
-                test_lines.append(f"        result = self.plugin.{method_name}()")
+            test_lines.append(f"        result = self.plugin.{method_name}()")
 
-        # Generate assertions based on return type analysis
         if "None" not in returns:
             test_lines.append("        self.assertIsNotNone(result)")
 
@@ -389,88 +377,59 @@ if __name__ == '__main__':
         elif "int" in returns or "float" in returns:
             test_lines.append("        self.assertIsInstance(result, (int, float))")
 
-        # Add edge case tests
         if args:
             test_lines.extend(self._generate_edge_case_test(method_name, args, is_async))
 
-        # Add exception tests if exceptions are raised
         if raises:
             test_lines.extend(self._generate_exception_test(method_name, args, raises, is_async))
 
         return "\n".join(test_lines)
 
-    def _generate_smart_test_param(self, param_name, class_attributes, imports):
+    def _generate_smart_test_param(self, param_name: str, class_attributes: dict[str, str], imports: list[str]) -> str:
         """Generate intelligent test parameters based on name and context"""
         param_lower = param_name.lower()
 
-        # Binary/file parameters
         if any(word in param_lower for word in ["binary", "file", "path", "exe", "dll"]):
             return "self.test_binary"
-
-        # Configuration parameters
         elif any(word in param_lower for word in ["options", "config", "settings", "params"]):
             return "self.test_options"
-
-        # Data/buffer parameters
         elif any(word in param_lower for word in ["data", "buffer", "bytes", "payload"]):
             return 'b"\\x4d\\x5a\\x90\\x00\\x03\\x00\\x00\\x00"  # MZ header'
-
-        # String parameters
         elif any(word in param_lower for word in ["string", "text", "name", "message"]):
             return f'"{param_name}_test"'
-
-        # Numeric parameters
         elif any(word in param_lower for word in ["size", "length", "count", "number", "int"]):
             return "1024"
-
-        # Address parameters
         elif any(word in param_lower for word in ["address", "addr", "offset", "rva"]):
             return "0x401000"
-
-        # Boolean parameters
         elif any(word in param_lower for word in ["enable", "disable", "is_", "has_", "should_"]):
             return "True"
-
-        # List parameters
         elif any(word in param_lower for word in ["list", "array", "items"]):
             return "[]"
-
-        # Dictionary parameters
         elif any(word in param_lower for word in ["dict", "map", "props", "attributes"]):
             return "{}"
-
-        # Module/plugin specific
         elif "frida" in imports or "frida" in param_lower:
             return "self.mock_frida_session"
         elif "ghidra" in imports or "ghidra" in param_lower:
             return "self.mock_ghidra_project"
-
-        # Default
         else:
             return "None"
 
-    def _generate_edge_case_test(self, method_name, args, is_async):
+    def _generate_edge_case_test(self, method_name: str, args: list[str], is_async: bool) -> list[str]:
         """Generate edge case tests for method"""
-        test_lines = []
         async_prefix = "async " if is_async else ""
 
-        test_lines.extend(
-            (
-                f"\n    {async_prefix}def test_{method_name}_edge_cases(self):",
-                f'        """Test {method_name} with edge case inputs"""',
-            )
-        )
-        # Test with None parameters
         none_params = ", ".join(["None"] * len(args))
-        test_lines.extend(
-            (
+        test_lines: list[str] = [
+            f"\n    {async_prefix}def test_{method_name}_edge_cases(self):",
+            f'        """Test {method_name} with edge case inputs"""',
+            *(
                 "        # Test with None parameters",
                 "        with self.assertRaises((TypeError, ValueError, AttributeError)):",
                 f"            {'await ' if is_async else ''}self.plugin.{method_name}({none_params})",
                 "        # Test with empty parameters",
-            )
-        )
-        empty_params = []
+            ),
+        ]
+        empty_params: list[str] = []
         for arg in args:
             if "string" in arg.lower() or "text" in arg.lower():
                 empty_params.append('""')
@@ -493,11 +452,11 @@ if __name__ == '__main__':
             )
         return test_lines
 
-    def _generate_exception_test(self, method_name, args, exceptions, is_async):
+    def _generate_exception_test(self, method_name: str, args: list[str], exceptions: list[str], is_async: bool) -> list[str]:
         """Generate exception handling tests"""
         async_prefix = "async " if is_async else ""
 
-        test_lines = [
+        test_lines: list[str] = [
             f"\n    {async_prefix}def test_{method_name}_exceptions(self):",
             f'        """Test {method_name} exception handling"""',
         ]
@@ -510,9 +469,9 @@ if __name__ == '__main__':
             )
         return test_lines
 
-    def _generate_attribute_tests(self, class_attributes):
+    def _generate_attribute_tests(self, class_attributes: dict[str, str]) -> str:
         """Generate tests for class attributes"""
-        test_lines = [
+        test_lines: list[str] = [
             "\n    def test_class_attributes(self):",
             '        """Test plugin class attributes"""',
         ]
@@ -524,9 +483,9 @@ if __name__ == '__main__':
 
         return "\n".join(test_lines)
 
-    def _generate_inheritance_tests(self, parent_classes):
+    def _generate_inheritance_tests(self, parent_classes: list[str]) -> str:
         """Generate tests for class inheritance"""
-        test_lines = ["\n    def test_inheritance(self):", '        """Test plugin inheritance"""']
+        test_lines: list[str] = ["\n    def test_inheritance(self):", '        """Test plugin inheritance"""']
 
         for parent in parent_classes:
             if "." in parent:
@@ -534,28 +493,24 @@ if __name__ == '__main__':
             test_lines.append(f"        # Should inherit from {parent}")
         return "\n".join(test_lines)
 
-    def _generate_plugin_specific_tests(self, methods_info, imports):
+    def _generate_plugin_specific_tests(self, methods_info: list[dict[str, Any]], imports: list[str]) -> list[str]:
         """Generate plugin-specific tests based on detected patterns"""
-        tests = []
+        tests: list[str] = []
 
-        # Check for common plugin patterns
-        method_names = [m["name"] for m in methods_info]
+        method_names = [cast(str, m["name"]) for m in methods_info]
 
-        # Frida plugin tests
         if any("frida" in imp.lower() for imp in imports):
             tests.append(self._generate_frida_plugin_tests(method_names))
 
-        # Ghidra plugin tests
         if any("ghidra" in imp.lower() for imp in imports):
             tests.append(self._generate_ghidra_plugin_tests(method_names))
 
-        # Analysis plugin tests
         if any(name in method_names for name in ["analyze", "scan", "detect"]):
             tests.append(self._generate_analysis_plugin_tests(method_names))
 
         return tests
 
-    def _generate_frida_plugin_tests(self, method_names):
+    def _generate_frida_plugin_tests(self, method_names: list[str]) -> str:
         """Generate Frida-specific plugin tests"""
         return """
     def test_frida_script_generation(self):
@@ -565,7 +520,7 @@ if __name__ == '__main__':
             self.assertIsInstance(script, str)
             self.assertIn('Interceptor', script)"""
 
-    def _generate_ghidra_plugin_tests(self, method_names):
+    def _generate_ghidra_plugin_tests(self, method_names: list[str]) -> str:
         """Generate Ghidra-specific plugin tests"""
         return """
     def test_ghidra_analysis(self):
@@ -575,7 +530,7 @@ if __name__ == '__main__':
             self.assertIsInstance(result, dict)
             self.assertIn('functions', result)"""
 
-    def _generate_analysis_plugin_tests(self, method_names):
+    def _generate_analysis_plugin_tests(self, method_names: list[str]) -> str:
         """Generate analysis-specific plugin tests"""
         return """
     def test_analysis_output(self):
@@ -589,7 +544,7 @@ if __name__ == '__main__':
                 if key in result:
                     self.assertIsNotNone(result[key])"""
 
-    def _generate_comprehensive_fallback_tests(self):
+    def _generate_comprehensive_fallback_tests(self) -> list[str]:
         """Generate comprehensive fallback tests when no class is found"""
         return [
             """
@@ -620,7 +575,7 @@ if __name__ == '__main__':
             self.skipTest("Plugin run method not implemented")"""
         ]
 
-    def _generate_error_aware_fallback_tests(self, error_msg):
+    def _generate_error_aware_fallback_tests(self, error_msg: str) -> str:
         """Generate fallback tests that acknowledge the parsing error"""
         return f"""
     def test_initialize(self):
@@ -647,12 +602,12 @@ if __name__ == '__main__':
 class MockDataGenerator:
     """Generates realistic mock data for testing instead of random data"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize mock data generator with real data templates"""
         self.pe_template = self._load_pe_template()
         self.elf_template = self._load_elf_template()
 
-    def _load_pe_template(self):
+    def _load_pe_template(self) -> bytearray:
         """Load a real PE file template"""
         # Minimal valid PE header structure
         dos_header = bytearray(
@@ -848,7 +803,7 @@ class MockDataGenerator:
 
         return dos_header + pe_header + optional_header
 
-    def _load_elf_template(self):
+    def _load_elf_template(self) -> bytearray:
         """Load a real ELF file template"""
         return bytearray(
             [
@@ -919,7 +874,7 @@ class MockDataGenerator:
             ]
         )
 
-    def create_mock_binary(self, binary_type="pe"):
+    def create_mock_binary(self, binary_type: str = "pe") -> bytes:
         """Create a mock binary file with real structure"""
         if binary_type.lower() == "pe":
             base = bytearray(self.pe_template)
@@ -1074,15 +1029,13 @@ class MockDataGenerator:
             return bytes(base)
 
         else:
-            # Generic binary
             return b"BINARY\x00\x00" + bytes(range(256)) + b"\x00" * 256
 
-    def create_mock_network_data(self):
+    def create_mock_network_data(self) -> dict[str, Any]:
         """Create realistic network capture data"""
         import time
 
-        # TCP handshake
-        syn_packet = {
+        syn_packet: dict[str, Any] = {
             "timestamp": time.time(),
             "src": "192.168.1.100",
             "dst": "93.184.216.34",
@@ -1093,9 +1046,8 @@ class MockDataGenerator:
             "length": 74,
             "payload": "",
         }
-        packets = [syn_packet]
-        # SYN-ACK
-        syn_ack_packet = {
+        packets: list[dict[str, Any]] = [syn_packet]
+        syn_ack_packet: dict[str, Any] = {
             "timestamp": time.time() + 0.05,
             "src": "93.184.216.34",
             "dst": "192.168.1.100",
@@ -1108,8 +1060,7 @@ class MockDataGenerator:
         }
         packets.append(syn_ack_packet)
 
-        # ACK
-        ack_packet = {
+        ack_packet: dict[str, Any] = {
             "timestamp": time.time() + 0.051,
             "src": "192.168.1.100",
             "dst": "93.184.216.34",
@@ -1122,8 +1073,7 @@ class MockDataGenerator:
         }
         packets.append(ack_packet)
 
-        # TLS Client Hello
-        tls_hello = {
+        tls_hello: dict[str, Any] = {
             "timestamp": time.time() + 0.052,
             "src": "192.168.1.100",
             "dst": "93.184.216.34",
@@ -1162,7 +1112,7 @@ class MockDataGenerator:
             "packets": packets,
         }
 
-    def create_mock_registry_data(self):
+    def create_mock_registry_data(self) -> dict[str, Any]:
         """Create realistic Windows registry data"""
         return {
             "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion": {
@@ -1417,7 +1367,7 @@ class MockDataGenerator:
 
         return bytes(result)
 
-    def create_test_network_data(self) -> dict:
+    def create_test_network_data(self) -> dict[str, Any]:
         """Create realistic network capture data for testing license server communication.
 
         Returns:
@@ -1606,7 +1556,7 @@ class MockDataGenerator:
             },
         }
 
-    def create_test_registry_data(self) -> dict:
+    def create_test_registry_data(self) -> dict[str, Any]:
         """Create realistic Windows registry data for license storage testing.
 
         Returns:
@@ -1618,7 +1568,7 @@ class MockDataGenerator:
         install_timestamp = int(time.time()) - (90 * 86400)
         last_run_timestamp = int(time.time()) - 3600
 
-        registry_data = {
+        return {
             "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion": {
                 "ProgramFilesDir": "C:\\Program Files",
                 "CommonFilesDir": "C:\\Program Files\\Common Files",
@@ -1709,8 +1659,6 @@ class MockDataGenerator:
             },
         }
 
-        return registry_data
-
 
 class PluginTestRunner:
     """Runs plugin tests and collects results."""
@@ -1755,7 +1703,7 @@ class PluginTestRunner:
                 result["error"] = f"Plugin file not found: {plugin_path}"
                 return result
 
-            if not plugin_path_obj.suffix == ".py":
+            if plugin_path_obj.suffix != ".py":
                 result["error"] = f"Expected Python file, got: {plugin_path_obj.suffix}"
                 return result
 
@@ -1891,23 +1839,19 @@ class PluginTestRunner:
         import re
 
         summary_pattern = r"(\d+) passed"
-        match = re.search(summary_pattern, output)
-        if match:
+        if match := re.search(summary_pattern, output):
             result["passed"] = int(match.group(1))
 
         failed_pattern = r"(\d+) failed"
-        match = re.search(failed_pattern, output)
-        if match:
+        if match := re.search(failed_pattern, output):
             result["failed"] = int(match.group(1))
 
         skipped_pattern = r"(\d+) skipped"
-        match = re.search(skipped_pattern, output)
-        if match:
+        if match := re.search(skipped_pattern, output):
             result["skipped"] = int(match.group(1))
 
         error_pattern = r"(\d+) error"
-        match = re.search(error_pattern, output)
-        if match:
+        if match := re.search(error_pattern, output):
             result["errors"] = int(match.group(1))
 
         result["total"] = result["passed"] + result["failed"] + result["skipped"] + result["errors"]
@@ -1915,8 +1859,7 @@ class PluginTestRunner:
         test_lines = []
         for line in output.split("\n"):
             if "PASSED" in line or "FAILED" in line or "SKIPPED" in line or "ERROR" in line:
-                test_name_match = re.search(r"(test_\w+)", line)
-                if test_name_match:
+                if test_name_match := re.search(r"(test_\w+)", line):
                     status = "passed"
                     if "FAILED" in line:
                         status = "failed"
@@ -1972,12 +1915,12 @@ class PluginTestRunner:
 class TestCoverageAnalyzer:
     """Analyzes test coverage for plugins"""
 
-    def __init__(self):
-        self.coverage_data = {}
+    def __init__(self) -> None:
+        """Initialize test coverage analyzer"""
+        self.coverage_data: dict[str, Any] = {}
 
-    def analyze_coverage(self, plugin_file, test_file):
+    def analyze_coverage(self, plugin_file: str, test_file: str) -> dict[str, Any]:
         """Analyze test coverage"""
-        # Implementation would use coverage.py or similar
         return {
             "total_coverage": 75.5,
             "line_coverage": 80.0,

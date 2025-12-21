@@ -254,10 +254,10 @@ class UIConfigManager:
             if theme_name in self.DEFAULT_THEMES:
                 theme_data = asdict(self.DEFAULT_THEMES[theme_name])
             else:
-                logger.warning(f"Unknown theme '{theme_name}', using dark theme")
+                logger.warning("Unknown theme '%s', using dark theme", theme_name)
                 theme_data = asdict(self.DEFAULT_THEMES["dark"])
         elif not isinstance(theme_data, dict):
-            logger.warning(f"Invalid theme data type: {type(theme_data)}, using dark theme")
+            logger.warning("Invalid theme data type: %s, using dark theme", type(theme_data))
             theme_data = asdict(self.DEFAULT_THEMES["dark"])
         self.theme = ThemeConfig(**theme_data)
 
@@ -334,14 +334,14 @@ class UIConfigManager:
             self._notify_change("theme")
             return True
 
-        logger.warning(f"Theme not found: {theme_name}")
+        logger.warning("Theme not found: %s", theme_name)
         return False
 
     def create_custom_theme(self, name: str, theme: ThemeConfig) -> None:
         """Create a custom theme."""
         self.custom_themes[name] = theme
         self._save_to_main_config()
-        logger.info(f"Custom theme created: {name}")
+        logger.info("Custom theme created: %s", name)
 
     # Font Management
     def get_font_config(self) -> FontConfig:
@@ -443,7 +443,7 @@ class UIConfigManager:
                 try:
                     callback()
                 except Exception as e:
-                    logger.error(f"Error in change callback: {e}")
+                    logger.exception("Error in change callback: %s", e)
 
     # Utility Methods
     def get_available_themes(self) -> list[str]:

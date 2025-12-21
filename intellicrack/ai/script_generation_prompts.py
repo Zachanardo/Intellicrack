@@ -321,7 +321,7 @@ Return validation results in structured JSON format.""",
             try:
                 prompt_data["user_template"] = prompt_data["user_template"].format(**kwargs)
             except KeyError as e:
-                self.logger.error("Key error in script_generation_prompts: %s", e)
+                self.logger.exception("Key error in script_generation_prompts: %s", e)
 
         return prompt_data
 
@@ -440,16 +440,21 @@ Return validation results in structured JSON format.""",
                     "- Monitor trial timer mechanisms",
                 ))
             elif "network" in ptype.lower():
-                requirements.extend((
-                    "- Intercept network validation calls",
-                    "- Inject custom license server responses",
-                ))
-                requirements.append("- Block outbound license verification")
+                requirements.extend(
+                    (
+                        "- Intercept network validation calls",
+                        "- Inject custom license server responses",
+                        "- Block outbound license verification",
+                    )
+                )
             elif "debug" in ptype.lower():
-                requirements.append("- Bypass debugger detection mechanisms")
-                requirements.append("- Hook IsDebuggerPresent and related functions")
-                requirements.append("- Manipulate PEB flags and debug registers")
-
+                requirements.extend(
+                    (
+                        "- Bypass debugger detection mechanisms",
+                        "- Hook IsDebuggerPresent and related functions",
+                        "- Manipulate PEB flags and debug registers",
+                    )
+                )
         if not requirements:
             requirements = [
                 "- Analyze binary for protection mechanisms",
@@ -494,12 +499,13 @@ Return validation results in structured JSON format.""",
                     "- Replace time-based jumps with unconditional success",
                 ))
             elif "network" in ptype.lower():
-                objectives.extend((
-                    "- Patch network calls to return success",
-                    "- Modify validation responses",
-                ))
-                objectives.append("- Bypass online license requirements")
-
+                objectives.extend(
+                    (
+                        "- Patch network calls to return success",
+                        "- Modify validation responses",
+                        "- Bypass online license requirements",
+                    )
+                )
         if not objectives:
             objectives = [
                 "- Identify and patch protection mechanisms",

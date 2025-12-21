@@ -136,7 +136,7 @@ def calculate_all_checksums(data: bytes) -> dict[str, str]:
         results["SHA-512"] = calculate_sha512(data).upper()
 
     except Exception as e:
-        logger.error(f"Error calculating checksums: {e}")
+        logger.exception("Error calculating checksums: %s", e)
 
     return results
 
@@ -172,7 +172,7 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
         hasher = hashlib.sha512()
     else:
         error_msg = f"Unsupported algorithm: {algorithm}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise ValueError(error_msg)
 
     try:
@@ -200,7 +200,7 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
             return f"{crc:04X}"
         return f"{crc:08X}" if algorithm == "CRC-32" else hasher.hexdigest().upper()
     except Exception as e:
-        logger.error(f"Error calculating {algorithm} for file {file_path}: {e}")
+        logger.exception("Error calculating %s for file %s: %s", algorithm, file_path, e)
         raise
 
 
@@ -249,7 +249,7 @@ class ChecksumCalculator:
 
         if algorithm not in self.algorithms:
             error_msg = f"Unsupported algorithm: {algorithm}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
 
         try:
@@ -259,7 +259,7 @@ class ChecksumCalculator:
             return self.algorithms[algorithm](data).upper()
 
         except Exception as e:
-            logger.error(f"Error calculating {algorithm}: {e}")
+            logger.exception("Error calculating %s: %s", algorithm, e)
             raise
 
     def calculate_selection(self, data: bytes, algorithms: list[str] | None = None) -> dict[str, str]:
@@ -287,7 +287,7 @@ class ChecksumCalculator:
                 results[algorithm] = self.calculate(data, algorithm)
             except Exception as e:
                 results[algorithm] = f"Error: {e}"
-                logger.error(f"Failed to calculate {algorithm}: {e}")
+                logger.exception("Failed to calculate %s: %s", algorithm, e)
 
         if self.progress_callback:
             self.progress_callback(total, total)
@@ -405,5 +405,5 @@ def verify_checksum(data: bytes, expected: str, algorithm: str) -> bool:
         actual = calculator.calculate(data, algorithm)
         return actual.upper() == expected.upper()
     except Exception as e:
-        logger.error(f"Error verifying checksum: {e}")
+        logger.exception("Error verifying checksum: %s", e)
         return False

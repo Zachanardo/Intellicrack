@@ -111,24 +111,24 @@ class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
         try:
             self._started_at = datetime.now()
             self.signals.started.emit(self.task_id)
-            logger.info(f"Task started: {self.task_id} - {self.description}")
+            logger.info("Task started: %s - %s", self.task_id, self.description)
 
             # Execute the actual task
             result = self.execute()
 
             if not self._is_cancelled:
                 self.signals.result.emit(self.task_id, result)
-                logger.info(f"Task completed: {self.task_id}")
+                logger.info("Task completed: %s", self.task_id)
             else:
-                logger.info(f"Task cancelled: {self.task_id}")
+                logger.info("Task cancelled: %s", self.task_id)
 
         except Exception as e:
             error_type = type(e).__name__
             error_msg = str(e)
             error_traceback = traceback.format_exc()
 
-            logger.error(f"Task failed: {self.task_id} - {error_type}: {error_msg}")
-            logger.debug(f"Traceback: {error_traceback}")
+            logger.exception("Task failed: %s - %s: %s", self.task_id, error_type, error_msg)
+            logger.debug("Traceback: %s", error_traceback)
 
             self.signals.error.emit(self.task_id, error_type, error_msg)
 
@@ -143,7 +143,7 @@ class BaseTask(QRunnable, ABC, metaclass=TaskMeta):
     def cancel(self) -> None:
         """Cancel the task."""
         self._is_cancelled = True
-        logger.info(f"Task cancellation requested: {self.task_id}")
+        logger.info("Task cancellation requested: %s", self.task_id)
 
     def is_cancelled(self) -> bool:
         """Check if the task has been cancelled."""
@@ -225,7 +225,7 @@ class TaskManager(QObject):
         self._task_history: list[dict[str, object]] = []
         self._task_results: dict[str, object] = {}
 
-        logger.info(f"TaskManager initialized with {self.thread_pool.maxThreadCount()} threads")
+        logger.info("TaskManager initialized with %d threads", self.thread_pool.maxThreadCount())
 
     def submit_task(self, task: BaseTask) -> str:
         """Submit a task for execution."""
@@ -246,7 +246,7 @@ class TaskManager(QObject):
         self.task_submitted.emit(task.task_id, task.description)
         self.active_task_count_changed.emit(len(self._active_tasks))
 
-        logger.info(f"Task submitted: {task.task_id} - {task.description}")
+        logger.info("Task submitted: %s - %s", task.task_id, task.description)
         return task.task_id
 
     def submit_callable(
@@ -266,7 +266,7 @@ class TaskManager(QObject):
         if task_id in self._active_tasks:
             task = self._active_tasks[task_id]
             task.cancel()
-            logger.info(f"Task cancelled: {task_id}")
+            logger.info("Task cancelled: %s", task_id)
             return True
         return False
 
@@ -298,29 +298,29 @@ class TaskManager(QObject):
     def set_thread_count(self, count: int) -> None:
         """Set the maximum thread count."""
         self.thread_pool.setMaxThreadCount(count)
-        logger.info(f"Thread count set to {count}")
+        logger.info("Thread count set to %d", count)
 
     # Private slot methods
     @pyqtSlot(str)
     def _on_task_started(self, task_id: str) -> None:
         """Handle task start."""
-        logger.debug(f"Task started signal received: {task_id}")
+        logger.debug("Task started signal received: %s", task_id)
 
     @pyqtSlot(str, int, str)
     def _on_task_progress(self, task_id: str, percentage: int, message: str) -> None:
         """Handle task progress update."""
-        logger.debug(f"Task progress: {task_id} - {percentage}% - {message}")
+        logger.debug("Task progress: %s - %d%% - %s", task_id, percentage, message)
 
     @pyqtSlot(str, object)
     def _on_task_result(self, task_id: str, result: object) -> None:
         """Handle task result."""
         self._task_results[task_id] = result
-        logger.debug(f"Task result received: {task_id}")
+        logger.debug("Task result received: %s", task_id)
 
     @pyqtSlot(str, str, str)
     def _on_task_error(self, task_id: str, error_type: str, error_message: str) -> None:
         """Handle task error."""
-        logger.error(f"Task error: {task_id} - {error_type}: {error_message}")
+        logger.error("Task error: %s - %s: %s", task_id, error_type, error_message)
 
     @pyqtSlot(str)
     def _on_task_finished(self, task_id: str) -> None:
@@ -349,7 +349,7 @@ class TaskManager(QObject):
             if not self._active_tasks:
                 self.all_tasks_completed.emit()
 
-        logger.debug(f"Task finished: {task_id}")
+        logger.debug("Task finished: %s", task_id)
 
 
 # Global instance

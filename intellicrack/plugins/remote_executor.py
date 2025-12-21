@@ -121,7 +121,7 @@ class RemotePluginExecutor:
             return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
         except (TypeError, ValueError):
             # Convert non-serializable objects to string representation
-            self.logger.debug(f"Converting non-JSON-serializable data to string: {type(data)}")
+            self.logger.debug("Converting non-JSON-serializable data to string: %s", type(data))
             # Attempt to make data JSON-serializable
             if hasattr(data, "__dict__"):
                 # Convert objects to their dict representation
@@ -129,7 +129,7 @@ class RemotePluginExecutor:
                     json_str = json.dumps(data.__dict__)
                     return base64.b64encode(json_str.encode("utf-8")).decode("ascii")
                 except (TypeError, ValueError, AttributeError) as e:
-                    self.logger.debug(f"Failed to serialize object dict for {type(data)}: {e}")
+                    self.logger.debug("Failed to serialize object dict for %s: %s", type(data), e)
             # Last resort: convert to string
             json_str = json.dumps(str(data))
             return base64.b64encode(json_str.encode("utf-8")).decode("ascii")

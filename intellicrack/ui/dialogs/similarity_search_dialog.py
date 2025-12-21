@@ -42,6 +42,37 @@ from intellicrack.handlers.pyqt6_handler import (
     QWidget,
     pyqtSignal,
 )
+
+if hasattr(QAbstractItemView, "SelectionBehavior"):
+    SelectRows = QAbstractItemView.SelectionBehavior.SelectRows
+    NoEditTriggers = QAbstractItemView.EditTrigger.NoEditTriggers
+else:
+    SelectRows = QAbstractItemView.SelectRows  # type: ignore[attr-defined]
+    NoEditTriggers = QAbstractItemView.NoEditTriggers  # type: ignore[attr-defined]
+
+if hasattr(QHeaderView, "ResizeMode"):
+    StretchMode = QHeaderView.ResizeMode.Stretch
+else:
+    StretchMode = QHeaderView.Stretch  # type: ignore[attr-defined]
+
+if hasattr(QSlider, "TickPosition"):
+    TicksBelow = QSlider.TickPosition.TicksBelow
+else:
+    TicksBelow = QSlider.TicksBelow  # type: ignore[attr-defined]
+
+if hasattr(Qt, "Orientation"):
+    HorizontalOrientation = Qt.Orientation.Horizontal
+    VerticalOrientation = Qt.Orientation.Vertical
+else:
+    HorizontalOrientation = Qt.Horizontal  # type: ignore[attr-defined]
+    VerticalOrientation = Qt.Vertical  # type: ignore[attr-defined]
+
+if hasattr(QMessageBox, "StandardButton"):
+    YesButton = QMessageBox.StandardButton.Yes
+    NoButton = QMessageBox.StandardButton.No
+else:
+    YesButton = QMessageBox.Yes  # type: ignore[attr-defined]
+    NoButton = QMessageBox.No  # type: ignore[attr-defined]
 from intellicrack.utils.logger import logger
 
 
@@ -67,6 +98,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 
+HAS_SIMILARITY_SEARCH: bool
 try:
     from ...core.analysis.binary_similarity_search import BinarySimilaritySearch
 
@@ -74,8 +106,40 @@ try:
 except ImportError as e:
     logger.error("Import error in similarity_search_dialog: %s", e)
     HAS_SIMILARITY_SEARCH = False
+    BinarySimilaritySearch = None  # type: ignore[assignment,misc]
 
 __all__ = ["BinarySimilaritySearchDialog"]
+
+
+class SearchThread(QThread):
+    """Thread for running binary similarity searches in the background."""
+
+    result_signal = pyqtSignal(list)
+
+    def __init__(self, search_engine: Any, binary_path: str, threshold: float) -> None:
+        """Initialize the SearchThread with default values.
+
+        Args:
+            search_engine: The binary similarity search engine instance
+            binary_path: Path to the binary file to analyze
+            threshold: Similarity threshold for matching (0.0 to 1.0)
+
+        """
+        super().__init__()
+        self.search_engine: Any = search_engine
+        self.binary_path: str = binary_path
+        self.threshold: float = threshold
+
+    def run(self) -> None:
+        """Execute binary similarity search in a separate thread."""
+        try:
+            results: list[dict[str, Any]] = self.search_engine.search_similar_binaries(
+                self.binary_path, self.threshold
+            )
+            self.result_signal.emit(results)
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.exception("Binary similarity search failed: %s", e)
+            self.result_signal.emit([])
 
 
 class BinarySimilaritySearchDialog(QDialog):
@@ -93,20 +157,22 @@ class BinarySimilaritySearchDialog(QDialog):
             parent: Parent widget for dialog hierarchy
 
         """
-        # Initialize UI attributes
-        self.db_info_label = None
-        self.threshold_label = None
-        self.results_table = None
-        self.patterns_view = None
-        self.status_label = None
-
         super().__init__(parent)
-        self.binary_path = binary_path
-        self.database_path = os.path.join(str(Path.cwd()), "binary_database.json")
+        self.binary_path: str = binary_path
+        self.database_path: str = os.path.join(str(Path.cwd()), "binary_database.json")
         self.similar_binaries: list[dict[str, Any]] = []
-        self.search_thread = None
+        self.search_thread: SearchThread | None = None
 
-        if HAS_SIMILARITY_SEARCH:
+        self.db_info_label: QLabel
+        self.threshold_label: QLabel
+        self.threshold_slider: QSlider
+        self.results_table: QTableWidget
+        self.patterns_view: QTextEdit
+        self.status_label: QLabel
+        self.apply_pattern_btn: QPushButton
+
+        self.search_engine: BinarySimilaritySearch | None
+        if HAS_SIMILARITY_SEARCH and BinarySimilaritySearch is not None:
             self.search_engine = BinarySimilaritySearch(self.database_path)
         else:
             self.search_engine = None
@@ -134,7 +200,7 @@ class BinarySimilaritySearchDialog(QDialog):
         layout.addLayout(header_layout)
 
         # Main splitter
-        splitter = QSplitter(Qt.Vertical)
+        splitter = QSplitter(VerticalOrientation)
 
         # Top panel - Search controls and results
         top_panel = QWidget()
@@ -145,11 +211,11 @@ class BinarySimilaritySearchDialog(QDialog):
 
         controls_layout.addWidget(QLabel("Similarity Threshold:"))
 
-        self.threshold_slider = QSlider(Qt.Horizontal)
+        self.threshold_slider = QSlider(HorizontalOrientation)
         self.threshold_slider.setMinimum(1)
         self.threshold_slider.setMaximum(10)
-        self.threshold_slider.setValue(7)  # Default 0.7
-        self.threshold_slider.setTickPosition(QSlider.TicksBelow)
+        self.threshold_slider.setValue(7)
+        self.threshold_slider.setTickPosition(TicksBelow)
         self.threshold_slider.setTickInterval(1)
         controls_layout.addWidget(self.threshold_slider)
 
@@ -174,11 +240,13 @@ class BinarySimilaritySearchDialog(QDialog):
         self.results_table = QTableWidget()
         self.results_table.setColumnCount(4)
         self.results_table.setHorizontalHeaderLabels(["Binary", "Similarity", "Path", "Patterns"])
-        self.results_table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.results_table.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        self.results_table.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
-        self.results_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.Stretch)
-        self.results_table.horizontalHeader().setSectionResizeMode(3, QHeaderView.Stretch)
+        self.results_table.setSelectionBehavior(SelectRows)
+        self.results_table.setEditTriggers(NoEditTriggers)
+        header = self.results_table.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(0, StretchMode)
+            header.setSectionResizeMode(2, StretchMode)
+            header.setSectionResizeMode(3, StretchMode)
         self.results_table.itemSelectionChanged.connect(self.result_selected)
 
         top_layout.addWidget(self.results_table)
@@ -232,13 +300,13 @@ class BinarySimilaritySearchDialog(QDialog):
         try:
             if os.path.exists(self.database_path):
                 with open(self.database_path, encoding="utf-8") as f:
-                    database = json.load(f)
-                    binary_count = len(database.get("binaries", []))
+                    database: dict[str, Any] = json.load(f)
+                    binary_count: int = len(database.get("binaries", []))
                     self.db_info_label.setText(f"Database: {binary_count} binaries")
             else:
                 self.db_info_label.setText("Database: Not found (will be created)")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in similarity_search_dialog: %s", e)
+            logger.error("Error in similarity_search_dialog: %s", e)
             self.db_info_label.setText(f"Database Error: {e}")
 
     def update_threshold_label(self, value: int) -> None:
@@ -256,40 +324,9 @@ class BinarySimilaritySearchDialog(QDialog):
             )
             return
 
-        threshold = self.threshold_slider.value() / 10.0
+        threshold: float = self.threshold_slider.value() / 10.0
         self.status_label.setText(f"Searching for similar binaries (threshold: {threshold:.1f})...")
 
-        # Use QThread to avoid freezing the UI
-        class SearchThread(QThread):
-            """Thread for running binary similarity searches in the background."""
-
-            result_signal = pyqtSignal(list)
-
-            def __init__(self, search_engine: object, binary_path: str, threshold: float) -> None:
-                """Initialize the SearchThread with default values.
-
-                Args:
-                    search_engine: The binary similarity search engine instance
-                    binary_path: Path to the binary file to analyze
-                    threshold: Similarity threshold for matching (0.0 to 1.0)
-
-                """
-                super().__init__()
-                self.search_engine = search_engine
-                self.binary_path = binary_path
-                self.threshold = threshold
-
-            def run(self) -> None:
-                """Execute binary similarity search in a separate thread."""
-                try:
-                    results = self.search_engine.search_similar_binaries(self.binary_path, self.threshold)
-                    self.result_signal.emit(results)
-                except (OSError, ValueError, RuntimeError) as e:
-                    logger.exception("Binary similarity search failed: %s", e)
-                    # Emit empty list on error
-                    self.result_signal.emit([])
-
-        # Create and start thread
         self.search_thread = SearchThread(self.search_engine, self.binary_path, threshold)
         self.search_thread.result_signal.connect(self.show_search_results)
         self.search_thread.start()
@@ -300,9 +337,9 @@ class BinarySimilaritySearchDialog(QDialog):
         self.results_table.setRowCount(len(results))
 
         for i, result in enumerate(results):
-            path = result.get("path", "")
-            similarity = result.get("similarity", 0)
-            patterns = result.get("cracking_patterns", [])
+            path: str = str(result.get("path", ""))
+            similarity: float = float(result.get("similarity", 0))
+            patterns: list[Any] = list(result.get("cracking_patterns", []))
 
             self.results_table.setItem(i, 0, QTableWidgetItem(os.path.basename(path)))
             self.results_table.setItem(i, 1, QTableWidgetItem(f"{similarity:.2f}"))
@@ -316,19 +353,22 @@ class BinarySimilaritySearchDialog(QDialog):
 
     def result_selected(self) -> None:
         """Handle result selection in the table."""
-        selected_rows = self.results_table.selectionModel().selectedRows()
+        selection_model = self.results_table.selectionModel()
+        if selection_model is None:
+            return
+        selected_rows = selection_model.selectedRows()
         if not selected_rows:
             self.patterns_view.clear()
             self.apply_pattern_btn.setEnabled(False)
             return
 
-        row = selected_rows[0].row()
+        row: int = selected_rows[0].row()
         if row < 0 or row >= len(self.similar_binaries):
             return
 
-        result = self.similar_binaries[row]
+        result: dict[str, Any] = self.similar_binaries[row]
         if patterns := result.get("cracking_patterns", []):
-            patterns_text = f"Cracking patterns for {os.path.basename(result.get('path', ''))}:\n\n"
+            patterns_text: str = f"Cracking patterns for {os.path.basename(str(result.get('path', '')))}:\n\n"
 
             for i, pattern in enumerate(patterns):
                 patterns_text += f"Pattern {i + 1}:\n"
@@ -342,56 +382,57 @@ class BinarySimilaritySearchDialog(QDialog):
 
     def apply_selected_pattern(self) -> None:
         """Apply the selected cracking pattern."""
-        selected_rows = self.results_table.selectionModel().selectedRows()
+        selection_model = self.results_table.selectionModel()
+        if selection_model is None:
+            return
+        selected_rows = selection_model.selectedRows()
         if not selected_rows:
             return
 
-        row = selected_rows[0].row()
+        row: int = selected_rows[0].row()
         if row < 0 or row >= len(self.similar_binaries):
             return
 
-        result = self.similar_binaries[row]
-        patterns = result.get("cracking_patterns", [])
+        result: dict[str, Any] = self.similar_binaries[row]
+        patterns: list[Any] = list(result.get("cracking_patterns", []))
 
         if not patterns:
             return
 
-        # If multiple patterns, ask which one to apply
-        pattern_to_apply = None
+        pattern_to_apply: Any = None
         if len(patterns) > 1:
-            pattern_items = [f"Pattern {i + 1}" for i in range(len(patterns))]
-            pattern_index, ok = QInputDialog.getItem(self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False)
+            pattern_items: list[str] = [f"Pattern {i + 1}" for i in range(len(patterns))]
+            result_tuple = QInputDialog.getItem(
+                self, "Select Pattern", "Choose a pattern to apply:", pattern_items, 0, False
+            )
+            pattern_index: str = result_tuple[0]
+            ok: bool = result_tuple[1] if result_tuple[1] is not None else False
 
             if ok and pattern_index:
-                index = pattern_items.index(pattern_index)
+                index: int = pattern_items.index(pattern_index)
                 pattern_to_apply = patterns[index]
         else:
             pattern_to_apply = patterns[0]
 
         if pattern_to_apply:
-            # Ask for confirmation
             response = QMessageBox.question(
                 self,
                 "Apply Pattern",
                 "Apply pattern from this similar binary?\n\nThis will attempt to apply the cracking pattern to your binary.",
-                QMessageBox.Yes | QMessageBox.No,
+                YesButton | NoButton,
             )
 
-            if response == QMessageBox.Yes:
+            if response == YesButton:
                 try:
-                    # Get the parent app instance
-                    parent = self.parent()
+                    parent_widget = self.parent()
 
-                    if parent and hasattr(parent, "apply_cracking_pattern"):
-                        # Get the source binary path from the selected result
-                        source_binary = result.get("path", "")
-                        target_binary = self.binary_path
+                    if parent_widget is not None and hasattr(parent_widget, "apply_cracking_pattern"):
+                        source_binary: str = str(result.get("path", ""))
+                        target_binary: str = self.binary_path
 
-                        # Call the parent's apply_cracking_pattern method
-                        parent.apply_cracking_pattern(source_binary, target_binary)
+                        parent_widget.apply_cracking_pattern(source_binary, target_binary)
                         self.status_label.setText("Applied cracking pattern from similar binary")
                     else:
-                        # Fallback: display the pattern for manual application
                         QMessageBox.information(
                             self,
                             "Pattern Information",
@@ -414,22 +455,22 @@ class BinarySimilaritySearchDialog(QDialog):
             )
             return
 
-        # Ask for cracking patterns
-        patterns_text, ok = QInputDialog.getMultiLineText(
+        result_tuple = QInputDialog.getMultiLineText(
             self,
             "Add to Database",
             "Enter cracking patterns for this binary (optional):",
             "",
         )
+        patterns_text: str = result_tuple[0]
+        ok: bool = result_tuple[1] if result_tuple[1] is not None else False
 
         if not ok:
             return
 
-        patterns = [patterns_text.strip()] if patterns_text.strip() else []
-        # Add to database
+        patterns: list[str] = [patterns_text.strip()] if patterns_text.strip() else []
         try:
             if success := self.search_engine.add_binary(self.binary_path, patterns):
-                logger.info(f"Binary added to search index successfully (result: {success})")
+                logger.info("Binary added to search index successfully (result: %s)", success)
                 QMessageBox.information(
                     self,
                     "Success",
@@ -457,17 +498,21 @@ class BinarySimilaritySearchDialog(QDialog):
             Selected pattern text or None if no pattern selected
 
         """
-        selected_rows = self.results_table.selectionModel().selectedRows()
+        selection_model = self.results_table.selectionModel()
+        if selection_model is None:
+            return None
+        selected_rows = selection_model.selectedRows()
         if not selected_rows:
             return None
 
-        row = selected_rows[0].row()
+        row: int = selected_rows[0].row()
         if row < 0 or row >= len(self.similar_binaries):
             return None
 
-        result = self.similar_binaries[row]
+        result: dict[str, Any] = self.similar_binaries[row]
         if patterns := result.get("cracking_patterns", []):
-            return patterns[0]  # Return first pattern
+            if isinstance(patterns, list) and len(patterns) > 0:
+                return str(patterns[0])
 
         return None
 

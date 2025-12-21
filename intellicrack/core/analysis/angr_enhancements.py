@@ -1617,11 +1617,10 @@ def install_license_simprocedures(project: Any) -> int:
                 project.hook(addr, simprocedure_class())
                 logger.debug("Hooked %s at %s", func_name, hex(addr))
                 installed_count += 1
-            else:
-                if symbol := project.loader.find_symbol(func_name):
-                    project.hook(symbol.rebased_addr, simprocedure_class())
-                    logger.debug("Hooked %s at %s", func_name, hex(symbol.rebased_addr))
-                    installed_count += 1
+            elif symbol := project.loader.find_symbol(func_name):
+                project.hook(symbol.rebased_addr, simprocedure_class())
+                logger.debug("Hooked %s at %s", func_name, hex(symbol.rebased_addr))
+                installed_count += 1
         except Exception as e:
             logger.debug("Could not hook %s: %s", func_name, e, exc_info=True)
 

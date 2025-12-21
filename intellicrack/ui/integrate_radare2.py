@@ -67,7 +67,7 @@ def add_radare2_to_intellicrack_app(app_instance: object) -> bool:
 
         # Validate app instance
         if app_instance is None:
-            logger.error("App instance is None")
+            logger.exception("App instance is None")
             return False
 
         # Perform comprehensive integration
@@ -88,7 +88,7 @@ def add_radare2_to_intellicrack_app(app_instance: object) -> bool:
                     "[Radare2 Integration] Features include: decompilation, vulnerability detection, AI analysis, and automated bypass generation.",
                 )
         else:
-            logger.error("Radare2 integration failed")
+            logger.exception("Radare2 integration failed")
 
             # Add failure notification
             if hasattr(app_instance, "update_output"):
@@ -99,7 +99,7 @@ def add_radare2_to_intellicrack_app(app_instance: object) -> bool:
         return success
 
     except Exception as e:
-        logger.error("Integration failed with exception: %s", e, exc_info=True)
+        logger.exception("Integration failed with exception: %s", e, exc_info=True)
 
         # Add error notification
         if hasattr(app_instance, "update_output"):
@@ -159,7 +159,7 @@ def integrate_with_main_app() -> bool:
         return False
 
     except Exception as e:
-        logger.error("Automatic integration failed: %s", e, exc_info=True)
+        logger.exception("Automatic integration failed: %s", e, exc_info=True)
         return False
 
 
@@ -181,11 +181,11 @@ def create_standalone_radare2_app() -> tuple[object, object] | tuple[None, None]
         if app and window:
             logger.info("Created standalone radare2 application")
             return app, window
-        logger.error("Failed to create standalone application")
+        logger.exception("Failed to create standalone application")
         return None, None
 
     except Exception as e:
-        logger.error("Failed to create standalone application: %s", e, exc_info=True)
+        logger.exception("Failed to create standalone application: %s", e, exc_info=True)
         return None, None
 
 
@@ -215,7 +215,7 @@ def show_integration_status(app_instance: object | None = None) -> dict:
         return status
 
     except Exception as e:
-        logger.error("Failed to get integration status: %s", e, exc_info=True)
+        logger.exception("Failed to get integration status: %s", e, exc_info=True)
         return {"error": str(e)}
 
 

@@ -161,12 +161,12 @@ class MigrationBackup:
         try:
             with open(backup_file, "w") as f:
                 json.dump(config_data, f, indent=2)
-            logger.info(f"Created backup at: {backup_file}")
+            logger.info("Created backup at: %s", backup_file)
             return backup_file
         except Exception as e:
             error_msg = f"Backup creation failed: {e}"
             logger.critical(error_msg)
-            logger.error(f"Failed to create backup: {e}")
+            logger.exception("Failed to create backup: %s", e)
             raise MigrationError(error_msg) from e
 
     def restore_backup(self, backup_file: Path) -> dict[str, Any]:
@@ -182,12 +182,12 @@ class MigrationBackup:
         try:
             with open(backup_file) as f:
                 config_data = json.load(f)
-            logger.info(f"Restored configuration from: {backup_file}")
+            logger.info("Restored configuration from: %s", backup_file)
             return config_data
         except Exception as e:
             error_msg = f"Backup restoration failed: {e}"
             logger.critical(error_msg)
-            logger.error(f"Failed to restore backup: {e}")
+            logger.exception("Failed to restore backup: %s", e)
             raise MigrationRollbackError(error_msg) from e
 
     def get_latest_backup(self) -> Path | None:
@@ -344,9 +344,9 @@ class ConfigMigrationHandler:
         try:
             with open(log_file, "w") as f:
                 json.dump(self.migration_log, f, indent=2)
-            logger.info(f"Migration log saved to: {log_file}")
+            logger.info("Migration log saved to: %s", log_file)
         except Exception as e:
-            logger.error(f"Failed to save migration log: {e}")
+            logger.exception("Failed to save migration log: %s", e)
 
     def get_migration_report(self) -> dict[str, Any]:
         """Get a summary report of the migration.
@@ -427,7 +427,7 @@ class SafeMigrationWrapper:
         critical_sections = ["version", "application"]
         for section in critical_sections:
             if section in original and section not in migrated:
-                logger.error(f"Critical section '{section}' lost during migration")
+                logger.error("Critical section '%s' lost during migration", section)
                 return False
 
         # Check that configuration didn't shrink too much
@@ -435,6 +435,6 @@ class SafeMigrationWrapper:
         migrated_size = len(json.dumps(migrated))
 
         if migrated_size < original_size * 0.5:
-            logger.warning(f"Configuration size reduced by more than 50% ({original_size} -> {migrated_size} bytes)")
+            logger.warning("Configuration size reduced by more than 50%% (%d -> %d bytes)", original_size, migrated_size)
 
         return True

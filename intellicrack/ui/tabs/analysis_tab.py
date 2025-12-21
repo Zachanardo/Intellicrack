@@ -170,8 +170,7 @@ class AnalysisTab(BaseTab):
             if hasattr(app_ctx, "binary_unloaded") and app_ctx.binary_unloaded is not None:
                 app_ctx.binary_unloaded.connect(self.on_binary_unloaded)
             if hasattr(app_ctx, "get_current_binary"):
-                current_binary = app_ctx.get_current_binary()
-                if current_binary:
+                if current_binary := app_ctx.get_current_binary():
                     self.on_binary_loaded(current_binary)
 
     def setup_content(self) -> None:
@@ -1117,7 +1116,7 @@ class AnalysisTab(BaseTab):
     def _run_static_analysis(self, task: object | None = None) -> dict[str, object]:
         """Run the static analysis task."""
         try:
-            binary_path = self.current_file_path if self.current_file_path else ""
+            binary_path = self.current_file_path or ""
             results: dict[str, object] = {
                 "binary": binary_path,
                 "file_name": os.path.basename(binary_path) if binary_path else "",
@@ -1342,8 +1341,7 @@ class AnalysisTab(BaseTab):
 
             if hasattr(self, "current_file_path") and self.current_file_path:
                 analyzer = AdvancedDynamicAnalyzer(self.current_file_path)
-                results = analyzer.run_comprehensive_analysis()
-                if results:
+                if results := analyzer.run_comprehensive_analysis():
                     self.results_display.append("Dynamic Analysis Results:\n")
                     for key, value in results.items():
                         self.results_display.append(f"   {key}: {value}\n")
@@ -1512,7 +1510,7 @@ class AnalysisTab(BaseTab):
                                 b"registered",
                                 b"expired",
                             ]
-                            license_found = sum(bool(pattern in header) for pattern in license_patterns)
+                            license_found = sum(pattern in header for pattern in license_patterns)
                             if license_found > 0:
                                 self.results_display.append(f"   License checks detected: {license_found} validation patterns found\n")
                             else:
@@ -1812,11 +1810,8 @@ class AnalysisTab(BaseTab):
 
                 # Disassemble
                 disasm_output = [f"; Disassembly of {os.path.basename(self.current_file_path or '')}"]
-                disasm_output.append(f"; Architecture: {cs.arch}")
-                disasm_output.append(f"; Mode: {cs.mode}")
-                disasm_output.append("; " + "=" * 60)
-                disasm_output.append("")
-
+                disasm_output.extend((f"; Architecture: {cs.arch}", f"; Mode: {cs.mode}"))
+                disasm_output.extend(("; " + "=" * 60, ""))
                 for instruction in cs.disasm(code_data, base_address):
                     hex_bytes = " ".join(f"{b:02x}" for b in instruction.bytes)
                     disasm_output.append(f"0x{instruction.address:08x}:  {hex_bytes:<20}  {instruction.mnemonic:<8} {instruction.op_str}")
@@ -2475,7 +2470,8 @@ class AnalysisTab(BaseTab):
             # License protection assessment
             analysis_results += "LICENSE PROTECTION ASSESSMENT:\n"
             total_high_entropy = sum(
-                bool(self.calculate_shannon_entropy(file_data[block : block + 1024]) > 7.5)
+                self.calculate_shannon_entropy(file_data[block : block + 1024])
+                > 7.5
                 for block in range(0, len(file_data) - 1024 + 1, 1024)
             )
 
@@ -3068,10 +3064,11 @@ class AnalysisTab(BaseTab):
                     b"license registry",
                     b"registration key",
                 ]
-                for pattern in registry_patterns:
-                    if pattern in file_data:
-                        license_checks_found.append(f"Registry Check: {pattern.decode('utf-8', errors='ignore')}")
-
+                license_checks_found.extend(
+                    f"Registry Check: {pattern.decode('utf-8', errors='ignore')}"
+                    for pattern in registry_patterns
+                    if pattern in file_data
+                )
             # Display results
             if license_checks_found:
                 self.license_display.append("=" * 60)
@@ -3905,23 +3902,23 @@ class AnalysisTab(BaseTab):
                 if binary is None:
                     return api_calls
 
-                license_keywords = [
-                    "reg",
-                    "crypt",
-                    "license",
-                    "serial",
-                    "key",
-                    "valid",
-                    "check",
-                    "internet",
-                    "http",
-                    "socket",
-                    "connect",
-                    "time",
-                    "debug",
-                ]
-
                 if hasattr(binary, "imports"):
+                    license_keywords = [
+                        "reg",
+                        "crypt",
+                        "license",
+                        "serial",
+                        "key",
+                        "valid",
+                        "check",
+                        "internet",
+                        "http",
+                        "socket",
+                        "connect",
+                        "time",
+                        "debug",
+                    ]
+
                     for imp in binary.imports:
                         dll_name = imp.name
                         for entry in imp.entries:
@@ -3997,18 +3994,16 @@ class AnalysisTab(BaseTab):
             for string in all_strings:
                 string_lower = string.lower()
 
-                if any(pattern in string_lower for pattern in license_file_patterns):
-                    if "\\" in string or "/" in string or "." in string:
-                        if len(string) < 260 and string not in seen_ops:
-                            seen_ops.add(string)
-                            if any(ext in string_lower for ext in [".lic", ".key", ".license"]):
-                                file_ops.append(f"[LICENSE FILE] {string}")
-                            elif any(ext in string_lower for ext in [".dat", ".cfg", ".ini"]):
-                                file_ops.append(f"[CONFIG FILE] {string}")
-                            elif any(ext in string_lower for ext in [".reg"]):
-                                file_ops.append(f"[REGISTRY FILE] {string}")
-                            else:
-                                file_ops.append(f"[FILE REF] {string}")
+                if any(pattern in string_lower for pattern in license_file_patterns) and ("\\" in string or "/" in string or "." in string) and (len(string) < 260 and string not in seen_ops):
+                    seen_ops.add(string)
+                    if any(ext in string_lower for ext in [".lic", ".key", ".license"]):
+                        file_ops.append(f"[LICENSE FILE] {string}")
+                    elif any(ext in string_lower for ext in [".dat", ".cfg", ".ini"]):
+                        file_ops.append(f"[CONFIG FILE] {string}")
+                    elif any(ext in string_lower for ext in [".reg"]):
+                        file_ops.append(f"[REGISTRY FILE] {string}")
+                    else:
+                        file_ops.append(f"[FILE REF] {string}")
 
             common_license_paths = [
                 "AppData\\Local",
@@ -4094,11 +4089,10 @@ class AnalysisTab(BaseTab):
                 try:
                     ip = ip_bytes.decode("utf-8")
                     parts = ip.split(".")
-                    if all(0 <= int(p) <= 255 for p in parts):
-                        if ip not in seen_ips and not ip.startswith("0.") and not ip.startswith("255."):
-                            seen_ips.add(ip)
-                            if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172."):
-                                net_activity.append(f"[PRIVATE IP] {ip}")
+                    if all(0 <= int(p) <= 255 for p in parts) and (ip not in seen_ips and not ip.startswith("0.") and not ip.startswith("255.")):
+                        seen_ips.add(ip)
+                        if ip.startswith("10.") or ip.startswith("192.168.") or ip.startswith("172."):
+                            net_activity.append(f"[PRIVATE IP] {ip}")
                 except Exception:
                     logger.debug("Failed to parse IP address", exc_info=True)
 
@@ -4111,10 +4105,9 @@ class AnalysisTab(BaseTab):
             for domain_bytes in domains:
                 try:
                     domain = domain_bytes.decode("utf-8", errors="ignore").lower()
-                    if domain not in seen_domains and len(domain) > 4:
-                        if any(kw in domain for kw in license_domain_keywords):
-                            seen_domains.add(domain)
-                            net_activity.append(f"[LICENSE DOMAIN] {domain}")
+                    if domain not in seen_domains and len(domain) > 4 and any(kw in domain for kw in license_domain_keywords):
+                        seen_domains.add(domain)
+                        net_activity.append(f"[LICENSE DOMAIN] {domain}")
                 except Exception:
                     logger.debug("Failed to parse domain", exc_info=True)
 
@@ -4212,10 +4205,9 @@ class AnalysisTab(BaseTab):
             for string in all_strings:
                 if len(string) > 3 and len(string) < 100:
                     for subkey in common_license_subkeys:
-                        if subkey.lower() in string.lower() and "\\" in string:
-                            if string not in seen_keys:
-                                seen_keys.add(string)
-                                reg_ops.append(f"[SUBKEY] {string}")
+                        if subkey.lower() in string.lower() and "\\" in string and string not in seen_keys:
+                            seen_keys.add(string)
+                            reg_ops.append(f"[SUBKEY] {string}")
 
         except Exception as e:
             self.log_activity(f"Registry monitoring error: {e!s}")

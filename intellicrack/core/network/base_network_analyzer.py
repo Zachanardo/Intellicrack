@@ -71,6 +71,6 @@ class BaseNetworkAnalyzer:
                 process_packet_func(packet, IP, TCP)
 
             except Exception as e:
-                self.logger.debug(f"Packet processing error: {e}")
+                self.logger.debug("Packet processing error: %s", e)
 
         return packet_handler

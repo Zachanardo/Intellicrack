@@ -143,7 +143,7 @@ class ThemeManager:
                 logger.warning("No QApplication instance found")
 
         except Exception as e:
-            logger.error("Error applying theme: %s", e, exc_info=True)
+            logger.exception("Error applying theme: %s", e)
             self._apply_builtin_dark_theme()
 
     def _get_theme_stylesheet(self) -> str:
@@ -165,7 +165,7 @@ class ThemeManager:
                 with open(theme_path, encoding="utf-8") as f:
                     return f.read()
             except Exception as e:
-                logger.error("Error loading theme file %s: %s", theme_path, e, exc_info=True)
+                logger.exception("Error loading theme file %s: %s", theme_path, e)
 
         # Fallback to built-in themes
         return self._get_builtin_theme_stylesheet()
@@ -992,7 +992,7 @@ QPushButton#resetButton:pressed {
                 app.setStyleSheet(self._get_builtin_dark_stylesheet())
                 logger.info("Applied built-in dark theme as fallback")
         except Exception as e:
-            logger.error("Error applying fallback theme: %s", e, exc_info=True)
+            logger.exception("Error applying fallback theme: %s", e)
 
 
 # Global theme manager instance (lazy initialization)

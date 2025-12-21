@@ -36,7 +36,7 @@ try:
 
     PYQT6_AVAILABLE = importlib.util.find_spec("PyQt6") is not None
 except ImportError as e:
-    logger.error("Import error in taint_analyzer: %s", e)
+    logger.exception("Import error in taint_analyzer: %s", e)
     PYQT6_AVAILABLE = False
 
 
@@ -273,7 +273,7 @@ class TaintAnalysisEngine:
     def run_analysis(self) -> bool:
         """Run taint analysis on the binary."""
         if not self.binary_path:
-            self.logger.error("No binary set")
+            self.logger.exception("No binary set")
             return False
 
         if not self.taint_sources:
@@ -302,7 +302,7 @@ class TaintAnalysisEngine:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during taint analysis: %s", e)
+            self.logger.exception("Error during taint analysis: %s", e)
             return False
 
     def _add_default_taint_sources(self) -> None:
@@ -350,7 +350,7 @@ class TaintAnalysisEngine:
             # Load and disassemble the binary
             disassembly = self._disassemble_binary()
             if not disassembly:
-                self.logger.error("Could not disassemble binary for taint analysis")
+                self.logger.exception("Could not disassemble binary for taint analysis")
                 return
 
             # Build enhanced data structures for analysis
@@ -423,7 +423,7 @@ class TaintAnalysisEngine:
             }
 
         except Exception as e:
-            self.logger.error("Error in real taint analysis: %s", e, exc_info=True)
+            self.logger.exception("Error in real taint analysis: %s", e, exc_info=True)
             # Fallback to basic analysis if full analysis fails
             self._perform_basic_analysis()
 
@@ -544,7 +544,7 @@ class TaintAnalysisEngine:
                     break
 
         except Exception as e:
-            self.logger.error("Error in pattern-based analysis: %s", e, exc_info=True)
+            self.logger.exception("Error in pattern-based analysis: %s", e, exc_info=True)
 
         return instructions
 
@@ -577,7 +577,7 @@ class TaintAnalysisEngine:
                         target = int(op_str.split("0x")[1].split()[0], 16)
                         successors.append(target)
                 except (ValueError, IndexError) as e:
-                    logger.error("Error in taint_analyzer: %s", e, exc_info=True)
+                    logger.exception("Error in taint_analyzer: %s", e, exc_info=True)
             elif mnemonic == "call":
                 # Call instructions have the return address as successor
                 if i + 1 < len(instructions):
@@ -834,7 +834,7 @@ class TaintAnalysisEngine:
     def generate_report(self, filename: str | None = None) -> str | None:
         """Generate a report of the taint analysis results."""
         if not self.results:
-            self.logger.error("No analysis results to report")
+            self.logger.exception("No analysis results to report")
             return None
 
         # Generate HTML report
@@ -940,7 +940,7 @@ class TaintAnalysisEngine:
             self.logger.info("Report saved to %s", filename)
             return filename
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error saving report: %s", e)
+            self.logger.exception("Error saving report: %s", e)
             return None
 
     def clear_analysis(self) -> None:
@@ -1270,9 +1270,7 @@ class TaintAnalysisEngine:
             return "call"
         if mnemonic in {"ret", "retn"}:
             return "return"
-        if mnemonic in ["push", "pop"]:
-            return "stack"
-        return "other"
+        return "stack" if mnemonic in {"push", "pop"} else "other"
 
     def _can_reach(self, from_addr: int, to_addr: int, cfg: dict[int, list[int]], max_depth: int = 50) -> bool:
         """Check if one address can reach another in the control flow graph."""
@@ -1305,7 +1303,7 @@ class TaintAnalysisEngine:
                 if hex_match := re.search(r"0x[0-9a-fA-F]+", op_str):
                     return int(hex_match.group(), 16)
             except ValueError as e:
-                self.logger.error("Value error in taint_analyzer: %s", e, exc_info=True)
+                self.logger.exception("Value error in taint_analyzer: %s", e, exc_info=True)
 
         # Could implement more sophisticated call target resolution
         return None
@@ -1529,8 +1527,12 @@ class TaintAnalysisEngine:
                 "total_sinks_reached": len(sinks_reached),
                 "total_flows": len(taint_flows),
                 "vulnerabilities_found": len(vulnerabilities),
-                "critical_vulnerabilities": sum(bool(v["severity"] == "critical") for v in vulnerabilities),
-                "high_vulnerabilities": sum(bool(v["severity"] == "high") for v in vulnerabilities),
+                "critical_vulnerabilities": sum(
+                    v["severity"] == "critical" for v in vulnerabilities
+                ),
+                "high_vulnerabilities": sum(
+                    v["severity"] == "high" for v in vulnerabilities
+                ),
             },
         }
 

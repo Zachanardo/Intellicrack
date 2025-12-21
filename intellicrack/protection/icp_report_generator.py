@@ -283,7 +283,7 @@ class ICPReportGenerator:
         report_path = self.report_output_path / f"{report_name}.html"
         report_path.write_text(html_content, encoding="utf-8")
 
-        logger.info(f"HTML report generated: {report_path}")
+        logger.info("HTML report generated: %s", report_path)
         return str(report_path)
 
     def _generate_summary_section(self, result: UnifiedProtectionResult) -> str:
@@ -610,32 +610,35 @@ class ICPReportGenerator:
             "=" * 80,
             f"Generated: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
             "",
+            "FILE INFORMATION:",
         ]
-        # File information
-        lines.append("FILE INFORMATION:")
-        lines.append(f"  File: {result.file_path}")
-        lines.append(f"  Type: {result.file_type}")
-        lines.append(f"  Architecture: {result.architecture}")
-        lines.append(f"  Protected: {'Yes' if result.is_protected else 'No'}")
-        lines.append(f"  Packed: {'Yes' if result.is_packed else 'No'}")
-        lines.append(f"  Confidence: {result.confidence_score:.1f}%")
-        lines.append("")
-
-        # Detections
-        lines.append("DETECTED PROTECTIONS:")
+        lines.extend(
+            (
+                f"  File: {result.file_path}",
+                f"  Type: {result.file_type}",
+                f"  Architecture: {result.architecture}",
+                f"  Protected: {'Yes' if result.is_protected else 'No'}",
+                f"  Packed: {'Yes' if result.is_packed else 'No'}",
+                f"  Confidence: {result.confidence_score:.1f}%",
+                "",
+                "DETECTED PROTECTIONS:",
+            )
+        )
         if result.protections:
             for i, protection in enumerate(result.protections, 1):
-                lines.append(f"  {i}. {protection['name']}")
-                lines.append(f"     Type: {protection['type']}")
+                lines.extend(
+                    (
+                        f"  {i}. {protection['name']}",
+                        f"     Type: {protection['type']}",
+                    )
+                )
                 lines.append(f"     Confidence: {protection.get('confidence', 0):.1f}%")
                 lines.append(f"     Source: {protection.get('source', 'Unknown')}")
                 if protection.get("version"):
                     lines.append(f"     Version: {protection['version']}")
                 lines.append("")
         else:
-            lines.append("  No protections detected")
-            lines.append("")
-
+            lines.extend(("  No protections detected", ""))
         # ICP Analysis
         if result.icp_analysis and result.icp_analysis.all_detections:
             lines.append("ICP ENGINE DETECTIONS:")
@@ -660,7 +663,7 @@ class ICPReportGenerator:
         report_path = self.report_output_path / f"{report_name}.txt"
         report_path.write_text("\n".join(lines), encoding="utf-8")
 
-        logger.info(f"Text report generated: {report_path}")
+        logger.info("Text report generated: %s", report_path)
         return str(report_path)
 
     def _generate_json_report(
@@ -740,7 +743,7 @@ class ICPReportGenerator:
             encoding="utf-8",
         )
 
-        logger.info(f"JSON report generated: {report_path}")
+        logger.info("JSON report generated: %s", report_path)
         return str(report_path)
 
     def _get_severity_class(self, protection_type: str) -> str:

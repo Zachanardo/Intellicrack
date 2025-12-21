@@ -393,18 +393,19 @@ class FingerprintEngine:
                     fingerprint.import_table_hash = hashlib.sha256(import_str.encode()).hexdigest()
 
                 if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
-                    export_list = []
-                    for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
-                        if exp.name:
-                            export_list.append(exp.name.decode("utf-8", errors="ignore"))
+                    export_list = [
+                        exp.name.decode("utf-8", errors="ignore")
+                        for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols
+                        if exp.name
+                    ]
                     export_str = ";".join(sorted(export_list))
                     fingerprint.export_table_hash = hashlib.sha256(export_str.encode()).hexdigest()
 
-                code_sections = []
-                for section in pe.sections:
-                    if section.Characteristics & 0x20000000:
-                        code_sections.append(section.get_data())
-                if code_sections:
+                if code_sections := [
+                    section.get_data()
+                    for section in pe.sections
+                    if section.Characteristics & 0x20000000
+                ]:
                     code_data = b"".join(code_sections)
                     fingerprint.code_sections_hash = hashlib.sha256(code_data).hexdigest()
 
@@ -413,7 +414,7 @@ class FingerprintEngine:
                 fingerprint.metadata["pe_sections"] = pe.FILE_HEADER.NumberOfSections
 
             except Exception:
-                logger.error("Failed to extract PE metadata for fingerprint", exc_info=True)
+                logger.exception("Failed to extract PE metadata for fingerprint", exc_info=True)
 
         return fingerprint
 
@@ -466,10 +467,9 @@ class FingerprintEngine:
                     matches += 1
                 total_checks += 1
 
-                pattern_matches = 0
-                for pattern in prot_sig["code_patterns"]:
-                    if pattern in binary_data:
-                        pattern_matches += 1
+                pattern_matches = sum(
+                    pattern in binary_data for pattern in prot_sig["code_patterns"]
+                )
                 if pattern_matches > 0:
                     matches += 1
                 total_checks += 1
@@ -498,7 +498,7 @@ class FingerprintEngine:
                     protections.append(fingerprint)
 
         except Exception:
-            logger.error("Error detecting protections", exc_info=True)
+            logger.exception("Error detecting protections", exc_info=True)
 
         return protections
 
@@ -543,22 +543,27 @@ class FingerprintEngine:
                 matches = 0
                 total_checks = 0
 
-                import_matches = sum(1 for imp in compiler_sig["imports"] if any(imp in i for i in imports))
+                import_matches = sum(
+                    any((imp in i for i in imports))
+                    for imp in compiler_sig["imports"]
+                )
                 if import_matches > 0:
                     matches += import_matches
                 total_checks += len(compiler_sig["imports"])
 
-                section_matches = sum(1 for sec in compiler_sig["sections"] if sec in section_names)
+                section_matches = sum(sec in section_names for sec in compiler_sig["sections"])
                 if section_matches > 0:
                     matches += section_matches
                 total_checks += len(compiler_sig["sections"])
 
-                string_matches = sum(1 for s in compiler_sig["strings"] if s in strings)
+                string_matches = sum(s in strings for s in compiler_sig["strings"])
                 if string_matches > 0:
                     matches += string_matches
                 total_checks += len(compiler_sig["strings"])
 
-                pattern_matches = sum(1 for pattern in compiler_sig["patterns"] if pattern in binary_data)
+                pattern_matches = sum(
+                    pattern in binary_data for pattern in compiler_sig["patterns"]
+                )
                 if pattern_matches > 0:
                     matches += pattern_matches
                 total_checks += len(compiler_sig["patterns"])
@@ -613,10 +618,11 @@ class FingerprintEngine:
             if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                 for entry in pe.DIRECTORY_ENTRY_IMPORT:
                     dll_name = entry.dll.decode("utf-8", errors="ignore").lower()
-                    dll_imports = []
-                    for imp in entry.imports:
-                        if imp.name:
-                            dll_imports.append(imp.name.decode("utf-8", errors="ignore"))
+                    dll_imports = [
+                        imp.name.decode("utf-8", errors="ignore")
+                        for imp in entry.imports
+                        if imp.name
+                    ]
                     imports[dll_name] = dll_imports
 
             strings = self._extract_strings(binary_data)
@@ -642,7 +648,7 @@ class FingerprintEngine:
                     matches += len(func_matches)
                 total_checks += len(license_sig["functions"])
 
-                string_matches = sum(1 for s in license_sig["strings"] if s in strings)
+                string_matches = sum(s in strings for s in license_sig["strings"])
                 if string_matches > 0:
                     matches += string_matches
                 total_checks += len(license_sig["strings"])
@@ -669,7 +675,7 @@ class FingerprintEngine:
                     license_systems.append(fingerprint)
 
         except Exception:
-            logger.error("Error identifying license system", exc_info=True)
+            logger.exception("Error identifying license system", exc_info=True)
 
     def compare_fingerprints(self, fp1: BinaryFingerprint, fp2: BinaryFingerprint) -> float:
         """Compare two binary fingerprints for similarity.
@@ -691,7 +697,7 @@ class FingerprintEngine:
                 ssdeep_sim = ssdeep.compare(fp1.ssdeep, fp2.ssdeep) / 100.0
                 similarity_scores.append(ssdeep_sim)
             except Exception:
-                logger.error("Failed to calculate ssdeep similarity", exc_info=True)
+                logger.exception("Failed to calculate ssdeep similarity", exc_info=True)
 
         if TLSH_AVAILABLE and fp1.tlsh and fp2.tlsh:
             try:
@@ -699,7 +705,7 @@ class FingerprintEngine:
                 tlsh_sim = max(0.0, 1.0 - (tlsh_distance / 300.0))
                 similarity_scores.append(tlsh_sim)
             except Exception:
-                logger.error("Failed to calculate TLSH similarity", exc_info=True)
+                logger.exception("Failed to calculate TLSH similarity", exc_info=True)
 
         if fp1.imphash and fp2.imphash:
             imphash_sim = 1.0 if fp1.imphash == fp2.imphash else 0.0
@@ -794,7 +800,7 @@ class FingerprintEngine:
                             func_name = imp.name.decode("utf-8", errors="ignore")
                             imports[dll_name].append(func_name)
         except Exception:
-            logger.error("Failed to extract import table hash", exc_info=True)
+            logger.exception("Failed to extract import table hash", exc_info=True)
 
         return dict(imports)
 
@@ -833,7 +839,7 @@ class FingerprintEngine:
                     "is_writable": bool(section.Characteristics & 0x80000000),
                 }
         except Exception:
-            logger.error("Failed to extract code section hashes", exc_info=True)
+            logger.exception("Failed to extract code section hashes", exc_info=True)
 
         return sections
 
@@ -848,7 +854,7 @@ class FingerprintEngine:
         """
         import math
 
-        if len(data) == 0:
+        if not data:
             return 0.0
 
         byte_counts = Counter(data)

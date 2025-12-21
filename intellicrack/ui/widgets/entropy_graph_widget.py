@@ -37,7 +37,7 @@ try:
 
     PYQTGRAPH_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in entropy_graph_widget: %s", e)
+    logger.exception("Import error in entropy_graph_widget: %s", e)
     PYQTGRAPH_AVAILABLE = False
     # Fallback to matplotlib if pyqtgraph not available
     try:
@@ -46,7 +46,7 @@ except ImportError as e:
         if HAS_MATPLOTLIB:
             plt.style.use("dark_background")
     except ImportError as e:
-        logger.error("Import error in entropy_graph_widget: %s", e)
+        logger.exception("Import error in entropy_graph_widget: %s", e)
         # Already initialized to None above
 
 
@@ -347,9 +347,13 @@ class EntropyGraphWidget(QWidget):
             "total_sections": len(self.entropy_data),
             "average_entropy": sum(entropies) / len(entropies),
             "max_entropy": max(entropies),
-            "packed_sections": sum(bool(info.packed) for info in self.entropy_data),
-            "encrypted_sections": sum(bool(info.encrypted) for info in self.entropy_data),
-            "high_entropy_sections": sum(bool(e >= 7.0) for e in entropies),
+            "packed_sections": sum(
+                bool(info.packed) for info in self.entropy_data
+            ),
+            "encrypted_sections": sum(
+                bool(info.encrypted) for info in self.entropy_data
+            ),
+            "high_entropy_sections": sum(e >= 7.0 for e in entropies),
         }
 
     def export_graph(self, file_path: str) -> None:
@@ -362,4 +366,4 @@ class EntropyGraphWidget(QWidget):
             # Export using matplotlib
             self.figure.savefig(file_path, dpi=150, bbox_inches="tight")
 
-        logger.info(f"Entropy graph exported to: {file_path}")
+        logger.info("Entropy graph exported to: %s", file_path)

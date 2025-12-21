@@ -86,11 +86,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Commercial protection scan complete")
-            logger.info(f"Commercial protection scan complete: {len(results.get('protections_found', []))} found")
+            logger.info("Commercial protection scan complete: %d found", len(results.get('protections_found', [])))
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during commercial protection scan: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -117,7 +117,7 @@ class ProtectionDetectionHandlers:
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during hardware dongle detection: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -152,11 +152,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("TPM detection complete")
-            logger.info(f"TPM detection complete: Present={results['tpm_present']}")
+            logger.info("TPM detection complete: Present=%s", results['tpm_present'])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during TPM detection: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -198,11 +198,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Checksum detection complete")
-            logger.info(f"Checksum detection complete: Detected={results['checksum_verification_detected']}")
+            logger.info("Checksum detection complete: Detected=%s", results['checksum_verification_detected'])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during checksum detection: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -244,11 +244,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Self-healing code detection complete")
-            logger.info(f"Self-healing code detection complete: Detected={results['self_healing_detected']}")
+            logger.info("Self-healing code detection complete: Detected=%s", results['self_healing_detected'])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during self-healing code detection: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -286,11 +286,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("TPM bypass attempt complete")
-            logger.info(f"TPM bypass complete: Success={results['success']}")
+            logger.info("TPM bypass complete: Success=%s", results['success'])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during TPM bypass: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -328,11 +328,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("VM detection bypass attempt complete")
-            logger.info(f"VM detection bypass complete: Success={results['success']}")
+            logger.info("VM detection bypass complete: Success=%s", results['success'])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during VM detection bypass: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -375,11 +375,11 @@ class ProtectionDetectionHandlers:
                 self.protection_results.append(output)
 
             self.update_status("Hardware dongle emulation complete")
-            logger.info(f"Dongle emulation complete: Success={results['success']}")
+            logger.info("Dongle emulation complete: Success=%s", results['success'])
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during hardware dongle emulation: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)
 
@@ -414,6 +414,6 @@ class ProtectionDetectionHandlers:
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error during embedded script detection: {e!s}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             self.update_status(error_msg)
             QMessageBox.critical(self, "Error", error_msg)

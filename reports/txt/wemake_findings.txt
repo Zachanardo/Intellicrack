@@ -10271,7 +10271,7 @@ intellicrack\ai\learning_engine.py:1784:9: WPS122 Found all unused variables def
 intellicrack\ai\learning_engine.py:1785:12: WPS121 Found usage of a variable marked as unused: _learning_engine
 
 
-240 findings in intellicrack\ai\integration_manager.py
+238 findings in intellicrack\ai\integration_manager.py
 
 intellicrack\ai\integration_manager.py:0:1: WPS232 Found module cognitive complexity that is too high: 10.8 > 8
 
@@ -10585,8 +10585,6 @@ intellicrack\ai\integration_manager.py:718:9: WPS111 Found too short name: e < 2
 
 intellicrack\ai\integration_manager.py:720:27: WPS226 Found string literal over-use: failed > 3
 
-intellicrack\ai\integration_manager.py:723:28: WPS226 Found string literal over-use: Task  > 3
-
 intellicrack\ai\integration_manager.py:730:21: WPS420 Found wrong keyword: del
 
 intellicrack\ai\integration_manager.py:730:25: WPS529 Found implicit `.get()` dict usage
@@ -10744,8 +10742,6 @@ intellicrack\ai\integration_manager.py:1280:41: WPS432 Found magic number: 50
 intellicrack\ai\integration_manager.py:1283:28: WPS111 Found too short name: x < 2
 
 intellicrack\ai\integration_manager.py:1287:60: WPS432 Found magic number: 50
-
-intellicrack\ai\integration_manager.py:1321:30: WPS237 Found a too complex `f` string
 
 intellicrack\ai\integration_manager.py:1337:5: WPS420 Found wrong keyword: global
 
@@ -11211,7 +11207,7 @@ intellicrack\cli\advanced_export.py:1434:9: WPS111 Found too short name: e < 2
 intellicrack\cli\advanced_export.py:1451:1: WPS212 Found too many return statements: 8 > 5
 
 
-210 findings in intellicrack\ai\interactive_assistant.py
+209 findings in intellicrack\ai\interactive_assistant.py
 
 intellicrack\ai\interactive_assistant.py:0:1: WPS232 Found module cognitive complexity that is too high: 8.2 > 8
 
@@ -11340,8 +11336,6 @@ intellicrack\ai\interactive_assistant.py:503:49: WPS226 Found string literal ove
 intellicrack\ai\interactive_assistant.py:504:84: WPS226 Found string literal over-use: Unknown error > 3
 
 intellicrack\ai\interactive_assistant.py:550:28: WPS336 Found explicit string concatenation
-
-intellicrack\ai\interactive_assistant.py:550:48: WPS226 Found string literal over-use: :  > 3
 
 intellicrack\ai\interactive_assistant.py:550:63: WPS226 Found string literal over-use: confidence > 3
 
@@ -15334,17 +15328,17 @@ intellicrack\cli\terminal_dashboard.py:392:19: WPS237 Found a too complex `f` st
 
 intellicrack\cli\terminal_dashboard.py:402:10: WPS221 Found line with high Jones Complexity: 16 > 14
 
-intellicrack\cli\terminal_dashboard.py:402:10: WPS226 Found string literal over-use: ≡ƒƒó > 3
+intellicrack\cli\terminal_dashboard.py:402:10: WPS226 Found string literal over-use: 🟢 > 3
 
 intellicrack\cli\terminal_dashboard.py:402:54: WPS432 Found magic number: else
 
 intellicrack\cli\terminal_dashboard.py:402:62: WPS509 Found incorrectly nested ternary
 
-intellicrack\cli\terminal_dashboard.py:402:62: WPS226 Found string literal over-use: ≡ƒƒí > 3
+intellicrack\cli\terminal_dashboard.py:402:62: WPS226 Found string literal over-use: 🟡 > 3
 
 intellicrack\cli\terminal_dashboard.py:402:106: WPS432 Found magic number: 95
 
-intellicrack\cli\terminal_dashboard.py:402:114: WPS226 Found string literal over-use: ≡ƒö┤ > 3
+intellicrack\cli\terminal_dashboard.py:402:114: WPS226 Found string literal over-use: 🔴 > 3
 
 intellicrack\cli\terminal_dashboard.py:403:10: WPS221 Found line with high Jones Complexity: 15 > 14
 
@@ -20176,45 +20170,45 @@ intellicrack\ai\model_sharding.py:711:20: WPS358 Found a float zero (0.0)
 
 intellicrack\ai\model_sharding.py:722:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\model_sharding.py:764:5: WPS210 Found too many local variables: 8 > 5
+intellicrack\ai\model_sharding.py:765:5: WPS210 Found too many local variables: 8 > 5
 
-intellicrack\ai\model_sharding.py:796:13: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:797:13: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:816:9: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\model_sharding.py:817:9: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:825:17: WPS122 Found all unused variables definition: _
+intellicrack\ai\model_sharding.py:826:17: WPS122 Found all unused variables definition: _
 
-intellicrack\ai\model_sharding.py:831:59: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:832:59: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:854:59: WPS111 Found too short name: j < 2
+intellicrack\ai\model_sharding.py:855:59: WPS111 Found too short name: j < 2
 
-intellicrack\ai\model_sharding.py:863:13: WPS122 Found all unused variables definition: _
+intellicrack\ai\model_sharding.py:864:13: WPS122 Found all unused variables definition: _
 
-intellicrack\ai\model_sharding.py:878:13: WPS221 Found line with high Jones Complexity: 15 > 14
+intellicrack\ai\model_sharding.py:879:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:878:67: WPS111 Found too short name: j < 2
+intellicrack\ai\model_sharding.py:879:67: WPS111 Found too short name: j < 2
 
-intellicrack\ai\model_sharding.py:879:62: WPS111 Found too short name: j < 2
-
-intellicrack\ai\model_sharding.py:886:13: WPS221 Found line with high Jones Complexity: 15 > 14
-
-intellicrack\ai\model_sharding.py:886:65: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:880:62: WPS111 Found too short name: j < 2
 
 intellicrack\ai\model_sharding.py:887:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:887:70: WPS111 Found too short name: i < 2
+intellicrack\ai\model_sharding.py:887:65: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:891:5: WPS211 Found too many arguments: 6 > 5
+intellicrack\ai\model_sharding.py:888:13: WPS221 Found line with high Jones Complexity: 15 > 14
 
-intellicrack\ai\model_sharding.py:891:5: WPS210 Found too many local variables: 7 > 5
+intellicrack\ai\model_sharding.py:888:70: WPS111 Found too short name: i < 2
 
-intellicrack\ai\model_sharding.py:909:9: WPS110 Found wrong variable name: results
+intellicrack\ai\model_sharding.py:892:5: WPS211 Found too many arguments: 6 > 5
 
-intellicrack\ai\model_sharding.py:943:5: WPS420 Found wrong keyword: global
+intellicrack\ai\model_sharding.py:892:5: WPS210 Found too many local variables: 7 > 5
 
-intellicrack\ai\model_sharding.py:945:9: WPS122 Found all unused variables definition: _sharding_manager
+intellicrack\ai\model_sharding.py:910:9: WPS110 Found wrong variable name: results
 
-intellicrack\ai\model_sharding.py:946:12: WPS121 Found usage of a variable marked as unused: _sharding_manager
+intellicrack\ai\model_sharding.py:944:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\model_sharding.py:946:9: WPS122 Found all unused variables definition: _sharding_manager
+
+intellicrack\ai\model_sharding.py:947:12: WPS121 Found usage of a variable marked as unused: _sharding_manager
 
 
 87 findings in intellicrack\analysis\protection_workflow.py
@@ -21787,7 +21781,7 @@ intellicrack\ai\protection_aware_script_gen.py:5214:5: WPS300 Found local folder
 intellicrack\ai\protection_aware_script_gen.py:5219:5: WPS110 Found wrong variable name: result
 
 
-60 findings in intellicrack\ai\model_discovery_service.py
+59 findings in intellicrack\ai\model_discovery_service.py
 
 intellicrack\ai\model_discovery_service.py:20:1: WPS300 Found local folder import
 
@@ -21841,9 +21835,7 @@ intellicrack\ai\model_discovery_service.py:200:27: WPS221 Found line with high J
 
 intellicrack\ai\model_discovery_service.py:224:25: WPS220 Found too deep nesting: 24 > 20
 
-intellicrack\ai\model_discovery_service.py:254:21: WPS237 Found a too complex `f` string
-
-intellicrack\ai\model_discovery_service.py:254:107: WPS432 Found magic number: 3600
+intellicrack\ai\model_discovery_service.py:254:114: WPS432 Found magic number: 3600
 
 intellicrack\ai\model_discovery_service.py:263:42: WPS432 Found magic number: 5.0
 
@@ -22671,105 +22663,6 @@ intellicrack\core\analysis\__init__.py:249:21: WPS110 Found wrong variable name:
 intellicrack\core\analysis\__init__.py:249:65: WPS421 Found wrong function call: locals
 
 
-48 findings in intellicrack\ai\lazy_model_loader.py
-
-intellicrack\ai\lazy_model_loader.py:0:1: WPS202 Found too many module members: 9 > 7
-
-intellicrack\ai\lazy_model_loader.py:34:5: WPS300 Found local folder import
-
-intellicrack\ai\lazy_model_loader.py:57:9: WPS221 Found line with high Jones Complexity: 16 > 14
-
-intellicrack\ai\lazy_model_loader.py:57:79: WPS226 Found string literal over-use: openai > 3
-
-intellicrack\ai\lazy_model_loader.py:57:89: WPS226 Found string literal over-use: anthropic > 3
-
-intellicrack\ai\lazy_model_loader.py:57:102: WPS226 Found string literal over-use: ollama > 3
-
-intellicrack\ai\lazy_model_loader.py:100:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\lazy_model_loader.py:104:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:114:20: WPS432 Found magic number: 90
-
-intellicrack\ai\lazy_model_loader.py:116:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\lazy_model_loader.py:119:31: WPS432 Found magic number: 80
-
-intellicrack\ai\lazy_model_loader.py:120:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:123:16: WPS432 Found magic number: 50
-
-intellicrack\ai\lazy_model_loader.py:126:1: WPS230 Found too many public instance attributes: 7 > 6
-
-intellicrack\ai\lazy_model_loader.py:126:1: WPS214 Found too many methods: 10 > 7
-
-intellicrack\ai\lazy_model_loader.py:126:1: WPS338 Found incorrect order of methods in a class
-
-intellicrack\ai\lazy_model_loader.py:164:13: WPS504 Found negated condition
-
-intellicrack\ai\lazy_model_loader.py:189:5: WPS231 Found function with too much cognitive complexity: 25 > 12
-
-intellicrack\ai\lazy_model_loader.py:204:13: WPS229 Found too long ``try`` body length: 8 > 1
-
-intellicrack\ai\lazy_model_loader.py:206:40: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:208:29: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:214:40: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:216:29: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:219:40: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:223:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:224:30: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:229:40: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:237:5: WPS615 Found unpythonic getter or setter: get_backend
-
-intellicrack\ai\lazy_model_loader.py:256:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\lazy_model_loader.py:257:21: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:258:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\ai\lazy_model_loader.py:262:29: WPS237 Found a too complex `f` string
-
-intellicrack\ai\lazy_model_loader.py:287:9: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:292:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\lazy_model_loader.py:295:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:301:1: WPS214 Found too many methods: 13 > 7
-
-intellicrack\ai\lazy_model_loader.py:301:1: WPS338 Found incorrect order of methods in a class
-
-intellicrack\ai\lazy_model_loader.py:326:9: WPS504 Found negated condition
-
-intellicrack\ai\lazy_model_loader.py:343:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:395:24: WPS221 Found line with high Jones Complexity: 19 > 14
-
-intellicrack\ai\lazy_model_loader.py:422:39: WPS111 Found too short name: x < 2
-
-intellicrack\ai\lazy_model_loader.py:425:13: WPS111 Found too short name: i < 2
-
-intellicrack\ai\lazy_model_loader.py:433:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\ai\lazy_model_loader.py:434:28: WPS432 Found magic number: 300
-
-intellicrack\ai\lazy_model_loader.py:436:13: WPS111 Found too short name: e < 2
-
-intellicrack\ai\lazy_model_loader.py:456:5: WPS420 Found wrong keyword: global
-
-intellicrack\ai\lazy_model_loader.py:460:9: WPS122 Found all unused variables definition: _lazy_manager
-
-intellicrack\ai\lazy_model_loader.py:461:12: WPS121 Found usage of a variable marked as unused: _lazy_manager
-
-
 48 findings in intellicrack\ai\pattern_library.py
 
 intellicrack\ai\pattern_library.py:25:1: WPS300 Found local folder import
@@ -23154,6 +23047,97 @@ intellicrack\cli\config_profiles.py:442:9: WPS223 Found too many `elif` branches
 intellicrack\cli\config_profiles.py:454:16: WPS332 Found walrus operator outside a comprehension
 
 intellicrack\cli\config_profiles.py:457:21: WPS237 Found a too complex `f` string
+
+
+44 findings in intellicrack\ai\lazy_model_loader.py
+
+intellicrack\ai\lazy_model_loader.py:0:1: WPS202 Found too many module members: 9 > 7
+
+intellicrack\ai\lazy_model_loader.py:34:5: WPS300 Found local folder import
+
+intellicrack\ai\lazy_model_loader.py:57:9: WPS221 Found line with high Jones Complexity: 16 > 14
+
+intellicrack\ai\lazy_model_loader.py:57:79: WPS226 Found string literal over-use: openai > 3
+
+intellicrack\ai\lazy_model_loader.py:57:89: WPS226 Found string literal over-use: anthropic > 3
+
+intellicrack\ai\lazy_model_loader.py:57:102: WPS226 Found string literal over-use: ollama > 3
+
+intellicrack\ai\lazy_model_loader.py:100:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\lazy_model_loader.py:104:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:114:20: WPS432 Found magic number: 90
+
+intellicrack\ai\lazy_model_loader.py:116:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\lazy_model_loader.py:119:31: WPS432 Found magic number: 80
+
+intellicrack\ai\lazy_model_loader.py:120:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:123:16: WPS432 Found magic number: 50
+
+intellicrack\ai\lazy_model_loader.py:126:1: WPS230 Found too many public instance attributes: 7 > 6
+
+intellicrack\ai\lazy_model_loader.py:126:1: WPS214 Found too many methods: 10 > 7
+
+intellicrack\ai\lazy_model_loader.py:126:1: WPS338 Found incorrect order of methods in a class
+
+intellicrack\ai\lazy_model_loader.py:164:13: WPS504 Found negated condition
+
+intellicrack\ai\lazy_model_loader.py:189:5: WPS231 Found function with too much cognitive complexity: 25 > 12
+
+intellicrack\ai\lazy_model_loader.py:204:13: WPS229 Found too long ``try`` body length: 8 > 1
+
+intellicrack\ai\lazy_model_loader.py:206:40: WPS237 Found a too complex `f` string
+
+intellicrack\ai\lazy_model_loader.py:214:40: WPS237 Found a too complex `f` string
+
+intellicrack\ai\lazy_model_loader.py:219:40: WPS237 Found a too complex `f` string
+
+intellicrack\ai\lazy_model_loader.py:223:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:229:40: WPS237 Found a too complex `f` string
+
+intellicrack\ai\lazy_model_loader.py:237:5: WPS615 Found unpythonic getter or setter: get_backend
+
+intellicrack\ai\lazy_model_loader.py:256:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\lazy_model_loader.py:257:21: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:258:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\ai\lazy_model_loader.py:287:9: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:292:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\lazy_model_loader.py:295:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:301:1: WPS214 Found too many methods: 13 > 7
+
+intellicrack\ai\lazy_model_loader.py:301:1: WPS338 Found incorrect order of methods in a class
+
+intellicrack\ai\lazy_model_loader.py:326:9: WPS504 Found negated condition
+
+intellicrack\ai\lazy_model_loader.py:343:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:395:24: WPS221 Found line with high Jones Complexity: 19 > 14
+
+intellicrack\ai\lazy_model_loader.py:422:39: WPS111 Found too short name: x < 2
+
+intellicrack\ai\lazy_model_loader.py:425:13: WPS111 Found too short name: i < 2
+
+intellicrack\ai\lazy_model_loader.py:433:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\ai\lazy_model_loader.py:434:28: WPS432 Found magic number: 300
+
+intellicrack\ai\lazy_model_loader.py:436:13: WPS111 Found too short name: e < 2
+
+intellicrack\ai\lazy_model_loader.py:456:5: WPS420 Found wrong keyword: global
+
+intellicrack\ai\lazy_model_loader.py:460:9: WPS122 Found all unused variables definition: _lazy_manager
+
+intellicrack\ai\lazy_model_loader.py:461:12: WPS121 Found usage of a variable marked as unused: _lazy_manager
 
 
 44 findings in intellicrack\analysis\handlers\llm_handler.py
@@ -23656,81 +23640,6 @@ intellicrack\ai\__init__.py:337:1: WPS410 Found wrong metadata variable: __versi
 intellicrack\ai\__init__.py:338:1: WPS410 Found wrong metadata variable: __author__
 
 
-36 findings in intellicrack\analysis\analysis_result_orchestrator.py
-
-intellicrack\analysis\analysis_result_orchestrator.py:31:5: WPS300 Found local folder import
-
-intellicrack\analysis\analysis_result_orchestrator.py:32:5: WPS300 Found local folder import
-
-intellicrack\analysis\analysis_result_orchestrator.py:35:5: WPS300 Found local folder import
-
-intellicrack\analysis\analysis_result_orchestrator.py:35:5: WPS474 Found import object collision: UnifiedProtectionResult
-
-intellicrack\analysis\analysis_result_orchestrator.py:40:5: WPS300 Found local folder import
-
-intellicrack\analysis\analysis_result_orchestrator.py:40:5: WPS474 Found import object collision: ICPScanResult
-
-intellicrack\analysis\analysis_result_orchestrator.py:45:5: WPS300 Found local folder import
-
-intellicrack\analysis\analysis_result_orchestrator.py:58:1: WPS214 Found too many methods: 14 > 7
-
-intellicrack\analysis\analysis_result_orchestrator.py:58:1: WPS338 Found incorrect order of methods in a class
-
-intellicrack\analysis\analysis_result_orchestrator.py:80:32: WPS110 Found wrong variable name: handler
-
-intellicrack\analysis\analysis_result_orchestrator.py:89:25: WPS237 Found a too complex `f` string
-
-intellicrack\analysis\analysis_result_orchestrator.py:91:28: WPS237 Found a too complex `f` string
-
-intellicrack\analysis\analysis_result_orchestrator.py:93:34: WPS110 Found wrong variable name: handler
-
-intellicrack\analysis\analysis_result_orchestrator.py:102:25: WPS237 Found a too complex `f` string
-
-intellicrack\analysis\analysis_result_orchestrator.py:104:38: WPS110 Found wrong variable name: result
-
-intellicrack\analysis\analysis_result_orchestrator.py:113:13: WPS110 Found wrong variable name: handler
-
-intellicrack\analysis\analysis_result_orchestrator.py:114:13: WPS229 Found too long ``try`` body length: 2 > 1
-
-intellicrack\analysis\analysis_result_orchestrator.py:120:13: WPS111 Found too short name: e < 2
-
-intellicrack\analysis\analysis_result_orchestrator.py:121:30: WPS237 Found a too complex `f` string
-
-intellicrack\analysis\analysis_result_orchestrator.py:127:5: WPS231 Found function with too much cognitive complexity: 13 > 12
-
-intellicrack\analysis\analysis_result_orchestrator.py:127:40: WPS110 Found wrong variable name: result
-
-intellicrack\analysis\analysis_result_orchestrator.py:142:13: WPS110 Found wrong variable name: handler
-
-intellicrack\analysis\analysis_result_orchestrator.py:158:13: WPS111 Found too short name: e < 2
-
-intellicrack\analysis\analysis_result_orchestrator.py:159:30: WPS237 Found a too complex `f` string
-
-intellicrack\analysis\analysis_result_orchestrator.py:165:5: WPS615 Found unpythonic getter or setter: get_current_result
-
-intellicrack\analysis\analysis_result_orchestrator.py:169:5: WPS231 Found function with too much cognitive complexity: 16 > 12
-
-intellicrack\analysis\analysis_result_orchestrator.py:169:35: WPS110 Found wrong variable name: result
-
-intellicrack\analysis\analysis_result_orchestrator.py:193:28: WPS226 Found string literal over-use: protections > 3
-
-intellicrack\analysis\analysis_result_orchestrator.py:195:44: WPS226 Found string literal over-use: type > 3
-
-intellicrack\analysis\analysis_result_orchestrator.py:252:42: WPS111 Found too short name: p < 2
-
-intellicrack\analysis\analysis_result_orchestrator.py:266:43: WPS110 Found wrong variable name: result
-
-intellicrack\analysis\analysis_result_orchestrator.py:288:5: WPS231 Found function with too much cognitive complexity: 18 > 12
-
-intellicrack\analysis\analysis_result_orchestrator.py:288:60: WPS110 Found wrong variable name: result
-
-intellicrack\analysis\analysis_result_orchestrator.py:295:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\analysis\analysis_result_orchestrator.py:299:25: WPS220 Found too deep nesting: 24 > 20
-
-intellicrack\analysis\analysis_result_orchestrator.py:302:41: WPS110 Found wrong variable name: result
-
-
 36 findings in intellicrack\cli\run_analysis_cli.py
 
 intellicrack\cli\run_analysis_cli.py:0:1: WPS232 Found module cognitive complexity that is too high: 11.5 > 8
@@ -23944,6 +23853,71 @@ intellicrack\cli\project_manager.py:309:16: WPS332 Found walrus operator outside
 intellicrack\cli\project_manager.py:326:28: WPS421 Found wrong function call: input
 
 intellicrack\cli\project_manager.py:346:5: WPS111 Found too short name: e < 2
+
+
+31 findings in intellicrack\analysis\analysis_result_orchestrator.py
+
+intellicrack\analysis\analysis_result_orchestrator.py:31:5: WPS300 Found local folder import
+
+intellicrack\analysis\analysis_result_orchestrator.py:32:5: WPS300 Found local folder import
+
+intellicrack\analysis\analysis_result_orchestrator.py:35:5: WPS300 Found local folder import
+
+intellicrack\analysis\analysis_result_orchestrator.py:35:5: WPS474 Found import object collision: UnifiedProtectionResult
+
+intellicrack\analysis\analysis_result_orchestrator.py:40:5: WPS300 Found local folder import
+
+intellicrack\analysis\analysis_result_orchestrator.py:40:5: WPS474 Found import object collision: ICPScanResult
+
+intellicrack\analysis\analysis_result_orchestrator.py:45:5: WPS300 Found local folder import
+
+intellicrack\analysis\analysis_result_orchestrator.py:58:1: WPS214 Found too many methods: 14 > 7
+
+intellicrack\analysis\analysis_result_orchestrator.py:58:1: WPS338 Found incorrect order of methods in a class
+
+intellicrack\analysis\analysis_result_orchestrator.py:80:32: WPS110 Found wrong variable name: handler
+
+intellicrack\analysis\analysis_result_orchestrator.py:93:34: WPS110 Found wrong variable name: handler
+
+intellicrack\analysis\analysis_result_orchestrator.py:104:38: WPS110 Found wrong variable name: result
+
+intellicrack\analysis\analysis_result_orchestrator.py:113:13: WPS110 Found wrong variable name: handler
+
+intellicrack\analysis\analysis_result_orchestrator.py:114:13: WPS229 Found too long ``try`` body length: 2 > 1
+
+intellicrack\analysis\analysis_result_orchestrator.py:120:13: WPS111 Found too short name: e < 2
+
+intellicrack\analysis\analysis_result_orchestrator.py:127:5: WPS231 Found function with too much cognitive complexity: 13 > 12
+
+intellicrack\analysis\analysis_result_orchestrator.py:127:40: WPS110 Found wrong variable name: result
+
+intellicrack\analysis\analysis_result_orchestrator.py:142:13: WPS110 Found wrong variable name: handler
+
+intellicrack\analysis\analysis_result_orchestrator.py:158:13: WPS111 Found too short name: e < 2
+
+intellicrack\analysis\analysis_result_orchestrator.py:165:5: WPS615 Found unpythonic getter or setter: get_current_result
+
+intellicrack\analysis\analysis_result_orchestrator.py:169:5: WPS231 Found function with too much cognitive complexity: 16 > 12
+
+intellicrack\analysis\analysis_result_orchestrator.py:169:35: WPS110 Found wrong variable name: result
+
+intellicrack\analysis\analysis_result_orchestrator.py:193:28: WPS226 Found string literal over-use: protections > 3
+
+intellicrack\analysis\analysis_result_orchestrator.py:195:44: WPS226 Found string literal over-use: type > 3
+
+intellicrack\analysis\analysis_result_orchestrator.py:252:42: WPS111 Found too short name: p < 2
+
+intellicrack\analysis\analysis_result_orchestrator.py:266:43: WPS110 Found wrong variable name: result
+
+intellicrack\analysis\analysis_result_orchestrator.py:288:5: WPS231 Found function with too much cognitive complexity: 18 > 12
+
+intellicrack\analysis\analysis_result_orchestrator.py:288:60: WPS110 Found wrong variable name: result
+
+intellicrack\analysis\analysis_result_orchestrator.py:295:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\analysis\analysis_result_orchestrator.py:299:25: WPS220 Found too deep nesting: 24 > 20
+
+intellicrack\analysis\analysis_result_orchestrator.py:302:41: WPS110 Found wrong variable name: result
 
 
 28 findings in intellicrack\analysis\handlers\report_generation_handler.py

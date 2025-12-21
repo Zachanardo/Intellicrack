@@ -40,7 +40,7 @@ try:
 
     HAS_HF_HUB = True
 except ImportError as e:
-    logger.error("Import error in model_download_manager: %s", e)
+    logger.exception("Import error in model_download_manager: %s", e)
     HfApi = None
     ModelCard = None
     hf_hub_download = None
@@ -54,7 +54,7 @@ try:
 
     HAS_REQUESTS = True
 except ImportError as e:
-    logger.error("Import error in model_download_manager: %s", e)
+    logger.exception("Import error in model_download_manager: %s", e)
     requests = None
     HAS_REQUESTS = False
 
@@ -129,7 +129,7 @@ class ModelDownloadManager:
                 with open(self.metadata_file) as f:
                     return json.load(f)
             except Exception as e:
-                logger.error("Failed to load metadata: %s", e)
+                logger.exception("Failed to load metadata: %s", e)
         return {"models": {}, "downloads": {}}
 
     def _save_metadata(self) -> None:
@@ -138,7 +138,7 @@ class ModelDownloadManager:
             with open(self.metadata_file, "w") as f:
                 json.dump(self.metadata, f, indent=2, default=str)
         except Exception as e:
-            logger.error("Failed to save metadata: %s", e)
+            logger.exception("Failed to save metadata: %s", e)
 
     def search_models(
         self,
@@ -162,7 +162,7 @@ class ModelDownloadManager:
 
         """
         if not HAS_HF_HUB:
-            logger.error("huggingface_hub required for model search")
+            logger.exception("huggingface_hub required for model search")
             return []
 
         try:
@@ -206,7 +206,7 @@ class ModelDownloadManager:
             return results
 
         except Exception as e:
-            logger.error("Failed to search models: %s", e)
+            logger.exception("Failed to search models: %s", e)
             return []
 
     def get_model_info(self, model_id: str) -> ModelInfo | None:
@@ -220,7 +220,7 @@ class ModelDownloadManager:
 
         """
         if not HAS_HF_HUB:
-            logger.error("huggingface_hub required for model info")
+            logger.exception("huggingface_hub required for model info")
             return None
 
         try:
@@ -262,10 +262,10 @@ class ModelDownloadManager:
             return info
 
         except RepositoryNotFoundError:
-            logger.error("Model not found: %s", model_id)
+            logger.exception("Model not found: %s", model_id)
             return None
         except Exception as e:
-            logger.error("Failed to get model info: %s", e)
+            logger.exception("Failed to get model info: %s", e)
             return None
 
     def get_model_card(self, model_id: str) -> dict[str, Any] | None:
@@ -279,7 +279,7 @@ class ModelDownloadManager:
 
         """
         if not HAS_HF_HUB or not ModelCard:
-            logger.error("ModelCard functionality not available")
+            logger.exception("ModelCard functionality not available")
             return None
 
         try:
@@ -313,7 +313,7 @@ class ModelDownloadManager:
             return card_data
 
         except Exception as e:
-            logger.error("Failed to fetch model card for %s: %s", model_id, e)
+            logger.exception("Failed to fetch model card for %s: %s", model_id, e)
             return None
 
     def get_model_readme(self, model_id: str) -> str | None:
@@ -353,7 +353,7 @@ class ModelDownloadManager:
 
         """
         if not HAS_HF_HUB:
-            logger.error("huggingface_hub required for model downloads")
+            logger.exception("huggingface_hub required for model downloads")
             return None
 
         # Check if already downloaded
@@ -418,7 +418,7 @@ class ModelDownloadManager:
             return Path(local_path)
 
         except Exception as e:
-            logger.error("Failed to download model: %s", e)
+            logger.exception("Failed to download model: %s", e)
             if download_id in self.active_downloads:
                 del self.active_downloads[download_id]
             return None
@@ -443,7 +443,7 @@ class ModelDownloadManager:
 
         """
         if not HAS_HF_HUB:
-            logger.error("huggingface_hub required for file downloads")
+            logger.exception("huggingface_hub required for file downloads")
             return None
 
         try:
@@ -479,7 +479,7 @@ class ModelDownloadManager:
             return Path(local_path)
 
         except Exception as e:
-            logger.error("Failed to download file: %s", e)
+            logger.exception("Failed to download file: %s", e)
             return None
 
     def list_cached_models(self) -> dict[str, dict[str, Any]]:
@@ -540,7 +540,7 @@ class ModelDownloadManager:
                 return True
 
             except Exception as e:
-                logger.error("Failed to delete model: %s", e)
+                logger.exception("Failed to delete model: %s", e)
                 return False
 
         return False
@@ -585,7 +585,7 @@ class ModelDownloadManager:
                 logger.info("Cleared entire model cache")
                 return -1  # All models
             except Exception as e:
-                logger.error("Failed to clear cache: %s", e)
+                logger.exception("Failed to clear cache: %s", e)
                 return 0
 
         # Keep recent models

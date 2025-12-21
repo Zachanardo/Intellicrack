@@ -84,18 +84,16 @@ def get_ghidra_headless_path() -> str | None:
         config = get_config()
         ghidra_path = config.get_ghidra_path()
         if ghidra_path and os.path.exists(ghidra_path):
-            # Check if it's the base directory or the script path
-            if os.path.isdir(ghidra_path):
-                # If it's a directory, look for analyzeHeadless
-                headless_path = os.path.join(ghidra_path, "support", "analyzeHeadless")
-                if os.path.exists(headless_path):
-                    return headless_path
-                headless_path_bat = f"{headless_path}.bat"
-                if os.path.exists(headless_path_bat):
-                    return headless_path_bat
-            else:
+            if not os.path.isdir(ghidra_path):
                 # If it's a file, use it directly
                 return ghidra_path
+            # If it's a directory, look for analyzeHeadless
+            headless_path = os.path.join(ghidra_path, "support", "analyzeHeadless")
+            if os.path.exists(headless_path):
+                return headless_path
+            headless_path_bat = f"{headless_path}.bat"
+            if os.path.exists(headless_path_bat):
+                return headless_path_bat
     except ImportError:
         logger.debug("Config module not available, skipping config-based path")
 

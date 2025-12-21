@@ -136,7 +136,7 @@ class DependencyGraph:
 
         def visit(layer: ValidationLayer) -> None:
             if layer in temp_mark:
-                logger.warning(f"Circular dependency detected involving {layer.value}")
+                logger.warning("Circular dependency detected involving %s", layer.value)
                 return
             if layer in visited:
                 return
@@ -246,7 +246,7 @@ class ValidationLayerDetector:
             self._establish_dependencies(detected_layers)
 
         except Exception as e:
-            logger.error(f"Error detecting validation layers: {e}")
+            logger.exception("Error detecting validation layers: %s", e)
             raise
 
         return list(detected_layers.values())
@@ -348,7 +348,7 @@ class ValidationLayerDetector:
                 layer_info.add_evidence("Found embedded certificate data")
 
         except Exception as e:
-            logger.warning(f"Error in application-level detection: {e}")
+            logger.warning("Error in application-level detection: %s", e)
 
         return layer_info if layer_info.confidence > 0.0 else None
 
@@ -383,7 +383,7 @@ class ValidationLayerDetector:
                 layer_info.add_evidence("Found HTTP/HTTPS endpoint URLs")
 
         except Exception as e:
-            logger.warning(f"Error in server-level detection: {e}")
+            logger.warning("Error in server-level detection: %s", e)
 
         return layer_info if layer_info.confidence > 0.0 else None
 
@@ -415,7 +415,7 @@ class ValidationLayerDetector:
 
             return any(marker in content for marker in cert_markers)
         except Exception as e:
-            logger.warning(f"Error checking for embedded certificates: {e}")
+            logger.warning("Error checking for embedded certificates: %s", e)
             return False
 
     def _contains_http_endpoints(self, strings: set[str]) -> bool:

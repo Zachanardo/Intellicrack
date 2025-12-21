@@ -596,18 +596,19 @@ class PluginDebugger:
             if end_line is None:
                 end_line = len(all_lines)
 
-            for i in range(max(0, start_line - 1), min(len(all_lines), end_line)):
-                lines.append(
-                    {
-                        "line": i + 1,
-                        "code": all_lines[i].rstrip(),
-                        "breakpoint": any(
-                            bp.file == filename and bp.line == i + 1 and bp.enabled
-                            for bp in self.breakpoints.values()
-                        ),
-                    }
+            lines.extend(
+                {
+                    "line": i + 1,
+                    "code": all_lines[i].rstrip(),
+                    "breakpoint": any(
+                        bp.file == filename and bp.line == i + 1 and bp.enabled
+                        for bp in self.breakpoints.values()
+                    ),
+                }
+                for i in range(
+                    max(0, start_line - 1), min(len(all_lines), end_line)
                 )
-
+            )
         return lines
 
     def get_variables(self, frame_index: int = 0) -> dict[str, Any]:

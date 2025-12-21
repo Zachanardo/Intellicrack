@@ -319,7 +319,7 @@ class FallbackChain:
             finally:
                 loop.close()
         except Exception as e:
-            logger.error("Error in fallback chain chat: %s", e)
+            logger.exception("Error in fallback chain chat: %s", e)
             return None
 
     def get_health_report(self) -> dict[str, Any]:
@@ -599,7 +599,7 @@ class FallbackManager:
                 try:
                     self.create_chain_from_config(chain_config)
                 except Exception as e:
-                    logger.error("Failed to import chain %s: %s", chain_id, e)
+                    logger.exception("Failed to import chain %s: %s", chain_id, e)
 
         # Set default chain
         default_chain = config.get("default_chain")

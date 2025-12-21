@@ -906,4 +906,4 @@ def get_dependency_status() -> dict[str, bool]:
 try:
     initialize_safe_imports()
 except Exception as e:
-    logger.error("Failed to initialize safe imports: %s", e, exc_info=True)
+    logger.exception("Failed to initialize safe imports: %s", e)

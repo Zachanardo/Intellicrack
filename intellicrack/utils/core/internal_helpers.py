@@ -73,22 +73,27 @@ if HAS_PSUTIL:
 else:
     psutil = None
 
+torch: Any
 try:
-    import torch
+    import torch as torch_import
 
+    torch = torch_import
     HAS_TORCH = True
 except ImportError as e:
-    logger.error("Import error in internal_helpers: %s", e)
+    logger.exception("Import error in internal_helpers: %s", e)
     torch = None
     HAS_TORCH = False
 
+tf: Any
 if HAS_TENSORFLOW:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     import os
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import tensorflow as tf  # pylint: disable=import-error
+    from intellicrack.handlers.tensorflow_handler import tensorflow as tf_import  # pylint: disable=import-error
+
+    tf = tf_import
 else:
     tf = None
 
@@ -122,31 +127,32 @@ def _analyze_requests(requests: list[dict[str, Any]]) -> dict[str, Any]:
         Dict containing analysis results including request counts, hosts, and patterns
 
     """
-    analysis = {
-        "total_requests": len(requests),
-        "unique_hosts": set(),
-        "protocols": {},
-        "suspicious_patterns": [],
-    }
+    unique_hosts: set[str] = set()
+    protocols: dict[str, int] = {}
+    suspicious_patterns: list[dict[str, Any]] = []
 
     for req in requests:
         if "host" in req:
-            analysis["unique_hosts"].add(req["host"])
+            unique_hosts.add(req["host"])
 
         protocol = req.get("protocol", "unknown")
-        analysis["protocols"][protocol] = analysis["protocols"].get(protocol, 0) + 1
+        protocols[protocol] = protocols.get(protocol, 0) + 1
 
         # Check for suspicious patterns
         if "license" in req.get("path", "").lower():
-            analysis["suspicious_patterns"].append(
+            suspicious_patterns.append(
                 {
                     "type": "license_check",
                     "request": req,
                 },
             )
 
-    analysis["unique_hosts"] = list(analysis["unique_hosts"])
-    return analysis
+    return {
+        "total_requests": len(requests),
+        "unique_hosts": list(unique_hosts),
+        "protocols": protocols,
+        "suspicious_patterns": suspicious_patterns,
+    }
 
 
 def _build_cm_packet(packet_type: str, data: bytes = b"") -> bytes:
@@ -223,7 +229,7 @@ def _handle_check_license(request_data: dict[str, Any]) -> dict[str, Any]:
         if major_version >= 3:
             features.extend(["ai_assistance", "cloud_sync"])
     except (ValueError, IndexError) as e:
-        logger.error("Error in internal_helpers: %s", e)
+        logger.exception("Error in internal_helpers: %s", e)
 
     # Generate realistic license details
     response = {
@@ -290,7 +296,8 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
         # Decrypt and remove padding
         padded_plaintext = decryptor.update(data) + decryptor.finalize()
         unpadder = padding.PKCS7(128).unpadder()
-        return unpadder.update(padded_plaintext) + unpadder.finalize()
+        decrypted_result: bytes = unpadder.update(padded_plaintext) + unpadder.finalize()
+        return decrypted_result
     except ImportError:
         # Fallback to XOR if cryptography not available
         logger.warning("cryptography library not available - using weak XOR decryption")
@@ -299,7 +306,7 @@ def _handle_decrypt(data: bytes, key: bytes) -> bytes:
             decrypted.append(byte ^ key[i % len(key)])
         return bytes(decrypted)
     except Exception as e:
-        logger.error("Decryption error: %s", e, exc_info=True)
+        logger.exception("Decryption error: %s", e)
         # Return original data on error
         return data
 
@@ -338,7 +345,8 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
             backend=default_backend(),
         )
         encryptor = cipher.encryptor()
-        return encryptor.update(padded_data) + encryptor.finalize()
+        encrypted_result: bytes = encryptor.update(padded_data) + encryptor.finalize()
+        return encrypted_result
     except ImportError:
         # Fallback to XOR if cryptography not available
         logger.warning("cryptography library not available - using weak XOR encryption")
@@ -347,7 +355,7 @@ def _handle_encrypt(data: bytes, key: bytes) -> bytes:
             encrypted.append(byte ^ key[i % len(key)])
         return bytes(encrypted)
     except Exception as e:
-        logger.error("Encryption error: %s", e, exc_info=True)
+        logger.exception("Encryption error: %s", e)
         # Return original data on error
         return data
 
@@ -632,16 +640,17 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
     # Generate version and platform info
     version = f"{int(license_hash[14:15], 16) % 5 + 1}.{int(license_hash[15:16], 16) % 10}.{int(license_hash[16:18], 16) % 100}"
     platforms = ["Windows", "macOS", "Linux", "Multi-Platform"]
-    platform = platforms[int(license_hash[18:20], 16) % len(platforms)]
+    platform_name = platforms[int(license_hash[18:20], 16) % len(platforms)]
 
     # Calculate maintenance and support info
     maintenance_expires = expires_date + timedelta(days=90)
     support_level = "premium" if license_type == "enterprise" else "standard"
 
     # Generate billing information
+    cost_per_month: float
     if license_type == "trial":
         billing_cycle = "trial"
-        cost_per_month = 0
+        cost_per_month = 0.0
     elif license_type == "enterprise":
         billing_cycle = "annual"
         cost_per_month = 299.99
@@ -689,7 +698,7 @@ def _handle_get_license(license_id: str) -> dict[str, Any]:
         "organization": organization,
         "organization_type": org_type,
         "version": version,
-        "platform": platform,
+        "platform": platform_name,
         "last_checkin": last_checkin.strftime("%Y-%m-%d %H:%M:%S"),
         "maintenance_expires": maintenance_expires.strftime("%Y-%m-%d"),
         "support_level": support_level,
@@ -736,12 +745,18 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
     from datetime import datetime, timedelta
 
     # Extract query parameters
-    limit = min(query.get("limit", 10), 100)  # Limit to 100 for performance
-    offset = query.get("offset", 0)
-    status_filter = query.get("status")
-    user_filter = query.get("user")
-    product_filter = query.get("product")
-    license_type = query.get("license_type")
+    limit_raw = query.get("limit", 10)
+    limit = min(int(limit_raw) if isinstance(limit_raw, (int, float, str)) else 10, 100)  # Limit to 100 for performance
+    offset_raw = query.get("offset", 0)
+    offset = int(offset_raw) if isinstance(offset_raw, (int, float, str)) else 0
+    status_filter_raw = query.get("status")
+    status_filter = str(status_filter_raw) if status_filter_raw is not None else None
+    user_filter_raw = query.get("user")
+    user_filter = str(user_filter_raw) if user_filter_raw is not None else None
+    product_filter_raw = query.get("product")
+    product_filter = str(product_filter_raw) if product_filter_raw is not None else None
+    license_type_raw = query.get("license_type")
+    license_type = str(license_type_raw) if license_type_raw is not None else None
 
     # Generate realistic license data
     licenses = []
@@ -796,9 +811,9 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
         else:
             # Weighted distribution: 70% active, 15% trial, 10% expired, 5% suspended
             weights = [0.7, 0.15, 0.1, 0.05]
-            status_index = 0
-            rand_val = (hash(f"status_{i}") % 100) / 100
-            cumulative = 0
+            status_index: int = 0
+            rand_val = (hash(f"status_{i}") % 100) / 100.0
+            cumulative: float = 0.0
             for idx, weight in enumerate(weights):
                 cumulative += weight
                 if rand_val <= cumulative:
@@ -830,7 +845,8 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         # Check product filter
-        if product_filter and product_filter.lower() not in template["product"].lower():
+        template_product = str(template["product"])
+        if product_filter and product_filter.lower() not in template_product.lower():
             continue
 
         # Check license type filter
@@ -838,22 +854,23 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             continue
 
         # Generate license ID with realistic format
-        license_hash = hashlib.sha256(f"{template['product']}_{user_id}_{i}".encode()).hexdigest()[:8]
+        license_hash = hashlib.sha256(f"{template_product}_{user_id}_{i}".encode()).hexdigest()[:8]
         license_id = f"LIC-{license_hash.upper()}-{i + 1:04d}"
 
         # Calculate usage statistics
-        current_users = min(template["max_users"], max(1, (hash(f"usage_{i}") % template["max_users"]) + 1))
+        max_users_val = int(template["max_users"]) if isinstance(template["max_users"], (int, float)) else 1
+        current_users = min(max_users_val, max(1, (hash(f"usage_{i}") % max_users_val) + 1))
 
         license_data = {
             "id": license_id,
             "user": user_id,
             "user_type": user_type,
-            "product": template["product"],
+            "product": template_product,
             "license_type": template["type"],
             "status": license_status,
             "issued_date": issued_date.strftime("%Y-%m-%d %H:%M:%S"),
             "expiry_date": expiry_date.strftime("%Y-%m-%d %H:%M:%S"),
-            "max_users": template["max_users"],
+            "max_users": max_users_val,
             "current_users": current_users if license_status == "active" else 0,
             "features": template["features"],
             "organization": f"{user_type.title()} Organization {(i % 10) + 1}",
@@ -862,12 +879,12 @@ def _handle_license_query(query: dict[str, Any]) -> list[dict[str, Any]]:
             "version": f"{((i % 5) + 1)}.{(i % 10)}.{(i % 20)}",
             "platform": ["Windows", "macOS", "Linux"][i % 3],
             "maintenance_expires": (expiry_date + timedelta(days=90)).strftime("%Y-%m-%d"),
-            "seat_utilization": f"{(current_users / template['max_users'] * 100):.1f}%" if template["max_users"] > 0 else "0.0%",
-            "compliance_status": "compliant" if license_status == "active" and current_users <= template["max_users"] else "non_compliant",
+            "seat_utilization": f"{(current_users / max_users_val * 100):.1f}%" if max_users_val > 0 else "0.0%",
+            "compliance_status": "compliant" if license_status == "active" and current_users <= max_users_val else "non_compliant",
             "billing_cycle": "monthly" if template["type"] == "subscription" else "one_time",
             "cost_center": f"CC-{(i % 20) + 1:03d}",
             "contact_email": f"{user_id}@{os.environ.get('EMAIL_DOMAIN', 'internal.local')}",
-            "notes": f"License for {template['product']} - {license_status.title()} status",
+            "notes": f"License for {template_product} - {license_status.title()} status",
         }
 
         licenses.append(license_data)
@@ -911,7 +928,7 @@ def _handle_license_release(license_id: str) -> dict[str, Any]:
             session_duration = release_datetime - last_checkin
             session_hours = session_duration.total_seconds() / 3600
         except (ValueError, TypeError) as e:
-            logger.error("Error in internal_helpers: %s", e)
+            logger.exception("Error in internal_helpers: %s", e)
             session_hours = 0.5  # Default session time
     else:
         session_hours = 0
@@ -1092,7 +1109,7 @@ def _handle_read_memory(address: int, size: int) -> bytes:
 
         # Allocate buffer for memory read
         buffer = (c_char * size)()
-        bytes_read = wintypes.SIZE_T()
+        bytes_read = c_ulong()
 
         if result := kernel32.ReadProcessMemory(
             current_process,
@@ -1101,7 +1118,8 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             size,
             ctypes.byref(bytes_read),
         ):
-            return bytes(buffer[: bytes_read.value])
+            buffer_list: list[int] = [ord(buffer[i]) for i in range(bytes_read.value)]
+            return bytes(buffer_list)
         # Memory not accessible, return zeros
         return b"\x00" * size
     # Unix-like systems - read from /proc/self/mem
@@ -1146,7 +1164,8 @@ def _handle_read_memory(address: int, size: int) -> bytes:
             result = process_vm_readv(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
             if result > 0:
-                return bytes(local_buf[:result])
+                buffer_list_unix: list[int] = [ord(local_buf[i]) for i in range(result)]
+                return bytes(buffer_list_unix)
         except (ValueError, TypeError, AttributeError):
             pass
 
@@ -1165,9 +1184,13 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
         Dict containing response data from the appropriate handler
 
     """
-    handlers = {
+    def _get_info_wrapper(d: dict[str, Any]) -> dict[str, Any]:
+        logger.debug("Get info request data: %s", d)
+        return _handle_get_info()
+
+    handlers: dict[str, Callable[[dict[str, Any]], dict[str, Any]]] = {
         "check_license": _handle_check_license,
-        "get_info": lambda d: (logger.debug("Get info request data: %s", d) or _handle_get_info()),
+        "get_info": _get_info_wrapper,
         "get_license": lambda d: _handle_get_license(d.get("id", "")),
         "request_license": _handle_license_request,
         "release_license": lambda d: _handle_license_release(d.get("id", "")),
@@ -1175,7 +1198,8 @@ def _handle_request(request_type: str, data: dict[str, Any]) -> dict[str, Any]:
         "logout": lambda d: _handle_logout(d.get("token", "")),
     }
 
-    if handler := handlers.get(request_type):
+    handler = handlers.get(request_type)
+    if handler is not None:
         return handler(data)
     return {"error": f"Unknown request type: {request_type}"}
 
@@ -1209,7 +1233,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
     """
     if platform.system() == "Windows":
         import ctypes
-        from ctypes import c_char, wintypes
+        from ctypes import c_char, c_ulong, wintypes
 
         # Open current process for memory writing
 
@@ -1221,9 +1245,9 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
         # Create buffer from data
         buffer = (c_char * len(data))()
         for i, byte in enumerate(data):
-            buffer[i] = byte
+            buffer[i] = bytes([byte])
 
-        bytes_written = wintypes.SIZE_T()
+        bytes_written = c_ulong()
 
         # Write to process memory
         result = kernel32.WriteProcessMemory(
@@ -1284,8 +1308,6 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
             return result == len(data)
         except (ValueError, TypeError, AttributeError):
             return False
-
-    return False
 
 
 # === Analysis and Comparison Helpers ===
@@ -1433,9 +1455,11 @@ def _get_filesystem_state() -> dict[str, Any]:
         Dict containing files, hashes, and timestamp of current filesystem
 
     """
-    state = {
-        "files": [],
-        "hashes": {},
+    files_list: list[str] = []
+    hashes_dict: dict[str, str] = {}
+    state: dict[str, Any] = {
+        "files": files_list,
+        "hashes": hashes_dict,
         "timestamp": time.time(),
     }
 
@@ -1446,15 +1470,15 @@ def _get_filesystem_state() -> dict[str, Any]:
             dirs[:] = dirs[:2]
             for file in files[:10]:  # Limit files
                 filepath = os.path.join(root, file)
-                state["files"].append(filepath)
+                files_list.append(filepath)
                 try:
                     with open(filepath, "rb") as f:
-                        state["hashes"][filepath] = hashlib.sha256(f.read(1024)).hexdigest()
+                        hashes_dict[filepath] = hashlib.sha256(f.read(1024)).hexdigest()
                 except OSError as e:
-                    logger.error("Error in internal_helpers: %s", e)
+                    logger.exception("Error in internal_helpers: %s", e)
             break  # Only process current directory
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error getting filesystem state: %s", e)
+        logger.exception("Error getting filesystem state: %s", e)
 
     return state
 
@@ -1466,7 +1490,7 @@ def _get_memory_regions() -> list[dict[str, Any]]:
         List of memory region dictionaries with path, size, and permissions
 
     """
-    regions = []
+    regions: list[dict[str, Any]] = []
 
     if HAS_PSUTIL:
         try:
@@ -1481,7 +1505,7 @@ def _get_memory_regions() -> list[dict[str, Any]]:
                 for mmap in process.memory_maps()
             )
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting memory regions: %s", e)
+            logger.exception("Error getting memory regions: %s", e)
 
     return regions
 
@@ -1506,9 +1530,11 @@ def _get_network_state() -> dict[str, Any]:
         Dict containing connections, ports, and timestamp
 
     """
-    state = {
-        "connections": [],
-        "ports": [],
+    connections_list: list[dict[str, Any]] = []
+    ports_list: list[int] = []
+    state: dict[str, Any] = {
+        "connections": connections_list,
+        "ports": ports_list,
         "timestamp": time.time(),
     }
 
@@ -1517,7 +1543,7 @@ def _get_network_state() -> dict[str, Any]:
             connections = psutil.net_connections()
             for conn in connections[:20]:  # Limit to 20
                 if conn.status == "ESTABLISHED":
-                    state["connections"].append(
+                    connections_list.append(
                         {
                             "local": f"{conn.laddr.ip}:{conn.laddr.port}",
                             "remote": f"{conn.raddr.ip}:{conn.raddr.port}" if conn.raddr else None,
@@ -1525,9 +1551,9 @@ def _get_network_state() -> dict[str, Any]:
                         },
                     )
                 if conn.laddr:
-                    state["ports"].append(conn.laddr.port)
+                    ports_list.append(conn.laddr.port)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting network state: %s", e)
+            logger.exception("Error getting network state: %s", e)
 
     return state
 
@@ -1539,24 +1565,26 @@ def _get_process_state() -> dict[str, Any]:
         Dict containing process IDs, process info, and timestamp
 
     """
-    state = {
-        "pids": [],
-        "processes": {},
+    pids_list: list[Any] = []
+    processes_dict: dict[Any, dict[str, Any]] = {}
+    state: dict[str, Any] = {
+        "pids": pids_list,
+        "processes": processes_dict,
         "timestamp": time.time(),
     }
 
     if HAS_PSUTIL:
         try:
             for proc in psutil.process_iter(["pid", "name", "cpu_percent"]):
-                state["pids"].append(proc.info["pid"])
-                state["processes"][proc.info["pid"]] = {
+                pids_list.append(proc.info["pid"])
+                processes_dict[proc.info["pid"]] = {
                     "name": proc.info["name"],
                     "cpu": proc.info["cpu_percent"],
                 }
-                if len(state["pids"]) > 50:  # Limit to 50 processes
+                if len(pids_list) > 50:  # Limit to 50 processes
                     break
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting process state: %s", e)
+            logger.exception("Error getting process state: %s", e)
 
     return state
 
@@ -1580,7 +1608,7 @@ def _archive_data(data: object, archive_path: str) -> bool:
             json.dump(data, f, indent=2)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error archiving data: %s", e)
+        logger.exception("Error archiving data: %s", e)
         return False
 
 
@@ -1618,7 +1646,7 @@ def _browse_for_source() -> str | None:
             return None
         return sanitized
     except (KeyboardInterrupt, EOFError) as e:
-        logger.error("Error in internal_helpers: %s", e)
+        logger.exception("Error in internal_helpers: %s", e)
         return None
 
 
@@ -1632,7 +1660,7 @@ def _build_knowledge_index(knowledge_base: list[dict[str, Any]]) -> dict[str, li
         Dict mapping keywords to lists of item indices
 
     """
-    index = {}
+    index: dict[str, list[int]] = {}
 
     for i, item in enumerate(knowledge_base):
         # Index by keywords
@@ -1683,7 +1711,7 @@ def _export_validation_report(report: dict[str, Any], output_path: str) -> bool:
             json.dump(report, f, indent=2)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error exporting report: %s", e)
+        logger.exception("Error exporting report: %s", e)
         return False
 
 
@@ -1697,7 +1725,7 @@ def _fix_dataset_issues(dataset: list[dict[str, Any]]) -> list[dict[str, Any]]:
         List of fixed dataset items with required fields and cleaned data
 
     """
-    fixed = []
+    fixed: list[dict[str, Any]] = []
 
     for item in dataset:
         # Skip empty items
@@ -1805,7 +1833,7 @@ def _save_patterns(patterns: dict[str, Any], output_path: str) -> bool:
             json.dump(patterns, f, indent=2)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error saving patterns: %s", e)
+        logger.exception("Error saving patterns: %s", e)
         return False
 
 
@@ -1916,13 +1944,14 @@ def _calculate_hash_opencl(data: bytes, algorithm: str = "sha256") -> str | None
             result = np.empty(32, dtype=np.uint8)
             cl.enqueue_copy(queue, result, output_buffer)
 
-            return result.tobytes()
+            result_bytes: bytes = result.tobytes()
+            return result_bytes.hex()
 
         except ImportError:
             # PyOpenCL not available, use CPU implementation
             return _cpu_hash_calculation(data, algorithm)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("OpenCL hash calculation failed: %s", e)
+        logger.exception("OpenCL hash calculation failed: %s", e)
         return _cpu_hash_calculation(data, algorithm)
 
 
@@ -2059,7 +2088,7 @@ def _cuda_hash_calculation(data: bytes, algorithm: str = "sha256") -> str | None
             cuda.memcpy_htod(data_gpu, data)
 
             # Allocate output buffer
-            hash_output = np.zeros(8, dtype=np.uint32)
+            hash_output: Any = np.zeros(8, dtype=np.uint32)
             hash_gpu = cuda.mem_alloc(hash_output.nbytes)
 
             # Execute kernel
@@ -2130,7 +2159,7 @@ def _gpu_entropy_calculation(data: bytes) -> float:
         cuda.memcpy_htod(data_gpu, data)
 
         # Allocate counts array (256 for all possible byte values)
-        counts = np.zeros(256, dtype=np.uint32)
+        counts: Any = np.zeros(256, dtype=np.uint32)
         counts_gpu = cuda.mem_alloc(counts.nbytes)
         cuda.memcpy_htod(counts_gpu, counts)
 
@@ -2151,7 +2180,8 @@ def _gpu_entropy_calculation(data: bytes) -> float:
         # Copy result back
         cuda.memcpy_dtoh(entropy_val, entropy_gpu)
 
-        return float(entropy_val[0])
+        entropy_result: float = float(entropy_val[0])
+        return entropy_result
 
     except (ImportError, cuda.Error):
         # PyCUDA not available or CUDA error, use CPU fallback
@@ -2203,9 +2233,10 @@ def _pytorch_entropy_calculation(data: bytes) -> float:
         # PyTorch tensor operations can be added later for GPU acceleration
         from ..analysis.entropy_utils import calculate_byte_entropy
 
-        return calculate_byte_entropy(data)
+        entropy_value: float = calculate_byte_entropy(data)
+        return entropy_value
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("PyTorch entropy calculation failed: %s", e)
+        logger.exception("PyTorch entropy calculation failed: %s", e)
         return _gpu_entropy_calculation(data)
 
 
@@ -2244,7 +2275,7 @@ def _pytorch_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
 
         return [i for i in range(len(data) - len(pattern) + 1) if torch.equal(data_tensor[i : i + len(pattern)], pattern_tensor)]
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("PyTorch pattern matching failed: %s", e)
+        logger.exception("PyTorch pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
 
 
@@ -2258,7 +2289,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
         Entropy value as float
 
     """
-    if not HAS_TENSORFLOW:
+    if not HAS_TENSORFLOW or tf is None:
         return _gpu_entropy_calculation(data)
 
     try:
@@ -2269,7 +2300,7 @@ def _tensorflow_entropy_calculation(data: bytes) -> float:
         # Simple entropy approximation
         return float(-tf.reduce_sum(tensor * tf.math.log(tensor + 1e-10)))
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("TensorFlow entropy calculation failed: %s", e)
+        logger.exception("TensorFlow entropy calculation failed: %s", e)
         return _gpu_entropy_calculation(data)
 
 
@@ -2319,11 +2350,11 @@ def _tensorflow_pattern_matching(data: bytes, pattern: bytes) -> list[int]:
         if matches is not None:
             return matches
         # Fallback if TensorFlow method fails
-        logger.debug("TensorFlow convolution failed, using fallback")
+        logger.debug("TensorFlow convolution failed, using fallback")  # type: ignore[unreachable]
         return _match_pattern(data, pattern)
 
     except Exception as e:
-        logger.error("TensorFlow pattern matching failed: %s", e, exc_info=True)
+        logger.exception("TensorFlow pattern matching failed: %s", e)
         return _match_pattern(data, pattern)
 
 
@@ -2358,7 +2389,7 @@ def _tensorflow_convolve_search(data_array: "np.ndarray", pattern_array: "np.nda
         return []
 
 
-def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
+def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int] | None:
     """Use TensorFlow convolution for pattern matching.
 
     Args:
@@ -2369,6 +2400,9 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         List of indices where exact matches occur or None if failed
 
     """
+    if not HAS_TENSORFLOW or tf is None:
+        return None
+
     try:
         # Reshape data for TensorFlow convolution
         # TensorFlow expects [batch, height, width, channels] format
@@ -2391,14 +2425,15 @@ def _tf_convolution_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
 
         # Convert to numpy and extract indices
         matches_np = matches_tensor.numpy()
-        return [int(match[0]) for match in matches_np]
+        result: list[int] = [int(match[0]) for match in matches_np]
+        return result
 
     except Exception as e:
         logger.debug("TensorFlow convolution error: %s", e)
         return None
 
 
-def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int]:
+def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarray") -> list[int] | None:
     """Use NumPy correlation for pattern matching.
 
     Args:
@@ -2424,7 +2459,8 @@ def _numpy_correlation_search(data_array: "np.ndarray", pattern_array: "np.ndarr
         threshold = expected_correlation * 0.99  # Allow for small floating point errors
         match_positions = np.where(correlation >= threshold)[0]
 
-        return match_positions.tolist()
+        result: list[int] = match_positions.tolist()
+        return result
 
     except Exception as e:
         logger.debug("NumPy correlation error: %s", e)
@@ -2452,9 +2488,18 @@ def _sliding_window_search(data_array: "np.ndarray", pattern_array: "np.ndarray"
         return []
 
 
-def _match_pattern(data: bytes, pattern: bytes) -> list[int]:
-    """Perform byte-level pattern matching fallback."""
-    matches = []
+def _match_pattern_fallback(data: bytes, pattern: bytes) -> list[int]:
+    """Perform byte-level pattern matching fallback.
+
+    Args:
+        data: Binary data to search in
+        pattern: Pattern bytes to find
+
+    Returns:
+        List of byte offsets where pattern matches occur
+
+    """
+    matches: list[int] = []
     pattern_len = len(pattern)
 
     if pattern_len == 0:
@@ -2481,7 +2526,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
             available = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024
             return available >= required_mb
         except (RuntimeError, AttributeError) as e:
-            logger.error("Error in internal_helpers: %s", e)
+            logger.exception("Error in internal_helpers: %s", e)
 
     # Check TensorFlow
     if HAS_TENSORFLOW:
@@ -2490,7 +2535,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
                 logger.debug("Found %s TensorFlow GPUs available", len(gpus))
                 return True  # Assume sufficient memory if GPU available
         except (RuntimeError, AttributeError) as e:
-            logger.error("Error in internal_helpers: %s", e)
+            logger.exception("Error in internal_helpers: %s", e)
 
     return False
 
@@ -2557,9 +2602,9 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
             elif model_path.endswith(".safetensors"):
                 # SafeTensors format
                 try:
-                    from safetensors import safe_open
+                    from safetensors import safe_open  # type: ignore
 
-                    with safe_open(model_path, framework="np") as sf:
+                    with safe_open(model_path, framework="np") as sf:  # type: ignore
                         for key in sf:
                             tensors[key] = sf.get_tensor(key)
                             tensor_count += 1
@@ -2664,7 +2709,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
                 # Convert to float32 if needed
                 if not isinstance(tensor_data, np.ndarray):
                     tensor_data = np.array(tensor_data, dtype=np.float32)
-                elif tensor_data.dtype != np.float32:
+                elif tensor_data.dtype != np.float32:  # type: ignore
                     tensor_data = tensor_data.astype(np.float32)
 
                 # Write tensor data
@@ -2685,7 +2730,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("GGUF conversion failed: %s", e)
+        logger.exception("GGUF conversion failed: %s", e)
         return False
 
 
@@ -2709,7 +2754,7 @@ def _manual_gguf_conversion(model_data: dict[str, Any], output_path: str) -> boo
             _write_realistic_tensor_data(f, model_data.get("tensors", []))
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Manual GGUF conversion failed: %s", e)
+        logger.exception("Manual GGUF conversion failed: %s", e)
         return False
 
 
@@ -2836,7 +2881,7 @@ def _write_realistic_tensor_data(file_handle: BinaryIO, tensors: list[dict[str, 
                 file_handle.write(chunk)
 
     except Exception as e:
-        logger.error("Error writing realistic tensor data: %s", e, exc_info=True)
+        logger.exception("Error writing realistic tensor data: %s", e)
         # Fallback to simple zero data if sophisticated generation fails
         for tensor in tensors:
             dims = tensor.get("dims", [1])
@@ -2984,14 +3029,9 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
         bias_array = np.zeros(total_elements, dtype=np.float16)
 
         if total_elements % 4 == 0:
-            # LSTM forget gate initialization
-            forget_start = total_elements // 4
-            bias_array[forget_start : total_elements // 2] = np.float16(1.0)
+            bias_array[total_elements // 4:total_elements // 2] = np.float16(1.0)
         elif total_elements % 3 == 0:
-            # GRU reset gate initialization
-            reset_start = total_elements // 3
-            reset_end = 2 * total_elements // 3
-            bias_array[reset_start:reset_end] = np.float16(-1.0)
+            bias_array[total_elements // 3:2 * total_elements // 3] = np.float16(-1.0)
 
         # Add small perturbation for numerical stability
         if fan_out < 256:
@@ -3011,8 +3051,7 @@ def _generate_bias_data(dims: list[int], data_type: str, total_elements: int) ->
             # LSTM layer - set forget gate biases to 1.0
             # Forget gates are typically at positions 1/4 to 2/4 of the bias vector
             forget_start = total_elements // 4
-            forget_end = total_elements // 2
-            bias_array[forget_start:forget_end] = 1.0
+            bias_array[forget_start:total_elements // 2] = 1.0
         elif total_elements % 3 == 0:
             # GRU layer - reset gate biases sometimes initialized to -1.0
             reset_start = total_elements // 3
@@ -3218,7 +3257,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
             scale = 1000
 
         # Generate normally distributed integers
-        tensor_data = np.random.normal(0, scale / 3, total_elements)
+        tensor_data = np.random.normal(0, scale / 3, total_elements)  # type: ignore[assignment]
         tensor_data = np.clip(tensor_data, -scale, scale).astype(np.int32)
 
         # Add structured patterns for certain positions (common in embeddings)
@@ -3238,7 +3277,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
 
         # Generate with appropriate distribution for INT8
         # Most values should be small with occasional larger values
-        tensor_data = np.random.normal(0, 30, total_elements)
+        tensor_data = np.random.normal(0, 30, total_elements)  # type: ignore[assignment]
 
         # Apply exponential decay for some positions (common pattern)
         for i in range(0, total_elements, 64):
@@ -3256,7 +3295,7 @@ def _generate_generic_tensor_data(dims: list[int], data_type: str, total_element
     elif data_type == "uint8":
         # UINT8 common for image data and certain quantization schemes
         # Generate with bias toward middle values
-        tensor_data = np.random.beta(2, 2, total_elements) * 255
+        tensor_data = np.random.beta(2, 2, total_elements) * 255  # type: ignore[assignment]
         tensor_data = tensor_data.astype(np.uint8)
 
         # Convert to bytes
@@ -3447,7 +3486,7 @@ def _perform_augmentation(data: dict[str, Any], augmentation_type: str) -> dict[
 # === Thread Functions ===
 
 
-def _run_autonomous_patching_thread(target: Callable, args: tuple) -> threading.Thread:
+def _run_autonomous_patching_thread(target: Callable[..., Any], args: tuple[Any, ...]) -> threading.Thread:
     """Run autonomous patching in a thread.
 
     Args:
@@ -3493,14 +3532,14 @@ def _run_ghidra_thread(ghidra_path: str, script: str, binary: str) -> threading.
                 text=True,
             )
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Ghidra thread error: %s", e)
+            logger.exception("Ghidra thread error: %s", e)
 
     thread = threading.Thread(target=run_ghidra, daemon=True)
     thread.start()
     return thread
 
 
-def _run_report_generation_thread(report_func: Callable, report_data: dict[str, Any]) -> threading.Thread:
+def _run_report_generation_thread(report_func: Callable[[dict[str, Any]], Any], report_data: dict[str, Any]) -> threading.Thread:
     """Run report generation in a thread.
 
     Args:

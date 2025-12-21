@@ -233,8 +233,6 @@ class ReportGenerator:
 
         doc = SimpleDocTemplate(str(output_path), pagesize=letter)
         styles = getSampleStyleSheet()
-        story = []
-
         # Title
         title_style = ParagraphStyle(
             "CustomTitle",
@@ -243,11 +241,11 @@ class ReportGenerator:
             textColor=colors.HexColor("#333333"),
             spaceAfter=30,
         )
-        story.extend((
+        story = [
             Paragraph("Binary Analysis Report", title_style),
             Spacer(1, 12),
             Paragraph("File Information", styles["Heading2"]),
-        ))
+        ]
         file_data = [
             ["Target File:", result.target_file],
             ["File Hash:", result.file_hash],
@@ -275,15 +273,18 @@ class ReportGenerator:
         if result.vulnerabilities:
             story.append(Paragraph("Vulnerabilities Found", styles["Heading2"]))
             vuln_data = [["Type", "Severity", "Description"]]
-            for v in result.vulnerabilities:
-                vuln_data.append(
-                    [
-                        v.get("type", "Unknown"),
-                        v.get("severity", "Unknown"),
-                        v.get("description", "")[:50] + "..." if len(v.get("description", "")) > 50 else v.get("description", ""),
-                    ],
-                )
-
+            vuln_data.extend(
+                [
+                    v.get("type", "Unknown"),
+                    v.get("severity", "Unknown"),
+                    (
+                        v.get("description", "")[:50] + "..."
+                        if len(v.get("description", "")) > 50
+                        else v.get("description", "")
+                    ),
+                ]
+                for v in result.vulnerabilities
+            )
             vuln_table = Table(vuln_data, colWidths=[1.5 * inch, 1.5 * inch, 3 * inch])
             vuln_table.setStyle(
                 TableStyle(
@@ -304,15 +305,18 @@ class ReportGenerator:
         if result.protections:
             story.append(Paragraph("Protection Mechanisms", styles["Heading2"]))
             prot_data = [["Type", "Status", "Details"]]
-            for p in result.protections:
-                prot_data.append(
-                    [
-                        p.get("type", "Unknown"),
-                        p.get("status", "Unknown"),
-                        p.get("details", "")[:50] + "..." if len(p.get("details", "")) > 50 else p.get("details", ""),
-                    ],
-                )
-
+            prot_data.extend(
+                [
+                    p.get("type", "Unknown"),
+                    p.get("status", "Unknown"),
+                    (
+                        p.get("details", "")[:50] + "..."
+                        if len(p.get("details", "")) > 50
+                        else p.get("details", "")
+                    ),
+                ]
+                for p in result.protections
+            )
             prot_table = Table(prot_data, colWidths=[2 * inch, 1.5 * inch, 2.5 * inch])
             prot_table.setStyle(
                 TableStyle(
@@ -332,8 +336,10 @@ class ReportGenerator:
         # Recommendations
         if result.recommendations:
             story.append(Paragraph("Recommendations", styles["Heading2"]))
-            for rec in result.recommendations:
-                story.append(Paragraph(f" {rec}", styles["Normal"]))
+            story.extend(
+                Paragraph(f" {rec}", styles["Normal"])
+                for rec in result.recommendations
+            )
             story.append(Spacer(1, 12))
 
         doc.build(story)

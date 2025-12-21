@@ -779,7 +779,7 @@ class BinaryPatternDetector:
             return relocations
 
         except Exception as e:
-            logger.debug(f"Failed to extract relocations: {e}")
+            logger.debug("Failed to extract relocations: %s", e)
             return []
 
     def _find_xrefs_to_offset(self, data: bytes, offset: int) -> list[int]:
@@ -808,9 +808,11 @@ class BinaryPatternDetector:
                     for insn in cs.disasm(data[i : i + 15], i):
                         if insn.group(CS_GRP_JUMP) or insn.group(CS_GRP_CALL):
                             # Check if target is our offset
-                            for op in insn.operands:
-                                if op.type == X86_OP_IMM and op.imm == offset:
-                                    xrefs.append(insn.address)
+                            xrefs.extend(
+                                insn.address
+                                for op in insn.operands
+                                if op.type == X86_OP_IMM and op.imm == offset
+                            )
                         break  # Only check first instruction
                 except Exception as e:
                     # Log the exception with details for debugging
@@ -846,7 +848,7 @@ class BinaryPatternDetector:
             code = data[offset : offset + size]
             disasm.extend(f"0x{insn.address:08x}: {insn.mnemonic} {insn.op_str}" for insn in cs.disasm(code, offset))
         except Exception as e:
-            logger.debug(f"Disassembly failed: {e}")
+            logger.debug("Disassembly failed: %s", e)
 
         return disasm
 
@@ -879,7 +881,7 @@ class BinaryPatternDetector:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to add custom pattern {name}: {e}")
+            logger.exception("Failed to add custom pattern %s: %s", name, e)
             return False
 
     def export_patterns(self, file_path: Path) -> bool:
@@ -905,11 +907,11 @@ class BinaryPatternDetector:
             with open(file_path, "w") as f:
                 json.dump(patterns_data, f, indent=2)
 
-            logger.info(f"Exported {sum(len(p) for p in self.patterns.values())} patterns to {file_path}")
+            logger.info("Exported %d patterns to %s", sum(len(p) for p in self.patterns.values()), file_path)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to export patterns: {e}")
+            logger.exception("Failed to export patterns: %s", e)
             return False
 
     def import_patterns(self, file_path: Path) -> int:
@@ -936,11 +938,11 @@ class BinaryPatternDetector:
                     self.add_pattern(pattern)
                     count += 1
 
-            logger.info(f"Imported {count} patterns from {file_path}")
+            logger.info("Imported %d patterns from %s", count, file_path)
             return count
 
         except Exception as e:
-            logger.error(f"Failed to import patterns: {e}")
+            logger.exception("Failed to import patterns: %s", e)
             return 0
 
     def get_pattern_statistics(self) -> dict[str, Any]:

@@ -976,7 +976,7 @@ const CertificatePinnerBypass = {
 
         // NSURLSession
         try {
-            const NSURLSession = ObjC.classes.NSURLSession;
+            const {NSURLSession} = ObjC.classes;
 
             Interceptor.attach(
                 NSURLSession['- dataTaskWithRequest:completionHandler:'].implementation,
@@ -1169,7 +1169,7 @@ const CertificatePinnerBypass = {
         }
 
         try {
-            const AFSecurityPolicy = ObjC.classes.AFSecurityPolicy;
+            const {AFSecurityPolicy} = ObjC.classes;
             if (AFSecurityPolicy) {
                 // setPinningMode:
                 Interceptor.attach(AFSecurityPolicy['- setPinningMode:'].implementation, {
@@ -2093,7 +2093,7 @@ const CertificatePinnerBypass = {
         // Hook NSURLSession SCT validation (iOS)
         if (ObjC.available) {
             try {
-                const NSURLSession = ObjC.classes.NSURLSession;
+                const {NSURLSession} = ObjC.classes;
                 if (NSURLSession) {
                     const sctValidation =
                         NSURLSession['- URLSession:task:didReceiveChallenge:completionHandler:'];

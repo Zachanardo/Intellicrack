@@ -87,14 +87,14 @@ class ExportWorker(QThread):
                 self._export_html(output_path, analysis_results)
             else:
                 error_msg = f"Unsupported export format: {export_format}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise ValueError(error_msg)
 
             self.progress_update.emit(100, "Export completed successfully")
             self.export_completed.emit(True, f"Export completed: {output_path}")
 
         except Exception as e:
-            logger.error(f"Export failed: {e}")
+            logger.exception("Export failed: %s", e)
             self.export_completed.emit(False, f"Export failed: {e!s}")
 
     def _export_json(self, output_path: str, results: dict[str, Any]) -> None:
@@ -234,9 +234,9 @@ class ExportWorker(QThread):
             from reportlab.lib.units import inch
             from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         except ImportError as e:
-            self.logger.error("Import error in export_dialog: %s", e)
+            self.logger.exception("Import error in export_dialog: %s", e)
             error_msg = "ReportLab is required for PDF export. Install with: pip install reportlab"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ImportError(error_msg) from None
 
         self.progress_update.emit(30, "Building PDF report...")
@@ -246,8 +246,6 @@ class ExportWorker(QThread):
         pagesize = letter if page_format == "letter" else A4
         doc = SimpleDocTemplate(output_path, pagesize=pagesize)
         styles = getSampleStyleSheet()
-        story = []
-
         # Title
         title_style = ParagraphStyle(
             "CustomTitle",
@@ -257,7 +255,7 @@ class ExportWorker(QThread):
             spaceAfter=30,
         )
 
-        story.extend((
+        story = [
             Paragraph("Intellicrack Protection Analysis Report", title_style),
             Spacer(1, 20),
             Paragraph(
@@ -265,15 +263,15 @@ class ExportWorker(QThread):
                 styles["Normal"],
             ),
             Spacer(1, 20),
-        ))
+        ]
         # File Information
         if "file_info" in results:
             story.append(Paragraph("File Information", styles["Heading2"]))
 
-            file_data = []
-            for key, value in results["file_info"].items():
-                file_data.append([key.replace("_", " ").title(), str(value)])
-
+            file_data = [
+                [key.replace("_", " ").title(), str(value)]
+                for key, value in results["file_info"].items()
+            ]
             file_table = Table(file_data, colWidths=[2 * inch, 3 * inch])
             file_table.setStyle(
                 TableStyle(
@@ -303,25 +301,22 @@ class ExportWorker(QThread):
             Protected: {"Yes" if getattr(icp_data, "is_protected", False) else "No"}<br/>
             """
 
-            story.append(Paragraph(summary_text, styles["Normal"]))
-            story.append(Spacer(1, 15))
-
+            story.extend((Paragraph(summary_text, styles["Normal"]), Spacer(1, 15)))
             # Detections table
             if hasattr(icp_data, "all_detections") and icp_data.all_detections:
                 story.append(Paragraph("Detected Protections", styles["Heading3"]))
 
                 detection_data = [["Name", "Type", "Confidence", "Version"]]
 
-                for detection in icp_data.all_detections:
-                    detection_data.append(
-                        [
-                            getattr(detection, "name", "Unknown"),
-                            getattr(detection, "type", "Unknown"),
-                            f"{getattr(detection, 'confidence', 0.0):.1%}",
-                            getattr(detection, "version", "N/A"),
-                        ],
-                    )
-
+                detection_data.extend(
+                    [
+                        getattr(detection, "name", "Unknown"),
+                        getattr(detection, "type", "Unknown"),
+                        f"{getattr(detection, 'confidence', 0.0):.1%}",
+                        getattr(detection, "version", "N/A"),
+                    ]
+                    for detection in icp_data.all_detections
+                )
                 detection_table = Table(detection_data, colWidths=[2 * inch, 1.5 * inch, 1 * inch, 1 * inch])
                 detection_table.setStyle(
                     TableStyle(
@@ -504,7 +499,7 @@ class ExportDialog(BaseDialog):
             }
             logger.debug("Loaded export preferences from configuration")
         except (ImportError, AttributeError) as e:
-            logger.debug(f"Could not load export preferences: {e}")
+            logger.debug("Could not load export preferences: %s", e)
 
         # Tab widget for different export options
         tab_widget = QTabWidget()
@@ -791,7 +786,7 @@ class ExportDialog(BaseDialog):
             self.preview_text.setPlainText(preview_text)
 
         except Exception as e:
-            logger.error("Exception in export_dialog: %s", e)
+            logger.exception("Exception in export_dialog: %s", e)
             self.preview_text.setPlainText(f"Preview error: {e!s}")
 
     def _filter_results(self) -> dict[str, Any]:
@@ -859,7 +854,7 @@ class ExportDialog(BaseDialog):
             config.update(export_prefs)
             logger.debug("Saved export preferences to configuration")
         except (ImportError, AttributeError) as e:
-            logger.debug(f"Could not save export preferences: {e}")
+            logger.debug("Could not save export preferences: %s", e)
 
         # Create export configuration
         export_config = {

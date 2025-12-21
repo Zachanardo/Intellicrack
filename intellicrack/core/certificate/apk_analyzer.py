@@ -209,7 +209,7 @@ class APKAnalyzer:
             with zipfile.ZipFile(self.apk_path, "r") as zf:
                 zf.extractall(self.extracted_path)
         except Exception as e:
-            logger.error("Failed to extract APK: %s", e, exc_info=True)
+            logger.exception("Failed to extract APK: %s", e)
             self.cleanup()
             raise RuntimeError(f"Failed to extract APK: {e}") from e
 
@@ -262,7 +262,7 @@ class APKAnalyzer:
             return config
 
         except ET.ParseError as e:
-            logger.error("Failed to parse network_security_config.xml: %s", e, exc_info=True)
+            logger.exception("Failed to parse network_security_config.xml: %s", e)
             return NetworkSecurityConfig()
 
     def _parse_domain_config(self, elem: ET.Element) -> DomainConfig | None:
@@ -350,38 +350,40 @@ class APKAnalyzer:
 
                 matches = okhttp_pattern.findall(content)
 
-                for domain, pin_hash in matches:
-                    pinning_infos.append(
-                        PinningInfo(
-                            location=str(smali_file.relative_to(self.decompiled_path)),
-                            pin_type="okhttp",
-                            domains=[domain],
-                            hashes=[f"sha256/{pin_hash}"],
-                            confidence=0.95,
-                            additional_info={"class": smali_file.stem},
-                        ),
+                pinning_infos.extend(
+                    PinningInfo(
+                        location=str(smali_file.relative_to(self.decompiled_path)),
+                        pin_type="okhttp",
+                        domains=[domain],
+                        hashes=[f"sha256/{pin_hash}"],
+                        confidence=0.95,
+                        additional_info={"class": smali_file.stem},
                     )
-
+                    for domain, pin_hash in matches
+                )
                 const_string_pattern = re.compile(r'const-string\s+v\d+,\s+"sha256/([A-Za-z0-9+/=]+)"')
                 pin_matches = const_string_pattern.findall(content)
 
                 if pin_matches and "CertificatePinner" in content:
                     domain_pattern = re.compile(r'const-string\s+v\d+,\s+"([a-z0-9\-\.]+\.[a-z]{2,})"')
                     if domain_matches := domain_pattern.findall(content):
-                        for pin_hash in pin_matches:
-                            pinning_infos.append(
-                                PinningInfo(
-                                    location=str(smali_file.relative_to(self.decompiled_path)),
-                                    pin_type="okhttp",
-                                    domains=domain_matches[:5],
-                                    hashes=[f"sha256/{pin_hash}"],
-                                    confidence=0.80,
-                                    additional_info={"detection": "const-string-pattern"},
+                        pinning_infos.extend(
+                            PinningInfo(
+                                location=str(
+                                    smali_file.relative_to(self.decompiled_path)
                                 ),
+                                pin_type="okhttp",
+                                domains=domain_matches[:5],
+                                hashes=[f"sha256/{pin_hash}"],
+                                confidence=0.80,
+                                additional_info={
+                                    "detection": "const-string-pattern"
+                                },
                             )
-
+                            for pin_hash in pin_matches
+                        )
             except Exception as e:
-                logger.debug("Error processing %s: %s", smali_file, e, exc_info=True)
+                logger.debug("Error processing %s: %s", smali_file, e)
                 continue
 
         logger.info("Detected %s OkHttp pinning instances", len(pinning_infos))
@@ -449,14 +451,14 @@ class APKAnalyzer:
             if result.returncode == 0:
                 logger.info("Successfully decompiled APK to %s", self.decompiled_path)
                 return True
-            logger.error("apktool failed: %s", result.stderr)
+            logger.exception("apktool failed: %s", result.stderr)
             return False
 
         except subprocess.TimeoutExpired:
-            logger.error("apktool decompilation timeout (300s)")
+            logger.exception("apktool decompilation timeout (300s)")
             return False
         except Exception as e:
-            logger.error("Decompilation error: %s", e, exc_info=True)
+            logger.exception("Decompilation error: %s", e)
             return False
 
     def _extract_certificate_info(self, cert_file: Path) -> PinningInfo | None:
@@ -507,7 +509,7 @@ class APKAnalyzer:
             )
 
         except Exception as e:
-            logger.debug("Failed to parse certificate %s: %s", cert_file, e, exc_info=True)
+            logger.debug("Failed to parse certificate %s: %s", cert_file, e)
             return None
 
     def _find_base64_certs(self) -> list[PinningInfo]:
@@ -563,7 +565,7 @@ class APKAnalyzer:
                             ),
                         )
                     except Exception as e:
-                        logger.debug("Failed to parse PEM certificate: %s", e, exc_info=True)
+                        logger.debug("Failed to parse PEM certificate: %s", e)
                         continue
 
                 b64_matches = base64_pattern.findall(content)
@@ -595,11 +597,11 @@ class APKAnalyzer:
                                 ),
                             )
                     except Exception as e:
-                        logger.debug("Failed to parse DER certificate: %s", e, exc_info=True)
+                        logger.debug("Failed to parse DER certificate: %s", e)
                         continue
 
             except Exception as e:
-                logger.debug("Error processing %s: %s", smali_file, e, exc_info=True)
+                logger.debug("Error processing %s: %s", smali_file, e)
                 continue
 
         return pinning_infos
@@ -611,7 +613,7 @@ class APKAnalyzer:
                 shutil.rmtree(self.temp_dir)
                 logger.debug("Cleaned up temp directory: %s", self.temp_dir)
             except Exception as e:
-                logger.warning("Failed to clean up temp directory: %s", e, exc_info=True)
+                logger.warning("Failed to clean up temp directory: %s", e)
 
     def __enter__(self) -> "APKAnalyzer":
         """Context manager entry."""

@@ -122,7 +122,7 @@ class WebSocketEventStream:
         """Start WebSocket server."""
         self.running = True
         self.server = await websockets.serve(self.handle_client, self.host, self.port, ping_interval=20, ping_timeout=10)
-        logger.info(f"WebSocket stream server started on ws://{self.host}:{self.port}")
+        logger.info("WebSocket stream server started on ws://%s:%s", self.host, self.port)
 
         # Start background tasks
         broadcaster_task = asyncio.create_task(self._event_broadcaster())
@@ -162,7 +162,7 @@ class WebSocketEventStream:
         self.stats["clients_connected"] += 1
         self.stats["clients_total"] += 1
 
-        logger.info(f"Client {client_id} connected from {websocket.remote_address} to path {path}")
+        logger.info("Client %s connected from %s to path %s", client_id, websocket.remote_address, path)
 
         # Send initial connection confirmation
         await websocket.send(
@@ -182,9 +182,9 @@ class WebSocketEventStream:
                 await self._handle_client_message(websocket, client_id, message)
 
         except websockets.exceptions.ConnectionClosed:
-            logger.info(f"Client {client_id} disconnected")
+            logger.info("Client %s disconnected", client_id)
         except Exception as e:
-            logger.error(f"Error handling client {client_id}: {e}")
+            logger.exception("Error handling client %s: %s", client_id, e)
         finally:
             # Remove client
             self.clients.discard(websocket)
@@ -483,7 +483,7 @@ class WebSocketEventStream:
             except websockets.exceptions.ConnectionClosed:
                 disconnected_clients.append(client)
             except Exception as e:
-                logger.error(f"Error broadcasting to client: {e}")
+                logger.exception("Error broadcasting to client: %s", e)
 
         # Remove disconnected clients
         for client in disconnected_clients:
@@ -514,7 +514,9 @@ class WebSocketEventStream:
             return False
 
         # Check tag filters
-        return not ("tags" in filters and all(tag not in event.tags for tag in filters["tags"]))
+        return "tags" not in filters or any(
+            tag in event.tags for tag in filters["tags"]
+        )
 
     def _is_rate_limited(self, client_id: str) -> bool:
         """Check if client is rate limited."""
@@ -571,7 +573,7 @@ class WebSocketEventStream:
                 try:
                     handler(event)
                 except Exception as e:
-                    logger.error(f"Event handler error: {e}")
+                    logger.exception("Event handler error: %s", e)
 
     def register_event_handler(self, event_type: EventType, handler: Callable) -> None:
         """Register handler for specific event type."""

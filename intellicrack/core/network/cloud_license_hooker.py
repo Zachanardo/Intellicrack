@@ -150,7 +150,7 @@ class CloudLicenseResponseGenerator:
             logger.info("Network API hooks enabled on ports: %s", self.target_ports)
 
         except Exception as e:
-            logger.error("Failed to enable network hooks: %s", e, exc_info=True)
+            logger.exception("Failed to enable network hooks: %s", e)
 
     def disable_network_api_hooks(self) -> None:
         """Disable network API hooks.
@@ -200,12 +200,12 @@ class CloudLicenseResponseGenerator:
                     continue
                 except Exception as e:
                     if self.active:
-                        logger.error("Error accepting connection on port %s: %s", port, e, exc_info=True)
+                        logger.exception("Error accepting connection on port %s: %s", port, e)
 
             listener_socket.close()
 
         except Exception as e:
-            logger.error("Failed to start listener on port %s: %s", port, e, exc_info=True)
+            logger.exception("Failed to start listener on port %s: %s", port, e)
 
     def _handle_connection(self, client_socket: socket.socket, address: tuple[str, int], port: int) -> None:
         """Handle an incoming connection.
@@ -263,7 +263,7 @@ class CloudLicenseResponseGenerator:
                     )
 
         except Exception as e:
-            logger.error("Error handling connection from %s: %s", address, e, exc_info=True)
+            logger.exception("Error handling connection from %s: %s", address, e)
         finally:
             client_socket.close()
 

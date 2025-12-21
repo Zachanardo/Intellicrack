@@ -34,7 +34,7 @@ try:
 
     HAS_PEFILE = True
 except ImportError as e:
-    logger.error("Import error in binary_similarity_search: %s", e)
+    logger.exception("Import error in binary_similarity_search: %s", e)
     HAS_PEFILE = False
 
 __all__ = ["BinarySimilaritySearch"]
@@ -75,7 +75,7 @@ class BinarySimilaritySearch:
             with open(self.database_path, encoding="utf-8") as f:
                 return json.load(f)
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error loading binary database: %s", e)
+            self.logger.exception("Error loading binary database: %s", e)
             return {"binaries": []}
 
     def _save_database(self) -> None:
@@ -84,7 +84,7 @@ class BinarySimilaritySearch:
             with open(self.database_path, "w", encoding="utf-8") as f:
                 json.dump(self.database, f, indent=4)
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error saving binary database: %s", e)
+            self.logger.exception("Error saving binary database: %s", e)
 
     def add_binary(self, binary_path: str, cracking_patterns: list[str] | None = None) -> bool:
         """Add a binary to the database with its features and patterns.
@@ -124,7 +124,7 @@ class BinarySimilaritySearch:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error adding binary %s to database: %s", binary_path, e)
+            self.logger.exception("Error adding binary %s to database: %s", binary_path, e)
             return False
 
     def _extract_binary_features(self, binary_path: str) -> dict[str, Any]:
@@ -209,7 +209,7 @@ class BinarySimilaritySearch:
             return features
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error extracting features from %s: %s", binary_path, e)
+            self.logger.exception("Error extracting features from %s: %s", binary_path, e)
             return features
 
     def _extract_strings(self, data: bytes, min_length: int = 4) -> list[str]:
@@ -256,7 +256,7 @@ class BinarySimilaritySearch:
             return similar_binaries
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error searching similar binaries for %s: %s", binary_path, e)
+            self.logger.exception("Error searching similar binaries for %s: %s", binary_path, e)
             return []
 
     def _calculate_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -306,7 +306,7 @@ class BinarySimilaritySearch:
             return min(1.0, max(0.0, weighted_similarity))
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error calculating advanced similarity: %s", e)
+            self.logger.exception("Error calculating advanced similarity: %s", e)
             # Fallback to basic similarity calculation
             return self._calculate_basic_similarity(features1, features2)
 
@@ -345,7 +345,7 @@ class BinarySimilaritySearch:
             return name_similarity * 0.6 + entropy_similarity * 0.4
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error calculating section similarity: %s", e)
+            self.logger.exception("Error calculating section similarity: %s", e)
             return 0.0
 
     def _calculate_list_similarity(self, list1: list[str], list2: list[str]) -> float:
@@ -374,7 +374,7 @@ class BinarySimilaritySearch:
             return intersection / union if union > 0 else 0.0
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error calculating list similarity: %s", e)
+            self.logger.exception("Error calculating list similarity: %s", e)
             return 0.0
 
     def _calculate_basic_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -435,7 +435,7 @@ class BinarySimilaritySearch:
             return min(1.0, max(0.0, similarity))
 
         except Exception as e:
-            self.logger.error("Error in basic similarity calculation: %s", e)
+            self.logger.exception("Error in basic similarity calculation: %s", e)
             return 0.0
 
     def _calculate_structural_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -464,7 +464,7 @@ class BinarySimilaritySearch:
             return section_similarity * 0.4 + import_similarity * 0.3 + export_similarity * 0.2 + header_similarity * 0.1
 
         except Exception as e:
-            self.logger.error("Error in structural similarity: %s", e)
+            self.logger.exception("Error in structural similarity: %s", e)
             return 0.0
 
     def _calculate_content_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -488,7 +488,7 @@ class BinarySimilaritySearch:
             return string_similarity * 0.5 + ngram_similarity * 0.3 + entropy_pattern_similarity * 0.2
 
         except Exception as e:
-            self.logger.error("Error in content similarity: %s", e)
+            self.logger.exception("Error in content similarity: %s", e)
             return 0.0
 
     def _calculate_statistical_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -515,7 +515,7 @@ class BinarySimilaritySearch:
             return size_similarity * 0.4 + entropy_similarity * 0.3 + section_distribution_similarity * 0.3
 
         except Exception as e:
-            self.logger.error("Error in statistical similarity: %s", e)
+            self.logger.exception("Error in statistical similarity: %s", e)
             return 0.0
 
     def _calculate_advanced_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -539,7 +539,7 @@ class BinarySimilaritySearch:
             return lsh_similarity * 0.4 + edit_distance_similarity * 0.3 + cosine_similarity * 0.3
 
         except Exception as e:
-            self.logger.error("Error in advanced similarity: %s", e)
+            self.logger.exception("Error in advanced similarity: %s", e)
             return 0.0
 
     def _calculate_fuzzy_hash_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -557,7 +557,7 @@ class BinarySimilaritySearch:
             return self._calculate_hash_similarity(hash1, hash2)
 
         except Exception as e:
-            self.logger.error("Error in fuzzy hash similarity: %s", e)
+            self.logger.exception("Error in fuzzy hash similarity: %s", e)
             return 0.0
 
     def _calculate_control_flow_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -582,7 +582,7 @@ class BinarySimilaritySearch:
             return max(0.0, 1.0 - entropy_diff / 8.0)
 
         except Exception as e:
-            self.logger.error("Error in control flow similarity: %s", e)
+            self.logger.exception("Error in control flow similarity: %s", e)
             return 0.0
 
     def _calculate_opcode_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -622,7 +622,7 @@ class BinarySimilaritySearch:
             return sum(pattern_similarities) / len(pattern_similarities) if pattern_similarities else 0.0
 
         except Exception as e:
-            self.logger.error("Error in opcode similarity: %s", e)
+            self.logger.exception("Error in opcode similarity: %s", e)
             return 0.0
 
     def _calculate_adaptive_weights(self, features1: dict[str, Any], features2: dict[str, Any]) -> dict[str, float]:
@@ -653,7 +653,7 @@ class BinarySimilaritySearch:
                 weights = {k: v / total_weight for k, v in weights.items()}
 
         except Exception as e:
-            self.logger.error("Error calculating adaptive weights: %s", e)
+            self.logger.exception("Error calculating adaptive weights: %s", e)
 
         return weights
 
@@ -692,7 +692,7 @@ class BinarySimilaritySearch:
             return weighted_score / total_weight if total_weight > 0 else 0.0
 
         except Exception as e:
-            self.logger.error("Error in weighted API similarity: %s", e)
+            self.logger.exception("Error in weighted API similarity: %s", e)
             return 0.0
 
     def _calculate_pe_header_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -720,7 +720,7 @@ class BinarySimilaritySearch:
             return sum(similarity_scores) / len(similarity_scores) if similarity_scores else 0.0
 
         except Exception as e:
-            self.logger.error("Error in PE header similarity: %s", e)
+            self.logger.exception("Error in PE header similarity: %s", e)
             return 0.0
 
     def _calculate_fuzzy_string_similarity(self, strings1: list[str], strings2: list[str]) -> float:
@@ -760,7 +760,7 @@ class BinarySimilaritySearch:
             return matches / len(sampled1) if sampled1 else 0.0
 
         except Exception as e:
-            self.logger.error("Error in fuzzy string similarity: %s", e)
+            self.logger.exception("Error in fuzzy string similarity: %s", e)
             return 0.0
 
     def _calculate_string_similarity(self, s1: str, s2: str) -> float:
@@ -786,7 +786,7 @@ class BinarySimilaritySearch:
             return intersection / union
 
         except Exception as e:
-            self.logger.error("Error in string similarity calculation: %s", e)
+            self.logger.exception("Error in string similarity calculation: %s", e)
             return 0.0
 
     def _calculate_ngram_similarity(self, strings1: list[str], strings2: list[str]) -> float:
@@ -816,7 +816,7 @@ class BinarySimilaritySearch:
             return intersection / union
 
         except Exception as e:
-            self.logger.error("Error in n-gram similarity: %s", e)
+            self.logger.exception("Error in n-gram similarity: %s", e)
             return 0.0
 
     def _calculate_entropy_pattern_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -851,7 +851,7 @@ class BinarySimilaritySearch:
 
             return 0.0 if norm1 == 0 or norm2 == 0 else dot_product / (norm1 * norm2)
         except Exception as e:
-            self.logger.error("Error in entropy pattern similarity: %s", e)
+            self.logger.exception("Error in entropy pattern similarity: %s", e)
             return 0.0
 
     def _calculate_logarithmic_size_similarity(self, size1: int, size2: int) -> float:
@@ -872,7 +872,7 @@ class BinarySimilaritySearch:
             return max(0.0, 1.0 - size_diff / max_log_diff) if max_log_diff > 0 else 1.0
 
         except Exception as e:
-            self.logger.error("Error in logarithmic size similarity: %s", e)
+            self.logger.exception("Error in logarithmic size similarity: %s", e)
             return 0.0
 
     def _calculate_entropy_similarity(self, entropy1: float, entropy2: float) -> float:
@@ -889,7 +889,7 @@ class BinarySimilaritySearch:
             return max(0.0, 1.0 - normalized_diff)
 
         except Exception as e:
-            self.logger.error("Error in entropy similarity: %s", e)
+            self.logger.exception("Error in entropy similarity: %s", e)
             return 0.0
 
     def _calculate_section_distribution_similarity(self, sections1: list[dict[str, Any]], sections2: list[dict[str, Any]]) -> float:
@@ -920,7 +920,7 @@ class BinarySimilaritySearch:
             return max(0.0, 1.0 - mse)
 
         except Exception as e:
-            self.logger.error("Error in section distribution similarity: %s", e)
+            self.logger.exception("Error in section distribution similarity: %s", e)
             return 0.0
 
     def _calculate_lsh_similarity(self, features1: list[str], features2: list[str]) -> float:
@@ -946,11 +946,11 @@ class BinarySimilaritySearch:
             sig2 = create_hash_signature(features2)
 
             # Calculate signature similarity
-            matches = sum(bool(a == b) for a, b in zip(sig1, sig2, strict=False))
+            matches = sum(a == b for a, b in zip(sig1, sig2, strict=False))
             return matches / len(sig1)
 
         except Exception as e:
-            self.logger.error("Error in LSH similarity: %s", e)
+            self.logger.exception("Error in LSH similarity: %s", e)
             return 0.0
 
     def _calculate_edit_distance_similarity(self, strings1: list[str], strings2: list[str]) -> float:
@@ -989,7 +989,7 @@ class BinarySimilaritySearch:
             return 1.0 - (distance / max_len) if max_len > 0 else 1.0
 
         except Exception as e:
-            self.logger.error("Error in edit distance similarity: %s", e)
+            self.logger.exception("Error in edit distance similarity: %s", e)
             return 0.0
 
     def _calculate_cosine_similarity(self, features1: dict[str, Any], features2: dict[str, Any]) -> float:
@@ -1016,7 +1016,7 @@ class BinarySimilaritySearch:
 
             return 0.0 if norm1 == 0 or norm2 == 0 else dot_product / (norm1 * norm2)
         except Exception as e:
-            self.logger.error("Error in cosine similarity: %s", e)
+            self.logger.exception("Error in cosine similarity: %s", e)
             return 0.0
 
     def _generate_rolling_hash(self, strings: list[str]) -> str:
@@ -1035,7 +1035,7 @@ class BinarySimilaritySearch:
             return hash_bytes.hex()
 
         except Exception as e:
-            self.logger.error("Error generating rolling hash: %s", e)
+            self.logger.exception("Error generating rolling hash: %s", e)
             return ""
 
     def _calculate_hash_similarity(self, hash1: str, hash2: str) -> float:
@@ -1051,7 +1051,7 @@ class BinarySimilaritySearch:
             return max(0.0, similarity)
 
         except Exception as e:
-            self.logger.error("Error calculating hash similarity: %s", e)
+            self.logger.exception("Error calculating hash similarity: %s", e)
             return 0.0
 
     def get_database_stats(self) -> dict[str, Any]:
@@ -1124,7 +1124,7 @@ class BinarySimilaritySearch:
             return False
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error removing binary %s: %s", binary_path, e)
+            self.logger.exception("Error removing binary %s: %s", binary_path, e)
             return False
 
     def load_database(self, database_path: str) -> bool:
@@ -1143,7 +1143,7 @@ class BinarySimilaritySearch:
             self.logger.info("Loaded database from %s", database_path)
             return True
         except Exception as e:
-            self.logger.error("Error loading database %s: %s", database_path, e)
+            self.logger.exception("Error loading database %s: %s", database_path, e)
             return False
 
     def find_similar(self, binary_path: str, threshold: float = 0.7) -> list[dict[str, Any]]:

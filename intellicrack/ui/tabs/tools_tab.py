@@ -905,10 +905,9 @@ class ToolsTab(BaseTab):
                 f"Used Memory: {memory.used // 1024**3} GB",
                 f"Memory Usage: {memory.percent}%",
                 f"Total Swap: {swap.total // 1024**3} GB",
+                f"Used Swap: {swap.used // 1024**3} GB",
+                f"Swap Usage: {swap.percent}%",
             ]
-            info.append(f"Used Swap: {swap.used // (1024**3)} GB")
-            info.append(f"Swap Usage: {swap.percent}%")
-
             self.output_console.append("Memory Information:")
             self.output_console.append("\n".join(info))
             self.log_message("Memory information retrieved")
@@ -1650,9 +1649,9 @@ def get_plugin():
             self._capture_active = True
             self._captured_packets = []
 
-            success = start_network_capture(self, interface=interface, filter_str=filter_text or None)
-
-            if success:
+            if success := start_network_capture(
+                self, interface=interface, filter_str=filter_text or None
+            ):
                 import threading
 
                 update_thread = threading.Thread(target=self._update_packet_table_periodically, daemon=True)

@@ -19,10 +19,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from pathlib import Path
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QAbstractItemView,
     QCheckBox,
+    QCloseEvent,
     QFileDialog,
     QGroupBox,
     QHBoxLayout,
@@ -41,6 +43,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QTimer,
     QVBoxLayout,
     QWidget,
+    Qt,
     pyqtSignal,
 )
 
@@ -53,11 +56,11 @@ logger = get_logger(__name__)
 
 
 # Utility functions for QHeaderView and QAbstractItemView
-def create_custom_header_view(orientation: int, parent: object | None = None) -> QHeaderView:
+def create_custom_header_view(orientation: Qt.Orientation, parent: QWidget | None = None) -> QHeaderView:
     """Create a custom header view with enhanced functionality.
 
     Args:
-        orientation: Header orientation (Qt.Horizontal or Qt.Vertical)
+        orientation: Header orientation (Qt.Orientation.Horizontal or Qt.Orientation.Vertical)
         parent: Parent widget
 
     Returns:
@@ -74,8 +77,8 @@ def create_custom_header_view(orientation: int, parent: object | None = None) ->
 
 def configure_table_selection(
     table: QTableWidget,
-    behavior: int | None = None,
-    mode: int | None = None,
+    behavior: QAbstractItemView.SelectionBehavior | None = None,
+    mode: QAbstractItemView.SelectionMode | None = None,
 ) -> QTableWidget:
     """Configure table selection behavior using QAbstractItemView.
 
@@ -89,21 +92,20 @@ def configure_table_selection(
 
     """
     if behavior is None:
-        behavior = QAbstractItemView.SelectRows
+        behavior = QAbstractItemView.SelectionBehavior.SelectRows
     if mode is None:
-        mode = QAbstractItemView.SingleSelection
+        mode = QAbstractItemView.SelectionMode.SingleSelection
 
     table.setSelectionBehavior(behavior)
     table.setSelectionMode(mode)
 
-    # Additional QAbstractItemView configurations
-    table.setDragDropMode(QAbstractItemView.NoDragDrop)
-    table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+    table.setDragDropMode(QAbstractItemView.DragDropMode.NoDragDrop)
+    table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
 
     return table
 
 
-def create_enhanced_item_view(parent: object | None = None) -> object:
+def create_enhanced_item_view(parent: QWidget | None = None) -> Any:
     """Create an enhanced item view with custom behavior.
 
     Args:
@@ -116,11 +118,12 @@ def create_enhanced_item_view(parent: object | None = None) -> object:
     from intellicrack.handlers.pyqt6_handler import QListView
 
     view = QListView(parent)
-    # Use QAbstractItemView methods
     view.setAlternatingRowColors(True)
-    view.setSelectionMode(QAbstractItemView.ExtendedSelection)
-    view.setDragDropMode(QAbstractItemView.InternalMove)
-    view.setEditTriggers(QAbstractItemView.DoubleClicked | QAbstractItemView.EditKeyPressed)
+    view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    view.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+    view.setEditTriggers(
+        QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.EditKeyPressed
+    )
 
     return view
 
@@ -176,7 +179,7 @@ class ModelDownloadThread(QThread):
             self.download_finished.emit(self.model_name, True)
 
         except Exception as e:
-            logger.error("Exception in model_manager_dialog: %s", e)
+            logger.exception("Exception in model_manager_dialog: %s", e)
             self.log_message.emit(f"Download failed: {self.model_name} - {e}")
             self.download_finished.emit(self.model_name, False)
 
@@ -188,33 +191,34 @@ class ModelDownloadThread(QThread):
 class ModelManagerDialog(BaseDialog):
     """Dialog for managing local GGUF models."""
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the ModelManagerDialog with default values."""
         super().__init__(parent, "Local GGUF Model Manager")
         self.setMinimumSize(900, 700)
         self.resize(1000, 800)
 
-        self.download_threads = {}
-        self.current_model = None
+        self.download_threads: dict[str, ModelDownloadThread] = {}
+        self.current_model: str | None = None
 
-        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
+        layout = self.content_widget.layout()
+        if layout is None:
+            layout = QVBoxLayout(self.content_widget)
+        assert isinstance(layout, QVBoxLayout)
+        self.setup_content(layout)
         self.refresh_models()
         self.update_server_status()
 
-        # Setup timer for server status updates
         self.status_timer = QTimer()
         self.status_timer.timeout.connect(self.update_server_status)
-        self.status_timer.start(5000)  # Update every 5 seconds
+        self.status_timer.start(5000)
 
-    def setup_content(self, layout: QVBoxLayout | None) -> None:
+    def setup_content(self, layout: QVBoxLayout) -> None:
         """Set up the user interface content.
 
         Args:
-            layout: Existing layout to populate, or None to create new one
+            layout: Existing layout to populate
 
         """
-        if layout is None:
-            layout = QVBoxLayout(self.content_widget)
 
         # Main tabs
         tabs = QTabWidget()
@@ -300,19 +304,16 @@ class ModelManagerDialog(BaseDialog):
             ],
         )
 
-        # Configure table
         header = self.models_table.horizontalHeader()
-        header.setStretchLastSection(True)
-        # Configure header resize modes
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        if header is not None:
+            header.setStretchLastSection(True)
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
 
-        # Create additional custom header for advanced features
-        self.custom_header = create_custom_header_view(header.orientation(), self.models_table)
+            self.custom_header = create_custom_header_view(header.orientation(), self.models_table)
 
-        # Use utility function to configure table selection
-        configure_table_selection(self.models_table, QAbstractItemView.SelectRows)
+        configure_table_selection(self.models_table, QAbstractItemView.SelectionBehavior.SelectRows)
         self.models_table.setAlternatingRowColors(True)
 
         layout.addWidget(self.models_table)
@@ -352,15 +353,14 @@ class ModelManagerDialog(BaseDialog):
             ],
         )
 
-        # Configure table
         header = self.recommended_table.horizontalHeader()
-        header.setStretchLastSection(True)
-        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        if header is not None:
+            header.setStretchLastSection(True)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
 
-        # Configure table selection behavior
         configure_table_selection(self.recommended_table)
 
-        self.recommended_table.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.recommended_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.recommended_table.setAlternatingRowColors(True)
 
         # Populate recommended models
@@ -518,13 +518,11 @@ class ModelManagerDialog(BaseDialog):
             size_item = QTableWidgetItem(model["size"])
             self.recommended_table.setItem(row, 2, size_item)
 
-            # Download button
             download_btn = QPushButton("Download")
+            url_val = str(model["url"])
+            name_val = str(model["name"])
             download_btn.clicked.connect(
-                lambda checked, url=model["url"], name=model["name"]: (
-                    logger.debug("Download button clicked, checked state: %s for model: %s", checked, name)
-                    or self.download_model(url, name)
-                ),
+                lambda checked=False, url=url_val, name=name_val: self.download_model(url, name)
             )
             self.recommended_table.setCellWidget(row, 3, download_btn)
 
@@ -553,14 +551,10 @@ class ModelManagerDialog(BaseDialog):
             path_item = QTableWidgetItem(model_info["path"])
             self.models_table.setItem(row, 3, path_item)
 
-            # Load button
             load_btn = QPushButton("Load")
             load_btn.setEnabled(status != "Loaded")
-            load_btn.clicked.connect(
-                lambda checked, name=model_name: (
-                    logger.debug("Load button clicked, checked state: %s for model: %s", checked, name) or self.load_model(name)
-                ),
-            )
+            name_val = model_name
+            load_btn.clicked.connect(lambda checked=False, name=name_val: self.load_model(name))
             self.models_table.setCellWidget(row, 4, load_btn)
 
         # Update model info
@@ -593,22 +587,24 @@ Server URL: {gguf_manager.get_server_url()}"""
                 use_mmap=self.use_mmap_checkbox.isChecked(),
                 use_mlock=self.use_mlock_checkbox.isChecked(),
             ):
-                logger.info(f"Model loaded successfully: {model_name} (result: {success})")
+                logger.info("Model loaded successfully: %s (result: %s)", model_name, success)
                 QMessageBox.information(self, "Success", f"Model '{model_name}' loaded successfully!")
                 self.refresh_models()
             else:
                 QMessageBox.warning(self, "Error", f"Failed to load model '{model_name}'")
 
         except Exception as e:
-            logger.error("Exception in model_manager_dialog: %s", e)
+            logger.exception("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error loading model: {e}")
 
     def load_selected_model(self) -> None:
         """Load the selected model."""
         current_row = self.models_table.currentRow()
         if current_row >= 0:
-            model_name = self.models_table.item(current_row, 0).text()
-            self.load_model(model_name)
+            item = self.models_table.item(current_row, 0)
+            if item is not None:
+                model_name = item.text()
+                self.load_model(model_name)
         else:
             QMessageBox.information(self, "Info", "Please select a model to load.")
 
@@ -625,16 +621,19 @@ Server URL: {gguf_manager.get_server_url()}"""
         """Delete the selected model."""
         current_row = self.models_table.currentRow()
         if current_row >= 0:
-            model_name = self.models_table.item(current_row, 0).text()
+            item = self.models_table.item(current_row, 0)
+            if item is None:
+                return
+            model_name = item.text()
 
             reply = QMessageBox.question(
                 self,
                 "Confirm Delete",
                 f"Are you sure you want to delete model '{model_name}'?",
-                QMessageBox.Yes | QMessageBox.No,
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             )
 
-            if reply == QMessageBox.Yes:
+            if reply == QMessageBox.StandardButton.Yes:
                 try:
                     models = gguf_manager.list_models()
                     if model_name in models:
@@ -653,7 +652,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                         QMessageBox.warning(self, "Error", "Model not found in list.")
 
                 except Exception as e:
-                    logger.error("Exception in model_manager_dialog: %s", e)
+                    logger.exception("Exception in model_manager_dialog: %s", e)
                     QMessageBox.critical(self, "Error", f"Error deleting model: {e}")
         else:
             QMessageBox.information(self, "Info", "Please select a model to delete.")
@@ -681,7 +680,7 @@ Server URL: {gguf_manager.get_server_url()}"""
                 self.refresh_models()
 
             except Exception as e:
-                logger.error("Exception in model_manager_dialog: %s", e)
+                logger.exception("Exception in model_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Error adding model: {e}")
 
     def download_model(self, model_url: str, model_name: str) -> None:
@@ -799,7 +798,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             else:
                 QMessageBox.warning(self, "Error", "Failed to start GGUF server. Check dependencies.")
         except Exception as e:
-            logger.error("Exception in model_manager_dialog: %s", e)
+            logger.exception("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error starting server: {e}")
 
         self.update_server_status()
@@ -810,7 +809,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             gguf_manager.stop_server()
             QMessageBox.information(self, "Info", "GGUF server stop requested.")
         except Exception as e:
-            logger.error("Exception in model_manager_dialog: %s", e)
+            logger.exception("Exception in model_manager_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Error stopping server: {e}")
 
         self.update_server_status()
@@ -843,7 +842,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             flask_version = getattr(flask, "__version__", "unknown")
             deps_status.append(f"OK Flask available (v{flask_version})")
         except ImportError as e:
-            logger.error("Import error in model_manager_dialog: %s", e)
+            logger.exception("Import error in model_manager_dialog: %s", e)
             deps_status.append("FAIL Flask not available (pip install flask flask-cors)")
 
         try:
@@ -852,7 +851,7 @@ Server URL: {gguf_manager.get_server_url()}"""
             llama_version = getattr(llama_cpp, "__version__", "unknown")
             deps_status.append(f"OK llama-cpp-python available (v{llama_version})")
         except ImportError as e:
-            logger.error("Import error in model_manager_dialog: %s", e)
+            logger.exception("Import error in model_manager_dialog: %s", e)
             deps_status.append("FAIL llama-cpp-python not available (pip install llama-cpp-python)")
 
         try:
@@ -861,21 +860,21 @@ Server URL: {gguf_manager.get_server_url()}"""
             requests_version = getattr(requests, "__version__", "unknown")
             deps_status.append(f"OK requests available (v{requests_version})")
         except ImportError as e:
-            logger.error("Import error in model_manager_dialog: %s", e)
+            logger.exception("Import error in model_manager_dialog: %s", e)
             deps_status.append("FAIL requests not available (pip install requests)")
 
         self.deps_status_text.setPlainText("\n".join(deps_status))
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close.
 
         Args:
             event: Close event from Qt
 
         """
-        # Cancel any ongoing downloads
         for thread in self.download_threads.values():
             thread.cancel()
-            thread.wait(1000)  # Wait up to 1 second
+            thread.wait(1000)
 
-        event.accept()
+        if event is not None:
+            event.accept()

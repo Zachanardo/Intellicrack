@@ -5,12 +5,10 @@ import logging
 from datetime import datetime
 from typing import Any
 
-
-logger = logging.getLogger(__name__)
-
 from PyQt6.QtCore import QEvent, QThread, pyqtSignal
-from PyQt6.QtGui import QFont
+from PyQt6.QtGui import QCloseEvent, QFont
 from PyQt6.QtWidgets import (
+    QAbstractButton,
     QButtonGroup,
     QCheckBox,
     QDialog,
@@ -36,6 +34,8 @@ from PyQt6.QtWidgets import (
 )
 
 from intellicrack.core.trial_reset_engine import TrialInfo, TrialResetEngine
+
+logger = logging.getLogger(__name__)
 
 
 class TrialResetWorker(QThread):
@@ -132,11 +132,11 @@ class TrialResetDialog(QDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the TrialResetDialog with an optional parent."""
         super().__init__(parent)
-        self.engine = TrialResetEngine()
-        self.current_trial_info = None
-        self.worker = None
-        self.monitor_worker = None
-        self.scan_history = []
+        self.engine: TrialResetEngine = TrialResetEngine()
+        self.current_trial_info: TrialInfo | None = None
+        self.worker: TrialResetWorker | None = None
+        self.monitor_worker: TrialResetWorker | None = None
+        self.scan_history: list[dict[str, Any]] = []
 
         self.init_ui()
 
@@ -207,9 +207,7 @@ class TrialResetDialog(QDialog):
         for software in ["WinRAR", "VMware", "IDM", "Sublime", "Beyond Compare"]:
             btn = QPushButton(software)
             btn.clicked.connect(
-                lambda checked, s=software: (
-                    logger.debug("Quick scan button clicked, checked state: %s for software: %s", checked, s) or self.quick_scan(s)
-                )
+                lambda checked, s=software: self._quick_scan_helper(checked, s)
             )
             quick_layout.addWidget(btn)
 
@@ -277,7 +275,7 @@ class TrialResetDialog(QDialog):
         for name, value, description in strategies:
             radio = QRadioButton(f"{name}")
             radio.setToolTip(description)
-            radio.strategy = value
+            setattr(radio, "strategy", value)
             if value == "clean_uninstall":
                 radio.setChecked(True)
             self.strategy_group.addButton(radio)
@@ -301,12 +299,12 @@ class TrialResetDialog(QDialog):
         self.kill_processes.setChecked(True)
         options_layout.addWidget(self.kill_processes)
 
-        self.clear_prefetch = QCheckBox("Clear prefetch data")
-        self.clear_prefetch.setChecked(True)
-        options_layout.addWidget(self.clear_prefetch)
+        self.chk_clear_prefetch = QCheckBox("Clear prefetch data")
+        self.chk_clear_prefetch.setChecked(True)
+        options_layout.addWidget(self.chk_clear_prefetch)
 
-        self.clear_event_logs = QCheckBox("Clear event logs")
-        options_layout.addWidget(self.clear_event_logs)
+        self.chk_clear_event_logs = QCheckBox("Clear event logs")
+        options_layout.addWidget(self.chk_clear_event_logs)
 
         self.verify_reset = QCheckBox("Verify reset after completion")
         self.verify_reset.setChecked(True)
@@ -485,13 +483,13 @@ class TrialResetDialog(QDialog):
         system_layout = QVBoxLayout()
 
         sys_btn_layout = QHBoxLayout()
-        self.btn_clear_prefetch = QPushButton("Clear Prefetch")
-        self.btn_clear_prefetch.clicked.connect(self.clear_prefetch)
-        sys_btn_layout.addWidget(self.btn_clear_prefetch)
+        self.btn_clear_prefetch_data = QPushButton("Clear Prefetch")
+        self.btn_clear_prefetch_data.clicked.connect(self.clear_prefetch)
+        sys_btn_layout.addWidget(self.btn_clear_prefetch_data)
 
-        self.btn_clear_logs = QPushButton("Clear Event Logs")
-        self.btn_clear_logs.clicked.connect(self.clear_event_logs)
-        sys_btn_layout.addWidget(self.btn_clear_logs)
+        self.btn_clear_event_logs = QPushButton("Clear Event Logs")
+        self.btn_clear_event_logs.clicked.connect(self.clear_event_logs)
+        sys_btn_layout.addWidget(self.btn_clear_event_logs)
 
         self.btn_time_travel = QPushButton("Time Travel Mode")
         self.btn_time_travel.clicked.connect(self.enable_time_travel)
@@ -515,7 +513,8 @@ class TrialResetDialog(QDialog):
         # History table
         self.history_table = QTableWidget(0, 5)
         self.history_table.setHorizontalHeaderLabels(["Product", "Type", "Status", "Days Left", "Scanned"])
-        self.history_table.horizontalHeader().setStretchLastSection(True)
+        if header := self.history_table.horizontalHeader():
+            header.setStretchLastSection(True)
         self.history_table.setAlternatingRowColors(True)
         self.history_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         layout.addWidget(self.history_table)
@@ -558,6 +557,11 @@ class TrialResetDialog(QDialog):
         self.worker.update.connect(self.progress_bar.setValue)
         self.worker.start()
 
+    def _quick_scan_helper(self, checked: bool, software: str) -> None:
+        """Helper method for quick scan button clicked signal."""
+        logger.debug("Quick scan button clicked, checked state: %s for software: %s", checked, software)
+        self.quick_scan(software)
+
     def quick_scan(self, software: str) -> None:
         """Quick scan for known software."""
         self.product_name_input.setText(software)
@@ -575,7 +579,7 @@ class TrialResetDialog(QDialog):
             QMessageBox.warning(self, "Warning", "Please select a reset strategy")
             return
 
-        strategy = selected.strategy
+        strategy = getattr(selected, "strategy", "clean_uninstall")
 
         # Confirm reset
         reply = QMessageBox.question(
@@ -676,12 +680,12 @@ class TrialResetDialog(QDialog):
         self.status_label.setText("Status: Not Monitoring")
         self.log("Stopped monitoring")
 
-    def update_monitor_display(self, result: dict) -> None:
+    def update_monitor_display(self, result: dict[str, Any]) -> None:
         """Update monitor display with trial status."""
         if result.get("operation") != "monitor":
             return
 
-        trial_info = result.get("data")
+        trial_info: TrialInfo | None = result.get("data")
         if not trial_info:
             return
 
@@ -912,9 +916,12 @@ class TrialResetDialog(QDialog):
             return
 
         # Get product name from history
-        product_name = self.history_table.item(current_row, 0).text()
+        item = self.history_table.item(current_row, 0)
+        if not item:
+            return
+        product_name = item.text()
         self.product_name_input.setText(product_name)
-        self.tabs.setCurrentIndex(0)  # Switch to scan tab
+        self.tabs.setCurrentIndex(0)
         self.scan_for_trial()
 
     def clear_history(self) -> None:
@@ -994,12 +1001,14 @@ class TrialResetDialog(QDialog):
 
         self.trial_info_tree.expandAll()
 
-    def handle_worker_result(self, result: dict) -> None:
+    def handle_worker_result(self, result: dict[str, Any]) -> None:
         """Handle worker thread results."""
         operation = result.get("operation")
 
         if operation == "scan":
-            trial_info = result.get("data")
+            trial_info: TrialInfo | None = result.get("data")
+            if not trial_info:
+                return
             self.current_trial_info = trial_info
 
             # Display results
@@ -1069,13 +1078,13 @@ class TrialResetDialog(QDialog):
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.console.append(f"[{timestamp}] {message}")
 
-        # Auto-scroll to bottom
-        scrollbar = self.console.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        if scrollbar := self.console.verticalScrollBar():
+            scrollbar.setValue(scrollbar.maximum())
 
-    def closeEvent(self, event: QEvent) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close."""
-        # Stop monitoring if active
+        if not event:
+            return
         if self.monitor_worker:
             self.stop_monitoring()
         event.accept()

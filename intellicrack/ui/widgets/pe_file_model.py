@@ -23,7 +23,7 @@ try:
 
     PEFILE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in pe_file_model: %s", e)
+    logger.exception("Import error in pe_file_model: %s", e)
     PEFILE_AVAILABLE = False
 
 
@@ -96,7 +96,7 @@ class BinaryFileModel(ABC):
         self.file_path = Path(file_path)
         if not self.file_path.exists():
             error_msg = f"File not found: {file_path}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise FileNotFoundError(error_msg)
 
         self.file_size = self.file_path.stat().st_size
@@ -132,7 +132,7 @@ class PEFileModel(BinaryFileModel):
 
         if not PEFILE_AVAILABLE:
             error_msg = "pefile library is required for PE analysis"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ImportError(error_msg)
 
         self.pe: pefile.PE | None = None
@@ -180,7 +180,7 @@ class PEFileModel(BinaryFileModel):
             logger.info("Successfully parsed PE file with %s sections", len(self.sections))
 
         except Exception as e:
-            logger.error("Failed to parse PE file %s: %s", self.file_path, e, exc_info=True)
+            logger.exception("Failed to parse PE file %s: %s", self.file_path, e, exc_info=True)
             raise
 
     def _parse_sections(self) -> None:
@@ -402,7 +402,7 @@ class PEFileModel(BinaryFileModel):
         try:
             return self.pe.get_offset_from_rva(rva)
         except Exception as e:
-            logger.error("Exception in pe_file_model: %s", e)
+            logger.exception("Exception in pe_file_model: %s", e)
             return None
 
     def offset_to_rva(self, offset: int) -> int | None:
@@ -413,7 +413,7 @@ class PEFileModel(BinaryFileModel):
         try:
             return self.pe.get_rva_from_offset(offset)
         except Exception as e:
-            logger.error("Exception in pe_file_model: %s", e)
+            logger.exception("Exception in pe_file_model: %s", e)
             return None
 
     def get_sections(self) -> list[SectionInfo]:
@@ -508,5 +508,5 @@ def create_file_model(file_path: str) -> BinaryFileModel | None:
         return None
 
     except Exception as e:
-        logger.error("Failed to create file model for %s: %s", file_path, e, exc_info=True)
+        logger.exception("Failed to create file model for %s: %s", file_path, e, exc_info=True)
         return None

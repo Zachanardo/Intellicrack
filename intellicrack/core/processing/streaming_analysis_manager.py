@@ -161,7 +161,7 @@ class StreamingAnalysisManager:
             try:
                 callback(progress)
             except Exception as e:
-                self.logger.error(f"Progress callback error: {e}")
+                self.logger.exception("Progress callback error: %s", e)
 
     def read_chunks(
         self,
@@ -306,7 +306,7 @@ class StreamingAnalysisManager:
 
                 except Exception as e:
                     error_msg = f"Error analyzing chunk {context.chunk_number}: {e}"
-                    self.logger.error(error_msg)
+                    self.logger.exception(error_msg)
                     progress.errors.append(error_msg)
                     chunk_results.append({"error": str(e), "chunk": context.chunk_number})
 
@@ -337,7 +337,7 @@ class StreamingAnalysisManager:
             return final_results
 
         except Exception as e:
-            self.logger.error(f"Streaming analysis failed: {e}")
+            self.logger.exception("Streaming analysis failed: %s", e)
             return {"error": str(e), "status": "failed"}
 
     def _save_checkpoint(
@@ -369,10 +369,10 @@ class StreamingAnalysisManager:
             with open(checkpoint_path, "w", encoding="utf-8") as f:
                 json.dump(checkpoint_data, f, indent=2)
 
-            self.logger.debug(f"Checkpoint saved: {checkpoint_path}")
+            self.logger.debug("Checkpoint saved: %s", checkpoint_path)
 
         except Exception as e:
-            self.logger.error(f"Failed to save checkpoint: {e}")
+            self.logger.exception("Failed to save checkpoint: %s", e)
 
     def load_checkpoint(self, checkpoint_path: Path) -> dict[str, Any] | None:
         """Load analysis checkpoint to resume.
@@ -392,7 +392,7 @@ class StreamingAnalysisManager:
                 return json.load(f)
 
         except Exception as e:
-            self.logger.error(f"Failed to load checkpoint: {e}")
+            self.logger.exception("Failed to load checkpoint: %s", e)
             return None
 
     def calculate_hashes_streaming(
@@ -448,7 +448,7 @@ class StreamingAnalysisManager:
             return {algo: hasher.hexdigest() for algo, hasher in hashers.items()}
 
         except Exception as e:
-            self.logger.error(f"Hash calculation failed: {e}")
+            self.logger.exception("Hash calculation failed: %s", e)
             return {"error": str(e)}
 
     def scan_for_patterns_streaming(
@@ -510,7 +510,7 @@ class StreamingAnalysisManager:
             return results
 
         except Exception as e:
-            self.logger.error(f"Pattern scanning failed: {e}")
+            self.logger.exception("Pattern scanning failed: %s", e)
             return {"error": str(e)}
 
     def analyze_section_streaming(
@@ -550,9 +550,9 @@ class StreamingAnalysisManager:
                         probability = count / size
                         entropy -= probability * math.log2(probability)
 
-                printable_count = sum(bool(32 <= byte <= 126) for byte in section_data)
+                printable_count = sum(32 <= byte <= 126 for byte in section_data)
                 null_count = byte_counts.get(0, 0)
-                high_entropy_count = sum(bool(byte > 127) for byte in section_data)
+                high_entropy_count = sum(byte > 127 for byte in section_data)
 
                 return {
                     "offset": f"0x{offset:08x}",
@@ -574,7 +574,7 @@ class StreamingAnalysisManager:
                 file_handle.close()
 
         except Exception as e:
-            self.logger.error(f"Section analysis failed: {e}")
+            self.logger.exception("Section analysis failed: %s", e)
             return {"error": str(e)}
 
     def _classify_section(self, entropy: float, printable_ratio: float, null_ratio: float) -> str:

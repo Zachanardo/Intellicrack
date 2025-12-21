@@ -189,7 +189,7 @@ class BinaryNinjaAnalyzer:
             return self._fallback_analysis(binary_path)
 
         try:
-            self.logger.info(f"Analyzing binary with Binary Ninja: {binary_path}")
+            self.logger.info("Analyzing binary with Binary Ninja: %s", binary_path)
             self.bv = bn.open_view(str(binary_path))
 
             if self.bv is None:
@@ -236,7 +236,7 @@ class BinaryNinjaAnalyzer:
             return result
 
         except Exception as e:
-            self.logger.error(f"Binary Ninja analysis failed: {e}")
+            self.logger.exception("Binary Ninja analysis failed: %s", e)
             raise RuntimeError(f"Analysis failed: {e}") from e
         finally:
             if self.bv is not None:
@@ -254,7 +254,7 @@ class BinaryNinjaAnalyzer:
                 bn_func = self._analyze_single_function(func)
                 functions[func.start] = bn_func
             except Exception as e:
-                self.logger.warning(f"Failed to analyze function at 0x{func.start:x}: {e}")
+                self.logger.warning("Failed to analyze function at 0x%x: %s", func.start, e)
                 continue
 
         return functions
@@ -279,19 +279,18 @@ class BinaryNinjaAnalyzer:
             if func.hlil:
                 hlil_code = "\n".join(str(line) for line in func.hlil.instructions)
         except Exception:
-            self.logger.error("Failed to generate HLIL for function", exc_info=True)
+            self.logger.exception("Failed to generate HLIL for function", exc_info=True)
 
         try:
             if func.mlil:
                 mlil_ssa = "\n".join(str(line) for line in func.mlil.ssa_form.instructions)
         except Exception:
-            self.logger.error("Failed to generate MLIL SSA for function", exc_info=True)
+            self.logger.exception("Failed to generate MLIL SSA for function", exc_info=True)
 
         comments = {}
         for addr in func.address_ranges:
             for offset in range(addr.start, addr.end):
-                comment = func.get_comment_at(offset)
-                if comment:
+                if comment := func.get_comment_at(offset):
                     comments[offset] = comment
 
         strings_referenced = []
@@ -354,9 +353,9 @@ class BinaryNinjaAnalyzer:
         if not self.bv or not BINARYNINJA_AVAILABLE:
             return strings
 
-        for string_ref in self.bv.strings:
-            strings.append((string_ref.start, string_ref.value))
-
+        strings.extend(
+            (string_ref.start, string_ref.value) for string_ref in self.bv.strings
+        )
         return strings
 
     def _extract_imports(self) -> list[tuple[str, str, int]]:
@@ -380,11 +379,13 @@ class BinaryNinjaAnalyzer:
         if not self.bv or not BINARYNINJA_AVAILABLE:
             return exports
 
-        for sym in self.bv.symbols.values():
-            if sym.type in (bn.SymbolType.FunctionSymbol, bn.SymbolType.DataSymbol):
-                if any(seg.readable and seg.executable for seg in self.bv.segments):
-                    exports.append((sym.short_name, sym.address))
-
+        exports.extend(
+            (sym.short_name, sym.address)
+            for sym in self.bv.symbols.values()
+            if any(seg.readable and seg.executable for seg in self.bv.segments)
+            and sym.type
+            in (bn.SymbolType.FunctionSymbol, bn.SymbolType.DataSymbol)
+        )
         return exports
 
     def _extract_sections(self) -> list[dict[str, Any]]:
@@ -394,15 +395,16 @@ class BinaryNinjaAnalyzer:
         if not self.bv or not BINARYNINJA_AVAILABLE:
             return sections
 
-        for section in self.bv.sections.values():
-            sections.append({
+        sections.extend(
+            {
                 "name": section.name,
                 "start": section.start,
                 "end": section.end,
                 "size": section.end - section.start,
                 "type": section.type,
-            })
-
+            }
+            for section in self.bv.sections.values()
+        )
         return sections
 
     def _extract_symbols(self) -> dict[int, str]:
@@ -459,20 +461,20 @@ class BinaryNinjaAnalyzer:
             return candidates
 
         for func in self.bv.functions:
-            score = 0
             func_name_lower = func.name.lower()
 
-            for keyword in self.LICENSE_VALIDATION_KEYWORDS:
-                if keyword in func_name_lower:
-                    score += 10
-
+            score = sum(
+                10
+                for keyword in self.LICENSE_VALIDATION_KEYWORDS
+                if keyword in func_name_lower
+            )
             try:
                 if func.hlil:
                     hlil_text = "\n".join(str(line) for line in func.hlil.instructions).lower()
                     for keyword in self.LICENSE_VALIDATION_KEYWORDS:
                         score += hlil_text.count(keyword) * 2
             except Exception:
-                self.logger.error("Failed to analyze HLIL for license validation keywords", exc_info=True)
+                self.logger.exception("Failed to analyze HLIL for license validation keywords", exc_info=True)
 
             for string_addr, string_val in self._extract_strings():
                 string_lower = string_val.lower()
@@ -507,9 +509,8 @@ class BinaryNinjaAnalyzer:
                     for sym in self.bv.symbols.values():
                         if sym.short_name == api_name:
                             for ref in self.bv.get_code_refs(sym.address):
-                                if func.start <= ref.address < func.start + func.total_bytes:
-                                    if func.start not in protections[category]:
-                                        protections[category].append(func.start)
+                                if func.start <= ref.address < func.start + func.total_bytes and func.start not in protections[category]:
+                                    protections[category].append(func.start)
 
         return protections
 
@@ -518,7 +519,7 @@ class BinaryNinjaAnalyzer:
         if not PEFILE_AVAILABLE:
             raise RuntimeError("Neither Binary Ninja nor pefile available for analysis")
 
-        self.logger.info(f"Using pefile fallback for: {binary_path}")
+        self.logger.info("Using pefile fallback for: %s", binary_path)
 
         try:
             pe = pefile.PE(str(binary_path))
@@ -539,16 +540,20 @@ class BinaryNinjaAnalyzer:
                         name = exp.name.decode("utf-8", errors="ignore")
                         exports.append((name, pe.OPTIONAL_HEADER.ImageBase + exp.address))
 
-            sections = []
-            for section in pe.sections:
-                sections.append({
-                    "name": section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
+            sections = [
+                {
+                    "name": section.Name.decode("utf-8", errors="ignore").rstrip(
+                        "\x00"
+                    ),
                     "start": pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress,
-                    "end": pe.OPTIONAL_HEADER.ImageBase + section.VirtualAddress + section.Misc_VirtualSize,
+                    "end": pe.OPTIONAL_HEADER.ImageBase
+                    + section.VirtualAddress
+                    + section.Misc_VirtualSize,
                     "size": section.Misc_VirtualSize,
                     "type": "section",
-                })
-
+                }
+                for section in pe.sections
+            ]
             strings = []
             for section in pe.sections:
                 if section.IMAGE_SCN_MEM_EXECUTE or section.IMAGE_SCN_CNT_CODE:
@@ -566,11 +571,12 @@ class BinaryNinjaAnalyzer:
                                 strings.append((current_addr + i - len(current_string), current_string.decode("ascii", errors="ignore")))
                         current_string = b""
 
-            result = BNAnalysisResult(
+            return BNAnalysisResult(
                 binary_path=str(binary_path),
                 architecture=pefile.MACHINE_TYPE[pe.FILE_HEADER.Machine],
                 platform="windows",
-                entry_point=pe.OPTIONAL_HEADER.ImageBase + pe.OPTIONAL_HEADER.AddressOfEntryPoint,
+                entry_point=pe.OPTIONAL_HEADER.ImageBase
+                + pe.OPTIONAL_HEADER.AddressOfEntryPoint,
                 image_base=pe.OPTIONAL_HEADER.ImageBase,
                 functions={},
                 strings=strings,
@@ -583,11 +589,8 @@ class BinaryNinjaAnalyzer:
                 protection_indicators={},
                 metadata={"analysis_method": "pefile_fallback"},
             )
-
-            return result
-
         except Exception as e:
-            self.logger.error(f"Fallback analysis failed: {e}")
+            self.logger.exception("Fallback analysis failed: %s", e)
             raise RuntimeError(f"Fallback analysis failed: {e}") from e
 
     def get_function_cfg(self, function_address: int) -> dict[str, Any]:
@@ -613,10 +616,7 @@ class BinaryNinjaAnalyzer:
         edges = []
 
         for bb in func.basic_blocks:
-            instructions = []
-            for instr in bb.disassembly_text:
-                instructions.append(str(instr))
-
+            instructions = [str(instr) for instr in bb.disassembly_text]
             nodes.append({
                 "address": bb.start,
                 "end": bb.end,
@@ -624,9 +624,14 @@ class BinaryNinjaAnalyzer:
                 "has_undetermined_outgoing_edges": bb.has_undetermined_outgoing_edges,
             })
 
-            for edge in bb.outgoing_edges:
-                edges.append({"source": bb.start, "target": edge.target.start, "type": str(edge.type)})
-
+            edges.extend(
+                {
+                    "source": bb.start,
+                    "target": edge.target.start,
+                    "type": str(edge.type),
+                }
+                for edge in bb.outgoing_edges
+            )
         return {
             "function_name": func.name,
             "function_address": function_address,

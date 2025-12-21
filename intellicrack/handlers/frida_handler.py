@@ -118,18 +118,17 @@ except ImportError as e:
                 List of FallbackProcess objects representing running processes on the device.
 
             """
-            processes = []
+            processes: list[Any] = []
 
             try:
                 # Build command based on platform
-                if sys.platform == "win32" and (wmic_path := shutil.which("wmic")):
-                    cmd = [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"]
-                elif (sys.platform == "win32" and not (wmic_path := shutil.which("wmic"))) or (
-                    sys.platform != "win32" and not (ps_path := shutil.which("ps"))
-                ):
-                    cmd = None
-                else:
+                cmd: list[str] | None = None
+                if sys.platform == "win32":
+                    if wmic_path := shutil.which("wmic"):
+                        cmd = [wmic_path, "process", "get", "ProcessId,Name,ExecutablePath"]
+                elif ps_path := shutil.which("ps"):
                     cmd = [ps_path, "aux"]
+
                 if not cmd:
                     logger.error("Process enumeration command not found for platform: %s", sys.platform)
                     return processes
@@ -427,13 +426,17 @@ except ImportError as e:
                     # Get active session
                     active_session = terminal_widget.get_active_session()
                     if active_session and hasattr(active_session, "_pid"):
-                        return active_session._pid
+                        pid_value = active_session._pid
+                        if isinstance(pid_value, int):
+                            return pid_value
 
                 # Fallback: Try to extract PID from session tracking
                 if hasattr(terminal_mgr, "_sessions") and session_id in terminal_mgr._sessions:
                     session_info = terminal_mgr._sessions[session_id]
                     if isinstance(session_info, dict) and "pid" in session_info:
-                        return session_info["pid"]
+                        pid_value = session_info["pid"]
+                        if isinstance(pid_value, int):
+                            return pid_value
 
                 logger.warning("Could not extract PID from terminal session %s", session_id)
 
@@ -864,7 +867,7 @@ except ImportError as e:
 
             Sets up the local device and device registry for management.
             """
-            self._devices: dict[str, Any] = {}
+            self._devices: dict[str, FallbackDevice] = {}
             self._local_device = FallbackDevice("local", "Local System", "local")
             self._devices["local"] = self._local_device
 
@@ -1104,15 +1107,12 @@ except ImportError as e:
 
         if isinstance(target, int):
             return device.attach(target)
-        if isinstance(target, str):
-            if process := device.get_process(target):
-                return device.attach(process.pid)
-            error_msg = f"Process not found: {target}"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
-        error_msg = f"Invalid target type: {type(target)}"
+
+        if process := device.get_process(target):
+            return device.attach(process.pid)
+        error_msg = f"Process not found: {target}"
         logger.error(error_msg)
-        raise TypeError(error_msg)
+        raise ValueError(error_msg)
 
     def spawn(
         program: str | list[str],
@@ -1220,99 +1220,6 @@ if not HAS_FRIDA:
     DeviceManager = FallbackDeviceManager
     FileMonitor = FallbackFileMonitor
     ScriptMessage = FallbackScriptMessage
-
-    def get_local_device() -> None:
-        """Get the local device when Frida is unavailable.
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def get_remote_device() -> None:
-        """Get a remote device when Frida is unavailable.
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def get_usb_device() -> None:
-        """Get USB device when Frida is unavailable.
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def get_device_manager() -> None:
-        """Get device manager when Frida is unavailable.
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def attach(*args: object) -> None:
-        """Attach to a process when Frida is unavailable.
-
-        Args:
-            *args: Variable arguments (ignored in fallback mode).
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def spawn(*args: object) -> None:
-        """Spawn a process when Frida is unavailable.
-
-        Args:
-            *args: Variable arguments (ignored in fallback mode).
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def resume(*args: object) -> None:
-        """Resume a process when Frida is unavailable.
-
-        Args:
-            *args: Variable arguments (ignored in fallback mode).
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def kill(*args: object) -> None:
-        """Kill a process when Frida is unavailable.
-
-        Args:
-            *args: Variable arguments (ignored in fallback mode).
-
-        Returns:
-            None in fallback mode.
-
-        """
-        return
-
-    def enumerate_devices() -> list[Any]:
-        """Enumerate all devices when Frida is unavailable.
-
-        Returns:
-            Empty list in fallback mode.
-
-        """
-        return []
 
 
 # Export all Frida objects and availability flag

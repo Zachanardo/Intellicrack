@@ -489,7 +489,7 @@ class FridaStealth:
                 return False
 
             except Exception as e:
-                logger.error("Thread randomization failed: %s", e, exc_info=True)
+                logger.exception("Thread randomization failed: %s", e, exc_info=True)
                 return False
 
     def _get_common_thread_names(self) -> list[str]:
@@ -687,7 +687,7 @@ class FridaStealth:
             return True
 
         except Exception as e:
-            logger.error("D-Bus hiding failed: %s", e, exc_info=True)
+            logger.exception("D-Bus hiding failed: %s", e, exc_info=True)
             return False
 
     def hide_frida_artifacts(self) -> bool:
@@ -721,7 +721,7 @@ class FridaStealth:
             return True
 
         except Exception as e:
-            logger.error("Artifact hiding failed: %s", e, exc_info=True)
+            logger.exception("Artifact hiding failed: %s", e, exc_info=True)
             return False
 
     def _hide_artifacts_linux(self) -> int:
@@ -834,7 +834,7 @@ class FridaStealth:
             return True
 
         except Exception as e:
-            logger.error("Syscall mode failed: %s", e, exc_info=True)
+            logger.exception("Syscall mode failed: %s", e, exc_info=True)
             return False
 
     def apply_anti_debugging_bypass(self, pid: int | None = None) -> bool:
@@ -875,7 +875,7 @@ class FridaStealth:
             return True
 
         except Exception as e:
-            logger.error("Anti-debugging bypass failed: %s", e, exc_info=True)
+            logger.exception("Anti-debugging bypass failed: %s", e, exc_info=True)
             return False
 
     def _bypass_anti_debug_windows(self, pid: int) -> int:

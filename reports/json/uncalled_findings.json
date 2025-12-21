@@ -1,8 +1,8 @@
 {
   "tool": "uncalled",
-  "generated": "2025-12-20T00:12:59.201133",
-  "total_findings": 334,
-  "total_files": 157,
+  "generated": "2025-12-20T02:58:53.734295",
+  "total_findings": 332,
+  "total_files": 156,
   "files": [
     {
       "path": "intellicrack\\handlers\\pyelftools_handler.py",
@@ -1241,24 +1241,6 @@
       ]
     },
     {
-      "path": "intellicrack\\ai\\llm_config_as_code.py",
-      "count": 2,
-      "findings": [
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: generate_config_files",
-          "raw": "intellicrack\\ai\\llm_config_as_code.py: Unused function generate_config_files"
-        },
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: save_current_config",
-          "raw": "intellicrack\\ai\\llm_config_as_code.py: Unused function save_current_config"
-        }
-      ]
-    },
-    {
       "path": "intellicrack\\ai\\lora_adapter_manager.py",
       "count": 2,
       "findings": [
@@ -1847,6 +1829,18 @@
       ]
     },
     {
+      "path": "intellicrack\\ai\\llm_config_as_code.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": null,
+          "column": null,
+          "message": "Unused function: save_current_config",
+          "raw": "intellicrack\\ai\\llm_config_as_code.py: Unused function save_current_config"
+        }
+      ]
+    },
+    {
       "path": "intellicrack\\ai\\local_gguf_server.py",
       "count": 1,
       "findings": [
@@ -2083,18 +2077,6 @@
           "column": null,
           "message": "Unused function: isWidgetType",
           "raw": "intellicrack\\core\\reporting\\pdf_generator.py: Unused function isWidgetType"
-        }
-      ]
-    },
-    {
-      "path": "intellicrack\\core\\reporting\\report_generator.py",
-      "count": 1,
-      "findings": [
-        {
-          "line": null,
-          "column": null,
-          "message": "Unused function: get_format_mime_types",
-          "raw": "intellicrack\\core\\reporting\\report_generator.py: Unused function get_format_mime_types"
         }
       ]
     },

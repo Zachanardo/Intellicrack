@@ -84,10 +84,10 @@ class SetupWorker(QThread):
             cmd = [sys.executable, "-m", "pip", "install", *package.split()]
             result = subprocess.run(cmd, check=False, capture_output=True, text=True)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
             if result.returncode != 0:
-                logger.error(f"Failed to install {package}: {result.stderr}")
+                logger.error("Failed to install %s: %s", package, result.stderr)
                 self.success = False
         except Exception as e:
-            logger.error(f"Error installing {package}: {e}")
+            logger.exception("Error installing %s: %s", package, e)
             self.success = False
 
 

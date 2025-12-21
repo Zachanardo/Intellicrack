@@ -30,7 +30,6 @@ from intellicrack.handlers.pyqt6_handler import (
     QFileDialog,
     QFont,
     QFrame,
-    QGraphicsScene,
     QGraphicsView,
     QGridLayout,
     QGroupBox,
@@ -49,6 +48,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QVBoxLayout,
     QWidget,
 )
+from PyQt6.QtWidgets import QGraphicsScene
 
 from ..utils.logger import get_logger
 from ..utils.resource_helper import get_resource_path
@@ -136,7 +136,7 @@ class EnhancedAnalysisDashboard(QWidget):
 
         # Quick stats section
         stats_frame = QFrame()
-        stats_frame.setFrameStyle(QFrame.StyledPanel)
+        stats_frame.setFrameStyle(QFrame.Shape.StyledPanel)
         stats_layout = QGridLayout(stats_frame)
 
         self.stats_labels = {}
@@ -371,7 +371,7 @@ class EnhancedAnalysisDashboard(QWidget):
     def _open_settings(self) -> None:
         """Open settings dialog."""
         dialog = R2ConfigurationDialog(self)
-        if dialog.exec() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             self.add_activity("Settings updated")
 
     def _update_visualization(self, viz_type: str) -> None:
@@ -416,7 +416,7 @@ class EnhancedMainWindow(QMainWindow):
         """Initialize the enhanced main window with UI setup, menu bar, toolbar, and status bar."""
         super().__init__()
         self.logger = logger
-        self.binary_path = None
+        self.binary_path: str | None = None
         self._setup_ui()
         self._setup_menu_bar()
         self._setup_tool_bar()
@@ -440,9 +440,12 @@ class EnhancedMainWindow(QMainWindow):
     def _setup_menu_bar(self) -> None:
         """Set up enhanced menu bar."""
         menubar = self.menuBar()
+        if menubar is None:
+            return
 
-        # File menu
         file_menu = menubar.addMenu("File")
+        if file_menu is None:
+            return
 
         open_action = QAction("Open Binary", self)
         open_action.setShortcut("Ctrl+O")
@@ -468,8 +471,9 @@ class EnhancedMainWindow(QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
-        # Analysis menu
         analysis_menu = menubar.addMenu("Analysis")
+        if analysis_menu is None:
+            return
 
         comprehensive_action = QAction("Comprehensive Analysis", self)
         comprehensive_action.triggered.connect(lambda: self._start_analysis("comprehensive"))
@@ -483,8 +487,9 @@ class EnhancedMainWindow(QMainWindow):
         license_action.triggered.connect(lambda: self._start_analysis("decompilation"))
         analysis_menu.addAction(license_action)
 
-        # Tools menu
         tools_menu = menubar.addMenu("Tools")
+        if tools_menu is None:
+            return
 
         config_action = QAction("Configuration", self)
         config_action.triggered.connect(self._open_configuration)
@@ -494,8 +499,9 @@ class EnhancedMainWindow(QMainWindow):
         hex_viewer_action.triggered.connect(self._open_hex_viewer)
         tools_menu.addAction(hex_viewer_action)
 
-        # Help menu
         help_menu = menubar.addMenu("Help")
+        if help_menu is None:
+            return
 
         about_action = QAction("About", self)
         about_action.triggered.connect(self._show_about)
@@ -504,6 +510,8 @@ class EnhancedMainWindow(QMainWindow):
     def _setup_tool_bar(self) -> None:
         """Set up enhanced tool bar."""
         toolbar = self.addToolBar("Main")
+        if toolbar is None:
+            return
         toolbar.setMovable(False)
 
         # File operations
@@ -556,19 +564,19 @@ class EnhancedMainWindow(QMainWindow):
         dark_palette = QPalette()
 
         # Set colors
-        dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.WindowText, QColor(255, 255, 255))
-        dark_palette.setColor(QPalette.Base, QColor(25, 25, 25))
-        dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.ToolTipBase, QColor(0, 0, 0))
-        dark_palette.setColor(QPalette.ToolTipText, QColor(255, 255, 255))
-        dark_palette.setColor(QPalette.Text, QColor(255, 255, 255))
-        dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-        dark_palette.setColor(QPalette.ButtonText, QColor(255, 255, 255))
-        dark_palette.setColor(QPalette.BrightText, QColor(255, 0, 0))
-        dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-        dark_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-        dark_palette.setColor(QPalette.HighlightedText, QColor(0, 0, 0))
+        dark_palette.setColor(QPalette.ColorRole.Window, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.WindowText, QColor(255, 255, 255))
+        dark_palette.setColor(QPalette.ColorRole.Base, QColor(25, 25, 25))
+        dark_palette.setColor(QPalette.ColorRole.AlternateBase, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(0, 0, 0))
+        dark_palette.setColor(QPalette.ColorRole.ToolTipText, QColor(255, 255, 255))
+        dark_palette.setColor(QPalette.ColorRole.Text, QColor(255, 255, 255))
+        dark_palette.setColor(QPalette.ColorRole.Button, QColor(53, 53, 53))
+        dark_palette.setColor(QPalette.ColorRole.ButtonText, QColor(255, 255, 255))
+        dark_palette.setColor(QPalette.ColorRole.BrightText, QColor(255, 0, 0))
+        dark_palette.setColor(QPalette.ColorRole.Link, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.ColorRole.Highlight, QColor(42, 130, 218))
+        dark_palette.setColor(QPalette.ColorRole.HighlightedText, QColor(0, 0, 0))
 
         QApplication.setPalette(dark_palette)
 
@@ -598,7 +606,6 @@ class EnhancedMainWindow(QMainWindow):
         self.dashboard.add_activity(f"Started {analysis_type} analysis")
         self.progress_bar.setVisible(True)
 
-        # Switch to radare2 tab and start analysis
         self.dashboard.content_tabs.setCurrentIndex(1)
         self.dashboard.r2_widget._start_analysis(analysis_type)
 
@@ -618,7 +625,7 @@ class EnhancedMainWindow(QMainWindow):
     def _open_configuration(self) -> None:
         """Open configuration dialog."""
         dialog = R2ConfigurationDialog(self)
-        if dialog.exec() == QDialog.Accepted:
+        if dialog.exec() == QDialog.DialogCode.Accepted:
             self.dashboard.add_activity("Configuration updated")
 
     def _open_hex_viewer(self) -> None:
@@ -628,13 +635,23 @@ class EnhancedMainWindow(QMainWindow):
             return
 
         try:
-            from .widgets.hex_viewer import show_hex_viewer
+            from .widgets.hex_viewer import HexViewerWidget
 
-            show_hex_viewer(self.binary_path)
+            with open(self.binary_path, "rb") as f:
+                data = f.read()
+
+            dialog = QDialog(self)
+            dialog.setWindowTitle("Hex Viewer")
+            dialog.resize(1000, 600)
+            layout = QVBoxLayout(dialog)
+            hex_widget = HexViewerWidget(dialog)
+            hex_widget.load_data(data)
+            layout.addWidget(hex_widget)
+            dialog.exec()
             self.dashboard.add_activity("Opened hex viewer")
-        except ImportError as e:
-            self.logger.error("Import error in enhanced_ui_integration: %s", e)
-            QMessageBox.information(self, "Hex Viewer", "Hex viewer not available")
+        except (ImportError, OSError) as e:
+            self.logger.exception("Error opening hex viewer: %s", e)
+            QMessageBox.information(self, "Hex Viewer", f"Hex viewer error: {e}")
 
     def _show_about(self) -> None:
         """Show about dialog."""
@@ -651,11 +668,14 @@ class EnhancedMainWindow(QMainWindow):
 
 def create_enhanced_application() -> tuple[QApplication, EnhancedMainWindow]:
     """Create and return enhanced Intellicrack application."""
-    app = QApplication.instance()
-    if app is None:
+    app_instance = QApplication.instance()
+    if app_instance is None:
         app = QApplication([])
+    elif isinstance(app_instance, QApplication):
+        app = app_instance
 
-    # Set application metadata
+    else:
+        raise TypeError("Existing application instance is not QApplication")
     app.setApplicationName("Intellicrack")
     app.setApplicationVersion("2.0")
     app.setOrganizationName("Intellicrack Project")
@@ -664,40 +684,44 @@ def create_enhanced_application() -> tuple[QApplication, EnhancedMainWindow]:
     return app, window
 
 
-def integrate_enhanced_ui_with_existing_app(existing_app: object) -> bool | None:
+def integrate_enhanced_ui_with_existing_app(existing_app: Any) -> bool:
     """Integrate enhanced UI features with existing application."""
     try:
-        # Add enhanced dashboard if main app has tab widget
+        enhanced_dashboard: EnhancedAnalysisDashboard | None = None
+
         if hasattr(existing_app, "tab_widget"):
-            enhanced_dashboard = EnhancedAnalysisDashboard(existing_app)
-            existing_app.tab_widget.addTab(enhanced_dashboard, "Enhanced Dashboard")
+            tab_widget = getattr(existing_app, "tab_widget", None)
+            if tab_widget is not None and isinstance(existing_app, QWidget):
+                enhanced_dashboard = EnhancedAnalysisDashboard(existing_app)
+                tab_widget.addTab(enhanced_dashboard, "Enhanced Dashboard")
+                setattr(existing_app, "enhanced_dashboard", enhanced_dashboard)
 
-            # Store reference
-            existing_app.enhanced_dashboard = enhanced_dashboard
+                if hasattr(existing_app, "binary_path"):
+                    binary_path = getattr(existing_app, "binary_path", None)
+                    if isinstance(binary_path, str):
+                        enhanced_dashboard.r2_widget.set_binary_path(binary_path)
 
-            # Connect binary path updates
-            if hasattr(existing_app, "binary_path"):
-                enhanced_dashboard.r2_widget.set_binary_path(existing_app.binary_path)
+        if hasattr(existing_app, "menuBar") and enhanced_dashboard is not None:
+            menu_bar_method = getattr(existing_app, "menuBar", None)
+            if callable(menu_bar_method):
+                menu_bar = menu_bar_method()
+                if menu_bar is not None:
+                    enhanced_menu = menu_bar.addMenu("Enhanced Analysis")
 
-        # Add enhanced menu items if main app has menu bar
-        if hasattr(existing_app, "menuBar"):
-            enhanced_menu = existing_app.menuBar().addMenu("Enhanced Analysis")
+                    comprehensive_action = enhanced_menu.addAction("Comprehensive R2 Analysis")
+                    comprehensive_action.triggered.connect(
+                        lambda: enhanced_dashboard.r2_widget._start_analysis("comprehensive"),
+                    )
 
-            # Add enhanced analysis actions
-            comprehensive_action = enhanced_menu.addAction("Comprehensive R2 Analysis")
-            comprehensive_action.triggered.connect(
-                lambda: existing_app.enhanced_dashboard.r2_widget._start_analysis("comprehensive"),
-            )
-
-            ai_action = enhanced_menu.addAction("AI-Enhanced Analysis")
-            ai_action.triggered.connect(
-                lambda: existing_app.enhanced_dashboard.r2_widget._start_analysis("ai"),
-            )
+                    ai_action = enhanced_menu.addAction("AI-Enhanced Analysis")
+                    ai_action.triggered.connect(
+                        lambda: enhanced_dashboard.r2_widget._start_analysis("ai"),
+                    )
 
         return True
 
     except Exception as e:
-        logger.error(f"Failed to integrate enhanced UI: {e}")
+        logger.exception("Failed to integrate enhanced UI: %s", e)
         return False
 
 

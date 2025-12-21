@@ -495,259 +495,259 @@ intellicrack\plugins\custom_modules\license_server_emulator.py:1127:45: warning[
 
 intellicrack\plugins\custom_modules\license_server_emulator.py:1135:45: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1386:24: error[unresolved-import] Cannot resolve imported module `netifaces`
+intellicrack\plugins\custom_modules\license_server_emulator.py:1387:24: error[unresolved-import] Cannot resolve imported module `netifaces`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1408:18: error[unresolved-import] Cannot resolve imported module `intellicrack.handlers.psutil_handler`
+intellicrack\plugins\custom_modules\license_server_emulator.py:1409:18: error[unresolved-import] Cannot resolve imported module `intellicrack.handlers.psutil_handler`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:1919:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\plugins\custom_modules\license_server_emulator.py:1920:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:2088:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\plugins\custom_modules\license_server_emulator.py:2089:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:2507:26: error[possibly-unresolved-reference] Name `ctypes` used when possibly not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:2508:26: error[possibly-unresolved-reference] Name `ctypes` used when possibly not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3269:30: error[not-iterable] Object of type `object` is not iterable
+intellicrack\plugins\custom_modules\license_server_emulator.py:3270:30: error[not-iterable] Object of type `object` is not iterable
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3282:26: error[missing-argument] No argument provided for required parameter `offset` of function `disasm`
+intellicrack\plugins\custom_modules\license_server_emulator.py:3283:26: error[missing-argument] No argument provided for required parameter `offset` of function `disasm`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3434:38: error[unresolved-attribute] Object of type `object` has no attribute `entries`
+intellicrack\plugins\custom_modules\license_server_emulator.py:3435:38: error[unresolved-attribute] Object of type `object` has no attribute `entries`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3951:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:3952:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4017:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4018:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4071:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4072:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4112:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4113:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4149:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4150:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4178:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4179:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4329:26: error[possibly-unresolved-reference] Name `subprocess` used when possibly not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:4330:26: error[possibly-unresolved-reference] Name `subprocess` used when possibly not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4439:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4440:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4524:20: error[unresolved-import] Cannot resolve imported module `win32process`
+intellicrack\plugins\custom_modules\license_server_emulator.py:4525:20: error[unresolved-import] Cannot resolve imported module `win32process`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4843:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\plugins\custom_modules\license_server_emulator.py:4844:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4886:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\plugins\custom_modules\license_server_emulator.py:4887:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4925:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\plugins\custom_modules\license_server_emulator.py:4926:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4946:66: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:4947:66: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4948:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\plugins\custom_modules\license_server_emulator.py:4949:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5111:24: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5112:24: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5116:17: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5117:17: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5144:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5145:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5145:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5146:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5147:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5148:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5149:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5150:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5151:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5152:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5154:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5155:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5156:20: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5157:20: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5157:23: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5158:23: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5159:23: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5160:23: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5161:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5162:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5163:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5164:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5166:23: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5167:23: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5176:16: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5177:16: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5188:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5189:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5189:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5190:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5191:26: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5192:26: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5249:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5250:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5250:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5251:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5252:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5253:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5255:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5256:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5264:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5265:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5265:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5266:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5267:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5268:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5277:16: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5278:16: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5292:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5293:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5293:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5294:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5295:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5296:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5302:16: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5303:16: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5313:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5314:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5314:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5315:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5316:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5317:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5326:20: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5327:20: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5335:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5336:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5339:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5340:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5340:38: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5341:38: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5341:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5342:18: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5343:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5344:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5345:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5346:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5346:26: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5347:26: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5348:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5349:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5350:20: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5351:20: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5355:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5356:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5356:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5357:22: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5358:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5359:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5360:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5361:21: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5362:19: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5363:19: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5363:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5364:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5365:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5366:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5526:32: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5527:32: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5615:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5616:16: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `Element`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5620:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5621:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5622:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5623:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5624:30: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5625:30: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5626:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5627:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5633:36: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5634:36: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5634:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5635:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5636:30: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5637:30: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5638:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5639:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5640:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5641:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5643:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5644:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5646:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5647:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5648:33: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5649:33: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5651:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5652:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5655:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5656:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5658:32: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5659:32: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5660:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5661:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5664:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5665:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5666:30: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5667:30: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5667:44: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5668:44: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5668:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5669:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5670:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5671:29: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5673:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5674:28: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5675:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5676:27: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5677:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5678:25: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5678:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5679:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5680:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
+intellicrack\plugins\custom_modules\license_server_emulator.py:5681:24: error[unresolved-attribute] Module `defusedxml.ElementTree` has no member `SubElement`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5791:32: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5792:32: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5847:78: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5848:78: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5949:24: error[unresolved-reference] Name `DefusedElementTree` used when not defined
+intellicrack\plugins\custom_modules\license_server_emulator.py:5950:24: error[unresolved-reference] Name `DefusedElementTree` used when not defined
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5972:41: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:5973:41: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6008:24: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6009:24: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6118:31: error[invalid-assignment] Object of type `str | None` is not assignable to `str`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6119:31: error[invalid-assignment] Object of type `str | None` is not assignable to `str`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6577:51: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6578:51: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6664:17: error[invalid-argument-type] Argument to bound method `add_middleware` is incorrect: Expected `_MiddlewareFactory[(...)]`, found `<class 'CORSMiddleware'>`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6665:17: error[invalid-argument-type] Argument to bound method `add_middleware` is incorrect: Expected `_MiddlewareFactory[(...)]`, found `<class 'CORSMiddleware'>`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6680:64: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6681:64: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6729:82: error[invalid-argument-type] Argument to bound method `analyze_traffic` is incorrect: Expected `int`, found `int | None`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6730:82: error[invalid-argument-type] Argument to bound method `analyze_traffic` is incorrect: Expected `int`, found `int | None`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6756:82: error[invalid-argument-type] Argument to bound method `analyze_traffic` is incorrect: Expected `int`, found `int | None`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6757:82: error[invalid-argument-type] Argument to bound method `analyze_traffic` is incorrect: Expected `int`, found `int | None`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6800:25: warning[possibly-missing-attribute] Attribute `host` may be missing on object of type `Address | None`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6801:25: warning[possibly-missing-attribute] Attribute `host` may be missing on object of type `Address | None`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6805:76: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6806:76: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6820:42: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6821:42: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6836:25: warning[possibly-missing-attribute] Attribute `host` may be missing on object of type `Address | None`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6837:25: warning[possibly-missing-attribute] Attribute `host` may be missing on object of type `Address | None`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6843:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6844:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6877:42: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:6878:42: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6983:45: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6984:45: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6984:40: error[unresolved-attribute] Module `socket` has no member `SOL_SOCKElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:6985:40: error[unresolved-attribute] Module `socket` has no member `SOL_SOCKElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7051:52: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:7052:52: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7128:53: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:7130:53: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7129:52: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\license_server_emulator.py:7131:52: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7159:40: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:7161:40: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7160:35: error[unresolved-attribute] Module `socket` has no member `SOL_SOCKElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:7162:35: error[unresolved-attribute] Module `socket` has no member `SOL_SOCKElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7269:48: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:7271:48: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7270:43: error[unresolved-attribute] Module `socket` has no member `SOL_SOCKElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:7272:43: error[unresolved-attribute] Module `socket` has no member `SOL_SOCKElementTree`
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7331:41: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
+intellicrack\plugins\custom_modules\license_server_emulator.py:7333:41: error[unresolved-attribute] Module `socket` has no member `AF_INElementTree`
 
 
 130 findings in intellicrack\core\vulnerability_research\research_manager.py
@@ -1429,7 +1429,7 @@ intellicrack\plugins\plugin_system.py:1753:57: error[unresolved-reference] Name 
 intellicrack\plugins\plugin_system.py:1753:84: error[unresolved-reference] Name `inspect` used when not defined
 
 
-90 findings in intellicrack\core\debugging_engine.py
+100 findings in intellicrack\core\debugging_engine.py
 
 intellicrack\core\debugging_engine.py:19:8: error[unresolved-import] Cannot resolve imported module `..utils.logger` - did you mean `utils.logger`?
 
@@ -1437,17 +1437,11 @@ intellicrack\core\debugging_engine.py:304:20: error[unresolved-import] Cannot re
 
 intellicrack\core\debugging_engine.py:305:20: error[unresolved-import] Cannot resolve imported module `win32security`
 
-intellicrack\core\debugging_engine.py:963:21: error[unresolved-attribute] Object of type `object` has no attribute `u`
+intellicrack\core\debugging_engine.py:953:46: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
-intellicrack\core\debugging_engine.py:991:39: error[unresolved-attribute] Object of type `object` has no attribute `dwThreadId`
+intellicrack\core\debugging_engine.py:1010:51: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
-intellicrack\core\debugging_engine.py:1017:26: error[unresolved-attribute] Object of type `object` has no attribute `u`
-
-intellicrack\core\debugging_engine.py:1019:31: error[unresolved-attribute] Object of type `object` has no attribute `dwThreadId`
-
-intellicrack\core\debugging_engine.py:1020:29: error[unresolved-attribute] Object of type `object` has no attribute `dwThreadId`
-
-intellicrack\core\debugging_engine.py:1035:20: error[unresolved-attribute] Object of type `object` has no attribute `u`
+intellicrack\core\debugging_engine.py:1028:45: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
 intellicrack\core\debugging_engine.py:1043:63: error[invalid-argument-type] Argument to function `hex` is incorrect: Expected `SupportsIndex`, found `int | None`
 
@@ -1469,9 +1463,9 @@ intellicrack\core\debugging_engine.py:1145:25: error[unsupported-operator] Opera
 
 intellicrack\core\debugging_engine.py:1145:25: error[unsupported-operator] Operator `+=` is not supported between objects of type `dict[Unknown, Unknown]` and `int | float`
 
-intellicrack\core\debugging_engine.py:1152:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `float`
-
 intellicrack\core\debugging_engine.py:1152:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `dict[Unknown, Unknown]` and `float`
+
+intellicrack\core\debugging_engine.py:1152:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `float`
 
 intellicrack\core\debugging_engine.py:1181:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `float`
 
@@ -1481,11 +1475,21 @@ intellicrack\core\debugging_engine.py:1185:49: error[invalid-argument-type] Argu
 
 intellicrack\core\debugging_engine.py:1185:49: error[invalid-argument-type] Argument to function `min` is incorrect: Expected `float`, found `Unknown | int | float | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\core\debugging_engine.py:1727:48: error[unresolved-attribute] Object of type `object` has no attribute `dwThreadId`
+intellicrack\core\debugging_engine.py:1260:20: error[invalid-return-type] Return type does not match returned value: expected `dict[int, str]`, found `dict[str, Any]`
+
+intellicrack\core\debugging_engine.py:1298:29: error[invalid-assignment] Invalid subscript assignment with key of type `int` and value of type `str & ~AlwaysFalsy` on object of type `dict[str, Any]`
+
+intellicrack\core\debugging_engine.py:1305:16: error[invalid-return-type] Return type does not match returned value: expected `dict[int, str]`, found `dict[str, Any]`
+
+intellicrack\core\debugging_engine.py:1711:75: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
 intellicrack\core\debugging_engine.py:2074:20: error[invalid-return-type] Return type does not match returned value: expected `core.debugging_engine.CONTEXT | None`, found `core.debugging_engine.LicenseDebugger.<locals of function '_get_thread_context'>.CONTEXT`
 
+intellicrack\core\debugging_engine.py:2268:45: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
+
 intellicrack\core\debugging_engine.py:2315:50: error[invalid-argument-type] Argument to function `unpack` is incorrect: Expected `Buffer`, found `list[Any]`
+
+intellicrack\core\debugging_engine.py:2367:64: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
 intellicrack\core\debugging_engine.py:2435:17: error[missing-argument] No argument provided for required parameter `filter_func` of bound method `register_exception_filter`
 
@@ -1493,11 +1497,19 @@ intellicrack\core\debugging_engine.py:2435:48: error[invalid-argument-type] Argu
 
 intellicrack\core\debugging_engine.py:2453:25: error[unresolved-attribute] Object of type `Self@bypass_output_debug_string` has no attribute `patched_apis`
 
+intellicrack\core\debugging_engine.py:2464:73: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
+
 intellicrack\core\debugging_engine.py:2509:27: error[unresolved-attribute] Object of type `Self@mitigate_timing_attacks` has no attribute `enumerate_memory_regions`
+
+intellicrack\core\debugging_engine.py:2585:64: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
+
+intellicrack\core\debugging_engine.py:2626:59: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
 intellicrack\core\debugging_engine.py:2668:22: error[possibly-unresolved-reference] Name `esp` used when possibly not defined
 
 intellicrack\core\debugging_engine.py:2672:41: error[possibly-unresolved-reference] Name `esp` used when possibly not defined
+
+intellicrack\core\debugging_engine.py:2683:69: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
 intellicrack\core\debugging_engine.py:2749:21: error[unresolved-attribute] Object of type `Self@bypass_thread_enumeration` has no attribute `logger`
 
@@ -1506,6 +1518,8 @@ intellicrack\core\debugging_engine.py:2759:31: warning[possibly-missing-attribut
 intellicrack\core\debugging_engine.py:2771:53: error[invalid-argument-type] Argument to function `cast` is incorrect: Expected `_CData | _CArgObject | int`, found `list[Any]`
 
 intellicrack\core\debugging_engine.py:2772:53: error[invalid-argument-type] Argument to function `cast` is incorrect: Expected `_CData | _CArgObject | int`, found `list[Any]`
+
+intellicrack\core\debugging_engine.py:2790:65: error[unresolved-reference] Name `DEBUG_EVENT` used when not defined
 
 intellicrack\core\debugging_engine.py:3169:57: error[missing-argument] No argument provided for required parameter `offset` of function `disasm`
 
@@ -1602,6 +1616,12 @@ intellicrack\core\debugging_engine.py:5320:30: error[not-iterable] Object of typ
 intellicrack\core\debugging_engine.py:5332:30: error[not-iterable] Object of type `~AlwaysFalsy` is not iterable
 
 intellicrack\core\debugging_engine.py:5606:49: error[invalid-type-form] Function calls are not allowed in type expressions
+
+intellicrack\core\debugging_engine.py:5636:98: error[too-many-positional-arguments] Too many positional arguments: expected 1, got 2
+
+intellicrack\core\debugging_engine.py:5658:32: error[invalid-return-type] Return type does not match returned value: expected `int`, found `None`
+
+intellicrack\core\debugging_engine.py:5658:91: error[too-many-positional-arguments] Too many positional arguments: expected 1, got 2
 
 intellicrack\core\debugging_engine.py:5725:70: error[invalid-argument-type] Argument to function `cast` is incorrect: Argument type `c_ulong` does not satisfy upper bound `_CanCastTo` of type variable `_CastT`
 
@@ -3695,75 +3715,75 @@ intellicrack\ai\lora_adapter_manager.py:241:41: error[invalid-argument-type] Arg
 
 intellicrack\ai\lora_adapter_manager.py:241:48: error[invalid-argument-type] Argument to function `get_peft_model` is incorrect: Expected `PeftConfig`, found `object`
 
-intellicrack\ai\lora_adapter_manager.py:253:20: error[invalid-return-type] Return type does not match returned value: expected `ModelType@apply_lora_to_model | None`, found `PeftModel | PeftMixedModel`
+intellicrack\ai\lora_adapter_manager.py:255:20: error[invalid-return-type] Return type does not match returned value: expected `ModelType@apply_lora_to_model | None`, found `PeftModel | PeftMixedModel`
 
-intellicrack\ai\lora_adapter_manager.py:293:17: error[invalid-argument-type] Argument to bound method `from_pretrained` is incorrect: Expected `Module`, found `ModelType@load_adapter`
+intellicrack\ai\lora_adapter_manager.py:295:17: error[invalid-argument-type] Argument to bound method `from_pretrained` is incorrect: Expected `Module`, found `ModelType@load_adapter`
 
-intellicrack\ai\lora_adapter_manager.py:298:17: error[invalid-argument-type] Argument to bound method `from_pretrained` is incorrect: Expected `bool`, found `object`
+intellicrack\ai\lora_adapter_manager.py:300:17: error[invalid-argument-type] Argument to bound method `from_pretrained` is incorrect: Expected `bool`, found `object`
 
-intellicrack\ai\lora_adapter_manager.py:310:20: error[invalid-return-type] Return type does not match returned value: expected `ModelType@load_adapter | None`, found `PeftModel | Unknown`
+intellicrack\ai\lora_adapter_manager.py:312:20: error[invalid-return-type] Return type does not match returned value: expected `ModelType@load_adapter | None`, found `PeftModel | Unknown`
 
-intellicrack\ai\lora_adapter_manager.py:345:17: error[call-non-callable] Object of type `object` is not callable
+intellicrack\ai\lora_adapter_manager.py:347:17: error[call-non-callable] Object of type `object` is not callable
 
-intellicrack\ai\lora_adapter_manager.py:405:21: error[unresolved-attribute] Object of type `object` has no attribute `keys`
+intellicrack\ai\lora_adapter_manager.py:407:21: error[unresolved-attribute] Object of type `object` has no attribute `keys`
 
-intellicrack\ai\lora_adapter_manager.py:420:17: error[call-non-callable] Object of type `object` is not callable
+intellicrack\ai\lora_adapter_manager.py:422:17: error[call-non-callable] Object of type `object` is not callable
 
-intellicrack\ai\lora_adapter_manager.py:457:13: error[call-non-callable] Object of type `object` is not callable
+intellicrack\ai\lora_adapter_manager.py:459:13: error[call-non-callable] Object of type `object` is not callable
 
-intellicrack\ai\lora_adapter_manager.py:494:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:496:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:505:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:507:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:517:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:519:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:535:29: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:537:29: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:535:29: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `str` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:537:29: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `str` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:544:29: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:546:29: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:544:29: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `str` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:546:29: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `str` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:550:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:552:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:575:29: error[invalid-assignment] Object of type `Unknown | Path` is not assignable to `str | None`
+intellicrack\ai\lora_adapter_manager.py:577:29: error[invalid-assignment] Object of type `Unknown | Path` is not assignable to `str | None`
 
-intellicrack\ai\lora_adapter_manager.py:665:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:667:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:669:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:671:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:677:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:679:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:686:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:688:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:688:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:690:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:688:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["peft_type"]` and value of type `Unknown` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:690:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["peft_type"]` and value of type `Unknown` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:691:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:693:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:691:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["rank"]` and value of type `Unknown` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:693:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["rank"]` and value of type `Unknown` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:693:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:695:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:696:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:698:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:696:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["target_modules"]` and value of type `Unknown` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:698:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["target_modules"]` and value of type `Unknown` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:698:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:700:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:701:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:703:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:701:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["task_type"]` and value of type `str` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:703:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["task_type"]` and value of type `str` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:705:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\ai\lora_adapter_manager.py:707:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\ai\lora_adapter_manager.py:705:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["base_model"]` and value of type `Unknown` on object of type `list[Unknown]`
+intellicrack\ai\lora_adapter_manager.py:707:17: error[invalid-assignment] Invalid subscript assignment with key of type `Literal["base_model"]` and value of type `Unknown` on object of type `list[Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:707:36: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:709:36: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\ai\lora_adapter_manager.py:710:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\ai\lora_adapter_manager.py:712:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bool | list[Unknown] | dict[Unknown, Unknown]`
 
 
 64 findings in intellicrack\ai\qemu_manager.py
@@ -3814,87 +3834,87 @@ intellicrack\ai\qemu_manager.py:2330:45: error[unsupported-operator] Operator `+
 
 intellicrack\ai\qemu_manager.py:2331:45: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2347:49: error[possibly-unresolved-reference] Name `Path` used when possibly not defined
+intellicrack\ai\qemu_manager.py:2349:49: error[possibly-unresolved-reference] Name `Path` used when possibly not defined
 
-intellicrack\ai\qemu_manager.py:2365:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2367:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2369:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2371:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2385:50: error[unsupported-operator] Operator `/` is not supported between objects of type `Unknown | int | list[Unknown]` and `Literal[1048576]`
+intellicrack\ai\qemu_manager.py:2387:50: error[unsupported-operator] Operator `/` is not supported between objects of type `Unknown | int | list[Unknown]` and `Literal[1048576]`
 
-intellicrack\ai\qemu_manager.py:2398:40: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
-
-intellicrack\ai\qemu_manager.py:2496:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
-
-intellicrack\ai\qemu_manager.py:2499:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2400:40: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
 
 intellicrack\ai\qemu_manager.py:2501:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
 intellicrack\ai\qemu_manager.py:2504:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2507:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2506:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2517:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2509:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2535:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2512:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2536:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `int`
+intellicrack\ai\qemu_manager.py:2523:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2555:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2541:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2571:45: error[unsupported-operator] Operator `/` is not supported between objects of type `Unknown | int | list[Unknown]` and `Literal[1048576]`
+intellicrack\ai\qemu_manager.py:2542:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `int`
 
-intellicrack\ai\qemu_manager.py:2584:40: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2561:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2651:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2577:45: error[unsupported-operator] Operator `/` is not supported between objects of type `Unknown | int | list[Unknown]` and `Literal[1048576]`
 
-intellicrack\ai\qemu_manager.py:2659:25: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2590:40: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2665:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2658:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2677:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2666:25: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2681:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2672:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2690:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2684:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2694:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2688:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2707:36: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2697:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2708:39: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | str | list[Unknown] | int`
+intellicrack\ai\qemu_manager.py:2701:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2754:13: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2714:36: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2759:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2715:39: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | str | list[Unknown] | int`
 
-intellicrack\ai\qemu_manager.py:2774:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
+intellicrack\ai\qemu_manager.py:2762:13: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2776:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2767:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2791:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2782:21: error[unsupported-operator] Operator `+=` is not supported between objects of type `list[Unknown]` and `Literal[1]`
 
-intellicrack\ai\qemu_manager.py:2795:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2784:21: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2801:20: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2799:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2802:20: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
+intellicrack\ai\qemu_manager.py:2803:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2821:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.qemu_image_discovery`
+intellicrack\ai\qemu_manager.py:2811:17: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2873:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.path_resolver`
+intellicrack\ai\qemu_manager.py:2812:17: error[invalid-argument-type] Argument to function `len` is incorrect: Expected `Sized`, found `Unknown | int | list[Unknown]`
 
-intellicrack\ai\qemu_manager.py:2874:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.qemu_image_discovery`
+intellicrack\ai\qemu_manager.py:2831:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.qemu_image_discovery`
 
-intellicrack\ai\qemu_manager.py:3271:24: error[possibly-unresolved-reference] Name `subprocess` used when possibly not defined
+intellicrack\ai\qemu_manager.py:2883:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.path_resolver`
 
-intellicrack\ai\qemu_manager.py:3281:20: error[possibly-unresolved-reference] Name `subprocess` used when possibly not defined
+intellicrack\ai\qemu_manager.py:2884:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.qemu_image_discovery`
 
-intellicrack\ai\qemu_manager.py:4179:50: error[invalid-argument-type] Argument to bound method `_execute_command_in_vm` is incorrect: Expected `QEMUSnapshot`, found `QEMUSnapshot | None`
+intellicrack\ai\qemu_manager.py:3281:24: error[possibly-unresolved-reference] Name `subprocess` used when possibly not defined
 
-intellicrack\ai\qemu_manager.py:4220:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\ai\qemu_manager.py:3291:20: error[possibly-unresolved-reference] Name `subprocess` used when possibly not defined
 
-intellicrack\ai\qemu_manager.py:4220:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `int`
+intellicrack\ai\qemu_manager.py:4189:50: error[invalid-argument-type] Argument to bound method `_execute_command_in_vm` is incorrect: Expected `QEMUSnapshot`, found `QEMUSnapshot | None`
+
+intellicrack\ai\qemu_manager.py:4230:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+
+intellicrack\ai\qemu_manager.py:4230:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `int`
 
 
 63 findings in intellicrack\core\processing\qemu_emulator.py
@@ -6719,85 +6739,85 @@ intellicrack\core\protection_bypass\cloud_license_analyzer.py:31:6: error[unreso
 
 intellicrack\core\protection_bypass\cloud_license_analyzer.py:44:17: error[invalid-assignment] Object of type `None` is not assignable to `<module 'xmltodict'>`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:125:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:126:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:126:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:127:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:172:57: error[invalid-argument-type] Argument to function `load_pem_private_key` is incorrect: Expected `bytes | bytearray | memoryview[int]`, found `Unknown | None | bytes`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:173:57: error[invalid-argument-type] Argument to function `load_pem_private_key` is incorrect: Expected `bytes | bytearray | memoryview[int]`, found `Unknown | None | bytes`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:174:54: error[invalid-argument-type] Argument to function `load_pem_x509_certificate` is incorrect: Expected `bytes`, found `Unknown | None | bytes`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:175:54: error[invalid-argument-type] Argument to function `load_pem_x509_certificate` is incorrect: Expected `bytes`, found `Unknown | None | bytes`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:194:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:196:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:195:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:197:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:205:19: error[invalid-argument-type] Argument to bound method `sign` is incorrect: Expected `Ed25519PrivateKey | Ed448PrivateKey | RSAPrivateKey | DSAPrivateKey | EllipticCurvePrivateKey`, found `DHPrivateKey | Ed25519PrivateKey | Ed448PrivateKey | ... omitted 5 union elements`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:207:19: error[invalid-argument-type] Argument to bound method `sign` is incorrect: Expected `Ed25519PrivateKey | Ed448PrivateKey | RSAPrivateKey | DSAPrivateKey | EllipticCurvePrivateKey`, found `DHPrivateKey | Ed25519PrivateKey | Ed448PrivateKey | ... omitted 5 union elements`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:238:13: error[no-matching-overload] No overload of bound method `on` matches arguments
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:240:13: error[no-matching-overload] No overload of bound method `on` matches arguments
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:395:16: error[non-subscriptable] Cannot subscript object of type `object` with no `__getitem__` method
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:397:16: error[non-subscriptable] Cannot subscript object of type `object` with no `__getitem__` method
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:588:35: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Unknown | str` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:590:35: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Unknown | str` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:593:37: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Unknown | str` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:595:37: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Unknown | str` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:599:61: error[invalid-argument-type] Argument to function `__new__` is incorrect: Expected `int | float`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:601:61: error[invalid-argument-type] Argument to function `__new__` is incorrect: Expected `int | float`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:599:69: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["expires_in"]` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:601:69: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["expires_in"]` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:602:61: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["expires_at"]` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:604:61: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["expires_at"]` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:602:61: error[invalid-argument-type] Argument to bound method `fromisoformat` is incorrect: Expected `str`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:604:61: error[invalid-argument-type] Argument to bound method `fromisoformat` is incorrect: Expected `str`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:606:29: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["scope"]` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:608:29: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["scope"]` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:606:65: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["scope"]` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:608:65: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["scope"]` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:606:90: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["scope"]` on object of type `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:608:90: error[invalid-argument-type] Method `__getitem__` of type `bound method Top[dict[Unknown, Unknown]].__getitem__(key: Never, /) -> object` cannot be called with key of type `Literal["scope"]` on object of type `Top[dict[Unknown, Unknown]]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:609:32: error[no-matching-overload] No overload of bound method `get` matches arguments
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:611:32: error[no-matching-overload] No overload of bound method `get` matches arguments
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:610:21: error[invalid-argument-type] Argument is incorrect: Expected `str`, found `~AlwaysFalsy`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:612:21: error[invalid-argument-type] Argument is incorrect: Expected `str`, found `~AlwaysFalsy`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:612:21: error[invalid-argument-type] Argument is incorrect: Expected `str | None`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:614:21: error[invalid-argument-type] Argument is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:613:21: error[invalid-argument-type] Argument is incorrect: Expected `list[str] | None`, found `~str`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:615:21: error[invalid-argument-type] Argument is incorrect: Expected `list[str] | None`, found `~str`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:614:21: error[invalid-argument-type] Argument is incorrect: Expected `dict[str, Any]`, found `dict[object, object]`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:616:21: error[invalid-argument-type] Argument is incorrect: Expected `dict[str, Any]`, found `dict[object, object]`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:632:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `str`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `str`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:632:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `str`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `str`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:632:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:632:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `int`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `int`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:632:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `dict[str, object] | None`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:45: error[invalid-argument-type] Argument to bound method `_generate_jwt_token` is incorrect: Expected `dict[str, object] | None`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:43: error[invalid-argument-type] Argument to bound method `_generate_api_key` is incorrect: Expected `str`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:636:43: error[invalid-argument-type] Argument to bound method `_generate_api_key` is incorrect: Expected `str`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:634:43: error[invalid-argument-type] Argument to bound method `_generate_api_key` is incorrect: Expected `int`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:636:43: error[invalid-argument-type] Argument to bound method `_generate_api_key` is incorrect: Expected `int`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:636:47: error[invalid-argument-type] Argument to bound method `_generate_license_key` is incorrect: Expected `str`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:638:47: error[invalid-argument-type] Argument to bound method `_generate_license_key` is incorrect: Expected `str`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:637:45: error[invalid-argument-type] Argument to bound method `_generate_generic_token` is incorrect: Expected `int`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:639:45: error[invalid-argument-type] Argument to bound method `_generate_generic_token` is incorrect: Expected `int`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:648:24: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:650:24: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:667:12: error[unresolved-attribute] Object of type `object` has no attribute `startswith`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:669:12: error[unresolved-attribute] Object of type `object` has no attribute `startswith`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:676:36: error[invalid-argument-type] Argument to bound method `encode` is incorrect: Expected `RSAPrivateKey | EllipticCurvePrivateKey | Ed25519PrivateKey | ... omitted 4 union elements`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:678:36: error[invalid-argument-type] Argument to bound method `encode` is incorrect: Expected `RSAPrivateKey | EllipticCurvePrivateKey | Ed25519PrivateKey | ... omitted 4 union elements`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:676:44: error[invalid-argument-type] Argument to bound method `encode` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:678:44: error[invalid-argument-type] Argument to bound method `encode` is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:897:42: error[unresolved-attribute] Module `json` has no member `JSONEncodeError`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:899:42: error[unresolved-attribute] Module `json` has no member `JSONEncodeError`
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:908:43: error[possibly-unresolved-reference] Name `future_date` used when possibly not defined
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:910:43: error[possibly-unresolved-reference] Name `future_date` used when possibly not defined
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:910:42: error[possibly-unresolved-reference] Name `future_date` used when possibly not defined
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:912:42: error[possibly-unresolved-reference] Name `future_date` used when possibly not defined
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:949:16: error[invalid-return-type] Return type does not match returned value: expected `LicenseToken | None`, found `Unknown | str`
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:951:16: error[invalid-return-type] Return type does not match returned value: expected `LicenseToken | None`, found `Unknown | str`
 
 
 44 findings in intellicrack\plugins\custom_modules\hardware_dongle_emulator.py
@@ -7580,17 +7600,17 @@ intellicrack\ui\traffic_analyzer.py:1135:55: error[unresolved-attribute] Object 
 
 intellicrack\ui\traffic_analyzer.py:1136:25: error[unresolved-attribute] Object of type `object` has no attribute `emit`
 
-intellicrack\ui\traffic_analyzer.py:1143:40: error[unresolved-attribute] Object of type `object` has no attribute `logger`
+intellicrack\ui\traffic_analyzer.py:1144:22: error[unresolved-attribute] Object of type `object` has no attribute `logger`
 
-intellicrack\ui\traffic_analyzer.py:1161:38: error[unresolved-attribute] Module `socket` has no member `AF_PACKET`
+intellicrack\ui\traffic_analyzer.py:1162:38: error[unresolved-attribute] Module `socket` has no member `AF_PACKET`
 
-intellicrack\ui\traffic_analyzer.py:1172:25: error[unresolved-attribute] Object of type `object` has no attribute `append`
+intellicrack\ui\traffic_analyzer.py:1173:25: error[unresolved-attribute] Object of type `object` has no attribute `append`
 
-intellicrack\ui\traffic_analyzer.py:1176:25: error[unresolved-attribute] Object of type `object` has no attribute `emit`
+intellicrack\ui\traffic_analyzer.py:1177:25: error[unresolved-attribute] Object of type `object` has no attribute `emit`
 
-intellicrack\ui\traffic_analyzer.py:1181:24: error[unresolved-attribute] Object of type `object` has no attribute `_capture_active`
+intellicrack\ui\traffic_analyzer.py:1182:24: error[unresolved-attribute] Object of type `object` has no attribute `_capture_active`
 
-intellicrack\ui\traffic_analyzer.py:1194:13: error[call-non-callable] Object of type `object` is not callable
+intellicrack\ui\traffic_analyzer.py:1195:13: error[call-non-callable] Object of type `object` is not callable
 
 
 41 findings in intellicrack\ui\dialogs\common_imports.py
@@ -8123,7 +8143,7 @@ intellicrack\ai\model_download_manager.py:178:17: error[call-non-callable] Objec
 
 intellicrack\ai\model_download_manager.py:228:21: warning[possibly-missing-attribute] Attribute `model_info` may be missing on object of type `Unknown | HfApi | None`
 
-intellicrack\ai\model_download_manager.py:238:68: warning[possibly-missing-attribute] Attribute `modelId` may be missing on object of type `Unknown | ModelInfo`
+intellicrack\ai\model_download_manager.py:238:75: warning[possibly-missing-attribute] Attribute `modelId` may be missing on object of type `Unknown | ModelInfo`
 
 intellicrack\ai\model_download_manager.py:241:26: warning[possibly-missing-attribute] Attribute `modelId` may be missing on object of type `Unknown | ModelInfo`
 
@@ -9257,7 +9277,7 @@ intellicrack\ai\model_sharding.py:610:17: error[invalid-assignment] Cannot assig
 
 intellicrack\ai\model_sharding.py:611:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `int`
 
-intellicrack\ai\model_sharding.py:906:32: error[invalid-argument-type] Argument to function `max` is incorrect: Argument type `object` does not satisfy upper bound `SupportsDunderLT[Any] | SupportsDunderGT[Any]` of type variable `SupportsRichComparisonT`
+intellicrack\ai\model_sharding.py:908:32: error[invalid-argument-type] Argument to function `max` is incorrect: Argument type `object` does not satisfy upper bound `SupportsDunderLT[Any] | SupportsDunderGT[Any]` of type variable `SupportsRichComparisonT`
 
 
 34 findings in intellicrack\core\analysis\frida_gui_integration.py
@@ -11300,13 +11320,13 @@ intellicrack\core\analysis\control_flow_deobfuscation.py:264:38: error[call-non-
 
 intellicrack\core\analysis\control_flow_deobfuscation.py:277:40: error[call-non-callable] Object of type `None` is not callable
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:1462:30: warning[possibly-missing-attribute] Attribute `parse` may be missing on object of type `Unknown | None`
+intellicrack\core\analysis\control_flow_deobfuscation.py:1470:30: warning[possibly-missing-attribute] Attribute `parse` may be missing on object of type `Unknown | None`
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:1477:25: error[invalid-assignment] Object of type `list[int]` is not assignable to attribute `content` on type `Section & ~AlwaysFalsy`
+intellicrack\core\analysis\control_flow_deobfuscation.py:1485:25: error[invalid-assignment] Object of type `list[int]` is not assignable to attribute `content` on type `Section & ~AlwaysFalsy`
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:1485:35: warning[possibly-missing-attribute] Attribute `asm` may be missing on object of type `Unknown | None`
+intellicrack\core\analysis\control_flow_deobfuscation.py:1493:35: warning[possibly-missing-attribute] Attribute `asm` may be missing on object of type `Unknown | None`
 
-intellicrack\core\analysis\control_flow_deobfuscation.py:1492:25: error[invalid-assignment] Object of type `list[int]` is not assignable to attribute `content` on type `Section & ~AlwaysFalsy`
+intellicrack\core\analysis\control_flow_deobfuscation.py:1500:25: error[invalid-assignment] Object of type `list[int]` is not assignable to attribute `content` on type `Section & ~AlwaysFalsy`
 
 
 25 findings in intellicrack\core\analysis\dynamic_analyzer.py
@@ -11596,33 +11616,33 @@ intellicrack\core\protection_bypass\hardware_token.py:361:9: error[invalid-assig
 
 intellicrack\core\protection_bypass\hardware_token.py:361:9: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `dict[str, Any]` on object of type `list[Unknown]`
 
-intellicrack\core\protection_bypass\hardware_token.py:505:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\hardware_token.py:506:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\hardware_token.py:506:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
-
-intellicrack\core\protection_bypass\hardware_token.py:525:47: error[unresolved-attribute] Module `cryptography.x509` has no member `Encoding`
+intellicrack\core\protection_bypass\hardware_token.py:507:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
 intellicrack\core\protection_bypass\hardware_token.py:526:47: error[unresolved-attribute] Module `cryptography.x509` has no member `Encoding`
 
-intellicrack\core\protection_bypass\hardware_token.py:556:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bytes | list[Unknown] | dict[Unknown, Unknown]`
+intellicrack\core\protection_bypass\hardware_token.py:527:47: error[unresolved-attribute] Module `cryptography.x509` has no member `Encoding`
 
-intellicrack\core\protection_bypass\hardware_token.py:629:34: warning[possibly-missing-attribute] Attribute `OpenProcess` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:557:17: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | bytes | list[Unknown] | dict[Unknown, Unknown]`
 
-intellicrack\core\protection_bypass\hardware_token.py:636:33: warning[possibly-missing-attribute] Attribute `VirtualAllocEx` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:630:34: warning[possibly-missing-attribute] Attribute `OpenProcess` may be missing on object of type `Unknown | WinDLL | None`
 
-intellicrack\core\protection_bypass\hardware_token.py:645:17: warning[possibly-missing-attribute] Attribute `WriteProcessMemory` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:637:33: warning[possibly-missing-attribute] Attribute `VirtualAllocEx` may be missing on object of type `Unknown | WinDLL | None`
 
-intellicrack\core\protection_bypass\hardware_token.py:648:32: warning[possibly-missing-attribute] Attribute `GetProcAddress` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:646:17: warning[possibly-missing-attribute] Attribute `WriteProcessMemory` may be missing on object of type `Unknown | WinDLL | None`
 
-intellicrack\core\protection_bypass\hardware_token.py:648:61: warning[possibly-missing-attribute] Attribute `GetModuleHandleA` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:649:32: warning[possibly-missing-attribute] Attribute `GetProcAddress` may be missing on object of type `Unknown | WinDLL | None`
 
-intellicrack\core\protection_bypass\hardware_token.py:650:37: warning[possibly-missing-attribute] Attribute `CreateRemoteThread` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:649:61: warning[possibly-missing-attribute] Attribute `GetModuleHandleA` may be missing on object of type `Unknown | WinDLL | None`
 
-intellicrack\core\protection_bypass\hardware_token.py:651:21: warning[possibly-missing-attribute] Attribute `CloseHandle` may be missing on object of type `Unknown | WinDLL | None`
+intellicrack\core\protection_bypass\hardware_token.py:651:37: warning[possibly-missing-attribute] Attribute `CreateRemoteThread` may be missing on object of type `Unknown | WinDLL | None`
 
 intellicrack\core\protection_bypass\hardware_token.py:652:21: warning[possibly-missing-attribute] Attribute `CloseHandle` may be missing on object of type `Unknown | WinDLL | None`
 
-intellicrack\core\protection_bypass\hardware_token.py:792:37: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `str`
+intellicrack\core\protection_bypass\hardware_token.py:653:21: warning[possibly-missing-attribute] Attribute `CloseHandle` may be missing on object of type `Unknown | WinDLL | None`
+
+intellicrack\core\protection_bypass\hardware_token.py:793:37: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `str`
 
 
 24 findings in intellicrack\core\reporting\pdf_generator.py
@@ -12145,33 +12165,33 @@ intellicrack\core\logging\audit_logger.py:1108:18: error[unresolved-import] Cann
 
 intellicrack\core\logging\audit_logger.py:1271:24: error[unresolved-import] Cannot resolve imported module `..config.external_tools_config`
 
-intellicrack\core\logging\audit_logger.py:1388:35: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `AuditLogger`
+intellicrack\core\logging\audit_logger.py:1394:35: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `AuditLogger`
 
-intellicrack\core\logging\audit_logger.py:1479:17: warning[possibly-missing-attribute] Attribute `log_security_event` may be missing on object of type `(Unknown & ~AlwaysFalsy) | (AuditLogger & ~AlwaysFalsy)`
+intellicrack\core\logging\audit_logger.py:1485:17: warning[possibly-missing-attribute] Attribute `log_security_event` may be missing on object of type `(Unknown & ~AlwaysFalsy) | (AuditLogger & ~AlwaysFalsy)`
 
-intellicrack\core\logging\audit_logger.py:1504:17: warning[possibly-missing-attribute] Attribute `log_security_event` may be missing on object of type `(Unknown & ~AlwaysFalsy) | (AuditLogger & ~AlwaysFalsy)`
+intellicrack\core\logging\audit_logger.py:1510:17: warning[possibly-missing-attribute] Attribute `log_security_event` may be missing on object of type `(Unknown & ~AlwaysFalsy) | (AuditLogger & ~AlwaysFalsy)`
 
-intellicrack\core\logging\audit_logger.py:1576:28: error[call-non-callable] Object of type `object` is not callable
+intellicrack\core\logging\audit_logger.py:1582:28: error[call-non-callable] Object of type `object` is not callable
 
-intellicrack\core\logging\audit_logger.py:1620:66: error[invalid-argument-type] Argument to bound method `log_exploit_attempt` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\logging\audit_logger.py:1626:66: error[invalid-argument-type] Argument to bound method `log_exploit_attempt` is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1620:66: error[invalid-argument-type] Argument to bound method `log_exploit_attempt` is incorrect: Expected `bool`, found `object`
+intellicrack\core\logging\audit_logger.py:1626:66: error[invalid-argument-type] Argument to bound method `log_exploit_attempt` is incorrect: Expected `bool`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1620:66: error[invalid-argument-type] Argument to bound method `log_exploit_attempt` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\logging\audit_logger.py:1626:66: error[invalid-argument-type] Argument to bound method `log_exploit_attempt` is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1645:61: error[invalid-argument-type] Argument to bound method `log_vm_operation` is incorrect: Expected `bool`, found `object`
+intellicrack\core\logging\audit_logger.py:1651:61: error[invalid-argument-type] Argument to bound method `log_vm_operation` is incorrect: Expected `bool`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1645:61: error[invalid-argument-type] Argument to bound method `log_vm_operation` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\logging\audit_logger.py:1651:61: error[invalid-argument-type] Argument to bound method `log_vm_operation` is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1657:72: error[invalid-argument-type] Argument to bound method `log_credential_access` is incorrect: Expected `bool`, found `object`
+intellicrack\core\logging\audit_logger.py:1663:72: error[invalid-argument-type] Argument to bound method `log_credential_access` is incorrect: Expected `bool`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1657:72: error[invalid-argument-type] Argument to bound method `log_credential_access` is incorrect: Expected `AuditSeverity`, found `object`
+intellicrack\core\logging\audit_logger.py:1663:72: error[invalid-argument-type] Argument to bound method `log_credential_access` is incorrect: Expected `AuditSeverity`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1669:63: error[invalid-argument-type] Argument to bound method `log_tool_execution` is incorrect: Expected `bool`, found `object`
+intellicrack\core\logging\audit_logger.py:1675:63: error[invalid-argument-type] Argument to bound method `log_tool_execution` is incorrect: Expected `bool`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1669:63: error[invalid-argument-type] Argument to bound method `log_tool_execution` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\logging\audit_logger.py:1675:63: error[invalid-argument-type] Argument to bound method `log_tool_execution` is incorrect: Expected `str | None`, found `object`
 
-intellicrack\core\logging\audit_logger.py:1669:63: error[invalid-argument-type] Argument to bound method `log_tool_execution` is incorrect: Expected `str | None`, found `object`
+intellicrack\core\logging\audit_logger.py:1675:63: error[invalid-argument-type] Argument to bound method `log_tool_execution` is incorrect: Expected `str | None`, found `object`
 
 
 23 findings in intellicrack\core\protection_bypass\dongle_emulator.py
@@ -12296,29 +12316,29 @@ intellicrack\hexview\file_handler.py:390:39: error[unresolved-attribute] Class `
 
 intellicrack\hexview\file_handler.py:396:21: error[invalid-argument-type] Argument to bound method `__init__` is incorrect: Expected `str`, found `None | str`
 
-intellicrack\hexview\file_handler.py:571:17: warning[possibly-missing-attribute] Attribute `seek` may be missing on object of type `Unknown | None | BufferedRandom`
+intellicrack\hexview\file_handler.py:574:17: warning[possibly-missing-attribute] Attribute `seek` may be missing on object of type `Unknown | None | BufferedRandom`
 
-intellicrack\hexview\file_handler.py:572:17: warning[possibly-missing-attribute] Attribute `write` may be missing on object of type `Unknown | None | BufferedRandom`
+intellicrack\hexview\file_handler.py:575:17: warning[possibly-missing-attribute] Attribute `write` may be missing on object of type `Unknown | None | BufferedRandom`
 
-intellicrack\hexview\file_handler.py:578:13: warning[possibly-missing-attribute] Attribute `flush` may be missing on object of type `Unknown | None | BufferedRandom`
+intellicrack\hexview\file_handler.py:581:13: warning[possibly-missing-attribute] Attribute `flush` may be missing on object of type `Unknown | None | BufferedRandom`
 
-intellicrack\hexview\file_handler.py:609:13: warning[possibly-missing-attribute] Attribute `seek` may be missing on object of type `Unknown | None | BufferedRandom`
+intellicrack\hexview\file_handler.py:612:13: warning[possibly-missing-attribute] Attribute `seek` may be missing on object of type `Unknown | None | BufferedRandom`
 
-intellicrack\hexview\file_handler.py:610:13: warning[possibly-missing-attribute] Attribute `write` may be missing on object of type `Unknown | None | BufferedRandom`
+intellicrack\hexview\file_handler.py:613:13: warning[possibly-missing-attribute] Attribute `write` may be missing on object of type `Unknown | None | BufferedRandom`
 
-intellicrack\hexview\file_handler.py:611:13: warning[possibly-missing-attribute] Attribute `flush` may be missing on object of type `Unknown | None | BufferedRandom`
+intellicrack\hexview\file_handler.py:614:13: warning[possibly-missing-attribute] Attribute `flush` may be missing on object of type `Unknown | None | BufferedRandom`
 
-intellicrack\hexview\file_handler.py:700:13: error[invalid-assignment] Object of type `BufferedRandom` is not assignable to attribute `file_obj` on type `Unknown | ChunkManager`
+intellicrack\hexview\file_handler.py:703:13: error[invalid-assignment] Object of type `BufferedRandom` is not assignable to attribute `file_obj` on type `Unknown | ChunkManager`
 
-intellicrack\hexview\file_handler.py:708:59: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
+intellicrack\hexview\file_handler.py:711:59: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
 
-intellicrack\hexview\file_handler.py:710:31: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
+intellicrack\hexview\file_handler.py:713:31: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
 
-intellicrack\hexview\file_handler.py:792:13: error[invalid-assignment] Object of type `BufferedRandom` is not assignable to attribute `file_obj` on type `Unknown | ChunkManager`
+intellicrack\hexview\file_handler.py:795:13: error[invalid-assignment] Object of type `BufferedRandom` is not assignable to attribute `file_obj` on type `Unknown | ChunkManager`
 
-intellicrack\hexview\file_handler.py:800:59: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
+intellicrack\hexview\file_handler.py:803:59: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
 
-intellicrack\hexview\file_handler.py:802:31: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
+intellicrack\hexview\file_handler.py:805:31: error[possibly-unresolved-reference] Name `temp_path` used when possibly not defined
 
 
 23 findings in intellicrack\plugins\custom_modules\ui_enhancement_module.py
@@ -13402,21 +13422,21 @@ intellicrack\ai\predictive_intelligence.py:249:53: warning[possibly-missing-attr
 
 intellicrack\ai\predictive_intelligence.py:262:31: warning[possibly-missing-attribute] Attribute `disk_io_counters` may be missing on object of type `Unknown | None`
 
-intellicrack\ai\predictive_intelligence.py:920:38: error[unresolved-attribute] Object of type `Stats` has no attribute `total_tt`
+intellicrack\ai\predictive_intelligence.py:918:38: error[unresolved-attribute] Object of type `Stats` has no attribute `total_tt`
 
-intellicrack\ai\predictive_intelligence.py:1545:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `defaultdict[Unknown, Unknown]` and `Literal[1]`
+intellicrack\ai\predictive_intelligence.py:1543:17: error[unsupported-operator] Operator `+=` is not supported between objects of type `defaultdict[Unknown, Unknown]` and `Literal[1]`
 
-intellicrack\ai\predictive_intelligence.py:1576:9: error[unsupported-operator] Operator `+=` is not supported between objects of type `defaultdict[Unknown, Unknown]` and `Literal[1]`
+intellicrack\ai\predictive_intelligence.py:1574:9: error[unsupported-operator] Operator `+=` is not supported between objects of type `defaultdict[Unknown, Unknown]` and `Literal[1]`
 
-intellicrack\ai\predictive_intelligence.py:1602:9: error[non-subscriptable] Cannot subscript object of type `int` with no `__getitem__` method
+intellicrack\ai\predictive_intelligence.py:1600:9: error[non-subscriptable] Cannot subscript object of type `int` with no `__getitem__` method
 
-intellicrack\ai\predictive_intelligence.py:1626:76: error[invalid-argument-type] Argument to function `max` is incorrect: Argument type `Unknown | int | defaultdict[Unknown, Unknown]` does not satisfy upper bound `SupportsDunderLT[Any] | SupportsDunderGT[Any]` of type variable `SupportsRichComparisonT`
+intellicrack\ai\predictive_intelligence.py:1624:76: error[invalid-argument-type] Argument to function `max` is incorrect: Argument type `Unknown | int | defaultdict[Unknown, Unknown]` does not satisfy upper bound `SupportsDunderLT[Any] | SupportsDunderGT[Any]` of type variable `SupportsRichComparisonT`
 
-intellicrack\ai\predictive_intelligence.py:1626:76: error[invalid-argument-type] Argument to function `max` is incorrect: Expected `Literal[1]`, found `Unknown | int | defaultdict[Unknown, Unknown]`
+intellicrack\ai\predictive_intelligence.py:1624:76: error[invalid-argument-type] Argument to function `max` is incorrect: Expected `Literal[1]`, found `Unknown | int | defaultdict[Unknown, Unknown]`
 
-intellicrack\ai\predictive_intelligence.py:1632:38: warning[possibly-missing-attribute] Attribute `items` may be missing on object of type `Unknown | int | defaultdict[Unknown, Unknown]`
+intellicrack\ai\predictive_intelligence.py:1630:38: warning[possibly-missing-attribute] Attribute `items` may be missing on object of type `Unknown | int | defaultdict[Unknown, Unknown]`
 
-intellicrack\ai\predictive_intelligence.py:1634:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `int`
+intellicrack\ai\predictive_intelligence.py:1632:17: error[invalid-assignment] Cannot assign to a subscript on an object of type `int`
 
 
 19 findings in intellicrack\core\binary_analyzer.py
@@ -14077,17 +14097,17 @@ intellicrack\ai\model_cache_manager.py:439:13: error[invalid-argument-type] Argu
 
 intellicrack\ai\model_cache_manager.py:440:13: error[invalid-argument-type] Argument is incorrect: Expected `dict[str, Any] | None`, found `object`
 
-intellicrack\ai\model_cache_manager.py:510:52: error[invalid-argument-type] Argument to function `secure_pickle_dump` is incorrect: Expected `str`, found `Unknown | Path`
+intellicrack\ai\model_cache_manager.py:513:52: error[invalid-argument-type] Argument to function `secure_pickle_dump` is incorrect: Expected `str`, found `Unknown | Path`
 
-intellicrack\ai\model_cache_manager.py:515:60: error[invalid-argument-type] Argument to function `secure_pickle_dump` is incorrect: Expected `str`, found `Unknown | Path`
+intellicrack\ai\model_cache_manager.py:518:60: error[invalid-argument-type] Argument to function `secure_pickle_dump` is incorrect: Expected `str`, found `Unknown | Path`
 
-intellicrack\ai\model_cache_manager.py:576:40: error[invalid-argument-type] Argument to function `secure_pickle_load` is incorrect: Expected `str`, found `Path`
+intellicrack\ai\model_cache_manager.py:579:40: error[invalid-argument-type] Argument to function `secure_pickle_load` is incorrect: Expected `str`, found `Path`
 
-intellicrack\ai\model_cache_manager.py:583:52: error[invalid-argument-type] Argument to function `secure_pickle_load` is incorrect: Expected `str`, found `Path`
+intellicrack\ai\model_cache_manager.py:586:52: error[invalid-argument-type] Argument to function `secure_pickle_load` is incorrect: Expected `str`, found `Path`
 
-intellicrack\ai\model_cache_manager.py:733:24: error[call-non-callable] Object of type `None` is not callable
+intellicrack\ai\model_cache_manager.py:736:24: error[call-non-callable] Object of type `None` is not callable
 
-intellicrack\ai\model_cache_manager.py:777:78: error[invalid-type-form] Variable of type `def callable(obj: object, /) -> TypeIs[() -> object]` is not allowed in a type expression
+intellicrack\ai\model_cache_manager.py:780:78: error[invalid-type-form] Variable of type `def callable(obj: object, /) -> TypeIs[() -> object]` is not allowed in a type expression
 
 
 17 findings in intellicrack\ai\orchestrator.py
@@ -14287,29 +14307,29 @@ intellicrack\plugins\custom_modules\cloud_license_interceptor.py:54:6: error[unr
 
 intellicrack\plugins\custom_modules\cloud_license_interceptor.py:55:6: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.logger`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:271:52: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:272:52: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:347:25: warning[possibly-missing-attribute] Attribute `subject` may be missing on object of type `Unknown | None`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:349:25: warning[possibly-missing-attribute] Attribute `subject` may be missing on object of type `Unknown | None`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:356:56: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:358:56: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:776:25: error[unresolved-attribute] Class `AuthenticationType` has no attribute `BEARER`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:778:25: error[unresolved-attribute] Class `AuthenticationType` has no attribute `BEARER`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:788:27: error[unresolved-attribute] Class `AuthenticationType` has no attribute `OAUTH`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:790:27: error[unresolved-attribute] Class `AuthenticationType` has no attribute `OAUTH`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:989:17: warning[possibly-missing-attribute] Attribute `update` may be missing on object of type `Unknown | bool | dict[Unknown | str, Unknown | str | int | float] | dict[Unknown | str, Unknown | bool] | dict[Unknown | str, Unknown | int]`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:991:17: warning[possibly-missing-attribute] Attribute `update` may be missing on object of type `Unknown | bool | dict[Unknown | str, Unknown | str | int | float] | dict[Unknown | str, Unknown | bool] | dict[Unknown | str, Unknown | int]`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:997:17: warning[possibly-missing-attribute] Attribute `update` may be missing on object of type `Unknown | bool | dict[Unknown | str, Unknown | str | int | float] | dict[Unknown | str, Unknown | bool] | dict[Unknown | str, Unknown | int]`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:999:17: warning[possibly-missing-attribute] Attribute `update` may be missing on object of type `Unknown | bool | dict[Unknown | str, Unknown | str | int | float] | dict[Unknown | str, Unknown | bool] | dict[Unknown | str, Unknown | int]`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1005:17: warning[possibly-missing-attribute] Attribute `update` may be missing on object of type `Unknown | bool | dict[Unknown | str, Unknown | str | int | float] | dict[Unknown | str, Unknown | bool] | dict[Unknown | str, Unknown | int]`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1007:17: warning[possibly-missing-attribute] Attribute `update` may be missing on object of type `Unknown | bool | dict[Unknown | str, Unknown | str | int | float] | dict[Unknown | str, Unknown | bool] | dict[Unknown | str, Unknown | int]`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1014:37: error[unresolved-attribute] Class `AuthenticationType` has no attribute `OAUTH`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1016:37: error[unresolved-attribute] Class `AuthenticationType` has no attribute `OAUTH`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1315:22: error[no-matching-overload] No overload of function `min` matches arguments
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1317:22: error[no-matching-overload] No overload of function `min` matches arguments
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1516:24: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `InterceptorConfig`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1518:24: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `InterceptorConfig`
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1761:24: warning[possibly-missing-attribute] Attribute `request` may be missing on object of type `Unknown | None`
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1763:24: warning[possibly-missing-attribute] Attribute `request` may be missing on object of type `Unknown | None`
 
 
 17 findings in intellicrack\ui\dialogs\keygen_dialog.py
@@ -14530,37 +14550,37 @@ intellicrack\core\analysis\dynamic_instrumentation.py:170:5: error[unresolved-at
 
 16 findings in intellicrack\core\analysis\ghidra_binary_integration.py
 
-intellicrack\core\analysis\ghidra_binary_integration.py:389:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:409:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:389:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:409:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:392:21: error[invalid-argument-type] Method `__getitem__` of type `Overload[(key: SupportsIndex | slice[Any, Any, Any], /) -> LiteralString, (key: SupportsIndex | slice[Any, Any, Any], /) -> str]` cannot be called with key of type `Literal["protection_detection"]` on object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:412:21: error[invalid-argument-type] Method `__getitem__` of type `Overload[(key: SupportsIndex | slice[Any, Any, Any], /) -> LiteralString, (key: SupportsIndex | slice[Any, Any, Any], /) -> str]` cannot be called with key of type `Literal["protection_detection"]` on object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:392:21: error[non-subscriptable] Cannot subscript object of type `bool` with no `__getitem__` method
+intellicrack\core\analysis\ghidra_binary_integration.py:412:21: error[non-subscriptable] Cannot subscript object of type `bool` with no `__getitem__` method
 
-intellicrack\core\analysis\ghidra_binary_integration.py:395:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:415:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:395:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:415:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:397:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:417:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:397:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:417:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:399:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:419:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:399:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:419:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:401:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:421:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:401:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:421:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:403:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:423:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:403:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:423:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:405:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\core\analysis\ghidra_binary_integration.py:425:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\core\analysis\ghidra_binary_integration.py:405:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\core\analysis\ghidra_binary_integration.py:425:9: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
 
 16 findings in intellicrack\core\exploitation\keygen_generator.py
@@ -14655,17 +14675,17 @@ intellicrack\core\protection_bypass\cloud_license.py:95:10: error[unresolved-imp
 
 intellicrack\core\protection_bypass\cloud_license.py:101:6: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.logger`
 
-intellicrack\core\protection_bypass\cloud_license.py:210:44: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license.py:211:44: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license.py:211:43: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license.py:212:43: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license.py:274:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license.py:276:40: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license.py:275:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license.py:277:39: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license.py:758:37: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\core\protection_bypass\cloud_license.py:760:37: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\core\protection_bypass\cloud_license.py:829:48: error[invalid-argument-type] Argument to bound method `_encode_protobuf` is incorrect: Expected `dict[str, Any]`, found `Top[dict[Unknown, Unknown]]`
+intellicrack\core\protection_bypass\cloud_license.py:831:48: error[invalid-argument-type] Argument to bound method `_encode_protobuf` is incorrect: Expected `dict[str, Any]`, found `Top[dict[Unknown, Unknown]]`
 
 
 16 findings in intellicrack\core\protection_bypass\tpm_bypass.py
@@ -16257,25 +16277,25 @@ intellicrack\utils\core\import_checks.py:168:14: error[invalid-assignment] Objec
 
 intellicrack\utils\protection\certificate_utils.py:24:6: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.logger`
 
-intellicrack\utils\protection\certificate_utils.py:160:51: error[possibly-unresolved-reference] Name `x509` used when possibly not defined
+intellicrack\utils\protection\certificate_utils.py:162:51: error[possibly-unresolved-reference] Name `x509` used when possibly not defined
 
-intellicrack\utils\protection\certificate_utils.py:189:39: error[possibly-unresolved-reference] Name `x509` used when possibly not defined
+intellicrack\utils\protection\certificate_utils.py:191:39: error[possibly-unresolved-reference] Name `x509` used when possibly not defined
 
-intellicrack\utils\protection\certificate_utils.py:208:32: error[possibly-unresolved-reference] Name `x509` used when possibly not defined
+intellicrack\utils\protection\certificate_utils.py:210:32: error[possibly-unresolved-reference] Name `x509` used when possibly not defined
 
-intellicrack\utils\protection\certificate_utils.py:232:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\utils\protection\certificate_utils.py:234:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\utils\protection\certificate_utils.py:232:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\utils\protection\certificate_utils.py:234:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\utils\protection\certificate_utils.py:232:13: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `Unknown` on object of type `list[Unknown]`
+intellicrack\utils\protection\certificate_utils.py:234:13: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `Unknown` on object of type `list[Unknown]`
 
-intellicrack\utils\protection\certificate_utils.py:236:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
+intellicrack\utils\protection\certificate_utils.py:238:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `str`
 
-intellicrack\utils\protection\certificate_utils.py:236:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
+intellicrack\utils\protection\certificate_utils.py:238:13: error[invalid-assignment] Cannot assign to a subscript on an object of type `bool`
 
-intellicrack\utils\protection\certificate_utils.py:236:13: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `Unknown` on object of type `list[Unknown]`
+intellicrack\utils\protection\certificate_utils.py:238:13: error[invalid-assignment] Invalid subscript assignment with key of type `str` and value of type `Unknown` on object of type `list[Unknown]`
 
-intellicrack\utils\protection\certificate_utils.py:245:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | dict[Unknown, Unknown] | str | bool | list[Unknown]`
+intellicrack\utils\protection\certificate_utils.py:247:13: warning[possibly-missing-attribute] Attribute `append` may be missing on object of type `Unknown | dict[Unknown, Unknown] | str | bool | list[Unknown]`
 
 
 10 findings in intellicrack\ai\model_batch_tester.py
@@ -16512,23 +16532,23 @@ intellicrack\hexview\intellicrack_hex_protection_integration.py:497:29: error[ca
 
 intellicrack\main.py:24:6: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.logger`
 
-intellicrack\main.py:141:14: error[unresolved-import] Cannot resolve imported module `intellicrack.config`
+intellicrack\main.py:146:14: error[unresolved-import] Cannot resolve imported module `intellicrack.config`
 
-intellicrack\main.py:142:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.core.plugin_paths`
+intellicrack\main.py:147:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.core.plugin_paths`
 
-intellicrack\main.py:143:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.logger`
+intellicrack\main.py:148:14: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.logger`
 
-intellicrack\main.py:174:18: error[unresolved-import] Cannot resolve imported module `intellicrack.core.logging.audit_logger`
+intellicrack\main.py:179:18: error[unresolved-import] Cannot resolve imported module `intellicrack.core.logging.audit_logger`
 
-intellicrack\main.py:184:18: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.torch_gil_safety`
+intellicrack\main.py:189:18: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.torch_gil_safety`
 
-intellicrack\main.py:197:18: error[unresolved-import] Cannot resolve imported module `intellicrack.core`
+intellicrack\main.py:202:18: error[unresolved-import] Cannot resolve imported module `intellicrack.core`
 
-intellicrack\main.py:213:18: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.security_mitigations`
+intellicrack\main.py:218:18: error[unresolved-import] Cannot resolve imported module `intellicrack.utils.security_mitigations`
 
-intellicrack\main.py:224:14: error[unresolved-import] Cannot resolve imported module `intellicrack.core.startup_checks`
+intellicrack\main.py:229:14: error[unresolved-import] Cannot resolve imported module `intellicrack.core.startup_checks`
 
-intellicrack\main.py:237:14: error[unresolved-import] Cannot resolve imported module `intellicrack.ui.main_app`
+intellicrack\main.py:242:14: error[unresolved-import] Cannot resolve imported module `intellicrack.ui.main_app`
 
 
 10 findings in intellicrack\protection\__init__.py
@@ -19015,9 +19035,9 @@ intellicrack\core\terminal_manager.py:85:14: error[unresolved-import] Cannot res
 
 intellicrack\core\tool_discovery.py:540:14: error[unresolved-import] Cannot resolve imported module `intellicrack.core.config_manager`
 
-intellicrack\core\tool_discovery.py:1356:55: error[unresolved-attribute] Object of type `(str, dict[str, Any], /) -> dict[str, Any] | None` has no attribute `__name__`
+intellicrack\core\tool_discovery.py:1356:76: error[unresolved-attribute] Object of type `(str, dict[str, Any], /) -> dict[str, Any] | None` has no attribute `__name__`
 
-intellicrack\core\tool_discovery.py:1359:52: error[unresolved-attribute] Object of type `(str, dict[str, Any], /) -> dict[str, Any] | None` has no attribute `__name__`
+intellicrack\core\tool_discovery.py:1359:67: error[unresolved-attribute] Object of type `(str, dict[str, Any], /) -> dict[str, Any] | None` has no attribute `__name__`
 
 
 3 findings in intellicrack\core\vulnerability_research\patch_analyzer.py
@@ -19204,9 +19224,9 @@ intellicrack\utils\system\subprocess_utils.py:194:26: error[possibly-unresolved-
 
 intellicrack\utils\system\windows_structures.py:249:55: error[invalid-parameter-default] Default value of type `None` is not assignable to annotated parameter type `str`
 
-intellicrack\utils\system\windows_structures.py:377:49: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\utils\system\windows_structures.py:378:49: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
-intellicrack\utils\system\windows_structures.py:378:48: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
+intellicrack\utils\system\windows_structures.py:379:48: warning[deprecated] The function `utcnow` is deprecated: Use timezone-aware objects to represent datetimes in UTC; e.g. by calling .now(datetime.timezone.utc)
 
 
 2 findings in intellicrack\__main__.py

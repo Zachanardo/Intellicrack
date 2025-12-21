@@ -470,15 +470,16 @@ class ASCIIChartGenerator:
         strings_data = analysis_results.get("strings", [])
         if isinstance(strings_data, list) and strings_data:
             if string_lengths := [len(s) for s in strings_data if isinstance(s, str)]:
-                charts.append("\n" + "=" * 50 + "\n")
-                charts.append(
-                    self.generate_histogram(
-                        string_lengths,
-                        bins=8,
-                        title="String Length Distribution",
-                    ),
+                charts.extend(
+                    (
+                        "\n" + "=" * 50 + "\n",
+                        self.generate_histogram(
+                            string_lengths,
+                            bins=8,
+                            title="String Length Distribution",
+                        ),
+                    )
                 )
-
         return "\n".join(charts) if charts else "No chartable data available"
 
     def generate_rich_dashboard(self, analysis_results: dict[str, Any]) -> None:

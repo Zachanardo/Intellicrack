@@ -174,7 +174,7 @@ try:
     if HAS_MATPLOTLIB:
         matplotlib.use("qtagg")
 except ImportError as e:
-    logger.error("Import error in ui_setup_functions: %s", e)
+    logger.exception("Import error in ui_setup_functions: %s", e)
     HAS_MATPLOTLIB = False
 
 

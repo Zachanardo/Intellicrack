@@ -1127,59 +1127,59 @@ intellicrack\plugins\custom_modules\license_server_emulator.py:439:8: [91mDC05
 
 intellicrack\plugins\custom_modules\license_server_emulator.py:725:8: [91mDC05[0m Attribute `[1mHASP_TIME_ERROR[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3097:4: [91mDC04[0m Method `[1m_extract_key_from_process_memory[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:3098:4: [91mDC04[0m Method `[1m_extract_key_from_process_memory[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3629:0: [91mDC03[0m Class `[1mRuntimeKeyExtractor[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:3630:0: [91mDC03[0m Class `[1mRuntimeKeyExtractor[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3638:4: [91mDC04[0m Method `[1mattach_and_extract[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:3639:4: [91mDC04[0m Method `[1mattach_and_extract[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3824:4: [91mDC04[0m Method `[1mscan_memory_for_keys[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:3825:4: [91mDC04[0m Method `[1mscan_memory_for_keys[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:3925:4: [91mDC04[0m Method `[1mhook_api_calls[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:3926:4: [91mDC04[0m Method `[1mhook_api_calls[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4574:4: [91mDC04[0m Method `[1m_hook_inline_apis[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4575:4: [91mDC04[0m Method `[1m_hook_inline_apis[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4808:0: [91mDC03[0m Class `[1mFridaKeyExtractor[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4809:0: [91mDC03[0m Class `[1mFridaKeyExtractor[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4822:4: [91mDC04[0m Method `[1minject_extraction_script[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4823:4: [91mDC04[0m Method `[1minject_extraction_script[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4856:4: [91mDC04[0m Method `[1mextract_flexlm_runtime[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4857:4: [91mDC04[0m Method `[1mextract_flexlm_runtime[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4895:4: [91mDC04[0m Method `[1mextract_hasp_runtime[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4896:4: [91mDC04[0m Method `[1mextract_hasp_runtime[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4934:4: [91mDC04[0m Method `[1mmonitor_license_validation[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4935:4: [91mDC04[0m Method `[1mmonitor_license_validation[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:4957:4: [91mDC04[0m Method `[1mdetach_all[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:4958:4: [91mDC04[0m Method `[1mdetach_all[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5380:8: [91mDC05[0m Attribute `[1mtransparent_mode[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:5381:8: [91mDC05[0m Attribute `[1mtransparent_mode[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:5384:8: [91mDC05[0m Attribute `[1msession_states[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:5385:8: [91mDC05[0m Attribute `[1msession_states[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6311:4: [91mDC04[0m Method `[1m_generate_kms_confirmation_id[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6312:4: [91mDC04[0m Method `[1m_generate_kms_confirmation_id[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6325:4: [91mDC04[0m Method `[1m_generate_kms_product_key_from_binary[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6326:4: [91mDC04[0m Method `[1m_generate_kms_product_key_from_binary[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6364:4: [91mDC04[0m Method `[1mset_target_binary[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6365:4: [91mDC04[0m Method `[1mset_target_binary[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6382:4: [91mDC04[0m Method `[1manalyze_binary_for_protection[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6383:4: [91mDC04[0m Method `[1manalyze_binary_for_protection[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6687:8: [91mDC02[0m Function `[1mactivate_license[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6688:8: [91mDC02[0m Function `[1mactivate_license[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6691:8: [91mDC02[0m Function `[1mget_license_status[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6692:8: [91mDC02[0m Function `[1mget_license_status[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6695:8: [91mDC02[0m Function `[1mflexlm_checkout[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6696:8: [91mDC02[0m Function `[1mflexlm_checkout[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6703:8: [91mDC02[0m Function `[1mkms_activate[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6704:8: [91mDC02[0m Function `[1mkms_activate[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6707:8: [91mDC02[0m Function `[1madobe_validate[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6708:8: [91mDC02[0m Function `[1madobe_validate[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6725:8: [91mDC02[0m Function `[1mhandle_proxy_intercept[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6726:8: [91mDC02[0m Function `[1mhandle_proxy_intercept[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:6747:8: [91mDC02[0m Function `[1mget_proxy_stats[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:6748:8: [91mDC02[0m Function `[1mget_proxy_stats[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7093:12: [91mDC05[0m Attribute `[1mcheck_hostname[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:7094:12: [91mDC05[0m Attribute `[1mcheck_hostname[0m` is never used
 
-intellicrack\plugins\custom_modules\license_server_emulator.py:7094:12: [91mDC05[0m Attribute `[1mverify_mode[0m` is never used
+intellicrack\plugins\custom_modules\license_server_emulator.py:7095:12: [91mDC05[0m Attribute `[1mverify_mode[0m` is never used
 
 
 38 findings in intellicrack\ui\main_app.py
@@ -2306,15 +2306,15 @@ intellicrack\ai\lora_adapter_manager.py:93:4: [91mDC01[0m Variable `[1minit_r
 
 intellicrack\ai\lora_adapter_manager.py:113:8: [91mDC05[0m Attribute `[1madapter_configs[0m` is never used
 
-intellicrack\ai\lora_adapter_manager.py:359:4: [91mDC04[0m Method `[1mprepare_model_for_qlora[0m` is never used
+intellicrack\ai\lora_adapter_manager.py:361:4: [91mDC04[0m Method `[1mprepare_model_for_qlora[0m` is never used
 
-intellicrack\ai\lora_adapter_manager.py:395:4: [91mDC04[0m Method `[1mlist_adapters[0m` is never used
+intellicrack\ai\lora_adapter_manager.py:397:4: [91mDC04[0m Method `[1mlist_adapters[0m` is never used
 
-intellicrack\ai\lora_adapter_manager.py:470:4: [91mDC04[0m Method `[1mcompare_adapter_configs[0m` is never used
+intellicrack\ai\lora_adapter_manager.py:472:4: [91mDC04[0m Method `[1mcompare_adapter_configs[0m` is never used
 
-intellicrack\ai\lora_adapter_manager.py:554:4: [91mDC04[0m Method `[1mdownload_adapter[0m` is never used
+intellicrack\ai\lora_adapter_manager.py:556:4: [91mDC04[0m Method `[1mdownload_adapter[0m` is never used
 
-intellicrack\ai\lora_adapter_manager.py:646:4: [91mDC04[0m Method `[1mvalidate_adapter_config[0m` is never used
+intellicrack\ai\lora_adapter_manager.py:648:4: [91mDC04[0m Method `[1mvalidate_adapter_config[0m` is never used
 
 
 14 findings in intellicrack\core\patching\license_check_remover.py
@@ -2774,7 +2774,7 @@ intellicrack\ai\model_sharding.py:570:4: [91mDC04[0m Method `[1moptimize_devi
 
 intellicrack\ai\model_sharding.py:722:4: [91mDC04[0m Method `[1mcreate_pipeline_parallel_groups[0m` is never used
 
-intellicrack\ai\model_sharding.py:763:4: [91mDC04[0m Method `[1mprofile_model_distribution[0m` is never used
+intellicrack\ai\model_sharding.py:765:4: [91mDC04[0m Method `[1mprofile_model_distribution[0m` is never used
 
 
 11 findings in intellicrack\ai\quantization_manager.py
@@ -4078,13 +4078,13 @@ intellicrack\plugins\custom_modules\cloud_license_interceptor.py:111:4: [91mDC0
 
 intellicrack\plugins\custom_modules\cloud_license_interceptor.py:123:4: [91mDC01[0m Variable `[1menable_ssl_interception[0m` is never used
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:653:8: [91mDC05[0m Attribute `[1mtoken_cache[0m` is never used
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:655:8: [91mDC05[0m Attribute `[1mtoken_cache[0m` is never used
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1227:4: [91mDC04[0m Method `[1m_check_network_connectivity[0m` is never used
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1229:4: [91mDC04[0m Method `[1m_check_network_connectivity[0m` is never used
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1265:4: [91mDC04[0m Method `[1m_compress_cache_data[0m` is never used
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1267:4: [91mDC04[0m Method `[1m_compress_cache_data[0m` is never used
 
-intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1275:4: [91mDC04[0m Method `[1m_analyze_response_content[0m` is never used
+intellicrack\plugins\custom_modules\cloud_license_interceptor.py:1277:4: [91mDC04[0m Method `[1m_analyze_response_content[0m` is never used
 
 
 6 findings in intellicrack\plugins\custom_modules\vm_protection_unwrapper.py
@@ -4237,9 +4237,9 @@ intellicrack\ai\predictive_intelligence.py:74:4: [91mDC01[0m Variable `[1mLEA
 
 intellicrack\ai\predictive_intelligence.py:379:8: [91mDC05[0m Attribute `[1mmodel_parameters[0m` is never used
 
-intellicrack\ai\predictive_intelligence.py:1122:8: [91mDC05[0m Attribute `[1mpattern_weights[0m` is never used
+intellicrack\ai\predictive_intelligence.py:1120:8: [91mDC05[0m Attribute `[1mpattern_weights[0m` is never used
 
-intellicrack\ai\predictive_intelligence.py:1123:8: [91mDC05[0m Attribute `[1mdiscovery_history[0m` is never used
+intellicrack\ai\predictive_intelligence.py:1121:8: [91mDC05[0m Attribute `[1mdiscovery_history[0m` is never used
 
 
 5 findings in intellicrack\ai\script_generation_prompts.py
@@ -4684,17 +4684,6 @@ tests\validation_system\version_compatibility_verifier.py:718:4: [91mDC04[0m M
 tests\validation_system\version_compatibility_verifier.py:779:4: [91mDC04[0m Method `[1msave_compatibility_report[0m` is never used
 
 
-4 findings in intellicrack\ai\llm_config_as_code.py
-
-intellicrack\ai\llm_config_as_code.py:735:4: [91mDC04[0m Method `[1mgenerate_config_files[0m` is never used
-
-intellicrack\ai\llm_config_as_code.py:788:0: [91mDC02[0m Function `[1mload_config_file[0m` is never used
-
-intellicrack\ai\llm_config_as_code.py:809:0: [91mDC02[0m Function `[1msave_current_config[0m` is never used
-
-intellicrack\ai\llm_config_as_code.py:822:0: [91mDC02[0m Function `[1mcreate_config_template[0m` is never used
-
-
 4 findings in intellicrack\ai\local_gguf_server.py
 
 intellicrack\ai\local_gguf_server.py:463:8: [91mDC02[0m Function `[1mchat_completions[0m` is never used
@@ -4803,17 +4792,6 @@ intellicrack\core\shared\result_types.py:44:4: [91mDC01[0m Variable `[1mVULNE
 intellicrack\core\shared\result_types.py:46:4: [91mDC01[0m Variable `[1mBINARY_INFO[0m` is never used
 
 intellicrack\core\shared\result_types.py:49:4: [91mDC01[0m Variable `[1mFIRMWARE[0m` is never used
-
-
-4 findings in intellicrack\dashboard\dashboard_manager.py
-
-intellicrack\dashboard\dashboard_manager.py:45:4: [91mDC01[0m Variable `[1mCROSS_TOOL[0m` is never used
-
-intellicrack\dashboard\dashboard_manager.py:98:4: [91mDC01[0m Variable `[1mrefresh_rate[0m` is never used
-
-intellicrack\dashboard\dashboard_manager.py:131:8: [91mDC05[0m Attribute `[1mupdate_lock[0m` is never used
-
-intellicrack\dashboard\dashboard_manager.py:423:4: [91mDC04[0m Method `[1mexport_dashboard_state[0m` is never used
 
 
 4 findings in intellicrack\dashboard\visualization_renderer.py
@@ -5343,20 +5321,11 @@ intellicrack\core\processing\distributed_manager.py:173:4: [91mDC01[0m Variabl
 
 3 findings in intellicrack\core\protection_bypass\cloud_license_analyzer.py
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:745:8: [91mDC02[0m Function `[1mverify_license[0m` is never used
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:747:8: [91mDC02[0m Function `[1mverify_license[0m` is never used
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:760:8: [91mDC02[0m Function `[1mactivate_license[0m` is never used
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:762:8: [91mDC02[0m Function `[1mactivate_license[0m` is never used
 
-intellicrack\core\protection_bypass\cloud_license_analyzer.py:930:4: [91mDC04[0m Method `[1mbypass_license_check[0m` is never used
-
-
-3 findings in intellicrack\core\reporting\report_generator.py
-
-intellicrack\core\reporting\report_generator.py:427:4: [91mDC04[0m Method `[1mcreate_temporary_report[0m` is never used
-
-intellicrack\core\reporting\report_generator.py:469:4: [91mDC04[0m Method `[1mget_format_mime_types[0m` is never used
-
-intellicrack\core\reporting\report_generator.py:483:4: [91mDC04[0m Method `[1mcreate_template_from_string[0m` is never used
+intellicrack\core\protection_bypass\cloud_license_analyzer.py:932:4: [91mDC04[0m Method `[1mbypass_license_check[0m` is never used
 
 
 3 findings in intellicrack\core\startup_checks.py
@@ -5375,6 +5344,15 @@ intellicrack\core\trial_reset_engine.py:384:12: [91mDC01[0m Variable `[1mFind
 intellicrack\core\trial_reset_engine.py:1441:16: [91mDC05[0m Attribute `[1mwDayOfWeek[0m` is never used
 
 intellicrack\core\trial_reset_engine.py:1446:16: [91mDC05[0m Attribute `[1mwMilliseconds[0m` is never used
+
+
+3 findings in intellicrack\dashboard\dashboard_manager.py
+
+intellicrack\dashboard\dashboard_manager.py:45:4: [91mDC01[0m Variable `[1mCROSS_TOOL[0m` is never used
+
+intellicrack\dashboard\dashboard_manager.py:98:4: [91mDC01[0m Variable `[1mrefresh_rate[0m` is never used
+
+intellicrack\dashboard\dashboard_manager.py:131:8: [91mDC05[0m Attribute `[1mupdate_lock[0m` is never used
 
 
 3 findings in intellicrack\handlers\capstone_handler.py
@@ -5835,6 +5813,13 @@ intellicrack\ai\learning_engine.py:1281:12: [91mDC05[0m Attribute `[1mfeature
 intellicrack\ai\learning_engine.py:1282:12: [91mDC05[0m Attribute `[1mmin_features[0m` is never used
 
 
+2 findings in intellicrack\ai\llm_config_as_code.py
+
+intellicrack\ai\llm_config_as_code.py:788:0: [91mDC02[0m Function `[1mload_config_file[0m` is never used
+
+intellicrack\ai\llm_config_as_code.py:809:0: [91mDC02[0m Function `[1msave_current_config[0m` is never used
+
+
 2 findings in intellicrack\ai\model_discovery_service.py
 
 intellicrack\ai\model_discovery_service.py:105:4: [91mDC04[0m Method `[1mdiscover_provider_models[0m` is never used
@@ -6007,7 +5992,7 @@ intellicrack\core\protection_analyzer.py:41:4: [91mDC01[0m Variable `[1mHAS_E
 
 intellicrack\core\protection_bypass\cloud_license.py:119:4: [91mDC01[0m Variable `[1mADOBE_IMS[0m` is never used
 
-intellicrack\core\protection_bypass\cloud_license.py:1095:8: [91mDC05[0m Attribute `[1mmitm_proxy[0m` is never used
+intellicrack\core\protection_bypass\cloud_license.py:1097:8: [91mDC05[0m Attribute `[1mmitm_proxy[0m` is never used
 
 
 2 findings in intellicrack\core\protection_detection\arxan_detector.py
@@ -6428,6 +6413,13 @@ tests\core\test_ai_model_manager_production.py:54:0: [91mDC02[0m Function `[1
 tests\core\test_app_context_production.py:56:8: [91mDC01[0m Variable `[1mbinary_info_received[0m` is never used
 
 tests\core\test_app_context_production.py:61:12: [91mDC01[0m Variable `[1mbinary_info_received[0m` is never used
+
+
+2 findings in tests\core\test_subscription_validation_bypass_production.py
+
+tests\core\test_subscription_validation_bypass_production.py:22:4: [91mDC07[0m Import `[1mJWTPayload[0m` is never used
+
+tests\core\test_subscription_validation_bypass_production.py:35:0: [91mDC01[0m Variable `[1mONE_YEAR[0m` is never used
 
 
 2 findings in tests\core\vulnerability_research\test_vulnerability_analyzer_production.py
@@ -7089,6 +7081,11 @@ intellicrack\core\processing\qemu_emulator.py:79:4: [91mDC04[0m Method `[1m_d
 intellicrack\core\protection_bypass\integrity_check_defeat.py:832:8: [91mDC05[0m Attribute `[1moriginal_bytes_cache[0m` is never used
 
 
+1 findings in intellicrack\core\reporting\report_generator.py
+
+intellicrack\core\reporting\report_generator.py:483:4: [91mDC04[0m Method `[1mcreate_template_from_string[0m` is never used
+
+
 1 findings in intellicrack\core\security_enforcement.py
 
 intellicrack\core\security_enforcement.py:240:0: [91mDC02[0m Function `[1m_secure_subprocess_popen[0m` is never used
@@ -7102,11 +7099,6 @@ intellicrack\core\serial_generator.py:50:4: [91mDC01[0m Variable `[1mblacklis
 1 findings in intellicrack\core\shared\bypass_config.py
 
 intellicrack\core\shared\bypass_config.py:102:4: [91mDC04[0m Method `[1mget_bypasses_by_difficulty[0m` is never used
-
-
-1 findings in intellicrack\core\vulnerability_research\base_analyzer.py
-
-intellicrack\core\vulnerability_research\base_analyzer.py:88:4: [91mDC04[0m Method `[1mfinalize_analysis_result[0m` is never used
 
 
 1 findings in intellicrack\core\vulnerability_research\binary_differ.py
@@ -7126,7 +7118,7 @@ intellicrack\core\vulnerability_research\patch_analyzer.py:204:4: [91mDC04[0m 
 
 1 findings in intellicrack\dashboard\__init__.py
 
-intellicrack\dashboard\__init__.py:78:0: [91mDC02[0m Function `[1m__getattr__[0m` is never used
+intellicrack\dashboard\__init__.py:76:0: [91mDC02[0m Function `[1m__getattr__[0m` is never used
 
 
 1 findings in intellicrack\handlers\aiohttp_handler.py
@@ -7151,7 +7143,7 @@ intellicrack\hexview\file_compare.py:522:4: [91mDC04[0m Method `[1mget_curren
 
 1 findings in intellicrack\hexview\file_handler.py
 
-intellicrack\hexview\file_handler.py:805:4: [91mDC04[0m Method `[1mget_modification_time[0m` is never used
+intellicrack\hexview\file_handler.py:808:4: [91mDC04[0m Method `[1mget_modification_time[0m` is never used
 
 
 1 findings in intellicrack\hexview\integration.py
@@ -7507,6 +7499,11 @@ tests\core\analysis\test_streaming_yara_scanner_comprehensive.py:29:0: [91mDC01
 1 findings in tests\core\analysis\test_symbolic_devirtualizer_production.py
 
 tests\core\analysis\test_symbolic_devirtualizer_production.py:34:0: [91mDC01[0m Variable `[1mpytestmark[0m` is never used
+
+
+1 findings in tests\core\anti_analysis\test_advanced_debugger_bypass_production.py
+
+tests\core\anti_analysis\test_advanced_debugger_bypass_production.py:30:0: [91mDC01[0m Variable `[1mpytestmark[0m` is never used
 
 
 1 findings in tests\core\certificate\test_frida_cert_hooks_production.py

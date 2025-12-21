@@ -147,7 +147,7 @@ except ImportError:
                     }
 
             except Exception as vm_error:
-                logger.error(f"VM testing error: {vm_error}", exc_info=True)
+                logger.exception("VM testing error: %s", vm_error, exc_info=True)
                 runtime_ms = int((time.time() - start_time) * 1000)
 
                 script_analysis = self._analyze_script_content(script)
@@ -231,7 +231,7 @@ Script Analysis:
                 return analysis_result
 
             except Exception as analysis_error:
-                logger.error(f"Script analysis error: {analysis_error}")
+                logger.exception("Script analysis error: %s", analysis_error)
                 return {
                     "type": "unknown",
                     "extension": "txt",
@@ -323,7 +323,7 @@ Script Analysis:
                 Path(target_path).chmod(0o700)  # Restrictive permissions: only owner can read/write/execute
 
             except Exception as create_error:
-                logger.error(f"Protected binary creation error: {create_error}")
+                logger.exception("Protected binary creation error: %s", create_error)
                 # Create minimal protected file as fallback
                 with open(target_path, "wb") as f:
                     # Minimal ELF with protection check
@@ -381,7 +381,7 @@ Script Analysis:
                 return self._perform_script_validation(script, script_path, target_path)
 
             except Exception as execution_error:
-                logger.error("Script execution error: %s", execution_error)
+                logger.exception("Script execution error: %s", execution_error)
                 return {
                     "success": False,
                     "output": f"Script execution failed: {execution_error}",
@@ -497,9 +497,11 @@ Script Analysis:
 
             """
             try:
-                validation_results = ["=== Script Validation Results ==="]
-                validation_results.append(f"Script file: {script_file}")
-                validation_results.append(f"Target binary: {target_file}")
+                validation_results = [
+                    "=== Script Validation Results ===",
+                    f"Script file: {script_file}",
+                    f"Target binary: {target_file}",
+                ]
                 validation_results.append(f"Script size: {len(script)} bytes")
 
                 try:
@@ -632,7 +634,7 @@ class IntegrationManager:
             thread.start()
             self.worker_threads.append(thread)
 
-        logger.info(f"Integration manager started with {self.max_workers} workers")
+        logger.info("Integration manager started with %d workers", self.max_workers)
 
     def stop(self) -> None:
         """Stop the integration manager."""
@@ -670,7 +672,7 @@ class IntegrationManager:
                 self._execute_task(task)
 
             except Exception as e:
-                logger.error(f"Error in worker loop: {e}")
+                logger.exception("Error in worker loop: %s", e)
                 time.sleep(1.0)
 
     def _are_dependencies_satisfied(self, task: IntegrationTask) -> bool:
@@ -720,7 +722,7 @@ class IntegrationManager:
             task.status = "failed"
             task.completed_at = datetime.now()
 
-            logger.error(f"Task {task.task_id} failed: {e}")
+            logger.exception("Task %s failed: %s", task.task_id, e)
             self._emit_event("task_failed", task)
 
         finally:
@@ -857,7 +859,7 @@ class IntegrationManager:
 
         # Add to queue
         self.task_queue.put(task)
-        logger.info(f"Created task {task_id}: {description}")
+        logger.info("Created task %s: %s", task_id, description)
 
         return task_id
 
@@ -891,7 +893,7 @@ class IntegrationManager:
             workflow["tasks"][task_id] = task_def
 
         self.active_workflows[workflow_id] = workflow
-        logger.info(f"Created workflow {workflow_id} with {len(tasks)} tasks")
+        logger.info("Created workflow %s with %d tasks", workflow_id, len(tasks))
 
         return workflow_id
 
@@ -998,9 +1000,17 @@ class IntegrationManager:
             workflow = self.active_workflows[workflow_id]
             task_ids = list(workflow["tasks"].keys())
 
-            completed = sum(bool(tid in self.completed_tasks and self.completed_tasks[tid].status == "completed") for tid in task_ids)
-            failed = sum(bool(tid in self.completed_tasks and self.completed_tasks[tid].status == "failed") for tid in task_ids)
-            running = sum(bool(tid in self.active_tasks) for tid in task_ids)
+            completed = sum(
+                tid in self.completed_tasks
+                and self.completed_tasks[tid].status == "completed"
+                for tid in task_ids
+            )
+            failed = sum(
+                tid in self.completed_tasks
+                and self.completed_tasks[tid].status == "failed"
+                for tid in task_ids
+            )
+            running = sum(tid in self.active_tasks for tid in task_ids)
             pending = len(task_ids) - completed - failed - running
 
             return {
@@ -1052,9 +1062,9 @@ class IntegrationManager:
                 cancelled = True
 
         if cancelled:
-            logger.info(f"Successfully cancelled task {task_id}")
+            logger.info("Successfully cancelled task %s", task_id)
         else:
-            logger.warning(f"Task {task_id} not found in queue or active tasks")
+            logger.warning("Task %s not found in queue or active tasks", task_id)
 
         return cancelled
 
@@ -1077,7 +1087,7 @@ class IntegrationManager:
             try:
                 handler(data)
             except Exception as e:
-                logger.error(f"Error in event handler: {e}")
+                logger.exception("Error in event handler: %s", e)
 
     def create_bypass_workflow(self, target_binary: str, bypass_type: str = "license_validation") -> str:
         """Create a complete bypass workflow."""
@@ -1179,25 +1189,23 @@ class IntegrationManager:
 
         try:
             if not self.llm_manager:
-                self.logger.error("LLM manager not available")
+                self.logger.exception("LLM manager not available")
                 return "Error: AI backend not configured. Please configure an LLM provider in settings."
 
             available_llms = self.llm_manager.get_available_llms()
             if not available_llms:
-                provider = self._detect_provider_from_model(model)
-                if provider:
-                    config = LLMConfig(
-                        provider=provider,
-                        model_name=model,
-                        temperature=temperature,
-                        max_tokens=max_tokens,
-                    )
-                    llm_id = f"{provider.value}_{model}" if model else provider.value
-                    if not self.llm_manager.register_llm(llm_id, config):
-                        return f"Error: Failed to initialize AI model '{model or 'default'}'"
-                else:
+                if not (provider := self._detect_provider_from_model(model)):
                     return "Error: No AI models available. Please configure an LLM provider."
 
+                config = LLMConfig(
+                    provider=provider,
+                    model_name=model,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
+                llm_id = f"{provider.value}_{model}" if model else provider.value
+                if not self.llm_manager.register_llm(llm_id, config):
+                    return f"Error: Failed to initialize AI model '{model or 'default'}'"
             backend_id = None
             if model:
                 for llm_id in available_llms:
@@ -1254,10 +1262,7 @@ class IntegrationManager:
         if any(name in model_lower for name in ["llama", "mistral", "mixtral", "codellama", "deepseek"]):
             return LLMProvider.OLLAMA
 
-        if model_lower.endswith(".gguf"):
-            return LLMProvider.LOCAL_GGUF
-
-        return None
+        return LLMProvider.LOCAL_GGUF if model_lower.endswith(".gguf") else None
 
     def get_performance_summary(self) -> dict[str, Any]:
         """Get performance summary for integration operations."""
@@ -1269,7 +1274,7 @@ class IntegrationManager:
         if len(self.completed_tasks) > 100:
             sorted_tasks = sorted(
                 self.completed_tasks.items(),
-                key=lambda item: (item[1].completed_at.timestamp() if isinstance(item[1].completed_at, datetime) else float("-inf")),
+                key=lambda item: item[1].completed_at.timestamp() if isinstance(item[1].completed_at, datetime) else float("-inf"),
                 reverse=True,
             )
 
@@ -1316,9 +1321,9 @@ class IntegrationManager:
 
         """
         if exc_type:
-            logger.error(f"Integration manager exiting due to {exc_type.__name__}: {exc_val}")
+            logger.exception("Integration manager exiting due to %s: %s", exc_type.__name__, exc_val)
             if exc_tb:
-                logger.debug(f"Exception traceback available: {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                logger.debug("Exception traceback available: %s:%d", exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
         self.stop()
         return False  # Don't suppress exceptions
 

@@ -109,7 +109,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         self.total_bytes = 0
         self.entropy_windows = []
         self.high_entropy_regions = []
-        logger.info(f"Initialized streaming entropy analysis for: {file_path}")
+        logger.info("Initialized streaming entropy analysis for: %s", file_path)
 
     def analyze_chunk(self, context: ChunkContext) -> dict[str, Any]:
         """Analyze entropy in a single chunk.
@@ -134,9 +134,9 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             chunk_entropy = self._calculate_entropy(byte_counts, len(chunk_data))
 
             unique_bytes = len(byte_counts)
-            printable_count = sum(bool(32 <= byte <= 126) for byte in chunk_data)
+            printable_count = sum(32 <= byte <= 126 for byte in chunk_data)
             null_count = byte_counts.get(0, 0)
-            high_entropy_count = sum(bool(byte > 127) for byte in chunk_data)
+            high_entropy_count = sum(byte > 127 for byte in chunk_data)
 
             printable_ratio = printable_count / len(chunk_data) if chunk_data else 0
             null_ratio = null_count / len(chunk_data) if chunk_data else 0
@@ -172,7 +172,8 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                     )
 
             logger.debug(
-                f"Chunk {context.chunk_number}/{context.total_chunks}: Entropy={chunk_entropy:.4f}, {len(windows)} windows analyzed",
+                "Chunk %d/%d: Entropy=%.4f, %d windows analyzed",
+                context.chunk_number, context.total_chunks, chunk_entropy, len(windows),
             )
 
             return {
@@ -189,7 +190,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             }
 
         except Exception as e:
-            logger.error(f"Error analyzing entropy in chunk at offset 0x{context.offset:08x}: {e}")
+            logger.exception("Error analyzing entropy in chunk at offset 0x%08x: %s", context.offset, e)
             return {
                 "chunk_offset": context.offset,
                 "chunk_size": context.size,
@@ -266,15 +267,14 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
                 merged["errors"] = errors
 
             logger.info(
-                f"Merged {len(results)} chunk results: "
-                f"Global entropy={global_entropy:.4f}, "
-                f"{len(self.high_entropy_regions)} high-entropy regions",
+                "Merged %d chunk results: Global entropy=%.4f, %d high-entropy regions",
+                len(results), global_entropy, len(self.high_entropy_regions),
             )
 
             return merged
 
         except Exception as e:
-            logger.error(f"Error merging entropy results: {e}")
+            logger.exception("Error merging entropy results: %s", e)
             return {"error": str(e), "global_entropy": 0.0}
 
     def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
@@ -316,15 +316,14 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             }
 
             logger.info(
-                f"Finalized entropy analysis: "
-                f"Packed={is_packed}, Encrypted={is_encrypted}, "
-                f"Randomness={merged_results['randomness_score']}%",
+                "Finalized entropy analysis: Packed=%s, Encrypted=%s, Randomness=%.2f%%",
+                is_packed, is_encrypted, merged_results['randomness_score'],
             )
 
             return merged_results
 
         except Exception as e:
-            logger.error(f"Error finalizing entropy analysis: {e}")
+            logger.exception("Error finalizing entropy analysis: %s", e)
             merged_results["finalization_error"] = str(e)
             return merged_results
 
@@ -525,5 +524,5 @@ def analyze_entropy_streaming(
 
         return manager.analyze_streaming(binary_path, analyzer)
     except Exception as e:
-        logger.error(f"Streaming entropy analysis failed: {e}")
+        logger.exception("Streaming entropy analysis failed: %s", e)
         return {"error": str(e), "status": "failed"}

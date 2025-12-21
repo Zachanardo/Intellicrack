@@ -83,7 +83,7 @@ def hex_to_bytes(hex_string: str) -> bytes:
     try:
         return bytes.fromhex(hex_string)
     except ValueError as e:
-        logger.error("Invalid hex string: %s", e, exc_info=True)
+        logger.exception("Invalid hex string: %s", e)
         raise
 
 
@@ -189,7 +189,7 @@ def patch_bytes(data: bytearray, offset: int, patch_data: bytes) -> bool:
         return True
 
     except Exception as e:
-        logger.error("Failed to patch bytes: %s", e, exc_info=True)
+        logger.exception("Failed to patch bytes: %s", e)
         return False
 
 
@@ -348,7 +348,7 @@ def detect_encoding(data: bytes) -> str | None:
             data.decode(encoding)
             return encoding
         except UnicodeError as e:
-            logger.error("Error in hex_utils: %s", e)
+            logger.exception("Error in hex_utils: %s", e)
             continue
 
     return None

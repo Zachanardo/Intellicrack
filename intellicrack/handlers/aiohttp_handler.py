@@ -312,7 +312,7 @@ except ImportError as e:
             if params:
                 parsed = urllib.parse.urlparse(url)
                 query = urllib.parse.parse_qs(parsed.query)
-                query.update({k: [str(v)] if not isinstance(v, list) else v for k, v in params.items()})
+                query.update({k: v if isinstance(v, list) else [str(v)] for k, v in params.items()})
                 query_string = urllib.parse.urlencode(query, doseq=True)
                 url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 

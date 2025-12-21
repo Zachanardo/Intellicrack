@@ -406,7 +406,7 @@ class BaseDongleEmulator:
         serial_hash = hashlib.sha256(self.spec.serial_number.encode()).digest()
         expected_code = struct.unpack("<I", serial_hash[:4])[0]
 
-        if feature_code == expected_code or feature_code in [1, 2, 5, 10, 100]:
+        if feature_code in [expected_code, 1, 2, 5, 10, 100]:
             return struct.pack("<I", 0) + serial_hash
         return struct.pack("<I", 0x00000002)
 
@@ -1032,9 +1032,7 @@ class USBDongleDriver:
                     return dongle.encrypt_data(payload)
                 if operation == 0x02:  # Decrypt
                     return dongle.decrypt_data(payload)
-                if operation == 0x03:  # Hash
-                    return dongle.generate_response(payload)
-                return b"\xff"  # Unknown operation
+                return dongle.generate_response(payload) if operation == 0x03 else b"\xff"
             return b"\xff"  # Invalid data length
 
         if request != 0x05:
@@ -1870,13 +1868,11 @@ class DongleAPIHooker:
         """
         SENTINEL_SUCCESS = 0
         SENTINEL_INVALID_PARAMETER = 0x00000002
-        SENTINEL_NO_DONGLE = 0x00000003
         SENTINEL_INVALID_CELL = 0x00000004
         SENTINEL_ACCESS_DENIED = 0x00000005
 
         if not dongle or not dongle.active:
-            return SENTINEL_NO_DONGLE
-
+            return 0x00000003
         if len(args) < 2:
             return SENTINEL_INVALID_PARAMETER
 
@@ -1947,21 +1943,15 @@ class DongleAPIHooker:
             Status code (0 = HASP_STATUS_OK, non-zero = error).
         """
         HASP_STATUS_OK = 0
-        HASP_DONGLE_NOT_FOUND = 0x00000001
-        HASP_INV_HND = 0x00000006
-        HASP_TOO_SHORT = 0x0000000D
         HASP_ENC_NOT_SUPP = 0x0000001C
         HASP_INTERNAL_ERROR = 0x00000021
 
         if not dongle or not dongle.active:
-            return HASP_DONGLE_NOT_FOUND
-
+            return 0x00000001
         if buffer is None:
-            return HASP_INV_HND
-
+            return 0x00000006
         if length <= 0:
-            return HASP_TOO_SHORT
-
+            return 0x0000000D
         try:
             if isinstance(buffer, (bytes, bytearray)):
                 data_to_encrypt = bytes(buffer[:length])
@@ -1977,21 +1967,20 @@ class DongleAPIHooker:
                 except (TypeError, ValueError):
                     return HASP_INTERNAL_ERROR
 
-            if hasattr(dongle, "encrypt_data"):
-                encrypted = dongle.encrypt_data(data_to_encrypt)
-
-                if isinstance(buffer, bytearray):
-                    buffer[:len(encrypted)] = encrypted
-                elif hasattr(buffer, "contents"):
-                    import ctypes
-                    ctypes.memmove(ctypes.addressof(buffer.contents), encrypted, len(encrypted))
-                elif hasattr(buffer, "value"):
-                    buffer.value = encrypted
-
-                return HASP_STATUS_OK
-            else:
+            if not hasattr(dongle, "encrypt_data"):
                 return HASP_ENC_NOT_SUPP
 
+            encrypted = dongle.encrypt_data(data_to_encrypt)
+
+            if isinstance(buffer, bytearray):
+                buffer[:len(encrypted)] = encrypted
+            elif hasattr(buffer, "contents"):
+                import ctypes
+                ctypes.memmove(ctypes.addressof(buffer.contents), encrypted, len(encrypted))
+            elif hasattr(buffer, "value"):
+                buffer.value = encrypted
+
+            return HASP_STATUS_OK
         except Exception as e:
             self.logger.exception(f"HASP encryption error: {e}")
             return HASP_INTERNAL_ERROR
@@ -2012,15 +2001,13 @@ class DongleAPIHooker:
             Status code (0 = HASP_STATUS_OK, non-zero = error).
         """
         HASP_STATUS_OK = 0
-        HASP_DONGLE_NOT_FOUND = 0x00000001
         HASP_FEATURE_NOT_FOUND = 0x00000009
         HASP_INV_VCODE = 0x0000000F
         HASP_NO_MORE_CONNECTIONS = 0x00000016
         HASP_INTERNAL_ERROR = 0x00000021
 
         if not dongle or not dongle.active:
-            return HASP_DONGLE_NOT_FOUND
-
+            return 0x00000001
         try:
             allowed_features = {0, 1, 2, 5, 10, 100, 0xFFFF}
 
@@ -2043,9 +2030,9 @@ class DongleAPIHooker:
                     except (TypeError, ValueError):
                         return HASP_INV_VCODE
 
-                expected_vendor_id = getattr(dongle.spec, "vendor_id", 0x0529)
                 if len(vendor_bytes) >= 4:
                     provided_vendor = struct.unpack("<I", vendor_bytes[:4])[0]
+                    expected_vendor_id = getattr(dongle.spec, "vendor_id", 0x0529)
                     if provided_vendor != 0 and (provided_vendor & 0xFFFF) != expected_vendor_id:
                         self.logger.debug(
                             f"Vendor code mismatch: expected {expected_vendor_id:04X}, got {provided_vendor:04X}"
@@ -2167,11 +2154,14 @@ class DongleAPIHooker:
             filename = filename.decode("utf-8", errors="ignore")
 
         lpt_patterns = ["LPT1", "LPT2", "LPT3", "\\\\.\\LPT", "\\Device\\Parallel"]
-        for pattern in lpt_patterns:
-            if pattern.upper() in str(filename).upper():
-                return 0x1000
-
-        return -1
+        return next(
+            (
+                0x1000
+                for pattern in lpt_patterns
+                if pattern.upper() in str(filename).upper()
+            ),
+            -1,
+        )
 
     def _handle_read_file_lpt(self, func_name: str, args: tuple) -> int:
         """Handle ReadFile calls for LPT handles."""
@@ -2443,11 +2433,15 @@ class HardwareDongleEmulator:
 
         try:
             if isinstance(dongle_type, str):
-                dongle_type_enum = None
-                for dt in DongleType:
-                    if dt.value.lower() == dongle_type.lower() or dt.name.lower() == dongle_type.lower():
-                        dongle_type_enum = dt
-                        break
+                dongle_type_enum = next(
+                    (
+                        dt
+                        for dt in DongleType
+                        if dt.value.lower() == dongle_type.lower()
+                        or dt.name.lower() == dongle_type.lower()
+                    ),
+                    None,
+                )
                 if dongle_type_enum is None:
                     result["error"] = f"Unknown dongle type: {dongle_type}"
                     return result

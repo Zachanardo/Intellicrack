@@ -800,7 +800,7 @@ const TimeBombDefuser = {
         const parsed = Stalker.parse(events);
         parsed.forEach(event => {
             if (event.type === 'call') {
-                const target = event.target;
+                const {target} = event;
                 const context = {
                     address: target,
                     module: Process.findModuleByAddress(target),
@@ -949,9 +949,7 @@ const TimeBombDefuser = {
         // Windows FILETIME is 100-nanosecond intervals since January 1, 1601
         const windowsEpoch = new Date(1601, 0, 1).getTime();
         const unixTime = date.getTime();
-        const fileTime = (unixTime - windowsEpoch) * 10000;
-
-        return fileTime;
+        return (unixTime - windowsEpoch) * 10000;
     },
 
     // Performance monitoring
@@ -1295,9 +1293,7 @@ const TimeBombDefuser = {
 
         // .NET ticks are 100-nanosecond intervals since January 1, 0001
         const dotNetEpoch = new Date(1, 0, 1).getTime();
-        const ticks = (date.getTime() - dotNetEpoch) * 10000;
-
-        return ticks;
+        return (date.getTime() - dotNetEpoch) * 10000;
     },
 
     // Module detection
@@ -1398,8 +1394,7 @@ const TimeBombDefuser = {
     // Convert Date to FILETIME (100-nanosecond intervals since Jan 1, 1601)
     dateToFileTime: date => {
         const EPOCH_DIFFERENCE = 11644473600000; // milliseconds between 1601 and 1970
-        const ticks = (date.getTime() + EPOCH_DIFFERENCE) * 10000;
-        return ticks;
+        return (date.getTime() + EPOCH_DIFFERENCE) * 10000;
     },
 
     // Hook .NET DateTime functions

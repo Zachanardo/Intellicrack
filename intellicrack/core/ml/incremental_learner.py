@@ -152,7 +152,7 @@ class IncrementalLearner:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to add sample %s: %s", binary_path, e)
+            self.logger.exception("Failed to add sample %s: %s", binary_path, e)
             return False
 
     def retrain_incremental(self, use_all_history: bool = False, n_estimators: int = 200) -> dict[str, Any]:
@@ -323,7 +323,7 @@ class IncrementalLearner:
                     self.sample_buffer = pickle.load(f)  # noqa: S301 - Loading internal ML sample data
                 self.logger.info("Loaded %d samples from buffer", len(self.sample_buffer))
             except Exception as e:
-                self.logger.error("Failed to load buffer: %s", e)
+                self.logger.exception("Failed to load buffer: %s", e)
                 self.sample_buffer = []
 
     def _save_buffer(self) -> None:
@@ -333,7 +333,7 @@ class IncrementalLearner:
             with open(self.buffer_path, "wb") as f:
                 pickle.dump(self.sample_buffer, f)
         except Exception as e:
-            self.logger.error("Failed to save buffer: %s", e)
+            self.logger.exception("Failed to save buffer: %s", e)
 
     def _save_learned_samples(self, samples: list[TrainingSample], session_id: str) -> None:
         """Archive learned samples for future reference.
@@ -354,4 +354,4 @@ class IncrementalLearner:
             self.logger.info("Archived %d learned samples to %s", len(samples), archive_file)
 
         except Exception as e:
-            self.logger.error("Failed to archive learned samples: %s", e)
+            self.logger.exception("Failed to archive learned samples: %s", e)

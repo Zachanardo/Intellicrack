@@ -81,7 +81,8 @@ class QEMUTestDialog(QDialog):
         # Warning icon
         icon_label: QLabel = QLabel()
         icon_label.setPixmap(
-            self.style()
+            self
+            .style()
             .standardPixmap(
                 self.style().SP_MessageBoxWarning,
             )

@@ -35,7 +35,7 @@ from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
-    from intellicrack.utils.tools.radare2_utils import Radare2Session
+    from intellicrack.utils.tools.radare2_utils import R2Session as Radare2Session, R2SessionPoolAdapter
 
 from intellicrack.utils.logger import logger
 
@@ -47,8 +47,8 @@ try:
 except ImportError:
     logger.warning("Advanced opaque predicate analyzer not available")
     OPAQUE_ANALYZER_AVAILABLE = False
-    OpaquePredicateAnalyzer = None
-    PredicateAnalysis = None
+    OpaquePredicateAnalyzer = type(None)  # type: ignore[misc,assignment]
+    PredicateAnalysis = type(None)  # type: ignore[misc,assignment]
 
 try:
     import networkx as nx
@@ -57,7 +57,7 @@ try:
 except ImportError:
     logger.warning("NetworkX not available for control flow deobfuscation")
     NETWORKX_AVAILABLE = False
-    nx = None
+    nx = Any
 
 try:
     from intellicrack.handlers.capstone_handler import (
@@ -76,13 +76,13 @@ try:
 except ImportError:
     logger.warning("Capstone not available for control flow deobfuscation")
     CAPSTONE_AVAILABLE = False
-    CS_ARCH_X86 = CS_ARCH_ARM = CS_ARCH_ARM64 = None
-    CS_MODE_32 = CS_MODE_64 = CS_MODE_ARM = CS_MODE_THUMB = None
-    CS_GRP_JUMP = None
-    Cs = None
+    CS_ARCH_X86 = CS_ARCH_ARM = CS_ARCH_ARM64 = Any
+    CS_MODE_32 = CS_MODE_64 = CS_MODE_ARM = CS_MODE_THUMB = Any
+    CS_GRP_JUMP = Any
+    Cs = Any
 
 try:
-    from intellicrack.handlers.keystone_handler import (
+    from intellicrack.handlers.keystone_handler import (  # type: ignore[attr-defined]
         KS_ARCH_ARM,
         KS_ARCH_ARM64,
         KS_ARCH_X86,
@@ -97,9 +97,9 @@ try:
 except ImportError:
     logger.warning("Keystone not available for control flow deobfuscation")
     KEYSTONE_AVAILABLE = False
-    KS_ARCH_X86 = KS_ARCH_ARM = KS_ARCH_ARM64 = None
-    KS_MODE_32 = KS_MODE_64 = KS_MODE_ARM = KS_MODE_THUMB = None
-    Ks = None
+    KS_ARCH_X86 = KS_ARCH_ARM = KS_ARCH_ARM64 = Any
+    KS_MODE_32 = KS_MODE_64 = KS_MODE_ARM = KS_MODE_THUMB = Any
+    Ks = Any
 
 try:
     from intellicrack.handlers.lief_handler import lief
@@ -111,10 +111,9 @@ try:
 except ImportError:
     logger.warning("LIEF not available for control flow deobfuscation")
     LIEF_AVAILABLE = False
-    lief = None
-    if TYPE_CHECKING:
-        Binary = Any
-        Section = Any
+    lief = type(None)  # type: ignore[assignment]
+    Binary = type(None)  # type: ignore[misc,assignment]
+    Section = type(None)  # type: ignore[misc,assignment]
 
 from ...utils.tools.radare2_utils import r2_session
 
@@ -132,7 +131,7 @@ class BasicBlock:
     is_dispatcher: bool = False
     is_prologue: bool = False
     is_epilogue: bool = False
-    state_variable_refs: list[int] = None
+    state_variable_refs: list[int] | None = None
     complexity_score: float = 0.0
 
     def __post_init__(self) -> None:
@@ -187,11 +186,11 @@ class ControlFlowDeobfuscator:
         self.binary_path = Path(binary_path)
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.binary = None
-        self.architecture = None
-        self.disassembler = None
-        self.assembler = None
-        self.opaque_analyzer = None
+        self.binary: Any = None
+        self.architecture: str | None = None
+        self.disassembler: Any = None
+        self.assembler: Any = None
+        self.opaque_analyzer: Any = None
 
         if not self.binary_path.exists():
             raise FileNotFoundError(f"Binary not found: {self.binary_path}")
@@ -207,9 +206,10 @@ class ControlFlowDeobfuscator:
             return
 
         try:
-            self.binary = lief.parse(str(self.binary_path))
-            if self.binary is None:
+            parsed_binary = lief.parse(str(self.binary_path))
+            if parsed_binary is None:
                 raise ValueError(f"Failed to parse binary: {self.binary_path}")
+            self.binary = parsed_binary
 
             if hasattr(self.binary, "header"):
                 if hasattr(self.binary.header, "machine_type"):
@@ -236,8 +236,9 @@ class ControlFlowDeobfuscator:
             self.logger.info("Detected architecture: %s", self.architecture)
 
         except Exception as e:
-            self.logger.error("Failed to initialize binary: %s", e)
-            self.architecture = "x86_64"
+            self.logger.exception("Failed to initialize binary: %s", e)
+            if self.architecture is None:
+                self.architecture = "x86_64"
 
     def _initialize_disassembler(self) -> None:
         """Initialize Capstone disassembler and Keystone assembler."""
@@ -263,22 +264,21 @@ class ControlFlowDeobfuscator:
                 if KEYSTONE_AVAILABLE:
                     self.assembler = Ks(KS_ARCH_ARM, KS_MODE_ARM)
 
-            if self.disassembler:
+            if self.disassembler and hasattr(self.disassembler, "detail"):
                 self.disassembler.detail = True
                 self.logger.info("Initialized disassembler for %s", self.architecture)
 
         except Exception as e:
-            self.logger.error("Failed to initialize disassembler: %s", e)
+            self.logger.exception("Failed to initialize disassembler: %s", e)
 
     def _initialize_opaque_analyzer(self) -> None:
         """Initialize advanced opaque predicate analyzer."""
-        if OPAQUE_ANALYZER_AVAILABLE:
+        if OPAQUE_ANALYZER_AVAILABLE and OpaquePredicateAnalyzer is not type(None):  # type: ignore[comparison-overlap]
             try:
                 self.opaque_analyzer = OpaquePredicateAnalyzer()
                 self.logger.info("Initialized advanced opaque predicate analyzer")
             except Exception as e:
                 self.logger.warning("Failed to initialize opaque analyzer: %s", e)
-                self.opaque_analyzer = None
         else:
             self.logger.warning("Advanced opaque predicate analyzer not available")
 
@@ -369,10 +369,10 @@ class ControlFlowDeobfuscator:
                 )
 
         except Exception as e:
-            self.logger.error("Deobfuscation failed: %s", e)
+            self.logger.exception("Deobfuscation failed: %s", e)
             raise
 
-    def _build_control_flow_graph(self, r2: "Radare2Session", function_address: int) -> nx.DiGraph:
+    def _build_control_flow_graph(self, r2: "Radare2Session | R2SessionPoolAdapter", function_address: int) -> Any:
         """Build control flow graph for a function using radare2.
 
         Args:
@@ -432,13 +432,13 @@ class ControlFlowDeobfuscator:
             return cfg
 
         except Exception as e:
-            self.logger.error("Failed to build CFG: %s", e)
+            self.logger.exception("Failed to build CFG: %s", e)
             raise
 
     def _detect_dispatchers(
         self,
-        r2: "Radare2Session",
-        cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        cfg: Any,
         function_address: int,
     ) -> list[DispatcherInfo]:
         """Detect control flow flattening dispatchers in the CFG.
@@ -483,7 +483,7 @@ class ControlFlowDeobfuscator:
 
         return dispatchers
 
-    def _is_dispatcher_block(self, basic_block: BasicBlock, cfg: nx.DiGraph) -> bool:
+    def _is_dispatcher_block(self, basic_block: BasicBlock, cfg: Any) -> bool:
         """Determine if a basic block is a control flow dispatcher.
 
         Dispatcher characteristics:
@@ -521,7 +521,7 @@ class ControlFlowDeobfuscator:
 
     def _identify_state_variable(
         self,
-        r2: "Radare2Session",
+        r2: "Radare2Session | R2SessionPoolAdapter",
         basic_block: BasicBlock,
         function_address: int,
     ) -> dict[str, Any]:
@@ -566,18 +566,18 @@ class ControlFlowDeobfuscator:
                         )
 
         if state_var_candidates:
-            access_counts = defaultdict(int)
+            access_counts: dict[str, int] = defaultdict(int)
             for candidate in state_var_candidates:
                 access_counts[candidate["access"]] += 1
 
-            most_common = max(access_counts.items(), key=lambda x: x[1])
+            most_common: tuple[str, int] = max(access_counts.items(), key=lambda x: x[1])
             for candidate in state_var_candidates:
                 if candidate["access"] == most_common[0]:
                     return candidate
 
         return {"location": 0, "type": "unknown", "access": "", "instruction": ""}
 
-    def _identify_controlled_blocks(self, cfg: nx.DiGraph, dispatcher_address: int) -> list[int]:
+    def _identify_controlled_blocks(self, cfg: Any, dispatcher_address: int) -> list[int]:
         """Identify blocks controlled by a dispatcher.
 
         Args:
@@ -603,7 +603,7 @@ class ControlFlowDeobfuscator:
 
     def _extract_switch_cases(
         self,
-        r2: "Radare2Session",
+        r2: "Radare2Session | R2SessionPoolAdapter",
         basic_block: BasicBlock,
         controlled_blocks: list[int],
         function_address: int,
@@ -654,11 +654,11 @@ class ControlFlowDeobfuscator:
 
     def _unflatten_control_flow(
         self,
-        r2: "Radare2Session",
-        cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        cfg: Any,
         dispatchers: list[DispatcherInfo],
         function_address: int,
-    ) -> nx.DiGraph:
+    ) -> Any:
         """Unflatten control flow by removing dispatcher blocks and recovering original edges.
 
         Args:
@@ -697,8 +697,8 @@ class ControlFlowDeobfuscator:
 
     def _recover_original_edges(
         self,
-        r2: "Radare2Session",
-        cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        cfg: Any,
         dispatcher: DispatcherInfo,
         function_address: int,
     ) -> list[tuple[int, int]]:
@@ -770,8 +770,8 @@ class ControlFlowDeobfuscator:
 
     def _detect_opaque_predicates(
         self,
-        r2: "Radare2Session",
-        cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        cfg: Any,
         function_address: int,
     ) -> list[dict[str, Any]]:
         """Detect opaque predicates using advanced analysis techniques.
@@ -791,9 +791,9 @@ class ControlFlowDeobfuscator:
             List of detected opaque predicates with analysis metadata
 
         """
-        opaque_predicates = []
+        opaque_predicates: list[dict[str, Any]] = []
 
-        if self.opaque_analyzer and OPAQUE_ANALYZER_AVAILABLE:
+        if self.opaque_analyzer and OPAQUE_ANALYZER_AVAILABLE and hasattr(self.opaque_analyzer, "analyze_cfg"):
             try:
                 entry_block = min(cfg.nodes()) if cfg.nodes() else function_address
 
@@ -874,10 +874,10 @@ class ControlFlowDeobfuscator:
 
     def _remove_opaque_predicates(
         self,
-        r2: "Radare2Session",
-        cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        cfg: Any,
         opaque_predicates: list[dict[str, Any]],
-    ) -> nx.DiGraph:
+    ) -> Any:
         """Remove opaque predicates and perform comprehensive dead code elimination.
 
         This enhanced method:
@@ -960,9 +960,9 @@ class ControlFlowDeobfuscator:
 
     def _eliminate_dead_code(
         self,
-        cfg: nx.DiGraph,
+        cfg: Any,
         initial_dead_blocks: list[int],
-    ) -> nx.DiGraph:
+    ) -> Any:
         """Perform comprehensive dead code elimination.
 
         This method iteratively removes unreachable blocks and blocks that
@@ -1019,7 +1019,7 @@ class ControlFlowDeobfuscator:
 
         return cleaned
 
-    def _collapse_linear_chains(self, cfg: nx.DiGraph) -> nx.DiGraph:
+    def _collapse_linear_chains(self, cfg: Any) -> Any:
         """Collapse linear chains of basic blocks with single predecessors/successors.
 
         This simplifies the CFG by merging blocks that form straight-line code.
@@ -1078,8 +1078,8 @@ class ControlFlowDeobfuscator:
 
     def _detect_bogus_blocks(
         self,
-        r2: "Radare2Session",
-        cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        cfg: Any,
         function_address: int,
     ) -> list[int]:
         """Detect bogus/unreachable basic blocks inserted by obfuscators.
@@ -1093,7 +1093,7 @@ class ControlFlowDeobfuscator:
             List of bogus block addresses
 
         """
-        bogus_blocks = []
+        bogus_blocks: list[int] = []
 
         try:
             entry_node = min(cfg.nodes())
@@ -1125,7 +1125,7 @@ class ControlFlowDeobfuscator:
 
         return bogus_blocks
 
-    def _remove_bogus_blocks(self, cfg: nx.DiGraph, bogus_blocks: list[int]) -> nx.DiGraph:
+    def _remove_bogus_blocks(self, cfg: Any, bogus_blocks: list[int]) -> Any:
         """Remove bogus blocks from the control flow graph.
 
         Args:
@@ -1154,9 +1154,9 @@ class ControlFlowDeobfuscator:
 
     def _generate_patch_information(
         self,
-        r2: "Radare2Session",
-        original_cfg: nx.DiGraph,
-        deobfuscated_cfg: nx.DiGraph,
+        r2: "Radare2Session | R2SessionPoolAdapter",
+        original_cfg: Any,
+        deobfuscated_cfg: Any,
         dispatchers: list[DispatcherInfo],
         function_address: int,
     ) -> list[dict[str, Any]]:
@@ -1204,7 +1204,7 @@ class ControlFlowDeobfuscator:
                 )
         return patches
 
-    def _get_block_size(self, cfg: nx.DiGraph, block_address: int) -> int:
+    def _get_block_size(self, cfg: Any, block_address: int) -> int:
         """Get size of a basic block.
 
         Args:
@@ -1216,14 +1216,14 @@ class ControlFlowDeobfuscator:
 
         """
         if block_address in cfg.nodes():
-            basic_block = cfg.nodes[block_address]["data"]
-            return basic_block.size
+            basic_block: BasicBlock = cfg.nodes[block_address]["data"]
+            return int(basic_block.size)
         return 0
 
     def _calculate_deobfuscation_metrics(
         self,
-        original_cfg: nx.DiGraph,
-        deobfuscated_cfg: nx.DiGraph,
+        original_cfg: Any,
+        deobfuscated_cfg: Any,
     ) -> dict[str, Any]:
         """Calculate metrics comparing original and deobfuscated CFGs.
 
@@ -1299,8 +1299,8 @@ class ControlFlowDeobfuscator:
 
     def _extract_recovered_edges(
         self,
-        original_cfg: nx.DiGraph,
-        deobfuscated_cfg: nx.DiGraph,
+        original_cfg: Any,
+        deobfuscated_cfg: Any,
     ) -> list[tuple[int, int]]:
         """Extract newly recovered edges that weren't in the original CFG.
 
@@ -1347,7 +1347,7 @@ class ControlFlowDeobfuscator:
             Complexity score
 
         """
-        complexity = len(instructions)
+        complexity: float = float(len(instructions))
 
         for inst in instructions:
             disasm = inst.get("disasm", "").lower()
@@ -1393,7 +1393,7 @@ class ControlFlowDeobfuscator:
 
         """
         if not NETWORKX_AVAILABLE:
-            self.logger.error("NetworkX required for export")
+            self.logger.exception("NetworkX required for export")
             return False
 
         try:
@@ -1441,7 +1441,7 @@ class ControlFlowDeobfuscator:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to export CFG: %s", e)
+            self.logger.exception("Failed to export CFG: %s", e)
             return False
 
     def apply_patches(
@@ -1460,14 +1460,17 @@ class ControlFlowDeobfuscator:
 
         """
         if not LIEF_AVAILABLE or not KEYSTONE_AVAILABLE:
-            self.logger.error("LIEF and Keystone required for patching")
+            self.logger.exception("LIEF and Keystone required for patching")
             return False
 
         if not output_path:
             output_path = self.binary_path.with_suffix(f"{self.binary_path.suffix}.deobf")
 
         try:
-            patched_binary = lief.parse(str(self.binary_path))
+            patched_binary_result = lief.parse(str(self.binary_path))
+            if patched_binary_result is None:
+                raise ValueError("Failed to parse binary for patching")
+            patched_binary = patched_binary_result
 
             for patch in result.patch_info:
                 patch_type = patch.get("type")
@@ -1476,11 +1479,12 @@ class ControlFlowDeobfuscator:
                     address = patch["address"]
                     size = patch["size"]
 
-                    nop_bytes = b"\x90" * size
-
-                    if section := self._find_section_for_address(patched_binary, address):
+                    section = self._find_section_for_address(patched_binary, address)
+                    if section and hasattr(patched_binary, "imagebase"):
                         offset = address - (section.virtual_address + patched_binary.imagebase)
                         section_content = bytearray(section.content)
+                        nop_bytes = b"\x90" * size
+
                         section_content[offset : offset + size] = nop_bytes
                         section.content = list(section_content)
 
@@ -1488,26 +1492,28 @@ class ControlFlowDeobfuscator:
                     address = patch["address"]
                     target = patch["target"]
 
-                    jmp_instruction = f"jmp 0x{target:x}"
+                    if self.assembler and hasattr(self.assembler, "asm"):
+                        jmp_instruction = f"jmp 0x{target:x}"
 
-                    encoding, _ = self.assembler.asm(jmp_instruction, address)
+                        encoding, _ = self.assembler.asm(jmp_instruction, address)
 
-                    section = self._find_section_for_address(patched_binary, address)
-                    if section and encoding:
-                        offset = address - (section.virtual_address + patched_binary.imagebase)
-                        section_content = bytearray(section.content)
-                        section_content[offset : offset + len(encoding)] = encoding
-                        section.content = list(section_content)
+                        section = self._find_section_for_address(patched_binary, address)
+                        if section and encoding and hasattr(patched_binary, "imagebase"):
+                            offset = address - (section.virtual_address + patched_binary.imagebase)
+                            section_content = bytearray(section.content)
+                            section_content[offset : offset + len(encoding)] = encoding
+                            section.content = list(section_content)
 
-            patched_binary.write(str(output_path))
+            if hasattr(patched_binary, "write"):
+                patched_binary.write(str(output_path))
             self.logger.info("Wrote patched binary to %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error("Failed to apply patches: %s", e)
+            self.logger.exception("Failed to apply patches: %s", e)
             return False
 
-    def _find_section_for_address(self, binary: "Binary", address: int) -> "Section | None":
+    def _find_section_for_address(self, binary: Any, address: int) -> Any:
         """Find the section containing a given address.
 
         Args:
@@ -1519,12 +1525,13 @@ class ControlFlowDeobfuscator:
 
         """
         try:
-            for section in binary.sections:
-                section_start = section.virtual_address + binary.imagebase
-                section_end = section_start + section.size
+            if hasattr(binary, "sections") and hasattr(binary, "imagebase"):
+                for section in binary.sections:
+                    section_start = section.virtual_address + binary.imagebase
+                    section_end = section_start + section.size
 
-                if section_start <= address < section_end:
-                    return section
+                    if section_start <= address < section_end:
+                        return section
         except Exception as e:
             self.logger.debug("Error finding section: %s", e)
 

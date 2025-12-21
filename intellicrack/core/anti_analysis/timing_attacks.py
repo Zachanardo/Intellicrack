@@ -132,7 +132,7 @@ class TimingAttackDefense:
             return True
 
         except Exception as e:
-            self.logger.error("Secure sleep failed: %s", e, exc_info=True)
+            self.logger.exception("Secure sleep failed: %s", e, exc_info=True)
             return False
 
     def stalling_code(self, min_duration: float, max_duration: float) -> None:
@@ -173,7 +173,7 @@ class TimingAttackDefense:
             self.logger.debug("Stalling completed: %.2fs, %d iterations", elapsed, iterations)
 
         except Exception as e:
-            self.logger.error("Stalling code failed: %s", e, exc_info=True)
+            self.logger.exception("Stalling code failed: %s", e, exc_info=True)
 
     def time_bomb(self, trigger_time: float, action: Callable) -> threading.Thread:
         """Create a time bomb that triggers after specific duration.
@@ -199,7 +199,7 @@ class TimingAttackDefense:
                     self.logger.warning("Time bomb detected acceleration, aborting")
 
             except Exception as e:
-                self.logger.error("Time bomb failed: %s", e, exc_info=True)
+                self.logger.exception("Time bomb failed: %s", e, exc_info=True)
 
         thread = threading.Thread(target=time_bomb_thread, daemon=True)
         thread.start()
@@ -244,7 +244,7 @@ class TimingAttackDefense:
                 self.secure_sleep(delay)
 
         except Exception as e:
-            self.logger.error("Execution delay failed: %s", e, exc_info=True)
+            self.logger.exception("Execution delay failed: %s", e, exc_info=True)
 
     def rdtsc_timing_check(self) -> bool:
         """Use RDTSC instruction for precise timing checks.
@@ -310,7 +310,7 @@ class TimingAttackDefense:
                     self.stalling_code(1, 2)
 
         except Exception as e:
-            self.logger.error("Anti-acceleration loop failed: %s", e, exc_info=True)
+            self.logger.exception("Anti-acceleration loop failed: %s", e, exc_info=True)
 
     def _check_rdtsc_availability(self) -> bool:
         """Check if RDTSC instruction is available."""

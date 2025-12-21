@@ -74,7 +74,7 @@ class ProtectionDetector:
         """
         if not os.path.exists(file_path):
             error_msg = f"File not found: {file_path}"
-            logger.error("File not found: %s", file_path)
+            logger.exception("File not found: %s", file_path)
             raise FileNotFoundError(error_msg)
 
         # Use unified engine
@@ -135,7 +135,7 @@ class ProtectionDetector:
                             analysis = self.detect_protections(file_path, deep_scan=deep_scan)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
+                            logger.exception("Error analyzing %s: %s", file_path, e)
         else:
             for file in os.listdir(directory):
                 if any(file.lower().endswith(ext) for ext in extensions):
@@ -145,7 +145,7 @@ class ProtectionDetector:
                             analysis = self.detect_protections(file_path, deep_scan=deep_scan)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
+                            logger.exception("Error analyzing %s: %s", file_path, e)
 
         logger.info("Completed directory analysis: %s files analyzed successfully", len(results))
         return results
@@ -188,15 +188,20 @@ class ProtectionDetector:
             )
             analysis.detections.append(det_result)
 
-        # Copy ICP-specific data if available
         if unified_result.icp_analysis:
             icp_data = unified_result.icp_analysis
-            analysis.has_overlay = icp_data.has_overlay
-            analysis.has_resources = icp_data.has_resources
-            analysis.entry_point = icp_data.entry_point
-            analysis.sections = icp_data.sections
-            analysis.imports = icp_data.imports
-            analysis.strings = icp_data.strings
+            if hasattr(icp_data, "has_overlay"):
+                analysis.has_overlay = icp_data.has_overlay
+            if hasattr(icp_data, "has_resources"):
+                analysis.has_resources = icp_data.has_resources
+            if hasattr(icp_data, "entry_point"):
+                analysis.entry_point = icp_data.entry_point
+            if hasattr(icp_data, "sections"):
+                analysis.sections = icp_data.sections
+            if hasattr(icp_data, "imports"):
+                analysis.imports = icp_data.imports
+            if hasattr(icp_data, "strings"):
+                analysis.strings = icp_data.strings
 
         # Add metadata
         analysis.metadata = {
@@ -306,7 +311,7 @@ class ProtectionDetector:
             return "\n".join(lines)
 
         error_msg = f"Unknown output format: {output_format}"
-        logger.error("Unknown output format: %s", output_format)
+        logger.exception("Unknown output format: %s", output_format)
         raise ValueError(error_msg)
 
     def detect_virtualization_protection(self, binary_path: str | None = None) -> dict[str, Any]:
@@ -319,7 +324,7 @@ class ProtectionDetector:
             Detection results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "virtualization_detected": False,
             "protection_types": [],
             "indicators": [],
@@ -330,7 +335,6 @@ class ProtectionDetector:
             logger.debug("Analyzing virtualization protection for binary: %s", binary_path)
 
         try:
-            # Check for known VM detection techniques
             vm_indicators = [
                 "VirtualBox",
                 "VMware",
@@ -343,19 +347,19 @@ class ProtectionDetector:
                 "qemu-ga",
             ]
 
-            # Check running processes
             try:
                 from intellicrack.handlers.psutil_handler import psutil
 
                 running_processes = [p.info["name"].lower() for p in psutil.process_iter(["name"]) if p.info["name"]]
                 for indicator in vm_indicators:
                     if any(indicator.lower() in proc for proc in running_processes):
-                        results["indicators"].append(f"VM process detected: {indicator}")
+                        indicators_val = results["indicators"]
+                        if isinstance(indicators_val, list):
+                            indicators_val.append(f"VM process detected: {indicator}")
                         results["virtualization_detected"] = True
             except ImportError:
                 logger.debug("psutil not available for process checking")
 
-            # Check registry for VM artifacts (Windows)
             if sys.platform == "win32":
                 try:
                     import winreg
@@ -368,7 +372,9 @@ class ProtectionDetector:
                     for key_path in vm_registry_keys:
                         try:
                             key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key_path)
-                            results["indicators"].append(f"VM registry key found: {key_path}")
+                            indicators_val = results["indicators"]
+                            if isinstance(indicators_val, list):
+                                indicators_val.append(f"VM registry key found: {key_path}")
                             results["virtualization_detected"] = True
                             winreg.CloseKey(key)
                         except FileNotFoundError:
@@ -376,7 +382,6 @@ class ProtectionDetector:
                 except ImportError:
                     logger.debug("winreg not available")
 
-            # Check for VM-specific files
             vm_files = [
                 "/proc/scsi/scsi",
                 "/sys/class/dmi/id/product_name",
@@ -390,20 +395,25 @@ class ProtectionDetector:
                             content = f.read().lower()
                             for indicator in vm_indicators:
                                 if indicator.lower() in content:
-                                    results["indicators"].append(f"VM indicator in {vm_file}: {indicator}")
+                                    indicators_val = results["indicators"]
+                                    if isinstance(indicators_val, list):
+                                        indicators_val.append(f"VM indicator in {vm_file}: {indicator}")
                                     results["virtualization_detected"] = True
                     except Exception as e:
-                        logger.error("Exception in virtualization detection: %s", e, exc_info=True)
+                        logger.exception("Exception in virtualization detection: %s", e)
 
-            # Calculate confidence
             if results["virtualization_detected"]:
-                results["confidence"] = min(len(results["indicators"]) * 0.3, 1.0)
-                results["protection_types"].append("VM Detection")
+                indicators_val = results["indicators"]
+                if isinstance(indicators_val, list):
+                    results["confidence"] = min(len(indicators_val) * 0.3, 1.0)
+                protection_types_val = results["protection_types"]
+                if isinstance(protection_types_val, list):
+                    protection_types_val.append("VM Detection")
 
             logger.info("Virtualization detection complete: %s", results["virtualization_detected"])
 
         except Exception as e:
-            logger.error("Error in virtualization detection: %s", e, exc_info=True)
+            logger.exception("Error in virtualization detection: %s", e)
             results["error"] = str(e)
 
         return results
@@ -443,7 +453,7 @@ class ProtectionDetector:
             logger.warning("Themida analyzer not available, falling back to signature detection")
             return {"detected": False, "error": "Advanced analyzer not available"}
         except Exception as e:
-            logger.error("Themida advanced detection failed: %s", e, exc_info=True)
+            logger.exception("Themida advanced detection failed: %s", e)
             return {"detected": False, "error": str(e)}
 
     def detect_denuvo_advanced(self, binary_path: str) -> dict[str, Any]:
@@ -482,7 +492,7 @@ class ProtectionDetector:
             logger.warning("Denuvo analyzer not available, falling back to signature detection")
             return {"detected": False, "error": "Advanced analyzer not available"}
         except Exception as e:
-            logger.error("Denuvo advanced detection failed: %s", e, exc_info=True)
+            logger.exception("Denuvo advanced detection failed: %s", e)
             return {"detected": False, "error": str(e)}
 
     def analyze_denuvo_ticket(
@@ -508,7 +518,7 @@ class ProtectionDetector:
                     with open(ticket_data, "rb") as f:
                         data = f.read()
                 else:
-                    logger.error("Ticket file not found: %s", ticket_data)
+                    logger.exception("Ticket file not found: %s", ticket_data)
                     return {"error": "File not found"}
             else:
                 data = ticket_data
@@ -549,7 +559,7 @@ class ProtectionDetector:
             logger.warning("Denuvo ticket analyzer not available")
             return {"error": "Ticket analyzer not available"}
         except Exception as e:
-            logger.error("Ticket analysis failed: %s", e, exc_info=True)
+            logger.exception("Ticket analysis failed: %s", e)
             return {"error": str(e)}
 
     def generate_denuvo_activation(
@@ -605,7 +615,7 @@ class ProtectionDetector:
             logger.warning("Denuvo ticket analyzer not available")
             return {"success": False, "error": "Ticket analyzer not available"}
         except Exception as e:
-            logger.error("Activation generation failed: %s", e, exc_info=True)
+            logger.exception("Activation generation failed: %s", e)
             return {"success": False, "error": str(e)}
 
     def forge_denuvo_token(
@@ -663,7 +673,7 @@ class ProtectionDetector:
             logger.warning("Denuvo ticket analyzer not available")
             return {"success": False, "error": "Ticket analyzer not available"}
         except Exception as e:
-            logger.error("Token forging failed: %s", e, exc_info=True)
+            logger.exception("Token forging failed: %s", e)
             return {"success": False, "error": str(e)}
 
     def detect_commercial_protections(self, binary_path: str) -> dict[str, Any]:
@@ -677,9 +687,9 @@ class ProtectionDetector:
 
         """
         if not os.path.exists(binary_path):
-            return {"error": "File not found", "protections": []}
+            return {"error": "File not found", "protections": [], "signatures_found": [], "advanced_analysis": {}}
 
-        results = {"protections": [], "signatures_found": [], "advanced_analysis": {}}
+        results: dict[str, Any] = {"protections": [], "signatures_found": [], "advanced_analysis": {}}
 
         themida_advanced = self.detect_themida_advanced(binary_path)
         if themida_advanced.get("detected"):
@@ -744,18 +754,22 @@ class ProtectionDetector:
                         break
 
                     for signature, protection_name in signatures.items():
-                        if signature in chunk and protection_name not in results["protections"]:
-                            results["protections"].append(protection_name)
-                            results["signatures_found"].append(
-                                {
-                                    "protection": protection_name,
-                                    "signature": signature.hex(),
-                                    "offset": f.tell() - len(chunk) + chunk.index(signature),
-                                },
-                            )
+                        if signature in chunk:
+                            protections_val = results["protections"]
+                            if isinstance(protections_val, list) and protection_name not in protections_val:
+                                protections_val.append(protection_name)
+                                signatures_found_val = results["signatures_found"]
+                                if isinstance(signatures_found_val, list):
+                                    signatures_found_val.append(
+                                        {
+                                            "protection": protection_name,
+                                            "signature": signature.hex(),
+                                            "offset": f.tell() - len(chunk) + chunk.index(signature),
+                                        },
+                                    )
 
         except Exception as e:
-            logger.error("Error detecting commercial protections: %s", e, exc_info=True)
+            logger.exception("Error detecting commercial protections: %s", e)
             results["error"] = str(e)
 
         return results
@@ -770,7 +784,7 @@ class ProtectionDetector:
             Detection results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "has_checksum_verification": False,
             "checksum_types": [],
             "indicators": [],
@@ -797,19 +811,19 @@ class ProtectionDetector:
                 for sig in checksum_signatures:
                     if sig in content:
                         results["has_checksum_verification"] = True
-                        # Check if signature contains non-printable characters (binary pattern)
-                        try:
-                            sig.decode("ascii")
-                            # It's a text string
-                            results["indicators"].append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
-                            if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
-                                results["checksum_types"].append(sig.decode("utf-8"))
-                        except UnicodeDecodeError:
-                            # It's a binary pattern with non-ASCII bytes
-                            results["indicators"].append(f"Assembly pattern: {sig.hex()}")
+                        indicators_val = results["indicators"]
+                        checksum_types_val = results["checksum_types"]
+                        if isinstance(indicators_val, list) and isinstance(checksum_types_val, list):
+                            try:
+                                sig.decode("ascii")
+                                indicators_val.append(f"String reference: {sig.decode('utf-8', errors='ignore')}")
+                                if sig in [b"CRC32", b"MD5", b"SHA1", b"SHA256"]:
+                                    checksum_types_val.append(sig.decode("utf-8"))
+                            except UnicodeDecodeError:
+                                indicators_val.append(f"Assembly pattern: {sig.hex()}")
 
         except Exception as e:
-            logger.error("Error detecting checksum verification: %s", e, exc_info=True)
+            logger.exception("Error detecting checksum verification: %s", e)
             results["error"] = str(e)
 
         return results
@@ -824,14 +838,13 @@ class ProtectionDetector:
             Detection results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "has_self_healing": False,
             "techniques": [],
             "indicators": [],
         }
 
-        # Self-modifying code patterns
-        patterns = {
+        patterns: dict[bytes, str] = {
             b"\x88": "mov [mem], reg (code modification)",
             b"\x89": "mov [mem], reg32 (code modification)",
             b"\xc6": "mov [mem], imm8 (direct write)",
@@ -849,22 +862,25 @@ class ProtectionDetector:
                 for pattern, description in patterns.items():
                     if pattern in content:
                         results["has_self_healing"] = True
-                        results["indicators"].append(description)
+                        indicators_val = results["indicators"]
+                        techniques_val = results["techniques"]
+                        if isinstance(indicators_val, list) and isinstance(techniques_val, list):
+                            indicators_val.append(description)
 
-                        if b"Virtual" in pattern or b"Process" in pattern or b"protect" in pattern:
-                            results["techniques"].append("Memory Protection Manipulation")
-                        else:
-                            # Check if pattern contains non-printable characters (binary pattern)
-                            try:
-                                pattern.decode("ascii")
-                            except UnicodeDecodeError:
-                                results["techniques"].append("Direct Code Modification")
+                            if b"Virtual" in pattern or b"Process" in pattern or b"protect" in pattern:
+                                techniques_val.append("Memory Protection Manipulation")
+                            else:
+                                try:
+                                    pattern.decode("ascii")
+                                except UnicodeDecodeError:
+                                    techniques_val.append("Direct Code Modification")
 
-                # Remove duplicates
-                results["techniques"] = list(set(results["techniques"]))
+                techniques_final = results["techniques"]
+                if isinstance(techniques_final, list):
+                    results["techniques"] = list(set(techniques_final))
 
         except Exception as e:
-            logger.error("Error detecting self-healing code: %s", e, exc_info=True)
+            logger.exception("Error detecting self-healing code: %s", e)
             results["error"] = str(e)
 
         return results
@@ -879,7 +895,7 @@ class ProtectionDetector:
             Detection results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "is_obfuscated": False,
             "obfuscation_types": [],
             "entropy_score": 0.0,
@@ -890,17 +906,18 @@ class ProtectionDetector:
             with open(binary_path, "rb") as f:
                 content = f.read()
 
-                # Calculate entropy
                 entropy = self._calculate_entropy(content)
                 results["entropy_score"] = entropy
 
-                if entropy > 7.0:  # High entropy indicates compression/encryption
+                if entropy > 7.0:
                     results["is_obfuscated"] = True
-                    results["obfuscation_types"].append("High Entropy (Packed/Encrypted)")
-                    results["indicators"].append(f"Entropy: {entropy:.2f}")
+                    obfuscation_types_val = results["obfuscation_types"]
+                    indicators_val = results["indicators"]
+                    if isinstance(obfuscation_types_val, list) and isinstance(indicators_val, list):
+                        obfuscation_types_val.append("High Entropy (Packed/Encrypted)")
+                        indicators_val.append(f"Entropy: {entropy:.2f}")
 
-                # Check for obfuscation patterns
-                obfuscation_patterns = {
+                obfuscation_patterns: dict[bytes, str] = {
                     b"\xeb\x01": "Junk bytes (EB 01 pattern)",
                     b"\xeb\x02": "Junk bytes (EB 02 pattern)",
                     b"\x90" * 10: "NOP sled",
@@ -914,19 +931,24 @@ class ProtectionDetector:
                 for pattern, description in obfuscation_patterns.items():
                     if pattern in content:
                         results["is_obfuscated"] = True
-                        results["indicators"].append(description)
-                        if "obfuscator" in description:
-                            results["obfuscation_types"].append(description)
+                        obfuscation_types_val2 = results["obfuscation_types"]
+                        indicators_val2 = results["indicators"]
+                        if isinstance(obfuscation_types_val2, list) and isinstance(indicators_val2, list):
+                            indicators_val2.append(description)
+                            if "obfuscator" in description:
+                                obfuscation_types_val2.append(description)
 
-                # Check for control flow obfuscation
                 jmp_count = content.count(b"\xeb") + content.count(b"\xe9")
-                if jmp_count > len(content) // 100:  # More than 1% jumps
+                if jmp_count > len(content) // 100:
                     results["is_obfuscated"] = True
-                    results["obfuscation_types"].append("Control Flow Obfuscation")
-                    results["indicators"].append(f"High jump density: {jmp_count}")
+                    obfuscation_types_val3 = results["obfuscation_types"]
+                    indicators_val3 = results["indicators"]
+                    if isinstance(obfuscation_types_val3, list) and isinstance(indicators_val3, list):
+                        obfuscation_types_val3.append("Control Flow Obfuscation")
+                        indicators_val3.append(f"High jump density: {jmp_count}")
 
         except Exception as e:
-            logger.error("Error detecting obfuscation: %s", e, exc_info=True)
+            logger.exception("Error detecting obfuscation: %s", e)
             results["error"] = str(e)
 
         return results
@@ -941,14 +963,13 @@ class ProtectionDetector:
             Detection results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "has_anti_debug": False,
             "techniques": [],
             "api_calls": [],
             "indicators": [],
         }
 
-        # Anti-debug API calls
         anti_debug_apis = [
             b"IsDebuggerPresent",
             b"CheckRemoteDebuggerPresent",
@@ -967,8 +988,7 @@ class ProtectionDetector:
             b"NtSetDebugFilterState",
         ]
 
-        # Anti-debug techniques indicators
-        technique_patterns = {
+        technique_patterns: dict[bytes, str] = {
             b"\xcc": "INT3 breakpoint detection",
             b"\x64\xa1\x30\x00\x00\x00": "PEB.BeingDebugged check",
             b"\x64\xa1\x18\x00\x00\x00": "PEB.ProcessHeap check",
@@ -985,34 +1005,39 @@ class ProtectionDetector:
             with open(binary_path, "rb") as f:
                 content = f.read()
 
-                # Check for anti-debug APIs
                 for api in anti_debug_apis:
                     if api in content:
                         results["has_anti_debug"] = True
                         api_name = api.decode("utf-8", errors="ignore")
-                        results["api_calls"].append(api_name)
-                        results["indicators"].append(f"Anti-debug API: {api_name}")
+                        api_calls_val = results["api_calls"]
+                        indicators_val = results["indicators"]
+                        if isinstance(api_calls_val, list) and isinstance(indicators_val, list):
+                            api_calls_val.append(api_name)
+                            indicators_val.append(f"Anti-debug API: {api_name}")
 
-                # Check for technique patterns
                 for pattern, description in technique_patterns.items():
                     if pattern in content:
                         results["has_anti_debug"] = True
-                        results["techniques"].append(description)
-                        # Check if pattern contains non-printable characters (binary pattern)
-                        try:
-                            pattern.decode("ascii")
-                            results["indicators"].append(f"String: {pattern.decode('utf-8', errors='ignore')}")
-                        except UnicodeDecodeError:
-                            results["indicators"].append(f"Assembly pattern: {pattern.hex()}")
+                        techniques_val = results["techniques"]
+                        indicators_val2 = results["indicators"]
+                        if isinstance(techniques_val, list) and isinstance(indicators_val2, list):
+                            techniques_val.append(description)
+                            try:
+                                pattern.decode("ascii")
+                                indicators_val2.append(f"String: {pattern.decode('utf-8', errors='ignore')}")
+                            except UnicodeDecodeError:
+                                indicators_val2.append(f"Assembly pattern: {pattern.hex()}")
 
-                # Check for heap flag manipulation
                 if b"Heap32First" in content or b"Heap32Next" in content:
                     results["has_anti_debug"] = True
-                    results["techniques"].append("Heap flag manipulation")
-                    results["indicators"].append("Heap walking detection")
+                    techniques_val2 = results["techniques"]
+                    indicators_val3 = results["indicators"]
+                    if isinstance(techniques_val2, list) and isinstance(indicators_val3, list):
+                        techniques_val2.append("Heap flag manipulation")
+                        indicators_val3.append("Heap walking detection")
 
         except Exception as e:
-            logger.error("Error detecting anti-debugging: %s", e, exc_info=True)
+            logger.exception("Error detecting anti-debugging: %s", e)
             results["error"] = str(e)
 
         return results
@@ -1027,7 +1052,7 @@ class ProtectionDetector:
             Detection results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "has_tpm_protection": False,
             "tpm_functions": [],
             "indicators": [],
@@ -1054,11 +1079,14 @@ class ProtectionDetector:
                     if sig in content:
                         results["has_tpm_protection"] = True
                         func_name = sig.decode("utf-8", errors="ignore")
-                        results["tpm_functions"].append(func_name)
-                        results["indicators"].append(f"TPM function: {func_name}")
+                        tpm_functions_val = results["tpm_functions"]
+                        indicators_val = results["indicators"]
+                        if isinstance(tpm_functions_val, list) and isinstance(indicators_val, list):
+                            tpm_functions_val.append(func_name)
+                            indicators_val.append(f"TPM function: {func_name}")
 
         except Exception as e:
-            logger.error("Error detecting TPM protection: %s", e, exc_info=True)
+            logger.exception("Error detecting TPM protection: %s", e)
             results["error"] = str(e)
 
         return results
@@ -1079,7 +1107,7 @@ class ProtectionDetector:
 
         import math
 
-        frequency = {}
+        frequency: dict[int, int] = {}
         for byte in data:
             frequency[byte] = frequency.get(byte, 0) + 1
 
@@ -1104,48 +1132,59 @@ class ProtectionDetector:
 
         """
         logger.info("Starting comprehensive protection detection for %s", binary_path)
-        results = {
+
+        virtualization_result = self.detect_virtualization_protection(binary_path)
+        commercial_result = self.detect_commercial_protections(binary_path)
+        checksum_result = self.detect_checksum_verification(binary_path)
+        self_healing_result = self.detect_self_healing_code(binary_path)
+        obfuscation_result = self.detect_obfuscation(binary_path)
+        anti_debug_result = self.detect_anti_debugging_techniques(binary_path)
+        tpm_result = self.detect_tpm_protection(binary_path)
+
+        results: dict[str, Any] = {
             "file_path": binary_path,
-            "virtualization": self.detect_virtualization_protection(binary_path),
-            "commercial": self.detect_commercial_protections(binary_path),
-            "checksum": self.detect_checksum_verification(binary_path),
-            "self_healing": self.detect_self_healing_code(binary_path),
-            "obfuscation": self.detect_obfuscation(binary_path),
-            "anti_debug": self.detect_anti_debugging_techniques(binary_path),
-            "tpm": self.detect_tpm_protection(binary_path),
+            "virtualization": virtualization_result,
+            "commercial": commercial_result,
+            "checksum": checksum_result,
+            "self_healing": self_healing_result,
+            "obfuscation": obfuscation_result,
+            "anti_debug": anti_debug_result,
+            "tpm": tpm_result,
         }
 
-        # Summary
+        virtualization_detected = bool(virtualization_result.get("virtualization_detected", False))
+        commercial_protections = bool(commercial_result.get("protections", []))
+        has_checksum = bool(checksum_result.get("has_checksum_verification", False))
+        has_self_healing = bool(self_healing_result.get("has_self_healing", False))
+        is_obfuscated = bool(obfuscation_result.get("is_obfuscated", False))
+        has_anti_debug = bool(anti_debug_result.get("has_anti_debug", False))
+        has_tpm = bool(tpm_result.get("has_tpm_protection", False))
+
         results["summary"] = {
-            "is_protected": any(
-                [
-                    results["virtualization"]["virtualization_detected"],
-                    bool(results["commercial"]["protections"]),
-                    results["checksum"]["has_checksum_verification"],
-                    results["self_healing"]["has_self_healing"],
-                    results["obfuscation"]["is_obfuscated"],
-                    results["anti_debug"]["has_anti_debug"],
-                    results["tpm"]["has_tpm_protection"],
-                ],
-            ),
-            "protection_count": sum(
-                [
-                    results["virtualization"]["virtualization_detected"],
-                    bool(results["commercial"]["protections"]),
-                    results["checksum"]["has_checksum_verification"],
-                    results["self_healing"]["has_self_healing"],
-                    results["obfuscation"]["is_obfuscated"],
-                    results["anti_debug"]["has_anti_debug"],
-                    results["tpm"]["has_tpm_protection"],
-                ],
-            ),
+            "is_protected": any([
+                virtualization_detected,
+                commercial_protections,
+                has_checksum,
+                has_self_healing,
+                is_obfuscated,
+                has_anti_debug,
+                has_tpm,
+            ]),
+            "protection_count": sum([
+                int(virtualization_detected),
+                int(commercial_protections),
+                int(has_checksum),
+                int(has_self_healing),
+                int(is_obfuscated),
+                int(has_anti_debug),
+                int(has_tpm),
+            ]),
         }
         logger.info("Completed comprehensive protection detection: %s protections found", results["summary"]["protection_count"])
         return results
 
 
-# Global detector instance
-_global_detector = None
+_global_detector: ProtectionDetector | None = None
 
 
 def get_protection_detector() -> ProtectionDetector:

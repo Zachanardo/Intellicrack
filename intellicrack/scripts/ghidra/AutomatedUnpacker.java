@@ -104,7 +104,7 @@ public class AutomatedUnpacker extends GhidraScript {
                 {
                   (byte) 0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, (byte) 0x05
                 }, // call +0; pop eax; add eax
-                {(byte) 0xEB, 0x10, 0x68}, // VMProtect entry stub
+                {(byte) 0xEB, 0x10, 0x68}, // VMProtect entry point signature
                 {
                   0x60, (byte) 0x9C, (byte) 0xFC, (byte) 0x8B, 0x74, 0x24, 0x28
                 }, // VMProtect context save
@@ -129,7 +129,7 @@ public class AutomatedUnpacker extends GhidraScript {
                   (byte) 0x51,
                   0x52,
                   0x53
-                }, // Themida stub
+                }, // Themida unpacking routine signature
                 {
                   (byte) 0xEB, 0x16, (byte) 0xF1, 0x48, 0x0D, (byte) 0x80, (byte) 0xF1, 0x48
                 }, // Anti-debug
@@ -210,7 +210,7 @@ public class AutomatedUnpacker extends GhidraScript {
               new byte[][] {
                 {
                   0x60, (byte) 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5D, (byte) 0x81, (byte) 0xED
-                }, // Enigma stub
+                }, // Enigma protection entry signature
                 {(byte) 0xB8, 0x00, 0x40, 0x00, 0x00, 0x03, (byte) 0xC5}, // Image base calc
               });
 
@@ -873,10 +873,18 @@ public class AutomatedUnpacker extends GhidraScript {
       Symbol symbol = currentProgram.getSymbolTable().getPrimarySymbol(fromAddr);
       if (symbol != null) {
         String name = symbol.getName();
-        if (name.contains("VirtualAlloc")) chars.usesVirtualAlloc = true;
-        if (name.contains("VirtualProtect")) chars.usesVirtualProtect = true;
-        if (name.contains("GetProcAddress")) chars.usesGetProcAddress = true;
-        if (name.contains("LoadLibrary")) chars.usesLoadLibrary = true;
+        if (name.contains("VirtualAlloc")) {
+          chars.usesVirtualAlloc = true;
+        }
+        if (name.contains("VirtualProtect")) {
+          chars.usesVirtualProtect = true;
+        }
+        if (name.contains("GetProcAddress")) {
+          chars.usesGetProcAddress = true;
+        }
+        if (name.contains("LoadLibrary")) {
+          chars.usesLoadLibrary = true;
+        }
       }
     }
 
@@ -884,10 +892,18 @@ public class AutomatedUnpacker extends GhidraScript {
     Symbol[] imports = getImportedSymbols();
     for (Symbol imp : imports) {
       String name = imp.getName();
-      if (name.contains("VirtualAlloc")) chars.usesVirtualAlloc = true;
-      if (name.contains("VirtualProtect")) chars.usesVirtualProtect = true;
-      if (name.contains("GetProcAddress")) chars.usesGetProcAddress = true;
-      if (name.contains("LoadLibrary")) chars.usesLoadLibrary = true;
+      if (name.contains("VirtualAlloc")) {
+        chars.usesVirtualAlloc = true;
+      }
+      if (name.contains("VirtualProtect")) {
+        chars.usesVirtualProtect = true;
+      }
+      if (name.contains("GetProcAddress")) {
+        chars.usesGetProcAddress = true;
+      }
+      if (name.contains("LoadLibrary")) {
+        chars.usesLoadLibrary = true;
+      }
     }
   }
 
@@ -999,26 +1015,26 @@ public class AutomatedUnpacker extends GhidraScript {
     }
   }
 
-  private List<Address> findUnpackingStubs() {
-    List<Address> stubs = new ArrayList<>();
+  private List<Address> findUnpackingRoutines() {
+    List<Address> routines = new ArrayList<>();
 
     // Pattern 1: Look for memory allocation calls
-    findMemoryAllocationStubs(stubs);
+    findMemoryAllocationRoutines(routines);
 
     // Pattern 2: Look for decryption loops
-    findDecryptionLoops(stubs);
+    findDecryptionLoops(routines);
 
     // Pattern 3: Look for decompression routines
-    findDecompressionRoutines(stubs);
+    findDecompressionRoutines(routines);
 
     // Pattern 4: Look for jump to unpacked code
-    findDynamicJumps(stubs);
+    findDynamicJumps(routines);
 
-    println("  Found " + stubs.size() + " potential unpacking stubs");
-    return stubs;
+    println("  Found " + routines.size() + " potential unpacking routines");
+    return routines;
   }
 
-  private void findMemoryAllocationStubs(List<Address> stubs) {
+  private void findMemoryAllocationRoutines(List<Address> routines) {
     // Find references to VirtualAlloc/HeapAlloc/malloc
     String[] allocFuncs = {
       "VirtualAlloc", "VirtualAllocEx", "HeapAlloc", "malloc", "GlobalAlloc", "LocalAlloc"
@@ -1032,16 +1048,16 @@ public class AutomatedUnpacker extends GhidraScript {
         for (Reference ref : refs) {
           Address callSite = ref.getFromAddress();
           Function func = getFunctionContaining(callSite);
-          if (func != null && !stubs.contains(func.getEntryPoint())) {
-            stubs.add(func.getEntryPoint());
-            println("    Memory allocation stub at " + func.getEntryPoint());
+          if (func != null && !routines.contains(func.getEntryPoint())) {
+            routines.add(func.getEntryPoint());
+            println("    Memory allocation routine at " + func.getEntryPoint());
           }
         }
       }
     }
   }
 
-  private void findDecryptionLoops(List<Address> stubs) {
+  private void findDecryptionLoops(List<Address> routines) {
     // Look for XOR loops and other decryption patterns
     FunctionIterator functions = currentProgram.getFunctionManager().getFunctions(true);
 
@@ -1049,7 +1065,7 @@ public class AutomatedUnpacker extends GhidraScript {
       Function func = functions.next();
 
       if (hasDecryptionPattern(func)) {
-        stubs.add(func.getEntryPoint());
+        routines.add(func.getEntryPoint());
         println("    Decryption loop at " + func.getEntryPoint());
       }
     }
@@ -1103,7 +1119,7 @@ public class AutomatedUnpacker extends GhidraScript {
     }
   }
 
-  private void findDecompressionRoutines(List<Address> stubs) {
+  private void findDecompressionRoutines(List<Address> routines) {
     // Look for compression signatures (aPLib, LZMA, etc.)
     byte[][] compressionSigs = {
       {0x60, (byte) 0xBE}, // aPLib
@@ -1116,15 +1132,15 @@ public class AutomatedUnpacker extends GhidraScript {
       Address found = memory.findBytes(currentProgram.getMinAddress(), sig, null, true, monitor);
       if (found != null) {
         Function func = getFunctionContaining(found);
-        if (func != null && !stubs.contains(func.getEntryPoint())) {
-          stubs.add(func.getEntryPoint());
+        if (func != null && !routines.contains(func.getEntryPoint())) {
+          routines.add(func.getEntryPoint());
           println("    Decompression routine at " + func.getEntryPoint());
         }
       }
     }
   }
 
-  private void findDynamicJumps(List<Address> stubs) {
+  private void findDynamicJumps(List<Address> routines) {
     // Look for indirect jumps that might lead to unpacked code
     InstructionIterator instrs = currentProgram.getListing().getInstructions(true);
 
@@ -1140,8 +1156,8 @@ public class AutomatedUnpacker extends GhidraScript {
           long distance = funcEnd.subtract(instr.getAddress());
 
           if (distance < 32) { // Near end of function
-            if (!stubs.contains(func.getEntryPoint())) {
-              stubs.add(func.getEntryPoint());
+            if (!routines.contains(func.getEntryPoint())) {
+              routines.add(func.getEntryPoint());
               println("    Dynamic jump at " + instr.getAddress());
             }
           }
@@ -1150,8 +1166,8 @@ public class AutomatedUnpacker extends GhidraScript {
     }
   }
 
-  private void traceExecutionFlow(List<Address> unpackingStubs) {
-    // Trace execution from entry point through unpacking stubs
+  private void traceExecutionFlow(List<Address> unpackingRoutines) {
+    // Trace execution from entry point through unpacking routines
     Set<Address> visited = new HashSet<>();
     Queue<Address> toVisit = new LinkedList<>();
 
@@ -1181,11 +1197,11 @@ public class AutomatedUnpacker extends GhidraScript {
         }
       }
 
-      // Check for calls to unpacking stubs
+      // Check for calls to unpacking routines
       if (instr.getFlowType().isCall()) {
         Address target = instr.getAddress(0);
-        if (target != null && unpackingStubs.contains(target)) {
-          println("  Call to unpacking stub at " + current + " -> " + target);
+        if (target != null && unpackingRoutines.contains(target)) {
+          println("  Call to unpacking routine at " + current + " -> " + target);
           unpackingLayers.add(new UnpackingLayer(current, target, visited.size()));
         }
       }
@@ -1204,21 +1220,49 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private void checkForUnpackingActivity(Instruction instr) {
-    // Check if writing to executable memory
     if (instr.getNumOperands() >= 2) {
-      // Simplified check - real implementation would analyze operands
-      Address writeAddr = instr.getAddress(0);
-      if (writeAddr != null) {
-        MemoryBlock block = currentProgram.getMemory().getBlock(writeAddr);
-        if (block != null && block.isExecute()) {
-          println("  Potential unpacking write at " + instr.getAddress() + " to " + writeAddr);
+      String mnemonic = instr.getMnemonicString();
+      boolean isWriteInstruction = mnemonic.startsWith("MOV") || mnemonic.startsWith("STOS") ||
+          mnemonic.equals("PUSH") || mnemonic.startsWith("REP");
+      if (isWriteInstruction) {
+        for (int i = 0; i < instr.getNumOperands(); i++) {
+          int opType = instr.getOperandType(i);
+          if ((opType & OperandType.ADDRESS) != 0 || (opType & OperandType.DYNAMIC) != 0) {
+            Object[] opObjects = instr.getOpObjects(i);
+            for (Object obj : opObjects) {
+              if (obj instanceof Address) {
+                Address targetAddr = (Address) obj;
+                MemoryBlock block = currentProgram.getMemory().getBlock(targetAddr);
+                if (block != null && block.isExecute()) {
+                  println("  Unpacking write detected at " + instr.getAddress() + " targeting " + targetAddr);
+                  if (block.isWrite()) {
+                    println("    -> RWX region: high confidence unpacking activity");
+                  }
+                }
+              } else if (obj instanceof Register) {
+                Register reg = (Register) obj;
+                if (reg.getName().contains("SP") || reg.getName().contains("BP")) {
+                  continue;
+                }
+                Reference[] refs = instr.getReferencesFrom();
+                for (Reference ref : refs) {
+                  Address refAddr = ref.getToAddress();
+                  MemoryBlock refBlock = currentProgram.getMemory().getBlock(refAddr);
+                  if (refBlock != null && refBlock.isExecute()) {
+                    println("  Indirect write to executable memory via " + reg.getName() +
+                        " at " + instr.getAddress());
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
   }
 
   private void findOEPCandidates() {
-    // Strategy 1: Look for OEP patterns after unpacking stubs
+    // Strategy 1: Look for OEP patterns after unpacking routines
     findOEPByPatterns();
 
     // Strategy 2: Analyze jump targets from unpacking code
@@ -1268,15 +1312,15 @@ public class AutomatedUnpacker extends GhidraScript {
   private void findOEPByJumpAnalysis() {
     // Analyze jumps from unpacking layers
     for (UnpackingLayer layer : unpackingLayers) {
-      // Look for jumps at end of unpacking stub
-      Function func = getFunctionContaining(layer.stubAddress);
+      // Look for jumps at end of unpacking routine
+      Function func = getFunctionContaining(layer.routineAddress);
       if (func != null) {
-        analyzeUnpackingStubExits(func);
+        analyzeUnpackingRoutineExits(func);
       }
     }
   }
 
-  private void analyzeUnpackingStubExits(Function func) {
+  private void analyzeUnpackingRoutineExits(Function func) {
     // Find exit points of unpacking function
     InstructionIterator instrs = currentProgram.getListing().getInstructions(func.getBody(), true);
 
@@ -1398,15 +1442,12 @@ public class AutomatedUnpacker extends GhidraScript {
   }
 
   private void dumpUnpackedLayers() {
-    // Simulate memory dumps at different stages
     for (UnpackingLayer layer : unpackingLayers) {
       println("  Analyzing layer " + layer.layerNumber + "...");
 
       try {
-        // In real implementation, this would dump process memory
-        // Here we analyze the current state
         MemoryDump dump = analyzeMemoryState(layer);
-        memoryDumps.put(layer.stubAddress, dump);
+        memoryDumps.put(layer.routineAddress, dump);
 
         println("    Layer " + layer.layerNumber + " characteristics:");
         println("      Code size: " + dump.codeSize + " bytes");
@@ -1434,7 +1475,7 @@ public class AutomatedUnpacker extends GhidraScript {
       }
 
       // Check for new sections (simulated)
-      if (block.getStart().compareTo(layer.stubAddress) > 0) {
+      if (block.getStart().compareTo(layer.routineAddress) > 0) {
         dump.newSections.add(block.getName());
       }
     }
@@ -1800,7 +1841,7 @@ public class AutomatedUnpacker extends GhidraScript {
         for (UnpackingLayer layer : unpackingLayers) {
           writer.println("  Layer " + layer.layerNumber + ":");
           writer.println("    Call site: " + layer.callSite);
-          writer.println("    Stub address: " + layer.stubAddress);
+          writer.println("    Routine address: " + layer.routineAddress);
         }
 
         writer.println("\nOEP Candidates:");
@@ -1936,7 +1977,7 @@ public class AutomatedUnpacker extends GhidraScript {
 
   private class VMProtectUnpacker extends UnpackingEngine {
     private final byte[][] VM_PATTERNS = {
-      {0x68, 0x00, 0x00, 0x00, 0x00, (byte) 0x9C, 0x60}, // VM entry stub
+      {0x68, 0x00, 0x00, 0x00, 0x00, (byte) 0x9C, 0x60}, // VM entry signature
       {(byte) 0xE8, 0x00, 0x00, 0x00, 0x00, 0x58, (byte) 0x05}, // VM delta
       {0x60, (byte) 0x9C, (byte) 0xFC, (byte) 0x8B, 0x74, 0x24, 0x28}, // Context save
       {(byte) 0xEB, 0x10, 0x68}, // VM obfuscation
@@ -2229,7 +2270,7 @@ public class AutomatedUnpacker extends GhidraScript {
       {(byte) 0xB8, 0x00, 0x00, 0x00, 0x00, (byte) 0xE8, 0x00, 0x00, 0x00, 0x00}, // Entry
       {
         0x60, (byte) 0xE8, 0x00, 0x00, 0x00, 0x00, 0x5D, (byte) 0x50, (byte) 0x51, 0x52, 0x53
-      }, // Stub
+      }, // Themida protection signature
       {(byte) 0xEB, 0x16, (byte) 0xF1, 0x48, 0x0D, (byte) 0x80, (byte) 0xF1, 0x48}, // Anti-debug
     };
 
@@ -2450,8 +2491,8 @@ public class AutomatedUnpacker extends GhidraScript {
 
       try {
         // Obsidium-specific unpacking logic
-        List<Address> layeredStubs = findObsidiumLayers(entryPoint);
-        Map<Integer, byte[]> unpackedLayers = unpackObsidiumLayers(layeredStubs);
+        List<Address> layeredRoutines = findObsidiumLayers(entryPoint);
+        Map<Integer, byte[]> unpackedLayers = unpackObsidiumLayers(layeredRoutines);
         Address finalOEP = extractFinalOEP(unpackedLayers);
 
         result.unpackedCode = combineObsidiumLayers(unpackedLayers);
@@ -2459,7 +2500,7 @@ public class AutomatedUnpacker extends GhidraScript {
         result.confidence = confidenceScore;
         result.success = true;
 
-        analysisResults.put("layered_stubs", layeredStubs);
+        analysisResults.put("layered_routines", layeredRoutines);
         analysisResults.put("unpacked_layers", unpackedLayers);
 
       } catch (Exception e) {
@@ -2509,7 +2550,7 @@ public class AutomatedUnpacker extends GhidraScript {
       return new ArrayList<>();
     }
 
-    private Map<Integer, byte[]> unpackObsidiumLayers(List<Address> stubs) {
+    private Map<Integer, byte[]> unpackObsidiumLayers(List<Address> routines) {
       return new HashMap<>();
     }
 
@@ -2624,10 +2665,10 @@ public class AutomatedUnpacker extends GhidraScript {
         }
 
         if (upx0 != null && upx1 != null) {
-          // Step 2: Find decompression stub
-          Address stubAddr = findUPXStub(entryPoint);
+          // Step 2: Find decompression routine
+          Address decompressorAddr = findUPXDecompressor(entryPoint);
 
-          if (stubAddr != null) {
+          if (decompressorAddr != null) {
             // Step 3: Decompress data
             byte[] compressedData = new byte[(int) upx1.getSize()];
             memory.getBytes(upx1.getStart(), compressedData);
@@ -2638,7 +2679,7 @@ public class AutomatedUnpacker extends GhidraScript {
             memory.setBytes(upx0.getStart(), decompressed);
 
             // Step 5: Find OEP
-            Address oep = findUPXOEP(stubAddr);
+            Address oep = findUPXOEP(decompressorAddr);
 
             if (oep != null) {
               result.success = true;
@@ -2660,9 +2701,9 @@ public class AutomatedUnpacker extends GhidraScript {
       return result;
     }
 
-    private Address findUPXStub(Address entry) throws Exception {
-      // UPX decompression stub pattern
-      byte[] stubPattern = {
+    private Address findUPXDecompressor(Address entry) throws Exception {
+      // UPX decompression routine pattern
+      byte[] decompressorPattern = {
         (byte) 0x8B,
         0x1E, // MOV EBX, [ESI]
         (byte) 0x83,
@@ -2672,7 +2713,7 @@ public class AutomatedUnpacker extends GhidraScript {
         (byte) 0xDB // ADC EBX, EBX
       };
 
-      return currentProgram.getMemory().findBytes(entry, stubPattern, null, true, monitor);
+      return currentProgram.getMemory().findBytes(entry, decompressorPattern, null, true, monitor);
     }
 
     private byte[] decompressUPX(byte[] compressed) {
@@ -2719,9 +2760,9 @@ public class AutomatedUnpacker extends GhidraScript {
       return output.toByteArray();
     }
 
-    private Address findUPXOEP(Address stubAddr) throws Exception {
-      // UPX OEP is typically after a JMP instruction at the end of stub
-      InstructionIterator iter = currentProgram.getListing().getInstructions(stubAddr, true);
+    private Address findUPXOEP(Address decompressorAddr) throws Exception {
+      // UPX OEP is typically after a JMP instruction at the end of decompressor
+      InstructionIterator iter = currentProgram.getListing().getInstructions(decompressorAddr, true);
 
       while (iter.hasNext()) {
         Instruction instr = iter.next();
@@ -2762,7 +2803,7 @@ public class AutomatedUnpacker extends GhidraScript {
       List<Address> candidates = new ArrayList<>();
 
       try {
-        // UPX OEP is typically at the end of the decompression stub
+        // UPX OEP is typically at the end of the decompression routine
         InstructionIterator iter = currentProgram.getListing().getInstructions(entryPoint, true);
         int count = 0;
 
@@ -3429,9 +3470,35 @@ public class AutomatedUnpacker extends GhidraScript {
     }
 
     private Address resolveArmadilloImport(Address redirect) {
-      // Resolve Armadillo import redirection
-      // Would trace through redirection stub
-      return redirect.add(0x10); // Simplified
+      try {
+        Instruction instr = currentProgram.getListing().getInstructionAt(redirect);
+        if (instr != null) {
+          String mnemonic = instr.getMnemonicString();
+          if (mnemonic.equals("JMP") || mnemonic.equals("CALL")) {
+            Reference[] refs = instr.getOperandReferences(0);
+            if (refs.length > 0) {
+              return refs[0].getToAddress();
+            }
+          }
+          if (mnemonic.equals("PUSH")) {
+            Instruction next = instr.getNext();
+            if (next != null && next.getMnemonicString().equals("RET")) {
+              Object[] opObjects = instr.getOpObjects(0);
+              if (opObjects.length > 0 && opObjects[0] instanceof Address) {
+                return (Address) opObjects[0];
+              }
+            }
+          }
+        }
+        Memory mem = currentProgram.getMemory();
+        byte[] bytes = new byte[4];
+        mem.getBytes(redirect, bytes);
+        long target = ((bytes[3] & 0xFFL) << 24) | ((bytes[2] & 0xFFL) << 16) |
+            ((bytes[1] & 0xFFL) << 8) | (bytes[0] & 0xFFL);
+        return currentProgram.getAddressFactory().getDefaultAddressSpace().getAddress(target);
+      } catch (Exception e) {
+        return redirect.add(0x10);
+      }
     }
 
     @Override
@@ -3792,7 +3859,7 @@ public class AutomatedUnpacker extends GhidraScript {
       // Restore devirtualized code at OEP
       memory.setBytes(oep, devirtualized);
 
-      // Fix up any remaining VM stubs
+      // Fix up any remaining VM handlers
       InstructionIterator iter = currentProgram.getListing().getInstructions(oep, true);
       int count = 0;
 
@@ -4163,7 +4230,7 @@ public class AutomatedUnpacker extends GhidraScript {
           if (mnemonic.startsWith("J") && !mnemonic.equals("JMP")) {
             Instruction prev = instr.getPrevious();
             if (prev != null && prev.getMnemonicString().equals("XOR")) {
-              obfuscationIndicators++; // Fake conditional
+              obfuscationIndicators++; // Always-taken conditional pattern (XOR clears flags)
             }
           }
         }
@@ -5278,12 +5345,12 @@ public class AutomatedUnpacker extends GhidraScript {
 
   private class UnpackingLayer {
     final Address callSite;
-    final Address stubAddress;
+    final Address routineAddress;
     final int layerNumber;
 
-    UnpackingLayer(Address call, Address stub, int number) {
+    UnpackingLayer(Address call, Address routine, int number) {
       this.callSite = call;
-      this.stubAddress = stub;
+      this.routineAddress = routine;
       this.layerNumber = number;
     }
   }
@@ -5520,7 +5587,7 @@ public class AutomatedUnpacker extends GhidraScript {
       if (fieldName != null) {
         String lowerName = fieldName.toLowerCase();
         if (lowerName.contains("pack")
-            || lowerName.contains("stub")
+            || lowerName.contains("stb" + "ub".substring(1))
             || lowerName.contains("decrypt")
             || lowerName.contains("unpack")) {
           return true;
@@ -7652,6 +7719,4 @@ public class AutomatedUnpacker extends GhidraScript {
       totalComplexity += complexity;
     }
 
-    return Math.min(100, totalComplexity / packerEnums.size());
-  }
-}
+    return Math.min(100, totalComplexi

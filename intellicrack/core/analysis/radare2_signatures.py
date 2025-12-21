@@ -126,7 +126,7 @@ class R2SignatureAnalyzer:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error("Signature analysis failed: %s", e)
+            self.logger.exception("Signature analysis failed: %s", e)
 
         return result
 
@@ -159,12 +159,9 @@ class R2SignatureAnalyzer:
                     and not func_name.startswith("sym.entry")
                     and len(func_name) > 10
                 ):
-                    # Get more details about this function
-                    func_addr = func.get("offset", 0)
-                    if func_addr:
+                    if func_addr := func.get("offset", 0):
                         try:
-                            func_info = r2.get_function_info(func_addr)
-                            if func_info:
+                            if func_info := r2.get_function_info(func_addr):
                                 identified_by_flirt.append(
                                     {
                                         "name": func_name,
@@ -604,7 +601,7 @@ class R2SignatureAnalyzer:
     def _calculate_crypto_confidence(self, func_name: str, patterns: list[str]) -> float:
         """Calculate confidence for crypto function identification."""
         name_lower = func_name.lower()
-        matches = sum(bool(pattern in name_lower) for pattern in patterns)
+        matches = sum(pattern in name_lower for pattern in patterns)
 
         # Higher confidence for more specific matches
         if "encrypt" in name_lower or "decrypt" in name_lower:
@@ -958,11 +955,11 @@ class R2SignatureAnalyzer:
                 if dangerous_calls:
                     func_addr_hex = hex(func_addr) if isinstance(func_addr, int) else str(func_addr)
                     if func_addr_hex in dangerous_calls or str(func_addr) in dangerous_calls:
-                        call_sites: list[str] = []
-                        for line in dangerous_calls.split("\n"):
-                            if func_addr_hex in line or str(func_addr) in line:
-                                call_sites.append(line.strip())
-                        if call_sites:
+                        if call_sites := [
+                            line.strip()
+                            for line in dangerous_calls.split("\n")
+                            if func_addr_hex in line or str(func_addr) in line
+                        ]:
                             r2_analysis["dangerous_call_sites"] = call_sites
                             r2_analysis["calls_unsafe_functions"] = True
                             if risk_level == "low":

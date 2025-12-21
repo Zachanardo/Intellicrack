@@ -59,13 +59,13 @@ class GhidraBinaryIntegration:
             self.logger.info(
                 "License validation analysis completed for %s: %s functions found",
                 binary_path.name,
-                result.get('validation_functions', 0),
+                result.get("validation_functions", 0),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error("License validation analysis failed: %s", e)
+            self.logger.exception("License validation analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def detect_protections(self, binary_path: Path) -> dict[str, Any]:
@@ -106,7 +106,7 @@ class GhidraBinaryIntegration:
             }
 
         except Exception as e:
-            self.logger.error("Protection detection failed: %s", e)
+            self.logger.exception("Protection detection failed: %s", e)
             return {"error": str(e), "success": False, "protections": []}
 
     def analyze_crypto_routines(self, binary_path: Path) -> dict[str, Any]:
@@ -151,7 +151,7 @@ class GhidraBinaryIntegration:
             }
 
         except Exception as e:
-            self.logger.error("Crypto analysis failed: %s", e)
+            self.logger.exception("Crypto analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def generate_keygen_template(self, binary_path: Path) -> dict[str, Any]:
@@ -174,13 +174,13 @@ class GhidraBinaryIntegration:
             self.logger.info(
                 "Keygen template generated for %s: algorithm=%s",
                 binary_path.name,
-                result.get('algorithm_type', 'unknown'),
+                result.get("algorithm_type", "unknown"),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error("Keygen template generation failed: %s", e)
+            self.logger.exception("Keygen template generation failed: %s", e)
             return {"error": str(e), "success": False}
 
     def deobfuscate_control_flow(self, binary_path: Path) -> dict[str, Any]:
@@ -203,13 +203,13 @@ class GhidraBinaryIntegration:
             self.logger.info(
                 "Control flow deobfuscation completed for %s: %s blocks processed",
                 binary_path.name,
-                result.get('blocks_deobfuscated', 0),
+                result.get("blocks_deobfuscated", 0),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error("Control flow deobfuscation failed: %s", e)
+            self.logger.exception("Control flow deobfuscation failed: %s", e)
             return {"error": str(e), "success": False}
 
     def decrypt_strings(self, binary_path: Path) -> dict[str, Any]:
@@ -240,7 +240,7 @@ class GhidraBinaryIntegration:
             return result
 
         except Exception as e:
-            self.logger.error("String decryption failed: %s", e)
+            self.logger.exception("String decryption failed: %s", e)
             return {"error": str(e), "success": False}
 
     def detect_anti_analysis(self, binary_path: Path) -> dict[str, Any]:
@@ -281,7 +281,7 @@ class GhidraBinaryIntegration:
             }
 
         except Exception as e:
-            self.logger.error("Anti-analysis detection failed: %s", e)
+            self.logger.exception("Anti-analysis detection failed: %s", e)
             return {"error": str(e), "success": False, "techniques": []}
 
     def perform_comprehensive_analysis(
@@ -311,13 +311,13 @@ class GhidraBinaryIntegration:
             self.logger.info(
                 "Comprehensive analysis completed for %s: %s functions analyzed",
                 binary_path.name,
-                result.get('function_count', 0),
+                result.get("function_count", 0),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error("Comprehensive analysis failed: %s", e)
+            self.logger.exception("Comprehensive analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def unpack_binary(self, binary_path: Path, max_iterations: int = 10) -> dict[str, Any]:
@@ -341,13 +341,13 @@ class GhidraBinaryIntegration:
             self.logger.info(
                 "Unpacking completed for %s: OEP=%s",
                 binary_path.name,
-                hex(result.get('oep', 0)),
+                hex(result.get("oep", 0)),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error("Unpacking failed: %s", e)
+            self.logger.exception("Unpacking failed: %s", e)
             return {"error": str(e), "success": False}
 
     def analyze_network_communication(self, binary_path: Path) -> dict[str, Any]:
@@ -370,13 +370,13 @@ class GhidraBinaryIntegration:
             self.logger.info(
                 "Network analysis completed for %s: %d functions found",
                 binary_path.name,
-                len(result.get('network_functions', [])),
+                len(result.get("network_functions", [])),
             )
 
             return result
 
         except Exception as e:
-            self.logger.error("Network analysis failed: %s", e)
+            self.logger.exception("Network analysis failed: %s", e)
             return {"error": str(e), "success": False}
 
     def perform_licensing_crack_workflow(self, binary_path: Path) -> dict[str, Any]:

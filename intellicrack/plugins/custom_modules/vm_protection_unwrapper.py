@@ -598,7 +598,7 @@ class VMEmulator:
             return True
 
         except Exception as e:
-            self.logger.error("Error executing %s: %s", instruction.mnemonic, e, exc_info=True)
+            self.logger.exception("Error executing %s: %s", instruction.mnemonic, e, exc_info=True)
             return False
 
     def _execute_stack_op(self, instruction: VMInstruction) -> bool:
@@ -874,7 +874,7 @@ class VMAnalyzer:
                 addresses = struct.unpack("<16I", potential_table)
 
                 # Heuristic: addresses should be in reasonable range
-                valid_addresses = sum(bool(0x400000 <= addr <= 0x800000) for addr in addresses)
+                valid_addresses = sum(0x400000 <= addr <= 0x800000 for addr in addresses)
 
                 if valid_addresses >= 12:  # At least 75% valid
                     return i
@@ -973,7 +973,9 @@ class VMAnalyzer:
             return "unknown"
 
         entropy = self._calculate_entropy(section_data)
-        printable_ratio = sum(1 for b in section_data if 32 <= b <= 126) / len(section_data)
+        printable_ratio = sum(32 <= b <= 126 for b in section_data) / len(
+            section_data
+        )
         null_ratio = section_data.count(0) / len(section_data)
 
         if null_ratio > 0.8:
@@ -1001,7 +1003,9 @@ class VMAnalyzer:
                 return "code"
 
         instruction_indicators = [0x55, 0x8B, 0x89, 0xE8, 0xE9, 0x74, 0x75, 0x0F, 0x90]
-        instruction_count = sum(1 for b in section_data[:256] if b in instruction_indicators)
+        instruction_count = sum(
+            b in instruction_indicators for b in section_data[:256]
+        )
 
         if instruction_count > 20:
             return "code"
@@ -1016,10 +1020,7 @@ class VMAnalyzer:
             if len(potential_addresses) >= 8:
                 return "handler_table"
 
-        if 4.0 <= entropy <= 6.5 and printable_ratio < 0.5:
-            return "data"
-
-        return "unknown"
+        return "data" if 4.0 <= entropy <= 6.5 and printable_ratio < 0.5 else "unknown"
 
 
 class VMProtectionUnwrapper:
@@ -1091,7 +1092,7 @@ class VMProtectionUnwrapper:
             return result
 
         except Exception as e:
-            self.logger.error("Error unwrapping %s: %s", input_file, e, exc_info=True)
+            self.logger.exception("Error unwrapping %s: %s", input_file, e, exc_info=True)
             self.stats["failed_unwraps"] += 1
             return {"success": False, "error": str(e)}
 
@@ -1130,7 +1131,7 @@ class VMProtectionUnwrapper:
                 unwrapped_sections.append(decrypted)
 
             except Exception as e:
-                self.logger.error("Error decrypting section: %s", e, exc_info=True)
+                self.logger.exception("Error decrypting section: %s", e, exc_info=True)
                 unwrapped_sections.append(section_data)  # Keep original
 
         return unwrapped_sections
@@ -1315,7 +1316,7 @@ class VMProtectionUnwrapper:
 
         # Check if decryption produces valid x86 code
         valid_opcodes = [0x55, 0x89, 0x8B, 0x50, 0x51, 0x52, 0x53]  # Common x86 opcodes
-        valid_count = sum(bool(b in valid_opcodes) for b in decrypted[:4])
+        valid_count = sum(b in valid_opcodes for b in decrypted[:4])
 
         return valid_count >= 2
 
@@ -1968,7 +1969,7 @@ class VMProtectionUnwrapper:
                 results.append(result)
 
             except Exception as e:
-                self.logger.error("Error processing %s: %s", file_path, e, exc_info=True)
+                self.logger.exception("Error processing %s: %s", file_path, e, exc_info=True)
                 results.append(
                     {
                         "input_file": str(file_path),
@@ -2027,7 +2028,7 @@ def main() -> None:
                 status = "OK" if result.get("success") else "FAIL"
                 main_logger.info("%s %s", status, Path(result["input_file"]).name)
                 if not result.get("success"):
-                    main_logger.error("  Error: %s", result.get("error", "Unknown error"))
+                    main_logger.exception("  Error: %s", result.get("error", "Unknown error"))
 
         else:
             main_logger.info("Unwrapping %s -> %s", args.input, args.output)
@@ -2040,7 +2041,7 @@ def main() -> None:
                 main_logger.info("  Unwrapped size: %s bytes", result["unwrapped_size"])
                 main_logger.info("  Processing time: %.2f seconds", result["processing_time"])
             else:
-                main_logger.error("FAIL Unwrapping failed: %s", result.get("error", "Unknown error"))
+                main_logger.exception("FAIL Unwrapping failed: %s", result.get("error", "Unknown error"))
 
         if args.stats:
             stats = unwrapper.get_statistics()
@@ -2048,7 +2049,7 @@ def main() -> None:
             main_logger.info("%s", json.dumps(stats, indent=2))
 
     except Exception as e:
-        main_logger.error("Error: %s", e, exc_info=True)
+        main_logger.exception("Error: %s", e, exc_info=True)
 
 
 if __name__ == "__main__":

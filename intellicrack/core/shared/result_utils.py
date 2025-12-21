@@ -37,11 +37,10 @@ class ResultMixin:
             Initialized result dictionary with success=False and error=None
 
         """
-        result = {
+        return {
             "success": False,
             "error": None,
         } | kwargs
-        return result
 
     def create_analysis_result(self, **kwargs: object) -> dict[str, object]:
         """Create a standardized analysis result dictionary.

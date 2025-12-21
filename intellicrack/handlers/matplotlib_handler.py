@@ -766,11 +766,7 @@ except ImportError as e:
             x_data: list[float]
             height_data: list[float]
 
-            if isinstance(x, (int, float)):
-                x_data = [float(x)]
-            else:
-                x_data = list(x)
-
+            x_data = [float(x)] if isinstance(x, (int, float)) else list(x)
             if isinstance(height, (int, float)):
                 height_data = [float(height)]
             else:
@@ -1680,10 +1676,9 @@ startxref
                 "/F1 12 Tf",
                 "72 720 Td",
                 f"(Page generated at {datetime.datetime.now()}) Tj",
+                "ET",
+                "Q",
             ]
-            pdf_stream.append("ET")  # End text
-            pdf_stream.append("Q")
-
             return "\n".join(pdf_stream)
 
     class FallbackPyplot:
@@ -1731,9 +1726,7 @@ startxref
                 The current figure object, creating one if necessary.
 
             """
-            if self._current_figure is None:
-                return self.figure()
-            return self._current_figure
+            return self.figure() if self._current_figure is None else self._current_figure
 
         def gca(self) -> FallbackAxes:
             """Get current axes.

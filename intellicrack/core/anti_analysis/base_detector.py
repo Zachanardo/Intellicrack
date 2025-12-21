@@ -84,7 +84,7 @@ class BaseDetector(ABC):
                     total_confidence += confidence
 
             except Exception as e:
-                self.logger.debug(f"Detection method {method_name} failed: {e}")
+                self.logger.debug("Detection method %s failed: %s", method_name, e)
 
         # Calculate overall results
         results["detection_count"] = detection_count
@@ -140,7 +140,7 @@ class BaseDetector(ABC):
             return processes, process_list
 
         except Exception as e:
-            self.logger.debug(f"Error getting process list: {e}")
+            self.logger.debug("Error getting process list: %s", e)
             return "", []
 
     def calculate_detection_score(

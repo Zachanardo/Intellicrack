@@ -313,7 +313,7 @@ class FridaScriptManager:
         for script_name, config in script_configs.items():
             if config.path.exists():
                 self.scripts[script_name] = config
-                logger.info(f"Loaded script: {script_name}")
+                logger.info("Loaded script: %s", script_name)
 
         # Load custom script configurations from metadata
         self._load_custom_scripts()
@@ -350,7 +350,7 @@ class FridaScriptManager:
             return None
 
         except Exception as e:
-            logger.warning(f"Failed to parse metadata from {script_path}: {e}")
+            logger.warning("Failed to parse metadata from %s: %s", script_path, e)
             return None
 
     def execute_script(
@@ -452,7 +452,7 @@ class FridaScriptManager:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to execute script {script_name}: {e}", exc_info=True)
+            logger.exception("Failed to execute script %s: %s", script_name, e)
             result.errors.append(str(e))
             result.end_time = time.time()
             return result
@@ -517,10 +517,10 @@ class FridaScriptManager:
             elif msg_type == "error":
                 error = message.get("description", "Unknown error")
                 result.errors.append(error)
-                logger.error(f"Script error: {error}", exc_info=True)
+                logger.exception("Script error: %s", error)
 
         except Exception as e:
-            logger.error(f"Failed to handle message: {e}", exc_info=True)
+            logger.exception("Failed to handle message: %s", e)
 
     def stop_script(self, session_id: str) -> None:
         """Stop a running script."""
@@ -529,9 +529,9 @@ class FridaScriptManager:
                 session = self.active_sessions[session_id]
                 session.detach()
                 del self.active_sessions[session_id]
-                logger.info(f"Stopped script session: {session_id}")
+                logger.info("Stopped script session: %s", session_id)
             except Exception as e:
-                logger.error(f"Failed to stop script: {e}", exc_info=True)
+                logger.exception("Failed to stop script: %s", e)
 
     def get_script_categories(self) -> list[ScriptCategory]:
         """Get all available script categories."""

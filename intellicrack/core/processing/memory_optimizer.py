@@ -38,7 +38,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in memory_optimizer: %s", e, exc_info=True)
+    logger.exception("Import error in memory_optimizer: %s", e)
     PSUTIL_AVAILABLE = False
 
 
@@ -102,7 +102,7 @@ class MemoryOptimizer:
             _, _, _ = self.get_current_memory_usage()
             self.logger.info("Memory tracking initialized successfully")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to initialize memory tracking: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize memory tracking: %s", e)
 
     def enable(self) -> None:
         """Enable memory optimization."""
@@ -197,7 +197,7 @@ class MemoryOptimizer:
             return (used_memory, total_memory, usage_percentage)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error getting memory usage: %s", e, exc_info=True)
+            self.logger.exception("Error getting memory usage: %s", e)
             return (0, 0, 0.0)
 
     def check_memory_usage(self) -> bool:
@@ -234,8 +234,9 @@ class MemoryOptimizer:
             int: Estimated bytes saved by optimization
 
         """
-        memory_before = self.optimization_stats["current_memory_usage"]
-        techniques_used = []
+        memory_before_raw = self.optimization_stats["current_memory_usage"]
+        memory_before = int(memory_before_raw) if isinstance(memory_before_raw, (int, float)) else 0
+        techniques_used: list[str] = []
 
         try:
             # Trigger garbage collection if enabled
@@ -257,22 +258,29 @@ class MemoryOptimizer:
             # Force update of memory usage after optimization
             time.sleep(0.1)  # Small delay to allow GC to complete
             _, _, _ = self.get_current_memory_usage()
-            memory_after = self.optimization_stats["current_memory_usage"]
+            memory_after_raw = self.optimization_stats["current_memory_usage"]
+            memory_after = int(memory_after_raw) if isinstance(memory_after_raw, (int, float)) else 0
 
             # Calculate memory saved
             memory_saved = max(0, memory_before - memory_after)
 
             # Update statistics
-            self.optimization_stats["memory_saved"] += memory_saved
-            self.optimization_stats["collections_triggered"] += 1
-            self.optimization_stats["total_optimizations"] += 1
+            memory_saved_stat = self.optimization_stats["memory_saved"]
+            self.optimization_stats["memory_saved"] = int(memory_saved_stat) + memory_saved if isinstance(memory_saved_stat, (int, float)) else memory_saved
+            collections_triggered = self.optimization_stats["collections_triggered"]
+            self.optimization_stats["collections_triggered"] = int(collections_triggered) + 1 if isinstance(collections_triggered, (int, float)) else 1
+            total_optimizations = self.optimization_stats["total_optimizations"]
+            self.optimization_stats["total_optimizations"] = int(total_optimizations) + 1 if isinstance(total_optimizations, (int, float)) else 1
             self.optimization_stats["last_optimization_time"] = time.time()
 
             # Calculate average memory saved
-            if self.optimization_stats["total_optimizations"] > 0:
-                self.optimization_stats["average_memory_saved"] = (
-                    self.optimization_stats["memory_saved"] / self.optimization_stats["total_optimizations"]
-                )
+            total_opt = self.optimization_stats["total_optimizations"]
+            if isinstance(total_opt, (int, float)) and total_opt > 0:
+                memory_saved_total = self.optimization_stats["memory_saved"]
+                if isinstance(memory_saved_total, (int, float)):
+                    self.optimization_stats["average_memory_saved"] = (
+                        float(memory_saved_total) / float(total_opt)
+                    )
 
             memory_saved_mb = memory_saved / (1024 * 1024)
 
@@ -296,7 +304,7 @@ class MemoryOptimizer:
             return memory_saved
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during memory optimization: %s", e, exc_info=True)
+            self.logger.exception("Error during memory optimization: %s", e)
             return 0
 
     def _optimize_data_structures(self) -> None:
@@ -326,11 +334,11 @@ class MemoryOptimizer:
                 self.logger.debug("Data structure optimizations applied: %s", ", ".join(optimizations_applied))
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during data structure optimization: %s", e, exc_info=True)
+            self.logger.exception("Error during data structure optimization: %s", e)
 
-    def _optimize_application_structures(self) -> list:
+    def _optimize_application_structures(self) -> list[str]:
         """Optimize application-specific data structures."""
-        optimizations = []
+        optimizations: list[str] = []
 
         try:
             # Clear analysis result caches that may be large
@@ -371,9 +379,9 @@ class MemoryOptimizer:
 
         return optimizations
 
-    def _optimize_python_objects(self) -> list:
+    def _optimize_python_objects(self) -> list[str]:
         """Optimize general Python objects for memory efficiency."""
-        optimizations = []
+        optimizations: list[str] = []
 
         try:
             # Get all objects tracked by garbage collector
@@ -390,7 +398,7 @@ class MemoryOptimizer:
                     elif isinstance(obj, dict) and len(obj) > 500:
                         large_dicts.append(obj)
                 except (TypeError, AttributeError) as e:
-                    self.logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                    self.logger.exception("Error in memory_optimizer: %s", e)
                     continue
 
             # Optimize large lists by converting to tuples where possible
@@ -403,7 +411,7 @@ class MemoryOptimizer:
                     # This is a heuristic - in practice you'd need more sophisticated detection
                     converted_lists += 1
                 except (AttributeError, TypeError) as e:
-                    logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                    logger.exception("Error in memory_optimizer: %s", e)
                     continue
 
             if converted_lists > 0:
@@ -416,7 +424,7 @@ class MemoryOptimizer:
                     if isinstance(obj, (list, dict, set)) and len(obj) == 0 and hasattr(obj, "clear"):
                         empty_cleared += 1
                 except (TypeError, AttributeError) as e:
-                    logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                    logger.exception("Error in memory_optimizer: %s", e)
                     continue
 
             if empty_cleared > 0:
@@ -427,9 +435,9 @@ class MemoryOptimizer:
 
         return optimizations
 
-    def _cleanup_circular_references(self) -> list:
+    def _cleanup_circular_references(self) -> list[str]:
         """Clean up circular references that prevent garbage collection."""
-        optimizations = []
+        optimizations: list[str] = []
 
         try:
             # Count objects before cleanup
@@ -456,19 +464,20 @@ class MemoryOptimizer:
 
         return optimizations
 
-    def _optimize_caches(self) -> list:
+    def _optimize_caches(self) -> list[str]:
         """Optimize various caches throughout the application."""
-        optimizations = []
+        optimizations: list[str] = []
 
         try:
             # Clear import caches if they exist
             import sys
 
             if hasattr(sys, "modules"):
-                modules_with_cache = [
-                    module_name for module_name, module in sys.modules.items() if module and hasattr(module, "__pycache__")
-                ]
-                if modules_with_cache:
+                if modules_with_cache := [
+                    module_name
+                    for module_name, module in sys.modules.items()
+                    if module and hasattr(module, "__pycache__")
+                ]:
                     optimizations.append(f"module_caches_identified({len(modules_with_cache)})")
 
             # Clear function caches from functools.lru_cache if accessible
@@ -484,7 +493,7 @@ class MemoryOptimizer:
                             obj.cache_clear()
                             cache_clears += 1
                 except (AttributeError, TypeError, ValueError) as e:
-                    logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                    logger.exception("Error in memory_optimizer: %s", e)
                     continue
 
             if cache_clears > 0:
@@ -521,7 +530,7 @@ class MemoryOptimizer:
             if uncollectable > 0:
                 critical_issues.append(f"{uncollectable} uncollectable objects")
                 # Analyze types of uncollectable objects
-                uncollectable_types = {}
+                uncollectable_types: dict[str, int] = {}
                 for obj in gc.garbage[:10]:  # Check first 10
                     obj_type = type(obj).__name__
                     uncollectable_types[obj_type] = uncollectable_types.get(obj_type, 0) + 1
@@ -611,16 +620,16 @@ class MemoryOptimizer:
             return detailed_report
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during comprehensive leak detection: %s", e, exc_info=True)
+            self.logger.exception("Error during comprehensive leak detection: %s", e)
             return f"error: {e!s}"
 
-    def _find_large_objects(self) -> list[tuple]:
+    def _find_large_objects(self) -> list[tuple[str, int, float]]:
         """Find large objects that may indicate memory leaks."""
         try:
             import sys
             from collections import defaultdict
 
-            object_sizes = defaultdict(lambda: {"count": 0, "total_size": 0})
+            object_sizes: defaultdict[str, dict[str, int]] = defaultdict(lambda: {"count": 0, "total_size": 0})
 
             # Sample objects to avoid performance issues
             all_objects = gc.get_objects()
@@ -635,7 +644,7 @@ class MemoryOptimizer:
                     object_sizes[obj_type]["count"] += 1
                     object_sizes[obj_type]["total_size"] += obj_size
                 except (TypeError, OSError) as e:
-                    self.logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                    self.logger.exception("Error in memory_optimizer: %s", e)
                     continue
 
             # Find objects using significant memory
@@ -677,10 +686,10 @@ class MemoryOptimizer:
                                 if obj in gc.get_referrers(referrer):
                                     cycle_count += 1
                             except (TypeError, RuntimeError) as e:
-                                self.logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                                self.logger.exception("Error in memory_optimizer: %s", e)
                                 continue
                 except (TypeError, RuntimeError) as e:
-                    logger.error("Error in memory_optimizer: %s", e, exc_info=True)
+                    logger.exception("Error in memory_optimizer: %s", e)
                     continue
 
             return (cycle_count, referrers_found)
@@ -691,7 +700,7 @@ class MemoryOptimizer:
 
     def _check_application_leaks(self) -> list[str]:
         """Check for application-specific memory leaks."""
-        leaks = []
+        leaks: list[str] = []
 
         if not self.app:
             return leaks
@@ -795,6 +804,15 @@ class MemoryOptimizer:
             used_memory, total_memory, usage_percentage = self.get_current_memory_usage()
             stats = self.get_optimization_stats()
 
+            peak_memory_usage = stats["peak_memory_usage"]
+            peak_mb = float(peak_memory_usage) / (1024 * 1024) if isinstance(peak_memory_usage, (int, float)) else 0.0
+
+            memory_saved = stats["memory_saved"]
+            memory_saved_mb = float(memory_saved) / (1024 * 1024) if isinstance(memory_saved, (int, float)) else 0.0
+
+            average_memory_saved = stats["average_memory_saved"]
+            average_saved_mb = float(average_memory_saved) / (1024 * 1024) if isinstance(average_memory_saved, (int, float)) else 0.0
+
             return {
                 "timestamp": time.time(),
                 "memory_usage": {
@@ -803,17 +821,17 @@ class MemoryOptimizer:
                     "total_bytes": total_memory,
                     "total_mb": total_memory / (1024 * 1024),
                     "usage_percentage": usage_percentage,
-                    "peak_usage_bytes": stats["peak_memory_usage"],
-                    "peak_usage_mb": stats["peak_memory_usage"] / (1024 * 1024),
+                    "peak_usage_bytes": peak_memory_usage,
+                    "peak_usage_mb": peak_mb,
                 },
                 "optimization": {
                     "enabled": self.enabled,
                     "threshold": self.threshold_percentage,
                     "techniques": self.optimization_techniques,
                     "total_optimizations": stats["total_optimizations"],
-                    "memory_saved_bytes": stats["memory_saved"],
-                    "memory_saved_mb": stats["memory_saved"] / (1024 * 1024),
-                    "average_saved_mb": stats["average_memory_saved"] / (1024 * 1024),
+                    "memory_saved_bytes": memory_saved,
+                    "memory_saved_mb": memory_saved_mb,
+                    "average_saved_mb": average_saved_mb,
                     "last_optimization": stats["last_optimization_time"],
                 },
                 "system": {
@@ -823,7 +841,7 @@ class MemoryOptimizer:
                 },
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating memory report: %s", e, exc_info=True)
+            self.logger.exception("Error generating memory report: %s", e)
             return {"error": str(e)}
 
     def force_optimization(self) -> int:
@@ -899,7 +917,7 @@ class MemoryOptimizer:
     ) -> None:
         """Context manager exit."""
         if exc_type:
-            self.logger.error(
+            self.logger.exception(
                 "Memory optimizer exiting due to %s: %s",
                 exc_type.__name__,
                 exc_val,
@@ -916,13 +934,17 @@ class MemoryOptimizer:
 
 def create_memory_optimizer(
     app_instance: object | None = None,
-    **kwargs: float | dict[str, bool],
+    threshold: float | None = None,
+    check_interval: float | None = None,
+    techniques: dict[str, bool] | None = None,
 ) -> MemoryOptimizer:
     """Create and configure a MemoryOptimizer instance.
 
     Args:
         app_instance: Application instance to bind to
-        **kwargs: Configuration options (threshold, check_interval, techniques)
+        threshold: Memory usage percentage threshold to trigger optimization (0-100)
+        check_interval: Interval in seconds between memory checks
+        techniques: Dictionary of optimization techniques to enable/disable
 
     Returns:
         MemoryOptimizer: Configured memory optimizer instance
@@ -930,8 +952,12 @@ def create_memory_optimizer(
     """
     optimizer = MemoryOptimizer(app_instance)
 
-    if kwargs:
-        optimizer.configure(**kwargs)
+    if threshold is not None or check_interval is not None or techniques is not None:
+        optimizer.configure(
+            threshold=threshold if threshold is not None else 80.0,
+            check_interval=check_interval if check_interval is not None else 5.0,
+            techniques=techniques,
+        )
 
     return optimizer
 

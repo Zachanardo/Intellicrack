@@ -23,7 +23,8 @@ import json
 import logging
 import os
 import re
-from typing import Any, Optional
+from typing import Any
+from weakref import WeakKeyDictionary
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -77,10 +78,7 @@ class SettingsTab(BaseTab):
         self.config = IntellicrackConfig()
         self.load_settings()
 
-        # Store original tooltips for toggle functionality using weak references
-        from weakref import WeakKeyDictionary
-
-        self._original_tooltips = WeakKeyDictionary()
+        self._original_tooltips: WeakKeyDictionary[QWidget, str] = WeakKeyDictionary()
 
         # Track current accent color for proper replacement
         self._current_accent_color = self.settings.get("accent_color", "#0078d4")
@@ -89,19 +87,17 @@ class SettingsTab(BaseTab):
 
     def setup_content(self) -> None:
         """Set up the settings tab content."""
-        layout = self.layout()  # Use existing layout from BaseTab
+        layout = self.layout()
+        if layout is None:
+            return
 
-        # Convert to QHBoxLayout behavior by using a horizontal container
         h_container = QWidget()
         h_layout = QHBoxLayout(h_container)
 
-        # Left panel - Settings categories
         left_panel = self.create_settings_panel()
 
-        # Right panel - Settings details and preview
         right_panel = self.create_preview_panel()
 
-        # Add panels with splitter
         splitter = QSplitter(Qt.Orientation.Horizontal)
         splitter.addWidget(left_panel)
         splitter.addWidget(right_panel)
@@ -183,7 +179,9 @@ class SettingsTab(BaseTab):
         theme_select_layout.addWidget(QLabel("Theme:"))
         self.theme_combo = QComboBox()
         self.theme_combo.addItems(["Dark", "Light", "Auto"])
-        self.theme_combo.setCurrentText(self.settings.get("theme", "Light"))
+        theme_value = self.settings.get("theme", "Light")
+        if isinstance(theme_value, str):
+            self.theme_combo.setCurrentText(theme_value)
         self.theme_combo.currentTextChanged.connect(self.on_theme_changed)
         theme_select_layout.addWidget(self.theme_combo)
         theme_select_layout.addStretch()
@@ -198,12 +196,13 @@ class SettingsTab(BaseTab):
         color_layout.addWidget(self.accent_color_btn)
         color_layout.addStretch()
 
-        # Transparency
         transparency_layout = QHBoxLayout()
         transparency_layout.addWidget(QLabel("Window Opacity:"))
         self.opacity_slider = QSlider(Qt.Orientation.Horizontal)
         self.opacity_slider.setRange(50, 100)
-        self.opacity_slider.setValue(self.settings.get("window_opacity", 100))
+        opacity_value = self.settings.get("window_opacity", 100)
+        if isinstance(opacity_value, int):
+            self.opacity_slider.setValue(opacity_value)
         self.opacity_slider.valueChanged.connect(self.on_opacity_changed)
         self.opacity_label = QLabel(f"{self.opacity_slider.value()}%")
         transparency_layout.addWidget(self.opacity_slider)
@@ -227,7 +226,9 @@ class SettingsTab(BaseTab):
 
         self.ui_font_size = QSpinBox()
         self.ui_font_size.setRange(8, 24)
-        self.ui_font_size.setValue(self.settings.get("ui_font_size", 10))
+        ui_font_size_value = self.settings.get("ui_font_size", 10)
+        if isinstance(ui_font_size_value, int):
+            self.ui_font_size.setValue(ui_font_size_value)
         self.ui_font_size.valueChanged.connect(self.on_ui_font_size_changed)
         ui_font_layout.addWidget(self.ui_font_size)
 
@@ -241,7 +242,9 @@ class SettingsTab(BaseTab):
 
         self.console_font_size = QSpinBox()
         self.console_font_size.setRange(8, 24)
-        self.console_font_size.setValue(self.settings.get("console_font_size", 10))
+        console_font_size_value = self.settings.get("console_font_size", 10)
+        if isinstance(console_font_size_value, int):
+            self.console_font_size.setValue(console_font_size_value)
         self.console_font_size.valueChanged.connect(self.on_console_font_size_changed)
         console_font_layout.addWidget(self.console_font_size)
 
@@ -266,21 +269,21 @@ class SettingsTab(BaseTab):
         icon_size_layout.addWidget(self.icon_size_combo)
         icon_size_layout.addStretch()
 
-        # Show tooltips
         self.show_tooltips_cb = QCheckBox("Show Tooltips")
         current_tooltip_state = self.settings.get("show_tooltips", True)
-        self.show_tooltips_cb.setChecked(current_tooltip_state)
+        tooltip_state_bool = bool(current_tooltip_state) if isinstance(current_tooltip_state, bool) else True
+        self.show_tooltips_cb.setChecked(tooltip_state_bool)
         self.show_tooltips_cb.stateChanged.connect(self.on_tooltips_toggled)
 
-        QTimer.singleShot(500, lambda: self.apply_tooltip_settings(current_tooltip_state))
+        QTimer.singleShot(500, lambda: self.apply_tooltip_settings(tooltip_state_bool))
 
-        # Animations
         self.enable_animations_cb = QCheckBox("Enable Smooth Animations")
         current_animation_state = self.settings.get("enable_animations", True)
-        self.enable_animations_cb.setChecked(current_animation_state)
+        animation_state_bool = bool(current_animation_state) if isinstance(current_animation_state, bool) else True
+        self.enable_animations_cb.setChecked(animation_state_bool)
         self.enable_animations_cb.stateChanged.connect(self.on_animations_toggled)
 
-        QTimer.singleShot(100, lambda: self.apply_animation_settings(current_animation_state))
+        QTimer.singleShot(100, lambda: self.apply_animation_settings(animation_state_bool))
 
         icon_layout.addLayout(icon_size_layout)
         icon_layout.addWidget(self.show_tooltips_cb)
@@ -307,25 +310,28 @@ class SettingsTab(BaseTab):
         analysis_group = QGroupBox("Default Analysis Settings")
         analysis_layout = QVBoxLayout(analysis_group)
 
-        # Auto-analysis
         self.auto_analysis_cb = QCheckBox("Enable Auto-Analysis")
-        self.auto_analysis_cb.setChecked(self.settings.get("auto_analysis", True))
+        auto_analysis_value = self.settings.get("auto_analysis", True)
+        if isinstance(auto_analysis_value, bool):
+            self.auto_analysis_cb.setChecked(auto_analysis_value)
 
-        # Analysis depth
         depth_layout = QHBoxLayout()
         depth_layout.addWidget(QLabel("Default Analysis Depth:"))
         self.analysis_depth_combo = QComboBox()
         self.analysis_depth_combo.addItems(["Quick", "Standard", "Deep", "Comprehensive"])
-        self.analysis_depth_combo.setCurrentText(self.settings.get("analysis_depth", "Standard"))
+        analysis_depth_value = self.settings.get("analysis_depth", "Standard")
+        if isinstance(analysis_depth_value, str):
+            self.analysis_depth_combo.setCurrentText(analysis_depth_value)
         depth_layout.addWidget(self.analysis_depth_combo)
         depth_layout.addStretch()
 
-        # Timeout settings
         timeout_layout = QHBoxLayout()
         timeout_layout.addWidget(QLabel("Analysis Timeout (seconds):"))
         self.analysis_timeout = QSpinBox()
         self.analysis_timeout.setRange(10, 3600)
-        self.analysis_timeout.setValue(self.settings.get("analysis_timeout", 300))
+        timeout_value = self.settings.get("analysis_timeout", 300)
+        if isinstance(timeout_value, int):
+            self.analysis_timeout.setValue(timeout_value)
         timeout_layout.addWidget(self.analysis_timeout)
         timeout_layout.addStretch()
 
@@ -352,22 +358,24 @@ class SettingsTab(BaseTab):
 
         provider_layout.addStretch()
 
-        # AI temperature
         temp_layout = QHBoxLayout()
         temp_layout.addWidget(QLabel("AI Temperature:"))
         self.ai_temperature = QDoubleSpinBox()
         self.ai_temperature.setRange(0.0, 2.0)
         self.ai_temperature.setSingleStep(0.1)
-        self.ai_temperature.setValue(self.settings.get("ai_temperature", 0.7))
+        ai_temp_value = self.settings.get("ai_temperature", 0.7)
+        if isinstance(ai_temp_value, (int, float)):
+            self.ai_temperature.setValue(float(ai_temp_value))
         temp_layout.addWidget(self.ai_temperature)
         temp_layout.addStretch()
 
-        # Max tokens
         tokens_layout = QHBoxLayout()
         tokens_layout.addWidget(QLabel("Max Tokens:"))
         self.ai_max_tokens = QSpinBox()
         self.ai_max_tokens.setRange(100, 8000)
-        self.ai_max_tokens.setValue(self.settings.get("ai_max_tokens", 2000))
+        ai_tokens_value = self.settings.get("ai_max_tokens", 2000)
+        if isinstance(ai_tokens_value, int):
+            self.ai_max_tokens.setValue(ai_tokens_value)
         tokens_layout.addWidget(self.ai_max_tokens)
         tokens_layout.addStretch()
 
@@ -379,17 +387,20 @@ class SettingsTab(BaseTab):
         script_group = QGroupBox("Script Generation Settings")
         script_layout = QVBoxLayout(script_group)
 
-        # Include comments
         self.include_comments_cb = QCheckBox("Include Comments in Generated Scripts")
-        self.include_comments_cb.setChecked(self.settings.get("include_comments", True))
+        include_comments_value = self.settings.get("include_comments", True)
+        if isinstance(include_comments_value, bool):
+            self.include_comments_cb.setChecked(include_comments_value)
 
-        # Include error handling
         self.include_error_handling_cb = QCheckBox("Include Error Handling")
-        self.include_error_handling_cb.setChecked(self.settings.get("include_error_handling", True))
+        include_error_handling_value = self.settings.get("include_error_handling", True)
+        if isinstance(include_error_handling_value, bool):
+            self.include_error_handling_cb.setChecked(include_error_handling_value)
 
-        # Optimize code
         self.optimize_code_cb = QCheckBox("Optimize Generated Code")
-        self.optimize_code_cb.setChecked(self.settings.get("optimize_code", False))
+        optimize_code_value = self.settings.get("optimize_code", False)
+        if isinstance(optimize_code_value, bool):
+            self.optimize_code_cb.setChecked(optimize_code_value)
 
         script_layout.addWidget(self.include_comments_cb)
         script_layout.addWidget(self.include_error_handling_cb)
@@ -416,27 +427,30 @@ class SettingsTab(BaseTab):
         memory_group = QGroupBox("Memory Settings")
         memory_layout = QVBoxLayout(memory_group)
 
-        # Cache size
         cache_layout = QHBoxLayout()
         cache_layout.addWidget(QLabel("Cache Size (MB):"))
         self.cache_size = QSpinBox()
         self.cache_size.setRange(100, 8192)
-        self.cache_size.setValue(self.settings.get("cache_size", 512))
+        cache_size_value = self.settings.get("cache_size", 512)
+        if isinstance(cache_size_value, int):
+            self.cache_size.setValue(cache_size_value)
         cache_layout.addWidget(self.cache_size)
         cache_layout.addStretch()
 
-        # Memory limit
         memory_limit_layout = QHBoxLayout()
         memory_limit_layout.addWidget(QLabel("Memory Limit (MB):"))
         self.memory_limit = QSpinBox()
         self.memory_limit.setRange(512, 16384)
-        self.memory_limit.setValue(self.settings.get("memory_limit", 2048))
+        memory_limit_value = self.settings.get("memory_limit", 2048)
+        if isinstance(memory_limit_value, int):
+            self.memory_limit.setValue(memory_limit_value)
         memory_limit_layout.addWidget(self.memory_limit)
         memory_limit_layout.addStretch()
 
-        # Auto cleanup
         self.auto_cleanup_cb = QCheckBox("Auto Cleanup Memory")
-        self.auto_cleanup_cb.setChecked(self.settings.get("auto_cleanup", True))
+        auto_cleanup_value = self.settings.get("auto_cleanup", True)
+        if isinstance(auto_cleanup_value, bool):
+            self.auto_cleanup_cb.setChecked(auto_cleanup_value)
 
         memory_layout.addLayout(cache_layout)
         memory_layout.addLayout(memory_limit_layout)
@@ -446,22 +460,25 @@ class SettingsTab(BaseTab):
         threading_group = QGroupBox("Threading Settings")
         threading_layout = QVBoxLayout(threading_group)
 
-        # Worker threads
         threads_layout = QHBoxLayout()
         threads_layout.addWidget(QLabel("Worker Threads:"))
         self.worker_threads = QSpinBox()
         self.worker_threads.setRange(1, 16)
-        self.worker_threads.setValue(self.settings.get("worker_threads", 4))
+        worker_threads_value = self.settings.get("worker_threads", 4)
+        if isinstance(worker_threads_value, int):
+            self.worker_threads.setValue(worker_threads_value)
         threads_layout.addWidget(self.worker_threads)
         threads_layout.addStretch()
 
-        # Parallel processing
         self.parallel_processing_cb = QCheckBox("Enable Parallel Processing")
-        self.parallel_processing_cb.setChecked(self.settings.get("parallel_processing", True))
+        parallel_processing_value = self.settings.get("parallel_processing", True)
+        if isinstance(parallel_processing_value, bool):
+            self.parallel_processing_cb.setChecked(parallel_processing_value)
 
-        # Background tasks
         self.background_tasks_cb = QCheckBox("Enable Background Tasks")
-        self.background_tasks_cb.setChecked(self.settings.get("background_tasks", True))
+        background_tasks_value = self.settings.get("background_tasks", True)
+        if isinstance(background_tasks_value, bool):
+            self.background_tasks_cb.setChecked(background_tasks_value)
 
         threading_layout.addLayout(threads_layout)
         threading_layout.addWidget(self.parallel_processing_cb)
@@ -471,16 +488,18 @@ class SettingsTab(BaseTab):
         gpu_group = QGroupBox("GPU Acceleration")
         gpu_layout = QVBoxLayout(gpu_group)
 
-        # Enable GPU
         self.enable_gpu_cb = QCheckBox("Enable GPU Acceleration")
-        self.enable_gpu_cb.setChecked(self.settings.get("enable_gpu", False))
+        enable_gpu_value = self.settings.get("enable_gpu", False)
+        if isinstance(enable_gpu_value, bool):
+            self.enable_gpu_cb.setChecked(enable_gpu_value)
 
-        # GPU device
         gpu_device_layout = QHBoxLayout()
         gpu_device_layout.addWidget(QLabel("GPU Device:"))
         self.gpu_device_combo = QComboBox()
         self.gpu_device_combo.addItems(["Auto", "CUDA", "OpenCL", "DirectML"])
-        self.gpu_device_combo.setCurrentText(self.settings.get("gpu_device", "Auto"))
+        gpu_device_value = self.settings.get("gpu_device", "Auto")
+        if isinstance(gpu_device_value, str):
+            self.gpu_device_combo.setCurrentText(gpu_device_value)
         gpu_device_layout.addWidget(self.gpu_device_combo)
         gpu_device_layout.addStretch()
 
@@ -531,8 +550,7 @@ class SettingsTab(BaseTab):
 
         self.tool_discovery = AdvancedToolDiscovery()
 
-        # Tool path widgets storage
-        self.tool_widgets = {}
+        self.tool_widgets: dict[str, dict[str, Any]] = {}
 
         # Create enhanced tool path entries
         tools_config = [
@@ -597,9 +615,9 @@ class SettingsTab(BaseTab):
         label.setMinimumWidth(80)
         main_row.addWidget(label)
 
-        # Path input
         path_edit = QLineEdit()
-        if current_path := self.settings.get(f"{tool_key}_path", ""):
+        current_path = self.settings.get(f"{tool_key}_path", "")
+        if isinstance(current_path, str) and current_path:
             path_edit.setText(current_path)
         path_edit.textChanged.connect(lambda text, key=tool_key: self.on_tool_path_changed(key, text))
 
@@ -612,27 +630,23 @@ class SettingsTab(BaseTab):
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for tool executable")
-        browse_btn.clicked.connect(
-            lambda checked, edit=path_edit, title=browse_title: (
-                self.logger.debug(
-                    "Browse button clicked, checked state: %s for edit: %s, title: %s",
-                    checked,
-                    edit,
-                    title,
-                )
-                or self.browse_tool_path(edit, title)
+        def _on_browse(checked: bool = False, edit: QLineEdit = path_edit, title: str = browse_title) -> None:
+            self.logger.debug(
+                "Browse button clicked, checked state: %s for edit: %s, title: %s",
+                checked,
+                edit,
+                title,
             )
-        )
+            self.browse_tool_path(edit, title)
+        browse_btn.clicked.connect(_on_browse)
 
-        # Clear/Reset button
         reset_btn = QPushButton("↻")
         reset_btn.setMaximumWidth(40)
         reset_btn.setToolTip("Reset to auto-discovered path")
-        reset_btn.clicked.connect(
-            lambda checked, key=tool_key: (
-                self.logger.debug("Reset button clicked, checked state: %s for key: %s", checked, key) or self.reset_tool_path(key)
-            )
-        )
+        def _on_reset(checked: bool = False, key: str = tool_key) -> None:
+            self.logger.debug("Reset button clicked, checked state: %s for key: %s", checked, key)
+            self.reset_tool_path(key)
+        reset_btn.clicked.connect(_on_reset)
 
         main_row.addWidget(path_edit)
         main_row.addWidget(status_label)
@@ -678,26 +692,24 @@ class SettingsTab(BaseTab):
         label.setMinimumWidth(80)
         layout.addWidget(label)
 
-        # Path input
         path_edit = QLineEdit()
-        if current_dir_path := self.settings.get(dir_key, ""):
+        current_dir_path = self.settings.get(dir_key, "")
+        if isinstance(current_dir_path, str) and current_dir_path:
             path_edit.setText(current_dir_path)
 
         # Browse button
         browse_btn = QPushButton("")
         browse_btn.setMaximumWidth(40)
         browse_btn.setToolTip("Browse for directory")
-        browse_btn.clicked.connect(
-            lambda checked, edit=path_edit, title=browse_title: (
-                self.logger.debug(
-                    "Directory browse button clicked, checked state: %s for edit: %s, title: %s",
-                    checked,
-                    edit,
-                    title,
-                )
-                or self.browse_directory(edit, title)
+        def _on_browse_dir(checked: bool = False, edit: QLineEdit = path_edit, title: str = browse_title) -> None:
+            self.logger.debug(
+                "Directory browse button clicked, checked state: %s for edit: %s, title: %s",
+                checked,
+                edit,
+                title,
             )
-        )
+            self.browse_directory(edit, title)
+        browse_btn.clicked.connect(_on_browse_dir)
 
         layout.addWidget(path_edit)
         layout.addWidget(browse_btn)
@@ -904,24 +916,27 @@ class SettingsTab(BaseTab):
         logging_group = QGroupBox("Logging Settings")
         logging_layout = QVBoxLayout(logging_group)
 
-        # Log level
         log_level_layout = QHBoxLayout()
         log_level_layout.addWidget(QLabel("Log Level:"))
         self.log_level_combo = QComboBox()
         self.log_level_combo.addItems(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
-        self.log_level_combo.setCurrentText(self.settings.get("log_level", "INFO"))
+        log_level_value = self.settings.get("log_level", "INFO")
+        if isinstance(log_level_value, str):
+            self.log_level_combo.setCurrentText(log_level_value)
         log_level_layout.addWidget(self.log_level_combo)
         log_level_layout.addStretch()
 
-        # Log to file
         self.log_to_file_cb = QCheckBox("Log to File")
-        self.log_to_file_cb.setChecked(self.settings.get("log_to_file", True))
+        log_to_file_value = self.settings.get("log_to_file", True)
+        if isinstance(log_to_file_value, bool):
+            self.log_to_file_cb.setChecked(log_to_file_value)
 
-        # Log file path
         log_file_layout = QHBoxLayout()
         log_file_layout.addWidget(QLabel("Log File:"))
         self.log_file_path = QLineEdit()
-        self.log_file_path.setText(self.settings.get("log_file_path", "intellicrack.log"))
+        log_file_path_value = self.settings.get("log_file_path", "intellicrack.log")
+        if isinstance(log_file_path_value, str):
+            self.log_file_path.setText(log_file_path_value)
         browse_log_btn = QPushButton("Browse")
         browse_log_btn.clicked.connect(lambda: self.browse_file(self.log_file_path, "Select Log File"))
         log_file_layout.addWidget(self.log_file_path)
@@ -935,17 +950,20 @@ class SettingsTab(BaseTab):
         security_group = QGroupBox("Security Settings")
         security_layout = QVBoxLayout(security_group)
 
-        # Safe mode
         self.safe_mode_cb = QCheckBox("Enable Safe Mode")
-        self.safe_mode_cb.setChecked(self.settings.get("safe_mode", True))
+        safe_mode_value = self.settings.get("safe_mode", True)
+        if isinstance(safe_mode_value, bool):
+            self.safe_mode_cb.setChecked(safe_mode_value)
 
-        # Confirm dangerous operations
         self.confirm_dangerous_cb = QCheckBox("Confirm Dangerous Operations")
-        self.confirm_dangerous_cb.setChecked(self.settings.get("confirm_dangerous", True))
+        confirm_dangerous_value = self.settings.get("confirm_dangerous", True)
+        if isinstance(confirm_dangerous_value, bool):
+            self.confirm_dangerous_cb.setChecked(confirm_dangerous_value)
 
-        # Auto backup
         self.auto_backup_cb = QCheckBox("Auto Backup Before Modifications")
-        self.auto_backup_cb.setChecked(self.settings.get("auto_backup", True))
+        auto_backup_value = self.settings.get("auto_backup", True)
+        if isinstance(auto_backup_value, bool):
+            self.auto_backup_cb.setChecked(auto_backup_value)
 
         security_layout.addWidget(self.safe_mode_cb)
         security_layout.addWidget(self.confirm_dangerous_cb)
@@ -955,20 +973,21 @@ class SettingsTab(BaseTab):
         network_group = QGroupBox("Network Settings")
         network_layout = QVBoxLayout(network_group)
 
-        # Proxy settings
         proxy_layout = QHBoxLayout()
         proxy_layout.addWidget(QLabel("Proxy:"))
         self.proxy_edit = QLineEdit()
-        if current_proxy := self.settings.get("proxy", ""):
+        current_proxy = self.settings.get("proxy", "")
+        if isinstance(current_proxy, str) and current_proxy:
             self.proxy_edit.setText(current_proxy)
         proxy_layout.addWidget(self.proxy_edit)
 
-        # Timeout
         timeout_layout = QHBoxLayout()
         timeout_layout.addWidget(QLabel("Network Timeout (seconds):"))
         self.network_timeout = QSpinBox()
         self.network_timeout.setRange(5, 300)
-        self.network_timeout.setValue(self.settings.get("network_timeout", 30))
+        network_timeout_value = self.settings.get("network_timeout", 30)
+        if isinstance(network_timeout_value, int):
+            self.network_timeout.setValue(network_timeout_value)
         timeout_layout.addWidget(self.network_timeout)
         timeout_layout.addStretch()
 
@@ -979,9 +998,10 @@ class SettingsTab(BaseTab):
         dev_group = QGroupBox("Developer Settings")
         dev_layout = QVBoxLayout(dev_group)
 
-        # Debug mode (actually used by logging system)
         self.debug_mode_cb = QCheckBox("Enable Debug Mode")
-        self.debug_mode_cb.setChecked(self.settings.get("debug_mode", False))
+        debug_mode_value = self.settings.get("debug_mode", False)
+        if isinstance(debug_mode_value, bool):
+            self.debug_mode_cb.setChecked(debug_mode_value)
         dev_layout.addWidget(self.debug_mode_cb)
 
         layout.addWidget(logging_group)
@@ -1071,7 +1091,7 @@ class SettingsTab(BaseTab):
             value = self.config.get(f"ui.{key}", default_settings[key])
             # Ensure we don't store dictionary objects as settings values
             if isinstance(value, dict):
-                self.logger.warning(f"Settings key {key} returned dict, using default value")
+                self.logger.warning("Settings key %s returned dict, using default value", key)
                 self.settings[key] = default_settings[key]
             else:
                 self.settings[key] = value
@@ -1260,11 +1280,14 @@ class SettingsTab(BaseTab):
         any changes made programmatically or through settings import/reset.
 
         """
-        # Update all UI elements to reflect current settings
         if hasattr(self, "theme_combo"):
-            self.theme_combo.setCurrentText(self.settings.get("theme", "Dark"))
+            theme_value = self.settings.get("theme", "Dark")
+            if isinstance(theme_value, str):
+                self.theme_combo.setCurrentText(theme_value)
         if hasattr(self, "opacity_slider"):
-            self.opacity_slider.setValue(self.settings.get("window_opacity", 100))
+            opacity_value = self.settings.get("window_opacity", 100)
+            if isinstance(opacity_value, int):
+                self.opacity_slider.setValue(opacity_value)
 
         # Update tool path widgets
         if hasattr(self, "tool_widgets"):
@@ -1410,8 +1433,8 @@ class SettingsTab(BaseTab):
         """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
-        app = QApplication.instance()
-        if not app:
+        app_instance = QApplication.instance()
+        if not isinstance(app_instance, QApplication):
             return
 
         from intellicrack.ui.theme_manager import get_theme_manager
@@ -1419,23 +1442,25 @@ class SettingsTab(BaseTab):
         theme_manager = get_theme_manager()
         theme_manager._apply_theme()
 
-        current_stylesheet = app.styleSheet()
+        current_stylesheet = app_instance.styleSheet()
 
         default_accent_colors = ["#0078D4", "#0078d4"]
 
         updated_stylesheet = current_stylesheet
         for default_color in default_accent_colors:
-            pattern = re.compile(re.escape(default_color), re.IGNORECASE)
+            default_color_str = str(default_color)
+            pattern = re.compile(re.escape(default_color_str), re.IGNORECASE)
             updated_stylesheet = pattern.sub(color_hex, updated_stylesheet)
 
         if self._current_accent_color and self._current_accent_color not in default_accent_colors:
-            old_color_pattern = re.compile(re.escape(self._current_accent_color), re.IGNORECASE)
+            current_accent_str = str(self._current_accent_color)
+            old_color_pattern = re.compile(re.escape(current_accent_str), re.IGNORECASE)
             updated_stylesheet = old_color_pattern.sub(color_hex, updated_stylesheet)
 
-        app.setStyleSheet(updated_stylesheet)
+        app_instance.setStyleSheet(updated_stylesheet)
         self._current_accent_color = color_hex
 
-        self.logger.info(f"Applied accent color: {color_hex}")
+        self.logger.info("Applied accent color: %s", color_hex)
 
     def on_ui_font_changed(self, font: QFont) -> None:
         """Handle UI font change.
@@ -1463,12 +1488,18 @@ class SettingsTab(BaseTab):
         """Apply UI font to the application."""
         from intellicrack.handlers.pyqt6_handler import QApplication
 
-        app = QApplication.instance()
-        if not app:
+        app_instance = QApplication.instance()
+        if not isinstance(app_instance, QApplication):
             return
 
-        font = QFont(self.settings.get("ui_font", "Segoe UI"), self.settings.get("ui_font_size", 10))
-        app.setFont(font)
+        ui_font_value = self.settings.get("ui_font", "Segoe UI")
+        ui_font_size_value = self.settings.get("ui_font_size", 10)
+
+        ui_font_str = str(ui_font_value) if isinstance(ui_font_value, str) else "Segoe UI"
+        ui_font_size_int = int(ui_font_size_value) if isinstance(ui_font_size_value, int) else 10
+
+        font = QFont(ui_font_str, ui_font_size_int)
+        app_instance.setFont(font)
 
     def on_console_font_changed(self, font: QFont) -> None:
         """Handle console font change.
@@ -1496,18 +1527,21 @@ class SettingsTab(BaseTab):
         """Apply console font to all console/terminal widgets in the application."""
         from intellicrack.handlers.pyqt6_handler import QApplication, QPlainTextEdit, QTextEdit
 
-        app = QApplication.instance()
-        if not app:
+        app_instance = QApplication.instance()
+        if not isinstance(app_instance, QApplication):
             return
 
-        console_font = QFont(
-            self.settings.get("console_font", "Consolas"),
-            self.settings.get("console_font_size", 10),
-        )
+        console_font_value = self.settings.get("console_font", "Consolas")
+        console_font_size_value = self.settings.get("console_font_size", 10)
+
+        console_font_str = str(console_font_value) if isinstance(console_font_value, str) else "Consolas"
+        console_font_size_int = int(console_font_size_value) if isinstance(console_font_size_value, int) else 10
+
+        console_font = QFont(console_font_str, console_font_size_int)
         console_font.setFixedPitch(True)
 
         widgets_updated = 0
-        for widget in app.allWidgets():
+        for widget in app_instance.allWidgets():
             if isinstance(widget, (QTextEdit, QPlainTextEdit)):
                 widget_name = widget.objectName().lower()
                 widget_class = widget.__class__.__name__.lower()
@@ -1530,7 +1564,7 @@ class SettingsTab(BaseTab):
                     widgets_updated += 1
 
         if widgets_updated > 0:
-            self.logger.info(f"Applied console font to {widgets_updated} widgets")
+            self.logger.info("Applied console font to %d widgets", widgets_updated)
 
     def on_tooltips_toggled(self, state: int) -> None:
         """Handle tooltips toggle.
@@ -1555,16 +1589,14 @@ class SettingsTab(BaseTab):
         """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
-        app = QApplication.instance()
-        if not app:
+        app_instance = QApplication.instance()
+        if not isinstance(app_instance, QApplication):
             return
 
-        all_widgets = app.allWidgets()
+        all_widgets = app_instance.allWidgets()
 
         if not enabled:
             for widget in all_widgets:
-                if widget is None:
-                    continue
                 if tooltip := widget.toolTip():
                     try:
                         self._original_tooltips[widget] = tooltip
@@ -1572,12 +1604,10 @@ class SettingsTab(BaseTab):
                     except (TypeError, RuntimeError):
                         pass
                 widget.setToolTipDuration(0)
-            self.logger.info(f"Tooltips disabled. Stored {len(self._original_tooltips)} tooltips.")
+            self.logger.info("Tooltips disabled. Stored %d tooltips.", len(self._original_tooltips))
         else:
             restored_count = 0
             for widget in all_widgets:
-                if widget is None:
-                    continue
                 try:
                     if widget in self._original_tooltips:
                         widget.setToolTip(self._original_tooltips[widget])
@@ -1585,7 +1615,7 @@ class SettingsTab(BaseTab):
                     widget.setToolTipDuration(-1)
                 except (TypeError, RuntimeError):
                     pass
-            self.logger.info(f"Tooltips enabled. Restored {restored_count} tooltips.")
+            self.logger.info("Tooltips enabled. Restored %d tooltips.", restored_count)
 
     def on_animations_toggled(self, state: int) -> None:
         """Handle animations toggle.
@@ -1610,11 +1640,11 @@ class SettingsTab(BaseTab):
         """
         from intellicrack.handlers.pyqt6_handler import QApplication
 
-        app = QApplication.instance()
-        if not app:
+        app_instance = QApplication.instance()
+        if not isinstance(app_instance, QApplication):
             return
 
-        current_stylesheet = app.styleSheet()
+        current_stylesheet = app_instance.styleSheet()
 
         marker_disable = "/* Disable all animations - instant transitions */"
         marker_enable = "/* Enable smooth animations and transitions */"
@@ -1667,7 +1697,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
             self.logger.info("Animations disabled")
 
-        app.setStyleSheet(current_stylesheet)
+        app_instance.setStyleSheet(current_stylesheet)
 
     def populate_ai_providers(self) -> None:
         """Populate AI provider dropdown with dynamically detected providers."""
@@ -1677,7 +1707,7 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
         self.ai_provider_combo.clear()
 
-        available_providers = []
+        available_providers: list[str] = []
 
         try:
             from intellicrack.ai.model_discovery_service import get_model_discovery_service
@@ -1688,14 +1718,14 @@ QPushButton:hover, QComboBox:hover, QTabBar::tab:hover {
 
             available_providers.extend(provider_name for provider_name, models in discovered_models.items() if models)
         except Exception as e:
-            self.logger.warning(f"Failed to discover AI providers dynamically: {e}")
+            self.logger.warning("Failed to discover AI providers dynamically: %s", e)
 
         if not available_providers:
             available_providers = ["OpenAI", "Anthropic", "Ollama", "LM Studio", "Local GGUF"]
 
         self.ai_provider_combo.addItems(available_providers)
 
-        if current_selection and current_selection in available_providers:
+        if isinstance(current_selection, str) and current_selection and current_selection in available_providers:
             self.ai_provider_combo.setCurrentText(current_selection)
         elif available_providers:
             self.ai_provider_combo.setCurrentIndex(0)

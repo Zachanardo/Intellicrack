@@ -98,7 +98,7 @@ class BinaryPatcherPlugin:
                     results.append("Found function prologue - patchable")
 
         except Exception as e:
-            self.logger.exception(f"Analysis error: {e}")
+            self.logger.exception("Analysis error: %s", e)
             results.append(f"Analysis error: {e}")
 
         return results
@@ -138,12 +138,12 @@ class BinaryPatcherPlugin:
         results = []
 
         # Create backup
-        backup_path = binary_path + ".backup"
+        backup_path = f"{binary_path}.backup"
         try:
             shutil.copy2(binary_path, backup_path)
             results.append(f"Created backup: {backup_path}")
         except Exception as e:
-            self.logger.exception(f"Backup creation failed: {e}")
+            self.logger.exception("Backup creation failed: %s", e)
             results.append(f"Backup creation failed: {e}")
             return results
 
@@ -235,7 +235,7 @@ class BinaryPatcherPlugin:
                     "File analysis completed - no modifications needed",
                 ))
         except Exception as e:
-            self.logger.exception(f"Patching error: {e}")
+            self.logger.exception("Patching error: %s", e)
             results.append(f"Patching error: {e}")
             # Restore from backup on error
             try:

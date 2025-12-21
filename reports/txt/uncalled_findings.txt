@@ -441,13 +441,6 @@ tests\unit\core\anti_analysis\test_debugger_detector.py: Unused function get_par
 tests\unit\core\anti_analysis\test_debugger_detector.py: Unused function get_system
 
 
-2 findings in intellicrack\ai\llm_config_as_code.py
-
-intellicrack\ai\llm_config_as_code.py: Unused function generate_config_files
-
-intellicrack\ai\llm_config_as_code.py: Unused function save_current_config
-
-
 2 findings in intellicrack\ai\lora_adapter_manager.py
 
 intellicrack\ai\lora_adapter_manager.py: Unused function download_adapter
@@ -677,6 +670,11 @@ tests\validation_system\version_compatibility_verifier.py: Unused function save_
 intellicrack\ai\integration_manager.py: Unused function add_event_handler
 
 
+1 findings in intellicrack\ai\llm_config_as_code.py
+
+intellicrack\ai\llm_config_as_code.py: Unused function save_current_config
+
+
 1 findings in intellicrack\ai\local_gguf_server.py
 
 intellicrack\ai\local_gguf_server.py: Unused function unload_model_endpoint
@@ -775,11 +773,6 @@ intellicrack\core\orchestration\tool_communication_bridge.py: Unused function ad
 1 findings in intellicrack\core\reporting\pdf_generator.py
 
 intellicrack\core\reporting\pdf_generator.py: Unused function isWidgetType
-
-
-1 findings in intellicrack\core\reporting\report_generator.py
-
-intellicrack\core\reporting\report_generator.py: Unused function get_format_mime_types
 
 
 1 findings in intellicrack\core\shared\bypass_config.py

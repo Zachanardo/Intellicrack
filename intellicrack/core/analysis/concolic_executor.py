@@ -206,30 +206,29 @@ class NativeConcolicState:
                 if isinstance(value, bytes):
                     for i, byte in enumerate(value):
                         self.memory[addr + i] = byte
-                    self.symbolic_memory[addr] = value
                 else:
                     size = 4
                     for i in range(size):
                         self.memory[addr + i] = (value >> (i * 8)) & 0xFF
-                    self.symbolic_memory[addr] = value
+                self.symbolic_memory[addr] = value
                 return
             except (ValueError, TypeError):
                 pass
 
-        if symbol in ("stdin", "argv"):
-            if symbol == "stdin":
-                if isinstance(value, bytes):
-                    self.input_symbols["stdin"] = value
-                elif isinstance(value, int):
-                    byte_length = max((value.bit_length() + 7) // 8, 1)
-                    self.input_symbols["stdin"] = value.to_bytes(byte_length, "little")
-            elif symbol == "argv":
+        if symbol in {"stdin", "argv"}:
+            if symbol == "argv":
                 if isinstance(value, list):
                     self.input_symbols["argv"] = value
                 elif isinstance(value, bytes):
                     self.input_symbols["argv"] = [value]
                 else:
                     self.input_symbols["argv"] = [str(value).encode()]
+            elif symbol == "stdin":
+                if isinstance(value, bytes):
+                    self.input_symbols["stdin"] = value
+                elif isinstance(value, int):
+                    byte_length = max((value.bit_length() + 7) // 8, 1)
+                    self.input_symbols["stdin"] = value.to_bytes(byte_length, "little")
             return
 
         if not isinstance(value, list):
@@ -309,7 +308,7 @@ class NativeManticore:
             self._logger.info("Binary loaded, entry point: 0x%x", self.entry_point)
 
         except OSError as e:
-            self._logger.error("Failed to load binary: %s", e)
+            self._logger.exception("Failed to load binary: %s", e)
 
     def _parse_pe_entry_point(self) -> int:
         """Parse PE file to find entry point."""
@@ -399,7 +398,7 @@ class NativeManticore:
                         try:
                             self.hooks[current_state.pc](current_state)
                         except (ValueError, RuntimeError) as e:
-                            self._logger.error("Hook execution failed: %s", e)
+                            self._logger.exception("Hook execution failed: %s", e)
 
                     if new_states := self._check_for_branches(current_state):
                         for new_state in new_states:
@@ -415,7 +414,7 @@ class NativeManticore:
         except KeyboardInterrupt:
             self._logger.info("Execution interrupted by user")
         except (ValueError, RuntimeError) as e:
-            self._logger.error("Execution error: %s", e)
+            self._logger.exception("Execution error: %s", e)
 
         self.execution_complete = True
         self._logger.info(
@@ -478,8 +477,7 @@ class NativeManticore:
                         rsp_reg = "rsp" if state.arch == "x64" else "esp"
                         rsp = state.registers.get(rsp_reg, 0)
                         word_size = 8 if state.arch == "x64" else 4
-                        ret_addr = state.read_memory(rsp, word_size)
-                        if ret_addr:
+                        if ret_addr := state.read_memory(rsp, word_size):
                             state.pc = ret_addr
                             state.registers[rsp_reg] = rsp + word_size
                         else:
@@ -489,12 +487,11 @@ class NativeManticore:
                     op_str = insn.op_str
                     if op_str.startswith("0x"):
                         target = int(op_str, 16)
+                    elif len(instruction_bytes) >= 5:
+                        displacement = struct.unpack("<i", instruction_bytes[1:5])[0]
+                        target = state.pc + insn.size + displacement
                     else:
-                        if len(instruction_bytes) >= 5:
-                            displacement = struct.unpack("<i", instruction_bytes[1:5])[0]
-                            target = state.pc + insn.size + displacement
-                        else:
-                            target = state.pc + insn.size
+                        target = state.pc + insn.size
 
                     ret_addr = state.pc + insn.size
                     rsp_reg = "rsp" if state.arch == "x64" else "esp"
@@ -850,9 +847,9 @@ class NativeManticore:
             return state.registers[expr]
 
         if match := re.match(r"(\w+)\s*([+-])\s*(0x[0-9a-f]+|\d+)", expr, re.IGNORECASE):
-            base_reg = match.group(1)
-            op = match.group(2)
-            disp = match.group(3)
+            base_reg = match[1]
+            op = match[2]
+            disp = match[3]
 
             base = state.registers.get(base_reg, 0)
             offset = int(disp, 16) if disp.startswith("0x") else int(disp)
@@ -864,11 +861,11 @@ class NativeManticore:
             expr,
             re.IGNORECASE,
         ):
-            base_reg = match.group(1)
-            index_reg = match.group(2)
-            scale = int(match.group(3))
-            op = match.group(4)
-            disp = match.group(5)
+            base_reg = match[1]
+            index_reg = match[2]
+            scale = int(match[3])
+            op = match[4]
+            disp = match[5]
 
             base = state.registers.get(base_reg, 0)
             index = state.registers.get(index_reg, 0)
@@ -897,8 +894,7 @@ class NativeManticore:
             sp_reg = "rsp" if state.arch == "x64" else "esp"
             sp = state.registers.get(sp_reg, 0)
             word_size = 8 if state.arch == "x64" else 4
-            ret_addr = state.read_memory(sp, word_size)
-            if ret_addr:
+            if ret_addr := state.read_memory(sp, word_size):
                 state.pc = ret_addr
                 state.registers[sp_reg] = sp + word_size
             else:
@@ -929,8 +925,9 @@ class NativeManticore:
             if len(instruction_bytes) >= 2:
                 displacement = struct.unpack("b", instruction_bytes[1:2])[0]
 
-                take_branch = (opcode == 0x74 and state.flags.get("ZF", False)) or (opcode == 0x75 and not state.flags.get("ZF", False))
-                if take_branch:
+                if take_branch := (
+                    opcode == 0x74 and state.flags.get("ZF", False)
+                ) or (opcode == 0x75 and not state.flags.get("ZF", False)):
                     state.add_constraint(f"{'JZ' if opcode == 0x74 else 'JNZ'}_taken_at_{state.pc:x}")
                     state.pc = state.pc + 2 + displacement
                 else:
@@ -950,10 +947,9 @@ class NativeManticore:
                 if opcode2 in [0x84, 0x85] and len(instruction_bytes) >= 6:
                     displacement = struct.unpack("<i", instruction_bytes[2:6])[0]
 
-                    take_branch = (opcode2 == 0x84 and state.flags.get("ZF", False)) or (
-                        opcode2 == 0x85 and not state.flags.get("ZF", False)
-                    )
-                    if take_branch:
+                    if take_branch := (
+                        opcode2 == 0x84 and state.flags.get("ZF", False)
+                    ) or (opcode2 == 0x85 and not state.flags.get("ZF", False)):
                         logger.debug("Taking branch at PC %#x: take_branch=%s", state.pc, take_branch)
                         state.pc = state.pc + 6 + displacement
                     else:
@@ -1184,7 +1180,7 @@ try:
 
         lief_module = _lief
 except ImportError as e:
-    logger.error("Import error in concolic_executor: %s", e)
+    logger.exception("Import error in concolic_executor: %s", e)
 
 
 class ConcolicExecutionEngine:
@@ -1265,8 +1261,8 @@ class ConcolicExecutionEngine:
             return results
 
         except (OSError, ValueError, RuntimeError) as e:
-            self._logger.error("Error during concolic execution: %s", e)
-            self._logger.error(traceback.format_exc())
+            self._logger.exception("Error during concolic execution: %s", e)
+            self._logger.exception(traceback.format_exc())
             return {"error": f"Concolic execution failed: {e!s}"}
 
     def _target_hook(self, state: NativeConcolicState) -> None:
@@ -1326,8 +1322,8 @@ class ConcolicExecutionEngine:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            self._logger.error("Error finding license bypass: %s", e)
-            self._logger.error(traceback.format_exc())
+            self._logger.exception("Error finding license bypass: %s", e)
+            self._logger.exception(traceback.format_exc())
             return {"error": f"License bypass search failed: {e!s}"}
 
     def _find_license_check_address(self) -> int | None:
@@ -1339,7 +1335,7 @@ class ConcolicExecutionEngine:
 
             binary = lief_module.parse(self.binary_path)
             if binary is None:
-                self._logger.error("Failed to parse binary with LIEF")
+                self._logger.exception("Failed to parse binary with LIEF")
                 return None
 
             if hasattr(binary, "exported_functions"):
@@ -1369,11 +1365,11 @@ class ConcolicExecutionEngine:
                 self._logger.info("No license-related patterns found in binary")
                 return None
             except OSError as e:
-                self._logger.error("Error reading binary file for pattern analysis: %s", e)
+                self._logger.exception("Error reading binary file for pattern analysis: %s", e)
                 return None
 
         except (OSError, ValueError, RuntimeError) as e:
-            self._logger.error("Error finding license check address: %s", e)
+            self._logger.exception("Error finding license check address: %s", e)
             return None
 
     def _extract_analysis_parameters(self, **kwargs: object) -> dict[str, object]:
@@ -1499,7 +1495,7 @@ class ConcolicExecutionEngine:
             return results
 
         except (OSError, ValueError, RuntimeError) as e:
-            self._logger.error("Native analysis failed: %s", e)
+            self._logger.exception("Native analysis failed: %s", e)
             results["error"] = str(e)
             results["execution_time"] = time.time() - start_time
             return results

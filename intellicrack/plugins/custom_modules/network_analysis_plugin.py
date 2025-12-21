@@ -86,8 +86,7 @@ class NetworkAnalysisPlugin:
                     indicator.decode("utf-8", errors="ignore") for indicator in network_indicators if indicator in data
                 ]:
                     results.append("Network indicators found:")
-                    for indicator in found_indicators:
-                        results.append(f"  - {indicator}")
+                    results.extend(f"  - {indicator}" for indicator in found_indicators)
                 else:
                     results.append("No obvious network indicators found")
 
@@ -145,8 +144,7 @@ class NetworkAnalysisPlugin:
 
             if found_apis := [f"{api.decode('ascii')} - {description}" for api, description in socket_apis.items() if api in data]:
                 results.append(f"Found {len(found_apis)} socket API references:")
-                for api in found_apis:
-                    results.append(f"   {api}")
+                results.extend(f"   {api}" for api in found_apis)
             else:
                 results.append("No socket API references found")
 
@@ -321,15 +319,19 @@ class NetworkAnalysisPlugin:
                     time.sleep(1)  # Check every second
 
             except Exception as e:
-                logger.error("Socket monitoring error: %s", e, exc_info=True)
+                logger.exception("Socket monitoring error: %s", e)
             finally:
                 self.monitoring = False
 
             result["connections"] = connection_log
             result["statistics"] = {
                 "total_events": len(connection_log),
-                "new_connections": sum(bool(c["type"] == "new_connection") for c in connection_log),
-                "closed_connections": sum(bool(c["type"] == "closed_connection") for c in connection_log),
+                "new_connections": sum(
+                    c["type"] == "new_connection" for c in connection_log
+                ),
+                "closed_connections": sum(
+                    c["type"] == "closed_connection" for c in connection_log
+                ),
             }
 
         # Start monitoring in a separate thread
@@ -422,7 +424,7 @@ class NetworkAnalysisPlugin:
         for socket_name, sock in self.active_sockets.items():
             try:
                 sock.close()
-                logger.info(f"Closed socket: {socket_name}")
+                logger.info("Closed socket: %s", socket_name)
             except OSError as e:
                 logger.debug("Error closing socket %s: %s", socket_name, e)
         self.active_sockets.clear()
@@ -450,7 +452,9 @@ class NetworkAnalysisPlugin:
             ports, and network I/O statistics.
 
         """
-        results = [f"Starting network monitoring{' for process: ' + str(target_process) if target_process else ''}..."]
+        results = [
+            f"Starting network monitoring{f' for process: {str(target_process)}' if target_process else ''}..."
+        ]
         try:
             import socket
 
@@ -521,19 +525,23 @@ class NetworkAnalysisPlugin:
                     results.append(f"  ... and {len(listening_ports) - 5} more listening ports")
 
             if net_io := psutil.net_io_counters():
-                results.extend((
-                    "\nNetwork I/O Statistics:",
-                    f"  Bytes sent: {net_io.bytes_sent:,}",
-                ))
-                results.extend((
-                    f"  Bytes received: {net_io.bytes_recv:,}",
-                    f"  Packets sent: {net_io.packets_sent:,}",
-                    f"  Packets received: {net_io.packets_recv:,}",
-                ))
+                results.extend(
+                    (
+                        "\nNetwork I/O Statistics:",
+                        f"  Bytes sent: {net_io.bytes_sent:,}",
+                        f"  Bytes received: {net_io.bytes_recv:,}",
+                        f"  Packets sent: {net_io.packets_sent:,}",
+                        f"  Packets received: {net_io.packets_recv:,}",
+                    )
+                )
         except ImportError as e:
             logger.debug("psutil not available: %s", e, exc_info=True)
-            results.append("Error: psutil library not available for network monitoring")
-            results.append("Install with: pip install psutil")
+            results.extend(
+                (
+                    "Error: psutil library not available for network monitoring",
+                    "Install with: pip install psutil",
+                )
+            )
         except Exception as e:
             logger.exception("Network monitoring error: %s", e)
             results.append(f"Network monitoring error: {e}")

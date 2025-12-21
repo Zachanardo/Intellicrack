@@ -30,10 +30,11 @@ try:
     from intellicrack.handlers.pyqt6_handler import QInputDialog
 
     PYQT6_AVAILABLE = True
+    QInputDialog_TYPE: type[QInputDialog] | None = QInputDialog
 except ImportError as e:
-    logger.error("Import error in rop_generator: %s", e)
+    logger.exception("Import error in rop_generator: %s", e)
     PYQT6_AVAILABLE = False
-    QInputDialog = None
+    QInputDialog_TYPE = None
 
 
 class ROPChainGenerator:
@@ -84,7 +85,7 @@ class ROPChainGenerator:
     def find_gadgets(self) -> bool:
         """Find ROP gadgets in the binary."""
         if not self.binary_path:
-            self.logger.error("No binary set")
+            self.logger.exception("No binary set")
             return False
 
         # Clear previous gadgets
@@ -94,17 +95,17 @@ class ROPChainGenerator:
             # Perform real ROP gadget analysis
             self._find_real_rop_gadgets()
 
-            self.logger.info(f"Found {len(self.gadgets)} gadgets")
+            self.logger.info("Found %d gadgets", len(self.gadgets))
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error finding gadgets: %s", e)
+            self.logger.exception("Error finding gadgets: %s", e)
             return False
 
     def generate_chains(self) -> bool:
         """Generate ROP chains for target functions."""
         if not self.binary_path:
-            self.logger.error("No binary set")
+            self.logger.exception("No binary set")
             return False
 
         if not self.gadgets:
@@ -122,11 +123,11 @@ class ROPChainGenerator:
         try:
             self._generate_real_rop_chains()
 
-            self.logger.info(f"Generated {len(self.chains)} ROP chains")
+            self.logger.info("Generated %d ROP chains", len(self.chains))
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating chains: %s", e)
+            self.logger.exception("Error generating chains: %s", e)
             return False
 
     def _add_default_targets(self) -> None:
@@ -150,7 +151,7 @@ class ROPChainGenerator:
             # Load and analyze the binary
             binary_data = self._load_binary_data()
             if not binary_data:
-                self.logger.error("Could not load binary data for gadget analysis")
+                self.logger.exception("Could not load binary data for gadget analysis")
                 return
 
             # Try to disassemble the binary using available engines
@@ -174,17 +175,20 @@ class ROPChainGenerator:
             self.logger.info("Found %d real ROP gadgets in binary", len(self.gadgets))
 
         except Exception as e:
-            self.logger.error("Error in real gadget finding: %s", e)
+            self.logger.exception("Error in real gadget finding: %s", e)
             # Fallback to basic pattern search
             self._fallback_gadget_search()
 
     def _load_binary_data(self) -> bytes | None:
         """Load binary data from file."""
+        if self.binary_path is None:
+            self.logger.exception("No binary path set")
+            return None
         try:
             with open(self.binary_path, "rb") as f:
                 return f.read()
         except OSError as e:
-            self.logger.error("Error loading binary: %s", e)
+            self.logger.exception("Error loading binary: %s", e)
             return None
 
     def _disassemble_binary(self, binary_data: bytes) -> list[dict[str, Any]]:
@@ -212,7 +216,7 @@ class ROPChainGenerator:
                 base_address = self._get_code_base_address(binary_data)
                 code_sections = self._extract_code_sections(binary_data)
 
-                self.logger.info(f"Base address: 0x{base_address:x}")
+                self.logger.info("Base address: 0x%x", base_address)
 
                 for section_data, section_base in code_sections:
                     for insn in md.disasm(section_data, section_base):
@@ -239,12 +243,14 @@ class ROPChainGenerator:
             # Fallback to objdump if available
             from ...utils.analysis.binary_analysis import disassemble_with_objdump
 
-            if instructions := disassemble_with_objdump(
-                self.binary_path,
-                extra_args=["--no-show-raw-insn"],
-                parse_func=self._parse_objdump_output,
-            ):
-                return instructions
+            if self.binary_path is not None:
+                result = disassemble_with_objdump(
+                    self.binary_path,
+                    extra_args=["--no-show-raw-insn"],
+                    parse_func=self._parse_objdump_output,
+                )
+                if result is not None:
+                    return result
 
         except Exception as e:
             self.logger.debug("Disassembly failed: %s", e)
@@ -259,9 +265,9 @@ class ROPChainGenerator:
         # ELF files
         return 0x8048000 if binary_data[:4] == b"\x7fELF" else 0x400000
 
-    def _extract_code_sections(self, binary_data: bytes) -> list[tuple]:
+    def _extract_code_sections(self, binary_data: bytes) -> list[tuple[bytes, int]]:
         """Extract code sections from binary."""
-        sections = []
+        sections: list[tuple[bytes, int]] = []
 
         try:
             # Try using lief if available
@@ -274,21 +280,27 @@ class ROPChainGenerator:
                 if binary_data[:2] == b"MZ":  # PE
                     if hasattr(lief, "parse"):
                         binary = lief.parse(list(binary_data))
-                        for section in binary.sections:
-                            if section.characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
-                                section_data = bytes(section.content)
-                                sections.append(
-                                    (
-                                        section_data,
-                                        section.virtual_address + binary.optional_header.imagebase,
-                                    ),
-                                )
+                        if binary is not None:
+                            for section in binary.sections:
+                                if hasattr(section, "characteristics") and hasattr(section, "virtual_address") and section.characteristics & 0x20000000 and hasattr(binary, "optional_header"):
+                                    section_data = bytes(section.content)
+                                    sections.append(
+                                        (
+                                            section_data,
+                                            section.virtual_address + binary.optional_header.imagebase,
+                                        ),
+                                    )
                 elif binary_data[:4] == b"\x7fELF":  # ELF
                     if hasattr(lief, "parse"):
                         binary = lief.parse(list(binary_data))
-                    sections.extend((bytes(section.content), section.virtual_address) for section in binary.sections if section.flags & 0x4)
+                        if binary is not None:
+                            for section in binary.sections:
+                                if hasattr(section, "flags") and hasattr(section, "virtual_address"):
+                                    flags_value = section.flags
+                                    if isinstance(flags_value, int) and flags_value & 0x4:
+                                        sections.append((bytes(section.content), section.virtual_address))
             except ImportError as e:
-                self.logger.error("Import error in rop_generator: %s", e)
+                self.logger.exception("Import error in rop_generator: %s", e)
                 # Simple fallback - assume first 64KB contains code
                 sections.append((binary_data[:65536], self._get_code_base_address(binary_data)))
 
@@ -562,7 +574,7 @@ class ROPChainGenerator:
                     self.logger.warning("Failed to build ROP chain for %s", target["name"])
 
         except Exception as e:
-            self.logger.error("Error in real ROP chain generation: %s", e)
+            self.logger.exception("Error in real ROP chain generation: %s", e)
             # Fallback to basic chain construction
             self._fallback_chain_generation()
 
@@ -634,7 +646,7 @@ class ROPChainGenerator:
             }
 
         except Exception as e:
-            self.logger.error("Error building ROP chain for %s: %s", target.get("name", "unknown"), e)
+            self.logger.exception("Error building ROP chain for %s: %s", target.get("name", "unknown"), e)
             return None
 
     def _build_real_rop_chain(self, target_info: dict[str, Any], chain_type: str, requirements: dict[str, Any]) -> dict[str, Any]:
@@ -659,7 +671,16 @@ class ROPChainGenerator:
             # Ensure we have gadgets available
             if not self.gadgets:
                 self.logger.warning("No gadgets available for chain building")
-                return None
+                return {
+                    "target": target_info,
+                    "chain_type": chain_type,
+                    "gadgets_used": [],
+                    "payload": b"",
+                    "stack_layout": [],
+                    "success_probability": 0.0,
+                    "constraints_met": [],
+                    "requirements": requirements,
+                }
 
             # Initialize chain structure
             chain_data = {
@@ -699,18 +720,38 @@ class ROPChainGenerator:
                 # Generate final payload
                 chain_data["payload"] = self._assemble_chain_payload(chain_data)
 
+                gadgets_used = chain_data.get("gadgets_used", [])
+                gadgets_count = len(gadgets_used) if isinstance(gadgets_used, list) else 0
                 self.logger.info(
                     "Successfully built ROP chain with %d gadgets, success probability: %.2f",
-                    len(chain_data["gadgets_used"]),
+                    gadgets_count,
                     chain_data["success_probability"],
                 )
                 return chain_data
             self.logger.warning("Built chain failed validation")
-            return None
+            return {
+                "target": target_info,
+                "chain_type": chain_type,
+                "gadgets_used": [],
+                "payload": b"",
+                "stack_layout": [],
+                "success_probability": 0.0,
+                "constraints_met": [],
+                "requirements": requirements,
+            }
 
         except Exception as e:
-            self.logger.error("Failed to build real ROP chain: %s", e)
-            return None
+            self.logger.exception("Failed to build real ROP chain: %s", e)
+            return {
+                "target": target_info,
+                "chain_type": chain_type,
+                "gadgets_used": [],
+                "payload": b"",
+                "stack_layout": [],
+                "success_probability": 0.0,
+                "constraints_met": [],
+                "requirements": requirements,
+            }
 
     def _is_control_gadget(self, gadget: dict[str, Any]) -> bool:
         """Check if gadget provides control flow functionality."""
@@ -730,8 +771,8 @@ class ROPChainGenerator:
     def _build_shell_execution_chain(
         self,
         chain_data: dict[str, Any],
-        control_gadgets: list[dict],
-        stack_gadgets: list[dict],
+        control_gadgets: list[dict[str, Any]],
+        stack_gadgets: list[dict[str, Any]],
         target_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Build ROP chain for shell execution."""
@@ -808,8 +849,8 @@ class ROPChainGenerator:
     def _build_memory_permission_chain(
         self,
         chain_data: dict[str, Any],
-        control_gadgets: list[dict],
-        stack_gadgets: list[dict],
+        control_gadgets: list[dict[str, Any]],
+        stack_gadgets: list[dict[str, Any]],
         target_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Build ROP chain for memory permission changes."""
@@ -841,8 +882,8 @@ class ROPChainGenerator:
     def _build_license_bypass_chain(
         self,
         chain_data: dict[str, Any],
-        control_gadgets: list[dict],
-        arithmetic_gadgets: list[dict],
+        control_gadgets: list[dict[str, Any]],
+        arithmetic_gadgets: list[dict[str, Any]],
         target_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Build ROP chain for license validation bypass."""
@@ -939,8 +980,8 @@ class ROPChainGenerator:
     def _build_comparison_bypass_chain(
         self,
         chain_data: dict[str, Any],
-        control_gadgets: list[dict],
-        arithmetic_gadgets: list[dict],
+        control_gadgets: list[dict[str, Any]],
+        arithmetic_gadgets: list[dict[str, Any]],
         target_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Build ROP chain for bypassing string/memory comparisons."""
@@ -1003,8 +1044,8 @@ class ROPChainGenerator:
     def _build_generic_chain(
         self,
         chain_data: dict[str, Any],
-        control_gadgets: list[dict],
-        stack_gadgets: list[dict],
+        control_gadgets: list[dict[str, Any]],
+        stack_gadgets: list[dict[str, Any]],
         target_info: dict[str, Any],
     ) -> dict[str, Any]:
         """Build generic ROP chain for unknown target types."""
@@ -1189,7 +1230,7 @@ class ROPChainGenerator:
         arg_gadgets = []
 
         if required_args := requirements.get("arguments", []):
-            self.logger.debug(f"Looking for gadgets to satisfy {len(required_args)} argument requirements")
+            self.logger.debug("Looking for gadgets to satisfy %d argument requirements", len(required_args))
 
         if mov_gadgets := [g for g in self.gadgets if g.get("type") == "mov_reg_reg"]:
             arg_gadgets.append(
@@ -1225,7 +1266,7 @@ class ROPChainGenerator:
     def _find_execution_gadgets(self, target: dict[str, Any], requirements: dict[str, Any]) -> list[dict[str, Any]]:
         """Find gadgets for final execution/function call."""
         execution_control = requirements.get("execution_control", "call")
-        self.logger.debug(f"Finding execution gadgets for {target} with control type: {execution_control}")
+        self.logger.debug("Finding execution gadgets for %s with control type: %s", target, execution_control)
         exec_gadgets = []
 
         if call_gadgets := [g for g in self.gadgets if g.get("type") in ["call_reg", "jmp_reg"]]:
@@ -1408,7 +1449,7 @@ class ROPChainGenerator:
     def generate_report(self, filename: str | None = None) -> str | None:
         """Generate a report of the ROP chain generation results."""
         if not self.chains:
-            self.logger.error("No chains generated")
+            self.logger.exception("No chains generated")
             return None
 
         # Generate HTML report
@@ -1503,7 +1544,7 @@ class ROPChainGenerator:
             self.logger.info("Report saved to %s", filename)
             return filename
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error saving report: %s", e)
+            self.logger.exception("Error saving report: %s", e)
             return None
 
     def clear_analysis(self) -> None:
@@ -1519,7 +1560,7 @@ class ROPChainGenerator:
             return {}
 
         # Count gadgets by type
-        type_counts = {}
+        type_counts: dict[str, int] = {}
         for gadget in self.gadgets:
             gadget_type = gadget.get("type", "unknown")
             type_counts[gadget_type] = type_counts.get(gadget_type, 0) + 1
@@ -1552,13 +1593,13 @@ class ROPChainGenerator:
             List of dictionaries containing gadget information for the ROP chain
 
         """
-        self.logger.info(f"Generating ROP chain for target: {target}")
+        self.logger.info("Generating ROP chain for target: %s", target)
 
         # Ensure gadgets are available
         if not self.gadgets:
             self.logger.warning("No gadgets found, attempting to find gadgets first")
             if not self.find_gadgets():
-                self.logger.error("Failed to find gadgets")
+                self.logger.exception("Failed to find gadgets")
                 return []
 
         # Parse target specification
@@ -1569,9 +1610,12 @@ class ROPChainGenerator:
             self.add_target_function(target_info["name"], target_info.get("address"))
 
         # Get chain parameters from kwargs
-        max_length = kwargs.get("max_length", self.max_chain_length)
-        chain_type = kwargs.get("chain_type", "auto")
-        constraints = kwargs.get("constraints", {})
+        max_length_obj = kwargs.get("max_length", self.max_chain_length)
+        max_length = max_length_obj if isinstance(max_length_obj, int) else self.max_chain_length
+        chain_type_obj = kwargs.get("chain_type", "auto")
+        chain_type = chain_type_obj if isinstance(chain_type_obj, str) else "auto"
+        constraints_obj = kwargs.get("constraints", {})
+        constraints = constraints_obj if isinstance(constraints_obj, dict) else {}
 
         # Determine chain type if auto
         if chain_type == "auto":
@@ -1579,13 +1623,14 @@ class ROPChainGenerator:
 
         # Get requirements for this chain type
         requirements = self._get_chain_requirements(chain_type)
-        requirements.update(constraints)
+        if isinstance(constraints, dict):
+            requirements.update(constraints)
 
         # Build the chain
         chain_data = self._build_real_rop_chain(target_info, chain_type, requirements)
 
         if not chain_data:
-            self.logger.error(f"Failed to build ROP chain for {target}")
+            self.logger.exception("Failed to build ROP chain for %s", target)
             return []
 
         # Extract gadget list for return
@@ -1611,7 +1656,8 @@ class ROPChainGenerator:
         # Validate chain length
         if len(gadget_list) > max_length:
             self.logger.warning(
-                f"Generated chain exceeds max_length ({len(gadget_list)} > {max_length}), consider optimizing or increasing max_length",
+                "Generated chain exceeds max_length (%d > %d), consider optimizing or increasing max_length",
+                len(gadget_list), max_length,
             )
 
         # Add chain to our collection
@@ -1619,9 +1665,8 @@ class ROPChainGenerator:
 
         # Log chain summary
         self.logger.info(
-            f"Generated ROP chain: {len(gadget_list)} gadgets, "
-            f"type: {chain_type}, "
-            f"success probability: {chain_data.get('success_probability', 0):.2%}",
+            "Generated ROP chain: %d gadgets, type: %s, success probability: %.2f%%",
+            len(gadget_list), chain_type, chain_data.get('success_probability', 0) * 100,
         )
 
         # Return the gadget list
@@ -1644,11 +1689,11 @@ class ROPChainGenerator:
                     target_info["address"] = target
                     target_info["type"] = "address"
                     target_info["name"] = f"func_{target}"
-                    target_info["address_int"] = addr
+                    target_info["address_int"] = str(addr)
                 else:
-                    self.logger.warning(f"Invalid address value: {target}")
+                    self.logger.warning("Invalid address value: %s", target)
             except ValueError as e:
-                self.logger.error("Value error in rop_generator: %s", e)
+                self.logger.exception("Value error in rop_generator: %s", e)
 
         # Check for specific target patterns
         if "@" in target:
@@ -1666,7 +1711,7 @@ class ROPChainGenerator:
         return target_info
 
 
-def _setup_rop_generator(app: object) -> ROPChainGenerator:
+def _setup_rop_generator(app: object) -> ROPChainGenerator | None:
     """Create and configure the ROP chain generator."""
     generator = ROPChainGenerator(
         {
@@ -1679,10 +1724,12 @@ def _setup_rop_generator(app: object) -> ROPChainGenerator:
     if hasattr(app, "update_output"):
         app.update_output.emit("log_message([ROP Chain Generator] Setting binary...)")
 
-    if generator.set_binary(app.binary_path):
-        if hasattr(app, "update_output"):
-            app.update_output.emit(f"log_message([ROP Chain Generator] Binary set: {app.binary_path})")
-        return generator
+    if hasattr(app, "binary_path"):
+        binary_path = app.binary_path
+        if isinstance(binary_path, str) and generator.set_binary(binary_path):
+            if hasattr(app, "update_output"):
+                app.update_output.emit(f"log_message([ROP Chain Generator] Binary set: {binary_path})")
+            return generator
     if hasattr(app, "update_output"):
         app.update_output.emit("log_message([ROP Chain Generator] Failed to set binary)")
     return None
@@ -1690,10 +1737,10 @@ def _setup_rop_generator(app: object) -> ROPChainGenerator:
 
 def _configure_architecture_and_targets(app: object, generator: ROPChainGenerator) -> bool:
     """Configure architecture and target functions for the ROP generator."""
-    if PYQT6_AVAILABLE:
+    if PYQT6_AVAILABLE and QInputDialog_TYPE is not None:
         arch_options = ["x86_64", "x86", "arm", "arm64", "mips"]
-        arch, ok = QInputDialog.getItem(
-            app,
+        arch, ok = QInputDialog_TYPE.getItem(
+            app,  # type: ignore[arg-type]
             "Architecture",
             "Select architecture:",
             arch_options,
@@ -1711,8 +1758,8 @@ def _configure_architecture_and_targets(app: object, generator: ROPChainGenerato
             app.update_output.emit(f"log_message([ROP Chain Generator] Architecture: {arch})")
 
         # Ask for target function
-        target_function, ok = QInputDialog.getText(
-            app,
+        target_function, ok = QInputDialog_TYPE.getText(
+            app,  # type: ignore[arg-type]
             "Target Function",
             "Enter target function name (leave empty for default targets):",
         )
@@ -1770,27 +1817,27 @@ def _process_rop_results(app: object, generator: ROPChainGenerator) -> None:
         app.update_output.emit(f"log_message(- Total targets: {results['summary']['total_targets']})")
 
     # Add to analyze results
-    if not hasattr(app, "analyze_results"):
-        app.analyze_results = []
+    if hasattr(app, "analyze_results"):
+        analyze_results = app.analyze_results
+        if isinstance(analyze_results, list):
+            analyze_results.append("\n=== ROP CHAIN GENERATOR RESULTS ===")
+            analyze_results.append(f"Total gadgets: {results['summary']['total_gadgets']}")
+            analyze_results.append(f"Total chains: {results['summary']['total_chains']}")
+            analyze_results.append(f"Total targets: {results['summary']['total_targets']}")
 
-    app.analyze_results.append("\n=== ROP CHAIN GENERATOR RESULTS ===")
-    app.analyze_results.append(f"Total gadgets: {results['summary']['total_gadgets']}")
-    app.analyze_results.append(f"Total chains: {results['summary']['total_chains']}")
-    app.analyze_results.append(f"Total targets: {results['summary']['total_targets']}")
+            # Display chains
+            for i, chain in enumerate(results["chains"]):
+                analyze_results.append(f"\nChain {i + 1}: {chain['description']}")
+                analyze_results.append(f"Target: {chain['target']['name']}")
+                analyze_results.append(f"Length: {chain['length']} gadgets")
 
-    # Display chains
-    for i, chain in enumerate(results["chains"]):
-        app.analyze_results.append(f"\nChain {i + 1}: {chain['description']}")
-        app.analyze_results.append(f"Target: {chain['target']['name']}")
-        app.analyze_results.append(f"Length: {chain['length']} gadgets")
+                analyze_results.append("Gadgets:")
+                for j, gadget in enumerate(chain["gadgets"]):
+                    analyze_results.append(f"  {j + 1}. {gadget['address']}: {gadget['instruction']}")
 
-        app.analyze_results.append("Gadgets:")
-        for j, gadget in enumerate(chain["gadgets"]):
-            app.analyze_results.append(f"  {j + 1}. {gadget['address']}: {gadget['instruction']}")
-
-        app.analyze_results.append("Payload:")
-        for addr in chain["payload"]:
-            app.analyze_results.append(f"  {addr}")
+                analyze_results.append("Payload:")
+                for addr in chain["payload"]:
+                    analyze_results.append(f"  {addr}")
 
 
 def _handle_rop_report_generation(app: object, generator: ROPChainGenerator) -> None:
@@ -1838,7 +1885,7 @@ def run_rop_chain_generator(app: object) -> None:
         _handle_rop_report_generation(app, generator)
 
     # Store the generator instance
-    app.rop_chain_generator = generator
+    setattr(app, "rop_chain_generator", generator)
 
 
 # Export the main classes and functions

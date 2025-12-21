@@ -703,609 +703,6 @@ intellicrack\ai\multi_agent_system.py:4045:80: E501 line too long (102 > 79 char
 intellicrack\ai\multi_agent_system.py:4047:80: E501 line too long (86 > 79 characters)
 
 
-300 findings in intellicrack\ai\qemu_manager.py
-
-intellicrack\ai\qemu_manager.py:49:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:95:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:109:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:113:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:121:80: E501 line too long (127 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:168:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:182:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:183:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:192:80: E501 line too long (109 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:193:80: E501 line too long (105 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:194:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:197:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:198:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:235:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:242:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:247:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:250:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:255:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:257:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:259:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:263:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:275:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:284:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:286:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:288:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:312:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:342:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:351:80: E501 line too long (112 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:365:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:377:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:389:80: E501 line too long (115 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:392:80: E501 line too long (105 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:394:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:396:80: E501 line too long (103 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:403:80: E501 line too long (103 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:408:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:417:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:441:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:445:80: E501 line too long (99 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:449:80: E501 line too long (109 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:459:80: E501 line too long (116 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:464:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:472:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:483:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:484:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:486:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:493:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:501:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:517:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:570:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:597:80: E501 line too long (161 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:654:80: E501 line too long (177 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:659:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:667:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:682:80: E501 line too long (127 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:687:80: E501 line too long (127 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:693:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:700:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:703:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:714:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:716:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:717:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:730:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:733:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:738:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:766:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:771:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:822:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:846:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:999:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1011:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1012:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1014:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1040:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1061:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1064:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1079:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1090:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1145:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1146:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1173:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1189:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1202:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1215:80: E501 line too long (111 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1216:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1240:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1253:80: E501 line too long (111 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1254:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1261:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1278:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1326:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1333:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1337:80: E501 line too long (100 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1342:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1344:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1355:80: E501 line too long (171 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1367:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1388:80: E501 line too long (171 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1444:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1451:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1452:80: E501 line too long (125 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1467:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1518:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1613:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1645:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1650:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1657:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1664:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1666:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1669:80: E501 line too long (100 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1690:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1700:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1720:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1722:80: E501 line too long (175 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1727:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1731:80: E501 line too long (185 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1742:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1778:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1786:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1788:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1794:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1797:80: E501 line too long (103 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1798:80: E501 line too long (103 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1823:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1825:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1835:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1837:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1838:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1839:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1842:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1854:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1875:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1888:80: E501 line too long (175 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1897:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1924:80: E501 line too long (175 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1942:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1973:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:1998:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2009:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2010:80: E501 line too long (182 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2028:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2030:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2040:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2043:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2054:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2067:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2112:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2114:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2117:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2157:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2193:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2225:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2226:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2240:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2255:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2256:80: E501 line too long (135 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2271:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2287:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2293:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2302:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2311:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2312:80: E501 line too long (152 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2322:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2326:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2327:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2330:80: E501 line too long (100 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2331:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2334:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2335:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2339:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2340:80: E501 line too long (111 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2341:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2342:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2347:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2348:80: E501 line too long (107 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2351:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2355:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2362:80: E501 line too long (112 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2363:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2377:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2384:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2385:80: E501 line too long (106 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2394:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2395:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2396:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2397:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2404:80: E501 line too long (105 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2431:80: E501 line too long (106 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2491:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2494:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2495:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2497:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2506:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2510:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2514:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2545:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2563:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2571:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2582:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2583:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2590:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2651:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2654:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2656:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2660:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2689:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2698:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2705:80: E501 line too long (124 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2721:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2722:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2729:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2765:80: E501 line too long (126 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2776:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2777:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2784:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2800:80: E501 line too long (128 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2826:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2839:80: E501 line too long (99 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2842:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2846:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2847:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2849:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2850:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2851:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2852:80: E501 line too long (99 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2853:80: E501 line too long (102 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2854:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2855:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2856:80: E501 line too long (129 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2859:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2895:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2907:80: E501 line too long (118 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2930:80: E501 line too long (122 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2936:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2940:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2944:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:2949:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3000:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3007:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3015:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3022:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3035:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3074:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3104:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3124:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3151:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3165:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3169:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3185:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3191:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3199:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3219:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3221:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3226:80: E501 line too long (136 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3234:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3236:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3272:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3374:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3379:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3394:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3400:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3401:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3402:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3471:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3482:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3517:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3538:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3563:80: E501 line too long (106 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3565:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3579:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3584:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3589:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3612:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3635:80: E501 line too long (130 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3670:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3678:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3686:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3687:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3723:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3785:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3828:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3924:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3945:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3949:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3951:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3974:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:3976:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4003:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4012:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4013:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4042:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4069:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4070:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4098:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4121:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4131:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4159:80: E501 line too long (107 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4160:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4179:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\qemu_manager.py:4191:80: E501 line too long (81 > 79 characters)
-
-
 300 findings in intellicrack\ai\script_generation_agent.py
 
 intellicrack\ai\script_generation_agent.py:38:1: F401 '..core.analysis.frida_script_manager.FridaScriptConfig' imported but unused
@@ -1907,6 +1304,605 @@ intellicrack\ai\script_generation_agent.py:3960:80: E501 line too long (99 > 79 
 intellicrack\ai\script_generation_agent.py:3970:80: E501 line too long (85 > 79 characters)
 
 intellicrack\ai\script_generation_agent.py:3995:80: E501 line too long (84 > 79 characters)
+
+
+298 findings in intellicrack\ai\qemu_manager.py
+
+intellicrack\ai\qemu_manager.py:49:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:95:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:109:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:113:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:121:80: E501 line too long (127 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:168:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:182:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:183:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:192:80: E501 line too long (109 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:193:80: E501 line too long (105 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:194:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:197:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:198:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:235:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:242:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:247:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:250:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:255:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:257:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:259:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:263:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:275:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:284:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:286:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:288:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:312:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:342:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:351:80: E501 line too long (112 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:365:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:377:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:389:80: E501 line too long (115 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:392:80: E501 line too long (105 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:394:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:396:80: E501 line too long (103 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:403:80: E501 line too long (103 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:408:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:417:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:441:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:445:80: E501 line too long (99 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:449:80: E501 line too long (109 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:459:80: E501 line too long (116 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:464:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:472:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:483:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:484:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:486:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:493:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:501:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:517:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:570:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:597:80: E501 line too long (161 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:654:80: E501 line too long (177 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:659:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:667:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:682:80: E501 line too long (127 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:687:80: E501 line too long (127 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:693:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:700:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:703:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:714:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:716:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:717:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:730:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:733:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:738:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:766:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:771:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:822:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:846:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:999:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1011:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1012:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1014:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1040:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1061:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1064:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1079:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1090:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1145:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1146:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1173:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1189:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1202:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1215:80: E501 line too long (111 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1216:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1240:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1253:80: E501 line too long (111 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1254:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1261:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1278:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1326:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1333:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1337:80: E501 line too long (100 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1342:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1344:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1355:80: E501 line too long (171 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1367:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1388:80: E501 line too long (171 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1444:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1451:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1452:80: E501 line too long (125 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1467:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1518:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1613:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1645:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1650:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1657:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1664:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1666:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1669:80: E501 line too long (100 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1690:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1700:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1720:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1722:80: E501 line too long (175 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1727:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1731:80: E501 line too long (185 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1742:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1778:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1786:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1788:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1794:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1797:80: E501 line too long (103 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1798:80: E501 line too long (103 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1823:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1825:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1835:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1837:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1838:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1839:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1842:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1854:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1875:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1888:80: E501 line too long (175 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1897:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1924:80: E501 line too long (175 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1942:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1973:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:1998:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2009:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2010:80: E501 line too long (182 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2028:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2030:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2040:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2043:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2054:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2067:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2112:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2114:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2117:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2157:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2193:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2225:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2226:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2240:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2255:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2256:80: E501 line too long (135 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2271:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2287:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2293:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2302:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2311:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2312:80: E501 line too long (152 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2322:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2326:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2327:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2330:80: E501 line too long (100 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2331:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2334:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2341:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2342:80: E501 line too long (111 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2343:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2344:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2349:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2350:80: E501 line too long (107 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2353:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2357:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2364:80: E501 line too long (112 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2365:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2379:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2386:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2387:80: E501 line too long (106 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2396:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2397:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2398:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2399:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2406:80: E501 line too long (105 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2434:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2496:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2499:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2500:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2502:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2511:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2515:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2520:80: E501 line too long (99 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2551:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2569:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2577:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2588:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2589:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2596:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2658:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2661:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2663:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2667:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2696:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2705:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2712:80: E501 line too long (124 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2728:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2729:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2736:80: E501 line too long (108 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2773:80: E501 line too long (126 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2784:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2785:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2792:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2836:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2849:80: E501 line too long (99 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2852:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2856:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2857:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2859:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2860:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2861:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2862:80: E501 line too long (99 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2863:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2864:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2865:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2866:80: E501 line too long (129 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2869:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2905:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2917:80: E501 line too long (118 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2940:80: E501 line too long (122 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2946:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2950:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2954:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:2959:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3010:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3017:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3025:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3032:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3045:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3084:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3114:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3134:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3161:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3175:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3179:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3195:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3201:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3209:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3229:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3231:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3236:80: E501 line too long (136 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3244:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3246:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3282:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3384:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3389:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3404:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3410:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3411:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3412:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3481:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3492:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3527:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3548:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3573:80: E501 line too long (106 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3575:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3589:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3594:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3599:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3622:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3645:80: E501 line too long (130 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3680:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3688:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3696:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3697:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3733:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3795:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3838:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3934:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3955:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3959:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3961:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3984:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:3986:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4013:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4022:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4023:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4052:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4079:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4080:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4108:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4131:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4141:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4169:80: E501 line too long (107 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4170:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4189:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\qemu_manager.py:4201:80: E501 line too long (81 > 79 characters)
 
 
 263 findings in intellicrack\ai\llm_backends.py
@@ -5897,7 +5893,7 @@ intellicrack\ai\learning_engine.py:1734:80: E501 line too long (82 > 79 characte
 intellicrack\ai\learning_engine.py:1754:80: E501 line too long (86 > 79 characters)
 
 
-132 findings in intellicrack\ai\orchestrator.py
+133 findings in intellicrack\ai\orchestrator.py
 
 intellicrack\ai\orchestrator.py:41:80: E501 line too long (82 > 79 characters)
 
@@ -5931,23 +5927,23 @@ intellicrack\ai\orchestrator.py:269:80: E501 line too long (89 > 79 characters)
 
 intellicrack\ai\orchestrator.py:314:80: E501 line too long (111 > 79 characters)
 
-intellicrack\ai\orchestrator.py:319:80: E501 line too long (98 > 79 characters)
+intellicrack\ai\orchestrator.py:319:80: E501 line too long (99 > 79 characters)
 
 intellicrack\ai\orchestrator.py:327:80: E501 line too long (90 > 79 characters)
 
 intellicrack\ai\orchestrator.py:330:80: E501 line too long (113 > 79 characters)
 
-intellicrack\ai\orchestrator.py:335:80: E501 line too long (96 > 79 characters)
+intellicrack\ai\orchestrator.py:335:80: E501 line too long (97 > 79 characters)
 
 intellicrack\ai\orchestrator.py:345:80: E501 line too long (88 > 79 characters)
 
 intellicrack\ai\orchestrator.py:349:80: E501 line too long (116 > 79 characters)
 
-intellicrack\ai\orchestrator.py:355:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\orchestrator.py:355:80: E501 line too long (98 > 79 characters)
 
 intellicrack\ai\orchestrator.py:367:80: E501 line too long (111 > 79 characters)
 
-intellicrack\ai\orchestrator.py:372:80: E501 line too long (98 > 79 characters)
+intellicrack\ai\orchestrator.py:372:80: E501 line too long (99 > 79 characters)
 
 intellicrack\ai\orchestrator.py:380:80: E501 line too long (97 > 79 characters)
 
@@ -5957,9 +5953,9 @@ intellicrack\ai\orchestrator.py:382:80: E501 line too long (87 > 79 characters)
 
 intellicrack\ai\orchestrator.py:383:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\orchestrator.py:398:80: E501 line too long (107 > 79 characters)
+intellicrack\ai\orchestrator.py:398:80: E501 line too long (110 > 79 characters)
 
-intellicrack\ai\orchestrator.py:400:80: E501 line too long (121 > 79 characters)
+intellicrack\ai\orchestrator.py:400:80: E501 line too long (124 > 79 characters)
 
 intellicrack\ai\orchestrator.py:402:80: E501 line too long (84 > 79 characters)
 
@@ -6025,7 +6021,7 @@ intellicrack\ai\orchestrator.py:574:80: E501 line too long (88 > 79 characters)
 
 intellicrack\ai\orchestrator.py:576:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\orchestrator.py:594:80: E501 line too long (84 > 79 characters)
+intellicrack\ai\orchestrator.py:594:80: E501 line too long (87 > 79 characters)
 
 intellicrack\ai\orchestrator.py:604:80: E501 line too long (104 > 79 characters)
 
@@ -6035,7 +6031,7 @@ intellicrack\ai\orchestrator.py:633:80: E501 line too long (99 > 79 characters)
 
 intellicrack\ai\orchestrator.py:642:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\orchestrator.py:645:80: E501 line too long (100 > 79 characters)
+intellicrack\ai\orchestrator.py:645:80: E501 line too long (103 > 79 characters)
 
 intellicrack\ai\orchestrator.py:659:80: E501 line too long (97 > 79 characters)
 
@@ -6043,11 +6039,11 @@ intellicrack\ai\orchestrator.py:661:80: E501 line too long (88 > 79 characters)
 
 intellicrack\ai\orchestrator.py:663:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\orchestrator.py:670:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\orchestrator.py:670:80: E501 line too long (88 > 79 characters)
 
 intellicrack\ai\orchestrator.py:686:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\orchestrator.py:696:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\orchestrator.py:696:80: E501 line too long (100 > 79 characters)
 
 intellicrack\ai\orchestrator.py:701:80: E501 line too long (86 > 79 characters)
 
@@ -6057,9 +6053,9 @@ intellicrack\ai\orchestrator.py:715:80: E501 line too long (83 > 79 characters)
 
 intellicrack\ai\orchestrator.py:726:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\orchestrator.py:728:80: E501 line too long (126 > 79 characters)
+intellicrack\ai\orchestrator.py:728:80: E501 line too long (127 > 79 characters)
 
-intellicrack\ai\orchestrator.py:731:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\orchestrator.py:731:80: E501 line too long (98 > 79 characters)
 
 intellicrack\ai\orchestrator.py:744:80: E501 line too long (82 > 79 characters)
 
@@ -6079,13 +6075,13 @@ intellicrack\ai\orchestrator.py:770:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\orchestrator.py:777:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\orchestrator.py:782:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\orchestrator.py:782:80: E501 line too long (85 > 79 characters)
 
 intellicrack\ai\orchestrator.py:788:80: E501 line too long (92 > 79 characters)
 
 intellicrack\ai\orchestrator.py:790:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\orchestrator.py:798:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\orchestrator.py:798:80: E501 line too long (94 > 79 characters)
 
 intellicrack\ai\orchestrator.py:810:80: E501 line too long (111 > 79 characters)
 
@@ -6095,7 +6091,7 @@ intellicrack\ai\orchestrator.py:841:80: E501 line too long (102 > 79 characters)
 
 intellicrack\ai\orchestrator.py:842:80: E501 line too long (89 > 79 characters)
 
-intellicrack\ai\orchestrator.py:860:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\orchestrator.py:860:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\orchestrator.py:884:80: E501 line too long (90 > 79 characters)
 
@@ -6103,7 +6099,7 @@ intellicrack\ai\orchestrator.py:890:80: E501 line too long (102 > 79 characters)
 
 intellicrack\ai\orchestrator.py:891:80: E501 line too long (89 > 79 characters)
 
-intellicrack\ai\orchestrator.py:909:80: E501 line too long (89 > 79 characters)
+intellicrack\ai\orchestrator.py:909:80: E501 line too long (92 > 79 characters)
 
 intellicrack\ai\orchestrator.py:934:80: E501 line too long (80 > 79 characters)
 
@@ -6113,11 +6109,13 @@ intellicrack\ai\orchestrator.py:945:80: E501 line too long (89 > 79 characters)
 
 intellicrack\ai\orchestrator.py:958:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\orchestrator.py:976:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\orchestrator.py:976:80: E501 line too long (93 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1006:80: E501 line too long (111 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1008:80: E501 line too long (112 > 79 characters)
+
+intellicrack\ai\orchestrator.py:1031:80: E501 line too long (82 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1056:80: E501 line too long (115 > 79 characters)
 
@@ -6125,11 +6123,11 @@ intellicrack\ai\orchestrator.py:1058:80: E501 line too long (98 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1061:80: E501 line too long (102 > 79 characters)
 
-intellicrack\ai\orchestrator.py:1067:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\orchestrator.py:1067:80: E501 line too long (85 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1098:80: E501 line too long (103 > 79 characters)
 
-intellicrack\ai\orchestrator.py:1107:80: E501 line too long (84 > 79 characters)
+intellicrack\ai\orchestrator.py:1107:80: E501 line too long (87 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1119:80: E501 line too long (86 > 79 characters)
 
@@ -6159,12 +6157,12 @@ intellicrack\ai\orchestrator.py:1236:80: E501 line too long (85 > 79 characters)
 
 intellicrack\ai\orchestrator.py:1242:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\orchestrator.py:1273:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\orchestrator.py:1273:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\orchestrator.py:1309:80: E501 line too long (98 > 79 characters)
+intellicrack\ai\orchestrator.py:1309:80: E501 line too long (99 > 79 characters)
 
 
-132 findings in intellicrack\ai\predictive_intelligence.py
+131 findings in intellicrack\ai\predictive_intelligence.py
 
 intellicrack\ai\predictive_intelligence.py:130:80: E501 line too long (89 > 79 characters)
 
@@ -6186,9 +6184,9 @@ intellicrack\ai\predictive_intelligence.py:199:80: E501 line too long (83 > 79 c
 
 intellicrack\ai\predictive_intelligence.py:206:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:207:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:207:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:210:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:210:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\predictive_intelligence.py:213:80: E501 line too long (121 > 79 characters)
 
@@ -6216,222 +6214,220 @@ intellicrack\ai\predictive_intelligence.py:348:80: E501 line too long (81 > 79 c
 
 intellicrack\ai\predictive_intelligence.py:351:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:387:80: E501 line too long (89 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:387:80: E501 line too long (92 > 79 characters)
 
 intellicrack\ai\predictive_intelligence.py:397:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:401:80: E501 line too long (123 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:401:80: E501 line too long (124 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:403:80: E501 line too long (124 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:428:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:430:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:476:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:478:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:485:80: E501 line too long (113 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:487:80: E501 line too long (113 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:538:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:540:80: E501 line too long (81 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:581:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:583:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:585:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:587:80: E501 line too long (101 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:597:80: E501 line too long (121 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:599:80: E501 line too long (121 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:598:80: E501 line too long (103 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:600:80: E501 line too long (103 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:599:80: E501 line too long (127 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:601:80: E501 line too long (127 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:600:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:602:80: E501 line too long (101 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:601:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:603:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:602:80: E501 line too long (105 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:604:80: E501 line too long (105 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:617:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:619:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:628:80: E501 line too long (94 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:630:80: E501 line too long (94 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:629:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:631:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:630:80: E501 line too long (108 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:632:80: E501 line too long (108 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:631:80: E501 line too long (95 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:633:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:632:80: E501 line too long (82 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:634:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:633:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:635:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:651:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:653:80: E501 line too long (81 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:723:80: E501 line too long (108 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:725:80: E501 line too long (108 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:726:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:728:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:764:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:766:80: E501 line too long (101 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:792:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:794:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:794:80: E501 line too long (106 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:796:80: E501 line too long (106 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:831:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:833:80: E501 line too long (84 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:877:80: E501 line too long (104 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:879:80: E501 line too long (104 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:885:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:887:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:886:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:888:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:887:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:889:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:889:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:891:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:927:80: E501 line too long (95 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:929:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:928:80: E501 line too long (96 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:930:80: E501 line too long (96 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:929:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:931:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:930:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:932:80: E501 line too long (83 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:931:80: E501 line too long (100 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:933:80: E501 line too long (100 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:947:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:949:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:958:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:960:80: E501 line too long (84 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:962:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:964:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1058:80: E501 line too long (103 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1060:80: E501 line too long (103 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1060:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1062:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1078:80: E501 line too long (126 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1080:80: E501 line too long (126 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1098:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1100:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1136:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1138:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1173:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1175:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1174:80: E501 line too long (82 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1176:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1177:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1179:80: E501 line too long (84 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1184:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1186:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1203:80: E501 line too long (92 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1205:80: E501 line too long (92 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1215:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1217:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1216:80: E501 line too long (95 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1218:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1217:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1219:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1219:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1221:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1224:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1226:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1245:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1247:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1256:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1258:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1257:80: E501 line too long (95 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1259:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1258:80: E501 line too long (108 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1260:80: E501 line too long (108 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1260:80: E501 line too long (98 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1262:80: E501 line too long (98 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1264:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1266:80: E501 line too long (101 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1265:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1267:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1279:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1281:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1294:80: E501 line too long (97 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1296:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1295:80: E501 line too long (95 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1297:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1298:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1300:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1299:80: E501 line too long (110 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1301:80: E501 line too long (110 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1300:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1302:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1302:80: E501 line too long (97 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1304:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1306:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1308:80: E501 line too long (101 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1307:80: E501 line too long (105 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1309:80: E501 line too long (105 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1309:80: E501 line too long (98 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1311:80: E501 line too long (98 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1401:80: E501 line too long (97 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1403:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1403:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1405:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1416:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1418:80: E501 line too long (81 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1434:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1436:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1455:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1457:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1486:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1488:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1508:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1510:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1516:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1518:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1534:80: E501 line too long (108 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1536:80: E501 line too long (108 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1558:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1560:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1578:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1580:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1582:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1584:80: E501 line too long (83 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1583:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1585:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1585:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1587:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1588:80: E501 line too long (94 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1590:80: E501 line too long (94 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1592:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1594:80: E501 line too long (89 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1600:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1602:80: E501 line too long (101 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1618:80: E501 line too long (107 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1620:80: E501 line too long (106 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1624:80: E501 line too long (119 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1626:80: E501 line too long (119 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1630:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1632:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1635:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1637:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1648:80: E501 line too long (129 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1650:80: E501 line too long (129 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1649:80: E501 line too long (108 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1651:80: E501 line too long (108 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1651:80: E501 line too long (87 > 79 characters)
 
 intellicrack\ai\predictive_intelligence.py:1653:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1655:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1655:80: E501 line too long (121 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1657:80: E501 line too long (121 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1656:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1658:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1658:80: E501 line too long (87 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1660:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1661:80: E501 line too long (102 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1663:80: E501 line too long (102 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1662:80: E501 line too long (97 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1664:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1667:80: E501 line too long (90 > 79 characters)
 
-intellicrack\ai\predictive_intelligence.py:1669:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\predictive_intelligence.py:1674:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\predictive_intelligence.py:1672:80: E501 line too long (85 > 79 characters)
 
 
-107 findings in intellicrack\ai\integration_manager.py
+108 findings in intellicrack\ai\integration_manager.py
 
 intellicrack\ai\integration_manager.py:50:80: E501 line too long (85 > 79 characters)
 
@@ -6527,7 +6523,7 @@ intellicrack\ai\integration_manager.py:320:80: E501 line too long (92 > 79 chara
 
 intellicrack\ai\integration_manager.py:323:80: E501 line too long (108 > 79 characters)
 
-intellicrack\ai\integration_manager.py:326:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\integration_manager.py:326:80: E501 line too long (81 > 79 characters)
 
 intellicrack\ai\integration_manager.py:330:80: E501 line too long (86 > 79 characters)
 
@@ -6579,7 +6575,7 @@ intellicrack\ai\integration_manager.py:516:80: E501 line too long (92 > 79 chara
 
 intellicrack\ai\integration_manager.py:518:80: E501 line too long (96 > 79 characters)
 
-intellicrack\ai\integration_manager.py:635:80: E501 line too long (83 > 79 characters)
+intellicrack\ai\integration_manager.py:635:80: E501 line too long (84 > 79 characters)
 
 intellicrack\ai\integration_manager.py:733:80: E501 line too long (82 > 79 characters)
 
@@ -6599,6 +6595,8 @@ intellicrack\ai\integration_manager.py:807:80: E501 line too long (99 > 79 chara
 
 intellicrack\ai\integration_manager.py:881:80: E501 line too long (128 > 79 characters)
 
+intellicrack\ai\integration_manager.py:894:80: E501 line too long (81 > 79 characters)
+
 intellicrack\ai\integration_manager.py:898:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\integration_manager.py:907:80: E501 line too long (95 > 79 characters)
@@ -6615,7 +6613,7 @@ intellicrack\ai\integration_manager.py:1001:80: E501 line too long (134 > 79 cha
 
 intellicrack\ai\integration_manager.py:1002:80: E501 line too long (128 > 79 characters)
 
-intellicrack\ai\integration_manager.py:1057:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\integration_manager.py:1057:80: E501 line too long (81 > 79 characters)
 
 intellicrack\ai\integration_manager.py:1082:80: E501 line too long (105 > 79 characters)
 
@@ -6641,11 +6639,11 @@ intellicrack\ai\integration_manager.py:1251:80: E501 line too long (99 > 79 char
 
 intellicrack\ai\integration_manager.py:1254:80: E501 line too long (105 > 79 characters)
 
-intellicrack\ai\integration_manager.py:1272:80: E501 line too long (133 > 79 characters)
+intellicrack\ai\integration_manager.py:1272:80: E501 line too long (131 > 79 characters)
 
-intellicrack\ai\integration_manager.py:1319:80: E501 line too long (94 > 79 characters)
+intellicrack\ai\integration_manager.py:1319:80: E501 line too long (97 > 79 characters)
 
-intellicrack\ai\integration_manager.py:1321:80: E501 line too long (119 > 79 characters)
+intellicrack\ai\integration_manager.py:1321:80: E501 line too long (122 > 79 characters)
 
 
 106 findings in intellicrack\cli\ai_chat_interface.py
@@ -7705,7 +7703,7 @@ intellicrack\ai\realtime_adaptation_engine.py:1351:80: E501 line too long (106 >
 intellicrack\ai\realtime_adaptation_engine.py:1353:80: E501 line too long (119 > 79 characters)
 
 
-99 findings in intellicrack\ai\performance_optimization_layer.py
+100 findings in intellicrack\ai\performance_optimization_layer.py
 
 intellicrack\ai\performance_optimization_layer.py:134:80: E501 line too long (89 > 79 characters)
 
@@ -7728,6 +7726,8 @@ intellicrack\ai\performance_optimization_layer.py:252:80: E501 line too long (80
 intellicrack\ai\performance_optimization_layer.py:267:80: E501 line too long (82 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:280:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\performance_optimization_layer.py:283:80: E501 line too long (80 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:288:80: E501 line too long (110 > 79 characters)
 
@@ -7791,7 +7791,7 @@ intellicrack\ai\performance_optimization_layer.py:690:80: E501 line too long (90
 
 intellicrack\ai\performance_optimization_layer.py:696:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\performance_optimization_layer.py:700:80: E501 line too long (100 > 79 characters)
+intellicrack\ai\performance_optimization_layer.py:700:80: E501 line too long (103 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:703:80: E501 line too long (94 > 79 characters)
 
@@ -7803,7 +7803,7 @@ intellicrack\ai\performance_optimization_layer.py:711:80: E501 line too long (87
 
 intellicrack\ai\performance_optimization_layer.py:714:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\performance_optimization_layer.py:719:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\performance_optimization_layer.py:719:80: E501 line too long (83 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:764:80: E501 line too long (85 > 79 characters)
 
@@ -7841,7 +7841,7 @@ intellicrack\ai\performance_optimization_layer.py:956:80: E501 line too long (89
 
 intellicrack\ai\performance_optimization_layer.py:963:80: E501 line too long (113 > 79 characters)
 
-intellicrack\ai\performance_optimization_layer.py:966:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\performance_optimization_layer.py:966:80: E501 line too long (90 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:972:80: E501 line too long (128 > 79 characters)
 
@@ -7869,7 +7869,7 @@ intellicrack\ai\performance_optimization_layer.py:1120:80: E501 line too long (8
 
 intellicrack\ai\performance_optimization_layer.py:1141:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\performance_optimization_layer.py:1160:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\performance_optimization_layer.py:1160:80: E501 line too long (83 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:1169:80: E501 line too long (88 > 79 characters)
 
@@ -7904,6 +7904,209 @@ intellicrack\ai\performance_optimization_layer.py:1344:80: E501 line too long (8
 intellicrack\ai\performance_optimization_layer.py:1348:80: E501 line too long (83 > 79 characters)
 
 intellicrack\ai\performance_optimization_layer.py:1357:80: E501 line too long (88 > 79 characters)
+
+
+100 findings in intellicrack\ai\visualization_analytics.py
+
+intellicrack\ai\visualization_analytics.py:132:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:163:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:233:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:348:80: E501 line too long (103 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:361:80: E501 line too long (108 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:434:80: E501 line too long (107 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:438:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:444:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:449:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:452:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:459:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:472:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:480:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:481:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:489:80: E501 line too long (115 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:493:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:575:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:582:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:647:80: E501 line too long (101 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:657:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:786:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:799:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:801:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:806:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:816:80: E501 line too long (117 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:822:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:851:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:942:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:944:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:947:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:953:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:989:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1029:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1032:80: E501 line too long (96 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1035:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1045:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1091:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1094:80: E501 line too long (99 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1096:80: E501 line too long (94 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1117:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1119:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1122:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1125:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1128:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1131:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1164:80: E501 line too long (117 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1166:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1177:80: E501 line too long (106 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1181:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1182:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1197:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1219:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1224:80: E501 line too long (118 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1228:80: E501 line too long (110 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1232:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1244:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1247:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1303:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1343:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1361:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1370:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1371:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1385:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1409:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1419:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1423:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1431:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1454:80: E501 line too long (91 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1460:80: E501 line too long (109 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1481:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1488:80: E501 line too long (90 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1533:80: E501 line too long (115 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1537:80: E501 line too long (108 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1540:80: E501 line too long (100 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1548:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1563:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1578:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1581:80: E501 line too long (89 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1594:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1607:80: E501 line too long (82 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1608:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1620:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1621:80: E501 line too long (95 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1633:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1650:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1651:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1676:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1707:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1713:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1735:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1736:80: E501 line too long (104 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1737:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1738:80: E501 line too long (103 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1748:80: E501 line too long (92 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1770:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1778:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1791:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1900:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1902:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\visualization_analytics.py:1909:80: E501 line too long (96 > 79 characters)
 
 
 98 findings in intellicrack\ai\script_editor.py
@@ -8105,212 +8308,13 @@ intellicrack\ai\script_editor.py:1175:80: E501 line too long (85 > 79 characters
 intellicrack\ai\script_editor.py:1195:80: E501 line too long (98 > 79 characters)
 
 
-98 findings in intellicrack\ai\visualization_analytics.py
-
-intellicrack\ai\visualization_analytics.py:132:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:163:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:233:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:348:80: E501 line too long (103 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:361:80: E501 line too long (108 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:434:80: E501 line too long (107 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:438:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:444:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:449:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:452:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:459:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:472:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:480:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:481:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:489:80: E501 line too long (115 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:493:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:575:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:582:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:647:80: E501 line too long (101 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:657:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:786:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:799:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:801:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:816:80: E501 line too long (117 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:822:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:942:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:944:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:947:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:953:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:989:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1029:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1032:80: E501 line too long (96 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1035:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1045:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1091:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1094:80: E501 line too long (99 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1096:80: E501 line too long (94 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1117:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1119:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1122:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1125:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1128:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1131:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1164:80: E501 line too long (117 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1166:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1177:80: E501 line too long (106 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1181:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1182:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1197:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1219:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1224:80: E501 line too long (118 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1228:80: E501 line too long (110 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1232:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1244:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1247:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1303:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1343:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1361:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1370:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1371:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1385:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1409:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1419:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1423:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1431:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1454:80: E501 line too long (91 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1460:80: E501 line too long (109 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1481:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1488:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1533:80: E501 line too long (115 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1537:80: E501 line too long (108 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1540:80: E501 line too long (100 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1548:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1563:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1578:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1581:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1594:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1607:80: E501 line too long (82 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1608:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1620:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1621:80: E501 line too long (95 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1633:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1650:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1651:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1676:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1707:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1713:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1735:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1736:80: E501 line too long (104 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1737:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1738:80: E501 line too long (103 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1748:80: E501 line too long (92 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1770:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1778:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1791:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1900:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1902:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\visualization_analytics.py:1909:80: E501 line too long (96 > 79 characters)
-
-
 87 findings in intellicrack\ai\vulnerability_research_integration.py
 
 intellicrack\ai\vulnerability_research_integration.py:46:80: E501 line too long (89 > 79 characters)
 
 intellicrack\ai\vulnerability_research_integration.py:127:80: E501 line too long (127 > 79 characters)
 
-intellicrack\ai\vulnerability_research_integration.py:151:80: E501 line too long (89 > 79 characters)
+intellicrack\ai\vulnerability_research_integration.py:151:80: E501 line too long (90 > 79 characters)
 
 intellicrack\ai\vulnerability_research_integration.py:159:80: E501 line too long (102 > 79 characters)
 
@@ -8326,7 +8330,7 @@ intellicrack\ai\vulnerability_research_integration.py:179:80: E501 line too long
 
 intellicrack\ai\vulnerability_research_integration.py:184:80: E501 line too long (118 > 79 characters)
 
-intellicrack\ai\vulnerability_research_integration.py:192:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\vulnerability_research_integration.py:192:80: E501 line too long (81 > 79 characters)
 
 intellicrack\ai\vulnerability_research_integration.py:200:80: E501 line too long (118 > 79 characters)
 
@@ -8686,9 +8690,9 @@ intellicrack\analysis\protection_workflow.py:188:80: E501 line too long (85 > 79
 
 intellicrack\analysis\protection_workflow.py:225:80: E501 line too long (100 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:232:80: E501 line too long (101 > 79 characters)
+intellicrack\analysis\protection_workflow.py:232:80: E501 line too long (102 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:234:80: E501 line too long (80 > 79 characters)
+intellicrack\analysis\protection_workflow.py:234:80: E501 line too long (81 > 79 characters)
 
 intellicrack\analysis\protection_workflow.py:241:80: E501 line too long (90 > 79 characters)
 
@@ -8698,9 +8702,9 @@ intellicrack\analysis\protection_workflow.py:250:80: E501 line too long (114 > 7
 
 intellicrack\analysis\protection_workflow.py:253:80: E501 line too long (84 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:258:80: E501 line too long (114 > 79 characters)
+intellicrack\analysis\protection_workflow.py:258:80: E501 line too long (115 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:260:80: E501 line too long (87 > 79 characters)
+intellicrack\analysis\protection_workflow.py:260:80: E501 line too long (88 > 79 characters)
 
 intellicrack\analysis\protection_workflow.py:267:80: E501 line too long (133 > 79 characters)
 
@@ -8712,11 +8716,11 @@ intellicrack\analysis\protection_workflow.py:276:80: E501 line too long (87 > 79
 
 intellicrack\analysis\protection_workflow.py:278:80: E501 line too long (89 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:282:80: E501 line too long (129 > 79 characters)
+intellicrack\analysis\protection_workflow.py:282:80: E501 line too long (130 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:284:80: E501 line too long (89 > 79 characters)
+intellicrack\analysis\protection_workflow.py:284:80: E501 line too long (90 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:290:80: E501 line too long (96 > 79 characters)
+intellicrack\analysis\protection_workflow.py:290:80: E501 line too long (97 > 79 characters)
 
 intellicrack\analysis\protection_workflow.py:322:80: E501 line too long (84 > 79 characters)
 
@@ -8774,7 +8778,7 @@ intellicrack\analysis\protection_workflow.py:491:80: E501 line too long (85 > 79
 
 intellicrack\analysis\protection_workflow.py:495:80: E501 line too long (87 > 79 characters)
 
-intellicrack\analysis\protection_workflow.py:498:80: E501 line too long (88 > 79 characters)
+intellicrack\analysis\protection_workflow.py:498:80: E501 line too long (91 > 79 characters)
 
 intellicrack\analysis\protection_workflow.py:502:80: E501 line too long (122 > 79 characters)
 
@@ -10229,7 +10233,7 @@ intellicrack\ai\llm_config_manager.py:377:80: E501 line too long (81 > 79 charac
 
 intellicrack\ai\llm_config_manager.py:394:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\llm_config_manager.py:430:80: E501 line too long (83 > 79 characters)
+intellicrack\ai\llm_config_manager.py:430:80: E501 line too long (84 > 79 characters)
 
 intellicrack\ai\llm_config_manager.py:440:80: E501 line too long (104 > 79 characters)
 
@@ -10259,7 +10263,7 @@ intellicrack\ai\llm_config_manager.py:616:80: E501 line too long (86 > 79 charac
 
 intellicrack\ai\llm_config_manager.py:650:80: E501 line too long (98 > 79 characters)
 
-intellicrack\ai\llm_config_manager.py:671:80: E501 line too long (107 > 79 characters)
+intellicrack\ai\llm_config_manager.py:671:80: E501 line too long (110 > 79 characters)
 
 intellicrack\ai\llm_config_manager.py:676:80: E501 line too long (88 > 79 characters)
 
@@ -10277,7 +10281,7 @@ intellicrack\ai\llm_config_manager.py:708:80: E501 line too long (87 > 79 charac
 
 intellicrack\ai\llm_config_manager.py:709:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\llm_config_manager.py:712:80: E501 line too long (83 > 79 characters)
+intellicrack\ai\llm_config_manager.py:712:80: E501 line too long (84 > 79 characters)
 
 intellicrack\ai\llm_config_manager.py:721:80: E501 line too long (82 > 79 characters)
 
@@ -10704,7 +10708,7 @@ intellicrack\ai\coordination_layer.py:637:80: E501 line too long (94 > 79 charac
 intellicrack\ai\coordination_layer.py:652:80: E501 line too long (103 > 79 characters)
 
 
-48 findings in intellicrack\ai\model_sharding.py
+47 findings in intellicrack\ai\model_sharding.py
 
 intellicrack\ai\model_sharding.py:3:80: E501 line too long (86 > 79 characters)
 
@@ -10714,7 +10718,7 @@ intellicrack\ai\model_sharding.py:58:80: E501 line too long (112 > 79 characters
 
 intellicrack\ai\model_sharding.py:71:80: E501 line too long (127 > 79 characters)
 
-intellicrack\ai\model_sharding.py:107:80: E501 line too long (105 > 79 characters)
+intellicrack\ai\model_sharding.py:107:80: E501 line too long (108 > 79 characters)
 
 intellicrack\ai\model_sharding.py:115:80: E501 line too long (103 > 79 characters)
 
@@ -10758,7 +10762,7 @@ intellicrack\ai\model_sharding.py:501:80: E501 line too long (97 > 79 characters
 
 intellicrack\ai\model_sharding.py:567:80: E501 line too long (131 > 79 characters)
 
-intellicrack\ai\model_sharding.py:620:80: E501 line too long (103 > 79 characters)
+intellicrack\ai\model_sharding.py:620:80: E501 line too long (106 > 79 characters)
 
 intellicrack\ai\model_sharding.py:664:80: E501 line too long (105 > 79 characters)
 
@@ -10768,39 +10772,37 @@ intellicrack\ai\model_sharding.py:669:80: E501 line too long (90 > 79 characters
 
 intellicrack\ai\model_sharding.py:715:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\model_sharding.py:740:80: E501 line too long (96 > 79 characters)
+intellicrack\ai\model_sharding.py:762:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\model_sharding.py:760:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\model_sharding.py:788:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\model_sharding.py:786:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\model_sharding.py:798:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\model_sharding.py:796:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\model_sharding.py:813:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\model_sharding.py:811:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\model_sharding.py:817:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\model_sharding.py:815:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\model_sharding.py:832:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\model_sharding.py:830:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\model_sharding.py:835:80: E501 line too long (117 > 79 characters)
 
-intellicrack\ai\model_sharding.py:833:80: E501 line too long (117 > 79 characters)
+intellicrack\ai\model_sharding.py:839:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\model_sharding.py:837:80: E501 line too long (81 > 79 characters)
+intellicrack\ai\model_sharding.py:855:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\model_sharding.py:853:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\model_sharding.py:858:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\model_sharding.py:856:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\model_sharding.py:873:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\model_sharding.py:871:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\model_sharding.py:879:80: E501 line too long (96 > 79 characters)
 
-intellicrack\ai\model_sharding.py:877:80: E501 line too long (96 > 79 characters)
+intellicrack\ai\model_sharding.py:880:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\model_sharding.py:878:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\model_sharding.py:887:80: E501 line too long (94 > 79 characters)
 
-intellicrack\ai\model_sharding.py:885:80: E501 line too long (94 > 79 characters)
+intellicrack\ai\model_sharding.py:888:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\model_sharding.py:886:80: E501 line too long (99 > 79 characters)
-
-intellicrack\ai\model_sharding.py:905:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\model_sharding.py:907:80: E501 line too long (90 > 79 characters)
 
 
 44 findings in intellicrack\ai\intelligent_code_modifier.py
@@ -10831,7 +10833,7 @@ intellicrack\ai\intelligent_code_modifier.py:479:80: E501 line too long (114 > 7
 
 intellicrack\ai\intelligent_code_modifier.py:488:80: E501 line too long (102 > 79 characters)
 
-intellicrack\ai\intelligent_code_modifier.py:497:80: E501 line too long (81 > 79 characters)
+intellicrack\ai\intelligent_code_modifier.py:497:80: E501 line too long (82 > 79 characters)
 
 intellicrack\ai\intelligent_code_modifier.py:503:80: E501 line too long (88 > 79 characters)
 
@@ -10869,7 +10871,7 @@ intellicrack\ai\intelligent_code_modifier.py:731:80: E501 line too long (97 > 79
 
 intellicrack\ai\intelligent_code_modifier.py:766:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\intelligent_code_modifier.py:767:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\intelligent_code_modifier.py:767:80: E501 line too long (94 > 79 characters)
 
 intellicrack\ai\intelligent_code_modifier.py:778:80: E501 line too long (87 > 79 characters)
 
@@ -10885,7 +10887,7 @@ intellicrack\ai\intelligent_code_modifier.py:813:80: E501 line too long (85 > 79
 
 intellicrack\ai\intelligent_code_modifier.py:825:80: E501 line too long (82 > 79 characters)
 
-intellicrack\ai\intelligent_code_modifier.py:835:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\intelligent_code_modifier.py:835:80: E501 line too long (88 > 79 characters)
 
 intellicrack\ai\intelligent_code_modifier.py:870:80: E501 line too long (80 > 79 characters)
 
@@ -10894,7 +10896,7 @@ intellicrack\ai\intelligent_code_modifier.py:872:80: E501 line too long (93 > 79
 intellicrack\ai\intelligent_code_modifier.py:883:80: E501 line too long (91 > 79 characters)
 
 
-43 findings in intellicrack\ai\llm_fallback_chains.py
+44 findings in intellicrack\ai\llm_fallback_chains.py
 
 intellicrack\ai\llm_fallback_chains.py:3:80: E501 line too long (82 > 79 characters)
 
@@ -10904,9 +10906,9 @@ intellicrack\ai\llm_fallback_chains.py:88:80: E501 line too long (82 > 79 charac
 
 intellicrack\ai\llm_fallback_chains.py:133:80: E501 line too long (94 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:144:80: E501 line too long (96 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:144:80: E501 line too long (99 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:151:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:151:80: E501 line too long (89 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:160:80: E501 line too long (83 > 79 characters)
 
@@ -10918,11 +10920,13 @@ intellicrack\ai\llm_fallback_chains.py:177:80: E501 line too long (126 > 79 char
 
 intellicrack\ai\llm_fallback_chains.py:186:80: E501 line too long (137 > 79 characters)
 
+intellicrack\ai\llm_fallback_chains.py:192:80: E501 line too long (80 > 79 characters)
+
 intellicrack\ai\llm_fallback_chains.py:212:80: E501 line too long (134 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:214:80: E501 line too long (104 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:217:80: E501 line too long (119 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:217:80: E501 line too long (122 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:220:80: E501 line too long (88 > 79 characters)
 
@@ -10932,23 +10936,23 @@ intellicrack\ai\llm_fallback_chains.py:238:80: E501 line too long (81 > 79 chara
 
 intellicrack\ai\llm_fallback_chains.py:249:80: E501 line too long (114 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:264:80: E501 line too long (81 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:264:80: E501 line too long (82 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:282:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:284:80: E501 line too long (117 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:284:80: E501 line too long (122 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:291:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:297:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:297:80: E501 line too long (89 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:302:80: E501 line too long (100 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:303:80: E501 line too long (106 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:303:80: E501 line too long (109 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:306:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:306:80: E501 line too long (93 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:308:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:308:80: E501 line too long (96 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:311:80: E501 line too long (102 > 79 characters)
 
@@ -10960,7 +10964,7 @@ intellicrack\ai\llm_fallback_chains.py:343:80: E501 line too long (101 > 79 char
 
 intellicrack\ai\llm_fallback_chains.py:344:80: E501 line too long (101 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:361:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:361:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\llm_fallback_chains.py:375:80: E501 line too long (121 > 79 characters)
 
@@ -10978,9 +10982,9 @@ intellicrack\ai\llm_fallback_chains.py:585:80: E501 line too long (90 > 79 chara
 
 intellicrack\ai\llm_fallback_chains.py:622:80: E501 line too long (122 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:649:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:649:80: E501 line too long (96 > 79 characters)
 
-intellicrack\ai\llm_fallback_chains.py:651:80: E501 line too long (117 > 79 characters)
+intellicrack\ai\llm_fallback_chains.py:651:80: E501 line too long (118 > 79 characters)
 
 
 43 findings in intellicrack\ai\model_comparison.py
@@ -11080,17 +11084,17 @@ intellicrack\ai\quantization_manager.py:84:80: E501 line too long (96 > 79 chara
 
 intellicrack\ai\quantization_manager.py:96:80: E501 line too long (91 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:125:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\quantization_manager.py:125:80: E501 line too long (83 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:130:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:132:80: E501 line too long (106 > 79 characters)
+intellicrack\ai\quantization_manager.py:132:80: E501 line too long (107 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:135:80: E501 line too long (95 > 79 characters)
+intellicrack\ai\quantization_manager.py:135:80: E501 line too long (96 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:148:80: E501 line too long (84 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:166:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\quantization_manager.py:166:80: E501 line too long (90 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:176:80: E501 line too long (87 > 79 characters)
 
@@ -11120,7 +11124,7 @@ intellicrack\ai\quantization_manager.py:350:80: E501 line too long (81 > 79 char
 
 intellicrack\ai\quantization_manager.py:386:80: E501 line too long (82 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:431:80: E501 line too long (80 > 79 characters)
+intellicrack\ai\quantization_manager.py:431:80: E501 line too long (81 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:513:80: E501 line too long (80 > 79 characters)
 
@@ -11144,13 +11148,13 @@ intellicrack\ai\quantization_manager.py:669:80: E501 line too long (88 > 79 char
 
 intellicrack\ai\quantization_manager.py:677:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:691:80: E501 line too long (93 > 79 characters)
+intellicrack\ai\quantization_manager.py:691:80: E501 line too long (94 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:698:80: E501 line too long (110 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:725:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\quantization_manager.py:728:80: E501 line too long (84 > 79 characters)
+intellicrack\ai\quantization_manager.py:728:80: E501 line too long (87 > 79 characters)
 
 intellicrack\ai\quantization_manager.py:736:80: E501 line too long (88 > 79 characters)
 
@@ -11566,13 +11570,13 @@ intellicrack\ai\optimization_config.py:201:80: E501 line too long (96 > 79 chara
 
 intellicrack\ai\optimization_config.py:211:80: E501 line too long (112 > 79 characters)
 
-intellicrack\ai\optimization_config.py:215:80: E501 line too long (99 > 79 characters)
+intellicrack\ai\optimization_config.py:215:80: E501 line too long (104 > 79 characters)
 
-intellicrack\ai\optimization_config.py:231:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\optimization_config.py:231:80: E501 line too long (88 > 79 characters)
 
 intellicrack\ai\optimization_config.py:237:80: E501 line too long (89 > 79 characters)
 
-intellicrack\ai\optimization_config.py:260:80: E501 line too long (91 > 79 characters)
+intellicrack\ai\optimization_config.py:260:80: E501 line too long (92 > 79 characters)
 
 intellicrack\ai\optimization_config.py:280:80: E501 line too long (107 > 79 characters)
 
@@ -11586,7 +11590,7 @@ intellicrack\ai\optimization_config.py:347:80: E501 line too long (95 > 79 chara
 
 intellicrack\ai\optimization_config.py:384:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\optimization_config.py:394:80: E501 line too long (109 > 79 characters)
+intellicrack\ai\optimization_config.py:394:80: E501 line too long (112 > 79 characters)
 
 intellicrack\ai\optimization_config.py:396:80: E501 line too long (108 > 79 characters)
 
@@ -11625,6 +11629,77 @@ intellicrack\ai\optimization_config.py:534:80: E501 line too long (100 > 79 char
 intellicrack\ai\optimization_config.py:541:80: E501 line too long (96 > 79 characters)
 
 intellicrack\ai\optimization_config.py:545:80: E501 line too long (90 > 79 characters)
+
+
+34 findings in intellicrack\analysis\analysis_result_orchestrator.py
+
+intellicrack\analysis\analysis_result_orchestrator.py:35:80: E501 line too long (106 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:47:5: F811 redefinition of unused 'logging' from line 24
+
+intellicrack\analysis\analysis_result_orchestrator.py:59:80: E501 line too long (86 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:61:80: E501 line too long (82 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:66:80: E501 line too long (87 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:91:80: E501 line too long (102 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:104:80: E501 line too long (80 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:110:80: E501 line too long (86 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:121:80: E501 line too long (83 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:134:80: E501 line too long (90 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:151:80: E501 line too long (84 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:152:80: E501 line too long (124 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:159:80: E501 line too long (87 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:184:80: E501 line too long (93 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:195:80: E501 line too long (92 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:196:80: E501 line too long (97 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:199:80: E501 line too long (112 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:200:80: E501 line too long (80 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:220:80: E501 line too long (87 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:230:80: E501 line too long (105 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:244:80: E501 line too long (82 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:249:80: E501 line too long (122 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:251:80: E501 line too long (89 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:252:80: E501 line too long (95 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:254:80: E501 line too long (89 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:258:80: E501 line too long (121 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:260:80: E501 line too long (95 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:262:80: E501 line too long (107 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:283:80: E501 line too long (89 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:288:80: E501 line too long (97 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:293:80: E501 line too long (92 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:296:80: E501 line too long (122 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:299:80: E501 line too long (117 > 79 characters)
+
+intellicrack\analysis\analysis_result_orchestrator.py:305:80: E501 line too long (93 > 79 characters)
 
 
 34 findings in intellicrack\core\adobe_injector_integration.py
@@ -11769,75 +11844,6 @@ intellicrack\core\analysis\activation_analyzer.py:724:80: E501 line too long (10
 intellicrack\core\analysis\activation_analyzer.py:737:80: E501 line too long (108 > 79 characters)
 
 
-33 findings in intellicrack\analysis\analysis_result_orchestrator.py
-
-intellicrack\analysis\analysis_result_orchestrator.py:35:80: E501 line too long (106 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:47:5: F811 redefinition of unused 'logging' from line 24
-
-intellicrack\analysis\analysis_result_orchestrator.py:59:80: E501 line too long (86 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:61:80: E501 line too long (82 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:66:80: E501 line too long (87 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:91:80: E501 line too long (101 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:104:80: E501 line too long (80 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:110:80: E501 line too long (85 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:121:80: E501 line too long (80 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:134:80: E501 line too long (89 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:151:80: E501 line too long (84 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:152:80: E501 line too long (124 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:159:80: E501 line too long (84 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:184:80: E501 line too long (92 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:195:80: E501 line too long (92 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:196:80: E501 line too long (96 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:199:80: E501 line too long (112 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:220:80: E501 line too long (87 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:230:80: E501 line too long (104 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:244:80: E501 line too long (82 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:249:80: E501 line too long (122 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:251:80: E501 line too long (89 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:252:80: E501 line too long (95 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:254:80: E501 line too long (89 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:258:80: E501 line too long (121 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:260:80: E501 line too long (95 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:262:80: E501 line too long (107 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:283:80: E501 line too long (89 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:288:80: E501 line too long (97 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:293:80: E501 line too long (92 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:296:80: E501 line too long (122 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:299:80: E501 line too long (117 > 79 characters)
-
-intellicrack\analysis\analysis_result_orchestrator.py:305:80: E501 line too long (93 > 79 characters)
-
-
 33 findings in intellicrack\cli\config_profiles.py
 
 intellicrack\cli\config_profiles.py:2:80: E501 line too long (106 > 79 characters)
@@ -11935,15 +11941,15 @@ intellicrack\ai\lazy_model_loader.py:167:80: E501 line too long (88 > 79 charact
 
 intellicrack\ai\lazy_model_loader.py:206:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\lazy_model_loader.py:208:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\lazy_model_loader.py:208:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\lazy_model_loader.py:214:80: E501 line too long (100 > 79 characters)
 
-intellicrack\ai\lazy_model_loader.py:216:80: E501 line too long (90 > 79 characters)
+intellicrack\ai\lazy_model_loader.py:216:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\lazy_model_loader.py:219:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\lazy_model_loader.py:224:80: E501 line too long (94 > 79 characters)
+intellicrack\ai\lazy_model_loader.py:224:80: E501 line too long (97 > 79 characters)
 
 intellicrack\ai\lazy_model_loader.py:229:80: E501 line too long (95 > 79 characters)
 
@@ -11957,7 +11963,7 @@ intellicrack\ai\lazy_model_loader.py:327:80: E501 line too long (97 > 79 charact
 
 intellicrack\ai\lazy_model_loader.py:346:80: E501 line too long (120 > 79 characters)
 
-intellicrack\ai\lazy_model_loader.py:359:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\lazy_model_loader.py:359:80: E501 line too long (85 > 79 characters)
 
 intellicrack\ai\lazy_model_loader.py:395:80: E501 line too long (99 > 79 characters)
 
@@ -12271,6 +12277,63 @@ intellicrack\ai\learning_engine_simple.py:305:80: E501 line too long (97 > 79 ch
 intellicrack\ai\learning_engine_simple.py:306:80: E501 line too long (82 > 79 characters)
 
 
+27 findings in intellicrack\ai\lora_adapter_manager.py
+
+intellicrack\ai\lora_adapter_manager.py:30:5: F401 'peft.PeftConfig as PeftConfigType' imported but unused
+
+intellicrack\ai\lora_adapter_manager.py:30:5: F401 'peft.PeftModel as PeftModelType' imported but unused
+
+intellicrack\ai\lora_adapter_manager.py:52:80: E501 line too long (128 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:149:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:181:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:193:80: E501 line too long (99 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:204:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:205:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:241:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:244:80: E501 line too long (97 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:248:80: E501 line too long (102 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:306:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:407:80: E501 line too long (86 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:465:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:508:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:512:80: E501 line too long (98 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:525:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:629:80: E501 line too long (81 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:634:80: E501 line too long (87 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:640:80: E501 line too long (85 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:648:80: E501 line too long (84 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:671:80: E501 line too long (80 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:695:80: E501 line too long (113 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:698:80: E501 line too long (88 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:703:80: E501 line too long (83 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:707:80: E501 line too long (93 > 79 characters)
+
+intellicrack\ai\lora_adapter_manager.py:732:80: E501 line too long (85 > 79 characters)
+
+
 27 findings in intellicrack\cli\ascii_charts.py
 
 intellicrack\cli\ascii_charts.py:107:80: E501 line too long (88 > 79 characters)
@@ -12326,61 +12389,6 @@ intellicrack\cli\ascii_charts.py:590:80: E501 line too long (98 > 79 characters)
 intellicrack\cli\ascii_charts.py:618:80: E501 line too long (120 > 79 characters)
 
 intellicrack\cli\ascii_charts.py:640:80: E501 line too long (93 > 79 characters)
-
-
-26 findings in intellicrack\ai\lora_adapter_manager.py
-
-intellicrack\ai\lora_adapter_manager.py:30:5: F401 'peft.PeftConfig as PeftConfigType' imported but unused
-
-intellicrack\ai\lora_adapter_manager.py:30:5: F401 'peft.PeftModel as PeftModelType' imported but unused
-
-intellicrack\ai\lora_adapter_manager.py:52:80: E501 line too long (128 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:149:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:181:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:193:80: E501 line too long (99 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:204:80: E501 line too long (87 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:205:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:241:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:244:80: E501 line too long (97 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:249:80: E501 line too long (89 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:405:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:463:80: E501 line too long (90 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:506:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:510:80: E501 line too long (98 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:523:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:627:80: E501 line too long (81 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:632:80: E501 line too long (86 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:638:80: E501 line too long (85 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:646:80: E501 line too long (84 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:669:80: E501 line too long (80 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:693:80: E501 line too long (113 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:696:80: E501 line too long (88 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:701:80: E501 line too long (83 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:705:80: E501 line too long (93 > 79 characters)
-
-intellicrack\ai\lora_adapter_manager.py:730:80: E501 line too long (84 > 79 characters)
 
 
 24 findings in intellicrack\cli\pipeline.py
@@ -12509,25 +12517,25 @@ intellicrack\ai\model_cache_manager.py:415:80: E501 line too long (102 > 79 char
 
 intellicrack\ai\model_cache_manager.py:448:80: E501 line too long (81 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:454:80: E501 line too long (82 > 79 characters)
+intellicrack\ai\model_cache_manager.py:454:80: E501 line too long (83 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:459:80: E501 line too long (132 > 79 characters)
+intellicrack\ai\model_cache_manager.py:589:80: E501 line too long (97 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:586:80: E501 line too long (97 > 79 characters)
+intellicrack\ai\model_cache_manager.py:592:80: E501 line too long (80 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:591:80: E501 line too long (87 > 79 characters)
+intellicrack\ai\model_cache_manager.py:594:80: E501 line too long (88 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:652:80: E501 line too long (86 > 79 characters)
+intellicrack\ai\model_cache_manager.py:655:80: E501 line too long (86 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:709:80: E501 line too long (85 > 79 characters)
+intellicrack\ai\model_cache_manager.py:712:80: E501 line too long (85 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:715:80: E501 line too long (98 > 79 characters)
+intellicrack\ai\model_cache_manager.py:718:80: E501 line too long (98 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:727:80: E501 line too long (123 > 79 characters)
+intellicrack\ai\model_cache_manager.py:730:80: E501 line too long (123 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:777:80: E501 line too long (96 > 79 characters)
+intellicrack\ai\model_cache_manager.py:780:80: E501 line too long (96 > 79 characters)
 
-intellicrack\ai\model_cache_manager.py:803:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\model_cache_manager.py:806:80: E501 line too long (88 > 79 characters)
 
 
 21 findings in intellicrack\cli\interactive_mode.py
@@ -12630,7 +12638,7 @@ intellicrack\ai\model_download_manager.py:155:80: E501 line too long (82 > 79 ch
 
 intellicrack\ai\model_download_manager.py:235:80: E501 line too long (121 > 79 characters)
 
-intellicrack\ai\model_download_manager.py:238:80: E501 line too long (88 > 79 characters)
+intellicrack\ai\model_download_manager.py:238:80: E501 line too long (91 > 79 characters)
 
 intellicrack\ai\model_download_manager.py:292:80: E501 line too long (85 > 79 characters)
 
@@ -13031,9 +13039,9 @@ intellicrack\core\analysis\__init__.py:249:80: E501 line too long (95 > 79 chara
 
 5 findings in intellicrack\core\ai_model_manager.py
 
-intellicrack\core\ai_model_manager.py:71:80: E501 line too long (82 > 79 characters)
+intellicrack\core\ai_model_manager.py:71:80: E501 line too long (83 > 79 characters)
 
-intellicrack\core\ai_model_manager.py:142:80: E501 line too long (81 > 79 characters)
+intellicrack\core\ai_model_manager.py:142:80: E501 line too long (84 > 79 characters)
 
 intellicrack\core\ai_model_manager.py:193:80: E501 line too long (80 > 79 characters)
 

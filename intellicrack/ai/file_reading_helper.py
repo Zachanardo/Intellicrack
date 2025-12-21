@@ -85,13 +85,13 @@ def read_file_with_ai_tools(
         if file_data.get("status") == "success" and file_data.get("content") is not None:
             content = _process_ai_content(file_data["content"])
             used_ai_tools = True
-            logger.debug(f"Successfully read file using AIFileTools: {file_path}")
+            logger.debug("Successfully read file using AIFileTools: %s", file_path)
             return content, used_ai_tools
 
     except (ImportError, AttributeError, KeyError) as e:
-        logger.debug(f"AIFileTools not available: {e}")
+        logger.debug("AIFileTools not available: %s", e)
     except Exception as e:
-        logger.warning(f"Error using AIFileTools for {file_path}: {e}")
+        logger.warning("Error using AIFileTools for %s: %s", file_path, e)
 
     # Fallback to direct file reading
     try:
@@ -102,11 +102,11 @@ def read_file_with_ai_tools(
             with open(file_path, encoding=encoding) as text_file:
                 content = text_file.read()
 
-        logger.debug(f"Read file using direct file access: {file_path}")
+        logger.debug("Read file using direct file access: %s", file_path)
         return content, False
 
     except Exception as e:
-        logger.error(f"Failed to read file {file_path}: {e}")
+        logger.exception("Failed to read file %s: %s", file_path, e)
         return None, False
 
 
@@ -135,9 +135,7 @@ def read_binary_header(
         mode="binary",
         max_bytes=header_size,
     )
-    if isinstance(content, bytes):
-        return content
-    return None
+    return content if isinstance(content, bytes) else None
 
 
 def read_text_file(
@@ -165,9 +163,7 @@ def read_text_file(
         mode="text",
         encoding=encoding,
     )
-    if isinstance(content, str):
-        return content
-    return None
+    return content if isinstance(content, str) else None
 
 
 class FileReadingMixin:

@@ -34,7 +34,7 @@ from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import psutil
 
@@ -70,8 +70,8 @@ class HookPoint:
 
     module: str
     function: str
-    on_enter: Callable | None = None
-    on_exit: Callable | None = None
+    on_enter: Callable[[list[Any], dict[str, Any]], None] | None = None
+    on_exit: Callable[[list[Any], dict[str, Any]], None] | None = None
     enabled: bool = True
     priority: int = 0
 
@@ -105,7 +105,7 @@ class QEMUController:
     def __init__(self, config: QEMUConfig) -> None:
         """Initialize QEMU controller with configuration."""
         self.config = config
-        self.process: subprocess.Popen | None = None
+        self.process: subprocess.Popen[bytes] | None = None
         self.monitor_socket: socket.socket | None = None
         self.qmp_socket: socket.socket | None = None
         self.gdb_socket: socket.socket | None = None
@@ -150,9 +150,7 @@ class QEMUController:
                 f"tcp:127.0.0.1:{self.config.qmp_port},server,nowait",
             ])
             if self.config.enable_gdb:
-                cmd.extend(["-gdb", f"tcp:127.0.0.1:{self.config.gdb_port}"])
-                cmd.append("-S")
-
+                cmd.extend(["-gdb", f"tcp:127.0.0.1:{self.config.gdb_port}", "-S"])
             if self.config.vnc_display is not None:
                 cmd.extend(["-vnc", f":{self.config.vnc_display}"])
             else:
@@ -184,7 +182,7 @@ class QEMUController:
             return True
 
         except Exception as e:
-            logger.error("Failed to start QEMU: %s", e, exc_info=True)
+            logger.exception("Failed to start QEMU: %s", e)
             return False
 
     def stop(self) -> None:
@@ -224,7 +222,7 @@ class QEMUController:
             self.monitor_socket.send(f"{command}\n".encode())
             return self.monitor_socket.recv(4096).decode()
         except Exception as e:
-            logger.error("Monitor command failed: %s", e, exc_info=True)
+            logger.exception("Monitor command failed: %s", e)
             return ""
 
     def send_qmp_command(self, command: dict[str, Any]) -> dict[str, Any]:
@@ -236,9 +234,12 @@ class QEMUController:
             cmd_json = json.dumps(command) + "\n"
             self.qmp_socket.send(cmd_json.encode())
             response = self.qmp_socket.recv(8192).decode()
-            return json.loads(response)
+            result = json.loads(response)
+            if not isinstance(result, dict):
+                return {}
+            return result
         except Exception as e:
-            logger.error("QMP command failed: %s", e, exc_info=True)
+            logger.exception("QMP command failed: %s", e)
             return {}
 
     def _find_qemu_binary(self) -> str | None:
@@ -322,7 +323,7 @@ class QEMUController:
             return True
 
         except Exception as e:
-            logger.error("Failed to connect to QEMU: %s", e, exc_info=True)
+            logger.exception("Failed to connect to QEMU: %s", e)
             return False
 
     def take_snapshot(self, name: str) -> bool:
@@ -508,7 +509,7 @@ class APIHookingFramework:
             logger.debug("File create: %s", filename)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_read_file(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor ReadFile calls."""
@@ -528,7 +529,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_write_file(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor WriteFile calls to track file writes."""
@@ -554,7 +555,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_reg_open_key(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor RegOpenKeyExW calls to track registry access."""
@@ -575,7 +576,7 @@ class APIHookingFramework:
             logger.debug("Registry open: %s", subkey)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_reg_query_value(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor registry queries via RegQueryValueExW hook."""
@@ -594,7 +595,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_reg_set_value(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor registry writes via RegSetValueExW hook."""
@@ -615,7 +616,7 @@ class APIHookingFramework:
             logger.debug("Registry set: %s", value_name)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_connect(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network connections via connect hook (Windows)."""
@@ -641,7 +642,7 @@ class APIHookingFramework:
             logger.debug("Network connect: %s:%s", addr_info.get("address"), addr_info.get("port"))
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_send(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network data transmission via send hook."""
@@ -667,7 +668,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_recv(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network data reception via recv hook."""
@@ -687,7 +688,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_create_process(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor process creation via NtCreateProcess hook."""
@@ -707,7 +708,7 @@ class APIHookingFramework:
             logger.debug("Process create detected")
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_open_process(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor process access via NtOpenProcess hook."""
@@ -728,7 +729,7 @@ class APIHookingFramework:
             logger.debug("Process open: PID %s", process_id)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_open(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file opening via open hook (Linux)."""
@@ -747,7 +748,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_read(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file reading via read hook (Linux)."""
@@ -767,7 +768,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_write(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor file writing via write hook (Linux)."""
@@ -793,7 +794,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_socket(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network socket creation via socket hook (Linux)."""
@@ -813,7 +814,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _hook_connect_linux(self, args: list[Any], context: dict[str, Any]) -> None:
         """Monitor network connections via connect hook (Linux)."""
@@ -838,7 +839,7 @@ class APIHookingFramework:
             self.events.append(event)
 
         except Exception as e:
-            logger.error("Hook error: %s", e, exc_info=True)
+            logger.exception("Hook error: %s", e)
 
     def _read_wide_string(self, address: int, max_length: int = 260) -> str:
         """Read a wide string from memory."""
@@ -958,7 +959,7 @@ class AntiAnalysisDetector:
             try:
                 method(process_id)
             except Exception as e:
-                logger.error("Detection method failed: %s", e, exc_info=True)
+                logger.exception("Detection method failed: %s", e)
 
         return self.detections
 
@@ -1015,7 +1016,7 @@ class AntiAnalysisDetector:
                     kernel32.CloseHandle(process_handle)
 
             except Exception as e:
-                logger.error("Debugger detection failed: %s", e, exc_info=True)
+                logger.exception("Debugger detection failed: %s", e)
 
         elif platform.system() == "Linux":
             try:
@@ -1035,14 +1036,14 @@ class AntiAnalysisDetector:
                         checks.append(f"High FD count: {fd_count}")
 
             except Exception as e:
-                logger.error("Linux debugger detection failed: %s", e, exc_info=True)
+                logger.exception("Linux debugger detection failed: %s", e)
 
         if checks:
             self.detections.append({"type": "debugger_presence", "methods": checks, "severity": "high"})
 
     def _detect_vm_artifacts(self, process_id: int) -> None:
         """Detect virtual machine artifacts."""
-        vm_indicators = []
+        vm_indicators: list[str] = []
 
         try:
             psutil.Process(process_id)
@@ -1081,7 +1082,7 @@ class AntiAnalysisDetector:
                         vm_indicators.append(f"DMI product: {product}")
 
         except Exception as e:
-            logger.error("VM detection failed: %s", e, exc_info=True)
+            logger.exception("VM detection failed: %s", e)
 
         if vm_indicators:
             self.detections.append({"type": "vm_artifacts", "indicators": vm_indicators, "severity": "medium"})
@@ -1125,18 +1126,21 @@ class AntiAnalysisDetector:
                     timing_checks.append(f"QueryPerformanceCounter anomaly: {elapsed_qpc:.6f}s")
 
             elif platform.system() == "Linux":
-                import resource
+                try:
+                    import resource
 
-                rusage1 = resource.getrusage(resource.RUSAGE_SELF)
-                time.sleep(0.001)
-                rusage2 = resource.getrusage(resource.RUSAGE_SELF)
+                    rusage1 = resource.getrusage(resource.RUSAGE_SELF)  # type: ignore[attr-defined]
+                    time.sleep(0.001)
+                    rusage2 = resource.getrusage(resource.RUSAGE_SELF)  # type: ignore[attr-defined]
 
-                cpu_time = rusage2.ru_utime - rusage1.ru_utime
-                if cpu_time > 0.01:
-                    timing_checks.append(f"CPU time anomaly: {cpu_time:.6f}s")
+                    cpu_time = rusage2.ru_utime - rusage1.ru_utime
+                    if cpu_time > 0.01:
+                        timing_checks.append(f"CPU time anomaly: {cpu_time:.6f}s")
+                except (ImportError, AttributeError):
+                    pass
 
         except Exception as e:
-            logger.error("Timing detection failed: %s", e, exc_info=True)
+            logger.exception("Timing detection failed: %s", e)
 
         if timing_checks:
             self.detections.append({"type": "timing_attacks", "checks": timing_checks, "severity": "medium"})
@@ -1162,7 +1166,7 @@ class AntiAnalysisDetector:
                 hollowing_indicators.append("Suspicious memory usage ratio")
 
         except Exception as e:
-            logger.error("Process hollowing detection failed: %s", e, exc_info=True)
+            logger.exception("Process hollowing detection failed: %s", e)
 
         if hollowing_indicators:
             self.detections.append({
@@ -1210,19 +1214,18 @@ class AntiAnalysisDetector:
                     kernel32.CloseHandle(process_handle)
 
             except Exception as e:
-                logger.error("API hook detection failed: %s", e, exc_info=True)
+                logger.exception("API hook detection failed: %s", e)
 
         if hooked_apis:
             self.detections.append({"type": "api_hooks", "hooked_functions": hooked_apis, "severity": "high"})
 
     def _detect_sandbox_artifacts(self, process_id: int) -> None:
         """Detect sandbox environment indicators."""
-        sandbox_indicators = []
+        sandbox_indicators: list[str] = []
 
         try:
             import tempfile
 
-            # Determine appropriate temp directory based on platform
             temp_dir = tempfile.gettempdir()
             sandbox_files = [
                 r"C:\agent\agent.py",
@@ -1254,7 +1257,7 @@ class AntiAnalysisDetector:
                 logger.debug("Username analysis failed: %s", e)
 
         except Exception as e:
-            logger.error("Sandbox detection failed: %s", e, exc_info=True)
+            logger.exception("Sandbox detection failed: %s", e)
 
         if sandbox_indicators:
             self.detections.append({
@@ -1296,7 +1299,7 @@ class AntiAnalysisDetector:
                     logger.debug("Error during memory protection detection cleanup: %s", e)
 
         except Exception as e:
-            logger.error("Memory protection detection failed: %s", e, exc_info=True)
+            logger.exception("Memory protection detection failed: %s", e)
 
         if protections:
             self.detections.append({"type": "memory_protections", "mechanisms": protections, "severity": "low"})
@@ -1357,7 +1360,7 @@ class AntiAnalysisDetector:
                         logger.debug("Error during obfuscation detection cleanup: %s", e)
 
         except Exception as e:
-            logger.error("Obfuscation detection failed: %s", e, exc_info=True)
+            logger.exception("Obfuscation detection failed: %s", e)
 
         if obfuscation_indicators:
             self.detections.append({
@@ -1373,7 +1376,7 @@ class AntiAnalysisDetector:
         if not data:
             return 0.0
 
-        frequency = defaultdict(int)
+        frequency: dict[int, int] = defaultdict(int)
         for byte in data:
             frequency[byte] += 1
 
@@ -1406,7 +1409,7 @@ class BehavioralAnalyzer:
         """Run comprehensive behavioral analysis."""
         logger.info("Starting behavioral analysis of %s", self.binary_path)
 
-        results = {
+        results: dict[str, Any] = {
             "binary": str(self.binary_path),
             "start_time": time.time(),
             "qemu_analysis": {},
@@ -1433,7 +1436,8 @@ class BehavioralAnalyzer:
 
             logger.info("Detecting anti-analysis techniques")
             if process_id := self._get_target_process_id():
-                results["anti_analysis"]["detections"] = self.anti_analysis.scan(process_id)
+                anti_analysis_results = cast(dict[str, Any], results["anti_analysis"])
+                anti_analysis_results["detections"] = self.anti_analysis.scan(process_id)
 
             results["behavioral_patterns"] = self._analyze_behavioral_patterns()
 
@@ -1442,13 +1446,15 @@ class BehavioralAnalyzer:
             results["registry_activity"] = [e.to_dict() for e in self.events if e.event_type.startswith("registry_")]
             results["process_activity"] = [e.to_dict() for e in self.events if e.event_type.startswith("process_")]
 
-            results["end_time"] = time.time()
-            results["duration"] = results["end_time"] - results["start_time"]
+            end_time = time.time()
+            start_time_val = cast(float, results["start_time"])
+            results["end_time"] = end_time
+            results["duration"] = end_time - start_time_val
 
             results["summary"] = self._generate_summary(results)
 
         except Exception as e:
-            logger.error("Behavioral analysis failed: %s", e, exc_info=True)
+            logger.exception("Behavioral analysis failed: %s", e)
             results["error"] = str(e)
 
         finally:
@@ -1459,7 +1465,7 @@ class BehavioralAnalyzer:
 
     def _run_qemu_analysis(self, duration: int) -> dict[str, Any]:
         """Run analysis in QEMU virtual machine."""
-        qemu_results = {"started": False, "snapshots": [], "monitor_output": [], "events": []}
+        qemu_results: dict[str, Any] = {"started": False, "snapshots": [], "monitor_output": [], "events": []}
 
         try:
             if self.qemu_controller.start(self.binary_path):
@@ -1467,10 +1473,12 @@ class BehavioralAnalyzer:
 
                 initial_snapshot = "clean_state"
                 if self.qemu_controller.take_snapshot(initial_snapshot):
-                    qemu_results["snapshots"].append(initial_snapshot)
+                    snapshots_list = cast(list[str], qemu_results["snapshots"])
+                    snapshots_list.append(initial_snapshot)
 
                 monitor_output = self.qemu_controller.send_monitor_command("info registers")
-                qemu_results["monitor_output"].append(monitor_output)
+                monitor_list = cast(list[str], qemu_results["monitor_output"])
+                monitor_list.append(monitor_output)
 
                 vm_info = self.qemu_controller.send_qmp_command({"execute": "query-status"})
                 qemu_results["vm_status"] = vm_info
@@ -1479,19 +1487,20 @@ class BehavioralAnalyzer:
 
                 infected_snapshot = "post_execution"
                 if self.qemu_controller.take_snapshot(infected_snapshot):
-                    qemu_results["snapshots"].append(infected_snapshot)
+                    snapshots_list = cast(list[str], qemu_results["snapshots"])
+                    snapshots_list.append(infected_snapshot)
 
                 self.qemu_controller.stop()
 
         except Exception as e:
-            logger.error("QEMU analysis failed: %s", e, exc_info=True)
+            logger.exception("QEMU analysis failed: %s", e)
             qemu_results["error"] = str(e)
 
         return qemu_results
 
     def _run_native_analysis(self, duration: int) -> dict[str, Any]:
         """Run analysis natively without virtualization."""
-        native_results = {
+        native_results: dict[str, Any] = {
             "process_started": False,
             "pid": None,
             "memory_usage": {},
@@ -1499,7 +1508,6 @@ class BehavioralAnalyzer:
         }
 
         try:
-            # Validate binary_path to prevent command injection
             binary_path_str = str(self.binary_path)
             if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
                 raise ValueError(f"Unsafe binary path: {binary_path_str}")
@@ -1513,7 +1521,8 @@ class BehavioralAnalyzer:
             start_time = time.time()
             while time.time() - start_time < duration and process.poll() is None:
                 try:
-                    native_results["cpu_usage"].append(proc.cpu_percent())
+                    cpu_usage_list = cast(list[float], native_results["cpu_usage"])
+                    cpu_usage_list.append(proc.cpu_percent())
                     mem_info = proc.memory_info()
                     native_results["memory_usage"] = {
                         "rss": mem_info.rss,
@@ -1529,25 +1538,25 @@ class BehavioralAnalyzer:
                 process.wait(timeout=5)
 
         except Exception as e:
-            logger.error("Native analysis failed: %s", e, exc_info=True)
+            logger.exception("Native analysis failed: %s", e)
             native_results["error"] = str(e)
 
         return native_results
 
     def _run_api_monitoring(self, duration: int) -> dict[str, Any]:
         """Run API monitoring."""
-        monitoring_results = {
+        monitoring_results: dict[str, Any] = {
             "hooks_installed": 0,
             "events_captured": 0,
-            "unique_apis_called": set(),
+            "unique_apis_called": set[str](),
         }
 
         try:
             for key in self.api_hooks.hooks:
                 self.api_hooks.enable_hook(*key.split(":"))
-                monitoring_results["hooks_installed"] += 1
+                hooks_installed = cast(int, monitoring_results["hooks_installed"])
+                monitoring_results["hooks_installed"] = hooks_installed + 1
 
-            # Validate binary_path to prevent command injection
             binary_path_str = str(self.binary_path)
             if not Path(binary_path_str).is_absolute() or ".." in binary_path_str:
                 raise ValueError(f"Unsafe binary path: {binary_path_str}")
@@ -1566,20 +1575,21 @@ class BehavioralAnalyzer:
             self.events.extend(self.api_hooks.events)
             monitoring_results["events_captured"] = len(self.api_hooks.events)
 
+            unique_apis = cast(set[str], monitoring_results["unique_apis_called"])
             for event in self.api_hooks.events:
-                monitoring_results["unique_apis_called"].add(event.event_type)
+                unique_apis.add(event.event_type)
 
-            monitoring_results["unique_apis_called"] = list(monitoring_results["unique_apis_called"])
+            monitoring_results["unique_apis_called"] = list(unique_apis)
 
         except Exception as e:
-            logger.error("API monitoring failed: %s", e, exc_info=True)
+            logger.exception("API monitoring failed: %s", e)
             monitoring_results["error"] = str(e)
 
         return monitoring_results
 
     def _analyze_behavioral_patterns(self) -> dict[str, Any]:
         """Analyze captured events for behavioral patterns."""
-        patterns = {
+        patterns: dict[str, Any] = {
             "license_checks": [],
             "network_communications": [],
             "persistence_mechanisms": [],
@@ -1626,10 +1636,16 @@ class BehavioralAnalyzer:
 
         for proc in psutil.process_iter(["pid", "name", "exe"]):
             try:
-                if proc.info["name"] and target_name in proc.info["name"].lower():
-                    return proc.info["pid"]
-                if proc.info["exe"] and target_name in proc.info["exe"].lower():
-                    return proc.info["pid"]
+                proc_name = proc.info.get("name")
+                if proc_name and target_name in proc_name.lower():
+                    pid = proc.info.get("pid")
+                    if isinstance(pid, int):
+                        return pid
+                proc_exe = proc.info.get("exe")
+                if proc_exe and target_name in proc_exe.lower():
+                    pid = proc.info.get("pid")
+                    if isinstance(pid, int):
+                        return pid
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
 
@@ -1637,7 +1653,7 @@ class BehavioralAnalyzer:
 
     def _generate_summary(self, results: dict[str, Any]) -> dict[str, Any]:
         """Generate analysis summary."""
-        summary = {
+        summary: dict[str, Any] = {
             "total_events": len(self.events),
             "unique_event_types": len({e.event_type for e in self.events}),
             "suspicious_activities": 0,
@@ -1645,24 +1661,38 @@ class BehavioralAnalyzer:
             "key_findings": [],
         }
 
-        if results.get("anti_analysis", {}).get("detections"):
-            summary["suspicious_activities"] += len(results["anti_analysis"]["detections"])
-            summary["key_findings"].append("Anti-analysis techniques detected")
+        anti_analysis = results.get("anti_analysis", {})
+        if isinstance(anti_analysis, dict) and anti_analysis.get("detections"):
+            detections = anti_analysis["detections"]
+            suspicious_count = cast(int, summary["suspicious_activities"])
+            summary["suspicious_activities"] = suspicious_count + len(detections)
+            key_findings_list = cast(list[str], summary["key_findings"])
+            key_findings_list.append("Anti-analysis techniques detected")
 
-        if results.get("behavioral_patterns", {}).get("license_checks"):
-            summary["key_findings"].append("License validation mechanisms identified")
+        behavioral_patterns = results.get("behavioral_patterns", {})
+        if isinstance(behavioral_patterns, dict):
+            if behavioral_patterns.get("license_checks"):
+                key_findings_list = cast(list[str], summary["key_findings"])
+                key_findings_list.append("License validation mechanisms identified")
 
-        if results.get("behavioral_patterns", {}).get("persistence_mechanisms"):
-            summary["suspicious_activities"] += len(results["behavioral_patterns"]["persistence_mechanisms"])
-            summary["key_findings"].append("Persistence mechanisms detected")
+            if behavioral_patterns.get("persistence_mechanisms"):
+                persistence = behavioral_patterns["persistence_mechanisms"]
+                suspicious_count = cast(int, summary["suspicious_activities"])
+                summary["suspicious_activities"] = suspicious_count + len(persistence)
+                key_findings_list = cast(list[str], summary["key_findings"])
+                key_findings_list.append("Persistence mechanisms detected")
 
-        if results.get("behavioral_patterns", {}).get("data_exfiltration"):
-            summary["suspicious_activities"] += len(results["behavioral_patterns"]["data_exfiltration"])
-            summary["key_findings"].append("Potential data exfiltration detected")
+            if behavioral_patterns.get("data_exfiltration"):
+                exfiltration = behavioral_patterns["data_exfiltration"]
+                suspicious_count = cast(int, summary["suspicious_activities"])
+                summary["suspicious_activities"] = suspicious_count + len(exfiltration)
+                key_findings_list = cast(list[str], summary["key_findings"])
+                key_findings_list.append("Potential data exfiltration detected")
 
-        if summary["suspicious_activities"] > 10:
+        suspicious_activities = cast(int, summary["suspicious_activities"])
+        if suspicious_activities > 10:
             summary["risk_level"] = "high"
-        elif summary["suspicious_activities"] > 5:
+        elif suspicious_activities > 5:
             summary["risk_level"] = "medium"
 
         return summary

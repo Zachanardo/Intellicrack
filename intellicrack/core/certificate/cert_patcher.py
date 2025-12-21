@@ -221,7 +221,7 @@ class CertificatePatcher:
             PatchResult with success/failure information
 
         """
-        logger.info(f"Patching {len(detection_report.validation_functions)} functions")
+        logger.info("Patching %d functions", len(detection_report.validation_functions))
 
         if not detection_report.validation_functions:
             return PatchResult(
@@ -237,7 +237,7 @@ class CertificatePatcher:
 
         for func in detection_report.validation_functions:
             try:
-                logger.debug(f"Patching {func.api_name} at 0x{func.address:x}")
+                logger.debug("Patching %s at 0x%x", func.api_name, func.address)
 
                 patch_type = self._select_patch_type(func)
 
@@ -286,7 +286,7 @@ class CertificatePatcher:
                             original_bytes=original_bytes,
                         )
                     )
-                    logger.info(f"Successfully patched {func.api_name}")
+                    logger.info("Successfully patched %s", func.api_name)
                 else:
                     failed_patches.append(
                         FailedPatch(
@@ -297,7 +297,7 @@ class CertificatePatcher:
                     )
 
             except Exception as e:
-                logger.error(f"Error patching {func.api_name}: {e}")
+                logger.exception("Error patching %s: %s", func.api_name, e)
                 failed_patches.append(
                     FailedPatch(
                         address=func.address,
@@ -309,9 +309,9 @@ class CertificatePatcher:
         if patched_functions:
             try:
                 self._save_patched_binary()
-                logger.info(f"Saved patched binary to {self.binary_path}.patched")
+                logger.info("Saved patched binary to %s.patched", self.binary_path)
             except Exception as e:
-                logger.error(f"Failed to save patched binary: {e}")
+                logger.exception("Failed to save patched binary: %s", e)
                 return PatchResult(
                     success=False,
                     patched_functions=patched_functions,
@@ -365,7 +365,7 @@ class CertificatePatcher:
             return None
 
         if template := select_template(func.api_name, self.architecture):
-            logger.debug(f"Using template: {template.name}")
+            logger.debug("Using template: %s", template.name)
             return template.patch_bytes
 
         if patch_type == PatchType.ALWAYS_SUCCEED:
@@ -411,7 +411,7 @@ class CertificatePatcher:
                         content = bytes(segment.content)
                         return content[offset : offset + size]
         except Exception as e:
-            logger.error(f"Failed to read original bytes: {e}")
+            logger.exception("Failed to read original bytes: %s", e)
 
         return b"\x90" * size
 
@@ -482,7 +482,7 @@ class CertificatePatcher:
                         return True
 
         except Exception as e:
-            logger.error(f"Failed to apply patch: {e}")
+            logger.exception("Failed to apply patch: %s", e)
             return False
 
         return False
@@ -516,5 +516,5 @@ class CertificatePatcher:
             return True
 
         except Exception as e:
-            logger.error(f"Rollback failed: {e}")
+            logger.exception("Rollback failed: %s", e)
             return False

@@ -41,7 +41,7 @@ try:
 
     HAS_PSUTIL = True
 except ImportError as e:
-    logger.error("Import error in performance_monitor: %s", e)
+    logger.exception("Import error in performance_monitor: %s", e)
     psutil = None
     HAS_PSUTIL = False
 
@@ -162,7 +162,7 @@ class PerformanceMonitor:
                 time.sleep(interval)
 
             except Exception as e:
-                logger.error("Error in system monitoring: %s", e, exc_info=True)
+                logger.exception("Error in system monitoring: %s", e, exc_info=True)
                 time.sleep(interval)
 
     def _check_thresholds(self, cpu_usage: float, memory_usage: int, memory_growth: int) -> None:
@@ -194,7 +194,7 @@ class PerformanceMonitor:
             try:
                 rule(metric_name, level, value)
             except Exception as e:
-                logger.error("Error in optimization rule: %s", e, exc_info=True)
+                logger.exception("Error in optimization rule: %s", e, exc_info=True)
 
     def record_metric(
         self,
@@ -256,7 +256,7 @@ class PerformanceMonitor:
         try:
             yield operation_id
         except Exception as e:
-            self.logger.error("Exception in performance_monitor: %s", e)
+            self.logger.exception("Exception in performance_monitor: %s", e)
             success = False
             error_message = str(e)
             raise
@@ -418,7 +418,7 @@ class PerformanceMonitor:
             }
 
         except Exception as e:
-            logger.error("Error assessing system health: %s", e, exc_info=True)
+            logger.exception("Error assessing system health: %s", e, exc_info=True)
             return {"score": 0, "status": "unknown", "error": str(e)}
 
     def add_optimization_rule(self, rule: Callable[[str, str, float], None]) -> None:
@@ -464,7 +464,7 @@ class PerformanceMonitor:
             logger.info("Metrics exported to %s", file_path)
 
         except Exception as e:
-            logger.error("Failed to export metrics: %s", e, exc_info=True)
+            logger.exception("Failed to export metrics: %s", e, exc_info=True)
 
     def optimize_cache(self) -> None:
         """Optimize performance cache."""
@@ -551,7 +551,7 @@ class PerformanceMonitor:
 
         """
         if exc_type:
-            logger.error("Performance monitor exiting due to %s: %s", exc_type.__name__, exc_val, exc_info=True)
+            logger.exception("Performance monitor exiting due to %s: %s", exc_type.__name__, exc_val, exc_info=True)
             self._log_final_metrics()
             if exc_tb:
                 logger.debug("Exception traceback from %s:%s", exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
@@ -687,7 +687,7 @@ class AsyncPerformanceMonitor:
         try:
             return await coro
         except Exception as e:
-            self.logger.error("Exception in performance_monitor: %s", e)
+            self.logger.exception("Exception in performance_monitor: %s", e)
             success = False
             error_message = str(e)
             raise

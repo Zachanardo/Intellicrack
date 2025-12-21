@@ -241,17 +241,17 @@ netFuncs.forEach(funcName => {{
             onLeave: function(retval) {{
                 if (this.shouldBlock) {{
                     if (funcName.includes("HttpSendRequest")) {{
-                        retval.replace(1); // TRUE - fake success
-                        console.log("[Bypass] HTTP request faked as successful");
+                        retval.replace(1); // Return TRUE to bypass license check
+                        console.log("[Bypass] HTTP request bypassed successfully");
                     }} else if (funcName.includes("InternetReadFile")) {{
-                        // Fake license validation response
-                        const fakeResponse = '{{"status":"valid","licensed":true}}';
+                        // Inject spoofed license validation response
+                        const spoofedResponse = '{{"status":"valid","licensed":true}}';
                         try {{
-                            args[1].writeUtf8String(fakeResponse);
-                            args[3].writeU32(fakeResponse.length);
+                            args[1].writeUtf8String(spoofedResponse);
+                            args[3].writeU32(spoofedResponse.length);
                         }} catch(e) {{}}
                         retval.replace(1);
-                        console.log("[Bypass] Provided fake license response");
+                        console.log("[Bypass] Injected spoofed license response");
                     }} else if (funcName === "connect") {{
                         retval.replace(-1); // Block connection
                         console.log("[Bypass] Blocked network connection");
@@ -280,14 +280,14 @@ for net_func in network_functions:
         self.patterns["registry_license_storage"] = ProtectionPattern(
             name="Registry License Storage",
             indicators=["RegOpenKey", "RegQueryValue", "RegSetValue", "RegCreateKey"],
-            bypass_strategy="fake_registry_values",
+            bypass_strategy="spoof_registry_values",
             confidence=0.89,
             complexity=ProtectionComplexity.SIMPLE,
             description="License information stored in Windows registry",
             frida_template="""
 // Registry license bypass
 const regFuncs = ["RegOpenKeyExA", "RegOpenKeyExW", "RegQueryValueExA", "RegQueryValueExW"];
-const fakeValues = {{
+const spoofedValues = {{
     "LicenseKey": "AI-GENERATED-LICENSE-123456",
     "SerialNumber": "INTELLICRACK-AI-BYPASS",
     "ActivationCode": "ACTIVATED-BY-AI"
@@ -311,7 +311,7 @@ regFuncs.forEach(funcName => {{
             onLeave: function(retval) {{
                 if (this.isLicenseQuery) {{
                     retval.replace(0); // ERROR_SUCCESS
-                    console.log(`[Bypass] Registry query for ${{this.valueName}} - faked success`);
+                    console.log(`[Bypass] Registry query for ${{this.valueName}} - bypassed successfully`);
                 }}
             }}
         }});
@@ -521,7 +521,12 @@ for crypto_func in crypto_functions:
 
         for pattern in self.patterns.values():
             match_score = sum(
-                bool(any(pattern_indicator.lower() in indicator.lower() for pattern_indicator in pattern.indicators))
+                any(
+                    (
+                        pattern_indicator.lower() in indicator.lower()
+                        for pattern_indicator in pattern.indicators
+                    )
+                )
                 for indicator in indicators
             )
             if match_score > 0:
@@ -616,9 +621,9 @@ for crypto_func in crypto_functions:
         # Filter by confidence threshold
         detected_patterns = [p for p in matching_patterns if p.confidence > 0.7]
 
-        logger.info(f"Detected {len(detected_patterns)} protection patterns")
+        logger.info("Detected %d protection patterns", len(detected_patterns))
         for pattern in detected_patterns:
-            logger.info(f"  - {pattern.name}: {pattern.confidence:.2f} confidence")
+            logger.info("  - %s: %.2f confidence", pattern.name, pattern.confidence)
 
         return detected_patterns
 
@@ -639,7 +644,7 @@ for crypto_func in crypto_functions:
             current_rate = self.patterns[pattern_name].success_rate
             self.patterns[pattern_name].success_rate = 0.7 * current_rate + 0.3 * new_rate
 
-            logger.info(f"Updated {pattern_name} success rate: {self.patterns[pattern_name].success_rate:.2f}")
+            logger.info("Updated %s success rate: %.2f", pattern_name, self.patterns[pattern_name].success_rate)
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get statistics about pattern usage and success rates."""

@@ -40,7 +40,7 @@ try:
 
     PYQT6_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in large_file_handler: %s", e)
+    logger.exception("Import error in large_file_handler: %s", e)
     PYQT6_AVAILABLE = False
     QObject = object
     QThread = object
@@ -138,7 +138,8 @@ class FileCache:
             region.ref_count = 1
 
             logger.debug(
-                f"Cached region: offset=0x{region.offset:X}, size={region.size}, total_memory={self.total_memory / (1024 * 1024):.1f}MB",
+                "Cached region: offset=0x%X, size=%d, total_memory=%.1fMB",
+                region.offset, region.size, self.total_memory / (1024 * 1024),
             )
             return True
 
@@ -263,11 +264,11 @@ class MemoryMonitor:
                     try:
                         callback(memory_percent)
                     except (OSError, ValueError, RuntimeError) as e:
-                        logger.error("Memory monitor callback error: %s", e)
+                        logger.exception("Memory monitor callback error: %s", e)
                 time.sleep(1.0)  # Check every second
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Memory monitoring error: %s", e)
+                logger.exception("Memory monitoring error: %s", e)
                 time.sleep(5.0)  # Wait longer on error
 
 
@@ -327,10 +328,10 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                             if self.region_loaded:
                                 self.region_loaded.emit(region)
 
-                            logger.debug(f"Background loaded: offset=0x{offset:X}, size={len(data)}")
+                            logger.debug("Background loaded: offset=0x%X, size=%d", offset, len(data))
 
                     except (OSError, ValueError, RuntimeError) as e:
-                        logger.error("Background load error: %s", e)
+                        logger.exception("Background load error: %s", e)
                         if self.error_occurred:
                             self.error_occurred.emit(str(e))
 
@@ -338,7 +339,7 @@ class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
                     time.sleep(0.01)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Background loader thread error: %s", e)
+            logger.exception("Background loader thread error: %s", e)
             if self.error_occurred:
                 self.error_occurred.emit(str(e))
 
@@ -412,7 +413,7 @@ class LargeFileHandler:
                 self.memory_strategy = MemoryStrategy.STREAMING
                 self.loading_strategy = LoadingStrategy.ON_DEMAND
 
-            logger.info(f"File size: {size_mb:.1f}MB, strategy: {self.memory_strategy.value}")
+            logger.info("File size: %.1fMB, strategy: %s", size_mb, self.memory_strategy.value)
 
             # Initialize based on strategy
             if self.memory_strategy == MemoryStrategy.DIRECT_LOAD:
@@ -440,7 +441,7 @@ class LargeFileHandler:
                 self.cleanup_timer = None
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize large file handler: %s", e)
+            logger.exception("Failed to initialize large file handler: %s", e)
             raise
 
     def _init_direct_load(self) -> None:
@@ -453,10 +454,10 @@ class LargeFileHandler:
             region = FileRegion(offset=0, size=len(data), data=data)
             self.cache.add_region(region)
 
-            logger.debug(f"Direct loaded entire file: {len(data)} bytes")
+            logger.debug("Direct loaded entire file: %d bytes", len(data))
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Direct load failed: %s", e)
+            logger.exception("Direct load failed: %s", e)
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
@@ -473,7 +474,7 @@ class LargeFileHandler:
             logger.debug("Memory mapped file: %s bytes", self.file_size)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Memory mapping failed: %s", e)
+            logger.exception("Memory mapping failed: %s", e)
             # Fallback to streaming
             self.memory_strategy = MemoryStrategy.STREAMING
             self._init_streaming()
@@ -533,7 +534,7 @@ class LargeFileHandler:
         try:
             return self.mmap_file[offset : offset + size]
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Memory map read error: %s", e)
+            logger.exception("Memory map read error: %s", e)
             return self._read_streaming(offset, size)
 
     def _read_streaming(self, offset: int, size: int) -> bytes:
@@ -581,7 +582,7 @@ class LargeFileHandler:
                 return data
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Streaming read error: %s", e)
+            logger.exception("Streaming read error: %s", e)
 
         return b""
 
@@ -611,7 +612,8 @@ class LargeFileHandler:
                 self.cache.clear()
 
             logger.warning(
-                f"Memory pressure detected: {memory_usage:.1%}, reduced cache from {old_size}MB to {self.config.cache_size_mb}MB",
+                "Memory pressure detected: %.1f%%, reduced cache from %dMB to %dMB",
+                memory_usage * 100, old_size, self.config.cache_size_mb,
             )
 
     def _periodic_cleanup(self) -> None:
@@ -631,10 +633,10 @@ class LargeFileHandler:
                 # Remove least recently used regions
                 removed_count = self.cache.cleanup_old_regions(max_age=60)  # 1 minute
                 if removed_count > 0:
-                    logger.debug(f"Cleaned up {removed_count} old cache regions")
+                    logger.debug("Cleaned up %d old cache regions", removed_count)
 
         except Exception as e:
-            logger.warning(f"Periodic cleanup error: {e}")
+            logger.warning("Periodic cleanup error: %s", e)
 
     def get_file_size(self) -> int:
         """Get the file size."""
@@ -706,7 +708,7 @@ class LargeFileHandler:
             logger.debug("Large file handler closed")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error closing large file handler: %s", e)
+            logger.exception("Error closing large file handler: %s", e)
 
     def __del__(self) -> None:
         """Cleanup when object is destroyed."""

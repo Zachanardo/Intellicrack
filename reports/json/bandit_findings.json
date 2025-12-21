@@ -1,6 +1,6 @@
 {
   "tool": "bandit",
-  "generated": "2025-12-20T00:03:16.263772",
+  "generated": "2025-12-20T12:29:06.768123",
   "total_findings": 592,
   "total_files": 145,
   "files": [
@@ -1677,121 +1677,121 @@
       "count": 13,
       "findings": [
         {
-          "line": 313,
+          "line": 330,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:313: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:330: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 318,
+          "line": 340,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:318: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:340: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 343,
+          "line": 369,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ai\\model_format_converter.py:343: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ai\\model_format_converter.py:369: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 440,
+          "line": 472,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ai\\model_format_converter.py:440: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ai\\model_format_converter.py:472: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 450,
+          "line": 480,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ai\\model_format_converter.py:450: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ai\\model_format_converter.py:480: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 732,
+          "line": 778,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ai\\model_format_converter.py:732: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ai\\model_format_converter.py:778: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 849,
+          "line": 894,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:849: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:894: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 850,
+          "line": 895,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:850: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:895: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 851,
+          "line": 896,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:851: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:896: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 865,
+          "line": 909,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:865: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:909: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 890,
+          "line": 933,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:890: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:933: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 893,
+          "line": 935,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:893: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:935: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 960,
+          "line": 1007,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\model_format_converter.py:960: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\model_format_converter.py:1007: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         }
       ]
     },
@@ -2256,94 +2256,94 @@
           "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:34: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 1219,
+          "line": 1220,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:1219: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:1220: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 1353,
+          "line": 1354,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:1353: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:1354: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 4319,
+          "line": 4320,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4319: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4320: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 4325,
+          "line": 4326,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B607:start_process_with_partial_path",
           "message": "Starting a process with a partial executable path",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4325: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4326: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
         },
         {
-          "line": 4325,
+          "line": 4326,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4325: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4326: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 4764,
+          "line": 4765,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4764: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4765: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 4766,
+          "line": 4767,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B607:start_process_with_partial_path",
           "message": "Starting a process with a partial executable path",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4766: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4767: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
         },
         {
-          "line": 4766,
+          "line": 4767,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4766: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:4767: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 6276,
+          "line": 6277,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B607:start_process_with_partial_path",
           "message": "Starting a process with a partial executable path",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:6276: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:6277: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
         },
         {
-          "line": 6276,
+          "line": 6277,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:6276: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\custom_modules\\license_server_emulator.py:6277: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         }
       ]
     },
@@ -2361,76 +2361,76 @@
           "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:27: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 634,
-          "column": null,
-          "severity": "Low",
-          "confidence": "High",
-          "code": "B404:blacklist",
-          "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:634: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
-        },
-        {
           "line": 639,
           "column": null,
           "severity": "Low",
           "confidence": "High",
-          "code": "B603:subprocess_without_shell_equals_true",
-          "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:639: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "code": "B404:blacklist",
+          "message": "Consider possible security implications associated with the subprocess module.",
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:639: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 766,
+          "line": 644,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B603:subprocess_without_shell_equals_true",
+          "message": "subprocess call - check for execution of untrusted input.",
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:644: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+        },
+        {
+          "line": 771,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:766: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:771: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 769,
+          "line": 774,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:769: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:774: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 823,
+          "line": 828,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:823: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:828: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 826,
+          "line": 831,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:826: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:831: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 1217,
+          "line": 1225,
           "column": null,
           "severity": "Medium",
           "confidence": "Medium",
           "code": "B108:hardcoded_tmp_directory",
           "message": "Probable insecure usage of temp file/directory.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:1217: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:1225: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
         },
         {
-          "line": 1218,
+          "line": 1226,
           "column": null,
           "severity": "Medium",
           "confidence": "Medium",
           "code": "B108:hardcoded_tmp_directory",
           "message": "Probable insecure usage of temp file/directory.",
-          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:1218: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
+          "raw": "intellicrack/core\\anti_analysis\\sandbox_detector.py:1226: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
         }
       ]
     },
@@ -2787,76 +2787,76 @@
       "count": 8,
       "findings": [
         {
-          "line": 25,
+          "line": 27,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\qemu_manager.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\qemu_manager.py:27: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 791,
+          "line": 806,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B103:set_bad_file_permissions",
           "message": "Chmod setting a permissive mask 0o755 on file (remote_path).",
-          "raw": "intellicrack/ai\\qemu_manager.py:791: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (remote_path)."
+          "raw": "intellicrack/ai\\qemu_manager.py:806: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (remote_path)."
         },
         {
-          "line": 2923,
+          "line": 3037,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\qemu_manager.py:2923: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\qemu_manager.py:3037: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 3224,
+          "line": 3347,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\qemu_manager.py:3224: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\qemu_manager.py:3347: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 3266,
+          "line": 3389,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\qemu_manager.py:3266: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\qemu_manager.py:3389: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 3278,
+          "line": 3401,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\qemu_manager.py:3278: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\qemu_manager.py:3401: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 3469,
+          "line": 3596,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B103:set_bad_file_permissions",
           "message": "Chmod setting a permissive mask 0o755 on file (vm_binary_path).",
-          "raw": "intellicrack/ai\\qemu_manager.py:3469: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (vm_binary_path)."
+          "raw": "intellicrack/ai\\qemu_manager.py:3596: [Medium] B103:set_bad_file_permissions: Chmod setting a permissive mask 0o755 on file (vm_binary_path)."
         },
         {
-          "line": 3553,
+          "line": 3680,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/ai\\qemu_manager.py:3553: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/ai\\qemu_manager.py:3680: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         }
       ]
     },
@@ -3012,49 +3012,40 @@
       "count": 7,
       "findings": [
         {
-          "line": 3114,
+          "line": 3142,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/core\\process_manipulation.py:3114: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/core\\process_manipulation.py:3142: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
-          "line": 3118,
+          "line": 3146,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/core\\process_manipulation.py:3118: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/core\\process_manipulation.py:3146: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
-          "line": 3122,
+          "line": 3150,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/core\\process_manipulation.py:3122: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/core\\process_manipulation.py:3150: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
-          "line": 3199,
+          "line": 3227,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/core\\process_manipulation.py:3199: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
-        },
-        {
-          "line": 3236,
-          "column": null,
-          "severity": "Low",
-          "confidence": "High",
-          "code": "B311:blacklist",
-          "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/core\\process_manipulation.py:3236: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/core\\process_manipulation.py:3227: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
           "line": 3264,
@@ -3066,13 +3057,22 @@
           "raw": "intellicrack/core\\process_manipulation.py:3264: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
-          "line": 3268,
+          "line": 3292,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/core\\process_manipulation.py:3268: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/core\\process_manipulation.py:3292: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+        },
+        {
+          "line": 3296,
+          "column": null,
+          "severity": "Low",
+          "confidence": "High",
+          "code": "B311:blacklist",
+          "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
+          "raw": "intellicrack/core\\process_manipulation.py:3296: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         }
       ]
     },
@@ -3288,49 +3288,49 @@
           "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:36: [Low] B405:blacklist: Using xml.etree.ElementTree to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree with the equivalent defusedxml package, or make sure defusedxml.defuse_stdlib() is called."
         },
         {
-          "line": 1090,
+          "line": 1139,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1090: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1139: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 1116,
+          "line": 1165,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1116: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1165: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 1125,
+          "line": 1174,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B314:blacklist",
           "message": "Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called",
-          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1125: [Medium] B314:blacklist: Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called"
+          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1174: [Medium] B314:blacklist: Using xml.etree.ElementTree.parse to parse untrusted XML data is known to be vulnerable to XML attacks. Replace xml.etree.ElementTree.parse with its defusedxml equivalent function or make sure defusedxml.defuse_stdlib() is called"
         },
         {
-          "line": 1264,
+          "line": 1346,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1264: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1346: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 1269,
+          "line": 1351,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1269: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/core\\analysis\\cross_tool_orchestrator.py:1351: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         }
       ]
     },
@@ -3486,31 +3486,31 @@
           "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:97: [Low] B105:hardcoded_password_string: Possible hardcoded password: 'token_refresh'"
         },
         {
-          "line": 1569,
+          "line": 1571,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:1569: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:1571: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
-          "line": 1618,
+          "line": 1620,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:1618: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:1620: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         },
         {
-          "line": 1754,
+          "line": 1763,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:1754: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/plugins\\custom_modules\\cloud_license_interceptor.py:1763: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         }
       ]
     },
@@ -3783,49 +3783,49 @@
       "count": 5,
       "findings": [
         {
-          "line": 204,
+          "line": 205,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ml\\license_protection_neural_network.py:204: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ml\\license_protection_neural_network.py:205: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 331,
+          "line": 332,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ml\\license_protection_neural_network.py:331: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ml\\license_protection_neural_network.py:332: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 464,
+          "line": 465,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ml\\license_protection_neural_network.py:464: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ml\\license_protection_neural_network.py:465: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 1414,
+          "line": 1415,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ml\\license_protection_neural_network.py:1414: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ml\\license_protection_neural_network.py:1415: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         },
         {
-          "line": 1476,
+          "line": 1477,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/ml\\license_protection_neural_network.py:1476: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/ml\\license_protection_neural_network.py:1477: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         }
       ]
     },
@@ -3834,49 +3834,49 @@
       "count": 5,
       "findings": [
         {
-          "line": 1601,
+          "line": 1619,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B310:blacklist",
           "message": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.",
-          "raw": "intellicrack/plugins\\plugin_system.py:1601: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
+          "raw": "intellicrack/plugins\\plugin_system.py:1619: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
         },
         {
-          "line": 1904,
+          "line": 1929,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B310:blacklist",
           "message": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.",
-          "raw": "intellicrack/plugins\\plugin_system.py:1904: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
+          "raw": "intellicrack/plugins\\plugin_system.py:1929: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
         },
         {
-          "line": 2127,
+          "line": 2153,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/plugins\\plugin_system.py:2127: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/plugins\\plugin_system.py:2153: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 2132,
+          "line": 2158,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\plugin_system.py:2132: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\plugin_system.py:2158: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
-          "line": 2141,
+          "line": 2167,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/plugins\\plugin_system.py:2141: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/plugins\\plugin_system.py:2167: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         }
       ]
     },
@@ -3978,40 +3978,40 @@
       "count": 4,
       "findings": [
         {
-          "line": 249,
+          "line": 253,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\quantization_manager.py:249: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\quantization_manager.py:253: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 293,
+          "line": 300,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\quantization_manager.py:293: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\quantization_manager.py:300: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 368,
+          "line": 378,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\quantization_manager.py:368: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\quantization_manager.py:378: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         },
         {
-          "line": 778,
+          "line": 792,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in from_pretrained()",
-          "raw": "intellicrack/ai\\quantization_manager.py:778: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
+          "raw": "intellicrack/ai\\quantization_manager.py:792: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in from_pretrained()"
         }
       ]
     },
@@ -4104,31 +4104,31 @@
       "count": 4,
       "findings": [
         {
-          "line": 649,
+          "line": 651,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\exploitation\\automated_unpacker.py:649: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/core\\exploitation\\automated_unpacker.py:651: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 660,
+          "line": 662,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B607:start_process_with_partial_path",
           "message": "Starting a process with a partial executable path",
-          "raw": "intellicrack/core\\exploitation\\automated_unpacker.py:660: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
+          "raw": "intellicrack/core\\exploitation\\automated_unpacker.py:662: [Low] B607:start_process_with_partial_path: Starting a process with a partial executable path"
         },
         {
-          "line": 660,
+          "line": 662,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B603:subprocess_without_shell_equals_true",
           "message": "subprocess call - check for execution of untrusted input.",
-          "raw": "intellicrack/core\\exploitation\\automated_unpacker.py:660: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
+          "raw": "intellicrack/core\\exploitation\\automated_unpacker.py:662: [Low] B603:subprocess_without_shell_equals_true: subprocess call - check for execution of untrusted input."
         },
         {
           "line": 1780,
@@ -4239,22 +4239,22 @@
           "raw": "intellicrack/ai\\multi_agent_system.py:26: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 2098,
+          "line": 2100,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\multi_agent_system.py:2098: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\multi_agent_system.py:2100: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 2232,
+          "line": 2242,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/ai\\multi_agent_system.py:2232: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/ai\\multi_agent_system.py:2242: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         }
       ]
     },
@@ -4437,22 +4437,22 @@
           "raw": "intellicrack/core\\processing\\qemu_emulator.py:28: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 2077,
+          "line": 2146,
           "column": null,
           "severity": "Medium",
           "confidence": "Medium",
           "code": "B108:hardcoded_tmp_directory",
           "message": "Probable insecure usage of temp file/directory.",
-          "raw": "intellicrack/core\\processing\\qemu_emulator.py:2077: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
+          "raw": "intellicrack/core\\processing\\qemu_emulator.py:2146: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
         },
         {
-          "line": 2296,
+          "line": 2365,
           "column": null,
           "severity": "Medium",
           "confidence": "Medium",
           "code": "B108:hardcoded_tmp_directory",
           "message": "Probable insecure usage of temp file/directory.",
-          "raw": "intellicrack/core\\processing\\qemu_emulator.py:2296: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
+          "raw": "intellicrack/core\\processing\\qemu_emulator.py:2365: [Medium] B108:hardcoded_tmp_directory: Probable insecure usage of temp file/directory."
         }
       ]
     },
@@ -5124,22 +5124,22 @@
       "count": 2,
       "findings": [
         {
-          "line": 25,
+          "line": 27,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B403:blacklist",
           "message": "Consider possible security implications associated with pickle module.",
-          "raw": "intellicrack/core\\security_enforcement.py:25: [Low] B403:blacklist: Consider possible security implications associated with pickle module."
+          "raw": "intellicrack/core\\security_enforcement.py:27: [Low] B403:blacklist: Consider possible security implications associated with pickle module."
         },
         {
-          "line": 26,
+          "line": 28,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B404:blacklist",
           "message": "Consider possible security implications associated with the subprocess module.",
-          "raw": "intellicrack/core\\security_enforcement.py:26: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
+          "raw": "intellicrack/core\\security_enforcement.py:28: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         }
       ]
     },
@@ -5229,13 +5229,13 @@
           "raw": "intellicrack/utils\\core\\internal_helpers.py:25: [Low] B404:blacklist: Consider possible security implications associated with the subprocess module."
         },
         {
-          "line": 2541,
+          "line": 2560,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B614:pytorch_load",
           "message": "Use of unsafe PyTorch load",
-          "raw": "intellicrack/utils\\core\\internal_helpers.py:2541: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
+          "raw": "intellicrack/utils\\core\\internal_helpers.py:2560: [Medium] B614:pytorch_load: Use of unsafe PyTorch load"
         }
       ]
     },
@@ -5322,13 +5322,13 @@
       "count": 1,
       "findings": [
         {
-          "line": 577,
+          "line": 579,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B615:huggingface_unsafe_download",
           "message": "Unsafe Hugging Face Hub download without revision pinning in snapshot_download()",
-          "raw": "intellicrack/ai\\lora_adapter_manager.py:577: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in snapshot_download()"
+          "raw": "intellicrack/ai\\lora_adapter_manager.py:579: [Medium] B615:huggingface_unsafe_download: Unsafe Hugging Face Hub download without revision pinning in snapshot_download()"
         }
       ]
     },
@@ -5802,13 +5802,13 @@
       "count": 1,
       "findings": [
         {
-          "line": 682,
+          "line": 663,
           "column": null,
           "severity": "Medium",
           "confidence": "High",
           "code": "B310:blacklist",
           "message": "Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected.",
-          "raw": "intellicrack/handlers\\requests_handler.py:682: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
+          "raw": "intellicrack/handlers\\requests_handler.py:663: [Medium] B310:blacklist: Audit url open for permitted schemes. Allowing use of file:/ or custom schemes is often unexpected."
         }
       ]
     },
@@ -5847,13 +5847,13 @@
       "count": 1,
       "findings": [
         {
-          "line": 1574,
+          "line": 1581,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/plugins\\custom_modules\\anti_anti_debug_suite.py:1574: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/plugins\\custom_modules\\anti_anti_debug_suite.py:1581: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         }
       ]
     },
@@ -5862,13 +5862,13 @@
       "count": 1,
       "findings": [
         {
-          "line": 701,
+          "line": 708,
           "column": null,
           "severity": "Low",
           "confidence": "High",
           "code": "B311:blacklist",
           "message": "Standard pseudo-random generators are not suitable for security/cryptographic purposes.",
-          "raw": "intellicrack/plugins\\custom_modules\\hardware_dongle_emulator.py:701: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
+          "raw": "intellicrack/plugins\\custom_modules\\hardware_dongle_emulator.py:708: [Low] B311:blacklist: Standard pseudo-random generators are not suitable for security/cryptographic purposes."
         }
       ]
     },

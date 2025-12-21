@@ -81,7 +81,7 @@ class ScriptExecutionManager(QObject):
             self.QEMUTestDialog = QEMUTestDialog
             self.QEMUTestResultsDialog = QEMUTestResultsDialog
         except ImportError as e:
-            logger.warning(f"Could not initialize QEMU components: {e}")
+            logger.warning("Could not initialize QEMU components: %s", e)
             self.qemu_manager = None
 
     def execute_script(
@@ -254,7 +254,7 @@ class ScriptExecutionManager(QObject):
             return results
 
         except Exception as e:
-            logger.exception(f"Error during QEMU test: {e}")
+            logger.exception("Error during QEMU test: %s", e)
             error_results = {"success": False, "error": str(e)}
             self.qemu_test_completed.emit(script_type, False, error_results)
             return error_results
@@ -280,7 +280,7 @@ class ScriptExecutionManager(QObject):
             return snapshot_id if success else None
 
         except Exception as e:
-            logger.exception(f"Error creating QEMU snapshot: {e}")
+            logger.exception("Error creating QEMU snapshot: %s", e)
             return None
 
     def _show_qemu_results_and_confirm(self, qemu_results: dict[str, Any]) -> bool:
@@ -317,7 +317,7 @@ class ScriptExecutionManager(QObject):
             logger.info("User rejected QEMU results dialog")
             return False
         # Handle other dialog results
-        logger.warning(f"Unexpected dialog result: {result}")
+        logger.warning("Unexpected dialog result: %s", result)
         return user_action == "deploy"
 
     def _execute_on_host(self, script_type: str, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
@@ -336,7 +336,7 @@ class ScriptExecutionManager(QObject):
             return results
 
         except Exception as e:
-            logger.exception(f"Error during host execution: {e}")
+            logger.exception("Error during host execution: %s", e)
             error_results = {"success": False, "error": str(e)}
             self.execution_completed.emit(script_type, False, error_results)
             return error_results
@@ -358,7 +358,7 @@ class ScriptExecutionManager(QObject):
 
             # Execute
             if options.get("use_terminal") and HAS_TERMINAL_MANAGER:
-                logger.info(f"Executing Frida script in terminal: {target_binary}")
+                logger.info("Executing Frida script in terminal: %s", target_binary)
                 terminal_mgr = get_terminal_manager()
 
                 session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True)
@@ -442,7 +442,7 @@ class ScriptExecutionManager(QObject):
 
             # Execute with timeout support
             if options.get("use_terminal") and HAS_TERMINAL_MANAGER:
-                logger.info(f"Executing Ghidra script in terminal: {target_binary}")
+                logger.info("Executing Ghidra script in terminal: %s", target_binary)
                 terminal_mgr = get_terminal_manager()
 
                 session_id = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=True)

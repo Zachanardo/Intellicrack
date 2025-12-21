@@ -55,7 +55,7 @@ try:
     security_enforcement.initialize_security()
     security_status = security_enforcement.get_security_status()
     if security_status.get("initialized"):
-        logger.info(f"Security enforcement initialized: {security_status.get('patches_applied', {})}")
+        logger.info("Security enforcement initialized: %s", security_status.get("patches_applied", {}))
 except ImportError:
     logger.warning("Security enforcement module not available - running without enhanced protections")
 

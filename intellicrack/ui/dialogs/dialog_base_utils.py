@@ -50,7 +50,8 @@ def create_standard_control_layout(
 
         # Store button reference by extracting key name
         key = (
-            button_text.lower()
+            button_text
+            .lower()
             .replace(" ", "_")
             .replace("▶️", "run")
             .replace("⏹️", "stop")

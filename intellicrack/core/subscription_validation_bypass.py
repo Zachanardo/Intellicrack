@@ -12,11 +12,11 @@ from enum import StrEnum
 from typing import Any
 
 from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
 
 logger = logging.getLogger(__name__)
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ECPrivateKey, RSAPrivateKey, ec, rsa
 
 
 class SubscriptionTier(StrEnum):
@@ -149,7 +149,7 @@ class JWTManipulator:
 
         return header, payload, signature
 
-    def sign_jwt_rs256(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
+    def sign_jwt_rs256(self, payload: dict[str, Any], private_key: rsa.RSAPrivateKey | None = None) -> str:
         """Sign JWT payload using RS256 algorithm (RSASSA-PKCS1-v1_5 with SHA-256) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -163,7 +163,7 @@ class JWTManipulator:
 
         return jwt.encode(payload, private_pem, algorithm="RS256")
 
-    def sign_jwt_rs512(self, payload: dict[str, Any], private_key: RSAPrivateKey | None = None) -> str:
+    def sign_jwt_rs512(self, payload: dict[str, Any], private_key: rsa.RSAPrivateKey | None = None) -> str:
         """Sign JWT payload using RS512 algorithm (RSASSA-PKCS1-v1_5 with SHA-512) with provided RSA private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -177,7 +177,7 @@ class JWTManipulator:
 
         return jwt.encode(payload, private_pem, algorithm="RS512")
 
-    def sign_jwt_es256(self, payload: dict[str, Any], private_key: ECPrivateKey | None = None) -> str:
+    def sign_jwt_es256(self, payload: dict[str, Any], private_key: ec.EllipticCurvePrivateKey | None = None) -> str:
         """Sign JWT payload using ES256 algorithm (ECDSA with P-256 curve and SHA-256) with provided EC private key or instance default, returning signed JWT token string."""
         import jwt
 
@@ -237,22 +237,28 @@ class JWTManipulator:
         token: str,
         modifications: dict[str, Any],
         algorithm: str = "RS256",
-        key: RSAPrivateKey | ECPrivateKey | str | None = None,
+        key: rsa.RSAPrivateKey | ec.EllipticCurvePrivateKey | str | None = None,
     ) -> str:
         """Modify JWT claims, then re-sign token with specified algorithm (RS256/RS512/ES256/HS256/HS512) using provided or default cryptographic key, returning forged JWT string."""
         modified_payload = self.modify_jwt_claims(token, modifications)
 
         if algorithm == "RS256":
-            return self.sign_jwt_rs256(modified_payload, key)
+            rsa_key = key if isinstance(key, rsa.RSAPrivateKey) else None
+            return self.sign_jwt_rs256(modified_payload, rsa_key)
         if algorithm == "RS512":
-            return self.sign_jwt_rs512(modified_payload, key)
+            rsa_key = key if isinstance(key, rsa.RSAPrivateKey) else None
+            return self.sign_jwt_rs512(modified_payload, rsa_key)
         if algorithm == "ES256":
-            return self.sign_jwt_es256(modified_payload, key)
+            ec_key = key if isinstance(key, ec.EllipticCurvePrivateKey) else None
+            return self.sign_jwt_es256(modified_payload, ec_key)
         if algorithm == "HS256":
-            return self.sign_jwt_hs256(modified_payload, key)
+            str_key = key if isinstance(key, str) else ""
+            return self.sign_jwt_hs256(modified_payload, str_key)
         if algorithm == "HS512":
-            return self.sign_jwt_hs512(modified_payload, key)
-        return self.sign_jwt_rs256(modified_payload, key)
+            str_key = key if isinstance(key, str) else ""
+            return self.sign_jwt_hs512(modified_payload, str_key)
+        rsa_key = key if isinstance(key, rsa.RSAPrivateKey) else None
+        return self.sign_jwt_rs256(modified_payload, rsa_key)
 
 
 class OAuthTokenGenerator:
@@ -265,8 +271,8 @@ class OAuthTokenGenerator:
     def generate_access_token(
         self,
         provider: OAuthProvider,
-        user_id: str = None,
-        scopes: list[str] = None,
+        user_id: str | None = None,
+        scopes: list[str] | None = None,
     ) -> str:
         """Build provider-specific JWT payload with authentic claim structure for Azure AD, Google, AWS Cognito, Okta, or Auth0, sign with RS256, and return forged access token."""
         current_time = int(time.time())
@@ -353,7 +359,7 @@ class OAuthTokenGenerator:
         self,
         provider: OAuthProvider,
         user_id: str,
-        email: str = None,
+        email: str | None = None,
     ) -> str:
         """Build OpenID Connect ID token with provider-specific claims for Azure AD, Google, AWS Cognito, Okta, or Auth0, sign with RS256, and return forged ID token JWT."""
         current_time = int(time.time())
@@ -432,7 +438,7 @@ class OAuthTokenGenerator:
     def generate_full_oauth_flow(
         self,
         provider: OAuthProvider,
-        user_id: str = None,
+        user_id: str | None = None,
     ) -> dict[str, Any]:
         """Generate complete OAuth 2.0 authorization flow response containing access_token, refresh_token, id_token, token_type Bearer, and expires_in 3600 seconds."""
         user_id = user_id or str(uuid.uuid4())
@@ -685,12 +691,20 @@ class SubscriptionValidationBypass:
             "Salesforce": "salesforce",
         }
 
+        self._local_server_thread: Any = None
+        self._server_stop_event: Any = None
+        self._local_server_socket: Any = None
+        self._http_server: Any = None
+        self._tcp_server: Any = None
+        self._flexlm_emulator: Any = None
+        self._added_hosts_entries: list[str] = []
+
     def manipulate_jwt_subscription(
         self,
         token: str,
         tier: SubscriptionTier = SubscriptionTier.ENTERPRISE,
-        features: list[str] = None,
-        quota_overrides: dict[str, int] = None,
+        features: list[str] | None = None,
+        quota_overrides: dict[str, int] | None = None,
     ) -> str:
         """Inject subscription claim with upgraded tier, active status, one-year expiration, custom features list, and quota overrides into JWT, then re-sign token."""
         features = features or []
@@ -965,8 +979,7 @@ class SubscriptionValidationBypass:
         ]
 
         for env_var in license_env_vars:
-            value = os.environ.get(env_var)
-            if value:
+            if value := os.environ.get(env_var):
                 result["found"] = True
                 result["environment_vars"][env_var] = value
                 if "@" in value:
@@ -1011,8 +1024,6 @@ class SubscriptionValidationBypass:
                 Path(os.environ.get("LOCALAPPDATA", "")),
             ])
             product_dir = Path(os.environ.get("PROGRAMDATA", "C:\\ProgramData")) / product_name
-            if product_dir.exists():
-                search_dirs.insert(0, product_dir)
         else:
             search_dirs.extend([
                 Path("/opt"),
@@ -1021,9 +1032,8 @@ class SubscriptionValidationBypass:
                 Path("/var/lib"),
             ])
             product_dir = Path("/opt") / product_lower
-            if product_dir.exists():
-                search_dirs.insert(0, product_dir)
-
+        if product_dir.exists():
+            search_dirs.insert(0, product_dir)
         for base_dir in search_dirs:
             if not base_dir.exists():
                 continue
@@ -1035,7 +1045,7 @@ class SubscriptionValidationBypass:
                             result["found"] = True
                             result["config_files"].append(str(config_file))
                             result["product_specific"] = True
-                except (OSError, PermissionError):
+                except OSError:
                     pass
 
             for server_name, patterns in config_patterns.values():
@@ -1159,15 +1169,10 @@ class SubscriptionValidationBypass:
                 Path.home() / ".local/share",
             ])
 
-        matched_vendor: str | None = None
-        for vendor in token_patterns:
-            if vendor in product_lower:
-                matched_vendor = vendor
-                break
-
-        patterns_to_check = token_patterns.get(matched_vendor, []) if matched_vendor else []
-        if not patterns_to_check:
-            patterns_to_check = [f"*{product_name}*/*", f"*{product_lower}*/*"]
+        matched_vendor: str | None = next(
+            (vendor for vendor in token_patterns if vendor in product_lower), None
+        )
+        patterns_to_check = (token_patterns.get(matched_vendor, []) if matched_vendor else []) or [f"*{product_name}*/*", f"*{product_lower}*/*"]
 
         token_file_names = ["token", "auth", "session", "credentials", "oauth", "jwt"]
 
@@ -1294,8 +1299,7 @@ class SubscriptionValidationBypass:
         ]
 
         for env_var in floating_env_vars:
-            value = os.environ.get(env_var)
-            if value:
+            if value := os.environ.get(env_var):
                 result["found"] = True
                 if "server_info" not in result or not result["server_info"]:
                     result["server_info"] = {}
@@ -1342,7 +1346,7 @@ class SubscriptionValidationBypass:
     def bypass_subscription(
         self,
         product_name: str,
-        subscription_type: SubscriptionType = None,
+        subscription_type: SubscriptionType | None = None,
     ) -> bool:
         """Auto-detect or use provided subscription type, then return True for all subscription models indicating bypass capability available."""
         if subscription_type is None:
@@ -1441,11 +1445,7 @@ class SubscriptionValidationBypass:
 
             filtered_lines = []
             for line in lines:
-                should_keep = True
-                for entry in self._added_hosts_entries:
-                    if entry in line:
-                        should_keep = False
-                        break
+                should_keep = all(entry not in line for entry in self._added_hosts_entries)
                 if should_keep:
                     filtered_lines.append(line)
 
@@ -1458,5 +1458,5 @@ class SubscriptionValidationBypass:
 
             self._added_hosts_entries = []
 
-        except (OSError, PermissionError, FileNotFoundError):
+        except OSError:
             pass

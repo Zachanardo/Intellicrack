@@ -1,6 +1,6 @@
 {
   "tool": "vulture",
-  "generated": "2025-12-20T00:01:51.181237",
+  "generated": "2025-12-20T02:49:56.039069",
   "total_findings": 3903,
   "total_files": 468,
   "files": [
@@ -3057,40 +3057,40 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1027: unused attribute 'adobe_products' (60% confidence, 1 line)"
         },
         {
-          "line": 3635,
+          "line": 3636,
           "column": null,
           "message": "unused attribute 'attached_processes' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3635: unused attribute 'attached_processes' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3636: unused attribute 'attached_processes' (60% confidence, 1 line)"
         },
         {
-          "line": 5380,
+          "line": 5381,
           "column": null,
           "message": "unused attribute 'transparent_mode' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5380: unused attribute 'transparent_mode' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5381: unused attribute 'transparent_mode' (60% confidence, 1 line)"
         },
         {
-          "line": 5384,
+          "line": 5385,
           "column": null,
           "message": "unused attribute 'session_states' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5384: unused attribute 'session_states' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5385: unused attribute 'session_states' (60% confidence, 1 line)"
         },
         {
-          "line": 6653,
+          "line": 6654,
           "column": null,
           "message": "unused attribute 'security' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6653: unused attribute 'security' (60% confidence, 1 line)"
-        },
-        {
-          "line": 7093,
-          "column": null,
-          "message": "unused attribute 'check_hostname' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7093: unused attribute 'check_hostname' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6654: unused attribute 'security' (60% confidence, 1 line)"
         },
         {
           "line": 7094,
           "column": null,
+          "message": "unused attribute 'check_hostname' (60% confidence, 1 line)",
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7094: unused attribute 'check_hostname' (60% confidence, 1 line)"
+        },
+        {
+          "line": 7095,
+          "column": null,
           "message": "unused attribute 'verify_mode' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7094: unused attribute 'verify_mode' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7095: unused attribute 'verify_mode' (60% confidence, 1 line)"
         },
         {
           "line": 534,
@@ -3099,64 +3099,64 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:534: unused method 'add_feature' (60% confidence, 3 lines)"
         },
         {
-          "line": 6686,
+          "line": 6687,
           "column": null,
           "message": "unused function 'activate_license' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6686: unused function 'activate_license' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6687: unused function 'activate_license' (60% confidence, 3 lines)"
         },
         {
-          "line": 6690,
+          "line": 6691,
           "column": null,
           "message": "unused function 'get_license_status' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6690: unused function 'get_license_status' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6691: unused function 'get_license_status' (60% confidence, 3 lines)"
         },
         {
-          "line": 6694,
+          "line": 6695,
           "column": null,
           "message": "unused function 'flexlm_checkout' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6694: unused function 'flexlm_checkout' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6695: unused function 'flexlm_checkout' (60% confidence, 3 lines)"
         },
         {
-          "line": 6702,
+          "line": 6703,
           "column": null,
           "message": "unused function 'kms_activate' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6702: unused function 'kms_activate' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6703: unused function 'kms_activate' (60% confidence, 3 lines)"
         },
         {
-          "line": 6706,
+          "line": 6707,
           "column": null,
           "message": "unused function 'adobe_validate' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6706: unused function 'adobe_validate' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6707: unused function 'adobe_validate' (60% confidence, 3 lines)"
         },
         {
-          "line": 7303,
+          "line": 7305,
           "column": null,
           "message": "unused method 'get_port' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7303: unused method 'get_port' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7305: unused method 'get_port' (60% confidence, 3 lines)"
         },
         {
-          "line": 7340,
+          "line": 7342,
           "column": null,
           "message": "unused method 'is_connected' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7340: unused method 'is_connected' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7342: unused method 'is_connected' (60% confidence, 3 lines)"
         },
         {
-          "line": 6746,
+          "line": 6747,
           "column": null,
           "message": "unused function 'get_proxy_stats' (60% confidence, 4 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6746: unused function 'get_proxy_stats' (60% confidence, 4 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6747: unused function 'get_proxy_stats' (60% confidence, 4 lines)"
         },
         {
-          "line": 3925,
+          "line": 3926,
           "column": null,
           "message": "unused method 'hook_api_calls' (60% confidence, 5 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3925: unused method 'hook_api_calls' (60% confidence, 5 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3926: unused method 'hook_api_calls' (60% confidence, 5 lines)"
         },
         {
-          "line": 6325,
+          "line": 6326,
           "column": null,
           "message": "unused method '_generate_kms_product_key_from_binary' (60% confidence, 6 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6325: unused method '_generate_kms_product_key_from_binary' (60% confidence, 6 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6326: unused method '_generate_kms_product_key_from_binary' (60% confidence, 6 lines)"
         },
         {
           "line": 674,
@@ -3171,16 +3171,16 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1148: unused method 'get_db' (60% confidence, 7 lines)"
         },
         {
-          "line": 7258,
+          "line": 7260,
           "column": null,
           "message": "unused method 'start_async' (60% confidence, 7 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7258: unused method 'start_async' (60% confidence, 7 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7260: unused method 'start_async' (60% confidence, 7 lines)"
         },
         {
-          "line": 7229,
+          "line": 7231,
           "column": null,
           "message": "unused method 'create_license_client' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7229: unused method 'create_license_client' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7231: unused method 'create_license_client' (60% confidence, 8 lines)"
         },
         {
           "line": 200,
@@ -3195,16 +3195,16 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:837: unused method 'hasp_logout' (60% confidence, 9 lines)"
         },
         {
-          "line": 3638,
+          "line": 3639,
           "column": null,
           "message": "unused method 'attach_and_extract' (60% confidence, 9 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3638: unused method 'attach_and_extract' (60% confidence, 9 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3639: unused method 'attach_and_extract' (60% confidence, 9 lines)"
         },
         {
-          "line": 4957,
+          "line": 4958,
           "column": null,
           "message": "unused method 'detach_all' (60% confidence, 9 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4957: unused method 'detach_all' (60% confidence, 9 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4958: unused method 'detach_all' (60% confidence, 9 lines)"
         },
         {
           "line": 682,
@@ -3213,10 +3213,10 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:682: unused method '_create_status_response' (60% confidence, 11 lines)"
         },
         {
-          "line": 7216,
+          "line": 7218,
           "column": null,
           "message": "unused method 'create_license_server' (60% confidence, 12 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7216: unused method 'create_license_server' (60% confidence, 12 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7218: unused method 'create_license_server' (60% confidence, 12 lines)"
         },
         {
           "line": 264,
@@ -3225,10 +3225,10 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:264: unused class 'LicenseActivation' (60% confidence, 13 lines)"
         },
         {
-          "line": 6311,
+          "line": 6312,
           "column": null,
           "message": "unused method '_generate_kms_confirmation_id' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6311: unused method '_generate_kms_confirmation_id' (60% confidence, 13 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6312: unused method '_generate_kms_confirmation_id' (60% confidence, 13 lines)"
         },
         {
           "line": 365,
@@ -3249,16 +3249,16 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:395: unused method 'decrypt_license_data' (60% confidence, 14 lines)"
         },
         {
-          "line": 6364,
+          "line": 6365,
           "column": null,
           "message": "unused method 'set_target_binary' (60% confidence, 17 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6364: unused method 'set_target_binary' (60% confidence, 17 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6365: unused method 'set_target_binary' (60% confidence, 17 lines)"
         },
         {
-          "line": 3824,
+          "line": 3825,
           "column": null,
           "message": "unused method 'scan_memory_for_keys' (60% confidence, 18 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3824: unused method 'scan_memory_for_keys' (60% confidence, 18 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3825: unused method 'scan_memory_for_keys' (60% confidence, 18 lines)"
         },
         {
           "line": 962,
@@ -3267,22 +3267,22 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:962: unused method 'hasp_get_info' (60% confidence, 21 lines)"
         },
         {
-          "line": 4934,
+          "line": 4935,
           "column": null,
           "message": "unused method 'monitor_license_validation' (60% confidence, 22 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4934: unused method 'monitor_license_validation' (60% confidence, 22 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4935: unused method 'monitor_license_validation' (60% confidence, 22 lines)"
         },
         {
-          "line": 6723,
+          "line": 6724,
           "column": null,
           "message": "unused function 'handle_proxy_intercept' (60% confidence, 22 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6723: unused function 'handle_proxy_intercept' (60% confidence, 22 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6724: unused function 'handle_proxy_intercept' (60% confidence, 22 lines)"
         },
         {
-          "line": 4822,
+          "line": 4823,
           "column": null,
           "message": "unused method 'inject_extraction_script' (60% confidence, 29 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4822: unused method 'inject_extraction_script' (60% confidence, 29 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4823: unused method 'inject_extraction_script' (60% confidence, 29 lines)"
         },
         {
           "line": 893,
@@ -3297,46 +3297,46 @@
           "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:925: unused method 'hasp_write' (60% confidence, 36 lines)"
         },
         {
-          "line": 4856,
+          "line": 4857,
           "column": null,
           "message": "unused method 'extract_flexlm_runtime' (60% confidence, 38 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4856: unused method 'extract_flexlm_runtime' (60% confidence, 38 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4857: unused method 'extract_flexlm_runtime' (60% confidence, 38 lines)"
         },
         {
-          "line": 4895,
+          "line": 4896,
           "column": null,
           "message": "unused method 'extract_hasp_runtime' (60% confidence, 38 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4895: unused method 'extract_hasp_runtime' (60% confidence, 38 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4896: unused method 'extract_hasp_runtime' (60% confidence, 38 lines)"
         },
         {
-          "line": 6382,
+          "line": 6383,
           "column": null,
           "message": "unused method 'analyze_binary_for_protection' (60% confidence, 40 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6382: unused method 'analyze_binary_for_protection' (60% confidence, 40 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6383: unused method 'analyze_binary_for_protection' (60% confidence, 40 lines)"
         },
         {
-          "line": 3097,
+          "line": 3098,
           "column": null,
           "message": "unused method '_extract_key_from_process_memory' (60% confidence, 45 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3097: unused method '_extract_key_from_process_memory' (60% confidence, 45 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3098: unused method '_extract_key_from_process_memory' (60% confidence, 45 lines)"
         },
         {
-          "line": 4574,
+          "line": 4575,
           "column": null,
           "message": "unused method '_hook_inline_apis' (60% confidence, 117 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4574: unused method '_hook_inline_apis' (60% confidence, 117 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4575: unused method '_hook_inline_apis' (60% confidence, 117 lines)"
         },
         {
-          "line": 4808,
+          "line": 4809,
           "column": null,
           "message": "unused class 'FridaKeyExtractor' (60% confidence, 158 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4808: unused class 'FridaKeyExtractor' (60% confidence, 158 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4809: unused class 'FridaKeyExtractor' (60% confidence, 158 lines)"
         },
         {
-          "line": 3629,
+          "line": 3630,
           "column": null,
           "message": "unused class 'RuntimeKeyExtractor' (60% confidence, 1177 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3629: unused class 'RuntimeKeyExtractor' (60% confidence, 1177 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3630: unused class 'RuntimeKeyExtractor' (60% confidence, 1177 lines)"
         }
       ]
     },
@@ -8589,118 +8589,118 @@
           "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:120: unused variable 'MICROSOFT_365' (60% confidence, 1 line)"
         },
         {
-          "line": 938,
+          "line": 940,
           "column": null,
           "message": "unused attribute 'request_count' (60% confidence, 1 line)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:938: unused attribute 'request_count' (60% confidence, 1 line)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:940: unused attribute 'request_count' (60% confidence, 1 line)"
         },
         {
-          "line": 948,
+          "line": 950,
           "column": null,
           "message": "unused attribute 'request_count' (60% confidence, 1 line)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:948: unused attribute 'request_count' (60% confidence, 1 line)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:950: unused attribute 'request_count' (60% confidence, 1 line)"
         },
         {
-          "line": 1095,
+          "line": 1097,
           "column": null,
           "message": "unused attribute 'mitm_proxy' (60% confidence, 1 line)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1095: unused attribute 'mitm_proxy' (60% confidence, 1 line)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1097: unused attribute 'mitm_proxy' (60% confidence, 1 line)"
         },
         {
-          "line": 1489,
+          "line": 1491,
           "column": null,
           "message": "unused method 'stop_cloud_interception' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1489: unused method 'stop_cloud_interception' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1491: unused method 'stop_cloud_interception' (60% confidence, 8 lines)"
         },
         {
-          "line": 1508,
+          "line": 1510,
           "column": null,
           "message": "unused function 'create_cloud_license_bypass' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1508: unused function 'create_cloud_license_bypass' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1510: unused function 'create_cloud_license_bypass' (60% confidence, 8 lines)"
         },
         {
-          "line": 402,
+          "line": 404,
           "column": null,
           "message": "unused method 'store_session_data' (60% confidence, 9 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:402: unused method 'store_session_data' (60% confidence, 9 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:404: unused method 'store_session_data' (60% confidence, 9 lines)"
         },
         {
-          "line": 412,
+          "line": 414,
           "column": null,
           "message": "unused method 'get_session_data' (60% confidence, 11 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:412: unused method 'get_session_data' (60% confidence, 11 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:414: unused method 'get_session_data' (60% confidence, 11 lines)"
         },
         {
-          "line": 1366,
+          "line": 1368,
           "column": null,
           "message": "unused method 'bypass_flexnet_cloud' (60% confidence, 11 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1366: unused method 'bypass_flexnet_cloud' (60% confidence, 11 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1368: unused method 'bypass_flexnet_cloud' (60% confidence, 11 lines)"
         },
         {
-          "line": 1378,
+          "line": 1380,
           "column": null,
           "message": "unused method 'bypass_sentinel_cloud' (60% confidence, 11 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1378: unused method 'bypass_sentinel_cloud' (60% confidence, 11 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1380: unused method 'bypass_sentinel_cloud' (60% confidence, 11 lines)"
         },
         {
-          "line": 373,
+          "line": 375,
           "column": null,
           "message": "unused method 'store_token' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:373: unused method 'store_token' (60% confidence, 13 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:375: unused method 'store_token' (60% confidence, 13 lines)"
         },
         {
-          "line": 1324,
+          "line": 1326,
           "column": null,
           "message": "unused method 'bypass_azure_ad' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1324: unused method 'bypass_azure_ad' (60% confidence, 13 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1326: unused method 'bypass_azure_ad' (60% confidence, 13 lines)"
         },
         {
-          "line": 1338,
+          "line": 1340,
           "column": null,
           "message": "unused method 'bypass_google_oauth' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1338: unused method 'bypass_google_oauth' (60% confidence, 13 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1340: unused method 'bypass_google_oauth' (60% confidence, 13 lines)"
         },
         {
-          "line": 1352,
+          "line": 1354,
           "column": null,
           "message": "unused method 'bypass_aws_cognito' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1352: unused method 'bypass_aws_cognito' (60% confidence, 13 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1354: unused method 'bypass_aws_cognito' (60% confidence, 13 lines)"
         },
         {
-          "line": 387,
+          "line": 389,
           "column": null,
           "message": "unused method 'get_token' (60% confidence, 14 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:387: unused method 'get_token' (60% confidence, 14 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:389: unused method 'get_token' (60% confidence, 14 lines)"
         },
         {
-          "line": 1268,
+          "line": 1270,
           "column": null,
           "message": "unused method 'synthesize_license_response' (60% confidence, 21 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1268: unused method 'synthesize_license_response' (60% confidence, 21 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1270: unused method 'synthesize_license_response' (60% confidence, 21 lines)"
         },
         {
-          "line": 1461,
+          "line": 1463,
           "column": null,
           "message": "unused method 'start_cloud_interception' (60% confidence, 27 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1461: unused method 'start_cloud_interception' (60% confidence, 27 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1463: unused method 'start_cloud_interception' (60% confidence, 27 lines)"
         },
         {
-          "line": 1430,
+          "line": 1432,
           "column": null,
           "message": "unused method 'bypass_microsoft_365' (60% confidence, 30 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1430: unused method 'bypass_microsoft_365' (60% confidence, 30 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1432: unused method 'bypass_microsoft_365' (60% confidence, 30 lines)"
         },
         {
-          "line": 1390,
+          "line": 1392,
           "column": null,
           "message": "unused method 'bypass_adobe_creative_cloud' (60% confidence, 39 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1390: unused method 'bypass_adobe_creative_cloud' (60% confidence, 39 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:1392: unused method 'bypass_adobe_creative_cloud' (60% confidence, 39 lines)"
         },
         {
-          "line": 244,
+          "line": 245,
           "column": null,
-          "message": "unused method 'generate_certificate' (60% confidence, 68 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:244: unused method 'generate_certificate' (60% confidence, 68 lines)"
+          "message": "unused method 'generate_certificate' (60% confidence, 69 lines)",
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license.py:245: unused method 'generate_certificate' (60% confidence, 69 lines)"
         }
       ]
     },
@@ -9333,16 +9333,16 @@
           "raw": "intellicrack\\ai\\lora_adapter_manager.py:30: unused import 'PeftModelType' (90% confidence, 4 lines)"
         },
         {
-          "line": 737,
+          "line": 739,
           "column": null,
           "message": "unused function 'get_adapter_manager' (60% confidence, 6 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:737: unused function 'get_adapter_manager' (60% confidence, 6 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:739: unused function 'get_adapter_manager' (60% confidence, 6 lines)"
         },
         {
-          "line": 395,
+          "line": 397,
           "column": null,
           "message": "unused method 'list_adapters' (60% confidence, 11 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:395: unused method 'list_adapters' (60% confidence, 11 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:397: unused method 'list_adapters' (60% confidence, 11 lines)"
         },
         {
           "line": 77,
@@ -9351,46 +9351,46 @@
           "raw": "intellicrack\\ai\\lora_adapter_manager.py:77: unused class 'AdapterConfig' (60% confidence, 17 lines)"
         },
         {
-          "line": 359,
+          "line": 361,
           "column": null,
           "message": "unused method 'prepare_model_for_qlora' (60% confidence, 35 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:359: unused method 'prepare_model_for_qlora' (60% confidence, 35 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:361: unused method 'prepare_model_for_qlora' (60% confidence, 35 lines)"
         },
         {
-          "line": 554,
+          "line": 556,
           "column": null,
           "message": "unused method 'download_adapter' (60% confidence, 38 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:554: unused method 'download_adapter' (60% confidence, 38 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:556: unused method 'download_adapter' (60% confidence, 38 lines)"
         },
         {
-          "line": 430,
+          "line": 432,
           "column": null,
           "message": "unused method 'merge_adapters' (60% confidence, 39 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:430: unused method 'merge_adapters' (60% confidence, 39 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:432: unused method 'merge_adapters' (60% confidence, 39 lines)"
         },
         {
           "line": 218,
           "column": null,
-          "message": "unused method 'apply_lora_to_model' (60% confidence, 40 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:218: unused method 'apply_lora_to_model' (60% confidence, 40 lines)"
+          "message": "unused method 'apply_lora_to_model' (60% confidence, 42 lines)",
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:218: unused method 'apply_lora_to_model' (60% confidence, 42 lines)"
         },
         {
-          "line": 316,
+          "line": 318,
           "column": null,
           "message": "unused method 'save_adapter' (60% confidence, 42 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:316: unused method 'save_adapter' (60% confidence, 42 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:318: unused method 'save_adapter' (60% confidence, 42 lines)"
         },
         {
-          "line": 593,
+          "line": 595,
           "column": null,
           "message": "unused method 'get_adapter_info' (60% confidence, 52 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:593: unused method 'get_adapter_info' (60% confidence, 52 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:595: unused method 'get_adapter_info' (60% confidence, 52 lines)"
         },
         {
-          "line": 259,
+          "line": 261,
           "column": null,
           "message": "unused method 'load_adapter' (60% confidence, 56 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:259: unused method 'load_adapter' (60% confidence, 56 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:261: unused method 'load_adapter' (60% confidence, 56 lines)"
         },
         {
           "line": 120,
@@ -9399,16 +9399,16 @@
           "raw": "intellicrack\\ai\\lora_adapter_manager.py:120: unused method 'create_lora_config' (60% confidence, 60 lines)"
         },
         {
-          "line": 646,
+          "line": 648,
           "column": null,
           "message": "unused method 'validate_adapter_config' (60% confidence, 67 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:646: unused method 'validate_adapter_config' (60% confidence, 67 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:648: unused method 'validate_adapter_config' (60% confidence, 67 lines)"
         },
         {
-          "line": 470,
+          "line": 472,
           "column": null,
           "message": "unused method 'compare_adapter_configs' (60% confidence, 83 lines)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:470: unused method 'compare_adapter_configs' (60% confidence, 83 lines)"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:472: unused method 'compare_adapter_configs' (60% confidence, 83 lines)"
         }
       ]
     },
@@ -9609,16 +9609,16 @@
           "raw": "intellicrack\\core\\logging\\audit_logger.py:286: unused attribute '_current_file' (60% confidence, 1 line)"
         },
         {
-          "line": 1409,
+          "line": 1415,
           "column": null,
           "message": "unused method 'clear_context' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\core\\logging\\audit_logger.py:1409: unused method 'clear_context' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\core\\logging\\audit_logger.py:1415: unused method 'clear_context' (60% confidence, 8 lines)"
         },
         {
-          "line": 1520,
+          "line": 1526,
           "column": null,
           "message": "unused function 'get_telemetry_collector' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\core\\logging\\audit_logger.py:1520: unused function 'get_telemetry_collector' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\core\\logging\\audit_logger.py:1526: unused function 'get_telemetry_collector' (60% confidence, 8 lines)"
         },
         {
           "line": 1217,
@@ -9633,16 +9633,16 @@
           "raw": "intellicrack\\core\\logging\\audit_logger.py:1152: unused method 'reset_metrics' (60% confidence, 12 lines)"
         },
         {
-          "line": 1341,
+          "line": 1347,
           "column": null,
           "message": "unused method 'get_telemetry_history' (60% confidence, 14 lines)",
-          "raw": "intellicrack\\core\\logging\\audit_logger.py:1341: unused method 'get_telemetry_history' (60% confidence, 14 lines)"
+          "raw": "intellicrack\\core\\logging\\audit_logger.py:1347: unused method 'get_telemetry_history' (60% confidence, 14 lines)"
         },
         {
-          "line": 1540,
+          "line": 1546,
           "column": null,
           "message": "unused function 'create_contextual_logger' (60% confidence, 14 lines)",
-          "raw": "intellicrack\\core\\logging\\audit_logger.py:1540: unused function 'create_contextual_logger' (60% confidence, 14 lines)"
+          "raw": "intellicrack\\core\\logging\\audit_logger.py:1546: unused function 'create_contextual_logger' (60% confidence, 14 lines)"
         },
         {
           "line": 957,
@@ -9657,10 +9657,10 @@
           "raw": "intellicrack\\core\\logging\\audit_logger.py:1040: unused method 'record_gauge' (60% confidence, 18 lines)"
         },
         {
-          "line": 1356,
+          "line": 1362,
           "column": null,
           "message": "unused method 'export_telemetry_json' (60% confidence, 27 lines)",
-          "raw": "intellicrack\\core\\logging\\audit_logger.py:1356: unused method 'export_telemetry_json' (60% confidence, 27 lines)"
+          "raw": "intellicrack\\core\\logging\\audit_logger.py:1362: unused method 'export_telemetry_json' (60% confidence, 27 lines)"
         },
         {
           "line": 976,
@@ -10101,22 +10101,22 @@
           "raw": "intellicrack\\ai\\predictive_intelligence.py:386: unused attribute 'last_training' (60% confidence, 1 line)"
         },
         {
-          "line": 1122,
+          "line": 1120,
           "column": null,
           "message": "unused attribute 'pattern_weights' (60% confidence, 1 line)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1122: unused attribute 'pattern_weights' (60% confidence, 1 line)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1120: unused attribute 'pattern_weights' (60% confidence, 1 line)"
         },
         {
-          "line": 1123,
+          "line": 1121,
           "column": null,
           "message": "unused attribute 'discovery_history' (60% confidence, 1 line)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1123: unused attribute 'discovery_history' (60% confidence, 1 line)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1121: unused attribute 'discovery_history' (60% confidence, 1 line)"
         },
         {
-          "line": 1693,
+          "line": 1691,
           "column": null,
           "message": "unused variable 'predictive_intelligence' (60% confidence, 1 line)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1693: unused variable 'predictive_intelligence' (60% confidence, 1 line)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1691: unused variable 'predictive_intelligence' (60% confidence, 1 line)"
         },
         {
           "line": 115,
@@ -10131,16 +10131,16 @@
           "raw": "intellicrack\\ai\\predictive_intelligence.py:88: unused class 'PredictionInput' (60% confidence, 9 lines)"
         },
         {
-          "line": 1622,
+          "line": 1620,
           "column": null,
           "message": "unused method 'get_prediction_analytics' (60% confidence, 19 lines)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1622: unused method 'get_prediction_analytics' (60% confidence, 19 lines)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1620: unused method 'get_prediction_analytics' (60% confidence, 19 lines)"
         },
         {
-          "line": 1491,
+          "line": 1489,
           "column": null,
           "message": "unused method 'get_confidence_score' (60% confidence, 21 lines)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1491: unused method 'get_confidence_score' (60% confidence, 21 lines)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1489: unused method 'get_confidence_score' (60% confidence, 21 lines)"
         },
         {
           "line": 337,
@@ -10149,22 +10149,22 @@
           "raw": "intellicrack\\ai\\predictive_intelligence.py:337: unused method 'extract_exploit_features' (60% confidence, 27 lines)"
         },
         {
-          "line": 1587,
+          "line": 1585,
           "column": null,
           "message": "unused method 'verify_prediction_accuracy' (60% confidence, 34 lines)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1587: unused method 'verify_prediction_accuracy' (60% confidence, 34 lines)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1585: unused method 'verify_prediction_accuracy' (60% confidence, 34 lines)"
         },
         {
-          "line": 1642,
+          "line": 1640,
           "column": null,
           "message": "unused method 'get_prediction_insights' (60% confidence, 34 lines)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1642: unused method 'get_prediction_insights' (60% confidence, 34 lines)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1640: unused method 'get_prediction_insights' (60% confidence, 34 lines)"
         },
         {
-          "line": 1535,
+          "line": 1533,
           "column": null,
           "message": "unused method 'make_prediction' (60% confidence, 44 lines)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1535: unused method 'make_prediction' (60% confidence, 44 lines)"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1533: unused method 'make_prediction' (60% confidence, 44 lines)"
         }
       ]
     },
@@ -11631,16 +11631,16 @@
           "raw": "intellicrack\\core\\protection_bypass\\hardware_token.py:91: unused attribute 'SCARD_EJECT_CARD' (60% confidence, 1 line)"
         },
         {
-          "line": 792,
+          "line": 793,
           "column": null,
           "message": "unused method 'extract_token_secrets' (60% confidence, 25 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\hardware_token.py:792: unused method 'extract_token_secrets' (60% confidence, 25 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\hardware_token.py:793: unused method 'extract_token_secrets' (60% confidence, 25 lines)"
         },
         {
-          "line": 922,
+          "line": 923,
           "column": null,
           "message": "unused function 'bypass_hardware_token' (60% confidence, 29 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\hardware_token.py:922: unused function 'bypass_hardware_token' (60% confidence, 29 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\hardware_token.py:923: unused function 'bypass_hardware_token' (60% confidence, 29 lines)"
         }
       ]
     },
@@ -11823,10 +11823,10 @@
           "raw": "intellicrack\\ai\\qemu_manager.py:2066: unused method 'get_snapshot_hierarchy' (60% confidence, 31 lines)"
         },
         {
-          "line": 3341,
+          "line": 3351,
           "column": null,
           "message": "unused method 'restore_monitor_snapshot' (60% confidence, 32 lines)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:3341: unused method 'restore_monitor_snapshot' (60% confidence, 32 lines)"
+          "raw": "intellicrack\\ai\\qemu_manager.py:3351: unused method 'restore_monitor_snapshot' (60% confidence, 32 lines)"
         },
         {
           "line": 1988,
@@ -11841,10 +11841,10 @@
           "raw": "intellicrack\\ai\\qemu_manager.py:1690: unused method 'create_versioned_snapshot' (60% confidence, 95 lines)"
         },
         {
-          "line": 2601,
+          "line": 2608,
           "column": null,
-          "message": "unused method 'perform_snapshot_maintenance' (60% confidence, 134 lines)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:2601: unused method 'perform_snapshot_maintenance' (60% confidence, 134 lines)"
+          "message": "unused method 'perform_snapshot_maintenance' (60% confidence, 135 lines)",
+          "raw": "intellicrack\\ai\\qemu_manager.py:2608: unused method 'perform_snapshot_maintenance' (60% confidence, 135 lines)"
         },
         {
           "line": 1842,
@@ -13671,58 +13671,58 @@
           "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:167: unused variable 'cache_hit' (60% confidence, 1 line)"
         },
         {
-          "line": 653,
+          "line": 655,
           "column": null,
           "message": "unused attribute 'token_cache' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:653: unused attribute 'token_cache' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:655: unused attribute 'token_cache' (60% confidence, 1 line)"
         },
         {
-          "line": 1173,
+          "line": 1175,
           "column": null,
           "message": "unused attribute 'cache_hit' (60% confidence, 1 line)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1173: unused attribute 'cache_hit' (60% confidence, 1 line)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1175: unused attribute 'cache_hit' (60% confidence, 1 line)"
         },
         {
-          "line": 829,
+          "line": 831,
           "column": null,
           "message": "unused method 'extract_bearer_token' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:829: unused method 'extract_bearer_token' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:831: unused method 'extract_bearer_token' (60% confidence, 3 lines)"
         },
         {
-          "line": 833,
+          "line": 835,
           "column": null,
           "message": "unused method 'modify_api_key' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:833: unused method 'modify_api_key' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:835: unused method 'modify_api_key' (60% confidence, 8 lines)"
         },
         {
-          "line": 1265,
+          "line": 1267,
           "column": null,
           "message": "unused method '_compress_cache_data' (60% confidence, 9 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1265: unused method '_compress_cache_data' (60% confidence, 9 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1267: unused method '_compress_cache_data' (60% confidence, 9 lines)"
         },
         {
-          "line": 1275,
+          "line": 1277,
           "column": null,
           "message": "unused method '_analyze_response_content' (60% confidence, 33 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1275: unused method '_analyze_response_content' (60% confidence, 33 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1277: unused method '_analyze_response_content' (60% confidence, 33 lines)"
         },
         {
-          "line": 1227,
+          "line": 1229,
           "column": null,
           "message": "unused method '_check_network_connectivity' (60% confidence, 37 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1227: unused method '_check_network_connectivity' (60% confidence, 37 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:1229: unused method '_check_network_connectivity' (60% confidence, 37 lines)"
         },
         {
-          "line": 687,
+          "line": 689,
           "column": null,
           "message": "unused method 'modify_jwt_token' (60% confidence, 56 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:687: unused method 'modify_jwt_token' (60% confidence, 56 lines)"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:689: unused method 'modify_jwt_token' (60% confidence, 56 lines)"
         },
         {
-          "line": 318,
+          "line": 319,
           "column": null,
-          "message": "unused method 'get_server_certificate' (60% confidence, 89 lines)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:318: unused method 'get_server_certificate' (60% confidence, 89 lines)"
+          "message": "unused method 'get_server_certificate' (60% confidence, 90 lines)",
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:319: unused method 'get_server_certificate' (60% confidence, 90 lines)"
         }
       ]
     },
@@ -13781,14 +13781,14 @@
         {
           "line": 722,
           "column": null,
-          "message": "unused method 'create_pipeline_parallel_groups' (60% confidence, 40 lines)",
-          "raw": "intellicrack\\ai\\model_sharding.py:722: unused method 'create_pipeline_parallel_groups' (60% confidence, 40 lines)"
+          "message": "unused method 'create_pipeline_parallel_groups' (60% confidence, 42 lines)",
+          "raw": "intellicrack\\ai\\model_sharding.py:722: unused method 'create_pipeline_parallel_groups' (60% confidence, 42 lines)"
         },
         {
-          "line": 763,
+          "line": 765,
           "column": null,
           "message": "unused method 'profile_model_distribution' (60% confidence, 47 lines)",
-          "raw": "intellicrack\\ai\\model_sharding.py:763: unused method 'profile_model_distribution' (60% confidence, 47 lines)"
+          "raw": "intellicrack\\ai\\model_sharding.py:765: unused method 'profile_model_distribution' (60% confidence, 47 lines)"
         },
         {
           "line": 570,
@@ -14955,16 +14955,16 @@
           "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:85: unused import 'KS_MODE_THUMB' (90% confidence, 10 lines)"
         },
         {
-          "line": 1372,
+          "line": 1380,
           "column": null,
           "message": "unused method 'export_deobfuscated_cfg' (60% confidence, 66 lines)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1372: unused method 'export_deobfuscated_cfg' (60% confidence, 66 lines)"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1380: unused method 'export_deobfuscated_cfg' (60% confidence, 66 lines)"
         },
         {
           "line": 285,
           "column": null,
-          "message": "unused method 'deobfuscate_function' (60% confidence, 88 lines)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:285: unused method 'deobfuscate_function' (60% confidence, 88 lines)"
+          "message": "unused method 'deobfuscate_function' (60% confidence, 89 lines)",
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:285: unused method 'deobfuscate_function' (60% confidence, 89 lines)"
         }
       ]
     },
@@ -15195,22 +15195,22 @@
           "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:138: unused attribute 'resolved_apis' (60% confidence, 1 line)"
         },
         {
-          "line": 414,
+          "line": 418,
           "column": null,
           "message": "unused method '_deobfuscate_string' (60% confidence, 3 lines)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:414: unused method '_deobfuscate_string' (60% confidence, 3 lines)"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:418: unused method '_deobfuscate_string' (60% confidence, 3 lines)"
         },
         {
-          "line": 408,
+          "line": 412,
           "column": null,
           "message": "unused method '_obfuscated_string' (60% confidence, 5 lines)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:408: unused method '_obfuscated_string' (60% confidence, 5 lines)"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:412: unused method '_obfuscated_string' (60% confidence, 5 lines)"
         },
         {
-          "line": 604,
+          "line": 608,
           "column": null,
           "message": "unused method 'generate_call_obfuscation' (60% confidence, 14 lines)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:604: unused method 'generate_call_obfuscation' (60% confidence, 14 lines)"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:608: unused method 'generate_call_obfuscation' (60% confidence, 14 lines)"
         },
         {
           "line": 75,
@@ -15219,10 +15219,10 @@
           "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:75: unused method 'obfuscate_api_calls' (60% confidence, 29 lines)"
         },
         {
-          "line": 374,
+          "line": 378,
           "column": null,
           "message": "unused method '_indirect_call' (60% confidence, 33 lines)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:374: unused method '_indirect_call' (60% confidence, 33 lines)"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:378: unused method '_indirect_call' (60% confidence, 33 lines)"
         },
         {
           "line": 105,
@@ -16227,28 +16227,28 @@
           "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:177: unused variable 'extraction_time' (60% confidence, 1 line)"
         },
         {
-          "line": 562,
+          "line": 564,
           "column": null,
           "message": "unused attribute 'extraction_time' (60% confidence, 1 line)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:562: unused attribute 'extraction_time' (60% confidence, 1 line)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:564: unused attribute 'extraction_time' (60% confidence, 1 line)"
         },
         {
-          "line": 1054,
+          "line": 1056,
           "column": null,
           "message": "unused function 'analyze_firmware_file' (60% confidence, 5 lines)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:1054: unused function 'analyze_firmware_file' (60% confidence, 5 lines)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:1056: unused function 'analyze_firmware_file' (60% confidence, 5 lines)"
         },
         {
-          "line": 1023,
+          "line": 1025,
           "column": null,
           "message": "unused method 'cleanup_extractions' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:1023: unused method 'cleanup_extractions' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:1025: unused method 'cleanup_extractions' (60% confidence, 8 lines)"
         },
         {
-          "line": 970,
+          "line": 972,
           "column": null,
           "message": "unused method 'export_analysis_report' (60% confidence, 52 lines)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:970: unused method 'export_analysis_report' (60% confidence, 52 lines)"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:972: unused method 'export_analysis_report' (60% confidence, 52 lines)"
         }
       ]
     },
@@ -17315,8 +17315,8 @@
         {
           "line": 343,
           "column": null,
-          "message": "unused function 'create_ssl_certificate_builder' (60% confidence, 50 lines)",
-          "raw": "intellicrack\\utils\\system\\windows_structures.py:343: unused function 'create_ssl_certificate_builder' (60% confidence, 50 lines)"
+          "message": "unused function 'create_ssl_certificate_builder' (60% confidence, 51 lines)",
+          "raw": "intellicrack\\utils\\system\\windows_structures.py:343: unused function 'create_ssl_certificate_builder' (60% confidence, 51 lines)"
         },
         {
           "line": 196,
@@ -19149,46 +19149,46 @@
       "count": 7,
       "findings": [
         {
-          "line": 411,
+          "line": 431,
           "column": null,
           "message": "unused method 'get_available_scripts' (60% confidence, 8 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:411: unused method 'get_available_scripts' (60% confidence, 8 lines)"
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:431: unused method 'get_available_scripts' (60% confidence, 8 lines)"
         },
         {
-          "line": 420,
+          "line": 440,
           "column": null,
           "message": "unused method 'get_script_info' (60% confidence, 21 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:420: unused method 'get_script_info' (60% confidence, 21 lines)"
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:440: unused method 'get_script_info' (60% confidence, 21 lines)"
         },
         {
-          "line": 178,
+          "line": 186,
           "column": null,
-          "message": "unused method 'deobfuscate_control_flow' (60% confidence, 26 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:178: unused method 'deobfuscate_control_flow' (60% confidence, 26 lines)"
+          "message": "unused method 'deobfuscate_control_flow' (60% confidence, 28 lines)",
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:186: unused method 'deobfuscate_control_flow' (60% confidence, 28 lines)"
         },
         {
-          "line": 335,
+          "line": 353,
           "column": null,
-          "message": "unused method 'analyze_network_communication' (60% confidence, 26 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:335: unused method 'analyze_network_communication' (60% confidence, 26 lines)"
+          "message": "unused method 'analyze_network_communication' (60% confidence, 28 lines)",
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:353: unused method 'analyze_network_communication' (60% confidence, 28 lines)"
         },
         {
-          "line": 273,
+          "line": 287,
           "column": null,
-          "message": "unused method 'perform_comprehensive_analysis' (60% confidence, 33 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:273: unused method 'perform_comprehensive_analysis' (60% confidence, 33 lines)"
+          "message": "unused method 'perform_comprehensive_analysis' (60% confidence, 35 lines)",
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:287: unused method 'perform_comprehensive_analysis' (60% confidence, 35 lines)"
         },
         {
-          "line": 362,
+          "line": 382,
           "column": null,
           "message": "unused method 'perform_licensing_crack_workflow' (60% confidence, 48 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:362: unused method 'perform_licensing_crack_workflow' (60% confidence, 48 lines)"
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:382: unused method 'perform_licensing_crack_workflow' (60% confidence, 48 lines)"
         },
         {
           "line": 21,
           "column": null,
-          "message": "unused class 'GhidraBinaryIntegration' (60% confidence, 429 lines)",
-          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:21: unused class 'GhidraBinaryIntegration' (60% confidence, 429 lines)"
+          "message": "unused class 'GhidraBinaryIntegration' (60% confidence, 449 lines)",
+          "raw": "intellicrack\\core\\analysis\\ghidra_binary_integration.py:21: unused class 'GhidraBinaryIntegration' (60% confidence, 449 lines)"
         }
       ]
     },
@@ -20445,22 +20445,16 @@
       "count": 6,
       "findings": [
         {
-          "line": 127,
+          "line": 130,
           "column": null,
           "message": "unused function 'secure_yaml_load' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\core\\security_utils.py:127: unused function 'secure_yaml_load' (60% confidence, 13 lines)"
+          "raw": "intellicrack\\core\\security_utils.py:130: unused function 'secure_yaml_load' (60% confidence, 13 lines)"
         },
         {
-          "line": 142,
+          "line": 145,
           "column": null,
           "message": "unused function 'secure_json_load' (60% confidence, 13 lines)",
-          "raw": "intellicrack\\core\\security_utils.py:142: unused function 'secure_json_load' (60% confidence, 13 lines)"
-        },
-        {
-          "line": 194,
-          "column": null,
-          "message": "unused function 'sanitize_input' (60% confidence, 30 lines)",
-          "raw": "intellicrack\\core\\security_utils.py:194: unused function 'sanitize_input' (60% confidence, 30 lines)"
+          "raw": "intellicrack\\core\\security_utils.py:145: unused function 'secure_json_load' (60% confidence, 13 lines)"
         },
         {
           "line": 39,
@@ -20469,16 +20463,22 @@
           "raw": "intellicrack\\core\\security_utils.py:39: unused function 'secure_hash' (60% confidence, 32 lines)"
         },
         {
-          "line": 157,
+          "line": 197,
+          "column": null,
+          "message": "unused function 'sanitize_input' (60% confidence, 32 lines)",
+          "raw": "intellicrack\\core\\security_utils.py:197: unused function 'sanitize_input' (60% confidence, 32 lines)"
+        },
+        {
+          "line": 160,
           "column": null,
           "message": "unused function 'validate_file_path' (60% confidence, 35 lines)",
-          "raw": "intellicrack\\core\\security_utils.py:157: unused function 'validate_file_path' (60% confidence, 35 lines)"
+          "raw": "intellicrack\\core\\security_utils.py:160: unused function 'validate_file_path' (60% confidence, 35 lines)"
         },
         {
           "line": 73,
           "column": null,
-          "message": "unused function 'secure_subprocess' (60% confidence, 52 lines)",
-          "raw": "intellicrack\\core\\security_utils.py:73: unused function 'secure_subprocess' (60% confidence, 52 lines)"
+          "message": "unused function 'secure_subprocess' (60% confidence, 55 lines)",
+          "raw": "intellicrack\\core\\security_utils.py:73: unused function 'secure_subprocess' (60% confidence, 55 lines)"
         }
       ]
     },
@@ -21731,8 +21731,8 @@
         {
           "line": 66,
           "column": null,
-          "message": "unused class 'AutodeskLicensingParser' (60% confidence, 910 lines)",
-          "raw": "intellicrack\\core\\network\\protocols\\autodesk_parser.py:66: unused class 'AutodeskLicensingParser' (60% confidence, 910 lines)"
+          "message": "unused class 'AutodeskLicensingParser' (60% confidence, 911 lines)",
+          "raw": "intellicrack\\core\\network\\protocols\\autodesk_parser.py:66: unused class 'AutodeskLicensingParser' (60% confidence, 911 lines)"
         }
       ]
     },
@@ -22311,28 +22311,28 @@
       "count": 4,
       "findings": [
         {
-          "line": 930,
+          "line": 932,
           "column": null,
           "message": "unused method 'bypass_license_check' (60% confidence, 10 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:930: unused method 'bypass_license_check' (60% confidence, 10 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:932: unused method 'bypass_license_check' (60% confidence, 10 lines)"
         },
         {
-          "line": 170,
+          "line": 171,
           "column": null,
-          "message": "unused method 'generate_host_certificate' (60% confidence, 46 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:170: unused method 'generate_host_certificate' (60% confidence, 46 lines)"
+          "message": "unused method 'generate_host_certificate' (60% confidence, 47 lines)",
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:171: unused method 'generate_host_certificate' (60% confidence, 47 lines)"
         },
         {
-          "line": 738,
+          "line": 740,
           "column": null,
           "message": "unused method 'emulate_license_server' (60% confidence, 48 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:738: unused method 'emulate_license_server' (60% confidence, 48 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:740: unused method 'emulate_license_server' (60% confidence, 48 lines)"
         },
         {
-          "line": 918,
+          "line": 920,
           "column": null,
           "message": "unused class 'CloudLicenseBypasser' (60% confidence, 59 lines)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:918: unused class 'CloudLicenseBypasser' (60% confidence, 59 lines)"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:920: unused class 'CloudLicenseBypasser' (60% confidence, 59 lines)"
         }
       ]
     },
@@ -22401,28 +22401,28 @@
       "count": 4,
       "findings": [
         {
-          "line": 398,
+          "line": 401,
           "column": null,
           "message": "unused method 'export_cert_der' (60% confidence, 11 lines)",
-          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:398: unused method 'export_cert_der' (60% confidence, 11 lines)"
+          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:401: unused method 'export_cert_der' (60% confidence, 11 lines)"
         },
         {
-          "line": 426,
+          "line": 429,
           "column": null,
           "message": "unused method 'export_public_key_pem' (60% confidence, 14 lines)",
-          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:426: unused method 'export_public_key_pem' (60% confidence, 14 lines)"
+          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:429: unused method 'export_public_key_pem' (60% confidence, 14 lines)"
         },
         {
-          "line": 410,
+          "line": 413,
           "column": null,
           "message": "unused method 'export_private_key_pem' (60% confidence, 15 lines)",
-          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:410: unused method 'export_private_key_pem' (60% confidence, 15 lines)"
+          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:413: unused method 'export_private_key_pem' (60% confidence, 15 lines)"
         },
         {
-          "line": 377,
+          "line": 380,
           "column": null,
           "message": "unused method 'export_chain_pem' (60% confidence, 20 lines)",
-          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:377: unused method 'export_chain_pem' (60% confidence, 20 lines)"
+          "raw": "intellicrack\\core\\certificate\\cert_chain_generator.py:380: unused method 'export_chain_pem' (60% confidence, 20 lines)"
         }
       ]
     },
@@ -23937,22 +23937,22 @@
       "count": 3,
       "findings": [
         {
-          "line": 805,
+          "line": 808,
           "column": null,
           "message": "unused method 'get_modification_time' (60% confidence, 14 lines)",
-          "raw": "intellicrack\\hexview\\file_handler.py:805: unused method 'get_modification_time' (60% confidence, 14 lines)"
+          "raw": "intellicrack\\hexview\\file_handler.py:808: unused method 'get_modification_time' (60% confidence, 14 lines)"
         },
         {
-          "line": 589,
+          "line": 592,
           "column": null,
           "message": "unused method 'undo_last_edit' (60% confidence, 29 lines)",
-          "raw": "intellicrack\\hexview\\file_handler.py:589: unused method 'undo_last_edit' (60% confidence, 29 lines)"
+          "raw": "intellicrack\\hexview\\file_handler.py:592: unused method 'undo_last_edit' (60% confidence, 29 lines)"
         },
         {
-          "line": 820,
+          "line": 823,
           "column": null,
           "message": "unused method 'save_as' (60% confidence, 38 lines)",
-          "raw": "intellicrack\\hexview\\file_handler.py:820: unused method 'save_as' (60% confidence, 38 lines)"
+          "raw": "intellicrack\\hexview\\file_handler.py:823: unused method 'save_as' (60% confidence, 38 lines)"
         }
       ]
     },
@@ -24747,16 +24747,16 @@
       "count": 2,
       "findings": [
         {
-          "line": 606,
+          "line": 608,
           "column": null,
           "message": "unused function 'create_graph_generator' (60% confidence, 11 lines)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:606: unused function 'create_graph_generator' (60% confidence, 11 lines)"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:608: unused function 'create_graph_generator' (60% confidence, 11 lines)"
         },
         {
-          "line": 484,
+          "line": 486,
           "column": null,
           "message": "unused method 'export_to_dot' (60% confidence, 33 lines)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:484: unused method 'export_to_dot' (60% confidence, 33 lines)"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:486: unused method 'export_to_dot' (60% confidence, 33 lines)"
         }
       ]
     },
@@ -24819,16 +24819,16 @@
       "count": 2,
       "findings": [
         {
-          "line": 793,
+          "line": 796,
           "column": null,
           "message": "unused method 'set_memory_limit' (60% confidence, 12 lines)",
-          "raw": "intellicrack\\ai\\model_cache_manager.py:793: unused method 'set_memory_limit' (60% confidence, 12 lines)"
+          "raw": "intellicrack\\ai\\model_cache_manager.py:796: unused method 'set_memory_limit' (60% confidence, 12 lines)"
         },
         {
-          "line": 777,
+          "line": 780,
           "column": null,
           "message": "unused method 'preload_models' (60% confidence, 15 lines)",
-          "raw": "intellicrack\\ai\\model_cache_manager.py:777: unused method 'preload_models' (60% confidence, 15 lines)"
+          "raw": "intellicrack\\ai\\model_cache_manager.py:780: unused method 'preload_models' (60% confidence, 15 lines)"
         }
       ]
     },
@@ -25169,8 +25169,8 @@
         {
           "line": 265,
           "column": null,
-          "message": "unused method 'apply_integrated_patches' (60% confidence, 78 lines)",
-          "raw": "intellicrack\\core\\patching\\radare2_patch_integration.py:265: unused method 'apply_integrated_patches' (60% confidence, 78 lines)"
+          "message": "unused method 'apply_integrated_patches' (60% confidence, 80 lines)",
+          "raw": "intellicrack\\core\\patching\\radare2_patch_integration.py:265: unused method 'apply_integrated_patches' (60% confidence, 80 lines)"
         }
       ]
     },
@@ -25971,10 +25971,10 @@
       "count": 1,
       "findings": [
         {
-          "line": 78,
+          "line": 76,
           "column": null,
           "message": "unused function '__getattr__' (60% confidence, 38 lines)",
-          "raw": "intellicrack\\dashboard\\__init__.py:78: unused function '__getattr__' (60% confidence, 38 lines)"
+          "raw": "intellicrack\\dashboard\\__init__.py:76: unused function '__getattr__' (60% confidence, 38 lines)"
         }
       ]
     },
@@ -26009,8 +26009,8 @@
         {
           "line": 31,
           "column": null,
-          "message": "unused function 'create_certificate_builder' (60% confidence, 48 lines)",
-          "raw": "intellicrack\\utils\\protection\\certificate_common.py:31: unused function 'create_certificate_builder' (60% confidence, 48 lines)"
+          "message": "unused function 'create_certificate_builder' (60% confidence, 49 lines)",
+          "raw": "intellicrack\\utils\\protection\\certificate_common.py:31: unused function 'create_certificate_builder' (60% confidence, 49 lines)"
         }
       ]
     },

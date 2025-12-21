@@ -164,7 +164,7 @@ class CacheEntry:
             current_size = os.path.getsize(file_path)
             return current_size == self.file_size
         except Exception as e:
-            self.logger.error("Exception in analysis_cache: %s", e)
+            self.logger.exception("Exception in analysis_cache: %s", e)
             return False
 
     def update_access(self) -> None:
@@ -249,7 +249,7 @@ class AnalysisCache:
         # Load existing cache
         self._load_cache()
 
-        logger.info(f"Analysis cache initialized: {len(self._cache)} entries, {self._get_cache_size_mb():.1f}MB")
+        logger.info("Analysis cache initialized: %d entries, %.1fMB", len(self._cache), self._get_cache_size_mb())
 
     def get(self, file_path: str, scan_options: str = "") -> object | None:
         """Get cached analysis result.
@@ -269,12 +269,12 @@ class AnalysisCache:
 
             if entry is None:
                 self._stats.cache_misses += 1
-                logger.debug(f"Cache miss: {cache_key}")
+                logger.debug("Cache miss: %s", cache_key)
                 return None
 
             # Validate cache entry
             if not entry.is_valid(file_path):
-                logger.debug(f"Cache invalidated: {cache_key}")
+                logger.debug("Cache invalidated: %s", cache_key)
                 del self._cache[cache_key]
                 self._stats.cache_invalidations += 1
                 self._stats.cache_misses += 1
@@ -284,7 +284,7 @@ class AnalysisCache:
             entry.update_access()
             self._stats.cache_hits += 1
 
-            logger.debug(f"Cache hit: {cache_key}")
+            logger.debug("Cache hit: %s", cache_key)
             return entry.data
 
     def put(self, file_path: str, data: object, scan_options: str = "") -> None:
@@ -324,14 +324,14 @@ class AnalysisCache:
                     self._stats.oldest_entry = entry.timestamp
                 self._stats.newest_entry = max(self._stats.newest_entry, entry.timestamp)
 
-                logger.debug(f"Cached: {cache_key}")
+                logger.debug("Cached: %s", cache_key)
 
                 # Auto-save if enabled
                 if self.auto_save:
                     self._save_cache_async()
 
         except Exception as e:
-            logger.error(f"Failed to cache result for {file_path}: {e}")
+            logger.exception("Failed to cache result for %s: %s", file_path, e)
 
     def remove(self, file_path: str, scan_options: str = "") -> bool:
         """Remove specific entry from cache.
@@ -350,7 +350,7 @@ class AnalysisCache:
             if cache_key in self._cache:
                 del self._cache[cache_key]
                 self._stats.total_entries = len(self._cache)
-                logger.debug(f"Removed from cache: {cache_key}")
+                logger.debug("Removed from cache: %s", cache_key)
                 return True
             return False
 
@@ -368,7 +368,7 @@ class AnalysisCache:
                 if self.stats_file.exists():
                     self.stats_file.unlink()
             except Exception as e:
-                logger.error(f"Failed to remove cache files: {e}")
+                logger.exception("Failed to remove cache files: %s", e)
 
     def cleanup_invalid(self) -> int:
         """Remove invalid cache entries.
@@ -396,7 +396,7 @@ class AnalysisCache:
             self._stats.cache_invalidations += removed_count
 
         if removed_count > 0:
-            logger.info(f"Cleaned up {removed_count} invalid cache entries")
+            logger.info("Cleaned up %d invalid cache entries", removed_count)
 
         return removed_count
 
@@ -451,10 +451,10 @@ class AnalysisCache:
                 with open(self.stats_file, "w") as f:
                     json.dump(self._stats.to_dict(), f, indent=2)
 
-                logger.debug(f"Cache saved: {len(self._cache)} entries")
+                logger.debug("Cache saved: %d entries", len(self._cache))
 
         except Exception as e:
-            logger.error(f"Failed to save cache: {e}")
+            logger.exception("Failed to save cache: %s", e)
 
     def _generate_cache_key(self, file_path: str, scan_options: str) -> str:
         """Generate cache key from file path and options."""
@@ -489,7 +489,7 @@ class AnalysisCache:
         for i in range(min(count, len(sorted_entries))):
             cache_key = sorted_entries[i][0]
             del self._cache[cache_key]
-            logger.debug(f"Evicted LRU entry: {cache_key}")
+            logger.debug("Evicted LRU entry: %s", cache_key)
 
     def _calculate_cache_size(self) -> int:
         """Calculate total cache size in bytes."""
@@ -513,7 +513,7 @@ class AnalysisCache:
             # Load cache data
             if self.cache_file.exists():
                 self._cache = secure_pickle_load(self.cache_file)
-                logger.info(f"Loaded cache: {len(self._cache)} entries")
+                logger.info("Loaded cache: %d entries", len(self._cache))
 
             # Load statistics
             if self.stats_file.exists():
@@ -522,7 +522,7 @@ class AnalysisCache:
                     self._stats = CacheStats(**stats_data)
 
         except Exception as e:
-            logger.warning(f"Failed to load cache: {e}")
+            logger.warning("Failed to load cache: %s", e)
             self._cache = {}
             self._stats = CacheStats()
 
@@ -539,7 +539,7 @@ class AnalysisCache:
             try:
                 self.save_cache()
             except Exception as e:
-                logger.error(f"Async cache save failed: {e}")
+                logger.exception("Async cache save failed: %s", e)
 
         thread = threading.Thread(target=save_worker, daemon=True)
         thread.start()

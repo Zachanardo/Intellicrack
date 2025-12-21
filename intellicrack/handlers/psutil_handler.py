@@ -591,18 +591,11 @@ except ImportError as e:
                                         # Per-CPU usage
                                         cpu_times.append(min(100.0, usage))
 
-                    if percpu:
-                        if cpu_times:
-                            return cpu_times
-                        # Return single CPU if no per-cpu data
-                        return [0.0]
-                    return 0.0
+                    return cpu_times or [0.0] if percpu else 0.0
             except (subprocess.TimeoutExpired, subprocess.SubprocessError, OSError) as e:
                 logger.debug(f"Failed to get CPU percent: {e}")
 
-        if percpu:
-            return [0.0]
-        return 0.0
+        return [0.0] if percpu else 0.0
 
     def cpu_count(logical: bool = True) -> int:
         """Get CPU count."""
@@ -893,7 +886,7 @@ except ImportError as e:
         alive: list[FallbackProcess] = list(procs)
 
         start_time = time.time()
-        while alive and not (timeout is not None and (time.time() - start_time) > timeout):
+        while alive and (timeout is None or time.time() - start_time <= timeout):
             new_alive: list[FallbackProcess] = []
             for proc in alive:
                 if proc.is_running():

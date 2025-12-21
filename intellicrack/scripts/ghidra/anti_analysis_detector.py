@@ -93,7 +93,7 @@ except ImportError:
                 message: The error message to print
 
             """
-            logger.error("ERROR: %s", message)
+            logger.exception("ERROR: %s", message)
 
         def askYesNo(self, title: str, question: str) -> bool:
             """Ask a yes/no question (returns False in non-interactive mode).

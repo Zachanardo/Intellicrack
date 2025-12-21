@@ -260,14 +260,14 @@ class IntellicrackProtectionCore:
             logger.info("ICP Engine: %s", version)
 
             if not self.icp_backend.is_icp_available():
-                logger.error("ICP Engine library not available or not working")
+                logger.exception("ICP Engine library not available or not working")
                 logger.info("Please install ICP Engine backend: pip install die-python")
                 return False
 
             logger.info("Native ICP Engine integration validated successfully")
             return True
         except Exception as e:
-            logger.error("Error validating native ICP Engine: %s", e, exc_info=True)
+            logger.exception("Error validating native ICP Engine: %s", e, exc_info=True)
             return False
 
     def detect_protections(self, file_path: str) -> ProtectionAnalysis:
@@ -282,7 +282,7 @@ class IntellicrackProtectionCore:
         """
         if not os.path.exists(file_path):
             error_msg = f"File not found: {file_path}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise FileNotFoundError(error_msg)
 
         if not self.icp_backend or not self.icp_backend.is_icp_available():
@@ -305,7 +305,7 @@ class IntellicrackProtectionCore:
                 loop.close()
 
             if icp_result.error:
-                logger.error("ICP analysis failed: %s", icp_result.error, exc_info=True)
+                logger.exception("ICP analysis failed: %s", icp_result.error, exc_info=True)
                 return ProtectionAnalysis(
                     file_path=file_path,
                     file_type="Error",
@@ -316,7 +316,7 @@ class IntellicrackProtectionCore:
             return self._convert_icp_result(icp_result)
 
         except Exception as e:
-            logger.error("Error analyzing file with native ICP Engine: %s", e, exc_info=True)
+            logger.exception("Error analyzing file with native ICP Engine: %s", e, exc_info=True)
             return ProtectionAnalysis(
                 file_path=file_path,
                 file_type="Error",
@@ -658,7 +658,7 @@ class IntellicrackProtectionCore:
                             analysis = self.detect_protections(file_path)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
+                            logger.exception("Error analyzing %s: %s", file_path, e, exc_info=True)
         else:
             for file in os.listdir(directory):
                 if any(file.lower().endswith(ext) for ext in extensions):
@@ -668,7 +668,7 @@ class IntellicrackProtectionCore:
                             analysis = self.detect_protections(file_path)
                             results.append(analysis)
                         except Exception as e:
-                            logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
+                            logger.exception("Error analyzing %s: %s", file_path, e, exc_info=True)
 
         return results
 
@@ -739,7 +739,7 @@ class IntellicrackProtectionCore:
             return "\n".join(lines)
 
         error_msg = f"Unknown output format: {output_format}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise ValueError(error_msg)
 
 

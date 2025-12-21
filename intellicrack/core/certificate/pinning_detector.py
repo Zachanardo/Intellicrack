@@ -170,7 +170,7 @@ class PinningDetector:
             content = self.binary_path.read_bytes()
             text_content = content.decode("utf-8", errors="ignore")
         except Exception as e:
-            logger.error("Failed to read binary: %s", e, exc_info=True)
+            logger.exception("Failed to read binary: %s", e, exc_info=True)
             return []
 
         sha256_pattern = re.compile(r"\b([a-fA-F0-9]{64})\b")
@@ -202,11 +202,11 @@ class PinningDetector:
         try:
             self.binary = lief.parse(str(self.binary_path))
         except Exception as e:
-            logger.error("Failed to parse binary with LIEF: %s", e, exc_info=True)
+            logger.exception("Failed to parse binary with LIEF: %s", e, exc_info=True)
             return []
 
         if not self.binary:
-            logger.error("Binary parsing returned None")
+            logger.exception("Binary parsing returned None")
             return []
 
         self._determine_platform()
@@ -404,7 +404,7 @@ class PinningDetector:
             with APKAnalyzer() as analyzer:
                 return analyzer.detect_okhttp_pinning(binary_path)
         except Exception as e:
-            logger.error("OkHttp detection failed: %s", e, exc_info=True)
+            logger.exception("OkHttp detection failed: %s", e, exc_info=True)
             return []
 
     def detect_afnetworking_pinning(self, binary_path: str) -> list[PinningInfo]:
@@ -425,7 +425,7 @@ class PinningDetector:
                 logger.warning("AFNetworking detection requires iOS binary")
                 return []
         except Exception as e:
-            logger.error("Failed to parse binary: %s", e, exc_info=True)
+            logger.exception("Failed to parse binary: %s", e, exc_info=True)
             return []
 
         strings = self._extract_strings()
@@ -463,7 +463,7 @@ class PinningDetector:
                 logger.warning("Alamofire detection requires iOS binary")
                 return []
         except Exception as e:
-            logger.error("Failed to parse binary: %s", e, exc_info=True)
+            logger.exception("Failed to parse binary: %s", e, exc_info=True)
             return []
 
         strings = self._extract_strings()
@@ -520,7 +520,7 @@ class PinningDetector:
                     cross_refs[hash_str] = addresses
 
         except Exception as e:
-            logger.error("Cross-reference analysis failed: %s", e, exc_info=True)
+            logger.exception("Cross-reference analysis failed: %s", e, exc_info=True)
 
         return cross_refs
 
@@ -540,7 +540,7 @@ class PinningDetector:
             self.binary = lief.parse(str(self.binary_path))
             self._determine_platform()
         except Exception as e:
-            logger.error("Binary parsing failed: %s", e, exc_info=True)
+            logger.exception("Binary parsing failed: %s", e, exc_info=True)
             self.platform = "unknown"
 
         detected_pins = []
@@ -579,7 +579,7 @@ class PinningDetector:
                         pinning_methods = list({p.pin_type for p in detected_pins})
 
             except Exception as e:
-                logger.error("APK analysis failed: %s", e, exc_info=True)
+                logger.exception("APK analysis failed: %s", e, exc_info=True)
 
         elif self.platform == "ios":
             afnet_pins = self.detect_afnetworking_pinning(str(self.binary_path))

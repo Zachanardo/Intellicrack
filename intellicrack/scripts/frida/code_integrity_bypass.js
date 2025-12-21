@@ -230,7 +230,7 @@ const CodeIntegrityBypass = {
 
                 spoofHashValue: function () {
                     try {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         const hashLength = this.pdwDataLen.readU32();
 
                         // Determine hash type by length and spoof accordingly
@@ -455,7 +455,7 @@ const CodeIntegrityBypass = {
 
                         spoofFinalHash: function () {
                             try {
-                                const config = this.parent.parent.parent.config;
+                                const {config} = this.parent.parent.parent;
                                 const hashConfig = config.hashAlgorithms[this.hashType];
 
                                 if (hashConfig?.enabled) {
@@ -557,7 +557,7 @@ const CodeIntegrityBypass = {
 
                             spoofComputeResult: function () {
                                 try {
-                                    const config = this.parent.parent.parent.config;
+                                    const {config} = this.parent.parent.parent;
                                     const hashConfig = config.hashAlgorithms[hashType];
 
                                     if (hashConfig?.enabled) {
@@ -760,7 +760,7 @@ const CodeIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (this.spoofSignature) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.signatures.enabled && config.signatures.spoofValidSignature) {
                             retval.replace(0); // ERROR_SUCCESS
                             send({
@@ -810,7 +810,7 @@ const CodeIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (this.spoofResult) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.signatures.enabled) {
                             retval.replace(1); // TRUE
                             send({
@@ -834,7 +834,7 @@ const CodeIntegrityBypass = {
         if (cryptVerifyDetached) {
             Interceptor.attach(cryptVerifyDetached, {
                 onLeave: function (retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.signatures.enabled) {
                         retval.replace(1); // TRUE
                         send({
@@ -927,7 +927,7 @@ const CodeIntegrityBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.checkSum && !this.checkSum.isNull()) {
                         // CHECKSUM_SUCCESS
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.peChecksum.enabled && config.peChecksum.spoofValidChecksum) {
                             // Make calculated checksum match header checksum
                             const headerSumValue = this.headerSum.readU32();
@@ -968,7 +968,7 @@ const CodeIntegrityBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0 && this.checkSum && !this.checkSum.isNull()) {
                         // CHECKSUM_SUCCESS
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.peChecksum.enabled && config.peChecksum.spoofValidChecksum) {
                             // Make calculated checksum match header checksum
                             const headerSumValue = this.headerSum.readU32();
@@ -1059,7 +1059,7 @@ const CodeIntegrityBypass = {
                 onEnter: function (args) {
                     if (args[0] && !args[0].isNull()) {
                         const fileName = args[0].readUtf16String();
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
 
                         // Track files that might be integrity checked
                         if (
@@ -1142,7 +1142,7 @@ const CodeIntegrityBypass = {
         if (cryptVerifySig) {
             Interceptor.attach(cryptVerifySig, {
                 onLeave: function (retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.signatures.enabled) {
                         retval.replace(1); // TRUE - signature valid
                         send({
@@ -1176,7 +1176,7 @@ const CodeIntegrityBypass = {
         if (bcryptVerifySignature) {
             Interceptor.attach(bcryptVerifySignature, {
                 onLeave: function (retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.signatures.enabled) {
                         retval.replace(0); // STATUS_SUCCESS
                         send({
@@ -1226,7 +1226,7 @@ const CodeIntegrityBypass = {
 
                 spoofBCryptResult: function () {
                     try {
-                        const config = this.parent.parent.parent.config;
+                        const {config} = this.parent.parent.parent;
 
                         // Determine hash type by output size and spoof accordingly
                         if (this.cbOutput === 16 && config.hashAlgorithms.md5.enabled) {
@@ -1586,7 +1586,7 @@ const CodeIntegrityBypass = {
             }
 
             const activeHashAlgorithms = {};
-            const config = this.config;
+            const {config} = this;
             for (let hashType in config.hashAlgorithms) {
                 if (config.hashAlgorithms[hashType].enabled) {
                     activeHashAlgorithms[hashType] =

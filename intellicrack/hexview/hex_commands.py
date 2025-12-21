@@ -140,7 +140,7 @@ class HexCommand(ABC):
         # Default implementation for commands that don't support merging
         # Subclasses should override this method if they support merging
         error_msg = f"Command type {self.__class__.__name__} does not support merging with {other.__class__.__name__}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise ValueError(error_msg)
 
 
@@ -180,10 +180,10 @@ class ReplaceCommand(HexCommand):
             success = file_handler.write(self.offset, self.new_data)
             if success:
                 self.executed = True
-                logger.debug(f"Replaced {len(self.new_data)} bytes at offset 0x{self.offset:X}")
+                logger.debug("Replaced %d bytes at offset 0x%X", len(self.new_data), self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error executing replace command: %s", e)
+            logger.exception("Error executing replace command: %s", e)
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
@@ -203,10 +203,10 @@ class ReplaceCommand(HexCommand):
             success = file_handler.write(self.offset, self.old_data)
             if success:
                 self.executed = False
-                logger.debug(f"Undid replace of {len(self.old_data)} bytes at offset 0x{self.offset:X}")
+                logger.debug("Undid replace of %d bytes at offset 0x%X", len(self.old_data), self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error undoing replace command: %s", e)
+            logger.exception("Error undoing replace command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple[int, int]:
@@ -250,7 +250,7 @@ class ReplaceCommand(HexCommand):
         """
         if not self.can_merge_with(other):
             error_msg = "Cannot merge non-adjacent replace commands"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
 
         # Combine the data
@@ -292,10 +292,10 @@ class InsertCommand(HexCommand):
             success = file_handler.insert(self.offset, self.data)
             if success:
                 self.executed = True
-                logger.debug(f"Inserted {len(self.data)} bytes at offset 0x{self.offset:X}")
+                logger.debug("Inserted %d bytes at offset 0x%X", len(self.data), self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error executing insert command: %s", e)
+            logger.exception("Error executing insert command: %s", e)
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
@@ -315,10 +315,10 @@ class InsertCommand(HexCommand):
             success = file_handler.delete(self.offset, len(self.data))
             if success:
                 self.executed = False
-                logger.debug(f"Undid insert of {len(self.data)} bytes at offset 0x{self.offset:X}")
+                logger.debug("Undid insert of %d bytes at offset 0x%X", len(self.data), self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error undoing insert command: %s", e)
+            logger.exception("Error undoing insert command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple[int, int]:
@@ -366,7 +366,7 @@ class InsertCommand(HexCommand):
         """
         if not self.can_merge_with(other):
             error_msg = "Cannot merge non-consecutive insert commands"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
 
         # Combine the data
@@ -417,7 +417,7 @@ class DeleteCommand(HexCommand):
                 logger.debug("Deleted %s bytes at offset 0x%s", self.length, self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error executing delete command: %s", e)
+            logger.exception("Error executing delete command: %s", e)
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
@@ -440,7 +440,7 @@ class DeleteCommand(HexCommand):
                 logger.debug("Undid delete of %s bytes at offset 0x%s", self.length, self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error undoing delete command: %s", e)
+            logger.exception("Error undoing delete command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple[int, int]:
@@ -496,7 +496,7 @@ class DeleteCommand(HexCommand):
         """
         if not self.can_merge_with(other):
             error_msg = "Cannot merge non-adjacent delete commands"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
 
         # Determine the range of the merged deletion
@@ -594,7 +594,7 @@ class FillCommand(HexCommand):
                 )
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error executing fill command: %s", e)
+            logger.exception("Error executing fill command: %s", e)
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
@@ -617,7 +617,7 @@ class FillCommand(HexCommand):
                 logger.debug("Undid fill of %s bytes at offset 0x%s", self.length, self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error undoing fill command: %s", e)
+            logger.exception("Error undoing fill command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple[int, int]:
@@ -673,10 +673,10 @@ class PasteCommand(HexCommand):
             if success:
                 self.executed = True
                 mode_str = "inserted" if self.insert_mode else "overwrote"
-                logger.debug(f"Pasted {len(self.data)} bytes at offset 0x{self.offset:X} ({mode_str})")
+                logger.debug("Pasted %d bytes at offset 0x%X (%s)", len(self.data), self.offset, mode_str)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error executing paste command: %s", e)
+            logger.exception("Error executing paste command: %s", e)
             return False
 
     def undo(self, file_handler: "VirtualFileAccess") -> bool:
@@ -704,10 +704,10 @@ class PasteCommand(HexCommand):
             if success:
                 self.executed = False
                 mode_str = "insert" if self.insert_mode else "overwrite"
-                logger.debug(f"Undid paste ({mode_str}) of {len(self.data)} bytes at offset 0x{self.offset:X}")
+                logger.debug("Undid paste (%s) of %d bytes at offset 0x%X", mode_str, len(self.data), self.offset)
             return success
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error undoing paste command: %s", e)
+            logger.exception("Error undoing paste command: %s", e)
             return False
 
     def get_affected_range(self) -> tuple[int, int]:
@@ -757,7 +757,7 @@ class CommandManager:
 
         """
         if not self.file_handler:
-            logger.error("No file handler set for command execution")
+            logger.exception("No file handler set for command execution")
             return False
 
         # Try to merge with previous command if auto-merge is enabled
@@ -819,7 +819,7 @@ class CommandManager:
             self.current_index -= 1
             logger.debug("Undid command: %s", command.description)
             return True
-        logger.error("Failed to undo command: %s", command.description)
+        logger.exception("Failed to undo command: %s", command.description)
         return False
 
     def redo(self) -> bool:
@@ -837,7 +837,7 @@ class CommandManager:
             self.current_index += 1
             logger.debug("Redid command: %s", command.description)
             return True
-        logger.error("Failed to redo command: %s", command.description)
+        logger.exception("Failed to redo command: %s", command.description)
         return False
 
     def can_undo(self) -> bool:
@@ -913,4 +913,4 @@ class CommandManager:
 
         """
         self.auto_merge = enabled
-        logger.debug(f"Auto-merge {'enabled' if enabled else 'disabled'}")
+        logger.debug("Auto-merge %s", 'enabled' if enabled else 'disabled')

@@ -124,7 +124,7 @@ class ExportAnalyzer:
             self._parse_export_functions()
 
         except Exception as e:
-            self.logger.error(f"Export analysis failed: {e}")
+            self.logger.exception("Export analysis failed: %s", e)
             raise
 
     def _validate_pe_format(self) -> bool:
@@ -132,7 +132,7 @@ class ExportAnalyzer:
         if len(self.pe_data) < 64:
             return False
 
-        if self.pe_data[0:2] != b"MZ":
+        if self.pe_data[:2] != b"MZ":
             return False
 
         pe_offset: int = struct.unpack("<I", self.pe_data[0x3C:0x40])[0]
@@ -195,7 +195,7 @@ class ExportAnalyzer:
                 return
 
             self.export_directory = {
-                "characteristics": struct.unpack("<I", export_data[0:4])[0],
+                "characteristics": struct.unpack("<I", export_data[:4])[0],
                 "timestamp": struct.unpack("<I", export_data[4:8])[0],
                 "major_version": struct.unpack("<H", export_data[8:10])[0],
                 "minor_version": struct.unpack("<H", export_data[10:12])[0],
@@ -211,7 +211,7 @@ class ExportAnalyzer:
             }
 
         except Exception as e:
-            self.logger.error(f"Failed to parse export directory: {e}")
+            self.logger.exception("Failed to parse export directory: %s", e)
             self.export_directory = None
 
     def _parse_export_functions(self) -> None:
@@ -293,7 +293,7 @@ class ExportAnalyzer:
                     name=name,
                     ordinal=ordinal,
                     rva=func_rva,
-                    address=self.base_address + func_rva if not is_forwarded else 0,
+                    address=0 if is_forwarded else self.base_address + func_rva,
                     is_forwarded=is_forwarded,
                     forward_name=forward_name,
                     forward_dll=forward_dll,
@@ -303,7 +303,7 @@ class ExportAnalyzer:
                 self.exports.append(export_entry)
 
         except Exception as e:
-            self.logger.error(f"Failed to parse export functions: {e}")
+            self.logger.exception("Failed to parse export functions: %s", e)
 
     def _is_forwarded_export(self, rva: int) -> bool:
         """Check if export RVA points to forwarded export string."""
@@ -335,14 +335,11 @@ class ExportAnalyzer:
 
             virtual_address: int = struct.unpack("<I", self.pe_data[section_offset + 12 : section_offset + 16])[0]
             virtual_size: int = struct.unpack("<I", self.pe_data[section_offset + 8 : section_offset + 12])[0]
-            raw_data_ptr: int = struct.unpack("<I", self.pe_data[section_offset + 20 : section_offset + 24])[0]
-
             if virtual_address <= rva < (virtual_address + virtual_size):
-                offset: int = raw_data_ptr + (rva - virtual_address)
-                if offset < len(self.pe_data):
-                    return offset
-                return 0
+                raw_data_ptr: int = struct.unpack("<I", self.pe_data[section_offset + 20 : section_offset + 24])[0]
 
+                offset: int = raw_data_ptr + (rva - virtual_address)
+                return offset if offset < len(self.pe_data) else 0
         return 0
 
     def _read_string(self, offset: int) -> str:
@@ -361,17 +358,13 @@ class ExportAnalyzer:
 
     def get_export_by_name(self, name: str) -> ExportEntry | None:
         """Get export entry by function name."""
-        for export in self.exports:
-            if export.name == name:
-                return export
-        return None
+        return next((export for export in self.exports if export.name == name), None)
 
     def get_export_by_ordinal(self, ordinal: int) -> ExportEntry | None:
         """Get export entry by ordinal."""
-        for export in self.exports:
-            if export.ordinal == ordinal:
-                return export
-        return None
+        return next(
+            (export for export in self.exports if export.ordinal == ordinal), None
+        )
 
     def get_license_related_exports(self) -> list[ExportEntry]:
         """Identify exports related to license validation and activation."""
@@ -489,12 +482,8 @@ class ExportAnalyzer:
             return name
 
         if name.startswith("?"):
-            parts: list[str] = name.split("@@")
-            if len(parts) >= 1:
+            if parts := name.split("@@"):
                 base_name: str = parts[0][1:]
-
-                if "::" in base_name:
-                    return base_name
 
                 return base_name
 
@@ -502,14 +491,13 @@ class ExportAnalyzer:
 
     def search_exports(self, search_term: str) -> list[ExportEntry]:
         """Search exports by name substring."""
-        results: list[ExportEntry] = []
-
         search_lower: str = search_term.lower()
 
-        for export in self.exports:
-            if export.name and search_lower in export.name.lower():
-                results.append(export)
-
+        results: list[ExportEntry] = [
+            export
+            for export in self.exports
+            if export.name and search_lower in export.name.lower()
+        ]
         return results
 
     def filter_exports_by_pattern(self, pattern: str) -> list[ExportEntry]:
@@ -519,12 +507,13 @@ class ExportAnalyzer:
         try:
             regex = re.compile(pattern)
 
-            for export in self.exports:
-                if export.name and regex.search(export.name):
-                    results.append(export)
-
+            results.extend(
+                export
+                for export in self.exports
+                if export.name and regex.search(export.name)
+            )
         except re.error as e:
-            self.logger.error(f"Invalid regex pattern: {e}")
+            self.logger.exception("Invalid regex pattern: %s", e)
 
         return results
 

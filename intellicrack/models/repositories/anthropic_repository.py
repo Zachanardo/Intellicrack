@@ -126,7 +126,7 @@ class AnthropicRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from Anthropic: {error_message}")
+            logger.error("Failed to get models from Anthropic: %s", error_message)
             return []
 
         models = []
@@ -141,7 +141,7 @@ class AnthropicRepository(APIRepositoryBase):
             return models
 
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing Anthropic models response: {e}")
+            logger.exception("Error parsing Anthropic models response: %s", e)
             return []
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
@@ -163,7 +163,7 @@ class AnthropicRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from Anthropic: {error_message}")
+            logger.error("Failed to get models from Anthropic: %s", error_message)
             return None
 
         try:
@@ -172,7 +172,7 @@ class AnthropicRepository(APIRepositoryBase):
                 None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing Anthropic model details for {model_id}: {e}")
+            logger.exception("Error parsing Anthropic model details for %s: %s", model_id, e)
             return None
 
     def _create_model_info(self, model_id: str, model_data: dict[str, Any]) -> ModelInfo | None:
@@ -212,7 +212,7 @@ class AnthropicRepository(APIRepositoryBase):
                 local_path=None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error creating ModelInfo for {model_id}: {e}")
+            logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
     def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
@@ -222,5 +222,5 @@ class AnthropicRepository(APIRepositoryBase):
             Always returns (False, "Anthropic doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning("Download requested for %s to %s, but not supported", model_id, destination_path)
         return False, "Anthropic doesn't support model downloads"

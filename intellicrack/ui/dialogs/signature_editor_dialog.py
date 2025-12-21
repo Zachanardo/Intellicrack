@@ -72,7 +72,7 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
         # Keyword patterns
         keyword_format = QTextCharFormat()
         keyword_format.setForeground(keyword_color)
-        keyword_format.setFontWeight(QFont.Bold)
+        keyword_format.setFontWeight(QFont.Weight.Bold)
 
         keywords = [
             "init",
@@ -119,8 +119,10 @@ class SignatureSyntaxHighlighter(QSyntaxHighlighter):
             escaped_op = re.escape(op)
             self.highlighting_rules.append((re.compile(escaped_op), operator_format))
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str | None) -> None:
         """Apply syntax highlighting to a block of text."""
+        if text is None:
+            return
         for pattern, fmt in self.highlighting_rules:
             for match in pattern.finditer(text):
                 start, end = match.span()
@@ -163,7 +165,7 @@ class SignatureTestWorker(QThread):
                 )
 
             except Exception as e:
-                self.logger.error("Exception in signature_editor_dialog: %s", e)
+                self.logger.exception("Exception in signature_editor_dialog: %s", e)
                 self.test_completed.emit(file_path, False, f"Error: {e!s}", 0.0)
 
         # Final progress update
@@ -213,7 +215,7 @@ class SignatureTestWorker(QThread):
 
         except Exception as e:
             execution_time = time.time() - test_start_time
-            logger.error("Exception in signature_editor_dialog: %s", e)
+            logger.exception("Exception in signature_editor_dialog: %s", e)
             return {
                 "success": False,
                 "message": f"Test failed: {e!s}",
@@ -231,18 +233,48 @@ class SignatureEditorDialog(QDialog):
         self.setModal(True)
         self.resize(1200, 800)
 
+        # Logger
+        self.logger = logger
+
         # Data
         self.current_signature_path: str | None = None
         self.signature_databases: dict[str, str] = {}  # name -> path
-        self.current_signatures: list[dict] = []
+        self.current_signatures: list[dict[str, str]] = []
         self.test_worker: SignatureTestWorker | None = None
+        self._category_selections: dict[str, str] = {}
 
         # UI Components
-        self.signature_list: QListWidget | None = None
-        self.signature_editor: QTextEdit | None = None
-        self.syntax_highlighter: SignatureSyntaxHighlighter | None = None
-        self.test_results_table: QTableView | None = None
-        self.test_results_model: QStandardItemModel | None = None
+        self.signature_list: QListWidget
+        self.signature_editor: QTextEdit
+        self.syntax_highlighter: SignatureSyntaxHighlighter
+        self.test_results_table: QTableView
+        self.test_results_model: QStandardItemModel
+        self.db_combo: QComboBox
+        self.search_input: QLineEdit
+        self.sig_info_text: QTextEdit
+        self.sig_name_input: QLineEdit
+        self.sig_type_combo: QComboBox
+        self.sig_version_input: QLineEdit
+        self.sig_description_input: QLineEdit
+        self.test_files_list: QListWidget
+        self.test_summary_label: QLabel
+        self.template_category_list: QListWidget
+        self.template_list: QListWidget
+        self.template_preview: QTextEdit
+        self.run_test_btn: QPushButton
+        self.stop_test_btn: QPushButton
+        self.new_sig_btn: QPushButton
+        self.load_sig_btn: QPushButton
+        self.save_sig_btn: QPushButton
+        self.add_db_btn: QPushButton
+        self.refresh_btn: QPushButton
+        self.validate_btn: QPushButton
+        self.format_btn: QPushButton
+        self.insert_template_btn: QPushButton
+        self.add_test_file_btn: QPushButton
+        self.add_test_folder_btn: QPushButton
+        self.clear_test_files_btn: QPushButton
+        self.insert_template_to_editor_btn: QPushButton
 
         self.init_ui()
         self.load_signature_databases()
@@ -256,7 +288,7 @@ class SignatureEditorDialog(QDialog):
         layout.addLayout(toolbar)
 
         # Main content area
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel: Signature browser
         left_panel = self._create_signature_browser()
@@ -272,7 +304,7 @@ class SignatureEditorDialog(QDialog):
 
         # Button box
         button_box = QDialogButtonBox(
-            QDialogButtonBox.Save | QDialogButtonBox.Close,
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Close,
         )
         button_box.accepted.connect(self.save_signature)
         button_box.rejected.connect(self.close)
@@ -287,7 +319,7 @@ class SignatureEditorDialog(QDialog):
         # Database selection
         layout.addWidget(QLabel("Database:"))
         self.db_combo = QComboBox()
-        self.db_combo.currentTextChanged.connect(self.load_signatures_from_database)
+        self.db_combo.currentTextChanged.connect(self._on_db_combo_changed)
         layout.addWidget(self.db_combo)
 
         layout.addWidget(QLabel("|"))
@@ -319,6 +351,10 @@ class SignatureEditorDialog(QDialog):
         layout.addStretch()
         return layout
 
+    def _on_db_combo_changed(self, text: str) -> None:
+        """Handle database combo box change."""
+        self.load_signatures_from_database(text)
+
     def _create_signature_browser(self) -> QWidget:
         """Create signature browser panel."""
         widget = QWidget()
@@ -328,7 +364,7 @@ class SignatureEditorDialog(QDialog):
         search_layout = QHBoxLayout()
         search_layout.addWidget(QLabel("Search:"))
         self.search_input = QLineEdit()
-        self.search_input.textChanged.connect(self.filter_signatures)
+        self.search_input.textChanged.connect(self._on_search_input_changed)
         self.search_input.setToolTip("Enter text to filter signatures by name")
         search_layout.addWidget(self.search_input)
         layout.addLayout(search_layout)
@@ -354,6 +390,10 @@ class SignatureEditorDialog(QDialog):
 
         widget.setLayout(layout)
         return widget
+
+    def _on_search_input_changed(self, text: str) -> None:
+        """Handle search input change."""
+        self.filter_signatures(text)
 
     def _create_editor_panel(self) -> QWidget:
         """Create editor and testing panel."""
@@ -451,10 +491,10 @@ class SignatureEditorDialog(QDialog):
         # Text editor
         self.signature_editor = QTextEdit()
         self.signature_editor.setFont(QFont("Consolas", 11))
-        self.signature_editor.setLineWrapMode(QTextEdit.NoWrap)
+        self.signature_editor.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
 
-        # Apply syntax highlighting
-        self.syntax_highlighter = SignatureSyntaxHighlighter(self.signature_editor.document())
+        if signature_doc := self.signature_editor.document():
+            self.syntax_highlighter = SignatureSyntaxHighlighter(signature_doc)
 
         editor_layout.addWidget(self.signature_editor)
         editor_group.setLayout(editor_layout)
@@ -532,15 +572,14 @@ class SignatureEditorDialog(QDialog):
         self.test_results_table = QTableView()
         self.test_results_table.setModel(self.test_results_model)
         self.test_results_table.setAlternatingRowColors(True)
-        self.test_results_table.setSelectionBehavior(QTableView.SelectRows)
+        self.test_results_table.setSelectionBehavior(QTableView.SelectionBehavior.SelectRows)
 
-        # Resize columns
-        header = self.test_results_table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
+        if header := self.test_results_table.horizontalHeader():
+            header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+            header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+            header.setSectionResizeMode(4, QHeaderView.ResizeMode.ResizeToContents)
 
         results_layout.addWidget(self.test_results_table)
 
@@ -662,12 +701,12 @@ class SignatureEditorDialog(QDialog):
             self._update_signature_list()
 
         except Exception as e:
-            self.logger.error("Exception in signature_editor_dialog: %s", e)
+            self.logger.exception("Exception in signature_editor_dialog: %s", e)
             QMessageBox.warning(self, "Load Error", f"Failed to load database {db_name}: {e!s}")
 
-    def _parse_signature_file(self, content: str) -> list[dict]:
+    def _parse_signature_file(self, content: str) -> list[dict[str, str]]:
         """Parse signature file content into individual signatures."""
-        signatures = []
+        signatures: list[dict[str, str]] = []
 
         # Split content by signature blocks
         blocks = re.split(r"\n\s*\n", content.strip())
@@ -676,7 +715,7 @@ class SignatureEditorDialog(QDialog):
             if not block.strip():
                 continue
 
-            sig_data = {
+            sig_data: dict[str, str] = {
                 "name": "Unknown",
                 "type": "Other",
                 "version": "",
@@ -715,7 +754,7 @@ class SignatureEditorDialog(QDialog):
                 continue
 
             item = QListWidgetItem(f"{sig['name']} ({sig['type']})")
-            item.setData(Qt.UserRole, sig)
+            item.setData(Qt.ItemDataRole.UserRole, sig)
 
             # Color code by type
             if sig["type"].lower() in ["packer", "protector"]:
@@ -733,9 +772,10 @@ class SignatureEditorDialog(QDialog):
 
     def load_signature_from_list(self, item: QListWidgetItem) -> None:
         """Load signature from list selection."""
-        sig_data = item.data(Qt.UserRole)
-        if not sig_data:
+        sig_data_raw = item.data(Qt.ItemDataRole.UserRole)
+        if not isinstance(sig_data_raw, dict):
             return
+        sig_data: dict[str, str] = sig_data_raw
 
         # Load into editor
         self.sig_name_input.setText(sig_data["name"])
@@ -747,7 +787,7 @@ class SignatureEditorDialog(QDialog):
         # Update info display
         self._update_signature_info(sig_data)
 
-    def _update_signature_info(self, sig_data: dict) -> None:
+    def _update_signature_info(self, sig_data: dict[str, str]) -> None:
         """Update signature info display."""
         info_text = f"""Name: {sig_data["name"]}
 Type: {sig_data["type"]}
@@ -814,7 +854,7 @@ ep:
                 self._extract_metadata_from_content(content)
 
             except Exception as e:
-                self.logger.error("Exception in signature_editor_dialog: %s", e)
+                self.logger.exception("Exception in signature_editor_dialog: %s", e)
                 QMessageBox.critical(self, "Load Error", f"Failed to load file: {e!s}")
 
     def _extract_metadata_from_content(self, content: str) -> None:
@@ -865,7 +905,7 @@ ep:
                 QMessageBox.information(self, "Save Successful", f"Signature saved to {file_path}")
 
             except Exception as e:
-                logger.error("Exception in signature_editor_dialog: %s", e)
+                logger.exception("Exception in signature_editor_dialog: %s", e)
                 QMessageBox.critical(self, "Save Error", f"Failed to save file: {e!s}")
 
     def _build_signature_content(self) -> str:
@@ -963,18 +1003,12 @@ ep:
             return
 
         # Save state from previous category if needed
-        if previous_item and hasattr(self, "template_list"):
+        if previous_item:
             previous_category = previous_item.text()
-            selected_template = None
-            if self.template_list.currentItem():
-                selected_template = self.template_list.currentItem().text()
-
-            # Store the last selected template for this category
-            if not hasattr(self, "_category_selections"):
-                self._category_selections = {}
-            if selected_template:
+            if current_template_item := self.template_list.currentItem():
+                selected_template = current_template_item.text()
                 self._category_selections[previous_category] = selected_template
-                logger.debug(f"Saved template selection '{selected_template}' for category '{previous_category}'")
+                logger.debug("Saved template selection '%s' for category '%s'", selected_template, previous_category)
 
         category = current_item.text()
         self.template_list.clear()
@@ -985,13 +1019,14 @@ ep:
             self.template_list.addItem(template_name)
 
         # Restore previous selection for this category if available
-        if hasattr(self, "_category_selections") and category in self._category_selections:
+        if category in self._category_selections:
             previous_selection = self._category_selections[category]
             for i in range(self.template_list.count()):
-                if self.template_list.item(i).text() == previous_selection:
+                template_item = self.template_list.item(i)
+                if template_item and template_item.text() == previous_selection:
                     self.template_list.setCurrentRow(i)
                     self._update_template_preview()
-                    logger.debug(f"Restored template selection '{previous_selection}' for category '{category}'")
+                    logger.debug("Restored template selection '%s' for category '%s'", previous_selection, category)
                     return
 
         # Load first template preview if no previous selection
@@ -1098,7 +1133,10 @@ ep:
             QMessageBox.warning(self, "Test Error", "No signature content to test")
             return
 
-        test_files = [self.test_files_list.item(i).text() for i in range(self.test_files_list.count())]
+        test_files: list[str] = []
+        for i in range(self.test_files_list.count()):
+            if test_item := self.test_files_list.item(i):
+                test_files.append(test_item.text())
         if not test_files:
             QMessageBox.warning(self, "Test Error", "No test files selected")
             return
@@ -1159,7 +1197,7 @@ ep:
             size = os.path.getsize(file_path)
             size_str = f"{size:,} bytes"
         except OSError as e:
-            logger.debug(f"Failed to get file size for {file_path}: {e}")
+            logger.debug("Failed to get file size for %s: %s", file_path, e)
             size_str = "Unknown"
 
         size_item = QStandardItem(size_str)

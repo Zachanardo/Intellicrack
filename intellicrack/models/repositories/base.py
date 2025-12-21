@@ -442,13 +442,13 @@ class APIRepositoryBase(ModelRepositoryInterface):
             ).hexdigest()  # lgtm[py/weak-sensitive-data-hashing] SHA256 for cache key generation, not sensitive data
 
             if cached_data := self.cache_manager.get_cached_item(cache_key):
-                logger.debug(f"Cache hit for {url}")
+                logger.debug("Cache hit for %s", url)
                 return True, cached_data, ""
 
         # Check rate limits
         allowed, message = self.rate_limiter.check_limit(url)
         if not allowed:
-            logger.warning(f"Rate limit check failed: {message}")
+            logger.warning("Rate limit check failed: %s", message)
             return False, None, message
 
         # Set default headers
@@ -481,14 +481,14 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
             # Handle response
             if response.status_code >= 400:
-                logger.warning(f"API request failed: {response.status_code} - {response.text}")
+                logger.warning("API request failed: %d - %s", response.status_code, response.text)
                 return False, None, f"API request failed: {response.status_code} - {response.text}"
 
             # Parse response data (assume JSON)
             try:
                 response_data = response.json()
             except ValueError:
-                logger.error("Value error in base", exc_info=True)
+                logger.exception("Value error in base", exc_info=True)
                 response_data = response.text
 
             # Cache successful GET responses
@@ -498,7 +498,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
             return True, response_data, ""
 
         except requests.RequestError:
-            logger.error("Request error", exc_info=True)
+            logger.exception("Request error", exc_info=True)
             return False, None, "Request error"
 
     # pylint: disable=too-many-locals
@@ -582,12 +582,12 @@ class APIRepositoryBase(ModelRepositoryInterface):
                 return True, "Download complete"
 
         except requests.RequestError:
-            logger.error("requests.RequestError in base", exc_info=True)
+            logger.exception("requests.RequestError in base", exc_info=True)
             if progress_callback:
                 progress_callback.on_complete(False, "Download failed")
             return False, "Download failed"
         except OSError:
-            logger.error("IO error in base", exc_info=True)
+            logger.exception("IO error in base", exc_info=True)
             if progress_callback:
                 progress_callback.on_complete(False, "File I/O error")
             return False, "File I/O error"
@@ -613,7 +613,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
             actual_checksum = sha256_hash.hexdigest()
             return actual_checksum == expected_checksum
         except OSError:
-            logger.error("Failed to compute checksum", exc_info=True)
+            logger.exception("Failed to compute checksum", exc_info=True)
             return False
 
     @abstractmethod

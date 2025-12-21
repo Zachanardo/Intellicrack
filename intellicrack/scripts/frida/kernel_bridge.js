@@ -993,8 +993,7 @@ const KernelBridge = {
         const code = Memory.alloc(shellcode.length);
         code.writeByteArray(shellcode);
 
-        const result = this.executeInKernel(code);
-        return result;
+        return this.executeInKernel(code);
     },
 
     // Write kernel memory

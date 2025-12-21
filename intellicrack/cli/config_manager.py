@@ -106,7 +106,7 @@ class ConfigManager:
             logger.info("Renamed old config to %s", backup_file)
 
         except Exception as e:
-            logger.error("Failed to migrate CLI config: %s", e, exc_info=True)
+            logger.exception("Failed to migrate CLI config: %s", e)
             # Continue without migration, use defaults
 
     def load_config(self) -> None:

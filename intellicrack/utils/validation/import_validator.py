@@ -222,9 +222,9 @@ class PluginStructureValidator:
 
             # Check for missing required methods
             missing_methods = required_methods - found_methods
-            for method in missing_methods:
-                errors.append(f"Missing required '{method}' method")
-
+            errors.extend(
+                f"Missing required '{method}' method" for method in missing_methods
+            )
             return not errors, errors
 
         except Exception as e:

@@ -1392,6 +1392,236 @@ class TestRiskAssessment:
         return dos_header + dos_stub + pe_sig + coff + opt + section + code
 
 
+class TestBypassGeneratorErrorHandling:
+    """Test error handling in bypass generation."""
+
+    def test_handles_corrupted_pe_header(self, temp_workspace: Path) -> None:
+        """Bypass generator handles corrupted PE header gracefully."""
+        binary_path = temp_workspace / "corrupted.exe"
+        binary_path.write_bytes(b"MZ" + b"\x00" * 100)
+
+        with pytest.raises((R2Exception, OSError, ValueError)):
+            generator = R2BypassGenerator(str(binary_path))
+            generator.generate_comprehensive_bypass()
+
+    def test_handles_empty_binary_file(self, temp_workspace: Path) -> None:
+        """Bypass generator handles empty binary file."""
+        binary_path = temp_workspace / "empty.exe"
+        binary_path.write_bytes(b"")
+
+        with pytest.raises((R2Exception, OSError, ValueError)):
+            generator = R2BypassGenerator(str(binary_path))
+            generator.generate_comprehensive_bypass()
+
+    def test_handles_binary_without_license_checks(self, temp_workspace: Path) -> None:
+        """Bypass generator handles binary without any license checks."""
+        binary_path = temp_workspace / "clean.exe"
+        binary_path.write_bytes(self._create_minimal_pe())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+        assert "bypass_strategies" in result
+        assert isinstance(result["bypass_strategies"], list)
+
+    def test_handles_radare2_analysis_failure(self, temp_workspace: Path) -> None:
+        """Bypass generator handles radare2 analysis failures gracefully."""
+        binary_path = temp_workspace / "test.exe"
+        binary_path.write_bytes(self._create_minimal_pe())
+
+        generator = R2BypassGenerator(str(binary_path), radare2_path="/nonexistent/r2")
+
+        result = generator.generate_comprehensive_bypass()
+        assert isinstance(result, dict)
+
+    def test_handles_invalid_binary_path(self) -> None:
+        """Bypass generator raises appropriate error for invalid path."""
+        with pytest.raises((FileNotFoundError, R2Exception, OSError)):
+            R2BypassGenerator("/invalid/path/to/binary.exe")
+
+    def test_handles_binary_with_no_code_section(self, temp_workspace: Path) -> None:
+        """Bypass generator handles binary with missing code section."""
+        binary_path = temp_workspace / "no_code.exe"
+        dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
+        pe_sig = b"PE\x00\x00"
+        coff = struct.pack("<HHIIIHH", 0x014C, 0, 0, 0, 0, 0xE0, 0x010B)
+        binary_path.write_bytes(dos_header + b"\x00" * 56 + pe_sig + coff)
+
+        with pytest.raises((R2Exception, OSError, ValueError)):
+            generator = R2BypassGenerator(str(binary_path))
+            generator.generate_comprehensive_bypass()
+
+    def test_handles_binary_with_invalid_architecture(self, temp_workspace: Path) -> None:
+        """Bypass generator handles binary with unsupported architecture."""
+        binary_path = temp_workspace / "invalid_arch.exe"
+        dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
+        pe_sig = b"PE\x00\x00"
+        coff = struct.pack("<HHIIIHH", 0xFFFF, 1, 0, 0, 0, 0xE0, 0x010B)
+        binary_path.write_bytes(dos_header + b"\x00" * 56 + pe_sig + coff + b"\x00" * 200)
+
+        with pytest.raises((R2Exception, OSError, ValueError)):
+            generator = R2BypassGenerator(str(binary_path))
+            generator.generate_comprehensive_bypass()
+
+    def _create_minimal_pe(self) -> bytes:
+        """Create minimal PE."""
+        dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
+        dos_stub = b"\x0e\x1fThis program cannot be run in DOS mode.\r\r\n$\x00" + b"\x00" * 20
+        pe_sig = b"PE\x00\x00"
+        coff = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 0xE0, 0x010B)
+        opt = struct.pack("<HHIIIIIIHHHHHHIIHHIIIIII",
+                          0x010B, 0x0E, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0, 0x10, 5, 1,
+                          0, 0, 5, 1, 0x4000, 0x1000, 0x1000, 0x200, 0x100000, 0x1000, 2, 0x8000)
+        section = b".text\x00\x00\x00" + struct.pack("<IIIIIIHH", 0x1000, 0x1000, 0x200, 0x200, 0, 0, 0, 0) + struct.pack("<I", 0x60000020)
+        code = b"\x55\x8b\xec\x33\xc0\x5d\xc3" + b"\x00" * (0x200 - 7)
+        return dos_header + dos_stub + pe_sig + coff + opt + section + code
+
+
+class TestBypassGeneratorEdgeCases:
+    """Test edge cases in bypass generation."""
+
+    def test_handles_binary_with_packed_sections(self, temp_workspace: Path) -> None:
+        """Bypass generator detects packed/compressed code sections."""
+        binary_path = temp_workspace / "packed.exe"
+        binary_path.write_bytes(self._create_packed_pe())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+        assert "bypass_strategies" in result
+
+    def test_handles_binary_with_obfuscated_strings(self, temp_workspace: Path) -> None:
+        """Bypass generator analyzes binary with obfuscated license strings."""
+        binary_path = temp_workspace / "obfuscated.exe"
+        binary_path.write_bytes(self._create_pe_with_obfuscated_strings())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+        assert "string_patterns" in result or "bypass_strategies" in result
+
+    def test_handles_large_binary_efficiently(self, temp_workspace: Path) -> None:
+        """Bypass generator handles large binaries without excessive memory usage."""
+        binary_path = temp_workspace / "large.exe"
+        large_binary = self._create_large_pe(size_mb=5)
+        binary_path.write_bytes(large_binary)
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+        assert "bypass_strategies" in result
+
+    def test_handles_binary_with_multiple_sections(self, temp_workspace: Path) -> None:
+        """Bypass generator analyzes binary with multiple code/data sections."""
+        binary_path = temp_workspace / "multi_section.exe"
+        binary_path.write_bytes(self._create_multi_section_pe())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+        assert "bypass_strategies" in result
+
+    def test_handles_binary_with_no_imports(self, temp_workspace: Path) -> None:
+        """Bypass generator handles binary with no import table."""
+        binary_path = temp_workspace / "no_imports.exe"
+        binary_path.write_bytes(self._create_minimal_pe())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+
+    def test_handles_binary_with_stripped_symbols(self, temp_workspace: Path) -> None:
+        """Bypass generator analyzes binary with stripped function names."""
+        binary_path = temp_workspace / "stripped.exe"
+        binary_path.write_bytes(self._create_minimal_pe())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result = generator.generate_comprehensive_bypass()
+
+        assert isinstance(result, dict)
+        assert "bypass_strategies" in result
+
+    def test_handles_concurrent_bypass_generation(self, temp_workspace: Path) -> None:
+        """Bypass generator handles concurrent analysis requests safely."""
+        binary_path = temp_workspace / "concurrent.exe"
+        binary_path.write_bytes(self._create_minimal_pe())
+
+        generator1 = R2BypassGenerator(str(binary_path))
+        generator2 = R2BypassGenerator(str(binary_path))
+
+        result1 = generator1.generate_comprehensive_bypass()
+        result2 = generator2.generate_comprehensive_bypass()
+
+        assert isinstance(result1, dict)
+        assert isinstance(result2, dict)
+
+    def test_bypass_generation_is_deterministic(self, temp_workspace: Path) -> None:
+        """Bypass generator produces consistent results for same binary."""
+        binary_path = temp_workspace / "deterministic.exe"
+        binary_path.write_bytes(self._create_minimal_pe())
+
+        generator = R2BypassGenerator(str(binary_path))
+        result1 = generator.generate_comprehensive_bypass()
+        result2 = generator.generate_comprehensive_bypass()
+
+        assert result1.get("binary_path") == result2.get("binary_path")
+
+    def _create_minimal_pe(self) -> bytes:
+        """Create minimal PE."""
+        dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
+        dos_stub = b"\x0e\x1fThis program cannot be run in DOS mode.\r\r\n$\x00" + b"\x00" * 20
+        pe_sig = b"PE\x00\x00"
+        coff = struct.pack("<HHIIIHH", 0x014C, 1, 0, 0, 0, 0xE0, 0x010B)
+        opt = struct.pack("<HHIIIIIIHHHHHHIIHHIIIIII",
+                          0x010B, 0x0E, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0x1000, 0, 0x10, 5, 1,
+                          0, 0, 5, 1, 0x4000, 0x1000, 0x1000, 0x200, 0x100000, 0x1000, 2, 0x8000)
+        section = b".text\x00\x00\x00" + struct.pack("<IIIIIIHH", 0x1000, 0x1000, 0x200, 0x200, 0, 0, 0, 0) + struct.pack("<I", 0x60000020)
+        code = b"\x55\x8b\xec\x33\xc0\x5d\xc3" + b"\x00" * (0x200 - 7)
+        return dos_header + dos_stub + pe_sig + coff + opt + section + code
+
+    def _create_packed_pe(self) -> bytes:
+        """Create PE with packed code section."""
+        import zlib
+        base_pe = self._create_minimal_pe()
+        return base_pe[:0x200] + zlib.compress(base_pe[0x200:])
+
+    def _create_pe_with_obfuscated_strings(self) -> bytes:
+        """Create PE with XOR-obfuscated strings."""
+        pe = bytearray(self._create_minimal_pe())
+        obfuscated = bytes([b ^ 0x42 for b in b"LICENSE_KEY_VALIDATION"])
+        pe.extend(obfuscated)
+        return bytes(pe)
+
+    def _create_large_pe(self, size_mb: int) -> bytes:
+        """Create large PE binary."""
+        base_pe = self._create_minimal_pe()
+        padding = b"\x00" * (size_mb * 1024 * 1024 - len(base_pe))
+        return base_pe + padding
+
+    def _create_multi_section_pe(self) -> bytes:
+        """Create PE with multiple sections."""
+        dos_header = b"MZ" + b"\x90" * 58 + struct.pack("<I", 0x80)
+        dos_stub = b"\x0e\x1fThis program cannot be run in DOS mode.\r\r\n$\x00" + b"\x00" * 20
+        pe_sig = b"PE\x00\x00"
+        coff = struct.pack("<HHIIIHH", 0x014C, 3, 0, 0, 0, 0xE0, 0x010B)
+        opt = struct.pack("<HHIIIIIIHHHHHHIIHHIIIIII",
+                          0x010B, 0x0E, 0x1000, 0x2000, 0x1000, 0x1000, 0x1000, 0x1000, 0, 0x10, 5, 1,
+                          0, 0, 5, 1, 0x6000, 0x1000, 0x1000, 0x200, 0x100000, 0x1000, 2, 0x8000)
+        text_section = b".text\x00\x00\x00" + struct.pack("<IIIIIIHH", 0x1000, 0x1000, 0x200, 0x200, 0, 0, 0, 0) + struct.pack("<I", 0x60000020)
+        data_section = b".data\x00\x00\x00" + struct.pack("<IIIIIIHH", 0x1000, 0x2000, 0x200, 0x400, 0, 0, 0, 0) + struct.pack("<I", 0xC0000040)
+        rsrc_section = b".rsrc\x00\x00\x00" + struct.pack("<IIIIIIHH", 0x1000, 0x3000, 0x200, 0x600, 0, 0, 0, 0) + struct.pack("<I", 0x40000040)
+        code = b"\x55\x8b\xec\x33\xc0\x5d\xc3" + b"\x00" * (0x200 - 7)
+        data = b"\x00" * 0x200
+        rsrc = b"\x00" * 0x200
+        return dos_header + dos_stub + pe_sig + coff + opt + text_section + data_section + rsrc_section + code + data + rsrc
+
+
 @pytest.fixture
 def temp_workspace(tmp_path: Path) -> Path:
     """Create temporary workspace for test binaries."""

@@ -31,7 +31,7 @@ from enum import Enum
 from typing import Any, TypeVar
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
+from .learning_engine import get_learning_engine
 from .performance_monitor import profile_ai_operation
 
 
@@ -46,7 +46,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in performance_optimization_layer: %s", e)
+    logger.exception("Import error in performance_optimization_layer: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -280,7 +280,7 @@ class PerformanceOptimizer:
             return result if result is not None else operation_func(*args, **kwargs)
 
         except Exception as e:
-            logger.error("Error in optimized operation %s: %s", operation_id, e)
+            logger.exception("Error in optimized operation %s: %s", operation_id, e)
             # Fall back to original function
             fallback_result = operation_func(*args, **kwargs)
             return fallback_result if fallback_result is not None else None
@@ -947,7 +947,7 @@ class ParallelExecutor:
                     result = future.result()
                     results.append(result)
                 except Exception as e:
-                    logger.error("Error in parallel execution: %s", e)
+                    logger.exception("Error in parallel execution: %s", e)
                     results.append(None)
 
         parallel_time = time.time() - start_parallel
@@ -1002,7 +1002,7 @@ class ParallelExecutor:
                     result = future.result()
                     results.append(result)
                 except Exception as e:
-                    logger.error("Error in batch parallel execution: %s", e)
+                    logger.exception("Error in batch parallel execution: %s", e)
                     results.append(None)
 
         self.execution_stats["parallel_executions"] += 1
@@ -1093,9 +1093,7 @@ class CacheManager:
             self.access_counts[key] += 1
             self.stats["hits"] += 1
 
-            cached_value = self.cache[key].get("value")
-            return cached_value
-
+            return self.cache[key].get("value")
         self.stats["misses"] += 1
         return None
 
@@ -1269,7 +1267,7 @@ class PerformanceOptimizationLayer:
                     time.sleep(300)
 
                 except Exception as e:
-                    logger.error("Error in background optimization: %s", e)
+                    logger.exception("Error in background optimization: %s", e)
                     time.sleep(60)  # Wait 1 minute on error
 
         thread = threading.Thread(target=background_worker, daemon=True)

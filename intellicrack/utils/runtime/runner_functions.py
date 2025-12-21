@@ -116,7 +116,7 @@ def get_resource_path(package: str, resource_path: str) -> str:
         with importlib_res.path(package, ".") as p:
             return str(p.parent / resource_path)
     except Exception as e:
-        logger.error("Exception in runner_functions: %s", e, exc_info=True)
+        logger.exception("Exception in runner_functions: %s", e)
         import intellicrack
 
         base_path = os.path.dirname(os.path.dirname(os.path.dirname(intellicrack.__file__)))
@@ -184,7 +184,7 @@ def run_network_license_server(app_instance: object | None = None, **kwargs: obj
             return {"status": "error", "message": "Network license server not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running network license server: %s", e, exc_info=True)
+        logger.exception("Error running network license server: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -246,7 +246,7 @@ def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object
             return {"status": "error", "message": "SSL/TLS interceptor not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running SSL/TLS interceptor: %s", e, exc_info=True)
+        logger.exception("Error running SSL/TLS interceptor: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -322,7 +322,7 @@ def run_protocol_fingerprinter(app_instance: object | None = None, **kwargs: obj
             return {"status": "error", "message": "Protocol fingerprinter not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running protocol fingerprinter: %s", e, exc_info=True)
+        logger.exception("Error running protocol fingerprinter: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -385,7 +385,7 @@ def run_cloud_license_hooker(app_instance: object | None = None, **kwargs: objec
             return {"status": "error", "message": "Cloud license hooker not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running cloud license hooker: %s", e, exc_info=True)
+        logger.exception("Error running cloud license hooker: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -422,7 +422,7 @@ def run_cfg_explorer(app_instance: object | None = None, binary_path: str | None
             return {"status": "error", "message": "CFG explorer not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running CFG explorer: %s", e, exc_info=True)
+        logger.exception("Error running CFG explorer: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -463,7 +463,7 @@ def run_concolic_execution(app_instance: object | None = None, binary_path: str 
             return {"status": "error", "message": "Concolic execution not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running concolic execution: %s", e, exc_info=True)
+        logger.exception("Error running concolic execution: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -514,7 +514,7 @@ def run_enhanced_protection_scan(app_instance: object | None = None, binary_path
             return {"status": "error", "message": "Protection scanning not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running enhanced protection scan: %s", e, exc_info=True)
+        logger.exception("Error running enhanced protection scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -546,7 +546,7 @@ def run_visual_network_traffic_analyzer(app_instance: object | None = None, **kw
             return {"status": "error", "message": "Network traffic analyzer not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running network traffic analyzer: %s", e, exc_info=True)
+        logger.exception("Error running network traffic analyzer: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -587,7 +587,7 @@ def run_multi_format_analysis(app_instance: object | None = None, binary_path: s
             return {"status": "error", "message": "Multi-format analyzer not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running multi-format analysis: %s", e, exc_info=True)
+        logger.exception("Error running multi-format analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -619,7 +619,7 @@ def run_distributed_processing(app_instance: object | None = None, **kwargs: obj
             return {"status": "error", "message": "Parallel processing not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running parallel processing: %s", e, exc_info=True)
+        logger.exception("Error running parallel processing: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -706,7 +706,7 @@ def run_gpu_accelerated_analysis(app_instance: object | None = None, **kwargs: o
                     _emit_output(app_instance, "  Normal entropy - likely uncompressed data")
                 _emit_output(app_instance, "")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in runner_functions: %s", e, exc_info=True)
+                logger.exception("Error in runner_functions: %s", e)
                 _emit_output(app_instance, f"  WARNING Entropy calculation failed: {e}")
                 _emit_output(app_instance, "")
 
@@ -751,7 +751,7 @@ def run_gpu_accelerated_analysis(app_instance: object | None = None, **kwargs: o
             return {"status": "error", "message": "GPU accelerator not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running GPU accelerated analysis: %s", e, exc_info=True)
+        logger.exception("Error running GPU accelerated analysis: %s", e)
         _emit_output(app_instance, f"ERROR Error in GPU analysis: {e}")
         return {"status": "error", "message": str(e)}
 
@@ -786,7 +786,7 @@ def run_ai_guided_patching(app_instance: object | None = None, binary_path: str 
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running autonomous patching: %s", e, exc_info=True)
+        logger.exception("Error running autonomous patching: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -918,7 +918,7 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
             try:
                 shutil.copy(script_source, script_destination)
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in runner_functions: %s", e, exc_info=True)
+                logger.exception("Error in runner_functions: %s", e)
                 error_msg = f"Error copying script: {e}"
                 _emit_output(app_instance, log_message(f"[Ghidra Analysis] {error_msg}"))
                 return {"status": "error", "message": error_msg}
@@ -956,7 +956,7 @@ def run_advanced_ghidra_analysis(app_instance: object | None = None, binary_path
         return {"status": "success", "message": "Ghidra analysis started"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running Ghidra analysis: %s", e, exc_info=True)
+        logger.exception("Error running Ghidra analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -981,14 +981,14 @@ def process_ghidra_analysis_results(app: Any, json_path: str) -> None:
             with open(json_path, encoding="utf-8") as f:
                 results = json.load(f)
         except json.JSONDecodeError as e:
-            logger.error("json.JSONDecodeError in runner_functions: %s", e, exc_info=True)
+            logger.exception("json.JSONDecodeError in runner_functions: %s", e)
             app.update_output.emit(log_message(f"[Ghidra Analysis] Invalid JSON: {e}"))
             app.update_output.emit(log_message(traceback.format_exc()))
             error_msg = f"Invalid JSON file: {e}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg) from e
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in runner_functions: %s", e, exc_info=True)
+            logger.exception("Error in runner_functions: %s", e)
             app.update_output.emit(log_message(f"[Ghidra Analysis] Error reading file: {e}"))
             app.update_output.emit(log_message(traceback.format_exc()))
             raise
@@ -1074,7 +1074,7 @@ def process_ghidra_analysis_results(app: Any, json_path: str) -> None:
                         },
                     )
                 except (ValueError, TypeError) as e:
-                    logger.error("Error in runner_functions: %s", e, exc_info=True)
+                    logger.exception("Error in runner_functions: %s", e)
                     app.update_output.emit(log_message(f"[Ghidra Analysis] Error parsing patch {i + 1}: {e}"))
 
             # Store patches for later use
@@ -1112,7 +1112,7 @@ def process_ghidra_analysis_results(app: Any, json_path: str) -> None:
         app.update_status.emit("Ghidra analysis complete")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in runner_functions: %s", e, exc_info=True)
+        logger.exception("Error in runner_functions: %s", e)
         app.update_output.emit(log_message(f"[Ghidra Analysis] Unexpected error: {e}"))
         app.update_output.emit(log_message(traceback.format_exc()))
         app.update_status.emit(f"Error processing results: {e!s}")
@@ -1175,7 +1175,7 @@ def run_symbolic_execution(app_instance: object | None = None, binary_path: str 
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running symbolic execution: %s", e, exc_info=True)
+        logger.exception("Error running symbolic execution: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1226,7 +1226,7 @@ def run_incremental_analysis(app_instance: object | None = None, binary_path: st
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running incremental analysis: %s", e, exc_info=True)
+        logger.exception("Error running incremental analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1287,12 +1287,12 @@ def run_memory_optimized_analysis(
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in runner_functions: %s", e, exc_info=True)
+            logger.exception("Error in runner_functions: %s", e)
             loader.close()
             raise
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running memory-optimized analysis: %s", e, exc_info=True)
+        logger.exception("Error running memory-optimized analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1337,7 +1337,7 @@ def run_taint_analysis(app_instance: object | None = None, binary_path: str | No
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running taint analysis: %s", e, exc_info=True)
+        logger.exception("Error running taint analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1364,7 +1364,7 @@ def run_rop_chain_generator(app_instance: object | None = None, binary_path: str
         return {"status": "success", "message": "ROP chain generation completed"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running ROP chain generation: %s", e, exc_info=True)
+        logger.exception("Error running ROP chain generation: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1393,7 +1393,7 @@ def run_qemu_analysis(app_instance: object | None = None, binary_path: str | Non
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running QEMU analysis: %s", e, exc_info=True)
+        logger.exception("Error running QEMU analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1446,7 +1446,7 @@ def run_qiling_emulation(app_instance: object | None = None, binary_path: str | 
         return {"status": "success", "message": "Qiling emulation complete", "results": qiling_results}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running Qiling emulation: %s", e, exc_info=True)
+        logger.exception("Error running Qiling emulation: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1493,7 +1493,7 @@ def run_selected_analysis(app_instance: object | None = None, analysis_type: str
         return {"status": "error", "message": f"Unknown analysis type: {analysis_type}"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running selected analysis: %s", e, exc_info=True)
+        logger.exception("Error running selected analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1528,7 +1528,7 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
                 result["details"] = {
                     "address": hex(patch_addr),
                     "bytes_to_patch": len(patch_bytes),
-                    "target_process": process_id if process_id else "current",
+                    "target_process": process_id or "current",
                 }
             if kw.get("verify"):
                 result["verification"] = "Patch verification enabled"
@@ -1593,7 +1593,6 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
             result["custom_options"] = {k: v for k, v in kw.items() if k not in ["script", "config", "dry_run"]}
             return result
 
-        type["Callable[[object], dict[str, object]] | Callable[..., dict[str, object]]"]
         patch_runners: dict[str, Any] = {
             "automatic": run_ai_guided_patching,
             "memory": run_memory_patching,
@@ -1609,7 +1608,7 @@ def run_selected_patching(app_instance: object | None = None, patch_type: str | 
         return cast("dict[str, object]", runner(app_instance, **kwargs))
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running selected patching: %s", e, exc_info=True)
+        logger.exception("Error running selected patching: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1632,7 +1631,7 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
     try:
         from intellicrack.handlers.pefile_handler import pefile
     except ImportError as e:
-        logger.error("Import error in runner_functions: %s", e, exc_info=True)
+        logger.exception("Import error in runner_functions: %s", e)
         pefile = None
 
     try:
@@ -1642,19 +1641,15 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
 
         logger.info("Running memory analysis on %s", binary_path)
 
-        results: dict[str, object] = {
-            "status": "success",
-            "static_analysis": {},
-            "dynamic_analysis": {},
-            "security_issues": [],
-        }
         static_analysis: dict[str, Any] = {}
         dynamic_analysis: dict[str, Any] = {}
         security_issues: list[dict[str, Any]] = []
-        results["static_analysis"] = static_analysis
-        results["dynamic_analysis"] = dynamic_analysis
-        results["security_issues"] = security_issues
-
+        results: dict[str, object] = {
+            "status": "success",
+            "static_analysis": static_analysis,
+            "dynamic_analysis": dynamic_analysis,
+            "security_issues": security_issues,
+        }
         # Static analysis
         if pefile and os.path.exists(binary_path):
             try:
@@ -1692,7 +1687,7 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
                 static_analysis["estimated_memory_mb"] = estimated_memory / (1024 * 1024)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in static memory analysis: %s", e, exc_info=True)
+                logger.exception("Error in static memory analysis: %s", e)
                 static_analysis["error"] = str(e)
 
         if app_instance is not None and hasattr(app_instance, "dynamic_analyzer"):
@@ -1737,16 +1732,16 @@ def run_memory_analysis(app_instance: object | None = None, binary_path: str | N
                             )
 
                     except (OSError, ValueError, RuntimeError) as e:
-                        logger.error("Error analyzing memory maps: %s", e, exc_info=True)
+                        logger.exception("Error analyzing memory maps: %s", e)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in dynamic memory analysis: %s", e, exc_info=True)
+                logger.exception("Error in dynamic memory analysis: %s", e)
                 dynamic_analysis["error"] = str(e)
 
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running memory analysis: %s", e, exc_info=True)
+        logger.exception("Error running memory analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1772,7 +1767,7 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
     try:
         from intellicrack.handlers.pefile_handler import pefile
     except ImportError as e:
-        logger.error("Import error in runner_functions: %s", e, exc_info=True)
+        logger.exception("Import error in runner_functions: %s", e)
         pefile = None
 
     try:
@@ -1814,7 +1809,7 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
                 detected_apis = analyze_network_apis(pe, network_apis)
 
                 api_results = process_network_api_results(detected_apis)
-                static_analysis.update(api_results)
+                static_analysis |= api_results
 
                 if api_results["ssl_usage"]["network_without_ssl"]:
                     security_issues.append(
@@ -1849,7 +1844,7 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
                         static_analysis["embedded_ips"] = unique_ips
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in static network analysis: %s", e, exc_info=True)
+                logger.exception("Error in static network analysis: %s", e)
                 static_analysis["error"] = str(e)
 
         if app_instance:
@@ -1888,14 +1883,15 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
                         dynamic_analysis["connection_summary"] = connection_summary
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error checking active connections: %s", e, exc_info=True)
+                    logger.exception("Error checking active connections: %s", e)
 
             if hasattr(app_instance, "traffic_recorder"):
                 try:
                     traffic_recorder = getattr(app_instance, "traffic_recorder", None)
                     if traffic_recorder is not None and hasattr(traffic_recorder, "get_traffic_summary"):
-                        traffic_summary = traffic_recorder.get_traffic_summary()
-                        if traffic_summary:
+                        if (
+                            traffic_summary := traffic_recorder.get_traffic_summary()
+                        ):
                             dynamic_analysis["traffic_summary"] = traffic_summary
 
                             protocols = traffic_summary.get("protocols", {})
@@ -1909,12 +1905,12 @@ def run_network_analysis(app_instance: object | None = None, binary_path: str | 
                                 )
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error getting traffic summary: %s", e, exc_info=True)
+                    logger.exception("Error getting traffic summary: %s", e)
 
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running network analysis: %s", e, exc_info=True)
+        logger.exception("Error running network analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1984,7 +1980,7 @@ def run_ghidra_plugin_from_file(app: object, plugin_path: str) -> dict[str, obje
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in runner_functions: %s", e, exc_info=True)
+        logger.exception("Error in runner_functions: %s", e)
         _emit_output(app, log_message(f"[Plugin] Error running Ghidra script: {e}"))
         _emit_output(app, log_message(traceback.format_exc()))
         return {"status": "error", "message": str(e)}
@@ -1992,7 +1988,7 @@ def run_ghidra_plugin_from_file(app: object, plugin_path: str) -> dict[str, obje
         try:
             shutil.rmtree(temp_dir)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in runner_functions: %s", e, exc_info=True)
+            logger.exception("Error in runner_functions: %s", e)
             _emit_output(app, log_message(f"[Plugin] Cleanup error: {e}"))
 
 
@@ -2045,7 +2041,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
                 # Set status after processing
                 app.update_status.emit("Ghidra analysis complete")
             except Exception as json_proc_err:
-                logger.error("Exception in runner_functions: %s", json_proc_err)
+                logger.exception("Exception in runner_functions: %s", json_proc_err)
                 app.update_output.emit(log_message(f"[Ghidra Analysis] Error processing results file '{json_path}': {json_proc_err}"))
                 app.update_status.emit("Error processing Ghidra results")
         elif app:
@@ -2054,7 +2050,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
 
     except (OSError, ValueError, RuntimeError) as e:
         error_msg = f"[Ghidra Analysis] Exception during Ghidra execution: {e}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         if app:
             app.update_output.emit(log_message(error_msg))
             app.update_status.emit("Error: Ghidra execution failed")
@@ -2065,7 +2061,7 @@ def _run_ghidra_thread(app: object, cmd: list[str], temp_dir: str) -> None:
             if temp_dir and os.path.exists(temp_dir):
                 shutil.rmtree(temp_dir)
         except Exception as e:
-            logger.error("Exception in runner_functions: %s", e, exc_info=True)
+            logger.exception("Exception in runner_functions: %s", e)
 
 
 def run_deep_license_analysis(app_instance: object | None = None, binary_path: str | None = None, **kwargs: object) -> dict[str, object]:
@@ -2145,7 +2141,7 @@ def run_deep_license_analysis(app_instance: object | None = None, binary_path: s
             return {"status": "error", "message": "Deep license analysis not available"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running deep license analysis: %s", e, exc_info=True)
+        logger.exception("Error running deep license analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2187,7 +2183,7 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
             frida_available = HAS_FRIDA
             frida_module = frida_imported
         except ImportError as e:
-            logger.error("Import error in runner_functions: %s", e, exc_info=True)
+            logger.exception("Import error in runner_functions: %s", e)
             frida_available = False
 
         if not frida_available or frida_module is None:
@@ -2292,11 +2288,10 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
         def on_message(message: Any, data: Any) -> None:
             data_len = len(data) if data else 0
             logger.debug("Frida message received with data length: %s", data_len)
-            if isinstance(message, dict):
-                if message.get("type") == "send":
-                    payload = message.get("payload", {})
-                    if isinstance(payload, dict) and payload.get("type") == "api_calls":
-                        api_calls.extend(payload.get("data", []))
+            if isinstance(message, dict) and message.get("type") == "send":
+                payload = message.get("payload", {})
+                if isinstance(payload, dict) and payload.get("type") == "api_calls":
+                    api_calls.extend(payload.get("data", []))
             _emit_output(app_instance, log_message(f"[Frida] {message}"))
 
         frida_script.on("message", on_message)
@@ -2324,7 +2319,7 @@ def run_frida_analysis(app_instance: object | None = None, binary_path: str | No
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running Frida analysis: %s", e, exc_info=True)
+        logger.exception("Error running Frida analysis: %s", e)
         error_msg = f"Frida analysis failed: {e!s}"
 
         if app_instance:
@@ -2406,7 +2401,7 @@ def run_dynamic_instrumentation(app_instance: object | None = None, binary_path:
         return result
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running dynamic instrumentation: %s", e, exc_info=True)
+        logger.exception("Error running dynamic instrumentation: %s", e)
         error_msg = f"Dynamic instrumentation failed: {e!s}"
 
         if app_instance:
@@ -2442,7 +2437,7 @@ def run_comprehensive_analysis(app_instance: object | None = None, binary_path: 
         return comprehensive_analysis(binary_path)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in comprehensive analysis: %s", e, exc_info=True)
+        logger.exception("Error in comprehensive analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2547,20 +2542,20 @@ def run_radare2_analysis(app_instance: object | None = None, binary_path: str | 
                 }
 
             except FileNotFoundError as e:
-                logger.error("File not found in runner_functions: %s", e, exc_info=True)
+                logger.exception("File not found in runner_functions: %s", e)
                 return {
                     "status": "error",
                     "message": "Radare2 not found in PATH",
                 }
             except subprocess.TimeoutExpired as e:
-                logger.error("Subprocess timeout in runner_functions: %s", e, exc_info=True)
+                logger.exception("Subprocess timeout in runner_functions: %s", e)
                 return {
                     "status": "error",
                     "message": "Radare2 analysis timed out",
                 }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in Radare2 analysis: %s", e, exc_info=True)
+        logger.exception("Error in Radare2 analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2653,16 +2648,16 @@ def run_frida_script(
             }
 
         except ImportError as e:
-            logger.error("Import error in runner_functions: %s", e, exc_info=True)
+            logger.exception("Import error in runner_functions: %s", e)
             error_msg = "Frida not available"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             return {
                 "status": "error",
                 "message": error_msg,
             }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running Frida script: %s", e, exc_info=True)
+        logger.exception("Error running Frida script: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2861,7 +2856,7 @@ def run_autonomous_patching(app_instance: object | None = None, **kwargs: object
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running autonomous patching: %s", e, exc_info=True)
+        logger.exception("Error running autonomous patching: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2896,7 +2891,7 @@ def _autonomous_analyze_binary(target_binary: str) -> dict[str, Any]:
         result["success"] = True
 
     except Exception as e:
-        logger.error("Exception in runner_functions: %s", e, exc_info=True)
+        logger.exception("Exception in runner_functions: %s", e)
         result["findings"].append(f"Analysis error: {e}")
 
     return result
@@ -2932,7 +2927,7 @@ def _autonomous_detect_targets(target_binary: str, analysis_result: dict[str, An
             logger.debug("License detection error: %s", e)
 
     except Exception as e:
-        logger.error("Target detection error: %s", e, exc_info=True)
+        logger.exception("Target detection error: %s", e)
 
     return result
 
@@ -2959,7 +2954,7 @@ def _autonomous_generate_patches(target_binary: str, detection_result: dict[str,
         result["patch_count"] = len(patches)
 
     except Exception as e:
-        logger.error("Patch generation error: %s", e, exc_info=True)
+        logger.exception("Patch generation error: %s", e)
 
     return result
 
@@ -3028,7 +3023,7 @@ def _autonomous_backup_original(target_binary: str) -> dict[str, Any]:
         result["message"] = f"Backup created: {backup_path}"
 
     except Exception as e:
-        logger.error("Exception in runner_functions: %s", e, exc_info=True)
+        logger.exception("Exception in runner_functions: %s", e)
         result["message"] = f"Backup failed: {e}"
 
     return result
@@ -3049,7 +3044,7 @@ def _autonomous_apply_patches(target_binary: str, patches: list[dict[str, Any]],
                 result["failed_count"] += 1
 
     except Exception as e:
-        logger.error("Patch application error: %s", e, exc_info=True)
+        logger.exception("Patch application error: %s", e)
 
     return result
 
@@ -3143,7 +3138,7 @@ def _apply_single_patch(target_binary: str, patch: dict[str, Any], strategy: str
             result["message"] = "No operations could be applied"
 
     except Exception as e:
-        logger.error("Exception in runner_functions: %s", e, exc_info=True)
+        logger.exception("Exception in runner_functions: %s", e)
         result["message"] = f"Patch application failed: {e}"
 
     return result
@@ -3164,7 +3159,7 @@ def _autonomous_verify_patches(target_binary: str) -> dict[str, Any]:
         result["tests"] = findings if isinstance(findings, list) else []
 
     except Exception as e:
-        logger.error("Exception in runner_functions: %s", e, exc_info=True)
+        logger.exception("Exception in runner_functions: %s", e)
         tests.append(f"Verification error: {e}")
 
     return result
@@ -3225,18 +3220,28 @@ def run_ghidra_analysis_gui(app_instance: object | None = None, **kwargs: object
         _emit_output(app_instance, log_message("[Ghidra] Starting Ghidra GUI analysis..."))
         _emit_status(app_instance, "Running Ghidra analysis...")
 
-        ghidra_kwargs: dict[str, Any] = dict(kwargs.items())
+        ghidra_kwargs: dict[str, Any] = dict(kwargs)
         results = run_advanced_ghidra_analysis(app_instance, binary_path, **ghidra_kwargs)
 
         if results.get("status") == "success":
             license_strings: list[str] = []
             strings_data = results.get("strings")
             if isinstance(strings_data, list):
-                for string_info in strings_data:
-                    if isinstance(string_info, str):
-                        if any(keyword in string_info.lower() for keyword in ["license", "serial", "key", "activation", "trial"]):
-                            license_strings.append(string_info)
-
+                license_strings.extend(
+                    string_info
+                    for string_info in strings_data
+                    if isinstance(string_info, str)
+                    and any(
+                        keyword in string_info.lower()
+                        for keyword in [
+                            "license",
+                            "serial",
+                            "key",
+                            "activation",
+                            "trial",
+                        ]
+                    )
+                )
             functions_data = results.get("functions", {})
             potential_checks: list[Any] = []
             if isinstance(functions_data, dict):
@@ -3263,7 +3268,7 @@ def run_ghidra_analysis_gui(app_instance: object | None = None, **kwargs: object
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running Ghidra GUI analysis: %s", e, exc_info=True)
+        logger.exception("Error running Ghidra GUI analysis: %s", e)
         _emit_output(app_instance, log_message(f"[Ghidra] Error: {e!s}"))
         _emit_status(app_instance, "Ghidra analysis failed")
         return {"status": "error", "message": str(e)}

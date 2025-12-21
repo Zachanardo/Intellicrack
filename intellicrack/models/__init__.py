@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
 try:
     from .protection_knowledge_base import get_protection_knowledge_base
 except ImportError:
-    logger.error("Import error in __init__", exc_info=True)
+    logger.exception("Import error in __init__")
     get_protection_knowledge_base = None
 
 # Export main interface

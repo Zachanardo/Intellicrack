@@ -36,8 +36,12 @@ from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QApplication,
     QColor,
+    QEvent,
     QFont,
+    QKeyEvent,
     QMenu,
+    QObject,
+    QPoint,
     Qt,
     QTextCharFormat,
     QTextCursor,
@@ -187,11 +191,11 @@ class EmbeddedTerminalWidget(QWidget):
         """
         super().__init__(parent)
 
-        self._process = None
-        self._pid = None
-        self._output_queue = queue.Queue()
-        self._input_queue = queue.Queue()
-        self._reader_thread = None
+        self._process: subprocess.Popen[bytes] | None = None
+        self._pid: int | None = None
+        self._output_queue: queue.Queue[str] = queue.Queue()
+        self._input_queue: queue.Queue[str] = queue.Queue()
+        self._reader_thread: threading.Thread | None = None
         self._running = False
         self._max_lines = 10000
         self._ansi_parser = ANSIParser()
@@ -290,13 +294,13 @@ class EmbeddedTerminalWidget(QWidget):
         self.terminal_display.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.terminal_display.customContextMenuRequested.connect(self._show_context_menu)
 
-        self.terminal_display.keyPressEvent = self._handle_keyboard_input
+        self.terminal_display.installEventFilter(self)
 
         layout.addWidget(self.terminal_display, stretch=1)
 
         self.setMinimumSize(600, 400)
 
-    def _show_context_menu(self, position: object) -> None:
+    def _show_context_menu(self, position: QPoint) -> None:
         """Show context menu for copy/paste operations.
 
         Args:
@@ -335,11 +339,16 @@ class EmbeddedTerminalWidget(QWidget):
         """Copy selected text to clipboard."""
         cursor = self.terminal_display.textCursor()
         if cursor.hasSelection():
-            QApplication.clipboard().setText(cursor.selectedText())
+            clipboard = QApplication.clipboard()
+            if clipboard is not None:
+                clipboard.setText(cursor.selectedText())
 
     def _paste_from_clipboard(self) -> None:
         """Paste text from clipboard and send to process."""
-        text = QApplication.clipboard().text()
+        clipboard = QApplication.clipboard()
+        if clipboard is None:
+            return
+        text = clipboard.text()
         if text and self._process and self._running:
             self.send_input(text)
 
@@ -358,9 +367,9 @@ class EmbeddedTerminalWidget(QWidget):
             try:
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(self.terminal_display.toPlainText())
-                logger.info(f"Terminal log exported to: {filename}")
+                logger.info("Terminal log exported to: %s", filename)
             except Exception as e:
-                logger.error(f"Error exporting terminal log: {e}")
+                logger.exception("Error exporting terminal log: %s", e)
 
     def start_process(self, command: str | list[str], cwd: str | None = None, env: dict[str, str] | None = None) -> int | None:
         """Start a new process in the terminal with PTY.
@@ -385,7 +394,7 @@ class EmbeddedTerminalWidget(QWidget):
             if isinstance(command, str):
                 command = [command]
 
-            logger.info(f"Starting process: {' '.join(command)}")
+            logger.info("Starting process: %s", " ".join(command))
 
             if env is None:
                 env = os.environ.copy()
@@ -399,10 +408,10 @@ class EmbeddedTerminalWidget(QWidget):
             # Validate that command and cwd contain only safe values to prevent command injection
             if not isinstance(command, list) or not all(isinstance(arg, str) for arg in command):
                 error_msg = f"Unsafe command: {command}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise ValueError(error_msg)
-            cwd_clean = str(cwd).replace(";", "").replace("|", "").replace("&", "")
-            self._process = subprocess.Popen(
+            cwd_clean = str(cwd).replace(";", "").replace("|", "").replace("&", "") if cwd else None
+            process = subprocess.Popen(
                 command,
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
@@ -416,19 +425,21 @@ class EmbeddedTerminalWidget(QWidget):
                 shell=False,
             )
 
-            self._pid = self._process.pid
+            self._process = process
+            self._pid = process.pid
             self._running = True
 
-            self._reader_thread = threading.Thread(target=self._read_output, daemon=True)
-            self._reader_thread.start()
+            reader_thread = threading.Thread(target=self._read_output, daemon=True)
+            self._reader_thread = reader_thread
+            reader_thread.start()
 
             self.process_started.emit(self._pid)
-            logger.info(f"Process started with PID: {self._pid}")
+            logger.info("Process started with PID: %s", self._pid)
 
             return self._pid
 
         except Exception as e:
-            logger.error(f"Error starting process: {e}")
+            logger.exception("Error starting process: %s", e)
             self._handle_output(f"\r\n[ERROR] Failed to start process: {e}\r\n", is_error=True)
             return None
 
@@ -437,6 +448,8 @@ class EmbeddedTerminalWidget(QWidget):
         try:
             while self._running and self._process:
                 try:
+                    if self._process.stdout is None:
+                        break
                     chunk = self._process.stdout.read(4096)
                     if not chunk:
                         break
@@ -450,14 +463,15 @@ class EmbeddedTerminalWidget(QWidget):
                     self.output_received.emit(text)
 
                 except Exception as e:
-                    logger.error(f"Error reading process output: {e}")
+                    logger.exception("Error reading process output: %s", e)
                     break
 
             if self._process:
                 returncode = self._process.wait()
                 self._running = False
-                self.process_finished.emit(self._pid, returncode)
-                logger.info(f"Process finished with code: {returncode}")
+                if self._pid is not None:
+                    self.process_finished.emit(self._pid, returncode)
+                logger.info("Process finished with code: %d", returncode)
 
                 if returncode != 0:
                     self._output_queue.put(f"\r\n[Process exited with code {returncode}]\r\n\r\n")
@@ -467,7 +481,7 @@ class EmbeddedTerminalWidget(QWidget):
                 QTimer.singleShot(100, self._show_prompt)
 
         except Exception as e:
-            logger.error(f"Error in output reader thread: {e}")
+            logger.exception("Error in output reader thread: %s", e)
             self._running = False
 
     def _process_output_queue(self) -> None:
@@ -517,6 +531,8 @@ class EmbeddedTerminalWidget(QWidget):
     def _manage_scrollback(self) -> None:
         """Manage scrollback buffer to prevent excessive memory usage."""
         document = self.terminal_display.document()
+        if document is None:
+            return
         if document.lineCount() > self._max_lines:
             cursor = QTextCursor(document)
             cursor.movePosition(QTextCursor.MoveOperation.Start)
@@ -527,7 +543,24 @@ class EmbeddedTerminalWidget(QWidget):
                 cursor.removeSelectedText()
                 cursor.deleteChar()
 
-    def _handle_keyboard_input(self, event: object) -> None:
+    def eventFilter(self, obj: QObject | None, event: QEvent | None) -> bool:
+        """Filter events for keyboard handling in terminal display.
+
+        Args:
+            obj: The object receiving the event.
+            event: The event to filter.
+
+        Returns:
+            True if event was handled, False otherwise.
+
+        """
+        if obj == self.terminal_display and isinstance(event, QKeyEvent):
+            if event.type() == QEvent.Type.KeyPress:
+                self._handle_keyboard_input(event)
+                return True
+        return super().eventFilter(obj, event)
+
+    def _handle_keyboard_input(self, event: QKeyEvent) -> None:
         """Handle keyboard input and forward to process or buffer locally.
 
         Args:
@@ -543,27 +576,29 @@ class EmbeddedTerminalWidget(QWidget):
                 cursor = self.terminal_display.textCursor()
                 if cursor.hasSelection():
                     self._copy_selection()
-                elif self._process and self._running:
+                elif self._process is not None and self._running:
                     self.send_input("\x03")
                 return
             if key == Qt.Key.Key_V:
-                if self._process and self._running:
+                if self._process is not None and self._running:
                     self._paste_from_clipboard()
                 else:
-                    text = QApplication.clipboard().text()
-                    if text:
-                        self._append_to_command_buffer(text)
+                    clipboard = QApplication.clipboard()
+                    if clipboard is not None:
+                        clipboard_text = clipboard.text()
+                        if clipboard_text:
+                            self._append_to_command_buffer(clipboard_text)
                 return
             if key == Qt.Key.Key_D:
-                if self._process and self._running:
+                if self._process is not None and self._running:
                     self.send_input("\x04")
                 return
             if key == Qt.Key.Key_Z:
-                if self._process and self._running:
+                if self._process is not None and self._running:
                     self.send_input("\x1a")
                 return
 
-        if self._process and self._running:
+        if self._process is not None and self._running:
             if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 self.send_input("\r\n")
             elif key == Qt.Key.Key_Backspace:
@@ -676,29 +711,33 @@ class EmbeddedTerminalWidget(QWidget):
             Exception: If writing to process stdin fails.
 
         """
-        if not self._process or not self._running:
+        if self._process is None or not self._running:
             logger.warning("Cannot send input: no process running")
             return
 
         try:
+            if self._process.stdin is None:
+                logger.warning("Process stdin is None")
+                return
             data = text.encode("utf-8")
             self._process.stdin.write(data)
             self._process.stdin.flush()
         except Exception as e:
-            logger.error(f"Error sending input to process: {e}")
+            logger.exception("Error sending input to process: %s", e)
 
     def stop_process(self) -> None:
         """Stop the current process."""
-        if not self._process:
+        if self._process is None:
             return
 
-        logger.info(f"Stopping process {self._pid}")
+        logger.info("Stopping process %s", self._pid)
 
         self._running = False
 
         try:
             if sys.platform == "win32":
-                self._process.send_signal(subprocess.signal.CTRL_C_EVENT)
+                import signal
+                self._process.send_signal(signal.CTRL_C_EVENT)
             else:
                 self._process.terminate()
 
@@ -710,11 +749,11 @@ class EmbeddedTerminalWidget(QWidget):
                 self._process.wait()
 
         except Exception as e:
-            logger.error(f"Error stopping process: {e}")
+            logger.exception("Error stopping process: %s", e)
             try:
                 self._process.kill()
             except Exception as kill_error:
-                logger.error(f"Error killing process: {kill_error}")
+                logger.exception("Error killing process: %s", kill_error)
 
         self._process = None
         self._pid = None

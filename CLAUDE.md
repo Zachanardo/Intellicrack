@@ -138,6 +138,13 @@ instead:**
 **This is non-negotiable: Every line of code Claude writes must be ready for
 production use.**
 
+### User Clarification
+
+When receiving a work prompt, Claude must use the AskUserQuestion tool to obtain
+clarifying information before proceeding with implementation. Never assume
+details that weren't explicitly provided by the user - ask for specifics on
+architecture decisions, implementation approaches, or ambiguous requirements.
+
 ### Error Handling
 
 - Use `getattr()` and `hasattr()` for safe attribute access

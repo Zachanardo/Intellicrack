@@ -168,7 +168,7 @@ class ConfigAsCodeManager:
         # Schema definitions
         self.schemas = self._load_schemas()
 
-        logger.info(f"ConfigAsCodeManager initialized with directory: {self.config_dir}")
+        logger.info("ConfigAsCodeManager initialized with directory: %s", self.config_dir)
 
     def _load_schemas(self) -> dict[str, dict[str, Any]]:
         """Load JSON schemas for validation."""
@@ -335,14 +335,14 @@ class ConfigAsCodeManager:
 
         try:
             jsonschema.validate(config, schema)
-            logger.debug(f"Configuration validation passed for schema: {schema_name}")
+            logger.debug("Configuration validation passed for schema: %s", schema_name)
             return True
         except jsonschema.ValidationError as e:
             error_msg = f"Configuration validation failed: {e.message}"
             if e.absolute_path:
                 error_msg += f" at path: {'.'.join(str(p) for p in e.absolute_path)}"
 
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ConfigValidationError(error_msg) from e
 
     def load_config(self, file_path: str | Path, validate: bool = True) -> dict[str, Any]:
@@ -388,7 +388,7 @@ class ConfigAsCodeManager:
                             raise ConfigValidationError("Could not determine file format and YAML not available")
                         config = yaml.safe_load(f)
 
-            logger.info(f"Loaded configuration from: {file_path}")
+            logger.info("Loaded configuration from: %s", file_path)
 
             # Perform environment variable substitution
             config = self._substitute_env_vars(config)
@@ -458,7 +458,7 @@ class ConfigAsCodeManager:
                 else:
                     json.dump(config, f, indent=2, ensure_ascii=False, default=str)
 
-            logger.info(f"Saved configuration to: {file_path}")
+            logger.info("Saved configuration to: %s", file_path)
 
         except Exception as e:
             raise ConfigValidationError(f"Failed to save configuration: {e}") from e
@@ -715,10 +715,10 @@ class ConfigAsCodeManager:
                 )
 
                 llm_manager.register_llm(model_id, llm_config)
-                logger.info(f"Applied model configuration: {model_id}")
+                logger.info("Applied model configuration: %s", model_id)
 
             except Exception as e:
-                logger.error(f"Failed to apply model config {model_id}: {e}")
+                logger.exception("Failed to apply model config %s: %s", model_id, e)
 
         # Apply fallback chains
         chains_config = {
@@ -730,7 +730,7 @@ class ConfigAsCodeManager:
             fallback_manager.import_configuration(chains_config)
             logger.info("Applied fallback chains configuration")
         except Exception as e:
-            logger.error(f"Failed to apply fallback chains: {e}")
+            logger.exception("Failed to apply fallback chains: %s", e)
 
     def generate_config_files(self, output_dir: str | None = None, environments: list[str] = None) -> list[Path]:
         """Generate configuration files for multiple environments.
@@ -769,7 +769,7 @@ class ConfigAsCodeManager:
             self.save_config(template, file_path)
             generated_files.append(file_path)
 
-        logger.info(f"Generated {len(generated_files)} configuration files in {output_dir}")
+        logger.info("Generated %d configuration files in %s", len(generated_files), output_dir)
         return generated_files
 
 

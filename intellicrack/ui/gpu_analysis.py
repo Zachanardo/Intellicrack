@@ -70,7 +70,7 @@ class GpuAnalysis:
                 frameworks = detect_gpu_frameworks()
                 self.framework_info |= frameworks
             except Exception as e:
-                self.logger.debug(f"Framework detection failed: {e}")
+                self.logger.debug("Framework detection failed: %s", e)
 
             if self.gpu_available:
                 log_info(
@@ -82,7 +82,7 @@ class GpuAnalysis:
                 log_warning("GPU Analysis initialized in CPU fallback mode", category="GPU")
 
         except ImportError as e:
-            self.logger.error(f"Failed to initialize GPU infrastructure: {e}")
+            self.logger.exception("Failed to initialize GPU infrastructure: %s", e)
             self.gpu_available = False
             self.framework_info = {"framework": "cpu", "error": str(e)}
             log_error("GPU infrastructure initialization failed", category="GPU", exception=e)
@@ -129,7 +129,7 @@ class GpuAnalysis:
             )
 
         except Exception as e:
-            self.logger.error(f"GPU analysis failed: {e}")
+            self.logger.exception("GPU analysis failed: %s", e)
             log_error("GPU-accelerated analysis failed", category="GPU", exception=e)
 
             if hasattr(app, "update_output"):
@@ -166,7 +166,7 @@ class GpuAnalysis:
             return None
 
         except Exception as e:
-            self.logger.error(f"Failed to get binary data: {e}")
+            self.logger.exception("Failed to get binary data: %s", e)
             return None
 
     def _show_progress_dialog(self, app: object) -> None:
@@ -215,7 +215,7 @@ class GpuAnalysis:
             self.progress_dialog.show()
 
         except Exception as e:
-            self.logger.error(f"Failed to show progress dialog: {e}")
+            self.logger.exception("Failed to show progress dialog: %s", e)
 
     def _hide_progress_dialog(self) -> None:
         """Hide progress dialog."""
@@ -224,7 +224,7 @@ class GpuAnalysis:
                 self.progress_dialog.close()
                 self.progress_dialog = None
         except Exception as e:
-            self.logger.error(f"Failed to hide progress dialog: {e}")
+            self.logger.exception("Failed to hide progress dialog: %s", e)
 
     def _process_analysis_results(self, app: object, results: dict[str, Any]) -> None:
         """Process and display GPU analysis results."""
@@ -274,7 +274,7 @@ class GpuAnalysis:
             self.current_analysis = results
 
         except Exception as e:
-            self.logger.error(f"Failed to process analysis results: {e}")
+            self.logger.exception("Failed to process analysis results: %s", e)
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] Failed to process GPU analysis results: {e}")
 
@@ -320,4 +320,4 @@ class GpuAnalysis:
             log_info("GPU Analysis cleanup completed", category="GPU")
 
         except Exception as e:
-            self.logger.error(f"GPU analysis cleanup failed: {e}")
+            self.logger.exception("GPU analysis cleanup failed: %s", e)

@@ -20,11 +20,42 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
-# Core components
+AIBinaryBridge: Any
+BinaryContextBuilder: Any
+ChunkManager: Any
+VirtualFileAccess: Any
+HexViewerDialog: Any
+HexHighlighter: Any
+HighlightType: Any
+HexViewRenderer: Any
+ViewMode: Any
+parse_hex_view: Any
+HexViewerWidget: Any
+initialize_hex_viewer: Any
+integrate_enhanced_hex_viewer: Any
+register_hex_viewer_ai_tools: Any
+restore_standard_hex_viewer: Any
+show_enhanced_hex_viewer: Any
+add_hex_viewer_to_application: Any
+analyze_binary_data: Any
+bytes_to_hex_string: Any
+create_binary_context: Any
+create_hex_viewer_dialog: Any
+create_hex_viewer_widget: Any
+hex_string_to_bytes: Any
+integrate_with_intellicrack: Any
+launch_hex_viewer: Any
+open_hex_file: Any
+read_hex_region: Any
+register_ai_tools: Any
+search_binary_pattern: Any
+suggest_binary_edits: Any
+write_hex_region: Any
+
 try:
     from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
 except ImportError as e:
@@ -32,9 +63,8 @@ except ImportError as e:
     AIBinaryBridge = None
     BinaryContextBuilder = None
 
-# API functions
 try:
-    from .api import (  # Analysis operations; Utility operations; UI operations; Integration operations; File operations
+    from .api import (
         add_hex_viewer_to_application,
         analyze_binary_data,
         bytes_to_hex_string,
@@ -53,11 +83,21 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import api: %s", e)
-    # Set all API functions to None
-    add_hex_viewer_to_application = analyze_binary_data = bytes_to_hex_string = create_binary_context = None
-    create_hex_viewer_dialog = create_hex_viewer_widget = hex_string_to_bytes = integrate_with_intellicrack = None
-    launch_hex_viewer = open_hex_file = read_hex_region = register_ai_tools = search_binary_pattern = None
-    suggest_binary_edits = write_hex_region = None
+    add_hex_viewer_to_application = None
+    analyze_binary_data = None
+    bytes_to_hex_string = None
+    create_binary_context = None
+    create_hex_viewer_dialog = None
+    create_hex_viewer_widget = None
+    hex_string_to_bytes = None
+    integrate_with_intellicrack = None
+    launch_hex_viewer = None
+    open_hex_file = None
+    read_hex_region = None
+    register_ai_tools = None
+    search_binary_pattern = None
+    suggest_binary_edits = None
+    write_hex_region = None
 
 try:
     from .file_handler import ChunkManager, VirtualFileAccess
@@ -93,7 +133,6 @@ except ImportError as e:
     logger.warning("Failed to import hex_widget: %s", e)
     HexViewerWidget = None
 
-# Integration functions
 try:
     from .integration import (
         initialize_hex_viewer,
@@ -104,8 +143,11 @@ try:
     )
 except ImportError as e:
     logger.warning("Failed to import integration: %s", e)
-    initialize_hex_viewer = integrate_enhanced_hex_viewer = register_hex_viewer_ai_tools = None
-    restore_standard_hex_viewer = show_enhanced_hex_viewer = None
+    initialize_hex_viewer = None
+    integrate_enhanced_hex_viewer = None
+    register_hex_viewer_ai_tools = None
+    restore_standard_hex_viewer = None
+    show_enhanced_hex_viewer = None
 
 """
 Enhanced Hex Viewer/Editor module for Intellicrack.
@@ -128,8 +170,12 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+LargeFileHandler: Any
+MemoryConfig: Any
+MemoryStrategy: Any
+PerformanceMonitor: Any
+PerformanceWidget: Any
 
-# Large file optimization components
 try:
     from .large_file_handler import (
         LargeFileHandler as LargeFileHandler,
@@ -141,10 +187,15 @@ try:
         PerformanceWidget as PerformanceWidget,
     )
 
-    LARGE_FILE_SUPPORT = True
+    LARGE_FILE_SUPPORT: bool = True
 except ImportError as e:
-    logger.error("Import error in __init__: %s", e)
+    logger.exception("Import error in __init__: %s", e)
     LARGE_FILE_SUPPORT = False
+    LargeFileHandler = None
+    MemoryConfig = None
+    MemoryStrategy = None
+    PerformanceMonitor = None
+    PerformanceWidget = None
 
 
 # Public API - explicitly export all imported components
@@ -201,9 +252,6 @@ if LARGE_FILE_SUPPORT:
         ],
     )
 
-# Convenience aliases
-show_hex_viewer = show_enhanced_hex_viewer or None
-integrate = integrate_with_intellicrack or None
-
-# Main hex viewer class (alias for compatibility)
-HexViewer = HexViewerWidget or None
+show_hex_viewer: Any = show_enhanced_hex_viewer if show_enhanced_hex_viewer is not None else None
+integrate: Any = integrate_with_intellicrack if integrate_with_intellicrack is not None else None
+HexViewer: Any = HexViewerWidget if HexViewerWidget is not None else None

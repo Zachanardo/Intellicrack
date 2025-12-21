@@ -222,7 +222,7 @@ class AutodeskLicensingParser:
                 try:
                     request_data = json.loads(body)
                 except json.JSONDecodeError as e:
-                    logger.error("json.JSONDecodeError in autodesk_parser: %s", e)
+                    logger.exception("json.JSONDecodeError in autodesk_parser: %s", e)
                     # Try to parse as form data
                     request_data = self._parse_form_data(body)
 
@@ -259,11 +259,11 @@ class AutodeskLicensingParser:
                 platform_info=platform_info,
             )
 
-            self.logger.info(f"Parsed Autodesk {request_type} request for product {product_key}")
+            self.logger.info("Parsed Autodesk %s request for product %s", request_type, product_key)
             return request
 
         except Exception as e:
-            self.logger.error(f"Failed to parse Autodesk request: {e}")
+            self.logger.exception("Failed to parse Autodesk request: %s", e)
             return None
 
     def _determine_request_type(self, request_line: str, headers: dict[str, str], data: dict[str, Any]) -> str:
@@ -387,7 +387,7 @@ class AutodeskLicensingParser:
                     key, value = pair.split("=", 1)
                     data[key] = value
         except Exception as e:
-            self.logger.error("Error in autodesk_parser: %s", e)
+            self.logger.exception("Error in autodesk_parser: %s", e)
         return data
 
     def generate_response(self, request: AutodeskRequest) -> AutodeskResponse:
@@ -400,7 +400,7 @@ class AutodeskLicensingParser:
             Autodesk response object
 
         """
-        self.logger.info(f"Generating response for Autodesk {request.request_type} request")
+        self.logger.info("Generating response for Autodesk %s request", request.request_type)
 
         if request.request_type == "activation":
             return self._handle_activation(request)
@@ -699,7 +699,7 @@ class AutodeskLicensingParser:
     def _handle_subscription(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle subscription status check."""
         user_id = request.user_id or "anonymous"
-        logger.debug(f"Processing subscription request for user: {user_id}")
+        logger.debug("Processing subscription request for user: %s", user_id)
 
         subscription_data = {
             "subscription_id": str(uuid.uuid4()).upper(),
@@ -791,7 +791,8 @@ class AutodeskLicensingParser:
     def _handle_offline_activation(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle offline activation."""
         offline_code = (
-            hashlib.sha256(
+            hashlib
+            .sha256(
                 f"{request.machine_id}:{request.product_key}:{time.time()}".encode(),
             )
             .hexdigest()
@@ -872,7 +873,7 @@ class AutodeskLicensingParser:
 
     def _handle_unknown_request(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle unknown request type."""
-        self.logger.warning(f"Unknown Autodesk request type: {request.request_type}")
+        self.logger.warning("Unknown Autodesk request type: %s", request.request_type)
         return AutodeskResponse(
             status="error",
             response_code=400,
@@ -964,7 +965,7 @@ class AutodeskLicensingParser:
             return http_response
 
         except Exception as e:
-            self.logger.error(f"Failed to serialize Autodesk response: {e}")
+            self.logger.exception("Failed to serialize Autodesk response: %s", e)
             # Return minimal error response
             error_body = '{"status": "error", "message": "Internal server error"}'
             return (

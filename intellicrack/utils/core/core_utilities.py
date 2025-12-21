@@ -118,7 +118,7 @@ def main(args: list[str] | None = None) -> int:
         logger.info("Interrupted by user")
         return 1
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Fatal error: %s", e, exc_info=True)
+        logger.exception("Fatal error: %s", e, exc_info=True)
         return 1
 
 
@@ -148,11 +148,11 @@ def run_gui_mode(args: object) -> int:
         return app.exec()
 
     except ImportError as e:
-        logger.error("GUI dependencies not available: %s", e, exc_info=True)
+        logger.exception("GUI dependencies not available: %s", e, exc_info=True)
         logger.info("Please install PyQt6 to use GUI mode")
         return 1
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error launching GUI: %s", e, exc_info=True)
+        logger.exception("Error launching GUI: %s", e, exc_info=True)
         return 1
 
 
@@ -167,7 +167,7 @@ def run_cli_mode(args: object) -> int:
 
     """
     if not args.binary:
-        logger.error("No binary specified for CLI mode")
+        logger.exception("No binary specified for CLI mode")
         return 1
 
     try:
@@ -207,7 +207,7 @@ def run_cli_mode(args: object) -> int:
         return 0
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in CLI mode: %s", e, exc_info=True)
+        logger.exception("Error in CLI mode: %s", e, exc_info=True)
         return 1
 
 
@@ -234,7 +234,7 @@ def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, An
     # Check if tool is registered
     if tool_name not in TOOL_REGISTRY:
         error_msg = f"Unknown tool: {tool_name}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
 
         # Suggest similar tools
         available_tools = list(TOOL_REGISTRY.keys())
@@ -274,7 +274,7 @@ def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, An
         error_trace = traceback.format_exc()
         error_msg = f"Error executing tool '{tool_name}': {e!s}"
 
-        logger.error("Error executing tool '%s': %s", tool_name, e, exc_info=True)
+        logger.exception("Error executing tool '%s': %s", tool_name, e, exc_info=True)
 
         # Update UI with error
         if app_instance and hasattr(app_instance, "update_output"):
@@ -308,7 +308,7 @@ def register_tool(name: str, func: Callable, category: str = "general") -> bool:
         logger.info("Registered tool: %s (category: %s)", name, category)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering tool %s: %s", name, e, exc_info=True)
+        logger.exception("Error registering tool %s: %s", name, e, exc_info=True)
         return False
 
 
@@ -368,7 +368,7 @@ def register_default_tools() -> bool | None:
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering default tools: %s", e, exc_info=True)
+        logger.exception("Error registering default tools: %s", e, exc_info=True)
         return False
 
 
@@ -400,11 +400,11 @@ def on_message(message: dict[str, Any], data: bytes | bytearray | None = None) -
             elif msg_type == "api_call":
                 logger.info("API call intercepted: %s", payload.get("function", "unknown"))
             elif msg_type == "error":
-                logger.error("Frida error: %s", payload.get("error", "unknown"))
+                logger.exception("Frida error: %s", payload.get("error", "unknown"))
 
     elif message["type"] == "error":
-        logger.error("[Frida Error] %s", message.get("description", "Unknown error"))
-        logger.error("Stack: %s", message.get("stack", "No stack trace"))
+        logger.exception("[Frida Error] %s", message.get("description", "Unknown error"))
+        logger.exception("Stack: %s", message.get("stack", "No stack trace"))
 
 
 def register(plugin_info: dict[str, Any]) -> bool:
@@ -422,7 +422,7 @@ def register(plugin_info: dict[str, Any]) -> bool:
     # Validate plugin info
     for field in required_fields:
         if field not in plugin_info:
-            logger.error("Missing required field: %s", field)
+            logger.exception("Missing required field: %s", field)
             return False
 
     try:
@@ -439,7 +439,7 @@ def register(plugin_info: dict[str, Any]) -> bool:
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering plugin: %s", e, exc_info=True)
+        logger.exception("Error registering plugin: %s", e, exc_info=True)
         return False
 
 
@@ -534,7 +534,7 @@ def deep_runtime_monitoring(target_process: str, monitoring_config: dict[str, An
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in deep runtime monitoring: %s", e, exc_info=True)
+        logger.exception("Error in deep runtime monitoring: %s", e, exc_info=True)
         return {
             "status": "error",
             "error": str(e),

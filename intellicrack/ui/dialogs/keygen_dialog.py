@@ -103,7 +103,7 @@ class KeygenWorker(QThread):
             elif self.operation == "analyze":
                 self._analyze_binary()
         except (OSError, ValueError, RuntimeError) as e:
-            self._logger.error("Error in keygen_dialog: %s", e)
+            self._logger.exception("Error in keygen_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
     def _generate_single_key(self) -> None:
@@ -837,8 +837,7 @@ class KeygenDialog(BaseDialog):
         """Copy generated key to clipboard."""
         if self.key_display is None:
             return
-        key = self.key_display.toPlainText().strip()
-        if key:
+        if key := self.key_display.toPlainText().strip():
             try:
                 from intellicrack.handlers.pyqt6_handler import QApplication
 
@@ -847,7 +846,7 @@ class KeygenDialog(BaseDialog):
                     clipboard.setText(key)
                 self.status_label.setText("Key copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:
-                self._logger.error("Error in keygen_dialog: %s", e)
+                self._logger.exception("Error in keygen_dialog: %s", e)
                 QMessageBox.information(self, "Copy", f"Key: {key}")
 
     def save_single_key(self) -> None:

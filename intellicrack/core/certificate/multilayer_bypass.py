@@ -206,7 +206,7 @@ class MultiLayerBypass:
             result.add_stage_result(stage_result)
 
             if not stage_result.success:
-                logger.error(
+                logger.exception(
                     "Stage %d failed: %s",
                     stage_number,
                     stage_result.error_message,
@@ -296,7 +296,7 @@ class MultiLayerBypass:
                     if self._frida_hooks.attach(target) and self._frida_hooks.inject_specific_bypass("cryptoapi"):
                         bypassed.append("Frida: CryptoAPI hooks")
                 except Exception as e:
-                    logger.error("Frida hook injection failed: %s", e, exc_info=True)
+                    logger.exception("Frida hook injection failed: %s", e, exc_info=True)
 
             return StageResult(
                 stage_number=stage_number,
@@ -307,7 +307,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error("OS-level bypass failed: %s", e, exc_info=True)
+            logger.exception("OS-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -375,7 +375,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error("Library-level bypass failed: %s", e, exc_info=True)
+            logger.exception("Library-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -431,7 +431,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error("Application-level bypass failed: %s", e, exc_info=True)
+            logger.exception("Application-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -475,7 +475,7 @@ class MultiLayerBypass:
             )
 
         except Exception as e:
-            logger.error("Server-level bypass failed: %s", e, exc_info=True)
+            logger.exception("Server-level bypass failed: %s", e, exc_info=True)
             return StageResult(
                 stage_number=stage_number,
                 layer=layer,
@@ -517,7 +517,7 @@ class MultiLayerBypass:
             return False
 
         except Exception as e:
-            logger.error("Verification failed for %s: %s", layer.value, e, exc_info=True)
+            logger.exception("Verification failed for %s: %s", layer.value, e, exc_info=True)
             return False
 
     def _verify_os_level_bypass(self, target: str) -> bool:
@@ -573,13 +573,13 @@ class MultiLayerBypass:
                 self._frida_hooks.detach()
                 logger.info("Detached Frida hooks")
         except Exception as e:
-            logger.error("Failed to detach Frida: %s", e, exc_info=True)
+            logger.exception("Failed to detach Frida: %s", e, exc_info=True)
 
         for layer in result.rollback_data:
             try:
                 logger.info("Rolling back %s", layer.value)
             except Exception as e:
-                logger.error("Failed to rollback %s: %s", layer.value, e, exc_info=True)
+                logger.exception("Failed to rollback %s: %s", layer.value, e, exc_info=True)
 
     def cleanup(self) -> None:
         """Clean up resources used by the bypass."""
@@ -587,4 +587,4 @@ class MultiLayerBypass:
             if hasattr(self._frida_hooks, "_session") and self._frida_hooks._session:
                 self._frida_hooks.detach()
         except Exception as e:
-            logger.error("Cleanup failed: %s", e, exc_info=True)
+            logger.exception("Cleanup failed: %s", e, exc_info=True)

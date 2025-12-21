@@ -38,7 +38,7 @@ try:
 
     HAS_PSUTIL = True
 except ImportError as e:
-    logger.error("Import error in memory_loader: %s", e)
+    logger.exception("Import error in memory_loader: %s", e)
     HAS_PSUTIL = False
 
 __all__ = ["MemoryOptimizedBinaryLoader", "run_memory_optimized_analysis"]
@@ -80,7 +80,7 @@ class MemoryOptimizedBinaryLoader:
 
         """
         if not os.path.exists(file_path):
-            self.logger.error("File not found: %s", file_path)
+            self.logger.exception("File not found: %s", file_path)
             return False
 
         try:
@@ -98,11 +98,11 @@ class MemoryOptimizedBinaryLoader:
                 access=mmap.ACCESS_READ,  # Read-only
             )
 
-            self.logger.info(f"Loaded file: {file_path} ({self._format_size(self.file_size)})")
+            self.logger.info("Loaded file: %s (%s)", file_path, self._format_size(self.file_size))
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error loading file: %s", e)
+            self.logger.exception("Error loading file: %s", e)
             self.close()
             return False
 
@@ -116,7 +116,7 @@ class MemoryOptimizedBinaryLoader:
             try:
                 self.mapped_file.close()
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in memory_loader: %s", e)
+                self.logger.exception("Error in memory_loader: %s", e)
             self.mapped_file = None
 
         # Close file
@@ -124,7 +124,7 @@ class MemoryOptimizedBinaryLoader:
             try:
                 self.current_file.close()
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in memory_loader: %s", e)
+                self.logger.exception("Error in memory_loader: %s", e)
             self.current_file = None
 
         self.file_size = 0
@@ -141,11 +141,11 @@ class MemoryOptimizedBinaryLoader:
 
         """
         if not self.mapped_file:
-            self.logger.error("No file loaded")
+            self.logger.exception("No file loaded")
             return None
 
         if offset < 0 or offset >= self.file_size:
-            self.logger.error("Invalid offset: %s", offset)
+            self.logger.exception("Invalid offset: %s", offset)
             return None
 
         # Adjust size if it would read past end of file
@@ -156,7 +156,7 @@ class MemoryOptimizedBinaryLoader:
             self.mapped_file.seek(offset)
             return self.mapped_file.read(size)
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error reading chunk: %s", e)
+            self.logger.exception("Error reading chunk: %s", e)
             return None
 
     def read_section(self, section_name: str, section_offset: int, section_size: int) -> bytes | None:
@@ -196,7 +196,7 @@ class MemoryOptimizedBinaryLoader:
 
         """
         if not self.mapped_file:
-            self.logger.error("No file loaded")
+            self.logger.exception("No file loaded")
             return
 
         if chunk_size is None:
@@ -225,7 +225,7 @@ class MemoryOptimizedBinaryLoader:
             process = psutil.Process(os.getpid())
             return int(process.memory_info().rss)
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error getting memory usage: %s", e)
+            self.logger.exception("Error getting memory usage: %s", e)
             return 0
 
     def get_file_info(self) -> dict[str, Any]:
@@ -312,9 +312,9 @@ class MemoryOptimizedBinaryLoader:
     ) -> None:
         """Context manager exit."""
         if exc_type:
-            self.logger.error(f"Memory loader exiting due to {exc_type.__name__}: {exc_val}")
+            self.logger.exception("Memory loader exiting due to %s: %s", exc_type.__name__, exc_val)
             if exc_tb:
-                self.logger.debug(f"Exception traceback from {exc_tb.tb_frame.f_code.co_filename}:{exc_tb.tb_lineno}")
+                self.logger.debug("Exception traceback from %s:%d", exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
         self.close()
 
     def __del__(self) -> None:
@@ -458,7 +458,7 @@ def run_memory_optimized_analysis(
                 )
 
         # Perform entropy distribution analysis
-        if analysis_type in ["full", "entropy"]:
+        if analysis_type in {"full", "entropy"}:
             entropy_samples = []
             file_info_dict: dict[str, Any] = results["file_info"]
             sample_count = min(100, file_info_dict.get("file_size", 0) // chunk_size)
@@ -505,7 +505,7 @@ def run_memory_optimized_analysis(
         results["status"] = "completed"
 
     except Exception as e:
-        logger.error(f"Error during memory-optimized analysis: {e}")
+        logger.exception(f"Error during memory-optimized analysis: {e}")
         results["status"] = "error"
         results["error"] = str(e)
 

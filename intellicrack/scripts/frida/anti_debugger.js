@@ -451,7 +451,7 @@ const antiDebugger = {
 
                 clearDebugRegisters: function (context) {
                     try {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.hardwareBreakpoints.enabled) {
                             // CONTEXT structure offsets for debug registers (x64)
                             const dr0Offset = 0x90;
@@ -514,7 +514,7 @@ const antiDebugger = {
 
                 preventHardwareBreakpoints: function (context) {
                     try {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.hardwareBreakpoints.enabled) {
                             // Check if any debug registers are being set
                             const dr7 = context.add(0xb8).readU64();
@@ -563,7 +563,7 @@ const antiDebugger = {
                         if (context && !context.isNull()) {
                             // Clear debug registers in native context as well
                             try {
-                                const config = this.parent.parent.config;
+                                const {config} = this.parent.parent;
                                 if (config.hardwareBreakpoints.enabled) {
                                     context.add(0x90).writeU64(0); // DR0
                                     context.add(0x98).writeU64(0); // DR1
@@ -651,7 +651,7 @@ const antiDebugger = {
         try {
             Interceptor.attach(address, {
                 onLeave: function (retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.timingProtection.enabled && config.timingProtection.rdtscSpoofing) {
                         // Store original timing value for analysis
                         const originalValue = retval.toNumber();
@@ -701,7 +701,7 @@ const antiDebugger = {
                     if (retval.toInt32() !== 0) {
                         const counterPtr = this.context.rcx;
                         if (counterPtr && !counterPtr.isNull()) {
-                            const config = this.parent.parent.config;
+                            const {config} = this.parent.parent;
                             if (
                                 config.timingProtection.enabled &&
                                 config.timingProtection.performanceCounterSpoofing
@@ -756,7 +756,7 @@ const antiDebugger = {
             Interceptor.attach(sleep, {
                 onEnter: function (args) {
                     const milliseconds = args[0].toInt32();
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
 
                     if (
                         config.timingProtection.enabled &&
@@ -783,7 +783,7 @@ const antiDebugger = {
             Interceptor.attach(sleepEx, {
                 onEnter: function (args) {
                     const milliseconds = args[0].toInt32();
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
 
                     if (
                         config.timingProtection.enabled &&
@@ -815,13 +815,12 @@ const antiDebugger = {
                 getTickCount,
                 new NativeCallback(
                     function () {
-                        const config = this.parent.config;
+                        const {config} = this.parent;
                         if (
                             config.timingProtection.enabled &&
                             config.timingProtection.consistentTiming
                         ) {
-                            const elapsed = Date.now() - baseTickCount;
-                            return elapsed;
+                            return Date.now() - baseTickCount;
                         }
                         return Date.now() - baseTickCount; // Normal behavior
                     },
@@ -841,13 +840,12 @@ const antiDebugger = {
                 getTickCount64,
                 new NativeCallback(
                     function () {
-                        const config = this.parent.config;
+                        const {config} = this.parent;
                         if (
                             config.timingProtection.enabled &&
                             config.timingProtection.consistentTiming
                         ) {
-                            const elapsed = Date.now() - baseTickCount64;
-                            return elapsed;
+                            return Date.now() - baseTickCount64;
                         }
                         return Date.now() - baseTickCount64;
                     },
@@ -888,7 +886,7 @@ const antiDebugger = {
                 onLeave: function (retval) {
                     if (retval.toInt32() > 0) {
                         const filename = this.context.rdx; // lpFilename
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
 
                         if (
                             filename &&
@@ -952,7 +950,7 @@ const antiDebugger = {
 
                 spoofProcessEntry: function (processEntry) {
                     try {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.processInfo.spoofParentProcess) {
                             // PROCESSENTRY32W structure offsets
                             const th32ProcessID = processEntry.add(8).readU32(); // Process ID
@@ -997,7 +995,7 @@ const antiDebugger = {
                 getCommandLine,
                 new NativeCallback(
                     function () {
-                        const config = this.parent.config;
+                        const {config} = this.parent;
                         if (config.processInfo.spoofParentProcess) {
                             const spoofedCmdLine = Memory.allocUtf16String(
                                 config.processInfo.spoofCommandLine
@@ -1065,7 +1063,7 @@ const antiDebugger = {
 
                 onLeave: function (retval) {
                     if (this.isPrivilegeQuery && retval.toInt32() !== 0) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.processInfo.hideDebugPrivileges) {
                             // Could modify privilege information here to hide debug privileges
                             send({
@@ -1108,7 +1106,7 @@ const antiDebugger = {
 
                         // EXCEPTION_SINGLE_STEP = 0x80000004
                         if (exceptionCode === 0x80000004) {
-                            const config = this.parent.parent.config;
+                            const {config} = this.parent.parent;
                             if (
                                 config.threadProtection.enabled &&
                                 config.threadProtection.protectSingleStep
@@ -1138,7 +1136,7 @@ const antiDebugger = {
                 onEnter: function (args) {
                     const context = args[1];
                     if (context && !context.isNull()) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (
                             config.threadProtection.enabled &&
                             config.threadProtection.spoofTrapFlag
@@ -1229,7 +1227,7 @@ const antiDebugger = {
                         handler_address: handler.toString(),
                     });
 
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.exceptionHandling.bypassVectoredHandlers) {
                         // Could potentially hook or modify the handler
                         this.monitorHandler = true;
@@ -1269,7 +1267,7 @@ const antiDebugger = {
                         filter_address: lpTopLevelExceptionFilter.toString(),
                     });
 
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.exceptionHandling.spoofUnhandledExceptions) {
                         // Could replace with our own handler
                         this.spoofFilter = true;
@@ -2312,7 +2310,7 @@ const antiDebugger = {
                             this.systemInfo &&
                             !this.systemInfo.isNull()
                         ) {
-                            const infoClass = this.infoClass;
+                            const {infoClass} = this;
 
                             // Monitor for PatchGuard-related information classes
                             const patchGuardClasses = [
@@ -2755,7 +2753,7 @@ const antiDebugger = {
                 total_hooks: Object.keys(this.hooksInstalled).length,
             });
 
-            const config = this.config;
+            const {config} = this;
             const activeFeatures = [];
 
             if (config.hardwareBreakpoints.enabled) {

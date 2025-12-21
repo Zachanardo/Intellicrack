@@ -107,7 +107,7 @@ class ProtectionAnalysisThread(QThread):
 
             self.analysis_complete.emit(analysis)
         except Exception as e:
-            logger.error("Exception in intellicrack_protection_widget: %s", e, exc_info=True)
+            logger.exception("Exception in intellicrack_protection_widget: %s", e, exc_info=True)
             self.analysis_error.emit(str(e))
 
 
@@ -383,10 +383,13 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.extend((f"Status: {' | '.join(status_flags)}", ""))
         # Detection summary
         if analysis.detections:
-            summary_lines.append(f"Total Detections: {len(analysis.detections)}")
-            summary_lines.append("")
-            summary_lines.append("Detected Protections:")
-
+            summary_lines.extend(
+                (
+                    f"Total Detections: {len(analysis.detections)}",
+                    "",
+                    "Detected Protections:",
+                )
+            )
             for detection in analysis.detections:
                 ver_str = f" v{detection.version}" if detection.version else ""
                 conf_str = f" ({detection.confidence:.0f}% confidence)" if detection.confidence < 100 else ""
@@ -396,11 +399,13 @@ class IntellicrackProtectionWidget(QWidget):
 
         # License files
         if hasattr(analysis, "license_files") and analysis.license_files:
-            summary_lines.append("")
-            summary_lines.append(f"License Files Found: {len(analysis.license_files)}")
-            for file_info in analysis.license_files[:5]:  # Show up to 5
-                summary_lines.append(f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})")
-
+            summary_lines.extend(
+                ("", f"License Files Found: {len(analysis.license_files)}")
+            )
+            summary_lines.extend(
+                f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})"
+                for file_info in analysis.license_files[:5]
+            )
         self.summary_text.setText("\n".join(summary_lines))
 
     def display_technical_details(self, analysis: ProtectionAnalysis) -> None:
@@ -456,29 +461,33 @@ class IntellicrackProtectionWidget(QWidget):
 
         if detection.bypass_recommendations:
             bypass_lines.extend(("Recommended approaches:", ""))
-            for i, recommendation in enumerate(detection.bypass_recommendations, 1):
-                bypass_lines.append(f"{i}. {recommendation}")
-
-            bypass_lines.extend((
-                "",
-                "Note: These are general recommendations. Actual bypass methods may vary based on:",
-            ))
-            bypass_lines.extend((
-                "   Specific version of the protection",
-                "   Target application implementation",
-            ))
-            bypass_lines.extend((
-                "   Additional protections present",
-                "   Legal and ethical considerations",
-            ))
+            bypass_lines.extend(
+                f"{i}. {recommendation}"
+                for i, recommendation in enumerate(
+                    detection.bypass_recommendations, 1
+                )
+            )
+            bypass_lines.extend(
+                (
+                    "",
+                    "Note: These are general recommendations. Actual bypass methods may vary based on:",
+                    "   Specific version of the protection",
+                    "   Target application implementation",
+                    "   Additional protections present",
+                    "   Legal and ethical considerations",
+                )
+            )
         else:
-            bypass_lines.append("No specific bypass recommendations available.")
-            bypass_lines.append("")
-            bypass_lines.append("This protection may require:")
-            bypass_lines.append("   Manual reverse engineering")
-            bypass_lines.append("   Custom tool development")
-            bypass_lines.append("   Advanced analysis techniques")
-
+            bypass_lines.extend(
+                (
+                    "No specific bypass recommendations available.",
+                    "",
+                    "This protection may require:",
+                    "   Manual reverse engineering",
+                    "   Custom tool development",
+                    "   Advanced analysis techniques",
+                )
+            )
         self.bypass_text.setText("\n".join(bypass_lines))
 
         # Switch to bypass tab
@@ -529,7 +538,7 @@ class IntellicrackProtectionWidget(QWidget):
                     f"Results exported to:\n{file_path}",
                 )
             except Exception as e:
-                logger.error("Exception in intellicrack_protection_widget: %s", e, exc_info=True)
+                logger.exception("Exception in intellicrack_protection_widget: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Export Error",
@@ -607,7 +616,7 @@ class IntellicrackProtectionWidget(QWidget):
             self.status_label.setText("AI reasoning complete")
 
         except Exception as e:
-            logger.error("Error in AI reasoning: %s", e, exc_info=True)
+            logger.exception("Error in AI reasoning: %s", e, exc_info=True)
             QMessageBox.critical(self, "AI Reasoning Error", f"Error performing AI reasoning:\n{e!s}")
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
@@ -630,22 +639,27 @@ class IntellicrackProtectionWidget(QWidget):
         # Display evidence
         if reasoning_result.get("evidence"):
             reasoning_lines.append("Evidence Found:")
-            for evidence in reasoning_result["evidence"]:
-                reasoning_lines.append(f"   {evidence}")
+            reasoning_lines.extend(
+                f"   {evidence}" for evidence in reasoning_result["evidence"]
+            )
             reasoning_lines.append("")
 
         # Display conclusions
         if reasoning_result.get("conclusions"):
             reasoning_lines.append("Conclusions:")
-            for conclusion in reasoning_result["conclusions"]:
-                reasoning_lines.append(f"   {conclusion}")
+            reasoning_lines.extend(
+                f"   {conclusion}"
+                for conclusion in reasoning_result["conclusions"]
+            )
             reasoning_lines.append("")
 
         # Display next steps
         if reasoning_result.get("next_steps"):
             reasoning_lines.append("Recommended Next Steps:")
-            for i, step in enumerate(reasoning_result["next_steps"], 1):
-                reasoning_lines.append(f"  {i}. {step}")
+            reasoning_lines.extend(
+                f"  {i}. {step}"
+                for i, step in enumerate(reasoning_result["next_steps"], 1)
+            )
             reasoning_lines.append("")
 
         # Add protection-specific reasoning
@@ -663,9 +677,12 @@ class IntellicrackProtectionWidget(QWidget):
                             "    - Suggests well-studied protection scheme",
                         ))
                     else:
-                        reasoning_lines.append("    - Limited bypass options")
-                        reasoning_lines.append("    - May require custom approach")
-
+                        reasoning_lines.extend(
+                            (
+                                "    - Limited bypass options",
+                                "    - May require custom approach",
+                            )
+                        )
                 # Analyze protection type implications
                 if detection.type.value == "protector":
                     reasoning_lines.append("  Impact: Code obfuscation and anti-debugging expected")
@@ -726,7 +743,7 @@ class IntellicrackProtectionWidget(QWidget):
             self.status_label.setText("License file search complete")
 
         except Exception as e:
-            logger.error("Error searching for license files: %s", e, exc_info=True)
+            logger.exception("Error searching for license files: %s", e, exc_info=True)
             QMessageBox.critical(self, "Error", f"Error searching for license files:\n{e!s}")
             self.status_label.setText("License file search failed")
 
@@ -793,7 +810,7 @@ class IntellicrackProtectionWidget(QWidget):
                 response_text.append(f"<b>AI Response:</b>\n{response}")
 
             except Exception as e:
-                logger.error("Error asking AI question: %s", e, exc_info=True)
+                logger.exception("Error asking AI question: %s", e, exc_info=True)
                 response_text.clear()
                 response_text.append(f"<b>Question:</b> {question}\n")
                 response_text.append(f"<b>Error:</b> {e!s}")

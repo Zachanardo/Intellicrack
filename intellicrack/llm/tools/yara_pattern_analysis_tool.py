@@ -287,8 +287,7 @@ class YARAPatternAnalysisTool:
             assessment["overall_threat_level"] = "medium"
 
         # Determine protection complexity
-        unique_categories = sum(bool(count > 0)
-                            for count in protection_categories.values())
+        unique_categories = sum(count > 0 for count in protection_categories.values())
         if unique_categories >= 4:
             assessment["protection_complexity"] = "advanced"
         elif unique_categories >= 2:
@@ -394,10 +393,8 @@ class YARAPatternAnalysisTool:
             return {"average": 0.0, "high_confidence_count": 0, "low_confidence_count": 0}
 
         confidences = [match.confidence for match in matches]
-        high_conf = sum(bool(c >= 0.8)
-                    for c in confidences)
-        low_conf = sum(bool(c < 0.6)
-                   for c in confidences)
+        high_conf = sum(c >= 0.8 for c in confidences)
+        low_conf = sum(c < 0.6 for c in confidences)
 
         return {
             "average": round(sum(confidences) / len(confidences), 3),

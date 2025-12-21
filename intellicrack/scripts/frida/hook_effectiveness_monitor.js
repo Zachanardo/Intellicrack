@@ -1092,14 +1092,12 @@ const HookEffectivenessMonitor = {
             return {};
         }
 
-        const trends = {
-            successRate: this.calculateSuccessRateTrend(),
-            responseTime: this.calculateResponseTimeTrend(),
-            stability: this.calculateStabilityTrend(),
-            performance: this.calculatePerformanceTrend(),
-        };
-
-        return trends;
+        return {
+                    successRate: this.calculateSuccessRateTrend(),
+                    responseTime: this.calculateResponseTimeTrend(),
+                    stability: this.calculateStabilityTrend(),
+                    performance: this.calculatePerformanceTrend(),
+                };
     },
 
     calculateSuccessRateTrend: function () {
@@ -1109,9 +1107,7 @@ const HookEffectivenessMonitor = {
         }
 
         const rates = recentReports.map(r => r.statistics.averageSuccessRate);
-        const trend = this.calculateTrendDirection(rates);
-
-        return trend;
+        return this.calculateTrendDirection(rates);
     },
 
     calculateResponseTimeTrend: function () {
@@ -1121,9 +1117,7 @@ const HookEffectivenessMonitor = {
         }
 
         const times = recentReports.map(r => r.statistics.averageResponseTime);
-        const trend = this.calculateTrendDirection(times);
-
-        return trend;
+        return this.calculateTrendDirection(times);
     },
 
     calculateTrendDirection: values => {
@@ -1384,15 +1378,13 @@ const HookEffectivenessMonitor = {
     },
 
     generateHookAnalysis: function () {
-        const analysis = {
-            totalHooks: this.monitor.activeHooks.size,
-            averageSuccessRate: this.statistics.averageSuccessRate,
-            mostActiveHooks: this.getMostActiveHooks(),
-            leastActiveHooks: this.getLeastActiveHooks(),
-            hooksByCategory: this.categorizeHooks(),
-        };
-
-        return analysis;
+        return {
+                    totalHooks: this.monitor.activeHooks.size,
+                    averageSuccessRate: this.statistics.averageSuccessRate,
+                    mostActiveHooks: this.getMostActiveHooks(),
+                    leastActiveHooks: this.getLeastActiveHooks(),
+                    hooksByCategory: this.categorizeHooks(),
+                };
     },
 
     getMostActiveHooks: function () {

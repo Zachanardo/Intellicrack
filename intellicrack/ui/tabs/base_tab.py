@@ -205,12 +205,9 @@ class BaseTab(QWidget):
 
             if hasattr(self, "_cleanup_connections"):
                 for connection in getattr(self, "_cleanup_connections", []):
-                    try:
+                    with contextlib.suppress(RuntimeError, TypeError):
                         if hasattr(connection, "disconnect"):
                             connection.disconnect()
-                    except (RuntimeError, TypeError):
-                        pass
-
             if hasattr(self, "_cleanup_file_handles"):
                 for handle in getattr(self, "_cleanup_file_handles", []):
                     try:

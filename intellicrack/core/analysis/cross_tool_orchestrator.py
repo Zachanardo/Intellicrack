@@ -19,6 +19,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 """
 
+from __future__ import annotations
+
 import hashlib
 import json
 import logging
@@ -35,6 +37,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as ET  # noqa: S405
 from collections import defaultdict
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -45,7 +48,7 @@ import psutil
 
 from ...utils.core.plugin_paths import get_ghidra_scripts_dir
 from ..frida_manager import FridaManager
-from .ghidra_analyzer import run_advanced_ghidra_analysis
+from .ghidra_analyzer import GhidraFunction, run_advanced_ghidra_analysis
 from .ghidra_results import GhidraAnalysisResult
 from .radare2_enhanced_integration import EnhancedR2Integration
 
@@ -90,9 +93,9 @@ class SharedMemoryIPC:
         """
         self.name = f"Global\\{name}_intellicrack"
         self.size = size
-        self.mmap_obj = None
+        self.mmap_obj: mmap.mmap | None = None
         self.lock = threading.Lock()
-        self.message_queue = queue.Queue()
+        self.message_queue: queue.Queue[tuple[MessageType, Any]] = queue.Queue()
         self.is_creator = False
 
         # Message header format: msg_type(1) + size(4) + checksum(32) + data
@@ -115,10 +118,10 @@ class SharedMemoryIPC:
                 self.mmap_obj = mmap.mmap(-1, self.size, tagname=self.name, access=mmap.ACCESS_WRITE)
                 logger.info("Connected to existing shared memory: %s", self.name)
             except Exception as conn_err:
-                logger.error("Failed to initialize shared memory: %s", conn_err, exc_info=True)
+                logger.exception("Failed to initialize shared memory: %s", conn_err)
                 raise
 
-    def send_message(self, msg_type: MessageType, data: dict | list | str | int | bool | None) -> bool:
+    def send_message(self, msg_type: MessageType, data: dict[Any, Any] | list[Any] | str | int | bool | bytes | None) -> bool:
         """Send message through shared memory.
 
         Args:
@@ -131,10 +134,17 @@ class SharedMemoryIPC:
         """
         with self.lock:
             try:
+                if not self.mmap_obj:
+                    logger.exception("Shared memory not initialized")
+                    return False
+
                 # Serialize data
-                serialized = json.dumps(data, ensure_ascii=False).encode("utf-8")
+                if isinstance(data, bytes):
+                    serialized = data
+                else:
+                    serialized = json.dumps(data, ensure_ascii=False).encode("utf-8")
                 if len(serialized) > self.max_data_size:
-                    logger.error("Message too large: %s > %s", len(serialized), self.max_data_size)
+                    logger.exception("Message too large: %s > %s", len(serialized), self.max_data_size)
                     return False
 
                 # Calculate checksum
@@ -152,7 +162,7 @@ class SharedMemoryIPC:
                 return True
 
             except Exception as e:
-                logger.error("Failed to send message: %s", e, exc_info=True)
+                logger.exception("Failed to send message: %s", e)
                 return False
 
     def receive_message(self) -> tuple[MessageType, Any] | None:
@@ -164,6 +174,10 @@ class SharedMemoryIPC:
         """
         with self.lock:
             try:
+                if not self.mmap_obj:
+                    logger.exception("Shared memory not initialized")
+                    return None
+
                 # Read header
                 self.mmap_obj.seek(0)
                 header_data = self.mmap_obj.read(5)
@@ -182,7 +196,7 @@ class SharedMemoryIPC:
                 # Verify checksum
                 calculated = hashlib.sha256(data).hexdigest().encode("utf-8")
                 if checksum != calculated:
-                    logger.error("Checksum mismatch in received message")
+                    logger.exception("Checksum mismatch in received message")
                     return None
 
                 # Deserialize
@@ -196,7 +210,7 @@ class SharedMemoryIPC:
                 return (msg_type, deserialized)
 
             except Exception as e:
-                logger.error("Failed to receive message: %s", e, exc_info=True)
+                logger.exception("Failed to receive message: %s", e)
                 return None
 
     def cleanup(self) -> None:
@@ -206,7 +220,7 @@ class SharedMemoryIPC:
                 self.mmap_obj.close()
                 logger.info("Closed shared memory: %s", self.name)
             except Exception as e:
-                logger.error("Error closing shared memory: %s", e, exc_info=True)
+                logger.exception("Error closing shared memory: %s", e)
 
 
 class ResultSerializer:
@@ -215,7 +229,7 @@ class ResultSerializer:
     PROTOCOL_VERSION = "1.0"
 
     @staticmethod
-    def serialize_result(tool_name: str, result: dict | list | str | object, metadata: dict[str, Any] | None = None) -> bytes:
+    def serialize_result(tool_name: str, result: dict[Any, Any] | list[Any] | str | object, metadata: dict[str, Any] | None = None) -> bytes:
         """Serialize analysis result with metadata.
 
         Args:
@@ -249,8 +263,10 @@ class ResultSerializer:
                 return [make_serializable(item) for item in obj]
             return obj
 
-        package = make_serializable(package)
-        return json.dumps(package, ensure_ascii=False).encode("utf-8")
+        serializable_package = make_serializable(package)
+        if not isinstance(serializable_package, dict):
+            raise TypeError("Package must be serializable to dict")
+        return json.dumps(serializable_package, ensure_ascii=False).encode("utf-8")
 
     @staticmethod
     def deserialize_result(data: bytes) -> dict[str, Any]:
@@ -264,7 +280,11 @@ class ResultSerializer:
 
         """
         try:
-            package = json.loads(data.decode("utf-8"))
+            decoded: Any = json.loads(data.decode("utf-8"))
+            if not isinstance(decoded, dict):
+                logger.exception("Decoded data is not a dictionary")
+                return {}
+            package: dict[str, Any] = decoded
 
             # Validate version
             if package.get("version") != ResultSerializer.PROTOCOL_VERSION:
@@ -273,7 +293,7 @@ class ResultSerializer:
             return package
 
         except Exception as e:
-            logger.error("Failed to deserialize result: %s", e, exc_info=True)
+            logger.exception("Failed to deserialize result: %s", e)
             return {}
 
 
@@ -284,8 +304,8 @@ class ToolMonitor:
         """Initialize tool monitor."""
         self.processes: dict[str, psutil.Process] = {}
         self.status: dict[str, ToolStatus] = {}
-        self.metrics: dict[str, dict] = {}
-        self.monitoring_thread = None
+        self.metrics: dict[str, dict[str, Any]] = {}
+        self.monitoring_thread: threading.Thread | None = None
         self.stop_monitoring = threading.Event()
 
     def register_process(self, tool_name: str, pid: int) -> None:
@@ -308,7 +328,7 @@ class ToolMonitor:
             }
             logger.info("Registered process %s for tool %s", pid, tool_name)
         except psutil.NoSuchProcess:
-            logger.error("Process %s not found for tool %s", pid, tool_name, exc_info=True)
+            logger.exception("Process %s not found for tool %s", pid, tool_name)
             self.status[tool_name] = ToolStatus.FAILED
 
     def start_monitoring(self, interval: float = 1.0) -> None:
@@ -401,10 +421,10 @@ class FailureRecovery:
         """
         self.max_retries = max_retries
         self.retry_counts: dict[str, int] = {}
-        self.failure_history: dict[str, list[dict]] = defaultdict(list)
-        self.recovery_strategies: dict[str, callable] = {}
+        self.failure_history: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        self.recovery_strategies: dict[str, Callable[[Exception, dict[str, Any] | None], None]] = {}
 
-    def register_recovery_strategy(self, tool_name: str, strategy: callable) -> None:
+    def register_recovery_strategy(self, tool_name: str, strategy: Callable[[Exception, dict[str, Any] | None], None]) -> None:
         """Register recovery strategy for a tool.
 
         Args:
@@ -415,7 +435,7 @@ class FailureRecovery:
         self.recovery_strategies[tool_name] = strategy
         logger.info("Registered recovery strategy for %s", tool_name)
 
-    def handle_failure(self, tool_name: str, error: Exception, context: dict[str, Any] = None) -> bool:
+    def handle_failure(self, tool_name: str, error: Exception, context: dict[str, Any] | None = None) -> bool:
         """Handle tool failure with recovery.
 
         Args:
@@ -433,7 +453,7 @@ class FailureRecovery:
         # Check retry count
         self.retry_counts[tool_name] = self.retry_counts.get(tool_name, 0) + 1
         if self.retry_counts[tool_name] > self.max_retries:
-            logger.error("Max retries exceeded for %s", tool_name)
+            logger.exception("Max retries exceeded for %s", tool_name)
             return False
 
         logger.warning("Attempting recovery for %s (attempt %s)", tool_name, self.retry_counts[tool_name])
@@ -445,7 +465,7 @@ class FailureRecovery:
                 logger.info("Recovery successful for %s", tool_name)
                 return True
             except Exception as recovery_error:
-                logger.error("Recovery failed for %s: %s", tool_name, recovery_error, exc_info=True)
+                logger.exception("Recovery failed for %s: %s", tool_name, recovery_error)
                 return False
         else:
             # Default recovery: wait and retry
@@ -461,7 +481,7 @@ class FailureRecovery:
         """
         self.retry_counts[tool_name] = 0
 
-    def get_failure_history(self, tool_name: str) -> list[dict]:
+    def get_failure_history(self, tool_name: str) -> list[dict[str, Any]]:
         """Get failure history for a tool.
 
         Args:
@@ -479,10 +499,10 @@ class ResultConflictResolver:
 
     def __init__(self) -> None:
         """Initialize conflict resolver."""
-        self.resolution_rules = []
-        self.conflict_log = []
+        self.resolution_rules: list[tuple[int, Callable[[list[CorrelatedFunction]], CorrelatedFunction | None]]] = []
+        self.conflict_log: list[dict[str, Any]] = []
 
-    def add_resolution_rule(self, rule: callable, priority: int = 0) -> None:
+    def add_resolution_rule(self, rule: Callable[[list[CorrelatedFunction]], CorrelatedFunction | None], priority: int = 0) -> None:
         """Add conflict resolution rule.
 
         Args:
@@ -493,7 +513,7 @@ class ResultConflictResolver:
         self.resolution_rules.append((priority, rule))
         self.resolution_rules.sort(key=lambda x: x[0], reverse=True)
 
-    def resolve_function_conflicts(self, functions: list[dict]) -> list[dict]:
+    def resolve_function_conflicts(self, functions: list[CorrelatedFunction]) -> list[CorrelatedFunction]:
         """Resolve conflicts in function data.
 
         Args:
@@ -503,8 +523,8 @@ class ResultConflictResolver:
             Resolved function list
 
         """
-        resolved = []
-        function_groups = defaultdict(list)
+        resolved: list[CorrelatedFunction] = []
+        function_groups: dict[str, list[CorrelatedFunction]] = defaultdict(list)
 
         # Group by similar names (fuzzy matching)
         for func in functions:
@@ -580,10 +600,10 @@ class ResultConflictResolver:
             return 0.0
 
         # Simple character-based similarity
-        common = sum(bool(c1 == c2) for c1, c2 in zip(s1, s2, strict=False))
+        common = sum(c1 == c2 for c1, c2 in zip(s1, s2, strict=False))
         return common / max(len(s1), len(s2))
 
-    def _apply_resolution_rules(self, group: list[dict]) -> dict | None:
+    def _apply_resolution_rules(self, group: list[CorrelatedFunction]) -> CorrelatedFunction | None:
         """Apply resolution rules to conflicting functions.
 
         Args:
@@ -598,10 +618,10 @@ class ResultConflictResolver:
                 if result := rule(group):
                     return result
             except Exception as e:
-                logger.error("Resolution rule failed: %s", e, exc_info=True)
+                logger.exception("Resolution rule failed: %s", e)
         return None
 
-    def _merge_functions(self, group: list[dict]) -> dict:
+    def _merge_functions(self, group: list[CorrelatedFunction]) -> CorrelatedFunction:
         """Merge multiple functions into one.
 
         Args:
@@ -612,33 +632,47 @@ class ResultConflictResolver:
 
         """
         # Start with highest confidence function
-        group.sort(key=lambda f: f.get("confidence_score", 0), reverse=True)
-        merged = group[0].copy()  # Make a copy to avoid modifying original
+        group.sort(key=lambda f: f.confidence_score, reverse=True)
+        merged = CorrelatedFunction(
+            name=group[0].name,
+            ghidra_data=group[0].ghidra_data,
+            r2_data=group[0].r2_data,
+            frida_data=group[0].frida_data,
+            addresses=dict(group[0].addresses),
+            sizes=dict(group[0].sizes),
+            confidence_score=group[0].confidence_score,
+            notes=list(group[0].notes),
+        )
 
         # Merge data from others
         for func in group[1:]:
-            if func.get("ghidra_data") and merged.get("ghidra_data") is None:
-                merged["ghidra_data"] = func["ghidra_data"]
-            if func.get("r2_data") and merged.get("r2_data") is None:
-                merged["r2_data"] = func["r2_data"]
-            if func.get("frida_data") and merged.get("frida_data") is None:
-                merged["frida_data"] = func["frida_data"]
+            if func.ghidra_data and merged.ghidra_data is None:
+                merged.ghidra_data = func.ghidra_data
+            if func.r2_data and merged.r2_data is None:
+                merged.r2_data = func.r2_data
+            if func.frida_data and merged.frida_data is None:
+                merged.frida_data = func.frida_data
 
             # Merge addresses
-            for tool, addr in func.get("addresses", {}).items():
-                if tool not in merged.get("addresses", {}):
-                    merged.setdefault("addresses", {})[tool] = addr
+            for tool, addr in func.addresses.items():
+                if tool not in merged.addresses:
+                    merged.addresses[tool] = addr
+
+            # Merge sizes
+            for tool, size in func.sizes.items():
+                if tool not in merged.sizes:
+                    merged.sizes[tool] = size
 
             # Combine notes
-            merged.setdefault("notes", []).extend(func.get("notes", []))
+            merged.notes.extend(func.notes)
 
         # Recalculate confidence
         sources = sum([
-            1 if merged.get("ghidra_data") else 0,
-            1 if merged.get("r2_data") else 0,
-            1 if merged.get("frida_data") else 0,
+            1 if merged.ghidra_data else 0,
+            1 if merged.r2_data else 0,
+            1 if merged.frida_data else 0,
         ])
-        merged["confidence_score"] = sources / 3.0
+        merged.confidence_score = sources / 3.0
 
         return merged
 
@@ -656,7 +690,7 @@ class LoadBalancer:
         """
         self.cpu_threshold = cpu_threshold
         self.memory_threshold = memory_threshold
-        self.tool_queue = queue.PriorityQueue()
+        self.tool_queue: queue.PriorityQueue[tuple[int, str, dict[str, float]]] = queue.PriorityQueue()
         self.resource_monitor = None
         self.balancing_enabled = True
 
@@ -701,7 +735,7 @@ class LoadBalancer:
 
         return True
 
-    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: dict[str, float] = None) -> None:
+    def schedule_tool(self, tool_name: str, priority: int = 5, estimated_resources: dict[str, float] | None = None) -> None:
         """Schedule tool for execution.
 
         Args:
@@ -838,7 +872,7 @@ class CrossToolOrchestrator:
 
         # Analysis state
         self.analysis_complete = {"ghidra": False, "radare2": False, "frida": False}
-        self.analysis_results = {"ghidra": None, "radare2": None, "frida": None}
+        self.analysis_results: dict[str, Any] = {"ghidra": None, "radare2": None, "frida": None}
 
         # Threading
         self.analysis_lock = threading.Lock()
@@ -900,7 +934,7 @@ class CrossToolOrchestrator:
         """Set up recovery strategies for tool failures."""
 
         # Ghidra recovery strategy
-        def ghidra_recovery(error: Exception, context: dict) -> None:
+        def ghidra_recovery(error: Exception, context: dict[str, Any] | None) -> None:
             self.logger.info("Attempting Ghidra recovery")
             # Kill any hanging Ghidra process
             for proc in psutil.process_iter(["name"]):
@@ -922,7 +956,7 @@ class CrossToolOrchestrator:
             time.sleep(2)
 
         # Radare2 recovery strategy
-        def r2_recovery(error: Exception, context: dict) -> None:
+        def r2_recovery(error: Exception, context: dict[str, Any] | None) -> None:
             self.logger.info("Attempting Radare2 recovery")
             # Re-initialize r2 integration
             if self.r2_integration:
@@ -931,10 +965,10 @@ class CrossToolOrchestrator:
             self.r2_integration = EnhancedR2Integration(self.binary_path)
 
         # Frida recovery strategy
-        def frida_recovery(error: Exception, context: dict) -> None:
+        def frida_recovery(error: Exception, context: dict[str, Any] | None) -> None:
             self.logger.info("Attempting Frida recovery")
             if self.frida_manager:
-                self.frida_manager.detach()
+                self.frida_manager.cleanup()
             time.sleep(1)
             self.frida_manager = FridaManager()
 
@@ -963,7 +997,7 @@ class CrossToolOrchestrator:
             self.tool_monitor.status["ghidra"] = ToolStatus.IDLE
 
         except Exception as e:
-            self.logger.error("Failed to initialize tools: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize tools: %s", e)
 
     def run_parallel_analysis(self, tools: list[str] | None = None) -> UnifiedAnalysisResult:
         """Run analysis in parallel across specified tools.
@@ -990,11 +1024,12 @@ class CrossToolOrchestrator:
 
             for tool in batch:
                 # Check if tool can be started
-                resources = {
-                    "ghidra": {"cpu": 30, "memory": 20},
-                    "radare2": {"cpu": 25, "memory": 15},
-                    "frida": {"cpu": 20, "memory": 10},
-                }.get(tool, {"cpu": 20, "memory": 10})
+                resources_map: dict[str, dict[str, float]] = {
+                    "ghidra": {"cpu": 30.0, "memory": 20.0},
+                    "radare2": {"cpu": 25.0, "memory": 15.0},
+                    "frida": {"cpu": 20.0, "memory": 10.0},
+                }
+                resources: dict[str, float] = resources_map.get(tool, {"cpu": 20.0, "memory": 10.0})
 
                 if not self.load_balancer.can_start_tool(tool, resources):
                     self.logger.warning("Skipping %s due to resource constraints", tool)
@@ -1025,7 +1060,7 @@ class CrossToolOrchestrator:
             for tool, thread in batch_threads:
                 thread.join(timeout=60)
                 if thread.is_alive():
-                    self.logger.error("%s analysis timed out", tool)
+                    self.logger.exception("%s analysis timed out", tool)
                     self.tool_monitor.status[tool] = ToolStatus.FAILED
 
             # Small delay between batches
@@ -1084,7 +1119,21 @@ class CrossToolOrchestrator:
             if self.main_app:
                 # Use GUI integration
                 run_advanced_ghidra_analysis(self.main_app)
-                self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
+                self.ghidra_results = GhidraAnalysisResult(
+                    binary_path=self.binary_path,
+                    architecture="",
+                    compiler="",
+                    functions={},
+                    data_types={},
+                    strings=[],
+                    imports=[],
+                    exports=[],
+                    sections=[],
+                    entry_point=0,
+                    image_base=0,
+                    vtables={},
+                    exception_handlers=[],
+                )
             else:
                 # Run Ghidra headless and parse real output
                 import subprocess
@@ -1158,10 +1207,37 @@ class CrossToolOrchestrator:
                             )
 
                     # Create analysis result
-                    self.ghidra_results = GhidraAnalysisResult(binary_path=self.binary_path, timestamp=datetime.now())
-                    self.ghidra_results.functions = functions
-                    self.ghidra_results.strings = strings
-                    self.ghidra_results.imports = imports
+                    self.ghidra_results = GhidraAnalysisResult(
+                        binary_path=self.binary_path,
+                        architecture="",
+                        compiler="",
+                        functions={
+                            f["address"]: GhidraFunction(
+                                name=f["name"],
+                                address=f["address"],
+                                size=f["size"],
+                                signature=f.get("signature", ""),
+                                return_type="",
+                                parameters=[],
+                                local_variables=[],
+                                decompiled_code="",
+                                assembly_code="",
+                                xrefs_to=f.get("xrefs", []),
+                                xrefs_from=[],
+                                comments={},
+                            )
+                            for f in functions
+                        },
+                        data_types={},
+                        strings=[(s["address"], s["value"]) for s in strings],
+                        imports=[(i["library"], i["name"], i["address"]) for i in imports],
+                        exports=[],
+                        sections=[],
+                        entry_point=0,
+                        image_base=0,
+                        vtables={},
+                        exception_handlers=[],
+                    )
 
             # Serialize and send results via IPC
             serialized = self.result_serializer.serialize_result("ghidra", self.ghidra_results, {"config": config})
@@ -1169,14 +1245,15 @@ class CrossToolOrchestrator:
 
             with self.analysis_lock:
                 self.analysis_complete["ghidra"] = True
-                self.analysis_results["ghidra"] = self.ghidra_results
+                if self.ghidra_results:
+                    self.analysis_results["ghidra"] = self.ghidra_results
 
             self.tool_monitor.status["ghidra"] = ToolStatus.COMPLETED
             self.failure_recovery.reset_retry_count("ghidra")
             self.logger.info("Ghidra analysis complete")
 
         except Exception as e:
-            self.logger.error("Ghidra analysis failed: %s", e, exc_info=True)
+            self.logger.exception("Ghidra analysis failed: %s", e)
             self.tool_monitor.status["ghidra"] = ToolStatus.FAILED
 
             # Try recovery
@@ -1216,14 +1293,15 @@ class CrossToolOrchestrator:
 
             with self.analysis_lock:
                 self.analysis_complete["radare2"] = True
-                self.analysis_results["radare2"] = results
+                if results:
+                    self.analysis_results["radare2"] = results
 
             self.tool_monitor.status["radare2"] = ToolStatus.COMPLETED
             self.failure_recovery.reset_retry_count("radare2")
             self.logger.info("Radare2 analysis complete")
 
         except Exception as e:
-            self.logger.error("Radare2 analysis failed: %s", e, exc_info=True)
+            self.logger.exception("Radare2 analysis failed: %s", e)
             self.tool_monitor.status["radare2"] = ToolStatus.FAILED
 
             # Try recovery
@@ -1258,7 +1336,11 @@ class CrossToolOrchestrator:
             )
 
             # Attach to process or spawn
-            pid = config.get("pid") if config else None
+            pid: int | None = None
+            if config:
+                pid_value = config.get("pid")
+                if isinstance(pid_value, int):
+                    pid = pid_value
             if not pid:
                 # Spawn process for real analysis
                 import subprocess
@@ -1271,8 +1353,16 @@ class CrossToolOrchestrator:
                 time.sleep(1)  # Let process initialize
             self.frida_manager.attach_to_process(pid)
             # Run standard scripts
-            scripts = config.get("scripts", ["memory_scan", "api_monitor", "hook_detection"])
-            results = {}
+            scripts: list[str] = []
+            if config:
+                scripts_value = config.get("scripts", ["memory_scan", "api_monitor", "hook_detection"])
+                if isinstance(scripts_value, list):
+                    scripts = scripts_value
+                else:
+                    scripts = ["memory_scan", "api_monitor", "hook_detection"]
+            else:
+                scripts = ["memory_scan", "api_monitor", "hook_detection"]
+            results: dict[str, Any] = {}
 
             for script_name in scripts:
                 if script_name == "api_monitor":
@@ -1288,14 +1378,15 @@ class CrossToolOrchestrator:
 
             with self.analysis_lock:
                 self.analysis_complete["frida"] = True
-                self.analysis_results["frida"] = results
+                if results:
+                    self.analysis_results["frida"] = results
 
             self.tool_monitor.status["frida"] = ToolStatus.COMPLETED
             self.failure_recovery.reset_retry_count("frida")
             self.logger.info("Frida analysis complete")
 
         except Exception as e:
-            self.logger.error("Frida analysis failed: %s", e, exc_info=True)
+            self.logger.exception("Frida analysis failed: %s", e)
             self.tool_monitor.status["frida"] = ToolStatus.FAILED
 
             # Try recovery
@@ -1312,7 +1403,7 @@ class CrossToolOrchestrator:
 
     def _frida_memory_scan(self) -> dict[str, Any]:
         """Perform memory scanning with Frida."""
-        results = {"strings": [], "patterns": [], "suspicious_regions": []}
+        results: dict[str, Any] = {"strings": [], "patterns": [], "suspicious_regions": []}
 
         if not self.frida_manager:
             return results
@@ -1351,20 +1442,23 @@ class CrossToolOrchestrator:
 
         try:
             # Execute the memory scan script
-            if hasattr(self.frida_manager, "inject_script"):
-                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
-                if script_result and "data" in script_result:
-                    results |= script_result["data"]
+            if hasattr(self.frida_manager, "inject_script") and self.frida_manager.sessions:
+                if first_pid := next(
+                    iter(self.frida_manager.sessions.keys()), None
+                ):
+                    script_result = self.frida_manager.inject_script(first_pid, script_code)
+                    if script_result and "data" in script_result:
+                        results |= script_result["data"]
             else:
-                self.logger.debug("Frida script injection method not available")
+                self.logger.debug("Frida script injection method not available or no active sessions")
         except Exception as e:
-            self.logger.error("Memory scan failed: %s", e, exc_info=True)
+            self.logger.exception("Memory scan failed: %s", e)
 
         return results
 
     def _frida_api_monitor(self) -> list[dict[str, Any]]:
         """Monitor API calls with Frida."""
-        api_calls = []
+        api_calls: list[dict[str, Any]] = []
 
         if not self.frida_manager:
             return api_calls
@@ -1397,20 +1491,23 @@ class CrossToolOrchestrator:
 
         try:
             # Execute the API monitoring script
-            if hasattr(self.frida_manager, "inject_script"):
-                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
-                if script_result and "calls" in script_result:
-                    api_calls.extend(script_result["calls"])
+            if hasattr(self.frida_manager, "inject_script") and self.frida_manager.sessions:
+                if first_pid := next(
+                    iter(self.frida_manager.sessions.keys()), None
+                ):
+                    script_result = self.frida_manager.inject_script(first_pid, script_code)
+                    if script_result and "calls" in script_result:
+                        api_calls.extend(script_result["calls"])
             else:
-                self.logger.debug("Frida script injection method not available")
+                self.logger.debug("Frida script injection method not available or no active sessions")
         except Exception as e:
-            self.logger.error("API monitoring failed: %s", e, exc_info=True)
+            self.logger.exception("API monitoring failed: %s", e)
 
         return api_calls
 
     def _frida_hook_detection(self) -> dict[str, Any]:
         """Detect hooks and patches with Frida."""
-        hooks = {"inline_hooks": [], "iat_hooks": [], "patches": []}
+        hooks: dict[str, Any] = {"inline_hooks": [], "iat_hooks": [], "patches": []}
 
         if not self.frida_manager:
             return hooks
@@ -1452,14 +1549,17 @@ class CrossToolOrchestrator:
 
         try:
             # Execute the hook detection script
-            if hasattr(self.frida_manager, "inject_script"):
-                script_result = self.frida_manager.inject_script(self.frida_manager.target_pid, script_code)
-                if script_result and "hooks" in script_result:
-                    hooks |= script_result["hooks"]
+            if hasattr(self.frida_manager, "inject_script") and self.frida_manager.sessions:
+                if first_pid := next(
+                    iter(self.frida_manager.sessions.keys()), None
+                ):
+                    script_result = self.frida_manager.inject_script(first_pid, script_code)
+                    if script_result and "hooks" in script_result:
+                        hooks |= script_result["hooks"]
             else:
-                self.logger.debug("Frida script injection method not available")
+                self.logger.debug("Frida script injection method not available or no active sessions")
         except Exception as e:
-            self.logger.error("Hook detection failed: %s", e, exc_info=True)
+            self.logger.exception("Hook detection failed: %s", e)
 
         return hooks
 
@@ -1533,41 +1633,44 @@ class CrossToolOrchestrator:
 
         return result
 
-    def _correlate_functions(self) -> list[dict]:
+    def _correlate_functions(self) -> list[CorrelatedFunction]:
         """Correlate function data across tools."""
-        correlated = []
-        function_map = defaultdict(CorrelatedFunction)
+        correlated: list[CorrelatedFunction] = []
+        function_map: dict[str, CorrelatedFunction] = {}
 
         # Process Ghidra functions
         if self.ghidra_results:
-            for func in self.ghidra_results.functions:
-                name = func.get("name", "")
+            for _func_addr, func in self.ghidra_results.functions.items():
+                name = func.name
+                if name not in function_map:
+                    function_map[name] = CorrelatedFunction(name=name)
                 cf = function_map[name]
-                cf.name = name
-                cf.ghidra_data = func
-                cf.addresses["ghidra"] = func.get("address", 0)
-                cf.sizes["ghidra"] = func.get("size", 0)
+                cf.ghidra_data = {"name": func.name, "address": func.address, "size": func.size}
+                cf.addresses["ghidra"] = func.address
+                cf.sizes["ghidra"] = func.size
 
         # Process Radare2 functions
-        r2_results = self.analysis_results.get("radare2", {})
+        r2_results: Any = self.analysis_results.get("radare2", {})
         if r2_results and "components" in r2_results:
             decompiler = r2_results["components"].get("decompiler", {})
             if "functions" in decompiler:
                 for func in decompiler["functions"]:
                     name = func.get("name", "")
+                    if name not in function_map:
+                        function_map[name] = CorrelatedFunction(name=name)
                     cf = function_map[name]
-                    cf.name = name
                     cf.r2_data = func
                     cf.addresses["r2"] = func.get("offset", 0)
                     cf.sizes["r2"] = func.get("size", 0)
 
         # Process Frida data
-        frida_results = self.analysis_results.get("frida", {})
+        frida_results: Any = self.analysis_results.get("frida", {})
         if frida_results and "hooks" in frida_results:
             for hook in frida_results["hooks"].get("inline", []):
                 name = hook.get("function", "")
+                if name not in function_map:
+                    function_map[name] = CorrelatedFunction(name=name)
                 cf = function_map[name]
-                cf.name = name
                 cf.frida_data = hook
                 cf.notes.append("Has inline hook detected by Frida")
 
@@ -1581,35 +1684,37 @@ class CrossToolOrchestrator:
 
     def _correlate_strings(self) -> list[CorrelatedString]:
         """Correlate string data across tools."""
-        correlated = []
-        string_map = defaultdict(CorrelatedString)
+        correlated: list[CorrelatedString] = []
+        string_map: dict[str, CorrelatedString] = {}
 
         # Process Ghidra strings
         if self.ghidra_results:
-            for string_data in self.ghidra_results.strings:
-                value = string_data.get("value", "")
+            for addr, value in self.ghidra_results.strings:
+                if value not in string_map:
+                    string_map[value] = CorrelatedString(value=value)
                 cs = string_map[value]
-                cs.value = value
-                cs.ghidra_refs = string_data.get("xrefs", [])
+                cs.ghidra_refs = [addr]
 
         # Process Radare2 strings
-        r2_results = self.analysis_results.get("radare2", {})
+        r2_results: Any = self.analysis_results.get("radare2", {})
         if r2_results and "components" in r2_results:
             strings = r2_results["components"].get("strings", {})
             if "strings" in strings:
                 for string_data in strings["strings"]:
                     value = string_data.get("string", "")
+                    if value not in string_map:
+                        string_map[value] = CorrelatedString(value=value)
                     cs = string_map[value]
-                    cs.value = value
                     cs.r2_refs = [string_data.get("vaddr", 0)]
 
         # Process Frida strings
-        frida_results = self.analysis_results.get("frida", {})
+        frida_results: Any = self.analysis_results.get("frida", {})
         if frida_results and "memory" in frida_results:
             for string_data in frida_results["memory"].get("strings", []):
                 value = string_data.get("content", "")
+                if value not in string_map:
+                    string_map[value] = CorrelatedString(value=value)
                 cs = string_map[value]
-                cs.value = value
                 cs.frida_refs = [int(string_data.get("address", "0"), 16)]
 
         # Classify strings
@@ -1636,10 +1741,10 @@ class CrossToolOrchestrator:
 
     def _combine_vulnerabilities(self) -> list[dict[str, Any]]:
         """Combine vulnerability findings from all tools."""
-        vulnerabilities = []
+        vulnerabilities: list[dict[str, Any]] = []
 
         # Get R2 vulnerabilities
-        r2_results = self.analysis_results.get("radare2", {})
+        r2_results: Any = self.analysis_results.get("radare2", {})
         if r2_results and "components" in r2_results:
             vuln_data = r2_results["components"].get("vulnerability", {})
             if "vulnerabilities" in vuln_data:
@@ -1648,7 +1753,7 @@ class CrossToolOrchestrator:
                     vulnerabilities.append(vuln)
 
         # Add Frida runtime vulnerabilities
-        frida_results = self.analysis_results.get("frida", {})
+        frida_results: Any = self.analysis_results.get("frida", {})
         if frida_results and "hooks" in frida_results:
             if inline_hooks := frida_results["hooks"].get("inline", []):
                 vulnerabilities.append(
@@ -1665,7 +1770,7 @@ class CrossToolOrchestrator:
 
     def _identify_protections(self) -> list[dict[str, Any]]:
         """Identify protection mechanisms from analysis."""
-        protections = []
+        protections: list[dict[str, Any]] = []
 
         if r2_results := self.analysis_results.get("radare2", {}):
             components = r2_results.get("components", {})
@@ -1692,7 +1797,7 @@ class CrossToolOrchestrator:
         if self.ghidra_results:
             # High ratio of unnamed functions suggests obfuscation
             total_funcs = len(self.ghidra_results.functions)
-            unnamed_funcs = sum(bool(f.get("name", "").startswith("sub_")) for f in self.ghidra_results.functions)
+            unnamed_funcs = sum(bool(f.name.startswith("sub_")) for f in self.ghidra_results.functions.values())
             if total_funcs > 0 and unnamed_funcs / total_funcs > 0.7:
                 protections.append({
                     "type": "obfuscation",
@@ -1704,10 +1809,10 @@ class CrossToolOrchestrator:
 
     def _generate_bypass_strategies(self) -> list[dict[str, Any]]:
         """Generate bypass strategies based on findings."""
-        strategies = []
+        strategies: list[dict[str, Any]] = []
 
         # Get bypass suggestions from R2
-        r2_results = self.analysis_results.get("radare2", {})
+        r2_results: Any = self.analysis_results.get("radare2", {})
         if r2_results and "components" in r2_results:
             bypass_data = r2_results["components"].get("bypass", {})
             if "strategies" in bypass_data:
@@ -1741,7 +1846,7 @@ class CrossToolOrchestrator:
 
     def _build_unified_call_graph(self) -> dict[str, Any]:
         """Build unified call graph from all tools."""
-        graph = {"nodes": [], "edges": [], "metadata": {}}
+        graph: dict[str, Any] = {"nodes": [], "edges": [], "metadata": {}}
 
         # Get R2 call graph
         if self.r2_integration:
@@ -1752,14 +1857,14 @@ class CrossToolOrchestrator:
         # Merge with Ghidra data
         if self.ghidra_results:
             # Add Ghidra-specific nodes
-            for func in self.ghidra_results.functions:
-                node_id = func.get("name", "")
+            for _func_addr, func in self.ghidra_results.functions.items():
+                node_id = func.name
                 if all(n["id"] != node_id for n in graph["nodes"]):
                     graph["nodes"].append({
                         "id": node_id,
                         "label": node_id,
                         "source": "ghidra",
-                        "address": func.get("address", 0),
+                        "address": func.address,
                     })
 
         return graph
@@ -1830,7 +1935,7 @@ class CrossToolOrchestrator:
             self.r2_integration.cleanup()
 
         if self.frida_manager:
-            self.frida_manager.detach()
+            self.frida_manager.cleanup()
 
         # Wait for threads to complete
         for thread in self.analysis_threads:

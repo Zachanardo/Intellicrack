@@ -128,7 +128,7 @@ class R2PerformanceMonitor:
             if self.enable_real_time:
                 self._start_monitoring()
 
-            self.logger.info(f"Started metrics session: {session_id}")
+            self.logger.info("Started metrics session: %s", session_id)
             return self.current_session
 
     def end_session(self) -> SessionMetrics | None:
@@ -161,7 +161,7 @@ class R2PerformanceMonitor:
             if self.enable_real_time:
                 self._stop_monitoring()
 
-            self.logger.info(f"Ended metrics session: {session.session_id}")
+            self.logger.info("Ended metrics session: %s", session.session_id)
             return session
 
     def start_operation(self, operation_name: str) -> OperationMetrics:
@@ -181,7 +181,7 @@ class R2PerformanceMonitor:
             try:
                 metrics.memory_before = self.process_monitor.memory_info().rss
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                self.logger.warning(f"Failed to get memory before operation: {e}")
+                self.logger.warning("Failed to get memory before operation: %s", e)
 
         with self.metrics_lock:
             self.operation_stack.append(metrics)
@@ -189,7 +189,7 @@ class R2PerformanceMonitor:
             if self.current_session:
                 self.current_session.total_operations += 1
 
-        self.logger.debug(f"Started operation: {operation_name}")
+        self.logger.debug("Started operation: %s", operation_name)
         return metrics
 
     def end_operation(
@@ -224,7 +224,7 @@ class R2PerformanceMonitor:
                 if operation_metrics.memory_before:
                     operation_metrics.memory_delta = operation_metrics.memory_after - operation_metrics.memory_before
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                self.logger.warning(f"Failed to get memory after operation: {e}")
+                self.logger.warning("Failed to get memory after operation: %s", e)
 
         with self.metrics_lock:
             # Remove from stack
@@ -252,7 +252,10 @@ class R2PerformanceMonitor:
         self._check_thresholds(operation_metrics)
 
         self.logger.debug(
-            f"Ended operation: {operation_metrics.operation_name} (duration: {operation_metrics.duration_ms:.2f}ms, success: {success})",
+            "Ended operation: %s (duration: %.2fms, success: %s)",
+            operation_metrics.operation_name,
+            operation_metrics.duration_ms,
+            success,
         )
 
         return operation_metrics
@@ -350,7 +353,7 @@ class R2PerformanceMonitor:
                     "open_files": len(self.process_monitor.open_files()),
                 }
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                self.logger.warning(f"Failed to get system metrics: {e}")
+                self.logger.warning("Failed to get system metrics: %s", e)
 
         return {
             "timestamp": datetime.now().isoformat(),
@@ -369,7 +372,7 @@ class R2PerformanceMonitor:
         try:
             self.process_monitor = psutil.Process()
         except Exception as e:
-            self.logger.warning(f"Failed to initialize process monitor: {e}")
+            self.logger.warning("Failed to initialize process monitor: %s", e)
             self.process_monitor = None
 
         self.stop_monitoring.clear()
@@ -407,10 +410,10 @@ class R2PerformanceMonitor:
                     for op in self.operation_stack:
                         duration_ms = (current_time - op.start_time) * 1000
                         if duration_ms > self.thresholds["operation_duration_critical_ms"]:
-                            self.logger.warning(f"Operation '{op.operation_name}' exceeds critical duration: {duration_ms:.0f}ms")
+                            self.logger.warning("Operation '%s' exceeds critical duration: %.0fms", op.operation_name, duration_ms)
 
             except Exception as e:
-                self.logger.error(f"Error in monitoring loop: {e}", exc_info=True)
+                self.logger.exception("Error in monitoring loop: %s", e)
 
             self.stop_monitoring.wait(timeout=1)
 
@@ -423,16 +426,16 @@ class R2PerformanceMonitor:
         """
         if metrics.duration_ms:
             if metrics.duration_ms > self.thresholds["operation_duration_critical_ms"]:
-                self.logger.warning(f"Operation '{metrics.operation_name}' exceeded critical duration: {metrics.duration_ms:.0f}ms")
+                self.logger.warning("Operation '%s' exceeded critical duration: %.0fms", metrics.operation_name, metrics.duration_ms)
             elif metrics.duration_ms > self.thresholds["operation_duration_warn_ms"]:
-                self.logger.info(f"Operation '{metrics.operation_name}' exceeded warning duration: {metrics.duration_ms:.0f}ms")
+                self.logger.info("Operation '%s' exceeded warning duration: %.0fms", metrics.operation_name, metrics.duration_ms)
 
         if metrics.memory_after:
             memory_mb = metrics.memory_after / (1024 * 1024)
             if memory_mb > self.thresholds["memory_usage_critical_mb"]:
-                self.logger.warning(f"Memory usage critical: {memory_mb:.0f}MB")
+                self.logger.warning("Memory usage critical: %.0fMB", memory_mb)
             elif memory_mb > self.thresholds["memory_usage_warn_mb"]:
-                self.logger.info(f"Memory usage warning: {memory_mb:.0f}MB")
+                self.logger.info("Memory usage warning: %.0fMB", memory_mb)
 
     def export_metrics(self, filepath: str) -> None:
         """Export metrics to JSON file.
@@ -450,7 +453,7 @@ class R2PerformanceMonitor:
         with open(filepath, "w") as f:
             json.dump(report, f, indent=2, default=convert_datetime)
 
-        self.logger.info(f"Exported metrics to {filepath}")
+        self.logger.info("Exported metrics to %s", filepath)
 
 
 def create_performance_monitor(enable_real_time: bool = True) -> R2PerformanceMonitor:

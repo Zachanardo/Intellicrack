@@ -165,7 +165,7 @@ class ArxanBypass:
             raise FileNotFoundError(error_msg)
 
         if output_path is None:
-            output_path = binary_path.with_suffix(".arxan_bypassed" + binary_path.suffix)
+            output_path = binary_path.with_suffix(f".arxan_bypassed{binary_path.suffix}")
         else:
             output_path = Path(output_path)
 
@@ -233,7 +233,7 @@ class ArxanBypass:
                     f.write(binary_data)
 
         except Exception as e:
-            self.logger.error("Binary patching failed: %s", e, exc_info=True)
+            self.logger.exception("Binary patching failed: %s", e)
             result.success = False
             return result
 
@@ -263,7 +263,7 @@ class ArxanBypass:
                     self.logger.info("Installed %d Frida hooks", result.runtime_hooks_installed)
 
                 except Exception as e:
-                    self.logger.error("Frida runtime bypass failed: %s", e, exc_info=True)
+                    self.logger.exception("Frida runtime bypass failed: %s", e)
 
         result.success = True
         return result
@@ -400,7 +400,7 @@ class ArxanBypass:
             for xor_key in range(1, 256):
                 decrypted = bytes(b ^ xor_key for b in encrypted_data)
 
-                printable_ratio = sum(bool(32 <= b < 127) for b in decrypted) / len(decrypted)
+                printable_ratio = sum(32 <= b < 127 for b in decrypted) / len(decrypted)
 
                 if printable_ratio > 0.7:
                     patch = BypassPatch(
@@ -649,7 +649,7 @@ def main() -> None:
                     logger.info("  - 0x%x: %s", patch.address, patch.description)
 
     except Exception as e:
-        logger.error("Bypass failed: %s", e, exc_info=True)
+        logger.exception("Bypass failed: %s", e)
         raise
 
 

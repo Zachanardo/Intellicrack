@@ -210,7 +210,7 @@ class APIKeyConfigDialog(QDialog):
             logger.info("Fetched %s models from %s", len(models), provider_name)
 
         except Exception as e:
-            logger.error("Error fetching models: %s", e)
+            logger.exception("Error fetching models: %s", e)
             self.status_label.setText(f"Error: {e!s}")
 
         finally:
@@ -402,7 +402,7 @@ class AIAssistantTab(BaseTab):
             self.status_label.setText("AI Assistant initialized")
             logger.info("AI Assistant initialized successfully")
         except Exception as e:
-            logger.error("Failed to initialize AI Assistant: %s", e)
+            logger.exception("Failed to initialize AI Assistant: %s", e)
             self.status_label.setText(f"Error: {e}")
 
     def configure_model(self) -> None:
@@ -472,11 +472,11 @@ class AIAssistantTab(BaseTab):
                     )
                 else:
                     error_msg = "Failed to register model with LLM manager"
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
                     raise Exception(error_msg)
 
             except Exception as e:
-                logger.error("Failed to configure model: %s", e)
+                logger.exception("Failed to configure model: %s", e)
                 QMessageBox.critical(self, "Configuration Error", f"Failed to configure model: {e!s}")
                 self.status_label.setText("Configuration failed")
 
@@ -504,7 +504,7 @@ class AIAssistantTab(BaseTab):
                 self.output_text.setPlainText("AI Assistant not initialized. Please check settings.")
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
-            logger.error("Analysis failed: %s", e)
+            logger.exception("Analysis failed: %s", e)
             self.output_text.setPlainText(f"Analysis failed: {e!s}")
             self.status_label.setText("Analysis failed")
         finally:
@@ -535,7 +535,7 @@ class AIAssistantTab(BaseTab):
                 self.output_text.setPlainText("AI Assistant not initialized. Please check settings.")
                 self.status_label.setText("Error: AI Assistant not available")
         except Exception as e:
-            logger.error("Script generation failed: %s", e)
+            logger.exception("Script generation failed: %s", e)
             self.output_text.setPlainText(f"Script generation failed: {e!s}")
             self.status_label.setText("Script generation failed")
         finally:
@@ -561,7 +561,7 @@ class AIAssistantTab(BaseTab):
                 logger.info("Script exported to %s", file_path)
             except Exception as e:
                 QMessageBox.critical(self, "Error", f"Failed to export script: {e!s}")
-                logger.error("Failed to export script: %s", e)
+                logger.exception("Failed to export script: %s", e)
 
     def copy_to_clipboard(self) -> None:
         """Copy output to clipboard."""
@@ -643,7 +643,7 @@ class AIAssistantTab(BaseTab):
                 logger.info("Loaded %d AI models dynamically", len(available_models))
 
         except Exception as e:
-            logger.error("Failed to load available models: %s", e)
+            logger.exception("Failed to load available models: %s", e)
             self.model_combo.addItem("FAIL Error loading models - Check configuration")
             self.model_combo.setEnabled(False)
 
@@ -679,7 +679,7 @@ class AIAssistantTab(BaseTab):
                     QMessageBox.warning(self, "Error", "Failed to upload model file.")
 
             except Exception as e:
-                logger.error("Failed to upload model: %s", e)
+                logger.exception("Failed to upload model: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to upload model: {e!s}")
 
     def open_model_manager(self) -> None:
@@ -693,7 +693,7 @@ class AIAssistantTab(BaseTab):
                 self.load_available_models()
 
         except Exception as e:
-            logger.error("Failed to open model manager: %s", e)
+            logger.exception("Failed to open model manager: %s", e)
             from intellicrack.handlers.pyqt6_handler import QMessageBox
 
             QMessageBox.critical(self, "Error", f"Failed to open model manager: {e!s}")

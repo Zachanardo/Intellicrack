@@ -30,7 +30,6 @@ import multiprocessing as mp
 import os
 import queue
 import signal
-import subprocess
 import sys
 import tempfile
 import threading
@@ -39,19 +38,24 @@ import traceback
 import uuid
 import weakref
 from abc import ABC, abstractmethod
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 import yaml
 from jsonschema import ValidationError, validate
 
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.utils.logger import log_all_methods
+
+
+if TYPE_CHECKING:
+    import subprocess
+    from types import FrameType, ModuleType
 
 
 """
@@ -247,14 +251,13 @@ class WorkflowDefinition:
 class LoggingManager:
     """Advanced logging manager with structured logging and multiple outputs."""
 
-    def __init__(self, config: dict[str, Any]) -> None:
+    def __init__(self, config: dict[str, Any] | str) -> None:
         """Initialize advanced logging manager with configuration."""
-        self.config = config
+        self.config: dict[str, Any] = config if isinstance(config, dict) else {}
         self.loggers: dict[str, logging.Logger] = {}
         self.handlers: dict[str, logging.Handler] = {}
 
-        # Use weakref for memory-efficient logger references
-        self._logger_refs = weakref.WeakValueDictionary()
+        self._logger_refs: weakref.WeakValueDictionary[str, logging.Logger] = weakref.WeakValueDictionary()
 
         # Use yaml for configuration if config is a string path
         if isinstance(config, str) and config.endswith(".yaml"):
@@ -262,7 +265,7 @@ class LoggingManager:
                 with open(config) as f:
                     self.config = yaml.safe_load(f)
             except Exception as e:
-                self.logger.exception("Failed to load YAML config: %s, using default config", e)
+                logging.exception("Failed to load YAML config: %s, using default config", e)
                 self.config = {}
 
         # Setup root logger
@@ -367,7 +370,7 @@ class LoggingManager:
             },
         )
 
-    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] = None) -> None:
+    def log_plugin_operation(self, plugin_name: str, operation: str, status: str, details: dict[str, Any] | None = None) -> None:
         """Log plugin operation."""
         logger = self.get_logger("plugins")
         logger.info(
@@ -455,7 +458,7 @@ class ConfigurationManager:
         self.config_path = Path(config_path) if config_path else Path("config/intellicrack.json")
         self.config: dict[str, Any] = {}
         self.schema: dict[str, Any] = {}
-        self.watchers: list[Callable] = []
+        self.watchers: list[Callable[[dict[str, Any]], None]] = []
         self.file_watcher: threading.Thread | None = None
         self.last_modified: float = 0
         self.logger = logging.getLogger(f"{__name__}.ConfigurationManager")
@@ -611,7 +614,7 @@ class ConfigurationManager:
                     self.logger.exception("Watcher error: %s", e)
 
         except (json.JSONDecodeError, ValidationError) as e:
-            self.logger.error("Configuration error: %s", e, exc_info=True)
+            self.logger.exception("Configuration error: %s", e)
             self.config = self._get_default_config()
 
     def _deep_merge(self, base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
@@ -748,7 +751,7 @@ class AbstractPlugin(ABC):
         """Update plugin configuration."""
         self.config.update(config)
 
-    def emit_event(self, event_type: str, data: dict[str, Any] = None, target: str = None) -> None:
+    def emit_event(self, event_type: str, data: dict[str, Any] | None = None, target: str | None = None) -> None:
         """Emit an event."""
         if self.event_bus:
             event = Event(
@@ -792,7 +795,7 @@ class GhidraPlugin(AbstractPlugin):
         """Initialize Ghidra plugin with name, script path, and version."""
         super().__init__(name, version)
         self.script_path = Path(script_path)
-        self.java_process: subprocess.Popen | None = None
+        self.java_process: subprocess.Popen[bytes] | None = None
         self.ghidra_project_path: str | None = None
 
     def get_metadata(self) -> PluginMetadata:
@@ -867,8 +870,11 @@ class GhidraPlugin(AbstractPlugin):
             if operation not in self.get_supported_operations():
                 raise ValueError(f"Unsupported operation: {operation}")
 
-            binary_path = parameters.get("binary_path")
-            if not binary_path or not Path(binary_path).exists():
+            binary_path_obj = parameters.get("binary_path")
+            if not binary_path_obj:
+                raise ValueError("No binary path provided")
+            binary_path = str(binary_path_obj)
+            if not Path(binary_path).exists():
                 raise ValueError("Invalid binary path")
 
             # Execute Ghidra script
@@ -923,11 +929,13 @@ class GhidraPlugin(AbstractPlugin):
         binary_id = await asyncio.to_thread(_hash_file)
 
         # Use inspect to validate parameters
-        current_function = inspect.currentframe().f_code.co_name
-        self.logger.debug("Executing %s with operation: %s", current_function, operation)
+        current_frame: FrameType | None = inspect.currentframe()
+        current_function = current_frame.f_code.co_name if current_frame else "unknown"
+        if self.logger:
+            self.logger.debug("Executing %s with operation: %s", current_function, operation)
 
         # Use queue for managing concurrent operations
-        operation_queue = queue.Queue()
+        operation_queue: queue.Queue[dict[str, Any]] = queue.Queue()
         operation_queue.put(
             {
                 "binary_path": binary_path,
@@ -989,18 +997,20 @@ class GhidraPlugin(AbstractPlugin):
                 except Exception as term_error:
                     # Use traceback for detailed error logging
                     error_trace = traceback.format_exc()
-                    self.logger.exception("Process termination failed: %s\n%s", term_error, error_trace)
+                    if self.logger:
+                        self.logger.exception("Process termination failed: %s\n%s", term_error, error_trace)
                     process.kill()
             raise Exception("Ghidra execution timed out") from timeout_error
         except Exception as e:
             # Use traceback for comprehensive error reporting
             error_trace = traceback.format_exc()
-            self.logger.exception("Ghidra execution error: %s\n%s", e, error_trace)
+            if self.logger:
+                self.logger.exception("Ghidra execution error: %s\n%s", e, error_trace)
             raise
 
     def _parse_ghidra_output(self, output: str, operation: str) -> dict[str, Any]:
         """Parse Ghidra script output."""
-        result = {
+        result: dict[str, Any] = {
             "operation": operation,
             "raw_output": output,
             "timestamp": datetime.now(UTC).isoformat(),
@@ -1008,7 +1018,7 @@ class GhidraPlugin(AbstractPlugin):
 
         # Operation-specific parsing
         if operation == "extract_functions":
-            functions = []
+            functions: list[dict[str, str]] = []
             for line in output.split("\n"):
                 if "FUNCTION:" in line:
                     parts = line.split("FUNCTION:")[1].strip().split()
@@ -1023,7 +1033,7 @@ class GhidraPlugin(AbstractPlugin):
             result["functions"] = functions
 
         elif operation == "find_strings":
-            strings = []
+            strings: list[str] = []
             for line in output.split("\n"):
                 if "STRING:" in line:
                     string_data = line.split("STRING:")[1].strip()
@@ -1031,7 +1041,7 @@ class GhidraPlugin(AbstractPlugin):
             result["strings"] = strings
 
         elif operation == "identify_crypto":
-            crypto_findings = []
+            crypto_findings: list[str] = []
             for line in output.split("\n"):
                 if "CRYPTO:" in line:
                     crypto_data = line.split("CRYPTO:")[1].strip()
@@ -1049,9 +1059,9 @@ class FridaPlugin(AbstractPlugin):
         """Initialize Frida plugin with name, script path, and version."""
         super().__init__(name, version)
         self.script_path = Path(script_path)
-        self.frida_session = None
-        self.frida_script = None
-        self.target_process = None
+        self.frida_session: Any = None
+        self.frida_script: Any = None
+        self.target_process: str | int | None = None
 
     def get_metadata(self) -> PluginMetadata:
         """Get Frida plugin metadata."""
@@ -1139,23 +1149,25 @@ class FridaPlugin(AbstractPlugin):
 
             # Check Frida version and capabilities
             frida_version = frida.__version__
-            self.logger.debug("Using Frida version: %s", frida_version)
+            if self.logger:
+                self.logger.debug("Using Frida version: %s", frida_version)
 
             if operation not in self.get_supported_operations():
                 raise ValueError(f"Unsupported operation: {operation}")
 
             # Get target process
-            target = parameters.get("target")
-            if not target:
+            target_obj = parameters.get("target")
+            if not target_obj:
                 raise ValueError("Target process not specified")
+            target: str | int = str(target_obj) if isinstance(target_obj, str) else int(target_obj) if isinstance(target_obj, int) else str(target_obj)
 
             # Attach to process
             if operation == "attach_process":
-                return await self._attach_to_process(target, parameters)
+                return await self._attach_to_process(target)
 
             # Ensure we have an active session
             if not self.frida_session:
-                await self._attach_to_process(target, parameters)
+                await self._attach_to_process(target)
 
             # Execute operation-specific logic
             if operation == "hook_functions":
@@ -1168,6 +1180,8 @@ class FridaPlugin(AbstractPlugin):
                 return await self._bypass_protections(parameters)
             if operation == "extract_runtime_data":
                 return await self._extract_runtime_data(parameters)
+
+            return None
 
         except Exception as e:
             self.last_error = str(e)
@@ -1185,7 +1199,7 @@ class FridaPlugin(AbstractPlugin):
 
             raise
 
-    async def _attach_to_process(self, target: str | int, parameters: dict[str, Any]) -> dict[str, Any]:
+    async def _attach_to_process(self, target: str | int) -> dict[str, Any]:
         """Attach to target process."""
         try:
             from intellicrack.handlers.frida_handler import frida
@@ -1347,8 +1361,8 @@ class PythonPlugin(AbstractPlugin):
         """Initialize Python plugin with name, module path, and version."""
         super().__init__(name, version)
         self.module_path = Path(module_path)
-        self.module = None
-        self.plugin_instance = None
+        self.module: ModuleType | None = None
+        self.plugin_instance: Any = None
 
     def get_metadata(self) -> PluginMetadata:
         """Get Python plugin metadata."""
@@ -1488,7 +1502,8 @@ class PythonPlugin(AbstractPlugin):
                 if isinstance(plugin_ops, list):
                     operations.extend(plugin_ops)
             except Exception as e:
-                self.logger.exception("Plugin operation error: %s", e)
+                if self.logger:
+                    self.logger.exception("Plugin operation error: %s", e)
 
         return list(set(operations))
 
@@ -1546,10 +1561,10 @@ class EventBus:
 
     def __init__(self, max_queue_size: int = 10000) -> None:
         """Initialize event bus with maximum queue size."""
-        self.subscribers: dict[str, list[Callable]] = {}
-        self.event_queue: asyncio.Queue = asyncio.Queue(maxsize=max_queue_size)
+        self.subscribers: dict[str, list[Callable[[Event], Awaitable[None]]]] = {}
+        self.event_queue: asyncio.Queue[Event] = asyncio.Queue(maxsize=max_queue_size)
         self.running = False
-        self.processor_task: asyncio.Task | None = None
+        self.processor_task: asyncio.Task[None] | None = None
         self.logger: logging.Logger | None = None
         self.event_history: list[Event] = []
         self.max_history_size = 1000
@@ -1587,7 +1602,8 @@ class EventBus:
             try:
                 await self.processor_task
             except asyncio.CancelledError as e:
-                self.logger.exception("Plugin operation error: %s", e)
+                if self.logger:
+                    self.logger.exception("Plugin operation error: %s", e)
 
         if self.logger:
             self.logger.info("Event bus stopped")
@@ -1636,7 +1652,7 @@ class EventBus:
 
         except asyncio.QueueFull:
             if self.logger:
-                self.logger.error("Event queue full, dropping event: %s", event.event_type, exc_info=True)
+                self.logger.exception("Event queue full, dropping event: %s", event.event_type)
 
     async def _process_events(self) -> None:
         """Process events from queue."""
@@ -1688,8 +1704,9 @@ class EventBus:
                     if asyncio.iscoroutinefunction(handler):
                         tasks.append(asyncio.create_task(handler(event)))
                     else:
-                        # Wrap sync handler in async
-                        tasks.append(asyncio.create_task(self._run_sync_handler(handler, event)))
+                        # Wrap sync handler in async - cast to match signature
+                        sync_handler = cast("Callable[[Event], None]", handler)
+                        tasks.append(asyncio.create_task(self._run_sync_handler(sync_handler, event)))
                 except Exception as e:
                     if self.logger:
                         self.logger.exception("Error creating task for handler: %s", e)
@@ -1701,14 +1718,14 @@ class EventBus:
 
                 # Track task completion in real-time
                 completed_count = 0
-                results = []
+                results: list[None | Exception] = []
 
                 try:
                     # Use as_completed to process tasks as they finish
                     for completed_task in asyncio.as_completed(tasks, timeout=timeout_seconds):
                         try:
-                            result = await completed_task
-                            results.append(result)
+                            await completed_task
+                            results.append(None)
                             completed_count += 1
                         except Exception as e:
                             results.append(e)
@@ -1738,7 +1755,7 @@ class EventBus:
                     for task in tasks:
                         task.cancel()
 
-    async def _run_sync_handler(self, handler: Callable, event: Event) -> None:
+    async def _run_sync_handler(self, handler: Callable[[Event], None], event: Event) -> None:
         """Run synchronous handler in executor."""
         loop = asyncio.get_event_loop()
         await loop.run_in_executor(None, handler, event)
@@ -1912,13 +1929,13 @@ class PluginManager:
                         metadata["capabilities"] = [cap.strip() for cap in caps]
 
             return PluginMetadata(
-                name=metadata["name"],
-                version=metadata["version"],
-                description=metadata["description"],
+                name=str(metadata["name"]),
+                version=str(metadata["version"]),
+                description=str(metadata["description"]),
                 component_type=ComponentType.GHIDRA_SCRIPT,
-                author=metadata["author"],
-                capabilities=metadata["capabilities"],
-                dependencies=metadata["dependencies"],
+                author=str(metadata["author"]),
+                capabilities=cast("list[str]", metadata["capabilities"]),
+                dependencies=cast("list[str]", metadata["dependencies"]),
                 supported_formats=[".exe", ".dll", ".elf", ".bin"],
             )
 
@@ -1958,13 +1975,13 @@ class PluginManager:
                             metadata["name"] = name_match
 
             return PluginMetadata(
-                name=metadata["name"],
-                version=metadata["version"],
-                description=metadata["description"],
+                name=str(metadata["name"]),
+                version=str(metadata["version"]),
+                description=str(metadata["description"]),
                 component_type=ComponentType.FRIDA_SCRIPT,
-                author=metadata["author"],
-                capabilities=metadata["capabilities"],
-                dependencies=metadata["dependencies"],
+                author=str(metadata["author"]),
+                capabilities=cast("list[str]", metadata["capabilities"]),
+                dependencies=cast("list[str]", metadata["dependencies"]),
                 supported_formats=[".exe", ".dll", ".so", ".dylib"],
             )
 
@@ -1978,7 +1995,7 @@ class PluginManager:
             content = await asyncio.to_thread(lambda: module_file.read_text(encoding="utf-8"))
 
             # Parse docstring and comments
-            metadata = {
+            metadata: dict[str, Any] = {
                 "name": module_file.stem,
                 "version": "1.0.0",
                 "description": f"Python module: {module_file.name}",
@@ -1986,6 +2003,8 @@ class PluginManager:
                 "capabilities": ["custom_analysis"],
                 "dependencies": [],
             }
+            capabilities_list: list[str] = cast("list[str]", metadata["capabilities"])
+            dependencies_list: list[str] = cast("list[str]", metadata["dependencies"])
 
             # Extract from docstring
             if '"""' in content:
@@ -1997,27 +2016,27 @@ class PluginManager:
                         metadata["author"] = line.split("Author:")[-1].strip()
                     elif line.startswith("Version:"):
                         metadata["version"] = line.split("Version:")[-1].strip()
-                    elif not metadata["description"].startswith("Python module:") and line:
+                    elif not str(metadata["description"]).startswith("Python module:") and line:
                         metadata["description"] = line
 
             # Look for imports to determine capabilities
             if "import torch" in content or "import tensorflow" in content:
-                metadata["capabilities"].append("machine_learning")
+                capabilities_list.append("machine_learning")
             if "import frida" in content:
-                metadata["capabilities"].append("dynamic_analysis")
+                capabilities_list.append("dynamic_analysis")
             if "cryptography" in content or "Crypto" in content:
-                metadata["capabilities"].append("cryptography")
+                capabilities_list.append("cryptography")
             if "license" in content.lower() or "bypass" in content.lower():
-                metadata["capabilities"].append("license_bypass")
+                capabilities_list.append("license_bypass")
 
             return PluginMetadata(
-                name=metadata["name"],
-                version=metadata["version"],
-                description=metadata["description"],
+                name=str(metadata["name"]),
+                version=str(metadata["version"]),
+                description=str(metadata["description"]),
                 component_type=ComponentType.CUSTOM_MODULE,
-                author=metadata["author"],
-                capabilities=metadata["capabilities"],
-                dependencies=metadata["dependencies"],
+                author=str(metadata["author"]),
+                capabilities=capabilities_list,
+                dependencies=dependencies_list,
                 supported_formats=[".exe", ".dll", ".so", ".dylib", ".bin"],
             )
 
@@ -2515,7 +2534,7 @@ class WorkflowEngine:
 
         except Exception as e:
             context["status"] = WorkflowStatus.FAILED
-            context["end_time"] = datetime.utcnow()
+            context["end_time"] = datetime.now(timezone.utc)
             context["errors"].append(str(e))
 
             self.logger.exception("Workflow failed: %s - %s", execution_id, e)
@@ -2594,7 +2613,7 @@ class WorkflowEngine:
                 self.logger.debug("Step %s depends on: %s", step_id, deps)
 
         # Execute in dependency order with parallelization
-        executed_steps = set()
+        executed_steps: set[str] = set()
         tasks = []  # Track all concurrent tasks
 
         while len(executed_steps) < len(workflow.steps):
@@ -2702,7 +2721,7 @@ class WorkflowEngine:
             context["step_results"][step.step_id] = result
 
             # Log performance
-            duration = (datetime.utcnow() - start_time).total_seconds()
+            duration = (datetime.now(timezone.utc) - start_time).total_seconds()
             self.logger.info("Step %s completed in %.2fs", step.step_id, duration)
 
         except TimeoutError as timeout_error:
@@ -2751,8 +2770,15 @@ class WorkflowEngine:
                     "completed_steps": workflow_record["completed_steps"],
                     "errors": workflow_record["errors"],
                     "start_time": workflow_record["start_time"].isoformat(),
-                    "end_time": (workflow_record["end_time"].isoformat() if workflow_record["end_time"] else None),
-                    "duration": ((workflow_record["end_time"] or datetime.utcnow()) - workflow_record["start_time"]).total_seconds(),
+                    "end_time": (
+                        workflow_record["end_time"].isoformat()
+                        if workflow_record["end_time"]
+                        else None
+                    ),
+                    "duration": (
+                        (workflow_record["end_time"] or datetime.now(timezone.utc))
+                        - workflow_record["start_time"]
+                    ).total_seconds(),
                 }
                 for workflow_record in self.workflow_history
                 if workflow_record["execution_id"] == execution_id
@@ -2805,8 +2831,8 @@ class AnalysisCoordinator:
         self.logger = logger
 
         self.active_analyses: dict[str, dict[str, Any]] = {}
-        self.analysis_queue: asyncio.Queue = asyncio.Queue()
-        self.coordinator_task: asyncio.Task | None = None
+        self.analysis_queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        self.coordinator_task: asyncio.Task[None] | None = None
         self.running = False
 
         # Analysis templates
@@ -2863,7 +2889,7 @@ class AnalysisCoordinator:
         self,
         binary_path: str,
         analysis_type: str = "deep_analysis",
-        parameters: dict[str, Any] = None,
+        parameters: dict[str, Any] | None = None,
     ) -> str:
         """Analyze binary file."""
         if not Path(binary_path).exists():
@@ -3141,7 +3167,7 @@ class AnalysisCoordinator:
 
     def get_active_analyses(self) -> list[dict[str, Any]]:
         """Get all active analyses."""
-        return [self.get_analysis_status(analysis_id) for analysis_id in self.active_analyses]
+        return [status for analysis_id in self.active_analyses if (status := self.get_analysis_status(analysis_id)) is not None]
 
 
 @log_all_methods
@@ -3164,7 +3190,7 @@ class ResourceManager:
         self.max_workers = config.get("max_workers", mp.cpu_count())
 
         # Monitoring
-        self.monitoring_task: asyncio.Task | None = None
+        self.monitoring_task: asyncio.Task[None] | None = None
         self.running = False
 
         # Resource tracking
@@ -3297,7 +3323,7 @@ class ResourceManager:
         except Exception as e:
             self.logger.exception("Error in auto cleanup: %s", e)
 
-    async def execute_in_process(self, func: Callable, *args: object, **kwargs: object) -> object:
+    async def execute_in_process(self, func: Callable[..., Any], *args: object, **kwargs: object) -> object:
         """Execute function in process pool."""
         if not self.process_pool:
             raise Exception("Process pool not initialized")
@@ -3306,7 +3332,7 @@ class ResourceManager:
         future = self.process_pool.submit(func, *args, **kwargs)
         return await loop.run_in_executor(None, future.result)
 
-    async def execute_in_thread(self, func: Callable, *args: object, **kwargs: object) -> object:
+    async def execute_in_thread(self, func: Callable[..., Any], *args: object, **kwargs: object) -> object:
         """Execute function in thread pool."""
         if not self.thread_pool:
             raise Exception("Thread pool not initialized")
@@ -3314,7 +3340,7 @@ class ResourceManager:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(self.thread_pool, func, *args, **kwargs)
 
-    async def start_external_process(self, cmd: list[str], cwd: str = None) -> subprocess.Popen:
+    async def start_external_process(self, cmd: list[str], cwd: str | None = None) -> asyncio.subprocess.Process:
         """Start external process with tracking."""
         try:
             process = await asyncio.create_subprocess_exec(
@@ -3674,7 +3700,7 @@ class IntellicrackcoreEngine:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     def generate_frida_script(self, target: str, script_type: str) -> str:
@@ -4829,7 +4855,7 @@ def main() -> None:
                 # Create a simple async loop that can be more responsive to stop signals
                 try:
                     while engine.running:
-                        await asyncio.wait([asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED)
+                        await asyncio.sleep(0.1)
                 except asyncio.CancelledError:
                     pass  # Allow clean cancellation
             else:
@@ -4837,7 +4863,7 @@ def main() -> None:
                 print("Intellicrack Core Engine running. Press Ctrl+C to stop.")
                 try:
                     while engine.running:
-                        await asyncio.wait([asyncio.sleep(0.1)], return_when=asyncio.FIRST_COMPLETED)
+                        await asyncio.sleep(0.1)
                 except (KeyboardInterrupt, asyncio.CancelledError):
                     print("\nShutting down...")
 

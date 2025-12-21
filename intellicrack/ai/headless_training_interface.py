@@ -80,10 +80,10 @@ class HeadlessTrainingInterface:
             logger.info("Configuration loaded from %s", config_path)
             return config
         except FileNotFoundError:
-            logger.error("Configuration file not found: %s", config_path)
+            logger.exception("Configuration file not found: %s", config_path)
             raise
         except json.JSONDecodeError as e:
-            logger.error("Invalid JSON in configuration file %s: %s", config_path, e)
+            logger.exception("Invalid JSON in configuration file %s: %s", config_path, e)
             raise
 
     def save_configuration(self, config: dict[str, Any], config_path: str) -> None:
@@ -100,7 +100,7 @@ class HeadlessTrainingInterface:
                 json.dump(config, f, indent=2)
             logger.info("Configuration saved to %s", config_path)
         except Exception as e:
-            logger.error("Failed to save configuration to %s: %s", config_path, e, exc_info=True)
+            logger.exception("Failed to save configuration to %s: %s", config_path, e)
             raise
 
     def start_training(
@@ -287,7 +287,7 @@ class HeadlessTrainingInterface:
 
     def _validate_dataset_path(self, dataset_path: str) -> None:
         if not dataset_path or not os.path.exists(dataset_path):
-            logger.error("Invalid dataset path: %s", dataset_path)
+            logger.exception("Invalid dataset path: %s", dataset_path)
             if self.callbacks.get("status"):
                 self.callbacks["status"]("Error: Invalid dataset path")
             raise ValueError("Invalid dataset path")
@@ -362,7 +362,7 @@ class HeadlessTrainingInterface:
             logger.info("Model saved to: %s", model_path)
 
     def _handle_training_error(self, error: Exception) -> None:
-        logger.error("Training worker error: %s", error, exc_info=True)
+        logger.exception("Training worker error: %s", error)
         if self.callbacks.get("status"):
             self.callbacks["status"](f"Training error: {error!s}")
 
@@ -452,7 +452,7 @@ class HeadlessTrainingInterface:
             return avg_train_loss, train_accuracy, avg_val_loss, val_accuracy
 
         except Exception as e:
-            logger.error("Training epoch %d failed: %s", epoch, e, exc_info=True)
+            logger.exception("Training epoch %d failed: %s", epoch, e)
             # Adaptive error recovery using historical metrics
             return self._generate_recovery_metrics(epoch, model_config)
 
@@ -482,7 +482,7 @@ class HeadlessTrainingInterface:
                 data = []
                 with open(dataset_path, encoding="utf-8") as f:
                     reader = csv.DictReader(f)
-                    data.extend(row for row in reader)
+                    data.extend(iter(reader))
             else:
                 # Try to read as text file with simple format
                 with open(dataset_path, encoding="utf-8") as f:
@@ -499,7 +499,7 @@ class HeadlessTrainingInterface:
             return data, []
 
         except Exception as e:
-            logger.error("Failed to load dataset from %s: %s", dataset_path, e, exc_info=True)
+            logger.exception("Failed to load dataset from %s: %s", dataset_path, e)
             return [], []
 
     def _generate_training_data(self, num_samples: int) -> list:
@@ -535,7 +535,7 @@ class HeadlessTrainingInterface:
             return samples
 
         except Exception as e:
-            logger.error("Failed to generate training data: %s", e, exc_info=True)
+            logger.exception("Failed to generate training data: %s", e)
             return []
 
     def _process_training_batch(
@@ -586,7 +586,7 @@ class HeadlessTrainingInterface:
             return avg_loss, correct_predictions, total_samples
 
         except Exception as e:
-            logger.error("Training batch processing failed: %s", e, exc_info=True)
+            logger.exception("Training batch processing failed: %s", e)
             return 1.0, 0, len(batch_data)
 
     def _process_validation_batch(self, batch_data: list, model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
@@ -628,7 +628,7 @@ class HeadlessTrainingInterface:
             return avg_loss, correct_predictions, total_samples
 
         except Exception as e:
-            logger.error("Validation batch processing failed: %s", e, exc_info=True)
+            logger.exception("Validation batch processing failed: %s", e)
             return 1.0, 0, len(batch_data)
 
     def _generate_recovery_metrics(self, epoch: int, model_config: dict[str, Any]) -> tuple[float, float, float, float]:
@@ -736,7 +736,7 @@ class HeadlessTrainingInterface:
             return train_loss, train_acc, val_loss, val_acc
 
         except Exception as e:
-            logger.debug("Recovery metrics generation error: %s", e, exc_info=True)
+            logger.debug("Recovery metrics generation error: %s", e)
             # Ultimate fallback - return conservative estimates
             train_loss = 2.0 * math.exp(-0.05 * epoch) + 0.1
             train_acc = 1.0 - train_loss / 3.0
@@ -827,7 +827,7 @@ class HeadlessTrainingInterface:
             return float(output[0])
 
         except Exception as e:
-            logger.error("Forward pass failed: %s", e, exc_info=True)
+            logger.exception("Forward pass failed: %s", e)
             return 0.5
 
     def _initialize_model_weights(self, input_size: int, model_config: dict[str, Any]) -> None:
@@ -977,7 +977,7 @@ class ConsoleTrainingManager:
             logger.info("Training session ended.")
 
         except Exception as e:
-            logger.error("Interactive training session error: %s", e, exc_info=True)
+            logger.exception("Interactive training session error: %s", e)
 
     def _progress_callback(self, progress: float) -> None:
         """Handle progress updates.
@@ -1042,7 +1042,7 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
     if len(sys.argv) != 2:
-        logger.error("Usage: python headless_training_interface.py <config_path>")
+        logger.exception("Usage: python headless_training_interface.py <config_path>")
         sys.exit(1)
 
     config_path = sys.argv[1]

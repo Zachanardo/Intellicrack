@@ -92,8 +92,8 @@ class WindowsAPIHooker:
     def __init__(self) -> None:
         """Initialize Windows API hooker for anti-debug function interception."""
         self.logger = logging.getLogger(f"{__name__}.APIHooker")
-        self.hooked_functions = {}
-        self.original_functions = {}
+        self.hooked_functions: dict[int, Any] = {}
+        self.original_functions: dict[int, bytes] = {}
 
         # Load required DLLs
         self.kernel32 = ctypes.windll.kernel32
@@ -101,7 +101,7 @@ class WindowsAPIHooker:
         self.user32 = ctypes.windll.user32
 
         # Hook tracking
-        self.active_hooks = set()
+        self.active_hooks: set[str] = set()
 
     def hook_is_debugger_present(self) -> bool:
         """Install hook for IsDebuggerPresent to always return FALSE."""
@@ -879,7 +879,8 @@ class PEBManipulator:
             )
 
             if status == 0:  # STATUS_SUCCESS
-                return pbi.PebBaseAddress
+                peb_value: int | None = pbi.PebBaseAddress
+                return peb_value
 
         except Exception as e:
             self.logger.exception("Failed to get PEB address: %s", e)
@@ -921,7 +922,10 @@ class PEBManipulator:
                 ctypes.byref(bytes_written),
             ):
                 self.logger.info(
-                    f"Patched BeingDebugged flag: {current_value.value} -> 0 (success: {success}, wrote {bytes_written.value} bytes)"
+                    "Patched BeingDebugged flag: %d -> 0 (success: %s, wrote %d bytes)",
+                    current_value.value,
+                    success,
+                    bytes_written.value,
                 )
                 return True
 
@@ -968,7 +972,11 @@ class PEBManipulator:
                 ctypes.byref(bytes_written),
             ):
                 self.logger.info(
-                    f"Patched NtGlobalFlag: 0x{current_value.value:08X} -> 0x{new_value.value:08X} (success: {success}, wrote {bytes_written.value} bytes)"
+                    "Patched NtGlobalFlag: 0x%08X -> 0x%08X (success: %s, wrote %d bytes)",
+                    current_value.value,
+                    new_value.value,
+                    success,
+                    bytes_written.value,
                 )
                 return True
 
@@ -1048,6 +1056,10 @@ class PEBManipulator:
 @log_all_methods
 class ThreadContextHooker:
     """Hooks GetThreadContext to prevent detection of hardware breakpoints."""
+
+    def __init__(self) -> None:
+        """Initialize thread context hooker."""
+        self.logger = logging.getLogger(f"{__name__}.ThreadContextHooker")
 
     def hook_get_thread_context(self) -> bool:
         """Install hook for GetThreadContext to hide hardware breakpoints."""
@@ -1169,9 +1181,9 @@ class HardwareDebugProtector:
         """Initialize hardware debug register protection and manipulation."""
         self.logger = logging.getLogger(f"{__name__}.HardwareDebugProtector")
         self.kernel32 = ctypes.windll.kernel32
-        self.saved_context = None
+        self.saved_context: dict[str, int] | None = None
 
-    def get_thread_context(self) -> dict[str, Any] | None:
+    def get_thread_context(self) -> Any:
         """Get current thread context including debug registers."""
         try:
 
@@ -1220,28 +1232,29 @@ class HardwareDebugProtector:
             if not context:
                 return False
 
-            if not self.saved_context:
+            if not self.saved_context and hasattr(context, "Dr0"):
                 self.saved_context = {
-                    "Dr0": context.Dr0,
-                    "Dr1": context.Dr1,
-                    "Dr2": context.Dr2,
-                    "Dr3": context.Dr3,
-                    "Dr6": context.Dr6,
-                    "Dr7": context.Dr7,
+                    "Dr0": int(context.Dr0),
+                    "Dr1": int(context.Dr1),
+                    "Dr2": int(context.Dr2),
+                    "Dr3": int(context.Dr3),
+                    "Dr6": int(context.Dr6),
+                    "Dr7": int(context.Dr7),
                 }
 
-            context.Dr0 = 0
-            context.Dr1 = 0
-            context.Dr2 = 0
-            context.Dr3 = 0
-            context.Dr6 = 0
-            context.Dr7 = 0
+            if hasattr(context, "Dr0"):
+                context.Dr0 = 0
+                context.Dr1 = 0
+                context.Dr2 = 0
+                context.Dr3 = 0
+                context.Dr6 = 0
+                context.Dr7 = 0
 
-            thread_handle = self.kernel32.GetCurrentThread()
+                thread_handle = self.kernel32.GetCurrentThread()
 
-            if self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context)):
-                self.logger.info("Cleared hardware debug registers")
-                return True
+                if self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context)):
+                    self.logger.info("Cleared hardware debug registers")
+                    return True
 
         except Exception as e:
             self.logger.exception("Failed to clear debug registers: %s", e)
@@ -1252,14 +1265,15 @@ class HardwareDebugProtector:
         """Monitor current debug register values for detection."""
         try:
             if context := self.get_thread_context():
-                return {
-                    "Dr0": context.Dr0,
-                    "Dr1": context.Dr1,
-                    "Dr2": context.Dr2,
-                    "Dr3": context.Dr3,
-                    "Dr6": context.Dr6,
-                    "Dr7": context.Dr7,
-                }
+                if hasattr(context, "Dr0"):
+                    return {
+                        "Dr0": int(context.Dr0),
+                        "Dr1": int(context.Dr1),
+                        "Dr2": int(context.Dr2),
+                        "Dr3": int(context.Dr3),
+                        "Dr6": int(context.Dr6),
+                        "Dr7": int(context.Dr7),
+                    }
         except Exception as e:
             self.logger.exception("Failed to monitor debug registers: %s", e)
 
@@ -1275,18 +1289,19 @@ class HardwareDebugProtector:
             if not context:
                 return False
 
-            context.Dr0 = self.saved_context["Dr0"]
-            context.Dr1 = self.saved_context["Dr1"]
-            context.Dr2 = self.saved_context["Dr2"]
-            context.Dr3 = self.saved_context["Dr3"]
-            context.Dr6 = self.saved_context["Dr6"]
-            context.Dr7 = self.saved_context["Dr7"]
+            if hasattr(context, "Dr0"):
+                context.Dr0 = self.saved_context["Dr0"]
+                context.Dr1 = self.saved_context["Dr1"]
+                context.Dr2 = self.saved_context["Dr2"]
+                context.Dr3 = self.saved_context["Dr3"]
+                context.Dr6 = self.saved_context["Dr6"]
+                context.Dr7 = self.saved_context["Dr7"]
 
-            thread_handle = self.kernel32.GetCurrentThread()
+                thread_handle = self.kernel32.GetCurrentThread()
 
-            if self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context)):
-                self.logger.info("Restored hardware debug registers")
-                return True
+                if self.kernel32.SetThreadContext(thread_handle, ctypes.byref(context)):
+                    self.logger.info("Restored hardware debug registers")
+                    return True
 
         except Exception as e:
             self.logger.exception("Failed to restore debug registers: %s", e)
@@ -1305,19 +1320,19 @@ class HardwareDebugProtector:
             bool: True if hook was installed successfully, False otherwise.
         """
         try:
-            nt_get_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("ntdll.dll"), b"NtGetContextThread")
-
-            if not nt_get_context_addr:
-                get_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
-                if not get_context_addr:
-                    self.logger.error("Failed to locate GetThreadContext/NtGetContextThread")
-                    return False
-                target_addr = get_context_addr
-                target_name = "GetThreadContext"
-            else:
+            if nt_get_context_addr := self.kernel32.GetProcAddress(
+                self.kernel32.GetModuleHandleW("ntdll.dll"), b"NtGetContextThread"
+            ):
                 target_addr = nt_get_context_addr
                 target_name = "NtGetContextThread"
 
+            else:
+                get_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"GetThreadContext")
+                if not get_context_addr:
+                    self.logger.exception("Failed to locate GetThreadContext/NtGetContextThread")
+                    return False
+                target_addr = get_context_addr
+                target_name = "GetThreadContext"
             import sys
 
             is_64bit = sys.maxsize > 2**32
@@ -1330,7 +1345,7 @@ class HardwareDebugProtector:
             hook_mem = self.kernel32.VirtualAlloc(None, 4096, 0x3000, 0x40)
 
             if not hook_mem:
-                self.logger.error("Failed to allocate memory for hook")
+                self.logger.exception("Failed to allocate memory for hook")
                 return False
 
             self._get_context_hook_mem = hook_mem
@@ -1360,7 +1375,7 @@ class HardwareDebugProtector:
             if not nt_set_context_addr:
                 set_context_addr = self.kernel32.GetProcAddress(self.kernel32.GetModuleHandleW("kernel32.dll"), b"SetThreadContext")
                 if not set_context_addr:
-                    self.logger.error("Failed to locate SetThreadContext/NtSetContextThread")
+                    self.logger.exception("Failed to locate SetThreadContext/NtSetContextThread")
                     return False
                 target_addr = set_context_addr
                 target_name = "SetThreadContext"
@@ -1380,7 +1395,7 @@ class HardwareDebugProtector:
             hook_mem = self.kernel32.VirtualAlloc(None, 4096, 0x3000, 0x40)
 
             if not hook_mem:
-                self.logger.error("Failed to allocate memory for SetThreadContext hook")
+                self.logger.exception("Failed to allocate memory for SetThreadContext hook")
                 return False
 
             self._set_context_hook_mem = hook_mem
@@ -1403,8 +1418,8 @@ class TimingNormalizer:
         """Initialize timing attack protection and normalization system."""
         self.logger = logging.getLogger(f"{__name__}.TimingNormalizer")
         self.kernel32 = ctypes.windll.kernel32
-        self.timing_hooks = {}
-        self.baseline_times = {}
+        self.timing_hooks: dict[int, bytes] = {}
+        self.baseline_times: dict[str, float] = {}
 
     def measure_baseline_timing(self) -> None:
         """Measure baseline timing for various operations."""
@@ -1604,7 +1619,7 @@ class MemoryPatcher:
         """Initialize memory patcher for anti-debug pattern modification."""
         self.logger = logging.getLogger(f"{__name__}.MemoryPatcher")
         self.kernel32 = ctypes.windll.kernel32
-        self.patches_applied = []
+        self.patches_applied: list[dict[str, Any]] = []
 
         # Common anti-debug patterns
         self.patterns = {
@@ -1630,7 +1645,7 @@ class MemoryPatcher:
 
     def find_patterns_in_memory(self, start_addr: int, size: int) -> list[tuple[str, int]]:
         """Find anti-debug patterns in memory region."""
-        found_patterns = []
+        found_patterns: list[tuple[str, int]] = []
 
         try:
             # Read memory region
@@ -1797,7 +1812,8 @@ class ExceptionHandler:
         """Initialize exception handler for anti-debug exception bypass."""
         self.logger = logging.getLogger(f"{__name__}.ExceptionHandler")
         self.kernel32 = ctypes.windll.kernel32
-        self.original_handler = None
+        self.original_handler: Any = None
+        self.exception_filter_func: Any = None
         self.exception_count = 0
 
     def custom_exception_handler(self, exception_info: object) -> int | None:
@@ -1836,12 +1852,12 @@ class ExceptionHandler:
             # Use AddVectoredExceptionHandler for first-chance exception handling
             EXCEPTION_HANDLER = ctypes.WINFUNCTYPE(ctypes.c_long, ctypes.POINTER(ctypes.c_void_p))
 
-            def exception_filter(exception_pointers: ctypes.c_void_p | None) -> int | None:
+            def exception_filter(exception_pointers: Any) -> int:
                 """Filter exceptions to hide debugging."""
                 try:
                     # Get exception code
                     if exception_pointers:
-                        exception_record = ctypes.cast(exception_pointers.contents, ctypes.POINTER(ctypes.c_ulong))
+                        exception_record = ctypes.cast(exception_pointers, ctypes.POINTER(ctypes.c_ulong))
                         exception_code = exception_record[0]
 
                         # Common anti-debug exception codes
@@ -1885,7 +1901,6 @@ class ExceptionHandler:
         try:
             if self.original_handler:
                 self.logger.info("Exception handler restored")
-                return True
             return True
 
         except Exception as e:
@@ -1904,7 +1919,7 @@ class EnvironmentSanitizer:
     def __init__(self) -> None:
         """Initialize environment sanitizer for debugger artifact removal."""
         self.logger = logging.getLogger(f"{__name__}.EnvironmentSanitizer")
-        self.original_values = {}
+        self.original_values: dict[str, str | None] = {}
 
     def clean_environment_variables(self) -> list[str]:
         """Clean debugging-related environment variables."""
@@ -2035,7 +2050,10 @@ class EnvironmentSanitizer:
         """Restore original environment variables."""
         try:
             for var, value in self.original_values.items():
-                os.environ[var] = value
+                if value is not None:
+                    os.environ[var] = value
+                elif var in os.environ:
+                    del os.environ[var]
 
             self.logger.info("Restored environment variables")
             return True
@@ -2052,11 +2070,11 @@ class TargetAnalyzer:
     def __init__(self) -> None:
         """Initialize target analyzer for anti-debug technique detection."""
         self.logger = logging.getLogger(f"{__name__}.TargetAnalyzer")
-        self.detected_techniques = set()
+        self.detected_techniques: set[AntiDebugTechnique] = set()
 
     def analyze_pe_headers(self, file_path: str) -> list[AntiDebugTechnique]:
         """Analyze PE headers for anti-debug indicators."""
-        techniques = []
+        techniques: list[AntiDebugTechnique] = []
 
         try:
             with open(file_path, "rb") as f:
@@ -2119,7 +2137,7 @@ class TargetAnalyzer:
 
     def analyze_runtime_behavior(self) -> list[AntiDebugTechnique]:
         """Analyze runtime behavior for anti-debug techniques."""
-        techniques = []
+        techniques: list[AntiDebugTechnique] = []
 
         try:
             techniques.extend((
@@ -2128,7 +2146,7 @@ class TargetAnalyzer:
                 AntiDebugTechnique.EXCEPTION_HANDLING,
             ))
         except Exception as e:
-            self.logger.error("Runtime analysis failed: %s", e, exc_info=True)
+            self.logger.exception("Runtime analysis failed: %s", e, exc_info=True)
 
         return techniques
 
@@ -2154,22 +2172,25 @@ class TargetAnalyzer:
                     except FileNotFoundError as e:
                         self.logger.debug("Error removing bypasses: %s", e)
                 # File check
-                elif os.path.exists(indicator):
+                elif isinstance(indicator, str) and os.path.exists(indicator):
                     return True
 
             return False
 
         except Exception as e:
-            self.logger.error("VM detection failed: %s", e, exc_info=True)
+            self.logger.exception("VM detection failed: %s", e, exc_info=True)
             return False
 
     def analyze_target(self, file_path: str | None = None) -> dict[str, Any]:
         """Perform comprehensive target analysis."""
-        analysis_results = {
-            "techniques_detected": [],
+        techniques_detected: list[AntiDebugTechnique] = []
+        recommended_bypasses: list[str] = []
+
+        analysis_results: dict[str, Any] = {
+            "techniques_detected": techniques_detected,
             "vm_environment": False,
             "risk_level": "low",
-            "recommended_bypasses": [],
+            "recommended_bypasses": recommended_bypasses,
         }
 
         try:
@@ -2178,21 +2199,22 @@ class TargetAnalyzer:
                 pe_techniques = self.analyze_pe_headers(file_path)
                 import_techniques = self.analyze_imports(file_path)
 
-                analysis_results["techniques_detected"].extend(pe_techniques)
-                analysis_results["techniques_detected"].extend(import_techniques)
+                techniques_detected.extend(pe_techniques)
+                techniques_detected.extend(import_techniques)
 
             # Runtime analysis
             runtime_techniques = self.analyze_runtime_behavior()
-            analysis_results["techniques_detected"].extend(runtime_techniques)
+            techniques_detected.extend(runtime_techniques)
 
             # VM detection
             analysis_results["vm_environment"] = self.detect_vm_environment()
 
             # Remove duplicates
-            analysis_results["techniques_detected"] = list(set(analysis_results["techniques_detected"]))
+            unique_techniques = list(set(techniques_detected))
+            analysis_results["techniques_detected"] = unique_techniques
 
             # Determine risk level
-            num_techniques = len(analysis_results["techniques_detected"])
+            num_techniques = len(unique_techniques)
             if num_techniques >= 6:
                 analysis_results["risk_level"] = "high"
             elif num_techniques >= 3:
@@ -2201,7 +2223,7 @@ class TargetAnalyzer:
                 analysis_results["risk_level"] = "low"
 
             # Recommend bypasses
-            technique_bypass_map = {
+            technique_bypass_map: dict[AntiDebugTechnique, str] = {
                 AntiDebugTechnique.API_HOOKS: "API hooking",
                 AntiDebugTechnique.PEB_FLAGS: "PEB manipulation",
                 AntiDebugTechnique.HARDWARE_BREAKPOINTS: "Hardware debug protection",
@@ -2210,16 +2232,15 @@ class TargetAnalyzer:
                 AntiDebugTechnique.PROCESS_ENVIRONMENT: "Environment sanitization",
             }
 
-            for technique in analysis_results["techniques_detected"]:
-                if technique in technique_bypass_map:
-                    analysis_results["recommended_bypasses"].append(
-                        technique_bypass_map[technique],
-                    )
-
+            recommended_bypasses.extend(
+                technique_bypass_map[technique]
+                for technique in unique_techniques
+                if technique in technique_bypass_map
+            )
             self.logger.info("Target analysis complete: %s risk", analysis_results["risk_level"])
 
         except Exception as e:
-            self.logger.error("Target analysis failed: %s", e, exc_info=True)
+            self.logger.exception("Target analysis failed: %s", e, exc_info=True)
 
         return analysis_results
 
@@ -2244,8 +2265,8 @@ class AntiAntiDebugSuite:
         self.target_analyzer = TargetAnalyzer()
 
         # Tracking
-        self.active_bypasses = set()
-        self.bypass_history = []
+        self.active_bypasses: set[AntiDebugTechnique] = set()
+        self.bypass_history: list[BypassOperation] = []
         self.statistics = {
             "bypasses_attempted": 0,
             "bypasses_successful": 0,
@@ -2337,7 +2358,7 @@ class AntiAntiDebugSuite:
                 env_sanitizer.logger = self.logger
 
                 results = env_sanitizer.sanitize_all()
-                successful = sum(bool("OK" in r) for r in results)
+                successful = sum("OK" in r for r in results)
                 total = len(results)
 
                 operation.details = f"Environment sanitized: {successful}/{total} items"
@@ -2355,7 +2376,7 @@ class AntiAntiDebugSuite:
             operation.result = BypassResult.FAILED
             operation.error = str(e)
             operation.details = f"Exception during bypass: {e}"
-            self.logger.error("Bypass failed for %s: %s", technique.value, e, exc_info=True)
+            self.logger.exception("Bypass failed for %s: %s", technique.value, e, exc_info=True)
 
         self.bypass_history.append(operation)
         return operation
@@ -2464,7 +2485,7 @@ class AntiAntiDebugSuite:
             self.logger.info("Report exported to %s", output_file)
 
         except Exception as e:
-            self.logger.error("Failed to export report: %s", e, exc_info=True)
+            self.logger.exception("Failed to export report: %s", e, exc_info=True)
 
     def run_interactive_mode(self) -> None:
         """Run interactive bypass mode."""
@@ -2511,13 +2532,18 @@ class AntiAntiDebugSuite:
                         self.logger.info("  %s %s: %s", status, op.technique.value, op.details)
 
                 elif command == "monitor":
-                    status = self.monitor_bypasses()
+                    bypass_status = self.monitor_bypasses()
                     self.logger.info("Bypass Status:")
-                    self.logger.info("  Active Bypasses: %s", status["bypass_count"])
-                    for bypass in status["active_bypasses"]:
-                        self.logger.info("    - %s", bypass.value)
-                    self.logger.info("  Uptime: %.1f seconds", status["uptime_seconds"])
-                    self.logger.info("  Statistics: %s", status["statistics"])
+                    bypass_count: int = bypass_status.get("bypass_count", 0) if isinstance(bypass_status, dict) else 0
+                    self.logger.info("  Active Bypasses: %s", bypass_count)
+                    active_bypasses_list: list[Any] = bypass_status.get("active_bypasses", []) if isinstance(bypass_status, dict) else []
+                    for bypass in active_bypasses_list:
+                        if isinstance(bypass, AntiDebugTechnique):
+                            self.logger.info("    - %s", bypass.value)
+                    uptime: float = bypass_status.get("uptime_seconds", 0.0) if isinstance(bypass_status, dict) else 0.0
+                    self.logger.info("  Uptime: %.1f seconds", uptime)
+                    stats: dict[str, Any] = bypass_status.get("statistics", {}) if isinstance(bypass_status, dict) else {}
+                    self.logger.info("  Statistics: %s", stats)
 
                 elif command == "remove":
                     results = self.remove_bypasses()
@@ -2553,7 +2579,7 @@ class AntiAntiDebugSuite:
                 self.logger.info("Exiting...")
                 break
             except Exception as e:
-                self.logger.error("Error: %s", e, exc_info=True)
+                self.logger.exception("Error: %s", e, exc_info=True)
 
         self.logger.info("Interactive mode ended.")
 
@@ -2614,10 +2640,13 @@ def main() -> None:
                     logger.info("    %s", op.details)
 
         elif args.monitor:
-            status = suite.monitor_bypasses()
-            logger.info("Active Bypasses: %s", status["bypass_count"])
-            for bypass in status["active_bypasses"]:
-                logger.info("  - %s", bypass.value)
+            bypass_status_main = suite.monitor_bypasses()
+            bypass_count_value: int = bypass_status_main.get("bypass_count", 0) if isinstance(bypass_status_main, dict) else 0
+            logger.info("Active Bypasses: %s", bypass_count_value)
+            active_bypasses_value: list[Any] = bypass_status_main.get("active_bypasses", []) if isinstance(bypass_status_main, dict) else []
+            for bypass in active_bypasses_value:
+                if isinstance(bypass, AntiDebugTechnique):
+                    logger.info("  - %s", bypass.value)
 
         elif args.remove:
             logger.info("Removing all bypasses...")
@@ -2634,7 +2663,7 @@ def main() -> None:
             logger.info("No action specified. Use --help for options.")
 
     except Exception as e:
-        logger.error("Error: %s", e, exc_info=True)
+        logger.exception("Error: %s", e, exc_info=True)
         if args.verbose:
             import traceback
 

@@ -91,7 +91,7 @@ class ChecksumWorker(QThread):
                         results[algorithm] = result
                     except Exception as e:
                         results[algorithm] = f"Error: {e}"
-                        logger.error(f"Failed to calculate {algorithm}: {e}")
+                        logger.exception("Failed to calculate %s: %s", algorithm, e)
             else:
                 error_msg = "No data or file path provided"
                 logger.error(error_msg)
@@ -101,7 +101,7 @@ class ChecksumWorker(QThread):
 
         except Exception as e:
             self.error.emit(str(e))
-            logger.error(f"Checksum calculation failed: {e}")
+            logger.exception("Checksum calculation failed: %s", e)
 
 
 class ChecksumDialog(QDialog):
@@ -279,8 +279,9 @@ class ChecksumDialog(QDialog):
                 start = getattr(self.hex_viewer, "selection_start", -1)
                 end = getattr(self.hex_viewer, "selection_end", -1)
                 if start != -1 and end != -1:
-                    file_handler = getattr(self.hex_viewer, "file_handler", None)
-                    if file_handler:
+                    if file_handler := getattr(
+                        self.hex_viewer, "file_handler", None
+                    ):
                         data = file_handler.read_data(start, end - start)
                         if data is None:
                             self.results_text.setPlainText("Failed to read selected data.")
@@ -291,7 +292,6 @@ class ChecksumDialog(QDialog):
             else:
                 self.results_text.setPlainText("Hex viewer not available.")
                 return
-        # Use entire file
         elif self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
             file_handler = getattr(self.hex_viewer, "file_handler", None)
             if file_handler and hasattr(file_handler, "file_path"):

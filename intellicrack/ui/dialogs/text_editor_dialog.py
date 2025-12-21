@@ -733,8 +733,7 @@ class TextEditorDialog(QDialog if HAS_PYQT and QDialog else object):  # type: ig
                 self.highlighter = PythonSyntaxHighlighter(self.text_edit.document())
 
             if self.file_watcher is not None:
-                files = self.file_watcher.files()
-                if files:
+                if files := self.file_watcher.files():
                     self.file_watcher.removePaths(files)
                 self.file_watcher.addPath(file_path)
 

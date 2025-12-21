@@ -2,9 +2,13 @@
 
 import logging
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.utils.logger import logger
+
+
+if TYPE_CHECKING:
+    import numpy as np
 
 from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
 from .radare2_imports import R2ImportExportAnalyzer
@@ -80,9 +84,9 @@ try:
         SKLEARN_AVAILABLE = False
 
 except Exception as e:
-    logger.error("Exception in radare2_ai_integration: %s", e, exc_info=True)
+    logger.exception("Exception in radare2_ai_integration: %s", e)
     # Complete fallback
-    np = None
+    np = None  # type: ignore[assignment]
     DBSCAN = None
     IsolationForest = None
     RandomForestClassifier = None
@@ -111,10 +115,10 @@ class R2AIEngine:
         self.logger = logging.getLogger(__name__)
 
         # ML Models
-        self.license_detector = None
-        self.vulnerability_classifier = None
-        self.function_clusterer = None
-        self.anomaly_detector = None
+        self.license_detector: Any = None
+        self.vulnerability_classifier: Any = None
+        self.function_clusterer: Any = None
+        self.anomaly_detector: Any = None
 
         # Feature extractors (only if sklearn available)
         if SKLEARN_AVAILABLE:
@@ -172,13 +176,13 @@ class R2AIEngine:
 
         except Exception as e:
             result["error"] = str(e)
-            self.logger.error("AI analysis failed: %s", e, exc_info=True)
+            self.logger.exception("AI analysis failed: %s", e)
 
         return result
 
     def _extract_comprehensive_features(self) -> dict[str, Any]:
         """Extract comprehensive features for ML analysis."""
-        features = {
+        features: dict[str, Any] = {
             "static_features": {},
             "function_features": [],
             "string_features": {},
@@ -214,7 +218,7 @@ class R2AIEngine:
                 features["entropy_features"] = self._extract_entropy_features(r2)
 
         except R2Exception as e:
-            self.logger.error("Feature extraction failed: %s", e, exc_info=True)
+            self.logger.exception("Feature extraction failed: %s", e)
 
         return features
 
@@ -324,7 +328,7 @@ class R2AIEngine:
                         max_depth = max(max_depth, len(blocks))
 
                 except R2Exception as e:
-                    logger.error("R2Exception in radare2_ai_integration: %s", e, exc_info=True)
+                    logger.exception("R2Exception in radare2_ai_integration: %s", e)
                     continue
 
         return {
@@ -370,7 +374,7 @@ class R2AIEngine:
             }
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_ai_integration: %s", e, exc_info=True)
+            logger.exception("R2Exception in radare2_ai_integration: %s", e)
             return {
                 "text_section_entropy": 0.0,
                 "data_section_entropy": 0.0,
@@ -402,19 +406,20 @@ class R2AIEngine:
         feature_vector = self._prepare_license_feature_vector(features)
 
         # Make prediction
-        if len(feature_vector) > 0:
-            prediction = self.license_detector.predict([feature_vector])[0]
-            probability = self.license_detector.predict_proba([feature_vector])[0]
+        if len(feature_vector) == 0:
+            return {"error": "Insufficient features for license detection"}
 
-            return {
-                "has_license_validation": bool(prediction),
-                "confidence": float(max(probability)),
-                "license_complexity": self._assess_license_complexity(features),
-                "bypass_difficulty": self._predict_bypass_difficulty(features),
-                "validation_methods": self._identify_validation_methods(features),
-            }
+        assert self.license_detector is not None
+        prediction = self.license_detector.predict([feature_vector])[0]
+        probability = self.license_detector.predict_proba([feature_vector])[0]
 
-        return {"error": "Insufficient features for license detection"}
+        return {
+            "has_license_validation": bool(prediction),
+            "confidence": float(max(probability)),
+            "license_complexity": self._assess_license_complexity(features),
+            "bypass_difficulty": self._predict_bypass_difficulty(features),
+            "validation_methods": self._identify_validation_methods(features),
+        }
 
     def _ai_vulnerability_prediction(self, features: dict[str, Any]) -> dict[str, Any]:
         """AI-based vulnerability prediction."""
@@ -438,36 +443,37 @@ class R2AIEngine:
         # Prepare feature vector
         feature_vector = self._prepare_vulnerability_feature_vector(features)
 
-        if len(feature_vector) > 0:
-            # Predict vulnerability types
-            predictions = self.vulnerability_classifier.predict([feature_vector])[0]
-            probabilities = self.vulnerability_classifier.predict_proba([feature_vector])[0]
+        if len(feature_vector) == 0:
+            return {"error": "Insufficient features for vulnerability prediction"}
 
-            vulnerability_types = [
-                "buffer_overflow",
-                "format_string",
-                "integer_overflow",
-                "use_after_free",
-                "race_condition",
-                "privilege_escalation",
-            ]
+        # Predict vulnerability types
+        assert self.vulnerability_classifier is not None
+        predictions = self.vulnerability_classifier.predict([feature_vector])[0]
+        probabilities = self.vulnerability_classifier.predict_proba([feature_vector])[0]
 
-            results = {
-                vuln_type: {
-                    "probability": float(probabilities[i]),
-                    "predicted": predictions == i,
-                }
-                for i, vuln_type in enumerate(vulnerability_types)
-                if i < len(probabilities)
+        vulnerability_types = [
+            "buffer_overflow",
+            "format_string",
+            "integer_overflow",
+            "use_after_free",
+            "race_condition",
+            "privilege_escalation",
+        ]
+
+        results = {
+            vuln_type: {
+                "probability": float(probabilities[i]),
+                "predicted": predictions == i,
             }
-            return {
-                "vulnerability_predictions": results,
-                "overall_risk_score": float(np.mean(probabilities)),
-                "high_risk_areas": self._identify_high_risk_areas(features),
-                "exploit_likelihood": self._predict_exploit_likelihood(features),
-            }
-
-        return {"error": "Insufficient features for vulnerability prediction"}
+            for i, vuln_type in enumerate(vulnerability_types)
+            if i < len(probabilities)
+        }
+        return {
+            "vulnerability_predictions": results,
+            "overall_risk_score": float(np.mean(probabilities)),
+            "high_risk_areas": self._identify_high_risk_areas(features),
+            "exploit_likelihood": self._predict_exploit_likelihood(features),
+        }
 
     def _function_clustering_analysis(self, features: dict[str, Any]) -> dict[str, Any]:
         """Perform function clustering analysis."""
@@ -606,7 +612,7 @@ class R2AIEngine:
 
     def _generate_ai_bypass_suggestions(self, features: dict[str, Any]) -> dict[str, Any]:
         """Generate AI-based bypass suggestions."""
-        suggestions = {
+        suggestions: dict[str, Any] = {
             "automated_patches": [],
             "bypass_strategies": [],
             "target_functions": [],
@@ -679,7 +685,7 @@ class R2AIEngine:
 
         return model
 
-    def _generate_license_training_data(self) -> tuple["np.ndarray", "np.ndarray"]:
+    def _generate_license_training_data(self) -> tuple[Any, Any]:
         """Generate training data from analysis of actual license-protected binaries."""
         try:
             # Analyze real license-protected binaries to extract features
@@ -709,7 +715,7 @@ class R2AIEngine:
             return X, y
 
         except Exception as e:
-            self.logger.error("Error generating real license training data: %s", e, exc_info=True)
+            self.logger.exception("Error generating real license training data: %s", e)
             return self._generate_pattern_based_license_data()
 
     def _get_real_license_patterns(self) -> dict[str, list[str]]:
@@ -759,7 +765,7 @@ class R2AIEngine:
             ],
         }
 
-    def _get_real_crypto_signatures(self) -> dict[str, bytes]:
+    def _get_real_crypto_signatures(self) -> dict[str, list[bytes]]:
         """Get real cryptographic signatures from license validation."""
         return {
             "rsa_public_key_headers": [
@@ -847,7 +853,7 @@ class R2AIEngine:
 
         return features
 
-    def _generate_pattern_based_license_data(self) -> tuple["np.ndarray", "np.ndarray"]:
+    def _generate_pattern_based_license_data(self) -> tuple[Any, Any]:
         """Generate training data based on real license validation patterns."""
         # Extract features from real license patterns
         self._get_real_license_patterns()
@@ -889,7 +895,7 @@ class R2AIEngine:
 
         return X, y
 
-    def _generate_vulnerability_training_data(self) -> tuple["np.ndarray", "np.ndarray"]:
+    def _generate_vulnerability_training_data(self) -> tuple[Any, Any]:
         """Generate training data from analysis of actual vulnerability patterns."""
         try:
             # Analyze real vulnerability patterns from CVE database and known exploits
@@ -917,7 +923,7 @@ class R2AIEngine:
             return X, y
 
         except Exception as e:
-            self.logger.error("Error generating real vulnerability training data: %s", e, exc_info=True)
+            self.logger.exception("Error generating real vulnerability training data: %s", e)
             return self._generate_cve_based_vulnerability_data()
 
     def _get_real_vulnerability_classes(self) -> dict[str, dict[str, Any]]:
@@ -1041,7 +1047,7 @@ class R2AIEngine:
 
         return features
 
-    def _generate_cve_based_vulnerability_data(self) -> tuple["np.ndarray", "np.ndarray"]:
+    def _generate_cve_based_vulnerability_data(self) -> tuple[Any, Any]:
         """Generate vulnerability training data based on CVE database patterns."""
         vuln_classes = self._get_real_vulnerability_classes()
 
@@ -1206,7 +1212,7 @@ class R2AIEngine:
 
         return min(1.0, score)
 
-    def _assess_clustering_quality(self, cluster_labels: "np.ndarray") -> float:
+    def _assess_clustering_quality(self, cluster_labels: Any) -> float:
         """Assess quality of clustering results."""
         unique_labels = set(cluster_labels)
         if len(unique_labels) <= 1:

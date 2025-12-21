@@ -50,14 +50,14 @@ def open_hex_file(file_path: str, read_only: bool = True) -> VirtualFileAccess |
     """
     try:
         if not os.path.exists(file_path):
-            logger.error("File not found: %s", file_path)
+            logger.exception("File not found: %s", file_path)
             return None
 
         file_handler = VirtualFileAccess(file_path, read_only)
         logger.info("Opened file %s for hex viewing/editing", file_path)
         return file_handler
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error opening file: %s", e)
+        logger.exception("Error opening file: %s", e)
         return None
 
 
@@ -77,7 +77,7 @@ def read_hex_region(file_path: str, offset: int, size: int) -> bytes | None:
         file_handler = open_hex_file(file_path, True)
         return file_handler.read(offset, size) if file_handler else None
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error reading hex region: %s", e)
+        logger.exception("Error reading hex region: %s", e)
         return None
 
 
@@ -104,7 +104,7 @@ def write_hex_region(file_path: str, offset: int, data: bytes) -> bool:
 
         return result
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error writing hex region: %s", e)
+        logger.exception("Error writing hex region: %s", e)
         return False
 
 
@@ -127,7 +127,7 @@ def analyze_binary_data(data: bytes, query: str | None = None, model_manager: ob
         ai_bridge = AIBinaryBridge(model_manager)
         return ai_bridge.analyze_binary_region(data, 0, len(data), query)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing binary data: %s", e)
+        logger.exception("Error analyzing binary data: %s", e)
         return {"error": str(e)}
 
 
@@ -147,7 +147,7 @@ def search_binary_pattern(data: bytes, pattern_desc: str, model_manager: object 
         ai_bridge = AIBinaryBridge(model_manager)
         return ai_bridge.search_binary_semantic(data, pattern_desc)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error searching binary pattern: %s", e)
+        logger.exception("Error searching binary pattern: %s", e)
         return []
 
 
@@ -167,7 +167,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | 
         ai_bridge = AIBinaryBridge(model_manager)
         return ai_bridge.suggest_edits(data, 0, len(data), edit_intent)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error suggesting binary edits: %s", e)
+        logger.exception("Error suggesting binary edits: %s", e)
         return {"error": str(e)}
 
 
@@ -258,7 +258,7 @@ def add_hex_viewer_to_application(app_instance: object) -> bool:
         logger.info("Enhanced hex viewer added to application")
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error adding hex viewer to application: %s", e)
+        logger.exception("Error adding hex viewer to application: %s", e)
         return False
 
 
@@ -276,7 +276,7 @@ def register_ai_tools(app_instance: object) -> bool:
         register_hex_viewer_ai_tools(app_instance)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error registering AI tools: %s", e)
+        logger.exception("Error registering AI tools: %s", e)
         return False
 
 
@@ -346,7 +346,7 @@ def hex_string_to_bytes(hex_string: str) -> bytes:
         try:
             result.append(int(hex_val, 16))
         except ValueError as e:
-            logger.error("Value error in api: %s", e)
+            logger.exception("Value error in api: %s", e)
             # Skip invalid hex values
 
     return bytes(result)

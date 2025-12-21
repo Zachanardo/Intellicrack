@@ -127,7 +127,7 @@ class GoogleRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from Google: {error_message}")
+            logger.error("Failed to get models from Google: %s", error_message)
             return []
 
         models = []
@@ -147,7 +147,7 @@ class GoogleRepository(APIRepositoryBase):
             return models
 
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing Google models response: {e}")
+            logger.exception("Error parsing Google models response: %s", e)
             return []
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
@@ -172,13 +172,13 @@ class GoogleRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get model details for {model_id}: {error_message}")
+            logger.error("Failed to get model details for %s: %s", model_id, error_message)
             return None
 
         try:
             return self._create_model_info(model_id, data)
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing Google model details for {model_id}: {e}")
+            logger.exception("Error parsing Google model details for %s: %s", model_id, e)
             return None
 
     def _create_model_info(self, model_id: str, model_data: dict[str, Any]) -> ModelInfo | None:
@@ -238,7 +238,7 @@ class GoogleRepository(APIRepositoryBase):
                 local_path=None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error creating ModelInfo for {model_id}: {e}")
+            logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
     def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
@@ -248,5 +248,5 @@ class GoogleRepository(APIRepositoryBase):
             Always returns (False, "Google doesn't support model downloads")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning("Download requested for %s to %s, but not supported", model_id, destination_path)
         return False, "Google doesn't support model downloads"

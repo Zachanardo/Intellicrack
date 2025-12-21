@@ -55,7 +55,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         """
         if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
+            logger.error("File not found: %s", file_path)
             return
 
         try:
@@ -69,7 +69,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             )
 
             if not os.path.exists(protection_viewer_path):
-                logger.error(f"Protection viewer not found at: {protection_viewer_path}")
+                logger.error("Protection viewer not found at: %s", protection_viewer_path)
                 return
 
             # Build command
@@ -79,7 +79,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             if offset is not None:
                 # Try command-line offset support first
                 cmd.extend(["--offset", hex(offset)])
-                logger.info(f"Attempting to open {file_path} at offset {hex(offset)} in protection viewer")
+                logger.info("Attempting to open %s at offset %s in protection viewer", file_path, hex(offset))
 
                 # Create offset sync file for advanced integration
                 try:
@@ -88,11 +88,11 @@ class IntellicrackHexProtectionIntegration(QObject):
                     sync_file = os.path.join(sync_dir, "initial_offset.txt")
                     with open(sync_file, "w") as f:
                         f.write(f"{offset}\n{hex(offset)}\n{file_path}")
-                    logger.debug(f"Created offset sync file: {sync_file}")
+                    logger.debug("Created offset sync file: %s", sync_file)
                 except OSError as e:
-                    logger.debug(f"Failed to create offset sync file: {e}")
+                    logger.debug("Failed to create offset sync file: %s", e)
             else:
-                logger.info(f"Opening {file_path} in protection viewer (no specific offset)")
+                logger.info("Opening %s in protection viewer (no specific offset)", file_path)
 
             # Start protection viewer
             self.engine_process = QProcess()
@@ -104,10 +104,10 @@ class IntellicrackHexProtectionIntegration(QObject):
                 # Set up timer to sync offset once process is running
                 QTimer.singleShot(2000, lambda: self.sync_offset_to_protection_viewer(offset))
 
-            logger.info(f"Protection viewer process started for {file_path}")
+            logger.info("Protection viewer process started for %s", file_path)
 
         except Exception as e:
-            logger.error(f"Error opening file in protection viewer: {e}")
+            logger.exception("Error opening file in protection viewer: %s", e)
 
     def open_in_icp(self, file_path: str, offset: int | None = None) -> None:
         """Alias for open_in_protection_viewer to maintain ICP naming consistency."""
@@ -133,7 +133,7 @@ class IntellicrackHexProtectionIntegration(QObject):
                 os.remove(sync_file)
                 logger.debug("Cleaned up offset sync file")
         except OSError as e:
-            logger.debug(f"Failed to cleanup sync files: {e}")
+            logger.debug("Failed to cleanup sync files: %s", e)
 
     def sync_offset_from_protection_viewer(self, offset: int) -> None:
         """Sync offset from protection viewer to our hex viewer.
@@ -164,9 +164,9 @@ class IntellicrackHexProtectionIntegration(QObject):
         try:
             with open(outgoing_sync_file, "w") as f:
                 f.write(str(offset))
-            logger.debug(f"Synced offset {offset:#x} to protection viewer via {outgoing_sync_file}")
+            logger.debug("Synced offset %#x to protection viewer via %s", offset, outgoing_sync_file)
         except Exception as e:
-            logger.error(f"Failed to sync offset to protection viewer: {e}")
+            logger.exception("Failed to sync offset to protection viewer: %s", e)
 
         # If we have a running process, try to send via stdin as well
         if self.engine_process and self.engine_process.state() == QProcess.ProcessState.Running:
@@ -174,9 +174,9 @@ class IntellicrackHexProtectionIntegration(QObject):
                 # Send offset command through stdin
                 command = f"goto:{offset}\n"
                 self.engine_process.write(command.encode())
-                logger.debug(f"Sent goto command to protection viewer process: {command.strip()}")
+                logger.debug("Sent goto command to protection viewer process: %s", command.strip())
             except Exception as e:
-                logger.error(f"Failed to send command to protection viewer process: {e}")
+                logger.exception("Failed to send command to protection viewer process: %s", e)
 
     def _monitor_protection_viewer_offset(self) -> None:
         """Monitor for offset changes from protection viewer."""
@@ -200,7 +200,7 @@ class IntellicrackHexProtectionIntegration(QObject):
                         with open(incoming_sync_file, "w") as f:
                             f.write("")
         except Exception as e:
-            logger.debug(f"Error monitoring protection viewer offset: {e}")
+            logger.debug("Error monitoring protection viewer offset: %s", e)
 
     def get_section_offsets(self, file_path: str) -> dict[str, int]:
         """Get section offsets from protection viewer analysis.
@@ -226,7 +226,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             return section_offsets
 
         except Exception as e:
-            logger.error(f"Error getting section offsets: {e}")
+            logger.exception("Error getting section offsets: %s", e)
             return {}
 
     def compare_features(self) -> dict[str, dict[str, bool]]:

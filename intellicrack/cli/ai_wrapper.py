@@ -389,8 +389,13 @@ class IntellicrackAIInterface:
         return {
             "session_id": self.session_id,
             "total_actions": len(self.confirmation_manager.action_history),
-            "approved_actions": sum(bool(h["approved"]) for h in self.confirmation_manager.action_history),
-            "declined_actions": sum(bool(not h["approved"]) for h in self.confirmation_manager.action_history),
+            "approved_actions": sum(
+                bool(h["approved"])
+                for h in self.confirmation_manager.action_history
+            ),
+            "declined_actions": sum(
+                not h["approved"] for h in self.confirmation_manager.action_history
+            ),
             "action_history": self.confirmation_manager.action_history,
         }
 

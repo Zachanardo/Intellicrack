@@ -82,7 +82,7 @@ class ESILAnalysisEngine:
             return True
 
         except R2Exception as e:
-            self.logger.error(f"Failed to initialize ESIL VM: {e}")
+            self.logger.exception("Failed to initialize ESIL VM: %s", e)
             return False
 
     def emulate_function_execution(self, address: int, max_steps: int = 100) -> dict[str, Any]:
@@ -174,11 +174,11 @@ class ESILAnalysisEngine:
 
                             # Check for function exit conditions
                             if self._is_function_exit(instruction):
-                                self.logger.info(f"Function exit detected at step {step + 1}")
+                                self.logger.info("Function exit detected at step %d", step + 1)
                                 break
 
                     except R2Exception as e:
-                        self.logger.debug(f"ESIL execution error at step {step}: {e}")
+                        self.logger.debug("ESIL execution error at step %d: %s", step, e)
                         if step == 0:  # If first step fails, it's a critical error
                             result["error"] = f"ESIL execution failed: {e}"
                             return result
@@ -202,7 +202,7 @@ class ESILAnalysisEngine:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"ESIL emulation failed for {hex(address)}: {e}")
+            self.logger.exception("ESIL emulation failed for %s: %s", hex(address), e)
 
         return result
 
@@ -334,7 +334,7 @@ class ESILAnalysisEngine:
             if addr := entry.get("address", ""):
                 address_counts[addr] = address_counts.get(addr, 0) + 1
 
-        loops_detected = sum(bool(count > 1) for count in address_counts.values())
+        loops_detected = sum(count > 1 for count in address_counts.values())
 
         result["execution_patterns"] = {
             "total_instructions_executed": total_instructions,
@@ -367,7 +367,8 @@ class ESILAnalysisEngine:
             # Pattern 2: Multiple comparisons (complex validation)
             if "cmp" in instruction:
                 comparison_count = 1 + sum(
-                    bool("cmp" in trace[j].get("instruction", "").lower()) for j in range(i + 1, min(i + 10, len(trace)))
+                    "cmp" in trace[j].get("instruction", "").lower()
+                    for j in range(i + 1, min(i + 10, len(trace)))
                 )
                 if comparison_count >= 3:
                     validation_patterns.append(
@@ -471,7 +472,7 @@ class ESILAnalysisEngine:
         }
 
         for i, address in enumerate(function_addresses):
-            self.logger.info(f"Emulating function {i + 1}/{len(function_addresses)}: {hex(address)}")
+            self.logger.info("Emulating function %d/%d: %s", i + 1, len(function_addresses), hex(address))
 
             func_result = self.emulate_function_execution(address, max_steps_per_function)
             results["function_results"][hex(address)] = func_result

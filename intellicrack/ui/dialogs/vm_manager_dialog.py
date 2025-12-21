@@ -218,10 +218,10 @@ class VMManagerDialog(QDialog):
             else:
                 self.vm_model.update_data(vm_info_list)
 
-            logger.info(f"Loaded {len(vm_info_list)} VM instances")
+            logger.info("Loaded %d VM instances", len(vm_info_list))
 
         except Exception as e:
-            logger.error(f"Failed to load VM data: {e}")
+            logger.exception("Failed to load VM data: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load VM data: {e}")
 
     def _get_selected_vm_id(self) -> str | None:
@@ -249,13 +249,13 @@ class VMManagerDialog(QDialog):
 
         try:
             if success := self.qemu_manager.start_vm_instance(snapshot_id):
-                logger.info(f"VM {snapshot_id} started successfully (result: {success})")
+                logger.info("VM %s started successfully (result: %s)", snapshot_id, success)
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} started successfully.")
                 self._load_vm_data()  # Refresh to show updated status
             else:
                 QMessageBox.critical(self, "Error", f"Failed to start VM {snapshot_id}.")
         except Exception as e:
-            logger.error(f"Error starting VM {snapshot_id}: {e}")
+            logger.exception("Error starting VM %s: %s", snapshot_id, e)
             QMessageBox.critical(self, "Error", f"Error starting VM: {e}")
 
     def _stop_selected_vm(self) -> None:
@@ -267,13 +267,13 @@ class VMManagerDialog(QDialog):
 
         try:
             if success := self.qemu_manager.stop_vm_instance(snapshot_id):
-                logger.info(f"VM {snapshot_id} stopped successfully (result: {success})")
+                logger.info("VM %s stopped successfully (result: %s)", snapshot_id, success)
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} stopped successfully.")
                 self._load_vm_data()  # Refresh to show updated status
             else:
                 QMessageBox.critical(self, "Error", f"Failed to stop VM {snapshot_id}.")
         except Exception as e:
-            logger.error(f"Error stopping VM {snapshot_id}: {e}")
+            logger.exception("Error stopping VM %s: %s", snapshot_id, e)
             QMessageBox.critical(self, "Error", f"Error stopping VM: {e}")
 
     def _delete_selected_vm(self) -> None:
@@ -297,13 +297,13 @@ class VMManagerDialog(QDialog):
 
         try:
             if success := self.qemu_manager.delete_vm_instance(snapshot_id):
-                logger.info(f"VM {snapshot_id} deleted successfully (result: {success})")
+                logger.info("VM %s deleted successfully (result: %s)", snapshot_id, success)
                 QMessageBox.information(self, "Success", f"VM {snapshot_id} deleted successfully.")
                 self._load_vm_data()  # Refresh to remove deleted VM
             else:
                 QMessageBox.critical(self, "Error", f"Failed to delete VM {snapshot_id}.")
         except Exception as e:
-            logger.error(f"Error deleting VM {snapshot_id}: {e}")
+            logger.exception("Error deleting VM %s: %s", snapshot_id, e)
             QMessageBox.critical(self, "Error", f"Error deleting VM: {e}")
 
     def _create_new_vm_dialog(self) -> None:
@@ -329,5 +329,5 @@ class VMManagerDialog(QDialog):
             QMessageBox.information(self, "Base Image Configuration", config_text)
 
         except Exception as e:
-            logger.error(f"Error loading base image configuration: {e}")
+            logger.exception("Error loading base image configuration: %s", e)
             QMessageBox.critical(self, "Error", f"Error loading configuration: {e}")

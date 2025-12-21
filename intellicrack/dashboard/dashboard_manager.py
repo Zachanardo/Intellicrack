@@ -268,7 +268,7 @@ class DashboardManager:
 
         """
         self.widgets[widget.config.widget_id] = widget
-        self.logger.info(f"Added widget: {widget.config.widget_id}")
+        self.logger.info("Added widget: %s", widget.config.widget_id)
 
     def add_data_source(self, source: DataSource) -> None:
         """Add data source.
@@ -278,7 +278,7 @@ class DashboardManager:
 
         """
         self.data_sources[source.source_id] = source
-        self.logger.info(f"Added data source: {source.source_id}")
+        self.logger.info("Added data source: %s", source.source_id)
 
     def add_layout(self, layout: DashboardLayout) -> None:
         """Add dashboard layout.
@@ -288,7 +288,7 @@ class DashboardManager:
 
         """
         self.layouts[layout.layout_id] = layout
-        self.logger.info(f"Added layout: {layout.layout_id}")
+        self.logger.info("Added layout: %s", layout.layout_id)
 
     def set_layout(self, layout_id: str) -> None:
         """Set current dashboard layout.
@@ -299,9 +299,9 @@ class DashboardManager:
         """
         if layout_id in self.layouts:
             self.current_layout = self.layouts[layout_id]
-            self.logger.info(f"Set layout: {layout_id}")
+            self.logger.info("Set layout: %s", layout_id)
         else:
-            self.logger.warning(f"Layout not found: {layout_id}")
+            self.logger.warning("Layout not found: %s", layout_id)
 
     def subscribe_widget(self, widget_id: str, source_id: str) -> None:
         """Subscribe widget to data source.
@@ -313,7 +313,7 @@ class DashboardManager:
         """
         self.widget_subscriptions[source_id].append(widget_id)
         self.source_subscriptions[widget_id].append(source_id)
-        self.logger.debug(f"Subscribed widget {widget_id} to source {source_id}")
+        self.logger.debug("Subscribed widget %s to source %s", widget_id, source_id)
 
     def integrate_tool(self, tool_name: str, handler: object) -> None:
         """Integrate analysis tool with dashboard.
@@ -335,7 +335,7 @@ class DashboardManager:
         )
         self.add_data_source(source)
 
-        self.logger.info(f"Integrated tool: {tool_name}")
+        self.logger.info("Integrated tool: %s", tool_name)
 
     def start(self) -> None:
         """Start dashboard manager."""
@@ -446,7 +446,7 @@ class DashboardManager:
         with open(filepath, "w") as f:
             json.dump(state, f, indent=2, default=str)
 
-        self.logger.info(f"Exported dashboard state to {filepath}")
+        self.logger.info("Exported dashboard state to %s", filepath)
 
     def _polling_loop(self) -> None:
         """Poll data source."""
@@ -471,10 +471,10 @@ class DashboardManager:
                                 self._distribute_data(source_id, data)
                             source.last_poll = current_time
                         except Exception as e:
-                            self.logger.error(f"Error polling source {source_id}: {e}")
+                            self.logger.exception("Error polling source %s: %s", source_id, e)
 
             except Exception as e:
-                self.logger.error(f"Error in polling loop: {e}")
+                self.logger.exception("Error in polling loop: %s", e)
 
             self.stop_polling.wait(timeout=0.5)
 
@@ -529,7 +529,7 @@ class DashboardManager:
                 "open_files": len(process.open_files()) if hasattr(process, "open_files") else 0,
             }
         except Exception as e:
-            self.logger.warning(f"Failed to collect system data: {e}")
+            self.logger.warning("Failed to collect system data: %s", e)
             return {}
 
     def _collect_tool_data(self, tool_name: str) -> dict[str, Any]:
@@ -552,7 +552,7 @@ class DashboardManager:
                 return handler.get_metrics()
             return handler.get_status() if hasattr(handler, "get_status") else {}
         except Exception as e:
-            self.logger.error(f"Error collecting data from {tool_name}: {e}")
+            self.logger.exception("Error collecting data from %s: %s", tool_name, e)
             return {}
 
     def _update_widgets_for_event(self, event: DashboardEvent) -> None:
@@ -648,9 +648,9 @@ class DashboardManager:
         """
         # Log significant events
         if event.severity in ["error", "critical"]:
-            self.logger.error(f"Dashboard event: {event.title} - {event.description}")
+            self.logger.error("Dashboard event: %s - %s", event.title, event.description)
         elif event.severity == "warning":
-            self.logger.warning(f"Dashboard event: {event.title} - {event.description}")
+            self.logger.warning("Dashboard event: %s - %s", event.title, event.description)
 
 
 def create_dashboard_manager(config: dict[str, Any] | None = None) -> DashboardManager:

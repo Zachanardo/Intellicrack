@@ -204,7 +204,8 @@ class BayesianAnalyzer:
     def posterior_probability(self, successes: int, failures: int, threshold: float) -> float:
         """Calculate P(``success_rate`` > threshold | data)."""
         alpha, beta = self.update_posterior(successes, failures)
-        return 1 - stats.beta.cdf(threshold, alpha, beta)
+        cdf_result = stats.beta.cdf(threshold, alpha, beta)
+        return float(1 - cdf_result)
 
 
 class SurvivalAnalyzer:
@@ -212,7 +213,7 @@ class SurvivalAnalyzer:
 
     def __init__(self) -> None:
         """Initialize survival analyzer for Kaplan-Meier analysis."""
-        self.survival_data = []
+        self.survival_data: list[tuple[float, bool]] = []
 
     def add_observation(self, duration: float, censored: bool = False) -> None:
         """Add survival observation."""
@@ -272,7 +273,7 @@ class TimeSeriesAnalyzer:
 
     def __init__(self) -> None:
         """Initialize time series analyzer with component history tracking."""
-        self.history = defaultdict(list)
+        self.history: defaultdict[str, list[tuple[float, float]]] = defaultdict(list)
 
     def add_data_point(self, component: str, timestamp: float, value: float) -> None:
         """Add time series data point."""
@@ -396,12 +397,15 @@ class StatisticalTester:
     """Statistical hypothesis testing."""
 
     @staticmethod
-    def chi_square_test(observed: list[int], expected: list[int] = None) -> dict[str, float]:
+    def chi_square_test(observed: list[int], expected: list[int] | None = None) -> dict[str, float]:
         """Chi-square goodness of fit test."""
+        expected_values: list[float]
         if expected is None:
-            expected = [sum(observed) / len(observed)] * len(observed)
+            expected_values = [float(sum(observed)) / len(observed)] * len(observed)
+        else:
+            expected_values = [float(x) for x in expected]
 
-        chi2_stat, p_value = stats.chisquare(observed, expected)
+        chi2_stat, p_value = stats.chisquare(observed, expected_values)
 
         return {
             "chi2_statistic": chi2_stat,
@@ -508,7 +512,7 @@ class EventTracker:
 
     def __init__(self, db_path: str = "") -> None:
         """Initialize event tracker with SQLite database and threading support."""
-        self.db_path = db_path if db_path else str(SUCCESS_RATES_DB)
+        self.db_path = db_path or str(SUCCESS_RATES_DB)
         self.lock = threading.Lock()
         self.initialize_database()
 
@@ -597,17 +601,17 @@ class EventTracker:
 
     def get_events(
         self,
-        component: str = None,
-        protection_category: ProtectionCategory = None,
-        start_time: float = None,
-        end_time: float = None,
+        component: str | None = None,
+        protection_category: ProtectionCategory | None = None,
+        start_time: float | None = None,
+        end_time: float | None = None,
     ) -> list[AnalysisEvent]:
         """Retrieve events from database with filtering."""
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
             query = "SELECT * FROM events WHERE 1=1"
-            params = []
+            params: list[str | float] = []
 
             if component:
                 query += " AND component = ?"
@@ -649,15 +653,15 @@ class EventTracker:
 
     def get_success_counts(
         self,
-        component: str = None,
-        protection_category: ProtectionCategory = None,
-        start_time: float = None,
-        end_time: float = None,
+        component: str | None = None,
+        protection_category: ProtectionCategory | None = None,
+        start_time: float | None = None,
+        end_time: float | None = None,
     ) -> tuple[int, int]:
         """Get success and total counts."""
         events = self.get_events(component, protection_category, start_time, end_time)
 
-        success_count = sum(bool(event.outcome == OutcomeType.SUCCESS) for event in events)
+        success_count = sum(event.outcome == OutcomeType.SUCCESS for event in events)
         total_count = len(events)
 
         return (success_count, total_count)
@@ -675,7 +679,7 @@ class MLPredictor:
         }
         self.scaler = StandardScaler()
         self.is_trained = False
-        self.feature_names = []
+        self.feature_names: list[str] = []
 
     def prepare_features(self, events: list[AnalysisEvent]) -> tuple[np.ndarray, np.ndarray]:
         """Prepare features for machine learning."""
@@ -698,7 +702,7 @@ class MLPredictor:
                 continue
 
             # Calculate features for this window
-            success_count = sum(bool(e.outcome == OutcomeType.SUCCESS) for e in window_events)
+            success_count = sum(e.outcome == OutcomeType.SUCCESS for e in window_events)
             total_count = len(window_events)
             success_rate = success_count / total_count if total_count > 0 else 0
 
@@ -707,12 +711,12 @@ class MLPredictor:
                 avg_duration = 0
 
             # Protection category distribution
-            category_counts = defaultdict(int)
+            category_counts: defaultdict[str, int] = defaultdict(int)
             for event in window_events:
                 category_counts[event.protection_category.value] += 1
 
             # Component distribution
-            component_counts = defaultdict(int)
+            component_counts: defaultdict[str, int] = defaultdict(int)
             for event in window_events:
                 component_counts[event.component] += 1
 
@@ -943,7 +947,7 @@ class ReportGenerator:
         daily_success = {}
         for day, day_events in daily_events.items():
             if day_events:
-                success_count = sum(bool(e.outcome == OutcomeType.SUCCESS) for e in day_events)
+                success_count = sum(e.outcome == OutcomeType.SUCCESS for e in day_events)
                 daily_success[day] = success_count / len(day_events)
 
         return daily_success
@@ -964,7 +968,7 @@ class ReportGenerator:
 
             # Create time-aligned success rate vectors for each component
             time_window = 3600  # 1 hour windows
-            time_buckets = {}
+            time_buckets: dict[int, dict[str, list[float]]] = {}
 
             for event in all_events:
                 bucket = int(event.timestamp // time_window)
@@ -976,7 +980,7 @@ class ReportGenerator:
                     time_buckets[bucket][event.component].append(success_value)
 
             # Calculate average success rates per bucket
-            aligned_data = {comp: [] for comp in components}
+            aligned_data: dict[str, list[float]] = {comp: [] for comp in components}
 
             for bucket in sorted(time_buckets):
                 for comp in components:
@@ -1016,7 +1020,7 @@ class SuccessRateAnalyzer:
 
     def __init__(self, db_path: str = "") -> None:
         """Initialize comprehensive success rate analyzer with all statistical components."""
-        self.event_tracker = EventTracker(db_path if db_path else str(SUCCESS_RATES_DB))
+        self.event_tracker = EventTracker(db_path or str(SUCCESS_RATES_DB))
         self.bayesian_analyzer = BayesianAnalyzer()
         self.survival_analyzer = SurvivalAnalyzer()
         self.time_series_analyzer = TimeSeriesAnalyzer()
@@ -1024,8 +1028,8 @@ class SuccessRateAnalyzer:
         self.report_generator = ReportGenerator()
 
         # Cache for expensive computations
-        self.cache = {}
-        self.cache_expiry = {}
+        self.cache: dict[str, StatisticalResult] = {}
+        self.cache_expiry: dict[str, float] = {}
         self.cache_duration = 3600  # 1 hour cache
 
         # Start background tasks
@@ -1068,7 +1072,7 @@ class SuccessRateAnalyzer:
         protection_category: ProtectionCategory,
         component: str,
         duration: float = 0.0,
-        metadata: dict[str, Any] = None,
+        metadata: dict[str, Any] | None = None,
         error_details: str = "",
     ) -> None:
         """Log analysis event."""
@@ -1097,9 +1101,9 @@ class SuccessRateAnalyzer:
 
     def get_success_rate(
         self,
-        component: str = None,
-        protection_category: ProtectionCategory = None,
-        time_window: int = None,
+        component: str | None = None,
+        protection_category: ProtectionCategory | None = None,
+        time_window: int | None = None,
     ) -> StatisticalResult:
         """Get success rate with confidence interval."""
         cache_key = f"success_rate_{component}_{protection_category}_{time_window}"
@@ -1107,7 +1111,7 @@ class SuccessRateAnalyzer:
         if cache_key in self.cache and self.cache_expiry.get(cache_key, 0) > time.time():
             return self.cache[cache_key]
 
-        start_time = time.time() - time_window if time_window else None
+        start_time: float | None = time.time() - time_window if time_window else None
         success_count, total_count = self.event_tracker.get_success_counts(
             component,
             protection_category,
@@ -1138,7 +1142,7 @@ class SuccessRateAnalyzer:
 
         return result
 
-    def get_bayesian_success_rate(self, component: str = None, protection_category: ProtectionCategory = None) -> dict[str, Any]:
+    def get_bayesian_success_rate(self, component: str | None = None, protection_category: ProtectionCategory | None = None) -> dict[str, Any]:
         """Get Bayesian success rate analysis."""
         success_count, total_count = self.event_tracker.get_success_counts(component, protection_category)
         failure_count = total_count - success_count
@@ -1160,7 +1164,7 @@ class SuccessRateAnalyzer:
             "sample_size": total_count,
         }
 
-    def compare_success_rates(self, component1: str, component2: str, protection_category: ProtectionCategory = None) -> dict[str, Any]:
+    def compare_success_rates(self, component1: str, component2: str, protection_category: ProtectionCategory | None = None) -> dict[str, Any]:
         """Compare success rates between components."""
         success1, total1 = self.event_tracker.get_success_counts(component1, protection_category)
         success2, total2 = self.event_tracker.get_success_counts(component2, protection_category)
@@ -1192,7 +1196,7 @@ class SuccessRateAnalyzer:
             "significant_difference": fisher_result["p_value"] < 0.05,
         }
 
-    def get_trend_analysis(self, component: str, protection_category: ProtectionCategory = None) -> TrendAnalysis:
+    def get_trend_analysis(self, component: str, protection_category: ProtectionCategory | None = None) -> TrendAnalysis:
         """Get trend analysis for component."""
         trend_data = self.time_series_analyzer.detect_trend(component)
         forecasts, intervals = self.time_series_analyzer.forecast_arima(component)
@@ -1253,7 +1257,9 @@ class SuccessRateAnalyzer:
 
         # Overall metrics
         total_events = len(recent_events)
-        successful_events = sum(bool(e.outcome == OutcomeType.SUCCESS) for e in recent_events)
+        successful_events = sum(
+            e.outcome == OutcomeType.SUCCESS for e in recent_events
+        )
         overall_success_rate = successful_events / total_events if total_events > 0 else 0
 
         # Component breakdown
@@ -1262,7 +1268,9 @@ class SuccessRateAnalyzer:
 
         for component in components:
             component_events = [e for e in recent_events if e.component == component]
-            component_successes = sum(bool(e.outcome == OutcomeType.SUCCESS) for e in component_events)
+            component_successes = sum(
+                e.outcome == OutcomeType.SUCCESS for e in component_events
+            )
 
             component_performance[component] = {
                 "events": len(component_events),
@@ -1308,7 +1316,7 @@ class SuccessRateAnalyzer:
         if format == "json":
             output_file = f"intellicrack_analysis_{timestamp}.json"
 
-            data = {
+            data: dict[str, Any] = {
                 "export_timestamp": timestamp,
                 "component_statistics": self.get_component_statistics(),
                 "category_statistics": self.get_category_statistics(),
@@ -1317,7 +1325,7 @@ class SuccessRateAnalyzer:
 
             if include_raw_events:
                 events = self.event_tracker.get_events()
-                data["raw_events"] = [
+                raw_events: list[dict[str, Any]] = [
                     {
                         "event_id": e.event_id,
                         "event_type": e.event_type.value,
@@ -1331,6 +1339,7 @@ class SuccessRateAnalyzer:
                     }
                     for e in events
                 ]
+                data["raw_events"] = raw_events
 
             with open(output_file, "w") as f:
                 json.dump(data, f, indent=2)
@@ -1460,7 +1469,7 @@ if __name__ == "__main__":
     from intellicrack.plugins.custom_modules.hardware_dongle_emulator import HardwareDongleEmulator
 
     # Hook into real component events for live tracking
-    def register_component_hooks() -> dict[str, Callable]:
+    def register_component_hooks() -> dict[str, Callable[..., bool]]:
         """Register success tracking hooks with Intellicrack components."""
 
         # Track protection detection events
@@ -1469,7 +1478,8 @@ if __name__ == "__main__":
             try:
                 detector = ProtectionDetector()
                 result = detector.analyze_binary(binary_path)
-                return result.get("serial_protection_found", False)
+                serial_found = result.get("serial_protection_found", False)
+                return bool(serial_found)
             except Exception:
                 return False
 
@@ -1479,7 +1489,8 @@ if __name__ == "__main__":
             try:
                 manager = BypassManager()
                 result = manager.bypass_protection(target_process, "vm_protection")
-                return result.get("bypass_successful", False)
+                bypass_successful = result.get("bypass_successful", False)
+                return bool(bypass_successful)
             except Exception:
                 return False
 
@@ -1489,7 +1500,8 @@ if __name__ == "__main__":
             try:
                 emulator = HardwareDongleEmulator()
                 result = emulator.emulate_dongle(dongle_type)
-                return result.get("emulation_active", False)
+                emulation_active = result.get("emulation_active", False)
+                return bool(emulation_active)
             except Exception:
                 return False
 

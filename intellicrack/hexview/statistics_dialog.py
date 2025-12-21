@@ -91,7 +91,7 @@ class StatisticsWorker(QThread):
 
         except Exception as e:
             self.error.emit(str(e))
-            logger.error(f"Statistics calculation failed: {e}")
+            logger.exception("Statistics calculation failed: %s", e)
 
 
 class StatisticsDialog(QDialog):

@@ -338,7 +338,7 @@ class AnalysisStatsGenerator:
 
             common_attributes = []
             for attr in all_attributes:
-                count = sum(bool(isinstance(item, dict) and attr in item) for item in items)
+                count = sum(isinstance(item, dict) and attr in item for item in items)
                 if count >= len(items) * 0.5:
                     common_attributes.append(attr)
 
@@ -424,10 +424,8 @@ class AnalysisStatsGenerator:
                 sorted_values = sorted(values)
                 n = len(sorted_values)
 
-                q3_idx = 3 * n // 4
-
                 q1 = sorted_values[n // 4]
-                q3 = sorted_values[q3_idx]
+                q3 = sorted_values[3 * n // 4]
                 iqr = q3 - q1
 
                 lower_bound = q1 - 1.5 * iqr

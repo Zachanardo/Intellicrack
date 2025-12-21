@@ -68,9 +68,9 @@ class LocalFileRepository(ModelRepositoryInterface):
                     # Convert metadata to ModelInfo objects
                     self.models_cache = {model_id: ModelInfo.from_dict(model_data) for model_id, model_data in metadata.items()}
 
-                logger.info(f"Loaded metadata for {len(self.models_cache)} local models")
+                logger.info("Loaded metadata for %d local models", len(self.models_cache))
             except (OSError, json.JSONDecodeError) as e:
-                logger.warning(f"Failed to load local models metadata: {e}")
+                logger.warning("Failed to load local models metadata: %s", e)
                 self.models_cache = {}
 
     def _save_metadata(self) -> None:
@@ -82,7 +82,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             with open(self.models_metadata_file, "w") as f:
                 json.dump(metadata, f, indent=2)
         except OSError as e:
-            logger.warning(f"Failed to save local models metadata: {e}")
+            logger.warning("Failed to save local models metadata: %s", e)
 
     def _scan_for_models(self) -> None:
         """Scan the models directory for GGUF files that are not in the cache."""
@@ -140,7 +140,7 @@ class LocalFileRepository(ModelRepositoryInterface):
 
             model_info.checksum = sha256_hash.hexdigest()
         except OSError as e:
-            logger.warning(f"Failed to compute checksum for {model_info.name}: {e}")
+            logger.warning("Failed to compute checksum for %s: %s", model_info.name, e)
 
     def _compute_checksum_async(self, model_info: ModelInfo) -> None:
         """Compute checksum in background thread and save metadata.
@@ -241,7 +241,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             return True, "Copy complete"
 
         except OSError as e:
-            logger.error("IO error in local_repository: %s", e)
+            logger.exception("IO error in local_repository: %s", e)
             if progress_callback:
                 progress_callback.on_complete(False, f"Copy failed: {e!s}")
             return False, f"Copy failed: {e!s}"
@@ -257,7 +257,7 @@ class LocalFileRepository(ModelRepositoryInterface):
 
         """
         if not os.path.exists(file_path):
-            logger.warning(f"Model file not found: {file_path}")
+            logger.warning("Model file not found: %s", file_path)
             return None
 
         # Get file information
@@ -277,7 +277,7 @@ class LocalFileRepository(ModelRepositoryInterface):
 
                 file_path = dest_path
             except OSError as e:
-                logger.error(f"Failed to copy model file: {e}")
+                logger.exception("Failed to copy model file: %s", e)
                 return None
 
         # Create a relative path for the model_id
@@ -329,7 +329,7 @@ class LocalFileRepository(ModelRepositoryInterface):
             try:
                 os.remove(model_info.local_path)
             except OSError as e:
-                logger.warning(f"Failed to remove model file: {e}")
+                logger.warning("Failed to remove model file: %s", e)
                 return False
 
         with self._cache_lock:

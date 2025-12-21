@@ -761,9 +761,7 @@ class WorkspaceTab(QWidget):
             if parent is None:
                 items.extend(self.file_tree.topLevelItem(i) for i in range(self.file_tree.topLevelItemCount()))
             else:
-                for i in range(parent.childCount()):
-                    items.append(parent.child(i))
-
+                items.extend(parent.child(i) for i in range(parent.childCount()))
             for item in items:
                 if item.text(0) == part and item.text(1) == "Folder":
                     parent = item

@@ -102,7 +102,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
                 if size_mb <= self.small_model_threshold_mb:
                     return self.preload_small_models
             except OSError as e:
-                self.logger.error("OS error in lazy_model_loader: %s", e)
+                self.logger.exception("OS error in lazy_model_loader: %s", e)
 
         return False
 
@@ -118,7 +118,7 @@ class SmartLoadingStrategy(ModelLoadingStrategy):
                 # Smaller models get higher priority
                 return max(0, 80 - int(size_mb / 100))
             except OSError as e:
-                self.logger.error("OS error in lazy_model_loader: %s", e)
+                self.logger.exception("OS error in lazy_model_loader: %s", e)
 
         return 50
 
@@ -205,7 +205,7 @@ class LazyModelWrapper:
                 if self.load_callback:
                     self.load_callback(f"Loading {self.config.model_name}...", False)
 
-                logger.info(f"Initializing lazy-loaded backend: {self.config.model_name}")
+                logger.info("Initializing lazy-loaded backend: %s", self.config.model_name)
                 self._backend = self.backend_class(self.config)
 
                 success = self._backend.initialize()
@@ -213,7 +213,7 @@ class LazyModelWrapper:
                     self._backend = None
                     raise RuntimeError(f"Failed to initialize backend for {self.config.model_name}")
 
-                logger.info(f"Successfully loaded lazy backend: {self.config.model_name}")
+                logger.info("Successfully loaded lazy backend: %s", self.config.model_name)
 
                 if self.load_callback:
                     self.load_callback(f"Loaded {self.config.model_name}", True)
@@ -221,7 +221,7 @@ class LazyModelWrapper:
                 return True
 
             except Exception as e:
-                logger.error(f"Error initializing lazy backend {self.config.model_name}: {e}")
+                logger.exception("Error initializing lazy backend %s: %s", self.config.model_name, e)
                 self._load_error = e
                 self._backend = None
 
@@ -255,11 +255,11 @@ class LazyModelWrapper:
                     try:
                         self._backend.cleanup()
                     except Exception as e:
-                        logger.warning(f"Error during backend cleanup: {e}")
+                        logger.warning("Error during backend cleanup: %s", e)
 
                 self._backend = None
                 self._initialized = False
-                logger.info(f"Unloaded backend: {self.config.model_name}")
+                logger.info("Unloaded backend: %s", self.config.model_name)
 
     def get_info(self) -> dict[str, Any]:
         """Get information about this lazy wrapper."""
@@ -285,7 +285,7 @@ class LazyModelWrapper:
             if hasattr(self._backend, "get_memory_usage"):
                 return self._backend.get_memory_usage()
         except Exception as e:
-            logger.debug(f"Could not get memory usage from backend: {e}")
+            logger.debug("Could not get memory usage from backend: %s", e)
 
         # Estimate based on model type and size
         if self.config.model_path and os.path.exists(self.config.model_path):
@@ -293,7 +293,7 @@ class LazyModelWrapper:
                 size_mb = os.path.getsize(self.config.model_path) / (1024 * 1024)
                 return f"~{size_mb:.1f} MB"
             except OSError as e:
-                self.logger.error("OS error in lazy_model_loader: %s", e)
+                self.logger.exception("OS error in lazy_model_loader: %s", e)
 
         return "Unknown"
 
@@ -341,7 +341,7 @@ class LazyModelManager:
             try:
                 callback(message, finished)
             except Exception as e:
-                logger.warning(f"Error in load callback: {e}")
+                logger.warning("Error in load callback: %s", e)
 
     def register_model(self, model_id: str, backend_class: type["LLMBackend"], config: "LLMConfig") -> LazyModelWrapper:
         """Register a model for lazy loading."""
@@ -356,7 +356,7 @@ class LazyModelManager:
             )
 
             self.models[model_id] = wrapper
-            logger.info(f"Registered lazy model: {model_id} (preload: {preload})")
+            logger.info("Registered lazy model: %s (preload: %s)", model_id, preload)
 
             return wrapper
 
@@ -364,7 +364,7 @@ class LazyModelManager:
         """Get a model backend, loading if necessary."""
         with self._access_lock:
             if model_id not in self.models:
-                logger.warning(f"Model not found: {model_id}")
+                logger.warning("Model not found: %s", model_id)
                 return None
 
             wrapper = self.models[model_id]
@@ -382,7 +382,7 @@ class LazyModelManager:
                 return False
 
             self.models[model_id].unload()
-            logger.info(f"Manually unloaded model: {model_id}")
+            logger.info("Manually unloaded model: %s", model_id)
             return True
 
     def unload_all(self) -> None:
@@ -425,7 +425,7 @@ class LazyModelManager:
         for i in range(min(count_to_unload, len(loaded_models))):
             _, model_id, wrapper = loaded_models[i]
             wrapper.unload()
-            logger.info(f"Auto-unloaded least used model: {model_id}")
+            logger.info("Auto-unloaded least used model: %s", model_id)
 
     def _background_cleanup(self) -> None:
         """Background thread for periodic cleanup."""
@@ -434,7 +434,7 @@ class LazyModelManager:
                 time.sleep(300)  # Check every 5 minutes
                 self._cleanup_idle_models()
             except Exception as e:
-                logger.error(f"Error in background cleanup: {e}")
+                logger.exception("Error in background cleanup: %s", e)
 
     def _cleanup_idle_models(self) -> None:
         """Unload models that have been idle for too long."""
@@ -444,7 +444,7 @@ class LazyModelManager:
             for model_id, wrapper in list(self.models.items()):
                 if wrapper.is_loaded and wrapper.last_access_time and current_time - wrapper.last_access_time > self.idle_unload_time:
                     wrapper.unload()
-                    logger.info(f"Auto-unloaded idle model: {model_id}")
+                    logger.info("Auto-unloaded idle model: %s", model_id)
 
 
 # Global lazy model manager instance

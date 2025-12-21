@@ -84,7 +84,7 @@ class DebuggerOutputThread(QThread):
             except queue.Empty:
                 continue
             except Exception as e:
-                self._logger.error("Exception in debugger_dialog: %s", e)
+                self._logger.exception("Exception in debugger_dialog: %s", e)
                 print(f"Debugger output error: {e}")
 
     def stop(self) -> None:
@@ -625,8 +625,7 @@ class DebuggerDialog(QDialog):
         elif msg_type == "exception_break":
             if isinstance(data, dict):
                 self.console.append(f"Exception: {data.get('type', '')}: {data.get('message', '')}")
-                traceback_str = data.get("traceback", "")
-                if traceback_str:
+                if traceback_str := data.get("traceback", ""):
                     self.console.append(str(traceback_str))
 
         elif msg_type == "result":

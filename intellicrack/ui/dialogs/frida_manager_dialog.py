@@ -454,7 +454,7 @@ commonLicensePatterns.forEach(function(pattern) {
             },
         }
 
-        templates.update(inline_templates)
+        templates |= inline_templates
 
         logger.debug("Loaded %d script template categories", len(templates))
         return templates
@@ -744,9 +744,8 @@ commonLicensePatterns.forEach(function(pattern) {
             new_pids = current_pids - self._last_known_pids
             removed_pids = self._last_known_pids - current_pids
 
-            if new_pids or removed_pids:
-                if hasattr(self, "status_label") and self.status_label:
-                    self.status_label.setText(f"Processes: {len(current_pids)} (+{len(new_pids)}/-{len(removed_pids)})")
+            if (new_pids or removed_pids) and (hasattr(self, "status_label") and self.status_label):
+                self.status_label.setText(f"Processes: {len(current_pids)} (+{len(new_pids)}/-{len(removed_pids)})")
 
         self._last_known_pids = current_pids
 
@@ -934,8 +933,7 @@ commonLicensePatterns.forEach(function(pattern) {
 
             settings = QSettings("Intellicrack", "FridaManagerDialog")
 
-            geometry = settings.value("geometry")
-            if geometry:
+            if geometry := settings.value("geometry"):
                 self.restoreGeometry(geometry)
 
             if hasattr(self, "batch_hooks_cb") and self.batch_hooks_cb:
@@ -977,9 +975,8 @@ commonLicensePatterns.forEach(function(pattern) {
                     self.preset_combo.setCurrentIndex(idx)
 
             last_binary = settings.value("last_target_binary", "")
-            if last_binary and hasattr(self, "ai_binary_path") and self.ai_binary_path:
-                if Path(last_binary).exists():
-                    self.ai_binary_path.setText(last_binary)
+            if last_binary and hasattr(self, "ai_binary_path") and self.ai_binary_path and Path(last_binary).exists():
+                self.ai_binary_path.setText(last_binary)
 
             logger.debug("Settings loaded successfully")
 
@@ -1141,15 +1138,12 @@ commonLicensePatterns.forEach(function(pattern) {
                 script.content if hasattr(script, "content") else str(script)
 
                 qemu = QEMUSystemEmulator(binary_path=target_binary)
-                success = qemu.start_system(headless=True)
-
-                if success:
+                if success := qemu.start_system(headless=True):
                     if hasattr(self, "log_console") and self.log_console:
                         self.log_console.append_output("[QEMU] System started for script testing")
                     qemu.stop_system()
-                else:
-                    if hasattr(self, "log_console") and self.log_console:
-                        self.log_console.append_output("[QEMU] Failed to start system for testing")
+                elif hasattr(self, "log_console") and self.log_console:
+                    self.log_console.append_output("[QEMU] Failed to start system for testing")
 
             if hasattr(self, "progress_label") and self.progress_label:
                 self.progress_label.setText("QEMU testing complete")
@@ -2199,9 +2193,6 @@ commonLicensePatterns.forEach(function(pattern) {
 
             # Add to process list
             self.refresh_processes()
-
-            # Auto-select the spawned process - will be selected on next refresh
-            pass
 
         except Exception as e:
             error_msg = f"Failed to spawn process: {e!s}"
@@ -3316,15 +3307,13 @@ commonLicensePatterns.forEach(function(pattern) {
         if hasattr(self, "performance_timer") and self.performance_timer:
             self.performance_timer.stop()
 
-        if hasattr(self, "process_worker") and self.process_worker:
-            if self.process_worker.isRunning():
-                self.process_worker.requestInterruption()
-                self.process_worker.wait(1000)
+        if hasattr(self, "process_worker") and self.process_worker and self.process_worker.isRunning():
+            self.process_worker.requestInterruption()
+            self.process_worker.wait(1000)
 
-        if hasattr(self, "frida_worker") and self.frida_worker:
-            if self.frida_worker.isRunning():
-                self.frida_worker.requestInterruption()
-                self.frida_worker.wait(1000)
+        if hasattr(self, "frida_worker") and self.frida_worker and self.frida_worker.isRunning():
+            self.frida_worker.requestInterruption()
+            self.frida_worker.wait(1000)
 
         if event is not None:
             event.accept()

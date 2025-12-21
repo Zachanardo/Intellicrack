@@ -165,7 +165,7 @@ class EmulatorManager(QObject):
                 self.qemu_starting = False
 
             error_msg = f"Failed to start QEMU for {binary_path}: {e!s}"
-            self.logger.error("Failed to start QEMU for %s: %s", binary_path, e, exc_info=True)
+            self.logger.exception("Failed to start QEMU for %s: %s", binary_path, e)
             self.emulator_error.emit("QEMU", error_msg)
             self.emulator_status_changed.emit("QEMU", False, "QEMU failed to start")
             return False
@@ -196,7 +196,7 @@ class EmulatorManager(QObject):
 
         except Exception as e:
             error_msg = f"Failed to initialize Qiling: {e!s}"
-            self.logger.error("Failed to initialize Qiling: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize Qiling: %s", e)
             self.emulator_error.emit("Qiling", error_msg)
             self.emulator_status_changed.emit("Qiling", False, "Qiling initialization failed")
             return None
@@ -210,7 +210,7 @@ class EmulatorManager(QObject):
                     self.qemu_running = False
                 self.emulator_status_changed.emit("QEMU", False, "QEMU emulator stopped")
             except Exception as e:
-                self.logger.error("Error stopping QEMU: %s", e, exc_info=True)
+                self.logger.exception("Error stopping QEMU: %s", e)
 
     def cleanup(self) -> None:
         """Clean up all emulator resources."""

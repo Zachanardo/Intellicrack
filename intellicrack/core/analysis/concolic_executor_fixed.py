@@ -87,7 +87,7 @@ class ConcolicExecutionEngine:
 
         # Log available engine
         if self.symbolic_engine:
-            self.logger.info(f"Using {self.symbolic_engine_name} for symbolic execution")
+            self.logger.info("Using %s for symbolic execution", self.symbolic_engine_name)
         else:
             self.logger.error("No symbolic execution engine available!", exc_info=True)
 
@@ -161,7 +161,7 @@ class ConcolicExecutionEngine:
             return results
 
         except Exception as e:
-            self.logger.error(f"Angr execution failed: {e}", exc_info=True)
+            self.logger.exception("Angr execution failed: %s", e)
             return {"error": str(e), "engine": "angr"}
 
     def _explore_paths_simconcolic(self, target_address: int | None, avoid_addresses: list[int] | None) -> dict[str, Any]:
@@ -241,7 +241,7 @@ class ConcolicExecutionEngine:
                             )
                             license_addrs.append(xref.addr)
                 except Exception as e:
-                    logger.debug(f"Failed to search for pattern {pattern}: {e}")
+                    logger.debug("Failed to search for pattern %s: %s", pattern, e)
 
             for func in cfg.functions.values():
                 # Look for functions that might be license checks

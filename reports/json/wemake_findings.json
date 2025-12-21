@@ -1,7 +1,7 @@
 {
   "tool": "wemake",
-  "generated": "2025-12-20T02:09:37.841335",
-  "total_findings": 12052,
+  "generated": "2025-12-20T03:05:35.832025",
+  "total_findings": 12039,
   "total_files": 93,
   "files": [
     {
@@ -35912,7 +35912,7 @@
     },
     {
       "path": "intellicrack\\ai\\integration_manager.py",
-      "count": 240,
+      "count": 238,
       "findings": [
         {
           "line": 0,
@@ -37007,13 +37007,6 @@
           "raw": "intellicrack\\ai\\integration_manager.py:720:27: WPS226 Found string literal over-use: failed > 3"
         },
         {
-          "line": 723,
-          "column": 28,
-          "code": "WPS226",
-          "message": "Found string literal over-use: Task  > 3",
-          "raw": "intellicrack\\ai\\integration_manager.py:723:28: WPS226 Found string literal over-use: Task  > 3"
-        },
-        {
           "line": 730,
           "column": 21,
           "code": "WPS420",
@@ -37565,13 +37558,6 @@
           "code": "WPS432",
           "message": "Found magic number: 50",
           "raw": "intellicrack\\ai\\integration_manager.py:1287:60: WPS432 Found magic number: 50"
-        },
-        {
-          "line": 1321,
-          "column": 30,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\integration_manager.py:1321:30: WPS237 Found a too complex `f` string"
         },
         {
           "line": 1337,
@@ -39193,7 +39179,7 @@
     },
     {
       "path": "intellicrack\\ai\\interactive_assistant.py",
-      "count": 210,
+      "count": 209,
       "findings": [
         {
           "line": 0,
@@ -39642,13 +39628,6 @@
           "code": "WPS336",
           "message": "Found explicit string concatenation",
           "raw": "intellicrack\\ai\\interactive_assistant.py:550:28: WPS336 Found explicit string concatenation"
-        },
-        {
-          "line": 550,
-          "column": 48,
-          "code": "WPS226",
-          "message": "Found string literal over-use: :  > 3",
-          "raw": "intellicrack\\ai\\interactive_assistant.py:550:48: WPS226 Found string literal over-use: :  > 3"
         },
         {
           "line": 550,
@@ -53573,8 +53552,8 @@
           "line": 402,
           "column": 10,
           "code": "WPS226",
-          "message": "Found string literal over-use: \u2261\u0192\u0192\u00f3 > 3",
-          "raw": "intellicrack\\cli\\terminal_dashboard.py:402:10: WPS226 Found string literal over-use: \u2261\u0192\u0192\u00f3 > 3"
+          "message": "Found string literal over-use: \ud83d\udfe2 > 3",
+          "raw": "intellicrack\\cli\\terminal_dashboard.py:402:10: WPS226 Found string literal over-use: \ud83d\udfe2 > 3"
         },
         {
           "line": 402,
@@ -53594,8 +53573,8 @@
           "line": 402,
           "column": 62,
           "code": "WPS226",
-          "message": "Found string literal over-use: \u2261\u0192\u0192\u00ed > 3",
-          "raw": "intellicrack\\cli\\terminal_dashboard.py:402:62: WPS226 Found string literal over-use: \u2261\u0192\u0192\u00ed > 3"
+          "message": "Found string literal over-use: \ud83d\udfe1 > 3",
+          "raw": "intellicrack\\cli\\terminal_dashboard.py:402:62: WPS226 Found string literal over-use: \ud83d\udfe1 > 3"
         },
         {
           "line": 402,
@@ -53608,8 +53587,8 @@
           "line": 402,
           "column": 114,
           "code": "WPS226",
-          "message": "Found string literal over-use: \u2261\u0192\u00f6\u2524 > 3",
-          "raw": "intellicrack\\cli\\terminal_dashboard.py:402:114: WPS226 Found string literal over-use: \u2261\u0192\u00f6\u2524 > 3"
+          "message": "Found string literal over-use: \ud83d\udd34 > 3",
+          "raw": "intellicrack\\cli\\terminal_dashboard.py:402:114: WPS226 Found string literal over-use: \ud83d\udd34 > 3"
         },
         {
           "line": 403,
@@ -70427,88 +70406,74 @@
           "raw": "intellicrack\\ai\\model_sharding.py:722:5: WPS210 Found too many local variables: 8 > 5"
         },
         {
-          "line": 764,
+          "line": 765,
           "column": 5,
           "code": "WPS210",
           "message": "Found too many local variables: 8 > 5",
-          "raw": "intellicrack\\ai\\model_sharding.py:764:5: WPS210 Found too many local variables: 8 > 5"
+          "raw": "intellicrack\\ai\\model_sharding.py:765:5: WPS210 Found too many local variables: 8 > 5"
         },
         {
-          "line": 796,
+          "line": 797,
           "column": 13,
           "code": "WPS111",
           "message": "Found too short name: i < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:796:13: WPS111 Found too short name: i < 2"
+          "raw": "intellicrack\\ai\\model_sharding.py:797:13: WPS111 Found too short name: i < 2"
         },
         {
-          "line": 816,
+          "line": 817,
           "column": 9,
           "code": "WPS221",
           "message": "Found line with high Jones Complexity: 15 > 14",
-          "raw": "intellicrack\\ai\\model_sharding.py:816:9: WPS221 Found line with high Jones Complexity: 15 > 14"
+          "raw": "intellicrack\\ai\\model_sharding.py:817:9: WPS221 Found line with high Jones Complexity: 15 > 14"
         },
         {
-          "line": 825,
+          "line": 826,
           "column": 17,
           "code": "WPS122",
           "message": "Found all unused variables definition: _",
-          "raw": "intellicrack\\ai\\model_sharding.py:825:17: WPS122 Found all unused variables definition: _"
+          "raw": "intellicrack\\ai\\model_sharding.py:826:17: WPS122 Found all unused variables definition: _"
         },
         {
-          "line": 831,
+          "line": 832,
           "column": 59,
           "code": "WPS111",
           "message": "Found too short name: i < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:831:59: WPS111 Found too short name: i < 2"
+          "raw": "intellicrack\\ai\\model_sharding.py:832:59: WPS111 Found too short name: i < 2"
         },
         {
-          "line": 854,
+          "line": 855,
           "column": 59,
           "code": "WPS111",
           "message": "Found too short name: j < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:854:59: WPS111 Found too short name: j < 2"
+          "raw": "intellicrack\\ai\\model_sharding.py:855:59: WPS111 Found too short name: j < 2"
         },
         {
-          "line": 863,
+          "line": 864,
           "column": 13,
           "code": "WPS122",
           "message": "Found all unused variables definition: _",
-          "raw": "intellicrack\\ai\\model_sharding.py:863:13: WPS122 Found all unused variables definition: _"
-        },
-        {
-          "line": 878,
-          "column": 13,
-          "code": "WPS221",
-          "message": "Found line with high Jones Complexity: 15 > 14",
-          "raw": "intellicrack\\ai\\model_sharding.py:878:13: WPS221 Found line with high Jones Complexity: 15 > 14"
-        },
-        {
-          "line": 878,
-          "column": 67,
-          "code": "WPS111",
-          "message": "Found too short name: j < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:878:67: WPS111 Found too short name: j < 2"
+          "raw": "intellicrack\\ai\\model_sharding.py:864:13: WPS122 Found all unused variables definition: _"
         },
         {
           "line": 879,
-          "column": 62,
-          "code": "WPS111",
-          "message": "Found too short name: j < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:879:62: WPS111 Found too short name: j < 2"
-        },
-        {
-          "line": 886,
           "column": 13,
           "code": "WPS221",
           "message": "Found line with high Jones Complexity: 15 > 14",
-          "raw": "intellicrack\\ai\\model_sharding.py:886:13: WPS221 Found line with high Jones Complexity: 15 > 14"
+          "raw": "intellicrack\\ai\\model_sharding.py:879:13: WPS221 Found line with high Jones Complexity: 15 > 14"
         },
         {
-          "line": 886,
-          "column": 65,
+          "line": 879,
+          "column": 67,
           "code": "WPS111",
-          "message": "Found too short name: i < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:886:65: WPS111 Found too short name: i < 2"
+          "message": "Found too short name: j < 2",
+          "raw": "intellicrack\\ai\\model_sharding.py:879:67: WPS111 Found too short name: j < 2"
+        },
+        {
+          "line": 880,
+          "column": 62,
+          "code": "WPS111",
+          "message": "Found too short name: j < 2",
+          "raw": "intellicrack\\ai\\model_sharding.py:880:62: WPS111 Found too short name: j < 2"
         },
         {
           "line": 887,
@@ -70519,52 +70484,66 @@
         },
         {
           "line": 887,
+          "column": 65,
+          "code": "WPS111",
+          "message": "Found too short name: i < 2",
+          "raw": "intellicrack\\ai\\model_sharding.py:887:65: WPS111 Found too short name: i < 2"
+        },
+        {
+          "line": 888,
+          "column": 13,
+          "code": "WPS221",
+          "message": "Found line with high Jones Complexity: 15 > 14",
+          "raw": "intellicrack\\ai\\model_sharding.py:888:13: WPS221 Found line with high Jones Complexity: 15 > 14"
+        },
+        {
+          "line": 888,
           "column": 70,
           "code": "WPS111",
           "message": "Found too short name: i < 2",
-          "raw": "intellicrack\\ai\\model_sharding.py:887:70: WPS111 Found too short name: i < 2"
+          "raw": "intellicrack\\ai\\model_sharding.py:888:70: WPS111 Found too short name: i < 2"
         },
         {
-          "line": 891,
+          "line": 892,
           "column": 5,
           "code": "WPS211",
           "message": "Found too many arguments: 6 > 5",
-          "raw": "intellicrack\\ai\\model_sharding.py:891:5: WPS211 Found too many arguments: 6 > 5"
+          "raw": "intellicrack\\ai\\model_sharding.py:892:5: WPS211 Found too many arguments: 6 > 5"
         },
         {
-          "line": 891,
+          "line": 892,
           "column": 5,
           "code": "WPS210",
           "message": "Found too many local variables: 7 > 5",
-          "raw": "intellicrack\\ai\\model_sharding.py:891:5: WPS210 Found too many local variables: 7 > 5"
+          "raw": "intellicrack\\ai\\model_sharding.py:892:5: WPS210 Found too many local variables: 7 > 5"
         },
         {
-          "line": 909,
+          "line": 910,
           "column": 9,
           "code": "WPS110",
           "message": "Found wrong variable name: results",
-          "raw": "intellicrack\\ai\\model_sharding.py:909:9: WPS110 Found wrong variable name: results"
+          "raw": "intellicrack\\ai\\model_sharding.py:910:9: WPS110 Found wrong variable name: results"
         },
         {
-          "line": 943,
+          "line": 944,
           "column": 5,
           "code": "WPS420",
           "message": "Found wrong keyword: global",
-          "raw": "intellicrack\\ai\\model_sharding.py:943:5: WPS420 Found wrong keyword: global"
-        },
-        {
-          "line": 945,
-          "column": 9,
-          "code": "WPS122",
-          "message": "Found all unused variables definition: _sharding_manager",
-          "raw": "intellicrack\\ai\\model_sharding.py:945:9: WPS122 Found all unused variables definition: _sharding_manager"
+          "raw": "intellicrack\\ai\\model_sharding.py:944:5: WPS420 Found wrong keyword: global"
         },
         {
           "line": 946,
+          "column": 9,
+          "code": "WPS122",
+          "message": "Found all unused variables definition: _sharding_manager",
+          "raw": "intellicrack\\ai\\model_sharding.py:946:9: WPS122 Found all unused variables definition: _sharding_manager"
+        },
+        {
+          "line": 947,
           "column": 12,
           "code": "WPS121",
           "message": "Found usage of a variable marked as unused: _sharding_manager",
-          "raw": "intellicrack\\ai\\model_sharding.py:946:12: WPS121 Found usage of a variable marked as unused: _sharding_manager"
+          "raw": "intellicrack\\ai\\model_sharding.py:947:12: WPS121 Found usage of a variable marked as unused: _sharding_manager"
         }
       ]
     },
@@ -76020,7 +75999,7 @@
     },
     {
       "path": "intellicrack\\ai\\model_discovery_service.py",
-      "count": 60,
+      "count": 59,
       "findings": [
         {
           "line": 20,
@@ -76206,17 +76185,10 @@
         },
         {
           "line": 254,
-          "column": 21,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\model_discovery_service.py:254:21: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 254,
-          "column": 107,
+          "column": 114,
           "code": "WPS432",
           "message": "Found magic number: 3600",
-          "raw": "intellicrack\\ai\\model_discovery_service.py:254:107: WPS432 Found magic number: 3600"
+          "raw": "intellicrack\\ai\\model_discovery_service.py:254:114: WPS432 Found magic number: 3600"
         },
         {
           "line": 263,
@@ -79077,348 +79049,6 @@
       ]
     },
     {
-      "path": "intellicrack\\ai\\lazy_model_loader.py",
-      "count": 48,
-      "findings": [
-        {
-          "line": 0,
-          "column": 1,
-          "code": "WPS202",
-          "message": "Found too many module members: 9 > 7",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:0:1: WPS202 Found too many module members: 9 > 7"
-        },
-        {
-          "line": 34,
-          "column": 5,
-          "code": "WPS300",
-          "message": "Found local folder import",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:34:5: WPS300 Found local folder import"
-        },
-        {
-          "line": 57,
-          "column": 9,
-          "code": "WPS221",
-          "message": "Found line with high Jones Complexity: 16 > 14",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:9: WPS221 Found line with high Jones Complexity: 16 > 14"
-        },
-        {
-          "line": 57,
-          "column": 79,
-          "code": "WPS226",
-          "message": "Found string literal over-use: openai > 3",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:79: WPS226 Found string literal over-use: openai > 3"
-        },
-        {
-          "line": 57,
-          "column": 89,
-          "code": "WPS226",
-          "message": "Found string literal over-use: anthropic > 3",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:89: WPS226 Found string literal over-use: anthropic > 3"
-        },
-        {
-          "line": 57,
-          "column": 102,
-          "code": "WPS226",
-          "message": "Found string literal over-use: ollama > 3",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:102: WPS226 Found string literal over-use: ollama > 3"
-        },
-        {
-          "line": 100,
-          "column": 13,
-          "code": "WPS229",
-          "message": "Found too long ``try`` body length: 2 > 1",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:100:13: WPS229 Found too long ``try`` body length: 2 > 1"
-        },
-        {
-          "line": 104,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:104:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 114,
-          "column": 20,
-          "code": "WPS432",
-          "message": "Found magic number: 90",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:114:20: WPS432 Found magic number: 90"
-        },
-        {
-          "line": 116,
-          "column": 13,
-          "code": "WPS229",
-          "message": "Found too long ``try`` body length: 2 > 1",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:116:13: WPS229 Found too long ``try`` body length: 2 > 1"
-        },
-        {
-          "line": 119,
-          "column": 31,
-          "code": "WPS432",
-          "message": "Found magic number: 80",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:119:31: WPS432 Found magic number: 80"
-        },
-        {
-          "line": 120,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:120:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 123,
-          "column": 16,
-          "code": "WPS432",
-          "message": "Found magic number: 50",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:123:16: WPS432 Found magic number: 50"
-        },
-        {
-          "line": 126,
-          "column": 1,
-          "code": "WPS230",
-          "message": "Found too many public instance attributes: 7 > 6",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:126:1: WPS230 Found too many public instance attributes: 7 > 6"
-        },
-        {
-          "line": 126,
-          "column": 1,
-          "code": "WPS214",
-          "message": "Found too many methods: 10 > 7",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:126:1: WPS214 Found too many methods: 10 > 7"
-        },
-        {
-          "line": 126,
-          "column": 1,
-          "code": "WPS338",
-          "message": "Found incorrect order of methods in a class",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:126:1: WPS338 Found incorrect order of methods in a class"
-        },
-        {
-          "line": 164,
-          "column": 13,
-          "code": "WPS504",
-          "message": "Found negated condition",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:164:13: WPS504 Found negated condition"
-        },
-        {
-          "line": 189,
-          "column": 5,
-          "code": "WPS231",
-          "message": "Found function with too much cognitive complexity: 25 > 12",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:189:5: WPS231 Found function with too much cognitive complexity: 25 > 12"
-        },
-        {
-          "line": 204,
-          "column": 13,
-          "code": "WPS229",
-          "message": "Found too long ``try`` body length: 8 > 1",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:204:13: WPS229 Found too long ``try`` body length: 8 > 1"
-        },
-        {
-          "line": 206,
-          "column": 40,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:206:40: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 208,
-          "column": 29,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:208:29: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 214,
-          "column": 40,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:214:40: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 216,
-          "column": 29,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:216:29: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 219,
-          "column": 40,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:219:40: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 223,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:223:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 224,
-          "column": 30,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:224:30: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 229,
-          "column": 40,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:229:40: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 237,
-          "column": 5,
-          "code": "WPS615",
-          "message": "Found unpythonic getter or setter: get_backend",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:237:5: WPS615 Found unpythonic getter or setter: get_backend"
-        },
-        {
-          "line": 256,
-          "column": 25,
-          "code": "WPS220",
-          "message": "Found too deep nesting: 24 > 20",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:256:25: WPS220 Found too deep nesting: 24 > 20"
-        },
-        {
-          "line": 257,
-          "column": 21,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:257:21: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 258,
-          "column": 25,
-          "code": "WPS220",
-          "message": "Found too deep nesting: 24 > 20",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:258:25: WPS220 Found too deep nesting: 24 > 20"
-        },
-        {
-          "line": 262,
-          "column": 29,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:262:29: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 287,
-          "column": 9,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:287:9: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 292,
-          "column": 13,
-          "code": "WPS229",
-          "message": "Found too long ``try`` body length: 2 > 1",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:292:13: WPS229 Found too long ``try`` body length: 2 > 1"
-        },
-        {
-          "line": 295,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:295:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 301,
-          "column": 1,
-          "code": "WPS214",
-          "message": "Found too many methods: 13 > 7",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:301:1: WPS214 Found too many methods: 13 > 7"
-        },
-        {
-          "line": 301,
-          "column": 1,
-          "code": "WPS338",
-          "message": "Found incorrect order of methods in a class",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:301:1: WPS338 Found incorrect order of methods in a class"
-        },
-        {
-          "line": 326,
-          "column": 9,
-          "code": "WPS504",
-          "message": "Found negated condition",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:326:9: WPS504 Found negated condition"
-        },
-        {
-          "line": 343,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:343:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 395,
-          "column": 24,
-          "code": "WPS221",
-          "message": "Found line with high Jones Complexity: 19 > 14",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:395:24: WPS221 Found line with high Jones Complexity: 19 > 14"
-        },
-        {
-          "line": 422,
-          "column": 39,
-          "code": "WPS111",
-          "message": "Found too short name: x < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:422:39: WPS111 Found too short name: x < 2"
-        },
-        {
-          "line": 425,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: i < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:425:13: WPS111 Found too short name: i < 2"
-        },
-        {
-          "line": 433,
-          "column": 13,
-          "code": "WPS229",
-          "message": "Found too long ``try`` body length: 2 > 1",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:433:13: WPS229 Found too long ``try`` body length: 2 > 1"
-        },
-        {
-          "line": 434,
-          "column": 28,
-          "code": "WPS432",
-          "message": "Found magic number: 300",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:434:28: WPS432 Found magic number: 300"
-        },
-        {
-          "line": 436,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:436:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 456,
-          "column": 5,
-          "code": "WPS420",
-          "message": "Found wrong keyword: global",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:456:5: WPS420 Found wrong keyword: global"
-        },
-        {
-          "line": 460,
-          "column": 9,
-          "code": "WPS122",
-          "message": "Found all unused variables definition: _lazy_manager",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:460:9: WPS122 Found all unused variables definition: _lazy_manager"
-        },
-        {
-          "line": 461,
-          "column": 12,
-          "code": "WPS121",
-          "message": "Found usage of a variable marked as unused: _lazy_manager",
-          "raw": "intellicrack\\ai\\lazy_model_loader.py:461:12: WPS121 Found usage of a variable marked as unused: _lazy_manager"
-        }
-      ]
-    },
-    {
       "path": "intellicrack\\ai\\pattern_library.py",
       "count": 48,
       "findings": [
@@ -80748,6 +80378,320 @@
           "code": "WPS237",
           "message": "Found a too complex `f` string",
           "raw": "intellicrack\\cli\\config_profiles.py:457:21: WPS237 Found a too complex `f` string"
+        }
+      ]
+    },
+    {
+      "path": "intellicrack\\ai\\lazy_model_loader.py",
+      "count": 44,
+      "findings": [
+        {
+          "line": 0,
+          "column": 1,
+          "code": "WPS202",
+          "message": "Found too many module members: 9 > 7",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:0:1: WPS202 Found too many module members: 9 > 7"
+        },
+        {
+          "line": 34,
+          "column": 5,
+          "code": "WPS300",
+          "message": "Found local folder import",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:34:5: WPS300 Found local folder import"
+        },
+        {
+          "line": 57,
+          "column": 9,
+          "code": "WPS221",
+          "message": "Found line with high Jones Complexity: 16 > 14",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:9: WPS221 Found line with high Jones Complexity: 16 > 14"
+        },
+        {
+          "line": 57,
+          "column": 79,
+          "code": "WPS226",
+          "message": "Found string literal over-use: openai > 3",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:79: WPS226 Found string literal over-use: openai > 3"
+        },
+        {
+          "line": 57,
+          "column": 89,
+          "code": "WPS226",
+          "message": "Found string literal over-use: anthropic > 3",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:89: WPS226 Found string literal over-use: anthropic > 3"
+        },
+        {
+          "line": 57,
+          "column": 102,
+          "code": "WPS226",
+          "message": "Found string literal over-use: ollama > 3",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:57:102: WPS226 Found string literal over-use: ollama > 3"
+        },
+        {
+          "line": 100,
+          "column": 13,
+          "code": "WPS229",
+          "message": "Found too long ``try`` body length: 2 > 1",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:100:13: WPS229 Found too long ``try`` body length: 2 > 1"
+        },
+        {
+          "line": 104,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:104:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 114,
+          "column": 20,
+          "code": "WPS432",
+          "message": "Found magic number: 90",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:114:20: WPS432 Found magic number: 90"
+        },
+        {
+          "line": 116,
+          "column": 13,
+          "code": "WPS229",
+          "message": "Found too long ``try`` body length: 2 > 1",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:116:13: WPS229 Found too long ``try`` body length: 2 > 1"
+        },
+        {
+          "line": 119,
+          "column": 31,
+          "code": "WPS432",
+          "message": "Found magic number: 80",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:119:31: WPS432 Found magic number: 80"
+        },
+        {
+          "line": 120,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:120:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 123,
+          "column": 16,
+          "code": "WPS432",
+          "message": "Found magic number: 50",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:123:16: WPS432 Found magic number: 50"
+        },
+        {
+          "line": 126,
+          "column": 1,
+          "code": "WPS230",
+          "message": "Found too many public instance attributes: 7 > 6",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:126:1: WPS230 Found too many public instance attributes: 7 > 6"
+        },
+        {
+          "line": 126,
+          "column": 1,
+          "code": "WPS214",
+          "message": "Found too many methods: 10 > 7",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:126:1: WPS214 Found too many methods: 10 > 7"
+        },
+        {
+          "line": 126,
+          "column": 1,
+          "code": "WPS338",
+          "message": "Found incorrect order of methods in a class",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:126:1: WPS338 Found incorrect order of methods in a class"
+        },
+        {
+          "line": 164,
+          "column": 13,
+          "code": "WPS504",
+          "message": "Found negated condition",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:164:13: WPS504 Found negated condition"
+        },
+        {
+          "line": 189,
+          "column": 5,
+          "code": "WPS231",
+          "message": "Found function with too much cognitive complexity: 25 > 12",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:189:5: WPS231 Found function with too much cognitive complexity: 25 > 12"
+        },
+        {
+          "line": 204,
+          "column": 13,
+          "code": "WPS229",
+          "message": "Found too long ``try`` body length: 8 > 1",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:204:13: WPS229 Found too long ``try`` body length: 8 > 1"
+        },
+        {
+          "line": 206,
+          "column": 40,
+          "code": "WPS237",
+          "message": "Found a too complex `f` string",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:206:40: WPS237 Found a too complex `f` string"
+        },
+        {
+          "line": 214,
+          "column": 40,
+          "code": "WPS237",
+          "message": "Found a too complex `f` string",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:214:40: WPS237 Found a too complex `f` string"
+        },
+        {
+          "line": 219,
+          "column": 40,
+          "code": "WPS237",
+          "message": "Found a too complex `f` string",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:219:40: WPS237 Found a too complex `f` string"
+        },
+        {
+          "line": 223,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:223:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 229,
+          "column": 40,
+          "code": "WPS237",
+          "message": "Found a too complex `f` string",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:229:40: WPS237 Found a too complex `f` string"
+        },
+        {
+          "line": 237,
+          "column": 5,
+          "code": "WPS615",
+          "message": "Found unpythonic getter or setter: get_backend",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:237:5: WPS615 Found unpythonic getter or setter: get_backend"
+        },
+        {
+          "line": 256,
+          "column": 25,
+          "code": "WPS220",
+          "message": "Found too deep nesting: 24 > 20",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:256:25: WPS220 Found too deep nesting: 24 > 20"
+        },
+        {
+          "line": 257,
+          "column": 21,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:257:21: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 258,
+          "column": 25,
+          "code": "WPS220",
+          "message": "Found too deep nesting: 24 > 20",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:258:25: WPS220 Found too deep nesting: 24 > 20"
+        },
+        {
+          "line": 287,
+          "column": 9,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:287:9: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 292,
+          "column": 13,
+          "code": "WPS229",
+          "message": "Found too long ``try`` body length: 2 > 1",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:292:13: WPS229 Found too long ``try`` body length: 2 > 1"
+        },
+        {
+          "line": 295,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:295:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 301,
+          "column": 1,
+          "code": "WPS214",
+          "message": "Found too many methods: 13 > 7",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:301:1: WPS214 Found too many methods: 13 > 7"
+        },
+        {
+          "line": 301,
+          "column": 1,
+          "code": "WPS338",
+          "message": "Found incorrect order of methods in a class",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:301:1: WPS338 Found incorrect order of methods in a class"
+        },
+        {
+          "line": 326,
+          "column": 9,
+          "code": "WPS504",
+          "message": "Found negated condition",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:326:9: WPS504 Found negated condition"
+        },
+        {
+          "line": 343,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:343:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 395,
+          "column": 24,
+          "code": "WPS221",
+          "message": "Found line with high Jones Complexity: 19 > 14",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:395:24: WPS221 Found line with high Jones Complexity: 19 > 14"
+        },
+        {
+          "line": 422,
+          "column": 39,
+          "code": "WPS111",
+          "message": "Found too short name: x < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:422:39: WPS111 Found too short name: x < 2"
+        },
+        {
+          "line": 425,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: i < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:425:13: WPS111 Found too short name: i < 2"
+        },
+        {
+          "line": 433,
+          "column": 13,
+          "code": "WPS229",
+          "message": "Found too long ``try`` body length: 2 > 1",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:433:13: WPS229 Found too long ``try`` body length: 2 > 1"
+        },
+        {
+          "line": 434,
+          "column": 28,
+          "code": "WPS432",
+          "message": "Found magic number: 300",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:434:28: WPS432 Found magic number: 300"
+        },
+        {
+          "line": 436,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:436:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 456,
+          "column": 5,
+          "code": "WPS420",
+          "message": "Found wrong keyword: global",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:456:5: WPS420 Found wrong keyword: global"
+        },
+        {
+          "line": 460,
+          "column": 9,
+          "code": "WPS122",
+          "message": "Found all unused variables definition: _lazy_manager",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:460:9: WPS122 Found all unused variables definition: _lazy_manager"
+        },
+        {
+          "line": 461,
+          "column": 12,
+          "code": "WPS121",
+          "message": "Found usage of a variable marked as unused: _lazy_manager",
+          "raw": "intellicrack\\ai\\lazy_model_loader.py:461:12: WPS121 Found usage of a variable marked as unused: _lazy_manager"
         }
       ]
     },
@@ -82475,264 +82419,6 @@
       ]
     },
     {
-      "path": "intellicrack\\analysis\\analysis_result_orchestrator.py",
-      "count": 36,
-      "findings": [
-        {
-          "line": 31,
-          "column": 5,
-          "code": "WPS300",
-          "message": "Found local folder import",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:31:5: WPS300 Found local folder import"
-        },
-        {
-          "line": 32,
-          "column": 5,
-          "code": "WPS300",
-          "message": "Found local folder import",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:32:5: WPS300 Found local folder import"
-        },
-        {
-          "line": 35,
-          "column": 5,
-          "code": "WPS300",
-          "message": "Found local folder import",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:35:5: WPS300 Found local folder import"
-        },
-        {
-          "line": 35,
-          "column": 5,
-          "code": "WPS474",
-          "message": "Found import object collision: UnifiedProtectionResult",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:35:5: WPS474 Found import object collision: UnifiedProtectionResult"
-        },
-        {
-          "line": 40,
-          "column": 5,
-          "code": "WPS300",
-          "message": "Found local folder import",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:40:5: WPS300 Found local folder import"
-        },
-        {
-          "line": 40,
-          "column": 5,
-          "code": "WPS474",
-          "message": "Found import object collision: ICPScanResult",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:40:5: WPS474 Found import object collision: ICPScanResult"
-        },
-        {
-          "line": 45,
-          "column": 5,
-          "code": "WPS300",
-          "message": "Found local folder import",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:45:5: WPS300 Found local folder import"
-        },
-        {
-          "line": 58,
-          "column": 1,
-          "code": "WPS214",
-          "message": "Found too many methods: 14 > 7",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:58:1: WPS214 Found too many methods: 14 > 7"
-        },
-        {
-          "line": 58,
-          "column": 1,
-          "code": "WPS338",
-          "message": "Found incorrect order of methods in a class",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:58:1: WPS338 Found incorrect order of methods in a class"
-        },
-        {
-          "line": 80,
-          "column": 32,
-          "code": "WPS110",
-          "message": "Found wrong variable name: handler",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:80:32: WPS110 Found wrong variable name: handler"
-        },
-        {
-          "line": 89,
-          "column": 25,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:89:25: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 91,
-          "column": 28,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:91:28: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 93,
-          "column": 34,
-          "code": "WPS110",
-          "message": "Found wrong variable name: handler",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:93:34: WPS110 Found wrong variable name: handler"
-        },
-        {
-          "line": 102,
-          "column": 25,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:102:25: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 104,
-          "column": 38,
-          "code": "WPS110",
-          "message": "Found wrong variable name: result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:104:38: WPS110 Found wrong variable name: result"
-        },
-        {
-          "line": 113,
-          "column": 13,
-          "code": "WPS110",
-          "message": "Found wrong variable name: handler",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:113:13: WPS110 Found wrong variable name: handler"
-        },
-        {
-          "line": 114,
-          "column": 13,
-          "code": "WPS229",
-          "message": "Found too long ``try`` body length: 2 > 1",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:114:13: WPS229 Found too long ``try`` body length: 2 > 1"
-        },
-        {
-          "line": 120,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:120:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 121,
-          "column": 30,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:121:30: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 127,
-          "column": 5,
-          "code": "WPS231",
-          "message": "Found function with too much cognitive complexity: 13 > 12",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:127:5: WPS231 Found function with too much cognitive complexity: 13 > 12"
-        },
-        {
-          "line": 127,
-          "column": 40,
-          "code": "WPS110",
-          "message": "Found wrong variable name: result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:127:40: WPS110 Found wrong variable name: result"
-        },
-        {
-          "line": 142,
-          "column": 13,
-          "code": "WPS110",
-          "message": "Found wrong variable name: handler",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:142:13: WPS110 Found wrong variable name: handler"
-        },
-        {
-          "line": 158,
-          "column": 13,
-          "code": "WPS111",
-          "message": "Found too short name: e < 2",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:158:13: WPS111 Found too short name: e < 2"
-        },
-        {
-          "line": 159,
-          "column": 30,
-          "code": "WPS237",
-          "message": "Found a too complex `f` string",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:159:30: WPS237 Found a too complex `f` string"
-        },
-        {
-          "line": 165,
-          "column": 5,
-          "code": "WPS615",
-          "message": "Found unpythonic getter or setter: get_current_result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:165:5: WPS615 Found unpythonic getter or setter: get_current_result"
-        },
-        {
-          "line": 169,
-          "column": 5,
-          "code": "WPS231",
-          "message": "Found function with too much cognitive complexity: 16 > 12",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:169:5: WPS231 Found function with too much cognitive complexity: 16 > 12"
-        },
-        {
-          "line": 169,
-          "column": 35,
-          "code": "WPS110",
-          "message": "Found wrong variable name: result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:169:35: WPS110 Found wrong variable name: result"
-        },
-        {
-          "line": 193,
-          "column": 28,
-          "code": "WPS226",
-          "message": "Found string literal over-use: protections > 3",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:193:28: WPS226 Found string literal over-use: protections > 3"
-        },
-        {
-          "line": 195,
-          "column": 44,
-          "code": "WPS226",
-          "message": "Found string literal over-use: type > 3",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:195:44: WPS226 Found string literal over-use: type > 3"
-        },
-        {
-          "line": 252,
-          "column": 42,
-          "code": "WPS111",
-          "message": "Found too short name: p < 2",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:252:42: WPS111 Found too short name: p < 2"
-        },
-        {
-          "line": 266,
-          "column": 43,
-          "code": "WPS110",
-          "message": "Found wrong variable name: result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:266:43: WPS110 Found wrong variable name: result"
-        },
-        {
-          "line": 288,
-          "column": 5,
-          "code": "WPS231",
-          "message": "Found function with too much cognitive complexity: 18 > 12",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:288:5: WPS231 Found function with too much cognitive complexity: 18 > 12"
-        },
-        {
-          "line": 288,
-          "column": 60,
-          "code": "WPS110",
-          "message": "Found wrong variable name: result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:288:60: WPS110 Found wrong variable name: result"
-        },
-        {
-          "line": 295,
-          "column": 25,
-          "code": "WPS220",
-          "message": "Found too deep nesting: 24 > 20",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:295:25: WPS220 Found too deep nesting: 24 > 20"
-        },
-        {
-          "line": 299,
-          "column": 25,
-          "code": "WPS220",
-          "message": "Found too deep nesting: 24 > 20",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:299:25: WPS220 Found too deep nesting: 24 > 20"
-        },
-        {
-          "line": 302,
-          "column": 41,
-          "code": "WPS110",
-          "message": "Found wrong variable name: result",
-          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:302:41: WPS110 Found wrong variable name: result"
-        }
-      ]
-    },
-    {
       "path": "intellicrack\\cli\\run_analysis_cli.py",
       "count": 36,
       "findings": [
@@ -83468,6 +83154,229 @@
           "code": "WPS111",
           "message": "Found too short name: e < 2",
           "raw": "intellicrack\\cli\\project_manager.py:346:5: WPS111 Found too short name: e < 2"
+        }
+      ]
+    },
+    {
+      "path": "intellicrack\\analysis\\analysis_result_orchestrator.py",
+      "count": 31,
+      "findings": [
+        {
+          "line": 31,
+          "column": 5,
+          "code": "WPS300",
+          "message": "Found local folder import",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:31:5: WPS300 Found local folder import"
+        },
+        {
+          "line": 32,
+          "column": 5,
+          "code": "WPS300",
+          "message": "Found local folder import",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:32:5: WPS300 Found local folder import"
+        },
+        {
+          "line": 35,
+          "column": 5,
+          "code": "WPS300",
+          "message": "Found local folder import",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:35:5: WPS300 Found local folder import"
+        },
+        {
+          "line": 35,
+          "column": 5,
+          "code": "WPS474",
+          "message": "Found import object collision: UnifiedProtectionResult",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:35:5: WPS474 Found import object collision: UnifiedProtectionResult"
+        },
+        {
+          "line": 40,
+          "column": 5,
+          "code": "WPS300",
+          "message": "Found local folder import",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:40:5: WPS300 Found local folder import"
+        },
+        {
+          "line": 40,
+          "column": 5,
+          "code": "WPS474",
+          "message": "Found import object collision: ICPScanResult",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:40:5: WPS474 Found import object collision: ICPScanResult"
+        },
+        {
+          "line": 45,
+          "column": 5,
+          "code": "WPS300",
+          "message": "Found local folder import",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:45:5: WPS300 Found local folder import"
+        },
+        {
+          "line": 58,
+          "column": 1,
+          "code": "WPS214",
+          "message": "Found too many methods: 14 > 7",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:58:1: WPS214 Found too many methods: 14 > 7"
+        },
+        {
+          "line": 58,
+          "column": 1,
+          "code": "WPS338",
+          "message": "Found incorrect order of methods in a class",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:58:1: WPS338 Found incorrect order of methods in a class"
+        },
+        {
+          "line": 80,
+          "column": 32,
+          "code": "WPS110",
+          "message": "Found wrong variable name: handler",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:80:32: WPS110 Found wrong variable name: handler"
+        },
+        {
+          "line": 93,
+          "column": 34,
+          "code": "WPS110",
+          "message": "Found wrong variable name: handler",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:93:34: WPS110 Found wrong variable name: handler"
+        },
+        {
+          "line": 104,
+          "column": 38,
+          "code": "WPS110",
+          "message": "Found wrong variable name: result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:104:38: WPS110 Found wrong variable name: result"
+        },
+        {
+          "line": 113,
+          "column": 13,
+          "code": "WPS110",
+          "message": "Found wrong variable name: handler",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:113:13: WPS110 Found wrong variable name: handler"
+        },
+        {
+          "line": 114,
+          "column": 13,
+          "code": "WPS229",
+          "message": "Found too long ``try`` body length: 2 > 1",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:114:13: WPS229 Found too long ``try`` body length: 2 > 1"
+        },
+        {
+          "line": 120,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:120:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 127,
+          "column": 5,
+          "code": "WPS231",
+          "message": "Found function with too much cognitive complexity: 13 > 12",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:127:5: WPS231 Found function with too much cognitive complexity: 13 > 12"
+        },
+        {
+          "line": 127,
+          "column": 40,
+          "code": "WPS110",
+          "message": "Found wrong variable name: result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:127:40: WPS110 Found wrong variable name: result"
+        },
+        {
+          "line": 142,
+          "column": 13,
+          "code": "WPS110",
+          "message": "Found wrong variable name: handler",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:142:13: WPS110 Found wrong variable name: handler"
+        },
+        {
+          "line": 158,
+          "column": 13,
+          "code": "WPS111",
+          "message": "Found too short name: e < 2",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:158:13: WPS111 Found too short name: e < 2"
+        },
+        {
+          "line": 165,
+          "column": 5,
+          "code": "WPS615",
+          "message": "Found unpythonic getter or setter: get_current_result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:165:5: WPS615 Found unpythonic getter or setter: get_current_result"
+        },
+        {
+          "line": 169,
+          "column": 5,
+          "code": "WPS231",
+          "message": "Found function with too much cognitive complexity: 16 > 12",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:169:5: WPS231 Found function with too much cognitive complexity: 16 > 12"
+        },
+        {
+          "line": 169,
+          "column": 35,
+          "code": "WPS110",
+          "message": "Found wrong variable name: result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:169:35: WPS110 Found wrong variable name: result"
+        },
+        {
+          "line": 193,
+          "column": 28,
+          "code": "WPS226",
+          "message": "Found string literal over-use: protections > 3",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:193:28: WPS226 Found string literal over-use: protections > 3"
+        },
+        {
+          "line": 195,
+          "column": 44,
+          "code": "WPS226",
+          "message": "Found string literal over-use: type > 3",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:195:44: WPS226 Found string literal over-use: type > 3"
+        },
+        {
+          "line": 252,
+          "column": 42,
+          "code": "WPS111",
+          "message": "Found too short name: p < 2",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:252:42: WPS111 Found too short name: p < 2"
+        },
+        {
+          "line": 266,
+          "column": 43,
+          "code": "WPS110",
+          "message": "Found wrong variable name: result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:266:43: WPS110 Found wrong variable name: result"
+        },
+        {
+          "line": 288,
+          "column": 5,
+          "code": "WPS231",
+          "message": "Found function with too much cognitive complexity: 18 > 12",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:288:5: WPS231 Found function with too much cognitive complexity: 18 > 12"
+        },
+        {
+          "line": 288,
+          "column": 60,
+          "code": "WPS110",
+          "message": "Found wrong variable name: result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:288:60: WPS110 Found wrong variable name: result"
+        },
+        {
+          "line": 295,
+          "column": 25,
+          "code": "WPS220",
+          "message": "Found too deep nesting: 24 > 20",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:295:25: WPS220 Found too deep nesting: 24 > 20"
+        },
+        {
+          "line": 299,
+          "column": 25,
+          "code": "WPS220",
+          "message": "Found too deep nesting: 24 > 20",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:299:25: WPS220 Found too deep nesting: 24 > 20"
+        },
+        {
+          "line": 302,
+          "column": 41,
+          "code": "WPS110",
+          "message": "Found wrong variable name: result",
+          "raw": "intellicrack\\analysis\\analysis_result_orchestrator.py:302:41: WPS110 Found wrong variable name: result"
         }
       ]
     },

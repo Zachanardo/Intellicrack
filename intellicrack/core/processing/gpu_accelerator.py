@@ -97,16 +97,12 @@ class GPUAccelerationManager:
                 return "pytorch_xpu"
             return "pyopencl" if OPENCL_AVAILABLE else "pytorch_xpu"
         elif self.gpu_type == "nvidia_cuda":
-            if CUPY_AVAILABLE:
-                return "cupy"
-            return "pytorch"
+            return "cupy" if CUPY_AVAILABLE else "pytorch"
         if self.gpu_type == "amd_rocm":
             return "pytorch"
         if self.gpu_type == "directml":
             return "directml"
-        if OPENCL_AVAILABLE:
-            return "pyopencl"
-        return None
+        return "pyopencl" if OPENCL_AVAILABLE else None
 
     def _init_opencl(self) -> None:
         """Initialize OpenCL context if needed."""
@@ -122,16 +118,16 @@ class GPUAccelerationManager:
                         best_platform = platform
                         break
                 except Exception as e:
-                    self.logger.debug(f"OpenCL platform error: {e}")
+                    self.logger.debug("OpenCL platform error: %s", e)
                     continue
 
             if best_device:
                 self.context = cl.Context([best_device])
                 self.queue = cl.CommandQueue(self.context)
-                self.logger.info(f"OpenCL initialized: {best_platform.name}, {best_device.name}")
+                self.logger.info("OpenCL initialized: %s, %s", best_platform.name, best_device.name)
 
         except Exception as e:
-            self.logger.debug(f"OpenCL initialization failed: {e}")
+            self.logger.debug("OpenCL initialization failed: %s", e)
 
     def is_acceleration_available(self) -> bool:
         """Check if GPU acceleration is available."""
@@ -170,7 +166,7 @@ class GPUAccelerationManager:
             self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
             return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
-            self.logger.error("GPU pattern matching failed: %s", e)
+            self.logger.exception("GPU pattern matching failed: %s", e)
             return self._cpu_pattern_matching(data, patterns)
 
     def _cpu_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
@@ -297,7 +293,7 @@ class GPUAccelerationManager:
             if num_matches > 0:
                 all_matches.extend(matches_array[: min(num_matches, max_matches)].tolist())
 
-            self.logger.debug(f"OpenCL found {num_matches} matches for pattern of size {len(pattern)}")
+            self.logger.debug("OpenCL found %d matches for pattern of size %d", num_matches, len(pattern))
 
         return sorted(all_matches)
 
@@ -369,7 +365,7 @@ class GPUAccelerationManager:
                 matches_cpu = matches_gpu[: min(num_matches, max_matches)].get()
                 all_matches.extend(matches_cpu.tolist())
 
-            self.logger.debug(f"CUDA found {num_matches} matches for pattern of size {len(pattern)}")
+            self.logger.debug("CUDA found %d matches for pattern of size %d", num_matches, len(pattern))
 
         return sorted(all_matches)
 
@@ -461,7 +457,7 @@ def create_gpu_acceleration_manager() -> GPUAccelerationManager | None:
     try:
         return GPUAccelerationManager()
     except Exception as e:
-        logger.error(f"Failed to create GPU acceleration manager: {e}")
+        logger.exception("Failed to create GPU acceleration manager: %s", e)
         return None
 
 
@@ -476,7 +472,7 @@ def create_gpu_accelerator() -> GPUAccelerator | None:
     try:
         return GPUAccelerator()
     except Exception as e:
-        logger.error(f"Failed to create GPU accelerator: {e}")
+        logger.exception("Failed to create GPU accelerator: %s", e)
         return None
 
 
@@ -491,5 +487,5 @@ def is_gpu_acceleration_available() -> bool:
         gpu_info = get_gpu_info()
         return gpu_info.get("available", False)
     except Exception as e:
-        logger.debug(f"GPU availability check failed: {e}")
+        logger.debug("GPU availability check failed: %s", e)
         return False

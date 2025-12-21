@@ -96,44 +96,32 @@ def run_test_learning_engine():
     print("\n=== Running Learning Engine Test ===")
 
     try:
-        from intellicrack.ai.learning_engine_simple import SimpleLearningEngine
+        from intellicrack.ai.learning_engine import AILearningEngine, get_learning_engine
 
-        # Create engine
-        engine = SimpleLearningEngine()
+        engine = get_learning_engine()
 
-        # Test initialization
         assert engine is not None, "Engine creation failed"
         print("Learning engine created successfully")
 
-        # Test knowledge storage
-        test_knowledge = {
-            'technique': 'anti_debug_bypass',
-            'success_rate': 0.85,
-            'tool': 'frida',
-            'target_protection': 'IsDebuggerPresent'
-        }
+        assert hasattr(engine, 'learning_enabled'), "Missing learning_enabled attribute"
+        assert hasattr(engine, 'database'), "Missing database attribute"
+        print("Engine has required attributes")
 
-        result = engine.store_knowledge(test_knowledge)
-        assert result is not None, "Knowledge storage failed"
-        print("Knowledge stored successfully")
+        insights = engine.get_learning_insights()
+        assert insights is not None, "Failed to get learning insights"
+        assert 'total_records' in insights, "Missing total_records in insights"
+        print(f"Got learning insights with {insights.get('total_records', 0)} records")
 
-        # Test knowledge retrieval
-        query = {'technique': 'anti_debug_bypass'}
-        retrieved = engine.retrieve_knowledge(query)
-        assert retrieved is not None, "Knowledge retrieval failed"
-        print(f"Retrieved {len(retrieved) if isinstance(retrieved, list) else 1} knowledge entries")
-
-        # Test learning from experience
-        experience = {
-            'action': 'bypass_attempt',
-            'protection': 'anti_debug',
-            'success': True,
-            'details': {'method': 'hook_api', 'time_taken': 2.5}
-        }
-
-        learn_result = engine.learn_from_experience(experience)
-        assert learn_result is not None, "Learning from experience failed"
-        print("Successfully learned from experience")
+        record_id = engine.record_experience(
+            task_type="anti_debug_bypass",
+            input_data={"protection": "IsDebuggerPresent"},
+            output_data={"bypassed": True},
+            success=True,
+            confidence=0.85,
+            execution_time=2.5,
+            memory_usage=1024000,
+        )
+        print("Successfully recorded experience")
 
         print("OK Test PASSED!")
         return True

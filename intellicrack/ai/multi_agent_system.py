@@ -33,10 +33,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from queue import Empty, PriorityQueue, Queue
-from typing import Any
+from typing import Any, cast
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
+from .learning_engine import get_learning_engine
 from .llm_backends import LLMManager
 from .performance_monitor import profile_ai_operation
 
@@ -163,8 +163,8 @@ class BaseAgent:
         self.active = False
         self.busy = False
         self.current_task: AgentTask | None = None
-        self.message_queue: Queue = Queue()
-        self.response_waiters: dict[str, Queue] = {}
+        self.message_queue: Queue[AgentMessage] = Queue()
+        self.response_waiters: dict[str, Queue[AgentMessage]] = {}
 
         # Capabilities
         self.capabilities: list[AgentCapability] = []
@@ -430,7 +430,7 @@ class BaseAgent:
 
         except Exception as e:
             self.tasks_failed += 1
-            self.logger.error("Task execution failed for %s: %s", task.task_id, e, exc_info=True)
+            self.logger.exception("Task execution failed for %s: %s", task.task_id, e)
 
             return {
                 "task_id": task.task_id,
@@ -1037,10 +1037,10 @@ if __name__ == "__main__":
                 message = self.message_queue.get(timeout=1.0)
                 self._process_message(message)
             except Empty as e:
-                self.logger.error("Empty in multi_agent_system: %s", e, exc_info=True)
+                self.logger.exception("Empty in multi_agent_system: %s", e)
                 continue
             except Exception as e:
-                logger.error("Error processing message in %s: %s", self.agent_id, e, exc_info=True)
+                logger.exception("Error processing message in %s: %s", self.agent_id, e)
 
     def _process_message(self, message: AgentMessage) -> None:
         """Process incoming message."""
@@ -1057,7 +1057,7 @@ if __name__ == "__main__":
                 self._handle_task_response(message)
 
         except Exception as e:
-            logger.error("Error handling message %s: %s", message.message_id, e, exc_info=True)
+            logger.exception("Error handling message %s: %s", message.message_id, e)
             self._send_error_response(message, str(e))
 
     def _handle_task_request(self, message: AgentMessage) -> None:
@@ -1134,7 +1134,7 @@ if __name__ == "__main__":
                 context={"agent_role": self.role.value, "agent_id": self.agent_id},
             )
 
-            logger.error("Task execution failed in %s: %s", self.agent_id, e, exc_info=True)
+            logger.exception("Task execution failed in %s: %s", self.agent_id, e)
             self._send_task_response(original_message, False, {"error": str(e)})
 
         finally:
@@ -1391,7 +1391,7 @@ class StaticAnalysisAgent(BaseAgent):
         """Analyze binary using LIEF library."""
         import lief
 
-        analysis_result = {}
+        analysis_result: dict[str, Any] = {}
 
         binary = lief.parse(file_path)
         if not binary:
@@ -1413,16 +1413,16 @@ class StaticAnalysisAgent(BaseAgent):
 
         # Get sections
         if hasattr(binary, "sections"):
-            analysis_result["sections"] = [section.name for section in binary.sections]
+            analysis_result["sections"] = ";".join(str(section.name) for section in binary.sections)
 
         # Get imports
         if hasattr(binary, "imports"):
-            imports = [lib.name for lib in binary.imports if hasattr(lib, "name")]
-            analysis_result["imports"] = imports
+            imports = [str(lib.name) for lib in binary.imports if hasattr(lib, "name")]
+            analysis_result["imports"] = ";".join(imports)
 
         # Get exports
         if hasattr(binary, "exported_functions"):
-            analysis_result["exports"] = [func.name for func in binary.exported_functions]
+            analysis_result["exports"] = ";".join(str(func.name) for func in binary.exported_functions)
 
         # Detect compiler
         if hasattr(binary, "rich_header"):
@@ -1432,8 +1432,8 @@ class StaticAnalysisAgent(BaseAgent):
         else:
             analysis_result["compiler"] = "Unknown"
 
-        analysis_result["file_size"] = os.path.getsize(file_path)
-        analysis_result["confidence"] = 0.95
+        analysis_result["file_size"] = str(os.path.getsize(file_path))
+        analysis_result["confidence"] = str(0.95)
         return analysis_result
 
     def _analyze_binary_with_r2pipe(self, file_path: str) -> dict[str, Any]:
@@ -1556,8 +1556,8 @@ class StaticAnalysisAgent(BaseAgent):
                     analysis_result["file_type"] = "Unknown"
                     analysis_result["architecture"] = "Unknown"
 
-                analysis_result["file_size"] = len(mmapped_file)
-                analysis_result["confidence"] = 0.7
+                analysis_result["file_size"] = str(len(mmapped_file))
+                analysis_result["confidence"] = str(0.7)
 
                 # Basic section detection for PE files
                 if analysis_result.get("file_type") == "PE":
@@ -1575,13 +1575,13 @@ class StaticAnalysisAgent(BaseAgent):
                             ):
                                 sections.append(section_name)
 
-                        analysis_result["sections"] = sections
+                        analysis_result["sections"] = ";".join(sections)
                     except (struct.error, IndexError, ValueError):
-                        analysis_result["sections"] = []
+                        analysis_result["sections"] = ""
 
                 # Set defaults for missing fields
-                analysis_result.setdefault("imports", [])
-                analysis_result.setdefault("exports", [])
+                analysis_result.setdefault("imports", "")
+                analysis_result.setdefault("exports", "")
                 analysis_result.setdefault("compiler", "Unknown")
 
         except (OSError, struct.error) as e:
@@ -1589,12 +1589,12 @@ class StaticAnalysisAgent(BaseAgent):
                 "file_type": "Unknown",
                 "architecture": "Unknown",
                 "compiler": "Unknown",
-                "sections": [],
-                "imports": [],
-                "exports": [],
+                "sections": "",
+                "imports": "",
+                "exports": "",
                 "entry_point": "0x0",
-                "file_size": 0,
-                "confidence": 0.0,
+                "file_size": "0",
+                "confidence": "0.0",
                 "error": str(e),
             }
 
@@ -1617,7 +1617,7 @@ class StaticAnalysisAgent(BaseAgent):
                 # Final fallback - use basic file analysis
                 analysis_result = self._analyze_binary_basic(file_path)
         except Exception as e:
-            logger.error("Binary analysis failed: %s", e, exc_info=True)
+            logger.exception("Binary analysis failed: %s", e)
             analysis_result = {
                 "file_type": "Unknown",
                 "architecture": "Unknown",
@@ -1692,7 +1692,7 @@ class StaticAnalysisAgent(BaseAgent):
         except SyntaxError as e:
             return {"syntax_error": str(e), "confidence": 0.3}
         except Exception as e:
-            logger.error("Python AST analysis failed: %s", e, exc_info=True)
+            logger.exception("Python AST analysis failed: %s", e)
             return {"confidence": 0.5}
 
     def _check_python_vulnerabilities(self, node: object) -> list[dict[str, object]]:
@@ -1701,7 +1701,7 @@ class StaticAnalysisAgent(BaseAgent):
 
         vulnerabilities = []
 
-        for child in ast.walk(node):
+        for child in ast.walk(cast("ast.AST", node)):
             if isinstance(child, ast.Call):
                 if hasattr(child.func, "id"):
                     func_name = child.func.id
@@ -1736,7 +1736,7 @@ class StaticAnalysisAgent(BaseAgent):
 
         return vulnerabilities
 
-    def _calculate_python_quality_score(self, code: str, functions: list, vulnerabilities: list) -> float:
+    def _calculate_python_quality_score(self, code: str, functions: list[Any], vulnerabilities: list[Any]) -> float:
         """Calculate code quality score for Python code."""
         lines = code.split("\n")
         non_empty_lines = [line for line in lines if line.strip()]
@@ -1947,14 +1947,14 @@ class StaticAnalysisAgent(BaseAgent):
                             if isinstance(call, dict):
                                 call_graph_nodes.add(call.get("name", f"fcn.{call.get('addr', 0):08x}"))
 
-                if result["function_count"] > 0:
+                if isinstance(result["function_count"], (int, float)) and result["function_count"] > 0:
                     result["cyclomatic_complexity"] = total_complexity / result["function_count"]
 
                 result["call_graph_nodes"] = len(call_graph_nodes)
 
             # Look for indirect calls and jumps
             indirect_calls = r2.cmdj("axtj @@ fcn.*")
-            if indirect_calls:
+            if indirect_calls and isinstance(result["control_flow_anomalies"], list):
                 for ref in indirect_calls:
                     if isinstance(ref, dict) and ref.get("type") == "CALL" and "reg" in str(ref.get("opcode", "")):
                         result["control_flow_anomalies"].append({"type": "indirect_call", "address": hex(ref.get("from", 0))})
@@ -2005,18 +2005,20 @@ class StaticAnalysisAgent(BaseAgent):
                         mmap_result["function_count"] = max(1, ret_instructions)
 
                         # Estimate cyclomatic complexity
-                        if mmap_result["function_count"] > 0:
+                        if isinstance(mmap_result["function_count"], (int, float)) and mmap_result["function_count"] > 0:
                             mmap_result["cyclomatic_complexity"] = (jump_instructions / mmap_result["function_count"]) + 1
 
                         # Estimate call graph nodes
-                        mmap_result["call_graph_nodes"] = call_instructions + mmap_result["function_count"]
+                        if isinstance(mmap_result["function_count"], (int, float)):
+                            mmap_result["call_graph_nodes"] = call_instructions + mmap_result["function_count"]
 
                         # Look for anomalies
-                        if jump_instructions > call_instructions * 3:
-                            mmap_result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
+                        if isinstance(mmap_result["control_flow_anomalies"], list):
+                            if jump_instructions > call_instructions * 3:
+                                mmap_result["control_flow_anomalies"].append({"type": "excessive_branching", "address": "0x0"})
 
-                        if ret_instructions > call_instructions * 1.5:
-                            mmap_result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
+                            if ret_instructions > call_instructions * 1.5:
+                                mmap_result["control_flow_anomalies"].append({"type": "unbalanced_returns", "address": "0x0"})
 
                         mmap_result["confidence"] = 0.6
                     return mmap_result
@@ -2024,7 +2026,7 @@ class StaticAnalysisAgent(BaseAgent):
                 result.update(await asyncio.to_thread(_analyze_with_mmap))
 
             except Exception as e:
-                logger.error("Control flow analysis failed: %s", e, exc_info=True)
+                logger.exception("Control flow analysis failed: %s", e)
                 result["error"] = str(e)
                 result["confidence"] = 0.0
 
@@ -2101,12 +2103,17 @@ class DynamicAnalysisAgent(BaseAgent):
             import frida
 
             # Start the process using a background thread to avoid blocking the event loop
+            creation_flags = 0
+            if sys.platform == "win32":
+                with contextlib.suppress(ImportError):
+                    import ctypes
+                    creation_flags = 0x00000004  # CREATE_SUSPENDED constant
             process = await asyncio.to_thread(
                 subprocess.Popen,
                 [executable],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                creationflags=subprocess.CREATE_SUSPENDED if sys.platform == "win32" else 0,
+                creationflags=creation_flags,
             )
 
             start_time = time.time()
@@ -2185,7 +2192,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 import ctypes
 
                 kernel32 = ctypes.windll.kernel32
-                kernel32.ResumeThread(process._handle)
+                kernel32.ResumeThread(getattr(process, "_handle", None))
 
             # Monitor for a short time
             await asyncio.sleep(2.0)
@@ -2302,7 +2309,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 result["confidence"] = 0.7
 
             except Exception as e:
-                logger.error("Runtime analysis failed: %s", e, exc_info=True)
+                logger.exception("Runtime analysis failed: %s", e)
                 result["error"] = str(e)
                 result["confidence"] = 0.0
 
@@ -2354,11 +2361,8 @@ class DynamicAnalysisAgent(BaseAgent):
                     permanent = wintypes.BOOL()
 
                     if handle := kernel32.OpenProcess(0x0400, False, process_id):
-                        if kernel32.GetProcessDEPPolicy(handle, ctypes.byref(flags), ctypes.byref(permanent)):
-                            # Process flags for DEP
-                            PROCESS_DEP_ENABLE = 0x00000001
-
-                            result["memory_protection"]["dep_enabled"] = bool(flags.value & PROCESS_DEP_ENABLE)
+                        if isinstance(result["memory_protection"], dict) and kernel32.GetProcessDEPPolicy(handle, ctypes.byref(flags), ctypes.byref(permanent)):
+                            result["memory_protection"]["dep_enabled"] = bool(flags.value & 0x00000001)
 
                         kernel32.CloseHandle(handle)
 
@@ -2372,13 +2376,15 @@ class DynamicAnalysisAgent(BaseAgent):
                             r"SYSTEM\CurrentControlSet\Control\Session Manager\Memory Management",
                         )
                         value, _ = winreg.QueryValueEx(key, "MoveImages")
-                        result["memory_protection"]["aslr_enabled"] = value != 0
+                        if isinstance(result["memory_protection"], dict):
+                            result["memory_protection"]["aslr_enabled"] = value != 0
                         winreg.CloseKey(key)
                     except (OSError, winreg.error):
-                        result["memory_protection"]["aslr_enabled"] = True  # Default on modern Windows
+                        if isinstance(result["memory_protection"], dict):
+                            result["memory_protection"]["aslr_enabled"] = True  # Default on modern Windows
 
                 except Exception as e:
-                    logger.debug("Could not check Windows memory protections: %s", e, exc_info=True)
+                    logger.debug("Could not check Windows memory protections: %s", e)
 
             # Scan for potential buffer overflows using memory maps
             try:
@@ -2426,7 +2432,22 @@ class DynamicAnalysisAgent(BaseAgent):
                             process_id,
                         ):
                             # Get system info for memory scanning
-                            system_info = wintypes.SYSTEM_INFO()
+                            class SYSTEM_INFO(ctypes.Structure):
+                                _fields_ = [
+                                    ("wProcessorArchitecture", wintypes.WORD),
+                                    ("wReserved", wintypes.WORD),
+                                    ("dwPageSize", wintypes.DWORD),
+                                    ("lpMinimumApplicationAddress", wintypes.LPVOID),
+                                    ("lpMaximumApplicationAddress", wintypes.LPVOID),
+                                    ("dwActiveProcessorMask", ctypes.POINTER(wintypes.DWORD)),
+                                    ("dwNumberOfProcessors", wintypes.DWORD),
+                                    ("dwProcessorType", wintypes.DWORD),
+                                    ("dwAllocationGranularity", wintypes.DWORD),
+                                    ("wProcessorLevel", wintypes.WORD),
+                                    ("wProcessorRevision", wintypes.WORD),
+                                ]
+
+                            system_info = SYSTEM_INFO()
                             kernel32.GetSystemInfo(ctypes.byref(system_info))
 
                             # Basic pattern scanning for common overflow indicators
@@ -2438,7 +2459,7 @@ class DynamicAnalysisAgent(BaseAgent):
                             kernel32.CloseHandle(handle)
 
                 except Exception as e:
-                    logger.debug("Memory scanning failed: %s", e, exc_info=True)
+                    logger.debug("Memory scanning failed: %s", e)
 
             # Detect memory leaks by monitoring allocation patterns
             try:
@@ -2451,7 +2472,7 @@ class DynamicAnalysisAgent(BaseAgent):
                 # Check for consistent memory growth
                 if all(samples[i] < samples[i + 1] for i in range(len(samples) - 1)):
                     avg_growth = (samples[-1] - samples[0]) / len(samples)
-                    if avg_growth > 1024 * 1024:  # More than 1MB growth
+                    if avg_growth > 1024 * 1024 and isinstance(result["memory_leaks"], list):  # More than 1MB growth
                         result["memory_leaks"].append(
                             {
                                 "type": "potential_leak",
@@ -2461,16 +2482,16 @@ class DynamicAnalysisAgent(BaseAgent):
                         )
 
             except Exception as e:
-                logger.debug("Memory leak detection failed: %s", e, exc_info=True)
+                logger.debug("Memory leak detection failed: %s", e)
 
             result["confidence"] = 0.8
 
         except psutil.NoSuchProcess:
-            logger.error("Process %s not found", process_id, exc_info=True)
+            logger.exception("Process %s not found", process_id)
             result["error"] = "Process not found"
             result["confidence"] = 0.0
         except Exception as e:
-            logger.error("Memory analysis failed: %s", e, exc_info=True)
+            logger.exception("Memory analysis failed: %s", e)
             result["error"] = str(e)
             result["confidence"] = 0.0
 
@@ -2598,18 +2619,19 @@ class DynamicAnalysisAgent(BaseAgent):
             script = session.create_script(script_code)
 
             def on_message(message: dict[str, object], data: object) -> None:
-                if message["type"] == "send":
-                    payload = message["payload"]
-                    if payload["type"] == "api_call":
+                if message.get("type") == "send" and isinstance(message.get("payload"), dict):
+                    payload = cast("dict[str, Any]", message["payload"])
+                    if payload.get("type") == "api_call" and isinstance(payload.get("data"), dict):
+                        payload_data = cast("dict[str, Any]", payload["data"])
                         api_calls.append({
-                            "function": payload["data"]["function"],
-                            "args": payload["data"]["args"],
+                            "function": payload_data.get("function", "unknown"),
+                            "args": payload_data.get("args", ""),
                             "result": "success",
                         })
-                    elif payload["type"] == "suspicious":
-                        suspicious_apis.append({"function": payload["function"], "reason": payload["reason"]})
-                    elif payload["type"] == "bypass":
-                        protection_bypasses.append({"type": payload["bypass_type"], "detected": payload["detected"]})
+                    elif payload.get("type") == "suspicious":
+                        suspicious_apis.append({"function": payload.get("function", "unknown"), "reason": payload.get("reason", "unknown")})
+                    elif payload.get("type") == "bypass":
+                        protection_bypasses.append({"type": payload.get("bypass_type", "unknown"), "detected": payload.get("detected", False)})
 
             script.on("message", on_message)
             script.load()
@@ -2675,7 +2697,7 @@ class DynamicAnalysisAgent(BaseAgent):
                     kernel32.DebugActiveProcessStop(process_id)
 
             except Exception as e:
-                logger.warning("Debug API monitoring failed: %s", e, exc_info=True)
+                logger.warning("Debug API monitoring failed: %s", e)
 
                 # Last fallback: Use process monitoring
                 try:
@@ -2706,10 +2728,10 @@ class DynamicAnalysisAgent(BaseAgent):
                             suspicious_apis.append({"function": "VirtualAlloc", "reason": "excessive_memory"})
 
                 except Exception as e:
-                    logger.error("Process monitoring failed: %s", e, exc_info=True)
+                    logger.exception("Process monitoring failed: %s", e)
 
         except Exception as e:
-            logger.error("API monitoring failed: %s", e, exc_info=True)
+            logger.exception("API monitoring failed: %s", e)
 
         # Ensure we have some data
         if not api_calls:
@@ -2721,7 +2743,7 @@ class DynamicAnalysisAgent(BaseAgent):
                     proc = psutil.Process(process_id)
                     api_calls.append({"function": "Process", "args": [proc.name()], "result": "running"})
             except (AttributeError, OSError, ValueError) as e:
-                self.logger.warning("Unable to access process %s: %s", proc.pid, e, exc_info=True)
+                self.logger.warning("Unable to access process %s: %s", proc.pid, e)
                 suspicious_apis.append(
                     {
                         "name": "protected_process",
@@ -2798,30 +2820,35 @@ class ReverseEngineeringAgent(BaseAgent):
             return Cs(CS_ARCH_ARM, CS_MODE_ARM)
         return Cs(CS_ARCH_X86, CS_MODE_32)
 
-    def _process_capstone_instruction(self, insn: object, function_boundaries: list, cross_references: list) -> dict[str, object]:
+    def _process_capstone_instruction(self, insn: object, function_boundaries: list[Any], cross_references: list[Any]) -> dict[str, object]:
         """Process a single capstone instruction and update boundaries/references."""
-        instruction_info = {
-            "address": hex(insn.address),
-            "instruction": f"{insn.mnemonic} {insn.op_str}",
-            "bytes": insn.bytes.hex(),
+        address = getattr(insn, "address", 0)
+        mnemonic = getattr(insn, "mnemonic", "")
+        op_str = getattr(insn, "op_str", "")
+        insn_bytes = getattr(insn, "bytes", b"")
+
+        instruction_info: dict[str, object] = {
+            "address": hex(address),
+            "instruction": f"{mnemonic} {op_str}",
+            "bytes": insn_bytes.hex() if isinstance(insn_bytes, bytes) else "",
         }
 
         # Detect function boundaries (prologue detection)
-        if insn.mnemonic == "push" and "bp" in insn.op_str:
-            function_boundaries.append({"start": hex(insn.address), "end": None, "name": f"sub_{insn.address:x}"})
-        elif insn.mnemonic == "ret":
+        if mnemonic == "push" and "bp" in op_str:
+            function_boundaries.append({"start": hex(address), "end": None, "name": f"sub_{address:x}"})
+        elif mnemonic == "ret":
             if function_boundaries and function_boundaries[-1]["end"] is None:
-                function_boundaries[-1]["end"] = hex(insn.address + len(insn.bytes))
+                function_boundaries[-1]["end"] = hex(address + len(insn_bytes) if isinstance(insn_bytes, bytes) else address + 1)
 
         # Detect cross references
-        if insn.mnemonic in ["call", "jmp", "je", "jne", "jz", "jnz"]:
+        if mnemonic in ["call", "jmp", "je", "jne", "jz", "jnz"]:
             try:
-                target = insn.op_str.strip()
+                target = op_str.strip()
                 if target.startswith("0x"):
-                    cross_references.append({"from": hex(insn.address), "to": target, "type": insn.mnemonic})
+                    cross_references.append({"from": hex(address), "to": target, "type": mnemonic})
             except (ValueError, AttributeError, KeyError) as e:
-                self.logger.debug("Failed to parse instruction at %s: %s", hex(insn.address), e, exc_info=True)
-                cross_references.append({"from": hex(insn.address), "to": "unknown", "type": "invalid_instruction"})
+                self.logger.debug("Failed to parse instruction at %s: %s", hex(address), e)
+                cross_references.append({"from": hex(address), "to": "unknown", "type": "invalid_instruction"})
 
         return instruction_info
 
@@ -2895,7 +2922,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         return f"db {opcode:02x}", 1
 
-    def _manual_x86_disassembly(self, binary_data: bytes, start_address: int) -> tuple[list, list, list]:
+    def _manual_x86_disassembly(self, binary_data: bytes, start_address: int) -> tuple[list[Any], list[Any], list[Any]]:
         """Perform manual x86 disassembly as fallback."""
         assembly_instructions = []
         function_boundaries = []
@@ -2933,13 +2960,14 @@ class ReverseEngineeringAgent(BaseAgent):
                         },
                     )
                 elif (
-                    binary_data[offset] == 0xE8
-                    or binary_data[offset] == 0xE9
-                    or (binary_data[offset] in [0x74, 0x75] and offset + 1 >= len(binary_data))
-                    or binary_data[offset] not in [0x74, 0x75]
+                    binary_data[offset] != 0xE8
+                    and binary_data[offset] != 0xE9
+                    and (
+                        binary_data[offset] not in [0x74, 0x75]
+                        or offset + 1 < len(binary_data)
+                    )
+                    and binary_data[offset] in [0x74, 0x75]
                 ):
-                    pass
-                else:
                     rel = binary_data[offset + 1]
                     if rel > 127:
                         rel -= 256
@@ -2959,7 +2987,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         return assembly_instructions, function_boundaries, cross_references
 
-    def _create_fallback_disassembly(self, binary_data: bytes, start_address: int) -> list:
+    def _create_fallback_disassembly(self, binary_data: bytes, start_address: int) -> list[Any]:
         """Create minimal fallback disassembly showing raw bytes."""
         assembly_instructions = []
         for i in range(0, min(len(binary_data), 100), 16):
@@ -2969,7 +2997,7 @@ class ReverseEngineeringAgent(BaseAgent):
             assembly_instructions.append({"address": hex(addr), "instruction": f"db {hex_str}", "bytes": hex_str})
         return assembly_instructions
 
-    def _identify_function_patterns(self, assembly_instructions: list) -> list:
+    def _identify_function_patterns(self, assembly_instructions: list[Any]) -> list[Any]:
         """Identify function boundaries from assembly patterns."""
         function_boundaries = []
         current_func = None
@@ -2996,16 +3024,16 @@ class ReverseEngineeringAgent(BaseAgent):
 
         logger.debug("Disassembly agent processing %s bytes starting at %s", len(binary_data), hex(start_address))
 
-        assembly_instructions = []
-        function_boundaries = []
-        cross_references = []
+        assembly_instructions: list[Any] = []
+        function_boundaries: list[Any] = []
+        cross_references: list[Any] = []
 
         try:
             # Try capstone disassembler
             md = self._create_capstone_disassembler(architecture)
 
             # Disassemble using capstone
-            for insn in md.disasm(binary_data, start_address):
+            for insn in getattr(md, "disasm", lambda x, y: [])(binary_data, start_address):
                 instruction_info = self._process_capstone_instruction(insn, function_boundaries, cross_references)
                 assembly_instructions.append(instruction_info)
 
@@ -3014,7 +3042,7 @@ class ReverseEngineeringAgent(BaseAgent):
             try:
                 assembly_instructions, function_boundaries, cross_references = self._manual_x86_disassembly(binary_data, start_address)
             except Exception as e:
-                logger.warning("Manual disassembly failed: %s", e, exc_info=True)
+                logger.warning("Manual disassembly failed: %s", e)
                 assembly_instructions = self._create_fallback_disassembly(binary_data, start_address)
 
         # Clean up incomplete function boundaries
@@ -3031,7 +3059,7 @@ class ReverseEngineeringAgent(BaseAgent):
             "confidence": 0.95 if assembly_instructions else 0.1,
         }
 
-    def _decompile_with_r2pipe(self, binary_path: str) -> tuple[str, list, list]:
+    def _decompile_with_r2pipe(self, binary_path: str) -> tuple[str, list[Any], list[Any]]:
         """Decompile using r2pipe with r2dec plugin."""
         import r2pipe
 
@@ -3072,10 +3100,10 @@ class ReverseEngineeringAgent(BaseAgent):
         r2.quit()
         return pseudo_code, function_signatures, variable_analysis
 
-    def _analyze_assembly_patterns(self, assembly_code: list) -> list:
+    def _analyze_assembly_patterns(self, assembly_code: list[Any]) -> list[Any]:
         """Analyze assembly code to identify code blocks."""
         code_blocks = []
-        current_block = []
+        current_block: list[Any] = []
 
         for insn in assembly_code:
             inst = insn.get("instruction", "")
@@ -3106,7 +3134,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         return code_blocks
 
-    def _generate_pseudocode_from_blocks(self, code_blocks: list) -> tuple[str, list]:
+    def _generate_pseudocode_from_blocks(self, code_blocks: list[Any]) -> tuple[str, list[Any]]:
         """Generate pseudo code from analyzed code blocks."""
         pseudo_code = ""
         function_signatures = []
@@ -3165,7 +3193,7 @@ class ReverseEngineeringAgent(BaseAgent):
 
         return pseudo_code, function_signatures
 
-    def _generate_pattern_based_pseudocode(self, assembly_code: list) -> tuple[str, list, list]:
+    def _generate_pattern_based_pseudocode(self, assembly_code: list[Any]) -> tuple[str, list[Any], list[Any]]:
         """Generate pseudo code based on common patterns in assembly."""
         has_license_check = any("license" in str(insn).lower() for insn in assembly_code)
         has_string_ops = any("str" in insn.get("instruction", "").lower() for insn in assembly_code)
@@ -3257,8 +3285,8 @@ int process_data(void* input, int size) {
         logger.debug("Decompilation agent processing %s assembly instructions", len(assembly_code))
 
         pseudo_code = ""
-        function_signatures = []
-        variable_analysis = []
+        function_signatures: list[Any] = []
+        variable_analysis: list[Any] = []
 
         try:
             # Try r2pipe with r2dec decompiler plugin
@@ -3266,7 +3294,7 @@ int process_data(void* input, int size) {
                 pseudo_code, function_signatures, variable_analysis = self._decompile_with_r2pipe(binary_path)
 
         except Exception as e:
-            logger.debug("r2pipe decompilation failed: %s, using pattern-based decompilation", e, exc_info=True)
+            logger.debug("r2pipe decompilation failed: %s, using pattern-based decompilation", e)
 
         # Fallback to pattern-based decompilation from assembly
         if not pseudo_code and assembly_code:
@@ -3367,7 +3395,7 @@ int process_data(void* input, int size) {
             if any(p in code_lower for p in patterns)
         ]
 
-    def _analyze_assembly_patterns(self, assembly_code: list) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
+    def _analyze_assembly_for_algorithms(self, assembly_code: list[Any]) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[str]]:
         """Analyze assembly code for algorithm and compiler patterns."""
         identified_algorithms = []
         cryptographic_functions = []
@@ -3431,7 +3459,7 @@ int process_data(void* input, int size) {
 
         return algorithms
 
-    def _determine_optimization_level(self, compiler_patterns: list[str], assembly_code: list) -> str:
+    def _determine_optimization_level(self, compiler_patterns: list[str], assembly_code: list[Any]) -> str:
         """Determine code optimization level based on compiler and assembly patterns."""
         if not compiler_patterns:
             if assembly_code:
@@ -3451,9 +3479,7 @@ int process_data(void* input, int size) {
             asm_str = str(assembly_code)
             if "unroll" in asm_str or "vectoriz" in asm_str:
                 return "high"
-            if len(assembly_code) > 1000:
-                return "low"
-            return "medium"
+            return "low" if len(assembly_code) > 1000 else "medium"
         return "unknown"
 
     async def _analyze_algorithms(self, input_data: dict[str, Any]) -> dict[str, Any]:
@@ -3567,7 +3593,7 @@ class MultiAgentSystem:
         self.message_router.route_message(message)
         self.collaboration_stats["messages_sent"] += 1
 
-    @profile_ai_operation("multi_agent_collaboration")
+    @profile_ai_operation("multi_agent_collaboration")  # type: ignore[untyped-decorator]
     async def execute_collaborative_task(self, task: AgentTask) -> CollaborationResult:
         """Execute task using multiple agents."""
         start_time = time.time()
@@ -3616,7 +3642,7 @@ class MultiAgentSystem:
             return result
 
         except Exception as e:
-            logger.error("Exception in multi_agent_system: %s", e, exc_info=True)
+            logger.exception("Exception in multi_agent_system: %s", e)
             execution_time = time.time() - start_time
 
             return CollaborationResult(
@@ -3700,7 +3726,7 @@ class MultiAgentSystem:
                 result = await agent.execute_task(subtask)
                 return agent_id, {"success": True, "result": result}
             except Exception as e:
-                logger.error("Exception in multi_agent_system: %s", e, exc_info=True)
+                logger.exception("Exception in multi_agent_system: %s", e)
                 return agent_id, {"success": False, "error": str(e)}
 
         # Execute all subtasks concurrently
@@ -3711,7 +3737,7 @@ class MultiAgentSystem:
 
     def _combine_results(self, subtask_results: dict[str, dict[str, Any]]) -> dict[str, Any]:
         """Combine results from multiple agents."""
-        combined = {
+        combined: dict[str, Any] = {
             "agent_results": {},
             "unified_analysis": {},
             "cross_validated_findings": [],
@@ -3721,7 +3747,8 @@ class MultiAgentSystem:
         for agent_id, result_data in subtask_results.items():
             if result_data.get("success", False):
                 successful_results[agent_id] = result_data["result"]
-                combined["agent_results"][agent_id] = result_data["result"]
+                if isinstance(combined["agent_results"], dict):
+                    combined["agent_results"][agent_id] = result_data["result"]
 
         # Create unified analysis
         if successful_results:
@@ -3741,7 +3768,7 @@ class MultiAgentSystem:
 
         # Combine confidence scores
         for agent_id, result in results.items():
-            if "confidence" in result:
+            if "confidence" in result and isinstance(unified["confidence_scores"], dict):
                 unified["confidence_scores"][agent_id] = result["confidence"]
 
         # Extract common findings
@@ -3847,10 +3874,10 @@ class MessageRouter:
 
     def __init__(self) -> None:
         """Initialize the message router for agent communication."""
-        self.agent_queues: dict[str, Queue] = {}
-        self.message_log: deque = deque(maxlen=1000)
+        self.agent_queues: dict[str, Queue[AgentMessage]] = {}
+        self.message_log: deque[dict[str, Any]] = deque(maxlen=1000)
 
-    def register_agent(self, agent_id: str, message_queue: Queue) -> None:
+    def register_agent(self, agent_id: str, message_queue: Queue[AgentMessage]) -> None:
         """Register agent message queue."""
         self.agent_queues[agent_id] = message_queue
 
@@ -3888,7 +3915,7 @@ class TaskDistributor:
 
         """
         self.system = multi_agent_system
-        self.task_queue: PriorityQueue = PriorityQueue()
+        self.task_queue: PriorityQueue[tuple[int, AgentTask]] = PriorityQueue()
         self.load_balancer = LoadBalancer()
 
     def distribute_task(self, task: AgentTask) -> str:
@@ -3971,7 +3998,7 @@ class LoadBalancer:
     def __init__(self) -> None:
         """Initialize the load balancer for distributing tasks among agents."""
         self.agent_loads: dict[str, float] = {}
-        self.load_history: deque = deque(maxlen=100)
+        self.load_history: deque[dict[str, Any]] = deque(maxlen=100)
 
     def update_agent_load(self, agent_id: str, load: float) -> None:
         """Update agent load."""
@@ -4027,7 +4054,7 @@ class KnowledgeManager:
         # Update knowledge graph
         self.knowledge_graph[source_agent].add(f"{category}:{key}")
 
-    def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> object | None:
+    def retrieve_knowledge(self, category: str, key: str, requesting_agent: str) -> Any:
         """Retrieve knowledge for agent."""
         if category in self.shared_knowledge and key in self.shared_knowledge[category]:
             knowledge_item = self.shared_knowledge[category][key]

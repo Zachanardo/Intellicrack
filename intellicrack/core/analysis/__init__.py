@@ -21,7 +21,47 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
+from typing import TYPE_CHECKING
+
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from intellicrack.core.analysis.cfg_explorer import CFGExplorer
+    from intellicrack.core.analysis.control_flow_deobfuscation import (
+        BasicBlock,
+        ControlFlowDeobfuscator,
+        DeobfuscationResult,
+        DispatcherInfo,
+    )
+    from intellicrack.core.analysis.incremental_manager import IncrementalAnalysisManager
+    from intellicrack.core.analysis.polymorphic_analyzer import (
+        BehaviorPattern,
+        CodeBlock,
+        InstructionNode,
+        MutationType,
+        PolymorphicAnalysis,
+        PolymorphicAnalyzer,
+        PolymorphicEngine,
+    )
+    from intellicrack.core.analysis.securom_analyzer import (
+        ActivationMechanism,
+        ProductActivationKey,
+        SecuROMAnalysis,
+        SecuROMAnalyzer,
+        TriggerPoint,
+    )
+    from intellicrack.core.analysis.similarity_searcher import SimilaritySearcher
+    from intellicrack.core.analysis.stalker_manager import (
+        APICallEvent,
+        CoverageEntry,
+        StalkerSession,
+        StalkerStats,
+        TraceEvent,
+    )
+    from intellicrack.core.analysis.starforce_analyzer import (
+        StarForceAnalysis,
+        StarForceAnalyzer,
+    )
 
 
 logger.debug("Core analysis module loaded")

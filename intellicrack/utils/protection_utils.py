@@ -284,7 +284,7 @@ def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
         Dictionary with detected protection information
 
     """
-    protections = {
+    protections: dict[str, str | bool | list[str] | None] = {
         "packer": None,
         "obfuscation": False,
         "anti_debug": False,
@@ -300,17 +300,20 @@ def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
             data = f.read(8192)  # Read first 8KB for quick analysis
 
         # Simple heuristic checks
+        details_list = protections["details"]
+        assert isinstance(details_list, list)
+
         if b"UPX" in data:
             protections["packer"] = "UPX"
-            protections["details"].append("UPX packer detected")
+            details_list.append("UPX packer detected")
 
         if b"VMProtect" in data or b"vmprotect" in data.lower():
             protections["packer"] = "VMProtect"
-            protections["details"].append("VMProtect detected")
+            details_list.append("VMProtect detected")
 
         if b"Themida" in data or b"themida" in data.lower():
             protections["packer"] = "Themida"
-            protections["details"].append("Themida protection detected")
+            details_list.append("Themida protection detected")
 
         # Anti-debug indicators
         debug_strings = [
@@ -321,7 +324,7 @@ def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
         for debug_str in debug_strings:
             if debug_str in data:
                 protections["anti_debug"] = True
-                protections["details"].append(f"Anti-debug API detected: {debug_str.decode()}")
+                details_list.append(f"Anti-debug API detected: {debug_str.decode()}")
                 break
 
         # VM detection indicators
@@ -329,32 +332,34 @@ def detect_protection_mechanisms(binary_path: str) -> dict[str, Any]:
         for vm_str in vm_strings:
             if vm_str in data:
                 protections["vm_detection"] = True
-                protections["details"].append(f"VM detection string found: {vm_str.decode()}")
+                details_list.append(f"VM detection string found: {vm_str.decode()}")
 
         # Hardware fingerprinting
         hw_strings = [b"GetVolumeInformation", b"GetSystemInfo", b"GetComputerName"]
         for hw_str in hw_strings:
             if hw_str in data:
                 protections["hardware_fingerprinting"] = True
-                protections["details"].append(f"Hardware fingerprinting API: {hw_str.decode()}")
+                details_list.append(f"Hardware fingerprinting API: {hw_str.decode()}")
 
         # Time-based checks
         time_strings = [b"GetTickCount", b"GetSystemTime", b"QueryPerformanceCounter"]
         for time_str in time_strings:
             if time_str in data:
                 protections["time_checks"] = True
-                protections["details"].append(f"Time-based check API: {time_str.decode()}")
+                details_list.append(f"Time-based check API: {time_str.decode()}")
 
         # Network validation
         net_strings = [b"InternetOpen", b"HttpSendRequest", b"WinHttpOpen"]
         for net_str in net_strings:
             if net_str in data:
                 protections["network_validation"] = True
-                protections["details"].append(f"Network validation API: {net_str.decode()}")
+                details_list.append(f"Network validation API: {net_str.decode()}")
 
     except Exception as e:
         logger.debug("Protection detection failed: %s", e, exc_info=True)
-        protections["details"].append(f"Detection error: {e}")
+        details_list = protections["details"]
+        assert isinstance(details_list, list)
+        details_list.append(f"Detection error: {e}")
 
     return protections
 
@@ -389,15 +394,21 @@ def generate_bypass_strategy(protections: dict[str, Any]) -> list[str]:
             "Consider using hardware breakpoints instead of software breakpoints",
         ))
     if protections.get("vm_detection"):
-        strategies.append("Use VM evasion techniques")
-        strategies.append("Modify VM artifacts to appear as physical machine")
-        strategies.append("Hook VM detection APIs")
-
+        strategies.extend(
+            (
+                "Use VM evasion techniques",
+                "Modify VM artifacts to appear as physical machine",
+                "Hook VM detection APIs",
+            )
+        )
     if protections.get("hardware_fingerprinting"):
-        strategies.append("Implement hardware fingerprint spoofing")
-        strategies.append("Hook GetVolumeInformation and GetSystemInfo")
-        strategies.append("Use consistent spoofed hardware identifiers")
-
+        strategies.extend(
+            (
+                "Implement hardware fingerprint spoofing",
+                "Hook GetVolumeInformation and GetSystemInfo",
+                "Use consistent spoofed hardware identifiers",
+            )
+        )
     if protections.get("time_checks"):
         strategies.append("Implement time manipulation hooks")
         strategies.append("Hook GetTickCount and time-related APIs")
@@ -808,7 +819,7 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
     """
     logger.info("Analyzing binary for time bombs: %s", binary_path)
 
-    config = {
+    config: dict[str, Any] = {
         "binary": binary_path,
         "time_checks_found": 0,
         "patches": [],
@@ -836,26 +847,39 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
             b"CompareFileTime": "Time comparison",
         }
 
+        time_checks_found = config["time_checks_found"]
+        assert isinstance(time_checks_found, int)
+        analysis_results = config["analysis_results"]
+        assert isinstance(analysis_results, dict)
+        hook_points = config["hook_points"]
+        assert isinstance(hook_points, list)
+        patches = config["patches"]
+        assert isinstance(patches, list)
+        recommendations = config["recommendations"]
+        assert isinstance(recommendations, list)
+
         # Search for time-related APIs
         for api, description in time_apis.items():
             if api in binary_data:
-                config["time_checks_found"] += 1
+                time_checks_found += 1
                 offset = binary_data.find(api)
 
-                config["analysis_results"][api.decode()] = {
+                analysis_results[api.decode()] = {
                     "offset": hex(offset),
                     "description": description,
                     "severity": "high" if b"Compare" in api else "medium",
                 }
 
                 # Generate hook point
-                config["hook_points"].append(
+                hook_points.append(
                     {
                         "api": api.decode(),
                         "module": "kernel32.dll" if b"Get" in api else "msvcrt.dll",
                         "strategy": "return_fixed_value",
                     },
                 )
+
+        config["time_checks_found"] = time_checks_found
 
         # Look for date comparison patterns
         date_patterns = [
@@ -869,14 +893,14 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
         for pattern, year in date_patterns:
             if pattern in binary_data:
                 offset = binary_data.find(pattern)
-                config["analysis_results"][f"year_{year}"] = {
+                analysis_results[f"year_{year}"] = {
                     "offset": hex(offset),
                     "description": f"Hardcoded year {year} found",
                     "severity": "critical",
                 }
 
                 # Generate patch to change year to 2099
-                config["patches"].append(
+                patches.append(
                     {
                         "offset": hex(offset),
                         "original": pattern.hex(),
@@ -886,7 +910,7 @@ def generate_time_bomb_defuser(binary_path: str) -> dict[str, Any]:
                 )
 
         # Generate defusal strategies based on findings
-        if config["time_checks_found"] > 0:
+        if time_checks_found > 0:
             config["defusal_strategy"] = "comprehensive_time_bypass"
 
             # Add Frida script for runtime bypass
@@ -941,16 +965,16 @@ if (time_func) {
 """
 
         # Add recommendations
-        if config["time_checks_found"] > 3:
-            config["recommendations"].append("Multiple time checks detected - comprehensive bypass recommended")
+        if time_checks_found > 3:
+            recommendations.append("Multiple time checks detected - comprehensive bypass recommended")
 
-        if any("critical" in result.get("severity", "") for result in config["analysis_results"].values()):
-            config["recommendations"].append("Critical time bomb detected - immediate patching required")
+        if any("critical" in result.get("severity", "") for result in analysis_results.values() if isinstance(result, dict)):
+            recommendations.append("Critical time bomb detected - immediate patching required")
 
-        if config["patches"]:
-            config["recommendations"].append(f"Apply {len(config['patches'])} binary patches for permanent fix")
+        if patches:
+            recommendations.append(f"Apply {len(patches)} binary patches for permanent fix")
 
-        config["recommendations"].extend(
+        recommendations.extend(
             [
                 "Use Frida script for runtime bypass without modifying binary",
                 "Consider system date manipulation as alternative approach",
@@ -959,9 +983,11 @@ if (time_func) {
         )
 
     except Exception as e:
-        logger.error("Time bomb analysis failed: %s", e, exc_info=True)
+        logger.exception("Time bomb analysis failed: %s", e)
         config["error"] = str(e)
-        config["recommendations"].append("Manual analysis required")
+        recommendations = config["recommendations"]
+        assert isinstance(recommendations, list)
+        recommendations.append("Manual analysis required")
 
     logger.info("Found %s time checks", config["time_checks_found"])
     return config
@@ -1022,18 +1048,18 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
 
     # Determine which domains to block
     app_lower = app_name.lower()
-    blocked_domains = telemetry_domains.get("default", []).copy()
+    blocked_domains_list: list[str] = telemetry_domains.get("default", []).copy()
 
     for key, domains in telemetry_domains.items():
         if key in app_lower:
-            blocked_domains.extend(domains)
+            blocked_domains_list.extend(domains)
 
     # Remove duplicates
-    blocked_domains = list(set(blocked_domains))
+    blocked_domains_list = list(set(blocked_domains_list))
 
-    config = {
+    config: dict[str, Any] = {
         "application": app_name,
-        "blocked_domains": blocked_domains,
+        "blocked_domains": blocked_domains_list,
         "blocked_ips": [],
         "firewall_rules": [],
         "hosts_entries": [],
@@ -1046,13 +1072,18 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
         },
     }
 
+    hosts_entries = config["hosts_entries"]
+    assert isinstance(hosts_entries, list)
+    firewall_rules = config["firewall_rules"]
+    assert isinstance(firewall_rules, list)
+
     # Generate hosts file entries
-    for domain in blocked_domains:
-        config["hosts_entries"].append(f"0.0.0.0 {domain}")
-        config["hosts_entries"].append(f"::0 {domain}")  # IPv6
+    for domain in blocked_domains_list:
+        hosts_entries.append(f"0.0.0.0 {domain}")
+        hosts_entries.append(f"::0 {domain}")  # IPv6
 
     # Generate firewall rules (Windows netsh format)
-    config["firewall_rules"] = [
+    firewall_rules.extend([
         {
             "name": f"Block_{app_name}_Telemetry_Out",
             "direction": "out",
@@ -1068,11 +1099,11 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
             "remoteport": "443,80",
             "command": f'netsh advfirewall firewall add rule name="Block {app_name} Analytics" dir=out action=block protocol=tcp remoteport=443,80 enable=yes',
         },
-    ]
+    ])
 
     # Add domain-specific firewall rules
-    for domain in blocked_domains[:10]:  # Limit to 10 most important
-        config["firewall_rules"].append(
+    for domain in blocked_domains_list[:10]:  # Limit to 10 most important
+        firewall_rules.append(
             {
                 "name": f"Block_{domain.replace('.', '_')}",
                 "direction": "out",
@@ -1087,7 +1118,7 @@ def generate_telemetry_blocker(app_name: str) -> dict[str, Any]:
 // Telemetry Blocking Script for {app_name}
 console.log('[Telemetry] Starting telemetry blocker...');
 
-var blocked_domains = {blocked_domains};
+var blocked_domains = {blocked_domains_list};
 
 // Hook WinInet functions
 try {{
@@ -1153,30 +1184,32 @@ console.log('[Telemetry] Telemetry blocker active');
 """
 
     # Add batch script for easy setup
-    config["setup_script"] = f"""@echo off
+    config["setup_script"] = (
+        f"""@echo off
 echo Setting up telemetry blocker for {app_name}...
 
 :: Add hosts entries
 echo.
 echo Adding hosts file entries...
-{"".join(f"echo {entry} >> %WINDIR%{chr(92)}System32{chr(92)}drivers{chr(92)}" + "etc" + chr(92) + "hosts" + chr(10) for entry in config["hosts_entries"][:5])}
+{"".join(f"echo {entry} >> %WINDIR%{chr(92)}System32{chr(92)}drivers{chr(92)}etc{chr(92)}hosts{chr(10)}" for entry in hosts_entries[:5])}
 
 :: Add firewall rules
 echo.
 echo Adding firewall rules...
-{chr(10).join(rule["command"] for rule in config["firewall_rules"][:3])}
+{chr(10).join(rule["command"] for rule in firewall_rules[:3] if isinstance(rule, dict) and "command" in rule)}
 
 echo.
 echo Telemetry blocker setup complete!
 pause
 """
+    )
 
     # Add removal script
     config["removal_script"] = f"""@echo off
 echo Removing telemetry blocker for {app_name}...
 
 :: Remove firewall rules
-{chr(10).join(f'netsh advfirewall firewall delete rule name="{rule["name"]}"' for rule in config["firewall_rules"][:3])}
+{chr(10).join(f'netsh advfirewall firewall delete rule name="{rule["name"]}"' for rule in firewall_rules[:3] if isinstance(rule, dict) and "name" in rule)}
 
 echo.
 echo Telemetry blocker removed!
@@ -1184,7 +1217,7 @@ echo Note: Hosts file entries must be removed manually
 pause
 """
 
-    logger.info("Telemetry blocker configured with %s blocked domains", len(blocked_domains))
+    logger.info("Telemetry blocker configured with %s blocked domains", len(blocked_domains_list))
     return config
 
 
@@ -1201,8 +1234,10 @@ def calculate_entropy(data: bytes) -> float:
     if not data:
         return 0.0
 
+    import math
+
     # Count byte frequencies
-    byte_counts = {}
+    byte_counts: dict[int, int] = {}
     for byte in data:
         byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
@@ -1213,7 +1248,7 @@ def calculate_entropy(data: bytes) -> float:
     for count in byte_counts.values():
         if count > 0:
             probability = count / data_len
-            entropy -= probability * ((probability and probability * probability.bit_length()) or 0)
+            entropy -= probability * math.log2(probability)
 
     return min(entropy, 8.0)
 

@@ -179,7 +179,7 @@ class AnalysisStage(PipelineStage):
                 format="json",
             )
         except Exception as e:
-            logger.error("Analysis stage failed for %s: %s", binary_path, e, exc_info=True)
+            logger.exception("Analysis stage failed for %s: %s", binary_path, e, exc_info=True)
             return PipelineData(
                 content={"error": str(e)},
                 metadata={
@@ -478,12 +478,12 @@ class Pipeline:
 
                 # Check for errors
                 if isinstance(data.content, dict) and "error" in data.content:
-                    logger.error("Error in stage %s: %s", stage.name, data.content["error"])
+                    logger.exception("Error in stage %s: %s", stage.name, data.content["error"])
                     if not data.metadata.get("continue_on_error", False):
                         break
 
             except Exception as e:
-                logger.error("Failed at stage %s: %s", stage.name, e, exc_info=True)
+                logger.exception("Failed at stage %s: %s", stage.name, e, exc_info=True)
                 break
 
         return data
@@ -605,10 +605,10 @@ Examples:
     try:
         pipeline = parse_pipeline_command(args.pipeline)
     except ValueError as e:
-        logger.error("Invalid pipeline command: %s", e, exc_info=True)
+        logger.exception("Invalid pipeline command: %s", e, exc_info=True)
         return
     except Exception as e:
-        logger.error("Error parsing pipeline: %s", e, exc_info=True)
+        logger.exception("Error parsing pipeline: %s", e, exc_info=True)
         return
 
     # Determine input
@@ -618,18 +618,18 @@ Examples:
             input_path = Path(args.input).resolve()
             # Check if path exists and is accessible
             if not input_path.exists():
-                logger.error("Input file not found: %s", args.input)
+                logger.exception("Input file not found: %s", args.input)
                 return
             if not input_path.is_file():
-                logger.error("Input path is not a file: %s", args.input)
+                logger.exception("Input path is not a file: %s", args.input)
                 return
             # Check file size to prevent memory issues
             if input_path.stat().st_size > 100 * 1024 * 1024:  # 100MB limit
-                logger.error("Input file too large (max 100MB)")
+                logger.exception("Input file too large (max 100MB)")
                 return
             initial_input = str(input_path)
         except Exception as e:
-            logger.error("Invalid input path: %s", e, exc_info=True)
+            logger.exception("Invalid input path: %s", e, exc_info=True)
             return
     elif not sys.stdin.isatty():
         # Read from stdin with size limit
@@ -644,14 +644,14 @@ Examples:
                     break
                 bytes_read += len(chunk.encode("utf-8"))
                 if bytes_read > max_stdin_size:
-                    logger.error("Stdin input too large (max 10MB)")
+                    logger.exception("Stdin input too large (max 10MB)")
                     return
                 initial_input += chunk
         except Exception as e:
-            logger.error("Error reading from stdin: %s", e, exc_info=True)
+            logger.exception("Error reading from stdin: %s", e, exc_info=True)
             return
     else:
-        logger.error("No input provided. Use -i flag or pipe data to stdin.")
+        logger.exception("No input provided. Use -i flag or pipe data to stdin.")
         return
 
     # Execute pipeline

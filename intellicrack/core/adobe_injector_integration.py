@@ -141,7 +141,7 @@ class AdobeInjectorProcess:
             return self.hwnd is not None
 
         except Exception as e:
-            logger.error("Failed to start Adobe Injector: %s", e, exc_info=True)
+            logger.exception("Failed to start Adobe Injector: %s", e)
             return False
 
     def _find_adobe_injector_window(self, max_attempts: int = 10) -> int | None:
@@ -201,7 +201,7 @@ class AdobeInjectorProcess:
             return True
 
         except Exception as e:
-            logger.error("Failed to embed Adobe Injector window: %s", e, exc_info=True)
+            logger.exception("Failed to embed Adobe Injector window: %s", e)
             return False
 
     def resize_to_parent(self, width: int, height: int) -> None:
@@ -339,7 +339,7 @@ class AdobeInjectorWidget(QWidget if PYQT6_AVAILABLE else object):
                 self.status_updated.emit("Failed to start Adobe Injector")
 
         except Exception as e:
-            logger.error("Error launching Adobe Injector: %s", e, exc_info=True)
+            logger.exception("Error launching Adobe Injector: %s", e)
             self.status_updated.emit(f"Error: {e}")
 
     def terminate_injector(self) -> None:

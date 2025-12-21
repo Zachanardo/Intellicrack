@@ -29,7 +29,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal, Protocol
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.path_resolver import get_qemu_images_dir
@@ -38,7 +38,23 @@ from .base_snapshot_handler import BaseSnapshotHandler
 
 
 if TYPE_CHECKING:
-    import types
+    from types import TracebackType
+
+    from PyQt6.QtCore import pyqtSignal
+
+
+class UpdateOutputSignal(Protocol):
+    """Protocol for pyqtSignal with emit method."""
+
+    def emit(self, message: str) -> None:
+        """Emit a message signal."""
+        pass
+
+
+class AppProtocol(Protocol):
+    """Protocol for application instances with update_output signal."""
+
+    update_output: UpdateOutputSignal
 
 
 """
@@ -140,7 +156,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         self.shared_folder = self.config.get("shared_folder")
 
         # QEMU process and management
-        self.qemu_process: subprocess.Popen | None = None
+        self.qemu_process: subprocess.Popen[str] | None = None
         self.monitor_socket: str | None = None
         self.monitor: Any | None = None  # QMP/Monitor connection object
 
@@ -151,9 +167,9 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         # Baseline snapshots for change detection
         self._baseline_snapshot: dict[str, Any] | None = None
-        self._baseline_processes: dict[str, Any] | None = None
-        self._baseline_connections: dict[str, Any] | None = None
-        self._baseline_dns_queries: dict[str, Any] | None = None
+        self._baseline_processes: list[dict[str, Any]] | None = None
+        self._baseline_connections: list[dict[str, Any]] | None = None
+        self._baseline_dns_queries: list[dict[str, Any]] | None = None
 
         # Determine rootfs path
         self.rootfs_path = rootfs_path or self._get_default_rootfs(architecture)
@@ -258,7 +274,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 self.logger.info("QEMU available: %s", result.stdout.strip())
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in qemu_emulator: %s", e, exc_info=True)
+            logger.error("Subprocess timeout in qemu_emulator: %s", e)
             raise RuntimeError(f"QEMU binary check timed out: {qemu_path}") from e
 
         # Check if rootfs exists (optional for some use cases)
@@ -300,12 +316,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             if boot_success := self._wait_for_boot():
                 self.logger.info("QEMU system started successfully (boot result: %s)", boot_success)
                 return True
-            self.logger.error("QEMU system failed to boot properly")
+            self.logger.exception("QEMU system failed to boot properly")
             self.stop_system()
             return False
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error starting QEMU system: %s", e, exc_info=True)
+            self.logger.exception("Error starting QEMU system: %s", e)
             return False
 
     def _build_qemu_command(self, qemu_binary: str, headless: bool, enable_snapshot: bool) -> list[str]:
@@ -391,7 +407,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         try:
             return os.path.exists("/dev/kvm") and os.access("/dev/kvm", os.R_OK | os.W_OK)
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in qemu_emulator: %s", e, exc_info=True)
+            self.logger.exception("Error in qemu_emulator: %s", e)
             return False
 
     def _wait_for_boot(self, timeout: int = 60) -> bool:
@@ -408,7 +424,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         while time.time() - start_time < timeout:
             if self.qemu_process and self.qemu_process.poll() is not None:
-                self.logger.error("QEMU process terminated during boot")
+                self.logger.exception("QEMU process terminated during boot")
                 return False
 
             # Try to connect to monitor
@@ -419,7 +435,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             time.sleep(2)
 
-        self.logger.error("System boot timeout after %s seconds", timeout)
+        self.logger.exception("System boot timeout after %s seconds", timeout)
         return False
 
     def _test_monitor_connection(self) -> bool:
@@ -433,7 +449,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return result is not None
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in qemu_emulator: %s", e, exc_info=True)
+            self.logger.exception("Error in qemu_emulator: %s", e)
             return False
 
     def stop_system(self, force: bool = False) -> bool:
@@ -471,7 +487,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             try:
                 self.qemu_process.wait(timeout=10)
             except subprocess.TimeoutExpired as e:
-                logger.error("Subprocess timeout in qemu_emulator: %s", e, exc_info=True)
+                logger.error("Subprocess timeout in qemu_emulator: %s", e)
                 self.qemu_process.kill()
                 self.qemu_process.wait()
 
@@ -479,7 +495,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error stopping QEMU system: %s", e, exc_info=True)
+            self.logger.exception("Error stopping QEMU system: %s", e)
             return False
         finally:
             self.qemu_process = None
@@ -488,7 +504,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 try:
                     Path(self.monitor_socket).unlink()
                 except OSError as e:
-                    logger.error("OS error in qemu_emulator: %s", e, exc_info=True)
+                    logger.error("OS error in qemu_emulator: %s", e)
 
     def execute_command(self, command: str, timeout: int = 30) -> str | None:
         """Execute a command in the guest system.
@@ -502,7 +518,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         """
         if not self.qemu_process or self.qemu_process.poll() is not None:
-            self.logger.error("QEMU system not running")
+            self.logger.exception("QEMU system not running")
             return None
 
         try:
@@ -522,7 +538,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error executing command: %s", e, exc_info=True)
+            self.logger.exception("Error executing command: %s", e)
             return None
 
     def _send_monitor_command(self, command: str) -> str | None:
@@ -544,7 +560,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             if hasattr(socket, "AF_UNIX"):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             else:
-                self.logger.error("AF_UNIX socket not available on this platform")
+                self.logger.exception("AF_UNIX socket not available on this platform")
                 return None
             # Use timeout from execute_command if set, otherwise default
             sock_timeout = getattr(self, "_monitor_timeout", 10)
@@ -561,7 +577,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return response.strip()
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Monitor command failed: %s", e, exc_info=True)
+            self.logger.exception("Monitor command failed: %s", e)
             return None
 
     def _send_qmp_command(self, command: dict[str, Any]) -> dict[str, Any] | None:
@@ -591,7 +607,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             if hasattr(socket, "AF_UNIX"):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
             else:
-                self.logger.error("AF_UNIX socket not available on this platform")
+                self.logger.exception("AF_UNIX socket not available on this platform")
                 return None
 
             sock_timeout = getattr(self, "_monitor_timeout", 10)
@@ -601,7 +617,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             # QMP handshake
             greeting = sock.recv(4096)
             if not greeting:
-                self.logger.error("Failed to receive QMP greeting")
+                self.logger.exception("Failed to receive QMP greeting")
                 sock.close()
                 return None
 
@@ -609,7 +625,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             sock.send(capabilities_cmd.encode())
             capabilities_resp = sock.recv(4096)
             if not capabilities_resp:
-                self.logger.error("Failed to receive QMP capabilities response")
+                self.logger.exception("Failed to receive QMP capabilities response")
                 sock.close()
                 return None
 
@@ -623,20 +639,22 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             # Parse JSON response
             try:
-                return json.loads(response.strip())
+                result: dict[str, Any] = json.loads(response.strip())
+                return result
             except json.JSONDecodeError as e:
-                logger.error("json.JSONDecodeError in qemu_emulator: %s", e, exc_info=True)
+                logger.error("json.JSONDecodeError in qemu_emulator: %s", e)
                 # If response is multiline, try to parse each line
                 for line in response.strip().split("\n"):
                     try:
-                        return json.loads(line)
+                        result = json.loads(line)
+                        return result
                     except json.JSONDecodeError as e:
-                        logger.error("json.JSONDecodeError in qemu_emulator: %s", e, exc_info=True)
+                        logger.error("json.JSONDecodeError in qemu_emulator: %s", e)
                         continue
                 return None
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("QMP command failed: %s", e, exc_info=True)
+            self.logger.exception("QMP command failed: %s", e)
             return None
 
     def create_snapshot(self, name: str) -> bool:
@@ -650,7 +668,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         """
         if not self.qemu_process or self.qemu_process.poll() is not None:
-            self.logger.error("QEMU system not running for snapshot creation")
+            self.logger.exception("QEMU system not running for snapshot creation")
             return False
 
         try:
@@ -669,11 +687,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                 self.logger.info("Snapshot '%s' created successfully", name)
                 return True
-            self.logger.error("Failed to create snapshot: %s", result)
+            self.logger.exception("Failed to create snapshot: %s", result)
             return False
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error creating snapshot: %s", e, exc_info=True)
+            self.logger.exception("Error creating snapshot: %s", e)
             return False
 
     def restore_snapshot(self, name: str) -> bool:
@@ -687,11 +705,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         """
         if name not in self.snapshots:
-            self.logger.error("Snapshot '%s' not found", name)
+            self.logger.exception("Snapshot '%s' not found", name)
             return False
 
         if not self.qemu_process or self.qemu_process.poll() is not None:
-            self.logger.error("QEMU system not running for snapshot restore")
+            self.logger.exception("QEMU system not running for snapshot restore")
             return False
 
         try:
@@ -702,11 +720,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             if result and "Error" not in result:
                 self.logger.info("Snapshot '%s' restored successfully", name)
                 return True
-            self.logger.error("Failed to restore snapshot: %s", result)
+            self.logger.exception("Failed to restore snapshot: %s", result)
             return False
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error restoring snapshot: %s", e, exc_info=True)
+            self.logger.exception("Error restoring snapshot: %s", e)
             return False
 
     def compare_snapshots(self, snapshot1: str, snapshot2: str) -> dict[str, Any]:
@@ -753,7 +771,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return comparison
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("QEMU-specific comparison failed: %s", e, exc_info=True)
+            self.logger.exception("QEMU-specific comparison failed: %s", e)
             return {"qemu_comparison_error": str(e)}
 
     def _analyze_memory_changes(self, snap1: str, snap2: str) -> dict[str, Any]:
@@ -764,8 +782,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             mem_info2 = self._send_monitor_command(f"info mtree -f -d snapshot={snap2}")
 
             # Parse memory regions
-            regions1 = self._parse_memory_regions(mem_info1)
-            regions2 = self._parse_memory_regions(mem_info2)
+            regions1 = self._parse_memory_regions(mem_info1 or "")
+            regions2 = self._parse_memory_regions(mem_info2 or "")
 
             # Find changes
             regions_changed = []
@@ -780,19 +798,19 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             ]
             # Check for modified regions
             for r1 in regions1:
-                for r2 in regions2:
-                    if r1.get("address") == r2.get("address") and r1.get("size") != r2.get("size"):
-                        regions_changed.append(
-                            {
-                                "address": r1.get("address"),
-                                "old_size": r1.get("size"),
-                                "new_size": r2.get("size"),
-                            },
-                        )
-
-            heap_growth = sum(mapping.get("size", 0) for mapping in new_mappings if "heap" in mapping.get("type", "").lower())
+                regions_changed.extend(
+                    {
+                        "address": r1.get("address"),
+                        "old_size": r1.get("size"),
+                        "new_size": r2.get("size"),
+                    }
+                    for r2 in regions2
+                    if r1.get("address") == r2.get("address")
+                    and r1.get("size") != r2.get("size")
+                )
+            heap_growth = sum(mapping.get("size", 0) for mapping in new_mappings if mapping.get("type") and "heap" in str(mapping.get("type")).lower())
             # Check for stack changes
-            stack_changes = any("stack" in r.get("type", "").lower() for r in regions_changed)
+            stack_changes = any(r.get("type") and "stack" in str(r.get("type")).lower() for r in regions_changed)
 
             return {
                 "regions_changed": regions_changed,
@@ -802,7 +820,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Error analyzing memory changes: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing memory changes: %s", e)
             return {
                 "regions_changed": [],
                 "heap_growth": 0,
@@ -813,7 +831,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
     def _parse_memory_regions(self, mem_info: str) -> list[dict[str, Any]]:
         """Parse memory region information from QEMU monitor output."""
-        regions = []
+        regions: list[dict[str, Any]] = []
         if not mem_info:
             return regions
 
@@ -857,7 +875,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 },
                             )
                     except (ValueError, IndexError) as e:
-                        logger.error("Error in qemu_emulator: %s", e, exc_info=True)
+                        logger.error("Error in qemu_emulator: %s", e)
                         continue
 
         return regions
@@ -865,7 +883,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
     def _get_snapshot_filesystem(self, snapshot_name: str) -> dict[str, Any]:
         """Get filesystem state for a specific snapshot via QEMU guest agent."""
         try:
-            filesystem_state = {
+            filesystem_state: dict[str, Any] = {
                 "files": [],
                 "directories": [],
                 "snapshot_name": snapshot_name,
@@ -891,16 +909,18 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                     for cmd in fs_commands:
                         try:
-                            response = self._send_monitor_command(cmd)
+                            response = self._send_qmp_command(cmd)
                             if response and "return" in response:
-                                if pid := response["return"].get("pid"):
-                                    status_cmd = {
+                                return_val = response.get("return", {})
+                                if isinstance(return_val, dict) and (pid := return_val.get("pid")):
+                                    status_cmd: dict[str, Any] = {
                                         "execute": "guest-exec-status",
                                         "arguments": {"pid": pid},
                                     }
-                                    status = self._send_monitor_command(status_cmd)
+                                    status = self._send_qmp_command(status_cmd)
                                     if status and "return" in status:
-                                        out_data = status["return"].get("out-data", "")
+                                        return_status = status.get("return", {})
+                                        out_data = return_status.get("out-data", "") if isinstance(return_status, dict) else ""
                                         if out_data:
                                             import base64
 
@@ -992,7 +1012,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return filesystem_state
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Failed to get filesystem state for snapshot %s: %s", snapshot_name, e, exc_info=True)
+            self.logger.exception("Failed to get filesystem state for snapshot %s: %s", snapshot_name, e)
             return {"files": [], "directories": [], "snapshot_name": snapshot_name, "error": str(e)}
 
     def _get_snapshot_processes(self, snapshot_name: str) -> list[dict[str, Any]]:
@@ -1004,39 +1024,42 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                 try:
                     # Query running processes via QEMU guest agent
-                    ps_cmd = {"execute": "guest-exec", "arguments": {"path": "ps", "arg": ["aux"]}}
-                    response = self._send_monitor_command(ps_cmd)
+                    ps_cmd: dict[str, Any] = {"execute": "guest-exec", "arguments": {"path": "ps", "arg": ["aux"]}}
+                    response = self._send_qmp_command(ps_cmd)
 
                     if response and "return" in response:
-                        if pid := response["return"].get("pid"):
+                        return_val = response.get("return", {})
+                        if isinstance(return_val, dict) and (pid := return_val.get("pid")):
                             import time
 
                             time.sleep(0.5)
-                            status_cmd = {"execute": "guest-exec-status", "arguments": {"pid": pid}}
-                            status = self._send_monitor_command(status_cmd)
+                            status_cmd: dict[str, Any] = {"execute": "guest-exec-status", "arguments": {"pid": pid}}
+                            status = self._send_qmp_command(status_cmd)
 
-                            if status and "return" in status and status["return"].get("exited"):
-                                if out_data := status["return"].get("out-data", ""):
-                                    import base64
+                            if status and "return" in status:
+                                return_status = status.get("return", {})
+                                if isinstance(return_status, dict) and return_status.get("exited"):
+                                    if out_data := return_status.get("out-data", ""):
+                                        import base64
 
-                                    decoded = base64.b64decode(out_data).decode("utf-8", errors="ignore")
-                                    lines = decoded.strip().split("\n")
+                                        decoded = base64.b64decode(out_data).decode("utf-8", errors="ignore")
+                                        lines = decoded.strip().split("\n")
 
-                                    for line in lines[1:]:
-                                        parts = line.split()
-                                        if len(parts) >= 11:
-                                            try:
-                                                processes.append(
-                                                    {
-                                                        "pid": int(parts[1]),
-                                                        "name": parts[10],
-                                                        "memory": int(float(parts[3]) * 1024),
-                                                        "cpu": float(parts[2]),
-                                                        "user": parts[0],
-                                                    },
-                                                )
-                                            except (ValueError, IndexError):
-                                                continue
+                                        for line in lines[1:]:
+                                            parts = line.split()
+                                            if len(parts) >= 11:
+                                                try:
+                                                    processes.append(
+                                                        {
+                                                            "pid": int(parts[1]),
+                                                            "name": parts[10],
+                                                            "memory": int(float(parts[3]) * 1024),
+                                                            "cpu": float(parts[2]),
+                                                            "user": parts[0],
+                                                        },
+                                                    )
+                                                except (ValueError, IndexError):
+                                                    continue
 
                     self.logger.info("Retrieved %s processes from snapshot", len(processes))
                     return processes
@@ -1048,7 +1071,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return []
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Failed to get processes for snapshot %s: %s", snapshot_name, e, exc_info=True)
+            self.logger.exception("Failed to get processes for snapshot %s: %s", snapshot_name, e)
             return []
 
     def _get_snapshot_network(self, snapshot_name: str) -> dict[str, Any]:
@@ -1064,7 +1087,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "established_connections": [],
             }
 
-            if not self.qmp_socket:
+            if not self.monitor_socket:
                 self.logger.warning("QMP socket not available for network state query")
                 return network_state
 
@@ -1081,25 +1104,35 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     result = self._send_qmp_command(netstat_cmd)
 
                     if result and "return" in result:
-                        output = result["return"].get("out-data", b"")
-                        if isinstance(output, bytes):
-                            output = output.decode("utf-8", errors="ignore")
+                        return_val = result.get("return", {})
+                        if isinstance(return_val, dict):
+                            output = return_val.get("out-data", b"")
+                            if isinstance(output, bytes):
+                                output = output.decode("utf-8", errors="ignore")
+                            elif not isinstance(output, str):
+                                output = str(output)
 
-                        for line in output.split("\n"):
-                            parts = line.strip().split()
-                            if len(parts) >= 4 and parts[0] in ("TCP", "UDP"):
-                                connection = {
-                                    "protocol": parts[0],
-                                    "local": parts[1],
-                                    "remote": parts[2],
-                                    "state": parts[3] if len(parts) > 3 else "UNKNOWN",
-                                }
-                                network_state["connections"].append(connection)
+                            for line in output.split("\n"):
+                                parts = line.strip().split()
+                                if len(parts) >= 4 and parts[0] in ("TCP", "UDP"):
+                                    connection = {
+                                        "protocol": parts[0],
+                                        "local": parts[1],
+                                        "remote": parts[2],
+                                        "state": parts[3] if len(parts) > 3 else "UNKNOWN",
+                                    }
+                                    connections_list = network_state.get("connections")
+                                    if isinstance(connections_list, list):
+                                        connections_list.append(connection)
 
-                                if "LISTEN" in parts[3]:
-                                    network_state["listening_ports"].append(parts[1])
-                                elif "ESTABLISHED" in parts[3]:
-                                    network_state["established_connections"].append(connection)
+                                    if len(parts) > 3 and "LISTEN" in parts[3]:
+                                        ports_list = network_state.get("listening_ports")
+                                        if isinstance(ports_list, list):
+                                            ports_list.append(parts[1])
+                                    elif len(parts) > 3 and "ESTABLISHED" in parts[3]:
+                                        est_list = network_state.get("established_connections")
+                                        if isinstance(est_list, list):
+                                            est_list.append(connection)
                 else:
                     ss_cmd = {
                         "execute": "guest-exec",
@@ -1112,25 +1145,37 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     result = self._send_qmp_command(ss_cmd)
 
                     if result and "return" in result:
-                        output = result["return"].get("out-data", b"")
-                        if isinstance(output, bytes):
-                            output = output.decode("utf-8", errors="ignore")
+                        return_val = result.get("return", {})
+                        if isinstance(return_val, dict):
+                            output = return_val.get("out-data", b"")
+                            if isinstance(output, bytes):
+                                output = output.decode("utf-8", errors="ignore")
+                            elif not isinstance(output, str):
+                                output = str(output)
 
-                        for line in output.split("\n")[1:]:
-                            parts = line.strip().split()
-                            if len(parts) >= 5:
-                                connection = {
-                                    "protocol": parts[0],
-                                    "state": parts[1] if len(parts) > 1 else "UNKNOWN",
-                                    "local": parts[4] if len(parts) > 4 else "",
-                                    "remote": parts[5] if len(parts) > 5 else "",
-                                }
-                                network_state["connections"].append(connection)
+                            for line in output.split("\n")[1:]:
+                                parts = line.strip().split()
+                                if len(parts) >= 5:
+                                    connection = {
+                                        "protocol": parts[0],
+                                        "state": parts[1] if len(parts) > 1 else "UNKNOWN",
+                                        "local": parts[4] if len(parts) > 4 else "",
+                                        "remote": parts[5] if len(parts) > 5 else "",
+                                    }
+                                    connections_list = network_state.get("connections")
+                                    if isinstance(connections_list, list):
+                                        connections_list.append(connection)
 
-                                if "LISTEN" in connection["state"]:
-                                    network_state["listening_ports"].append(connection["local"])
-                                elif "ESTAB" in connection["state"]:
-                                    network_state["established_connections"].append(connection)
+                                    conn_state = connection.get("state", "")
+                                    if isinstance(conn_state, str) and "LISTEN" in conn_state:
+                                        ports_list = network_state.get("listening_ports")
+                                        local_val = connection.get("local")
+                                        if isinstance(ports_list, list) and isinstance(local_val, str):
+                                            ports_list.append(local_val)
+                                    elif isinstance(conn_state, str) and "ESTAB" in conn_state:
+                                        est_list = network_state.get("established_connections")
+                                        if isinstance(est_list, list):
+                                            est_list.append(connection)
 
                 if dns_result := self._query_dns_cache():
                     network_state["dns_queries"] = dns_result
@@ -1141,7 +1186,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return network_state
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Failed to get network state for snapshot %s: %s", snapshot_name, e, exc_info=True)
+            self.logger.exception("Failed to get network state for snapshot %s: %s", snapshot_name, e)
             return {
                 "connections": [],
                 "dns_queries": [],
@@ -1175,8 +1220,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 result = self._send_qmp_command(dns_cmd)
 
                 if result and "return" in result:
-                    pid = result["return"].get("pid")
-                    if pid:
+                    if pid := result["return"].get("pid"):
                         status_cmd = {
                             "execute": "guest-exec-status",
                             "arguments": {"pid": pid},
@@ -1206,8 +1250,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     }
                     result = self._send_qmp_command(cat_cmd)
                     if result and "return" in result:
-                        pid = result["return"].get("pid")
-                        if pid:
+                        if pid := result["return"].get("pid"):
                             status_cmd = {
                                 "execute": "guest-exec-status",
                                 "arguments": {"pid": pid},
@@ -1232,8 +1275,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 }
                 result = self._send_qmp_command(dig_cmd)
                 if result and "return" in result:
-                    pid = result["return"].get("pid")
-                    if pid:
+                    if pid := result["return"].get("pid"):
                         status_cmd = {
                             "execute": "guest-exec-status",
                             "arguments": {"pid": pid},
@@ -1344,12 +1386,12 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             parts = line.split()
             if len(parts) >= 3:
-                ip_address = parts[0]
-                record_type = parts[1]
                 domain = parts[2]
 
                 if domain not in seen_domains:
                     seen_domains.add(domain)
+                    ip_address = parts[0]
+                    record_type = parts[1]
                     entries.append({
                         "domain": domain,
                         "ip_address": ip_address,
@@ -1372,8 +1414,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             directories_created = []
 
             # Use snapshot names to perform targeted comparison
-            snap1_info = {"name": snap1, "timestamp": None, "filesystem_state": {}}
-            snap2_info = {"name": snap2, "timestamp": None, "filesystem_state": {}}
+            snap1_info: dict[str, Any] = {"name": snap1, "timestamp": None, "filesystem_state": {}}
+            snap2_info: dict[str, Any] = {"name": snap2, "timestamp": None, "filesystem_state": {}}
 
             # Attempt to get snapshot information using QEMU monitor
             try:
@@ -1435,7 +1477,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 current_snapshot = self._capture_filesystem_snapshot()
 
                 # Find new files by comparing with baseline
-                if hasattr(self, "_baseline_snapshot"):
+                if hasattr(self, "_baseline_snapshot") and self._baseline_snapshot is not None:
                     new_files = set(current_snapshot.keys()) - set(self._baseline_snapshot.keys())
                     for file_path in new_files:
                         file_info = current_snapshot[file_path]
@@ -1484,7 +1526,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Error analyzing filesystem changes: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing filesystem changes: %s", e)
             return {
                 "files_created": [],
                 "files_modified": [],
@@ -1564,15 +1606,17 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                                 self.logger.info("Detected license process: %s", proc_name)
                                 break
 
-                    if hasattr(self, "_baseline_processes"):
+                    if hasattr(self, "_baseline_processes") and self._baseline_processes is not None:
                         # Compare with baseline to find changes
-                        baseline_pids = {p["pid"] for p in self._baseline_processes}
-                        current_pids = {p["pid"] for p in current_processes}
+                        baseline_pids = {p["pid"] for p in self._baseline_processes if isinstance(p, dict) and "pid" in p}
+                        current_pids = {p["pid"] for p in current_processes if isinstance(p, dict) and "pid" in p}
 
                         # Find new processes
                         new_pids = current_pids - baseline_pids
                         for process in current_processes:
-                            if process["pid"] in new_pids and any(
+                            if not isinstance(process, dict):
+                                continue  # type: ignore[unreachable]
+                            if process.get("pid") in new_pids and any(
                                 lp in process.get("name", "").lower()
                                 for lp in [
                                     "license",
@@ -1594,22 +1638,28 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                         # Monitor memory changes for existing processes
                         for current_proc in current_processes:
+                            if not isinstance(current_proc, dict):
+                                continue  # type: ignore[unreachable]
                             for baseline_proc in self._baseline_processes:
-                                if current_proc["pid"] == baseline_proc["pid"] and current_proc.get("memory", 0) != baseline_proc.get(
-                                    "memory",
-                                    0,
-                                ):
-                                    memory_diff = current_proc.get("memory", 0) - baseline_proc.get("memory", 0)
-                                    if abs(memory_diff) > 1024 * 1024:  # Only significant changes > 1MB
-                                        process_memory_changes.append(
-                                            {
-                                                "pid": current_proc["pid"],
-                                                "name": current_proc.get("name", "unknown"),
-                                                "memory_before": baseline_proc.get("memory", 0),
-                                                "memory_after": current_proc.get("memory", 0),
-                                                "growth": memory_diff,
-                                            },
-                                        )
+                                if not isinstance(baseline_proc, dict):
+                                    continue  # type: ignore[unreachable]
+                                curr_pid = current_proc.get("pid")
+                                base_pid = baseline_proc.get("pid")
+                                if curr_pid == base_pid and current_proc.get("memory", 0) != baseline_proc.get("memory", 0):
+                                    curr_mem = current_proc.get("memory", 0)
+                                    base_mem = baseline_proc.get("memory", 0)
+                                    if isinstance(curr_mem, (int, float)) and isinstance(base_mem, (int, float)):
+                                        memory_diff = curr_mem - base_mem
+                                        if abs(memory_diff) > 1024 * 1024:  # Only significant changes > 1MB
+                                            process_memory_changes.append(
+                                                {
+                                                    "pid": curr_pid,
+                                                    "name": current_proc.get("name", "unknown"),
+                                                    "memory_before": base_mem,
+                                                    "memory_after": curr_mem,
+                                                    "growth": memory_diff,
+                                                },
+                                            )
                     else:
                         # First run - establish baseline
                         self._baseline_processes = current_processes
@@ -1628,7 +1678,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Error analyzing process changes: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing process changes: %s", e)
             return {
                 "processes_started": [],
                 "processes_ended": [],
@@ -1645,10 +1695,10 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             snap1_network = self._get_snapshot_network(snap1)
             snap2_network = self._get_snapshot_network(snap2)
 
-            new_connections = []
-            closed_connections = []
-            dns_queries = []
-            traffic_volume = 0
+            new_connections: list[dict[str, Any]] = []
+            closed_connections: list[dict[str, Any]] = []
+            dns_queries: list[dict[str, Any]] = []
+            traffic_volume: int | float = 0
 
             # Compare network states between snapshots
             if snap1_network and snap2_network:
@@ -1686,40 +1736,49 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                     current_connections = self._get_guest_network_connections()
                     current_dns_queries = self._get_guest_dns_queries()
 
-                    if hasattr(self, "_baseline_connections"):
+                    if hasattr(self, "_baseline_connections") and self._baseline_connections is not None:
                         # Compare with baseline to find new connections
-                        baseline_conn_ids = {self._connection_id(c) for c in self._baseline_connections}
-                        current_conn_ids = {self._connection_id(c) for c in current_connections}
+                        baseline_conn_ids = {self._connection_id(c) for c in self._baseline_connections if isinstance(c, dict)}
+                        current_conn_ids = {self._connection_id(c) for c in current_connections if isinstance(c, dict)}
 
                         new_conn_ids = current_conn_ids - baseline_conn_ids
                         for conn in current_connections:
+                            if not isinstance(conn, dict):
+                                continue  # type: ignore[unreachable]
+                            dst_port = conn.get("dst_port")
                             if self._connection_id(conn) in new_conn_ids and (
-                                conn.get("dst_port") in license_ports or any(host in conn.get("dst_ip", "") for host in license_hosts)
+                                (isinstance(dst_port, int) and dst_port in license_ports) or any(host in str(conn.get("dst_ip", "")) for host in license_hosts)
                             ):
+                                likely_license = isinstance(dst_port, int) and dst_port in [27000, 27001, 1947]
                                 new_connections.append(
                                     {
                                         "src_ip": conn.get("src_ip", "unknown"),
                                         "src_port": conn.get("src_port", 0),
                                         "dst_ip": conn.get("dst_ip", "unknown"),
-                                        "dst_port": conn.get("dst_port", 0),
+                                        "dst_port": dst_port if isinstance(dst_port, int) else 0,
                                         "protocol": conn.get("protocol", "TCP"),
                                         "state": conn.get("state", "UNKNOWN"),
                                         "timestamp": time.time(),
-                                        "likely_license": conn.get("dst_port") in [27000, 27001, 1947],
+                                        "likely_license": likely_license,
                                     },
                                 )
-                                traffic_volume += conn.get("bytes_transferred", 0)
+                                bytes_transferred = conn.get("bytes_transferred", 0)
+                                if isinstance(bytes_transferred, (int, float)):
+                                    traffic_volume += bytes_transferred
 
                         # Compare DNS queries
-                        if hasattr(self, "_baseline_dns_queries"):
-                            baseline_queries = {q.get("query", "") for q in self._baseline_dns_queries}
+                        if hasattr(self, "_baseline_dns_queries") and self._baseline_dns_queries is not None:
+                            baseline_queries = {q.get("query", "") for q in self._baseline_dns_queries if isinstance(q, dict)}
                             for query in current_dns_queries:
-                                if query.get("query", "") not in baseline_queries and any(
-                                    host in query.get("query", "") for host in license_hosts
+                                if not isinstance(query, dict):
+                                    continue  # type: ignore[unreachable]
+                                query_str = query.get("query", "")
+                                if query_str not in baseline_queries and any(
+                                    host in str(query_str) for host in license_hosts
                                 ):
                                     dns_queries.append(
                                         {
-                                            "query": query.get("query", ""),
+                                            "query": query_str,
                                             "type": query.get("type", "A"),
                                             "response": query.get("response", ""),
                                             "timestamp": time.time(),
@@ -1739,9 +1798,10 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                 # Check for suspicious patterns
                 for conn in new_connections:
-                    if conn["dst_port"] in license_ports:
+                    dst_port_val = conn.get("dst_port")
+                    if isinstance(dst_port_val, int) and dst_port_val in license_ports:
                         conn["suspicious"] = True
-                        conn["reason"] = f"Connection to known license port {conn['dst_port']}"
+                        conn["reason"] = f"Connection to known license port {dst_port_val}"
 
             except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
                 self.logger.debug("Could not get network info: %s", e)
@@ -1754,7 +1814,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Error analyzing network changes: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing network changes: %s", e)
             return {
                 "new_connections": [],
                 "closed_connections": [],
@@ -1773,7 +1833,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             License activity analysis
 
         """
-        license_indicators = {
+        license_indicators: dict[str, Any] = {
             "license_files_accessed": [],
             "registry_changes": [],
             "network_license_activity": [],
@@ -1784,15 +1844,22 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         # Analyze filesystem changes for license-related files
         fs_changes = comparison.get("filesystem_changes", {})
-        for file_path in fs_changes.get("files_created", []) + fs_changes.get("files_modified", []):
-            if any(keyword in file_path.lower() for keyword in ["license", "activation", "serial", "key"]):
-                license_indicators["license_files_accessed"].append(file_path)
+        if isinstance(fs_changes, dict):
+            files_list = fs_changes.get("files_created", []) + fs_changes.get("files_modified", [])
+            for file_path in files_list:
+                if isinstance(file_path, str) and any(keyword in file_path.lower() for keyword in ["license", "activation", "serial", "key"]):
+                    files_accessed = license_indicators.get("license_files_accessed")
+                    if isinstance(files_accessed, list):
+                        files_accessed.append(file_path)
 
         # Analyze network activity for license servers
         net_changes = comparison.get("network_changes", {})
-        for connection in net_changes.get("new_connections", []):
-            if any(port in str(connection) for port in ["27000", "1947", "7777"]):  # Common license ports
-                license_indicators["network_license_activity"].append(connection)
+        if isinstance(net_changes, dict):
+            for connection in net_changes.get("new_connections", []):
+                if any(port in str(connection) for port in ["27000", "1947", "7777"]):  # Common license ports
+                    network_activity = license_indicators.get("network_license_activity")
+                    if isinstance(network_activity, list):
+                        network_activity.append(connection)
 
         # Calculate confidence score
         score = 0.0
@@ -1828,7 +1895,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 system_info = self._send_monitor_command("info status")
                 status["system_info"] = system_info
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in qemu_emulator: %s", e, exc_info=True)
+                self.logger.exception("Error in qemu_emulator: %s", e)
 
         return status
 
@@ -1839,19 +1906,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             True if cleanup successful, False otherwise
 
         """
-        success = True
-
-        # Stop QEMU if running
-        if self.qemu_process and not self.stop_system():
-            success = False
-
+        success = bool(not self.qemu_process or self.stop_system())
         # Clear snapshots
         self.snapshots.clear()
 
         self.logger.info("QEMU emulator cleanup completed")
         return success
 
-    def _execute_binary_analysis(self, binary_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _execute_binary_analysis(self, binary_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Execute binary within the QEMU environment and monitor for activity.
 
         Args:
@@ -1887,13 +1949,13 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                 return self._execute_linux_binary_real(binary_path, app)
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Binary execution error: %s", e, exc_info=True)
+            self.logger.exception("Binary execution error: %s", e)
             return {
                 "success": False,
                 "error": str(e),
             }
 
-    def _execute_pe_binary_real(self, binary_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _execute_pe_binary_real(self, binary_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Execute Windows PE binary using real QEMU with Windows guest."""
         start_time = time.time()
 
@@ -1939,7 +2001,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("PE binary execution failed: %s", e, exc_info=True)
+            self.logger.exception("PE binary execution failed: %s", e)
             return {
                 "success": False,
                 "error": str(e),
@@ -1947,7 +2009,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "execution_time": time.time() - start_time,
             }
 
-    def _execute_linux_binary_real(self, binary_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _execute_linux_binary_real(self, binary_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Execute Linux binary using real QEMU with Linux guest."""
         start_time = time.time()
 
@@ -1992,7 +2054,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Linux binary execution failed: %s", e, exc_info=True)
+            self.logger.exception("Linux binary execution failed: %s", e)
             return {
                 "success": False,
                 "error": str(e),
@@ -2000,7 +2062,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "execution_time": time.time() - start_time,
             }
 
-    def _copy_binary_to_windows_guest(self, binary_path: str, app: types.TracebackType | None = None) -> str | None:
+    def _copy_binary_to_windows_guest(self, binary_path: str, app: AppProtocol | None = None) -> str | None:
         """Copy binary to Windows guest using QEMU guest agent."""
         try:
             binary_name = os.path.basename(binary_path)
@@ -2063,14 +2125,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 shutil.copy2(binary_path, shared_path)
                 return f"D:\\{binary_name}"  # Assuming D: is shared drive
 
-            self.logger.error("No method available to copy binary to Windows guest")
+            self.logger.exception("No method available to copy binary to Windows guest")
             return None
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Failed to copy binary to Windows guest: %s", e, exc_info=True)
+            self.logger.exception("Failed to copy binary to Windows guest: %s", e)
             return None
 
-    def _copy_binary_to_linux_guest(self, binary_path: str, app: types.TracebackType | None = None) -> str | None:
+    def _copy_binary_to_linux_guest(self, binary_path: str, app: AppProtocol | None = None) -> str | None:
         """Copy binary to Linux guest using SSH or guest agent."""
         try:
             binary_name = os.path.basename(binary_path)
@@ -2117,14 +2179,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 # Similar implementation as Windows but for Linux paths
                 return self._copy_via_guest_agent(binary_path, guest_path)
 
-            self.logger.error("No method available to copy binary to Linux guest")
+            self.logger.exception("No method available to copy binary to Linux guest")
             return None
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Failed to copy binary to Linux guest: %s", e, exc_info=True)
+            self.logger.exception("Failed to copy binary to Linux guest: %s", e)
             return None
 
-    def _execute_in_windows_guest(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _execute_in_windows_guest(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Execute binary in Windows guest and capture results."""
         try:
             if app:
@@ -2178,14 +2240,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Windows execution failed: %s", e, exc_info=True)
+            self.logger.exception("Windows execution failed: %s", e)
             return {
                 "success": False,
                 "error": str(e),
                 "exit_code": -1,
             }
 
-    def _execute_in_linux_guest(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _execute_in_linux_guest(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Execute binary in Linux guest and capture results."""
         try:
             if app:
@@ -2221,14 +2283,14 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Linux execution failed: %s", e, exc_info=True)
+            self.logger.exception("Linux execution failed: %s", e)
             return {
                 "success": False,
                 "error": str(e),
                 "exit_code": -1,
             }
 
-    def _monitor_windows_execution(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _monitor_windows_execution(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Monitor Windows execution for registry, file, and network changes."""
         try:
             binary_name = os.path.basename(guest_path) if guest_path else "unknown"
@@ -2236,9 +2298,9 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 app.update_output.emit(f"[QEMU] Monitoring Windows execution of {binary_name}...")
 
             # Monitor Windows-specific changes related to binary execution
-            registry_changes = []
+            registry_changes: list[dict[str, Any]] = []
             file_changes = []
-            network_activity = []
+            network_activity: list[dict[str, Any]] = []
             processes_created = []
 
             # Use QEMU guest agent to monitor Windows-specific activities
@@ -2273,7 +2335,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Windows monitoring failed: %s", e, exc_info=True)
+            self.logger.exception("Windows monitoring failed: %s", e)
             return {
                 "registry_changes": [],
                 "file_changes": [],
@@ -2281,7 +2343,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 "processes_created": [],
             }
 
-    def _monitor_linux_execution(self, guest_path: str, app: types.TracebackType | None = None) -> dict[str, Any]:
+    def _monitor_linux_execution(self, guest_path: str, app: AppProtocol | None = None) -> dict[str, Any]:
         """Monitor Linux execution for file and network changes."""
         try:
             if app:
@@ -2289,7 +2351,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             # Monitor file system changes around the binary execution
             file_changes = []
-            network_activity = []
+            network_activity: list[dict[str, Any]] = []
             processes_created = []
 
             # Check if the binary file exists and monitor its execution directory
@@ -2312,10 +2374,11 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
                 if stdout:
                     proc_output = stdout.read().decode("utf-8", errors="ignore")
                     if proc_output.strip():
-                        for pid in proc_output.strip().split("\n"):
-                            if pid.isdigit():
-                                processes_created.append({"pid": int(pid), "name": binary_name})
-
+                        processes_created.extend(
+                            {"pid": int(pid), "name": binary_name}
+                            for pid in proc_output.strip().split("\n")
+                            if pid.isdigit()
+                        )
                 if stdin:
                     stdin.close()
 
@@ -2326,7 +2389,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Linux monitoring failed: %s", e, exc_info=True)
+            self.logger.exception("Linux monitoring failed: %s", e)
             return {
                 "file_changes": [],
                 "network_activity": [],
@@ -2342,7 +2405,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
         """
         return self
 
-    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: object) -> bool:
+    def __exit__(self, exc_type: type[BaseException] | None, exc_val: BaseException | None, exc_tb: TracebackType | None) -> Literal[False]:
         """Context manager exit with cleanup.
 
         Args:
@@ -2355,10 +2418,10 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
         """
         if exc_type:
-            self.logger.error("QEMU emulator exiting due to %s: %s", exc_type.__name__, exc_val, exc_info=True)
-            if exc_tb:
-                if tb_frame := getattr(exc_tb, "tb_frame", None):
-                    self.logger.debug("Exception traceback from %s:%s", tb_frame.f_code.co_filename, exc_tb.tb_lineno)
+            self.logger.exception("QEMU emulator exiting due to %s: %s", exc_type.__name__, exc_val)
+            if exc_tb and hasattr(exc_tb, "tb_frame") and hasattr(exc_tb, "tb_lineno"):
+                tb_frame = exc_tb.tb_frame
+                self.logger.debug("Exception traceback from %s:%s", tb_frame.f_code.co_filename, exc_tb.tb_lineno)
         self.cleanup()
         return False
 
@@ -2543,6 +2606,8 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
             for cmd in commands:
                 try:
+                    if not self.ssh_client or not hasattr(self.ssh_client, "exec_command"):
+                        continue
                     stdin, stdout, stderr = self.ssh_client.exec_command(cmd)
                     output = stdout.read().decode("utf-8", errors="ignore")
 
@@ -2564,18 +2629,21 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
                     elif "ss -tuln" in cmd and "ss_failed" not in output:
                         # Check for DNS servers listening
-                        for line in output.strip().split("\n"):
-                            if ":53" in line:
-                                dns_queries.append(
-                                    {
-                                        "type": "dns_server_detected",
-                                        "query": "DNS_SERVER_LISTENING",
-                                        "server": line.split()[4] if len(line.split()) > 4 else "unknown",
-                                        "timestamp": time.time(),
-                                        "source": "network_analysis",
-                                    },
-                                )
-
+                        dns_queries.extend(
+                            {
+                                "type": "dns_server_detected",
+                                "query": "DNS_SERVER_LISTENING",
+                                "server": (
+                                    line.split()[4]
+                                    if len(line.split()) > 4
+                                    else "unknown"
+                                ),
+                                "timestamp": time.time(),
+                                "source": "network_analysis",
+                            }
+                            for line in output.strip().split("\n")
+                            if ":53" in line
+                        )
                 except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
                     self.logger.debug("SSH command failed: %s", e)
                     continue
@@ -2626,7 +2694,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
     def _analyze_dns_cache(self) -> list[dict[str, Any]]:
         """Analyze DNS cache for recent queries."""
-        dns_queries = []
+        dns_queries: list[dict[str, Any]] = []
 
         try:
             if hasattr(self, "ssh_client") and self.ssh_client:
@@ -2771,7 +2839,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
 
     def _parse_dns_logs(self) -> list[dict[str, Any]]:
         """Parse system logs for DNS-related entries."""
-        dns_queries = []
+        dns_queries: list[dict[str, Any]] = []
 
         try:
             if hasattr(self, "ssh_client") and self.ssh_client:
@@ -2916,7 +2984,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             return None
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Failed to copy binary via guest agent: %s", e, exc_info=True)
+            self.logger.exception("Failed to copy binary via guest agent: %s", e)
             return None
 
     def _execute_via_guest_agent(self, guest_path: str) -> dict[str, Any]:
@@ -2971,7 +3039,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
         except (OSError, AttributeError, ValueError, TypeError, RuntimeError, subprocess.SubprocessError) as e:
-            self.logger.error("Guest agent execution failed: %s", e, exc_info=True)
+            self.logger.exception("Guest agent execution failed: %s", e)
             return {
                 "success": False,
                 "error": str(e),
@@ -2979,7 +3047,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             }
 
 
-def run_qemu_analysis(app: types.TracebackType | None, binary_path: str, architecture: str = "x86_64") -> dict[str, Any]:
+def run_qemu_analysis(app: AppProtocol | None, binary_path: str, architecture: str = "x86_64") -> dict[str, Any]:
     """Run complete QEMU-based analysis workflow.
 
     Args:
@@ -2992,7 +3060,8 @@ def run_qemu_analysis(app: types.TracebackType | None, binary_path: str, archite
 
     """
     try:
-        app.update_output.emit("[QEMU] Starting full system analysis...")
+        if app:
+            app.update_output.emit("[QEMU] Starting full system analysis...")
 
         # Initialize emulator
         with QEMUSystemEmulator(binary_path, architecture) as emulator:
@@ -3000,33 +3069,39 @@ def run_qemu_analysis(app: types.TracebackType | None, binary_path: str, archite
             if not emulator.start_system():
                 return {"error": "Failed to start QEMU system"}
 
-            app.update_output.emit("[QEMU] System started, creating baseline snapshot...")
+            if app:
+                app.update_output.emit("[QEMU] System started, creating baseline snapshot...")
 
             # Create baseline snapshot
             if not emulator.create_snapshot("baseline"):
                 return {"error": "Failed to create baseline snapshot"}
 
-            app.update_output.emit("[QEMU] Executing binary...")
+            if app:
+                app.update_output.emit("[QEMU] Executing binary...")
 
             # Execute binary analysis
             execution_results = emulator._execute_binary_analysis(binary_path, app)
-            if not execution_results.get("success", False):
-                app.update_output.emit(f"[QEMU] Warning: Binary execution had issues: {execution_results.get('error', 'Unknown error')}")
-            else:
-                app.update_output.emit("[QEMU] Binary execution completed successfully")
+            if execution_results.get("success", False):
+                if app:
+                    app.update_output.emit("[QEMU] Binary execution completed successfully")
 
-            app.update_output.emit("[QEMU] Creating post-execution snapshot...")
+            elif app:
+                app.update_output.emit(f"[QEMU] Warning: Binary execution had issues: {execution_results.get('error', 'Unknown error')}")
+            if app:
+                app.update_output.emit("[QEMU] Creating post-execution snapshot...")
 
             # Create post-execution snapshot
             if not emulator.create_snapshot("post_execution"):
                 return {"error": "Failed to create post-execution snapshot"}
 
-            app.update_output.emit("[QEMU] Analyzing differences...")
+            if app:
+                app.update_output.emit("[QEMU] Analyzing differences...")
 
             # Compare snapshots
             comparison = emulator.compare_snapshots("baseline", "post_execution")
 
-            app.update_output.emit("[QEMU] Analysis complete")
+            if app:
+                app.update_output.emit("[QEMU] Analysis complete")
 
             return {
                 "status": "success",
@@ -3037,9 +3112,10 @@ def run_qemu_analysis(app: types.TracebackType | None, binary_path: str, archite
             }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in qemu_emulator: %s", e, exc_info=True)
+        logger.error("Error in qemu_emulator: %s", e)
         error_msg = f"QEMU analysis failed: {e}"
-        app.update_output.emit(f"[QEMU] {error_msg}")
+        if app:
+            app.update_output.emit(f"[QEMU] {error_msg}")
         return {"error": error_msg}
 
 

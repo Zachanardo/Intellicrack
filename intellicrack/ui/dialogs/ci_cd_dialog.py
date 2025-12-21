@@ -489,11 +489,11 @@ class CICDDialog(PluginDialogBase):
             try:
                 return int(value)
             except ValueError as e:
-                self.logger.error("Value error in ci_cd_dialog: %s", e)
+                self.logger.exception("Value error in ci_cd_dialog: %s", e)
                 try:
                     return float(value)
                 except ValueError as e:
-                    logger.error("Value error in ci_cd_dialog: %s", e)
+                    logger.exception("Value error in ci_cd_dialog: %s", e)
                     return value
 
         # Process root items
@@ -702,7 +702,10 @@ class CICDDialog(PluginDialogBase):
                 widget.setObjectName("pipelineStageError")
 
         # Update progress
-        completed = sum(bool(w.status_label.text() in ["OK", "ERROR"]) for w in self.stage_widgets.values())
+        completed = sum(
+            w.status_label.text() in ["OK", "ERROR"]
+            for w in self.stage_widgets.values()
+        )
         self.progress_bar.setValue(completed)
 
         # Log errors

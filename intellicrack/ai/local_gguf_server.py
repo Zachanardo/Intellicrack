@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import threading
 import time
-from collections.abc import Generator, Iterator
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 
@@ -31,29 +31,37 @@ from ..utils.logger import get_logger
 logger = get_logger(__name__)
 
 try:
-    import requests
+    import requests as requests_module
+
+    requests: Any = requests_module
 except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
+    logger.exception("Import error in local_gguf_server: %s", e)
     requests = None
 
 try:
-    from flask import Flask, jsonify, request
+    from flask import Flask, Response, jsonify, request
     from flask_cors import CORS
 
     HAS_FLASK = True
 except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
-    Flask = jsonify = request = CORS = None
+    logger.exception("Import error in local_gguf_server: %s", e)
+    Flask = None  # type: ignore[assignment, misc]
+    jsonify = None  # type: ignore[assignment]
+    request = None  # type: ignore[assignment]
+    CORS = None
+    Response = None  # type: ignore[assignment, misc]
     HAS_FLASK = False
 
 try:
-    import llama_cpp
+    import llama_cpp as llama_cpp_module
     from llama_cpp import Llama
 
+    llama_cpp: Any = llama_cpp_module
     HAS_LLAMA_CPP = True
 except ImportError as e:
-    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
-    llama_cpp = Llama = None
+    logger.exception("Import error in local_gguf_server: %s", e)
+    llama_cpp = None
+    Llama = None  # type: ignore[assignment, misc]
     HAS_LLAMA_CPP = False
 
 # Try to import Intel GPU libraries
@@ -64,7 +72,7 @@ try:
     if not HAS_INTEL_GPU:
         logger.debug("PyTorch XPU not available")
 except Exception as e:
-    logger.error("Import error in local_gguf_server: %s", e, exc_info=True)
+    logger.exception("Import error in local_gguf_server: %s", e)
     HAS_INTEL_GPU = False
 
 # Check for Intel GPU support via OpenVINO
@@ -102,14 +110,14 @@ class LocalGGUFServer:
         self.logger = get_logger(f"{__name__}.LocalGGUFServer")
         self.host = host
         self.port = port
-        self.app = None
-        self.model = None
-        self.model_path = None
-        self.server_thread = None
+        self.app: Any = None
+        self.model: Any = None
+        self.model_path: str | None = None
+        self.server_thread: threading.Thread | None = None
         self.is_running = False
-        self.model_config = {}
-        self.gpu_backend = None
-        self.gpu_devices = []
+        self.model_config: dict[str, Any] = {}
+        self.gpu_backend: str | None = None
+        self.gpu_devices: list[str] = []
 
         if not HAS_FLASK:
             logger.warning("Flask not available. Local GGUF server will be disabled.")
@@ -126,7 +134,7 @@ class LocalGGUFServer:
         self.gpu_devices = []
 
         # Check for Intel GPU via OpenVINO
-        if HAS_OPENVINO:
+        if HAS_OPENVINO and Core is not None:
             try:
                 core = Core()
                 devices = core.available_devices
@@ -137,10 +145,10 @@ class LocalGGUFServer:
                             self.gpu_backend = "openvino"
                         logger.info("Found Intel GPU device via OpenVINO: %s", device)
             except Exception as e:
-                logger.debug("OpenVINO GPU detection failed: %s", e, exc_info=True)
+                logger.debug("OpenVINO GPU detection failed: %s", e)
 
         # Check for Intel GPU via SYCL/DPC++
-        if HAS_DPCTL:
+        if HAS_DPCTL and dpctl is not None:
             try:
                 gpu_devices = dpctl.get_devices(backend="opencl", device_type="gpu")
                 for device in gpu_devices:
@@ -150,15 +158,12 @@ class LocalGGUFServer:
                             self.gpu_backend = "dpctl"
                         logger.info("Found Intel GPU device via DPCTL: %s", device.name)
             except Exception as e:
-                logger.debug("DPCTL GPU detection failed: %s", e, exc_info=True)
+                logger.debug("DPCTL GPU detection failed: %s", e)
 
         # Check for Intel GPU via native PyTorch XPU
         if HAS_INTEL_GPU:
             try:
                 import torch  # pylint: disable=import-outside-toplevel
-
-                if not torch:
-                    raise ImportError("Torch not available")
 
                 # Check for XPU device support
                 if hasattr(torch, "xpu") and torch.xpu.is_available():
@@ -182,12 +187,12 @@ class LocalGGUFServer:
                         torch.set_float32_matmul_precision("high")
                         logger.info("Enabled high precision matrix multiplication")
                     except Exception as e:
-                        logger.debug("Could not set matmul precision: %s", e, exc_info=True)
+                        logger.debug("Could not set matmul precision: %s", e)
             except Exception as e:
-                logger.debug("PyTorch XPU GPU detection failed: %s", e, exc_info=True)
+                logger.debug("PyTorch XPU GPU detection failed: %s", e)
 
         # Check llama.cpp build info for GPU support
-        if HAS_LLAMA_CPP and hasattr(llama_cpp, "llama_backend_init"):
+        if HAS_LLAMA_CPP and llama_cpp is not None and hasattr(llama_cpp, "llama_backend_init"):
             try:
                 # Initialize llama backend to check capabilities
                 llama_cpp.llama_backend_init()
@@ -198,7 +203,7 @@ class LocalGGUFServer:
                     if not self.gpu_backend:
                         self.gpu_backend = "llama_cpp_gpu"
             except Exception as e:
-                logger.debug("llama.cpp GPU detection failed: %s", e, exc_info=True)
+                logger.debug("llama.cpp GPU detection failed: %s", e)
 
         if self.gpu_devices:
             logger.info("Intel GPU backend: %s", self.gpu_backend)
@@ -221,7 +226,7 @@ class LocalGGUFServer:
             try:
                 optimal = int(os.environ["OMP_NUM_THREADS"])
             except ValueError as e:
-                self.logger.error("Value error in local_gguf_server: %s", e, exc_info=True)
+                self.logger.exception("Value error in local_gguf_server: %s", e)
 
         logger.debug("Using %s threads (CPU count: %s, GPU: %s)", optimal, cpu_count, bool(self.gpu_backend))
         return optimal
@@ -258,17 +263,17 @@ class LocalGGUFServer:
 
         """
         if not self.can_run():
-            logger.error("Cannot load model: missing dependencies")
+            logger.exception("Cannot load model: missing dependencies")
             return False
 
         try:
-            model_path = Path(model_path)
-            if not model_path.exists():
-                logger.error("Model file not found: %s", model_path)
+            model_path_obj = Path(model_path)
+            if not model_path_obj.exists():
+                logger.exception("Model file not found: %s", model_path_obj)
                 return False
 
             # Auto-detect GPU layers if Intel GPU is available
-            auto_gpu_layers = 0
+            auto_gpu_layers: int | object = 0
             if self.gpu_backend and kwargs.get("auto_gpu", True):
                 # Try to offload all layers to GPU by default
                 auto_gpu_layers = kwargs.get("gpu_layers", -1)  # -1 means all layers
@@ -309,24 +314,26 @@ class LocalGGUFServer:
             # Filter out None values
             model_params = {k: v for k, v in default_params.items() if v is not None}
 
-            logger.info("Loading GGUF model: %s", model_path)
+            logger.info("Loading GGUF model: %s", model_path_obj)
             logger.info("Model parameters: %s", model_params)
 
-            # Load the model
-            self.model = Llama(model_path=str(model_path), **model_params)
-            self.model_path = str(model_path)
+            # Load the model - check at runtime if Llama is available
+            assert Llama is not None, "Llama class not available"
+
+            self.model = Llama(model_path=str(model_path_obj), **model_params)  # type: ignore[arg-type]
+            self.model_path = str(model_path_obj)
             self.model_config = {
-                "model_path": str(model_path),
-                "model_name": model_path.name,
+                "model_path": str(model_path_obj),
+                "model_name": model_path_obj.name,
                 **model_params,
                 **kwargs,
             }
 
-            logger.info("Successfully loaded GGUF model: %s", model_path.name)
+            logger.info("Successfully loaded GGUF model: %s", model_path_obj.name)
             return True
 
         except Exception as e:
-            logger.error("Failed to load GGUF model: %s", e, exc_info=True)
+            logger.exception("Failed to load GGUF model: %s", e)
             self.model = None
             self.model_path = None
             return False
@@ -342,12 +349,12 @@ class LocalGGUFServer:
                 self.model_config = {}
                 logger.info("Model unloaded successfully")
             except Exception as e:
-                logger.error("Error unloading model: %s", e, exc_info=True)
+                logger.exception("Error unloading model: %s", e)
 
     def start_server(self) -> bool:
         """Start the local GGUF server."""
         if not self.can_run():
-            logger.error("Cannot start server: missing dependencies")
+            logger.exception("Cannot start server: missing dependencies")
             return False
 
         if self.is_running:
@@ -355,18 +362,22 @@ class LocalGGUFServer:
             return True
 
         try:
-            self.app = Flask(__name__)
-            CORS(self.app)  # Enable CORS for all routes
+            if Flask is not None and CORS is not None:
+                self.app = Flask(__name__)
+                CORS(self.app)
 
-            # Setup routes
-            self._setup_routes()
+                # Setup routes
+                self._setup_routes()
 
-            # Start server in a separate thread
-            self.server_thread = threading.Thread(
-                target=self._run_server,
-                daemon=True,
-            )
-            self.server_thread.start()
+                # Start server in a separate thread
+                self.server_thread = threading.Thread(
+                    target=self._run_server,
+                    daemon=True,
+                )
+                self.server_thread.start()
+            else:
+                logger.exception("Flask or CORS not available")
+                return False
 
             # Wait for server to start
             time.sleep(2)
@@ -376,11 +387,11 @@ class LocalGGUFServer:
                 self.is_running = True
                 logger.info("Local GGUF server started at http://%s:%s", self.host, self.port)
                 return True
-            logger.error("Server failed to start properly")
+            logger.exception("Server failed to start properly")
             return False
 
         except Exception as e:
-            logger.error("Failed to start GGUF server: %s", e, exc_info=True)
+            logger.exception("Failed to start GGUF server: %s", e)
             return False
 
     def stop_server(self) -> None:
@@ -393,8 +404,11 @@ class LocalGGUFServer:
 
     def _setup_routes(self) -> None:
         """Set up Flask routes for the server."""
+        if self.app is None or jsonify is None:
+            logger.exception("Flask app or jsonify not available")
+            return
 
-        @self.app.route("/health", methods=["GET"])
+        @self.app.route("/health", methods=["GET"])  # type: ignore[untyped-decorator]
         def health() -> object:
             """Health check endpoint.
 
@@ -414,7 +428,7 @@ class LocalGGUFServer:
                 },
             )
 
-        @self.app.route("/models", methods=["GET"])
+        @self.app.route("/models", methods=["GET"])  # type: ignore[untyped-decorator]
         def list_models() -> object:
             """List available models.
 
@@ -429,7 +443,7 @@ class LocalGGUFServer:
                 },
             )
 
-        @self.app.route("/gpu_info", methods=["GET"])
+        @self.app.route("/gpu_info", methods=["GET"])  # type: ignore[untyped-decorator]
         def gpu_info() -> object:
             """Get detailed GPU information.
 
@@ -459,7 +473,7 @@ class LocalGGUFServer:
 
             return jsonify(gpu_details)
 
-        @self.app.route("/v1/chat/completions", methods=["POST"])
+        @self.app.route("/v1/chat/completions", methods=["POST"])  # type: ignore[untyped-decorator]
         def chat_completions() -> object:
             """OpenAI-compatible chat completions endpoint.
 
@@ -491,10 +505,10 @@ class LocalGGUFServer:
                 return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
-                logger.error("Chat completion error: %s", e, exc_info=True)
+                logger.exception("Chat completion error: %s", e)
                 return jsonify({"error": "Internal server error during chat completion"}), 500
 
-        @self.app.route("/v1/completions", methods=["POST"])
+        @self.app.route("/v1/completions", methods=["POST"])  # type: ignore[untyped-decorator]
         def completions() -> object:
             """OpenAI-compatible completions endpoint.
 
@@ -523,10 +537,10 @@ class LocalGGUFServer:
                 return self._complete_response(prompt, max_tokens, temperature, top_p, stop)
 
             except Exception as e:
-                logger.error("Completion error: %s", e, exc_info=True)
+                logger.exception("Completion error: %s", e)
                 return jsonify({"error": "Internal server error during completion"}), 500
 
-        @self.app.route("/load_model", methods=["POST"])
+        @self.app.route("/load_model", methods=["POST"])  # type: ignore[untyped-decorator]
         def load_model_endpoint() -> object:
             """Load a new model.
 
@@ -558,10 +572,10 @@ class LocalGGUFServer:
                 return jsonify({"error": "Failed to load model"}), 500
 
             except Exception as e:
-                logger.error("Model loading error: %s", e, exc_info=True)
+                logger.exception("Model loading error: %s", e)
                 return jsonify({"error": "Internal server error during model loading"}), 500
 
-        @self.app.route("/unload_model", methods=["POST"])
+        @self.app.route("/unload_model", methods=["POST"])  # type: ignore[untyped-decorator]
         def unload_model_endpoint() -> object:
             """Unload the current model.
 
@@ -573,10 +587,10 @@ class LocalGGUFServer:
                 self.unload_model()
                 return jsonify({"status": "success", "message": "Model unloaded"})
             except Exception as e:
-                logger.error("Model unloading error: %s", e, exc_info=True)
+                logger.exception("Model unloading error: %s", e)
                 return jsonify({"error": "Internal server error during model unloading"}), 500
 
-    def _messages_to_prompt(self, messages: list[dict]) -> str:
+    def _messages_to_prompt(self, messages: list[dict[str, Any]]) -> str:
         """Convert OpenAI-style messages to a prompt."""
         prompt_parts = []
 
@@ -594,8 +608,11 @@ class LocalGGUFServer:
         prompt_parts.append("Assistant:")
         return "\n\n".join(prompt_parts)
 
-    def _complete_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> dict[str, Any]:
+    def _complete_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
         """Generate a complete response."""
+        if jsonify is None:
+            raise RuntimeError("jsonify not available")
+
         try:
             # Generate completion
             response = self.model(
@@ -635,7 +652,7 @@ class LocalGGUFServer:
             )
 
         except Exception as e:
-            logger.error("Response generation error: %s", e, exc_info=True)
+            logger.exception("Response generation error: %s", e)
             raise
 
     def _stream_response(self, prompt: str, max_tokens: int, temperature: float, top_p: float, stop: list[str]) -> object:
@@ -652,6 +669,9 @@ class LocalGGUFServer:
             Flask response object with streaming content.
 
         """
+        if self.app is None:
+            raise RuntimeError("Flask app not available")
+
         try:
 
             def generate() -> Generator[str, None, None]:
@@ -698,11 +718,15 @@ class LocalGGUFServer:
             )
 
         except Exception as e:
-            logger.error("Streaming error: %s", e, exc_info=True)
+            logger.exception("Streaming error: %s", e)
             raise
 
     def _run_server(self) -> None:
         """Run the Flask server."""
+        if self.app is None:
+            logger.exception("Flask app not available")
+            return
+
         try:
             self.app.run(
                 host=self.host,
@@ -712,13 +736,14 @@ class LocalGGUFServer:
                 threaded=True,
             )
         except Exception as e:
-            logger.error("Server runtime error: %s", e, exc_info=True)
+            logger.exception("Server runtime error: %s", e)
 
     def _test_server(self) -> bool:
         """Test if the server is responding."""
         if requests is None:
-            logger.error("requests module not available")
+            logger.exception("requests module not available")
             return False
+
         try:
             response = requests.get(
                 f"http://{self.host}:{self.port}/health",
@@ -726,7 +751,7 @@ class LocalGGUFServer:
             )
             return response.status_code == 200
         except Exception as e:
-            self.logger.error("Exception in local_gguf_server: %s", e, exc_info=True)
+            self.logger.exception("Exception in local_gguf_server: %s", e)
             return False
 
     def get_server_url(self) -> str:
@@ -740,6 +765,7 @@ class LocalGGUFServer:
 
         if requests is None:
             return False
+
         try:
             response = requests.get(
                 f"{self.get_server_url()}/health",
@@ -747,7 +773,7 @@ class LocalGGUFServer:
             )
             return response.status_code == 200
         except Exception as e:
-            self.logger.error("Exception in local_gguf_server: %s", e, exc_info=True)
+            self.logger.exception("Exception in local_gguf_server: %s", e)
             return False
 
 
@@ -766,8 +792,8 @@ class GGUFModelManager:
         self.models_directory.mkdir(parents=True, exist_ok=True)
 
         self.server = LocalGGUFServer()
-        self.available_models = {}
-        self.current_model = None
+        self.available_models: dict[str, dict[str, Any]] = {}
+        self.current_model: str | None = None
 
         self.scan_models()
 
@@ -804,6 +830,10 @@ class GGUFModelManager:
 
     def download_model(self, model_url: str, model_name: str | None = None) -> bool:
         """Download a model from URL."""
+        if requests is None:
+            logger.exception("requests module required for model download")
+            return False
+
         try:
             if not model_name:
                 model_name = Path(model_url).name
@@ -812,10 +842,6 @@ class GGUFModelManager:
 
             logger.info("Downloading model: %s", model_url)
 
-            # Use requests to download with progress
-            if requests is None:
-                logger.error("requests module required for model download")
-                return False
             response = requests.get(model_url, stream=True)
             response.raise_for_status()
 
@@ -837,7 +863,7 @@ class GGUFModelManager:
             return True
 
         except Exception as e:
-            logger.error("Failed to download model: %s", e, exc_info=True)
+            logger.exception("Failed to download model: %s", e)
             return False
 
     def load_model(self, model_name: str, **kwargs: object) -> bool:
@@ -853,7 +879,7 @@ class GGUFModelManager:
 
         """
         if model_name not in self.available_models:
-            logger.error("Model not found: %s", model_name)
+            logger.exception("Model not found: %s", model_name)
             return False
 
         model_path = self.available_models[model_name]["path"]
@@ -862,6 +888,8 @@ class GGUFModelManager:
         if success:
             self.current_model = model_name
             logger.info("Loaded model: %s", model_name)
+        else:
+            logger.exception("Failed to load model: %s", model_name)
 
         return success
 
@@ -937,7 +965,7 @@ def create_gguf_server_with_intel_gpu(
 
     """
     if not HAS_FLASK or not HAS_LLAMA_CPP:
-        logger.error("Cannot create GGUF server: Missing Flask or llama-cpp-python")
+        logger.exception("Cannot create GGUF server: Missing Flask or llama-cpp-python")
         return None
 
     server = LocalGGUFServer(host=host, port=port)
@@ -954,7 +982,7 @@ def create_gguf_server_with_intel_gpu(
     if model_path:
         success = server.load_model(model_path, auto_gpu=True)
         if not success:
-            logger.error("Failed to load model: %s", model_path)
+            logger.exception("Failed to load model: %s", model_path)
             return None
 
     # Start server if requested
@@ -963,7 +991,7 @@ def create_gguf_server_with_intel_gpu(
             logger.info("GGUF server started at http://%s:%s", host, port)
             logger.info("GPU acceleration: %s", "Enabled" if server.gpu_backend else "Disabled")
         else:
-            logger.error("Failed to start GGUF server")
+            logger.exception("Failed to start GGUF server")
             return None
 
     return server

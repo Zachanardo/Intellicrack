@@ -31,7 +31,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
+from .learning_engine import get_learning_engine
 from .performance_monitor import performance_monitor, profile_ai_operation
 
 
@@ -45,7 +45,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in visualization_analytics: %s", e)
+    logger.exception("Import error in visualization_analytics: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -177,7 +177,7 @@ class DataCollector:
                     time.sleep(self.collection_interval)
 
                 except Exception as e:
-                    logger.error("Error in data collection: %s", e)
+                    logger.exception("Error in data collection: %s", e)
                     time.sleep(5)  # Wait on error
 
         thread = threading.Thread(target=collection_worker, daemon=True)
@@ -216,7 +216,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error("Error collecting performance metrics: %s", e)
+            logger.exception("Error collecting performance metrics: %s", e)
             return []
 
     def _collect_success_rate_metrics(self) -> list[DataPoint]:
@@ -249,7 +249,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error("Error collecting success rate metrics: %s", e)
+            logger.exception("Error collecting success rate metrics: %s", e)
             return []
 
     def _collect_resource_usage_metrics(self) -> list[DataPoint]:
@@ -312,7 +312,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error("Error collecting resource usage metrics: %s", e)
+            logger.exception("Error collecting resource usage metrics: %s", e)
             return []
 
     def _collect_error_rate_metrics(self) -> list[DataPoint]:
@@ -331,7 +331,7 @@ class DataCollector:
                 )
             ]
         except Exception as e:
-            logger.error("Error collecting error rate metrics: %s", e)
+            logger.exception("Error collecting error rate metrics: %s", e)
             return []
 
     def _calculate_real_error_rate(self, current_time: datetime) -> float:
@@ -373,7 +373,7 @@ class DataCollector:
             return min(error_rate, 50.0)
 
         except Exception as e:
-            logger.error("Error calculating real error rate: %s", e)
+            logger.exception("Error calculating real error rate: %s", e)
             # Return conservative estimate if calculation fails
             return 2.5
 
@@ -415,7 +415,7 @@ class DataCollector:
             return execution_time > 30000
 
         except Exception as e:
-            logger.error("Error checking error indicators: %s", e)
+            logger.exception("Error checking error indicators: %s", e)
             return False
 
     def _get_real_agent_metrics(self) -> tuple[int, int]:
@@ -505,7 +505,7 @@ class DataCollector:
             return active_agents, total_tasks
 
         except Exception as e:
-            logger.error("Error getting real agent metrics: %s", e)
+            logger.exception("Error getting real agent metrics: %s", e)
             # Return conservative estimates if calculation fails
             return 1, 10
 
@@ -540,7 +540,7 @@ class DataCollector:
             return data_points
 
         except Exception as e:
-            logger.error("Error collecting learning metrics: %s", e)
+            logger.exception("Error collecting learning metrics: %s", e)
             return []
 
     def _collect_exploit_chain_metrics(self) -> list[DataPoint]:
@@ -569,7 +569,7 @@ class DataCollector:
                 ),
             ]
         except Exception as e:
-            logger.error("Error collecting agent activity metrics: %s", e)
+            logger.exception("Error collecting agent activity metrics: %s", e)
             return []
 
     def get_data(self, metric_type: MetricType, time_range: int = 3600) -> list[DataPoint]:
@@ -780,13 +780,13 @@ class DashboardManager:
         for template_name, template in self.dashboard_templates.items():
             if dashboard := self.create_dashboard_from_template(template_name):
                 self.dashboards[dashboard.dashboard_id] = dashboard
-                logger.info("Created default dashboard: %s", template['name'])
+                logger.info("Created default dashboard: %s", template["name"])
 
     @profile_ai_operation("dashboard_creation")
     def create_dashboard_from_template(self, template_name: str) -> Dashboard | None:
         """Create dashboard from template."""
         if template_name not in self.dashboard_templates:
-            logger.error("Unknown dashboard template: %s", template_name)
+            logger.exception("Unknown dashboard template: %s", template_name)
             return None
 
         template = self.dashboard_templates[template_name]
@@ -803,7 +803,7 @@ class DashboardManager:
                     chart = self.chart_generator.generate_chart(chart_template)
                 charts.append(chart)
             except Exception as e:
-                logger.error("Error generating chart %s: %s", chart_template, e)
+                logger.exception("Error generating chart %s: %s", chart_template, e)
 
         return Dashboard(
             dashboard_id=str(uuid.uuid4()),
@@ -822,7 +822,7 @@ class DashboardManager:
                 chart = self.chart_generator.generate_custom_chart(chart_config)
                 charts.append(chart)
             except Exception as e:
-                logger.error("Error generating custom chart: %s", e)
+                logger.exception("Error generating custom chart: %s", e)
 
         dashboard = Dashboard(
             dashboard_id=str(uuid.uuid4()),
@@ -848,7 +848,7 @@ class DashboardManager:
                 if refreshed_chart := self._refresh_chart(chart):
                     dashboard.charts[i] = refreshed_chart
             except Exception as e:
-                logger.error("Error refreshing chart %s: %s", chart.chart_id, e)
+                logger.exception("Error refreshing chart %s: %s", chart.chart_id, e)
 
         dashboard.last_updated = datetime.now()
         return True
@@ -918,7 +918,7 @@ class DashboardManager:
                 json.dump(export_data, f, indent=2)
             return True
         except Exception as e:
-            logger.error("Error exporting dashboard: %s", e)
+            logger.exception("Error exporting dashboard: %s", e)
             return False
 
 
@@ -1194,7 +1194,7 @@ class VisualizationAnalytics:
 
         """
         if not binary_path or not Path(binary_path).exists():
-            logger.error("Invalid binary path for semantic analysis: %s", binary_path)
+            logger.exception("Invalid binary path for semantic analysis: %s", binary_path)
             return None
 
         try:
@@ -1221,11 +1221,15 @@ class VisualizationAnalytics:
 
             results["semantic_summary"] = {
                 "total_functions_analyzed": len(function_semantics),
-                "licensing_related_functions": sum(1 for f in function_semantics if f.get("category") == "licensing"),
+                "licensing_related_functions": sum(
+                    f.get("category") == "licensing" for f in function_semantics
+                ),
                 "protection_patterns_found": len(code_patterns),
                 "protection_indicators_count": len(protection_indicators),
                 "binary_size": binary_size,
-                "analysis_confidence": self._calculate_analysis_confidence(function_semantics, code_patterns),
+                "analysis_confidence": self._calculate_analysis_confidence(
+                    function_semantics, code_patterns
+                ),
             }
 
             logger.info(
@@ -1238,10 +1242,10 @@ class VisualizationAnalytics:
             return results
 
         except PermissionError:
-            logger.error("Permission denied reading binary: %s", binary_path)
+            logger.exception("Permission denied reading binary: %s", binary_path)
             return None
         except Exception as e:
-            logger.error("Error in semantic analysis for %s: %s", binary_path, e)
+            logger.exception("Error in semantic analysis for %s: %s", binary_path, e)
             return None
 
     def _analyze_function_semantics(self, binary_data: bytes) -> list[dict[str, Any]]:
@@ -1372,8 +1376,7 @@ class VisualizationAnalytics:
             ]
 
             for pattern in patterns:
-                match = re.search(pattern, text)
-                if match:
+                if match := re.search(pattern, text):
                     name = match.group(1)
                     if 3 <= len(name) <= 64:
                         return name
@@ -1410,13 +1413,13 @@ class VisualizationAnalytics:
             if null_ratio < 0.5:
                 confidence += 0.1
 
-            printable_count = sum(1 for b in context if 32 <= b <= 126)
+            printable_count = sum(32 <= b <= 126 for b in context)
             printable_ratio = printable_count / len(context) if context else 0
             if printable_ratio > 0.6:
                 confidence += 0.1
 
         except Exception:
-            logger.debug("Failed to calculate context confidence score", exc_info=True)
+            logger.debug("Failed to calculate context confidence score")
 
         return min(1.0, confidence)
 
@@ -1537,7 +1540,9 @@ class VisualizationAnalytics:
             avg_pattern_confidence = sum(p.get("confidence", 0) for p in code_patterns) / len(code_patterns)
             base_confidence += avg_pattern_confidence * 0.2
 
-        licensing_functions = sum(1 for f in function_semantics if f.get("category") == "licensing")
+        licensing_functions = sum(
+            f.get("category") == "licensing" for f in function_semantics
+        )
         if licensing_functions > 5:
             base_confidence += 0.1
         elif licensing_functions > 2:
@@ -1560,7 +1565,7 @@ class VisualizationAnalytics:
 
         """
         if not binary_path or not Path(binary_path).exists():
-            logger.error("Invalid binary path for script generation: %s", binary_path)
+            logger.exception("Invalid binary path for script generation: %s", binary_path)
             return None
 
         try:
@@ -1591,7 +1596,7 @@ class VisualizationAnalytics:
             return results
 
         except Exception as e:
-            logger.error("Error generating analysis scripts for %s: %s", binary_path, e)
+            logger.exception("Error generating analysis scripts for %s: %s", binary_path, e)
             return None
 
     def _generate_frida_scripts(
@@ -1600,14 +1605,16 @@ class VisualizationAnalytics:
         semantic_results: dict[str, Any] | None,
     ) -> list[dict[str, Any]]:
         """Generate Frida scripts based on semantic analysis."""
-        scripts: list[dict[str, Any]] = []
-
-        scripts.append({
-            "name": f"{binary_name}_license_hook.js",
-            "description": "Hook licensing functions and log validation attempts",
-            "code": self._build_license_hook_script(binary_name, semantic_results),
-            "type": "hook",
-        })
+        scripts: list[dict[str, Any]] = [
+            {
+                "name": f"{binary_name}_license_hook.js",
+                "description": "Hook licensing functions and log validation attempts",
+                "code": self._build_license_hook_script(
+                    binary_name, semantic_results
+                ),
+                "type": "hook",
+            }
+        ]
 
         scripts.append({
             "name": f"{binary_name}_api_trace.js",
@@ -1643,14 +1650,16 @@ class VisualizationAnalytics:
         semantic_results: dict[str, Any] | None,
     ) -> list[dict[str, Any]]:
         """Generate Ghidra scripts based on semantic analysis."""
-        scripts: list[dict[str, Any]] = []
-
-        scripts.append({
-            "name": f"{binary_name}_LicenseAnalyzer.java",
-            "description": "Analyze and annotate licensing functions in the binary",
-            "code": self._build_ghidra_license_analyzer(binary_name, semantic_results),
-            "type": "analysis",
-        })
+        scripts: list[dict[str, Any]] = [
+            {
+                "name": f"{binary_name}_LicenseAnalyzer.java",
+                "description": "Analyze and annotate licensing functions in the binary",
+                "code": self._build_ghidra_license_analyzer(
+                    binary_name, semantic_results
+                ),
+                "type": "analysis",
+            }
+        ]
 
         scripts.append({
             "name": f"{binary_name}_CryptoFinder.java",
@@ -1669,10 +1678,11 @@ class VisualizationAnalytics:
         """Build Frida script for hooking licensing functions."""
         target_functions: list[str] = []
         if semantic_results:
-            for func in semantic_results.get("function_semantics", []):
-                if func.get("category") == "licensing" and func.get("name"):
-                    target_functions.append(func["name"])
-
+            target_functions.extend(
+                func["name"]
+                for func in semantic_results.get("function_semantics", [])
+                if func.get("category") == "licensing" and func.get("name")
+            )
         target_functions_js = ", ".join(f'"{f}"' for f in target_functions[:10])
 
         return f'''

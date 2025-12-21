@@ -204,7 +204,7 @@ class FlexLMProtocolParser:
             offset += 4
 
             if magic not in [0x464C4558, 0x4C4D5F56, 0x46584C4D]:  # "FLEX", "LM_V", "FXLM"
-                self.logger.debug(f"Invalid FlexLM magic: 0x{magic:X}")
+                self.logger.debug("Invalid FlexLM magic: 0x%X", magic)
                 return None
 
             # Parse header fields
@@ -274,11 +274,11 @@ class FlexLMProtocolParser:
                 additional_data=additional_data,
             )
 
-            self.logger.info(f"Parsed FlexLM {self.FLEXLM_COMMANDS.get(command, 'UNKNOWN')} request for feature '{feature}'")
+            self.logger.info("Parsed FlexLM %s request for feature '%s'", self.FLEXLM_COMMANDS.get(command, "UNKNOWN"), feature)
             return request
 
         except Exception as e:
-            self.logger.error(f"Failed to parse FlexLM request: {e}")
+            self.logger.exception("Failed to parse FlexLM request: %s", e)
             return None
 
     def _parse_string_field(self, data: bytes, offset: int) -> str:
@@ -289,7 +289,7 @@ class FlexLMProtocolParser:
                 end = len(data)
             return data[offset:end].decode("utf-8", errors="ignore")
         except Exception as e:
-            self.logger.error("Error in flexlm_parser: %s", e)
+            self.logger.exception("Error in flexlm_parser: %s", e)
             return ""
 
     def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
@@ -321,7 +321,7 @@ class FlexLMProtocolParser:
                     additional[f"field_{field_type:04X}"] = field_data
 
         except Exception as e:
-            self.logger.debug(f"Error parsing additional data: {e}")
+            self.logger.debug("Error parsing additional data: %s", e)
 
         return additional
 
@@ -336,7 +336,7 @@ class FlexLMProtocolParser:
 
         """
         command_name = self.FLEXLM_COMMANDS.get(request.command, "UNKNOWN")
-        self.logger.info(f"Generating response for {command_name} command")
+        self.logger.info("Generating response for %s command", command_name)
 
         if request.command == 0x01:  # CHECKOUT
             return self._handle_checkout(request)
@@ -540,7 +540,7 @@ class FlexLMProtocolParser:
 
     def _handle_unknown_command(self, request: FlexLMRequest) -> FlexLMResponse:
         """Handle unknown command."""
-        self.logger.warning(f"Unknown FlexLM command: 0x{request.command:02X}")
+        self.logger.warning("Unknown FlexLM command: 0x%02X", request.command)
         return FlexLMResponse(
             status=0x0C,  # ENCRYPTION_FAILED (generic error)
             sequence=request.sequence,
@@ -635,7 +635,7 @@ class FlexLMProtocolParser:
             return bytes(packet)
 
         except Exception as e:
-            self.logger.error(f"Failed to serialize FlexLM response: {e}")
+            self.logger.exception("Failed to serialize FlexLM response: %s", e)
             # Return minimal error response
             return struct.pack(">IHI", 0x464C4558, 0x03, response.sequence) + b"\x00"
 
@@ -660,7 +660,7 @@ class FlexLMProtocolParser:
                 serialized.extend(value_bytes)
 
             except Exception as e:
-                self.logger.debug(f"Error serializing field {key}: {e}")
+                self.logger.debug("Error serializing field %s: %s", key, e)
 
         return bytes(serialized)
 
@@ -694,7 +694,7 @@ class FlexLMProtocolParser:
             "vendor": vendor,
             "signature": signature,
         }
-        self.logger.info(f"Added custom FlexLM feature: {name}")
+        self.logger.info("Added custom FlexLM feature: %s", name)
 
     def remove_feature(self, name: str) -> None:
         """Remove feature from server.
@@ -706,7 +706,7 @@ class FlexLMProtocolParser:
         feature_key = name.upper()
         if feature_key in self.server_features:
             del self.server_features[feature_key]
-            self.logger.info(f"Removed FlexLM feature: {name}")
+            self.logger.info("Removed FlexLM feature: %s", name)
 
     def get_active_checkouts(self) -> dict[str, dict[str, Any]]:
         """Get all active license checkouts.
@@ -721,7 +721,7 @@ class FlexLMProtocolParser:
         """Clear all active checkouts."""
         count = len(self.active_checkouts)
         self.active_checkouts.clear()
-        self.logger.info(f"Cleared {count} active checkouts")
+        self.logger.info("Cleared %d active checkouts", count)
 
     def get_server_statistics(self) -> dict[str, Any]:
         """Get server statistics.
@@ -782,7 +782,7 @@ class FlexLMTrafficCapture:
             self.captured_requests.append((timestamp, request, data))
             self.client_endpoints.add(source)
             self.server_endpoints.add(dest)
-            self.logger.debug(f"Captured FlexLM request from {source} to {dest}")
+            self.logger.debug("Captured FlexLM request from %s to %s", source, dest)
             return True
 
         return False
@@ -906,7 +906,7 @@ class FlexLMTrafficCapture:
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(capture_data, f, indent=2)
 
-        self.logger.info(f"Exported {len(self.captured_requests)} captured packets to {filepath}")
+        self.logger.info("Exported %d captured packets to %s", len(self.captured_requests), filepath)
 
 
 class FlexLMLicenseGenerator:

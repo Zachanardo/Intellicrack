@@ -179,6 +179,32 @@ class R2Session:
                 )
                 raise R2Exception(f"Command execution failed: {e}") from e
 
+    def cmd(self, command: str) -> str:
+        """Execute a radare2 command and return the result as a string.
+
+        Args:
+            command: The radare2 command to execute
+
+        Returns:
+            Command output as string
+
+        """
+        result = self._execute_command(command, expect_json=False)
+        return str(result) if result else ""
+
+    def cmdj(self, command: str) -> dict[str, Any] | list[Any]:
+        """Execute a radare2 command and return the result as parsed JSON.
+
+        Args:
+            command: The radare2 command to execute (typically ending with 'j')
+
+        Returns:
+            Parsed JSON result as dict or list
+
+        """
+        result = self._execute_command(command, expect_json=True)
+        return result if isinstance(result, (dict, list)) else {}
+
     def _parse_json(self, json_data: str | bytes | None) -> dict[str, Any] | list[Any]:
         """Parse JSON data from radare2 command output.
 
@@ -774,6 +800,32 @@ class R2SessionPoolAdapter:
                 },
             )
             raise R2Exception(f"Command execution failed: {e}") from e
+
+    def cmd(self, command: str) -> str:
+        """Execute a radare2 command and return the result as a string.
+
+        Args:
+            command: The radare2 command to execute
+
+        Returns:
+            Command output as string
+
+        """
+        result = self._execute_command(command, expect_json=False)
+        return str(result) if result else ""
+
+    def cmdj(self, command: str) -> dict[str, Any] | list[Any]:
+        """Execute a radare2 command and return the result as parsed JSON.
+
+        Args:
+            command: The radare2 command to execute (typically ending with 'j')
+
+        Returns:
+            Parsed JSON result as dict or list
+
+        """
+        result = self._execute_command(command, expect_json=True)
+        return result if isinstance(result, (dict, list)) else {}
 
     def _parse_json(self, json_data: str | bytes | None) -> dict[str, Any] | list[Any]:
         """Parse JSON data from radare2 command output.
@@ -1421,8 +1473,7 @@ def analyze_binary_comprehensive(binary_path: str, radare2_path: str | None = No
             for func in functions_list:
                 if addr := func.get("offset"):
                     try:
-                        decompiled = r2.decompile_function(addr)
-                        if decompiled:
+                        if decompiled := r2.decompile_function(addr):
                             decompiled_samples[func["name"]] = decompiled
                     except R2Exception as e:
                         logger.error("R2Exception in radare2_utils: %s", e)

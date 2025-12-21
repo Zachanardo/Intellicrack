@@ -86,7 +86,7 @@ class CPUMonitorWorker(QObject):
                 cpu_data = self._collect_cpu_data()
                 self.cpu_data_ready.emit(cpu_data)
             except Exception as e:
-                logger.error("CPU data collection failed: %s", e, exc_info=True)
+                logger.exception("CPU data collection failed: %s", e)
                 self.error_occurred.emit(str(e))
 
             # Sleep for update interval
@@ -173,7 +173,7 @@ class CPUMonitorWorker(QObject):
 
                 return subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
         except (subprocess.SubprocessError, OSError) as e:
-            logger.debug(f"Failed to get CPU name: {e}")
+            logger.debug("Failed to get CPU name: %s", e)
 
         return "Unknown CPU"
 
@@ -469,4 +469,4 @@ class CPUStatusWidget(QWidget):
             error_msg: Error message from the monitoring worker.
 
         """
-        logger.error(f"CPU monitoring error: {error_msg}")
+        logger.error("CPU monitoring error: %s", error_msg)

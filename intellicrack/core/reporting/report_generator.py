@@ -158,36 +158,40 @@ class ReportGenerator:
             html_parts.extend(("</table>", "</section>"))
         # Add protection analysis
         if "protections" in data:
-            html_parts.append("<section class='protections'>")
-            html_parts.append("<h2>Protection Analysis</h2>")
-            html_parts.append("<ul>")
+            html_parts.extend(
+                (
+                    "<section class='protections'>",
+                    "<h2>Protection Analysis</h2>",
+                    "<ul>",
+                )
+            )
             for protection in data["protections"]:
                 status = "OK" if protection.get("bypassed") else "FAIL"
                 html_parts.append(f"<li>{status} {protection.get('name', 'Unknown')}: {protection.get('description', '')}</li>")
-            html_parts.append("</ul>")
-            html_parts.append("</section>")
-
+            html_parts.extend(("</ul>", "</section>"))
         # Add vulnerabilities
         if "vulnerabilities" in data:
-            html_parts.append("<section class='vulnerabilities'>")
-            html_parts.append("<h2>Vulnerabilities Found</h2>")
-            html_parts.append("<table>")
-            html_parts.append("<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>")
+            html_parts.extend(
+                (
+                    "<section class='vulnerabilities'>",
+                    "<h2>Vulnerabilities Found</h2>",
+                    "<table>",
+                    "<tr><th>Severity</th><th>Type</th><th>Description</th><th>Location</th></tr>",
+                )
+            )
             for vuln in data["vulnerabilities"]:
                 severity_class = vuln.get("severity", "unknown").lower()
                 html_parts.append(f"<tr class='severity-{severity_class}'>")
                 html_parts.append(f"<td>{vuln.get('severity', 'Unknown')}</td>")
                 html_parts.append(f"<td>{vuln.get('type', 'Unknown')}</td>")
                 html_parts.append(f"<td>{vuln.get('description', '')}</td>")
-                html_parts.append(f"<td>{vuln.get('location', 'N/A')}</td>")
-                html_parts.append("</tr>")
-            html_parts.append("</table>")
-            html_parts.append("</section>")
-
+                html_parts.extend((f"<td>{vuln.get('location', 'N/A')}</td>", "</tr>"))
+            html_parts.extend(("</table>", "</section>"))
         # Add exploitation results
         if "exploitation" in data:
-            html_parts.append("<section class='exploitation'>")
-            html_parts.append("<h2>Exploitation Results</h2>")
+            html_parts.extend(
+                ("<section class='exploitation'>", "<h2>Exploitation Results</h2>")
+            )
             for exploit in data["exploitation"]:
                 html_parts.append("<div class='exploit-result'>")
                 html_parts.append(f"<h3>{exploit.get('technique', 'Unknown Technique')}</h3>")
@@ -201,8 +205,12 @@ class ReportGenerator:
 
         # Add recommendations
         if "recommendations" in data:
-            html_parts.append("<section class='recommendations'>")
-            html_parts.append("<h2>Security Recommendations</h2>")
+            html_parts.extend(
+                (
+                    "<section class='recommendations'>",
+                    "<h2>Security Recommendations</h2>",
+                )
+            )
             html_parts.append("<ol>")
             for rec in data["recommendations"]:
                 html_parts.append(f"<li>{rec}</li>")
@@ -342,21 +350,15 @@ class ReportGenerator:
         ]
         # Add sections
         if "summary" in data:
-            lines.append("SUMMARY")
-            lines.append("-" * 40)
-            lines.append(data["summary"])
-            lines.append("")
-
+            lines.extend(("SUMMARY", "-" * 40))
+            lines.extend((data["summary"], ""))
         if "binary_info" in data:
-            lines.append("BINARY INFORMATION")
-            lines.append("-" * 40)
-            for key, value in data["binary_info"].items():
-                lines.append(f"  {key}: {value}")
+            lines.extend(("BINARY INFORMATION", "-" * 40))
+            lines.extend(f"  {key}: {value}" for key, value in data["binary_info"].items())
             lines.append("")
 
         if "protections" in data:
-            lines.append("PROTECTION ANALYSIS")
-            lines.append("-" * 40)
+            lines.extend(("PROTECTION ANALYSIS", "-" * 40))
             for protection in data["protections"]:
                 status = "[BYPASSED]" if protection.get("bypassed") else "[ACTIVE]"
                 lines.append(f"  {status} {protection.get('name', 'Unknown')}")
@@ -365,8 +367,7 @@ class ReportGenerator:
             lines.append("")
 
         if "vulnerabilities" in data:
-            lines.append("VULNERABILITIES FOUND")
-            lines.append("-" * 40)
+            lines.extend(("VULNERABILITIES FOUND", "-" * 40))
             for vuln in data["vulnerabilities"]:
                 lines.append(f"  [{vuln.get('severity', 'UNKNOWN')}] {vuln.get('type', 'Unknown')}")
                 lines.append(f"    {vuln.get('description', 'No description')}")
@@ -374,8 +375,7 @@ class ReportGenerator:
             lines.append("")
 
         if "exploitation" in data:
-            lines.append("EXPLOITATION RESULTS")
-            lines.append("-" * 40)
+            lines.extend(("EXPLOITATION RESULTS", "-" * 40))
             for exploit in data["exploitation"]:
                 lines.append(f"  Technique: {exploit.get('technique', 'Unknown')}")
                 lines.append(f"  Status: {exploit.get('status', 'Unknown')}")
@@ -384,16 +384,12 @@ class ReportGenerator:
             lines.append("")
 
         if "recommendations" in data:
-            lines.append("SECURITY RECOMMENDATIONS")
-            lines.append("-" * 40)
+            lines.extend(("SECURITY RECOMMENDATIONS", "-" * 40))
             for i, rec in enumerate(data["recommendations"], 1):
                 lines.append(f"  {i}. {rec}")
             lines.append("")
 
-        lines.append("=" * 80)
-        lines.append("END OF REPORT")
-        lines.append("=" * 80)
-
+        lines.extend(("=" * 80, "END OF REPORT", "=" * 80))
         return "\n".join(lines)
 
     def save_report(self, content: str, format: str, filename: str | None = None) -> str:
@@ -421,7 +417,7 @@ class ReportGenerator:
         with open(filepath, mode, encoding=encoding) as f:
             f.write(content)
 
-        self.logger.info(f"Report saved to: {filepath}")
+        self.logger.info("Report saved to: %s", filepath)
         return str(filepath)
 
     def create_temporary_report(self, content: str, format: str) -> str:
@@ -446,7 +442,7 @@ class ReportGenerator:
             temp_file.write(content)
             temp_path = temp_file.name
 
-        self.logger.debug(f"Temporary report created: {temp_path}")
+        self.logger.debug("Temporary report created: %s", temp_path)
         return temp_path
 
     def get_supported_formats(self) -> list[str]:
@@ -496,7 +492,7 @@ class ReportGenerator:
 
                 return Template(template_string)
             except Exception as e:
-                self.logger.warning(f"Failed to create template from string: {e}")
+                self.logger.warning("Failed to create template from string: %s", e)
         return None
 
 

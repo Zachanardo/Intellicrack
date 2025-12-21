@@ -523,9 +523,7 @@ class PatternEvolutionEngine:
                 return "negative_number"
             if value == 0:
                 return "zero"
-            if value < 100:
-                return "small_number"
-            return "large_number"
+            return "small_number" if value < 100 else "large_number"
         if isinstance(value, bool):
             return str(value).lower()
         if isinstance(value, (list, tuple)):
@@ -631,7 +629,7 @@ class PatternEvolutionEngine:
 
             return False
         except Exception as e:
-            logger.error("Exception in learning_engine: %s", e, exc_info=True)
+            logger.exception("Exception in learning_engine: %s", e, exc_info=True)
             return False
 
     def _deprecate_ineffective_patterns(self) -> list[PatternRule]:
@@ -836,7 +834,7 @@ class PatternEvolutionEngine:
             }
 
         except Exception as e:
-            logger.error("Error getting pattern insights: %s", e, exc_info=True)
+            logger.exception("Error getting pattern insights: %s", e, exc_info=True)
             return {
                 "total_patterns": 0,
                 "error": str(e),
@@ -976,7 +974,7 @@ class FailureAnalysisEngine:
 
         # Check if failures affect critical operations
         critical_tasks = ["generate_script", "modify_code", "autonomous_analysis"]
-        critical_failures = sum(bool(r.task_type in critical_tasks) for r in records)
+        critical_failures = sum(r.task_type in critical_tasks for r in records)
 
         if frequency >= 50 or critical_failures >= 20:
             return "critical"
@@ -1360,7 +1358,7 @@ class AILearningEngine:
                 self.analyze_failures()
                 self.last_evolution = datetime.now()
             except Exception as e:
-                logger.error("Error in background evolution: %s", e, exc_info=True)
+                logger.exception("Error in background evolution: %s", e, exc_info=True)
 
         evolution_thread = threading.Thread(target=evolution_worker, daemon=True)
         evolution_thread.start()
@@ -1532,7 +1530,7 @@ class AILearningEngine:
             logger.debug("Exiting AILearningEngine.learn")
 
         except Exception as e:
-            logger.error("Error during learning: %s", e, exc_info=True)
+            logger.exception("Error during learning: %s", e, exc_info=True)
 
     def _extract_features(self, record: dict[str, Any]) -> list[float] | None:
         """Extract numerical features from a learning record.
@@ -1706,7 +1704,7 @@ class AILearningEngine:
             logger.info("Discovered %d new patterns", len(anomalous_successes))
 
         except Exception as e:
-            logger.error("Error discovering patterns: %s", e, exc_info=True)
+            logger.exception("Error discovering patterns: %s", e, exc_info=True)
 
     def predict_success(self, exploit_data: dict[str, Any]) -> dict[str, float]:
         """Predict the success probability of an exploit.
@@ -1750,7 +1748,7 @@ class AILearningEngine:
             }
 
         except Exception as e:
-            logger.error("Error predicting success: %s", e, exc_info=True)
+            logger.exception("Error predicting success: %s", e, exc_info=True)
             return {"status": "prediction_error", "probability": 0.5, "error": str(e)}
 
     def _calculate_confidence(self, rf_prob: float, nn_prob: float) -> float:

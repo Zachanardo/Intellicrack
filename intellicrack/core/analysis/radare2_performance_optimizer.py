@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 try:
     import r2pipe
 except ImportError as e:
-    logger.error("Import error in radare2_performance_optimizer: %s", e, exc_info=True)
+    logger.exception("Import error in radare2_performance_optimizer: %s", e)
     r2pipe = None
 
 
@@ -201,7 +201,7 @@ class R2PerformanceOptimizer:
             "analysis_timeout_multiplier": 1.5,
         }
 
-        self.logger.info(f"R2PerformanceOptimizer initialized with {strategy.value} strategy")
+        self.logger.info("R2PerformanceOptimizer initialized with %s strategy", strategy.value)
 
     def _get_system_info(self) -> dict[str, Any]:
         """Get comprehensive system information.
@@ -236,7 +236,7 @@ class R2PerformanceOptimizer:
             # Check cache first
             cache_key = f"{binary_path}_{Path(binary_path).stat().st_mtime}"
             if cache_key in self._config_cache:
-                self.logger.debug(f"Using cached optimization for {binary_path}")
+                self.logger.debug("Using cached optimization for %s", binary_path)
                 return self._config_cache[cache_key]
 
             # Analyze binary characteristics
@@ -254,11 +254,11 @@ class R2PerformanceOptimizer:
             # Cache the configuration
             self._config_cache[cache_key] = optimized_config
 
-            self.logger.info(f"Optimized configuration created for {binary_path}")
+            self.logger.info("Optimized configuration created for %s", binary_path)
             return optimized_config
 
         except Exception as e:
-            self.logger.error(f"Failed to optimize for binary {binary_path}: {e}", exc_info=True)
+            self.logger.exception("Failed to optimize for binary %s: %s", binary_path, e)
             # Return safe default configuration
             return self._get_safe_default_config()
 
@@ -307,10 +307,10 @@ class R2PerformanceOptimizer:
                     characteristics["complexity_estimate"] = self._estimate_complexity(characteristics)
 
                 except Exception as e:
-                    self.logger.warning(f"Failed to get detailed binary info: {e}")
+                    self.logger.warning("Failed to get detailed binary info: %s", e)
 
         except Exception as e:
-            self.logger.error(f"Failed to analyze binary characteristics: {e}", exc_info=True)
+            self.logger.exception("Failed to analyze binary characteristics: %s", e)
 
         return characteristics
 
@@ -374,7 +374,7 @@ class R2PerformanceOptimizer:
 
         for profile_name, profile in self.PERFORMANCE_PROFILES.items():
             if file_size <= profile.max_file_size:
-                self.logger.debug(f"Selected profile: {profile.name} (key: {profile_name})")
+                self.logger.debug("Selected profile: %s (key: %s)", profile.name, profile_name)
                 # Log profile selection for monitoring and optimization
                 self._track_profile_usage(profile_name, file_size)
                 return profile
@@ -653,7 +653,7 @@ class R2PerformanceOptimizer:
                 time.sleep(interval)
 
             except Exception as e:
-                self.logger.error(f"Resource monitoring error: {e}", exc_info=True)
+                self.logger.exception("Resource monitoring error: %s", e)
                 time.sleep(interval * 2)
 
     def _trigger_emergency_optimization(self, reason: str) -> None:
@@ -663,7 +663,7 @@ class R2PerformanceOptimizer:
             reason: Reason for emergency optimization (e.g., "memory_critical", "cpu_high").
 
         """
-        self.logger.warning(f"Emergency optimization triggered: {reason}")
+        self.logger.warning("Emergency optimization triggered: %s", reason)
 
         if reason == "cpu_high":
             # Throttle operations
@@ -699,7 +699,7 @@ class R2PerformanceOptimizer:
             self.logger.debug("R2 session optimizations applied")
 
         except Exception as e:
-            self.logger.error(f"Failed to optimize r2 session: {e}", exc_info=True)
+            self.logger.exception("Failed to optimize r2 session: %s", e)
 
     def _track_profile_usage(self, profile_name: str, file_size: int) -> None:
         """Track profile usage for optimization insights.
@@ -724,7 +724,7 @@ class R2PerformanceOptimizer:
         stats["total_file_size"] += file_size
         stats["avg_file_size"] = stats["total_file_size"] / stats["usage_count"]
 
-        self.logger.debug(f"Profile {profile_name} used {stats['usage_count']} times, avg file size: {stats['avg_file_size']:.2f} bytes")
+        self.logger.debug("Profile %s used %d times, avg file size: %.2f bytes", profile_name, stats["usage_count"], stats["avg_file_size"])
 
     def get_performance_report(self) -> dict[str, Any]:
         """Generate comprehensive performance report.
@@ -832,7 +832,7 @@ class R2PerformanceOptimizer:
                 }
 
             except Exception as e:
-                self.logger.error(f"Benchmark failed for {analysis_type}: {e}", exc_info=True)
+                self.logger.exception("Benchmark failed for %s: %s", analysis_type, e)
                 results[analysis_type] = {
                     "duration": float("inf"),
                     "memory_delta": 0,
@@ -865,7 +865,7 @@ class R2PerformanceOptimizer:
             self.logger.info("R2PerformanceOptimizer cleanup completed")
 
         except Exception as e:
-            self.logger.error(f"Cleanup failed: {e}", exc_info=True)
+            self.logger.exception("Cleanup failed: %s", e)
 
 
 def create_performance_optimizer(

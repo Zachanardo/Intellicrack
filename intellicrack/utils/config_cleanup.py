@@ -119,7 +119,7 @@ def analyze_file(file_path: Path) -> tuple[set[tuple[str, int]], set[tuple[str, 
             detector.legacy_config_patterns,
         )
     except Exception as e:
-        logger.error("Error analyzing %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error analyzing %s: %s", file_path, e)
         return set(), set(), [], []
 
 
@@ -163,28 +163,31 @@ def generate_cleanup_report(results: dict) -> str:
         Formatted report string
 
     """
-    report = ["=" * 60, "CONFIGURATION CODE CLEANUP REPORT", "=" * 60, ""]
     total_files = len(results)
     total_issues = sum(
         len(info["unused_imports"]) + len(info["unused_methods"]) + len(info["qsettings_usage"]) + len(info["legacy_patterns"])
         for info in results.values()
     )
 
-    report.extend((
-        f"Files with unused config code: {total_files}",
-        f"Total issues found: {total_issues}",
-    ))
-    report.append("")
-
+    report = [
+        "=" * 60,
+        "CONFIGURATION CODE CLEANUP REPORT",
+        "=" * 60,
+        "",
+        *(
+            f"Files with unused config code: {total_files}",
+            f"Total issues found: {total_issues}",
+            "",
+        ),
+    ]
     for file_path, info in sorted(results.items()):
-        report.append(f"\n{file_path}:")
-        report.append("-" * 40)
-
+        report.extend((f"\n{file_path}:", "-" * 40))
         if info["unused_imports"]:
             report.append("  Unused imports:")
-            for import_name, line in info["unused_imports"]:
-                report.append(f"    Line {line}: {import_name}")
-
+            report.extend(
+                f"    Line {line}: {import_name}"
+                for import_name, line in info["unused_imports"]
+            )
         if info["unused_methods"]:
             report.append("  Unused methods:")
             for method_name, line in info["unused_methods"]:
@@ -229,7 +232,7 @@ def remove_unused_imports(file_path: Path, unused_imports: set[tuple[str, int]])
 
         return True
     except Exception as e:
-        logger.error("Error removing imports from %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error removing imports from %s: %s", file_path, e)
         return False
 
 

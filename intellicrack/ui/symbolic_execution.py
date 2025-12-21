@@ -117,7 +117,7 @@ class SymbolicExecution:
             )
 
         except ImportError as e:
-            self.logger.error(f"Failed to initialize symbolic execution engine: {e}")
+            self.logger.exception("Failed to initialize symbolic execution engine: %s", e)
             self.engine_available = False
             log_error("Symbolic execution engine initialization failed", category="SYMBOLIC", exception=e)
 
@@ -190,7 +190,7 @@ class SymbolicExecution:
             )
 
         except Exception as e:
-            self.logger.error(f"Symbolic execution failed: {e}")
+            self.logger.exception("Symbolic execution failed: %s", e)
             log_error("Symbolic execution analysis failed", category="SYMBOLIC", exception=e)
 
             if hasattr(app, "update_output"):
@@ -238,7 +238,7 @@ class SymbolicExecution:
             return None
 
         except Exception as e:
-            self.logger.error(f"Failed to get binary path: {e}")
+            self.logger.exception("Failed to get binary path: %s", e)
             return None
 
     def _show_configuration_dialog(self, app: object) -> bool:
@@ -338,7 +338,7 @@ class SymbolicExecution:
             return False
 
         except Exception as e:
-            self.logger.error(f"Failed to show configuration dialog: {e}")
+            self.logger.exception("Failed to show configuration dialog: %s", e)
             return True  # Use defaults on error
 
     def _show_progress_dialog(self, app: object, binary_path: str) -> None:
@@ -403,7 +403,7 @@ class SymbolicExecution:
             self.progress_dialog.show()
 
         except Exception as e:
-            self.logger.error(f"Failed to show progress dialog: {e}")
+            self.logger.exception("Failed to show progress dialog: %s", e)
 
     def _hide_progress_dialog(self) -> None:
         """Hide progress dialog."""
@@ -412,7 +412,7 @@ class SymbolicExecution:
                 self.progress_dialog.close()
                 self.progress_dialog = None
         except Exception as e:
-            self.logger.error(f"Failed to hide progress dialog: {e}")
+            self.logger.exception("Failed to hide progress dialog: %s", e)
 
     def _run_symbolic_analysis(self, app: object, engine: object) -> dict[str, object]:
         """Run the actual symbolic analysis.
@@ -463,7 +463,7 @@ class SymbolicExecution:
             return results
 
         except Exception as e:
-            self.logger.error(f"Symbolic analysis execution failed: {e}")
+            self.logger.exception("Symbolic analysis execution failed: %s", e)
             results["error"] = str(e)
             return results
 
@@ -650,7 +650,7 @@ class SymbolicExecution:
             return results
 
         except Exception as e:
-            self.logger.error(f"Fallback analysis failed: {e}")
+            self.logger.exception("Fallback analysis failed: %s", e)
             results["error"] = str(e)
             return results
 
@@ -705,7 +705,7 @@ class SymbolicExecution:
             self.current_analysis = results
 
         except Exception as e:
-            self.logger.error(f"Failed to process symbolic execution results: {e}")
+            self.logger.exception("Failed to process symbolic execution results: %s", e)
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] Failed to process symbolic execution results: {e}")
 
@@ -737,4 +737,4 @@ class SymbolicExecution:
             log_info("Symbolic execution cleanup completed", category="SYMBOLIC")
 
         except Exception as e:
-            self.logger.error(f"Symbolic execution cleanup failed: {e}")
+            self.logger.exception("Symbolic execution cleanup failed: %s", e)

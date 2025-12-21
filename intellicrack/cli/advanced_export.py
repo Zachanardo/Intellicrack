@@ -772,7 +772,11 @@ KEY FINDINGS
         if not isinstance(vulns, list):
             return 0
 
-        return sum(bool(isinstance(vuln, dict) and vuln.get("severity", "").lower() == severity.lower()) for vuln in vulns)
+        return sum(
+            isinstance(vuln, dict)
+            and vuln.get("severity", "").lower() == severity.lower()
+            for vuln in vulns
+        )
 
     def _calculate_risk_score(self, vuln_data: dict[str, Any]) -> float:
         """Calculate overall risk score."""

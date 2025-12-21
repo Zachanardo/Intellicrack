@@ -160,7 +160,7 @@ class FileMetadataWidget(QWidget):
 
         """
         if not os.path.exists(file_path):
-            logger.error(f"File not found: {file_path}")
+            logger.error("File not found: %s", file_path)
             return {}
 
         self.current_file = file_path

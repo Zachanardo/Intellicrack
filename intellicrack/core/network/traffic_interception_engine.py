@@ -43,7 +43,7 @@ try:
 
     HAS_SCAPY = True
 except ImportError as e:
-    logger.error("Import error in traffic_interception_engine: %s", e)
+    logger.exception("Import error in traffic_interception_engine: %s", e)
     HAS_SCAPY = False
 
 # Note: Removed pcap import - now using Scapy exclusively for packet capture
@@ -286,7 +286,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return True
 
         except Exception as e:
-            self.logger.error("Failed to start traffic interception: %s", e, exc_info=True)
+            self.logger.exception("Failed to start traffic interception: %s", e)
             self.running = False
             return False
 
@@ -306,7 +306,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return True
 
         except Exception as e:
-            self.logger.error("Error stopping traffic interception: %s", e, exc_info=True)
+            self.logger.exception("Error stopping traffic interception: %s", e)
             return False
 
     def _capture_loop(self) -> None:
@@ -319,7 +319,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 self._socket_capture()
 
         except Exception as e:
-            self.logger.error("Capture loop error: %s", e, exc_info=True)
+            self.logger.exception("Capture loop error: %s", e)
 
     def _scapy_capture(self) -> None:
         """Packet capture using Scapy."""
@@ -376,7 +376,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
 
         except Exception as e:
-            self.logger.error("Scapy capture error: %s", e, exc_info=True)
+            self.logger.exception("Scapy capture error: %s", e)
 
     # Note: _pcap_capture method removed - now using Scapy exclusively for packet capture
     # This provides better cross-platform compatibility and enhanced features
@@ -395,7 +395,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 try:
                     sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(3))
                 except (AttributeError, OSError) as e:
-                    self.logger.error("Error in traffic_interception_engine: %s", e)
+                    self.logger.exception("Error in traffic_interception_engine: %s", e)
                     # Fallback to standard socket monitoring
                     self._monitor_local_connections()
                     return
@@ -408,18 +408,18 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                     self._parse_raw_packet(raw_packet)
 
                 except TimeoutError as e:
-                    logger.error("socket.timeout in traffic_interception_engine: %s", e)
+                    logger.exception("socket.timeout in traffic_interception_engine: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.debug("Socket capture error: %s", e, exc_info=True)
+                        self.logger.debug("Socket capture error: %s", e)
 
             if sys.platform == "win32":
                 sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
             sock.close()
 
         except Exception as e:
-            self.logger.warning("Raw socket capture failed, using connection monitoring: %s", e, exc_info=True)
+            self.logger.warning("Raw socket capture failed, using connection monitoring: %s", e)
             self._monitor_local_connections()
 
     def _monitor_local_connections(self) -> None:
@@ -453,12 +453,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                         sock.close()
 
                     except Exception as e:
-                        logger.error("Exception in traffic_interception_engine: %s", e)
+                        logger.exception("Exception in traffic_interception_engine: %s", e)
 
                 time.sleep(1.0)
 
             except Exception as e:
-                self.logger.debug("Connection monitoring error: %s", e, exc_info=True)
+                self.logger.debug("Connection monitoring error: %s", e)
 
     def _parse_raw_packet(self, raw_packet: bytes) -> None:
         """Parse raw network packet."""
@@ -516,7 +516,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self._queue_packet(intercepted)
 
         except Exception as e:
-            self.logger.debug("Error parsing packet: %s", e, exc_info=True)
+            self.logger.debug("Error parsing packet: %s", e)
 
     def _queue_packet(self, packet: InterceptedPacket) -> None:
         """Add packet to analysis queue."""
@@ -549,12 +549,12 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                             try:
                                 callback(analysis)
                             except Exception as e:
-                                self.logger.error("Analysis callback error: %s", e, exc_info=True)
+                                self.logger.exception("Analysis callback error: %s", e)
 
                 time.sleep(0.1)
 
             except Exception as e:
-                self.logger.error("Analysis loop error: %s", e, exc_info=True)
+                self.logger.exception("Analysis loop error: %s", e)
 
     def _analyze_packet(self, packet: InterceptedPacket) -> AnalyzedTraffic | None:
         """Analyze packet for license-related content."""
@@ -594,7 +594,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
                 # Look for license-related keywords
                 license_keywords = [b"license", b"activation", b"checkout", b"verify", b"serial"]
-                keyword_matches = sum(bool(keyword in data_lower) for keyword in license_keywords)
+                keyword_matches = sum(keyword in data_lower for keyword in license_keywords)
 
                 if keyword_matches > 0:
                     confidence += min(keyword_matches * 0.1, 0.3)
@@ -626,7 +626,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
 
         except Exception as e:
-            self.logger.error("Packet analysis error: %s", e, exc_info=True)
+            self.logger.exception("Packet analysis error: %s", e)
             return None
 
     def add_analysis_callback(self, callback: Callable[[AnalyzedTraffic], None]) -> None:
@@ -645,7 +645,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.info("DNS redirection setup: %s -> %s", hostname, target_ip)
             return True
         except Exception as e:
-            self.logger.error("Failed to setup DNS redirection: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup DNS redirection: %s", e)
             return False
 
     def setup_transparent_proxy(self, target_host: str, target_port: int) -> bool:
@@ -656,7 +656,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.info("Transparent proxy setup: %s -> %s:%d", proxy_key, self.bind_interface, target_port)
             return True
         except Exception as e:
-            self.logger.error("Failed to setup transparent proxy: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup transparent proxy: %s", e)
             return False
 
     def get_statistics(self) -> dict[str, Any]:
@@ -728,7 +728,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             try:
                 sock.connect((host, port))
             except (TimeoutError, OSError) as e:
-                self.logger.error("Connection failed to %s:%d: %s", host, port, e)
+                self.logger.exception("Connection failed to %s:%d: %s", host, port, e)
                 sock.close()
                 return None
 
@@ -738,7 +738,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             try:
                 sock.sendall(wrapped_command)
             except OSError as e:
-                self.logger.error("Send failed: %s", e)
+                self.logger.exception("Send failed: %s", e)
                 sock.close()
                 return None
 
@@ -793,7 +793,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             return None
 
         except Exception as e:
-            self.logger.error("Protocol command failed: %s", e, exc_info=True)
+            self.logger.exception("Protocol command failed: %s", e)
             return None
 
     def _wrap_protocol_command(self, protocol_name: str, command: bytes) -> bytes:
@@ -844,7 +844,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 expected_len = struct.unpack(">H", data[2:4])[0]
                 return len(data) >= expected_len + 4
 
-        if protocol_name == "hasp":
+        elif protocol_name == "hasp":
             if len(data) >= 6:
                 expected_len = struct.unpack("<H", data[4:6])[0]
                 return len(data) >= expected_len + 6

@@ -98,10 +98,7 @@ class BinaryFeatureExtractor:
 
                 self.arch = CS_ARCH_X86
                 # Determine architecture
-                if self.pe.FILE_HEADER.Machine == 0x8664:
-                    self.mode = CS_MODE_64
-                else:
-                    self.mode = CS_MODE_32
+                self.mode = CS_MODE_64 if self.pe.FILE_HEADER.Machine == 0x8664 else CS_MODE_32
             except Exception as e:
                 self.logger.warning("PE parsing failed: %s", e, exc_info=True)
 

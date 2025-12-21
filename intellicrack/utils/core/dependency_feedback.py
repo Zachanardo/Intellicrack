@@ -256,9 +256,7 @@ class DependencyFeedback:
         # Alternatives
         if info["alternatives"]:
             message_parts.append("   Alternatives:")
-            for alt in info["alternatives"]:
-                message_parts.append(f"      {alt}")
-
+            message_parts.extend(f"      {alt}" for alt in info["alternatives"])
         # Criticality
         if info["critical"]:
             message_parts.append("   WARNING️  This is a CRITICAL dependency for core functionality.")
@@ -359,15 +357,16 @@ class DependencyFeedback:
                 report_lines.extend((status["message"], ""))
         # Optional dependencies
         if optional_deps:
-            report_lines.append("🟡 OPTIONAL MISSING DEPENDENCIES:")
-            report_lines.append("These provide enhanced functionality.")
-            report_lines.append("")
-
+            report_lines.extend(
+                (
+                    "🟡 OPTIONAL MISSING DEPENDENCIES:",
+                    "These provide enhanced functionality.",
+                    "",
+                )
+            )
             for dep_name in optional_deps:
                 status = self.get_dependency_status(dep_name)
-                report_lines.append(status["message"])
-                report_lines.append("")
-
+                report_lines.extend((status["message"], ""))
         report_lines.extend((
             "📜 BATCH INSTALLATION SCRIPT:",
             "-" * 40,

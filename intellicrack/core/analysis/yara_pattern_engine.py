@@ -188,7 +188,7 @@ class YaraPatternEngine:
             logger.info("Loaded %d YARA rule namespaces with %d rules", len(rule_files), self._count_total_rules())
 
         except Exception as e:
-            logger.error("Failed to load YARA rules: %s", e)
+            logger.exception("Failed to load YARA rules: %s", e)
             self.compiled_rules = None
 
     def _create_default_rules(self, rules_dir: Path) -> None:
@@ -596,9 +596,8 @@ rule Basic_PE_Detection
                 "matches": [],
             }
 
-        matches_list = []
-        for match in result.matches:
-            matches_list.append({
+        matches_list = [
+            {
                 "rule_name": match.rule_name,
                 "namespace": match.namespace,
                 "tags": match.tags,
@@ -610,8 +609,9 @@ rule Basic_PE_Detection
                 "string_data": match.string_data,
                 "severity": match.severity,
                 "metadata": match.metadata,
-            })
-
+            }
+            for match in result.matches
+        ]
         return {
             "file_path": result.file_path,
             "matches": matches_list,
@@ -648,7 +648,7 @@ rule Basic_PE_Detection
             rule_files: dict[str, str] = {}
 
             if rules_path_obj.is_file():
-                if rules_path_obj.suffix in (".yar", ".yara"):
+                if rules_path_obj.suffix in {".yar", ".yara"}:
                     namespace = f"external_{rules_path_obj.stem}"
                     rule_files[namespace] = str(rules_path_obj)
                     try:
@@ -696,7 +696,7 @@ rule Basic_PE_Detection
                         namespace = f"custom_{rule_file.stem}"
                         existing_rule_files[namespace] = str(rule_file)
 
-            all_rule_files = {**existing_rule_files, **rule_files}
+            all_rule_files = existing_rule_files | rule_files
 
             self.compiled_rules = yara.compile(filepaths=all_rule_files)
             self._extract_rule_metadata()
@@ -706,10 +706,10 @@ rule Basic_PE_Detection
             return True
 
         except yara.SyntaxError as e:
-            logger.error("YARA syntax error in rules from %s: %s", rules_path, e)
+            logger.exception("YARA syntax error in rules from %s: %s", rules_path, e)
             return False
         except Exception as e:
-            logger.error("Failed to load YARA rules from %s: %s", rules_path, e)
+            logger.exception("Failed to load YARA rules from %s: %s", rules_path, e)
             return False
 
     def scan_file(self, file_path: str, timeout: int = 60) -> YaraScanResult:
@@ -805,7 +805,7 @@ rule Basic_PE_Detection
             file_hash = hasher.hexdigest()[:32]  # Use more hash bytes for better uniqueness
         except Exception as e:
             logger.debug("Could not generate file hash: %s", e)
-            file_hash = "unknown_%s_%s" % (file_size, file_mtime)
+            file_hash = f"unknown_{file_size}_{file_mtime}"
 
         # Update cache with new file info
         self.scanned_files[abs_file_path] = (file_mtime, file_size, file_hash)
@@ -900,7 +900,7 @@ rule Basic_PE_Detection
                 },
             )
         except Exception as e:
-            logger.error("YARA scan error: %s", e)
+            logger.exception("YARA scan error: %s", e)
             return YaraScanResult(
                 file_path=file_path,
                 error=str(e),
@@ -1063,9 +1063,9 @@ rule Basic_PE_Detection
             )
 
         except Exception as e:
-            logger.error("Memory scan error: %s", e)
+            logger.exception("Memory scan error: %s", e)
             return YaraScanResult(
-                file_path="process_%s" % process_id,
+                file_path=f"process_{process_id}",
                 error=str(e),
             )
 
@@ -1101,7 +1101,7 @@ rule Basic_PE_Detection
             return True
 
         except Exception as e:
-            logger.error("Failed to create custom rule: %s", e)
+            logger.exception("Failed to create custom rule: %s", e)
             return False
 
     def get_rule_info(self) -> dict[str, Any]:
@@ -1233,7 +1233,7 @@ def get_yara_engine() -> YaraPatternEngine | None:
         try:
             _yara_engine = YaraPatternEngine()
         except Exception as e:
-            logger.error("Failed to initialize YARA engine: %s", e)
+            logger.exception("Failed to initialize YARA engine: %s", e)
             return None
     return _yara_engine
 

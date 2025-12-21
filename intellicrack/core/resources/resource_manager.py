@@ -21,7 +21,12 @@ from collections.abc import Callable, Generator
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, ParamSpec, cast
+from typing import TYPE_CHECKING, Any, Literal, ParamSpec, cast
+
+if TYPE_CHECKING:
+    from subprocess import Popen as PopenGeneric
+else:
+    PopenGeneric = subprocess.Popen
 
 from intellicrack.handlers.psutil_handler import psutil
 
@@ -112,7 +117,7 @@ class ManagedResource:
         self,
         resource_id: str,
         resource_type: ResourceType,
-        cleanup_func: Callable | None = None,
+        cleanup_func: Callable[[], None] | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> None:
         """Initialize a managed resource.
@@ -153,7 +158,7 @@ class ManagedResource:
             logger.info("Cleaned up %s: %s", self.resource_type.value, self.resource_id)
         except Exception as e:
             self.state = ResourceState.FAILED
-            logger.error("Failed to cleanup %s %s: %s", self.resource_type.value, self.resource_id, e, exc_info=True)
+            logger.exception("Failed to cleanup %s %s: %s", self.resource_type.value, self.resource_id, e)
             raise
 
     def __del__(self) -> None:
@@ -173,7 +178,7 @@ class ManagedResource:
 class ProcessResource(ManagedResource):
     """Managed process resource."""
 
-    def __init__(self, process: subprocess.Popen, command: str) -> None:
+    def __init__(self, process: subprocess.Popen[bytes], command: str) -> None:
         """Initialize process resource.
 
         Args:
@@ -183,7 +188,7 @@ class ProcessResource(ManagedResource):
         """
         self.process = process
         self.command = command
-        self.psutil_process = None
+        self.psutil_process: psutil.Process | None = None
 
         with contextlib.suppress(psutil.NoSuchProcess):
             self.psutil_process = psutil.Process(process.pid)
@@ -212,7 +217,7 @@ class ProcessResource(ManagedResource):
                     self.process.kill()
                     self.process.wait()
             except Exception as e:
-                logger.error("Error terminating process %s: %s", self.resource_id, e, exc_info=True)
+                logger.exception("Error terminating process %s: %s", self.resource_id, e)
 
     def update_usage(self) -> None:
         """Update resource usage statistics from process metrics."""
@@ -223,7 +228,7 @@ class ProcessResource(ManagedResource):
 class VMResource(ManagedResource):
     """Managed virtual machine resource."""
 
-    def __init__(self, vm_name: str, vm_process: subprocess.Popen | None = None) -> None:
+    def __init__(self, vm_name: str, vm_process: subprocess.Popen[bytes] | None = None) -> None:
         """Initialize VM resource.
 
         Args:
@@ -262,7 +267,7 @@ class VMResource(ManagedResource):
                 timeout=10,
             )
         except Exception as e:
-            logger.warning("Failed to shutdown VM %s gracefully: %s", self.vm_name, e, exc_info=True)
+            logger.warning("Failed to shutdown VM %s gracefully: %s", self.vm_name, e)
 
         # Kill process if still running
         if self.vm_process and self.vm_process.poll() is None:
@@ -307,6 +312,7 @@ class ResourceManager:
         self._lock = threading.RLock()
 
         # Cleanup thread (skip during testing)
+        self._cleanup_thread: threading.Thread | None
         if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
             self._cleanup_thread = threading.Thread(target=self._cleanup_loop, daemon=True)
             self._cleanup_thread.start()
@@ -332,7 +338,7 @@ class ResourceManager:
                 self._check_resource_limits()
                 self._cleanup_stale_resources()
             except Exception as e:
-                logger.error("Error in cleanup loop: %s", e, exc_info=True)
+                logger.exception("Error in cleanup loop: %s", e)
 
     def _check_resource_limits(self) -> None:
         """Check and enforce resource limits.
@@ -347,7 +353,7 @@ class ResourceManager:
                 logger.warning("Process limit exceeded: %s/%s", len(process_ids), self.max_processes)
 
             # Check memory usage
-            total_memory = 0
+            total_memory = 0.0
             for resource_id in self._resources:
                 resource = self._resources[resource_id]
                 if isinstance(resource, ProcessResource):
@@ -364,13 +370,12 @@ class ResourceManager:
 
         """
         with self._lock:
-            stale_resources = []
-
-            for resource_id, resource in self._resources.items():
-                # Check if process resources are still alive
-                if isinstance(resource, ProcessResource) and resource.process.poll() is not None:
-                    stale_resources.append(resource_id)
-
+            stale_resources = [
+                resource_id
+                for resource_id, resource in self._resources.items()
+                if isinstance(resource, ProcessResource)
+                and resource.process.poll() is not None
+            ]
             for resource_id in stale_resources:
                 self.release_resource(resource_id)
 
@@ -389,15 +394,15 @@ class ResourceManager:
             resource_count = len(self._resources_by_type.get(resource.resource_type, set()))
             if resource.resource_type == ResourceType.PROCESS and resource_count >= self.max_processes:
                 error_msg = f"Process limit reached: {self.max_processes}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise RuntimeError(error_msg)
             if resource.resource_type == ResourceType.VM and resource_count >= self.max_vms:
                 error_msg = f"VM limit reached: {self.max_vms}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise RuntimeError(error_msg)
             if resource.resource_type == ResourceType.CONTAINER and resource_count >= self.max_containers:
                 error_msg = f"Container limit reached: {self.max_containers}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise RuntimeError(error_msg)
 
             # Register resource
@@ -432,7 +437,7 @@ class ResourceManager:
                 self._resources_by_type[resource.resource_type].discard(resource_id)
 
             except Exception as e:
-                logger.error("Error releasing resource %s: %s", resource_id, e, exc_info=True)
+                logger.exception("Error releasing resource %s: %s", resource_id, e)
 
     def get_resource(self, resource_id: str) -> ManagedResource | None:
         """Get a managed resource by ID.
@@ -450,7 +455,7 @@ class ResourceManager:
     def managed_process(
         self,
         command: str | list[str],
-        **kwargs: dict[str, object],
+        **kwargs: Any,
     ) -> Generator[ProcessResource, None, None]:
         """Context manager for managed processes.
 
@@ -466,7 +471,7 @@ class ResourceManager:
         if isinstance(command, str):
             kwargs["shell"] = True
 
-        process = subprocess.Popen(command, **kwargs)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
+        process: subprocess.Popen[bytes] = subprocess.Popen(command, **kwargs)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         resource = ProcessResource(process, str(command))
 
         try:
@@ -476,7 +481,7 @@ class ResourceManager:
             self.release_resource(resource.resource_id)
 
     @contextlib.contextmanager
-    def managed_vm(self, vm_name: str, vm_process: subprocess.Popen | None = None) -> Generator[VMResource, None, None]:
+    def managed_vm(self, vm_name: str, vm_process: subprocess.Popen[bytes] | None = None) -> Generator[VMResource, None, None]:
         """Context manager for managed VMs.
 
         Args:
@@ -519,7 +524,7 @@ class ResourceManager:
             try:
                 shutil.rmtree(temp_dir)
             except Exception as e:
-                logger.error("Failed to remove temp directory %s: %s", temp_dir, e, exc_info=True)
+                logger.exception("Failed to remove temp directory %s: %s", temp_dir, e)
 
         resource = ManagedResource(resource_id=temp_dir, resource_type=ResourceType.TEMP_DIR, cleanup_func=cleanup_temp)
 
@@ -545,7 +550,7 @@ class ResourceManager:
                 try:
                     self.release_resource(resource_id)
                 except Exception as e:
-                    logger.error("Error cleaning up resource %s: %s", resource_id, e, exc_info=True)
+                    logger.exception("Error cleaning up resource %s: %s", resource_id, e)
 
     def __enter__(self) -> "ResourceManager":
         """Context manager entry."""
@@ -556,11 +561,11 @@ class ResourceManager:
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool:
+    ) -> Literal[False]:
         """Context manager exit with cleanup."""
         self.cleanup_all()
         if exc_type:
-            logger.error("Exception in resource manager context: %s: %s", exc_type.__name__, exc_val)
+            logger.exception("Exception in resource manager context: %s: %s", exc_type.__name__, exc_val)
         return False
 
     def get_resource_usage_stats(self) -> dict[str, Any]:
@@ -572,7 +577,7 @@ class ResourceManager:
 
         """
         with self._lock:
-            stats = {
+            stats: dict[str, Any] = {
                 "total_resources": len(self._resources),
                 "by_type": {},
                 "by_status": {},
@@ -586,14 +591,16 @@ class ResourceManager:
                 "cleanup_interval": self.cleanup_interval,
             }
 
-            # Count by type
-            for resource_type, resource_ids in self._resources_by_type.items():
-                stats["by_type"][resource_type.value] = len(resource_ids)
+            by_type_dict: dict[str, int] = {
+                resource_type.value: len(resource_ids)
+                for resource_type, resource_ids in self._resources_by_type.items()
+            }
+            stats["by_type"] = by_type_dict
 
             # Count by status
-            status_counts = {}
+            status_counts: dict[str, int] = {}
             for resource in self._resources.values():
-                status = resource.status.value
+                status = resource.state.value
                 status_counts[status] = status_counts.get(status, 0) + 1
             stats["by_status"] = status_counts
 
@@ -619,7 +626,7 @@ class ResourceManager:
         except ImportError:
             return {"rss_mb": 0, "vms_mb": 0, "percent": 0.0}
         except Exception as e:
-            logger.warning("Failed to get memory usage: %s", e, exc_info=True)
+            logger.warning("Failed to get memory usage: %s", e)
             return {"rss_mb": 0, "vms_mb": 0, "percent": 0.0}
 
     def _cleanup_resource(self, resource_id: str) -> bool:
@@ -636,7 +643,7 @@ class ResourceManager:
             self.release_resource(resource_id)
             return True
         except Exception as e:
-            logger.error("Failed to cleanup resource %s: %s", resource_id, e, exc_info=True)
+            logger.exception("Failed to cleanup resource %s: %s", resource_id, e)
             return False
 
     def force_cleanup_by_type(self, resource_type: ResourceType) -> int:
@@ -676,7 +683,7 @@ class ResourceManager:
             resource_ids = list(self._resources.keys())
             for resource_id in resource_ids:
                 resource = self._resources.get(resource_id)
-                if resource and (current_time - resource.created_at) > max_age_seconds and self._cleanup_resource(resource_id):
+                if resource and (current_time - resource.created_at.timestamp()) > max_age_seconds and self._cleanup_resource(resource_id):
                     cleaned_count += 1
 
         logger.info("Force cleaned %s expired resources (older than %ss)", cleaned_count, max_age_seconds)
@@ -707,7 +714,7 @@ class ResourceManager:
                 terminal_manager = get_terminal_manager()
                 terminal_manager.log_terminal_message(f"Resource limits updated: {limits}")
             except Exception as e:
-                logger.warning("Could not log to terminal manager: %s", e, exc_info=True)
+                logger.warning("Could not log to terminal manager: %s", e)
 
         logger.info("Updated resource limits: %s", limits)
 
@@ -764,27 +771,30 @@ class ResourceManager:
             Dictionary with health status, issues, warnings, and statistics
 
         """
-        health = {
+        health_issues: list[str] = []
+        health_warnings: list[str] = []
+
+        health: dict[str, Any] = {
             "status": "healthy",
-            "issues": [],
-            "warnings": [],
+            "issues": health_issues,
+            "warnings": health_warnings,
             "stats": self.get_resource_usage_stats(),
         }
 
         with self._lock:
             # Check for resource limits
             if len(self._resources_by_type.get(ResourceType.PROCESS, set())) > self.max_processes:
-                health["issues"].append(
+                health_issues.append(
                     f"Process count exceeds limit: {len(self._resources_by_type.get(ResourceType.PROCESS, set()))} > {self.max_processes}",
                 )
 
             if len(self._resources_by_type.get(ResourceType.VM, set())) > self.max_vms:
-                health["issues"].append(
+                health_issues.append(
                     f"VM count exceeds limit: {len(self._resources_by_type.get(ResourceType.VM, set()))} > {self.max_vms}",
                 )
 
             if len(self._resources_by_type.get(ResourceType.CONTAINER, set())) > self.max_containers:
-                health["issues"].append(
+                health_issues.append(
                     f"Container count exceeds limit: {len(self._resources_by_type.get(ResourceType.CONTAINER, set()))} > {self.max_containers}",
                 )
 
@@ -795,22 +805,22 @@ class ResourceManager:
                 for resource in self._resources.values()
                 if (resource.state == ResourceState.CLEANING and (current_time - resource.created_at.timestamp()) > 300)
             ]:
-                health["warnings"].append(f"Found {len(stuck_resources)} stuck resources in cleanup state")
+                health_warnings.append(f"Found {len(stuck_resources)} stuck resources in cleanup state")
 
             # Check memory usage
             memory_stats = self._get_memory_usage()
             if memory_stats.get("rss_mb", 0) > self.max_memory_mb:
-                health["issues"].append(
+                health_issues.append(
                     f"Memory usage exceeds limit: {memory_stats['rss_mb']}MB > {self.max_memory_mb}MB",
                 )
 
             # Check cleanup thread (skip during testing)
             if self._cleanup_thread is not None and not self._cleanup_thread.is_alive():
-                health["issues"].append("Cleanup thread is not running")
+                health_issues.append("Cleanup thread is not running")
 
-        if health["issues"]:
+        if health_issues:
             health["status"] = "unhealthy"
-        elif health["warnings"]:
+        elif health_warnings:
             health["status"] = "degraded"
 
         # Report health status to terminal manager if available
@@ -825,7 +835,7 @@ class ResourceManager:
                     for warning in health["warnings"]:
                         terminal_manager.log_terminal_message(f"Health warning: {warning}", level="warning")
             except Exception as e:
-                logger.warning("Could not report to terminal manager: %s", e, exc_info=True)
+                logger.warning("Could not report to terminal manager: %s", e)
 
         return health
 
@@ -856,7 +866,7 @@ class ResourceContext:
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool:
+    ) -> Literal[False]:
         """Exit resource context with cleanup."""
         if self._entered:
             self.cleanup_all()
@@ -883,7 +893,7 @@ class ResourceContext:
         """
         if not self._entered:
             error_msg = "ResourceContext must be used as a context manager"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise RuntimeError(error_msg)
 
         if metadata is None:
@@ -891,7 +901,13 @@ class ResourceContext:
         metadata["owner"] = self.owner
         metadata["context_managed"] = True
 
-        resource_id = self.resource_manager.register_resource(resource_type, resource_handle, cleanup_func, metadata)
+        resource = ManagedResource(
+            resource_id=id(resource_handle),
+            resource_type=resource_type,
+            cleanup_func=cleanup_func,
+            metadata=metadata,
+        )
+        resource_id = self.resource_manager.register_resource(resource)
         self.managed_resources.append(resource_id)
         return resource_id
 
@@ -941,7 +957,7 @@ class AutoCleanupResource:
 
         """
 
-        def wrapper(*args: object, **kwargs: object) -> object:
+        def wrapper(*args: object, **kwargs: object) -> Any:
             """Wrap function with automatic resource cleanup.
 
             Args:
@@ -1004,8 +1020,8 @@ class FallbackHandler:
 
     def __init__(self) -> None:
         """Initialize fallback handler with tool alternatives."""
-        self.fallback_registry = {}
-        self.python_alternatives = {}
+        self.fallback_registry: dict[str, Callable[..., Any]] = {}
+        self.python_alternatives: dict[str, list[str]] = {}
         self._setup_builtin_fallbacks()
 
     def _setup_builtin_fallbacks(self) -> None:
@@ -1065,7 +1081,7 @@ class FallbackHandler:
                 fallback_func: Callable[..., object | None] = cast("Callable[..., object | None]", self.fallback_registry[tool_name])
                 return fallback_func(*args, **kwargs)
             except Exception as e:
-                logger.error("Fallback for %s failed: %s", tool_name, e, exc_info=True)
+                logger.exception("Fallback for %s failed: %s", tool_name, e)
                 return None
 
         logger.warning("No fallback available for tool: %s", tool_name)
@@ -1100,7 +1116,7 @@ class FallbackHandler:
             return list(set(strings))  # Remove duplicates
 
         except Exception as e:
-            logger.error("Strings fallback failed: %s", e, exc_info=True)
+            logger.exception("Strings fallback failed: %s", e)
             return []
 
     def _file_type_fallback(self, file_path: str) -> str:
@@ -1149,7 +1165,7 @@ class FallbackHandler:
             return mime_type or "Unknown file type"
 
         except Exception as e:
-            logger.error("File type fallback failed: %s", e, exc_info=True)
+            logger.exception("File type fallback failed: %s", e)
             return "Unknown file type"
 
     def _objdump_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
@@ -1164,10 +1180,10 @@ class FallbackHandler:
 
         """
         try:
-            result = []
+            result: list[str] = []
 
             # Try PE analysis
-            try:
+            with contextlib.suppress(ImportError):
                 from intellicrack.handlers.pefile_handler import pefile
 
                 pe = pefile.PE(binary_path)
@@ -1190,41 +1206,35 @@ class FallbackHandler:
 
                 return "\n".join(result)
 
-            except ImportError:
-                pass
-
             # Try ELF analysis
-            try:
+            with contextlib.suppress(ImportError):
                 from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
 
                 if not HAS_PYELFTOOLS:
                     raise ImportError("pyelftools not available")
 
                 with open(binary_path, "rb") as f:
-                    elf = ELFFile(f)
+                    elf_file: Any = cast(Any, ELFFile)(f)
 
                     if "-h" in (options or []):
                         result.extend((
                             f"File: {binary_path}",
-                            f"Class: {elf.get_machine_arch()}",
-                            f"Type: {elf.header['e_type']}",
+                            f"Class: {elf_file.get_machine_arch()}",
+                            f"Type: {elf_file.header['e_type']}",
                         ))
                     if "-S" in (options or []):
                         result.append("\nSections:")
-                        for section in elf.iter_sections():
-                            result.append(
-                                f"  {section.name}: Offset={hex(section['sh_offset'])}, Size={hex(section['sh_size'])}",
-                            )
-
+                        elf_section: Any
+                        result.extend(
+                            f"  {elf_section.name}: Offset={hex(elf_section['sh_offset'])}, Size={hex(elf_section['sh_size'])}"
+                            for elf_section in elf_file.iter_sections()
+                        )
                 return "\n".join(result)
-
-            except ImportError:
-                pass
 
             return "objdump fallback: Install pefile or pyelftools for detailed analysis"
 
         except Exception as e:
-            logger.error("objdump fallback failed: %s", e, exc_info=True)
+            logger.exception("objdump fallback failed: %s", e)
             return f"objdump fallback error: {e}"
 
     def _readelf_fallback(self, binary_path: str, options: list[str] | None = None) -> str:
@@ -1244,13 +1254,13 @@ class FallbackHandler:
             if not HAS_PYELFTOOLS:
                 raise ImportError("pyelftools not available")
 
-            result = []
+            result: list[str] = []
             with open(binary_path, "rb") as f:
-                elf = ELFFile(f)
+                elf_file: Any = cast(Any, ELFFile)(f)
 
                 if "-h" in (options or []):
                     # ELF header
-                    header = elf.header
+                    header = elf_file.header
                     result.extend((
                         "ELF Header:",
                         f"  Class: {header['e_ident']['EI_CLASS']}",
@@ -1262,17 +1272,17 @@ class FallbackHandler:
                 if "-S" in (options or []):
                     # Section headers
                     result.append("\nSection Headers:")
-                    for section in elf.iter_sections():
-                        result.append(
-                            f"  [{section.name}] Type={section['sh_type']} Addr={hex(section['sh_addr'])} Size={hex(section['sh_size'])}",
-                        )
-
+                    section: Any
+                    result.extend(
+                        f"  [{section.name}] Type={section['sh_type']} Addr={hex(section['sh_addr'])} Size={hex(section['sh_size'])}"
+                        for section in elf_file.iter_sections()
+                    )
             return "\n".join(result)
 
         except ImportError:
             return "readelf fallback: Install pyelftools for ELF analysis"
         except Exception as e:
-            logger.error("readelf fallback failed: %s", e, exc_info=True)
+            logger.exception("readelf fallback failed: %s", e)
             return f"readelf fallback error: {e}"
 
     def _nmap_fallback(self, target: str, ports: str | None = None) -> dict[str, Any]:
@@ -1303,6 +1313,7 @@ class FallbackHandler:
             host = target.split("/", maxsplit=1)[0]  # Remove CIDR if present
 
             # Parse ports
+            port_list: list[int]
             if ports:
                 port_list = []
                 for port_range in ports.split(","):
@@ -1331,7 +1342,7 @@ class FallbackHandler:
             }
 
         except Exception as e:
-            logger.error("nmap fallback failed: %s", e, exc_info=True)
+            logger.exception("nmap fallback failed: %s", e)
             return {"error": str(e)}
 
     def _netstat_fallback(self) -> list[dict[str, Any]]:
@@ -1357,7 +1368,7 @@ class FallbackHandler:
         except ImportError:
             return [{"error": "psutil not available for netstat fallback"}]
         except Exception as e:
-            logger.error("netstat fallback failed: %s", e, exc_info=True)
+            logger.exception("netstat fallback failed: %s", e)
             return [{"error": str(e)}]
 
     def _qemu_fallback(self, *_args: object, **_kwargs: object) -> dict[str, object]:
@@ -1494,7 +1505,7 @@ def execute_with_fallback(
         raise subprocess.CalledProcessError(result.returncode, primary_command, result.stderr)
 
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
-        logger.warning("Primary command failed for %s: %s", tool_name, e, exc_info=True)
+        logger.warning("Primary command failed for %s: %s", tool_name, e)
 
         # Try fallback
         fallback_result = fallback_handler.get_fallback(tool_name, *(fallback_args or ()), **(fallback_kwargs or {}))
@@ -1542,7 +1553,7 @@ def validate_external_dependencies() -> dict[str, Any]:
         return validation_result
 
     except ImportError as e:
-        logger.warning("External tools configuration not available: %s", e, exc_info=True)
+        logger.warning("External tools configuration not available: %s", e)
         return {
             "status": "error",
             "error": "External tools configuration module not found",
@@ -1577,7 +1588,7 @@ def setup_resource_monitoring() -> None:
                 logger.warning("Missing required tools: %s", validation["missing_required_tools"])
 
         except Exception as e:
-            logger.error("Failed to log resource stats: %s", e, exc_info=True)
+            logger.exception("Failed to log resource stats: %s", e)
 
     # Start monitoring thread (skip during testing)
     import threading
@@ -1588,7 +1599,7 @@ def setup_resource_monitoring() -> None:
                 time.sleep(300)  # Log every 5 minutes
                 log_resource_stats()
             except Exception as e:
-                logger.error("Resource monitoring error: %s", e, exc_info=True)
+                logger.exception("Resource monitoring error: %s", e)
                 time.sleep(60)  # Wait before retrying
 
     if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
@@ -1603,7 +1614,7 @@ def setup_resource_monitoring() -> None:
 try:
     setup_resource_monitoring()
 except Exception as e:
-    logger.warning("Failed to setup resource monitoring: %s", e, exc_info=True)
+    logger.warning("Failed to setup resource monitoring: %s", e)
 
 
 # Global resource manager instance

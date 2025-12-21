@@ -70,7 +70,7 @@ class DirectR2Session:
             self.r2 = r2pipe.open(self.binary_path, flags=self.flags)
             return True
         except Exception as e:
-            logger.error(f"Failed to connect: {e}")
+            logger.exception("Failed to connect: %s", e)
             return False
 
     def disconnect(self) -> None:
@@ -79,7 +79,7 @@ class DirectR2Session:
             try:
                 self.r2.quit()
             except Exception as e:
-                logger.warning(f"Error closing session: {e}")
+                logger.warning("Error closing session: %s", e)
             finally:
                 self.r2 = None
 
@@ -219,7 +219,8 @@ def configure_global_pool(
             analysis_level=analysis_level,
         )
         logger.info(
-            f"Configured global pool: max_sessions={max_sessions}, max_idle_time={max_idle_time}, analysis_level={analysis_level}",
+            "Configured global pool: max_sessions=%d, max_idle_time=%d, analysis_level=%s",
+            max_sessions, max_idle_time, analysis_level,
         )
 
 
@@ -263,7 +264,7 @@ class R2CommandBatch:
                     result = session.execute(command, expect_json)
                     results.append(result)
                 except Exception as e:
-                    logger.error(f"Command failed: {command}, Error: {e}")
+                    logger.exception("Command failed: %s, Error: %s", command, e)
                     results.append({"error": str(e)})
 
         return results
@@ -291,7 +292,7 @@ def migrate_r2pipe_to_pooled(
     try:
         original_r2.quit()
     except Exception as e:
-        logger.warning(f"Error closing original r2pipe: {e}")
+        logger.warning("Error closing original r2pipe: %s", e)
 
     pool = get_global_pool()
     return pool.get_session(binary_path, flags)

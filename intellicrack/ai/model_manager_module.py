@@ -88,7 +88,7 @@ try:
 
     HAS_TENSORFLOW = True
 except ImportError as e:
-    logger.error("Import error in model_manager_module: %s", e, exc_info=True)
+    logger.exception("Import error in model_manager_module: %s", e)
 
 onnx: Any = None
 ort: Any = None
@@ -102,14 +102,14 @@ try:
     ort = _ort
     HAS_ONNX = True
 except (ImportError, AttributeError) as e:
-    logger.error("Import error in model_manager_module: %s", e, exc_info=True)
+    logger.exception("Import error in model_manager_module: %s", e)
 
 try:
     import joblib
 
     HAS_JOBLIB = True
 except ImportError as e:
-    logger.error("Import error in model_manager_module: %s", e, exc_info=True)
+    logger.exception("Import error in model_manager_module: %s", e)
     HAS_JOBLIB = False
 
 
@@ -143,7 +143,7 @@ class PyTorchBackend(ModelBackend):
                 model.eval()
             return model
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load PyTorch model: %s", e, exc_info=True)
+            logger.exception("Failed to load PyTorch model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -164,7 +164,7 @@ class PyTorchBackend(ModelBackend):
 
             return output.numpy() if hasattr(output, "numpy") else output
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("PyTorch prediction failed: %s", e, exc_info=True)
+            logger.exception("PyTorch prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -195,7 +195,7 @@ class TensorFlowBackend(ModelBackend):
         try:
             return keras.models.load_model(model_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load TensorFlow model: %s", e, exc_info=True)
+            logger.exception("Failed to load TensorFlow model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -209,7 +209,7 @@ class TensorFlowBackend(ModelBackend):
 
             return model.predict(input_data)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("TensorFlow prediction failed: %s", e, exc_info=True)
+            logger.exception("TensorFlow prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -244,7 +244,7 @@ class ONNXBackend(ModelBackend):
 
             return ort.InferenceSession(model_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load ONNX model: %s", e, exc_info=True)
+            logger.exception("Failed to load ONNX model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -261,7 +261,7 @@ class ONNXBackend(ModelBackend):
 
             return outputs[0] if len(outputs) == 1 else outputs
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("ONNX prediction failed: %s", e, exc_info=True)
+            logger.exception("ONNX prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -308,7 +308,7 @@ class SklearnBackend(ModelBackend):
         try:
             return joblib.load(model_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to load sklearn model: %s", e, exc_info=True)
+            logger.exception("Failed to load sklearn model: %s", e)
             raise
 
     def predict(self, model: Any, input_data: Any) -> Any:
@@ -321,7 +321,7 @@ class SklearnBackend(ModelBackend):
                 return model.predict_proba(input_data)
             return model.predict(input_data)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Sklearn prediction failed: %s", e, exc_info=True)
+            logger.exception("Sklearn prediction failed: %s", e)
             raise
 
     def get_model_info(self, model: Any) -> dict[str, Any]:
@@ -368,7 +368,7 @@ class ModelCache:
             key_string = f"{model_path}_{mtime}"
             return hashlib.sha256(key_string.encode()).hexdigest()
         except (OSError, ValueError) as e:
-            self.logger.error("Error in model_manager_module: %s", e, exc_info=True)
+            self.logger.exception("Error in model_manager_module: %s", e)
             return hashlib.sha256(model_path.encode()).hexdigest()
 
     def get(self, model_path: str) -> Any:
@@ -497,7 +497,7 @@ class ModelManager:
             with open(metadata_file, "w", encoding="utf-8") as f:
                 json.dump(self.model_metadata, f, indent=2)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to save model metadata: %s", e, exc_info=True)
+            logger.exception("Failed to save model metadata: %s", e)
 
     def _detect_model_type(self, model_path: str) -> str:
         """Detect the model type from file extension or content."""
@@ -994,7 +994,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             )
             return True
         except Exception as e:
-            logger.error("Failed to download model %s: %s", model_id, e, exc_info=True)
+            logger.exception("Failed to download model %s: %s", model_id, e)
             return False
 
     def _load_model_with_fallback(self, model_path: str, model_type: str, model_id: str) -> object:
@@ -1052,11 +1052,10 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                     if hasattr(model, "parameters"):
                         params = model.parameters()
                         first_param = next(params, None)
-                        if first_param is not None and not first_param.is_cuda:
-                            if hasattr(torch, "quantization") and hasattr(torch.quantization, "quantize_dynamic"):
-                                quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
-                                logger.info("Applied quantization to %s", model_id)
-                                return quantized
+                        if first_param is not None and not first_param.is_cuda and (hasattr(torch, "quantization") and hasattr(torch.quantization, "quantize_dynamic")):
+                            quantized = torch.quantization.quantize_dynamic(model, {torch.nn.Linear}, dtype=torch.qint8)
+                            logger.info("Applied quantization to %s", model_id)
+                            return quantized
             except Exception as e:
                 logger.debug("Could not quantize model: %s", e, exc_info=True)
 
@@ -1154,7 +1153,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
                 b"strtrns",
                 b"getwd",
             ]
-            unsafe_func_count = sum(bool(func in binary) for func in buffer_overflow_indicators)
+            unsafe_func_count = sum(func in binary for func in buffer_overflow_indicators)
             if unsafe_func_count > 0:
                 confidence = min(0.95, 0.3 + (unsafe_func_count * 0.15))
                 vulnerabilities.append(
@@ -1168,7 +1167,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
 
             # Format string detection - look for format string functions without proper validation
             format_string_indicators = [b"printf", b"fprintf", b"sprintf", b"snprintf", b"vprintf"]
-            format_funcs = sum(bool(func in binary) for func in format_string_indicators)
+            format_funcs = sum(func in binary for func in format_string_indicators)
             if format_funcs > 0 and b"%s" in binary and b"%n" in binary:
                 confidence = min(0.85, 0.4 + (format_funcs * 0.1))
                 vulnerabilities.append(
@@ -1184,7 +1183,7 @@ Memory.writeByteArray(patch_addr, {bytes});""",
             if b"malloc" in binary or b"calloc" in binary or b"realloc" in binary:
                 # Check for multiplication operations near memory allocation
                 alloc_patterns = [b"imul", b"mul", b"shl"]  # x86 assembly patterns
-                overflow_risk = sum(bool(pattern in binary) for pattern in alloc_patterns)
+                overflow_risk = sum(pattern in binary for pattern in alloc_patterns)
                 if overflow_risk > 0:
                     confidence = min(0.7, 0.3 + (overflow_risk * 0.1))
                     vulnerabilities.append(
@@ -1362,21 +1361,22 @@ Interceptor.attach(IsDebuggerPresent, {
 
     def _extract_binary_features(self, binary_data: bytes) -> "np.ndarray[Any, np.dtype[np.float32]]":
         """Extract feature vector from binary data."""
-        features: list[float] = []
-
         byte_counts: np.ndarray[Any, np.dtype[np.float64]] = np.zeros(256)
         data_slice = binary_data[:10000]
         for byte in data_slice:
             byte_counts[byte] += 1
-        features.extend(list(byte_counts / len(data_slice)))
-
+        features: list[float] = list(list(byte_counts / len(data_slice)))
         for i in range(0, min(len(binary_data), 10000), 1000):
             chunk = binary_data[i : i + 1000]
             features.append(self._calculate_entropy(chunk))
 
         strings = self._extract_strings(binary_data[:10000])
-        features.append(float(len(strings)))
-        features.append(float(np.mean([len(s) for s in strings])) if strings else 0.0)
+        features.extend(
+            (
+                float(len(strings)),
+                float(np.mean([len(s) for s in strings])) if strings else 0.0,
+            )
+        )
         expected_size = 1024
         if len(features) < expected_size:
             features.extend([0.0] * (expected_size - len(features)))
@@ -1624,7 +1624,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 result = backend.predict(model, data)
                 results.append(result)
             except Exception as e:
-                logger.error("Batch prediction error: %s", e, exc_info=True)
+                logger.exception("Batch prediction error: %s", e)
                 results.append(None)
 
         return results
@@ -1715,7 +1715,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 "type": model_type,
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to import local model: %s", e, exc_info=True)
+            logger.exception("Failed to import local model: %s", e)
             return None
 
     def get_available_repositories(self) -> list[str]:
@@ -1801,7 +1801,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 "config": api_config,
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to import API model: %s", e, exc_info=True)
+            logger.exception("Failed to import API model: %s", e)
             return None
 
     def train_model(self, training_data: Any, model_type: str) -> bool:
@@ -2044,7 +2044,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     logger.warning("PyTorch not available for training")
                     return False
                 except Exception as e:
-                    logger.error("PyTorch training error: %s", e, exc_info=True)
+                    logger.exception("PyTorch training error: %s", e)
                     return False
 
             elif model_type.lower() == "tensorflow":
@@ -2161,7 +2161,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     logger.warning("TensorFlow not available for training")
                     return False
                 except Exception as e:
-                    logger.error("TensorFlow training error: %s", e, exc_info=True)
+                    logger.exception("TensorFlow training error: %s", e)
                     return False
 
             else:
@@ -2169,7 +2169,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 return False
 
         except Exception as e:
-            logger.error("Model training failed: %s", e, exc_info=True)
+            logger.exception("Model training failed: %s", e)
             return False
 
     def save_model(self, model: Any, path: str) -> bool:
@@ -2216,7 +2216,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     logger.info("PyTorch model saved: %s", path)
                     return True
                 except ImportError:
-                    logger.error("PyTorch not available for saving")
+                    logger.exception("PyTorch not available for saving")
                     return False
 
             elif "tensorflow" in str(type(model)) or "keras" in str(type(model)):
@@ -2228,7 +2228,7 @@ Interceptor.attach(IsDebuggerPresent, {
                     logger.error("Model does not have save method")
                     return False
                 except Exception as tf_error:
-                    logger.error("TensorFlow model save failed: %s", tf_error, exc_info=True)
+                    logger.exception("TensorFlow model save failed: %s", tf_error)
                     return False
 
             else:
@@ -2238,7 +2238,7 @@ Interceptor.attach(IsDebuggerPresent, {
                 return True
 
         except Exception as e:
-            logger.error("Model save failed: %s", e, exc_info=True)
+            logger.exception("Model save failed: %s", e)
             return False
 
     @property
@@ -2368,10 +2368,10 @@ Interceptor.attach(IsDebuggerPresent, {
             return evaluation_results
 
         except ImportError as e:
-            logger.error("Failed to import required libraries: %s", e, exc_info=True)
+            logger.exception("Failed to import required libraries: %s", e)
             return {"error": f"Missing dependencies: {e}"}
         except Exception as e:
-            logger.error("Model evaluation failed: %s", e, exc_info=True)
+            logger.exception("Model evaluation failed: %s", e)
             return {"error": str(e)}
 
 
@@ -2410,7 +2410,7 @@ class AsyncModelManager:
                 if callback:
                     callback(True, model, None)
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in model_manager_module: %s", e, exc_info=True)
+                self.logger.exception("Error in model_manager_module: %s", e)
                 if callback:
                     callback(False, None, str(e))
 
@@ -2441,7 +2441,7 @@ class AsyncModelManager:
                 if callback:
                     callback(True, result, None)
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in model_manager_module: %s", e, exc_info=True)
+                self.logger.exception("Error in model_manager_module: %s", e)
                 if callback:
                     callback(False, None, str(e))
 
@@ -2528,7 +2528,7 @@ class ModelFineTuner:
             actual_callback = callback if callback is not None else noop_callback
 
             try:
-                if model_type in ["pytorch", "pth"] and HAS_TORCH:
+                if model_type in {"pytorch", "pth"} and HAS_TORCH:
                     results = self._fine_tune_pytorch(
                         model,
                         training_data,
@@ -2538,7 +2538,7 @@ class ModelFineTuner:
                         batch_size,
                         actual_callback,
                     )
-                elif model_type in ["tensorflow", "h5"] and HAS_TENSORFLOW:
+                elif model_type in {"tensorflow", "h5"} and HAS_TENSORFLOW:
                     results = self._fine_tune_tensorflow(
                         model,
                         training_data,
@@ -2548,7 +2548,7 @@ class ModelFineTuner:
                         batch_size,
                         actual_callback,
                     )
-                elif model_type in ["sklearn", "joblib"] and HAS_JOBLIB:
+                elif model_type in {"sklearn", "joblib"} and HAS_JOBLIB:
                     results = self._fine_tune_sklearn(
                         model,
                         training_data,
@@ -2570,12 +2570,11 @@ class ModelFineTuner:
                 backend = self.model_manager.backends[model_type]
                 if hasattr(backend, "save_model"):
                     backend.save_model(model, fine_tuned_path)
-                # Default save methods
-                elif model_type in ["pytorch", "pth"]:
+                elif model_type in {"pytorch", "pth"}:
                     torch.save(model, fine_tuned_path)
-                elif model_type in ["tensorflow", "h5"]:
+                elif model_type in {"tensorflow", "h5"}:
                     model.save(fine_tuned_path)
-                elif model_type in ["sklearn", "joblib"]:
+                elif model_type in {"sklearn", "joblib"}:
                     joblib.dump(model, fine_tuned_path)
 
                 # Register the fine-tuned model
@@ -2603,7 +2602,7 @@ class ModelFineTuner:
                 logger.info("Fine-tuning completed. New model ID: %s", fine_tuned_id)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Fine-tuning failed: %s", e, exc_info=True)
+                logger.exception("Fine-tuning failed: %s", e)
                 results["error"] = str(e)
 
             return results
@@ -2626,7 +2625,7 @@ class ModelFineTuner:
             from torch import optim
             from torch.utils.data import DataLoader, TensorDataset
         except ImportError as e:
-            self.logger.error("Import error in model_manager_module: %s", e, exc_info=True)
+            self.logger.exception("Import error in model_manager_module: %s", e)
             return {"error": "PyTorch components not available"}
 
         model.train()
@@ -2803,7 +2802,7 @@ def import_custom_model(model_path: str, model_type: str | None = None, model_id
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to import model: %s", e, exc_info=True)
+        logger.exception("Failed to import model: %s", e)
         return {
             "success": False,
             "error": str(e),
@@ -2849,7 +2848,7 @@ def load_model(model_id: str, model_path: str | None = None) -> object:
         return manager.load_model(model_id)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to load model %s: %s", model_id, e, exc_info=True)
+        logger.exception("Failed to load model %s: %s", model_id, e)
         raise
 
 
@@ -2916,7 +2915,7 @@ def save_model(model_id: str, save_path: str, model_format: str = "auto") -> dic
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to save model %s: %s", model_id, e, exc_info=True)
+        logger.exception("Failed to save model %s: %s", model_id, e)
         return {
             "success": False,
             "error": str(e),
@@ -2943,7 +2942,7 @@ def list_available_models() -> dict[str, Any]:
                 info = manager.get_model_info(model_id)
                 detailed_models[model_id] = info
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in model_manager_module: %s", e, exc_info=True)
+                logger.exception("Error in model_manager_module: %s", e)
                 detailed_models[model_id] = {"error": str(e)}
 
         return {
@@ -2953,7 +2952,7 @@ def list_available_models() -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to list models: %s", e, exc_info=True)
+        logger.exception("Failed to list models: %s", e)
         return {
             "success": False,
             "error": str(e),
@@ -3022,7 +3021,7 @@ def configure_ai_provider(provider_name: str, config: dict[str, Any]) -> dict[st
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to configure AI provider %s: %s", provider_name, e, exc_info=True)
+        logger.exception("Failed to configure AI provider %s: %s", provider_name, e)
         return {
             "success": False,
             "error": str(e),

@@ -216,38 +216,32 @@ class DenuvoAnalyzer:
             encrypted_sections = []
             analysis_details = {}
 
-            version_result = self._detect_version(binary, binary_path)
-            if version_result:
+            if version_result := self._detect_version(binary, binary_path):
                 version = version_result
                 confidence_scores.append(version_result.confidence)
                 analysis_details["version_detection"] = f"Detected {version_result.name}"
 
-            encrypted_result = self._detect_encrypted_sections(binary)
-            if encrypted_result:
+            if encrypted_result := self._detect_encrypted_sections(binary):
                 encrypted_sections = encrypted_result
                 confidence_scores.append(0.85)
                 analysis_details["encrypted_sections"] = len(encrypted_result)
 
-            vm_result = self._detect_vm_regions(binary)
-            if vm_result:
+            if vm_result := self._detect_vm_regions(binary):
                 vm_regions = vm_result
                 confidence_scores.append(0.80)
                 analysis_details["vm_regions"] = len(vm_result)
 
-            integrity_result = self._detect_integrity_checks(binary)
-            if integrity_result:
+            if integrity_result := self._detect_integrity_checks(binary):
                 integrity_checks = integrity_result
                 confidence_scores.append(0.75)
                 analysis_details["integrity_checks"] = len(integrity_result)
 
-            timing_result = self._detect_timing_checks(binary)
-            if timing_result:
+            if timing_result := self._detect_timing_checks(binary):
                 timing_checks = timing_result
                 confidence_scores.append(0.70)
                 analysis_details["timing_checks"] = len(timing_result)
 
-            trigger_result = self._detect_triggers(binary)
-            if trigger_result:
+            if trigger_result := self._detect_triggers(binary):
                 triggers = trigger_result
                 confidence_scores.append(0.65)
                 analysis_details["triggers"] = len(trigger_result)
@@ -281,7 +275,7 @@ class DenuvoAnalyzer:
             )
 
         except Exception as e:
-            logger.error(f"Denuvo analysis failed: {e}")
+            logger.exception("Denuvo analysis failed: %s", e)
             return self._create_negative_result(f"Analysis error: {e}")
 
     def _analyze_without_lief(self, binary_path: str) -> DenuvoAnalysisResult:
@@ -346,7 +340,7 @@ class DenuvoAnalyzer:
             )
 
         except Exception as e:
-            logger.error(f"Basic Denuvo analysis failed: {e}")
+            logger.exception("Basic Denuvo analysis failed: %s", e)
             return self._create_negative_result(f"Basic analysis error: {e}")
 
     def _detect_version(self, binary: Binary, binary_path: str) -> DenuvoVersion | None:
@@ -372,7 +366,7 @@ class DenuvoAnalyzer:
             ]
 
             for signatures, major, name, base_confidence in version_checks:
-                match_count = sum(bool(sig in data) for sig in signatures)
+                match_count = sum(sig in data for sig in signatures)
                 if match_count > 0:
                     confidence = base_confidence * (match_count / len(signatures))
                     if confidence >= 0.60:
@@ -386,7 +380,7 @@ class DenuvoAnalyzer:
             return None
 
         except Exception as e:
-            logger.debug(f"Version detection failed: {e}")
+            logger.debug("Version detection failed: %s", e)
             return None
 
     def _detect_encrypted_sections(self, binary: Binary) -> list[dict[str, Any]]:
@@ -421,7 +415,7 @@ class DenuvoAnalyzer:
             return encrypted_sections
 
         except Exception as e:
-            logger.debug(f"Encrypted section detection failed: {e}")
+            logger.debug("Encrypted section detection failed: %s", e)
             return []
 
     def _detect_vm_regions(self, binary: Binary) -> list[VMRegion]:
@@ -473,7 +467,7 @@ class DenuvoAnalyzer:
             return vm_regions
 
         except Exception as e:
-            logger.debug(f"VM region detection failed: {e}")
+            logger.debug("VM region detection failed: %s", e)
             return []
 
     def _detect_integrity_checks(self, binary: Binary) -> list[IntegrityCheck]:
@@ -529,7 +523,7 @@ class DenuvoAnalyzer:
             return integrity_checks
 
         except Exception as e:
-            logger.debug(f"Integrity check detection failed: {e}")
+            logger.debug("Integrity check detection failed: %s", e)
             return []
 
     def _detect_timing_checks(self, binary: Binary) -> list[TimingCheck]:
@@ -584,7 +578,7 @@ class DenuvoAnalyzer:
             return timing_checks
 
         except Exception as e:
-            logger.debug(f"Timing check detection failed: {e}")
+            logger.debug("Timing check detection failed: %s", e)
             return []
 
     def _detect_triggers(self, binary: Binary) -> list[DenuvoTrigger]:
@@ -640,7 +634,7 @@ class DenuvoAnalyzer:
             return triggers
 
         except Exception as e:
-            logger.debug(f"Trigger detection failed: {e}")
+            logger.debug("Trigger detection failed: %s", e)
             return []
 
     def _calculate_entropy(self, data: bytes) -> float:
@@ -837,13 +831,12 @@ class DenuvoAnalyzer:
                 "Use ScyllaHide RDTSC feature or manual timing manipulation",
             ))
         if vm_regions:
-            recommendations.append(
-                f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",
+            recommendations.extend(
+                (
+                    f"Found {len(vm_regions)} VM-protected regions - Devirtualization required",
+                    "Consider VMProtect devirtualization tools adapted for Denuvo",
+                )
             )
-            recommendations.append(
-                "Consider VMProtect devirtualization tools adapted for Denuvo",
-            )
-
         if not recommendations:
             recommendations.append(
                 "Advanced analysis required - Consider manual reversing with IDA/Ghidra",

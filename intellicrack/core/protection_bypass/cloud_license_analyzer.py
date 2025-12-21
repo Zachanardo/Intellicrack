@@ -41,7 +41,13 @@ TOKEN_TYPE_LICENSE_KEY = "license_key"  # noqa: S105
 try:
     import xmltodict
 except ImportError:
-    xmltodict = None
+    xmltodict = None  # type: ignore[assignment]
+
+from typing import TYPE_CHECKING, Any as FridaSession, Any as FridaScript
+
+if TYPE_CHECKING:
+    from mitmproxy.tools.dump import DumpMaster
+    from mitmproxy.options import Options
 
 logger = logging.getLogger(__name__)
 
@@ -77,16 +83,18 @@ class CloudLicenseAnalyzer:
 
     def __init__(self) -> None:
         """Initialize the MITMProxyAnalyzer with interception data structures and proxy settings."""
-        self.intercepted_requests = []
-        self.discovered_endpoints = {}
-        self.license_tokens = {}
-        self.api_schemas = {}
-        self.proxy_port = 8080
-        self.ca_cert = None
-        self.ca_key = None
-        self.proxy_thread = None
-        self.frida_session = None
-        self.target_process = None
+        self.intercepted_requests: list[dict[str, Any]] = []
+        self.discovered_endpoints: dict[str, CloudEndpoint] = {}
+        self.license_tokens: dict[str, LicenseToken] = {}
+        self.api_schemas: dict[str, Any] = {}
+        self.proxy_port: int = 8080
+        self.ca_cert: bytes | None = None
+        self.ca_key: bytes | None = None
+        self.proxy_thread: threading.Thread | None = None
+        self.frida_session: FridaSession | None = None
+        self.target_process: int | None = None
+        self.proxy_options: Options
+        self.proxy_master: DumpMaster
         self._init_certificates()
         self._init_proxy()
 
@@ -117,7 +125,8 @@ class CloudLicenseAnalyzer:
         )
 
         cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(issuer)
             .public_key(key.public_key())
@@ -169,6 +178,9 @@ class CloudLicenseAnalyzer:
 
     def generate_host_certificate(self, hostname: str) -> tuple[bytes, bytes]:
         """Generate SSL certificate for intercepting HTTPS traffic to specific host."""
+        if self.ca_key is None or self.ca_cert is None:
+            raise ValueError("CA certificate and key must be initialized before generating host certificates")
+
         ca_key_obj = serialization.load_pem_private_key(self.ca_key, password=None, backend=default_backend())
 
         ca_cert_obj = x509.load_pem_x509_certificate(self.ca_cert, backend=default_backend())
@@ -186,7 +198,8 @@ class CloudLicenseAnalyzer:
         )
 
         cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(ca_cert_obj.issuer)
             .public_key(key.public_key())
@@ -202,7 +215,7 @@ class CloudLicenseAnalyzer:
                 ),
                 critical=False,
             )
-            .sign(ca_key_obj, hashes.SHA256(), default_backend())
+            .sign(ca_key_obj, hashes.SHA256(), default_backend())  # type: ignore[arg-type]
         )
 
         cert_pem = cert.public_bytes(serialization.Encoding.PEM)
@@ -221,10 +234,11 @@ class CloudLicenseAnalyzer:
         if target_process:
             self._inject_proxy_settings(target_process)
 
-        self.proxy_thread = threading.Thread(target=self._run_proxy, daemon=True)
-        self.proxy_thread.start()
+        proxy_thread = threading.Thread(target=self._run_proxy, daemon=True)
+        proxy_thread.start()
+        self.proxy_thread = proxy_thread
 
-        logger.info(f"TLS interception proxy started on port {self.proxy_port}")
+        logger.info("TLS interception proxy started on port %d", self.proxy_port)
 
     def _run_proxy(self) -> None:
         asyncio.set_event_loop(asyncio.new_event_loop())
@@ -232,14 +246,14 @@ class CloudLicenseAnalyzer:
 
     def _inject_proxy_settings(self, pid: int) -> None:
         try:
-            session = frida.attach(pid)
+            session: FridaSession = frida.attach(pid)
             script_code = self._generate_proxy_injection_script()
-            script = session.create_script(script_code)
+            script: FridaScript = session.create_script(script_code)
             script.on("message", self._on_frida_message)
             script.load()
             self.frida_session = session
         except Exception as e:
-            logger.error(f"Failed to inject proxy settings: {e}")
+            logger.exception("Failed to inject proxy settings: %s", e)
 
     def _generate_proxy_injection_script(self) -> str:
         return (
@@ -390,9 +404,9 @@ class CloudLicenseAnalyzer:
             data: Binary data associated with message, if any.
 
         """
-        if message["type"] == "send":
-            payload = message["payload"]
-            if payload["type"] == "hooks_installed":
+        if message.get("type") == "send":
+            payload = message.get("payload")
+            if isinstance(payload, dict) and payload.get("type") == "hooks_installed":
                 logger.info("Proxy hooks successfully installed in target process")
 
     def analyze_endpoint(self, request: mitmproxy.http.Request, response: mitmproxy.http.Response) -> CloudEndpoint:
@@ -626,7 +640,7 @@ class CloudLicenseAnalyzer:
 
         return tokens
 
-    def generate_token(self, token_type: str, **kwargs: object) -> str:
+    def generate_token(self, token_type: str, **kwargs: Any) -> str:
         """Generate valid license token of specified type for bypassing cloud checks."""
         if token_type == TOKEN_TYPE_JWT:
             return self._generate_jwt_token(**kwargs)
@@ -643,11 +657,11 @@ class CloudLicenseAnalyzer:
         audience: str | None = None,
         expires_in: int = 3600,
         claims: dict[str, object] | None = None,
-        **kwargs: object,
+        **kwargs: Any,
     ) -> str:
         now = datetime.utcnow()
 
-        payload = {
+        payload: dict[str, Any] = {
             "iss": issuer,
             "sub": subject,
             "iat": int(now.timestamp()),
@@ -661,8 +675,11 @@ class CloudLicenseAnalyzer:
         if claims:
             payload |= claims
 
-        secret = kwargs.get("secret", "intellicrack-secret-key")
-        algorithm = kwargs.get("algorithm", "HS256")
+        secret_raw = kwargs.get("secret", "intellicrack-secret-key")
+        algorithm_raw = kwargs.get("algorithm", "HS256")
+
+        secret: str | bytes = secret_raw if isinstance(secret_raw, (str, bytes)) else "intellicrack-secret-key"
+        algorithm: str = algorithm_raw if isinstance(algorithm_raw, str) else "HS256"
 
         if algorithm.startswith("RS"):
             key = rsa.generate_private_key(public_exponent=65537, key_size=2048, backend=default_backend())
@@ -675,12 +692,12 @@ class CloudLicenseAnalyzer:
 
         return jwt.encode(payload, secret, algorithm=algorithm)
 
-    def _generate_api_key(self, prefix: str = "ik", length: int = 32, **kwargs: object) -> str:
+    def _generate_api_key(self, prefix: str = "ik", length: int = 32, **kwargs: Any) -> str:
         random_bytes = os.urandom(length)
         key = base64.urlsafe_b64encode(random_bytes).decode("utf-8")[:length]
         return f"{prefix}_{key}"
 
-    def _generate_license_key(self, format: str = "4-4-4-4", **kwargs: object) -> str:
+    def _generate_license_key(self, format: str = "4-4-4-4", **kwargs: Any) -> str:
         import string
 
         chars = string.ascii_uppercase + string.digits
@@ -700,7 +717,7 @@ class CloudLicenseAnalyzer:
 
         return "-".join(key_parts)
 
-    def _generate_generic_token(self, length: int = 64, **kwargs: object) -> str:
+    def _generate_generic_token(self, length: int = 64, **kwargs: Any) -> str:
         return hashlib.sha256(os.urandom(32)).hexdigest()[:length]
 
     def refresh_token(self, token: LicenseToken) -> LicenseToken | None:
@@ -810,7 +827,7 @@ class CloudLicenseAnalyzer:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to export analysis: {e}")
+            logger.exception("Failed to export analysis: %s", e)
             return False
 
     def _serialize_endpoint(self, endpoint: CloudEndpoint) -> dict[str, Any]:
@@ -894,7 +911,7 @@ class CloudInterceptor:
             content_type = response.headers.get("content-type", "")
 
             if "application/json" in content_type:
-                with contextlib.suppress(json.JSONEncodeError, TypeError):
+                with contextlib.suppress(json.JSONDecodeError, TypeError):
                     data = json.loads(response.content)
 
                     if "valid" in data or "licensed" in data or "activated" in data:
@@ -946,7 +963,14 @@ class CloudLicenseBypasser:
                 if new_token := self.analyzer.refresh_token(token):
                     return new_token
 
-        return self.analyzer.generate_token("jwt")
+        token_value = self.analyzer.generate_token("jwt")
+        return LicenseToken(
+            token_type=TOKEN_TYPE_JWT,
+            value=token_value,
+            expires_at=None,
+            refresh_token=None,
+            scope=None,
+        )
 
     def _send_bypass_request(self, endpoint: CloudEndpoint, token: LicenseToken) -> bool:
         headers = endpoint.headers.copy()
@@ -972,5 +996,5 @@ class CloudLicenseBypasser:
             return response.status_code in [200, 201, 204]
 
         except Exception as e:
-            logger.error(f"Bypass request failed: {e}")
+            logger.exception("Bypass request failed: %s", e)
             return False

@@ -418,16 +418,15 @@ class ActivationAnalyzer:
 
     def _find_nearby_api_calls(self, offset: int, window: int = 512) -> list[str]:
         """Find API calls near offset."""
-        api_calls: list[str] = []
-
         start = max(0, offset - window)
         end = min(len(self.binary_data), offset + window)
         context = self.binary_data[start:end]
 
-        for api in self.ACTIVATION_APIS:
-            if api in context:
-                api_calls.append(api.decode("utf-8", errors="ignore"))
-
+        api_calls: list[str] = [
+            api.decode("utf-8", errors="ignore")
+            for api in self.ACTIVATION_APIS
+            if api in context
+        ]
         return list(set(api_calls))
 
     def _determine_activation_type(self, strings: list[str], api_calls: list[str]) -> ActivationType:
@@ -532,11 +531,14 @@ class ActivationAnalyzer:
                 if "software\\" in s.lower() or "hkey_" in s.lower():
                     return f"registry:{s}"
 
-        for s in context_strings:
-            if ".dat" in s or ".cfg" in s or ".ini" in s:
-                return f"file:{s}"
-
-        return None
+        return next(
+            (
+                f"file:{s}"
+                for s in context_strings
+                if ".dat" in s or ".cfg" in s or ".ini" in s
+            ),
+            None,
+        )
 
     def _find_time_check_nearby(self, offset: int) -> int | None:
         """Find time comparison operations near offset."""
@@ -580,10 +582,7 @@ class ActivationAnalyzer:
             return "demo_mode"
         if storage and "registry" in storage:
             return "registry_trial"
-        if storage and "file" in storage:
-            return "file_trial"
-
-        return "trial_limitation"
+        return "file_trial" if storage and "file" in storage else "trial_limitation"
 
     def _detect_hwid_components(self, api_calls: list[str]) -> list[str]:
         """Detect which hardware components are fingerprinted."""
@@ -606,21 +605,23 @@ class ActivationAnalyzer:
             return "multi_component"
         if "volume_serial" in components:
             return "volume_based"
-        if "system_info" in components:
-            return "system_based"
-
-        return "simple_hwid"
+        return "system_based" if "system_info" in components else "simple_hwid"
 
     def _extract_license_path(self, offset: int) -> str | None:
         """Extract license file path from binary."""
         strings = self._extract_context_strings(offset, 512)
 
-        for s in strings:
-            if any(ext in s.lower() for ext in [".lic", ".key", ".dat", "license"]):
-                if "\\" in s or "/" in s or ":" in s:
-                    return s
-
-        return None
+        return next(
+            (
+                s
+                for s in strings
+                if any(
+                    ext in s.lower() for ext in [".lic", ".key", ".dat", "license"]
+                )
+                and ("\\" in s or "/" in s or ":" in s)
+            ),
+            None,
+        )
 
     def _detect_license_format(self, keyword: bytes, offset: int) -> str | None:
         """Detect license file format."""
@@ -646,10 +647,7 @@ class ActivationAnalyzer:
         """Find license file validation function."""
         api_calls = self._find_nearby_api_calls(offset, 1024)
 
-        if any("Crypt" in api for api in api_calls):
-            return offset
-
-        return None
+        return offset if any("Crypt" in api for api in api_calls) else None
 
     def _detect_encryption_usage(self, offset: int) -> bool:
         """Detect if license data is encrypted."""

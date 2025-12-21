@@ -114,7 +114,7 @@ class Radare2SignatureDetector:
             logger.info("Opened %s for signature detection", self.binary_path)
             return True
         except Exception as e:
-            logger.error("Failed to open binary: %s", e, exc_info=True)
+            logger.exception("Failed to open binary: %s", e)
             return False
 
     def load_yara_rules(self, rules_path: str) -> bool:
@@ -136,12 +136,12 @@ class Radare2SignatureDetector:
                         self.yara_rules.append(rules)
                         logger.info("Loaded YARA rules from %s", rule_file)
                     except Exception as e:
-                        logger.warning("Failed to load %s: %s", rule_file, e, exc_info=True)
+                        logger.warning("Failed to load %s: %s", rule_file, e)
 
             return len(self.yara_rules) > 0
 
         except Exception as e:
-            logger.error("Failed to load YARA rules: %s", e, exc_info=True)
+            logger.exception("Failed to load YARA rules: %s", e)
             return False
 
     def create_default_yara_rules(self) -> str:
@@ -534,7 +534,7 @@ rule CryptoAPI_Usage {
                         logger.info("YARA match: %s at offset %s", match.rule, hex(string_match[0]))
 
         except Exception as e:
-            logger.error("YARA scanning failed: %s", e, exc_info=True)
+            logger.exception("YARA scanning failed: %s", e)
 
         self.matches.extend(matches)
         return matches
@@ -579,7 +579,7 @@ rule CryptoAPI_Usage {
         except FileNotFoundError:
             logger.debug("ClamAV not installed, skipping ClamAV scan")
         except Exception as e:
-            logger.error("ClamAV scanning failed: %s", e, exc_info=True)
+            logger.exception("ClamAV scanning failed: %s", e)
 
         self.matches.extend(matches)
         return matches
@@ -657,7 +657,7 @@ rule CryptoAPI_Usage {
                     offset = pos + 1
 
         except Exception as e:
-            logger.error("Custom signature scanning failed: %s", e, exc_info=True)
+            logger.exception("Custom signature scanning failed: %s", e)
 
         self.matches.extend(matches)
         return matches
@@ -723,7 +723,7 @@ rule CryptoAPI_Usage {
                 matches.append(sig_match)
 
         except Exception as e:
-            logger.error("Protection scheme detection failed: %s", e, exc_info=True)
+            logger.exception("Protection scheme detection failed: %s", e)
 
         self.matches.extend(matches)
         return matches
@@ -838,7 +838,7 @@ rule CryptoAPI_Usage {
             )
 
         except Exception as e:
-            logger.error("Compiler detection failed: %s", e, exc_info=True)
+            logger.exception("Compiler detection failed: %s", e)
             return None
 
     def detect_libraries(self) -> list[LibraryInfo]:
@@ -903,20 +903,22 @@ rule CryptoAPI_Usage {
                         libraries.append(lib_info)
 
         except Exception as e:
-            logger.error("Library detection failed: %s", e, exc_info=True)
+            logger.exception("Library detection failed: %s", e)
 
         return libraries
 
     def generate_report(self) -> str:
         """Generate comprehensive detection report."""
-        report = ["=" * 60, "SIGNATURE DETECTION REPORT"]
-        report.append("=" * 60)
-        report.append(f"Binary: {self.binary_path}")
-        report.append(f"SHA256: {self.file_hash['sha256']}")
-        report.append(f"SHA512: {self.file_hash['sha512']}")
-        report.append(f"Size: {self.file_hash['size']} bytes")
-        report.append("")
-
+        report = [
+            "=" * 60,
+            "SIGNATURE DETECTION REPORT",
+            "=" * 60,
+            f"Binary: {self.binary_path}",
+            f"SHA256: {self.file_hash['sha256']}",
+            f"SHA512: {self.file_hash['sha512']}",
+            f"Size: {self.file_hash['size']} bytes",
+            "",
+        ]
         # Group matches by type
         by_type = {}
         for match in self.matches:
@@ -926,9 +928,12 @@ rule CryptoAPI_Usage {
 
         # Report each type
         for sig_type, matches in by_type.items():
-            report.append(f"\n{sig_type.value.upper()} SIGNATURES ({len(matches)} matches)")
-            report.append("-" * 40)
-
+            report.extend(
+                (
+                    f"\n{sig_type.value.upper()} SIGNATURES ({len(matches)} matches)",
+                    "-" * 40,
+                )
+            )
             # Group by unique names
             unique_sigs = {}
             for match in matches:
@@ -937,8 +942,7 @@ rule CryptoAPI_Usage {
                 unique_sigs[match.name].append(match)
 
             for sig_name, sig_matches in unique_sigs.items():
-                report.append(f"  {sig_name}")
-                report.append(f"    Matches: {len(sig_matches)}")
+                report.extend((f"  {sig_name}", f"    Matches: {len(sig_matches)}"))
                 report.append(f"    Confidence: {sig_matches[0].confidence:.0%}")
 
                 # Show first few offsets
@@ -968,11 +972,13 @@ rule CryptoAPI_Usage {
                 report.append(f"  ... and {len(libraries) - 10} more libraries")
             report.append("")
 
-        # Summary
-        report.append("\nSUMMARY")
-        report.append("-" * 40)
-        report.append(f"Total Signatures Matched: {len(self.matches)}")
-
+        report.extend(
+            (
+                "\nSUMMARY",
+                "-" * 40,
+                f"Total Signatures Matched: {len(self.matches)}",
+            )
+        )
         if protection_matches := [
             m for m in self.matches if "protect" in m.name.lower() or "pack" in m.name.lower() or "crypt" in m.name.lower()
         ]:
@@ -1024,7 +1030,7 @@ rule CryptoAPI_Usage {
             return True
 
         except Exception as e:
-            logger.error("Failed to export signatures: %s", e, exc_info=True)
+            logger.exception("Failed to export signatures: %s", e)
             return False
 
     def close(self) -> None:

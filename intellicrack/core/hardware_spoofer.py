@@ -1162,7 +1162,7 @@ class HardwareFingerPrintSpoofer:
             return S_OK
 
         except Exception as e:
-            logger.error("Failed to create spoofed enumerator: %s", e)
+            logger.exception("Failed to create spoofed enumerator: %s", e)
             return E_FAIL
 
     def _get_spoofed_values_for_class(self, hw_class: str) -> list[dict[str, Any]]:
@@ -2002,7 +2002,7 @@ class HardwareFingerPrintSpoofer:
                             current.contents.Address[i] = mac_bytes[i]
 
                     adapter_idx += 1
-                    current = current.contents.Next if current.contents.Next else None
+                    current = current.contents.Next or None
 
             return result
 

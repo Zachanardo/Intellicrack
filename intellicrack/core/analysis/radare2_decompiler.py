@@ -125,7 +125,7 @@ class R2DecompilationEngine:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Decompilation failed for {hex(address)}: {e}")
+            self.logger.exception("Decompilation failed for %s: %s", hex(address), e)
 
         return result
 
@@ -151,12 +151,12 @@ class R2DecompilationEngine:
                         break
 
                     if addr := func.get("offset"):
-                        self.logger.info(f"Decompiling function {func.get('name', 'unknown')} at {hex(addr)}")
+                        self.logger.info("Decompiling function %s at %s", func.get('name', 'unknown'), hex(addr))
                         results[hex(addr)] = self.decompile_function(addr)
                         function_count += 1
 
         except R2Exception as e:
-            self.logger.error(f"Failed to decompile functions: {e}")
+            self.logger.exception("Failed to decompile functions: %s", e)
 
         return results
 
@@ -180,7 +180,7 @@ class R2DecompilationEngine:
                     for var in var_info
                 )
         except R2Exception as e:
-            self.logger.error("R2Exception in radare2_decompiler: %s", e)
+            self.logger.exception("R2Exception in radare2_decompiler: %s", e)
 
         return variables
 
@@ -434,10 +434,10 @@ class R2DecompilationEngine:
                                         },
                                     )
                             except R2Exception as e:
-                                logger.error("R2Exception in radare2_decompiler: %s", e)
+                                logger.exception("R2Exception in radare2_decompiler: %s", e)
                                 continue
         except R2Exception as e:
-            logger.error("R2Exception in radare2_decompiler: %s", e)
+            logger.exception("R2Exception in radare2_decompiler: %s", e)
 
         return strings
 
@@ -631,7 +631,7 @@ class R2DecompilationEngine:
                         decompilation_result = self.decompile_function(func_addr, optimize=True)
 
                         if decompilation_result.get("error"):
-                            self.logger.warning(f"Failed to decompile function {func_name} at {hex(func_addr)}")
+                            self.logger.warning("Failed to decompile function %s at %s", func_name, hex(func_addr))
                             continue
 
                         license_patterns = decompilation_result.get("license_patterns", [])
@@ -677,11 +677,11 @@ class R2DecompilationEngine:
                 result["license_functions"].sort(key=lambda x: x["confidence_score"], reverse=True)
                 result["high_confidence_targets"].sort(key=lambda x: x["confidence"], reverse=True)
 
-                self.logger.info(f"Found {len(result['license_functions'])} license-related functions")
+                self.logger.info("Found %d license-related functions", len(result['license_functions']))
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"License function analysis failed: {e}")
+            self.logger.exception("License function analysis failed: %s", e)
 
         return result
 
@@ -780,11 +780,11 @@ class R2DecompilationEngine:
             with open(output_path, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
 
-            self.logger.info(f"Analysis report exported to: {output_path}")
+            self.logger.info("Analysis report exported to: %s", output_path)
             return True
 
         except Exception as e:
-            self.logger.error(f"Failed to export report: {e}")
+            self.logger.exception("Failed to export report: %s", e)
             return False
 
 

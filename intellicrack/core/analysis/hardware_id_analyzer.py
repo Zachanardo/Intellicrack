@@ -271,8 +271,9 @@ class HardwareIDAnalyzer:
             results["validation_count"] = len(self.validation_patterns)
             results["node_locked"] = len(self.node_lock_patterns) > 0
 
-            obfuscation_levels = [v.obfuscation_level for v in self.validation_patterns]
-            if obfuscation_levels:
+            if obfuscation_levels := [
+                v.obfuscation_level for v in self.validation_patterns
+            ]:
                 avg_obfuscation = sum(obfuscation_levels) / len(obfuscation_levels)
                 if avg_obfuscation > 7:
                     results["obfuscation_level"] = "high"
@@ -387,10 +388,10 @@ class HardwareIDAnalyzer:
             context_end = min(len(data), pos + 20)
             context = data[context_start:context_end]
 
-            disasm_text = ""
-            for instr in self.disasm.disasm(context, base_va + context_start):
-                disasm_text += f"{instr.mnemonic} {instr.op_str}\n"
-
+            disasm_text = "".join(
+                f"{instr.mnemonic} {instr.op_str}\n"
+                for instr in self.disasm.disasm(context, base_va + context_start)
+            )
             check = HWIDCheck(
                 offset=base_va + pos,
                 hwid_type=HWIDType.CPU_ID,
@@ -468,7 +469,7 @@ class HardwareIDAnalyzer:
                 for match in pattern.finditer(section_data):
                     offset = section.VirtualAddress + match.start()
 
-                    if not any(check.offset == offset for check in self.hwid_checks):
+                    if all(check.offset != offset for check in self.hwid_checks):
                         check = HWIDCheck(
                             offset=offset,
                             hwid_type=HWIDType.CPU_ID,
@@ -742,7 +743,7 @@ class HardwareIDAnalyzer:
             elif hwid_type == HWIDType.MACHINE_GUID:
                 return self._get_machine_guid()
         except Exception as e:
-            logger.error(f"Failed to extract {hwid_type.value}: {e}")
+            logger.exception("Failed to extract %s: %s", hwid_type.value, e)
             return None
 
     def _get_cpu_id(self) -> str:
@@ -753,31 +754,47 @@ class HardwareIDAnalyzer:
 
     def _get_disk_serial(self) -> str:
         """Get primary disk serial number."""
-        for disk in self.wmi_conn.Win32_DiskDrive():
-            if disk.SerialNumber:
-                return disk.SerialNumber
-        return ""
+        return next(
+            (
+                disk.SerialNumber
+                for disk in self.wmi_conn.Win32_DiskDrive()
+                if disk.SerialNumber
+            ),
+            "",
+        )
 
     def _get_mac_address(self) -> str:
         """Get primary MAC address."""
-        for adapter in self.wmi_conn.Win32_NetworkAdapter():
-            if adapter.MACAddress:
-                return adapter.MACAddress
-        return ""
+        return next(
+            (
+                adapter.MACAddress
+                for adapter in self.wmi_conn.Win32_NetworkAdapter()
+                if adapter.MACAddress
+            ),
+            "",
+        )
 
     def _get_motherboard_serial(self) -> str:
         """Get motherboard serial number."""
-        for board in self.wmi_conn.Win32_BaseBoard():
-            if board.SerialNumber:
-                return board.SerialNumber
-        return ""
+        return next(
+            (
+                board.SerialNumber
+                for board in self.wmi_conn.Win32_BaseBoard()
+                if board.SerialNumber
+            ),
+            "",
+        )
 
     def _get_bios_serial(self) -> str:
         """Get BIOS serial number."""
-        for bios in self.wmi_conn.Win32_BIOS():
-            if bios.SerialNumber:
-                return bios.SerialNumber
-        return ""
+        return next(
+            (
+                bios.SerialNumber
+                for bios in self.wmi_conn.Win32_BIOS()
+                if bios.SerialNumber
+            ),
+            "",
+        )
 
     def _get_volume_serial(self) -> str:
         """Get C: volume serial number."""

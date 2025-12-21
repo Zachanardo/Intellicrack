@@ -19,7 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import struct
-from typing import IO, Any, Optional
+from typing import IO, Any
 
 from intellicrack.utils.logger import log_all_methods, logger
 
@@ -41,9 +41,8 @@ try:
 
     # Try to import architecture constants - these may have moved
     try:
-        from lief import ARCHITECTURES, ENDIANNESS, MODES
+        from lief import ARCHITECTURES, ENDIANNESS, MODES  # type: ignore[attr-defined]
     except ImportError:
-        # Create fallback classes if not available
         ARCHITECTURES = None
         ENDIANNESS = None
         MODES = None
@@ -52,13 +51,13 @@ try:
     try:
         from lief import Binary, Function, Section, Symbol
     except ImportError:
-        Binary = None
-        Function = None
-        Section = None
-        Symbol = None
+        Binary = None  # type: ignore[assignment, misc]
+        Function = None  # type: ignore[assignment, misc]
+        Section = None  # type: ignore[assignment, misc]
+        Symbol = None  # type: ignore[assignment, misc]
 
     HAS_LIEF = True
-    LIEF_VERSION = lief.__version__
+    LIEF_VERSION: str | None = getattr(lief, "__version__", None)
 
 except ImportError as e:
     logger.error("LIEF not available, using fallback implementations: %s", e)
@@ -68,7 +67,7 @@ except ImportError as e:
     # Production-ready fallback implementations for binary analysis
 
     # Architecture constants
-    class ARCHITECTURES:
+    class ARCHITECTURES:  # type: ignore[no-redef]
         """Binary architectures."""
 
         NONE = 0
@@ -79,13 +78,13 @@ except ImportError as e:
         MIPS = 5
         PPC = 6
 
-    class ENDIANNESS:
+    class ENDIANNESS:  # type: ignore[no-redef]
         """Byte order."""
 
         LITTLE = 0
         BIG = 1
 
-    class MODES:
+    class MODES:  # type: ignore[no-redef]
         """Execution modes."""
 
         MODE_32 = 0
@@ -171,17 +170,17 @@ except ImportError as e:
             self.size = 0
             self.entrypoint = 0
             self.imagebase = 0
-            self.sections = []
-            self.symbols = []
-            self.functions = []
-            self.imports = []
-            self.exports = []
-            self.libraries = []
+            self.sections: list[FallbackSection] = []
+            self.symbols: list[FallbackSymbol] = []
+            self.functions: list[FallbackFunction] = []
+            self.imports: list[Any] = []
+            self.exports: list[Any] = []
+            self.libraries: list[str] = []
             self.format = "UNKNOWN"
             self.architecture = ARCHITECTURES.NONE
             self.endianness = ENDIANNESS.LITTLE
             self.mode = MODES.MODE_32
-            self.header = {}
+            self.header: dict[str, Any] = {}
 
             if path and os.path.exists(path):
                 self.size = os.path.getsize(path)
@@ -539,16 +538,16 @@ except ImportError as e:
         def __init__(self, path: str = "") -> None:
             """Initialize PE binary."""
             super().__init__(path)
-            self.dos_header = {}
-            self.header = {}
-            self.optional_header = {}
-            self.data_directories = []
-            self.imports = []
-            self.exports = []
-            self.resources = []
-            self.tls = None
-            self.relocations = []
-            self.signature = None
+            self.dos_header: dict[str, Any] = {}
+            self.header: dict[str, Any] = {}
+            self.optional_header: dict[str, Any] = {}
+            self.data_directories: list[Any] = []
+            self.imports: list[Any] = []
+            self.exports: list[Any] = []
+            self.resources: list[Any] = []
+            self.tls: Any | None = None
+            self.relocations: list[Any] = []
+            self.signature: Any | None = None
 
     @log_all_methods
     class FallbackELF(FallbackBinary):
@@ -557,12 +556,12 @@ except ImportError as e:
         def __init__(self, path: str = "") -> None:
             """Initialize ELF binary."""
             super().__init__(path)
-            self.segments = []
-            self.dynamic_entries = []
-            self.notes = []
+            self.segments: list[Any] = []
+            self.dynamic_entries: list[Any] = []
+            self.notes: list[Any] = []
             self.interpreter = ""
-            self.gnu_hash = None
-            self.sysv_hash = None
+            self.gnu_hash: Any | None = None
+            self.sysv_hash: Any | None = None
 
     @log_all_methods
     class FallbackMachO(FallbackBinary):
@@ -571,14 +570,14 @@ except ImportError as e:
         def __init__(self, path: str = "") -> None:
             """Initialize Mach-O binary."""
             super().__init__(path)
-            self.commands = []
-            self.uuid = None
-            self.main_command = None
-            self.code_signature = None
-            self.dylibs = []
-            self.rpaths = []
+            self.commands: list[Any] = []
+            self.uuid: Any | None = None
+            self.main_command: Any | None = None
+            self.code_signature: Any | None = None
+            self.dylibs: list[str] = []
+            self.rpaths: list[str] = []
 
-    def parse(filepath: str) -> FallbackBinary | None:
+    def parse(filepath: str) -> FallbackBinary | None:  # type: ignore[misc]
         """Parse a binary file and return appropriate object."""
         if not os.path.exists(filepath):
             logger.error("File not found: %s", filepath)
@@ -605,7 +604,7 @@ except ImportError as e:
             logger.error("Failed to parse binary %s: %s", filepath, e)
             return None
 
-    def is_pe(filepath: str) -> bool:
+    def is_pe(filepath: str) -> bool:  # type: ignore[no-redef]
         """Check if file is PE format."""
         try:
             with open(filepath, "rb") as f:
@@ -614,7 +613,7 @@ except ImportError as e:
         except Exception:
             return False
 
-    def is_elf(filepath: str) -> bool:
+    def is_elf(filepath: str) -> bool:  # type: ignore[no-redef]
         """Check if file is ELF format."""
         try:
             with open(filepath, "rb") as f:
@@ -623,7 +622,7 @@ except ImportError as e:
         except Exception:
             return False
 
-    def is_macho(filepath: str) -> bool:
+    def is_macho(filepath: str) -> bool:  # type: ignore[no-redef]
         """Check if file is Mach-O format."""
         try:
             with open(filepath, "rb") as f:
@@ -638,13 +637,13 @@ except ImportError as e:
             return False
 
     # Assign classes
-    Binary = FallbackBinary
-    Section = FallbackSection
-    Symbol = FallbackSymbol
-    Function = FallbackFunction
-    PE = FallbackPE
-    ELF = FallbackELF
-    MachO = FallbackMachO
+    Binary = FallbackBinary  # type: ignore[assignment, misc]
+    Section = FallbackSection  # type: ignore[assignment, misc]
+    Symbol = FallbackSymbol  # type: ignore[assignment, misc]
+    Function = FallbackFunction  # type: ignore[assignment, misc]
+    PE = FallbackPE  # type: ignore[assignment]
+    ELF = FallbackELF  # type: ignore[assignment]
+    MachO = FallbackMachO  # type: ignore[assignment]
 
     # Create module-like object
     class FallbackLIEF:
@@ -670,19 +669,19 @@ except ImportError as e:
         is_elf = staticmethod(is_elf)
         is_macho = staticmethod(is_macho)
 
-    lief = FallbackLIEF()
+    lief = FallbackLIEF()  # type: ignore[assignment]
 
     # Export constants at module level
-    Binary = FallbackBinary
-    Section = FallbackSection
-    Symbol = FallbackSymbol
-    Function = FallbackFunction
+    Binary = FallbackBinary  # type: ignore[assignment, misc]
+    Section = FallbackSection  # type: ignore[assignment, misc]
+    Symbol = FallbackSymbol  # type: ignore[assignment, misc]
+    Function = FallbackFunction  # type: ignore[assignment, misc]
     PE = lief.PE
     ELF = lief.ELF
     MachO = lief.MachO
-    ARCHITECTURES = lief.ARCHITECTURES
-    ENDIANNESS = lief.ENDIANNESS
-    MODES = lief.MODES
+    ARCHITECTURES = lief.ARCHITECTURES  # type: ignore[attr-defined]
+    ENDIANNESS = lief.ENDIANNESS  # type: ignore[attr-defined]
+    MODES = lief.MODES  # type: ignore[attr-defined]
     parse = lief.parse
     is_pe = lief.is_pe
     is_elf = lief.is_elf

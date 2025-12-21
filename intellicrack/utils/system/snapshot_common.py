@@ -44,13 +44,13 @@ def validate_snapshots(
     if snapshot1 not in snapshots_dict:
         error_msg = f"Snapshot '{snapshot1}' not found"
         if logger:
-            logger.error(error_msg)
+            logger.exception(error_msg)
         return False, error_msg
 
     if snapshot2 not in snapshots_dict:
         error_msg = f"Snapshot '{snapshot2}' not found"
         if logger:
-            logger.error(error_msg)
+            logger.exception(error_msg)
         return False, error_msg
 
     return True, None
@@ -110,7 +110,7 @@ def start_snapshot_comparison(
     except Exception as e:
         error_msg = f"Error starting comparison: {e!s}"
         if logger:
-            logger.error(error_msg)
+            logger.exception(error_msg)
         return False, None, error_msg
 
 

@@ -1617,7 +1617,9 @@ class CryptographicRoutineDetector:
 
     def _check_sbox_pattern(self, data: bytes, reference: bytes) -> bool:
         """Check if data matches an S-box pattern."""
-        matches = sum(bool(data[i] == reference[i]) for i in range(min(len(data), len(reference))))
+        matches = sum(
+            data[i] == reference[i] for i in range(min(len(data), len(reference)))
+        )
         return matches >= len(reference) * 0.85
 
     def _calculate_sbox_confidence(self, data: bytes, reference: bytes) -> float:
@@ -1625,7 +1627,7 @@ class CryptographicRoutineDetector:
         if len(data) != len(reference):
             return 0.0
 
-        exact_matches = sum(bool(data[i] == reference[i]) for i in range(len(reference)))
+        exact_matches = sum(data[i] == reference[i] for i in range(len(reference)))
         base_confidence = exact_matches / len(reference)
 
         hamming_distances = [bin(data[i] ^ reference[i]).count("1") for i in range(len(reference))]
@@ -1646,7 +1648,7 @@ class CryptographicRoutineDetector:
         """Fuzzy matching for byte patterns with length tolerance."""
         if len(data) != len(pattern):
             return False
-        matches = sum(bool(data[i] == pattern[i]) for i in range(len(data)))
+        matches = sum(data[i] == pattern[i] for i in range(len(data)))
         return (matches / len(pattern)) >= threshold
 
     def _detect_blowfish_sbox_pattern(self, data: bytes) -> bool:
@@ -1668,7 +1670,7 @@ class CryptographicRoutineDetector:
         window = data[offset : offset + search_range]
 
         swap_indicators = [b"\x86", b"\x87", b"\x91", b"\x92"]
-        swap_count = sum(bool(indicator in window) for indicator in swap_indicators)
+        swap_count = sum(indicator in window for indicator in swap_indicators)
 
         return swap_count >= 2
 
@@ -1716,7 +1718,7 @@ class CryptographicRoutineDetector:
             b"\x4c\x0f\xaf",
         ]
 
-        pattern_count = sum(bool(pattern in data) for pattern in montgomery_patterns)
+        pattern_count = sum(pattern in data for pattern in montgomery_patterns)
         return pattern_count >= 2
 
     def _detect_chacha20_quarter_round(self, data: bytes, offset: int) -> bool:

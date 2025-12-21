@@ -840,7 +840,7 @@ def launch_hex_viewer(filepath: str) -> bool:
         viewer = TerminalHexViewer(filepath)
         curses.wrapper(viewer.run)
     except Exception as e:
-        logger.error("Error launching hex viewer: %s", e, exc_info=True)
+        logger.exception("Error launching hex viewer: %s", e)
         return False
     return True
 

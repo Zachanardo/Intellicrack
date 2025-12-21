@@ -36,7 +36,7 @@ try:
 
     LLM_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in ai_bridge: %s", e)
+    logger.exception("Import error in ai_bridge: %s", e)
     LLM_AVAILABLE = False
 
 
@@ -209,7 +209,7 @@ class BinaryContextBuilder:
                     },
                 )
             except ValueError as e:
-                logger.error("Error in ai_bridge: %s", e)
+                logger.exception("Error in ai_bridge: %s", e)
 
         # UTF-16LE strings (Windows)
         utf16_chars = []
@@ -242,7 +242,7 @@ class BinaryContextBuilder:
                                 },
                             )
                         except (ValueError, OverflowError) as e:
-                            logger.error("Error in ai_bridge: %s", e)
+                            logger.exception("Error in ai_bridge: %s", e)
                     utf16_chars = []
                     in_utf16 = False
                 else:
@@ -258,7 +258,7 @@ class BinaryContextBuilder:
                                 },
                             )
                         except (ValueError, OverflowError) as e:
-                            logger.error("Error in ai_bridge: %s", e)
+                            logger.exception("Error in ai_bridge: %s", e)
                     utf16_chars = []
                     in_utf16 = False
 
@@ -434,7 +434,7 @@ class BinaryContextBuilder:
         try:
             result["utf8_string"] = data.decode("utf-8")
         except UnicodeDecodeError as e:
-            logger.error("UnicodeDecodeError in ai_bridge: %s", e)
+            logger.exception("UnicodeDecodeError in ai_bridge: %s", e)
 
         # Try to interpret as a timestamp
         if len(data) >= 4:
@@ -446,7 +446,7 @@ class BinaryContextBuilder:
                 try:
                     result["unix_timestamp"] = datetime.datetime.fromtimestamp(uint32).isoformat()
                 except (ValueError, OSError, OverflowError) as e:
-                    logger.error("Error in ai_bridge: %s", e)
+                    logger.exception("Error in ai_bridge: %s", e)
 
             # Windows FILETIME (64-bit value representing 100-nanosecond intervals since January 1, 1601)
             if len(data) >= 8:
@@ -460,7 +460,7 @@ class BinaryContextBuilder:
                         try:
                             result["windows_filetime"] = datetime.datetime.fromtimestamp(unix_time).isoformat()
                         except (ValueError, OSError, OverflowError) as e:
-                            logger.error("Error in ai_bridge: %s", e)
+                            logger.exception("Error in ai_bridge: %s", e)
 
         return result
 
@@ -1137,7 +1137,7 @@ class AIBinaryBridge:
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error parsing analysis response: %s", e)
+            logger.exception("Error parsing analysis response: %s", e)
 
             # Return a basic result
             return {
@@ -1170,14 +1170,14 @@ class AIBinaryBridge:
                 try:
                     result["original_bytes_raw"] = bytes.fromhex(result["original_bytes"].replace(" ", ""))
                 except ValueError as e:
-                    logger.error("Value error in ai_bridge: %s", e)
+                    logger.exception("Value error in ai_bridge: %s", e)
                     result["original_bytes_raw"] = b""
 
             if "new_bytes" in result:
                 try:
                     result["new_bytes_raw"] = bytes.fromhex(result["new_bytes"].replace(" ", ""))
                 except ValueError as e:
-                    logger.error("Value error in ai_bridge: %s", e)
+                    logger.exception("Value error in ai_bridge: %s", e)
                     result["new_bytes_raw"] = b""
 
             if binary_data and "original_bytes_raw" in result and "offset" in result:
@@ -1191,7 +1191,7 @@ class AIBinaryBridge:
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error parsing edit response: %s", e)
+            logger.exception("Error parsing edit response: %s", e)
 
             # Return a basic result
             return {
@@ -1237,7 +1237,7 @@ class AIBinaryBridge:
 
             return patterns
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error parsing pattern response: %s", e)
+            logger.exception("Error parsing pattern response: %s", e)
             return []
 
     def _parse_search_response(self, response: str, binary_data: bytes, offset: int) -> list[dict[str, Any]]:
@@ -1270,7 +1270,7 @@ class AIBinaryBridge:
 
             return matches
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error parsing search response: %s", e)
+            logger.exception("Error parsing search response: %s", e)
             return []
 
     def _calculate_analysis_confidence(self, patterns: list[dict], anomalies: list[dict], suspicious_strings: list[str]) -> float:
@@ -1292,7 +1292,10 @@ class AIBinaryBridge:
             confidence += min(0.15, len(suspicious_strings) * 0.03)
             # Higher confidence for specific keywords
             critical_keywords = ["license", "trial", "expired", "debug", "crack"]
-            if critical_found := sum(bool(any(k in s.lower() for k in critical_keywords)) for s in suspicious_strings):
+            if critical_found := sum(
+                any((k in s.lower() for k in critical_keywords))
+                for s in suspicious_strings
+            ):
                 confidence += min(0.1, critical_found * 0.05)
 
         return min(1.0, confidence)
@@ -1311,7 +1314,7 @@ class AIBinaryBridge:
         # Higher confidence if we have good pattern matches in context
         if context.get("patterns"):
             if relevant_patterns := [p for p in context["patterns"] if p.get("pattern_type") in ["license_check", "anti_debug"]]:
-                logger.debug(f"Found {len(relevant_patterns)} relevant patterns, boosting confidence")
+                logger.debug("Found %d relevant patterns, boosting confidence", len(relevant_patterns))
                 confidence = min(1.0, confidence + 0.1)
 
         # Higher confidence for specific edit types
@@ -1330,7 +1333,7 @@ class AIBinaryBridge:
         confidence = min(0.5, len(patterns) * 0.1)
 
         if file_sig_patterns := [p for p in patterns if p.get("pattern_type") == "file_signature"]:
-            logger.debug(f"Found {len(file_sig_patterns)} file signature patterns")
+            logger.debug("Found %d file signature patterns", len(file_sig_patterns))
             confidence += 0.2
 
         if high_conf_patterns := [p for p in patterns if p.get("confidence", 0) > 0.8]:
@@ -1354,7 +1357,7 @@ class AIBinaryBridge:
             confidence += min(0.3, len(high_relevance) * 0.1)
 
         if exact_matches := [m for m in matches if m.get("match_type") == "exact"]:
-            logger.debug(f"Found {len(exact_matches)} exact matches")
+            logger.debug("Found %d exact matches", len(exact_matches))
             confidence += 0.2
 
         # Adjust based on query specificity
@@ -1439,7 +1442,7 @@ class AIBinaryBridge:
                 "analysis_summary": f"Analyzed {len(data)} bytes, found {len(patterns)} patterns",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error analyzing binary patterns: %s", e)
+            logger.exception("Error analyzing binary patterns: %s", e)
             return {
                 "error": str(e),
                 "confidence": 0.0,
@@ -1493,7 +1496,7 @@ def wrapper_ai_binary_analyze(app_instance: object, parameters: object) -> dict[
 
         return ai_bridge.analyze_binary_region(data, offset, len(data), query)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in AI binary analysis: %s", e)
+        logger.exception("Error in AI binary analysis: %s", e)
         return {"error": str(e)}
 
 
@@ -1568,7 +1571,7 @@ def wrapper_ai_binary_pattern_search(app_instance: object, parameters: object) -
 
         return {"results": results, "count": len(results)}
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in AI binary pattern search: %s", e)
+        logger.exception("Error in AI binary pattern search: %s", e)
         return {"error": str(e)}
 
 
@@ -1617,5 +1620,5 @@ def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: object) -> 
 
         return ai_bridge.suggest_edits(data, offset, len(data), edit_intent)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in AI binary edit suggestion: %s", e)
+        logger.exception("Error in AI binary edit suggestion: %s", e)
         return {"error": str(e)}

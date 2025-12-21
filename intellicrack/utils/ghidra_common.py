@@ -116,7 +116,7 @@ def run_ghidra_plugin(
 
     except Exception as e:
         error_msg = f"Ghidra execution failed: {e}"
-        logger.error("Ghidra execution failed: %s", e, exc_info=True)
+        logger.exception("Ghidra execution failed: %s", e)
         return 1, "", error_msg
 
 
@@ -747,7 +747,7 @@ def save_ghidra_script(script_content: str, script_name: str, output_dir: str) -
         return script_path
 
     except Exception as e:
-        logger.error("Failed to save Ghidra script: %s", e, exc_info=True)
+        logger.exception("Failed to save Ghidra script: %s", e)
         raise
 
 
@@ -823,7 +823,7 @@ def cleanup_ghidra_project(project_dir: str, project_name: str) -> bool:
         return True
 
     except Exception as e:
-        logger.error("Failed to cleanup Ghidra project: %s", e, exc_info=True)
+        logger.exception("Failed to cleanup Ghidra project: %s", e)
         return False
 
 

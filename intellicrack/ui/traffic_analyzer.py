@@ -21,6 +21,8 @@ import logging
 import platform
 import threading
 import time
+from collections.abc import Callable
+from typing import Any, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -56,12 +58,12 @@ class TrafficAnalyzer:
 
     def __init__(self) -> None:
         """Initialize traffic analyzer with existing infrastructure integration."""
-        self.logger = logging.getLogger(__name__)
-        self.analyzer = None
-        self.analysis_thread = None
-        self.capture_active = False
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.analyzer: Any | None = None
+        self.analysis_thread: threading.Thread | None = None
+        self.capture_active: bool = False
 
-    def run_visual_network_traffic_analyzer(self, main_window: object) -> None:
+    def run_visual_network_traffic_analyzer(self, main_window: Any) -> None:
         """Launch visual network traffic analyzer dialog.
 
         Args:
@@ -71,7 +73,6 @@ class TrafficAnalyzer:
         try:
             log_info("Launching Visual Network Traffic Analyzer...")
 
-            # Check if the core analyzer is available
             import importlib.util
 
             if importlib.util.find_spec("intellicrack.core.network.traffic_analyzer") is None:
@@ -79,18 +80,20 @@ class TrafficAnalyzer:
                 log_error(error_msg)
                 raise ImportError(error_msg)
 
-            # Create and show the traffic analysis dialog
-            dialog = NetworkTrafficAnalysisDialog(main_window)
+            parent_widget: QWidget | None = main_window if isinstance(main_window, QWidget) else None
+            dialog = NetworkTrafficAnalysisDialog(parent_widget)
             dialog.exec()
 
         except ImportError as e:
             error_msg = f"Failed to import NetworkTrafficAnalyzer: {e}"
             log_error(error_msg)
-            main_window.log_message(error_msg)
+            if hasattr(main_window, "log_message"):
+                main_window.log_message(error_msg)
         except Exception as e:
             error_msg = f"Error launching traffic analyzer: {e}"
             log_error(error_msg)
-            main_window.log_message(error_msg)
+            if hasattr(main_window, "log_message"):
+                main_window.log_message(error_msg)
 
     def analyze_network_traffic(self) -> dict[str, object] | None:
         """Analyze current network traffic for license-related communications.
@@ -160,7 +163,8 @@ class TrafficAnalyzer:
                 for conn in connections:
                     try:
                         protocol = protocol_map.get(conn.type, "OTHER")
-                        results["protocol_stats"][protocol] += 1
+                        protocol_stats = cast(dict[str, int], results["protocol_stats"])
+                        protocol_stats[protocol] = protocol_stats.get(protocol, 0) + 1
 
                         if conn.laddr and conn.raddr:
                             src = f"{conn.laddr.ip}:{conn.laddr.port}"
@@ -169,7 +173,7 @@ class TrafficAnalyzer:
 
                             remote_port = conn.raddr.port
                             if remote_port in license_ports:
-                                license_conn = {
+                                license_conn: dict[str, Any] = {
                                     "src": src,
                                     "dst": dst,
                                     "port": remote_port,
@@ -177,9 +181,10 @@ class TrafficAnalyzer:
                                     "status": conn.status,
                                     "reason": "Known license port",
                                 }
-                                results["license_traffic"].append(license_conn)
+                                license_traffic_list = cast(list[dict[str, Any]], results["license_traffic"])
+                                license_traffic_list.append(license_conn)
 
-                            conn_info = {
+                            conn_info: dict[str, Any] = {
                                 "local": src,
                                 "remote": dst,
                                 "protocol": protocol,
@@ -194,27 +199,30 @@ class TrafficAnalyzer:
                                     conn_info["process"] = proc.name()
 
                                     if any(kw in proc_name for kw in license_keywords):
-                                        license_conn = {
+                                        license_conn_proc: dict[str, Any] = {
                                             "src": src,
                                             "dst": dst,
                                             "process": proc.name(),
                                             "protocol": protocol,
                                             "reason": "License-related process",
                                         }
-                                        if license_conn not in results["license_traffic"]:
-                                            results["license_traffic"].append(license_conn)
+                                        license_traffic_list = cast(list[dict[str, Any]], results["license_traffic"])
+                                        if license_conn_proc not in license_traffic_list:
+                                            license_traffic_list.append(license_conn_proc)
                                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                                     pass
 
-                            results["connection_info"].append(conn_info)
+                            connection_info_list = cast(list[dict[str, Any]], results["connection_info"])
+                            connection_info_list.append(conn_info)
 
                     except Exception as e:
                         log_error(f"Error analyzing network connection: {e}")
                         continue
 
                 sorted_convs = sorted(connection_counts.items(), key=lambda x: x[1], reverse=True)
+                top_conversations_list = cast(list[dict[str, Any]], results["top_conversations"])
                 for (src, dst), count in sorted_convs[:20]:
-                    results["top_conversations"].append({
+                    top_conversations_list.append({
                         "src": src,
                         "dst": dst,
                         "packets": count,
@@ -235,21 +243,23 @@ class TrafficAnalyzer:
 
                         if netstat_result.returncode == 0:
                             lines = netstat_result.stdout.strip().split("\n")
+                            protocol_stats_dict = cast(dict[str, int], results["protocol_stats"])
+                            license_traffic_list = cast(list[dict[str, Any]], results["license_traffic"])
                             for line in lines[4:]:
                                 parts = line.split()
                                 if len(parts) >= 4:
                                     protocol = parts[0]
-                                    results["protocol_stats"][protocol] += 1
+                                    protocol_stats_dict[protocol] = protocol_stats_dict.get(protocol, 0) + 1
 
                                     if len(parts) >= 3:
-                                        local_addr = parts[1]
                                         remote_addr = parts[2]
 
                                         if ":" in remote_addr:
+                                            local_addr = parts[1]
                                             try:
                                                 remote_port = int(remote_addr.split(":")[-1])
                                                 if remote_port in {443, 80, 27000, 27001, 5093, 7788, 1947}:
-                                                    results["license_traffic"].append({
+                                                    license_traffic_list.append({
                                                         "local": local_addr,
                                                         "remote": remote_addr,
                                                         "protocol": protocol,
@@ -274,27 +284,29 @@ class TrafficAnalyzer:
 
                         if ss_result.returncode == 0:
                             lines = ss_result.stdout.strip().split("\n")
+                            protocol_stats_dict = cast(dict[str, int], results["protocol_stats"])
                             for line in lines[1:]:
-                                parts = line.split()
-                                if parts:
+                                if parts := line.split():
                                     protocol = parts[0]
-                                    results["protocol_stats"][protocol] += 1
+                                    protocol_stats_dict[protocol] = protocol_stats_dict.get(protocol, 0) + 1
 
                     except Exception as e:
                         self.logger.warning("ss fallback failed: %s", e)
 
-            results["protocol_stats"] = dict(results["protocol_stats"])
-            results["total_connections"] = sum(results["protocol_stats"].values())
-            results["license_connection_count"] = len(results["license_traffic"])
+            protocol_stats_dict = cast(dict[str, int], results["protocol_stats"])
+            results["protocol_stats"] = dict(protocol_stats_dict)
+            results["total_connections"] = sum(cast(dict[str, int], results["protocol_stats"]).values())
+            results["license_connection_count"] = len(cast(list[Any], results["license_traffic"]))
 
-            if results["total_connections"] > 0:
-                log_info(f"Traffic analysis complete: {results['total_connections']} connections analyzed")
+            total_connections = cast(int, results["total_connections"])
+            if total_connections > 0:
+                log_info(f"Traffic analysis complete: {total_connections} connections analyzed")
                 return results
 
             return None
 
         except Exception as e:
-            self.logger.error("Network traffic analysis failed: %s", e)
+            self.logger.exception("Network traffic analysis failed: %s", e)
             log_error(f"Traffic analysis error: {e}")
             return None
 
@@ -310,11 +322,11 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.parent = parent
-        self.analyzer = None
-        self.capture_thread = None
-        self.analysis_results = {}
-        self.captured_packets = []
+        self._parent: QWidget | None = parent
+        self.analyzer: Any | None = None
+        self.capture_thread: threading.Thread | None = None
+        self.analysis_results: dict[str, Any] = {}
+        self.captured_packets: list[Any] = []
 
         self.setWindowTitle("Visual Network Traffic Analyzer")
         self.setMinimumSize(900, 700)
@@ -329,7 +341,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         try:
             from intellicrack.core.network.traffic_analyzer import NetworkTrafficAnalyzer
 
-            self.analyzer = NetworkTrafficAnalyzer()
+            self.analyzer = cast(Any, NetworkTrafficAnalyzer())
             log_info("NetworkTrafficAnalyzer initialized successfully")
         except Exception as e:
             error_msg = f"Failed to initialize NetworkTrafficAnalyzer: {e}"
@@ -340,8 +352,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         """Set up the comprehensive UI layout."""
         layout = QVBoxLayout(self)
 
-        # Create tab widget for organized interface
-        self.tab_widget = QTabWidget()
+        self.tab_widget: QTabWidget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
         # Capture Configuration Tab
@@ -369,16 +380,16 @@ class NetworkTrafficAnalysisDialog(QDialog):
         interface_layout = QGridLayout(interface_group)
 
         interface_layout.addWidget(QLabel("Interface:"), 0, 0)
-        self.interface_combo = QComboBox()
+        self.interface_combo: QComboBox = QComboBox()
         self.interface_combo.addItems(["auto", "eth0", "wlan0", "lo"])
         interface_layout.addWidget(self.interface_combo, 0, 1)
 
         interface_layout.addWidget(QLabel("Capture Filter:"), 1, 0)
-        self.filter_edit = QLineEdit()
+        self.filter_edit: QLineEdit = QLineEdit()
         interface_layout.addWidget(self.filter_edit, 1, 1)
 
         interface_layout.addWidget(QLabel("Timeout (seconds):"), 2, 0)
-        self.timeout_spin = QSpinBox()
+        self.timeout_spin: QSpinBox = QSpinBox()
         self.timeout_spin.setRange(10, 3600)
         self.timeout_spin.setValue(60)
         interface_layout.addWidget(self.timeout_spin, 2, 1)
@@ -389,18 +400,18 @@ class NetworkTrafficAnalysisDialog(QDialog):
         license_group = QGroupBox("License Traffic Detection")
         license_layout = QGridLayout(license_group)
 
-        self.enable_license_detection = QCheckBox("Enable License Server Detection")
+        self.enable_license_detection: QCheckBox = QCheckBox("Enable License Server Detection")
         self.enable_license_detection.setChecked(True)
         license_layout.addWidget(self.enable_license_detection, 0, 0, 1, 2)
 
         license_layout.addWidget(QLabel("License Patterns:"), 1, 0)
-        self.license_patterns_edit = QTextEdit()
+        self.license_patterns_edit: QTextEdit = QTextEdit()
         self.license_patterns_edit.setMaximumHeight(100)
         self.license_patterns_edit.setPlainText("license\nactivation\nkey\ntoken\ncredentials")
         license_layout.addWidget(self.license_patterns_edit, 1, 1)
 
         license_layout.addWidget(QLabel("Common License Ports:"), 2, 0)
-        self.license_ports_edit = QLineEdit("443,8080,27000,27001,7788,5093")
+        self.license_ports_edit: QLineEdit = QLineEdit("443,8080,27000,27001,7788,5093")
         license_layout.addWidget(self.license_ports_edit, 2, 1)
 
         layout.addWidget(license_group)
@@ -409,19 +420,19 @@ class NetworkTrafficAnalysisDialog(QDialog):
         analysis_group = QGroupBox("Analysis Options")
         analysis_layout = QGridLayout(analysis_group)
 
-        self.deep_packet_inspection = QCheckBox("Deep Packet Inspection")
+        self.deep_packet_inspection: QCheckBox = QCheckBox("Deep Packet Inspection")
         self.deep_packet_inspection.setChecked(True)
         analysis_layout.addWidget(self.deep_packet_inspection, 0, 0)
 
-        self.protocol_analysis = QCheckBox("Protocol Analysis")
+        self.protocol_analysis: QCheckBox = QCheckBox("Protocol Analysis")
         self.protocol_analysis.setChecked(True)
         analysis_layout.addWidget(self.protocol_analysis, 0, 1)
 
-        self.traffic_classification = QCheckBox("Traffic Classification")
+        self.traffic_classification: QCheckBox = QCheckBox("Traffic Classification")
         self.traffic_classification.setChecked(True)
         analysis_layout.addWidget(self.traffic_classification, 1, 0)
 
-        self.anomaly_detection = QCheckBox("Anomaly Detection")
+        self.anomaly_detection: QCheckBox = QCheckBox("Anomaly Detection")
         self.anomaly_detection.setChecked(False)
         analysis_layout.addWidget(self.anomaly_detection, 1, 1)
 
@@ -439,30 +450,28 @@ class NetworkTrafficAnalysisDialog(QDialog):
         status_layout = QGridLayout(status_group)
 
         status_layout.addWidget(QLabel("Status:"), 0, 0)
-        self.status_label = QLabel("Ready")
+        self.status_label: QLabel = QLabel("Ready")
         self.status_label.setStyleSheet("color: green; font-weight: bold;")
         status_layout.addWidget(self.status_label, 0, 1)
 
         status_layout.addWidget(QLabel("Packets Captured:"), 1, 0)
-        self.packet_count_label = QLabel("0")
+        self.packet_count_label: QLabel = QLabel("0")
         status_layout.addWidget(self.packet_count_label, 1, 1)
 
         status_layout.addWidget(QLabel("License Traffic:"), 2, 0)
-        self.license_traffic_label = QLabel("0")
+        self.license_traffic_label: QLabel = QLabel("0")
         status_layout.addWidget(self.license_traffic_label, 2, 1)
 
         layout.addWidget(status_group)
 
-        # Progress Bar
-        self.progress_bar = QProgressBar()
+        self.progress_bar: QProgressBar = QProgressBar()
         self.progress_bar.setVisible(False)
         layout.addWidget(self.progress_bar)
 
-        # Real-time Packet List
         packet_group = QGroupBox("Live Packet Feed")
         packet_layout = QVBoxLayout(packet_group)
 
-        self.packet_list = QListWidget()
+        self.packet_list: QListWidget = QListWidget()
         self.packet_list.setMaximumHeight(300)
         packet_layout.addWidget(self.packet_list)
 
@@ -473,15 +482,15 @@ class NetworkTrafficAnalysisDialog(QDialog):
         stats_layout = QGridLayout(stats_group)
 
         stats_layout.addWidget(QLabel("Packet Rate (pps):"), 0, 0)
-        self.packet_rate_label = QLabel("0")
+        self.packet_rate_label: QLabel = QLabel("0")
         stats_layout.addWidget(self.packet_rate_label, 0, 1)
 
         stats_layout.addWidget(QLabel("Data Rate (Mbps):"), 1, 0)
-        self.data_rate_label = QLabel("0.0")
+        self.data_rate_label: QLabel = QLabel("0.0")
         stats_layout.addWidget(self.data_rate_label, 1, 1)
 
         stats_layout.addWidget(QLabel("Top Protocol:"), 2, 0)
-        self.top_protocol_label = QLabel("N/A")
+        self.top_protocol_label: QLabel = QLabel("N/A")
         stats_layout.addWidget(self.top_protocol_label, 2, 1)
 
         layout.addWidget(stats_group)
@@ -497,31 +506,29 @@ class NetworkTrafficAnalysisDialog(QDialog):
         summary_group = QGroupBox("Analysis Summary")
         summary_layout = QVBoxLayout(summary_group)
 
-        self.summary_text = QTextEdit()
+        self.summary_text: QTextEdit = QTextEdit()
         self.summary_text.setReadOnly(True)
         self.summary_text.setMaximumHeight(200)
         summary_layout.addWidget(self.summary_text)
 
         layout.addWidget(summary_group)
 
-        # Detailed Results
         details_group = QGroupBox("Detailed Analysis Results")
         details_layout = QVBoxLayout(details_group)
 
-        self.results_text = QTextEdit()
+        self.results_text: QTextEdit = QTextEdit()
         self.results_text.setReadOnly(True)
         details_layout.addWidget(self.results_text)
 
         layout.addWidget(details_group)
 
-        # Export Options
         export_group = QGroupBox("Export Options")
         export_layout = QHBoxLayout(export_group)
 
-        self.export_json_btn = QPushButton("Export JSON")
-        self.export_csv_btn = QPushButton("Export CSV")
-        self.export_pcap_btn = QPushButton("Export PCAP")
-        self.export_report_btn = QPushButton("Generate Report")
+        self.export_json_btn: QPushButton = QPushButton("Export JSON")
+        self.export_csv_btn: QPushButton = QPushButton("Export CSV")
+        self.export_pcap_btn: QPushButton = QPushButton("Export PCAP")
+        self.export_report_btn: QPushButton = QPushButton("Generate Report")
 
         export_layout.addWidget(self.export_json_btn)
         export_layout.addWidget(self.export_csv_btn)
@@ -542,7 +549,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
         controls_layout = QGridLayout(controls_group)
 
         controls_layout.addWidget(QLabel("Chart Type:"), 0, 0)
-        self.chart_type_combo = QComboBox()
+        self.chart_type_combo: QComboBox = QComboBox()
         self.chart_type_combo.addItems(
             [
                 "Protocol Distribution",
@@ -555,21 +562,20 @@ class NetworkTrafficAnalysisDialog(QDialog):
         controls_layout.addWidget(self.chart_type_combo, 0, 1)
 
         controls_layout.addWidget(QLabel("Time Window (minutes):"), 1, 0)
-        self.time_window_spin = QSpinBox()
+        self.time_window_spin: QSpinBox = QSpinBox()
         self.time_window_spin.setRange(1, 60)
         self.time_window_spin.setValue(5)
         controls_layout.addWidget(self.time_window_spin, 1, 1)
 
-        self.generate_viz_btn = QPushButton("Generate Visualization")
+        self.generate_viz_btn: QPushButton = QPushButton("Generate Visualization")
         controls_layout.addWidget(self.generate_viz_btn, 2, 0, 1, 2)
 
         layout.addWidget(controls_group)
 
-        # Visualization Display Area
         viz_display_group = QGroupBox("Visualization Display")
         viz_display_layout = QVBoxLayout(viz_display_group)
 
-        self.viz_display = QTextEdit()
+        self.viz_display: QTextEdit = QTextEdit()
         self.viz_display.setReadOnly(True)
         self.viz_display.setPlainText("Visualization will be displayed here after analysis...")
         viz_display_layout.addWidget(self.viz_display)
@@ -587,11 +593,11 @@ class NetworkTrafficAnalysisDialog(QDialog):
         """
         button_layout = QHBoxLayout()
 
-        self.start_capture_btn = QPushButton("Start Capture")
-        self.stop_capture_btn = QPushButton("Stop Capture")
-        self.analyze_btn = QPushButton("Analyze Traffic")
-        self.clear_btn = QPushButton("Clear Data")
-        self.close_btn = QPushButton("Close")
+        self.start_capture_btn: QPushButton = QPushButton("Start Capture")
+        self.stop_capture_btn: QPushButton = QPushButton("Stop Capture")
+        self.analyze_btn: QPushButton = QPushButton("Analyze Traffic")
+        self.clear_btn: QPushButton = QPushButton("Clear Data")
+        self.close_btn: QPushButton = QPushButton("Close")
 
         self.stop_capture_btn.setEnabled(False)
         self.analyze_btn.setEnabled(False)
@@ -622,13 +628,12 @@ class NetworkTrafficAnalysisDialog(QDialog):
         # Visualization button
         self.generate_viz_btn.clicked.connect(self._generate_visualization)
 
-        # Update timer for real-time stats
-        self.update_timer = QTimer()
+        self.update_timer: QTimer = QTimer()
         self.update_timer.timeout.connect(self._update_realtime_stats)
 
     def _start_capture(self) -> None:
         """Start network traffic capture."""
-        if not self.analyzer:
+        if self.analyzer is None:
             QMessageBox.warning(self, "Error", "Network traffic analyzer not available")
             return
 
@@ -638,8 +643,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
             timeout = self.timeout_spin.value()
             packet_filter = self.filter_edit.text()
 
-            # Configure analyzer
-            config = {
+            config: dict[str, Any] = {
                 "interface": interface,
                 "timeout": timeout,
                 "filter": packet_filter,
@@ -647,9 +651,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
                 "deep_inspection": self.deep_packet_inspection.isChecked(),
             }
 
-            # Start capture in separate thread
             self.capture_thread = threading.Thread(target=self._capture_worker, args=(config,), daemon=True)
-
             self.capture_thread.start()
 
             # Update UI state
@@ -671,15 +673,17 @@ class NetworkTrafficAnalysisDialog(QDialog):
             log_error(error_msg)
             QMessageBox.critical(self, "Capture Error", error_msg)
 
-    def _capture_worker(self, config: dict[str, object]) -> None:
+    def _capture_worker(self, config: dict[str, Any]) -> None:
         """Worker method for packet capture.
 
         Args:
             config: Configuration dictionary containing capture settings
 
         """
+        if self.analyzer is None:
+            return
+
         try:
-            # Set license patterns if enabled
             if config.get("enable_license_detection"):
                 patterns = self.license_patterns_edit.toPlainText().split("\n")
                 patterns = [p.strip() for p in patterns if p.strip()]
@@ -689,7 +693,6 @@ class NetworkTrafficAnalysisDialog(QDialog):
                     ports = [int(p.strip()) for p in ports_text.split(",") if p.strip().isdigit()]
                     self.analyzer.license_ports = ports
 
-            # Start capture
             self.analyzer.start_capture(
                 interface=config.get("interface", "auto"),
                 timeout=config.get("timeout", 60),
@@ -702,7 +705,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
     def _stop_capture(self) -> None:
         """Stop network traffic capture."""
         try:
-            if self.analyzer:
+            if self.analyzer is not None:
                 self.analyzer.stop_capture()
 
             # Update UI state
@@ -724,7 +727,7 @@ class NetworkTrafficAnalysisDialog(QDialog):
 
     def _analyze_traffic(self) -> None:
         """Analyze captured traffic."""
-        if not self.analyzer:
+        if self.analyzer is None:
             QMessageBox.warning(self, "Error", "Network traffic analyzer not available")
             return
 
@@ -797,7 +800,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
     def _update_realtime_stats(self) -> None:
         """Update real-time statistics during capture."""
-        if not self.analyzer:
+        if self.analyzer is None:
             return
 
         try:
@@ -821,7 +824,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
     def _clear_data(self) -> None:
         """Clear all captured data and reset the interface."""
         try:
-            if self.analyzer:
+            if self.analyzer is not None:
                 self.analyzer.packets = []
                 self.analyzer.connections = {}
                 self.analyzer.license_connections = []
@@ -867,7 +870,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
     def _export_csv(self) -> None:
         """Export packet data to CSV."""
-        if not self.analyzer or not hasattr(self.analyzer, "packets"):
+        if self.analyzer is None or not hasattr(self.analyzer, "packets"):
             QMessageBox.warning(self, "Warning", "No packet data to export")
             return
 
@@ -919,8 +922,8 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
             filename, _ = QFileDialog.getSaveFileName(self, "Export Report", "traffic_analysis_report.txt", "Text files (*.txt)")
 
             if filename:
-                if self.analyzer:
-                    report_content = self.analyzer.generate_report()
+                if self.analyzer is not None:
+                    report_content: str = self.analyzer.generate_report()
 
                     with open(filename, "w", encoding="utf-8") as f:
                         f.write(report_content)
@@ -989,7 +992,7 @@ Threat Level: {self.analysis_results.get("threat_level", "Unknown")}
 
 
 # Network capture management functions for main_app binding
-def start_network_capture(self: object, interface: str | None = None, filter_str: str | None = None) -> bool | None:
+def start_network_capture(self: Any, interface: str | None = None, filter_str: str | None = None) -> bool | None:
     """Start network packet capture on specified interface.
 
     Args:
@@ -1006,9 +1009,7 @@ def start_network_capture(self: object, interface: str | None = None, filter_str
         if not hasattr(self, "_traffic_analyzer"):
             self._traffic_analyzer = TrafficAnalyzer()
 
-        # Determine interface if not specified
         if interface is None:
-            # Try to get default interface
             try:
                 import netifaces
 
@@ -1016,21 +1017,24 @@ def start_network_capture(self: object, interface: str | None = None, filter_str
                 if "default" in gateways and netifaces.AF_INET in gateways["default"]:
                     interface = gateways["default"][netifaces.AF_INET][1]
             except ImportError:
-                # Fall back to common interface names
-                import platform
+                import platform as plat
 
-                interface = "Ethernet" if platform.system() == "Windows" else "eth0"
-        # Store capture settings
-        self._capture_interface = interface
-        self._capture_filter = filter_str
-        self._capture_active = True
-        self._captured_packets = []
+                interface = "Ethernet" if plat.system() == "Windows" else "eth0"
 
-        # Start capture in background thread
+        setattr(self, "_capture_interface", interface)
+        setattr(self, "_capture_filter", filter_str)
+        setattr(self, "_capture_active", True)
+        setattr(self, "_captured_packets", [])
+
         import threading
 
-        self._capture_thread = threading.Thread(target=self._perform_network_capture, args=(interface, filter_str), daemon=True)
-        self._capture_thread.start()
+        capture_thread = threading.Thread(
+            target=_perform_network_capture,
+            args=(self, interface, filter_str),
+            daemon=True
+        )
+        setattr(self, "_capture_thread", capture_thread)
+        capture_thread.start()
 
         if hasattr(self, "log_message"):
             self.log_message(f"Started network capture on {interface}")
@@ -1045,7 +1049,7 @@ def start_network_capture(self: object, interface: str | None = None, filter_str
         return False
 
 
-def stop_network_capture(self: object) -> bool | None:
+def stop_network_capture(self: Any) -> bool | None:
     """Stop active network packet capture.
 
     Args:
@@ -1078,7 +1082,7 @@ def stop_network_capture(self: object) -> bool | None:
         return False
 
 
-def clear_network_capture(self: object) -> bool | None:
+def clear_network_capture(self: Any) -> bool | None:
     """Clear captured network packets from memory.
 
     Args:
@@ -1106,7 +1110,7 @@ def clear_network_capture(self: object) -> bool | None:
         return False
 
 
-def _perform_network_capture(self: object, interface: str | None, filter_str: str | None) -> None:
+def _perform_network_capture(self: Any, interface: str | None, filter_str: str | None) -> None:
     """Background thread function to perform packet capture.
 
     Args:
@@ -1116,11 +1120,10 @@ def _perform_network_capture(self: object, interface: str | None, filter_str: st
 
     """
     try:
-        # Try to use scapy for packet capture
         try:
             from scapy.all import sniff
 
-            def packet_handler(packet: object) -> None:
+            def packet_handler(packet: Any) -> None:
                 """Handle captured packets.
 
                 Args:
@@ -1128,61 +1131,55 @@ def _perform_network_capture(self: object, interface: str | None, filter_str: st
 
                 """
                 if hasattr(self, "_captured_packets"):
-                    self._captured_packets.append(packet)
+                    captured_packets: list[Any] = getattr(self, "_captured_packets")
+                    captured_packets.append(packet)
 
-                    # Optionally update UI with packet info
                     if hasattr(self, "update_output"):
                         packet_summary = f"Captured: {packet.summary()}"
-                        self.update_output.emit(packet_summary)
+                        update_output: Any = getattr(self, "update_output")
+                        update_output.emit(packet_summary)
 
-            # Start packet sniffing
             sniff(
                 iface=interface,
                 filter=filter_str,
                 prn=packet_handler,
-                stop_filter=lambda x: (self.logger.debug("Packet in stop_filter: %s", x) or True)
-                and not getattr(self, "_capture_active", False),
+                stop_filter=lambda x: not getattr(self, "_capture_active", False),
                 store=False,
             )
 
         except ImportError:
-            # Fall back to socket-based capture if scapy not available
             import socket
 
-            # Create raw socket for packet capture
+            sock: Any
             if platform.system() == "Windows":
-                # Windows raw socket
                 sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
                 sock.bind((socket.gethostbyname(socket.gethostname()), 0))
                 sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
                 sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_ON)
             else:
-                # Linux/Unix raw socket
-                sock = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
+                sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_IP)
 
-            sock.settimeout(1.0)  # 1 second timeout for checking capture_active
+            sock.settimeout(1.0)
 
             while getattr(self, "_capture_active", False):
                 try:
-                    # Receive packet data
                     packet_data, addr = sock.recvfrom(65535)
 
-                    # Store packet data
                     if hasattr(self, "_captured_packets"):
-                        self._captured_packets.append({"data": packet_data, "address": addr, "timestamp": time.time()})
+                        captured_packets: list[Any] = getattr(self, "_captured_packets")
+                        captured_packets.append({"data": packet_data, "address": addr, "timestamp": time.time()})
 
-                    # Update UI if possible
                     if hasattr(self, "update_output"):
-                        self.update_output.emit(f"Captured packet: {len(packet_data)} bytes")
+                        update_output: Any = getattr(self, "update_output")
+                        update_output.emit(f"Captured packet: {len(packet_data)} bytes")
 
                 except TimeoutError:
                     continue
                 except Exception as e:
-                    if self._capture_active:
+                    if getattr(self, "_capture_active", False):
                         log_error(f"Packet capture error: {e}")
                     break
 
-            # Clean up socket
             if platform.system() == "Windows":
                 sock.ioctl(socket.SIO_RCVALL, socket.RCVALL_OFF)
             sock.close()

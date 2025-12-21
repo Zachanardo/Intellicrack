@@ -247,7 +247,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             file_hash = self._calculate_file_hash(file_path)
             cached_result, cached_hash = self.result_cache[file_path]
             if file_hash == cached_hash:
-                logger.debug(f"Returning cached result for {file_path}")
+                logger.debug("Returning cached result for %s", file_path)
                 return cached_result
 
         # Build command with advanced options
@@ -292,7 +292,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             )
 
             if result.returncode != 0:
-                logger.error(f"Protection engine execution failed: {result.stderr}")
+                logger.exception("Protection engine execution failed: %s", result.stderr)
                 return AdvancedProtectionAnalysis(
                     file_path=file_path,
                     file_type="Error",
@@ -329,14 +329,14 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return analysis
 
         except subprocess.TimeoutExpired:
-            logger.error(f"Protection analysis timed out for: {file_path}")
+            logger.exception("Protection analysis timed out for: %s", file_path)
             return AdvancedProtectionAnalysis(
                 file_path=file_path,
                 file_type="Timeout",
                 architecture="Unknown",
             )
         except Exception as e:
-            logger.error(f"Error in advanced analysis: {e}")
+            logger.exception("Error in advanced analysis: %s", e)
             return AdvancedProtectionAnalysis(
                 file_path=file_path,
                 file_type="Error",
@@ -463,7 +463,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 analysis.entropy_info.append(entropy_info)
 
         except ElementTree.ParseError as e:
-            logger.error(f"XML parsing error: {e}")
+            logger.exception("XML parsing error: %s", e)
 
         return analysis
 
@@ -587,7 +587,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                             suspicious_strings.append(string_info)
 
         except Exception as e:
-            logger.error(f"Error extracting strings: {e}")
+            logger.exception("Error extracting strings: %s", e)
 
         return suspicious_strings
 
@@ -636,7 +636,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 rich_header_hash=rich_header_hash,
             )
         except Exception as e:
-            logger.error(f"Error calculating import hash with pefile: {e}")
+            logger.exception("Error calculating import hash with pefile: %s", e)
             # Try manual fallback
             return self._calculate_import_hash_manual(file_path)
 
@@ -732,15 +732,14 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                             import_strings.append(f"[FORWARD:{forwarder_chain:08X}]")
 
                         # Validate thunks for IAT hooking detection
-                        if first_thunk != 0 and original_first_thunk != 0:
-                            # Both thunks present - normal import
-                            if abs(first_thunk - original_first_thunk) > 0x10000:
+                        if first_thunk != 0:
+                            if original_first_thunk == 0:
+                                # Only IAT present - could indicate runtime binding
+                                import_strings.append(f"[DYNAMIC_IMPORT:{first_thunk:08X}]")
+
+                            elif abs(first_thunk - original_first_thunk) > 0x10000:
                                 # Suspicious thunk separation - possible IAT manipulation
                                 import_strings.append(f"[IAT_ANOMALY:{first_thunk:08X}]")
-                        elif first_thunk != 0:
-                            # Only IAT present - could indicate runtime binding
-                            import_strings.append(f"[DYNAMIC_IMPORT:{first_thunk:08X}]")
-
                         # Convert name RVA to file offset
                         name_file_offset = 0
                         for i in range(num_sections):
@@ -813,7 +812,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             )
 
         except Exception as e:
-            logger.error(f"Error in manual import hash calculation: {e}")
+            logger.exception("Error in manual import hash calculation: %s", e)
             return None
 
     def _calculate_similarity_hash(self, file_path: str) -> str | None:
@@ -828,7 +827,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         except ImportError:
             logger.debug("ssdeep not available, trying TLSH")
         except Exception as e:
-            logger.error(f"Error calculating ssdeep hash: {e}")
+            logger.exception("Error calculating ssdeep hash: %s", e)
 
         # Try TLSH as alternative
         try:
@@ -843,13 +842,13 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         except ImportError:
             logger.debug("TLSH not available, using custom fuzzy hash")
         except Exception as e:
-            logger.error(f"Error calculating TLSH hash: {e}")
+            logger.exception("Error calculating TLSH hash: %s", e)
 
         # Fallback: Custom rolling hash implementation for similarity
         try:
             return self._calculate_custom_fuzzy_hash(file_path)
         except Exception as e:
-            logger.error(f"Error calculating custom fuzzy hash: {e}")
+            logger.exception("Error calculating custom fuzzy hash: %s", e)
             return None
 
     def _calculate_custom_fuzzy_hash(self, file_path: str) -> str:
@@ -968,7 +967,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             return f"{block_size}:{main_hash}:{secondary_hash}"
 
         except Exception as e:
-            logger.error(f"Error in custom fuzzy hash calculation: {e}")
+            logger.exception("Error in custom fuzzy hash calculation: %s", e)
             # Last resort: return a simple hash
             with open(file_path, "rb") as f:
                 return f"sha256:{hashlib.sha256(f.read()).hexdigest()}"
@@ -1017,7 +1016,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 try:
                     results[path] = future.result()
                 except Exception as e:
-                    logger.error(f"Error analyzing {path}: {e}")
+                    logger.exception("Error analyzing %s: %s", path, e)
                     results[path] = AdvancedProtectionAnalysis(
                         file_path=path,
                         file_type="Error",
@@ -1040,7 +1039,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         """
         if not self.custom_db_path:
-            logger.error("Custom database path not set")
+            logger.exception("Custom database path not set")
             return False
 
         try:
@@ -1065,11 +1064,11 @@ function detect(bShowType, bShowVersion, bShowOptions)
 """
 
             sig_file.write_text(signature_content)
-            logger.info(f"Created custom signature: {sig_file}")
+            logger.info("Created custom signature: %s", sig_file)
             return True
 
         except Exception as e:
-            logger.error(f"Error creating signature: {e}")
+            logger.exception("Error creating signature: %s", e)
             return False
 
     def export_to_yara(self, analysis: AdvancedProtectionAnalysis) -> str:
@@ -1082,8 +1081,6 @@ function detect(bShowType, bShowVersion, bShowOptions)
             YARA rule string with detailed detection patterns
 
         """
-        yara_rules = []
-
         # Generate main detection rule
         main_rule_name = Path(analysis.file_path).stem.replace(" ", "_").replace("-", "_")
 
@@ -1105,9 +1102,7 @@ function detect(bShowType, bShowVersion, bShowOptions)
         # Add protection-specific patterns based on detections
         for detection in analysis.detections:
             detection_strings = self._generate_detection_patterns(detection)
-            for pattern in detection_strings:
-                strings_section.append(f"        {pattern}")
-
+            strings_section.extend(f"        {pattern}" for pattern in detection_strings)
             # Add detection-specific conditions
             if detection.type == ProtectionType.PACKER:
                 conditions_list.append(f"// Packer detection: {detection.name}")
@@ -1155,8 +1150,7 @@ rule {main_rule_name}_Protection_Detection {{
         {" and ".join(conditions_list[:3]) if conditions_list else "uint32(0) == 0x00"}
 }}"""
 
-        yara_rules.append(main_rule)
-
+        yara_rules = [main_rule]
         # Generate individual rules for each detection
         for detection in analysis.detections:
             rule_name = detection.name.replace(" ", "_").replace("-", "_").replace(".", "_")

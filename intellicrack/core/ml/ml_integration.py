@@ -124,7 +124,7 @@ class MLAnalysisIntegration:
             return classification
 
         except Exception as e:
-            self.logger.error("Classification failed for %s: %s", binary_path, e)
+            self.logger.exception("Classification failed for %s: %s", binary_path, e)
             return {
                 "enabled": True,
                 "error": str(e),

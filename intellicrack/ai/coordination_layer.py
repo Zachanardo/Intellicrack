@@ -57,7 +57,7 @@ except ImportError as e:
     import logging
 
     logger = logging.getLogger(__name__)
-    logger.error("Import error in coordination_layer: %s", e)
+    logger.exception("Import error in coordination_layer: %s", e)
 
 if not TYPE_CHECKING:
     try:
@@ -163,7 +163,7 @@ class AICoordinationLayer:
             else:
                 logger.warning("Model Manager not available")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize Model Manager: %s", e)
+            logger.exception("Failed to initialize Model Manager: %s", e)
 
     def _get_cache_key(self, request: AnalysisRequest) -> str:
         """Generate cache key for analysis request."""
@@ -205,7 +205,7 @@ class AICoordinationLayer:
             return AnalysisStrategy.ML_FIRST  # Default to ML first
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in coordination_layer: %s", e)
+            logger.exception("Error in coordination_layer: %s", e)
             return AnalysisStrategy.ML_FIRST
 
     def analyze_vulnerabilities(self, request: AnalysisRequest) -> CoordinatedResult:
@@ -269,7 +269,7 @@ class AICoordinationLayer:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in coordinated analysis: %s", e)
+            logger.exception("Error in coordinated analysis: %s", e)
             result.processing_time = time.time() - start_time
             return result
 
@@ -314,7 +314,7 @@ class AICoordinationLayer:
                 llm_results = self._perform_llm_analysis(request)
                 llm_queue.put(("success", llm_results))
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in coordination_layer: %s", e)
+                logger.exception("Error in coordination_layer: %s", e)
                 llm_queue.put(("error", str(e)))
         else:
             llm_queue.put(("unavailable", None))
@@ -408,7 +408,7 @@ class AICoordinationLayer:
                 result.combined_confidence = llm_results.get("confidence", 0.0)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("LLM analysis failed: %s", e)
+            logger.exception("LLM analysis failed: %s", e)
 
         return result
 
@@ -462,7 +462,7 @@ class AICoordinationLayer:
             return self._fallback_analysis(request)
 
         except Exception as e:
-            logger.error("LLM analysis failed: %s", e)
+            logger.exception("LLM analysis failed: %s", e)
             return self._fallback_analysis(request)
 
     def _create_binary_analysis_prompt(self, request: AnalysisRequest) -> str:
@@ -511,7 +511,7 @@ class AICoordinationLayer:
                                 # Use full path to file command and avoid shell injection
                                 # Use shlex.quote to properly escape the binary path
                                 safe_path = shlex.quote(request.binary_path)
-                                logger.debug(f"Running file command with safe path: {safe_path}")
+                                logger.debug("Running file command with safe path: %s", safe_path)
                                 result = subprocess.run(
                                     [file_cmd, request.binary_path],
                                     capture_output=True,
@@ -644,7 +644,7 @@ class AICoordinationLayer:
             return AnalysisStrategy.ADAPTIVE  # Let the system decide
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in coordination_layer: %s", e)
+            logger.exception("Error in coordination_layer: %s", e)
             return AnalysisStrategy.ADAPTIVE
 
 

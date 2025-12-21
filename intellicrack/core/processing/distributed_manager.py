@@ -333,7 +333,7 @@ class DistributedAnalysisManager:
             return True
 
         except OSError as e:
-            self.logger.error("Failed to start cluster: %s", e)
+            self.logger.exception("Failed to start cluster: %s", e)
             self.running = False
             return False
 
@@ -355,7 +355,7 @@ class DistributedAnalysisManager:
             self.logger.info("Coordinator server started on %s", self.coordinator_address)
 
         except OSError as e:
-            self.logger.error("Failed to start coordinator server: %s", e)
+            self.logger.exception("Failed to start coordinator server: %s", e)
             raise
 
     def _accept_connections_loop(self) -> None:
@@ -377,7 +377,7 @@ class DistributedAnalysisManager:
                 continue
             except OSError as e:
                 if self.running:
-                    self.logger.error("Error accepting connection: %s", e)
+                    self.logger.exception("Error accepting connection: %s", e)
                 break
 
     def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple) -> None:
@@ -428,7 +428,7 @@ class DistributedAnalysisManager:
                         self._send_message(client_socket, {"type": "no_tasks"})
 
         except OSError as e:
-            self.logger.error("Client connection error from %s: %s", client_address, e)
+            self.logger.exception("Client connection error from %s: %s", client_address, e)
         finally:
             if node_id:
                 self._mark_node_offline(node_id)
@@ -476,7 +476,7 @@ class DistributedAnalysisManager:
                 raise ConnectionError("Failed to register with coordinator")
 
         except (OSError, ConnectionError) as e:
-            self.logger.error("Failed to connect to coordinator: %s", e)
+            self.logger.exception("Failed to connect to coordinator: %s", e)
             raise
 
     def _worker_communication_loop(self, coordinator_socket: socket.socket) -> None:
@@ -503,7 +503,7 @@ class DistributedAnalysisManager:
                     time.sleep(2.0)
 
         except OSError as e:
-            self.logger.error("Worker communication error: %s", e)
+            self.logger.exception("Worker communication error: %s", e)
 
     def _send_message(self, sock: socket.socket, message: dict[str, Any]) -> None:
         """Send a message over socket with length prefix and HMAC."""
@@ -514,7 +514,7 @@ class DistributedAnalysisManager:
             length = struct.pack("!I", len(payload))
             sock.sendall(length + payload)
         except (OSError, pickle.PickleError) as e:
-            self.logger.error("Error sending message: %s", e)
+            self.logger.exception("Error sending message: %s", e)
             raise
 
     def _receive_message(self, sock: socket.socket) -> dict[str, Any] | None:
@@ -534,12 +534,12 @@ class DistributedAnalysisManager:
 
             expected_hmac = hmac.new(self._hmac_key, data, hashlib.sha256).digest()
             if not hmac.compare_digest(received_hmac, expected_hmac):
-                self.logger.error("HMAC verification failed - potential data tampering detected")
+                self.logger.exception("HMAC verification failed - potential data tampering detected")
                 return None
 
             return pickle.loads(data) if data else None  # noqa: S301
         except (OSError, pickle.PickleError, struct.error) as e:
-            self.logger.error("Error receiving message: %s", e)
+            self.logger.exception("Error receiving message: %s", e)
             return None
 
     def _recv_exactly(self, sock: socket.socket, length: int) -> bytes | None:
@@ -620,7 +620,7 @@ class DistributedAnalysisManager:
                 time.sleep(self.HEARTBEAT_INTERVAL)
 
             except Exception as e:
-                self.logger.error("Heartbeat error: %s", e, exc_info=True)
+                self.logger.exception("Heartbeat error: %s", e)
 
     def _task_monitor_loop(self) -> None:
         """Monitor task execution and handle timeouts."""
@@ -644,7 +644,7 @@ class DistributedAnalysisManager:
                 time.sleep(self.TASK_CHECK_INTERVAL)
 
             except Exception as e:
-                self.logger.error("Task monitor error: %s", e, exc_info=True)
+                self.logger.exception("Task monitor error: %s", e)
 
     def _task_scheduler_loop(self) -> None:
         """Schedule tasks to available worker nodes."""
@@ -664,7 +664,7 @@ class DistributedAnalysisManager:
                         task = heapq.heappop(self.task_queue)
 
                         if task.retry_count > task.max_retries:
-                            self.logger.error("Task %s exceeded max retries", task.task_id)
+                            self.logger.exception("Task %s exceeded max retries", task.task_id)
                             task.status = TaskStatus.FAILED
                             task.error = "Maximum retry count exceeded"
                             continue
@@ -676,17 +676,18 @@ class DistributedAnalysisManager:
                 time.sleep(0.1)
 
             except Exception as e:
-                self.logger.error("Task scheduler error: %s", e, exc_info=True)
+                self.logger.exception("Task scheduler error: %s", e)
                 time.sleep(1.0)
 
     def _get_available_nodes(self) -> list[WorkerNode]:
         """Get list of available worker nodes."""
         with self.nodes_lock:
-            available = []
-            for node in self.nodes.values():
-                if node.status in (NodeStatus.READY, NodeStatus.BUSY) and node.current_load < node.max_load:
-                    available.append(node)
-            return available
+            return [
+                node
+                for node in self.nodes.values()
+                if node.status in (NodeStatus.READY, NodeStatus.BUSY)
+                and node.current_load < node.max_load
+            ]
 
     def _select_best_node(self, task: AnalysisTask, available_nodes: list[WorkerNode]) -> WorkerNode | None:
         """Select the best node for a task based on capabilities and load."""
@@ -775,7 +776,7 @@ class DistributedAnalysisManager:
 
         except Exception as e:
             error_msg = f"Task execution failed: {e!s}\n{traceback.format_exc()}"
-            self.logger.error(error_msg)
+            self.logger.exception(error_msg)
 
             task.status = TaskStatus.FAILED
             task.error = error_msg
@@ -924,7 +925,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "pefile not available"}
         except Exception as e:
-            logger.error("Section analysis error: %s", e, exc_info=True)
+            self.logger.exception("Section analysis error: %s", e)
             return {"error": str(e)}
 
     def _task_string_extraction(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1003,7 +1004,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "pefile not available"}
         except Exception as e:
-            logger.error("Import analysis error: %s", e, exc_info=True)
+            self.logger.exception("Import analysis error: %s", e)
             return {"error": str(e)}
 
     def _task_crypto_detection(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1072,7 +1073,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "r2pipe not available"}
         except Exception as e:
-            logger.error("Radare2 analysis error: %s", e, exc_info=True)
+            self.logger.exception("Radare2 analysis error: %s", e)
             return {"error": str(e)}
 
     def _task_angr_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1095,7 +1096,7 @@ class DistributedAnalysisManager:
         except ImportError:
             return {"error": "angr not available"}
         except Exception as e:
-            logger.error("Angr analysis error: %s", e, exc_info=True)
+            self.logger.exception("Angr analysis error: %s", e)
             return {"error": str(e)}
 
     def _task_generic_analysis(self, binary_path: str, params: dict[str, Any]) -> dict[str, Any]:
@@ -1162,7 +1163,7 @@ class DistributedAnalysisManager:
                 else:
                     task.status = TaskStatus.FAILED
                     self.performance_metrics["tasks_failed"] += 1
-                    self.logger.error("Task %s failed permanently after %d retries", task_id, task.retry_count)
+                    self.logger.exception("Task %s failed permanently after %d retries", task_id, task.retry_count)
 
                 if task.assigned_node:
                     with self.nodes_lock:
@@ -1398,11 +1399,21 @@ class DistributedAnalysisManager:
             }
         with self.task_lock:
             task_stats = {
-                "pending": sum(bool(t.status == TaskStatus.PENDING) for t in self.tasks.values()),
-                "assigned": sum(bool(t.status == TaskStatus.ASSIGNED) for t in self.tasks.values()),
-                "running": sum(bool(t.status == TaskStatus.RUNNING) for t in self.tasks.values()),
-                "completed": sum(bool(t.status == TaskStatus.COMPLETED) for t in self.tasks.values()),
-                "failed": sum(bool(t.status == TaskStatus.FAILED) for t in self.tasks.values()),
+                "pending": sum(
+                    t.status == TaskStatus.PENDING for t in self.tasks.values()
+                ),
+                "assigned": sum(
+                    t.status == TaskStatus.ASSIGNED for t in self.tasks.values()
+                ),
+                "running": sum(
+                    t.status == TaskStatus.RUNNING for t in self.tasks.values()
+                ),
+                "completed": sum(
+                    t.status == TaskStatus.COMPLETED for t in self.tasks.values()
+                ),
+                "failed": sum(
+                    t.status == TaskStatus.FAILED for t in self.tasks.values()
+                ),
                 "total": len(self.tasks),
             }
 
@@ -1474,7 +1485,7 @@ class DistributedAnalysisManager:
             return True
 
         except (OSError, json.JSONEncodeError) as e:
-            self.logger.error("Failed to export results: %s", e)
+            self.logger.exception("Failed to export results: %s", e)
             return False
 
     def shutdown(self) -> None:

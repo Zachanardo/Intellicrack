@@ -86,9 +86,9 @@ class AnalysisResultOrchestrator(QObject):
         """
         if hasattr(handler, "on_analysis_complete"):
             self.handlers.append(handler)
-            logger.info(f"Registered handler: {handler.__class__.__name__}")
+            logger.info("Registered handler: %s", handler.__class__.__name__)
         else:
-            logger.warning(f"Handler {handler.__class__.__name__} missing on_analysis_complete slot")
+            logger.warning("Handler %s missing on_analysis_complete slot", handler.__class__.__name__)
 
     def unregister_handler(self, handler: QObject) -> None:
         """Remove a handler from the registry.
@@ -99,7 +99,7 @@ class AnalysisResultOrchestrator(QObject):
         """
         if handler in self.handlers:
             self.handlers.remove(handler)
-            logger.info(f"Unregistered handler: {handler.__class__.__name__}")
+            logger.info("Unregistered handler: %s", handler.__class__.__name__)
 
     def on_protection_analyzed(self, result: "UnifiedProtectionResult") -> None:
         """Connect slot to UnifiedProtectionWidget.protection_analyzed signal.
@@ -107,7 +107,7 @@ class AnalysisResultOrchestrator(QObject):
         Distribute the result to all registered handlers.
         """
         self._current_result = result
-        logger.info(f"Orchestrator received analysis result for: {result.file_path}")
+        logger.info("Orchestrator received analysis result for: %s", result.file_path)
 
         # Distribute to all handlers
         for handler in self.handlers:
@@ -118,7 +118,7 @@ class AnalysisResultOrchestrator(QObject):
                     "Processing complete",
                 )
             except Exception as e:
-                logger.error(f"Handler {handler.__class__.__name__} error: {e}")
+                logger.exception("Handler %s error: %s", handler.__class__.__name__, e)
                 self.handler_status.emit(
                     handler.__class__.__name__,
                     f"Error: {e!s}",
@@ -131,7 +131,7 @@ class AnalysisResultOrchestrator(QObject):
             result: ICPScanResult object from ICP analysis
 
         """
-        logger.info(f"Orchestrator received ICP analysis result for: {result.file_path}")
+        logger.info("Orchestrator received ICP analysis result for: %s", result.file_path)
 
         # Store ICP result for handlers that need it
         if hasattr(self, "_current_result") and self._current_result:
@@ -156,7 +156,7 @@ class AnalysisResultOrchestrator(QObject):
                         "Analysis processing complete",
                     )
             except Exception as e:
-                logger.error(f"Handler {handler.__class__.__name__} ICP error: {e}")
+                logger.exception("Handler %s ICP error: %s", handler.__class__.__name__, e)
                 self.handler_status.emit(
                     handler.__class__.__name__,
                     f"ICP Error: {e!s}",
@@ -181,7 +181,7 @@ class AnalysisResultOrchestrator(QObject):
             return False
 
         if not isinstance(result, _ICPScanResult):
-            logger.error(f"Invalid result type: expected ICPScanResult, got {type(result)}")
+            logger.error("Invalid result type: expected ICPScanResult, got %s", type(result))
             return False
 
         # Validate required fields
@@ -193,13 +193,13 @@ class AnalysisResultOrchestrator(QObject):
         if hasattr(result, "protections") and result.protections:
             for protection in result.protections:
                 if not hasattr(protection, "type") or not hasattr(protection, "confidence"):
-                    logger.warning(f"Incomplete protection data in ICPScanResult: {protection}")
+                    logger.warning("Incomplete protection data in ICPScanResult: %s", protection)
 
         # Check for analysis status
         if hasattr(result, "status") and result.status not in ["completed", "partial", "failed", "in_progress"]:
-            logger.warning(f"Unexpected ICPScanResult status: {result.status}")
+            logger.warning("Unexpected ICPScanResult status: %s", result.status)
 
-        logger.info(f"ICPScanResult validation passed for {result.file_path}")
+        logger.info("ICPScanResult validation passed for %s", result.file_path)
         return True
 
     def merge_icp_with_unified_result(
@@ -227,7 +227,7 @@ class AnalysisResultOrchestrator(QObject):
         self._merge_protections_from_icp(icp_result, unified_result)
         self._merge_confidence_from_icp(icp_result, unified_result)
 
-        logger.info(f"Merged ICPScanResult with UnifiedProtectionResult for {unified_result.file_path}")
+        logger.info("Merged ICPScanResult with UnifiedProtectionResult for %s", unified_result.file_path)
         return unified_result
 
     def _create_or_get_unified_result(

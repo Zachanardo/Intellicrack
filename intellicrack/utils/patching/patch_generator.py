@@ -54,7 +54,7 @@ def generate_patch(target_binary: str, patch_config: dict[str, Any] | None = Non
             "message": "Patch generation completed using compatibility layer",
         }
     except Exception as e:
-        logger.error("Patch generation failed: %s", e, exc_info=True)
+        logger.exception("Patch generation failed: %s", e)
         return {
             "success": False,
             "error": str(e),

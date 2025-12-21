@@ -279,14 +279,14 @@ class HexViewerWidget(QAbstractScrollArea):
 
         """
         if not os.path.exists(file_path):
-            logger.error("File not found: %s", file_path)
+            logger.exception("File not found: %s", file_path)
             return False
 
         logger.debug("HexWidget.load_file: Loading %s, read_only=%s", file_path, read_only)
         logger.info("HexWidget.load_file: Loading %s, read_only=%s", file_path, read_only)
 
         if not os.access(file_path, os.R_OK):
-            logger.error("Cannot read file (permission denied): %s", file_path)
+            logger.exception("Cannot read file (permission denied): %s", file_path)
             return False
 
         try:
@@ -294,7 +294,7 @@ class HexViewerWidget(QAbstractScrollArea):
             self.file_handler = new_handler
             self.file_path = file_path
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Failed to create VirtualFileAccess: {e}", exc_info=True)
+            logger.exception("Failed to create VirtualFileAccess: %s", e)
             return False
 
         file_handler = new_handler
@@ -304,14 +304,14 @@ class HexViewerWidget(QAbstractScrollArea):
 
             test_data = file_handler.read(0, min(1024, file_size))
             if not test_data and file_size > 0:
-                logger.error(
+                logger.exception(
                     "File appears to be unreadable - read test returned empty data for %s",
                     file_path,
                 )
             else:
-                logger.debug(f"Read test successful: got {len(test_data)} bytes")
+                logger.debug("Read test successful: got %d bytes", len(test_data))
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Error reading file data: {e}", exc_info=True)
+            logger.exception("Error reading file data: %s", e)
             return False
 
         if file_size == 0:
@@ -360,7 +360,7 @@ class HexViewerWidget(QAbstractScrollArea):
         """
         try:
             # Log the data size being loaded
-            logger.info(f"HexWidget.load_data: Loading {len(data)} bytes as '{name}'")
+            logger.info("HexWidget.load_data: Loading %d bytes as '%s'", len(data), name)
 
             if not data:
                 logger.warning("Attempted to load empty data buffer")
@@ -397,14 +397,14 @@ class HexViewerWidget(QAbstractScrollArea):
                 self._get_vscrollbar().setValue(0)
                 self._get_hscrollbar().setValue(0)
 
-                logger.info(f"Loaded data buffer: {name} ({len(data)} bytes), success={result}")
+                logger.info("Loaded data buffer: %s (%d bytes), success=%s", name, len(data), result)
                 return result
             finally:
                 # Clean up the temporary file
                 with suppress(OSError):
                     Path(temp_file_path).unlink()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Error loading data: {e}", exc_info=True)
+            logger.exception("Error loading data: %s", e)
             return False
 
     def close(self) -> bool:
@@ -581,7 +581,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 painter.drawText(20, 75, f"Invalid read size: {size} (rows {start_row}-{end_row})")
                 return
         except Exception as calc_error:
-            logger.error("Exception in hex_widget: %s", calc_error)
+            logger.exception("Exception in hex_widget: %s", calc_error)
             painter.setPen(Qt.GlobalColor.red)
             painter.drawText(20, 60, f"Calculation error: {calc_error!s}")
             return
@@ -604,7 +604,7 @@ class HexViewerWidget(QAbstractScrollArea):
             painter.setPen(Qt.GlobalColor.green)
             painter.drawText(10, 60, data_debug)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error(f"Exception reading data: {e}", exc_info=True)
+            logger.exception("Exception reading data: %s", e)
             painter.setPen(Qt.GlobalColor.red)
             painter.drawText(20, 90, f"Error reading data: {e!s}")
             return
@@ -624,7 +624,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             painter.translate(-h_scroll_val, 0)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in header rendering: %s", e)
+            logger.exception("Error in header rendering: %s", e)
             return
 
         try:
@@ -667,7 +667,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 try:
                     start_idx = row_offset - start_offset
                     if start_idx < 0 or start_idx >= len(data):
-                        logger.warning(f"Invalid row data index: {start_idx}, data length: {len(data)}")
+                        logger.warning("Invalid row data index: %d, data length: %d", start_idx, len(data))
                         continue
 
                     row_data = data[start_idx : start_idx + row_size]
@@ -676,7 +676,7 @@ class HexViewerWidget(QAbstractScrollArea):
                         continue
 
                     # Log the data being rendered
-                    logger.debug(f"Rendering row at offset {row_offset}: {len(row_data)} bytes")
+                    logger.debug("Rendering row at offset %d: %d bytes", row_offset, len(row_data))
 
                     # Draw the row
                     if self.view_mode == ViewMode.HEX:
@@ -686,14 +686,14 @@ class HexViewerWidget(QAbstractScrollArea):
                     elif self.view_mode == ViewMode.BINARY:
                         self.draw_binary_row(painter, row_data, row_offset, y)
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error rendering row at offset %s: %s", row_offset, e)
+                    logger.exception("Error rendering row at offset %s: %s", row_offset, e)
                     # Draw error indicator
                     painter.setPen(Qt.GlobalColor.red)
                     painter.drawText(10, y, f"Error: {str(e)[:30]}...")
 
                 y += self.char_height
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in row rendering loop: %s", e)
+            logger.exception("Error in row rendering loop: %s", e)
             # Draw a final error indicator at the top
             painter.setPen(Qt.GlobalColor.red)
             painter.drawText(10, 80, f"Error in rendering: {str(e)[:50]}...")
@@ -829,7 +829,7 @@ class HexViewerWidget(QAbstractScrollArea):
             row_end = offset + len(data)
             highlights = self.highlighter.get_highlights_for_region(offset, row_end)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Exception in draw_hex_row setup: %s", e)
+            logger.exception("Exception in draw_hex_row setup: %s", e)
             painter.setPen(Qt.GlobalColor.red)
             painter.drawText(10, y, f"Error in hex row: {str(e)[:30]}...")
             return
@@ -1309,7 +1309,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 # Try to decode as hex string
                 pattern_bytes = bytes.fromhex(pattern.replace(" ", ""))
             except ValueError as e:
-                logger.error("Value error in hex_widget: %s", e)
+                logger.exception("Value error in hex_widget: %s", e)
                 # Treat as regular string
                 pattern_bytes = pattern.encode("utf-8")
         else:
@@ -1675,7 +1675,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 # Jump to the offset
                 self.jump_to_offset(offset)
             except ValueError as e:
-                logger.error("Value error in hex_widget: %s", e)
+                logger.exception("Value error in hex_widget: %s", e)
                 QMessageBox.warning(
                     self,
                     "Invalid Offset",
@@ -1759,7 +1759,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 # Add the bookmark
                 self.add_bookmark(offset, size, description)
             except ValueError as e:
-                logger.error("Value error in hex_widget: %s", e)
+                logger.exception("Value error in hex_widget: %s", e)
                 QMessageBox.warning(
                     self,
                     "Invalid Offset",
@@ -1784,7 +1784,7 @@ class HexViewerWidget(QAbstractScrollArea):
         try:
             text = data.decode("utf-8")
         except UnicodeDecodeError as e:
-            logger.error("UnicodeDecodeError in hex_widget: %s", e)
+            logger.exception("UnicodeDecodeError in hex_widget: %s", e)
             text = "".join(chr(b) if 32 <= b <= 126 else f"\\x{b:02X}" for b in data)
 
         self._set_clipboard_text(text)
@@ -1997,7 +1997,7 @@ class HexViewerWidget(QAbstractScrollArea):
                 # Write the data
                 self.edit_selection(fill_data)
             except ValueError as e:
-                logger.error("Value error in hex_widget: %s", e)
+                logger.exception("Value error in hex_widget: %s", e)
                 QMessageBox.warning(
                     self,
                     "Invalid Value",
@@ -2341,9 +2341,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
         """
         result = self.performance_monitor.create_widget(self)
-        if isinstance(result, QWidget):
-            return result
-        return None
+        return result if isinstance(result, QWidget) else None
 
     def get_performance_stats(self) -> dict[str, object]:
         """Get current performance statistics.
@@ -2365,8 +2363,7 @@ class HexViewerWidget(QAbstractScrollArea):
 
             layout = QVBoxLayout(dialog)
 
-            stats = self.get_performance_stats()
-            if stats:
+            if stats := self.get_performance_stats():
                 perf_widget = self.get_performance_widget()
                 if perf_widget is not None:
                     layout.addWidget(perf_widget)
@@ -2392,7 +2389,7 @@ class HexViewerWidget(QAbstractScrollArea):
             dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error showing performance dialog: %s", e)
+            logger.exception("Error showing performance dialog: %s", e)
 
     def optimize_for_large_files(self) -> None:
         """Optimize settings for large file handling."""

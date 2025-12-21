@@ -74,9 +74,9 @@ class ProtocolFingerprinter:
             self.config |= config
 
         # Initialize components
-        self.signatures = {}
-        self.learned_signatures = {}
-        self.traffic_samples = []
+        self.signatures: dict[str, dict[str, Any]] = {}
+        self.learned_signatures: dict[str, dict[str, Any]] = {}
+        self.traffic_samples: list[dict[str, Any]] = []
 
         # License server ports to monitor
         self.license_ports = [
@@ -99,9 +99,10 @@ class ProtocolFingerprinter:
     def _load_signatures(self) -> None:
         """Load known protocol signatures from database."""
         logger.debug("Entering _load_signatures: path=%s", self.config["signature_db_path"])
+        sig_path: str = str(self.config["signature_db_path"])
         try:
-            if os.path.exists(self.config["signature_db_path"]):
-                with open(self.config["signature_db_path"], encoding="utf-8") as f:
+            if os.path.exists(sig_path):
+                with open(sig_path, encoding="utf-8") as f:
                     self.signatures = json.load(f)
 
                 self.logger.info("Loaded %d protocol signatures", len(self.signatures))
@@ -111,23 +112,24 @@ class ProtocolFingerprinter:
                 self._save_signatures()
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error loading signatures: %s", e, exc_info=True)
+            self.logger.exception("Error loading signatures: %s", e, exc_info=True)
             self._initialize_signatures()
 
     def _save_signatures(self) -> None:
         """Save protocol signatures to database."""
+        sig_path: str = str(self.config["signature_db_path"])
         try:
             # Create directory if it doesn't exist
-            os.makedirs(os.path.dirname(os.path.abspath(self.config["signature_db_path"])), exist_ok=True)
+            os.makedirs(os.path.dirname(os.path.abspath(sig_path)), exist_ok=True)
 
             # Save signatures
-            with open(self.config["signature_db_path"], "w", encoding="utf-8") as f:
+            with open(sig_path, "w", encoding="utf-8") as f:
                 json.dump(self.signatures, f, indent=2)
 
             self.logger.info("Saved %d protocol signatures", len(self.signatures))
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error saving signatures: %s", e, exc_info=True)
+            self.logger.exception("Error saving signatures: %s", e, exc_info=True)
 
     def _initialize_signatures(self) -> None:
         """Initialize with built-in protocol signatures."""
@@ -253,7 +255,7 @@ class ProtocolFingerprinter:
             return self._process_analysis_results(results, packet_data, port)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing traffic: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing traffic: %s", e, exc_info=True)
             return None
 
     def _store_traffic_sample(self, packet_data: bytes | bytearray, port: int | None) -> None:
@@ -278,8 +280,13 @@ class ProtocolFingerprinter:
 
         for protocol_id, signature in self.signatures.items():
             confidence = self._calculate_protocol_confidence(packet_data, port, signature)
+            min_conf_val = self.config.get("min_confidence", 0.7)
+            if isinstance(min_conf_val, (int, float)):
+                min_conf: float = float(min_conf_val)
+            else:
+                min_conf = 0.7
 
-            if confidence >= self.config["min_confidence"]:
+            if confidence >= min_conf:
                 results.append(
                     {
                         "protocol_id": protocol_id,
@@ -321,7 +328,7 @@ class ProtocolFingerprinter:
 
     def _check_entropy_match(self, packet_data: bytes | bytearray, stats_features: dict[str, Any]) -> float:
         """Check if packet entropy matches signature requirements."""
-        entropy = calculate_entropy(packet_data)
+        entropy = calculate_entropy(bytes(packet_data))
         min_entropy = stats_features.get("min_entropy", 0)
         max_entropy = stats_features.get("max_entropy", 8)
 
@@ -360,16 +367,18 @@ class ProtocolFingerprinter:
 
     def _match_binary_pattern(self, packet_data: bytes | bytearray, pattern: dict[str, Any]) -> float:
         """Match a single binary pattern against packet data."""
-        offset = pattern["offset"]
+        offset: int = int(pattern["offset"])
+        pattern_bytes: bytes = bytes(pattern["bytes"])
+        weight: float = float(pattern.get("weight", 0.2))
 
-        if offset + len(pattern["bytes"]) > len(packet_data):
+        if offset + len(pattern_bytes) > len(packet_data):
             return 0.0
 
         if pattern.get("mask") is None:
-            if packet_data[offset : offset + len(pattern["bytes"])] == pattern["bytes"]:
-                return pattern.get("weight", 0.2)
+            if packet_data[offset : offset + len(pattern_bytes)] == pattern_bytes:
+                return weight
         elif self._match_masked_pattern(packet_data, pattern, offset):
-            return pattern.get("weight", 0.2)
+            return weight
 
         return 0.0
 
@@ -392,9 +401,10 @@ class ProtocolFingerprinter:
             return 0.0
 
         pattern_matches = 0
+        packet_bytes = bytes(packet_data)
         for pattern in regex_patterns:
-            search_pattern = pattern.encode("utf-8") if isinstance(packet_data, bytes) else pattern
-            if re.search(search_pattern, packet_data):
+            search_pattern = pattern.encode("utf-8")
+            if re.search(search_pattern, packet_bytes):
                 pattern_matches += 1
 
         match_ratio = pattern_matches / len(regex_patterns)
@@ -444,9 +454,7 @@ class ProtocolFingerprinter:
         if not data_bytes:
             return None
 
-        result = self.analyze_traffic(data_bytes, port)
-
-        if result:
+        if result := self.analyze_traffic(data_bytes, port):
             confidence_pct = int(result.get("confidence", 0) * 100)
 
             return {
@@ -458,9 +466,9 @@ class ProtocolFingerprinter:
                 "response_templates": result.get("response_templates", {}),
             }
 
-        for protocol_id, signature in self.signatures.items():
-            if self._quick_pattern_match(data_bytes, signature):
-                return {
+        return next(
+            (
+                {
                     "name": signature["name"],
                     "protocol_id": protocol_id,
                     "confidence": 50,
@@ -468,8 +476,11 @@ class ProtocolFingerprinter:
                     "header_format": signature.get("header_format", []),
                     "response_templates": signature.get("response_templates", {}),
                 }
-
-        return None
+                for protocol_id, signature in self.signatures.items()
+                if self._quick_pattern_match(data_bytes, signature)
+            ),
+            None,
+        )
 
     def _quick_pattern_match(self, data_bytes: bytes | bytearray, signature: dict[str, Any]) -> bool:
         """Perform quick pattern matching without full analysis.
@@ -497,9 +508,8 @@ class ProtocolFingerprinter:
             if isinstance(pattern_bytes, str):
                 pattern_bytes = pattern_bytes.encode("utf-8")
 
-            if offset + len(pattern_bytes) <= len(data_bytes):
-                if data_bytes[offset : offset + len(pattern_bytes)] == pattern_bytes:
-                    return True
+            if offset + len(pattern_bytes) <= len(data_bytes) and data_bytes[offset : offset + len(pattern_bytes)] == pattern_bytes:
+                return True
 
         return False
 
@@ -534,8 +544,9 @@ class ProtocolFingerprinter:
                         sock.close()
 
                         if probe_data:
-                            protocol_info = self._identify_protocol_from_response(probe_data, port)
-                            if protocol_info:
+                            if protocol_info := self._identify_protocol_from_response(
+                                probe_data, port
+                            ):
                                 protocol_info["host"] = host
                                 detected.append(protocol_info)
                         else:
@@ -588,7 +599,7 @@ class ProtocolFingerprinter:
             sock.settimeout(2.0)
             sock.send(probe)
             response = sock.recv(4096)
-            return response if response else None
+            return response or None
         except (TimeoutError, OSError) as e:
             self.logger.debug("Protocol probe timeout/error on port %d: %s", port, e, exc_info=True)
             return None
@@ -652,12 +663,12 @@ class ProtocolFingerprinter:
             return None
 
         except Exception as e:
-            self.logger.error("Packet fingerprinting failed: %s", e, exc_info=True)
+            self.logger.exception("Packet fingerprinting failed: %s", e, exc_info=True)
             return None
 
     def _analyze_packet_structure(self, packet_data: bytes | bytearray) -> dict[str, Any]:
         """Analyze packet structure for additional fingerprint information."""
-        analysis = {
+        analysis: dict[str, Any] = {
             "packet_entropy": 0.0,
             "ascii_ratio": 0.0,
             "common_patterns": [],
@@ -673,22 +684,25 @@ class ProtocolFingerprinter:
                 )
 
             # Calculate ASCII ratio
-            ascii_bytes = sum(bool(32 <= b <= 126) for b in packet_data)
+            ascii_bytes = sum(32 <= b <= 126 for b in packet_data)
             analysis["ascii_ratio"] = ascii_bytes / len(packet_data) if packet_data else 0.0
 
             # Look for common patterns
+            protocol_hints: list[str] = []
             if b"HTTP" in packet_data:
-                analysis["protocol_hints"].append("HTTP")
+                protocol_hints.append("HTTP")
             if b"FTP" in packet_data:
-                analysis["protocol_hints"].append("FTP")
+                protocol_hints.append("FTP")
             if packet_data.startswith(b"\x16\x03"):  # TLS handshake
-                analysis["protocol_hints"].append("TLS")
+                protocol_hints.append("TLS")
             if b"SSH" in packet_data:
-                analysis["protocol_hints"].append("SSH")
+                protocol_hints.append("SSH")
 
             # License-specific patterns
             if any(pattern in packet_data for pattern in [b"license", b"activation", b"key"]):
-                analysis["protocol_hints"].append("License_Protocol")
+                protocol_hints.append("License_Protocol")
+
+            analysis["protocol_hints"] = protocol_hints
 
         except Exception as e:
             self.logger.debug("Packet structure analysis failed: %s", e, exc_info=True)
@@ -713,13 +727,13 @@ class ProtocolFingerprinter:
             signature = self.signatures[protocol_id]
             header_format = signature["header_format"]
 
-            result = {}
+            result: dict[str, Any] = {}
             offset = 0
 
             for field in header_format:
-                field_name = field["name"]
-                field_type = field["type"]
-                field_length = field["length"]
+                field_name: str = str(field["name"])
+                field_type: str = str(field["type"])
+                field_length: int = int(field["length"])
 
                 if offset + field_length > len(packet_data):
                     return None
@@ -731,7 +745,7 @@ class ProtocolFingerprinter:
                 elif field_type == "string":
                     result[field_name] = packet_data[offset : offset + field_length].decode("utf-8", errors="ignore").rstrip("\x00")
                 elif field_type == "bytes":
-                    result[field_name] = packet_data[offset : offset + field_length]
+                    result[field_name] = bytes(packet_data[offset : offset + field_length])
 
                 offset += field_length
 
@@ -742,7 +756,7 @@ class ProtocolFingerprinter:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error parsing packet: %s", e, exc_info=True)
+            self.logger.exception("Error parsing packet: %s", e, exc_info=True)
             return None
 
     def generate_response(self, protocol_id: str, request_packet: bytes | bytearray, response_type: str = "license_ok") -> bytes | None:
@@ -766,7 +780,7 @@ class ProtocolFingerprinter:
             if response_type not in signature["response_templates"]:
                 response_type = next(iter(signature["response_templates"]))
 
-            response_template = signature["response_templates"][response_type]
+            response_template: bytes = bytes(signature["response_templates"][response_type])
 
             # Parse request packet
             parsed_request = self.parse_packet(protocol_id, request_packet)
@@ -792,12 +806,12 @@ class ProtocolFingerprinter:
 
             elif protocol_id == "microsoft_kms" and len(response) >= 12 and len(request_packet) >= 12:
                 # Copy signature and protocol fields
-                response[0:10] = request_packet[:10]
+                response[:10] = request_packet[:10]
 
             return bytes(response)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error generating response: %s", e, exc_info=True)
+            self.logger.exception("Error generating response: %s", e, exc_info=True)
             return None
 
     def _learn_new_signature(self, packet_data: bytes | bytearray, port: int | None = None) -> bool:
@@ -864,7 +878,7 @@ class ProtocolFingerprinter:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error learning new signature: %s", e, exc_info=True)
+            self.logger.exception("Error learning new signature: %s", e, exc_info=True)
             return False
 
     def _calculate_similarity(self, data1: bytes | bytearray, data2: bytes | bytearray) -> float:
@@ -885,7 +899,7 @@ class ProtocolFingerprinter:
         if min_len == 0:
             return 0.0
 
-        common_bytes = sum(bool(data1[i] == data2[i]) for i in range(min_len))
+        common_bytes = sum(data1[i] == data2[i] for i in range(min_len))
         return common_bytes / max_len
 
     def _extract_common_patterns(self, samples: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -957,7 +971,7 @@ class ProtocolFingerprinter:
         try:
             # Check if file exists
             if not os.path.exists(pcap_path):
-                self.logger.error("PCAP file not found: %s", pcap_path)
+                self.logger.exception("PCAP file not found: %s", pcap_path)
                 results["error"] = "File not found"
                 return results
 
@@ -970,7 +984,7 @@ class ProtocolFingerprinter:
 
                 packets_analyzed = 0
                 license_packets = 0
-                protocol_counts = Counter()
+                protocol_counts: Counter[str] = Counter()
 
                 # Process packets
                 for packet in capture:
@@ -991,20 +1005,26 @@ class ProtocolFingerprinter:
                                     payload = bytes.fromhex(packet.tcp.payload.replace(":", ""))
 
                                     if fingerprint_result := self.fingerprint_packet(payload, dst_port):
-                                        protocol_id = fingerprint_result["protocol_id"]
-                                        protocol_counts[protocol_id] += 1
+                                        protocol_id_str = str(fingerprint_result["protocol_id"])
+                                        protocol_counts[protocol_id_str] += 1
 
                                         # Store detailed fingerprint
-                                        if protocol_id not in results["fingerprints"]:
-                                            results["fingerprints"][protocol_id] = {
-                                                "name": fingerprint_result.get("name", protocol_id),
+                                        fingerprints_obj = results["fingerprints"]
+                                        if not isinstance(fingerprints_obj, dict):
+                                            fingerprints_obj = {}
+                                            results["fingerprints"] = fingerprints_obj
+                                        fingerprints_dict: dict[str, Any] = fingerprints_obj
+                                        if protocol_id_str not in fingerprints_dict:
+                                            fingerprints_dict[protocol_id_str] = {
+                                                "name": fingerprint_result.get("name", protocol_id_str),
                                                 "confidence": fingerprint_result.get("confidence", 0),
                                                 "packets": 0,
                                                 "ports": set(),
                                                 "sample_data": [],
                                             }
+                                            results["fingerprints"] = fingerprints_dict
 
-                                        fp = results["fingerprints"][protocol_id]
+                                        fp = fingerprints_dict[protocol_id_str]
                                         fp["packets"] += 1
                                         fp["ports"].add(dst_port)
 
@@ -1026,14 +1046,23 @@ class ProtocolFingerprinter:
                 capture.close()
 
                 # Convert sets to lists for JSON serialization
-                for fp in results["fingerprints"].values():
-                    fp["ports"] = list(fp["ports"])
+                fingerprints_obj_final = results["fingerprints"]
+                if isinstance(fingerprints_obj_final, dict):
+                    fingerprints_final: dict[str, Any] = fingerprints_obj_final
+                    for fp in fingerprints_final.values():
+                        fp["ports"] = list(fp["ports"])
+                    results["fingerprints"] = fingerprints_final
 
                 # Update results
-                results["protocols"] = list(protocol_counts.keys())
-                results["summary"]["total_packets"] = packets_analyzed
-                results["summary"]["license_packets"] = license_packets
-                results["summary"]["identified_protocols"] = len(results["protocols"])
+                protocols_list: list[str] = list(protocol_counts.keys())
+                results["protocols"] = protocols_list
+                summary_obj = results["summary"]
+                if isinstance(summary_obj, dict):
+                    summary_dict: dict[str, Any] = summary_obj
+                    summary_dict["total_packets"] = packets_analyzed
+                    summary_dict["license_packets"] = license_packets
+                    summary_dict["identified_protocols"] = len(protocols_list)
+                    results["summary"] = summary_dict
 
                 self.logger.info("PCAP analysis complete: %d packets, %d protocols identified", packets_analyzed, len(results["protocols"]))
 
@@ -1064,10 +1093,14 @@ class ProtocolFingerprinter:
                         f.seek(packet_len, 1)
                         packet_count += 1
 
-                    results["summary"]["total_packets"] = packet_count
+                    summary_obj_alt = results["summary"]
+                    if isinstance(summary_obj_alt, dict):
+                        summary_dict_alt: dict[str, Any] = summary_obj_alt
+                        summary_dict_alt["total_packets"] = packet_count
+                        results["summary"] = summary_dict_alt
 
         except Exception as e:
-            self.logger.error("Error analyzing PCAP file: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing PCAP file: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results
@@ -1091,7 +1124,7 @@ class ProtocolFingerprinter:
         """
         self.logger.info("Analyzing binary for network protocols: %s", binary_path)
 
-        results = {
+        results: dict[str, Any] = {
             "binary": binary_path,
             "network_functions": [],
             "protocols": [],
@@ -1108,7 +1141,7 @@ class ProtocolFingerprinter:
         try:
             # Check if file exists
             if not os.path.exists(binary_path):
-                self.logger.error("Binary file not found: %s", binary_path)
+                self.logger.exception("Binary file not found: %s", binary_path)
                 results["error"] = "File not found"
                 return results
 
@@ -1134,9 +1167,12 @@ class ProtocolFingerprinter:
                 b"TLS_",
             ]
 
-            for func in network_functions:
-                if func in binary_data:
-                    results["network_functions"].append(func.decode("utf-8", errors="ignore"))
+            network_funcs_list: list[str] = [
+                func.decode("utf-8", errors="ignore")
+                for func in network_functions
+                if func in binary_data
+            ]
+            results["network_functions"] = network_funcs_list
 
             # 2. Search for protocol-specific strings
             protocol_indicators = {
@@ -1157,6 +1193,8 @@ class ProtocolFingerprinter:
                 "Generic": [b"LICENSE", b"ACTIVATION", b"serial", b"product_key", b"registration"],
             }
 
+            license_indicators_list: list[dict[str, str]] = []
+            protocols_list_bin: list[str] = []
             for protocol, indicators in protocol_indicators.items():
                 matches = 0
                 for indicator in indicators:
@@ -1169,7 +1207,7 @@ class ProtocolFingerprinter:
                         end = min(len(binary_data), index + len(indicator) + 20)
                         context = binary_data[start:end]
 
-                        results["license_indicators"].append(
+                        license_indicators_list.append(
                             {
                                 "protocol": protocol,
                                 "indicator": indicator.decode("utf-8", errors="ignore"),
@@ -1178,7 +1216,10 @@ class ProtocolFingerprinter:
                         )
 
                 if matches >= 2:  # At least 2 indicators for confidence
-                    results["protocols"].append(protocol)
+                    protocols_list_bin.append(protocol)
+
+            results["license_indicators"] = license_indicators_list
+            results["protocols"] = protocols_list_bin
 
             # 3. Search for network-related strings
             # Extract ASCII strings
@@ -1194,13 +1235,15 @@ class ProtocolFingerprinter:
                 re.compile(rb"activation[_\-]?server", re.IGNORECASE),
             ]
 
+            network_strings_list: list[str] = []
             for string in ascii_strings[:1000]:  # Limit to first 1000 strings
                 for pattern in network_patterns:
                     if pattern.search(string):
                         decoded = string.decode("utf-8", errors="ignore")
-                        if decoded not in results["network_strings"]:
-                            results["network_strings"].append(decoded)
+                        if decoded not in network_strings_list:
+                            network_strings_list.append(decoded)
                         break
+            results["network_strings"] = network_strings_list
 
             # 4. Check for specific port numbers
             license_ports_bytes = [
@@ -1221,8 +1264,9 @@ class ProtocolFingerprinter:
                     self.logger.debug("Found license port number: %d", port_num)
 
             # 5. Calculate summary
-            results["summary"]["has_network_code"] = len(results["network_functions"]) > 0
-            results["summary"]["likely_license_client"] = len(results["protocols"]) > 0 or len(results["license_indicators"]) > 0
+            summary_final: dict[str, Any] = dict(results["summary"])
+            summary_final["has_network_code"] = len(results["network_functions"]) > 0
+            summary_final["likely_license_client"] = len(results["protocols"]) > 0 or len(results["license_indicators"]) > 0
 
             # Calculate confidence
             confidence = 0.0
@@ -1233,7 +1277,8 @@ class ProtocolFingerprinter:
             if results["license_indicators"]:
                 confidence += 0.3
 
-            results["summary"]["protocol_confidence"] = min(confidence, 1.0)
+            summary_final["protocol_confidence"] = min(confidence, 1.0)
+            results["summary"] = summary_final
 
             self.logger.info(
                 "Binary analysis complete: %d network functions, %d protocols identified",
@@ -1242,7 +1287,7 @@ class ProtocolFingerprinter:
             )
 
         except Exception as e:
-            self.logger.error("Error analyzing binary: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing binary: %s", e, exc_info=True)
             results["error"] = str(e)
 
         return results

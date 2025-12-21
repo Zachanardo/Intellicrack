@@ -109,7 +109,7 @@ class HexHighlight:
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        logger.debug(f"Created highlight: 0x{start:X}-0x{end:X} type={highlight_type} color={color}")
+        logger.debug("Created highlight: 0x%X-0x%X type=%s color=%s", start, end, highlight_type, color)
 
     @property
     def size(self) -> int:
@@ -317,7 +317,7 @@ class HexHighlighter:
         if highlight_type is None:
             return len(self.highlights)
 
-        return sum(bool(h.highlight_type == highlight_type) for h in self.highlights)
+        return sum(h.highlight_type == highlight_type for h in self.highlights)
 
     def update_highlight(self, highlight_id: int, **kwargs: object) -> bool:
         """Update an existing highlight's properties.

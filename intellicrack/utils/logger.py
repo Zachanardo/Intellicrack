@@ -33,12 +33,15 @@ C = TypeVar("C", bound=type)
 logger = logging.getLogger(__name__)
 
 
-def log_message(message: str, level: str = "INFO") -> None:
-    """Log a message at the specified level.
+def log_message(message: str, level: str = "INFO") -> str:
+    """Log a message at the specified level and return the message.
 
     Args:
         message: The message to log
         level: The log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+
+    Returns:
+        The original message (allows chaining with emit calls)
 
     """
     level = level.upper()
@@ -47,11 +50,12 @@ def log_message(message: str, level: str = "INFO") -> None:
     elif level == "DEBUG":
         logger.debug(message)
     elif level == "ERROR":
-        logger.error(message)
+        logger.exception(message)
     elif level == "WARNING":
         logger.warning(message)
     else:
         logger.info(message)
+    return message
 
 
 def log_function_call[F: Callable[..., Any]](func: F) -> F:
@@ -98,7 +102,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                         return r[:max_len] + "..."
                     return r
                 except (TypeError, ValueError, AttributeError, RecursionError) as e:
-                    logger.error("Error in logger: %s", e)
+                    logger.exception("Error in logger: %s", e)
                     return "<repr_failed>"
 
             arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
@@ -112,9 +116,9 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
         except (OSError, ValueError, RuntimeError) as e:
             # Don't use logger.exception to avoid recursion - just log the error
             try:
-                logger.error("Exception in %s: %s", func_name, e, exc_info=True)
+                logger.exception("Exception in %s: %s", func_name, e, exc_info=True)
             except (RuntimeError, OSError) as e:
-                logger.error("Error in logger: %s", e)
+                logger.exception("Error in logger: %s", e)
                 print(f"Exception in {func_name}: {e}")
             raise
         finally:
@@ -149,7 +153,7 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
                             return r[:max_len] + "..."
                         return r
                     except (TypeError, ValueError, AttributeError, RecursionError) as e:
-                        logger.error("Error in logger: %s", e)
+                        logger.exception("Error in logger: %s", e)
                         return "<repr_failed>"
 
                 arg_strs = [f"{name}={safe_repr(value)}" for name, value in zip(arg_names, arg_values, strict=False)]
@@ -163,9 +167,9 @@ def log_function_call[F: Callable[..., Any]](func: F) -> F:
             except (OSError, ValueError, RuntimeError) as e:
                 # Don't use logger.exception to avoid recursion
                 try:
-                    logger.error("Exception in async %s: %s", func_name, e, exc_info=True)
+                    logger.exception("Exception in async %s: %s", func_name, e, exc_info=True)
                 except (RuntimeError, OSError) as e:
-                    logger.error("Error in logger: %s", e)
+                    logger.exception("Error in logger: %s", e)
                     print(f"Exception in async {func_name}: {e}")
                 raise
             finally:
@@ -323,7 +327,7 @@ def setup_logging(
     numeric_level = getattr(logging, level.upper(), None)
     if not isinstance(numeric_level, int):
         error_msg = f"Invalid log level: {level}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise TypeError(error_msg)
 
     # Set up handlers

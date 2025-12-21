@@ -31,7 +31,7 @@ from typing import Any
 from intellicrack.utils.logger import logger
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
+from .learning_engine import get_learning_engine
 from .performance_monitor import profile_ai_operation
 
 
@@ -43,7 +43,7 @@ try:
 
     NUMPY_AVAILABLE = HAS_NUMPY
 except ImportError as e:
-    logger.error("Import error in predictive_intelligence: %s", e)
+    logger.exception("Import error in predictive_intelligence: %s", e)
     np = None
     NUMPY_AVAILABLE = False
 
@@ -52,7 +52,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in predictive_intelligence: %s", e)
+    logger.exception("Import error in predictive_intelligence: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -221,7 +221,7 @@ class FeatureExtractor:
             return features
 
         except Exception as e:
-            logger.error("Error getting historical performance: %s", e)
+            logger.exception("Error getting historical performance: %s", e)
             return {
                 "historical_success_rate": 0.8,
                 "avg_execution_time": 5.0,
@@ -248,7 +248,7 @@ class FeatureExtractor:
             try:
                 load_avg = psutil.getloadavg()[0] / psutil.cpu_count(logical=False)
             except (AttributeError, OSError) as e:
-                self.logger.error("Error in predictive_intelligence: %s", e)
+                self.logger.exception("Error in predictive_intelligence: %s", e)
                 load_avg = cpu_percent  # Fallback for Windows
 
             features = {
@@ -270,7 +270,7 @@ class FeatureExtractor:
             return features
 
         except Exception as e:
-            logger.error("Error extracting system features: %s", e)
+            logger.exception("Error extracting system features: %s", e)
             return {
                 "cpu_usage": 0.3,
                 "memory_usage": 0.5,
@@ -499,7 +499,7 @@ class LinearRegressionModel(PredictiveModel):
                 prediction += self.weights[feature_name] * value
 
         # Calculate confidence based on feature coverage
-        covered_features = sum(bool(name in self.weights) for name in features)
+        covered_features = sum(name in self.weights for name in features)
         total_features = len(self.weights)
         coverage = covered_features / max(total_features, 1)
 
@@ -1303,8 +1303,8 @@ class VulnerabilityPredictor:
                         }
 
                         # Score based on actual security findings
-                        high_risk_findings = sum(bool(f.get("risk", "") == "high") for f in findings)
-                        medium_risk_findings = sum(bool(f.get("risk", "") == "medium") for f in findings)
+                        high_risk_findings = sum(f.get("risk", "") == "high" for f in findings)
+                        medium_risk_findings = sum(f.get("risk", "") == "medium" for f in findings)
 
                         target = min(1.0, high_risk_findings * 0.15 + medium_risk_findings * 0.05)
 
@@ -1483,7 +1483,7 @@ class VulnerabilityPredictor:
             ]
 
         except Exception as e:
-            logger.error("Error predicting vulnerabilities for %s: %s", binary_path, e)
+            logger.exception("Error predicting vulnerabilities for %s: %s", binary_path, e)
             return []
 
     def get_confidence_score(self, binary_path: str) -> float:
@@ -1505,7 +1505,7 @@ class VulnerabilityPredictor:
             return result.confidence_score
 
         except Exception as e:
-            logger.error("Error getting confidence score for %s: %s", binary_path, e)
+            logger.exception("Error getting confidence score for %s: %s", binary_path, e)
             return 0.0
 
 

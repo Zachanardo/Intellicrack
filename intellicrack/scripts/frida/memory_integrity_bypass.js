@@ -176,7 +176,7 @@ const MemoryIntegrityBypass = {
                     // Check if this is trying to remove execute permissions
                     if ((this.flNewProtect & 0xf0) === 0) {
                         // No execute permissions
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (
                             config.memoryProtection.enabled &&
                             config.memoryProtection.allowExecutableWrites
@@ -200,7 +200,7 @@ const MemoryIntegrityBypass = {
                         !this.lpflOldProtect.isNull()
                     ) {
                         // Record the memory region change
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         config.codeIntegrity.protectedRegions.set(this.lpAddress.toString(), {
                             size: this.dwSize,
                             newProtect: this.flNewProtect,
@@ -233,7 +233,7 @@ const MemoryIntegrityBypass = {
                     });
 
                     // Allow execute permissions for external processes too
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (config.memoryProtection.enabled && (this.flNewProtect & 0xf0) === 0) {
                         args[3] = ptr(0x40); // PAGE_EXECUTE_READWRITE
                         send({
@@ -269,7 +269,7 @@ const MemoryIntegrityBypass = {
                     });
 
                     // Ensure executable allocations are allowed
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (
                         config.memoryProtection.enabled &&
                         config.memoryProtection.allowExecutableWrites
@@ -299,7 +299,7 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (!retval.isNull()) {
                         // Track allocated executable memory
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (this.flProtect && 0x40) {
                             config.codeIntegrity.protectedRegions.set(retval.toString(), {
                                 size: this.dwSize,
@@ -340,7 +340,7 @@ const MemoryIntegrityBypass = {
                     });
 
                     // Allow executable allocations in external processes
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (
                         config.memoryProtection.enabled &&
                         config.memoryProtection.allowExecutableWrites &&
@@ -384,7 +384,7 @@ const MemoryIntegrityBypass = {
                     });
 
                     // Force executable permissions
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (
                         config.memoryProtection.enabled &&
                         config.memoryProtection.allowExecutableWrites &&
@@ -482,7 +482,7 @@ const MemoryIntegrityBypass = {
 
                         onLeave: function (retval) {
                             if (this.spoofChecksum) {
-                                const config = this.parent.parent.parent.config;
+                                const {config} = this.parent.parent.parent;
                                 if (
                                     config.codeIntegrity.enabled &&
                                     config.codeIntegrity.spoofChecksums
@@ -532,7 +532,7 @@ const MemoryIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (this.isCodeIntegrityCheck && retval.toInt32() !== 0) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.codeIntegrity.enabled && config.codeIntegrity.bypassSelfChecks) {
                             // Force comparison to succeed
                             retval.replace(0);
@@ -680,7 +680,7 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() > 0 && this.lpBuffer && !this.lpBuffer.isNull()) {
                         // Modify memory info to hide our modifications
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.memoryProtection.enabled) {
                             // Could spoof memory protection information here
                             send({
@@ -742,7 +742,7 @@ const MemoryIntegrityBypass = {
                 },
 
                 isProtectedPattern: function (pattern) {
-                    const config = this.parent.parent.parent.config;
+                    const {config} = this.parent.parent.parent;
                     return config.memoryScanning.protectedPatterns.some(protectedPattern =>
                         pattern.includes(protectedPattern)
                     );
@@ -773,7 +773,7 @@ const MemoryIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (this.hidePattern && !retval.isNull()) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.memoryScanning.enabled && config.memoryScanning.hidePatches) {
                             retval.replace(ptr(0));
                             send({
@@ -839,7 +839,7 @@ const MemoryIntegrityBypass = {
 
                 onLeave: function (_retval) {
                     if (this.bypassCanary) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (
                             config.runtimeVerification.enabled &&
                             config.runtimeVerification.spoofStackCanaries
@@ -906,7 +906,7 @@ const MemoryIntegrityBypass = {
 
                 onLeave: function (_retval) {
                     if (this.bypassCFG) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (
                             config.runtimeVerification.enabled &&
                             config.runtimeVerification.bypassCFG
@@ -939,7 +939,7 @@ const MemoryIntegrityBypass = {
                 },
 
                 onLeave: function (retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (
                         config.runtimeVerification.enabled &&
                         config.runtimeVerification.bypassCFG
@@ -1103,7 +1103,7 @@ const MemoryIntegrityBypass = {
                         this.lpBuffer &&
                         !this.lpBuffer.isNull()
                     ) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.memoryScanning.enabled && config.memoryScanning.spoofPatterns) {
                             // Could modify the read data here to hide our patches
                             this.spoofReadData();
@@ -1184,7 +1184,7 @@ const MemoryIntegrityBypass = {
                     // Track our own memory modifications
                     if (this.nSize <= 1024) {
                         // Reasonable patch size
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         config.codeIntegrity.protectedRegions.set(this.lpBaseAddress.toString(), {
                             size: this.nSize,
                             type: 'patch',
@@ -1256,7 +1256,7 @@ const MemoryIntegrityBypass = {
 
                 onLeave: function (retval) {
                     if (retval.toInt32() !== 0 && this.lpme && !this.lpme.isNull()) {
-                        const config = this.parent.parent.config;
+                        const {config} = this.parent.parent;
                         if (config.antiDump.enabled && config.antiDump.hideModules) {
                             // Could modify module information here
                             send({
@@ -1390,7 +1390,7 @@ const MemoryIntegrityBypass = {
                 },
 
                 onLeave: function (_retval) {
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     if (
                         config.antiDump.enabled &&
                         config.antiDump.protectHeaders &&
@@ -1436,7 +1436,7 @@ const MemoryIntegrityBypass = {
                     });
 
                     // Remove from our tracking
-                    const config = this.parent.parent.config;
+                    const {config} = this.parent.parent;
                     config.codeIntegrity.protectedRegions.delete(this.lpAddress.toString());
                 },
             });
@@ -1622,7 +1622,7 @@ const MemoryIntegrityBypass = {
                 count: this.config.codeIntegrity.protectedRegions.size,
             });
 
-            const config = this.config;
+            const {config} = this;
             send({
                 type: 'status',
                 target: 'memory_integrity_bypass',
@@ -1738,7 +1738,7 @@ const MemoryIntegrityBypass = {
                 onLeave: function (retval) {
                     if (retval.toInt32() === 0) {
                         // NT_SUCCESS
-                        const parent = this.parent.parent;
+                        const {parent} = this.parent;
                         const address = this.baseAddress.readPointer();
                         parent.memoryIntegrityState.regions.set(address.toString(), {
                             size: this.viewSize.readU32(),
@@ -1812,14 +1812,14 @@ const MemoryIntegrityBypass = {
                     this.buffer = args[2];
                     this.size = args[3].toInt32();
 
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     if (parent.encryptionEngine.encryptedRegions.has(this.baseAddress.toString())) {
                         this.needsDecryption = true;
                     }
                 },
                 onLeave: function (retval) {
                     if (this.needsDecryption && retval.toInt32() === 0) {
-                        const parent = this.parent.parent;
+                        const {parent} = this.parent;
                         parent.decryptMemoryBuffer(this.buffer, this.size, this.baseAddress);
                         send({
                             type: 'bypass',
@@ -1926,7 +1926,7 @@ const MemoryIntegrityBypass = {
                         const exceptionCode = exceptionRecord.readU32();
                         const exceptionAddress = exceptionRecord.add(20).readPointer();
 
-                        const parent = this.parent.parent;
+                        const {parent} = this.parent;
                         if (exceptionCode === 0x80000003 || exceptionCode === 0x80000004) {
                             // Breakpoint or single step
                             parent.handleWatchdogViolation(exceptionAddress, contextRecord);
@@ -1991,7 +1991,7 @@ const MemoryIntegrityBypass = {
 
                     if (this.size <= 256) {
                         // Reasonable patch size
-                        const parent = this.parent.parent;
+                        const {parent} = this.parent;
                         const mutatedPatch = parent.createPolymorphicPatch(this.buffer, this.size);
                         if (mutatedPatch) {
                             args[2] = mutatedPatch;
@@ -2101,7 +2101,7 @@ const MemoryIntegrityBypass = {
                     this.iLen = args[2].toInt32();
                 },
                 onLeave: function (retval) {
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     // Check if this is validating a known region
                     const regionKey = parent.findMatchingRegion(this.pData, this.iLen);
                     if (regionKey) {
@@ -2494,7 +2494,7 @@ const MemoryIntegrityBypass = {
                 },
                 onLeave: function (retval) {
                     if (!retval.isNull()) {
-                        const parent = this.parent.parent;
+                        const {parent} = this.parent;
                         // Add canary values around allocation
                         const canary = parent.generateHeapCanary();
                         parent.heapProtection.heapCanaries.set(retval.toString(), {
@@ -2533,7 +2533,7 @@ const MemoryIntegrityBypass = {
                     this.flags = args[1].toInt32();
                     this.baseAddress = args[2];
 
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     // Check for double-free
                     if (parent.heapProtection.freeList.has(this.baseAddress.toString())) {
                         send({
@@ -2595,7 +2595,7 @@ const MemoryIntegrityBypass = {
                         this.context.rax = requestedSize + padding;
                     }
 
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     parent.stackRandomization.randomOffsets.set(
                         Thread.getCurrentThreadId(),
                         padding
@@ -2713,7 +2713,7 @@ const MemoryIntegrityBypass = {
                     if (exceptionCode === 0x80000001) {
                         // EXCEPTION_GUARD_PAGE
                         const faultAddress = exceptionRecord.add(20).readPointer();
-                        const parent = this.parent;
+                        const {parent} = this;
 
                         parent.guardPageSystem.accessLog.push({
                             address: faultAddress,
@@ -2789,7 +2789,7 @@ const MemoryIntegrityBypass = {
         if (exitProcess) {
             Interceptor.attach(exitProcess, {
                 onEnter: function (_args) {
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     parent.scrubSensitiveMemory();
                 },
             });
@@ -2809,7 +2809,7 @@ const MemoryIntegrityBypass = {
                         action: 'memory_dump_attempted',
                     });
 
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     if (parent.forensicsEvasion.antiForensicsActive) {
                         // Scramble sensitive memory before dump
                         parent.scrambleSensitiveRegions();
@@ -2820,7 +2820,7 @@ const MemoryIntegrityBypass = {
                 },
                 onLeave: function (_retval) {
                     if (this.needsUnscramble) {
-                        const parent = this.parent.parent;
+                        const {parent} = this.parent;
                         parent.unscrambleSensitiveRegions();
                     }
                 },
@@ -3028,7 +3028,7 @@ const MemoryIntegrityBypass = {
                     this.size = args[2].toInt32();
                 },
                 onLeave: function () {
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     // Check if destination is in a replicated region
                     parent.memoryReplication.replicas.forEach((replica, _key) => {
                         if (
@@ -3216,7 +3216,7 @@ const MemoryIntegrityBypass = {
         if (ntSetSystemPowerState) {
             Interceptor.attach(ntSetSystemPowerState, {
                 onEnter: function (_args) {
-                    const parent = this.parent.parent;
+                    const {parent} = this.parent;
                     parent.scrubSensitiveMemory();
                     send({
                         type: 'info',

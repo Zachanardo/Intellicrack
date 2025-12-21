@@ -232,7 +232,7 @@ class ProtocolToolWindow(QWidget):
 
         except Exception as e:
             self.output_text_edit.append(f"[ERROR] Analysis failed: {e!s}")
-            logger.error("Protocol analysis error: %s", e, exc_info=True)
+            logger.exception("Protocol analysis error: %s", e)
             self.description_label.setText("Analysis failed")
 
     def _on_clear_log(self) -> None:
@@ -310,7 +310,7 @@ class ProtocolToolWindow(QWidget):
             self.output_text_edit.append(f"[ERROR] Invalid hex data: {e}")
         except Exception as e:
             self.output_text_edit.append(f"[ERROR] Analysis failed: {e}")
-            logger.error("Protocol analysis error: %s", e, exc_info=True)
+            logger.exception("Protocol analysis error: %s", e)
 
     def _parse_raw_data(self, hex_data: str) -> None:
         """Auto-detect and parse protocol from raw hex data."""
@@ -358,7 +358,7 @@ class ProtocolToolWindow(QWidget):
             self.output_text_edit.append(f"[ERROR] Invalid hex data: {e}")
         except Exception as e:
             self.output_text_edit.append(f"[ERROR] Parse failed: {e}")
-            logger.error("Raw data parse error: %s", e, exc_info=True)
+            logger.exception("Raw data parse error: %s", e)
 
     def _send_protocol_command(self, protocol_name: str, command_data: str) -> None:
         """Send a protocol command to a license server."""
@@ -388,7 +388,7 @@ class ProtocolToolWindow(QWidget):
 
         except Exception as e:
             self.output_text_edit.append(f"[ERROR] Send failed: {e}")
-            logger.error("Protocol send error: %s", e, exc_info=True)
+            logger.exception("Protocol send error: %s", e)
 
     def _list_available_protocols(self) -> None:
         """List all available protocol parsers."""

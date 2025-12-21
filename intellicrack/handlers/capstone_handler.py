@@ -26,7 +26,7 @@ implementations for essential architectures used in Intellicrack.
 import struct
 import warnings
 from collections.abc import Callable
-from typing import Any, Optional, Union
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -38,6 +38,9 @@ warnings.filterwarnings(
     category=UserWarning,
     module="capstone.*",
 )
+
+# Declare version variable with proper type before try-except
+CAPSTONE_VERSION: str | None
 
 # Capstone availability detection and import handling
 try:
@@ -138,10 +141,10 @@ except ImportError as e:
     CS_GRP_PRIVILEGE = 6
     CS_GRP_BRANCH_RELATIVE = 7
 
-    class CsError(Exception):
+    class FallbackCsError(Exception):
         """Capstone error exception."""
 
-    class CsInsn:
+    class FallbackCsInsn:
         """Functional instruction representation for capstone fallback."""
 
         def __init__(self, address: int, size: int, mnemonic: str, op_str: str, bytes_data: bytes) -> None:
@@ -252,7 +255,7 @@ except ImportError as e:
             self.is_32bit: bool = (mode & CS_MODE_32) != 0
             self.is_16bit: bool = (mode & CS_MODE_16) != 0
 
-        def disasm(self, code: bytes, offset: int) -> list[CsInsn]:
+        def disasm(self, code: bytes, offset: int) -> list[FallbackCsInsn]:
             """Disassemble x86 code.
 
             Args:
@@ -263,7 +266,7 @@ except ImportError as e:
                 List of decoded instructions.
 
             """
-            instructions: list[CsInsn] = []
+            instructions: list[FallbackCsInsn] = []
             idx: int = 0
 
             while idx < len(code):
@@ -278,7 +281,7 @@ except ImportError as e:
 
             return instructions
 
-        def _handle_nop(self, code: bytes, offset: int) -> CsInsn:
+        def _handle_nop(self, code: bytes, offset: int) -> FallbackCsInsn:
             """Handle NOP instruction (0x90).
 
             Args:
@@ -289,9 +292,9 @@ except ImportError as e:
                 Decoded NOP instruction.
 
             """
-            return CsInsn(offset, 1, "nop", "", code[:1])
+            return FallbackCsInsn(offset, 1, "nop", "", code[:1])
 
-        def _handle_ret(self, code: bytes, offset: int) -> CsInsn:
+        def _handle_ret(self, code: bytes, offset: int) -> FallbackCsInsn:
             """Handle RET instruction (0xC3).
 
             Args:
@@ -302,11 +305,11 @@ except ImportError as e:
                 Decoded RET instruction.
 
             """
-            insn: CsInsn = CsInsn(offset, 1, "ret", "", code[:1])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 1, "ret", "", code[:1])
             insn.groups = [CS_GRP_RET]
             return insn
 
-        def _handle_ret_imm16(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_ret_imm16(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle RET imm16 instruction (0xC2).
 
             Args:
@@ -320,11 +323,11 @@ except ImportError as e:
             if len(code) < 3:
                 return None
             imm: int = struct.unpack("<H", code[1:3])[0]
-            insn: CsInsn = CsInsn(offset, 3, "ret", hex(imm), code[:3])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 3, "ret", hex(imm), code[:3])
             insn.groups = [CS_GRP_RET]
             return insn
 
-        def _handle_int3(self, code: bytes, offset: int) -> CsInsn:
+        def _handle_int3(self, code: bytes, offset: int) -> FallbackCsInsn:
             """Handle INT3 instruction (0xCC).
 
             Args:
@@ -335,11 +338,11 @@ except ImportError as e:
                 Decoded INT3 instruction.
 
             """
-            insn: CsInsn = CsInsn(offset, 1, "int3", "", code[:1])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 1, "int3", "", code[:1])
             insn.groups = [CS_GRP_INT]
             return insn
 
-        def _handle_int_imm8(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_int_imm8(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle INT imm8 instruction (0xCD).
 
             Args:
@@ -353,11 +356,11 @@ except ImportError as e:
             if len(code) < 2:
                 return None
             imm: int = code[1]
-            insn: CsInsn = CsInsn(offset, 2, "int", hex(imm), code[:2])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 2, "int", hex(imm), code[:2])
             insn.groups = [CS_GRP_INT]
             return insn
 
-        def _handle_call_rel32(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_call_rel32(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle CALL rel32 instruction (0xE8).
 
             Args:
@@ -372,11 +375,11 @@ except ImportError as e:
                 return None
             rel: int = struct.unpack("<i", code[1:5])[0]
             target: int = offset + 5 + rel
-            insn: CsInsn = CsInsn(offset, 5, "call", hex(target), code[:5])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 5, "call", hex(target), code[:5])
             insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jmp_rel32(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_jmp_rel32(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle JMP rel32 instruction (0xE9).
 
             Args:
@@ -391,11 +394,11 @@ except ImportError as e:
                 return None
             rel: int = struct.unpack("<i", code[1:5])[0]
             target: int = offset + 5 + rel
-            insn: CsInsn = CsInsn(offset, 5, "jmp", hex(target), code[:5])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 5, "jmp", hex(target), code[:5])
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jmp_rel8(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_jmp_rel8(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle JMP rel8 instruction (0xEB).
 
             Args:
@@ -410,11 +413,11 @@ except ImportError as e:
                 return None
             rel: int = struct.unpack("b", code[1:2])[0]
             target: int = offset + 2 + rel
-            insn: CsInsn = CsInsn(offset, 2, "jmp", hex(target), code[:2])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 2, "jmp", hex(target), code[:2])
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_jcc_rel8(self, code: bytes, offset: int, opcode: int) -> CsInsn | None:
+        def _handle_jcc_rel8(self, code: bytes, offset: int, opcode: int) -> FallbackCsInsn | None:
             """Handle Jcc rel8 instructions (0x70-0x7F).
 
             Args:
@@ -449,11 +452,11 @@ except ImportError as e:
             rel: int = struct.unpack("b", code[1:2])[0]
             target: int = offset + 2 + rel
             mnemonic: str = jcc_mnemonics.get(opcode, f"j{opcode:02x}")
-            insn: CsInsn = CsInsn(offset, 2, mnemonic, hex(target), code[:2])
+            insn: FallbackCsInsn = FallbackCsInsn(offset, 2, mnemonic, hex(target), code[:2])
             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
             return insn
 
-        def _handle_two_byte_opcodes(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_two_byte_opcodes(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle two-byte opcodes starting with 0x0F.
 
             Args:
@@ -492,13 +495,13 @@ except ImportError as e:
                 rel: int = struct.unpack("<i", code[2:6])[0]
                 target: int = offset + 6 + rel
                 mnemonic: str = jcc_mnemonics.get(opcode2, f"j{opcode2:02x}")
-                insn: CsInsn = CsInsn(offset, 6, mnemonic, hex(target), code[:6])
+                insn: FallbackCsInsn = FallbackCsInsn(offset, 6, mnemonic, hex(target), code[:6])
                 insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                 return insn
 
             return None
 
-        def _handle_push_reg(self, code: bytes, offset: int, opcode: int, rex: int | None) -> CsInsn:
+        def _handle_push_reg(self, code: bytes, offset: int, opcode: int, rex: int | None) -> FallbackCsInsn:
             """Handle PUSH register instructions (0x50-0x57).
 
             Args:
@@ -517,9 +520,9 @@ except ImportError as e:
                 if rex and (rex & 0x01):
                     reg_names = [f"r{8 + i}" for i in range(8)]
             reg: str = reg_names[opcode - 0x50]
-            return CsInsn(offset, 1, "push", reg, code[:1])
+            return FallbackCsInsn(offset, 1, "push", reg, code[:1])
 
-        def _handle_pop_reg(self, code: bytes, offset: int, opcode: int, rex: int | None) -> CsInsn:
+        def _handle_pop_reg(self, code: bytes, offset: int, opcode: int, rex: int | None) -> FallbackCsInsn:
             """Handle POP register instructions (0x58-0x5F).
 
             Args:
@@ -538,9 +541,9 @@ except ImportError as e:
                 if rex and (rex & 0x01):
                     reg_names = [f"r{8 + i}" for i in range(8)]
             reg: str = reg_names[opcode - 0x58]
-            return CsInsn(offset, 1, "pop", reg, code[:1])
+            return FallbackCsInsn(offset, 1, "pop", reg, code[:1])
 
-        def _handle_mov_rm_r(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_mov_rm_r(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle MOV r/m, r instruction (0x89).
 
             Args:
@@ -565,10 +568,10 @@ except ImportError as e:
                 rm: int = modrm & 0x07
 
                 dst: str = reg_names[rm]
-                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
+                return FallbackCsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_r_rm(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_mov_r_rm(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle MOV r, r/m instruction (0x8B).
 
             Args:
@@ -593,10 +596,10 @@ except ImportError as e:
                 src: str = reg_names[rm]
                 reg: int = (modrm >> 3) & 0x07
                 dst: str = reg_names[reg]
-                return CsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
+                return FallbackCsInsn(offset, 2, "mov", f"{dst}, {src}", code[:2])
             return None
 
-        def _handle_mov_reg_imm(self, code: bytes, offset: int, opcode: int, rex: int | None) -> CsInsn | None:
+        def _handle_mov_reg_imm(self, code: bytes, offset: int, opcode: int, rex: int | None) -> FallbackCsInsn | None:
             """Handle MOV reg, imm instructions (0xB8-0xBF).
 
             Args:
@@ -620,25 +623,25 @@ except ImportError as e:
                     reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
                     if rex and (rex & 0x01):
                         reg_names = [f"r{8 + i}" for i in range(8)]
-                    return CsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
+                    return FallbackCsInsn(offset, 9, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:9])
                 reg_names = ["rax", "rcx", "rdx", "rbx", "rsp", "rbp", "rsi", "rdi"]
 
             if self.is_32bit or (self.is_64bit and not (rex and (rex & 0x08))):
                 if len(code) < 5:
                     return None
                 imm = struct.unpack("<I", code[1:5])[0]
-                return CsInsn(offset, 5, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:5])
+                return FallbackCsInsn(offset, 5, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:5])
 
             if self.is_16bit:
                 if len(code) < 3:
                     return None
                 imm = struct.unpack("<H", code[1:3])[0]
                 reg_names = ["ax", "cx", "dx", "bx", "sp", "bp", "si", "di"]
-                return CsInsn(offset, 3, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:3])
+                return FallbackCsInsn(offset, 3, "mov", f"{reg_names[reg_idx]}, {hex(imm)}", code[:3])
 
             return None
 
-        def _handle_xor_rm_r(self, code: bytes, offset: int) -> CsInsn | None:
+        def _handle_xor_rm_r(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Handle XOR r/m, r instruction (0x31).
 
             Args:
@@ -663,10 +666,10 @@ except ImportError as e:
                 rm: int = modrm & 0x07
 
                 dst: str = reg_names[rm]
-                return CsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
+                return FallbackCsInsn(offset, 2, "xor", f"{dst}, {src}", code[:2])
             return None
 
-        def _decode_instruction(self, code: bytes, offset: int) -> CsInsn | None:
+        def _decode_instruction(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Decode a single x86 instruction.
 
             Args:
@@ -690,7 +693,7 @@ except ImportError as e:
                     return None
                 opcode = code[0]
 
-            handlers: dict[int, Callable[[], CsInsn | None]] = {
+            handlers: dict[int, Callable[[], FallbackCsInsn | None]] = {
                 0x90: lambda: self._handle_nop(code, offset),
                 0xC3: lambda: self._handle_ret(code, offset),
                 0xC2: lambda: self._handle_ret_imm16(code, offset),
@@ -717,7 +720,7 @@ except ImportError as e:
             if 0xB8 <= opcode <= 0xBF:
                 return self._handle_mov_reg_imm(code, offset, opcode, rex)
 
-            return CsInsn(offset, 1, "db", hex(opcode), code[:1])
+            return FallbackCsInsn(offset, 1, "db", hex(opcode), code[:1])
 
     class ARMDisassembler:
         """Real ARM disassembler implementation."""
@@ -733,7 +736,7 @@ except ImportError as e:
             self.is_thumb: bool = (mode & CS_MODE_THUMB) != 0
             self.is_big_endian: bool = (mode & CS_MODE_BIG_ENDIAN) != 0
 
-        def disasm(self, code: bytes, offset: int) -> list[CsInsn]:
+        def disasm(self, code: bytes, offset: int) -> list[FallbackCsInsn]:
             """Disassemble ARM code.
 
             Args:
@@ -744,7 +747,7 @@ except ImportError as e:
                 List of decoded instructions.
 
             """
-            instructions: list[CsInsn] = []
+            instructions: list[FallbackCsInsn] = []
             idx: int = 0
 
             if self.is_thumb:
@@ -764,7 +767,7 @@ except ImportError as e:
 
             return instructions
 
-        def _decode_arm_instruction(self, code: bytes, offset: int) -> CsInsn | None:
+        def _decode_arm_instruction(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Decode a single ARM instruction.
 
             Args:
@@ -792,7 +795,7 @@ except ImportError as e:
                 target: int = offset + offset_val
 
                 mnemonic: str = "bl" if is_link else "b"
-                insn: CsInsn = CsInsn(offset, 4, mnemonic, hex(target), code[:4])
+                insn: FallbackCsInsn = FallbackCsInsn(offset, 4, mnemonic, hex(target), code[:4])
                 insn.groups = [CS_GRP_CALL if is_link else CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                 return insn
 
@@ -803,14 +806,14 @@ except ImportError as e:
                     imm = (imm >> rotate) | (imm << (32 - rotate))
                 imm &= 0xFFFFFFFF
 
-                return CsInsn(offset, 4, "mov", f"r{rd}, #{hex(imm)}", code[:4])
+                return FallbackCsInsn(offset, 4, "mov", f"r{rd}, #{hex(imm)}", code[:4])
 
             if insn_word == 0xE1A00000:
-                return CsInsn(offset, 4, "nop", "", code[:4])
+                return FallbackCsInsn(offset, 4, "nop", "", code[:4])
 
-            return CsInsn(offset, 4, "dcd", hex(insn_word), code[:4])
+            return FallbackCsInsn(offset, 4, "dcd", hex(insn_word), code[:4])
 
-        def _decode_thumb_instruction(self, code: bytes, offset: int) -> CsInsn | None:
+        def _decode_thumb_instruction(self, code: bytes, offset: int) -> FallbackCsInsn | None:
             """Decode a single Thumb instruction.
 
             Args:
@@ -855,30 +858,30 @@ except ImportError as e:
 
                     is_blx: bool = (insn_hw2 & 0x1000) == 0
                     mnemonic: str = "blx" if is_blx else "bl"
-                    insn: CsInsn = CsInsn(offset, 4, mnemonic, hex(target), code[:4])
+                    insn: FallbackCsInsn = FallbackCsInsn(offset, 4, mnemonic, hex(target), code[:4])
                     insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
                     return insn
 
-                return CsInsn(offset, 4, "dcd", f"{hex(insn_hw)}, {hex(insn_hw2)}", code[:4])
+                return FallbackCsInsn(offset, 4, "dcd", f"{hex(insn_hw)}, {hex(insn_hw2)}", code[:4])
 
             if (insn_hw & 0xF800) == 0xE000:
                 offset_val = (insn_hw & 0x7FF) << 1
                 if offset_val & 0x800:
                     offset_val |= 0xFFFFF000
                 target = offset + 4 + offset_val
-                insn = CsInsn(offset, 2, "b", hex(target), code[:2])
+                insn = FallbackCsInsn(offset, 2, "b", hex(target), code[:2])
                 insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                 return insn
 
             if insn_hw == 0xBF00:
-                return CsInsn(offset, 2, "nop", "", code[:2])
+                return FallbackCsInsn(offset, 2, "nop", "", code[:2])
 
             if (insn_hw & 0xF800) == 0x2000:
                 rd = (insn_hw >> 8) & 0x07
                 imm = insn_hw & 0xFF
-                return CsInsn(offset, 2, "mov", f"r{rd}, #{hex(imm)}", code[:2])
+                return FallbackCsInsn(offset, 2, "mov", f"r{rd}, #{hex(imm)}", code[:2])
 
-            return CsInsn(offset, 2, "dcw", hex(insn_hw), code[:2])
+            return FallbackCsInsn(offset, 2, "dcw", hex(insn_hw), code[:2])
 
     class FallbackCs:
         """Functional Capstone disassembler implementation."""
@@ -898,7 +901,7 @@ except ImportError as e:
             self.skipdata: bool = False
 
             if arch == CS_ARCH_X86:
-                self._disasm_impl: object | None = X86Disassembler(mode)
+                self._disasm_impl: X86Disassembler | ARMDisassembler | object | None = X86Disassembler(mode)
             elif arch == CS_ARCH_ARM:
                 self._disasm_impl = ARMDisassembler(mode)
             elif arch == CS_ARCH_ARM64:
@@ -906,7 +909,7 @@ except ImportError as e:
             else:
                 self._disasm_impl = None
 
-        def disasm(self, code: bytes | str, offset: int, count: int = 0) -> list[CsInsn]:
+        def disasm(self, code: bytes | str, offset: int, count: int = 0) -> list[FallbackCsInsn]:
             """Disassemble code.
 
             Args:
@@ -922,12 +925,9 @@ except ImportError as e:
                 logger.warning("No disassembler for architecture %d", self.arch)
                 return []
 
-            if isinstance(code, str):
-                code = bytes(code, "latin-1")
-            elif not isinstance(code, bytes):
-                code = bytes(code)
-
-            instructions: list[CsInsn] = self._disasm_impl.disasm(code, offset)
+            code_bytes: bytes
+            code_bytes = bytes(code, "latin-1") if isinstance(code, str) else code
+            instructions: list[FallbackCsInsn] = self._disasm_impl.disasm(code_bytes, offset)  # type: ignore[attr-defined]
 
             if count > 0:
                 instructions = instructions[:count]
@@ -943,11 +943,14 @@ except ImportError as e:
 
             """
             if option == CS_OPT_SYNTAX:
-                self.syntax = value  # type: ignore[assignment]
+                if isinstance(value, int):
+                    self.syntax = value
             elif option == CS_OPT_DETAIL:
-                self.detail = value  # type: ignore[assignment]
+                if isinstance(value, bool):
+                    self.detail = value
             elif option == CS_OPT_SKIPDATA:
-                self.skipdata = value  # type: ignore[assignment]
+                if isinstance(value, bool):
+                    self.skipdata = value
 
         def _create_arm64_disassembler(self, mode: int) -> object:
             """Create ARM64 disassembler.
@@ -959,6 +962,8 @@ except ImportError as e:
                 ARM64Disassembler instance.
 
             """
+
+
 
             class ARM64Disassembler:
                 """Basic ARM64 disassembler."""
@@ -973,7 +978,7 @@ except ImportError as e:
                     self.mode: int = arm64_mode
                     self.is_big_endian: bool = (arm64_mode & CS_MODE_BIG_ENDIAN) != 0
 
-                def disasm(self, code: bytes, offset: int) -> list[CsInsn]:
+                def disasm(self, code: bytes, offset: int) -> list[FallbackCsInsn]:
                     """Disassemble ARM64 code.
 
                     Args:
@@ -984,45 +989,46 @@ except ImportError as e:
                         List of decoded instructions.
 
                     """
-                    instructions: list[CsInsn] = []
+                    instructions: list[FallbackCsInsn] = []
                     idx: int = 0
 
-                    while idx < len(code) - 3 and not len(code[idx:]) < 4:
+                    while idx < len(code) - 3 and len(code[idx:]) >= 4:
                         if self.is_big_endian:
                             insn_word: int = struct.unpack(">I", code[idx : idx + 4])[0]
                         else:
                             insn_word = struct.unpack("<I", code[idx : idx + 4])[0]
 
                         if insn_word == 0xD503201F:
-                            insn: CsInsn = CsInsn(offset + idx, 4, "nop", "", code[idx : idx + 4])
+                            insn: FallbackCsInsn = FallbackCsInsn(offset + idx, 4, "nop", "", code[idx : idx + 4])
                         elif insn_word == 0xD65F03C0:
-                            insn = CsInsn(offset + idx, 4, "ret", "", code[idx : idx + 4])
+                            insn = FallbackCsInsn(offset + idx, 4, "ret", "", code[idx : idx + 4])
                             insn.groups = [CS_GRP_RET]
                         elif (insn_word & 0xFC000000) == 0x94000000:
                             imm26: int = insn_word & 0x03FFFFFF
                             if imm26 & 0x02000000:
                                 imm26 |= 0xFC000000
                             target: int = offset + idx + (imm26 << 2)
-                            insn = CsInsn(offset + idx, 4, "bl", hex(target), code[idx : idx + 4])
+                            insn = FallbackCsInsn(offset + idx, 4, "bl", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_CALL, CS_GRP_BRANCH_RELATIVE]
                         elif (insn_word & 0xFC000000) == 0x14000000:
                             imm26 = insn_word & 0x03FFFFFF
                             if imm26 & 0x02000000:
                                 imm26 |= 0xFC000000
                             target = offset + idx + (imm26 << 2)
-                            insn = CsInsn(offset + idx, 4, "b", hex(target), code[idx : idx + 4])
+                            insn = FallbackCsInsn(offset + idx, 4, "b", hex(target), code[idx : idx + 4])
                             insn.groups = [CS_GRP_JUMP, CS_GRP_BRANCH_RELATIVE]
                         else:
-                            insn = CsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4])
+                            insn = FallbackCsInsn(offset + idx, 4, "dcd", hex(insn_word), code[idx : idx + 4])
 
                         instructions.append(insn)
                         idx += 4
 
                     return instructions
 
+
             return ARM64Disassembler(mode)
 
-    def cs_disasm_quick(arch: int, mode: int, code: bytes | str, offset: int, count: int = 0) -> list[CsInsn]:
+    def cs_disasm_quick(arch: int, mode: int, code: bytes | str, offset: int, count: int = 0) -> list[FallbackCsInsn]:
         """Quick disassembly function.
 
         Args:
@@ -1061,8 +1067,10 @@ except ImportError as e:
         """Enable debug mode."""
         logger.info("Capstone fallback debug mode enabled")
 
-    # Assign Cs class
+    # Assign Cs class and exception/insn types
     Cs = FallbackCs
+    CsError = FallbackCsError
+    CsInsn = FallbackCsInsn
 
     class FallbackCapstone:
         """Fallback capstone module providing compatibility interface.
@@ -1109,16 +1117,17 @@ except ImportError as e:
         CS_GRP_PRIVILEGE: int = CS_GRP_PRIVILEGE
         CS_GRP_BRANCH_RELATIVE: int = CS_GRP_BRANCH_RELATIVE
 
-        Cs: type = Cs
-        CsInsn: type = CsInsn
-        CsError: type = CsError
+        Cs: type[FallbackCs] = Cs
+        CsInsn: type[FallbackCsInsn] = CsInsn
+        CsError: type[FallbackCsError] = CsError
 
-        cs_disasm_quick: Callable[[int, int, bytes | str, int, int], list[CsInsn]] = staticmethod(cs_disasm_quick)
+        cs_disasm_quick: Callable[[int, int, bytes | str, int, int], list[FallbackCsInsn]] = staticmethod(cs_disasm_quick)
         cs_version: Callable[[], tuple[int, int, int]] = staticmethod(cs_version)
         version_bind: Callable[[], tuple[int, int, int]] = staticmethod(version_bind)
         debug: Callable[[], None] = staticmethod(debug)
 
-    capstone: FallbackCapstone = FallbackCapstone()
+    capstone_module: FallbackCapstone = FallbackCapstone()
+    capstone = capstone_module
 
 
 # Export all Capstone objects and availability flag

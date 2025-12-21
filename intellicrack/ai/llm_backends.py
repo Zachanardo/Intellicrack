@@ -2730,9 +2730,8 @@ Please analyze this script and return validation results in JSON format."""
                     return self.backends[llm_id]
 
             for llm_id in self.lazy_wrappers:
-                if llm_id.startswith(provider_value):
-                    if self.lazy_manager:
-                        return self.lazy_manager.get_model(llm_id)
+                if llm_id.startswith(provider_value) and self.lazy_manager:
+                    return self.lazy_manager.get_model(llm_id)
 
             logger.debug("No backend found for provider: %s", provider_value)
             return None

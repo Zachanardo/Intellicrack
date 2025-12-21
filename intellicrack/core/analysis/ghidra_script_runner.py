@@ -75,7 +75,7 @@ class GhidraScriptRunner:
     def _discover_all_scripts(self) -> None:
         """Dynamically discover all Ghidra scripts from intellicrack scripts directory."""
         if not self.intellicrack_scripts_dir.exists():
-            logger.warning(f"Intellicrack scripts directory not found: {self.intellicrack_scripts_dir}")
+            logger.warning("Intellicrack scripts directory not found: %s", self.intellicrack_scripts_dir)
             return
 
         for script_file in self.intellicrack_scripts_dir.glob("*.[pj][ya][vt][ah]*"):
@@ -99,7 +99,7 @@ class GhidraScriptRunner:
                 description=metadata.get("description", f"{script_file.stem} Ghidra script"),
             )
 
-        logger.info(f"Discovered {len(self.discovered_scripts)} Ghidra scripts from {self.intellicrack_scripts_dir}")
+        logger.info("Discovered %d Ghidra scripts from %s", len(self.discovered_scripts), self.intellicrack_scripts_dir)
 
     def _parse_script_metadata(self, script_path: Path) -> dict[str, Any]:
         """Parse metadata from script header comments.
@@ -127,7 +127,7 @@ class GhidraScriptRunner:
             return metadata
 
         except Exception as e:
-            logger.debug(f"Could not parse metadata from {script_path.name}: {e}")
+            logger.debug("Could not parse metadata from %s: %s", script_path.name, e)
             return {}
 
     def run_script(
@@ -209,7 +209,7 @@ class GhidraScriptRunner:
 
             # Execute script
             if use_terminal and HAS_TERMINAL_MANAGER:
-                logger.info(f"Running Ghidra script '{script_name}' in terminal")
+                logger.info("Running Ghidra script '%s' in terminal", script_name)
                 terminal_mgr = get_terminal_manager()
 
                 # Show script execution in terminal
@@ -253,11 +253,11 @@ class GhidraScriptRunner:
             return results
 
         except subprocess.TimeoutExpired:
-            logger.error(f"Script {script_name} timed out after {script.timeout} seconds")
+            logger.exception("Script %s timed out after %d seconds", script_name, script.timeout)
             return {"error": "Script execution timed out"}
 
         except Exception as e:
-            logger.error(f"Failed to run script {script_name}: {e}")
+            logger.exception("Failed to run script %s: %s", script_name, e)
             return {"error": str(e)}
 
         finally:
@@ -283,7 +283,7 @@ class GhidraScriptRunner:
 
         try:
             for script_name in script_names:
-                logger.info(f"Running script: {script_name}")
+                logger.info("Running script: %s", script_name)
 
                 script_output_dir = output_dir / script_name
                 script_output_dir.mkdir(parents=True, exist_ok=True)
@@ -299,7 +299,7 @@ class GhidraScriptRunner:
 
                 # Stop chain if script fails
                 if not result.get("execution", {}).get("success", False):
-                    logger.error(f"Script {script_name} failed, stopping chain")
+                    logger.error("Script %s failed, stopping chain", script_name)
                     break
 
             return results
@@ -382,7 +382,7 @@ class GhidraScriptRunner:
                 description=metadata.get("description", ""),
             )
 
-        logger.warning(f"Script not found: {name}")
+        logger.warning("Script not found: %s", name)
         return None
 
     def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> dict[str, Any]:
@@ -440,7 +440,7 @@ class GhidraScriptRunner:
             return True
 
         except Exception as e:
-            logger.error(f"Script validation failed: {e}")
+            logger.exception("Script validation failed: %s", e)
             return False
 
     def refresh_scripts(self) -> int:

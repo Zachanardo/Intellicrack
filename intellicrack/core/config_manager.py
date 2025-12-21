@@ -127,7 +127,7 @@ class IntellicrackConfig:
             self.logger.debug("IntellicrackConfig: Determined Intellicrack root from module location: %s", root)
             return root
         except (AttributeError, OSError):
-            self.logger.error("Failed to determine Intellicrack root", exc_info=True)
+            self.logger.exception("Failed to determine Intellicrack root")
             return Path.cwd()
 
     def _get_user_config_dir(self) -> Path:
@@ -537,10 +537,7 @@ class IntellicrackConfig:
                 self.logger.debug("API endpoint not configured for provider: %s", provider)
                 return None
 
-        if isinstance(value, str) and value:
-            return value
-
-        return None
+        return value if isinstance(value, str) and value else None
 
     def _upgrade_config_if_needed(self) -> None:
         """Perform configuration upgrades based on version.

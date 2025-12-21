@@ -45,7 +45,7 @@ def get_project_root() -> Path:
         intellicrack_root = Path(get_resource_path(""))
         return intellicrack_root.parent
     except Exception as e:
-        _logger.error("Exception in plugin_paths: %s", e, exc_info=True)
+        _logger.exception("Exception in plugin_paths: %s", e)
         # Fallback to relative path calculation
         current_file = Path(__file__)
         # Go up from utils -> intellicrack -> project root

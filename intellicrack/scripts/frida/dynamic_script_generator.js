@@ -1280,7 +1280,7 @@ const DynamicScriptGenerator = {
 
         // Check import table for anti-debug APIs
         if (this.analysisResults.binaryInfo.imports) {
-            const imports = this.analysisResults.binaryInfo.imports;
+            const {imports} = this.analysisResults.binaryInfo;
 
             if (imports.debugAPIs.length > 0) {
                 mechanisms.push({
@@ -1376,7 +1376,7 @@ const DynamicScriptGenerator = {
 
         // Check for license-related API usage
         if (this.analysisResults.binaryInfo.imports?.licenseAPIs) {
-            const licenseAPIs = this.analysisResults.binaryInfo.imports.licenseAPIs;
+            const {licenseAPIs} = this.analysisResults.binaryInfo.imports;
 
             if (licenseAPIs.length > 3) {
                 mechanisms.push({
@@ -1397,7 +1397,7 @@ const DynamicScriptGenerator = {
 
         // Check for DRM-related imports
         if (this.analysisResults.binaryInfo.imports) {
-            const imports = this.analysisResults.binaryInfo.imports;
+            const {imports} = this.analysisResults.binaryInfo;
 
             const drmAPIs = imports.protectionAPIs.filter(
                 api =>
@@ -1701,25 +1701,23 @@ const DynamicScriptGenerator = {
     },
 
     generateInitFunction: _plan => {
-        const initCode = `
-    onAttach: function(pid) {
-        send({
-            type: "status",
-            target: "generated_script",
-            action: "attaching_to_process",
-            process_id: pid
-        });
-        this.processId = pid;
-        this.startTime = Date.now();
-        this.stats = {
-            hooksInstalled: 0,
-            bypassAttempts: 0,
-            successfulBypasses: 0,
-            failedBypasses: 0
-        };
-    },`;
-
-        return initCode;
+        return `
+            onAttach: function(pid) {
+                send({
+                    type: "status",
+                    target: "generated_script",
+                    action: "attaching_to_process",
+                    process_id: pid
+                });
+                this.processId = pid;
+                this.startTime = Date.now();
+                this.stats = {
+                    hooksInstalled: 0,
+                    bypassAttempts: 0,
+                    successfulBypasses: 0,
+                    failedBypasses: 0
+                };
+            },`;
     },
 
     generateRunFunction: plan => {

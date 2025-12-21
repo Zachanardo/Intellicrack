@@ -110,7 +110,7 @@ def show_message(
 
     # Log the message
     if msg_type == MessageType.ERROR:
-        logger.error("%s: %s%s", title, message, parent_context)
+        logger.exception("%s: %s%s", title, message, parent_context)
     elif msg_type == MessageType.WARNING:
         logger.warning("%s: %s%s", title, message, parent_context)
     elif msg_type == MessageType.DEBUG:
@@ -191,7 +191,7 @@ def get_user_input(prompt: str, default: str = "", title: str = "Input Required"
 
         return result
     except (KeyboardInterrupt, EOFError) as e:
-        logger.error("Error in ui_utils: %s", e, exc_info=True)
+        logger.exception("Error in ui_utils: %s", e, exc_info=True)
         return None
 
 
@@ -240,7 +240,7 @@ def confirm_action(message: str, title: str = "Confirm Action", parent: object =
         # Validate response - only accept specific values (y/yes)
         return response in ("y", "yes")
     except (KeyboardInterrupt, EOFError) as e:
-        logger.error("Error in ui_utils: %s", e, exc_info=True)
+        logger.exception("Error in ui_utils: %s", e, exc_info=True)
         return False
 
 
@@ -293,7 +293,7 @@ def select_from_list(
                     if 0 <= idx < len(items):
                         selected.append(items[idx])
                 except ValueError as e:
-                    logger.error("Value error in ui_utils: %s", e, exc_info=True)
+                    logger.exception("Value error in ui_utils: %s", e, exc_info=True)
                     continue
             return selected or None
         user_input = input("Enter number: ").strip()
@@ -304,7 +304,7 @@ def select_from_list(
         idx = int(selection) - 1
         return [items[idx]] if 0 <= idx < len(items) else None
     except (KeyboardInterrupt, EOFError, ValueError) as e:
-        logger.error("Error in ui_utils: %s", e, exc_info=True)
+        logger.exception("Error in ui_utils: %s", e, exc_info=True)
         return None
 
 

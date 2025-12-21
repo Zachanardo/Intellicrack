@@ -387,7 +387,7 @@ class HexViewRenderer:
                             return f'"{data[:null_pos].decode("ascii", errors="replace")}"'
                         return f'"{data.decode("ascii", errors="replace")}"'
                     except Exception as e:
-                        self.logger.error("Exception in hex_renderer: %s", e)
+                        self.logger.exception("Exception in hex_renderer: %s", e)
                         return " ".join(f"{b:02X}" for b in data)
 
                 # Other array types

@@ -1010,7 +1010,7 @@ Generate the complete modified script:"""
             "recv(",
             "frida.",
         ]
-        frida_score = sum(1 for ind in frida_indicators if ind in content_lower)
+        frida_score = sum(ind in content_lower for ind in frida_indicators)
         if frida_score >= 2:
             return "frida"
 
@@ -1028,7 +1028,7 @@ Generate the complete modified script:"""
             "@keybinding",
             "ghidrascript",
         ]
-        ghidra_score = sum(1 for ind in ghidra_indicators if ind in content_lower)
+        ghidra_score = sum(ind in content_lower for ind in ghidra_indicators)
         if ghidra_score >= 2:
             return "ghidra"
 
@@ -1044,7 +1044,7 @@ Generate the complete modified script:"""
             "izz",
             "aaa",
         ]
-        r2_score = sum(1 for ind in r2_indicators if ind in content_lower)
+        r2_score = sum(ind in content_lower for ind in r2_indicators)
         if r2_score >= 2:
             return "radare2"
 

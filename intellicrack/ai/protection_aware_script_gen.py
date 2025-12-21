@@ -85,7 +85,7 @@ class ProtectionAwareScriptGenerator:
         try:
             result = self.unified_engine.analyze_file(binary_path, deep_scan=True)
         except Exception as e:
-            self.logger.error("Exception in protection_aware_script_gen: %s", e, exc_info=True)
+            self.logger.exception("Exception in protection_aware_script_gen: %s", e)
             return {
                 "success": False,
                 "error": f"Failed to analyze protection: {e!s}",

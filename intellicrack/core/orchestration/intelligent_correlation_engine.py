@@ -568,10 +568,13 @@ class IntelligentCorrelationEngine:
                 float(len(result.xrefs_from)),
             ))
         elif isinstance(result, StringResult):
-            features.append(float(result.length))
-            features.append(float(result.entropy))
-            features.append(float(len(result.references)))
-
+            features.extend(
+                (
+                    float(result.length),
+                    float(result.entropy),
+                    float(len(result.references)),
+                )
+            )
         # Pad or truncate to fixed size
         target_size = 10
         if len(features) < target_size:
@@ -711,4 +714,4 @@ class IntelligentCorrelationEngine:
         with open(output_path, "w") as f:
             json.dump(export_data, f, indent=2)
 
-        logger.info(f"Exported correlation analysis to {output_path}")
+        logger.info("Exported correlation analysis to %s", output_path)

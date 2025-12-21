@@ -146,10 +146,10 @@ class Radare2PatchEngine:
             self.bits = info["bin"]["bits"]
             self.endian = info["bin"]["endian"]
 
-            logger.info(f"Initialized patch engine for {self.architecture} {self.bits}-bit {self.endian}")
+            logger.info("Initialized patch engine for %s %d-bit %s", self.architecture, self.bits, self.endian)
 
         except Exception as e:
-            logger.error(f"Failed to initialize Radare2: {e}", exc_info=True)
+            logger.exception("Failed to initialize Radare2: %s", e)
             raise
 
     def create_nop_sled(self, address: int, length: int) -> PatchInstruction:
@@ -310,7 +310,7 @@ class Radare2PatchEngine:
 
         else:
             # Default fallback - use generic branch encoding
-            logger.warning(f"Using generic branch encoding for {self.architecture}")
+            logger.warning("Using generic branch encoding for %s", self.architecture)
             # Try to use Radare2's assembler
             if jump_type == "call":
                 asm_cmd = f"pa bl 0x{target:x}"
@@ -536,7 +536,7 @@ class Radare2PatchEngine:
 
         else:
             # Generic fallback using Radare2 assembler
-            logger.warning(f"Using generic return value patch for {self.architecture}")
+            logger.warning("Using generic return value patch for %s", self.architecture)
 
             # Try to assemble architecture-specific return sequence
             asm_commands = []
@@ -749,7 +749,7 @@ class Radare2PatchEngine:
 
         """
         if not self.write_mode:
-            logger.error("Cannot apply patch: not in write mode")
+            logger.exception("Cannot apply patch: not in write mode")
             return False
 
         try:
@@ -757,11 +757,11 @@ class Radare2PatchEngine:
             hex_bytes = patch.patch_bytes.hex()
             self.r2.cmd(f"wx {hex_bytes} @ {patch.address}")
 
-            logger.info(f"Applied patch: {patch.description}")
+            logger.info("Applied patch: %s", patch.description)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to apply patch: {e}", exc_info=True)
+            logger.exception("Failed to apply patch: %s", e)
             return False
 
     def apply_patch_set(self, patch_set_name: str) -> bool:
@@ -775,13 +775,13 @@ class Radare2PatchEngine:
 
         """
         if patch_set_name not in self.patch_sets:
-            logger.error(f"Unknown patch set: {patch_set_name}")
+            logger.exception("Unknown patch set: %s", patch_set_name)
             return False
 
         patch_set = self.patch_sets[patch_set_name]
 
         if patch_set.applied:
-            logger.warning(f"Patch set already applied: {patch_set_name}")
+            logger.warning("Patch set already applied: %s", patch_set_name)
             return True
 
         success = all(self.apply_patch(patch) for patch in patch_set.patches)
@@ -803,7 +803,7 @@ class Radare2PatchEngine:
 
         """
         if not self.write_mode:
-            logger.error("Cannot revert patch: not in write mode")
+            logger.exception("Cannot revert patch: not in write mode")
             return False
 
         try:
@@ -811,11 +811,11 @@ class Radare2PatchEngine:
             hex_bytes = patch.original_bytes.hex()
             self.r2.cmd(f"wx {hex_bytes} @ {patch.address}")
 
-            logger.info(f"Reverted patch: {patch.description}")
+            logger.info("Reverted patch: %s", patch.description)
             return True
 
         except Exception as e:
-            logger.error(f"Failed to revert patch: {e}", exc_info=True)
+            logger.exception("Failed to revert patch: %s", e)
             return False
 
     def create_patch_set(self, name: str, patches: list[PatchInstruction]) -> PatchSet:

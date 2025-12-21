@@ -1,8 +1,8 @@
 {
   "tool": "xenon",
-  "generated": "2025-12-20T00:12:19.030082",
-  "total_findings": 2712,
-  "total_files": 784,
+  "generated": "2025-12-20T02:58:14.704833",
+  "total_findings": 2717,
+  "total_files": 788,
   "files": [
     {
       "path": "tests\\validation_system\\phase2\\detection_depth_validator.py",
@@ -420,337 +420,337 @@
       "count": 37,
       "findings": [
         {
-          "line": 6102,
+          "line": 6103,
           "column": null,
           "name": "_extract_kms_data",
           "rank": "E",
           "complexity": 40,
           "message": "'_extract_kms_data' has rank E (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6102: '_extract_kms_data' has rank E"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6103: '_extract_kms_data' has rank E"
         },
         {
-          "line": 3223,
+          "line": 3224,
           "column": null,
           "name": "extract_flexlm_keys",
           "rank": "E",
           "complexity": 40,
           "message": "'extract_flexlm_keys' has rank E (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3223: 'extract_flexlm_keys' has rank E"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3224: 'extract_flexlm_keys' has rank E"
         },
         {
-          "line": 3306,
+          "line": 3307,
           "column": null,
           "name": "extract_hasp_keys",
           "rank": "E",
           "complexity": 40,
           "message": "'extract_hasp_keys' has rank E (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3306: 'extract_hasp_keys' has rank E"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3307: 'extract_hasp_keys' has rank E"
         },
         {
-          "line": 2924,
+          "line": 2925,
           "column": null,
           "name": "_extract_openssl_components",
           "rank": "D",
           "complexity": 30,
           "message": "'_extract_openssl_components' has rank D (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:2924: '_extract_openssl_components' has rank D"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:2925: '_extract_openssl_components' has rank D"
         },
         {
-          "line": 3384,
+          "line": 3385,
           "column": null,
           "name": "extract_adobe_keys",
           "rank": "D",
           "complexity": 30,
           "message": "'extract_adobe_keys' has rank D (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3384: 'extract_adobe_keys' has rank D"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3385: 'extract_adobe_keys' has rank D"
         },
         {
-          "line": 5767,
+          "line": 5768,
           "column": null,
           "name": "_generate_text_response",
           "rank": "D",
           "complexity": 30,
           "message": "'_generate_text_response' has rank D (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5767: '_generate_text_response' has rank D"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5768: '_generate_text_response' has rank D"
         },
         {
-          "line": 4574,
+          "line": 4575,
           "column": null,
           "name": "_hook_inline_apis",
           "rank": "C",
           "complexity": 20,
           "message": "'_hook_inline_apis' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4574: '_hook_inline_apis' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4575: '_hook_inline_apis' has rank C"
         },
         {
-          "line": 6562,
+          "line": 6563,
           "column": null,
           "name": "modify_response",
           "rank": "C",
           "complexity": 20,
           "message": "'modify_response' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6562: 'modify_response' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6563: 'modify_response' has rank C"
         },
         {
-          "line": 3097,
+          "line": 3098,
           "column": null,
           "name": "_extract_key_from_process_memory",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_key_from_process_memory' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3097: '_extract_key_from_process_memory' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3098: '_extract_key_from_process_memory' has rank C"
         },
         {
-          "line": 3843,
+          "line": 3844,
           "column": null,
           "name": "_scan_windows_memory",
           "rank": "C",
           "complexity": 20,
           "message": "'_scan_windows_memory' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3843: '_scan_windows_memory' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3844: '_scan_windows_memory' has rank C"
         },
         {
-          "line": 1562,
+          "line": 1563,
           "column": null,
           "name": "analyze_traffic",
           "rank": "C",
           "complexity": 20,
           "message": "'analyze_traffic' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1562: 'analyze_traffic' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1563: 'analyze_traffic' has rank C"
         },
         {
-          "line": 1611,
+          "line": 1612,
           "column": null,
           "name": "_parse_http_request",
           "rank": "C",
           "complexity": 20,
           "message": "'_parse_http_request' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1611: '_parse_http_request' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1612: '_parse_http_request' has rank C"
         },
         {
-          "line": 4012,
+          "line": 4013,
           "column": null,
           "name": "_handle_vmprotect",
           "rank": "C",
           "complexity": 20,
           "message": "'_handle_vmprotect' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4012: '_handle_vmprotect' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4013: '_handle_vmprotect' has rank C"
         },
         {
-          "line": 1666,
+          "line": 1667,
           "column": null,
           "name": "_parse_flexlm_data",
           "rank": "C",
           "complexity": 20,
           "message": "'_parse_flexlm_data' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1666: '_parse_flexlm_data' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1667: '_parse_flexlm_data' has rank C"
         },
         {
-          "line": 1816,
+          "line": 1817,
           "column": null,
           "name": "_extract_key_with_advanced_patterns",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_key_with_advanced_patterns' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1816: '_extract_key_with_advanced_patterns' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1817: '_extract_key_with_advanced_patterns' has rank C"
         },
         {
-          "line": 4433,
+          "line": 4434,
           "column": null,
           "name": "_reconstruct_vmprotect_iat",
           "rank": "C",
           "complexity": 20,
           "message": "'_reconstruct_vmprotect_iat' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4433: '_reconstruct_vmprotect_iat' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4434: '_reconstruct_vmprotect_iat' has rank C"
         },
         {
-          "line": 6465,
+          "line": 6466,
           "column": null,
           "name": "_determine_adobe_subscription",
           "rank": "C",
           "complexity": 20,
           "message": "'_determine_adobe_subscription' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6465: '_determine_adobe_subscription' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6466: '_determine_adobe_subscription' has rank C"
         },
         {
-          "line": 7012,
+          "line": 7013,
           "column": null,
           "name": "_handle_dns_query",
           "rank": "C",
           "complexity": 20,
           "message": "'_handle_dns_query' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7012: '_handle_dns_query' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:7013: '_handle_dns_query' has rank C"
         },
         {
-          "line": 1379,
+          "line": 1380,
           "column": null,
           "name": "_get_mac_address",
           "rank": "C",
           "complexity": 20,
           "message": "'_get_mac_address' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1379: '_get_mac_address' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1380: '_get_mac_address' has rank C"
         },
         {
-          "line": 1405,
+          "line": 1406,
           "column": null,
           "name": "_get_ram_size",
           "rank": "C",
           "complexity": 20,
           "message": "'_get_ram_size' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1405: '_get_ram_size' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1406: '_get_ram_size' has rank C"
         },
         {
-          "line": 1737,
+          "line": 1738,
           "column": null,
           "name": "_extract_adobe_private_key_from_memory",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_adobe_private_key_from_memory' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1737: '_extract_adobe_private_key_from_memory' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1738: '_extract_adobe_private_key_from_memory' has rank C"
         },
         {
-          "line": 3946,
+          "line": 3947,
           "column": null,
           "name": "_detect_memory_protection",
           "rank": "C",
           "complexity": 20,
           "message": "'_detect_memory_protection' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3946: '_detect_memory_protection' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3947: '_detect_memory_protection' has rank C"
         },
         {
-          "line": 5732,
+          "line": 5733,
           "column": null,
           "name": "_extract_xml_features",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_xml_features' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5732: '_extract_xml_features' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5733: '_extract_xml_features' has rank C"
         },
         {
-          "line": 1778,
+          "line": 1779,
           "column": null,
           "name": "_extract_key_from_adobe_process",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_key_from_adobe_process' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1778: '_extract_key_from_adobe_process' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1779: '_extract_key_from_adobe_process' has rank C"
         },
         {
-          "line": 1954,
+          "line": 1955,
           "column": null,
           "name": "_extract_key_via_entropy_analysis",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_key_via_entropy_analysis' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1954: '_extract_key_via_entropy_analysis' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1955: '_extract_key_via_entropy_analysis' has rank C"
         },
         {
-          "line": 1995,
+          "line": 1996,
           "column": null,
           "name": "_extract_key_via_crypto_structure_detection",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_key_via_crypto_structure_detection' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1995: '_extract_key_via_crypto_structure_detection' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1996: '_extract_key_via_crypto_structure_detection' has rank C"
         },
         {
-          "line": 3565,
+          "line": 3566,
           "column": null,
           "name": "_analyze_validation_function",
           "rank": "C",
           "complexity": 20,
           "message": "'_analyze_validation_function' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3565: '_analyze_validation_function' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3566: '_analyze_validation_function' has rank C"
         },
         {
-          "line": 4066,
+          "line": 4067,
           "column": null,
           "name": "_handle_themida",
           "rank": "C",
           "complexity": 20,
           "message": "'_handle_themida' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4066: '_handle_themida' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4067: '_handle_themida' has rank C"
         },
         {
-          "line": 5584,
+          "line": 5585,
           "column": null,
           "name": "_determine_license_type",
           "rank": "C",
           "complexity": 20,
           "message": "'_determine_license_type' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5584: '_determine_license_type' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5585: '_determine_license_type' has rank C"
         },
         {
-          "line": 5880,
+          "line": 5881,
           "column": null,
           "name": "_find_binary_by_process",
           "rank": "C",
           "complexity": 20,
           "message": "'_find_binary_by_process' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5880: '_find_binary_by_process' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5881: '_find_binary_by_process' has rank C"
         },
         {
-          "line": 1324,
+          "line": 1325,
           "column": null,
           "name": "_get_disk_serial_linux",
           "rank": "C",
           "complexity": 20,
           "message": "'_get_disk_serial_linux' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1324: '_get_disk_serial_linux' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:1325: '_get_disk_serial_linux' has rank C"
         },
         {
-          "line": 3891,
+          "line": 3892,
           "column": null,
           "name": "_scan_unix_memory",
           "rank": "C",
           "complexity": 20,
           "message": "'_scan_unix_memory' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3891: '_scan_unix_memory' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:3892: '_scan_unix_memory' has rank C"
         },
         {
-          "line": 4106,
+          "line": 4107,
           "column": null,
           "name": "_handle_obsidium",
           "rank": "C",
           "complexity": 20,
           "message": "'_handle_obsidium' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4106: '_handle_obsidium' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4107: '_handle_obsidium' has rank C"
         },
         {
-          "line": 4217,
+          "line": 4218,
           "column": null,
           "name": "_deobfuscate_memory",
           "rank": "C",
           "complexity": 20,
           "message": "'_deobfuscate_memory' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4217: '_deobfuscate_memory' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:4218: '_deobfuscate_memory' has rank C"
         },
         {
-          "line": 5106,
+          "line": 5107,
           "column": null,
           "name": "hasp_state_machine",
           "rank": "C",
           "complexity": 20,
           "message": "'hasp_state_machine' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5106: 'hasp_state_machine' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5107: 'hasp_state_machine' has rank C"
         },
         {
-          "line": 5990,
+          "line": 5991,
           "column": null,
           "name": "_generate_adobe_response",
           "rank": "C",
           "complexity": 20,
           "message": "'_generate_adobe_response' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5990: '_generate_adobe_response' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:5991: '_generate_adobe_response' has rank C"
         },
         {
-          "line": 6486,
+          "line": 6487,
           "column": null,
           "name": "_get_adobe_products",
           "rank": "C",
           "complexity": 20,
           "message": "'_get_adobe_products' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6486: '_get_adobe_products' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\license_server_emulator.py:6487: '_get_adobe_products' has rank C"
         }
       ]
     },
@@ -6384,13 +6384,13 @@
       "count": 10,
       "findings": [
         {
-          "line": 770,
+          "line": 771,
           "column": null,
           "name": "_detect_opaque_predicates",
           "rank": "D",
           "complexity": 30,
           "message": "'_detect_opaque_predicates' has rank D (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:770: '_detect_opaque_predicates' has rank D"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:771: '_detect_opaque_predicates' has rank D"
         },
         {
           "line": 203,
@@ -6402,31 +6402,31 @@
           "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:203: '_initialize_binary' has rank C"
         },
         {
-          "line": 521,
+          "line": 522,
           "column": null,
           "name": "_identify_state_variable",
           "rank": "C",
           "complexity": 20,
           "message": "'_identify_state_variable' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:521: '_identify_state_variable' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:522: '_identify_state_variable' has rank C"
         },
         {
-          "line": 873,
+          "line": 875,
           "column": null,
           "name": "_remove_opaque_predicates",
           "rank": "C",
           "complexity": 20,
           "message": "'_remove_opaque_predicates' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:873: '_remove_opaque_predicates' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:875: '_remove_opaque_predicates' has rank C"
         },
         {
-          "line": 1014,
+          "line": 1022,
           "column": null,
           "name": "_collapse_linear_chains",
           "rank": "C",
           "complexity": 20,
           "message": "'_collapse_linear_chains' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1014: '_collapse_linear_chains' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1022: '_collapse_linear_chains' has rank C"
         },
         {
           "line": 242,
@@ -6438,40 +6438,40 @@
           "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:242: '_initialize_disassembler' has rank C"
         },
         {
-          "line": 485,
+          "line": 486,
           "column": null,
           "name": "_is_dispatcher_block",
           "rank": "C",
           "complexity": 20,
           "message": "'_is_dispatcher_block' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:485: '_is_dispatcher_block' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:486: '_is_dispatcher_block' has rank C"
         },
         {
-          "line": 953,
+          "line": 961,
           "column": null,
           "name": "_eliminate_dead_code",
           "rank": "C",
           "complexity": 20,
           "message": "'_eliminate_dead_code' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:953: '_eliminate_dead_code' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:961: '_eliminate_dead_code' has rank C"
         },
         {
-          "line": 374,
+          "line": 375,
           "column": null,
           "name": "_build_control_flow_graph",
           "rank": "C",
           "complexity": 20,
           "message": "'_build_control_flow_graph' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:374: '_build_control_flow_graph' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:375: '_build_control_flow_graph' has rank C"
         },
         {
-          "line": 1439,
+          "line": 1447,
           "column": null,
           "name": "apply_patches",
           "rank": "C",
           "complexity": 20,
           "message": "'apply_patches' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1439: 'apply_patches' has rank C"
+          "raw": "intellicrack\\core\\analysis\\control_flow_deobfuscation.py:1447: 'apply_patches' has rank C"
         }
       ]
     },
@@ -9738,22 +9738,22 @@
           "raw": "intellicrack\\ai\\qemu_manager.py:1842: 'rollback_snapshot' has rank C"
         },
         {
-          "line": 2415,
+          "line": 2418,
           "column": null,
           "name": "cleanup_old_snapshots",
           "rank": "C",
           "complexity": 20,
           "message": "'cleanup_old_snapshots' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:2415: 'cleanup_old_snapshots' has rank C"
+          "raw": "intellicrack\\ai\\qemu_manager.py:2418: 'cleanup_old_snapshots' has rank C"
         },
         {
-          "line": 3413,
+          "line": 3423,
           "column": null,
           "name": "copy_file_to_vm",
           "rank": "C",
           "complexity": 20,
           "message": "'copy_file_to_vm' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:3413: 'copy_file_to_vm' has rank C"
+          "raw": "intellicrack\\ai\\qemu_manager.py:3423: 'copy_file_to_vm' has rank C"
         },
         {
           "line": 2192,
@@ -9765,31 +9765,31 @@
           "raw": "intellicrack\\ai\\qemu_manager.py:2192: 'optimize_snapshot_storage' has rank C"
         },
         {
-          "line": 3934,
+          "line": 3944,
           "column": null,
           "name": "test_frida_script_with_callback",
           "rank": "C",
           "complexity": 20,
           "message": "'test_frida_script_with_callback' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:3934: 'test_frida_script_with_callback' has rank C"
+          "raw": "intellicrack\\ai\\qemu_manager.py:3944: 'test_frida_script_with_callback' has rank C"
         },
         {
-          "line": 2601,
+          "line": 2608,
           "column": null,
           "name": "perform_snapshot_maintenance",
           "rank": "C",
           "complexity": 20,
           "message": "'perform_snapshot_maintenance' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:2601: 'perform_snapshot_maintenance' has rank C"
+          "raw": "intellicrack\\ai\\qemu_manager.py:2608: 'perform_snapshot_maintenance' has rank C"
         },
         {
-          "line": 2955,
+          "line": 2965,
           "column": null,
           "name": "_build_qemu_command",
           "rank": "C",
           "complexity": 20,
           "message": "'_build_qemu_command' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\qemu_manager.py:2955: '_build_qemu_command' has rank C"
+          "raw": "intellicrack\\ai\\qemu_manager.py:2965: '_build_qemu_command' has rank C"
         }
       ]
     },
@@ -13149,49 +13149,49 @@
       "count": 5,
       "findings": [
         {
-          "line": 1128,
+          "line": 1126,
           "column": null,
           "name": "_initialize_model",
           "rank": "E",
           "complexity": 40,
           "message": "'_initialize_model' has rank E (complexity > threshold)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1128: '_initialize_model' has rank E"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1126: '_initialize_model' has rank E"
         },
         {
-          "line": 823,
+          "line": 821,
           "column": null,
           "name": "_initialize_model",
           "rank": "D",
           "complexity": 30,
           "message": "'_initialize_model' has rank D (complexity > threshold)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:823: '_initialize_model' has rank D"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:821: '_initialize_model' has rank D"
         },
         {
-          "line": 1642,
+          "line": 1640,
           "column": null,
           "name": "get_prediction_insights",
           "rank": "C",
           "complexity": 20,
           "message": "'get_prediction_insights' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:1642: 'get_prediction_insights' has rank C"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:1640: 'get_prediction_insights' has rank C"
         },
         {
-          "line": 530,
+          "line": 528,
           "column": null,
           "name": "_initialize_model",
           "rank": "C",
           "complexity": 20,
           "message": "'_initialize_model' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:530: '_initialize_model' has rank C"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:528: '_initialize_model' has rank C"
         },
         {
-          "line": 443,
+          "line": 441,
           "column": null,
           "name": "train",
           "rank": "C",
           "complexity": 20,
           "message": "'train' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\predictive_intelligence.py:443: 'train' has rank C"
+          "raw": "intellicrack\\ai\\predictive_intelligence.py:441: 'train' has rank C"
         }
       ]
     },
@@ -13719,13 +13719,13 @@
           "raw": "intellicrack\\hexview\\file_handler.py:247: '__init__' has rank C"
         },
         {
-          "line": 713,
+          "line": 716,
           "column": null,
           "name": "delete",
           "rank": "C",
           "complexity": 20,
           "message": "'delete' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\hexview\\file_handler.py:713: 'delete' has rank C"
+          "raw": "intellicrack\\hexview\\file_handler.py:716: 'delete' has rank C"
         },
         {
           "line": 441,
@@ -13737,13 +13737,13 @@
           "raw": "intellicrack\\hexview\\file_handler.py:441: 'read' has rank C"
         },
         {
-          "line": 624,
+          "line": 627,
           "column": null,
           "name": "insert",
           "rank": "C",
           "complexity": 20,
           "message": "'insert' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\hexview\\file_handler.py:624: 'insert' has rank C"
+          "raw": "intellicrack\\hexview\\file_handler.py:627: 'insert' has rank C"
         },
         {
           "line": 408,
@@ -15465,40 +15465,40 @@
       "count": 4,
       "findings": [
         {
-          "line": 387,
+          "line": 389,
           "column": null,
           "name": "_determine_firmware_type",
           "rank": "C",
           "complexity": 20,
           "message": "'_determine_firmware_type' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:387: '_determine_firmware_type' has rank C"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:389: '_determine_firmware_type' has rank C"
         },
         {
-          "line": 510,
+          "line": 512,
           "column": null,
           "name": "_extract_embedded_files",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_embedded_files' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:510: '_extract_embedded_files' has rank C"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:512: '_extract_embedded_files' has rank C"
         },
         {
-          "line": 422,
+          "line": 424,
           "column": null,
           "name": "_analyze_entropy",
           "rank": "C",
           "complexity": 20,
           "message": "'_analyze_entropy' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:422: '_analyze_entropy' has rank C"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:424: '_analyze_entropy' has rank C"
         },
         {
-          "line": 883,
+          "line": 885,
           "column": null,
           "name": "generate_icp_supplemental_data",
           "rank": "C",
           "complexity": 20,
           "message": "'generate_icp_supplemental_data' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:883: 'generate_icp_supplemental_data' has rank C"
+          "raw": "intellicrack\\core\\analysis\\firmware_analyzer.py:885: 'generate_icp_supplemental_data' has rank C"
         }
       ]
     },
@@ -15633,22 +15633,22 @@
       "count": 4,
       "findings": [
         {
-          "line": 518,
+          "line": 520,
           "column": null,
           "name": "visualize_graph",
           "rank": "C",
           "complexity": 20,
           "message": "'visualize_graph' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:518: 'visualize_graph' has rank C"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:520: 'visualize_graph' has rank C"
         },
         {
-          "line": 229,
+          "line": 231,
           "column": null,
           "name": "generate_call_graph",
           "rank": "C",
           "complexity": 20,
           "message": "'generate_call_graph' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:229: 'generate_call_graph' has rank C"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:231: 'generate_call_graph' has rank C"
         },
         {
           "line": 126,
@@ -15660,13 +15660,13 @@
           "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:126: 'generate_control_flow_graph' has rank C"
         },
         {
-          "line": 308,
+          "line": 310,
           "column": null,
           "name": "generate_xref_graph",
           "rank": "C",
           "complexity": 20,
           "message": "'generate_xref_graph' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:308: 'generate_xref_graph' has rank C"
+          "raw": "intellicrack\\core\\analysis\\radare2_graph_view.py:310: 'generate_xref_graph' has rank C"
         }
       ]
     },
@@ -18051,13 +18051,13 @@
           "raw": "intellicrack\\ai\\model_cache_manager.py:263: '_estimate_model_memory' has rank C"
         },
         {
-          "line": 551,
+          "line": 554,
           "column": null,
           "name": "_load_from_disk",
           "rank": "C",
           "complexity": 20,
           "message": "'_load_from_disk' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\model_cache_manager.py:551: '_load_from_disk' has rank C"
+          "raw": "intellicrack\\ai\\model_cache_manager.py:554: '_load_from_disk' has rank C"
         }
       ]
     },
@@ -18660,22 +18660,22 @@
       "count": 3,
       "findings": [
         {
-          "line": 258,
+          "line": 262,
           "column": null,
           "name": "_resolve_by_ordinal",
           "rank": "C",
           "complexity": 20,
           "message": "'_resolve_by_ordinal' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:258: '_resolve_by_ordinal' has rank C"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:262: '_resolve_by_ordinal' has rank C"
         },
         {
-          "line": 1154,
+          "line": 1158,
           "column": null,
           "name": "_resolve_delayed_imports",
           "rank": "C",
           "complexity": 20,
           "message": "'_resolve_delayed_imports' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:1154: '_resolve_delayed_imports' has rank C"
+          "raw": "intellicrack\\core\\anti_analysis\\api_obfuscation.py:1158: '_resolve_delayed_imports' has rank C"
         },
         {
           "line": 166,
@@ -18858,31 +18858,31 @@
       "count": 3,
       "findings": [
         {
-          "line": 575,
+          "line": 577,
           "column": null,
           "name": "_extract_tokens_from_json",
           "rank": "C",
           "complexity": 20,
           "message": "'_extract_tokens_from_json' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:575: '_extract_tokens_from_json' has rank C"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:577: '_extract_tokens_from_json' has rank C"
         },
         {
-          "line": 483,
+          "line": 485,
           "column": null,
           "name": "_detect_authentication_type",
           "rank": "C",
           "complexity": 20,
           "message": "'_detect_authentication_type' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:483: '_detect_authentication_type' has rank C"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:485: '_detect_authentication_type' has rank C"
         },
         {
-          "line": 890,
+          "line": 892,
           "column": null,
           "name": "_modify_response",
           "rank": "C",
           "complexity": 20,
           "message": "'_modify_response' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:890: '_modify_response' has rank C"
+          "raw": "intellicrack\\core\\protection_bypass\\cloud_license_analyzer.py:892: '_modify_response' has rank C"
         }
       ]
     },
@@ -19155,31 +19155,31 @@
       "count": 3,
       "findings": [
         {
-          "line": 549,
+          "line": 551,
           "column": null,
           "name": "_detect_request_type",
           "rank": "F",
           "complexity": 50,
           "message": "'_detect_request_type' has rank F (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:549: '_detect_request_type' has rank F"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:551: '_detect_request_type' has rank F"
         },
         {
-          "line": 516,
+          "line": 518,
           "column": null,
           "name": "_detect_auth_type",
           "rank": "C",
           "complexity": 20,
           "message": "'_detect_auth_type' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:516: '_detect_auth_type' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:518: '_detect_auth_type' has rank C"
         },
         {
-          "line": 410,
+          "line": 412,
           "column": null,
           "name": "RequestClassifier",
           "rank": "C",
           "complexity": 20,
           "message": "'RequestClassifier' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:410: 'RequestClassifier' has rank C"
+          "raw": "intellicrack\\plugins\\custom_modules\\cloud_license_interceptor.py:412: 'RequestClassifier' has rank C"
         }
       ]
     },
@@ -20982,22 +20982,22 @@
       "count": 2,
       "findings": [
         {
-          "line": 470,
+          "line": 472,
           "column": null,
           "name": "compare_adapter_configs",
           "rank": "C",
           "complexity": 20,
           "message": "'compare_adapter_configs' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:470: 'compare_adapter_configs' has rank C"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:472: 'compare_adapter_configs' has rank C"
         },
         {
-          "line": 646,
+          "line": 648,
           "column": null,
           "name": "validate_adapter_config",
           "rank": "C",
           "complexity": 20,
           "message": "'validate_adapter_config' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\ai\\lora_adapter_manager.py:646: 'validate_adapter_config' has rank C"
+          "raw": "intellicrack\\ai\\lora_adapter_manager.py:648: 'validate_adapter_config' has rank C"
         }
       ]
     },
@@ -23594,6 +23594,30 @@
       ]
     },
     {
+      "path": "tests\\models\\repositories\\test_openai_repository_production.py",
+      "count": 2,
+      "findings": [
+        {
+          "line": 69,
+          "column": null,
+          "name": "test_get_available_models_returns_gpt_models",
+          "rank": "C",
+          "complexity": 20,
+          "message": "'test_get_available_models_returns_gpt_models' has rank C (complexity > threshold)",
+          "raw": "tests\\models\\repositories\\test_openai_repository_production.py:69: 'test_get_available_models_returns_gpt_models' has rank C"
+        },
+        {
+          "line": 204,
+          "column": null,
+          "name": "test_model_info_contains_required_fields",
+          "rank": "C",
+          "complexity": 20,
+          "message": "'test_model_info_contains_required_fields' has rank C (complexity > threshold)",
+          "raw": "tests\\models\\repositories\\test_openai_repository_production.py:204: 'test_model_info_contains_required_fields' has rank C"
+        }
+      ]
+    },
+    {
       "path": "tests\\payload\\test_payload_methods_day2.py",
       "count": 2,
       "findings": [
@@ -24726,13 +24750,13 @@
       "count": 1,
       "findings": [
         {
-          "line": 110,
+          "line": 115,
           "column": null,
           "name": "main",
           "rank": "C",
           "complexity": 20,
           "message": "'main' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\main.py:110: 'main' has rank C"
+          "raw": "intellicrack\\main.py:115: 'main' has rank C"
         }
       ]
     },
@@ -25131,13 +25155,13 @@
       "count": 1,
       "findings": [
         {
-          "line": 298,
+          "line": 301,
           "column": null,
           "name": "get_operation_statistics",
           "rank": "C",
           "complexity": 20,
           "message": "'get_operation_statistics' has rank C (complexity > threshold)",
-          "raw": "intellicrack\\core\\analysis\\radare2_performance_metrics.py:298: 'get_operation_statistics' has rank C"
+          "raw": "intellicrack\\core\\analysis\\radare2_performance_metrics.py:301: 'get_operation_statistics' has rank C"
         }
       ]
     },
@@ -27838,6 +27862,51 @@
           "complexity": 20,
           "message": "'test_extract_all_features_completeness' has rank C (complexity > threshold)",
           "raw": "tests\\ml\\test_binary_feature_extractor_comprehensive.py:593: 'test_extract_all_features_completeness' has rank C"
+        }
+      ]
+    },
+    {
+      "path": "tests\\models\\repositories\\test_anthropic_repository_production.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 205,
+          "column": null,
+          "name": "test_model_info_contains_required_fields",
+          "rank": "C",
+          "complexity": 20,
+          "message": "'test_model_info_contains_required_fields' has rank C (complexity > threshold)",
+          "raw": "tests\\models\\repositories\\test_anthropic_repository_production.py:205: 'test_model_info_contains_required_fields' has rank C"
+        }
+      ]
+    },
+    {
+      "path": "tests\\models\\repositories\\test_google_repository_production.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 146,
+          "column": null,
+          "name": "test_model_info_contains_required_fields",
+          "rank": "C",
+          "complexity": 20,
+          "message": "'test_model_info_contains_required_fields' has rank C (complexity > threshold)",
+          "raw": "tests\\models\\repositories\\test_google_repository_production.py:146: 'test_model_info_contains_required_fields' has rank C"
+        }
+      ]
+    },
+    {
+      "path": "tests\\models\\repositories\\test_openrouter_repository_production.py",
+      "count": 1,
+      "findings": [
+        {
+          "line": 146,
+          "column": null,
+          "name": "test_model_info_contains_required_fields",
+          "rank": "C",
+          "complexity": 20,
+          "message": "'test_model_info_contains_required_fields' has rank C (complexity > threshold)",
+          "raw": "tests\\models\\repositories\\test_openrouter_repository_production.py:146: 'test_model_info_contains_required_fields' has rank C"
         }
       ]
     },

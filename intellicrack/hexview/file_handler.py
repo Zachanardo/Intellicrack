@@ -34,7 +34,7 @@ try:
 
     LARGE_FILE_SUPPORT = True
 except ImportError as e:
-    logger.error("Import error in file_handler: %s", e)
+    logger.exception("Import error in file_handler: %s", e)
     LARGE_FILE_SUPPORT = False
     LargeFileHandler = None
 
@@ -115,7 +115,7 @@ class ChunkManager:
 
             logger.debug("ChunkManager resources for %s released", self.file_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error closing ChunkManager resources: %s", e)
+            logger.exception("Error closing ChunkManager resources: %s", e)
 
     def get_chunk(self, offset: int) -> bytes | mmap.mmap:
         """Get the chunk containing the specified offset.
@@ -149,7 +149,7 @@ class ChunkManager:
             self.active_chunks[chunk_index] = chunk_data
             return chunk_data
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error creating memory map for chunk at offset %s: %s", chunk_offset, e)
+            logger.exception("Error creating memory map for chunk at offset %s: %s", chunk_offset, e)
             # Fallback: return the raw data without memory mapping
             self.file.seek(chunk_offset)
             return self.file.read(actual_chunk_size)
@@ -196,7 +196,7 @@ class ChunkManager:
                     chunks_accessed += 1
 
                     if chunk is None:
-                        logger.error("Failed to get chunk for offset %s", current_offset)
+                        logger.exception("Failed to get chunk for offset %s", current_offset)
                         break
 
                     # Calculate offsets within chunk
@@ -220,7 +220,7 @@ class ChunkManager:
                     current_offset += local_size
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error reading from chunk at offset %s: %s", current_offset, e)
+                    logger.exception("Error reading from chunk at offset %s: %s", current_offset, e)
                     break
 
             result = bytes(data)
@@ -233,7 +233,7 @@ class ChunkManager:
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Exception in ChunkManager.read_data: %s", e)
+            logger.exception("Exception in ChunkManager.read_data: %s", e)
             return b""
 
 
@@ -321,7 +321,7 @@ class VirtualFileAccess:
                 # Verify the temp file was created and has the correct size
                 if not os.path.exists(self.temp_file_path):
                     error_msg = f"Temp file not created: {self.temp_file_path}"
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
                     raise FileNotFoundError(error_msg) from e
 
                 self.file_size = os.path.getsize(self.temp_file_path)
@@ -329,7 +329,7 @@ class VirtualFileAccess:
 
                 if self.file_size != len(file_data):
                     error_msg = f"Temp file size mismatch: {self.file_size} vs {len(file_data)}"
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
                     raise ValueError(error_msg) from e
 
                 # Initialize chunk manager with the temp file path
@@ -344,7 +344,7 @@ class VirtualFileAccess:
                     logger.debug("Test read from chunk manager: %d bytes", len(test_data))
                     if not test_data:
                         error_msg = "Chunk manager returned empty data in test read"
-                        logger.error(error_msg)
+                        logger.exception(error_msg)
                         raise ValueError(error_msg) from e
 
                 # Mark as read-only since we're using a temp copy
@@ -352,7 +352,7 @@ class VirtualFileAccess:
 
                 logger.info("Successfully created and verified temporary copy: %s", self.temp_file_path)
             except Exception as copy_error:
-                logger.error("Failed to create temporary copy: %s", copy_error, exc_info=True)
+                logger.exception("Failed to create temporary copy: %s", copy_error)
 
                 # Try to clean up the temp file if it exists
                 if self.temp_file_path and os.path.exists(self.temp_file_path):
@@ -363,10 +363,10 @@ class VirtualFileAccess:
                         logger.warning("Could not clean up temp file: %s", cleanup_error)
 
                 error_msg = f"Could not create temporary copy of {file_path}: {copy_error}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise ValueError(error_msg) from copy_error
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error loading file: %s", e)
+            logger.exception("Error loading file: %s", e)
             raise
 
         # Store pending edits
@@ -427,7 +427,7 @@ class VirtualFileAccess:
 
             logger.debug("VirtualFileAccess resources for %s released", self.file_path)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error closing VirtualFileAccess resources: %s", e)
+            logger.exception("Error closing VirtualFileAccess resources: %s", e)
 
     def get_file_size(self) -> int:
         """Get the size of the file.
@@ -502,7 +502,7 @@ class VirtualFileAccess:
 
             # Force conversion to bytes and ensure we don't return None
             if data is None:
-                logger.error("Data is None after applying edits")
+                logger.exception("Data is None after applying edits")
                 return b""
 
             # Make sure we always return bytes, not bytearray or other type
@@ -512,7 +512,7 @@ class VirtualFileAccess:
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Exception in file_handler.read: %s", e, exc_info=True)
+            logger.exception("Exception in file_handler.read: %s", e)
             # Return empty data on error
             return b""
 
@@ -531,14 +531,16 @@ class VirtualFileAccess:
 
         """
         if self.read_only:
-            logger.error("Cannot write to file in read-only mode")
+            logger.exception("Cannot write to file in read-only mode")
             return False
 
         # Ensure we don't write beyond the file size
         if offset + len(data) > self.file_size:
-            logger.error(
+            logger.exception(
                 "Write operation would extend beyond file size: offset %s, data size %d, file size %d",
-                offset, len(data), self.file_size,
+                offset,
+                len(data),
+                self.file_size,
             )
             return False
 
@@ -559,7 +561,7 @@ class VirtualFileAccess:
 
         """
         if self.read_only:
-            logger.error("Cannot apply edits to file in read-only mode")
+            logger.exception("Cannot apply edits to file in read-only mode")
             return False
 
         if not self.pending_edits:
@@ -584,7 +586,7 @@ class VirtualFileAccess:
             logger.info("Applied %d edits to %s", len(self.applied_edits), self.file_path)
             return True
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error applying edits to file: %s", e)
+            logger.exception("Error applying edits to file: %s", e)
             return False
 
     def undo_last_edit(self) -> bool:
@@ -595,7 +597,7 @@ class VirtualFileAccess:
 
         """
         if self.read_only:
-            logger.error("Cannot undo edits in read-only mode")
+            logger.exception("Cannot undo edits in read-only mode")
             return False
 
         if not self.applied_edits:
@@ -614,7 +616,7 @@ class VirtualFileAccess:
             logger.info("Undid edit at offset %s, size %d", offset, len(original_data))
             return True
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error undoing edit: %s", e)
+            logger.exception("Error undoing edit: %s", e)
             return False
 
     def discard_edits(self) -> None:
@@ -637,11 +639,11 @@ class VirtualFileAccess:
 
         """
         if self.read_only:
-            logger.error("Cannot insert data in read-only mode")
+            logger.exception("Cannot insert data in read-only mode")
             return False
 
         if offset < 0 or offset > self.file_size:
-            logger.error("Insert offset %s is out of bounds (file size: %s)", offset, self.file_size)
+            logger.exception("Insert offset %s is out of bounds (file size: %s)", offset, self.file_size)
             return False
 
         if not data:
@@ -704,7 +706,7 @@ class VirtualFileAccess:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error inserting data at offset %s: %s", offset, e)
+            logger.exception("Error inserting data at offset %s: %s", offset, e)
             # Clean up temp file if it exists
             if "temp_path" in locals() and os.path.exists(temp_path):
                 with contextlib.suppress(OSError):
@@ -726,11 +728,11 @@ class VirtualFileAccess:
 
         """
         if self.read_only:
-            logger.error("Cannot delete data in read-only mode")
+            logger.exception("Cannot delete data in read-only mode")
             return False
 
         if offset < 0 or offset >= self.file_size:
-            logger.error("Delete offset %s is out of bounds (file size: %s)", offset, self.file_size)
+            logger.exception("Delete offset %s is out of bounds (file size: %s)", offset, self.file_size)
             return False
 
         if length <= 0:
@@ -796,7 +798,7 @@ class VirtualFileAccess:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error deleting data at offset %s: %s", offset, e)
+            logger.exception("Error deleting data at offset %s: %s", offset, e)
             # Clean up temp file if it exists
             if "temp_path" in locals() and os.path.exists(temp_path):
                 with contextlib.suppress(OSError):
@@ -831,7 +833,7 @@ class VirtualFileAccess:
         try:
             # Apply any pending edits first
             if self.pending_edits and not self.apply_edits():
-                logger.error("Failed to apply pending edits before save")
+                logger.exception("Failed to apply pending edits before save")
                 return False
 
             # Read entire file and write to new location
@@ -854,7 +856,7 @@ class VirtualFileAccess:
             return True
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error saving file to %s: %s", new_path, e)
+            logger.exception("Error saving file to %s: %s", new_path, e)
             return False
 
     def get_performance_stats(self) -> dict | None:

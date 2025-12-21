@@ -610,18 +610,27 @@ class R2LicenseAnalyzer:
                     "Patch hardware comparison logic",
                 ))
             elif lic_func.type == LicenseType.TIME_TRIAL:
-                strategies.append("Freeze or extend trial period")
-                strategies.append("Patch time comparison to always pass")
-
+                strategies.extend(
+                    (
+                        "Freeze or extend trial period",
+                        "Patch time comparison to always pass",
+                    )
+                )
             elif lic_func.type == LicenseType.CRYPTO_SIGNATURE:
-                strategies.append("Replace public key with known key")
-                strategies.append("Patch signature verification to succeed")
-
+                strategies.extend(
+                    (
+                        "Replace public key with known key",
+                        "Patch signature verification to succeed",
+                    )
+                )
             # Protection level specific
             if lic_func.protection_level == ProtectionLevel.ADVANCED:
-                strategies.append("May require unpacking/devirtualization first")
-                strategies.append("Consider using dynamic patching with Frida")
-
+                strategies.extend(
+                    (
+                        "May require unpacking/devirtualization first",
+                        "Consider using dynamic patching with Frida",
+                    )
+                )
             lic_func.bypass_strategies = strategies
 
     def export_report(self, output_file: str = "license_analysis.json") -> None:
@@ -869,7 +878,7 @@ class R2LicenseAnalyzer:
             self.logger.debug("Capstone not available, using fallback instruction detection")
             return self._find_patch_location_fallback(lic_func, func_bytes)
         except Exception as e:
-            self.logger.error("Error in capstone disassembly: %s", e, exc_info=True)
+            self.logger.exception("Error in capstone disassembly: %s", e)
             return self._find_patch_location_fallback(lic_func, func_bytes)
 
         return None, None

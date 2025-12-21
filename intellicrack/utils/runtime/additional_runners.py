@@ -47,7 +47,7 @@ try:
     _joblib = _joblib_module
     JOBLIB_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in additional_runners: %s", e)
+    logger.exception("Import error in additional_runners: %s", e)
     _joblib = None
     JOBLIB_AVAILABLE = False
 
@@ -59,7 +59,7 @@ try:
     _psutil = _psutil_module
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in additional_runners: %s", e)
+    logger.exception("Import error in additional_runners: %s", e)
     _psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -111,7 +111,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None, 
         from ..protection.protection_detection import run_comprehensive_protection_scan
         from .distributed_processing import run_distributed_entropy_analysis
     except ImportError as e:
-        logger.error("Import error: %s", e)
+        logger.exception("Import error: %s", e)
         results["error"] = f"Missing dependencies: {e}"
         return results
 
@@ -165,7 +165,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None, 
                 results["analyses"]["license"] = analyze_patterns(binary_path, license_patterns)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in %s: %s", analysis, e)
+            logger.exception("Error in %s: %s", analysis, e)
             results["analyses"][analysis] = {"error": str(e)}
 
     # Generate summary
@@ -178,7 +178,7 @@ def run_comprehensive_analysis(binary_path: str, output_dir: str | None = None, 
             json.dump(results, f, indent=2, default=str)
         results["results_file"] = results_file
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error saving results: %s", e)
+        logger.exception("Error saving results: %s", e)
 
     return results
 
@@ -232,7 +232,7 @@ def run_deep_license_analysis(binary_path: str) -> dict[str, Any]:
             results["bypass_suggestions"] = _generate_bypass_suggestions(pattern_results)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in deep license analysis: %s", e)
+        logger.exception("Error in deep license analysis: %s", e)
         results["error"] = str(e)
 
     return results
@@ -274,7 +274,7 @@ def run_detect_packing(binary_path: str) -> dict[str, Any]:
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error detecting packing: %s", e)
+        logger.exception("Error detecting packing: %s", e)
         return {"error": str(e)}
 
 
@@ -358,7 +358,7 @@ def run_autonomous_crack(binary_path: str, target_type: str | None = None) -> di
             results["message"] = "No patches generated"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in autonomous crack: %s", e)
+        logger.exception("Error in autonomous crack: %s", e)
         results["error"] = str(e)
 
     return results
@@ -417,7 +417,7 @@ def run_full_autonomous_mode(binary_path: str, config: dict[str, Any] | None = N
         results["overall_success"] = results["phases"]["crack"].get("success", False)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in full autonomous mode: %s", e)
+        logger.exception("Error in full autonomous mode: %s", e)
         results["error"] = str(e)
 
     return results
@@ -470,7 +470,7 @@ def run_ghidra_analysis_gui(binary_path: str, ghidra_path: str | None = None) ->
             results["error"] = f"Ghidra run script not found: {ghidra_run}"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error launching Ghidra GUI: %s", e)
+        logger.exception("Error launching Ghidra GUI: %s", e)
         results["error"] = str(e)
 
     return results
@@ -507,7 +507,7 @@ def run_incremental_analysis_ui(binary_path: str, cache_dir: str | None = None) 
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in incremental analysis UI: %s", e)
+        logger.exception("Error in incremental analysis UI: %s", e)
         return {"error": str(e)}
 
 
@@ -556,7 +556,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
                         )
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error(f"Error analyzing function {func['name']}: {e}")
+                logger.exception("Error analyzing function %s: %s", func["name"], e)
 
         results["functions_analyzed"] = functions_analyzed
         results["license_checks_found"] = license_checks_found
@@ -569,7 +569,7 @@ def run_deep_cfg_analysis(binary_path: str, output_format: str = "json") -> dict
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in deep CFG analysis: %s", e)
+        logger.exception("Error in deep CFG analysis: %s", e)
         return {"error": str(e)}
 
 
@@ -630,13 +630,13 @@ def run_external_tool(tool_name: str, binary_path: str, args: list[str] | None =
             results["success"] = False
 
     except subprocess.TimeoutExpired as e:
-        logger.error("Subprocess timeout in additional_runners: %s", e)
+        logger.exception("Subprocess timeout in additional_runners: %s", e)
         results["error"] = "Tool execution timed out"
     except FileNotFoundError as e:
-        logger.error("File not found in additional_runners: %s", e)
+        logger.exception("File not found in additional_runners: %s", e)
         results["error"] = f"Tool '{tool_name}' not found in PATH"
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running external tool: %s", e)
+        logger.exception("Error running external tool: %s", e)
         results["error"] = str(e)
 
     return results
@@ -672,7 +672,7 @@ def run_windows_activator(product: str = "windows", method: str = "kms") -> dict
         return {"error": f"Unknown product/method: {product}/{method}"}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in Windows activation: %s", e)
+        logger.exception("Error in Windows activation: %s", e)
         return {"error": str(e)}
 
 
@@ -722,7 +722,7 @@ def validate_dataset(dataset_path: str, dataset_type: str = "binary") -> dict[st
                 results["issues"].append("File not found")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error validating dataset: %s", e)
+        logger.exception("Error validating dataset: %s", e)
         results["issues"].append(str(e))
 
     return results
@@ -759,7 +759,7 @@ def verify_hash(file_path: str, expected_hash: str, algorithm: str = "sha256") -
         results["verified"] = actual_hash.lower() == expected_hash.lower()
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error verifying hash: %s", e)
+        logger.exception("Error verifying hash: %s", e)
         results["error"] = str(e)
 
     return results
@@ -800,10 +800,10 @@ def run_external_command(command: str | list[str], timeout: int = 60) -> dict[st
         results["success"] = result.returncode == 0
 
     except subprocess.TimeoutExpired as e:
-        logger.error("Subprocess timeout in additional_runners: %s", e)
+        logger.exception("Subprocess timeout in additional_runners: %s", e)
         results["error"] = "Command timed out"
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error running command: %s", e)
+        logger.exception("Error running command: %s", e)
         results["error"] = str(e)
 
     return results
@@ -906,7 +906,7 @@ console.log("Sample Frida script loaded");
         results["success"] = True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error creating sample plugins: %s", e)
+        logger.exception("Error creating sample plugins: %s", e)
         results["error"] = str(e)
 
     return results
@@ -959,7 +959,7 @@ def load_ai_model(model_path: str, model_type: str = "auto") -> dict[str, Any]:
             results["error"] = f"Model type {model_type} not implemented"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error loading AI model: %s", e)
+        logger.exception("Error loading AI model: %s", e)
         results["error"] = str(e)
 
     return results
@@ -983,12 +983,9 @@ def get_target_process_pid(process_name: str) -> int | None:
         for proc in _psutil.process_iter(["pid", "name"]):
             if process_name.lower() in proc.info["name"].lower():
                 pid_val = proc.info["pid"]
-                if isinstance(pid_val, int):
-                    return pid_val
-                return None
-
+                return pid_val if isinstance(pid_val, int) else None
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error getting process PID: %s", e)
+        logger.exception("Error getting process PID: %s", e)
 
     return None
 
@@ -1042,7 +1039,7 @@ def _detect_usb_dongles() -> list[dict[str, Any]]:
                     continue
 
         except ImportError as e:
-            logger.error("Import error in additional_runners: %s", e)
+            logger.exception("Import error in additional_runners: %s", e)
             # Fallback to platform-specific methods
             import platform
 
@@ -1200,7 +1197,7 @@ def _detect_dongle_processes() -> list[dict[str, Any]]:
                     )
 
             except Exception as e:
-                logger.error("Error in additional_runners: %s", e)
+                logger.exception("Error in additional_runners: %s", e)
                 continue
     except (OSError, ValueError, RuntimeError) as e:
         logger.debug("Process dongle detection error: %s", e)
@@ -1468,7 +1465,7 @@ def detect_hardware_dongles() -> dict[str, Any]:
             results["message"] = "No hardware dongles detected using available methods"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error detecting hardware dongles: %s", e)
+        logger.exception("Error detecting hardware dongles: %s", e)
         results["error"] = str(e)
 
     return results
@@ -1488,11 +1485,9 @@ def detect_local_tpm_protection(binary_path: str) -> dict[str, Any]:
         from ..protection.protection_detection import detect_tpm_protection as tpm_detect
 
         result = tpm_detect(binary_path)
-        if isinstance(result, dict):
-            return result
-        return {"result": result}
+        return result if isinstance(result, dict) else {"result": result}
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error detecting TPM protection: %s", e)
+        logger.exception("Error detecting TPM protection: %s", e)
         return {"error": str(e)}
 
 
@@ -1557,7 +1552,7 @@ def run_local_protection_scan(binary_path: str) -> dict[str, Any]:
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in protection scan: %s", e)
+        logger.exception("Error in protection scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -1577,7 +1572,7 @@ def _generate_analysis_summary(analyses: dict[str, Any]) -> dict[str, Any]:
     """Generate summary from analysis results."""
     summary: dict[str, Any] = {
         "total_analyses": len(analyses),
-        "successful": sum(bool("error" not in a) for a in analyses.values()),
+        "successful": sum("error" not in a for a in analyses.values()),
         "issues_found": [],
     }
 
@@ -1736,7 +1731,7 @@ def _verify_crack(binary_path: str) -> dict[str, Any]:
         )
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in crack verification: %s", e)
+        logger.exception("Error in crack verification: %s", e)
         verification_result["warnings"].append(f"Verification error: {e}")
 
     return verification_result
@@ -1793,11 +1788,11 @@ def _verify_static_analysis(binary_path: str) -> dict[str, Any]:
                 result["checks"].append("No obvious patch patterns detected")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["checks"].append(f"Error reading binary: {e}")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in additional_runners: %s", e)
+        logger.exception("Error in additional_runners: %s", e)
         result["checks"].append(f"Static analysis error: {e}")
 
     return result
@@ -1849,11 +1844,11 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
         except (subprocess.TimeoutExpired, OSError, ValueError, RuntimeError) as e:
             if isinstance(e, subprocess.TimeoutExpired):
-                logger.error("Subprocess timeout in additional_runners: %s", e)
+                logger.exception("Subprocess timeout in additional_runners: %s", e)
                 result["tests"].append("Binary execution timed out (may be waiting for input)")
                 result["confidence"] += 0.1
             else:
-                logger.error("Error in additional_runners: %s", e)
+                logger.exception("Error in additional_runners: %s", e)
                 result["tests"].append(f"Execution test error: {e}")
 
         # Test 2: Check for license-related error messages
@@ -1894,10 +1889,10 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
 
         except (subprocess.TimeoutExpired, OSError, ValueError, RuntimeError) as e:
             if isinstance(e, subprocess.TimeoutExpired):
-                logger.error("Subprocess timeout in additional_runners: %s", e)
+                logger.exception("Subprocess timeout in additional_runners: %s", e)
                 result["tests"].append("Binary execution hangs (possible input wait)")
             else:
-                logger.error("Error in additional_runners: %s", e)
+                logger.exception("Error in additional_runners: %s", e)
                 result["tests"].append(f"License test error: {e}")
 
         # Test 3: File system access test
@@ -1923,7 +1918,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
                 result["tests"].append("Filesystem access test completed")
 
         except (OSError, ValueError, RuntimeError, subprocess.TimeoutExpired) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["tests"].append(f"Filesystem test error: {e}")
 
         # Overall success determination
@@ -1931,7 +1926,7 @@ def _verify_execution_testing(binary_path: str) -> dict[str, Any]:
             result["success"] = True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in additional_runners: %s", e)
+        logger.exception("Error in additional_runners: %s", e)
         result["tests"].append(f"Execution testing error: {e}")
 
     return result
@@ -1965,7 +1960,9 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 b"NtQueryInformationProcess",
             ]
 
-            debug_protection_found = sum(bool(pattern in binary_data) for pattern in anti_debug_patterns)
+            debug_protection_found = sum(
+                pattern in binary_data for pattern in anti_debug_patterns
+            )
 
             if debug_protection_found == 0:
                 result["protections"].append("Anti-debugging protection appears bypassed")
@@ -1974,13 +1971,13 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 result["protections"].append(f"Anti-debugging functions still present ({debug_protection_found})")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["protections"].append(f"Debug protection check error: {e}")
 
         # Protection 2: Check for VM detection bypass
         try:
             vm_patterns = [b"VMware", b"VirtualBox", b"QEMU", b"Xen"]
-            vm_detection_found = sum(bool(pattern in binary_data) for pattern in vm_patterns)
+            vm_detection_found = sum(pattern in binary_data for pattern in vm_patterns)
 
             if vm_detection_found == 0:
                 result["protections"].append("VM detection appears bypassed")
@@ -1989,13 +1986,15 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 result["protections"].append(f"VM detection strings still present ({vm_detection_found})")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["protections"].append(f"VM protection check error: {e}")
 
         # Protection 3: Check for integrity checks bypass
         try:
             integrity_patterns = [b"CRC", b"checksum", b"hash", b"MD5", b"SHA"]
-            integrity_checks_found = sum(bool(pattern in binary_data) for pattern in integrity_patterns)
+            integrity_checks_found = sum(
+                pattern in binary_data for pattern in integrity_patterns
+            )
 
             # If integrity checks are found but binary still runs, they may be bypassed
             if integrity_checks_found > 0:
@@ -2006,7 +2005,7 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
                 result["confidence"] += 0.1
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["protections"].append(f"Integrity check error: {e}")
 
         # Overall bypass determination
@@ -2014,7 +2013,7 @@ def _verify_protection_bypass(binary_path: str) -> dict[str, Any]:
             result["bypassed"] = True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in additional_runners: %s", e)
+        logger.exception("Error in additional_runners: %s", e)
         result["protections"].append(f"Protection bypass verification error: {e}")
 
     return result
@@ -2048,7 +2047,9 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
                 b"\xb8\x01\x00\x00\x00\xc3",  # MOV EAX, 1; RET
             ]
 
-            bypass_patterns_found = sum(bool(pattern in binary_data) for pattern in bypass_patterns)
+            bypass_patterns_found = sum(
+                pattern in binary_data for pattern in bypass_patterns
+            )
 
             if bypass_patterns_found > 0:
                 result["license_checks"].append(f"Found {bypass_patterns_found} potential license bypass pattern(s)")
@@ -2057,7 +2058,7 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
                 result["license_checks"].append("No obvious license bypass patterns detected")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["license_checks"].append(f"Pattern search error: {e}")
 
         # Check 2: Look for NOPed license checks
@@ -2074,13 +2075,13 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
                 result["license_checks"].append("No significant NOP sequences found")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["license_checks"].append(f"NOP detection error: {e}")
 
         # Check 3: License string analysis
         try:
             license_strings = [b"license", b"trial", b"demo", b"activation", b"serial"]
-            license_refs_found = sum(bool(string in binary_data) for string in license_strings)
+            license_refs_found = sum(string in binary_data for string in license_strings)
 
             if license_refs_found > 0:
                 result["license_checks"].append(f"License-related strings still present ({license_refs_found})")
@@ -2091,7 +2092,7 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
                 result["confidence"] += 0.2
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["license_checks"].append(f"String analysis error: {e}")
 
         # Overall bypass determination
@@ -2099,7 +2100,7 @@ def _verify_license_bypass(binary_path: str) -> dict[str, Any]:
             result["bypassed"] = True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in additional_runners: %s", e)
+        logger.exception("Error in additional_runners: %s", e)
         result["license_checks"].append(f"License bypass verification error: {e}")
 
     return result
@@ -2151,7 +2152,7 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
                 result["integrity_checks"].append("Executable header format unrecognized or corrupted")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["integrity_checks"].append(f"Header check error: {e}")
 
         # Check 3: Basic executable validation
@@ -2168,7 +2169,7 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
                 result["confidence"] += 0.1
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["integrity_checks"].append(f"Platform check error: {e}")
 
         # Check 4: Calculate file hash for future reference
@@ -2181,7 +2182,7 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
             result["confidence"] += 0.1
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in additional_runners: %s", e)
+            logger.exception("Error in additional_runners: %s", e)
             result["integrity_checks"].append(f"Hash calculation error: {e}")
 
         # Overall validity determination
@@ -2192,7 +2193,7 @@ def _verify_patch_integrity(binary_path: str) -> dict[str, Any]:
             result["integrity_checks"].append("Patch integrity validation failed")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in additional_runners: %s", e)
+        logger.exception("Error in additional_runners: %s", e)
         result["integrity_checks"].append(f"Patch integrity verification error: {e}")
 
     return result
@@ -2213,7 +2214,7 @@ def _find_ghidra_installation() -> str | None:
         if ghidra_path := find_tool("ghidra"):
             return ghidra_path
     except ImportError as e:
-        logger.error("Import error in additional_runners: %s", e)
+        logger.exception("Import error in additional_runners: %s", e)
 
     # Fallback to legacy search
     common_paths = [
@@ -2349,7 +2350,7 @@ def _is_license_check_pattern(cfg: dict[str, Any]) -> bool:
         return is_license_pattern
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in license pattern analysis: %s", e)
+        logger.exception("Error in license pattern analysis: %s", e)
         # Fallback to simple heuristic
         complexity = cfg.get("complexity", 0)
         branches = cfg.get("branches", 0)
@@ -2500,14 +2501,20 @@ def run_vulnerability_scan(binary_path: str) -> dict[str, Any]:
             "vulnerabilities": vulnerabilities,
             "summary": {
                 "total": len(vulnerabilities),
-                "high": sum(bool(v.get("severity") == "high") for v in vulnerabilities),
-                "medium": sum(bool(v.get("severity") == "medium") for v in vulnerabilities),
-                "low": sum(bool(v.get("severity") == "low") for v in vulnerabilities),
+                "high": sum(
+                    v.get("severity") == "high" for v in vulnerabilities
+                ),
+                "medium": sum(
+                    v.get("severity") == "medium" for v in vulnerabilities
+                ),
+                "low": sum(
+                    v.get("severity") == "low" for v in vulnerabilities
+                ),
             },
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in vulnerability scan: %s", e)
+        logger.exception("Error in vulnerability scan: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2535,7 +2542,7 @@ def run_cfg_analysis(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in CFG analysis: %s", e)
+        logger.exception("Error in CFG analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2584,7 +2591,7 @@ def run_rop_gadget_finder(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error finding ROP gadgets: %s", e)
+        logger.exception("Error finding ROP gadgets: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2636,7 +2643,7 @@ def run_section_analysis(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in section analysis: %s", e)
+        logger.exception("Error in section analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2692,7 +2699,7 @@ def run_import_export_analysis(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in import/export analysis: %s", e)
+        logger.exception("Error in import/export analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2756,7 +2763,7 @@ def run_weak_crypto_detection(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in weak crypto detection: %s", e)
+        logger.exception("Error in weak crypto detection: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2878,7 +2885,7 @@ def run_generate_patch_suggestions(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error generating patch suggestions: %s", e)
+        logger.exception("Error generating patch suggestions: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2906,7 +2913,7 @@ def run_multi_format_analysis(binary_path: str) -> dict[str, Any]:
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in multi-format analysis: %s", e)
+        logger.exception("Error in multi-format analysis: %s", e)
         return {"status": "error", "message": str(e)}
 
 
@@ -2942,7 +2949,7 @@ def run_ml_similarity_search(binary_path: str, database: str | None = None) -> d
         }
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in ML similarity search: %s", e)
+        logger.exception("Error in ML similarity search: %s", e)
         return {"status": "error", "message": str(e)}
 
 

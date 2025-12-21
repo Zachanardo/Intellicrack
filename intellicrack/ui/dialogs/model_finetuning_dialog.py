@@ -111,7 +111,7 @@ try:
 
     ENHANCED_TRAINING_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
+    logger.exception("Import error in model_finetuning_dialog: %s", e)
     ENHANCED_TRAINING_AVAILABLE = False
 
 """
@@ -143,7 +143,7 @@ try:
 
     GPU_AUTOLOADER_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
+    logger.exception("Import error in model_finetuning_dialog: %s", e)
     GPU_AUTOLOADER_AVAILABLE = False
 
 try:
@@ -151,7 +151,7 @@ try:
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
+    logger.exception("Import error in model_finetuning_dialog: %s", e)
     TRANSFORMERS_AVAILABLE = False
 
 try:
@@ -159,7 +159,7 @@ try:
 
     PEFT_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
+    logger.exception("Import error in model_finetuning_dialog: %s", e)
     PEFT_AVAILABLE = False
 
 
@@ -169,7 +169,7 @@ try:
 
     NLTK_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
+    logger.exception("Import error in model_finetuning_dialog: %s", e)
     NLTK_AVAILABLE = False
     nltk = None
 
@@ -183,7 +183,7 @@ try:
     plt = _plt
     MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
 except ImportError as e:
-    logger.error("Import error in model_finetuning_dialog: %s", e)
+    logger.exception("Import error in model_finetuning_dialog: %s", e)
     MATPLOTLIB_AVAILABLE = False
     HAS_MATPLOTLIB = False
 
@@ -357,9 +357,8 @@ class TrainingThread(QThread):
                     device_map="auto" if TORCH_AVAILABLE else None,
                 )
 
-                if hasattr(self.tokenizer, "pad_token") and self.tokenizer.pad_token is None:
-                    if hasattr(self.tokenizer, "eos_token"):
-                        self.tokenizer.pad_token = self.tokenizer.eos_token
+                if hasattr(self.tokenizer, "pad_token") and self.tokenizer.pad_token is None and hasattr(self.tokenizer, "eos_token"):
+                    self.tokenizer.pad_token = self.tokenizer.eos_token
 
             elif TORCH_AVAILABLE and self.config.model_format == "PyTorch":
                 import torch as torch_local
@@ -385,7 +384,7 @@ class TrainingThread(QThread):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to load model: %s", e)
+            self.logger.exception("Failed to load model: %s", e)
             raise
 
     def _create_minimal_model(self) -> None:
@@ -443,7 +442,7 @@ class TrainingThread(QThread):
                 self.tokenizer = None
 
         except Exception as e:
-            self.logger.error("Error creating model: %s", e)
+            self.logger.exception("Error creating model: %s", e)
             self.model = None
             self.tokenizer = None
             raise
@@ -1192,9 +1191,8 @@ class TrainingThread(QThread):
                 ids_to_decode: list[int] = []
                 raw_ids: Any = token_ids
                 torch_mod = torch if TORCH_AVAILABLE else None
-                if torch_mod is not None and hasattr(torch_mod, "is_tensor"):  # type: ignore[unreachable]
-                    if torch_mod.is_tensor(raw_ids):  # type: ignore[unreachable]
-                        raw_ids = raw_ids.tolist()
+                if torch_mod is not None and hasattr(torch_mod, "is_tensor") and torch_mod.is_tensor(raw_ids):
+                    raw_ids = raw_ids.tolist()
 
                 if isinstance(raw_ids, list):
                     if raw_ids and isinstance(raw_ids[0], list):
@@ -1325,7 +1323,7 @@ class TrainingThread(QThread):
 
             if not os.path.exists(dataset_path):
                 error_msg = f"Dataset file not found: {dataset_path}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise FileNotFoundError(error_msg)
 
             data = []
@@ -1345,7 +1343,7 @@ class TrainingThread(QThread):
                             item = json.loads(line.strip())
                             data.append(item)
                         except json.JSONDecodeError as e:
-                            logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
+                            logger.exception("json.JSONDecodeError in model_finetuning_dialog: %s", e)
                             continue
 
             elif dataset_format == "csv":
@@ -1369,7 +1367,7 @@ class TrainingThread(QThread):
             return data
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to load dataset: %s", e)
+            self.logger.exception("Failed to load dataset: %s", e)
             raise
 
     def _setup_training(self, dataset: object) -> None:
@@ -1417,7 +1415,7 @@ class TrainingThread(QThread):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup training: %s", e)
+            self.logger.exception("Failed to setup training: %s", e)
             raise
 
     def _train_model(self) -> None:
@@ -1425,7 +1423,7 @@ class TrainingThread(QThread):
         try:
             if self.model is None:
                 error_msg = "Model not initialized before training"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise ValueError(error_msg)
 
             # Generate sophisticated license protection training data
@@ -1543,11 +1541,11 @@ class TrainingThread(QThread):
 
             else:
                 error_msg = "Model does not implement training functionality"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 raise ValueError(error_msg)
 
         except Exception as e:
-            self.logger.error("License protection training failed: %s", e)
+            self.logger.exception("License protection training failed: %s", e)
             if PYQT6_AVAILABLE and self.progress_signal:
                 self.progress_signal.emit(
                     {
@@ -1734,12 +1732,12 @@ class TrainingThread(QThread):
 
         """
         if self.model is None:
-            self.logger.error("Model is not initialized for PyTorch training")
+            self.logger.exception("Model is not initialized for PyTorch training")
             return
 
         model_obj = self.model
         if not (hasattr(model_obj, "parameters") and hasattr(model_obj, "train") and callable(model_obj)):
-            self.logger.error("Model does not have required PyTorch interface")
+            self.logger.exception("Model does not have required PyTorch interface")
             return
 
         try:
@@ -1905,7 +1903,7 @@ class TrainingThread(QThread):
             self.logger.warning("PyTorch not available, falling back to custom neural network")
             raise
         except Exception as e:
-            self.logger.error("PyTorch training failed: %s", e)
+            self.logger.exception("PyTorch training failed: %s", e)
             raise
 
     def stop(self) -> None:
@@ -2220,7 +2218,7 @@ class LicenseAnalysisNeuralNetwork:
             if validation_data:
                 self._validate_epoch(validation_data, training_metrics, epoch, epochs, epoch_loss, epoch_accuracy)
             else:
-                self.logger.info(f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Accuracy={epoch_accuracy:.4f}")
+                self.logger.info("Epoch %d/%d: Loss=%.4f, Accuracy=%.4f", epoch + 1, epochs, epoch_loss, epoch_accuracy)
 
         self.training = False
         self.loss_history = training_metrics["loss_history"]
@@ -2330,7 +2328,8 @@ class LicenseAnalysisNeuralNetwork:
         training_metrics["validation_accuracy"].append(val_accuracy)
 
         self.logger.info(
-            f"Epoch {epoch + 1}/{epochs}: Loss={epoch_loss:.4f}, Acc={epoch_accuracy:.4f}, Val_Loss={val_loss:.4f}, Val_Acc={val_accuracy:.4f}",
+            "Epoch %d/%d: Loss=%.4f, Acc=%.4f, Val_Loss=%.4f, Val_Acc=%.4f",
+            epoch + 1, epochs, epoch_loss, epoch_accuracy, val_loss, val_accuracy,
         )
 
     def _update_weights(self, gradients: dict[str, Any], learning_rate: float) -> None:
@@ -2513,7 +2512,7 @@ class ModelFinetuningDialog(QDialog):
         self.visualization_label: QLabel
         if not PYQT6_AVAILABLE:
             error_msg = "PyQt6 is required for ModelFinetuningDialog"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ImportError(error_msg)
 
         super().__init__(parent)
@@ -2567,14 +2566,14 @@ class ModelFinetuningDialog(QDialog):
             if GPU_AUTOLOADER_AVAILABLE:
                 self.training_device = get_device()
                 self.gpu_info = get_gpu_info()
-                self.logger.info(f"GPU system initialized. Device: {self.training_device}")
-                self.logger.info(f"GPU info: {self.gpu_info}")
+                self.logger.info("GPU system initialized. Device: %s", self.training_device)
+                self.logger.info("GPU info: %s", self.gpu_info)
             else:
                 self.training_device = "cpu"
                 self.gpu_info = {"available": False, "devices": []}
                 self.logger.info("GPU autoloader not available, using CPU")
         except Exception as e:
-            self.logger.warning(f"Failed to initialize GPU system: {e}")
+            self.logger.warning("Failed to initialize GPU system: %s", e)
             self.training_device = "cpu"
             self.gpu_info = {"available": False, "devices": []}
 
@@ -2596,7 +2595,7 @@ class ModelFinetuningDialog(QDialog):
                     return result
             return tensor_or_model
         except Exception as e:
-            self.logger.warning(f"Failed to move to device: {e}")
+            self.logger.warning("Failed to move to device: %s", e)
             return tensor_or_model
 
     def _get_device_info_text(self) -> str:
@@ -2616,7 +2615,7 @@ class ModelFinetuningDialog(QDialog):
                 return device_info
             return "Training Device: CPU (GPU autoloader not available)\n"
         except Exception as e:
-            self.logger.warning(f"Failed to get device info: {e}")
+            self.logger.warning("Failed to get device info: %s", e)
             return "Training Device: CPU (Error getting device info)\n"
 
     def _setup_ui(self) -> None:
@@ -3116,7 +3115,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Training started")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to start training: %s", e)
+            self.logger.exception("Failed to start training: %s", e)
             QMessageBox.critical(self, "Training Error", f"Failed to start training: {e!s}")
             self._on_training_finished()
 
@@ -3133,7 +3132,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Training stopped")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error stopping training: %s", e)
+            self.logger.exception("Error stopping training: %s", e)
 
     def _update_training_progress(self, progress: dict[str, Any]) -> None:
         """Update training progress display."""
@@ -3178,7 +3177,7 @@ class ModelFinetuningDialog(QDialog):
                 scroll_bar.setValue(scroll_bar.maximum())
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error updating training progress: %s", e)
+            self.logger.exception("Error updating training progress: %s", e)
 
     def _on_training_finished(self) -> None:
         """Handle training completion."""
@@ -3202,7 +3201,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Training finished")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error handling training completion: %s", e)
+            self.logger.exception("Error handling training completion: %s", e)
 
     def _save_model(self) -> None:
         """Save the fine-tuned model."""
@@ -3293,7 +3292,7 @@ class ModelFinetuningDialog(QDialog):
             self.logger.info("Model saved to: %s", save_path)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to save model: %s", e)
+            self.logger.exception("Failed to save model: %s", e)
             QMessageBox.critical(self, "Save Error", f"Failed to save model: {e!s}")
 
     def _load_dataset_preview(self) -> None:
@@ -3330,7 +3329,7 @@ class ModelFinetuningDialog(QDialog):
                             sample = json.loads(line.strip())
                             samples.append(sample)
                         except json.JSONDecodeError as e:
-                            logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
+                            logger.exception("json.JSONDecodeError in model_finetuning_dialog: %s", e)
                             continue
 
             elif dataset_format == "csv":
@@ -3346,10 +3345,10 @@ class ModelFinetuningDialog(QDialog):
                 self._add_dataset_row(sample_)
 
             self.dataset_preview.resizeRowsToContents()
-            self.logger.info(f"Loaded {len(samples)} dataset samples for preview")
+            self.logger.info("Loaded %d dataset samples for preview", len(samples))
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to load dataset preview: %s", e)
+            self.logger.exception("Failed to load dataset preview: %s", e)
             QMessageBox.warning(self, "Preview Error", f"Error loading dataset preview: {e!s}")
 
     def _add_dataset_row(self, sample: dict[str, Any]) -> None:
@@ -3433,7 +3432,7 @@ class ModelFinetuningDialog(QDialog):
             dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to create dataset: %s", e)
+            self.logger.exception("Failed to create dataset: %s", e)
             QMessageBox.critical(self, "Dataset Creation Error", str(e))
 
     def _get_sample_data(self, template: str) -> str:
@@ -3499,7 +3498,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to generate dataset: %s", e)
+            self.logger.exception("Failed to generate dataset: %s", e)
             QMessageBox.critical(dialog, "Generation Error", str(e))
 
     def _validate_dataset(self) -> None:
@@ -3530,7 +3529,7 @@ class ModelFinetuningDialog(QDialog):
                         else:
                             issues.append("Root element is not an array")
                     except json.JSONDecodeError as e:
-                        logger.error("json.JSONDecodeError in model_finetuning_dialog: %s", e)
+                        logger.exception("json.JSONDecodeError in model_finetuning_dialog: %s", e)
                         issues.append(f"JSON parsing error: {e}")
 
             # Show validation results
@@ -3547,7 +3546,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Dataset validation failed: %s", e)
+            self.logger.exception("Dataset validation failed: %s", e)
             QMessageBox.critical(self, "Validation Error", str(e))
 
     def _export_dataset(self) -> None:
@@ -3595,7 +3594,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Dataset export failed: %s", e)
+            self.logger.exception("Dataset export failed: %s", e)
             QMessageBox.critical(self, "Export Error", str(e))
 
     def _preview_augmentation(self) -> None:
@@ -3665,7 +3664,7 @@ class ModelFinetuningDialog(QDialog):
             preview_dialog.exec()
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Augmentation preview failed: %s", e)
+            self.logger.exception("Augmentation preview failed: %s", e)
             QMessageBox.critical(self, "Preview Error", str(e))
 
     def _apply_augmentation_technique(self, text: str, technique: str) -> str:
@@ -3679,7 +3678,7 @@ class ModelFinetuningDialog(QDialog):
                 try:
                     wordnet.synsets("test")
                 except LookupError as e:
-                    self.logger.error("LookupError in model_finetuning_dialog: %s", e)
+                    self.logger.exception("LookupError in model_finetuning_dialog: %s", e)
                     if NLTK_AVAILABLE:
                         nltk.download("wordnet", quiet=True)
                         nltk.download("punkt", quiet=True)
@@ -3696,7 +3695,7 @@ class ModelFinetuningDialog(QDialog):
                     result_words.append(word)
                 return " ".join(result_words)
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in model_finetuning_dialog: %s", e)
+                logger.exception("Error in model_finetuning_dialog: %s", e)
 
         elif technique == "random_insertion":
             # Insert random words
@@ -3799,7 +3798,7 @@ class ModelFinetuningDialog(QDialog):
             self.dataset_path_edit.setText(output_path)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Augmentation failed: %s", e)
+            self.logger.exception("Augmentation failed: %s", e)
             QMessageBox.critical(self, "Augmentation Error", str(e))
 
     def _update_visualization(self, history: list[dict[str, Any]]) -> None:
@@ -3842,10 +3841,10 @@ class ModelFinetuningDialog(QDialog):
             try:
                 os.remove(temp_path)
             except Exception as e:
-                logger.error("Exception in model_finetuning_dialog: %s", e)
+                logger.exception("Exception in model_finetuning_dialog: %s", e)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to update visualization: %s", e)
+            self.logger.exception("Failed to update visualization: %s", e)
 
     def _export_metrics(self) -> None:
         """Export training metrics to file."""
@@ -3887,7 +3886,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to export metrics: %s", e)
+            self.logger.exception("Failed to export metrics: %s", e)
             QMessageBox.critical(self, "Export Error", str(e))
 
     def _save_plot(self) -> None:
@@ -3946,7 +3945,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to save plot: %s", e)
+            self.logger.exception("Failed to save plot: %s", e)
             QMessageBox.critical(self, "Save Error", str(e))
 
     def _open_enhanced_training(self) -> None:
@@ -3982,7 +3981,7 @@ class ModelFinetuningDialog(QDialog):
                 )
 
         except (ImportError, AttributeError, OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error opening enhanced training interface: %s", e)
+            self.logger.exception("Error opening enhanced training interface: %s", e)
             QMessageBox.critical(self, "Enhanced Training Error", f"Error opening enhanced training interface:\n{e}")
 
     def _get_current_config(self) -> TrainingConfig:
@@ -4089,7 +4088,7 @@ class ModelFinetuningDialog(QDialog):
             event.accept()
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error closing dialog: %s", e)
+            self.logger.exception("Error closing dialog: %s", e)
             event.accept()
 
 
@@ -4111,7 +4110,7 @@ def create_model_finetuning_dialog(parent: QWidget | None = None) -> ModelFinetu
     try:
         return ModelFinetuningDialog(parent)
     except (OSError, ValueError, RuntimeError) as e:
-        logging.getLogger(__name__).error(f"Failed to create dialog: {e}")
+        logging.getLogger(__name__).exception("Failed to create dialog: %s", e)
         return None
 
 

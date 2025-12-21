@@ -110,7 +110,7 @@ class DynamicSignatureExtractor:
 
     def __init__(self, db_path: str = "") -> None:
         """Initialize the dynamic signature extractor."""
-        self.db_path = db_path if db_path else str(PROTECTION_SIGNATURES_DB)
+        self.db_path = db_path or str(PROTECTION_SIGNATURES_DB)
         self.signatures: dict[str, list[DynamicSignature]] = defaultdict(list)
         self.pattern_tracker = PatternEvolutionTracker()
         self.binary_detector = BinaryPatternDetector()
@@ -207,7 +207,7 @@ class DynamicSignatureExtractor:
                 self.pattern_tracker.track_pattern(sig.pattern_bytes.hex(), sig.category.value, {"confidence": sig.confidence})
 
         except Exception as e:
-            logger.error(f"Failed to extract signatures: {e}")
+            logger.exception("Failed to extract signatures: %s", e)
 
         return signatures
 
@@ -288,7 +288,7 @@ class DynamicSignatureExtractor:
             pe.close()
 
         except Exception as e:
-            logger.debug(f"PE section extraction failed: {e}")
+            logger.debug("PE section extraction failed: %s", e)
 
         return signatures
 
@@ -337,7 +337,7 @@ class DynamicSignatureExtractor:
             pe.close()
 
         except Exception as e:
-            logger.debug(f"Import extraction failed: {e}")
+            logger.debug("Import extraction failed: %s", e)
 
         return signatures
 
@@ -649,7 +649,7 @@ class DynamicSignatureExtractor:
                 try:
                     strings.append(match.group().decode("ascii"))
                 except Exception as e:
-                    logger.debug(f"String decoding failed: {e}")
+                    logger.debug("String decoding failed: %s", e)
 
         elif encoding == "utf-16le":
             # Simple Unicode string extraction
@@ -943,7 +943,7 @@ class DynamicSignatureExtractor:
                         signatures.append(sig)
 
                 except Exception as e:
-                    logger.debug(f"Disassembly validation failed for {pattern_name}: {e}")
+                    logger.debug("Disassembly validation failed for %s: %s", pattern_name, e)
 
                 offset = found_offset + 1
 
@@ -1069,12 +1069,16 @@ class DynamicSignatureExtractor:
                 context_end = min(len(data), found + 16)
                 context = data[context_start:context_end]
 
-                has_string_ref = False
-                for license_str in [b"license", b"serial", b"key", b"valid", b"trial"]:
-                    if license_str in data[max(0, found - 256) : found + 256].lower():
-                        has_string_ref = True
-                        break
-
+                has_string_ref = any(
+                    license_str in data[max(0, found - 256) : found + 256].lower()
+                    for license_str in [
+                        b"license",
+                        b"serial",
+                        b"key",
+                        b"valid",
+                        b"trial",
+                    ]
+                )
                 if has_string_ref:
                     comparison_sequence_count += 1
                     confidence = min(0.9, base_conf + 0.3)
@@ -1196,7 +1200,7 @@ class DynamicSignatureExtractor:
                 ))
 
         except Exception as e:
-            logger.debug(f"Polymorphic analysis error: {e}")
+            logger.debug("Polymorphic analysis error: %s", e)
 
             xor_loop = b"\x31"
             offset = 0
@@ -1249,7 +1253,7 @@ class DynamicSignatureExtractor:
                     patterns.append((data[:48], 0.75, "Metamorphic: Complex control flow"))
 
         except Exception as e:
-            logger.debug(f"Metamorphic analysis error: {e}")
+            logger.debug("Metamorphic analysis error: %s", e)
 
         return patterns
 
@@ -1258,7 +1262,7 @@ class DynamicSignatureExtractor:
         if len(data) < 64:
             return 32
 
-        rex_prefix_count = sum(bool(0x40 <= b <= 0x4F) for b in data[:64])
+        rex_prefix_count = sum(0x40 <= b <= 0x4F for b in data[:64])
         if rex_prefix_count > 2:
             return 64
 
@@ -1558,7 +1562,7 @@ class EnhancedProtectionScanner:
                 self.cache[cache_key] = {"timestamp": time.time(), "results": results}
 
         except Exception as e:
-            logger.error(f"Protection scan failed: {e}")
+            logger.exception("Protection scan failed: %s", e)
             results["error"] = str(e)
 
         return results

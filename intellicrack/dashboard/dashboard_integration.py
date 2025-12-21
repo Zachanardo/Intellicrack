@@ -412,7 +412,7 @@ class DashboardIntegration:
         with open(filepath, "w") as f:
             json.dump(report, f, indent=2, default=str)
 
-        self.logger.info(f"Exported analysis report to {filepath}")
+        self.logger.info("Exported analysis report to %s", filepath)
 
     def shutdown(self) -> None:
         """Shutdown dashboard integration."""

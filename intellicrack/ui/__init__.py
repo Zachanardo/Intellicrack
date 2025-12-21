@@ -19,6 +19,35 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from intellicrack.ui import dialogs
+    from intellicrack.ui import widgets
+    from intellicrack.ui.comprehensive_integration import (
+        ComprehensiveR2Integration,
+        cleanup_integration,
+        get_comprehensive_integration,
+        get_integration_status,
+        integrate_radare2_comprehensive,
+    )
+    from intellicrack.ui.dashboard_manager import DashboardManager
+    from intellicrack.ui.enhanced_ui_integration import (
+        EnhancedAnalysisDashboard,
+        EnhancedMainWindow,
+        create_enhanced_application,
+    )
+    from intellicrack.ui.main_window import IntellicrackMainWindow
+    from intellicrack.ui.radare2_integration_ui import (
+        R2ConfigurationDialog,
+        R2IntegrationWidget,
+        R2ResultsViewer,
+        create_radare2_tab,
+    )
+    from intellicrack.ui.radare2_ui_manager import (
+        R2UIManager,
+        create_r2_ui_manager,
+    )
 
 
 logger = logging.getLogger(__name__)

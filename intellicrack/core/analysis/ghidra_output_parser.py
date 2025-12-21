@@ -139,7 +139,7 @@ class GhidraOutputParser:
             }
 
         except Exception as e:
-            logger.error(f"Failed to parse XML output: {e}")
+            logger.exception("Failed to parse XML output: %s", e)
             raise
 
     def parse_json_output(self, json_path: Path) -> dict[str, Any]:
@@ -204,7 +204,7 @@ class GhidraOutputParser:
             }
 
         except Exception as e:
-            logger.error(f"Failed to parse JSON output: {e}")
+            logger.exception("Failed to parse JSON output: %s", e)
             raise
 
     def parse_decompilation_output(self, decomp_path: Path) -> list[DecompiledFunction]:
@@ -246,7 +246,7 @@ class GhidraOutputParser:
             return decompiled_functions
 
         except Exception as e:
-            logger.error(f"Failed to parse decompilation output: {e}")
+            logger.exception("Failed to parse decompilation output: %s", e)
             raise
 
     def parse_call_graph(self, graph_path: Path) -> dict[str, list[str]]:
@@ -267,7 +267,7 @@ class GhidraOutputParser:
             return call_graph
 
         except Exception as e:
-            logger.error(f"Failed to parse call graph: {e}")
+            logger.exception("Failed to parse call graph: %s", e)
             raise
 
     def parse_data_types(self, types_path: Path) -> dict[str, DataStructure]:
@@ -310,7 +310,7 @@ class GhidraOutputParser:
             return structures
 
         except Exception as e:
-            logger.error(f"Failed to parse data types: {e}")
+            logger.exception("Failed to parse data types: %s", e)
             raise
 
     def _parse_program_info(self, root: ET.Element) -> dict[str, Any]:

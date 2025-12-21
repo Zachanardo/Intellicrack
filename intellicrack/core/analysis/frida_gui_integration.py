@@ -9,9 +9,11 @@ Licensed under GNU General Public License v3.0
 
 import json
 import time
+from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
 from threading import Thread
+from typing import Any
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QColor, QFont, QTextCharFormat, QTextCursor
@@ -28,6 +30,9 @@ from PyQt6.QtWidgets import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
+    QMainWindow,
+    QMenuBar,
     QMessageBox,
     QPlainTextEdit,
     QProgressBar,
@@ -61,8 +66,8 @@ class FridaScriptParameterWidget(QDialog):
         """
         super().__init__(parent)
         self.script_config = script_config
-        self.parameter_widgets = {}
-        self.custom_values = {}
+        self.parameter_widgets: dict[str, QWidget] = {}
+        self.custom_values: dict[str, object] = {}
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -220,15 +225,16 @@ class FridaScriptParameterWidget(QDialog):
                 if not widget.text():
                     widget.setText("127.0.0.1")
             elif "port" in name.lower():
-                widget = QSpinBox()
-                widget.setRange(1, 65535)
-                widget.setValue(int(default_value) if default_value else 80)
+                port_widget = QSpinBox()
+                port_widget.setRange(1, 65535)
+                port_widget.setValue(int(default_value) if isinstance(default_value, (int, str)) and default_value else 80)
+                return port_widget
 
         return widget
 
     def get_parameters(self) -> dict[str, object]:
         """Get configured parameter values."""
-        parameters = {}
+        parameters: dict[str, object] = {}
 
         for param_name, widget in self.parameter_widgets.items():
             if isinstance(widget, QCheckBox):
@@ -241,13 +247,12 @@ class FridaScriptParameterWidget(QDialog):
                 try:
                     parameters[param_name] = json.loads(widget.toPlainText())
                 except json.JSONDecodeError:
-                    # Fallback to list of lines
                     parameters[param_name] = widget.toPlainText().split("\n")
 
             elif isinstance(widget, QLineEdit):
                 text = widget.text()
                 parameters[param_name] = None if text in {"", "None"} else text
-        # Add advanced options
+
         parameters["timeout"] = self.timeout_spin.value()
         parameters["output_format"] = self.output_combo.currentText().lower()
         parameters["log_level"] = self.log_level_combo.currentText().lower()
@@ -312,7 +317,7 @@ class FridaScriptOutputWidget(QWidget):
     def __init__(self) -> None:
         """Initialize the FridaScriptOutputWidget for real-time script output."""
         super().__init__()
-        self.script_outputs = {}
+        self.script_outputs: dict[str, ScriptOutputTab] = {}
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -364,8 +369,8 @@ class ScriptOutputTab(QWidget):
         super().__init__()
         self.script_name = script_name
         self.session_id = session_id
-        self.messages = []
-        self.data = {}
+        self.messages: list[object] = []
+        self.data: dict[str, object] = {}
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -440,8 +445,9 @@ class ScriptOutputTab(QWidget):
 
         cursor.insertText(formatted + "\n", text_format)
 
-        # Auto-scroll to bottom
-        self.output_text.verticalScrollBar().setValue(self.output_text.verticalScrollBar().maximum())
+        scrollbar = self.output_text.verticalScrollBar()
+        if scrollbar is not None:
+            scrollbar.setValue(scrollbar.maximum())
 
         # Update data tree if message contains data
         if isinstance(message, dict) and "data" in message:
@@ -481,9 +487,10 @@ class ScriptOutputTab(QWidget):
         """Update data tree with collected data."""
         self.data.update(data)
 
-        # Clear and rebuild tree
         self.data_tree.clear()
-        self._add_dict_to_tree(self.data, self.data_tree.invisibleRootItem())
+        root_item = self.data_tree.invisibleRootItem()
+        if root_item is not None:
+            self._add_dict_to_tree(self.data, root_item)
 
     def _add_dict_to_tree(self, data: object, parent: QTreeWidgetItem, key: str = "") -> None:
         """Recursively add dictionary to tree."""
@@ -546,9 +553,9 @@ class FridaScriptDebuggerWidget(QWidget):
     def __init__(self) -> None:
         """Initialize the FridaScriptDebuggerWidget for debugging Frida scripts."""
         super().__init__()
-        self.breakpoints = {}
-        self.watch_expressions = []
-        self.call_stack = []
+        self.breakpoints: dict[int, dict[str, object]] = {}
+        self.watch_expressions: list[str] = []
+        self.call_stack: list[str] = []
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -865,16 +872,15 @@ if (typeof ObjC !== 'undefined') {
             self.module_edit.clear()
             self.function_edit.clear()
 
-    def load_template(self, item: QListWidget | None) -> None:
+    def load_template(self, item: object) -> None:
         """Load selected template."""
-        if not item:
+        if not isinstance(item, QListWidgetItem):
             return
 
         template_name = item.text()
         template_code = self.get_template_code(template_name)
         self.code_editor.setPlainText(template_code)
 
-        # Switch to code tab
         self.tab_widget.setCurrentIndex(2)
 
     def get_template_code(self, template_name: str) -> str:
@@ -1129,77 +1135,95 @@ send({ type: 'ready', payload: 'Memory scanner initialized' });
             self.accept()
 
 
-def integrate_frida_gui(main_app: object) -> bool:
-    """Integrate Frida GUI components."""
-    # Create Frida menu if not exists
+def integrate_frida_gui(main_app: Any) -> bool:
+    """Integrate Frida GUI components.
+
+    Args:
+        main_app: Main application window, expected to have menuBar() method.
+
+    Returns:
+        True if integration successful.
+    """
     if not hasattr(main_app, "frida_menu"):
-        main_app.frida_menu = main_app.menuBar().addMenu("Frida")
+        menu_bar = getattr(main_app, "menuBar", lambda: None)()
+        if menu_bar is not None:
+            main_app.frida_menu = menu_bar.addMenu("Frida")
+        else:
+            return False
 
-    # Add actions
-    configure_action = QAction("Configure Script", main_app)
+    frida_menu = getattr(main_app, "frida_menu", None)
+    if frida_menu is None:
+        return False
+
+    configure_action = QAction("Configure Script", None)
     configure_action.triggered.connect(lambda: show_parameter_dialog(main_app))
-    main_app.frida_menu.addAction(configure_action)
+    frida_menu.addAction(configure_action)
 
-    output_action = QAction("Show Output Viewer", main_app)
+    output_action = QAction("Show Output Viewer", None)
     output_action.triggered.connect(lambda: show_output_viewer(main_app))
-    main_app.frida_menu.addAction(output_action)
+    frida_menu.addAction(output_action)
 
-    debug_action = QAction("Script Debugger", main_app)
+    debug_action = QAction("Script Debugger", None)
     debug_action.triggered.connect(lambda: show_debugger(main_app))
-    main_app.frida_menu.addAction(debug_action)
+    frida_menu.addAction(debug_action)
 
-    create_action = QAction("Create Script", main_app)
+    create_action = QAction("Create Script", None)
     create_action.triggered.connect(lambda: show_creator(main_app))
-    main_app.frida_menu.addAction(create_action)
+    frida_menu.addAction(create_action)
 
-    # Create output viewer widget
     if not hasattr(main_app, "frida_output_widget"):
         main_app.frida_output_widget = FridaScriptOutputWidget()
 
     return True
 
 
-def show_parameter_dialog(main_app: object) -> None:
-    """Show parameter configuration dialog."""
-    # Get script manager
+def show_parameter_dialog(main_app: Any) -> None:
+    """Show parameter configuration dialog.
+
+    Args:
+        main_app: Main application window instance.
+    """
     if not hasattr(main_app, "frida_script_manager"):
         scripts_dir = Path(__file__).parent.parent.parent / "scripts" / "frida"
         main_app.frida_script_manager = FridaScriptManager(scripts_dir)
 
-    manager = main_app.frida_script_manager
+    manager: FridaScriptManager = main_app.frida_script_manager
 
-    # Get list of available scripts
     script_names = list(manager.scripts.keys())
     if not script_names:
-        QMessageBox.warning(main_app, "No Scripts", "No Frida scripts found")
+        QMessageBox.warning(None, "No Scripts", "No Frida scripts found")
         return
 
-    # Select script
-    script_name, ok = QInputDialog.getItem(main_app, "Select Script", "Choose a script to configure:", script_names, 0, False)
+    script_name, ok = QInputDialog.getItem(
+        None,
+        "Select Script",
+        "Choose a script to configure:",
+        script_names,
+        0,
+        False,
+    )
 
     if ok and script_name:
         config = manager.get_script_config(script_name)
         if config:
-            dialog = FridaScriptParameterWidget(config, main_app)
+            dialog = FridaScriptParameterWidget(config, None)
             if dialog.exec():
                 params = dialog.get_parameters()
 
-                # Get target
                 target, ok = QInputDialog.getText(
-                    main_app,
+                    None,
                     "Target Process",
                     "Enter target process (path for spawn, PID/name for attach):",
                 )
 
                 if ok and target and hasattr(main_app, "frida_output_widget"):
                     session_id = f"{script_name}_{target}_{time.time()}"
-                    main_app.frida_output_widget.add_script_output(script_name, session_id)
+                    output_widget: FridaScriptOutputWidget = main_app.frida_output_widget
+                    output_widget.add_script_output(script_name, session_id)
 
-                    # Execute script in background
                     def output_callback(message: object) -> None:
-                        main_app.frida_output_widget.update_output(session_id, message)
+                        output_widget.update_output(session_id, message)
 
-                    # Run in thread
                     thread = Thread(
                         target=manager.execute_script,
                         args=(script_name, target, "spawn", params, output_callback),
@@ -1208,19 +1232,32 @@ def show_parameter_dialog(main_app: object) -> None:
                     thread.start()
 
 
-def show_output_viewer(main_app: object) -> None:
-    """Show output viewer window."""
+def show_output_viewer(main_app: Any) -> None:
+    """Show output viewer window.
+
+    Args:
+        main_app: Main application window instance.
+    """
     if hasattr(main_app, "frida_output_widget"):
-        main_app.frida_output_widget.show()
+        output_widget: FridaScriptOutputWidget = main_app.frida_output_widget
+        output_widget.show()
 
 
-def show_debugger(main_app: object) -> None:
-    """Show debugger window."""
+def show_debugger(main_app: Any) -> None:
+    """Show debugger window.
+
+    Args:
+        main_app: Main application window instance (unused).
+    """
     debugger = FridaScriptDebuggerWidget()
     debugger.show()
 
 
-def show_creator(main_app: object) -> None:
-    """Show script creator dialog."""
-    creator = FridaScriptCreatorWidget(main_app)
+def show_creator(main_app: Any) -> None:
+    """Show script creator dialog.
+
+    Args:
+        main_app: Main application window instance (unused).
+    """
+    creator = FridaScriptCreatorWidget(None)
     creator.exec()

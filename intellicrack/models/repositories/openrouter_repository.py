@@ -125,7 +125,7 @@ class OpenRouterRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from OpenRouter: {error_message}")
+            logger.error("Failed to get models from OpenRouter: %s", error_message)
             return []
 
         models = []
@@ -140,7 +140,7 @@ class OpenRouterRepository(APIRepositoryBase):
             return models
 
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing OpenRouter models response: {e}")
+            logger.exception("Error parsing OpenRouter models response: %s", e)
             return []
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
@@ -162,7 +162,7 @@ class OpenRouterRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from OpenRouter: {error_message}")
+            logger.error("Failed to get models from OpenRouter: %s", error_message)
             return None
 
         try:
@@ -171,7 +171,7 @@ class OpenRouterRepository(APIRepositoryBase):
                 None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing OpenRouter model details for {model_id}: {e}")
+            logger.exception("Error parsing OpenRouter model details for %s: %s", model_id, e)
             return None
 
     def _create_model_info(self, model_id: str, model_data: dict[str, Any]) -> ModelInfo | None:
@@ -218,7 +218,7 @@ class OpenRouterRepository(APIRepositoryBase):
                 local_path=None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error creating ModelInfo for {model_id}: {e}")
+            logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
     def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
@@ -228,5 +228,5 @@ class OpenRouterRepository(APIRepositoryBase):
             Always returns (False, "OpenRouter doesn't support model downloads")
 
         """
-        self.logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        self.logger.warning("Download requested for %s to %s, but not supported", model_id, destination_path)
         return False, "OpenRouter doesn't support model downloads"

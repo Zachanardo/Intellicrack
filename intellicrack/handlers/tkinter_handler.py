@@ -21,6 +21,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -100,21 +101,43 @@ def _setup_tkinter_environment() -> None:
 _setup_tkinter_environment()
 
 # Tkinter availability detection and import handling
+HAS_TKINTER: bool
+TKINTER_VERSION: float | None
+tk: Any
+tkinter: Any
+ttk: Any
+messagebox: Any
+filedialog: Any
+colorchooser: Any
+Font: Any
+ScrolledText: Any
+scrolledtext: Any
+
 try:
-    import tkinter as tk
-    from tkinter import colorchooser, filedialog, messagebox, ttk
-    from tkinter.font import Font
-    from tkinter.scrolledtext import ScrolledText
+    import tkinter as tk_real
+    from tkinter import colorchooser as colorchooser_real
+    from tkinter import filedialog as filedialog_real
+    from tkinter import messagebox as messagebox_real
+    from tkinter import ttk as ttk_real
+    from tkinter.font import Font as Font_real
+    from tkinter.scrolledtext import ScrolledText as ScrolledText_real
 
     HAS_TKINTER = True
-    TKINTER_VERSION = tk.TkVersion
+    TKINTER_VERSION = tk_real.TkVersion
 
     # Create tkinter alias for export
-    tkinter = tk
+    tk = tk_real
+    tkinter = tk_real
+    ttk = ttk_real
+    messagebox = messagebox_real
+    filedialog = filedialog_real
+    colorchooser = colorchooser_real
+    Font = Font_real
+    ScrolledText = ScrolledText_real
 
     # Create scrolledtext module alias
     class ScrolledTextModule:
-        ScrolledText = ScrolledText
+        ScrolledText = ScrolledText_real
 
     # Alias for compatibility
     scrolledtext = ScrolledTextModule
@@ -132,7 +155,7 @@ except ImportError as e:
         """Base widget class for GUI fallbacks."""
 
         _widget_counter = 0
-        _widget_registry = {}
+        _widget_registry: dict[str, "FallbackWidget"] = {}
 
         def __init__(self, master: "FallbackWidget | None" = None, **kwargs: object) -> None:
             """Initialize widget.
@@ -148,8 +171,8 @@ except ImportError as e:
 
             self.master = master
             self.parent = master
-            self.children = {}
-            self.winfo_children_list = []
+            self.children: dict[str, object] = {}
+            self.winfo_children_list: list["FallbackWidget"] = []
 
             # Widget properties
             self.width = kwargs.get("width", 100)
@@ -166,13 +189,13 @@ except ImportError as e:
             self.textvariable = kwargs.get("textvariable")
 
             # Event bindings
-            self.bindings = {}
+            self.bindings: dict[str, list[object]] = {}
             self.command = kwargs.get("command")
 
             # Grid/pack properties
-            self.grid_info_dict = {}
-            self.pack_info_dict = {}
-            self.place_info_dict = {}
+            self.grid_info_dict: dict[str, object] = {}
+            self.pack_info_dict: dict[str, object] = {}
+            self.place_info_dict: dict[str, object] = {}
 
             # Widget state
             self.destroyed = False
@@ -197,7 +220,10 @@ except ImportError as e:
                 Widget width in pixels.
 
             """
-            return self.width
+            width_val = self.width
+            if isinstance(width_val, int):
+                return width_val
+            return int(width_val) if isinstance(width_val, (str, float)) else 100
 
         def winfo_height(self) -> int:
             """Get widget height.
@@ -206,7 +232,10 @@ except ImportError as e:
                 Widget height in pixels.
 
             """
-            return self.height
+            height_val = self.height
+            if isinstance(height_val, int):
+                return height_val
+            return int(height_val) if isinstance(height_val, (str, float)) else 30
 
         def winfo_x(self) -> int:
             """Get widget x position.
@@ -215,7 +244,10 @@ except ImportError as e:
                 X coordinate in pixels.
 
             """
-            return self.x
+            x_val = self.x
+            if isinstance(x_val, int):
+                return x_val
+            return int(x_val) if isinstance(x_val, (str, float)) else 0
 
         def winfo_y(self) -> int:
             """Get widget y position.
@@ -224,7 +256,10 @@ except ImportError as e:
                 Y coordinate in pixels.
 
             """
-            return self.y
+            y_val = self.y
+            if isinstance(y_val, int):
+                return y_val
+            return int(y_val) if isinstance(y_val, (str, float)) else 0
 
         def winfo_reqwidth(self) -> int:
             """Get requested width.
@@ -233,7 +268,10 @@ except ImportError as e:
                 Requested width in pixels.
 
             """
-            return self.width
+            width_val = self.width
+            if isinstance(width_val, int):
+                return width_val
+            return int(width_val) if isinstance(width_val, (str, float)) else 100
 
         def winfo_reqheight(self) -> int:
             """Get requested height.
@@ -242,7 +280,10 @@ except ImportError as e:
                 Requested height in pixels.
 
             """
-            return self.height
+            height_val = self.height
+            if isinstance(height_val, int):
+                return height_val
+            return int(height_val) if isinstance(height_val, (str, float)) else 30
 
         def configure(self, **kwargs: object) -> None:
             """Configure widget.
@@ -510,8 +551,8 @@ except ImportError as e:
             super().__init__()
             self.title_text = "Tk"
             self.geometry_string = "200x200+100+100"
-            self.protocol_bindings = {}
-            self._pending_protocols = []
+            self.protocol_bindings: dict[str, object] = {}
+            self._pending_protocols: list[tuple[str, object]] = []
             self.withdrawn = False
             self.iconified = False
             logger.info("Fallback Tk window created: %s", self.widget_id)
@@ -700,7 +741,7 @@ except ImportError as e:
 
         def invoke(self) -> None:
             """Invoke button command."""
-            if self.command:
+            if self.command and callable(self.command):
                 logger.debug("Button %s: Command invoked", self.widget_id)
                 try:
                     self.command()
@@ -732,7 +773,9 @@ except ImportError as e:
                 Current entry text.
 
             """
-            return self.value
+            if isinstance(self.value, str):
+                return self.value
+            return str(self.value) if self.value else ""
 
         def set(self, value: object) -> None:
             """Set entry value.
@@ -752,10 +795,11 @@ except ImportError as e:
                 string: String to insert.
 
             """
-            if index == "end":
-                self.value += string
+            current_value = str(self.value) if self.value else ""
+            if index == "end" or not isinstance(index, int):
+                self.value = current_value + string
             else:
-                self.value = self.value[:index] + string + self.value[index:]
+                self.value = current_value[:index] + string + current_value[index:]
             logger.debug("Entry %s: Inserted '%s' at %s", self.widget_id, string, index)
 
         def delete(self, first: int | str, last: str | None = None) -> None:
@@ -799,7 +843,9 @@ except ImportError as e:
             """
             if end is None:
                 end = "end"
-            return self.content
+            if isinstance(self.content, str):
+                return self.content
+            return str(self.content) if self.content else ""
 
         def insert(self, index: str, chars: str) -> None:
             """Insert text.
@@ -809,7 +855,8 @@ except ImportError as e:
                 chars: Text to insert.
 
             """
-            self.content += chars
+            current_content = str(self.content) if self.content else ""
+            self.content = current_content + chars
             logger.debug("Text %s: Inserted text", self.widget_id)
 
         def delete(self, start: str, end: str | None = None) -> None:
@@ -845,8 +892,8 @@ except ImportError as e:
 
             """
             super().__init__(master, **kwargs)
-            self.items = []
-            self.selection = []
+            self.items: list[object] = []
+            self.selection: list[int] = []
             self.selectmode = kwargs.get("selectmode", "browse")
             logger.debug("Listbox created: %s", self.widget_id)
 
@@ -858,7 +905,7 @@ except ImportError as e:
                 *items: Items to insert.
 
             """
-            if index == "end":
+            if index == "end" or not isinstance(index, int):
                 self.items.extend(items)
             else:
                 for i, item in enumerate(items):
@@ -873,9 +920,8 @@ except ImportError as e:
                 last: End position or None.
 
             """
-            if last is None:
-                last = first
-            if first == 0 and last == "end":
+            resolved_last: int | str = first if last is None else last
+            if first == 0 and resolved_last == "end":
                 self.items.clear()
             logger.debug("Listbox %s: Deleted items", self.widget_id)
 
@@ -944,12 +990,14 @@ except ImportError as e:
 
         def invoke(self) -> None:
             """Toggle checkbutton."""
-            current = self.variable.get()
-            new_value = self.offvalue if current == self.onvalue else self.onvalue
-            self.variable.set(new_value)
-            if self.command:
-                self.command()
-            logger.debug("Checkbutton %s: Toggled to %s", self.widget_id, new_value)
+            variable = self.variable
+            if isinstance(variable, FallbackVariable) and hasattr(variable, "get") and hasattr(variable, "set"):
+                current = variable.get()
+                new_value = self.offvalue if current == self.onvalue else self.onvalue
+                variable.set(new_value)
+                if self.command and callable(self.command):
+                    self.command()
+                logger.debug("Checkbutton %s: Toggled to %s", self.widget_id, new_value)
 
     class FallbackRadiobutton(FallbackWidget):
         """Radiobutton widget."""
@@ -971,10 +1019,12 @@ except ImportError as e:
 
         def invoke(self) -> None:
             """Select radiobutton."""
-            self.variable.set(self.value)
-            if self.command:
-                self.command()
-            logger.debug("Radiobutton %s: Selected with value '%s'", self.widget_id, self.value)
+            variable = self.variable
+            if isinstance(variable, FallbackVariable) and hasattr(variable, "set"):
+                variable.set(self.value)
+                if self.command and callable(self.command):
+                    self.command()
+                logger.debug("Radiobutton %s: Selected with value '%s'", self.widget_id, self.value)
 
     class FallbackScale(FallbackWidget):
         """Scale widget."""
@@ -991,8 +1041,10 @@ except ImportError as e:
             self.from_ = kwargs.get("from_", 0)
             self.to = kwargs.get("to", 100)
             self.orient = kwargs.get("orient", "horizontal")
-            self.variable = kwargs.get("variable", FallbackDoubleVar())
-            self.variable.set(kwargs.get("value", self.from_))
+            var = kwargs.get("variable", FallbackDoubleVar())
+            self.variable = var
+            if isinstance(var, FallbackVariable) and hasattr(var, "set"):
+                var.set(kwargs.get("value", self.from_))
             self.command = kwargs.get("command")
             logger.debug("Scale created: %s", self.widget_id)
 
@@ -1003,7 +1055,10 @@ except ImportError as e:
                 Current scale value.
 
             """
-            return self.variable.get()
+            variable = self.variable
+            if isinstance(variable, FallbackVariable) and hasattr(variable, "get"):
+                return variable.get()
+            return 0
 
         def set(self, value: object) -> None:
             """Set scale value.
@@ -1012,10 +1067,12 @@ except ImportError as e:
                 value: Value to set.
 
             """
-            self.variable.set(value)
-            if self.command:
-                self.command(value)
-            logger.debug("Scale %s: Value set to %s", self.widget_id, value)
+            variable = self.variable
+            if isinstance(variable, FallbackVariable) and hasattr(variable, "set"):
+                variable.set(value)
+                if self.command and callable(self.command):
+                    self.command(value)
+                logger.debug("Scale %s: Value set to %s", self.widget_id, value)
 
     # Variable classes
     class FallbackVariable:
@@ -1051,7 +1108,8 @@ except ImportError as e:
             """
             self._value = value
             for callback in self._callbacks:
-                callback()
+                if callable(callback):
+                    callback()
 
         def trace(self, mode: str, callback: object) -> None:
             """Trace variable changes.
@@ -1105,7 +1163,12 @@ except ImportError as e:
                 value: Value to set (converted to int).
 
             """
-            super().set(int(value))
+            if isinstance(value, int):
+                super().set(value)
+            elif isinstance(value, (str, float)):
+                super().set(int(value))
+            else:
+                super().set(0)
 
     class FallbackDoubleVar(FallbackVariable):
         """Double variable."""
@@ -1127,7 +1190,12 @@ except ImportError as e:
                 value: Value to set (converted to float).
 
             """
-            super().set(float(value))
+            if isinstance(value, float):
+                super().set(value)
+            elif isinstance(value, (str, int)):
+                super().set(float(value))
+            else:
+                super().set(0.0)
 
     class FallbackBooleanVar(FallbackVariable):
         """Boolean variable."""
@@ -1497,7 +1565,11 @@ except ImportError as e:
                     Current selected value.
 
                 """
-                return self.textvariable.get()
+                textvariable = self.textvariable
+                if isinstance(textvariable, FallbackVariable) and hasattr(textvariable, "get"):
+                    result = textvariable.get()
+                    return str(result) if result is not None else ""
+                return ""
 
             def set(self, value: object) -> None:
                 """Set current value.
@@ -1506,7 +1578,9 @@ except ImportError as e:
                     value: Value to set.
 
                 """
-                self.textvariable.set(value)
+                textvariable = self.textvariable
+                if isinstance(textvariable, FallbackVariable) and hasattr(textvariable, "set"):
+                    textvariable.set(value)
 
             def current(self, index: int | None = None) -> int:
                 """Get/set current index.
@@ -1520,8 +1594,11 @@ except ImportError as e:
                 """
                 if index is not None:
                     self.current_index = index
-                    if 0 <= index < len(self.values_list):
-                        self.textvariable.set(self.values_list[index])
+                    values_list = self.values_list
+                    if isinstance(values_list, (list, tuple)) and 0 <= index < len(values_list):
+                        textvariable = self.textvariable
+                        if isinstance(textvariable, FallbackVariable) and hasattr(textvariable, "set"):
+                            textvariable.set(values_list[index])
                 return self.current_index
 
         class Progressbar(FallbackWidget):
@@ -1572,7 +1649,9 @@ except ImportError as e:
                     delta: Amount to increment progress by.
 
                 """
-                self.value = min(self.maximum, self.value + delta)
+                current_value = self.value if isinstance(self.value, (int, float)) else 0
+                maximum = self.maximum if isinstance(self.maximum, (int, float)) else 100
+                self.value = min(maximum, current_value + delta)
                 logger.debug("Progressbar %s: Stepped to %s", self.widget_id, self.value)
 
         class Treeview(FallbackWidget):
@@ -1718,55 +1797,55 @@ except ImportError as e:
     class FallbackTkModule:
         """Fallback tkinter module."""
 
-        TkVersion = 0.0
-        Tk = FallbackTk
-        Frame = FallbackFrame
-        Label = FallbackLabel
-        Button = FallbackButton
-        Entry = FallbackEntry
-        Text = FallbackText
-        Listbox = FallbackListbox
-        Checkbutton = FallbackCheckbutton
-        Radiobutton = FallbackRadiobutton
-        Scale = FallbackScale
-        StringVar = FallbackStringVar
-        IntVar = FallbackIntVar
-        DoubleVar = FallbackDoubleVar
-        BooleanVar = FallbackBooleanVar
+        TkVersion: float = 0.0
+        Tk: type[FallbackTk] = FallbackTk
+        Frame: type[FallbackFrame] = FallbackFrame
+        Label: type[FallbackLabel] = FallbackLabel
+        Button: type[FallbackButton] = FallbackButton
+        Entry: type[FallbackEntry] = FallbackEntry
+        Text: type[FallbackText] = FallbackText
+        Listbox: type[FallbackListbox] = FallbackListbox
+        Checkbutton: type[FallbackCheckbutton] = FallbackCheckbutton
+        Radiobutton: type[FallbackRadiobutton] = FallbackRadiobutton
+        Scale: type[FallbackScale] = FallbackScale
+        StringVar: type[FallbackStringVar] = FallbackStringVar
+        IntVar: type[FallbackIntVar] = FallbackIntVar
+        DoubleVar: type[FallbackDoubleVar] = FallbackDoubleVar
+        BooleanVar: type[FallbackBooleanVar] = FallbackBooleanVar
         # Constants
-        NORMAL = "normal"
-        DISABLED = "disabled"
-        ACTIVE = "active"
-        END = "end"
-        BOTH = "both"
-        X = "x"
-        Y = "y"
-        TOP = "top"
-        BOTTOM = "bottom"
-        LEFT = "left"
-        RIGHT = "right"
-        CENTER = "center"
-        N = "n"
-        S = "s"
-        E = "e"
-        W = "w"
-        NE = "ne"
-        NW = "nw"
-        SE = "se"
-        SW = "sw"
+        NORMAL: str = "normal"
+        DISABLED: str = "disabled"
+        ACTIVE: str = "active"
+        END: str = "end"
+        BOTH: str = "both"
+        X: str = "x"
+        Y: str = "y"
+        TOP: str = "top"
+        BOTTOM: str = "bottom"
+        LEFT: str = "left"
+        RIGHT: str = "right"
+        CENTER: str = "center"
+        N: str = "n"
+        S: str = "s"
+        E: str = "e"
+        W: str = "w"
+        NE: str = "ne"
+        NW: str = "nw"
+        SE: str = "se"
+        SW: str = "sw"
 
     tk = FallbackTkModule()
-    tkinter = tk  # Alias for compatibility
-    ttk = FallbackTTK()
-    messagebox = FallbackMessageBox()
-    filedialog = FallbackFileDialog()
-    colorchooser = FallbackColorChooser()
+    tkinter = tk
+    ttk = FallbackTTK
+    messagebox = FallbackMessageBox
+    filedialog = FallbackFileDialog
+    colorchooser = FallbackColorChooser
     Font = FallbackFont
     ScrolledText = FallbackScrolledText
 
     # Create scrolledtext module fallback
     class ScrolledTextModuleFallback:
-        ScrolledText = FallbackScrolledText
+        ScrolledText: type[FallbackScrolledText] = FallbackScrolledText
 
     # Alias for compatibility
     scrolledtext = ScrolledTextModuleFallback

@@ -22,6 +22,21 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # pylint: disable=cyclic-import
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from intellicrack.core.logging.audit_logger import (
+        AuditEvent,
+        AuditEventType,
+        AuditLogger,
+        AuditSeverity,
+        get_audit_logger,
+        log_binary_analysis,
+        log_credential_access,
+        log_exploit_attempt,
+        log_tool_execution,
+        log_vm_operation,
+    )
 
 
 logger = logging.getLogger(__name__)

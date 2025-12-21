@@ -166,7 +166,7 @@ class ModelComparison:
 
         llm = self.llm_manager.get_llm(model_id)
         if not llm:
-            logger.error(f"Model {model_id} not found")
+            logger.error("Model %s not found", model_id)
             return None
 
         # Build messages
@@ -215,7 +215,7 @@ class ModelComparison:
             )
 
         except Exception as e:
-            logger.error(f"Failed to generate output from {model_id}: {e}")
+            logger.exception("Failed to generate output from %s: %s", model_id, e)
             self.performance_monitor.end_inference(perf_context, tokens_generated=0, error=str(e))
             return None
 
@@ -416,7 +416,7 @@ class ModelComparison:
                 visualizations["similarity_chart"] = sim_chart_path
 
         except Exception as e:
-            logger.error(f"Failed to create visualizations: {e}")
+            logger.exception("Failed to create visualizations: %s", e)
 
         return visualizations
 
@@ -541,7 +541,7 @@ class ModelComparison:
         with open(report_file, "w") as f:
             json.dump(report_data, f, indent=2)
 
-        logger.info(f"Saved comparison report to {report_file}")
+        logger.info("Saved comparison report to %s", report_file)
 
     def generate_html_report(self, report: ComparisonReport) -> Path:
         """Generate HTML report with visualizations.
@@ -661,7 +661,7 @@ class ModelComparison:
         with open(html_file, "w") as f:
             f.write(html)
 
-        logger.info(f"Generated HTML report: {html_file}")
+        logger.info("Generated HTML report: %s", html_file)
         return html_file
 
 

@@ -65,11 +65,11 @@ class AnalysisExporter:
                 return AnalysisExporter._export_csv(result, output_file, analysis_type)
             if format == "text":
                 return AnalysisExporter._export_text(result, output_file)
-            logger.error("Unsupported export format: %s", format)
+            logger.exception("Unsupported export format: %s", format)
             return False
 
         except Exception as e:
-            logger.error("Analysis export failed: %s", e, exc_info=True)
+            logger.exception("Analysis export failed: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -80,7 +80,7 @@ class AnalysisExporter:
                 json.dump(result, f, indent=2, default=str)
             return True
         except Exception as e:
-            logger.error("JSON export failed: %s", e, exc_info=True)
+            logger.exception("JSON export failed: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -98,7 +98,7 @@ class AnalysisExporter:
                 f.write(html_content)
             return True
         except Exception as e:
-            logger.error("HTML export failed: %s", e, exc_info=True)
+            logger.exception("HTML export failed: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -117,7 +117,7 @@ class AnalysisExporter:
 
             return True
         except Exception as e:
-            logger.error("CSV export failed: %s", e, exc_info=True)
+            logger.exception("CSV export failed: %s", e, exc_info=True)
             return False
 
     @staticmethod
@@ -128,7 +128,7 @@ class AnalysisExporter:
                 f.write(str(result))
             return True
         except Exception as e:
-            logger.error("Text export failed: %s", e, exc_info=True)
+            logger.exception("Text export failed: %s", e, exc_info=True)
             return False
 
     @staticmethod

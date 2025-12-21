@@ -1,18 +1,19 @@
 
-import re
 import json
+import re
 import sys
 from pathlib import Path
 
+
 def verify_html(file_path):
     print(f"Verifying {file_path}...")
-    
+
     if not file_path.exists():
         print("FAIL: File not found.")
         sys.exit(1)
-        
+
     content = file_path.read_text(encoding='utf-8')
-    
+
     # 1. Check for Static Physics Setting
     # Search for "enabled: false" inside a physics block, handling newlines/spaces
     if re.search(r'physics:\s*\{[^}]*enabled:\s*false', content, re.DOTALL):
@@ -27,7 +28,7 @@ def verify_html(file_path):
     if not match:
         print("FAIL: Could not extract nodes JSON data.")
         sys.exit(1)
-        
+
     try:
         nodes_data = json.loads(match.group(1))
     except json.JSONDecodeError as e:
@@ -35,12 +36,12 @@ def verify_html(file_path):
         # Print a snippet to debug
         print(f"Snippet: {match.group(1)[:100]}...")
         sys.exit(1)
-        
+
     print(f"PASS: Successfully parsed {len(nodes_data)} nodes.")
-    
+
     if len(nodes_data) < 1000:
         print(f"WARNING: Node count seems low ({len(nodes_data)}). Expected > 10,000 for full architecture.")
-    
+
     # 3. Verify Pre-calculated Layout (X/Y coordinates)
     nodes_with_pos = [n for n in nodes_data if 'x' in n and 'y' in n]
     if len(nodes_with_pos) == 0:
@@ -65,6 +66,7 @@ def verify_html(file_path):
         print("FAIL: No internal module nodes found.")
     else:
         print(f"PASS: Found {len(internal_nodes)} internal modules.")
+
 
 if __name__ == "__main__":
     verify_html(Path("IntellicrackKnowledgeGraph.html"))

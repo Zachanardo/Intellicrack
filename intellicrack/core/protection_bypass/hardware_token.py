@@ -497,7 +497,8 @@ class HardwareTokenBypass:
         )
 
         cert = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(subject)
             .issuer_name(issuer)
             .public_key(private_key.public_key())
@@ -568,7 +569,7 @@ class HardwareTokenBypass:
             return reader_name
 
         except Exception as e:
-            logger.error(f"Failed to emulate card reader: {e}")
+            logger.exception("Failed to emulate card reader: %s", e)
             return "Virtual Card Reader"
 
     def bypass_token_verification(self, application: str, token_type: str) -> dict[str, Any]:

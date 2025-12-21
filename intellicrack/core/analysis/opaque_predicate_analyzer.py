@@ -313,82 +313,98 @@ class ConstantPropagationEngine:
             return
 
         if mnemonic in {"inc"}:
-            if dest in state and state[dest].is_constant and state[dest].value is not None:
-                state[dest] = ConstantValue(
-                    register=dest,
-                    value=state[dest].value + 1,
-                    is_constant=True,
-                    source_instruction=inst,
-                )
+            if dest in state and state[dest].is_constant:
+                dest_val = state[dest].value
+                if dest_val is not None:
+                    state[dest] = ConstantValue(
+                        register=dest,
+                        value=dest_val + 1,
+                        is_constant=True,
+                        source_instruction=inst,
+                    )
+                else:
+                    state.pop(dest, None)
             else:
                 state.pop(dest, None)
-        elif mnemonic in ["dec"]:
-            if dest in state and state[dest].is_constant and state[dest].value is not None:
-                state[dest] = ConstantValue(
-                    register=dest,
-                    value=state[dest].value - 1,
-                    is_constant=True,
-                    source_instruction=inst,
-                )
+        elif mnemonic in {"dec"}:
+            if dest in state and state[dest].is_constant:
+                dest_val = state[dest].value
+                if dest_val is not None:
+                    state[dest] = ConstantValue(
+                        register=dest,
+                        value=dest_val - 1,
+                        is_constant=True,
+                        source_instruction=inst,
+                    )
+                else:
+                    state.pop(dest, None)
             else:
                 state.pop(dest, None)
         elif len(operands) >= 2:
             src = operands[1]
-            if dest in state and state[dest].is_constant and state[dest].value is not None:
-                if src.startswith("0x"):
-                    try:
-                        src_val = int(src, 16)
-                        if mnemonic == "add":
-                            new_val = state[dest].value + src_val
-                        elif mnemonic == "sub":
-                            new_val = state[dest].value - src_val
-                        else:
+            if dest in state and state[dest].is_constant:
+                dest_val = state[dest].value
+                if dest_val is not None:
+                    if src.startswith("0x"):
+                        try:
+                            src_val = int(src, 16)
+                            if mnemonic == "add":
+                                new_val = dest_val + src_val
+                            elif mnemonic == "sub":
+                                new_val = dest_val - src_val
+                            else:
+                                state.pop(dest, None)
+                                return
+                            state[dest] = ConstantValue(
+                                register=dest,
+                                value=new_val,
+                                is_constant=True,
+                                source_instruction=inst,
+                            )
+                        except ValueError:
                             state.pop(dest, None)
-                            return
-                        state[dest] = ConstantValue(
-                            register=dest,
-                            value=new_val,
-                            is_constant=True,
-                            source_instruction=inst,
-                        )
-                    except ValueError:
-                        state.pop(dest, None)
-                elif src.isdigit():
-                    try:
-                        src_val = int(src)
-                        if mnemonic == "add":
-                            new_val = state[dest].value + src_val
-                        elif mnemonic == "sub":
-                            new_val = state[dest].value - src_val
-                        else:
+                    elif src.isdigit():
+                        try:
+                            src_val = int(src)
+                            if mnemonic == "add":
+                                new_val = dest_val + src_val
+                            elif mnemonic == "sub":
+                                new_val = dest_val - src_val
+                            else:
+                                state.pop(dest, None)
+                                return
+                            state[dest] = ConstantValue(
+                                register=dest,
+                                value=new_val,
+                                is_constant=True,
+                                source_instruction=inst,
+                            )
+                        except ValueError:
                             state.pop(dest, None)
-                            return
-                        state[dest] = ConstantValue(
-                            register=dest,
-                            value=new_val,
-                            is_constant=True,
-                            source_instruction=inst,
-                        )
-                    except ValueError:
-                        state.pop(dest, None)
-                else:
-                    src_reg = self._extract_register(src)
-                    if src_reg and src_reg in state and state[src_reg].is_constant and state[src_reg].value is not None:
-                        if mnemonic == "add":
-                            new_val = state[dest].value + state[src_reg].value
-                        elif mnemonic == "sub":
-                            new_val = state[dest].value - state[src_reg].value
-                        else:
-                            state.pop(dest, None)
-                            return
-                        state[dest] = ConstantValue(
-                            register=dest,
-                            value=new_val,
-                            is_constant=True,
-                            source_instruction=inst,
-                        )
                     else:
-                        state.pop(dest, None)
+                        src_reg = self._extract_register(src)
+                        if src_reg and src_reg in state and state[src_reg].is_constant:
+                            src_reg_val = state[src_reg].value
+                            if src_reg_val is not None:
+                                if mnemonic == "add":
+                                    new_val = dest_val + src_reg_val
+                                elif mnemonic == "sub":
+                                    new_val = dest_val - src_reg_val
+                                else:
+                                    state.pop(dest, None)
+                                    return
+                                state[dest] = ConstantValue(
+                                    register=dest,
+                                    value=new_val,
+                                    is_constant=True,
+                                    source_instruction=inst,
+                                )
+                            else:
+                                state.pop(dest, None)
+                        else:
+                            state.pop(dest, None)
+                else:
+                    state.pop(dest, None)
             else:
                 state.pop(dest, None)
         else:
@@ -428,64 +444,69 @@ class ConstantPropagationEngine:
                 is_constant=True,
                 source_instruction=inst,
             )
-        elif dest in state and state[dest].is_constant and state[dest].value is not None:
-            if src.startswith("0x"):
-                try:
-                    src_val = int(src, 16)
-                    if mnemonic == "xor":
-                        new_val = state[dest].value ^ src_val
-                    elif mnemonic == "or":
-                        new_val = state[dest].value | src_val
-                    elif mnemonic == "and":
-                        new_val = state[dest].value & src_val
+        elif dest in state and state[dest].is_constant:
+            dest_val = state[dest].value
+            if dest_val is not None:
+                if src.startswith("0x"):
+                    try:
+                        src_val = int(src, 16)
+                        if mnemonic == "xor":
+                            new_val = dest_val ^ src_val
+                        elif mnemonic == "or":
+                            new_val = dest_val | src_val
+                        elif mnemonic == "and":
+                            new_val = dest_val & src_val
+                        else:
+                            state.pop(dest, None)
+                            return
+                        state[dest] = ConstantValue(
+                            register=dest,
+                            value=new_val,
+                            is_constant=True,
+                            source_instruction=inst,
+                        )
+                    except ValueError:
+                        state.pop(dest, None)
+                elif src.isdigit():
+                    try:
+                        src_val = int(src)
+                        if mnemonic == "xor":
+                            new_val = dest_val ^ src_val
+                        elif mnemonic == "or":
+                            new_val = dest_val | src_val
+                        elif mnemonic == "and":
+                            new_val = dest_val & src_val
+                        else:
+                            state.pop(dest, None)
+                            return
+                        state[dest] = ConstantValue(
+                            register=dest,
+                            value=new_val,
+                            is_constant=True,
+                            source_instruction=inst,
+                        )
+                    except ValueError:
+                        state.pop(dest, None)
+                elif src_reg and src_reg in state and state[src_reg].is_constant:
+                    src_reg_val = state[src_reg].value
+                    if src_reg_val is not None:
+                        if mnemonic == "xor":
+                            new_val = dest_val ^ src_reg_val
+                        elif mnemonic == "or":
+                            new_val = dest_val | src_reg_val
+                        elif mnemonic == "and":
+                            new_val = dest_val & src_reg_val
+                        else:
+                            state.pop(dest, None)
+                            return
+                        state[dest] = ConstantValue(
+                            register=dest,
+                            value=new_val,
+                            is_constant=True,
+                            source_instruction=inst,
+                        )
                     else:
                         state.pop(dest, None)
-                        return
-                    state[dest] = ConstantValue(
-                        register=dest,
-                        value=new_val,
-                        is_constant=True,
-                        source_instruction=inst,
-                    )
-                except ValueError:
-                    state.pop(dest, None)
-            elif src.isdigit():
-                try:
-                    src_val = int(src)
-                    if mnemonic == "xor":
-                        new_val = state[dest].value ^ src_val
-                    elif mnemonic == "or":
-                        new_val = state[dest].value | src_val
-                    elif mnemonic == "and":
-                        new_val = state[dest].value & src_val
-                    else:
-                        state.pop(dest, None)
-                        return
-                    state[dest] = ConstantValue(
-                        register=dest,
-                        value=new_val,
-                        is_constant=True,
-                        source_instruction=inst,
-                    )
-                except ValueError:
-                    state.pop(dest, None)
-            elif src_reg and src_reg in state and state[src_reg].is_constant:
-                if state[src_reg].value is not None:
-                    if mnemonic == "xor":
-                        new_val = state[dest].value ^ state[src_reg].value
-                    elif mnemonic == "or":
-                        new_val = state[dest].value | state[src_reg].value
-                    elif mnemonic == "and":
-                        new_val = state[dest].value & state[src_reg].value
-                    else:
-                        state.pop(dest, None)
-                        return
-                    state[dest] = ConstantValue(
-                        register=dest,
-                        value=new_val,
-                        is_constant=True,
-                        source_instruction=inst,
-                    )
                 else:
                     state.pop(dest, None)
             else:
@@ -517,7 +538,8 @@ class ConstantPropagationEngine:
             return
 
         if dest in state and state[dest].is_constant and len(operands) >= 2:
-            if state[dest].value is not None:
+            dest_val = state[dest].value
+            if dest_val is not None:
                 shift_amount_str = operands[1].strip()
                 if shift_amount_str.startswith("0x"):
                     try:
@@ -532,9 +554,9 @@ class ConstantPropagationEngine:
                     return
 
                 if mnemonic in {"shl", "sal"}:
-                    new_val = state[dest].value << shift_amount
+                    new_val = dest_val << shift_amount
                 elif mnemonic in {"shr", "sar"}:
-                    new_val = state[dest].value >> shift_amount
+                    new_val = dest_val >> shift_amount
                 else:
                     state.pop(dest, None)
                     return
@@ -617,13 +639,16 @@ class ConstantPropagationEngine:
             Merged state with only constants that match in both states
 
         """
-        merged = {}
-
-        for reg, reg_value in state1.items():
-            if reg in state2 and (reg_value.is_constant and state2[reg].is_constant and reg_value.value == state2[reg].value):
-                merged[reg] = reg_value
-
-        return merged
+        return {
+            reg: reg_value
+            for reg, reg_value in state1.items()
+            if reg in state2
+            and (
+                reg_value.is_constant
+                and state2[reg].is_constant
+                and reg_value.value == state2[reg].value
+            )
+        }
 
     def _extract_register(self, operand: str) -> str | None:
         """Extract register name from operand string.
@@ -736,7 +761,7 @@ class SymbolicExecutionEngine:
             return None, None
 
         except Exception as e:
-            self.logger.debug(f"Symbolic execution failed: {e}")
+            self.logger.debug("Symbolic execution failed: %s", e)
             return None, None
 
     def _build_symbolic_expression(self, basic_block: BasicBlockProtocol, symbolic_vars: dict[str, Any]) -> Z3Expr:
@@ -1313,19 +1338,21 @@ class OpaquePredicateAnalyzer:
         if len(basic_block.successors) != 2:
             return None
 
-        true_successor = None
-        false_successor = None
+        true_successor: int | None = None
+        false_successor: int | None = None
 
         block_addr = basic_block.address
 
         for edge in cfg.out_edges(block_addr, data=True):
-            edge_type = edge[2].get("edge_type", "")
-            if "true" in edge_type or edge_type == "conditional_true":
-                true_successor = edge[1]
-            elif "false" in edge_type or edge_type == "conditional_false":
-                false_successor = edge[1]
+            edge_data: dict[str, Any] = edge[2]
+            edge_type = edge_data.get("edge_type", "")
+            if isinstance(edge_type, str):
+                if "true" in edge_type or edge_type == "conditional_true":
+                    true_successor = edge[1]
+                elif "false" in edge_type or edge_type == "conditional_false":
+                    false_successor = edge[1]
 
-        if true_successor and false_successor:
+        if true_successor is not None and false_successor is not None:
             return false_successor if always_value else true_successor
         return None
 

@@ -161,7 +161,7 @@ class CodeAnalyzer:
             return self._analyze_generic_file(file_path, content, language)
 
         except Exception as e:
-            logger.error("Error analyzing file %s: %s", file_path, e)
+            logger.exception("Error analyzing file %s: %s", file_path, e)
             return CodeContext(
                 file_path=file_path,
                 content="",
@@ -281,19 +281,17 @@ class CodeAnalyzer:
     def _calculate_complexity(self, tree: ast.AST) -> int:
         """Calculate cyclomatic complexity of Python AST."""
         return 1 + sum(
-            bool(
-                isinstance(
-                    node,
-                    (
-                        ast.If,
-                        ast.While,
-                        ast.For,
-                        ast.AsyncFor,
-                        ast.ExceptHandler,
-                        ast.And,
-                        ast.Or,
-                    ),
-                )
+            isinstance(
+                node,
+                (
+                    ast.If,
+                    ast.While,
+                    ast.For,
+                    ast.AsyncFor,
+                    ast.ExceptHandler,
+                    ast.And,
+                    ast.Or,
+                ),
             )
             for node in ast.walk(tree)
         )
@@ -502,7 +500,7 @@ class IntelligentCodeModifier:
                 relative_path = file_path.relative_to(project_path)
                 context[str(relative_path)] = self.analyzer.analyze_file(str(file_path))
             except Exception as e:
-                logger.error("Failed to analyze %s: %s", file_path, e)
+                logger.exception("Failed to analyze %s: %s", file_path, e)
 
         self.project_context = context
         logger.info("Analyzed %d files for project context", len(context))
@@ -550,7 +548,7 @@ class IntelligentCodeModifier:
                 changes.extend(file_changes)
 
             except Exception as e:
-                logger.error("Failed to analyze %s: %s", target_file, e)
+                logger.exception("Failed to analyze %s: %s", target_file, e)
 
         # Store pending changes
         for change in changes:
@@ -630,7 +628,7 @@ Requirements:
             return response.content if response else ""
 
         except Exception as e:
-            logger.error("Failed to get AI response: %s", e)
+            logger.exception("Failed to get AI response: %s", e)
             return ""
 
     def _parse_modification_response(self, response: str, file_path: str, request: ModificationRequest) -> list[CodeChange]:
@@ -658,7 +656,7 @@ Requirements:
                 try:
                     mod_type = ModificationType(mod_type_str)
                 except ValueError as e:
-                    logger.error("Value error in intelligent_code_modifier: %s", e)
+                    logger.exception("Value error in intelligent_code_modifier: %s", e)
                     mod_type = ModificationType.FUNCTION_MODIFICATION
 
                 change = CodeChange(
@@ -678,9 +676,9 @@ Requirements:
                 changes.append(change)
 
         except json.JSONDecodeError as e:
-            logger.error("Failed to parse JSON response: %s", e)
+            logger.exception("Failed to parse JSON response: %s", e)
         except Exception as e:
-            logger.error("Error parsing modification response: %s", e)
+            logger.exception("Error parsing modification response: %s", e)
 
         return changes
 
@@ -778,7 +776,7 @@ Requirements:
                     results["errors"].append(f"Failed to apply changes to {file_path}")
 
             except Exception as e:
-                logger.error("Error applying changes to %s: %s", file_path, e)
+                logger.exception("Error applying changes to %s: %s", file_path, e)
                 for change in file_changes:
                     change.status = ChangeStatus.FAILED
                     results["failed"].append(change.change_id)
@@ -848,7 +846,7 @@ Requirements:
             return True
 
         except Exception as e:
-            logger.error("Failed to apply changes to %s: %s", file_path, e)
+            logger.exception("Failed to apply changes to %s: %s", file_path, e)
             return False
 
     def reject_changes(self, change_ids: list[str]) -> dict[str, Any]:

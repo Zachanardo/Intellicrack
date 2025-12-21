@@ -64,7 +64,7 @@ try:
 
     HAS_PSUTIL = True
 except ImportError as e:
-    logger.error("Import error in final_utilities: %s", e, exc_info=True)
+    logger.exception("Import error in final_utilities: %s", e)
     HAS_PSUTIL = False
 
 try:
@@ -72,7 +72,7 @@ try:
 
     REQUESTS_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in final_utilities: %s", e, exc_info=True)
+    logger.exception("Import error in final_utilities: %s", e)
     REQUESTS_AVAILABLE = False
 
 
@@ -100,9 +100,10 @@ def add_table(parent: object, headers: list[str], data: list[list[object]]) -> o
         logger.warning("PyQt6 not available, cannot create table")
         return None
 
-    from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem
+    from PyQt6.QtWidgets import QTableWidget, QTableWidgetItem, QWidget
 
-    table = QTableWidget(len(data), len(headers), parent)
+    parent_widget: QWidget | None = parent if isinstance(parent, QWidget) else None
+    table = QTableWidget(len(data), len(headers), parent_widget)
     table.setHorizontalHeaderLabels(headers)
 
     for row, row_data in enumerate(data):
@@ -126,10 +127,11 @@ def browse_dataset(parent: object | None = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse dataset")
         return None
 
-    from intellicrack.handlers.pyqt6_handler import QFileDialog
+    from intellicrack.handlers.pyqt6_handler import QFileDialog, QWidget
 
+    parent_widget: QWidget | None = parent if isinstance(parent, QWidget) else None
     file_path, _ = QFileDialog.getOpenFileName(
-        parent,
+        parent_widget,
         "Select Dataset",
         "",
         "Dataset Files (*.json *.jsonl *.csv *.txt);;All Files (*.*)",
@@ -151,8 +153,11 @@ def browse_model(parent: object | None = None) -> str | None:
         logger.warning("PyQt6 not available, cannot browse model")
         return None
 
+    from intellicrack.handlers.pyqt6_handler import QWidget
+
+    parent_widget: QWidget | None = parent if isinstance(parent, QWidget) else None
     file_path, _ = QFileDialog.getOpenFileName(
-        parent,
+        parent_widget,
         "Select Model",
         "",
         "Model Files (*.gguf *.bin *.pth *.onnx *.h5);;All Files (*.*)",
@@ -172,9 +177,10 @@ def show_analysis_results(results: dict[str, object], parent: object | None = No
         logger.info("Analysis Results: %s", json.dumps(results, indent=2))
         return
 
-    from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout
+    from PyQt6.QtWidgets import QDialog, QPushButton, QTextEdit, QVBoxLayout, QWidget
 
-    dialog = QDialog(parent)
+    parent_widget: QWidget | None = parent if isinstance(parent, QWidget) else None
+    dialog = QDialog(parent_widget)
     dialog.setWindowTitle("Analysis Results")
     dialog.resize(600, 400)
 
@@ -262,7 +268,7 @@ def monitor_memory(process_name: str | None = None, threshold_mb: float = 1000.0
             "percent": memory.percent,
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in final_utilities: %s", e, exc_info=True)
+        logger.exception("Error in final_utilities: %s", e)
         return {"error": str(e)}
 
 
@@ -307,7 +313,7 @@ def compute_binary_hash(binary_path: str, algorithm: str = "sha256") -> str | No
                 hash_obj.update(chunk)
         return hash_obj.hexdigest()
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error computing hash: %s", e, exc_info=True)
+        logger.exception("Error computing hash: %s", e)
         return None
 
 
@@ -339,7 +345,7 @@ def compute_section_hashes(binary_path: str) -> dict[str, str]:
         if file_hash := compute_binary_hash(binary_path):
             section_hashes["_file"] = file_hash
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error computing section hashes: %s", e, exc_info=True)
+        logger.exception("Error computing section hashes: %s", e)
 
     return section_hashes
 
@@ -455,7 +461,7 @@ def cache_analysis_results(key: str, results: dict[str, object], cache_dir: str 
 
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to cache results: %s", e, exc_info=True)
+        logger.exception("Failed to cache results: %s", e)
         return False
 
 
@@ -493,7 +499,11 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, object]]:
         captured_requests.extend(system_requests)
 
         # 5. Sort by timestamp (most recent first) and apply limit
-        captured_requests.sort(key=lambda x: x.get("timestamp", 0), reverse=True)
+        def get_timestamp(x: dict[str, object]) -> int | float:
+            ts = x.get("timestamp", 0)
+            return ts if isinstance(ts, (int, float)) else 0
+
+        captured_requests.sort(key=get_timestamp, reverse=True)
         captured_requests = captured_requests[:limit]
 
         # 6. Enhance requests with additional analysis
@@ -505,7 +515,7 @@ def get_captured_requests(limit: int = 100) -> list[dict[str, object]]:
         return captured_requests
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error retrieving captured requests: %s", e, exc_info=True)
+        logger.exception("Error retrieving captured requests: %s", e)
         return []
 
 
@@ -519,7 +529,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, object]]:
         List of request dictionaries from protocol handlers
 
     """
-    request_list = []
+    request_list: list[dict[str, object]] = []
 
     try:
         # Check if protocol handlers are active and have captured data
@@ -610,7 +620,7 @@ def _get_protocol_handler_requests(limit: int) -> list[dict[str, object]]:
                         conn.close()
 
             except ImportError as e:
-                logger.error("Import error in final_utilities: %s", e, exc_info=True)
+                logger.exception("Import error in final_utilities: %s", e)
                 continue
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
@@ -735,7 +745,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
         List of system network connection dictionaries
 
     """
-    request_list = []
+    request_list: list[dict[str, object]] = []
 
     try:
         # Use system tools to capture recent network activity
@@ -761,7 +771,7 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                     if conn.status == "ESTABLISHED" and conn.raddr
                 )
             except (AttributeError, OSError) as e:
-                logger.error("Error in final_utilities: %s", e, exc_info=True)
+                logger.exception("Error in final_utilities: %s", e)
 
         # Add process-specific network activity
         if hasattr(psutil, "Process"):
@@ -770,28 +780,38 @@ def _get_system_network_requests(limit: int) -> list[dict[str, object]]:
                 for child in current_process.children(recursive=True)[:5]:
                     try:
                         connections = child.connections(kind="inet")
-                        for conn in connections[:2]:
-                            if conn.raddr:
-                                request_list.append(
-                                    {
-                                        "timestamp": time.time() - 5,
-                                        "source": "Process_Monitor",
-                                        "type": "process_connection",
-                                        "protocol": "TCP" if conn.type == socket.SOCK_STREAM else "UDP",
-                                        "src_ip": conn.laddr.ip if conn.laddr else "unknown",
-                                        "dst_ip": conn.raddr.ip if conn.raddr else "unknown",
-                                        "dst_port": conn.raddr.port if conn.raddr else 0,
-                                        "process_name": child.name(),
-                                        "process_pid": child.pid,
-                                        "status": conn.status,
-                                    },
-                                )
+                        request_list.extend(
+                            {
+                                "timestamp": time.time() - 5,
+                                "source": "Process_Monitor",
+                                "type": "process_connection",
+                                "protocol": (
+                                    "TCP"
+                                    if conn.type == socket.SOCK_STREAM
+                                    else "UDP"
+                                ),
+                                "src_ip": (
+                                    conn.laddr.ip if conn.laddr else "unknown"
+                                ),
+                                "dst_ip": (
+                                    conn.raddr.ip if conn.raddr else "unknown"
+                                ),
+                                "dst_port": (
+                                    conn.raddr.port if conn.raddr else 0
+                                ),
+                                "process_name": child.name(),
+                                "process_pid": child.pid,
+                                "status": conn.status,
+                            }
+                            for conn in connections[:2]
+                            if conn.raddr
+                        )
                     except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                        logger.error("Error in final_utilities: %s", e, exc_info=True)
+                        logger.exception("Error in final_utilities: %s", e)
                         continue
 
             except (AttributeError, OSError) as e:
-                logger.error("Error in final_utilities: %s", e, exc_info=True)
+                logger.exception("Error in final_utilities: %s", e)
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
         logger.debug("Error getting system network requests: %s", e, exc_info=True)
@@ -849,12 +869,13 @@ def _enhance_request_metadata(request: dict[str, object]) -> None:
     try:
         # Add geolocation info for IP addresses
         dst_ip = request.get("dst_ip", "")
-        if dst_ip and dst_ip != "unknown":
+        if isinstance(dst_ip, str) and dst_ip and dst_ip != "unknown":
             request["geolocation"] = _get_ip_geolocation(dst_ip)
 
         # Add protocol analysis
-        protocol = request.get("protocol", "").lower()
-        request["protocol_analysis"] = _analyze_protocol(protocol, request)
+        protocol = request.get("protocol", "")
+        if isinstance(protocol, str):
+            request["protocol_analysis"] = _analyze_protocol(protocol.lower(), request)
 
         # Add security assessment
         request["security_flags"] = _assess_request_security(request)
@@ -863,12 +884,14 @@ def _enhance_request_metadata(request: dict[str, object]) -> None:
         request["timing_analysis"] = _analyze_request_timing(request)
 
         # Add size analysis
-        bytes_sent = request.get("bytes_sent", 0)
-        bytes_received = request.get("bytes_received", 0)
+        bytes_sent_val = request.get("bytes_sent", 0)
+        bytes_received_val = request.get("bytes_received", 0)
+        bytes_sent = bytes_sent_val if isinstance(bytes_sent_val, (int, float)) else 0
+        bytes_received = bytes_received_val if isinstance(bytes_received_val, (int, float)) else 0
         request["data_analysis"] = {
             "total_bytes": bytes_sent + bytes_received,
             "ratio": bytes_received / bytes_sent if bytes_sent > 0 else 0,
-            "size_category": _categorize_data_size(bytes_sent + bytes_received),
+            "size_category": _categorize_data_size(int(bytes_sent + bytes_received)),
         }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
@@ -913,14 +936,14 @@ def _analyze_protocol(protocol: str, request: dict[str, object]) -> dict[str, ob
 
     """
     """Analyze protocol-specific characteristics."""
-    analysis = {"protocol": protocol}
+    analysis: dict[str, object] = {"protocol": protocol}
 
     if protocol in {"http", "https"}:
         analysis["web_protocol"] = True
         analysis["encrypted"] = protocol == "https"
         # Check for common license-related endpoints
         request_data = request.get("request_data", "")
-        if any(term in request_data.lower() for term in ["license", "auth", "activate", "validate"]):
+        if isinstance(request_data, str) and any(term in request_data.lower() for term in ["license", "auth", "activate", "validate"]):
             analysis["license_related"] = True
     elif protocol == "tcp":
         analysis["connection_oriented"] = True
@@ -943,28 +966,36 @@ def _assess_request_security(request: dict[str, object]) -> list[str]:
 
     """
     """Assess security characteristics of the request."""
-    flags = []
+    flags: list[str] = []
 
     # Check for encrypted protocols
-    protocol = request.get("protocol", "").lower()
-    if protocol in ["https", "ssl", "tls"]:
-        flags.append("encrypted")
-    elif protocol in ["http", "ftp", "telnet"]:
-        flags.append("unencrypted")
+    protocol = request.get("protocol", "")
+    if isinstance(protocol, str):
+        protocol_lower = protocol.lower()
+        if protocol_lower in ["https", "ssl", "tls"]:
+            flags.append("encrypted")
+        elif protocol_lower in ["http", "ftp", "telnet"]:
+            flags.append("unencrypted")
 
     # Check for license-related activity
-    request_data = request.get("request_data", "").lower()
-    response_data = request.get("response_data", "").lower()
+    request_data = request.get("request_data", "")
+    response_data = request.get("response_data", "")
+    request_data_str = request_data.lower() if isinstance(request_data, str) else ""
+    response_data_str = response_data.lower() if isinstance(response_data, str) else ""
 
-    if any(term in request_data + response_data for term in ["license", "key", "activate", "validate"]):
+    if any(term in request_data_str + response_data_str for term in ["license", "key", "activate", "validate"]):
         flags.append("license_related")
 
     # Check for suspicious patterns
-    if "crack" in request_data + response_data:
+    if "crack" in request_data_str + response_data_str:
         flags.append("suspicious_content")
 
     # Check for large data transfers
-    total_bytes = request.get("bytes_sent", 0) + request.get("bytes_received", 0)
+    bytes_sent_val = request.get("bytes_sent", 0)
+    bytes_received_val = request.get("bytes_received", 0)
+    bytes_sent = bytes_sent_val if isinstance(bytes_sent_val, (int, float)) else 0
+    bytes_received = bytes_received_val if isinstance(bytes_received_val, (int, float)) else 0
+    total_bytes = bytes_sent + bytes_received
     if total_bytes > 10000:
         flags.append("large_transfer")
 
@@ -982,7 +1013,8 @@ def _analyze_request_timing(request: dict[str, object]) -> dict[str, object]:
 
     """
     """Analyze timing characteristics of the request."""
-    timestamp = request.get("timestamp", time.time())
+    timestamp_val = request.get("timestamp", time.time())
+    timestamp = timestamp_val if isinstance(timestamp_val, (int, float)) else time.time()
     age_seconds = time.time() - timestamp
 
     return {
@@ -1118,13 +1150,13 @@ def sandbox_process(command: list[str], timeout: int = 60) -> dict[str, object]:
             "returncode": result.returncode,
         }
     except subprocess.TimeoutExpired as e:
-        logger.error("Subprocess timeout in final_utilities: %s", e, exc_info=True)
+        logger.exception("Subprocess timeout in final_utilities: %s", e)
         return {
             "success": False,
             "error": f"Process timed out after {timeout} seconds",
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in final_utilities: %s", e, exc_info=True)
+        logger.exception("Error in final_utilities: %s", e)
         return {
             "success": False,
             "error": str(e),
@@ -1187,15 +1219,26 @@ def center_on_screen(widget: object) -> None:
     if not HAS_PYQT or not widget:
         return
 
-    if app := QApplication.instance():
-        if primary_screen := app.primaryScreen():
-            screen_rect = primary_screen.geometry()
-            widget_rect = widget.geometry()
+    from typing import cast
 
-            x = (screen_rect.width() - widget_rect.width()) // 2
-            y = (screen_rect.height() - widget_rect.height()) // 2
+    from PyQt6.QtGui import QGuiApplication, QScreen
+    from PyQt6.QtWidgets import QApplication as QApp, QWidget
 
-            widget.move(x, y)
+    if not isinstance(widget, QWidget):
+        return
+
+    if app := QApp.instance():
+        if app is not None:
+            gui_app = cast(QGuiApplication, app)
+            if screens := gui_app.screens():
+                primary_screen = screens[0]
+                screen_rect = primary_screen.geometry()
+                widget_rect = widget.geometry()
+
+                x = (screen_rect.width() - widget_rect.width()) // 2
+                y = (screen_rect.height() - widget_rect.height()) // 2
+
+                widget.move(x, y)
 
 
 def copy_to_clipboard(text: str) -> bool:
@@ -1212,8 +1255,9 @@ def copy_to_clipboard(text: str) -> bool:
         if HAS_PYQT:
             if QApplication.instance():
                 clipboard = QApplication.clipboard()
-                clipboard.setText(text)
-                return True
+                if clipboard is not None:
+                    clipboard.setText(text)
+                    return True
         elif platform.system() == "Windows":
             subprocess.run(["clip"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             return True
@@ -1224,7 +1268,7 @@ def copy_to_clipboard(text: str) -> bool:
             subprocess.run(["xclip", "-selection", "clipboard"], input=text, text=True, check=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to copy to clipboard: %s", e, exc_info=True)
+        logger.exception("Failed to copy to clipboard: %s", e)
 
     return False
 
@@ -1296,7 +1340,7 @@ def export_metrics(metrics: dict[str, object], output_path: str) -> bool:
             json.dump(metrics, f, indent=2)
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to export metrics: %s", e, exc_info=True)
+        logger.exception("Failed to export metrics: %s", e)
         return False
 
 
@@ -1356,7 +1400,7 @@ def submit_report(report_data: dict[str, object], endpoint: str | None = None) -
         return final_result
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error during report submission: %s", e, exc_info=True)
+        logger.exception("Error during report submission: %s", e)
         return {"status": "error", "error": str(e), "timestamp": time.time()}
 
 
@@ -1372,33 +1416,33 @@ def _validate_and_enhance_report(report_data: dict[str, object]) -> dict[str, ob
     """
     """Validate and enhance report data before submission."""
     try:
-        if not isinstance(report_data, dict):
-            logger.error("Report data must be a dictionary")
-            return None
-
         # Create enhanced report with required fields
-        enhanced_report = {
-            "report_metadata": {
-                "version": "1.0",
-                "generated_by": "Intellicrack",
-                "generation_timestamp": time.time(),
-                "report_type": report_data.get("type", "analysis_report"),
-                "validation_status": "validated",
-            },
-            "content": report_data.copy(),
+        report_metadata: dict[str, object] = {
+            "version": "1.0",
+            "generated_by": "Intellicrack",
+            "generation_timestamp": time.time(),
+            "report_type": report_data.get("type", "analysis_report"),
+            "validation_status": "validated",
         }
 
-        # Add system information
-        enhanced_report["system_info"] = {
+        system_info: dict[str, object] = {
             "platform": platform.system(),
             "architecture": platform.machine(),
             "python_version": platform.python_version(),
             "hostname": platform.node(),
         }
 
+        content_copy = report_data.copy()
+
         # Add analysis summary if not present
-        if "summary" not in enhanced_report["content"]:
-            enhanced_report["content"]["summary"] = _generate_report_summary(report_data)
+        if "summary" not in content_copy:
+            content_copy["summary"] = _generate_report_summary(report_data)
+
+        enhanced_report: dict[str, object] = {
+            "report_metadata": report_metadata,
+            "content": content_copy,
+            "system_info": system_info,
+        }
 
         # Validate required fields
         required_fields = ["content"]
@@ -1408,12 +1452,10 @@ def _validate_and_enhance_report(report_data: dict[str, object]) -> dict[str, ob
                 return None
 
         # Sanitize sensitive data
-        enhanced_report = _sanitize_report_data(enhanced_report)
-
-        return enhanced_report
+        return _sanitize_report_data(enhanced_report)
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Error validating report: %s", e, exc_info=True)
+        logger.exception("Error validating report: %s", e)
         return None
 
 
@@ -1530,7 +1572,7 @@ def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, re
                 }
 
         except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-            logger.error("HTTP submission failed: %s", e, exc_info=True)
+            logger.exception("HTTP submission failed: %s", e)
             return {
                 "status": "failed",
                 "endpoint": endpoint,
@@ -1540,7 +1582,7 @@ def _submit_to_remote_endpoint(report_data: dict[str, object], endpoint: str, re
             }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Remote submission error: %s", e, exc_info=True)
+        logger.exception("Remote submission error: %s", e)
         return {"status": "error", "error": str(e)}
 
 
@@ -1551,9 +1593,9 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         from pathlib import Path
 
         project_root = Path(__file__).parent.parent.parent.parent
-        reports_dir = project_root / "data" / "reports"
-        reports_dir.mkdir(parents=True, exist_ok=True)
-        reports_dir = str(reports_dir)
+        reports_dir_path = project_root / "data" / "reports"
+        reports_dir_path.mkdir(parents=True, exist_ok=True)
+        reports_dir = str(reports_dir_path)
 
         # Generate multiple output formats
         formats_saved = []
@@ -1565,7 +1607,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
                 json.dump(report_data, f, indent=2, ensure_ascii=False)
             formats_saved.append({"format": "json", "path": json_path, "size": os.path.getsize(json_path)})
         except (OSError, ValueError) as e:
-            logger.error("Failed to save JSON report: %s", e, exc_info=True)
+            logger.exception("Failed to save JSON report: %s", e)
 
         # 2. Human-readable text format
         txt_path = os.path.join(reports_dir, f"{report_id}.txt")
@@ -1574,7 +1616,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
                 f.write(_format_report_as_text(report_data))
             formats_saved.append({"format": "text", "path": txt_path, "size": os.path.getsize(txt_path)})
         except (OSError, ValueError) as e:
-            logger.error("Failed to save text report: %s", e, exc_info=True)
+            logger.exception("Failed to save text report: %s", e)
 
         # 3. CSV format for tabular data
         csv_path = os.path.join(reports_dir, f"{report_id}.csv")
@@ -1614,7 +1656,7 @@ def _submit_to_local_storage(report_data: dict[str, object], report_id: str) -> 
         }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Local storage submission error: %s", e, exc_info=True)
+        logger.exception("Local storage submission error: %s", e)
         return {"status": "error", "error": str(e)}
 
 
@@ -1685,7 +1727,7 @@ def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> d
             }
 
         except ImportError as e:
-            logger.error("Import error in final_utilities: %s", e, exc_info=True)
+            logger.exception("Import error in final_utilities: %s", e)
             return {
                 "method": "email",
                 "status": "unavailable",
@@ -1701,7 +1743,7 @@ def _attempt_email_delivery(report_data: dict[str, object], report_id: str) -> d
             }
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Email configuration error: %s", e, exc_info=True)
+        logger.exception("Email configuration error: %s", e)
         return None
 
 
@@ -1758,7 +1800,7 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                     "message": "AWS SDK (boto3) not installed. Install with: pip install boto3",
                 }
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e, exc_info=True)
+                logger.exception("Error in final_utilities: %s", e)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1780,10 +1822,12 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                 blob_client = blob_service.get_blob_client(container=container, blob=blob_name)
 
                 # Upload the report
+                from azure.storage.blob import ContentSettings
+
                 blob_client.upload_blob(
                     json.dumps(report_data, indent=2),
                     overwrite=True,
-                    content_settings={"content_type": "application/json"},
+                    content_settings=ContentSettings(content_type="application/json"),
                 )
 
                 return {
@@ -1804,7 +1848,7 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
                     "message": "Azure SDK not installed. Install with: pip install azure-storage-blob",
                 }
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e, exc_info=True)
+                logger.exception("Error in final_utilities: %s", e)
                 return {
                     "method": "cloud_storage",
                     "status": "failed",
@@ -1821,14 +1865,14 @@ def _attempt_cloud_storage(report_data: dict[str, object], report_id: str) -> di
             }
 
     except json.JSONDecodeError as e:
-        logger.error("json.JSONDecodeError in final_utilities: %s", e, exc_info=True)
+        logger.exception("json.JSONDecodeError in final_utilities: %s", e)
         return {
             "method": "cloud_storage",
             "status": "failed",
             "message": "Invalid cloud configuration JSON in INTELLICRACK_CLOUD_CONFIG",
         }
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Error in final_utilities: %s", e, exc_info=True)
+        logger.exception("Error in final_utilities: %s", e)
         return {
             "method": "cloud_storage",
             "status": "failed",
@@ -1891,7 +1935,7 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
                 }
 
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.exception("Error in final_utilities: %s", e)
                 return {
                     "method": "database",
                     "status": "failed",
@@ -1966,7 +2010,7 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
                     "message": "PostgreSQL driver not installed. Install with: pip install psycopg2-binary",
                 }
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.exception("Error in final_utilities: %s", e)
                 return {
                     "method": "database",
                     "status": "failed",
@@ -1979,13 +2023,14 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
             # MongoDB database storage
             try:
                 import pymongo
+                from pymongo import MongoClient
 
                 # Get MongoDB server from configuration
                 from intellicrack.utils.service_utils import get_service_url
 
                 mongo_url = get_service_url("mongodb_server")
 
-                client = pymongo.MongoClient(config.get("connection_string", mongo_url))
+                client: MongoClient[dict[str, object]] = pymongo.MongoClient(config.get("connection_string", mongo_url))
                 db = client[config.get("database", "intellicrack")]
                 collection = db[config.get("collection", "analysis_reports")]
 
@@ -2021,7 +2066,7 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
                     "message": "MongoDB driver not installed. Install with: pip install pymongo",
                 }
             except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-                logger.error("Error in final_utilities: %s", e)
+                logger.exception("Error in final_utilities: %s", e)
                 return {
                     "method": "database",
                     "status": "failed",
@@ -2038,14 +2083,14 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
             }
 
     except json.JSONDecodeError as e:
-        logger.error("json.JSONDecodeError in final_utilities: %s", e)
+        logger.exception("json.JSONDecodeError in final_utilities: %s", e)
         return {
             "method": "database",
             "status": "failed",
             "message": "Invalid database configuration JSON in INTELLICRACK_DB_CONFIG",
         }
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
-        logger.error("Error in final_utilities: %s", e)
+        logger.exception("Error in final_utilities: %s", e)
         return {
             "method": "database",
             "status": "failed",
@@ -2056,17 +2101,18 @@ def _attempt_database_storage(report_data: dict[str, object], report_id: str) ->
 
 def _generate_report_summary(report_data: dict[str, object]) -> dict[str, object]:
     """Generate a summary of the report data."""
-    summary = {
+    data_types: dict[str, str] = {}
+    summary: dict[str, object] = {
         "total_sections": len(report_data),
         "sections": list(report_data.keys()),
-        "data_types": {},
+        "data_types": data_types,
         "has_errors": False,
         "has_results": False,
     }
 
     # Analyze data types and content
     for key, value in report_data.items():
-        summary["data_types"][key] = type(value).__name__
+        data_types[key] = type(value).__name__
 
         # Check for common patterns
         if key.lower() in ["error", "errors", "exception"]:
@@ -2084,18 +2130,21 @@ def _sanitize_report_data(report_data: dict[str, object]) -> dict[str, object]:
     # Remove or mask sensitive keys
     sensitive_patterns = ["password", "key", "token", "secret", "credential"]
 
-    def sanitize_dict(data: object) -> object:
-        if isinstance(data, dict):
-            for key, value in data.items():
-                if any(pattern in key.lower() for pattern in sensitive_patterns):
-                    data[key] = "***REDACTED***"
-                elif isinstance(value, dict):
-                    sanitize_dict(value)
-                elif isinstance(value, list):
-                    for item in value:
-                        if isinstance(item, dict):
-                            sanitize_dict(item)
-        return data
+    def sanitize_dict(data: object) -> dict[str, object]:
+        if not isinstance(data, dict):
+            return {}
+
+        result: dict[str, object] = {}
+        for key, value in data.items():
+            if any(pattern in key.lower() for pattern in sensitive_patterns):
+                result[key] = "***REDACTED***"
+            elif isinstance(value, dict):
+                result[key] = sanitize_dict(value)
+            elif isinstance(value, list):
+                result[key] = [sanitize_dict(item) if isinstance(item, dict) else item for item in value]
+            else:
+                result[key] = value
+        return result
 
     return sanitize_dict(sanitized)
 
@@ -2109,21 +2158,23 @@ def _format_report_as_text(report_data: dict[str, object]) -> str:
 
     # Add metadata
     metadata = report_data.get("report_metadata", {})
-    lines.append("REPORT METADATA:")
-    for key, value in metadata.items():
-        lines.append(f"  {key}: {value}")
-    lines.append("")
+    if isinstance(metadata, dict):
+        lines.append("REPORT METADATA:")
+        for key, value in metadata.items():
+            lines.append(f"  {key}: {value}")
+        lines.append("")
 
     # Add system info
     system_info = report_data.get("system_info", {})
-    if system_info:
+    if isinstance(system_info, dict) and system_info:
         lines.append("SYSTEM INFORMATION:")
         for key, value in system_info.items():
             lines.append(f"  {key}: {value}")
         lines.append("")
 
     # Add content
-    content = report_data.get("content", {})
+    content_val = report_data.get("content", {})
+    content = content_val if isinstance(content_val, dict) else {}
     lines.append("ANALYSIS CONTENT:")
     lines.append("-" * 30)
 
@@ -2155,27 +2206,31 @@ def _save_report_as_csv(report_data: dict[str, object], csv_path: str) -> bool:
     """Save report data as CSV format."""
     try:
         import csv
+        from typing import Any
 
         # Look for list/array data that can be converted to CSV
-        content = report_data.get("content", {})
+        content_val = report_data.get("content", {})
+        content = content_val if isinstance(content_val, dict) else {}
+
         for value in content.values():
             if isinstance(value, list) and value and isinstance(value[0], dict):
                 with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
                     fieldnames = list(value[0].keys())
-                    writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+                    writer: csv.DictWriter[Any] = csv.DictWriter(csvfile, fieldnames=fieldnames)
                     writer.writeheader()
                     for row in value:
-                        writer.writerow(row)
+                        if isinstance(row, dict):
+                            writer.writerow(row)
                 return True
 
         # If no suitable tabular data found, create summary CSV
         with open(csv_path, "w", newline="", encoding="utf-8") as csvfile:
-            writer = csv.writer(csvfile)
-            writer.writerow(["Section", "Type", "Summary"])
+            writer_obj = csv.writer(csvfile)
+            writer_obj.writerow(["Section", "Type", "Summary"])
 
             for key, value in content.items():
                 summary = f"{str(value)[:100]}..." if len(str(value)) > 100 else str(value)
-                writer.writerow([key, type(value).__name__, summary])
+                writer_obj.writerow([key, type(value).__name__, summary])
 
         return True
 
@@ -2192,11 +2247,12 @@ def _create_report_archive(report_id: str, formats_saved: list[dict[str, object]
 
         with tarfile.open(archive_path, "w:gz") as tar:
             for format_info in formats_saved:
-                if format_info["format"] != "archive":  # Don't include the archive itself
-                    file_path = format_info["path"]
-                    if os.path.exists(file_path):
-                        arcname = os.path.basename(file_path)
-                        tar.add(file_path, arcname=arcname)
+                fmt = format_info.get("format")
+                if fmt != "archive":  # Don't include the archive itself
+                    file_path_val = format_info.get("path")
+                    if isinstance(file_path_val, str) and os.path.exists(file_path_val):
+                        arcname = os.path.basename(file_path_val)
+                        tar.add(file_path_val, arcname=arcname)
 
         return True
 
@@ -2229,7 +2285,7 @@ def _create_submission_audit_trail(submission_result: dict[str, object], metadat
             with open(audit_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(audit_entry) + "\n")
         except OSError as e:
-            logger.error("OS error in final_utilities: %s", e)
+            logger.exception("OS error in final_utilities: %s", e)
             # Audit file not critical
 
     except (OSError, ValueError, RuntimeError, AttributeError, KeyError) as e:
@@ -2300,7 +2356,7 @@ def create_dataset(data: list[dict[str, object]], format: str = "json") -> dict[
 
     """
     """Create a dataset from raw data."""
-    dataset = {
+    dataset: dict[str, object] = {
         "format": format,
         "size": len(data),
         "created": time.time(),
@@ -2309,9 +2365,10 @@ def create_dataset(data: list[dict[str, object]], format: str = "json") -> dict[
 
     # Calculate statistics
     if data:
-        keys = set()
+        keys: set[str] = set()
         for item in data:
-            keys.update(item.keys())
+            if isinstance(item, dict):
+                keys.update(item.keys())
         dataset["fields"] = list(keys)
 
     return dataset
@@ -2374,7 +2431,7 @@ def load_dataset_preview(dataset_path: str, limit: int = 10) -> list[dict[str, o
             data = json.load(f)
             return data[:limit] if isinstance(data, list) else [data]
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to load dataset preview: %s", e)
+        logger.exception("Failed to load dataset preview: %s", e)
         return []
 
 
@@ -2503,7 +2560,9 @@ def add_recommendations(report: dict[str, object], recommendations: list[str]) -
     """Add recommendations to a report."""
     if "recommendations" not in report:
         report["recommendations"] = []
-    report["recommendations"].extend(recommendations)
+    existing = report["recommendations"]
+    if isinstance(existing, list):
+        existing.extend(recommendations)
 
 
 def showEvent(event: object) -> None:
@@ -2535,10 +2594,13 @@ def do_GET(request_handler: object) -> None:
         request_handler: HTTP request handler object
 
     """
-    request_handler.send_response(200)
-    request_handler.send_header("Content-type", "text/html")
-    request_handler.end_headers()
-    request_handler.wfile.write(b"Intellicrack Server Running")
+    from http.server import BaseHTTPRequestHandler
+
+    if isinstance(request_handler, BaseHTTPRequestHandler):
+        request_handler.send_response(200)
+        request_handler.send_header("Content-type", "text/html")
+        request_handler.end_headers()
+        request_handler.wfile.write(b"Intellicrack Server Running")
 
 
 def display_patch_validation_results(results: dict[str, object], display_mode: str = "console") -> None:
@@ -2582,28 +2644,31 @@ def display_patch_validation_results(results: dict[str, object], display_mode: s
                 "=== PATCH TESTING RESULTS ===\n",
                 f"Status: {'SUCCESS' if success else 'FAILED'}\n",
                 f"Total Patches: {patches_total}\n",
+                f"Validated: {patches_validated}\n",
+                f"Failed: {patches_failed}\n\n",
             ]
-            output.append(f"Validated: {patches_validated}\n")
-            output.append(f"Failed: {patches_failed}\n\n")
-
-            if validation_results:
+            if validation_results and isinstance(validation_results, list):
                 output.append("=== PATCH DETAILS ===\n")
+                patch_result: object
                 for i, patch_result in enumerate(validation_results):
-                    output.append(f"\nPatch {i + 1}:")
-                    output.append(f"  Offset: {hex(patch_result.get('offset', 0))}\n")
-                    output.append(f"  Description: {patch_result.get('description', 'N/A')}\n")
-                    output.append(f"  Success: {patch_result.get('success', False)}\n")
+                    if isinstance(patch_result, dict):
+                        output.append(f"\nPatch {i + 1}:")
+                        offset_val = patch_result.get('offset', 0)
+                        offset = offset_val if isinstance(offset_val, int) else 0
+                        output.append(f"  Offset: {hex(offset)}\n")
+                        output.append(f"  Description: {patch_result.get('description', 'N/A')}\n")
+                        output.append(f"  Success: {patch_result.get('success', False)}\n")
 
-                    if "error" in patch_result:
-                        output.append(f"  Error: {patch_result['error']}\n")
-                    if "warning" in patch_result:
-                        output.append(f"  Warning: {patch_result['warning']}\n")
+                        if "error" in patch_result:
+                            output.append(f"  Error: {patch_result['error']}\n")
+                        if "warning" in patch_result:
+                            output.append(f"  Warning: {patch_result['warning']}\n")
 
-                    if validation := patch_result.get("validation", {}):
-                        output.append("  Validation:\n")
-                        for key, value in validation.items():
-                            output.append(f"    {key}: {value}\n")
-
+                        validation_val = patch_result.get("validation", {})
+                        if isinstance(validation_val, dict):
+                            validation = validation_val
+                            output.append("  Validation:\n")
+                            output.extend(f"    {key}: {value}\n" for key, value in validation.items())
             text_edit.setPlainText("".join(output))
             layout.addWidget(text_edit)
             dialog.setLayout(layout)
@@ -2626,26 +2691,32 @@ def display_patch_validation_results(results: dict[str, object], display_mode: s
             if results.get("temp_output"):
                 logger.info("Output File: %s", results["temp_output"])
 
-            if validation_results:
+            if validation_results and isinstance(validation_results, list):
                 logger.info("\n%s", "=" * 60)
                 logger.info("PATCH DETAILS")
                 logger.info("=" * 60)
 
-                for i, patch_result in enumerate(validation_results):
-                    logger.info("\nPatch %s:", i + 1)
-                    logger.info("  Offset: %s", hex(patch_result.get("offset", 0)))
-                    logger.info("  Description: %s", patch_result.get("description", "N/A"))
-                    logger.info("  Success: %s", patch_result.get("success", False))
+                patch_result_obj: object
+                for i, patch_result_obj in enumerate(validation_results):
+                    if isinstance(patch_result_obj, dict):
+                        offset_val = patch_result_obj.get("offset", 0)
+                        offset = offset_val if isinstance(offset_val, int) else 0
+                        logger.info("\nPatch %s:", i + 1)
+                        logger.info("  Offset: %s", hex(offset))
+                        logger.info("  Description: %s", patch_result_obj.get("description", "N/A"))
+                        logger.info("  Success: %s", patch_result_obj.get("success", False))
 
-                    if "error" in patch_result:
-                        logger.info("  Error: %s", patch_result["error"])
-                    if "warning" in patch_result:
-                        logger.info("  Warning: %s", patch_result["warning"])
+                        if "error" in patch_result_obj:
+                            logger.info("  Error: %s", patch_result_obj["error"])
+                        if "warning" in patch_result_obj:
+                            logger.info("  Warning: %s", patch_result_obj["warning"])
 
-                    if validation := patch_result.get("validation", {}):
-                        logger.info("  Validation:")
-                        for key, value in validation.items():
-                            logger.info("    %s: %s", key, value)
+                        validation_val = patch_result_obj.get("validation", {})
+                        if isinstance(validation_val, dict):
+                            validation = validation_val
+                            logger.info("  Validation:")
+                            for key, value in validation.items():
+                                logger.info("    %s: %s", key, value)
 
             logger.info("\n%s", "=" * 60)
 
@@ -2655,7 +2726,7 @@ def display_patch_validation_results(results: dict[str, object], display_mode: s
         logger.info("Displayed patch testing results: %s/%s validated", patches_validated, patches_total)
 
     except Exception as e:
-        logger.error("Error displaying results: %s", e, exc_info=True)
+        logger.exception("Error displaying results: %s", e)
 
 
 # Note: Exports are handled by the package-level __init__.py to avoid duplication

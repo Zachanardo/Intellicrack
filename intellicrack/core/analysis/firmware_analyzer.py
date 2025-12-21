@@ -135,7 +135,7 @@ class ExtractedFile:
                 permissions=oct(stat_info.st_mode)[-3:],
             )
         except Exception as e:
-            logger.error("Error creating ExtractedFile from %s: %s", file_path, e)
+            logger.exception("Error creating ExtractedFile from %s: %s", file_path, e)
             return cls(
                 file_path=file_path,
                 original_offset=original_offset,
@@ -323,7 +323,7 @@ class FirmwareAnalyzer:
             return result
 
         except Exception as e:
-            logger.error("Firmware analysis error: %s", e)
+            logger.exception("Firmware analysis error: %s", e)
             return FirmwareAnalysisResult(
                 file_path=file_path,
                 error=str(e),
@@ -348,7 +348,7 @@ class FirmwareAnalyzer:
                     signatures.append(signature)
 
         except Exception as e:
-            logger.error("Signature scanning failed: %s", e)
+            logger.exception("Signature scanning failed: %s", e)
             # Fallback to basic file type detection
             signatures.append(
                 FirmwareSignature(
@@ -473,7 +473,7 @@ class FirmwareAnalyzer:
                 entropy_analysis["file_entropy"] = round(avg_entropy, 3)
 
         except Exception as e:
-            logger.error("Entropy analysis failed: %s", e)
+            logger.exception("Entropy analysis failed: %s", e)
             # Fallback to basic entropy calculation
             try:
                 entropy_analysis["file_entropy"] = self._calculate_basic_entropy(file_path)
@@ -506,7 +506,7 @@ class FirmwareAnalyzer:
 
             return round(entropy, 3)
         except Exception as e:
-            logger.error("Basic entropy calculation failed: %s", e)
+            logger.exception("Basic entropy calculation failed: %s", e)
             return 0.0
 
     def _extract_embedded_files(self, file_path: str, max_depth: int = 2) -> FirmwareExtraction:
@@ -557,7 +557,7 @@ class FirmwareAnalyzer:
                             logger.debug("Recursive extraction failed for %s: %s", extracted_file.file_path, e)
 
         except Exception as e:
-            logger.error("File extraction failed: %s", e)
+            logger.exception("File extraction failed: %s", e)
             extraction.success = False
             extraction.errors.append(str(e))
 
@@ -803,21 +803,20 @@ class FirmwareAnalyzer:
             ]
 
             for string in strings:
-                for pattern, description in backdoor_patterns:
-                    if re.search(pattern, string, re.IGNORECASE):
-                        findings.append(
-                            SecurityFinding(
-                                finding_type=SecurityFindingType.BACKDOOR_BINARY,
-                                description=f"{description} detected",
-                                file_path=file_path,
-                                offset=0,
-                                severity="high",
-                                confidence=0.6,
-                                evidence=string[:100],
-                                remediation="Review and remove suspicious functionality",
-                            )
-                        )
-
+                findings.extend(
+                    SecurityFinding(
+                        finding_type=SecurityFindingType.BACKDOOR_BINARY,
+                        description=f"{description} detected",
+                        file_path=file_path,
+                        offset=0,
+                        severity="high",
+                        confidence=0.6,
+                        evidence=string[:100],
+                        remediation="Review and remove suspicious functionality",
+                    )
+                    for pattern, description in backdoor_patterns
+                    if re.search(pattern, string, re.IGNORECASE)
+                )
         except Exception as e:
             logger.debug("Backdoor scanning failed: %s", e)
 
@@ -1043,7 +1042,7 @@ def get_firmware_analyzer() -> FirmwareAnalyzer | None:
         try:
             _firmware_analyzer = FirmwareAnalyzer()
         except Exception as e:
-            logger.error("Failed to initialize firmware analyzer: %s", e)
+            logger.exception("Failed to initialize firmware analyzer: %s", e)
             return None
     return _firmware_analyzer
 

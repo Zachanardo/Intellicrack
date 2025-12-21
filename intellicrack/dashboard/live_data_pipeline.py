@@ -285,7 +285,7 @@ class LiveDataPipeline:
                         events_dropped = self.metrics["events_dropped"]
                         if isinstance(events_dropped, (int, float)):
                             self.metrics["events_dropped"] = events_dropped + 1
-                    self.logger.warning(f"Dropped low-priority event from {source}")
+                    self.logger.warning("Dropped low-priority event from %s", source)
                 else:
                     # Force add high-priority events
                     self.event_queues[priority].put((event.timestamp, event))
@@ -337,7 +337,7 @@ class LiveDataPipeline:
                 time.sleep(0.001)  # Small delay to prevent CPU spinning
 
             except Exception as e:
-                self.logger.error(f"Error processing events: {e}")
+                self.logger.exception("Error processing events: %s", e)
 
     def _process_single_event(self, event: DataEvent) -> None:
         """Process a single event.
@@ -398,7 +398,7 @@ class LiveDataPipeline:
                 try:
                     callback(self.event_buffer)
                 except Exception as e:
-                    self.logger.error(f"Error in event callback: {e}")
+                    self.logger.exception("Error in event callback: %s", e)
 
             # Clear buffer
             self.event_buffer.clear()
@@ -557,7 +557,7 @@ class LiveDataPipeline:
             try:
                 callback(alert)
             except Exception as e:
-                self.logger.error(f"Error in alert callback: {e}")
+                self.logger.exception("Error in alert callback: %s", e)
 
     def _send_metrics_update(self) -> None:
         """Send metrics update to clients."""
@@ -589,7 +589,7 @@ class LiveDataPipeline:
                     ws_connection = cast("Any", connection)
                     asyncio.run_coroutine_threadsafe(ws_connection.send(message_json), asyncio.get_event_loop())
                 except Exception as e:
-                    self.logger.error(f"Error sending to WebSocket: {e}")
+                    self.logger.exception("Error sending to WebSocket: %s", e)
                     disconnected.add(connection)
 
             # Remove disconnected clients
@@ -626,7 +626,7 @@ class LiveDataPipeline:
             conn.close()
 
         except Exception as e:
-            self.logger.error(f"Error storing event: {e}")
+            self.logger.exception("Error storing event: %s", e)
 
     def _store_metrics(self) -> None:
         """Store metrics in database."""
@@ -650,7 +650,7 @@ class LiveDataPipeline:
             conn.close()
 
         except Exception as e:
-            self.logger.error(f"Error storing metrics: {e}")
+            self.logger.exception("Error storing metrics: %s", e)
 
     def add_websocket_connection(self, connection: object) -> None:
         """Add WebSocket connection.
@@ -749,7 +749,7 @@ class LiveDataPipeline:
             return events
 
         except Exception as e:
-            self.logger.error(f"Error getting historical events: {e}")
+            self.logger.exception("Error getting historical events: %s", e)
             return []
 
     def get_metrics_history(self, start_time: float, end_time: float, metric_name: str | None = None) -> list[dict[str, Any]]:
@@ -796,5 +796,5 @@ class LiveDataPipeline:
             return metrics
 
         except Exception as e:
-            self.logger.error(f"Error getting metrics history: {e}")
+            self.logger.exception("Error getting metrics history: %s", e)
             return []

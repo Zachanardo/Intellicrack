@@ -20,11 +20,22 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 import re
+import sys
 import types
 from collections.abc import Callable
-from typing import Any, Optional, Union
+from typing import Any, Protocol, TYPE_CHECKING
 
 from intellicrack.utils.logger import logger
+
+
+class Comparable(Protocol):
+    """Protocol for comparable types."""
+
+    def __lt__(self, other: Any) -> bool:
+        """Less than comparison."""
+
+    def __gt__(self, other: Any) -> bool:
+        """Greater than comparison."""
 
 
 """
@@ -35,9 +46,26 @@ When sqlite3 is not available, it provides REAL, functional Python-based
 implementations for database operations used in Intellicrack.
 """
 
-# SQLite3 availability detection and import handling
+if TYPE_CHECKING:
+    import sqlite3 as sqlite3_module_type
+    from sqlite3 import Connection, Cursor, Row
+
+HAS_SQLITE3: bool = False
+HAS_SQLITE: bool = False
+SQLITE3_VERSION: str | None = None
+
 try:
-    import sqlite3
+    import sqlite3 as _sqlite3_real
+
+    HAS_SQLITE3 = True
+    HAS_SQLITE = True
+    SQLITE3_VERSION = _sqlite3_real.sqlite_version
+
+except ImportError as e:
+    logger.error("SQLite3 not available, using fallback implementations: %s", e)
+    _sqlite3_real = None  # type: ignore[assignment]
+
+if _sqlite3_real is not None:
     from sqlite3 import (
         Connection,
         Cursor,
@@ -52,43 +80,43 @@ try:
         register_converter,
     )
 
-    HAS_SQLITE3 = True
-    HAS_SQLITE = True  # Alias for compatibility
-    SQLITE3_VERSION = sqlite3.sqlite_version
+    PARSE_DECLTYPES: int = _sqlite3_real.PARSE_DECLTYPES
+    PARSE_COLNAMES: int = _sqlite3_real.PARSE_COLNAMES
 
-except ImportError as e:
-    logger.error("SQLite3 not available, using fallback implementations: %s", e)
-    HAS_SQLITE3 = False
-    HAS_SQLITE = False  # Alias for compatibility
-    SQLITE3_VERSION = None
+    sqlite3 = _sqlite3_real
 
-    # Production-ready fallback in-memory database implementation
+else:
 
-    # Exception classes
-    class Error(Exception):
+    class FallbackError(Exception):  # type: ignore[unreachable]
         """Base exception for database errors."""
 
         pass
 
-    class DatabaseError(Error):
+    class FallbackDatabaseError(FallbackError):
         """Database error."""
 
         pass
 
-    class IntegrityError(DatabaseError):
+    class FallbackIntegrityError(FallbackDatabaseError):
         """Integrity constraint violation."""
 
         pass
 
-    class OperationalError(DatabaseError):
+    class FallbackOperationalError(FallbackDatabaseError):
         """Database operational error."""
 
         pass
 
-    class ProgrammingError(DatabaseError):
+    class FallbackProgrammingError(FallbackDatabaseError):
         """Programming error."""
 
         pass
+
+    Error = FallbackError  # type: ignore[misc]
+    DatabaseError = FallbackDatabaseError  # type: ignore[misc]
+    IntegrityError = FallbackIntegrityError  # type: ignore[misc]
+    OperationalError = FallbackOperationalError  # type: ignore[misc]
+    ProgrammingError = FallbackProgrammingError  # type: ignore[misc]
 
     class FallbackTable:
         """In-memory table implementation.
@@ -124,7 +152,6 @@ except ImportError as e:
             self.indexes: dict[str, Any] = {}
             self.constraints: list[tuple[str, str]] = []
 
-            # Parse columns for constraints
             for col_name, _col_type, constraints in columns:
                 if "PRIMARY KEY" in constraints:
                     self.primary_key = col_name
@@ -146,7 +173,6 @@ except ImportError as e:
                 IntegrityError: If constraints are violated.
 
             """
-            # Validate constraints
             row = {}
             for i, (col_name, col_type, _constraints) in enumerate(self.columns):
                 if i < len(values):
@@ -154,13 +180,11 @@ except ImportError as e:
                 else:
                     value = None
 
-                # Check NOT NULL
                 if value is None and ("NOT NULL", col_name) in self.constraints:
                     error_msg = f"NOT NULL constraint failed: {col_name}"
                     logger.error(error_msg)
                     raise IntegrityError(error_msg)
 
-                # Type conversion
                 if value is not None:
                     if col_type == "INTEGER":
                         value = int(value) if value else None
@@ -173,7 +197,6 @@ except ImportError as e:
 
                 row[col_name] = value
 
-            # Check UNIQUE constraints
             for constraint_type, col_name in self.constraints:
                 if constraint_type == "UNIQUE" and row[col_name] is not None:
                     for existing_row in self.rows:
@@ -181,7 +204,6 @@ except ImportError as e:
                             error_msg = f"UNIQUE constraint failed: {col_name}"
                             logger.error(error_msg)
                             raise IntegrityError(error_msg)
-            # Check PRIMARY KEY
             if self.primary_key and row[self.primary_key] is not None:
                 for existing_row in self.rows:
                     if existing_row[self.primary_key] == row[self.primary_key]:
@@ -214,11 +236,9 @@ except ImportError as e:
             result_rows = []
 
             for row in self.rows:
-                # Apply WHERE clause
                 if where and not self._evaluate_where(row, where):
                     continue
 
-                # Select columns
                 if columns and columns != ["*"]:
                     result_row = tuple(row.get(col) for col in columns)
                 else:
@@ -226,14 +246,19 @@ except ImportError as e:
 
                 result_rows.append(result_row)
 
-            # Apply ORDER BY
             if order_by:
                 col_name, direction = order_by
                 col_idx = self._get_column_index(col_name)
                 reverse = direction == "DESC"
-                result_rows.sort(key=lambda x: x[col_idx] if x[col_idx] is not None else "", reverse=reverse)
 
-            # Apply LIMIT
+                def sort_key(x: tuple[Any, ...]) -> Any:
+                    val = x[col_idx] if col_idx < len(x) else None
+                    if val is None:
+                        return ""
+                    return val
+
+                result_rows.sort(key=sort_key, reverse=reverse)
+
             if limit:
                 result_rows = result_rows[:limit]
 
@@ -312,28 +337,28 @@ except ImportError as e:
             row_value = row.get(col_name)
 
             if operator == "=":
-                return row_value == value
+                return bool(row_value == value)
             elif operator == "!=":
-                return row_value != value
+                return bool(row_value != value)
             elif operator == ">":
-                return row_value > value if row_value is not None else False
+                return bool(row_value > value if row_value is not None else False)
             elif operator == "<":
-                return row_value < value if row_value is not None else False
+                return bool(row_value < value if row_value is not None else False)
             elif operator == ">=":
-                return row_value >= value if row_value is not None else False
+                return bool(row_value >= value if row_value is not None else False)
             elif operator == "<=":
-                return row_value <= value if row_value is not None else False
+                return bool(row_value <= value if row_value is not None else False)
             elif operator == "LIKE":
                 if row_value is None:
                     return False
                 pattern = value.replace("%", ".*").replace("_", ".")
                 return bool(re.match(pattern, str(row_value)))
             elif operator == "IN":
-                return row_value in value
+                return bool(row_value in value)
             elif operator == "IS":
-                return row_value is value
+                return bool(row_value is value)
             elif operator == "IS NOT":
-                return row_value is not value
+                return bool(row_value is not value)
 
             return False
 
@@ -384,7 +409,6 @@ except ImportError as e:
             self.transactions: list[Any] = []
             self.in_transaction: bool = False
 
-            # Load from file if not in-memory
             if path != ":memory:" and os.path.exists(path):
                 self._load_from_file()
 
@@ -443,22 +467,26 @@ except ImportError as e:
                 ProgrammingError: If SQL syntax is invalid or unsupported.
 
             """
-            # Parse SQL (simplified)
             sql = sql.strip()
             sql_upper = sql.upper()
 
             if sql_upper.startswith("CREATE TABLE"):
-                return self._execute_create_table(sql)
+                self._execute_create_table(sql)
+                return None
             elif sql_upper.startswith("DROP TABLE"):
-                return self._execute_drop_table(sql)
+                self._execute_drop_table(sql)
+                return None
             elif sql_upper.startswith("INSERT INTO"):
-                return self._execute_insert(sql, params)
+                self._execute_insert(sql, params)
+                return None
             elif sql_upper.startswith("SELECT"):
                 return self._execute_select(sql, params)
             elif sql_upper.startswith("UPDATE"):
-                return self._execute_update(sql, params)
+                self._execute_update(sql, params)
+                return None
             elif sql_upper.startswith("DELETE"):
-                return self._execute_delete(sql, params)
+                self._execute_delete(sql, params)
+                return None
             elif sql_upper.startswith("BEGIN"):
                 self.in_transaction = True
                 self.transactions = []
@@ -489,7 +517,6 @@ except ImportError as e:
                 ProgrammingError: If SQL syntax is invalid.
 
             """
-            # Parse table name and columns
             match = re.match(r"CREATE TABLE\s+(\w+)\s*\((.*)\)", sql, re.IGNORECASE | re.DOTALL)
             if not match:
                 error_msg = f"Invalid CREATE TABLE syntax: {sql}"
@@ -499,7 +526,6 @@ except ImportError as e:
             table_name = match[1]
             columns_str = match[2]
 
-            # Parse columns
             columns = []
             for col_def in columns_str.split(","):
                 col_def = col_def.strip()
@@ -568,12 +594,10 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise OperationalError(error_msg)
 
-            # Parse values
             values = []
             if params:
                 values = params
             else:
-                # Parse literal values
                 for val in values_str.split(","):
                     val = val.strip()
                     if val.startswith("'") and val.endswith("'"):
@@ -605,7 +629,6 @@ except ImportError as e:
                 OperationalError: If table does not exist.
 
             """
-            # Simplified SELECT parsing
             match = re.match(
                 r"SELECT\s+(.*?)\s+FROM\s+(\w+)(?:\s+WHERE\s+(.*?))?(?:\s+ORDER BY\s+(.*?))?(?:\s+LIMIT\s+(\d+))?",
                 sql,
@@ -628,13 +651,11 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise OperationalError(error_msg)
 
-            # Parse columns
             if columns_str.strip() == "*":
                 columns = ["*"]
             else:
                 columns = [col.strip() for col in columns_str.split(",")]
 
-            # Parse WHERE clause
             where = None
             if where_str:
                 if match := re.match(
@@ -642,11 +663,10 @@ except ImportError as e:
                     where_str,
                     re.IGNORECASE,
                 ):
-                    col_name = match.group(1)
-                    operator = match.group(2).upper()
-                    value_str = match.group(3)
+                    col_name = match[1]
+                    operator = match[2].upper()
+                    value_str = match[3]
 
-                    # Parse value
                     if params and "?" in value_str:
                         value = params[0]
                     elif value_str.startswith("'") and value_str.endswith("'"):
@@ -664,7 +684,6 @@ except ImportError as e:
 
                     where = (col_name, operator, value)
 
-            # Parse ORDER BY
             order_by = None
             if order_str:
                 parts = order_str.split()
@@ -672,7 +691,6 @@ except ImportError as e:
                 direction = parts[1] if len(parts) > 1 else "ASC"
                 order_by = (col_name, direction.upper())
 
-            # Parse LIMIT
             limit = int(limit_str) if limit_str else None
 
             return self.tables[table_name].select(columns, where, order_by, limit)
@@ -708,7 +726,6 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise OperationalError(error_msg)
 
-            # Parse SET clause
             set_values = {}
             for assignment in set_str.split(","):
                 col_name, value_str = assignment.split("=")
@@ -727,7 +744,6 @@ except ImportError as e:
 
                 set_values[col_name] = value
 
-            # Parse WHERE clause (simplified)
             where = None
             return self.tables[table_name].update(set_values, where)
 
@@ -761,7 +777,6 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise OperationalError(error_msg)
 
-            # Parse WHERE clause (simplified)
             where = None
             return self.tables[table_name].delete(where)
 
@@ -822,7 +837,7 @@ except ImportError as e:
             except Exception as e:
                 logger.error("Failed to load database: %s", e)
 
-    class Cursor:
+    class FallbackCursor:
         """Database cursor implementation.
 
         Provides an interface for executing SQL statements and fetching results.
@@ -837,7 +852,7 @@ except ImportError as e:
 
         """
 
-        def __init__(self, connection: Connection) -> None:
+        def __init__(self, connection: "FallbackConnection") -> None:
             """Initialize cursor.
 
             Args:
@@ -847,7 +862,7 @@ except ImportError as e:
                 None
 
             """
-            self.connection: Connection = connection
+            self.connection: FallbackConnection = connection
             self.description: list[tuple[str, ...]] | None = None
             self.rowcount: int = -1
             self.lastrowid: int | None = None
@@ -858,7 +873,7 @@ except ImportError as e:
             self,
             sql: str,
             params: list[Any] | None = None,
-        ) -> "Cursor":
+        ) -> "FallbackCursor":
             """Execute SQL statement.
 
             Args:
@@ -893,7 +908,7 @@ except ImportError as e:
                 logger.error(error_msg)
                 raise DatabaseError(error_msg) from e
 
-        def executemany(self, sql: str, params_list: list[list[Any]]) -> "Cursor":
+        def executemany(self, sql: str, params_list: list[list[Any]]) -> "FallbackCursor":
             """Execute SQL with multiple parameter sets.
 
             Args:
@@ -971,7 +986,7 @@ except ImportError as e:
             """
             self._results = []
 
-        def __enter__(self) -> "Cursor":
+        def __enter__(self) -> "FallbackCursor":
             """Context manager entry.
 
             Args:
@@ -995,7 +1010,9 @@ except ImportError as e:
             """
             self.close()
 
-    class Connection:
+    Cursor = FallbackCursor  # type: ignore[misc]
+
+    class FallbackConnection:
         """Database connection implementation.
 
         Manages the connection to a database and provides methods for
@@ -1022,9 +1039,9 @@ except ImportError as e:
             self.database: str = database
             self._db: FallbackDatabase = FallbackDatabase(database)
             self.isolation_level: str | None = None
-            self.row_factory: Callable[[Any], Any] | None = None
+            self.row_factory: Callable[[Any, tuple[Any, ...]], Any] | None = None
 
-        def cursor(self) -> Cursor:
+        def cursor(self) -> FallbackCursor:
             """Create a cursor.
 
             Args:
@@ -1034,9 +1051,9 @@ except ImportError as e:
                 A new Cursor instance bound to this connection.
 
             """
-            return Cursor(self)
+            return FallbackCursor(self)
 
-        def execute(self, sql: str, params: list[Any] | None = None) -> Cursor:
+        def execute(self, sql: str, params: list[Any] | None = None) -> FallbackCursor:
             """Execute SQL directly.
 
             Args:
@@ -1050,7 +1067,7 @@ except ImportError as e:
             cursor = self.cursor()
             return cursor.execute(sql, params)
 
-        def executemany(self, sql: str, params_list: list[list[Any]]) -> Cursor:
+        def executemany(self, sql: str, params_list: list[list[Any]]) -> FallbackCursor:
             """Execute SQL with multiple parameter sets.
 
             Args:
@@ -1101,7 +1118,7 @@ except ImportError as e:
             if self._db.path != ":memory:":
                 self._db._save_to_file()
 
-        def __enter__(self) -> "Connection":
+        def __enter__(self) -> "FallbackConnection":
             """Context manager entry.
 
             Args:
@@ -1136,7 +1153,9 @@ except ImportError as e:
                 self.rollback()
             self.close()
 
-    class Row:
+    Connection = FallbackConnection  # type: ignore[misc]
+
+    class FallbackRow:
         """Row object that supports both index and column name access.
 
         Provides a dict-like interface for accessing row data by column name
@@ -1148,7 +1167,7 @@ except ImportError as e:
 
         """
 
-        def __init__(self, cursor: Cursor, row: tuple[Any, ...]) -> None:
+        def __init__(self, cursor: FallbackCursor, row: tuple[Any, ...]) -> None:
             """Initialize row.
 
             Args:
@@ -1159,7 +1178,7 @@ except ImportError as e:
                 None
 
             """
-            self.cursor: Cursor = cursor
+            self.cursor: FallbackCursor = cursor
             self.row: tuple[Any, ...] = row
 
         def __getitem__(self, key: int | str) -> object:
@@ -1196,7 +1215,9 @@ except ImportError as e:
             """
             return [desc[0] for desc in self.cursor.description or []]
 
-    def connect(database: str = ":memory:", **kwargs: object) -> Connection:
+    Row = FallbackRow  # type: ignore[misc]
+
+    def connect(database: str = ":memory:", **kwargs: object) -> FallbackConnection:  # type: ignore[no-redef]
         """Connect to database.
 
         Args:
@@ -1207,13 +1228,13 @@ except ImportError as e:
             A Connection instance.
 
         """
-        return Connection(database)
+        return FallbackConnection(database)
 
-    def register_adapter(type: type, adapter: Callable[[Any], Any]) -> None:
+    def register_adapter(type_: type[Any], adapter: Callable[[Any], Any]) -> None:
         """Register type adapter.
 
         Args:
-            type: The Python type to adapt.
+            type_: The Python type to adapt.
             adapter: A callable that adapts instances of the type.
 
         Returns:
@@ -1235,12 +1256,10 @@ except ImportError as e:
         """
         logger.info("Converter registration not supported in fallback mode")
 
-    # Module-level attributes
-    PARSE_DECLTYPES: int = 1
-    PARSE_COLNAMES: int = 2
+    PARSE_DECLTYPES: int = 1  # type: ignore[no-redef]
+    PARSE_COLNAMES: int = 2  # type: ignore[no-redef]
 
-    # Create module-like object
-    class FallbackSQLite3:
+    class FallbackSQLite3ModuleType:
         """Fallback sqlite3 module.
 
         Provides a module-like interface compatible with the sqlite3 standard
@@ -1264,34 +1283,28 @@ except ImportError as e:
 
         """
 
-        # Functions
-        connect = staticmethod(connect)
-        register_adapter = staticmethod(register_adapter)
-        register_converter = staticmethod(register_converter)
+        def __init__(self) -> None:
+            """Initialize fallback sqlite3 module."""
+            self.connect = connect
+            self.register_adapter = register_adapter
+            self.register_converter = register_converter
+            self.Connection = Connection
+            self.Cursor = Cursor
+            self.Row = Row
+            self.Error = Error
+            self.DatabaseError = DatabaseError
+            self.IntegrityError = IntegrityError
+            self.OperationalError = OperationalError
+            self.ProgrammingError = ProgrammingError
+            self.PARSE_DECLTYPES = PARSE_DECLTYPES
+            self.PARSE_COLNAMES = PARSE_COLNAMES
+            self.version = "0.0.0-fallback"
 
-        # Classes
-        Connection = Connection
-        Cursor = Cursor
-        Row = Row
-
-        # Exceptions
-        Error = Error
-        DatabaseError = DatabaseError
-        IntegrityError = IntegrityError
-        OperationalError = OperationalError
-        ProgrammingError = ProgrammingError
-
-        # Constants
-        PARSE_DECLTYPES = PARSE_DECLTYPES
-        PARSE_COLNAMES = PARSE_COLNAMES
-
-        # Version
-        version: str = "0.0.0-fallback"
-
-    sqlite3 = FallbackSQLite3()
+    sqlite3_fallback = FallbackSQLite3ModuleType()
+    sys.modules["sqlite3"] = sqlite3_fallback
+    sqlite3 = sqlite3_fallback
 
 
-# Export all sqlite3 objects and availability flag
 __all__ = [
     "Connection",
     "Cursor",

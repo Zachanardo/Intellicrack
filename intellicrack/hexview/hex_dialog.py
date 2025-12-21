@@ -20,8 +20,9 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
+from typing import Any, cast
 
-from PyQt6.QtCore import QSize, Qt
+from PyQt6.QtCore import QPoint, QSize, Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (
     QApplication,
@@ -48,7 +49,7 @@ from intellicrack.handlers.pyqt6_handler import QAction
 
 from .compare_dialog import CompareDialog, ComparisonWorker
 from .file_compare import BinaryComparer
-from .hex_highlighter import HighlightType
+from .hex_highlighter import HexHighlight, HighlightType
 from .hex_renderer import ViewMode
 from .hex_widget import HexViewerWidget
 
@@ -79,13 +80,14 @@ class HexViewerDialog(QDialog):
         self.resize(1200, 800)  # Larger default size (was 800x600)
         self.setModal(False)  # Non-modal dialog
 
-        # Center dialog on screen
-        screen = QApplication.primaryScreen().geometry()
-        size = self.geometry()
-        self.move(
-            (screen.width() - size.width()) // 2,
-            (screen.height() - size.height()) // 2,
-        )
+        primary_screen = QApplication.primaryScreen()
+        if primary_screen is not None:
+            screen = primary_screen.geometry()
+            size = self.geometry()
+            self.move(
+                (screen.width() - size.width()) // 2,
+                (screen.height() - size.height()) // 2,
+            )
 
         # Create main layout
         layout = QVBoxLayout(self)
@@ -101,7 +103,7 @@ class HexViewerDialog(QDialog):
         layout.addWidget(self.toolbar)
 
         # Create main horizontal splitter for sidebar and content
-        self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
         layout.addWidget(self.main_splitter)
 
         # Add sidebar
@@ -114,7 +116,7 @@ class HexViewerDialog(QDialog):
         self.viewer_layout.setContentsMargins(0, 0, 0, 0)
 
         # Create splitter for hex viewers (initially contains one)
-        self.viewer_splitter = QSplitter(Qt.Vertical)
+        self.viewer_splitter = QSplitter(Qt.Orientation.Vertical)
         self.viewer_layout.addWidget(self.viewer_splitter)
 
         # Create the primary hex viewer widget
@@ -291,86 +293,83 @@ class HexViewerDialog(QDialog):
         """
         menu_bar = QMenuBar()
 
-        # File menu
         file_menu = menu_bar.addMenu("File")
+        if file_menu is not None:
+            open_action = QAction("Open...", self)
+            open_action.setShortcut("Ctrl+O")
+            open_action.triggered.connect(self.open_file)
+            file_menu.addAction(open_action)
 
-        open_action = QAction("Open...", self)
-        open_action.setShortcut("Ctrl+O")
-        open_action.triggered.connect(self.open_file)
-        file_menu.addAction(open_action)
+            save_action = QAction("Save", self)
+            save_action.setShortcut("Ctrl+S")
+            save_action.triggered.connect(self.save_file)
+            file_menu.addAction(save_action)
 
-        save_action = QAction("Save", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.save_file)
-        file_menu.addAction(save_action)
+            file_menu.addSeparator()
 
-        file_menu.addSeparator()
+            export_action = QAction("Export...", self)
+            export_action.triggered.connect(self.show_export_dialog)
+            file_menu.addAction(export_action)
 
-        export_action = QAction("Export...", self)
-        export_action.triggered.connect(self.show_export_dialog)
-        file_menu.addAction(export_action)
+            file_menu.addSeparator()
 
-        file_menu.addSeparator()
+            compare_action = QAction("Compare...", self)
+            compare_action.setShortcut("Ctrl+Shift+C")
+            compare_action.triggered.connect(self.show_compare_dialog)
+            file_menu.addAction(compare_action)
 
-        compare_action = QAction("Compare...", self)
-        compare_action.setShortcut("Ctrl+Shift+C")
-        compare_action.triggered.connect(self.show_compare_dialog)
-        file_menu.addAction(compare_action)
+            file_menu.addSeparator()
 
-        file_menu.addSeparator()
+            print_action = QAction("Print...", self)
+            print_action.setShortcut("Ctrl+P")
+            print_action.triggered.connect(self.show_print_dialog)
+            file_menu.addAction(print_action)
 
-        print_action = QAction("Print...", self)
-        print_action.setShortcut("Ctrl+P")
-        print_action.triggered.connect(self.show_print_dialog)
-        file_menu.addAction(print_action)
+            print_preview_action = QAction("Print Preview...", self)
+            print_preview_action.triggered.connect(self.show_print_preview)
+            file_menu.addAction(print_preview_action)
 
-        print_preview_action = QAction("Print Preview...", self)
-        print_preview_action.triggered.connect(self.show_print_preview)
-        file_menu.addAction(print_preview_action)
-
-        # View menu
         view_menu = menu_bar.addMenu("View")
+        if view_menu is not None:
+            split_vertical_action = QAction("Split Vertical", self)
+            split_vertical_action.setShortcut("Ctrl+Shift+V")
+            split_vertical_action.triggered.connect(self.split_view_vertical)
+            view_menu.addAction(split_vertical_action)
 
-        split_vertical_action = QAction("Split Vertical", self)
-        split_vertical_action.setShortcut("Ctrl+Shift+V")
-        split_vertical_action.triggered.connect(self.split_view_vertical)
-        view_menu.addAction(split_vertical_action)
+            split_horizontal_action = QAction("Split Horizontal", self)
+            split_horizontal_action.setShortcut("Ctrl+Shift+H")
+            split_horizontal_action.triggered.connect(self.split_view_horizontal)
+            view_menu.addAction(split_horizontal_action)
 
-        split_horizontal_action = QAction("Split Horizontal", self)
-        split_horizontal_action.setShortcut("Ctrl+Shift+H")
-        split_horizontal_action.triggered.connect(self.split_view_horizontal)
-        view_menu.addAction(split_horizontal_action)
+            view_menu.addSeparator()
 
-        view_menu.addSeparator()
+            close_split_action = QAction("Close Active Split", self)
+            close_split_action.setShortcut("Ctrl+W")
+            close_split_action.triggered.connect(self.close_active_split)
+            view_menu.addAction(close_split_action)
 
-        close_split_action = QAction("Close Active Split", self)
-        close_split_action.setShortcut("Ctrl+W")
-        close_split_action.triggered.connect(self.close_active_split)
-        view_menu.addAction(close_split_action)
+            close_all_splits_action = QAction("Close All Splits", self)
+            close_all_splits_action.triggered.connect(self.close_all_splits)
+            view_menu.addAction(close_all_splits_action)
 
-        close_all_splits_action = QAction("Close All Splits", self)
-        close_all_splits_action.triggered.connect(self.close_all_splits)
-        view_menu.addAction(close_all_splits_action)
+            view_menu.addSeparator()
 
-        view_menu.addSeparator()
+            sync_scrolling_action = QAction("Synchronize Scrolling", self)
+            sync_scrolling_action.setCheckable(True)
+            sync_scrolling_action.setChecked(True)
+            sync_scrolling_action.triggered.connect(self.toggle_sync_scrolling)
+            view_menu.addAction(sync_scrolling_action)
+            self.sync_scrolling_action = sync_scrolling_action
 
-        sync_scrolling_action = QAction("Synchronize Scrolling", self)
-        sync_scrolling_action.setCheckable(True)
-        sync_scrolling_action.setChecked(True)
-        sync_scrolling_action.triggered.connect(self.toggle_sync_scrolling)
-        view_menu.addAction(sync_scrolling_action)
-        self.sync_scrolling_action = sync_scrolling_action
-
-        # Tools menu
         tools_menu = menu_bar.addMenu("Tools")
+        if tools_menu is not None:
+            checksum_action = QAction("Checksums...", self)
+            checksum_action.triggered.connect(self.show_checksum_dialog)
+            tools_menu.addAction(checksum_action)
 
-        checksum_action = QAction("Checksums...", self)
-        checksum_action.triggered.connect(self.show_checksum_dialog)
-        tools_menu.addAction(checksum_action)
-
-        statistics_action = QAction("Statistics...", self)
-        statistics_action.triggered.connect(self.show_statistics_dialog)
-        tools_menu.addAction(statistics_action)
+            statistics_action = QAction("Statistics...", self)
+            statistics_action.triggered.connect(self.show_statistics_dialog)
+            tools_menu.addAction(statistics_action)
 
         return menu_bar
 
@@ -408,14 +407,23 @@ class HexViewerDialog(QDialog):
 
             # Sync position
             if self.sync_scrolling_action.isChecked():
-                new_viewer.vertical_scroll_bar.setValue(self.active_viewer.vertical_scroll_bar.value())
+                new_vbar = new_viewer.verticalScrollBar()
+                active_vbar = self.active_viewer.verticalScrollBar()
+                if new_vbar is not None and active_vbar is not None:
+                    new_vbar.setValue(active_vbar.value())
 
         # Set up synchronization if enabled
         if self.sync_scrolling_action.isChecked():
             self.setup_viewer_sync(new_viewer)
 
-        # Track focus changes
-        new_viewer.focusInEvent = lambda event: (logger.debug("Focus event: %s", event) or self.set_active_viewer(new_viewer))
+        original_focus_in = new_viewer.focusInEvent
+
+        def handle_focus(event: Any) -> None:
+            logger.debug("Focus event: %s", event)
+            self.set_active_viewer(new_viewer)
+            original_focus_in(event)
+
+        new_viewer.focusInEvent = handle_focus  # type: ignore[assignment]
 
         # Add to tracking
         self.viewers.append(new_viewer)
@@ -427,29 +435,28 @@ class HexViewerDialog(QDialog):
             self.viewer_splitter.addWidget(new_viewer)
         else:
             widgets = [self.viewer_splitter.widget(i) for i in range(self.viewer_splitter.count())]
-            # Clear the splitter
             for widget in widgets:
-                widget.setParent(None)
+                if widget is not None:
+                    widget.setParent(None)
 
             # Create new nested layout
             if orientation == Qt.Orientation.Vertical:
                 # Create horizontal splitter containing vertical splits
                 new_splitter = QSplitter(Qt.Orientation.Horizontal)
 
-                # Add existing viewers to left split
                 left_split = QSplitter(Qt.Orientation.Vertical)
                 for widget in widgets:
-                    left_split.addWidget(widget)
+                    if widget is not None:
+                        left_split.addWidget(widget)
                 new_splitter.addWidget(left_split)
 
             else:
-                # Create vertical splitter containing horizontal splits
                 new_splitter = QSplitter(Qt.Orientation.Vertical)
 
-                # Add existing viewers to top split
                 top_split = QSplitter(Qt.Orientation.Horizontal)
                 for widget in widgets:
-                    top_split.addWidget(widget)
+                    if widget is not None:
+                        top_split.addWidget(widget)
                 new_splitter.addWidget(top_split)
 
             # Add new viewer to right
@@ -511,8 +518,12 @@ class HexViewerDialog(QDialog):
                 self.setup_viewer_sync(viewer)
             else:
                 try:
-                    viewer.vertical_scroll_bar.valueChanged.disconnect()
-                    viewer.horizontal_scroll_bar.valueChanged.disconnect()
+                    vbar = viewer.verticalScrollBar()
+                    hbar = viewer.horizontalScrollBar()
+                    if vbar is not None:
+                        vbar.valueChanged.disconnect()
+                    if hbar is not None:
+                        hbar.valueChanged.disconnect()
                 except Exception as e:
                     logger.debug("Error disconnecting scroll signals: %s", e)
 
@@ -528,22 +539,30 @@ class HexViewerDialog(QDialog):
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
-                if other != viewer and hasattr(other, "vertical_scroll_bar"):
-                    other.vertical_scroll_bar.blockSignals(True)
-                    other.vertical_scroll_bar.setValue(value)
-                    other.vertical_scroll_bar.blockSignals(False)
+                if other != viewer:
+                    vbar = other.verticalScrollBar()
+                    if vbar is not None:
+                        vbar.blockSignals(True)
+                        vbar.setValue(value)
+                        vbar.blockSignals(False)
 
         def sync_horizontal(value: int) -> None:
             if not self.sync_scrolling_action.isChecked():
                 return
             for other in self.viewers:
-                if other != viewer and hasattr(other, "horizontal_scroll_bar"):
-                    other.horizontal_scroll_bar.blockSignals(True)
-                    other.horizontal_scroll_bar.setValue(value)
-                    other.horizontal_scroll_bar.blockSignals(False)
+                if other != viewer:
+                    hbar = other.horizontalScrollBar()
+                    if hbar is not None:
+                        hbar.blockSignals(True)
+                        hbar.setValue(value)
+                        hbar.blockSignals(False)
 
-        viewer.vertical_scroll_bar.valueChanged.connect(sync_vertical)
-        viewer.horizontal_scroll_bar.valueChanged.connect(sync_horizontal)
+        vbar = viewer.verticalScrollBar()
+        hbar = viewer.horizontalScrollBar()
+        if vbar is not None:
+            vbar.valueChanged.connect(sync_vertical)
+        if hbar is not None:
+            hbar.valueChanged.connect(sync_horizontal)
 
     def set_active_viewer(self, viewer: HexViewerWidget) -> None:
         """Set the active viewer.
@@ -569,8 +588,8 @@ class HexViewerDialog(QDialog):
 
         """
         sidebar = QFrame()
-        sidebar.setFrameShape(QFrame.StyledPanel)
-        sidebar.setFrameShadow(QFrame.Sunken)
+        sidebar.setFrameShape(QFrame.Shape.StyledPanel)
+        sidebar.setFrameShadow(QFrame.Shadow.Sunken)
 
         # Sidebar layout
         sidebar_layout = QVBoxLayout(sidebar)
@@ -579,24 +598,24 @@ class HexViewerDialog(QDialog):
 
         # Bookmarks section
         bookmarks_label = QLabel("Bookmarks")
-        bookmarks_label.setAlignment(Qt.AlignCenter)
+        bookmarks_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         bookmarks_label.setStyleSheet("background-color: #E0E0E0; padding: 2px;")
         sidebar_layout.addWidget(bookmarks_label)
 
         self.bookmarks_list = QListWidget()
-        self.bookmarks_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.bookmarks_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.bookmarks_list.customContextMenuRequested.connect(self.show_bookmark_context_menu)
         self.bookmarks_list.itemDoubleClicked.connect(self.jump_to_bookmark)
         sidebar_layout.addWidget(self.bookmarks_list)
 
         # Search results section
         search_label = QLabel("Search Results")
-        search_label.setAlignment(Qt.AlignCenter)
+        search_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         search_label.setStyleSheet("background-color: #E0E0E0; padding: 2px;")
         sidebar_layout.addWidget(search_label)
 
         self.search_list = QListWidget()
-        self.search_list.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.search_list.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.search_list.customContextMenuRequested.connect(self.show_search_context_menu)
         self.search_list.itemDoubleClicked.connect(self.jump_to_search_result)
         sidebar_layout.addWidget(self.search_list)
@@ -620,14 +639,14 @@ class HexViewerDialog(QDialog):
             # Check if file exists and is accessible
             if not os.path.exists(file_path):
                 error_msg = f"File does not exist: {file_path}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.status_bar.showMessage(error_msg)
                 return False
 
             # Check if file is readable
             if not os.access(file_path, os.R_OK):
                 error_msg = f"No permission to read file: {file_path}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.status_bar.showMessage(error_msg)
                 return False
 
@@ -638,35 +657,32 @@ class HexViewerDialog(QDialog):
             except (OSError, ValueError, RuntimeError) as e:
                 logger.warning("Could not get file size: %s", e)
 
-            # Attempt to load the file
             result = self.hex_viewer.load_file(file_path, read_only)
 
             if result:
-                # Update window title
                 filename = os.path.basename(file_path)
                 mode_str = "Read-Only" if read_only else "Editable"
                 self.setWindowTitle(f"Enhanced Hex Viewer - {filename} ({mode_str})")
 
-                # Update Edit mode button text
                 self.edit_mode_action.setText("Enable Editing" if read_only else "Switch to Read-Only")
 
-                # Update status bar
                 self.update_status_bar(0, 0)
 
-                # Force UI update
-                self.hex_viewer.viewport().update()
-                QApplication.processEvents()  # Process pending UI events
+                viewport = self.hex_viewer.viewport()
+                if viewport is not None:
+                    viewport.update()
+                QApplication.processEvents()
 
                 logger.info("Successfully loaded file %s in %s mode", file_path, mode_str)
             else:
                 error_msg = f"Failed to load file: {file_path}"
-                logger.error(error_msg)
+                logger.exception(error_msg)
                 self.status_bar.showMessage(error_msg)
 
-            return result
+            return bool(result)
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Error loading file: {e!s}"
-            logger.error(error_msg, exc_info=True)
+            logger.exception(error_msg, exc_info=True)
             self.status_bar.showMessage(error_msg)
             return False
 
@@ -686,10 +702,10 @@ class HexViewerDialog(QDialog):
                     self,
                     "Open Mode",
                     "Open file in read-only mode?",
-                    QMessageBox.Yes | QMessageBox.No,
-                    QMessageBox.Yes,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.Yes,
                 )
-                == QMessageBox.Yes
+                == QMessageBox.StandardButton.Yes
             )
 
             self.load_file(file_path, read_only)
@@ -708,7 +724,9 @@ class HexViewerDialog(QDialog):
 
             # Clear modification highlights
             self.hex_viewer.highlighter.clear_highlights(HighlightType.MODIFICATION)
-            self.hex_viewer.viewport().update()
+            viewport = self.hex_viewer.viewport()
+            if viewport is not None:
+                viewport.update()
         else:
             self.status_bar.showMessage("Failed to save changes")
 
@@ -741,7 +759,9 @@ class HexViewerDialog(QDialog):
             self.status_bar.showMessage(f"Failed to switch edit mode for {file_path}")
 
         # Force UI update
-        self.hex_viewer.viewport().update()
+        viewport = self.hex_viewer.viewport()
+        if viewport is not None:
+            viewport.update()
 
     def show_checksum_dialog(self) -> None:
         """Show the checksum calculation dialog."""
@@ -815,7 +835,7 @@ class HexViewerDialog(QDialog):
             settings = dialog.get_settings()
             self.perform_comparison(settings)
 
-    def perform_comparison(self, settings: dict) -> None:
+    def perform_comparison(self, settings: dict[str, Any]) -> None:
         """Perform file comparison and display results.
 
         Args:
@@ -843,7 +863,7 @@ class HexViewerDialog(QDialog):
             if total > 0:
                 progress.setValue(int(current * 100 / total))
 
-        def on_finished(differences: list[object]) -> None:
+        def on_finished(differences: list[Any]) -> None:
             progress.close()
 
             if mode == "visual":
@@ -867,7 +887,7 @@ class HexViewerDialog(QDialog):
         # Start comparison
         worker.start()
 
-    def show_visual_comparison(self, file1: str, file2: str, differences: list, settings: dict) -> None:
+    def show_visual_comparison(self, file1: str, file2: str, differences: list[Any], settings: dict[str, Any]) -> None:
         """Show visual side-by-side comparison.
 
         Args:
@@ -888,8 +908,8 @@ class HexViewerDialog(QDialog):
         self.split_view_horizontal()
 
         # Load files into viewers
-        self.viewers[0].open_file(file1)
-        self.viewers[1].open_file(file2)
+        self.viewers[0].load_file(file1)
+        self.viewers[1].load_file(file2)
 
         # Apply difference highlighting if enabled
         if settings["highlight_differences"]:
@@ -906,15 +926,13 @@ class HexViewerDialog(QDialog):
         # Show statistics in status bar
         self.show_comparison_stats(differences)
 
-    def highlight_comparison_differences(self, differences: list) -> None:
+    def highlight_comparison_differences(self, differences: list[Any]) -> None:
         """Highlight differences in both viewers.
 
         Args:
             differences: List of DifferenceBlock objects
 
         """
-        from .hex_highlighter import Highlight, HighlightType
-
         # Define colors for different types
         colors = {
             "modified": "#FFE5B4",  # Peach
@@ -930,7 +948,7 @@ class HexViewerDialog(QDialog):
                 color = colors.get(diff_type_str, "#FFFF00")
 
                 # Create highlight
-                highlight = Highlight(
+                highlight = HexHighlight(
                     start=diff.offset1,
                     end=diff.offset1 + diff.length1,
                     color=color,
@@ -940,7 +958,7 @@ class HexViewerDialog(QDialog):
 
                 # Add to first viewer
                 if len(self.viewers) > 0:
-                    self.viewers[0].highlighter.add_highlight(highlight)
+                    self.viewers[0].highlighter.add_highlight(highlight.start, highlight.end, highlight.highlight_type, highlight.color, highlight.alpha, highlight.description)
 
         # Highlight in second viewer
         for diff in differences:
@@ -950,7 +968,7 @@ class HexViewerDialog(QDialog):
                 color = colors.get(diff_type_str, "#FFFF00")
 
                 # Create highlight
-                highlight = Highlight(
+                highlight = HexHighlight(
                     start=diff.offset2,
                     end=diff.offset2 + diff.length2,
                     color=color,
@@ -960,13 +978,15 @@ class HexViewerDialog(QDialog):
 
                 # Add to second viewer
                 if len(self.viewers) > 1:
-                    self.viewers[1].highlighter.add_highlight(highlight)
+                    self.viewers[1].highlighter.add_highlight(highlight.start, highlight.end, highlight.highlight_type, highlight.color, highlight.alpha, highlight.description)
 
         # Refresh both viewers
         for viewer in self.viewers:
-            viewer.viewport().update()
+            viewport = viewer.viewport()
+            if viewport is not None:
+                viewport.update()
 
-    def show_comparison_stats(self, differences: list) -> None:
+    def show_comparison_stats(self, differences: list[Any]) -> None:
         """Show comparison statistics in status bar.
 
         Args:
@@ -974,12 +994,12 @@ class HexViewerDialog(QDialog):
 
         """
         if not differences:
-            self.statusBar().showMessage("Files are identical")
+            self.status_bar.showMessage("Files are identical")
         else:
             # Count difference types
-            modified = sum(bool("modified" in str(d.diff_type).lower()) for d in differences)
-            inserted = sum(bool("inserted" in str(d.diff_type).lower()) for d in differences)
-            deleted = sum(bool("deleted" in str(d.diff_type).lower()) for d in differences)
+            modified = sum("modified" in str(d.diff_type).lower() for d in differences)
+            inserted = sum("inserted" in str(d.diff_type).lower() for d in differences)
+            deleted = sum("deleted" in str(d.diff_type).lower() for d in differences)
 
             # Build message
             msg = f"Found {len(differences)} difference blocks: "
@@ -992,9 +1012,9 @@ class HexViewerDialog(QDialog):
                 parts.append(f"{deleted} deleted")
 
             msg += ", ".join(parts)
-            self.statusBar().showMessage(msg)
+            self.status_bar.showMessage(msg)
 
-    def show_byte_comparison(self, differences: list, settings: dict) -> None:
+    def show_byte_comparison(self, differences: list[Any], settings: dict[str, Any]) -> None:
         """Show detailed byte-by-byte comparison results.
 
         Args:
@@ -1050,7 +1070,7 @@ class HexViewerDialog(QDialog):
 
         result_dialog.exec()
 
-    def show_structural_comparison(self, differences: list, settings: dict) -> None:
+    def show_structural_comparison(self, differences: list[Any], settings: dict[str, Any]) -> None:
         """Show structural block-level comparison.
 
         Args:
@@ -1158,7 +1178,7 @@ class HexViewerDialog(QDialog):
 
         result_dialog.exec()
 
-    def update_status_bar(self, start: int = 0, end: int = None) -> None:
+    def update_status_bar(self, start: int = 0, end: int | None = None) -> None:
         """Update the status bar with current selection and offset information.
 
         Args:
@@ -1170,7 +1190,6 @@ class HexViewerDialog(QDialog):
             self.status_bar.showMessage("No file loaded")
             return
 
-        # If end is not provided, use start as both the start and end
         if end is None:
             end = start
 
@@ -1209,10 +1228,10 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/4 bytes>"
-                                logger.debug(f"Can't show 32-bit value - got {len(data)} bytes, need 4")
+                                logger.debug("Can't show 32-bit value - got %d bytes, need 4", len(data))
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
-                            logger.error("Error unpacking 32-bit value: %s", e)
+                            logger.exception("Error unpacking 32-bit value: %s", e)
                     elif selection_size == 8:
                         import struct
 
@@ -1224,10 +1243,10 @@ class HexViewerDialog(QDialog):
                             else:
                                 # Log the issue but don't crash
                                 value_str = f" | Value: <insufficient data: {len(data)}/8 bytes>"
-                                logger.debug(f"Can't show 64-bit value - got {len(data)} bytes, need 8")
+                                logger.debug("Can't show 64-bit value - got %d bytes, need 8", len(data))
                         except (OSError, ValueError, RuntimeError) as e:
                             value_str = " | Value: <error>"
-                            logger.error("Error unpacking 64-bit value: %s", e)
+                            logger.exception("Error unpacking 64-bit value: %s", e)
 
             info += f" | Selection: 0x{start:X}-0x{end - 1:X} ({end - start} bytes){value_str}"
 
@@ -1265,7 +1284,7 @@ class HexViewerDialog(QDialog):
             value = int(value_text)
             self.hex_viewer.set_bytes_per_row(value)
         except ValueError as e:
-            self.logger.error("Value error in hex_dialog: %s", e)
+            logger.exception("Value error in hex_dialog: %s", e)
 
     def change_group_size(self, value_text: str) -> None:
         """Change the byte grouping size.
@@ -1278,9 +1297,9 @@ class HexViewerDialog(QDialog):
             value = int(value_text)
             self.hex_viewer.set_group_size(value)
         except ValueError as e:
-            self.logger.error("Value error in hex_dialog: %s", e)
+            logger.exception("Value error in hex_dialog: %s", e)
 
-    def show_bookmark_context_menu(self, position: object) -> None:
+    def show_bookmark_context_menu(self, position: QPoint) -> None:
         """Show context menu for bookmarks list.
 
         Args:
@@ -1294,14 +1313,16 @@ class HexViewerDialog(QDialog):
         menu = QMenu()
 
         goto_action = menu.addAction("Jump to Bookmark")
-        goto_action.triggered.connect(lambda: self.jump_to_bookmark(item))
+        if goto_action is not None:
+            goto_action.triggered.connect(lambda: self.jump_to_bookmark(item))
 
         remove_action = menu.addAction("Remove Bookmark")
-        remove_action.triggered.connect(lambda: self.remove_bookmark(item))
+        if remove_action is not None:
+            remove_action.triggered.connect(lambda: self.remove_bookmark(item))
 
-        menu.exec_(self.bookmarks_list.mapToGlobal(position))
+        menu.exec(self.bookmarks_list.mapToGlobal(position))
 
-    def show_search_context_menu(self, position: object) -> None:
+    def show_search_context_menu(self, position: QPoint) -> None:
         """Show context menu for search results list.
 
         Args:
@@ -1315,12 +1336,14 @@ class HexViewerDialog(QDialog):
         menu = QMenu()
 
         goto_action = menu.addAction("Jump to Result")
-        goto_action.triggered.connect(lambda: self.jump_to_search_result(item))
+        if goto_action is not None:
+            goto_action.triggered.connect(lambda: self.jump_to_search_result(item))
 
         clear_action = menu.addAction("Clear Results")
-        clear_action.triggered.connect(self.clear_search_results)
+        if clear_action is not None:
+            clear_action.triggered.connect(self.clear_search_results)
 
-        menu.exec_(self.search_list.mapToGlobal(position))
+        menu.exec(self.search_list.mapToGlobal(position))
 
     def jump_to_bookmark(self, item: QListWidgetItem) -> None:
         """Jump to the location of a bookmark.
@@ -1329,7 +1352,7 @@ class HexViewerDialog(QDialog):
             item: List widget item for the bookmark
 
         """
-        highlight_id = item.data(Qt.UserRole)
+        highlight_id = item.data(Qt.ItemDataRole.UserRole)
         if highlight := self.hex_viewer.highlighter.get_highlight_by_id(highlight_id):
             self.hex_viewer.select_range(highlight.start, highlight.end)
 
@@ -1340,14 +1363,16 @@ class HexViewerDialog(QDialog):
             item: List widget item for the bookmark
 
         """
-        highlight_id = item.data(Qt.UserRole)
+        highlight_id = item.data(Qt.ItemDataRole.UserRole)
         if self.hex_viewer.highlighter.remove_highlight(highlight_id):
             # Remove from list
             row = self.bookmarks_list.row(item)
             self.bookmarks_list.takeItem(row)
 
             # Update the view
-            self.hex_viewer.viewport().update()
+            viewport = self.hex_viewer.viewport()
+            if viewport is not None:
+                viewport.update()
 
     def jump_to_search_result(self, item: QListWidgetItem) -> None:
         """Jump to the location of a search result.
@@ -1356,7 +1381,7 @@ class HexViewerDialog(QDialog):
             item: List widget item for the search result
 
         """
-        highlight_id = item.data(Qt.UserRole)
+        highlight_id = item.data(Qt.ItemDataRole.UserRole)
         if highlight := self.hex_viewer.highlighter.get_highlight_by_id(highlight_id):
             self.hex_viewer.select_range(highlight.start, highlight.end)
 
@@ -1369,7 +1394,9 @@ class HexViewerDialog(QDialog):
         self.search_list.clear()
 
         # Update the view
-        self.hex_viewer.viewport().update()
+        viewport = self.hex_viewer.viewport()
+        if viewport is not None:
+            viewport.update()
 
     def update_bookmark_list(self) -> None:
         """Update the bookmarks list from current highlights."""
@@ -1381,7 +1408,7 @@ class HexViewerDialog(QDialog):
                 # Create list item
                 text = f"0x{h.start:X}: {h.description or 'Bookmark'} ({h.size} bytes)"
                 item = QListWidgetItem(text)
-                item.setData(Qt.UserRole, h.id)
+                item.setData(Qt.ItemDataRole.UserRole, h.id)
 
                 # Add to list
                 self.bookmarks_list.addItem(item)
@@ -1397,7 +1424,7 @@ class HexViewerDialog(QDialog):
                 query = h.metadata.get("query", "")
                 text = f"0x{h.start:X}: {query} ({h.size} bytes)"
                 item = QListWidgetItem(text)
-                item.setData(Qt.UserRole, h.id)
+                item.setData(Qt.ItemDataRole.UserRole, h.id)
 
                 # Add to list
                 self.search_list.addItem(item)
@@ -1415,8 +1442,12 @@ class HexViewerDialog(QDialog):
 
         for viewer in self.viewers:
             try:
-                viewer.vertical_scroll_bar.valueChanged.disconnect()
-                viewer.horizontal_scroll_bar.valueChanged.disconnect()
+                vbar = viewer.verticalScrollBar()
+                hbar = viewer.horizontalScrollBar()
+                if vbar is not None:
+                    vbar.valueChanged.disconnect()
+                if hbar is not None:
+                    hbar.valueChanged.disconnect()
             except (TypeError, RuntimeError):
                 pass
 
@@ -1437,24 +1468,32 @@ class HexViewerDialog(QDialog):
                 return
             for target_viewer in self.viewers:
                 if target_viewer is not source_viewer:
-                    if hasattr(target_viewer, "vertical_scroll_bar"):
-                        target_viewer.vertical_scroll_bar.blockSignals(True)
-                        target_viewer.vertical_scroll_bar.setValue(value)
-                        target_viewer.vertical_scroll_bar.blockSignals(False)
-                        target_viewer.viewport().update()
+                    vbar = target_viewer.verticalScrollBar()
+                    if vbar is not None:
+                        vbar.blockSignals(True)
+                        vbar.setValue(value)
+                        vbar.blockSignals(False)
+                    viewport = target_viewer.viewport()
+                    if viewport is not None:
+                        viewport.update()
 
         def sync_horizontal_scroll(value: int) -> None:
             if not getattr(self, "sync_scrolling", True):
                 return
             for target_viewer in self.viewers:
                 if target_viewer is not source_viewer:
-                    if hasattr(target_viewer, "horizontal_scroll_bar"):
-                        target_viewer.horizontal_scroll_bar.blockSignals(True)
-                        target_viewer.horizontal_scroll_bar.setValue(value)
-                        target_viewer.horizontal_scroll_bar.blockSignals(False)
-                        target_viewer.viewport().update()
+                    hbar = target_viewer.horizontalScrollBar()
+                    if hbar is not None:
+                        hbar.blockSignals(True)
+                        hbar.setValue(value)
+                        hbar.blockSignals(False)
+                    viewport = target_viewer.viewport()
+                    if viewport is not None:
+                        viewport.update()
 
-        if hasattr(source_viewer, "vertical_scroll_bar"):
-            source_viewer.vertical_scroll_bar.valueChanged.connect(sync_vertical_scroll)
-        if hasattr(source_viewer, "horizontal_scroll_bar"):
-            source_viewer.horizontal_scroll_bar.valueChanged.connect(sync_horizontal_scroll)
+        vbar = source_viewer.verticalScrollBar()
+        hbar = source_viewer.horizontalScrollBar()
+        if vbar is not None:
+            vbar.valueChanged.connect(sync_vertical_scroll)
+        if hbar is not None:
+            hbar.valueChanged.connect(sync_horizontal_scroll)

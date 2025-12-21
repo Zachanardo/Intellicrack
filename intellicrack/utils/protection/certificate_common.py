@@ -40,7 +40,8 @@ def create_certificate_builder() -> object:
         from cryptography.x509.oid import NameOID
 
         builder = (
-            x509.CertificateBuilder()
+            x509
+            .CertificateBuilder()
             .subject_name(
                 x509.Name(
                     [

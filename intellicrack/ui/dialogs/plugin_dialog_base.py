@@ -134,7 +134,7 @@ class PluginDialogBase(QDialog):
 
     def on_plugin_loaded(self, plugin_path: str) -> None:
         """Handle a plugin is loaded - to be overridden by subclasses."""
-        self.logger.debug(f"Plugin loaded from: {plugin_path}")
+        self.logger.debug("Plugin loaded from: %s", plugin_path)
 
         # Store plugin metadata
         plugin_name = os.path.basename(plugin_path)
@@ -171,7 +171,7 @@ class PluginDialogBase(QDialog):
             self.plugin_loaded_signal.emit(plugin_path)
 
         # Log successful plugin loading
-        self.logger.info(f"Successfully loaded plugin: {plugin_name}")
+        self.logger.info("Successfully loaded plugin: %s", plugin_name)
 
         # Store last loaded plugin for quick access
         self._last_loaded_plugin = plugin_path

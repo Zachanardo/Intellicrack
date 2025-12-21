@@ -375,7 +375,7 @@ class FunctionRenamingEngine:
             )
 
         func = self.functions[func_addr]
-        patterns = custom_patterns if custom_patterns else self.LICENSE_PATTERNS
+        patterns = custom_patterns or self.LICENSE_PATTERNS
 
         if not func.strings:
             self.extract_function_strings(func_addr)
@@ -387,8 +387,7 @@ class FunctionRenamingEngine:
         for func_type, pattern_list in patterns.items():
             for pattern in pattern_list:
                 try:
-                    matches = re.findall(pattern, all_text, re.IGNORECASE)
-                    if matches:
+                    if matches := re.findall(pattern, all_text, re.IGNORECASE):
                         scores[func_type] += len(matches) * 10.0
                         evidence[func_type].append(f"Pattern '{pattern}' matched {len(matches)} times")
                 except re.error:
@@ -544,16 +543,20 @@ class FunctionRenamingEngine:
         ]
 
         for result in results:
-            lines.append(f'    idc.set_name(0x{result.address:X}, "{result.suggested_name}", idc.SN_NOWARN)')
-            lines.append(
-                f'    idc.set_func_cmt(0x{result.address:X}, "Type: {result.function_type.value}, Confidence: {result.confidence:.2f}", 1)'
+            lines.extend(
+                (
+                    f'    idc.set_name(0x{result.address:X}, "{result.suggested_name}", idc.SN_NOWARN)',
+                    f'    idc.set_func_cmt(0x{result.address:X}, "Type: {result.function_type.value}, Confidence: {result.confidence:.2f}", 1)',
+                )
             )
-
-        lines.append("")
-        lines.append("if __name__ == '__main__':")
-        lines.append("    rename_functions()")
-        lines.append(f'    print("Renamed {len(results)} functions")')
-
+        lines.extend(
+            (
+                "",
+                "if __name__ == '__main__':",
+                "    rename_functions()",
+                f'    print("Renamed {len(results)} functions")',
+            )
+        )
         return "\n".join(lines)
 
     def _generate_ghidra_script(self, results: list[FunctionRenameResult]) -> str:
@@ -568,17 +571,23 @@ class FunctionRenamingEngine:
         ]
 
         for result in results:
-            lines.append(f"    addr = toAddr(0x{result.address:X})")
-            lines.append("    func = fm.getFunctionAt(addr)")
-            lines.append("    if func:")
-            lines.append(f'        func.setName("{result.suggested_name}", SourceType.USER_DEFINED)')
-            lines.append(f'        func.setComment("Type: {result.function_type.value}, Confidence: {result.confidence:.2f}")')
-            lines.append("")
-
-        lines.append("if __name__ == '__main__':")
-        lines.append("    rename_functions()")
-        lines.append(f'    println("Renamed {len(results)} functions")')
-
+            lines.extend(
+                (
+                    f"    addr = toAddr(0x{result.address:X})",
+                    "    func = fm.getFunctionAt(addr)",
+                    "    if func:",
+                    f'        func.setName("{result.suggested_name}", SourceType.USER_DEFINED)',
+                    f'        func.setComment("Type: {result.function_type.value}, Confidence: {result.confidence:.2f}")',
+                    "",
+                )
+            )
+        lines.extend(
+            (
+                "if __name__ == '__main__':",
+                "    rename_functions()",
+                f'    println("Renamed {len(results)} functions")',
+            )
+        )
         return "\n".join(lines)
 
     def _generate_radare2_script(self, results: list[FunctionRenameResult]) -> str:
@@ -586,9 +595,12 @@ class FunctionRenamingEngine:
         lines = []
 
         for result in results:
-            lines.append(f"afn {result.suggested_name} 0x{result.address:X}")
-            lines.append(f"CC Type: {result.function_type.value}, Confidence: {result.confidence:.2f} @ 0x{result.address:X}")
-
+            lines.extend(
+                (
+                    f"afn {result.suggested_name} 0x{result.address:X}",
+                    f"CC Type: {result.function_type.value}, Confidence: {result.confidence:.2f} @ 0x{result.address:X}",
+                )
+            )
         return "\n".join(lines)
 
     def get_statistics(self) -> dict[str, Any]:
@@ -607,9 +619,9 @@ class FunctionRenamingEngine:
             type_name = result.function_type.value
             type_counts[type_name] = type_counts.get(type_name, 0) + 1
 
-        high_confidence = sum(1 for r in results if r.confidence >= 0.7)
-        medium_confidence = sum(1 for r in results if 0.4 <= r.confidence < 0.7)
-        low_confidence = sum(1 for r in results if r.confidence < 0.4)
+        high_confidence = sum(r.confidence >= 0.7 for r in results)
+        medium_confidence = sum(0.4 <= r.confidence < 0.7 for r in results)
+        low_confidence = sum(r.confidence < 0.4 for r in results)
 
         return {
             "total_functions": len(self.functions),

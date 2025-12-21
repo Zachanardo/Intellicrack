@@ -164,7 +164,7 @@ class FridaServerManager:
             return True
 
         except Exception as e:
-            logger.error("Download failed: %s", e, exc_info=True)
+            logger.exception("Download failed: %s", e)
             return False
 
     def _decompress_xz(self, input_path: Path, output_path: Path) -> None:
@@ -226,7 +226,7 @@ class FridaServerManager:
             return True
 
         if not self._ensure_server_installed():
-            logger.error("Failed to install frida-server")
+            logger.exception("Failed to install frida-server")
             return False
 
         if not self._is_admin():
@@ -262,7 +262,7 @@ class FridaServerManager:
             return False
 
         except Exception as e:
-            logger.error("Failed to start frida-server: %s", e, exc_info=True)
+            logger.exception("Failed to start frida-server: %s", e)
             return False
 
     def stop(self) -> None:
@@ -278,7 +278,7 @@ class FridaServerManager:
 
                 logger.info("frida-server stopped")
             except Exception as e:
-                logger.error("Error stopping frida-server: %s", e, exc_info=True)
+                logger.exception("Error stopping frida-server: %s", e)
             finally:
                 self.server_process = None
 

@@ -632,7 +632,7 @@ invalid-assignment = "error"
 invalid-return-type = "error"
 
 [tool.pyright]
-include = ["intellicrack"]
+include = ["intellicrack", "tests"]
 exclude = [
     "**/__pycache__",
     "**/node_modules",
@@ -659,7 +659,6 @@ exclude = [
     "**/logs",
     "**/reports",
     "**/*.egg-info",
-    "**/tests",
     "tools",
     "docs",
     ".pixi",
@@ -669,7 +668,7 @@ exclude = [
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
 pythonPlatform = "Windows"
-useLibraryCodeForTypes = true
+useLibraryCodeForTypes = false
 analyzeUnannotatedFunctions = true
 enableTypeIgnoreComments = true
 strictListInference = true
@@ -1097,6 +1096,7 @@ ignore = [
     "PLR0912", # too-many-branches
     "PLR0913", # too-many-arguments
     "PLR0915", # too-many-statements
+    "PLR6301", # no-self-use - methods may need self for override/interface compatibility
 
     # Conflicting docstring rules (keep D211/D212, ignore D203/D213)
     "D203", # incorrect-blank-line-before-class (conflicts with D211)

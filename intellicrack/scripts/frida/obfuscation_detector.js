@@ -1977,7 +1977,7 @@ const ObfuscationDetector = {
         };
 
         try {
-            const base = module.base;
+            const {base} = module;
             const dosHeader = base.readU16();
             if (dosHeader !== 0x5a4d) {
                 return indicators;
@@ -2121,7 +2121,7 @@ const ObfuscationDetector = {
         });
 
         try {
-            const base = module.base;
+            const {base} = module;
             const dosHeader = base.readU16();
             if (dosHeader !== 0x5a4d) {
                 return analysis;
@@ -2211,7 +2211,7 @@ const ObfuscationDetector = {
         });
 
         try {
-            const base = module.base;
+            const {base} = module;
             const dosHeader = base.readU16();
             if (dosHeader !== 0x5a4d) {
                 return cert;
@@ -2288,7 +2288,7 @@ const ObfuscationDetector = {
         });
 
         try {
-            const base = module.base;
+            const {base} = module;
             const fileSize = this.getFileSize(module);
             const peSize = this.calculatePESize(base);
 
@@ -2366,7 +2366,7 @@ const ObfuscationDetector = {
         };
 
         try {
-            const base = module.base;
+            const {base} = module;
             const peOffset = base.add(0x3c).readU32();
             const sections = this.parseSections(base, peOffset);
 
@@ -2928,7 +2928,7 @@ const ObfuscationDetector = {
         });
 
         try {
-            const base = module.base;
+            const {base} = module;
             const dosHeader = base.readU16();
             if (dosHeader !== 0x5a4d) {
                 return tlsAbuse;

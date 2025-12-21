@@ -280,9 +280,12 @@ deobfuscate_strings()''',
                         )
                     )
                 elif protection_type.lower() in ["anti_debug", "anti_vm"]:
-                    script_parts.append(f"// Anti-analysis bypass for {protection_type}")
-                    script_parts.append(self._generate_anti_analysis_hooks(protection_type))
-
+                    script_parts.extend(
+                        (
+                            f"// Anti-analysis bypass for {protection_type}",
+                            self._generate_anti_analysis_hooks(protection_type),
+                        )
+                    )
         # Determine if Java or native
         if ".apk" in target.lower() or "android" in task.lower():
             # Java hook
@@ -334,9 +337,7 @@ if (targetModule) {{
         # Add custom requirements
         if requirements:
             script_parts.append("\n// Custom requirements:")
-            for req in requirements:
-                script_parts.append(f"// - {req}")
-
+            script_parts.extend(f"// - {req}" for req in requirements)
         return "\n".join(script_parts)
 
     def _generate_frida_trace(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
@@ -600,9 +601,11 @@ Interceptor.attach(targetAddr, {
 
     def _generate_frida_patch(self, target: str, task: str, protection_info: dict[str, Any], requirements: list[str]) -> str:
         """Generate Frida memory patch script"""
-        script_parts = [f"// Frida Memory Patch Script for {target}"]
+        script_parts = [
+            f"// Frida Memory Patch Script for {target}",
+            f"// Task: {task}",
+        ]
 
-        script_parts.append(f"// Task: {task}")
         if protection_info:
             script_parts.append(f"// Target protections: {', '.join(protection_info.keys())}")
         script_parts.append("")
@@ -611,7 +614,7 @@ Interceptor.attach(targetAddr, {
         patch_code_parts = []
 
         if protection_info:
-            for protection_type, _details in protection_info.items():
+            for protection_type in protection_info:
                 if protection_type.lower() in ["anti_debug", "debugger"]:
                     patch_code_parts.append("""    // Patch anti-debug checks
     var antiDebugOpcodes = [0x33, 0xC0, 0xC3]; // xor eax, eax; ret

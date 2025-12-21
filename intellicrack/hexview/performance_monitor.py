@@ -18,9 +18,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+
 import logging
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from ..handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -46,54 +47,57 @@ logger = logging.getLogger(__name__)
 __all__ = ["PerformanceMonitor", "PerformanceWidget"]
 
 
-class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
+_BaseClass = QWidget if TYPE_CHECKING or PYQT6_AVAILABLE else object
+
+
+class PerformanceWidget(_BaseClass):  # type: ignore[misc, valid-type]
     """Widget for displaying performance statistics."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the performance widget."""
         if not PYQT6_AVAILABLE:
             logger.warning("PyQt6 not available, PerformanceWidget cannot be created")
-            return
+            raise RuntimeError("PyQt6 not available")
 
         super().__init__(parent)
-        self.file_handler = None
-        self.stats_history = []
-        self.max_history = 100
+        self.file_handler: object | None = None
+        self.stats_history: list[dict[str, Any]] = []
+        self.max_history: int = 100
 
-        # Initialize UI attributes
-        self.file_size_label = None
-        self.memory_strategy_label = None
-        self.loading_strategy_label = None
-        self.read_operations_label = None
-        self.cache_hit_rate_label = None
-        self.sequential_ratio_label = None
-        self.avg_read_time_label = None
-        self.optimization_status = None
-        self.background_loader_status = None
-        self.memory_used_label = None
-        self.memory_limit_label = None
-        self.memory_progress = None
-        self.system_memory_label = None
-        self.system_memory_progress = None
-        self.cache_regions_label = None
-        self.cache_memory_label = None
-        self.cache_utilization_label = None
-        self.cache_hits_label = None
-        self.cache_misses_label = None
-        self.cache_progress = None
-        self.pattern_table = None
-        self.sequential_count_label = None
-        self.random_count_label = None
-        self.large_read_label = None
-        self.optimize_button = None
-        self.clear_stats_button = None
+        self.file_size_label: QLabel
+        self.memory_strategy_label: QLabel
+        self.loading_strategy_label: QLabel
+        self.read_operations_label: QLabel
+        self.cache_hit_rate_label: QLabel
+        self.sequential_ratio_label: QLabel
+        self.avg_read_time_label: QLabel
+        self.optimization_status: QLabel
+        self.background_loader_status: QLabel
+        self.memory_used_label: QLabel
+        self.memory_limit_label: QLabel
+        self.memory_progress: QProgressBar
+        self.system_memory_label: QLabel
+        self.system_memory_progress: QProgressBar
+        self.cache_regions_label: QLabel
+        self.cache_memory_label: QLabel
+        self.cache_utilization_label: QLabel
+        self.cache_hits_label: QLabel
+        self.cache_misses_label: QLabel
+        self.cache_progress: QProgressBar
+        self.pattern_table: QTableWidget
+        self.sequential_count_label: QLabel
+        self.random_count_label: QLabel
+        self.large_read_label: QLabel
+        self.optimize_button: QPushButton
+        self.clear_stats_button: QPushButton
+        self.tab_widget: QTabWidget
+        self.update_timer: QTimer
 
         self.setup_ui()
 
-        # Update timer
         self.update_timer = QTimer()
         self.update_timer.timeout.connect(self.update_display)
-        self.update_timer.start(2000)  # Update every 2 seconds
+        self.update_timer.start(2000)
 
     def setup_ui(self) -> None:
         """Set up the user interface."""
@@ -101,13 +105,11 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         layout.setContentsMargins(4, 4, 4, 4)
         layout.setSpacing(4)
 
-        # Title
         title_label = QLabel("Performance Monitor")
-        title_label.setFont(QFont("", 10, QFont.Bold))
-        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setFont(QFont("", 10, QFont.Weight.Bold))
+        title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title_label)
 
-        # Create tab widget
         self.tab_widget = QTabWidget()
         layout.addWidget(self.tab_widget)
 
@@ -161,16 +163,15 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         layout.addWidget(perf_group)
 
-        # Status indicators
         status_group = QGroupBox("Status")
         status_layout = QVBoxLayout(status_group)
 
         self.optimization_status = QLabel("No optimization active")
-        self.optimization_status.setAlignment(Qt.AlignCenter)
+        self.optimization_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_layout.addWidget(self.optimization_status)
 
         self.background_loader_status = QLabel("Background loader: Inactive")
-        self.background_loader_status.setAlignment(Qt.AlignCenter)
+        self.background_loader_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         status_layout.addWidget(self.background_loader_status)
 
         layout.addWidget(status_group)
@@ -272,10 +273,11 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
         pattern_group = QGroupBox("Access Pattern Analysis")
         pattern_layout = QVBoxLayout(pattern_group)
 
-        # Pattern table
         self.pattern_table = QTableWidget(0, 4)
         self.pattern_table.setHorizontalHeaderLabels(["Time", "Offset", "Size", "Type"])
-        self.pattern_table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        header = self.pattern_table.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         pattern_layout.addWidget(self.pattern_table)
 
         # Pattern summary
@@ -308,7 +310,9 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
         controls_layout.addStretch()
 
-        self.layout().addLayout(controls_layout)
+        main_layout = self.layout()
+        if main_layout is not None:
+            main_layout.addLayout(controls_layout)
 
     def set_file_handler(self, file_handler: object) -> None:
         """Set the file handler to monitor."""
@@ -322,31 +326,26 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             return
 
         try:
-            # Get performance stats
-            stats = self.file_handler.get_performance_stats()
-            if not stats:
+            if not hasattr(self.file_handler, "get_performance_stats"):
                 return
 
-            # Store in history
+            stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
+            if not stats_result:
+                return
+
+            stats = cast("dict[str, Any]", stats_result)
             stats["timestamp"] = time.time()
             self.stats_history.append(stats)
             if len(self.stats_history) > self.max_history:
                 self.stats_history = self.stats_history[-self.max_history :]
 
-            # Update overview tab
             self.update_overview_tab(stats)
-
-            # Update memory tab
             self.update_memory_tab(stats)
-
-            # Update cache tab
             self.update_cache_tab(stats)
-
-            # Update patterns tab
             self.update_patterns_tab(stats)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error updating performance display: %s", e)
+            logger.exception("Error updating performance display: %s", e)
 
     def update_overview_tab(self, stats: dict[str, Any]) -> None:
         """Update the overview tab."""
@@ -376,10 +375,10 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
     def update_memory_tab(self, stats: dict[str, Any]) -> None:
         """Update the memory tab."""
-        cache_stats = stats.get("cache_stats", {})
+        cache_stats = cast("dict[str, Any]", stats.get("cache_stats", {}))
 
-        memory_used = cache_stats.get("total_memory_mb", 0)
-        memory_limit = cache_stats.get("max_memory_mb", 0)
+        memory_used = float(cache_stats.get("total_memory_mb", 0))
+        memory_limit = float(cache_stats.get("max_memory_mb", 0))
 
         self.memory_used_label.setText(f"{memory_used:.1f} MB")
         self.memory_limit_label.setText(f"{memory_limit:.1f} MB")
@@ -388,7 +387,6 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             usage_percent = min(100, (memory_used / memory_limit) * 100)
             self.memory_progress.setValue(int(usage_percent))
 
-        # System memory (would need psutil integration)
         try:
             from intellicrack.handlers.psutil_handler import psutil
 
@@ -396,17 +394,17 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             self.system_memory_label.setText(f"{memory.percent:.1f}%")
             self.system_memory_progress.setValue(int(memory.percent))
         except ImportError as e:
-            self.logger.error("Import error in performance_monitor: %s", e)
+            logger.exception("Import error in performance_monitor: %s", e)
             self.system_memory_label.setText("N/A (psutil not available)")
-            self.system_memory_progress.setValue(50)  # Default to 50%
+            self.system_memory_progress.setValue(50)
 
     def update_cache_tab(self, stats: dict[str, Any]) -> None:
         """Update the cache tab."""
-        cache_stats = stats.get("cache_stats", {})
+        cache_stats = cast("dict[str, Any]", stats.get("cache_stats", {}))
 
-        regions = cache_stats.get("regions", 0)
-        memory_mb = cache_stats.get("total_memory_mb", 0)
-        utilization = cache_stats.get("utilization", 0) * 100
+        regions = int(cache_stats.get("regions", 0))
+        memory_mb = float(cache_stats.get("total_memory_mb", 0))
+        utilization = float(cache_stats.get("utilization", 0)) * 100
 
         self.cache_regions_label.setText(str(regions))
         self.cache_memory_label.setText(f"{memory_mb:.1f} MB")
@@ -415,10 +413,8 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
 
     def update_patterns_tab(self, stats: dict[str, Any]) -> None:
         """Update the access patterns tab."""
-        # This would require more detailed access pattern tracking
-        # For now, just show basic statistics
-        access_patterns = stats.get("access_patterns", 0)
-        sequential_ratio = stats.get("sequential_ratio", 0)
+        access_patterns = int(stats.get("access_patterns", 0))
+        sequential_ratio = float(stats.get("sequential_ratio", 0))
 
         total_patterns = max(1, access_patterns)
         sequential_count = int(total_patterns * sequential_ratio)
@@ -433,25 +429,29 @@ class PerformanceWidget(QWidget if PYQT6_AVAILABLE else object):
             return
 
         try:
-            stats = self.file_handler.get_performance_stats()
-            if not stats:
+            if not hasattr(self.file_handler, "get_performance_stats"):
                 return
 
-            sequential_ratio = stats.get("sequential_ratio", 0)
+            stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
+            if not stats_result:
+                return
+
+            stats = cast("dict[str, Any]", stats_result)
+            sequential_ratio = float(stats.get("sequential_ratio", 0))
 
             if sequential_ratio > 0.7:
-                # Mostly sequential access
-                self.file_handler.optimize_for_sequential_access()
+                if hasattr(self.file_handler, "optimize_for_sequential_access"):
+                    self.file_handler.optimize_for_sequential_access()
                 self.optimization_status.setText("Optimized for sequential access")
             else:
-                # Mostly random access
-                self.file_handler.optimize_for_random_access()
+                if hasattr(self.file_handler, "optimize_for_random_access"):
+                    self.file_handler.optimize_for_random_access()
                 self.optimization_status.setText("Optimized for random access")
 
             self.optimization_status.setStyleSheet("color: blue; font-weight: bold;")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Auto-optimization failed: %s", e)
+            logger.exception("Auto-optimization failed: %s", e)
 
     def clear_stats(self) -> None:
         """Clear statistics history."""
@@ -464,8 +464,8 @@ class PerformanceMonitor:
 
     def __init__(self) -> None:
         """Initialize the performance monitor with widget and file handler references."""
-        self.widget = None
-        self.file_handler = None
+        self.widget: PerformanceWidget | None = None
+        self.file_handler: object | None = None
 
     def create_widget(self, parent: QWidget | None = None) -> QWidget | None:
         """Create and return the performance monitoring widget."""
@@ -476,7 +476,7 @@ class PerformanceMonitor:
         if self.file_handler:
             self.widget.set_file_handler(self.file_handler)
 
-        return self.widget
+        return cast("QWidget", self.widget)
 
     def set_file_handler(self, file_handler: object) -> None:
         """Set the file handler to monitor."""
@@ -489,11 +489,15 @@ class PerformanceMonitor:
         if not self.file_handler:
             return {}
 
-        stats = self.file_handler.get_performance_stats()
-        if not stats:
+        if not hasattr(self.file_handler, "get_performance_stats"):
             return {}
 
-        cache_stats = stats.get("cache_stats", {})
+        stats_result = self.file_handler.get_performance_stats()  # type: ignore[attr-defined]
+        if not stats_result:
+            return {}
+
+        stats = cast("dict[str, Any]", stats_result)
+        cache_stats = cast("dict[str, Any]", stats.get("cache_stats", {}))
 
         return {
             "file_size_mb": stats.get("file_size_mb", 0),

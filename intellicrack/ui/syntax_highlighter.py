@@ -60,7 +60,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         elif self.language in {"shell", "bash"}:
             self._setup_shell_rules()
         else:
-            logger.warning(f"Unsupported language: {self.language}, using default")
+            logger.warning("Unsupported language: %s, using default", self.language)
             self._setup_default_rules()
 
     def _create_format(self, color: str, bold: bool = False, italic: bool = False) -> QTextCharFormat:
@@ -768,7 +768,7 @@ def detect_language(code: str) -> str:
             json.loads(code)
             return "json"
         except (json.JSONDecodeError, ValueError, TypeError, ImportError) as e:
-            logger.debug(f"Not valid JSON: {e}")
+            logger.debug("Not valid JSON: %s", e)
 
     # Assembly detection
     if any(keyword in code_lower for keyword in ["mov ", "push ", "pop ", "call ", "ret", "jmp "]):

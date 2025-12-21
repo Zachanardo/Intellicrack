@@ -286,7 +286,10 @@ class BackgroundModelLoader:
             }
 
             if completed_tasks := list(self.completed_tasks.values()):
-                successful = sum(bool(task.state == LoadingState.COMPLETED) for task in completed_tasks)
+                successful = sum(
+                    task.state == LoadingState.COMPLETED
+                    for task in completed_tasks
+                )
                 stats["success_rate"] = float(successful) / float(len(completed_tasks))
             else:
                 stats["success_rate"] = 0.0
@@ -325,7 +328,7 @@ class BackgroundModelLoader:
                     self.completed_tasks[task.model_id] = task
 
             except Exception as e:
-                logger.error("Error in worker thread %s: %s", thread_name, e, exc_info=True)
+                logger.exception("Error in worker thread %s: %s", thread_name, e)
 
     def _load_model(self, task: LoadingTask) -> None:
         """Load a model with progress tracking."""
@@ -374,7 +377,7 @@ class BackgroundModelLoader:
             if not task.cancelled:
                 error_msg = str(e)
                 task.mark_completed(False, error=error_msg)
-                logger.error("Error loading model %s: %s", task.model_id, e, exc_info=True)
+                logger.exception("Error loading model %s: %s", task.model_id, e)
 
     def shutdown(self) -> None:
         """Shutdown the background loader."""

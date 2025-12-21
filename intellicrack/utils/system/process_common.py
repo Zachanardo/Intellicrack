@@ -52,10 +52,10 @@ def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: boo
             check=False,
         )
     except subprocess.TimeoutExpired:
-        logger.error("Command timed out after %d seconds: %s", timeout, cmd[0])
+        logger.exception("Command timed out after %d seconds: %s", timeout, cmd[0])
         raise
     except FileNotFoundError:
-        logger.error("Command not found: %s", cmd[0])
+        logger.exception("Command not found: %s", cmd[0])
         raise
 
 
@@ -104,14 +104,14 @@ def create_suspended_process_with_context(
         process_info = create_func(target_exe)
         if not process_info:
             error_msg = "Failed to create suspended process"
-            logger_instance.error(error_msg)
+            logger_instance.exception(error_msg)
             return {"success": False, "error": error_msg}
 
         # Get thread context
         context = get_context_func(process_info["thread_handle"])
         if not context:
             error_msg = "Failed to get thread context"
-            logger_instance.error(error_msg)
+            logger_instance.exception(error_msg)
             return {"success": False, "error": error_msg, "process_info": process_info}
 
         return {
@@ -122,5 +122,5 @@ def create_suspended_process_with_context(
 
     except Exception as e:
         error_msg = f"Error in process creation: {e!s}"
-        logger_instance.error(error_msg)
+        logger_instance.exception(error_msg)
         return {"success": False, "error": error_msg}

@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 try:
     from intellicrack.handlers.pefile_handler import pefile
 except ImportError as e:
-    logger.error("Import error in core_analysis: %s", e)
+    logger.exception("Import error in core_analysis: %s", e)
     pefile = None
 
 
@@ -627,9 +627,8 @@ def detect_packing(binary_path: str) -> dict[str, Any]:
 
         # Suspicious section names
         indicators = results.get("indicators", [])
-        if isinstance(indicators, list):
-            if any("suspicious" in str(indicator).lower() for indicator in indicators):
-                confidence_factors.append(0.3)
+        if isinstance(indicators, list) and any("suspicious" in str(indicator).lower() for indicator in indicators):
+            confidence_factors.append(0.3)
 
         # Calculate final confidence
         confidence: float = min(sum(confidence_factors), 1.0)
@@ -778,10 +777,7 @@ def decrypt_embedded_script(binary_path: str) -> list[str]:
                     "Content preview:",
                 ))
                 # Show first few lines
-                if isinstance(content, str):
-                    lines = content.splitlines()
-                else:
-                    lines = []
+                lines = content.splitlines() if isinstance(content, str) else []
                 for j, line in enumerate(lines[:10]):
                     results.append(f"  {j + 1}: {line}")
 

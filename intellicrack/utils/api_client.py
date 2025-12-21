@@ -34,7 +34,7 @@ try:
 
     HAS_AIOHTTP = True
 except ImportError as e:
-    logger.error("Import error in api_client: %s", e)
+    logger.exception("Import error in api_client: %s", e)
     aiohttp = None
     ClientTimeout = None
     HAS_AIOHTTP = False

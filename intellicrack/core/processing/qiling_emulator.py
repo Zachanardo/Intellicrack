@@ -536,7 +536,7 @@ class QilingEmulator:
             if timeout_timer and timeout_timer.is_alive():
                 timeout_timer.cancel()
 
-            self.logger.error("Qiling emulation error: %s", e, exc_info=True)
+            self.logger.exception("Qiling emulation error: %s", e)
             self.logger.debug(traceback.format_exc())
 
             return {

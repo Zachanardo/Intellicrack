@@ -107,7 +107,7 @@ class Radare2AdvancedPatcher:
             return True
 
         except Exception as e:
-            logger.error("Failed to open binary: %s", e, exc_info=True)
+            logger.exception("Failed to open binary: %s", e, exc_info=True)
             return False
 
     def generate_nop_sled(self, address: int, size: int) -> PatchInfo:
@@ -633,11 +633,7 @@ class Radare2AdvancedPatcher:
                 # bx r12             ; Branch to target
                 # .word target       ; Target address
 
-                trampoline = []
-                # ldr r12, [pc, #0]
-                trampoline.append(0xE59FC000)
-                # bx r12
-                trampoline.append(0xE12FFF1C)
+                trampoline = [3852451840, 3778019100]
                 # Target address (32-bit)
                 trampoline.append(new_target & 0xFFFFFFFF)
 
@@ -948,10 +944,9 @@ class Radare2AdvancedPatcher:
                 else:
                     if self.bits == 64:
                         jump_to_hook = b"\x48\xb8" + struct.pack("<Q", hook_cave)
-                        jump_to_hook += b"\xff\xe0"
                     else:
                         jump_to_hook = b"\xb8" + struct.pack("<I", hook_cave)
-                        jump_to_hook += b"\xff\xe0"
+                    jump_to_hook += b"\xff\xe0"
             elif self.architecture == Architecture.ARM64:
                 prologue_offset = hook_cave - func_address
                 if abs(prologue_offset // 4) < 0x2000000:
@@ -991,19 +986,14 @@ class Radare2AdvancedPatcher:
             else:
                 # Fallback for unknown architectures - assume x86-like
                 prologue_offset = hook_cave - (func_address + 5)
-                if self.bits == 64:
-                    if abs(prologue_offset) < 0x7FFFFFFF:
-                        jump_to_hook = b"\xe9" + struct.pack("<i", prologue_offset)
-                    else:
-                        jump_to_hook = b"\x48\xb8" + struct.pack("<Q", hook_cave)
-                        jump_to_hook += b"\xff\xe0"
+                if abs(prologue_offset) < 0x7FFFFFFF:
+                    jump_to_hook = b"\xe9" + struct.pack("<i", prologue_offset)
                 else:
-                    if abs(prologue_offset) < 0x7FFFFFFF:
-                        jump_to_hook = b"\xe9" + struct.pack("<i", prologue_offset)
+                    if self.bits == 64:
+                        jump_to_hook = b"\x48\xb8" + struct.pack("<Q", hook_cave)
                     else:
                         jump_to_hook = b"\xb8" + struct.pack("<I", hook_cave)
-                        jump_to_hook += b"\xff\xe0"
-
+                    jump_to_hook += b"\xff\xe0"
             # Read original prologue bytes before overwriting
             original = self.r2.cmdj(f"pxj {len(jump_to_hook)} @ {func_address}")
             original_bytes = bytes(original) if original else b""
@@ -1025,8 +1015,6 @@ class Radare2AdvancedPatcher:
                     "complete_hook_size": len(complete_hook),
                 },
             )
-            self.patches.append(patch)
-
         else:
             # Simple replacement
             complete_hook = hook_code
@@ -1050,7 +1038,7 @@ class Radare2AdvancedPatcher:
 
             # Apply patch
             self._write_bytes(func_address, complete_hook)
-            self.patches.append(patch)
+        self.patches.append(patch)
 
         logger.info("Created function hook at %s", hex(func_address))
         return patch
@@ -1162,7 +1150,7 @@ class Radare2AdvancedPatcher:
             logger.info("Applied patch: %s", patch.description)
             return True
         except Exception as e:
-            logger.error("Failed to apply patch at %s: %s", hex(patch.address), e, exc_info=True)
+            logger.exception("Failed to apply patch at %s: %s", hex(patch.address), e, exc_info=True)
             return False
 
     def revert_patch(self, patch: PatchInfo) -> bool:
@@ -1172,7 +1160,7 @@ class Radare2AdvancedPatcher:
             logger.info("Reverted patch: %s", patch.description)
             return True
         except Exception as e:
-            logger.error("Failed to revert patch at %s: %s", hex(patch.address), e, exc_info=True)
+            logger.exception("Failed to revert patch at %s: %s", hex(patch.address), e, exc_info=True)
             return False
 
     def _read_binary_content(self) -> bytes:
@@ -1212,7 +1200,7 @@ class Radare2AdvancedPatcher:
             return True
 
         except Exception as e:
-            logger.error("Failed to save patches: %s", e, exc_info=True)
+            logger.exception("Failed to save patches: %s", e, exc_info=True)
             return False
 
     def load_patches(self, patch_file: str) -> bool:
@@ -1244,7 +1232,7 @@ class Radare2AdvancedPatcher:
             return True
 
         except Exception as e:
-            logger.error("Failed to load patches: %s", e, exc_info=True)
+            logger.exception("Failed to load patches: %s", e, exc_info=True)
             return False
 
     def generate_patch_script(self, script_type: str = "python") -> str:
@@ -1394,7 +1382,7 @@ def main() -> None:
     patcher = Radare2AdvancedPatcher(args.binary)
 
     if not patcher.open(write_mode=True):
-        logger.error("Failed to open binary")
+        logger.exception("Failed to open binary")
         return
 
     try:

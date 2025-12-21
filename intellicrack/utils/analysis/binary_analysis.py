@@ -89,7 +89,7 @@ try:
     create_performance_optimizer_func = _create_optimizer
     PERFORMANCE_OPTIMIZER_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in binary_analysis: %s", e)
+    logger.exception("Import error in binary_analysis: %s", e)
 
 
 try:
@@ -98,7 +98,7 @@ try:
     pefile_module = _pefile
     PEFILE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in binary_analysis: %s", e)
+    logger.exception("Import error in binary_analysis: %s", e)
     PEFILE_AVAILABLE = False
 
 try:
@@ -110,7 +110,7 @@ try:
     lief_module = _lief
     LIEF_AVAILABLE = HAS_LIEF
 except ImportError as e:
-    logger.error("Import error in binary_analysis: %s", e)
+    logger.exception("Import error in binary_analysis: %s", e)
     LIEF_AVAILABLE = False
     HAS_LIEF = False
 
@@ -123,7 +123,7 @@ try:
     ELFFile_class = _ELFFile
     PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
 except ImportError as e:
-    logger.error("Import error in binary_analysis: %s", e)
+    logger.exception("Import error in binary_analysis: %s", e)
     PYELFTOOLS_AVAILABLE = False
     HAS_PYELFTOOLS = False
 
@@ -133,7 +133,7 @@ try:
     MachO_class = _MachO
     MACHOLIB_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in binary_analysis: %s", e)
+    logger.exception("Import error in binary_analysis: %s", e)
     MACHOLIB_AVAILABLE = False
 
 try:
@@ -142,7 +142,7 @@ try:
     capstone_module = _capstone
     HAS_CAPSTONE = True
 except ImportError as e:
-    logger.error("Import error in binary_analysis: %s", e)
+    logger.exception("Import error in binary_analysis: %s", e)
     HAS_CAPSTONE = False
 
 
@@ -220,7 +220,7 @@ def _analyze_with_performance_optimizer(binary_path: str, detailed: bool) -> dic
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in performance-optimized analysis: %s", e)
+        logger.exception("Error in performance-optimized analysis: %s", e)
         return analyze_binary(binary_path, detailed)
 
 
@@ -310,7 +310,7 @@ def _integrate_ai_script_generation(analysis_results: dict[str, Any], binary_pat
         logger.info("AI script generation integration completed successfully")
 
     except Exception as e:
-        logger.error("Error in AI script generation integration: %s", e, exc_info=True)
+        logger.exception("Error in AI script generation integration: %s", e)
         analysis_results["ai_integration"] = {"enabled": False, "error": str(e)}
 
     return analysis_results
@@ -388,7 +388,7 @@ def _generate_ai_script_suggestions(analysis_results: dict[str, Any], binary_pat
             priority_targets.append("trial_restrictions")
 
     except Exception as e:
-        logger.error("Error generating AI script suggestions: %s", e, exc_info=True)
+        logger.exception("Error generating AI script suggestions: %s", e)
 
     return {
         "frida_scripts": frida_scripts,
@@ -413,15 +413,21 @@ def _get_recommended_ai_actions(analysis_results: dict[str, Any]) -> list[str]:
                 "Generate GOT (Global Offset Table) manipulation scripts",
             ])
         elif binary_format == "PE":
-            actions.append("Analyze PE imports and exports for bypass opportunities")
-            actions.append("Generate IAT (Import Address Table) hook scripts")
-
+            actions.extend(
+                (
+                    "Analyze PE imports and exports for bypass opportunities",
+                    "Generate IAT (Import Address Table) hook scripts",
+                )
+            )
         if analysis_results.get("protection"):
-            actions.append("Generate multi-layer protection bypass strategy")
-            actions.append("Create adaptive bypass scripts with fallback mechanisms")
-
+            actions.extend(
+                (
+                    "Generate multi-layer protection bypass strategy",
+                    "Create adaptive bypass scripts with fallback mechanisms",
+                )
+            )
     except Exception as e:
-        logger.error("Error getting recommended AI actions: %s", e, exc_info=True)
+        logger.exception("Error getting recommended AI actions: %s", e)
 
     return actions
 
@@ -431,8 +437,7 @@ def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> li
     candidates: list[dict[str, Any]] = []
 
     try:
-        imports = analysis_results.get("imports")
-        if imports:
+        if imports := analysis_results.get("imports"):
             protection_apis = [
                 "GetTickCount",
                 "GetSystemTime",
@@ -469,7 +474,7 @@ def _identify_auto_generation_candidates(analysis_results: dict[str, Any]) -> li
             )
 
     except Exception as e:
-        logger.error("Error identifying auto-generation candidates: %s", e, exc_info=True)
+        logger.exception("Error identifying auto-generation candidates: %s", e)
 
     return candidates
 
@@ -514,7 +519,7 @@ def _trigger_autonomous_script_generation(orchestrator: Any, analysis_results: d
             }
 
     except Exception as e:
-        logger.error("Error triggering autonomous script generation: %s", e, exc_info=True)
+        logger.exception("Error triggering autonomous script generation: %s", e)
 
 
 def identify_binary_format(binary_path: str) -> str:
@@ -567,7 +572,7 @@ def identify_binary_format(binary_path: str) -> str:
                 return "DOTNET"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error identifying binary format: %s", e)
+        logger.exception("Error identifying binary format: %s", e)
 
     return "UNKNOWN"
 
@@ -667,7 +672,7 @@ def analyze_pe(binary_path: str, detailed: bool = True) -> dict[str, Any]:
         return info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing PE binary: %s", e)
+        logger.exception("Error analyzing PE binary: %s", e)
         return {"format": "PE", "error": str(e), "basic_info": get_basic_file_info(binary_path)}
 
 
@@ -761,8 +766,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
 
         if hasattr(binary, "dynamic_symbols"):
             for symbol in binary.dynamic_symbols:
-                symbol_name = getattr(symbol, "name", "")
-                if symbol_name:
+                if symbol_name := getattr(symbol, "name", ""):
                     symbol_value = getattr(symbol, "value", 0)
                     symbol_type = getattr(symbol, "type", None)
                     symbols_list.append({
@@ -778,7 +782,7 @@ def analyze_elf_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
         return info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing ELF with LIEF: %s", e)
+        logger.exception("Error analyzing ELF with LIEF: %s", e)
         return {"format": "ELF", "error": str(e)}
 
 
@@ -823,7 +827,7 @@ def analyze_elf_with_pyelftools(binary_path: str, detailed: bool) -> dict[str, A
             return info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing ELF with pyelftools: %s", e)
+        logger.exception("Error analyzing ELF with pyelftools: %s", e)
         return {"format": "ELF", "error": str(e)}
 
 
@@ -878,8 +882,7 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
             "libraries": libraries_list,
         }
 
-        header = getattr(binary, "header", None)
-        if header:
+        if header := getattr(binary, "header", None):
             magic_val = getattr(header, "magic", 0)
             cpu_type = getattr(header, "cpu_type", None)
             file_type = getattr(header, "file_type", None)
@@ -923,7 +926,7 @@ def analyze_macho_with_lief(binary_path: str, detailed: bool) -> dict[str, Any]:
         return info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing Mach-O with LIEF: %s", e)
+        logger.exception("Error analyzing Mach-O with LIEF: %s", e)
         return {"format": "MACHO", "error": str(e)}
 
 
@@ -965,7 +968,7 @@ def analyze_macho_with_macholib(binary_path: str, detailed: bool) -> dict[str, A
         return info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing Mach-O with macholib: %s", e)
+        logger.exception("Error analyzing Mach-O with macholib: %s", e)
         return {"format": "MACHO", "error": str(e)}
 
 
@@ -1047,7 +1050,7 @@ def analyze_patterns(binary_path: str, patterns: list[bytes] | None = None) -> d
         return results
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing patterns: %s", e)
+        logger.exception("Error analyzing patterns: %s", e)
         return {"error": str(e)}
 
 
@@ -1093,7 +1096,7 @@ def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, 
             try:
                 from scapy.all import rdpcap, sniff
             except ImportError as e:
-                logger.error("Import error in binary_analysis: %s", e)
+                logger.exception("Import error in binary_analysis: %s", e)
                 return {"network_connections": [], "protocols": [], "error": "scapy not available"}
 
             packet_list: list[Any] = []
@@ -1174,7 +1177,7 @@ def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, 
 
                 pyshark_mod = pyshark_imported
             except ImportError as e:
-                logger.error("Import error in binary_analysis: %s", e)
+                logger.exception("Import error in binary_analysis: %s", e)
 
             if pyshark_mod is None:
                 results["error"] = "pyshark import failed"
@@ -1233,7 +1236,7 @@ def analyze_traffic(pcap_file: str | None = None, interface: str | None = None, 
             results["error"] = "Neither scapy nor pyshark available for traffic analysis"
 
     except Exception as e:
-        logger.error("Exception in binary_analysis: %s", e)
+        logger.exception("Exception in binary_analysis: %s", e)
         results["error"] = f"Traffic analysis failed: {e!s}"
 
     results["packets_analyzed"] = packets_analyzed
@@ -1250,7 +1253,7 @@ def _try_import_scapy() -> bool:
             logger.debug("Scapy version %s available for network analysis", scapy.__version__)
         return True
     except ImportError as e:
-        logger.error("Import error in binary_analysis: %s", e)
+        logger.exception("Import error in binary_analysis: %s", e)
         return False
 
 
@@ -1265,7 +1268,7 @@ def _try_import_pyshark() -> bool:
             logger.debug("Pyshark available for network analysis")
         return True
     except ImportError as e:
-        logger.error("Import error in binary_analysis: %s", e)
+        logger.exception("Import error in binary_analysis: %s", e)
         return False
 
 
@@ -1319,7 +1322,7 @@ def get_basic_file_info(file_path: str) -> dict[str, Any]:
             "permissions": oct(stat.st_mode),
         }
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"error": str(e)}
 
 
@@ -1405,7 +1408,7 @@ def extract_binary_info(binary_path: str) -> dict[str, Any]:
             info["sha1"] = hashlib.sha256(data).hexdigest()  # Using sha256 instead of sha1 for security
             info["sha256"] = hashlib.sha256(data).hexdigest()
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error calculating hashes: %s", e)
+        logger.exception("Error calculating hashes: %s", e)
 
     return info
 
@@ -1459,7 +1462,7 @@ def extract_binary_features(binary_path: str) -> dict[str, Any]:
             features["has_resources"] = hasattr(pe, "DIRECTORY_ENTRY_RESOURCE")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error extracting features: %s", e)
+        logger.exception("Error extracting features: %s", e)
 
     return features
 
@@ -1501,7 +1504,7 @@ def extract_patterns_from_binary(binary_path: str, pattern_size: int = 16, min_f
         return frequent_patterns[:100]  # Return top 100 patterns
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error extracting patterns: %s", e)
+        logger.exception("Error extracting patterns: %s", e)
         return []
 
 
@@ -1549,7 +1552,7 @@ def scan_binary(binary_path: str, signatures: dict[str, bytes] | None = None) ->
         results["scan_time"] = time.time() - start_time
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error scanning binary: %s", e)
+        logger.exception("Error scanning binary: %s", e)
         results["error"] = str(e)
 
     return results
@@ -1585,7 +1588,7 @@ def _optimized_basic_analysis(data: bytes, chunk_info: dict[str, Any] | None = N
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1636,7 +1639,7 @@ def _optimized_string_analysis(data: bytes, chunk_info: dict[str, Any] | None = 
                         license_strings.append(string)
                         break
 
-            if len(license_strings) > 0:
+            if license_strings:
                 findings_list.append(f"Found {len(license_strings)} license-related strings")
 
             if strings_found > 1000:
@@ -1644,7 +1647,7 @@ def _optimized_string_analysis(data: bytes, chunk_info: dict[str, Any] | None = 
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1689,7 +1692,7 @@ def _optimized_entropy_analysis(data: bytes, chunk_info: dict[str, Any] | None =
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1732,7 +1735,7 @@ def _optimized_section_analysis(data: bytes, chunk_info: dict[str, Any] | None =
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1780,12 +1783,12 @@ def _optimized_import_analysis(data: bytes, chunk_info: dict[str, Any] | None = 
                 if func in data:
                     suspicious_imports.append(func.decode())
 
-            if len(suspicious_imports) > 0:
+            if suspicious_imports:
                 findings_list.append(f"Found {len(suspicious_imports)} potentially suspicious imports")
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1835,7 +1838,7 @@ def _optimized_pattern_analysis(data: bytes, chunk_info: dict[str, Any] | None =
 
         return results
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in binary_analysis: %s", e)
+        logger.exception("Error in binary_analysis: %s", e)
         return {"status": "failed", "error": str(e)}
 
 
@@ -1926,7 +1929,7 @@ def _get_basic_disassembly_info(binary_path: str) -> list[str]:
         return lines
 
     except Exception as e:
-        logger.error("Exception in binary_analysis: %s", e)
+        logger.exception("Exception in binary_analysis: %s", e)
         return [
             f"# Binary: {os.path.basename(binary_path)}",
             "# Unable to analyze - may be corrupted or unsupported format",
@@ -1942,7 +1945,7 @@ def _get_pe_entry_point(binary_path: str) -> int:
             entry_point = getattr(pe.OPTIONAL_HEADER, "AddressOfEntryPoint", 0x1000)
             return int(entry_point) if isinstance(entry_point, int) else 0x1000
     except Exception as e:
-        logger.error("Exception in binary_analysis: %s", e)
+        logger.exception("Exception in binary_analysis: %s", e)
     return 0x1000
 
 
@@ -1956,7 +1959,7 @@ def _get_elf_entry_point(binary_path: str) -> int:
                 entry = elf_header.get("e_entry", 0x1000)
                 return int(entry) if isinstance(entry, int) else 0x1000
     except Exception as e:
-        logger.error("Exception in binary_analysis: %s", e)
+        logger.exception("Exception in binary_analysis: %s", e)
     return 0x1000
 
 

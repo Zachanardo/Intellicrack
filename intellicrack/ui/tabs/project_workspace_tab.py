@@ -21,9 +21,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
-
-
-logger = logging.getLogger(__name__)
+from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QFileDialog,
@@ -43,6 +41,8 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from .base_tab import BaseTab
 
+logger = logging.getLogger(__name__)
+
 
 class DashboardTab(BaseTab):
     """Dashboard Tab - Manages project files, binary information, and workspace overview.
@@ -53,28 +53,28 @@ class DashboardTab(BaseTab):
     binary_selected = pyqtSignal(str)
     analysis_saved = pyqtSignal(str)
 
-    def __init__(self, shared_context: object | None = None, parent: object | None = None) -> None:
+    def __init__(self, shared_context: Any = None, parent: QWidget | None = None) -> None:
         """Initialize project workspace tab with file management and workspace overview."""
         super().__init__(shared_context, parent)
         self.current_binary_path: str | None = None
         self.recent_files: list[str] = []
-        self.recent_files_menu: QMenu | None = None
-        self.binary_icon_label: QLabel | None = None
-        self.binary_info_label: QLabel | None = None
-        self.file_size_label: QLabel | None = None
-        self.architecture_label: QLabel | None = None
-        self.entry_point_label: QLabel | None = None
-        self.vulns_found_label: QLabel | None = None
-        self.protections_label: QLabel | None = None
-        self.patches_label: QLabel | None = None
-        self.activity_log: QTextEdit | None = None
+        self.recent_files_menu: QMenu
+        self.binary_icon_label: QLabel
+        self.binary_info_label: QLabel
+        self.file_size_label: QLabel
+        self.architecture_label: QLabel
+        self.entry_point_label: QLabel
+        self.vulns_found_label: QLabel
+        self.protections_label: QLabel
+        self.patches_label: QLabel
+        self.activity_log: QTextEdit
 
     def setup_content(self) -> None:
         """Set up the complete Project Workspace tab content."""
         main_layout = QVBoxLayout(self)
 
         # Create horizontal splitter for left and right panels
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Project Controls
         left_panel = self.create_project_controls_panel()
@@ -247,6 +247,8 @@ class DashboardTab(BaseTab):
 
     def open_project(self) -> None:
         """Open an existing project."""
+        import json
+
         file_dialog = QFileDialog()
         project_file, _ = file_dialog.getOpenFileName(
             self,
@@ -257,12 +259,10 @@ class DashboardTab(BaseTab):
         if project_file:
             self.log_activity(f"Opening project: {project_file}")
             try:
-                import json
-
                 with open(project_file, encoding="utf-8") as f:
-                    project_data = json.load(f)
+                    project_data: Any = json.load(f)
                     if "binary_path" in project_data:
-                        binary_path = project_data["binary_path"]
+                        binary_path: str = project_data["binary_path"]
                         if os.path.exists(binary_path):
                             self.load_binary(binary_path)
                             self.log_activity(f"Project loaded successfully: {project_file}")
@@ -275,6 +275,8 @@ class DashboardTab(BaseTab):
 
     def save_project(self) -> None:
         """Save the current project."""
+        import json
+
         if not self.current_binary_path:
             QMessageBox.information(self, "Save Project", "No binary loaded to save.")
             return
@@ -289,9 +291,7 @@ class DashboardTab(BaseTab):
         if project_file:
             self.log_activity(f"Saving project: {project_file}")
             try:
-                import json
-
-                project_data = {
+                project_data: dict[str, Any] = {
                     "binary_path": self.current_binary_path,
                     "recent_files": self.recent_files,
                 }
@@ -318,16 +318,12 @@ class DashboardTab(BaseTab):
         self.current_binary_path = file_path
         self.add_to_recent_files(file_path)
 
-        # Update binary information
-        import os
-
-        file_name = os.path.basename(file_path)
-        file_size = os.path.getsize(file_path)
+        file_name: str = os.path.basename(file_path)
+        file_size: int = os.path.getsize(file_path)
 
         self.binary_info_label.setText(f"File: {file_name}\nPath: {file_path}")
         self.file_size_label.setText(f"File Size: {self.format_file_size(file_size)}")
 
-        # Emit signal for other components
         self.binary_selected.emit(file_path)
 
         self.log_activity(f"Loaded binary: {file_name}")
@@ -335,10 +331,9 @@ class DashboardTab(BaseTab):
     def close_binary(self) -> None:
         """Close the current binary."""
         if self.current_binary_path:
-            file_name = os.path.basename(self.current_binary_path)
+            file_name: str = os.path.basename(self.current_binary_path)
             self.current_binary_path = None
 
-            # Reset UI
             self.binary_info_label.setText("No binary loaded")
             self.file_size_label.setText("File Size: -")
             self.architecture_label.setText("Architecture: -")
@@ -358,15 +353,17 @@ class DashboardTab(BaseTab):
         """Update the recent files menu."""
         self.recent_files_menu.clear()
         for file_path in self.recent_files:
-            import os
-
-            file_name = os.path.basename(file_path)
+            file_name: str = os.path.basename(file_path)
             action = self.recent_files_menu.addAction(file_name)
-            action.triggered.connect(
-                lambda checked, path=file_path: (
-                    logger.debug("Recent file opened, checked state: %s for path: %s", checked, path) or self.load_binary(path)
+            if action is not None:
+                action.triggered.connect(
+                    lambda checked=False, path=file_path: self._handle_recent_file_click(checked, path)
                 )
-            )
+
+    def _handle_recent_file_click(self, checked: bool, path: str) -> None:
+        """Handle recent file click from menu."""
+        logger.debug("Recent file opened, checked state: %s for path: %s", checked, path)
+        self.load_binary(path)
 
     def save_analysis_results(self) -> None:
         """Save analysis results."""
@@ -425,7 +422,7 @@ class DashboardTab(BaseTab):
         """Export analysis results as JSON format."""
         import json
 
-        export_data = {
+        export_data: dict[str, Any] = {
             "binary_path": self.current_binary_path,
             "file_size": self.file_size_label.text(),
             "architecture": self.architecture_label.text(),
@@ -456,9 +453,9 @@ class DashboardTab(BaseTab):
             self,
             "Clear Analysis",
             "Are you sure you want to clear all analysis results?",
-            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             self.binary_info_label.setText("No binary loaded")
             self.file_size_label.setText("File Size: -")
             self.architecture_label.setText("Architecture: -")

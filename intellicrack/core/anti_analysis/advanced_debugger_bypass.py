@@ -91,7 +91,7 @@ class UserModeNTAPIHooker:
             self.logger.info("Windows user-mode NT API hook infrastructure initialized")
 
         except Exception as e:
-            self.logger.error("Failed to initialize Windows user-mode NT API hooks: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize Windows user-mode NT API hooks: %s", e)
 
     def _init_linux_usermode_hooks(self) -> None:
         """Initialize Linux user-mode hook infrastructure."""
@@ -101,7 +101,7 @@ class UserModeNTAPIHooker:
                 self.logger.info("Linux user-mode hook infrastructure initialized")
 
         except Exception as e:
-            self.logger.error("Failed to initialize Linux user-mode hooks: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize Linux user-mode hooks: %s", e)
 
     def hook_ntquery_information_process(self) -> bool:
         """Hide debugger by hooking NtQueryInformationProcess in user-mode."""
@@ -136,7 +136,7 @@ class UserModeNTAPIHooker:
             return False
 
         except Exception as e:
-            self.logger.error("Failed to hook NtQueryInformationProcess: %s", e, exc_info=True)
+            self.logger.exception("Failed to hook NtQueryInformationProcess: %s", e)
             return False
 
     def _generate_ntquery_hook_shellcode(self, original_addr: int) -> bytes:
@@ -210,7 +210,7 @@ class UserModeNTAPIHooker:
             return False
 
         except Exception as e:
-            self.logger.error("Failed to hook NtSetInformationThread: %s", e, exc_info=True)
+            self.logger.exception("Failed to hook NtSetInformationThread: %s", e)
             return False
 
     def _generate_ntset_thread_hook_shellcode(self, original_addr: int) -> bytes:
@@ -261,7 +261,7 @@ class UserModeNTAPIHooker:
             return False
 
         except Exception as e:
-            self.logger.error("Failed to hook NtQuerySystemInformation: %s", e, exc_info=True)
+            self.logger.exception("Failed to hook NtQuerySystemInformation: %s", e)
             return False
 
     def _generate_ntsystem_hook_shellcode(self, original_addr: int) -> bytes:
@@ -311,7 +311,7 @@ class UserModeNTAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to install inline hook: %s", e, exc_info=True)
+            self.logger.exception("Failed to install inline hook: %s", e)
             return False
 
     def _read_memory(self, address: int, size: int) -> bytes:
@@ -330,7 +330,7 @@ class UserModeNTAPIHooker:
             return b""
 
         except Exception as e:
-            self.logger.error("Failed to read memory: %s", e, exc_info=True)
+            self.logger.exception("Failed to read memory: %s", e)
             return b""
 
     def remove_all_hooks(self) -> bool:
@@ -345,7 +345,7 @@ class UserModeNTAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to remove hooks: %s", e, exc_info=True)
+            self.logger.exception("Failed to remove hooks: %s", e)
             return False
 
     def _remove_hook(self, hook_info: HookInfo) -> bool:
@@ -383,7 +383,7 @@ class UserModeNTAPIHooker:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to remove hook: %s", e, exc_info=True)
+            self.logger.exception("Failed to remove hook: %s", e)
             return False
 
 
@@ -410,7 +410,7 @@ class HypervisorDebugger:
             return support_info
 
         except Exception as e:
-            self.logger.error("Failed to check virtualization support: %s", e, exc_info=True)
+            self.logger.exception("Failed to check virtualization support: %s", e)
             return {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
     def _check_windows_vt_support(self) -> dict[str, bool]:
@@ -433,7 +433,7 @@ class HypervisorDebugger:
             return support
 
         except Exception as e:
-            self.logger.error("Failed to check Windows VT support: %s", e, exc_info=True)
+            self.logger.exception("Failed to check Windows VT support: %s", e)
             return {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
     def _check_linux_vt_support(self) -> dict[str, bool]:
@@ -442,16 +442,14 @@ class HypervisorDebugger:
             with Path("/proc/cpuinfo").open() as f:
                 cpuinfo = f.read()
 
-            support = {
+            return {
                 "vmx": "vmx" in cpuinfo,
                 "svm": "svm" in cpuinfo,
                 "ept": "ept" in cpuinfo,
                 "vpid": "vpid" in cpuinfo,
             }
-            return support
-
         except Exception as e:
-            self.logger.error("Failed to check Linux VT support: %s", e, exc_info=True)
+            self.logger.exception("Failed to check Linux VT support: %s", e)
             return {"vmx": False, "svm": False, "ept": False, "vpid": False}
 
     def _get_cpuid(self, eax: int, ecx: int) -> tuple[int, int, int, int]:
@@ -496,7 +494,7 @@ class HypervisorDebugger:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to setup VMCS shadowing: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup VMCS shadowing: %s", e)
             return False
 
     def setup_ept_hooks(self) -> bool:
@@ -513,7 +511,7 @@ class HypervisorDebugger:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to setup EPT hooks: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup EPT hooks: %s", e)
             return False
 
     def manipulate_hardware_breakpoints(self, breakpoints: dict[int, int]) -> bool:
@@ -529,7 +527,7 @@ class HypervisorDebugger:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to manipulate hardware breakpoints: %s", e, exc_info=True)
+            self.logger.exception("Failed to manipulate hardware breakpoints: %s", e)
             return False
 
 
@@ -557,7 +555,7 @@ class TimingNeutralizer:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to neutralize RDTSC: %s", e, exc_info=True)
+            self.logger.exception("Failed to neutralize RDTSC: %s", e)
             return False
 
     def _neutralize_rdtsc_linux(self) -> bool:
@@ -568,7 +566,7 @@ class TimingNeutralizer:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to neutralize RDTSC on Linux: %s", e, exc_info=True)
+            self.logger.exception("Failed to neutralize RDTSC on Linux: %s", e)
             return False
 
     def _read_tsc(self) -> int:
@@ -600,7 +598,7 @@ class TimingNeutralizer:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to hook QueryPerformanceCounter: %s", e, exc_info=True)
+            self.logger.exception("Failed to hook QueryPerformanceCounter: %s", e)
             return False
 
     def hook_get_tick_count(self) -> bool:
@@ -622,7 +620,7 @@ class TimingNeutralizer:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to hook GetTickCount: %s", e, exc_info=True)
+            self.logger.exception("Failed to hook GetTickCount: %s", e)
             return False
 
     def normalize_timing(self, execution_time_ms: float) -> float:
@@ -639,7 +637,7 @@ class TimingNeutralizer:
             return normalized
 
         except Exception as e:
-            self.logger.error("Failed to normalize timing: %s", e, exc_info=True)
+            self.logger.exception("Failed to normalize timing: %s", e)
             return execution_time_ms
 
     def remove_timing_hooks(self) -> bool:
@@ -650,7 +648,7 @@ class TimingNeutralizer:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to remove timing hooks: %s", e, exc_info=True)
+            self.logger.exception("Failed to remove timing hooks: %s", e)
             return False
 
 
@@ -728,7 +726,7 @@ class AdvancedDebuggerBypass:
             return results
 
         except Exception as e:
-            self.logger.error("Failed to install full bypass: %s", e, exc_info=True)
+            self.logger.exception("Failed to install full bypass: %s", e)
             results["error"] = str(e)
             return results
 
@@ -765,7 +763,7 @@ class AdvancedDebuggerBypass:
             return results
 
         except Exception as e:
-            self.logger.error("Failed to install ScyllaHide-resistant bypass: %s", e, exc_info=True)
+            self.logger.exception("Failed to install ScyllaHide-resistant bypass: %s", e)
             return {"error": str(e)}
 
     def defeat_anti_debug_technique(self, technique_name: str) -> bool:
@@ -785,7 +783,7 @@ class AdvancedDebuggerBypass:
             try:
                 return handler()
             except Exception as e:
-                self.logger.error("Failed to defeat %s: %s", technique_name, e, exc_info=True)
+                self.logger.exception("Failed to defeat %s: %s", technique_name, e)
                 return False
         else:
             self.logger.warning("Unknown anti-debug technique: %s", technique_name)
@@ -803,7 +801,7 @@ class AdvancedDebuggerBypass:
             return bypass._bypass_peb_flags()
 
         except Exception as e:
-            self.logger.error("Failed to defeat PEB.BeingDebugged: %s", e, exc_info=True)
+            self.logger.exception("Failed to defeat PEB.BeingDebugged: %s", e)
             return False
 
     def _defeat_ntglobalflag(self) -> bool:
@@ -819,7 +817,7 @@ class AdvancedDebuggerBypass:
             return bypass._bypass_hardware_breakpoints()
 
         except Exception as e:
-            self.logger.error("Failed to defeat hardware breakpoints: %s", e, exc_info=True)
+            self.logger.exception("Failed to defeat hardware breakpoints: %s", e)
             return False
 
     def remove_all_bypasses(self) -> bool:
@@ -833,7 +831,7 @@ class AdvancedDebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to remove bypasses: %s", e, exc_info=True)
+            self.logger.exception("Failed to remove bypasses: %s", e)
             return False
 
     def get_bypass_status(self) -> dict[str, Any]:

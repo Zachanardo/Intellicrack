@@ -220,7 +220,7 @@ class MemoryForensicsEngine:
             logger.info("Volatility3 framework initialized successfully")
 
         except Exception as e:
-            logger.error("Failed to initialize Volatility3: %s", e, exc_info=True)
+            logger.exception("Failed to initialize Volatility3: %s", e)
             global VOLATILITY3_AVAILABLE
             VOLATILITY3_AVAILABLE = False
 
@@ -306,7 +306,7 @@ class MemoryForensicsEngine:
             return result
 
         except Exception as e:
-            logger.error("Memory forensics analysis failed: %s", e, exc_info=True)
+            logger.exception("Memory forensics analysis failed: %s", e)
             return MemoryAnalysisResult(
                 dump_path=dump_path,
                 error=str(e),
@@ -446,7 +446,7 @@ class MemoryForensicsEngine:
             return AnalysisProfile.WINDOWS_10.value
 
         except Exception as e:
-            logger.debug("Profile detection failed for %s: %s", dump_path, e, exc_info=True)
+            logger.debug("Profile detection failed for %s: %s", dump_path, e)
             return AnalysisProfile.WINDOWS_10.value
 
     def _configure_volatility(self, dump_path: str, profile: str) -> None:
@@ -466,7 +466,7 @@ class MemoryForensicsEngine:
             automagic.run(self.automagics, self.vol_context, self.vol_config, "plugins")
 
         except Exception as e:
-            logger.error("Failed to configure Volatility3: %s", e, exc_info=True)
+            logger.exception("Failed to configure Volatility3: %s", e)
             raise
 
     def _run_volatility_plugin(self, plugin_name: str, plugin_config: dict[str, Any]) -> list[Any]:
@@ -551,7 +551,7 @@ class MemoryForensicsEngine:
                         formatted_result = renderer.render(result)
                         formatted_output.append(formatted_result)
                     except Exception as render_error:
-                        logger.debug("Failed to render result: %s", render_error, exc_info=True)
+                        logger.debug("Failed to render result: %s", render_error)
                         formatted_output.append(str(result))
 
                 logger.info("Plugin %s executed successfully with %s results", plugin_name, len(results))
@@ -561,11 +561,11 @@ class MemoryForensicsEngine:
                 return results
 
             except Exception as run_error:
-                logger.error("Plugin execution failed: %s", run_error, exc_info=True)
+                logger.exception("Plugin execution failed: %s", run_error)
                 return []
 
         except Exception as e:
-            logger.error("Failed to run plugin %s: %s", plugin_name, e, exc_info=True)
+            logger.exception("Failed to run plugin %s: %s", plugin_name, e)
             return []
 
     def _analyze_processes(self) -> list[MemoryProcess]:
@@ -600,7 +600,7 @@ class MemoryForensicsEngine:
             self._detect_hidden_processes(processes)
 
         except Exception as e:
-            logger.error("Process analysis failed: %s", e, exc_info=True)
+            logger.exception("Process analysis failed: %s", e)
 
         return processes
 
@@ -624,7 +624,7 @@ class MemoryForensicsEngine:
                 modules.append(module)
 
         except Exception as e:
-            logger.error("Module analysis failed: %s", e, exc_info=True)
+            logger.exception("Module analysis failed: %s", e)
 
         return modules
 
@@ -651,7 +651,7 @@ class MemoryForensicsEngine:
                 connections.append(connection)
 
         except Exception as e:
-            logger.error("Network analysis failed: %s", e, exc_info=True)
+            logger.exception("Network analysis failed: %s", e)
 
         return connections
 
@@ -673,7 +673,7 @@ class MemoryForensicsEngine:
                 registry_artifacts.append(artifact)
 
         except Exception as e:
-            logger.error("Registry analysis failed: %s", e, exc_info=True)
+            logger.exception("Registry analysis failed: %s", e)
 
         return registry_artifacts
 
@@ -697,7 +697,7 @@ class MemoryForensicsEngine:
                     file_handles.append(handle)
 
         except Exception as e:
-            logger.error("File handle analysis failed: %s", e, exc_info=True)
+            logger.exception("File handle analysis failed: %s", e)
 
         return file_handles
 
@@ -722,7 +722,7 @@ class MemoryForensicsEngine:
                     strings.append(string_obj)
 
         except Exception as e:
-            logger.error("String extraction failed: %s", e, exc_info=True)
+            logger.exception("String extraction failed: %s", e)
 
         return strings
 
@@ -758,7 +758,7 @@ class MemoryForensicsEngine:
                     strings.append(current_string)
 
         except Exception as e:
-            logger.error("Fallback string extraction failed: %s", e, exc_info=True)
+            logger.exception("Fallback string extraction failed: %s", e)
 
         return strings
 
@@ -809,7 +809,7 @@ class MemoryForensicsEngine:
 
             except Exception as e:
                 # Continue analysis if path checking fails
-                logger.debug("Error checking process path: %s", e, exc_info=True)
+                logger.debug("Error checking process path: %s", e)
             if process.ppid == 0 and process.name.lower() != "system":
                 indicators.append("Suspicious parent process ID")
 
@@ -833,7 +833,7 @@ class MemoryForensicsEngine:
                     process.is_hidden = True
 
         except Exception as e:
-            logger.error("Hidden process detection failed: %s", e, exc_info=True)
+            logger.exception("Hidden process detection failed: %s", e)
 
     def _is_module_suspicious(self, module_data: object) -> bool:
         """Check if a module appears suspicious.
@@ -967,7 +967,7 @@ class MemoryForensicsEngine:
                 )
 
         except Exception as e:
-            logger.error("Security issue detection failed: %s", e, exc_info=True)
+            logger.exception("Security issue detection failed: %s", e)
 
         return findings
 
@@ -987,20 +987,24 @@ class MemoryForensicsEngine:
                 # Analyze specific process from memory dump
                 full_analysis = self.analyze_memory_dump(dump_path, deep_analysis=False)
 
-                target_process = next(
-                    (process for process in full_analysis.processes if process.pid == process_id),
+                if target_process := next(
+                    (
+                        process
+                        for process in full_analysis.processes
+                        if process.pid == process_id
+                    ),
                     None,
-                )
-                if not target_process:
+                ):
+                    return {
+                        "process_id": process_id,
+                        "process_info": target_process,
+                        "modules": list(full_analysis.modules),  # All modules for context
+                        "connections": [c for c in full_analysis.network_connections if c.pid == process_id],
+                        "analysis_status": "completed",
+                    }
+                else:
                     return {"error": f"Process {process_id} not found in memory dump"}
 
-                return {
-                    "process_id": process_id,
-                    "process_info": target_process,
-                    "modules": list(full_analysis.modules),  # All modules for context
-                    "connections": [c for c in full_analysis.network_connections if c.pid == process_id],
-                    "analysis_status": "completed",
-                }
             # Live process memory analysis implementation
             import platform
 
@@ -1015,7 +1019,7 @@ class MemoryForensicsEngine:
             }
 
         except Exception as e:
-            logger.error("Process memory analysis failed: %s", e, exc_info=True)
+            logger.exception("Process memory analysis failed: %s", e)
             return {"error": str(e)}
 
     def _analyze_live_process_windows(self, process_id: int) -> dict[str, Any]:
@@ -1056,7 +1060,7 @@ class MemoryForensicsEngine:
                         },
                     )
                 except Exception as e:
-                    logger.debug("Failed to get module info for %s: %s", hex(module), e, exc_info=True)
+                    logger.debug("Failed to get module info for %s: %s", hex(module), e)
                     continue
 
             # Memory regions analysis
@@ -1186,13 +1190,13 @@ class MemoryForensicsEngine:
                         },
                     )
             except (ImportError, AttributeError) as e:
-                logger.debug("psutil not available for network connections: %s", e, exc_info=True)
+                logger.debug("psutil not available for network connections: %s", e)
             except psutil.NoSuchProcess:
                 logger.debug("Process %s no longer exists", process_id)
             except psutil.AccessDenied:
                 logger.debug("Access denied to process %s network connections", process_id)
             except Exception as e:
-                logger.debug("Failed to get network connections for process %s: %s", process_id, e, exc_info=True)
+                logger.debug("Failed to get network connections for process %s: %s", process_id, e)
 
             # Close handle
             win32api.CloseHandle(h_process)
@@ -1243,12 +1247,10 @@ class MemoryForensicsEngine:
 
             with open(maps_path) as f:
                 for line in f:
-                    # Parse memory mapping
-                    match = re.match(
+                    if match := re.match(
                         r"([0-9a-f]+)-([0-9a-f]+) ([-rwxp]{4}) ([0-9a-f]+) ([\d:]+) (\d+)\s*(.*)?",
                         line,
-                    )
-                    if match:
+                    ):
                         start = int(match.group(1), 16)
                         end = int(match.group(2), 16)
                         perms = match.group(3)
@@ -1311,10 +1313,10 @@ class MemoryForensicsEngine:
                                     )
                         except OSError as e:
                             region_info["read_error"] = True
-                            logger.debug("Failed to read memory region %s-%s: %s", hex(start), hex(end), e, exc_info=True)
+                            logger.debug("Failed to read memory region %s-%s: %s", hex(start), hex(end), e)
                         except ValueError as e:
                             region_info["read_error"] = True
-                            logger.debug("Invalid memory region values: %s", e, exc_info=True)
+                            logger.debug("Invalid memory region values: %s", e)
 
                         memory_regions.append(region_info)
 
@@ -1327,9 +1329,9 @@ class MemoryForensicsEngine:
                             key, value = line.split(":", 1)
                             status_info[key.strip()] = value.strip()
             except OSError as e:
-                logger.debug("Failed to read process status for PID %s: %s", process_id, e, exc_info=True)
+                logger.debug("Failed to read process status for PID %s: %s", process_id, e)
             except ValueError as e:
-                logger.debug("Error parsing process status line: %s", e, exc_info=True)
+                logger.debug("Error parsing process status line: %s", e)
 
             # Get network connections
             connections = []
@@ -1362,23 +1364,22 @@ class MemoryForensicsEngine:
                                                     )
                                             except OSError as e:
                                                 # File descriptor might have closed
-                                                logger.debug("Failed to read fd %s: %s", fd, e, exc_info=True)
+                                                logger.debug("Failed to read fd %s: %s", fd, e)
                                                 continue
                                             except Exception as e:
-                                                logger.debug("Error processing fd %s: %s", fd, e, exc_info=True)
+                                                logger.debug("Error processing fd %s: %s", fd, e)
                                                 continue
             except OSError as e:
-                logger.debug("Failed to read network connections from /proc/net: %s", e, exc_info=True)
+                logger.debug("Failed to read network connections from /proc/net: %s", e)
             except Exception as e:
-                logger.debug("Error parsing network connections: %s", e, exc_info=True)
+                logger.debug("Error parsing network connections: %s", e)
 
-            # Look for injected code
-            injected_regions = []
-            for region in memory_regions:
-                if not region.get("pathname") and "x" in region.get("permissions", ""):
-                    # Executable region without file backing - possibly injected
-                    injected_regions.append(region["address"])
-
+            injected_regions = [
+                region["address"]
+                for region in memory_regions
+                if not region.get("pathname")
+                and "x" in region.get("permissions", "")
+            ]
             return {
                 "process_id": process_id,
                 "status": "success",
@@ -1438,10 +1439,10 @@ class MemoryForensicsEngine:
             port_num = int(port, 16)
             return f"{host_ip}:{port_num}"
         except ValueError as e:
-            logger.debug("Invalid address format '%s': %s", addr_str, e, exc_info=True)
+            logger.debug("Invalid address format '%s': %s", addr_str, e)
             return addr_str
         except AttributeError as e:
-            logger.debug("Error parsing address '%s': %s", addr_str, e, exc_info=True)
+            logger.debug("Error parsing address '%s': %s", addr_str, e)
             return addr_str
 
     def extract_strings(self, memory_data: bytes, min_length: int = 4) -> list[str]:
@@ -1474,7 +1475,7 @@ class MemoryForensicsEngine:
             return strings
 
         except Exception as e:
-            logger.error("String extraction failed: %s", e, exc_info=True)
+            logger.exception("String extraction failed: %s", e)
             return []
 
     def generate_icp_supplemental_data(self, analysis_result: MemoryAnalysisResult) -> dict[str, Any]:
@@ -1654,7 +1655,7 @@ def get_memory_forensics_engine() -> MemoryForensicsEngine | None:
         try:
             _memory_forensics_engine = MemoryForensicsEngine()
         except Exception as e:
-            logger.error("Failed to initialize memory forensics engine: %s", e, exc_info=True)
+            logger.exception("Failed to initialize memory forensics engine: %s", e)
             return None
     return _memory_forensics_engine
 

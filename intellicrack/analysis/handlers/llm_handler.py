@@ -146,7 +146,7 @@ class LLMAnalysisWorker(QRunnable):
             self.signals.result.emit(result)
 
         except Exception as e:
-            logger.error("Exception in llm_handler: %s", e)
+            logger.exception("Exception in llm_handler: %s", e)
             import traceback
 
             self.signals.error.emit((type(e), e, traceback.format_exc()))
@@ -274,7 +274,7 @@ class LLMHandler(QObject):
             logger.info("Retrieved LLM manager instance: %s", llm_manager)
             logger.info("Registered ICP analysis tool with LLM manager")
         except Exception as e:
-            logger.error(f"Failed to register LLM tool: {e}")
+            logger.exception("Failed to register LLM tool: %s", e)
 
     def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
         """Handle slot when protection analysis completes.
@@ -283,7 +283,7 @@ class LLMHandler(QObject):
         LLM operations.
         """
         self.current_result = result
-        logger.info(f"LLM handler received analysis for: {result.file_path}")
+        logger.info("LLM handler received analysis for: %s", result.file_path)
 
         # Register context with LLM in background
         worker = LLMAnalysisWorker("register_context", result)
@@ -364,5 +364,5 @@ class LLMHandler(QObject):
         """Handle worker thread errors."""
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"LLM operation failed: {exc_value}"
-        logger.error(f"{error_msg}\n{exc_traceback}")
+        logger.error("%s\n%s", error_msg, exc_traceback)
         self.llm_error.emit(error_msg)

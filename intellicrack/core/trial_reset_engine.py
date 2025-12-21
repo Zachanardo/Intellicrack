@@ -369,7 +369,6 @@ class TrialResetEngine:
         ads_files = []
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
-        # Define WIN32_STREAM_ID structure for BackupRead
         class WIN32_STREAM_ID(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("dwStreamId", wintypes.DWORD),
@@ -378,12 +377,10 @@ class TrialResetEngine:
                 ("dwStreamNameSize", wintypes.DWORD),
             ]
 
-        # Define FindFirstStreamW structures
         class STREAM_INFO_LEVELS(ctypes.c_int):  # noqa: N801
             FindStreamInfoStandard = 0
             FindStreamInfoMaxInfoLevel = 1
 
-        # Define stream info structure
         class WIN32_FIND_STREAM_DATA(ctypes.Structure):  # noqa: N801
             _fields_ = [
                 ("StreamSize", wintypes.LARGE_INTEGER),
@@ -440,33 +437,32 @@ class TrialResetEngine:
                             stream_id = WIN32_STREAM_ID()
                             bytes_read = wintypes.DWORD(0)
 
-                            while kernel32.BackupRead(
-                                file_handle,
-                                ctypes.byref(stream_id),
-                                ctypes.sizeof(WIN32_STREAM_ID),
-                                ctypes.byref(bytes_read),
-                                False,
-                                False,
-                                ctypes.byref(context),
+                            while (
+                                kernel32.BackupRead(
+                                    file_handle,
+                                    ctypes.byref(stream_id),
+                                    ctypes.sizeof(WIN32_STREAM_ID),
+                                    ctypes.byref(bytes_read),
+                                    False,
+                                    False,
+                                    ctypes.byref(context),
+                                )
+                                and bytes_read.value != 0
                             ):
-                                if bytes_read.value == 0:
-                                    break
-                                if stream_id.dwStreamId == 4:
-                                    if stream_id.dwStreamNameSize > 0:
-                                        name_buffer = ctypes.create_unicode_buffer(stream_id.dwStreamNameSize // 2)
-                                        kernel32.BackupRead(
-                                            file_handle,
-                                            name_buffer,
-                                            stream_id.dwStreamNameSize,
-                                            ctypes.byref(bytes_read),
-                                            False,
-                                            False,
-                                            ctypes.byref(context),
-                                        )
-                                        stream_name = name_buffer.value
-                                        if stream_name:
-                                            ads_files.append(f"{base_path}{stream_name}")
-                                            logger.debug("Found ADS via BackupRead: %s%s", base_path, stream_name)
+                                if stream_id.dwStreamId == 4 and stream_id.dwStreamNameSize > 0:
+                                    name_buffer = ctypes.create_unicode_buffer(stream_id.dwStreamNameSize // 2)
+                                    kernel32.BackupRead(
+                                        file_handle,
+                                        name_buffer,
+                                        stream_id.dwStreamNameSize,
+                                        ctypes.byref(bytes_read),
+                                        False,
+                                        False,
+                                        ctypes.byref(context),
+                                    )
+                                    if stream_name := name_buffer.value:
+                                        ads_files.append(f"{base_path}{stream_name}")
+                                        logger.debug("Found ADS via BackupRead: %s%s", base_path, stream_name)
                         finally:
                             kernel32.CloseHandle(file_handle)
                 except (OSError, ctypes.WinError) as backup_error:

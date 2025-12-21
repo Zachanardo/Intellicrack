@@ -5,16 +5,28 @@ from __future__ import annotations
 import logging
 import os
 from collections import Counter
-from typing import TYPE_CHECKING, Any
+from collections.abc import Callable
+from typing import Any, Protocol
 
-from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar
+from PyQt6.QtCore import QObject
+from PyQt6.QtWidgets import QDialog, QMessageBox, QToolBar, QWidget
 
 from intellicrack.handlers.pyqt6_handler import QAction
 from intellicrack.utils.logger import logger
 
 
-if TYPE_CHECKING:
-    from collections.abc import Callable
+class AppInstance(Protocol):
+    """Protocol for application instance with hex viewer attributes."""
+
+    binary_path: str | None
+    _original_show_editable_hex_viewer: Callable[[], QDialog | None]
+    show_editable_hex_viewer: Callable[[], QDialog | None]
+    show_writable_hex_viewer: Callable[[], QDialog | None]
+    _hex_viewer_integrated: bool
+    TOOL_REGISTRY: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]]
+
+    def menuBar(self) -> Any: ...
+    def children(self) -> list[QObject]: ...
 
 """
 Integration between enhanced hex viewer/editor and Intellicrack.
@@ -41,18 +53,17 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 try:
     from .hex_dialog import HexViewerDialog
 except ImportError as e:
-    logger.error("Import error in integration: %s", e)
-    HexViewerDialog = None
+    logger.exception("Import error in integration: %s", e)
+    HexViewerDialog = None  # type: ignore[assignment,misc]
 
 try:
     from .ai_bridge import wrapper_ai_binary_analyze, wrapper_ai_binary_edit_suggest, wrapper_ai_binary_pattern_search
 except ImportError as e:
-    logger.error("Import error in integration: %s", e)
+    logger.exception("Import error in integration: %s", e)
 
     import re
-    from collections import Counter
 
-    def wrapper_ai_binary_analyze(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_analyze(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
         """Perform static binary analysis when AI bridge is not available.
 
         Analyzes binary data using entropy calculation, string extraction,
@@ -85,10 +96,10 @@ except ImportError as e:
 
             return {"analysis": analysis_results}
         except Exception as e:
-            logger.error("Error in fallback binary analyze: %s", e)
+            logger.exception("Error in fallback binary analyze: %s", e)
             return {"error": f"Analysis failed: {e!s}"}
 
-    def wrapper_ai_binary_pattern_search(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_pattern_search(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
         """Search for patterns in binary data when AI bridge is not available.
 
         Performs pattern matching using regex, byte sequences, and common
@@ -169,10 +180,10 @@ except ImportError as e:
                 "pattern_type": pattern_type,
             }
         except Exception as e:
-            logger.error("Error in fallback pattern search: %s", e)
+            logger.exception("Error in fallback pattern search: %s", e)
             return {"error": f"Pattern search failed: {e!s}"}
 
-    def wrapper_ai_binary_edit_suggest(app_instance: object, parameters: dict[str, Any]) -> dict[str, Any]:
+    def wrapper_ai_binary_edit_suggest(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:  # type: ignore[misc]
         """Suggest binary edits for license bypass when AI bridge is not available.
 
         Analyzes binary code to suggest patches for common license validation
@@ -279,7 +290,7 @@ except ImportError as e:
                 )
             return {"suggestions": suggestions, "count": len(suggestions)}
         except Exception as e:
-            logger.error("Error in fallback edit suggest: %s", e)
+            logger.exception("Error in fallback edit suggest: %s", e)
             return {"error": f"Edit suggestion failed: {e!s}"}
 
     def _calculate_entropy(data: bytes) -> float:
@@ -362,11 +373,10 @@ except ImportError as e:
 
 logger = logging.getLogger("Intellicrack.HexView")
 
-# Tool registry for hex viewer AI tools
-TOOL_REGISTRY = {}
+TOOL_REGISTRY: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]] = {}
 
 
-def show_enhanced_hex_viewer(app_instance: object, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
+def show_enhanced_hex_viewer(app_instance: Any, file_path: str | None = None, read_only: bool = True) -> QDialog | None:
     """Show the enhanced hex viewer/editor dialog.
 
     This function creates and shows the enhanced hex viewer dialog, optionally
@@ -382,81 +392,76 @@ def show_enhanced_hex_viewer(app_instance: object, file_path: str | None = None,
 
     """
     try:
-        # If no file path is provided, use the currently loaded binary
+        parent_widget = app_instance if isinstance(app_instance, QWidget) else None
+
         if not file_path:
             if hasattr(app_instance, "binary_path") and app_instance.binary_path:
                 file_path = app_instance.binary_path
                 logger.debug("Using current binary path: %s", file_path)
             else:
-                # Show a message box if no file is loaded
                 logger.warning("No file path provided and no binary loaded")
                 QMessageBox.warning(
-                    app_instance,
+                    parent_widget,
                     "No File Loaded",
                     "Please load a binary file first.",
                 )
                 return None
 
-        # Validate file before creating dialog
         if not os.path.exists(file_path):
-            logger.error("File does not exist: %s", file_path)
+            logger.exception("File does not exist: %s", file_path)
             QMessageBox.critical(
-                app_instance,
+                parent_widget,
                 "Error Opening File",
                 f"The file does not exist: {file_path}",
             )
             return None
 
-        # Check for read permission
         if not os.access(file_path, os.R_OK):
-            logger.error("No permission to read file: %s", file_path)
+            logger.exception("No permission to read file: %s", file_path)
             QMessageBox.critical(
-                app_instance,
+                parent_widget,
                 "Error Opening File",
                 f"No permission to read file: {file_path}",
             )
             return None
 
-        # Check file size
         try:
             file_size = os.path.getsize(file_path)
             logger.debug("File size: %s bytes", file_size)
             if file_size == 0:
                 logger.warning("File is empty: %s", file_path)
                 QMessageBox.warning(
-                    app_instance,
+                    parent_widget,
                     "Empty File",
                     f"The file is empty: {file_path}",
                 )
-                # Continue anyway - we'll show an empty hex view
         except (OSError, ValueError, RuntimeError) as e:
             logger.warning("Could not get file size: %s", e)
 
-        # Create the dialog
         logger.debug("Creating HexViewerDialog for %s, read_only=%s", file_path, read_only)
-        dialog = HexViewerDialog(app_instance, file_path, read_only)
+        dialog = HexViewerDialog(parent_widget, file_path, read_only)
 
-        # Show the dialog (non-modal)
         dialog.show()
-        dialog.raise_()  # Bring to front
-        dialog.activateWindow()  # Make it the active window
+        dialog.raise_()
+        dialog.activateWindow()
 
-        # Force update after showing
-        dialog.hex_viewer.viewport().update()
+        viewport = dialog.hex_viewer.viewport()
+        if viewport is not None:
+            viewport.update()
 
         logger.info("Opened enhanced hex viewer for %s", file_path)
         return dialog
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error(f"Error showing enhanced hex viewer: {e}", exc_info=True)
+        logger.exception("Error showing enhanced hex viewer: %s", e, exc_info=True)
         QMessageBox.critical(
-            app_instance,
+            parent_widget,
             "Error Opening Hex Viewer",
             f"Failed to open hex viewer: {e!s}",
         )
         return None
 
 
-def initialize_hex_viewer(app_instance: object) -> None:
+def initialize_hex_viewer(app_instance: Any) -> None:
     """Initialize the hex viewer functionality.
 
     This function sets up the hex viewer methods on the application instance
@@ -466,26 +471,22 @@ def initialize_hex_viewer(app_instance: object) -> None:
         app_instance: Intellicrack application instance
 
     """
-    # Store the original method
-    if not hasattr(app_instance, "_original_show_editable_hex_viewer"):
+    if not hasattr(app_instance, "_original_show_editable_hex_viewer") and hasattr(app_instance, "show_editable_hex_viewer"):
         app_instance._original_show_editable_hex_viewer = app_instance.show_editable_hex_viewer
 
-    # Replace with enhanced version
-    # Ensure the proper way to open hex viewer in edit mode is used
     app_instance.show_editable_hex_viewer = lambda: show_enhanced_hex_viewer(
         app_instance,
         app_instance.binary_path if hasattr(app_instance, "binary_path") else None,
         False,
     )
 
-    # Add function to show writable hex viewer explicitly (fixes the menu-only integration)
     if not hasattr(app_instance, "show_writable_hex_viewer"):
         app_instance.show_writable_hex_viewer = app_instance.show_editable_hex_viewer
 
     logger.info("Initialized hex viewer functionality")
 
 
-def restore_standard_hex_viewer(app_instance: object) -> None:
+def restore_standard_hex_viewer(app_instance: Any) -> None:
     """Restore the standard hex viewer.
 
     This function restores the original hex viewer function if it was
@@ -495,12 +496,12 @@ def restore_standard_hex_viewer(app_instance: object) -> None:
         app_instance: Intellicrack application instance
 
     """
-    if hasattr(app_instance, "_original_show_editable_hex_viewer"):
+    if hasattr(app_instance, "_original_show_editable_hex_viewer") and hasattr(app_instance, "show_editable_hex_viewer"):
         app_instance.show_editable_hex_viewer = app_instance._original_show_editable_hex_viewer
         logger.info("Restored standard hex viewer")
 
 
-def add_hex_viewer_menu(app_instance: object, menu_name: str | None = None) -> None:
+def add_hex_viewer_menu(app_instance: Any, menu_name: str | None = None) -> None:
     """Add the enhanced hex viewer to a menu.
 
     This function adds a menu item for the enhanced hex viewer to the
@@ -511,25 +512,28 @@ def add_hex_viewer_menu(app_instance: object, menu_name: str | None = None) -> N
         menu_name: Name of the menu to add the item to
 
     """
-    # Check if menu_name is None - skip menu creation if so
     if menu_name is None:
-        # Skip adding hex viewer menu items - they're already available in the dedicated tab
         logger.info("Skipping hex viewer menu creation - using dedicated tab instead")
         return
 
-    menu = next(
-        (action.menu() for action in app_instance.menuBar().actions() if action.text() == menu_name),
-        None,
-    ) or app_instance.menuBar().addMenu(menu_name)
+    if not hasattr(app_instance, "menuBar"):
+        logger.warning("app_instance does not have menuBar method")
+        return
 
-    # Add view action (read-only)
-    enhanced_hex_action = QAction("Hex Viewer (View)", app_instance)
+    menu_bar = app_instance.menuBar()
+    menu = next(
+        (action.menu() for action in menu_bar.actions() if action.text() == menu_name),
+        None,
+    ) or menu_bar.addMenu(menu_name)
+
+    parent_obj = app_instance if isinstance(app_instance, QObject) else None
+
+    enhanced_hex_action = QAction("Hex Viewer (View)", parent_obj)
     enhanced_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance, None, True))
     enhanced_hex_action.setStatusTip("Open binary in read-only hex viewer")
     menu.addAction(enhanced_hex_action)
 
-    # Add edit action
-    edit_hex_action = QAction("Hex Editor (Editable)", app_instance)
+    edit_hex_action = QAction("Hex Editor (Editable)", parent_obj)
     edit_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance, None, False))
     edit_hex_action.setStatusTip("Open binary in editable hex editor")
     menu.addAction(edit_hex_action)
@@ -537,7 +541,7 @@ def add_hex_viewer_menu(app_instance: object, menu_name: str | None = None) -> N
     logger.info("Added Enhanced Hex Viewer options to %s menu", menu_name)
 
 
-def add_hex_viewer_toolbar_button(app_instance: object, toolbar: QToolBar | None = None) -> None:
+def add_hex_viewer_toolbar_button(app_instance: Any, toolbar: QToolBar | None = None) -> None:
     """Add the enhanced hex viewer to a toolbar.
 
     This function adds a toolbar button for the enhanced hex viewer to the
@@ -548,8 +552,7 @@ def add_hex_viewer_toolbar_button(app_instance: object, toolbar: QToolBar | None
         toolbar: Toolbar to add the button to, or None to use the main toolbar
 
     """
-    # Find the toolbar if not provided
-    if not toolbar:
+    if not toolbar and hasattr(app_instance, "children"):
         for child in app_instance.children():
             if isinstance(child, QToolBar):
                 toolbar = child
@@ -559,15 +562,15 @@ def add_hex_viewer_toolbar_button(app_instance: object, toolbar: QToolBar | None
         logger.warning("Could not find a toolbar to add the hex viewer button to")
         return
 
-    # Add the action
-    enhanced_hex_action = QAction("Enhanced Hex", app_instance)
+    parent_obj = app_instance if isinstance(app_instance, QObject) else None
+    enhanced_hex_action = QAction("Enhanced Hex", parent_obj)
     enhanced_hex_action.triggered.connect(lambda: show_enhanced_hex_viewer(app_instance))
     toolbar.addAction(enhanced_hex_action)
 
     logger.info("Added Enhanced Hex Viewer button to toolbar")
 
 
-def register_hex_viewer_ai_tools(app_instance: object) -> None:
+def register_hex_viewer_ai_tools(app_instance: Any) -> None:
     """Register the AI tool wrappers for the hex viewer.
 
     This function registers the AI tool wrappers that provide integration
@@ -577,25 +580,22 @@ def register_hex_viewer_ai_tools(app_instance: object) -> None:
         app_instance: Intellicrack application instance
 
     """
-    # Check if TOOL_REGISTRY exists
     if not hasattr(app_instance, "TOOL_REGISTRY"):
         logger.warning("TOOL_REGISTRY not found in app_instance")
         return
 
-    # Register the tool wrappers
-    tool_registry = {
+    tool_registry: dict[str, Callable[[Any, dict[str, Any]], dict[str, Any]]] = {
         "tool_ai_binary_analyze": wrapper_ai_binary_analyze,
         "tool_ai_binary_pattern_search": wrapper_ai_binary_pattern_search,
         "tool_ai_binary_edit_suggest": wrapper_ai_binary_edit_suggest,
     }
 
-    # Update the registry
     app_instance.TOOL_REGISTRY.update(tool_registry)
 
-    logger.info(f"Registered {len(tool_registry)} hex viewer AI tools")
+    logger.info("Registered %d hex viewer AI tools", len(tool_registry))
 
 
-def integrate_enhanced_hex_viewer(app_instance: object) -> bool | None:
+def integrate_enhanced_hex_viewer(app_instance: Any) -> bool | None:
     """Fully integrate the enhanced hex viewer with Intellicrack.
 
     This function performs all necessary steps to integrate the enhanced hex
@@ -609,28 +609,22 @@ def integrate_enhanced_hex_viewer(app_instance: object) -> bool | None:
 
     """
     try:
-        # Check if already integrated to prevent duplicates
-        if hasattr(app_instance, "_hex_viewer_integrated"):
+        if hasattr(app_instance, "_hex_viewer_integrated") and app_instance._hex_viewer_integrated:
             logger.info("Enhanced hex viewer already integrated - skipping")
             return True
 
-        # Initialize hex viewer
         initialize_hex_viewer(app_instance)
 
-        # Skip adding to menu since we have a dedicated tab
-        # add_hex_viewer_menu(app_instance)
         logger.info("Skipping hex viewer menu integration - using dedicated tab instead")
 
-        # Register AI tools
         register_hex_viewer_ai_tools(app_instance)
 
-        # Mark as integrated
         app_instance._hex_viewer_integrated = True
 
         logger.info("Hex viewer integration completed successfully")
         return True
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error integrating enhanced hex viewer: %s", e)
+        logger.exception("Error integrating enhanced hex viewer: %s", e)
         return False
 
 
@@ -668,7 +662,7 @@ def hex_viewer_ai_tool(
             logger.debug("Hex viewer AI tool %s completed successfully", func.__name__)
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in hex viewer AI tool %s: %s", func.__name__, e)
+            logger.exception("Error in hex viewer AI tool %s: %s", func.__name__, e)
             return {"error": str(e)}
 
     return wrapper

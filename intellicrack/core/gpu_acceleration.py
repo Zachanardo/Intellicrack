@@ -127,10 +127,7 @@ class GPUAccelerator:
             return "pycuda"
 
         # Fall back to Intel GPU if available
-        if XPU_AVAILABLE:
-            return "xpu"
-
-        return "cpu"
+        return "xpu" if XPU_AVAILABLE else "cpu"
 
     def _get_device_info(self) -> dict[str, Any]:
         """Get GPU device information."""
@@ -294,7 +291,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("Intel XPU pattern search failed: %s", e)
+            logger.exception("Intel XPU pattern search failed: %s", e)
             return self._cpu_pattern_search(data, pattern)
 
     def _cupy_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
@@ -356,7 +353,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("CuPy pattern search failed: %s", e)
+            logger.exception("CuPy pattern search failed: %s", e)
             return self._cpu_pattern_search(data, pattern)
 
     def _numba_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
@@ -396,7 +393,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("Numba pattern search failed: %s", e)
+            logger.exception("Numba pattern search failed: %s", e)
             return self._cpu_pattern_search(data, pattern)
 
     def _create_pattern_match_kernel(self) -> object:
@@ -496,7 +493,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("PyCUDA pattern search failed: %s", e)
+            logger.exception("PyCUDA pattern search failed: %s", e)
             return self._cpu_pattern_search(data, pattern)
 
     def _cpu_pattern_search(self, data: bytes, pattern: bytes) -> dict[str, Any]:
@@ -585,7 +582,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("Intel XPU entropy calculation failed: %s", e)
+            logger.exception("Intel XPU entropy calculation failed: %s", e)
             return self._cpu_entropy(data, block_size)
 
     def _cupy_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
@@ -617,7 +614,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("CuPy entropy calculation failed: %s", e)
+            logger.exception("CuPy entropy calculation failed: %s", e)
             return self._cpu_entropy(data, block_size)
 
     def _numba_entropy(self, data: bytes, block_size: int) -> dict[str, Any]:
@@ -649,7 +646,7 @@ class GPUAccelerator:
             }
 
         except Exception as e:
-            logger.error("Numba entropy calculation failed: %s", e)
+            logger.exception("Numba entropy calculation failed: %s", e)
             return self._cpu_entropy(data, block_size)
 
     def _create_entropy_kernel(self) -> object:
@@ -780,7 +777,7 @@ class GPUAccelerator:
             return format(result & 0xFFFFFFFF, "08x")
 
         except Exception as e:
-            logger.error("CuPy CRC32 failed: %s", e)
+            logger.exception("CuPy CRC32 failed: %s", e)
             import zlib
 
             return format(zlib.crc32(data) & 0xFFFFFFFF, "08x")

@@ -38,7 +38,7 @@ logger = get_logger(__name__)
 try:
     import r2pipe
 except ImportError as e:
-    logger.error("Import error in radare2_error_handler: %s", e)
+    logger.exception("Import error in radare2_error_handler: %s", e)
     r2pipe = None
 
 
@@ -204,7 +204,7 @@ class R2ErrorHandler:
         try:
             yield
         except Exception as e:
-            self.logger.error("Exception in radare2_error_handler: %s", e)
+            self.logger.exception("Exception in radare2_error_handler: %s", e)
             duration = time.time() - start_time
             self._record_performance(operation_name, duration, success=False)
             self.handle_error(e, operation_name, context)
@@ -232,7 +232,7 @@ class R2ErrorHandler:
 
                 # Check circuit breaker
                 if self._is_circuit_broken(operation_name):
-                    self.logger.error("Circuit breaker open for %s, aborting", operation_name)
+                    self.logger.exception("Circuit breaker open for %s, aborting", operation_name)
                     return False
 
                 # Record error
@@ -256,7 +256,7 @@ class R2ErrorHandler:
                 return False
 
             except Exception as recovery_error:
-                self.logger.critical("Error in error handler: %s", recovery_error, exc_info=True)
+                self.logger.critical("Error in error handler: %s", recovery_error)
                 return False
 
     def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any]) -> ErrorEvent:
@@ -343,7 +343,7 @@ class R2ErrorHandler:
             return False
 
         except Exception as e:
-            self.logger.error("Recovery execution failed: %s", e, exc_info=True)
+            self.logger.exception("Recovery execution failed: %s", e)
             return False
 
     def _execute_retry_recovery(self, error_event: ErrorEvent) -> bool:
@@ -407,7 +407,7 @@ class R2ErrorHandler:
     def _execute_recovery_action(self, action_name: str, error_event: ErrorEvent) -> bool:
         """Execute specific recovery action."""
         if action_name not in self.recovery_actions:
-            self.logger.error("Unknown recovery action: %s", action_name)
+            self.logger.exception("Unknown recovery action: %s", action_name)
             return False
 
         action = self.recovery_actions[action_name]
@@ -441,7 +441,7 @@ class R2ErrorHandler:
             return success
 
         except Exception as e:
-            self.logger.error("Recovery action %s threw exception: %s", action_name, e, exc_info=True)
+            self.logger.exception("Recovery action %s threw exception: %s", action_name, e)
             self._record_recovery_failure(action_name)
             return False
 
@@ -459,7 +459,7 @@ class R2ErrorHandler:
                 try:
                     r2_session.quit()
                 except Exception as e:
-                    self.logger.debug("Error closing r2 session during recovery: %s", e, exc_info=True)
+                    self.logger.debug("Error closing r2 session during recovery: %s", e)
 
                 # Create new session
                 new_session = r2pipe.open(binary_path, flags=["-2"])
@@ -474,7 +474,7 @@ class R2ErrorHandler:
             return False
 
         except Exception as e:
-            self.logger.error("Failed to restart R2 session: %s", e, exc_info=True)
+            self.logger.exception("Failed to restart R2 session: %s", e)
             return False
 
     def _re_analyze_binary(self, error_event: ErrorEvent) -> bool:
@@ -493,7 +493,7 @@ class R2ErrorHandler:
             return False
 
         except Exception as e:
-            self.logger.error("Failed to re-analyze binary: %s", e, exc_info=True)
+            self.logger.exception("Failed to re-analyze binary: %s", e)
             return False
 
     def _retry_with_fallback(self, error_event: ErrorEvent) -> bool:
@@ -506,7 +506,7 @@ class R2ErrorHandler:
             return True
 
         except Exception as e:
-            self.logger.error("Retry with fallback failed: %s", e, exc_info=True)
+            self.logger.exception("Retry with fallback failed: %s", e)
             return False
 
     def _cleanup_memory(self, error_event: ErrorEvent) -> bool:
@@ -518,7 +518,7 @@ class R2ErrorHandler:
                     r2_session.cmd("af-*")
                     r2_session.cmd("fs-*")
                 except Exception as e:
-                    self.logger.debug("Error closing r2 session during recovery: %s", e, exc_info=True)
+                    self.logger.debug("Error closing r2 session during recovery: %s", e)
 
             # Clean up temporary files
             temp_files = error_event.context.get("temp_files", [])
@@ -527,13 +527,13 @@ class R2ErrorHandler:
                     if os.path.exists(temp_file):
                         os.remove(temp_file)
                 except Exception as e:
-                    self.logger.debug("Error removing temp file during recovery: %s", e, exc_info=True)
+                    self.logger.debug("Error removing temp file during recovery: %s", e)
 
             self.logger.info("Memory cleanup completed")
             return True
 
         except Exception as e:
-            self.logger.error("Memory cleanup failed: %s", e, exc_info=True)
+            self.logger.exception("Memory cleanup failed: %s", e)
             return False
 
     def _graceful_degradation(self, error_event: ErrorEvent) -> bool:
@@ -557,7 +557,7 @@ class R2ErrorHandler:
             return True
 
         except Exception as e:
-            self.logger.error("Graceful degradation failed: %s", e, exc_info=True)
+            self.logger.exception("Graceful degradation failed: %s", e)
             return False
 
     # Circuit breaker pattern implementation

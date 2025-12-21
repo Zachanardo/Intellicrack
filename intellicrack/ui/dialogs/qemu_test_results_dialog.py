@@ -118,7 +118,7 @@ class QEMUExecutionThread(QThread):
             self.execution_complete.emit(test_results)
 
         except Exception as e:
-            logger.error("QEMU execution failed: %s", e)
+            logger.exception("QEMU execution failed: %s", e)
             error_results = TestResults(
                 success=False,
                 duration=time.time() - self.start_time,
@@ -205,7 +205,7 @@ class QEMUExecutionThread(QThread):
             return result
 
         except AttributeError as e:
-            logger.error("QEMU manager missing Ghidra execution method: %s", e)
+            logger.exception("QEMU manager missing Ghidra execution method: %s", e)
             return ExecutionResult(
                 success=False,
                 output="",
@@ -214,7 +214,7 @@ class QEMUExecutionThread(QThread):
                 runtime_ms=0,
             )
         except TimeoutError as e:
-            logger.error("Ghidra script execution timed out: %s", e)
+            logger.exception("Ghidra script execution timed out: %s", e)
             return ExecutionResult(
                 success=False,
                 output="",
@@ -293,7 +293,7 @@ class QEMUExecutionThread(QThread):
             return result
 
         except AttributeError as e:
-            logger.error("QEMU manager missing execution method: %s", e)
+            logger.exception("QEMU manager missing execution method: %s", e)
             return ExecutionResult(
                 success=False,
                 output="",
@@ -302,7 +302,7 @@ class QEMUExecutionThread(QThread):
                 runtime_ms=0,
             )
         except TimeoutError as e:
-            logger.error("Generic script execution timed out: %s", e)
+            logger.exception("Generic script execution timed out: %s", e)
             return ExecutionResult(
                 success=False,
                 output="",

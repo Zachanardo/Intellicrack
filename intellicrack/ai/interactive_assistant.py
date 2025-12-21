@@ -696,7 +696,7 @@ What security aspect interests you?"""
 
                 return self.cli_interface.apply_patch(binary_path, patch_file)
             except Exception as e:
-                logger.error(f"Error applying patch: {e}")
+                logger.exception("Error applying patch: %s", e)
                 return {"status": "error", "message": f"Failed to apply patch: {e!s}"}
 
             finally:
@@ -705,7 +705,7 @@ What security aspect interests you?"""
                     try:
                         Path(patch_file).unlink()
                     except OSError as e:
-                        logger.warning(f"Failed to clean up temporary patch file {patch_file}: {e}")
+                        logger.warning("Failed to clean up temporary patch file %s: %s", patch_file, e)
 
         return {"status": "error", "message": CLI_INTERFACE_NOT_AVAILABLE}
 
@@ -773,19 +773,19 @@ What security aspect interests you?"""
             }
 
         except ImportError as e:
-            logger.error(f"Failed to import LargeFileHandler: {e}", exc_info=True)
+            logger.exception("Failed to import LargeFileHandler: %s", e)
             return {
                 "status": "error",
                 "message": "Hex view module not available",
             }
         except OSError as e:
-            logger.error(f"File access error for {binary_path}: {e}", exc_info=True)
+            logger.exception("File access error for %s: %s", binary_path, e)
             return {
                 "status": "error",
                 "message": f"Cannot access file: {e!s}",
             }
         except ValueError as e:
-            logger.error(f"Invalid address format '{address}': {e}", exc_info=True)
+            logger.exception("Invalid address format '%s': %s", address, e)
             return {
                 "status": "error",
                 "message": f"Invalid address format: {e!s}",
@@ -830,19 +830,19 @@ What security aspect interests you?"""
             }
 
         except ImportError as e:
-            logger.error(f"Failed to import LargeFileHandler: {e}", exc_info=True)
+            logger.exception("Failed to import LargeFileHandler: %s", e)
             return {
                 "status": "error",
                 "message": "Disassembly module not available",
             }
         except OSError as e:
-            logger.error(f"File access error for {binary_path}: {e}", exc_info=True)
+            logger.exception("File access error for %s: %s", binary_path, e)
             return {
                 "status": "error",
                 "message": f"Cannot access file: {e!s}",
             }
         except ValueError as e:
-            logger.error(f"Invalid address format '{address}': {e}", exc_info=True)
+            logger.exception("Invalid address format '%s': %s", address, e)
             return {
                 "status": "error",
                 "message": f"Invalid address format: {e!s}",
@@ -865,7 +865,7 @@ What security aspect interests you?"""
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in file search tool: %s", e)
+            logger.exception("Error in file search tool: %s", e)
             return {"status": "error", "message": str(e)}
 
     def _read_file(self, file_path: str, purpose: str = "License analysis") -> dict[str, Any]:
@@ -884,7 +884,7 @@ What security aspect interests you?"""
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in file read tool: %s", e)
+            logger.exception("Error in file read tool: %s", e)
             return {"status": "error", "message": str(e)}
 
     def _analyze_program_directory(self, program_path: str) -> dict[str, Any]:
@@ -904,7 +904,7 @@ What security aspect interests you?"""
 
             return result
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in program directory analysis: %s", e)
+            logger.exception("Error in program directory analysis: %s", e)
             return {"status": "error", "message": str(e)}
 
     def analyze_binary_complex(self, binary_path: str, ml_results: dict[str, Any] = None) -> dict[str, Any]:
@@ -955,7 +955,7 @@ What security aspect interests you?"""
             return analysis
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in complex binary analysis: %s", e)
+            logger.exception("Error in complex binary analysis: %s", e)
             return {
                 "error": str(e),
                 "confidence": 0.0,
@@ -1019,7 +1019,7 @@ What security aspect interests you?"""
             return analysis
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in license pattern analysis: %s", e)
+            logger.exception("Error in license pattern analysis: %s", e)
             return {
                 "error": str(e),
                 "confidence": 0.0,
@@ -1074,7 +1074,7 @@ What security aspect interests you?"""
             return reasoning
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in AI reasoning: %s", e)
+            logger.exception("Error in AI reasoning: %s", e)
             return {
                 "error": str(e),
                 "reasoning_confidence": 0.0,
@@ -1223,10 +1223,10 @@ What security aspect interests you?"""
             }
 
         except requests.RequestException as e:
-            logger.error(f"Network error during external analysis: {e}")
+            logger.exception("Network error during external analysis: %s", e)
             return {"status": "error", "message": f"Network error: {e!s}"}
         except Exception as e:
-            logger.error(f"External analysis error: {e}")
+            logger.exception("External analysis error: %s", e)
             return {"status": "error", "message": f"Analysis failed: {e!s}"}
 
     def generate_insights(self, ai_request: dict[str, Any]) -> dict[str, Any]:
@@ -1379,7 +1379,7 @@ What security aspect interests you?"""
                 confidence = 0.2
 
             # Add general recommendations if none were found
-            if len(recommendations) == 0:
+            if not recommendations:
                 recommendations.append(
                     {
                         "action": "perform_dynamic_analysis",
@@ -1394,7 +1394,7 @@ What security aspect interests you?"""
             }
 
         except Exception as e:
-            logger.error(f"Error generating AI insights: {e}")
+            logger.exception("Error generating AI insights: %s", e)
             return {
                 "analysis": f"Analysis failed due to error: {e!s}",
                 "recommendations": [

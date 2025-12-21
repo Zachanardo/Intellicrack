@@ -569,8 +569,7 @@ except ImportError as e:
                         except Exception as e:
                             logger.error(f"Timer callback error: {e}")
 
-                    single_shot = timer_info.get("single_shot")
-                    if single_shot:
+                    if single_shot := timer_info.get("single_shot"):
                         self._timers.remove(timer_info)
                     else:
                         interval = timer_info.get("interval")

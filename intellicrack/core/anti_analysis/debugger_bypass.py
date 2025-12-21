@@ -87,7 +87,7 @@ class DebuggerBypass:
             self.logger.info("Windows bypass mechanisms initialized")
 
         except Exception as e:
-            self.logger.error("Failed to initialize Windows bypass: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize Windows bypass: %s", e, exc_info=True)
 
     def _init_linux_bypass(self) -> None:
         """Initialize Linux-specific bypass mechanisms."""
@@ -102,7 +102,7 @@ class DebuggerBypass:
             self.logger.info("Linux bypass mechanisms initialized")
 
         except Exception as e:
-            self.logger.error("Failed to initialize Linux bypass: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize Linux bypass: %s", e, exc_info=True)
 
     def install_bypasses(self, methods: list[str] = None) -> dict[str, bool]:
         """Install anti-anti-debug bypasses using user-mode techniques.
@@ -134,7 +134,7 @@ class DebuggerBypass:
                     else:
                         self.logger.warning("Failed to install bypass: %s", method)
                 except Exception as e:
-                    self.logger.error("Error installing bypass %s: %s", method, e, exc_info=True)
+                    self.logger.exception("Error installing bypass %s: %s", method, e, exc_info=True)
                     results[method] = False
             else:
                 self.logger.warning("Unknown bypass method: %s", method)
@@ -662,7 +662,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.error("Hypervisor debugging failed: %s", e, exc_info=True)
+            self.logger.exception("Hypervisor debugging failed: %s", e, exc_info=True)
             return False
 
     def _check_hypervisor_support(self) -> bool:
@@ -699,7 +699,7 @@ class DebuggerBypass:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to remove bypasses: %s", e, exc_info=True)
+            self.logger.exception("Failed to remove bypasses: %s", e, exc_info=True)
             return False
 
     def get_bypass_status(self) -> dict[str, Any]:

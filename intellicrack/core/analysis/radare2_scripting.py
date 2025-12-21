@@ -94,7 +94,7 @@ class R2ScriptingEngine:
                         )
 
                     except R2Exception as e:
-                        logger.error("R2Exception in radare2_scripting: %s", e)
+                        logger.exception("R2Exception in radare2_scripting: %s", e)
                         result["command_results"].append(
                             {
                                 "command": command,
@@ -110,7 +110,7 @@ class R2ScriptingEngine:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Script execution failed: {e}")
+            self.logger.exception("Script execution failed: %s", e)
 
         return result
 
@@ -253,7 +253,7 @@ class R2ScriptingEngine:
 
         except Exception as e:
             workflow_result["error"] = str(e)
-            self.logger.error(f"License analysis workflow failed: {e}")
+            self.logger.exception("License analysis workflow failed: %s", e)
 
         return workflow_result
 
@@ -299,7 +299,7 @@ class R2ScriptingEngine:
 
         except Exception as e:
             workflow_result["error"] = str(e)
-            self.logger.error(f"Vulnerability analysis workflow failed: {e}")
+            self.logger.exception("Vulnerability analysis workflow failed: %s", e)
 
         return workflow_result
 
@@ -327,11 +327,11 @@ class R2ScriptingEngine:
             if os.name != "nt":
                 Path(script_path).chmod(0o700)  # Owner-only executable script
 
-            self.logger.info(f"Created r2 script: {script_path}")
+            self.logger.info("Created r2 script: %s", script_path)
             return script_path
 
         except Exception as e:
-            self.logger.error(f"Failed to create script: {e}")
+            self.logger.exception("Failed to create script: %s", e)
             raise
 
     def execute_r2_script_file(self, script_path: str, use_terminal: bool = False) -> dict[str, Any]:
@@ -365,7 +365,7 @@ class R2ScriptingEngine:
 
             # Execute command
             if use_terminal and HAS_TERMINAL_MANAGER:
-                logger.info(f"Running r2 script in terminal: {script_path}")
+                logger.info("Running r2 script in terminal: %s", script_path)
                 terminal_mgr = get_terminal_manager()
 
                 # Show r2 execution in terminal
@@ -391,11 +391,11 @@ class R2ScriptingEngine:
                 result["execution_successful"] = process.returncode == 0
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in radare2_scripting: %s", e)
+            logger.exception("Subprocess timeout in radare2_scripting: %s", e)
             result["errors"] = "Script execution timed out"
         except Exception as e:
             result["errors"] = str(e)
-            self.logger.error(f"Script execution failed: {e}")
+            self.logger.exception("Script execution failed: %s", e)
 
         return result
 
@@ -462,7 +462,7 @@ class R2ScriptingEngine:
 
         except Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Function analysis failed: {e}")
+            self.logger.exception("Function analysis failed: %s", e)
 
         return result
 

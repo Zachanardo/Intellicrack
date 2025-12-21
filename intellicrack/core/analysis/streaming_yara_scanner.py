@@ -121,7 +121,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
                 logger.info("Compiled YARA rules from source string")
             elif self.rules_path and self.rules_path.exists():
                 self.rules = yara.compile(filepath=str(self.rules_path))
-                logger.info(f"Compiled YARA rules from: {self.rules_path}")
+                logger.info("Compiled YARA rules from: %s", self.rules_path)
             else:
                 default_rules = self._get_default_rules()
                 self.rules = yara.compile(source=default_rules)
@@ -131,7 +131,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
             self.rule_match_counts = defaultdict(int)
 
         except Exception as e:
-            logger.error(f"Failed to compile YARA rules: {e}")
+            logger.exception("Failed to compile YARA rules: %s", e)
             raise
 
     def analyze_chunk(self, context: ChunkContext) -> dict[str, Any]:
@@ -193,7 +193,8 @@ class StreamingYaraScanner(StreamingAnalyzer):
                         )
 
             logger.debug(
-                f"Chunk {context.chunk_number}/{context.total_chunks}: Found {len(chunk_matches)} YARA matches",
+                "Chunk %d/%d: Found %d YARA matches",
+                context.chunk_number, context.total_chunks, len(chunk_matches),
             )
 
             return {
@@ -204,7 +205,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
             }
 
         except Exception as e:
-            logger.error(f"Error scanning chunk at offset 0x{context.offset:08x}: {e}")
+            logger.exception("Error scanning chunk at offset 0x%08x: %s", context.offset, e)
             return {
                 "chunk_offset": context.offset,
                 "chunk_size": context.size,
@@ -265,13 +266,14 @@ class StreamingYaraScanner(StreamingAnalyzer):
                 merged["errors"] = errors
 
             logger.info(
-                f"Merged {len(results)} chunk results: {len(all_matches)} total matches for {len(rules_matched)} unique rules",
+                "Merged %d chunk results: %d total matches for %d unique rules",
+                len(results), len(all_matches), len(rules_matched),
             )
 
             return merged
 
         except Exception as e:
-            logger.error(f"Error merging YARA results: {e}")
+            logger.exception("Error merging YARA results: %s", e)
             return {"error": str(e), "total_matches": 0, "matches": []}
 
     def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
@@ -324,13 +326,14 @@ class StreamingYaraScanner(StreamingAnalyzer):
             }
 
             logger.info(
-                f"Finalized YARA analysis: {len(license_matches)} licensing matches, {len(protection_matches)} protection matches",
+                "Finalized YARA analysis: %d licensing matches, %d protection matches",
+                len(license_matches), len(protection_matches),
             )
 
             return merged_results
 
         except Exception as e:
-            logger.error(f"Error finalizing YARA analysis: {e}")
+            logger.exception("Error finalizing YARA analysis: %s", e)
             merged_results["finalization_error"] = str(e)
             return merged_results
 
@@ -523,5 +526,5 @@ def scan_binary_streaming(
 
         return manager.analyze_streaming(binary_path, scanner)
     except Exception as e:
-        logger.error(f"Streaming YARA scan failed: {e}")
+        logger.exception("Streaming YARA scan failed: %s", e)
         return {"error": str(e), "status": "failed"}

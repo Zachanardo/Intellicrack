@@ -148,11 +148,11 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
                                 license_indicators.append(keyword.decode())
                         packet_info["license_indicators"] = license_indicators
                 except (AttributeError, UnicodeDecodeError, TypeError) as e:
-                    logger.debug(f"Failed to extract license indicators from packet: {e}")
+                    logger.debug("Failed to extract license indicators from packet: %s", e)
 
             captured_packets.append(packet_info)
 
-        logger.info(f"[Scapy] Starting packet capture on interface: {interface}")
+        logger.info("[Scapy] Starting packet capture on interface: %s", interface)
 
         # Start packet capture with timeout
         packets = sniff(
@@ -165,7 +165,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
         )
 
         # Log capture completion status
-        logger.info(f"[Scapy] Packet capture completed. Session info: {packets}")
+        logger.info("[Scapy] Packet capture completed. Session info: %s", packets)
 
         # Analyze captured packets
         license_packets = [p for p in captured_packets if p.get("license_related")]
@@ -201,7 +201,7 @@ def capture_with_scapy(interface: str = "any", filter_str: str = "", count: int 
         }
 
     except Exception as e:
-        logger.error(f"Scapy capture error: {e}")
+        logger.exception("Scapy capture error: %s", e)
         return {"error": str(e), "success": False}
 
 
@@ -237,7 +237,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
         return {"error": "PyShark not available", "suggestion": "Install with: pip install pyshark"}
 
     try:
-        logger.info(f"[PyShark] Analyzing PCAP file: {pcap_file}")
+        logger.info("[PyShark] Analyzing PCAP file: %s", pcap_file)
 
         # Open capture file with display filter
         cap = pyshark.FileCapture(
@@ -365,7 +365,7 @@ def analyze_pcap_with_pyshark(pcap_file: str) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"PyShark analysis error: {e}")
+        logger.exception("PyShark analysis error: %s", e)
         return {"error": str(e), "success": False}
 
 
@@ -427,9 +427,7 @@ class NetworkCapture:
         """
         analysis: dict[str, Any] = analyze_pcap_with_pyshark(pcap_file)
         result: Any = analysis.get("license_traffic", [])
-        if isinstance(result, list):
-            return list(result)
-        return []
+        return list(result) if isinstance(result, list) else []
 
     def extract_dns_queries(self, pcap_file: str) -> list[str]:
         """Extract DNS queries from packet capture.
@@ -442,9 +440,7 @@ class NetworkCapture:
         """
         analysis: dict[str, Any] = analyze_pcap_with_pyshark(pcap_file)
         result: Any = analysis.get("dns_queries", [])
-        if isinstance(result, list):
-            return [str(item) for item in result]
-        return []
+        return [str(item) for item in result] if isinstance(result, list) else []
 
     def detect_cloud_licensing_traffic(self, interface: str = "any", duration: int = 60) -> dict[str, Any]:
         """Detect cloud licensing traffic in real-time.
@@ -511,7 +507,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
         return {"error": "dpkt not available", "suggestion": "Install with: pip install dpkt"}
 
     try:
-        logger.info(f"[dpkt] Parsing PCAP file: {pcap_file}")
+        logger.info("[dpkt] Parsing PCAP file: %s", pcap_file)
 
         total_packets: int = 0
         total_bytes: int = 0
@@ -608,20 +604,20 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
                                         for question in dns.qd:
                                             queried_domain: str = str(question.name)
                                             if queried_domain and len(queried_domain) > 1:
-                                                logger.debug(f"DNS query detected: {queried_domain}")
+                                                logger.debug("DNS query detected: %s", queried_domain)
                                 except (
                                     dpkt.dpkt.NeedData,
                                     dpkt.dpkt.UnpackError,
                                     AttributeError,
                                 ) as e:
-                                    logger.debug(f"Failed to parse DNS packet: {e}")
+                                    logger.debug("Failed to parse DNS packet: %s", e)
 
                         elif isinstance(ip.data, dpkt.icmp.ICMP):
                             icmp_packets += 1
 
                 except Exception as e:
                     # Skip malformed packets
-                    logger.debug(f"Skipping malformed packet: {e}")
+                    logger.debug("Skipping malformed packet: %s", e)
                     continue
 
         duration_seconds: float = 0.0
@@ -672,7 +668,7 @@ def parse_pcap_with_dpkt(pcap_file: str) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.error(f"dpkt parsing error: {e}")
+        logger.exception("dpkt parsing error: %s", e)
         return {"error": str(e), "success": False}
 
 

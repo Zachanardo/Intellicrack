@@ -12,6 +12,38 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from intellicrack.dashboard.dashboard_manager import (
+        DashboardLayout,
+        DashboardManager,
+        DataSource,
+        DataSourceType,
+        create_dashboard_manager,
+    )
+    from intellicrack.dashboard.dashboard_widgets import (
+        DashboardWidget,
+        GaugeWidget,
+        HeatmapWidget,
+        LineChartWidget,
+        NetworkGraphWidget,
+        ProgressWidget,
+        TableWidget,
+        TimelineWidget,
+        WidgetConfig,
+        WidgetData,
+        WidgetFactory,
+        WidgetType,
+        create_widget,
+    )
+    from intellicrack.dashboard.real_time_dashboard import (
+        AnalysisMetrics,
+        DashboardEvent,
+        DashboardEventType,
+        RealTimeDashboard,
+        create_dashboard,
+    )
 
 
 logger = logging.getLogger(__name__)
@@ -67,11 +99,9 @@ def _lazy_import_real_time_dashboard() -> object:
 
 
 # Create properties for lazy loading
-dashboard_manager = property(lambda self: (logger.debug("Accessing dashboard_manager on %s", self) or _lazy_import_dashboard_manager()))
-dashboard_widgets = property(lambda self: (logger.debug("Accessing dashboard_widgets on %s", self) or _lazy_import_dashboard_widgets()))
-real_time_dashboard = property(
-    lambda self: (logger.debug("Accessing real_time_dashboard on %s", self) or _lazy_import_real_time_dashboard())
-)
+dashboard_manager = property(lambda self: logger.debug("Accessing dashboard_manager on %s", self) or _lazy_import_dashboard_manager())
+dashboard_widgets = property(lambda self: logger.debug("Accessing dashboard_widgets on %s", self) or _lazy_import_dashboard_widgets())
+real_time_dashboard = property(lambda self: logger.debug("Accessing real_time_dashboard on %s", self) or _lazy_import_real_time_dashboard())
 
 
 # For backwards compatibility, expose the classes and functions
@@ -103,13 +133,13 @@ def __getattr__(name: str) -> object:
     }:
         if dw := _lazy_import_dashboard_widgets():
             return getattr(dw, name)
-    elif name in (
+    elif name in {
         "AnalysisMetrics",
         "DashboardEvent",
         "DashboardEventType",
         "RealTimeDashboard",
         "create_dashboard",
-    ):
+    }:
         if rtd := _lazy_import_real_time_dashboard():
             return getattr(rtd, name)
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")

@@ -214,7 +214,7 @@ class ValidationAnalyzer:
                 if instruction.mnemonic == "ret":
                     break
         except capstone.CsError as e:
-            self.logger.warning(f"Disassembly error: {e}")
+            self.logger.warning("Disassembly error: %s", e)
 
         return instructions
 
@@ -289,7 +289,12 @@ class ValidationAnalyzer:
                             )
 
         xor_chain_count = sum(
-            bool(all(instructions[j].mnemonic == "xor" for j in range(i, min(i + 3, len(instructions)))))
+            all(
+                (
+                    instructions[j].mnemonic == "xor"
+                    for j in range(i, min(i + 3, len(instructions)))
+                )
+            )
             for i in range(len(instructions) - 3)
         )
         if xor_chain_count > 5:
@@ -626,9 +631,12 @@ class ValidationAnalyzer:
                 recommendations.append("Multiple hash algorithms detected - composite validation scheme")
 
         if not patch_points and algorithm_type == AlgorithmType.UNKNOWN:
-            recommendations.append("Limited information - recommend dynamic analysis with debugger")
-            recommendations.append("Set breakpoints on string comparison functions (strcmp, memcmp)")
-
+            recommendations.extend(
+                (
+                    "Limited information - recommend dynamic analysis with debugger",
+                    "Set breakpoints on string comparison functions (strcmp, memcmp)",
+                )
+            )
         return recommendations
 
 
@@ -663,7 +671,7 @@ class ConstraintExtractor:
 
         try:
             if not self.binary_path.exists():
-                self.logger.error(f"Binary file not found: {self.binary_path}")
+                self.logger.error("Binary file not found: %s", self.binary_path)
                 return constraints
 
             with open(self.binary_path, "rb") as f:
@@ -678,9 +686,9 @@ class ConstraintExtractor:
             constraints.extend(self._extract_length_constraints())
 
         except OSError as e:
-            self.logger.error(f"Failed to read binary file: {e}")
+            self.logger.exception("Failed to read binary file: %s", e)
         except Exception as e:
-            self.logger.error(f"Constraint extraction failed: {e}")
+            self.logger.exception("Constraint extraction failed: %s", e)
 
         return constraints
 
@@ -721,19 +729,17 @@ class ConstraintExtractor:
                 )
 
         for regex_pattern, format_type in format_patterns:
-            matches = list(re.finditer(regex_pattern, self._binary_data))
-            if matches:
-                for match in matches[:3]:
-                    constraints.append(
-                        KeyConstraint(
-                            constraint_type="format",
-                            description=f"Detected {format_type} pattern",
-                            value=format_type,
-                            confidence=0.75,
-                            source_address=match.start(),
-                        )
+            if matches := list(re.finditer(regex_pattern, self._binary_data)):
+                constraints.extend(
+                    KeyConstraint(
+                        constraint_type="format",
+                        description=f"Detected {format_type} pattern",
+                        value=format_type,
+                        confidence=0.75,
+                        source_address=match.start(),
                     )
-
+                    for match in matches[:3]
+                )
         return constraints
 
     def _extract_crypto_constraints(self) -> list[KeyConstraint]:
@@ -1030,7 +1036,7 @@ class KeySynthesizer:
                     candidate.algorithm = algorithm.algorithm_name
                     return candidate
             except Exception as e:
-                self.logger.debug(f"Validation failed for candidate {candidate.serial}: {e}")
+                self.logger.debug("Validation failed for candidate %s: %s", candidate.serial, e)
                 continue
 
         return self.generator.generate_serial(constraints)

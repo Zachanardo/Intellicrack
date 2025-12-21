@@ -103,6 +103,6 @@ def compare_snapshots(snapshot1: dict[str, Any], snapshot2: dict[str, Any]) -> d
             differences["processes"]["terminated"] = list(proc1 - proc2)
 
     except Exception as e:
-        logger.error("Error comparing snapshots: %s", e)
+        logger.exception("Error comparing snapshots: %s", e)
 
     return differences

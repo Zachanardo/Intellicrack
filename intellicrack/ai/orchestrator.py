@@ -27,7 +27,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.utils.logger import logger
 
@@ -40,16 +40,18 @@ try:
     from .interactive_assistant import IntellicrackAIAssistant
     from .llm_backends import LLMManager, LLMMessage, LLMResponse, get_llm_manager
     from .model_manager_module import ModelManager
+
+    IMPORTS_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in orchestrator: %s", e)
-    # Fallback for testing
-    ModelManager = None
-    IntellicrackAIAssistant = None
-    LLMManager = None
-    get_llm_manager = None
-    LLMMessage = None
-    LLMResponse = None
-    AIBinaryBridge = None
+    logger.exception("Import error in orchestrator: %s", e)
+    IMPORTS_AVAILABLE = False
+    ModelManager = None  # type: ignore[assignment, misc]
+    IntellicrackAIAssistant = None  # type: ignore[assignment, misc]
+    LLMManager = None  # type: ignore[assignment, misc]
+    get_llm_manager = None  # type: ignore[assignment]
+    LLMMessage = None  # type: ignore[assignment, misc]
+    LLMResponse = None  # type: ignore[assignment, misc]
+    AIBinaryBridge = None  # type: ignore[assignment, misc]
 
 logger = get_logger(__name__)
 
@@ -94,7 +96,7 @@ class AITask:
     priority: int = 5  # 1-10, 10 being highest
     created_at: datetime = field(default_factory=datetime.now)
     context: dict[str, Any] = field(default_factory=dict)
-    callback: Callable | None = None
+    callback: Callable[[Any], None] | None = None
 
 
 @dataclass
@@ -121,7 +123,7 @@ class AISharedContext:
         Creates a thread-safe context store for sharing data between AI components,
         including binary metadata, analysis results, model predictions, and workflow state.
         """
-        self._context = {
+        self._context: dict[str, object] = {
             "current_binary": None,
             "binary_metadata": {},
             "analysis_results": {},
@@ -163,15 +165,17 @@ class AISharedContext:
         with self._lock:
             self._context.update(updates)
 
-    def get_analysis_cache(self, binary_hash: str) -> dict | None:
+    def get_analysis_cache(self, binary_hash: str) -> dict[str, Any] | None:
         """Get cached analysis results for a binary."""
         with self._lock:
-            return self._context["cached_analyses"].get(binary_hash)
+            cached_analyses = cast("dict[str, Any]", self._context["cached_analyses"])
+            return cast("dict[str, Any] | None", cached_analyses.get(binary_hash))
 
-    def cache_analysis(self, binary_hash: str, results: dict) -> None:
+    def cache_analysis(self, binary_hash: str, results: dict[str, Any]) -> None:
         """Cache analysis results for a binary."""
         with self._lock:
-            self._context["cached_analyses"][binary_hash] = {
+            cached_analyses = cast("dict[str, Any]", self._context["cached_analyses"])
+            cached_analyses[binary_hash] = {
                 "results": results,
                 "timestamp": datetime.now(),
                 "access_count": 0,
@@ -193,11 +197,11 @@ class AIEventBus:
         Creates a thread-safe publish-subscribe system for AI components
         to communicate through events.
         """
-        self._subscribers = {}
+        self._subscribers: dict[str, list[dict[str, Any]]] = {}
         self._lock = threading.RLock()
         logger.info("AI Event Bus initialized")
 
-    def subscribe(self, event_type: str, callback: Callable, component_name: str) -> None:
+    def subscribe(self, event_type: str, callback: Callable[[dict[str, Any], str], None], component_name: str) -> None:
         """Subscribe to specific events."""
         with self._lock:
             if event_type not in self._subscribers:
@@ -241,12 +245,12 @@ class AIEventBus:
                         try:
                             sub["callback"](data, source_component)
                         except (OSError, ValueError, RuntimeError) as e:
-                            logger.error("Error in subscriber %s: %s", sub["component"], e)
+                            logger.exception("Error in subscriber %s: %s", sub["component"], e)
 
                     threading.Thread(target=lambda sub=subscriber: call_subscriber(sub), daemon=True).start()
 
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.error("Error calling subscriber %s: %s", subscriber["component"], e)
+                    logger.exception("Error calling subscriber %s: %s", subscriber["component"], e)
 
     def unsubscribe(self, event_type: str, component_name: str) -> None:
         """Unsubscribe a component from an event type."""
@@ -275,22 +279,28 @@ class AIOrchestrator:
         # Initialize shared systems
         self.shared_context = AISharedContext()
         self.event_bus = AIEventBus()
-        self.task_queue = queue.PriorityQueue()
-        self.active_tasks = {}
+        self.task_queue: queue.PriorityQueue[tuple[int, AITask]] = queue.PriorityQueue()
+        self.active_tasks: dict[str, AITask] = {}
         self.is_running = False
 
         # Progress tracking
-        self.task_progress = {}
-        self.progress_callbacks = {}
+        self.task_progress: dict[str, dict[str, Any]] = {}
+        self.progress_callbacks: dict[str, Callable[[str, int, str], None]] = {}
 
-        # Initialize AI components
+        self.ml_predictor: Any = None
+        self.model_manager: Any = None
+        self.llm_manager: Any = None
+        self.ai_assistant: Any = None
+        self.system_prompt: str | None = None
+        self.hex_bridge: Any = None
+
         self._initialize_components()
 
         # Set up event subscriptions
         self._setup_event_subscriptions()
 
         # Start task processing thread
-        self.processing_thread = None
+        self.processing_thread: threading.Thread | None = None
         self.start_processing()
 
         logger.info("AI Orchestrator initialized successfully")
@@ -299,48 +309,43 @@ class AIOrchestrator:
         """Initialize all AI components."""
         logger.info("Initializing AI components...")
 
-        # ML predictor functionality has been removed
         self.ml_predictor = None
         logger.debug("ML predictor functionality is not enabled.")
 
-        # Large model manager for complex reasoning
         logger.debug("Attempting to initialize Model Manager...")
         try:
-            if ModelManager:
+            if IMPORTS_AVAILABLE and ModelManager is not None:
                 self.model_manager = ModelManager()
                 logger.info("Model Manager initialized successfully.")
             else:
                 self.model_manager = None
                 logger.warning("Model Manager class not found. Complex reasoning capabilities may be limited.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize Model Manager: %s", e)
+            logger.exception("Failed to initialize Model Manager: %s", e)
             self.model_manager = None
         except Exception as e:
-            logger.error("An unexpected error occurred during Model Manager initialization: %s", e)
+            logger.exception("An unexpected error occurred during Model Manager initialization: %s", e)
             self.model_manager = None
 
-        # LLM manager for GGUF and API-based models
         logger.debug("Attempting to initialize LLM Manager...")
         try:
-            if get_llm_manager:
+            if IMPORTS_AVAILABLE and get_llm_manager is not None:
                 self.llm_manager = get_llm_manager()
                 logger.info("LLM Manager initialized successfully for agentic workflows.")
             else:
                 self.llm_manager = None
                 logger.warning("LLM Manager function not found. LLM-based agentic workflows may be unavailable.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize LLM Manager: %s", e)
+            logger.exception("Failed to initialize LLM Manager: %s", e)
             self.llm_manager = None
         except Exception as e:
-            logger.error("An unexpected error occurred during LLM Manager initialization: %s", e)
+            logger.exception("An unexpected error occurred during LLM Manager initialization: %s", e)
             self.llm_manager = None
 
-        # AI assistant for tool-based workflows
         logger.debug("Attempting to initialize AI Assistant...")
         try:
-            if IntellicrackAIAssistant:
+            if IMPORTS_AVAILABLE and IntellicrackAIAssistant is not None:
                 self.ai_assistant = IntellicrackAIAssistant()
-                # Store the system prompt for use with LLM calls
                 self.system_prompt = self.ai_assistant.get_system_prompt()
                 logger.info("AI Assistant initialized successfully with system prompt.")
             else:
@@ -348,28 +353,27 @@ class AIOrchestrator:
                 self.system_prompt = None
                 logger.warning("IntellicrackAIAssistant class not found. AI Assistant features may be unavailable.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize AI Assistant: %s", e)
+            logger.exception("Failed to initialize AI Assistant: %s", e)
             self.ai_assistant = None
             self.system_prompt = None
         except Exception as e:
-            logger.error("An unexpected error occurred during AI Assistant initialization: %s", e)
+            logger.exception("An unexpected error occurred during AI Assistant initialization: %s", e)
             self.ai_assistant = None
             self.system_prompt = None
 
-        # Hex viewer AI bridge
         logger.debug("Attempting to initialize Hex AI Bridge...")
         try:
-            if AIBinaryBridge:
+            if IMPORTS_AVAILABLE and AIBinaryBridge is not None:
                 self.hex_bridge = AIBinaryBridge()
                 logger.info("Hex AI Bridge initialized successfully.")
             else:
                 self.hex_bridge = None
                 logger.warning("AIBinaryBridge class not found. Hex viewer AI integration may be unavailable.")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Failed to initialize Hex Bridge: %s", e)
+            logger.exception("Failed to initialize Hex Bridge: %s", e)
             self.hex_bridge = None
         except Exception as e:
-            logger.error("An unexpected error occurred during Hex AI Bridge initialization: %s", e)
+            logger.exception("An unexpected error occurred during Hex AI Bridge initialization: %s", e)
             self.hex_bridge = None
 
         logger.info("All AI components initialization attempt completed.")
@@ -414,7 +418,7 @@ class AIOrchestrator:
 
     def _on_error_occurred(self, data: dict[str, Any], source: str) -> None:
         """Handle error events."""
-        logger.error("Error in %s: %s", source, data.get("error", "unknown error"))
+        logger.exception("Error in %s: %s", source, data.get("error", "unknown error"))
 
     def _escalate_to_complex_analysis(self, ml_data: dict[str, Any]) -> None:
         """Escalate low-confidence ML results to complex LLM analysis."""
@@ -467,14 +471,14 @@ class AIOrchestrator:
                 self._execute_task(task)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in task processing loop: %s", e)
+                logger.exception("Error in task processing loop: %s", e)
 
     def _execute_task(self, task: AITask) -> AIResult:
         """Execute an AI task using the appropriate components."""
         start_time = datetime.now()
-        result_data = {}
-        components_used = []
-        errors = []
+        result_data: dict[str, Any] = {}
+        components_used: list[str] = []
+        errors: list[str] = []
         success = False
         confidence = 0.0
 
@@ -549,7 +553,7 @@ class AIOrchestrator:
 
         except (OSError, ValueError, RuntimeError) as e:
             errors.append(str(e))
-            logger.error("Error executing task %s: %s", task.task_id, e)
+            logger.exception("Error executing task %s: %s", task.task_id, e)
             self.update_task_progress(task.task_id, 0, f"Error: {e!s}")
 
         # Update progress to completion
@@ -591,7 +595,7 @@ class AIOrchestrator:
             try:
                 task.callback(result)
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in task callback for task %s: %s", task.task_id, e)
+                logger.exception("Error in task callback for task %s: %s", task.task_id, e)
 
         # Clear progress tracking after short delay (keep for UI feedback)
         def clear_progress() -> None:
@@ -609,26 +613,23 @@ class AIOrchestrator:
 
         return result
 
-    def _execute_vulnerability_scan(self, task: AITask) -> tuple:
+    def _execute_vulnerability_scan(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute vulnerability scanning task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         binary_path = task.input_data.get("binary_path")
         if not binary_path:
             raise ValueError("No binary_path provided for vulnerability scan")
 
-        # ML prediction functionality has been removed
-        ml_results = None
+        ml_results: dict[str, Any] = {"confidence": 0.0, "predictions": []}
         confidence = 0.0
 
-        # Escalate to LLM if complexity requires it or ML confidence is low
         if (task.complexity in [AnalysisComplexity.COMPLEX, AnalysisComplexity.CRITICAL] or confidence < 0.7) and (
             self.model_manager and self.ai_assistant
         ):
             try:
-                # Use AI assistant for complex analysis
                 if hasattr(self.ai_assistant, "analyze_binary_complex"):
                     llm_results = self.ai_assistant.analyze_binary_complex(binary_path, ml_results)
                 elif hasattr(self.ai_assistant, "analyze_binary"):
@@ -638,18 +639,17 @@ class AIOrchestrator:
                 result_data["llm_analysis"] = llm_results
                 components_used.append("ai_assistant")
 
-                # Combine confidences
                 confidence = max(confidence, llm_results.get("confidence", 0.0))
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("LLM analysis failed for vulnerability scan task %s: %s", task.task_id, e)
+                logger.exception("LLM analysis failed for vulnerability scan task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
-    def _execute_license_analysis(self, task: AITask) -> tuple:
+    def _execute_license_analysis(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute license analysis task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         # License analysis typically requires LLM reasoning
@@ -667,19 +667,21 @@ class AIOrchestrator:
                 confidence = license_results.get("confidence", 0.8)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("License analysis failed for task %s: %s", task.task_id, e)
+                logger.exception("License analysis failed for task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
-    def _execute_binary_analysis(self, task: AITask) -> tuple:
+    def _execute_binary_analysis(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute binary analysis task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         binary_path = task.input_data.get("binary_path")
+        if not binary_path or not isinstance(binary_path, str):
+            logger.warning("Invalid binary_path for binary analysis task")
+            return result_data, components_used, confidence
 
-        # Use hex bridge for binary-specific analysis
         if self.hex_bridge:
             try:
                 if hasattr(self.hex_bridge, "analyze_binary_patterns"):
@@ -693,28 +695,21 @@ class AIOrchestrator:
                 confidence = hex_results.get("confidence", 0.7)
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Hex analysis failed for binary analysis task %s: %s", task.task_id, e)
+                logger.exception("Hex analysis failed for binary analysis task %s: %s", task.task_id, e)
 
-        # ML feature analysis functionality has been removed
-
-        # Add AI-enhanced complex binary analysis
         if self.ai_assistant and hasattr(self.ai_assistant, "analyze_binary_complex"):
             try:
-                # Prepare ML results for AI analysis
-                ml_results_for_ai = {
+                ml_results_for_ai: dict[str, Any] = {
                     "confidence": confidence,
                     "predictions": [],
                 }
 
-                # Include ML features if available
                 if "ml_features" in result_data:
                     ml_results_for_ai["ml_features"] = result_data["ml_features"]
 
-                # Include hex analysis patterns
                 if "hex_analysis" in result_data:
                     ml_results_for_ai["hex_patterns"] = result_data["hex_analysis"]
 
-                # Run AI complex analysis
                 ai_complex_results = self.ai_assistant.analyze_binary_complex(
                     binary_path,
                     ml_results_for_ai,
@@ -725,17 +720,17 @@ class AIOrchestrator:
                     components_used.append("ai_assistant_complex")
                     confidence = max(confidence, ai_complex_results.get("confidence", 0.0))
 
-                    logger.info("AI complex analysis completed with confidence: %s", ai_complex_results.get('confidence', 0.0))
+                    logger.info("AI complex analysis completed with confidence: %s", ai_complex_results.get("confidence", 0.0))
 
             except Exception as e:
-                logger.error("AI complex binary analysis failed for task %s: %s", task.task_id, e)
+                logger.exception("AI complex binary analysis failed for task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
-    def _execute_reasoning_task(self, task: AITask) -> tuple:
+    def _execute_reasoning_task(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute complex reasoning task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         # Use LLM manager for reasoning tasks if available
@@ -779,9 +774,8 @@ class AIOrchestrator:
                     logger.warning("LLM returned empty response")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("LLM reasoning failed for task %s: %s", task.task_id, e)
+                logger.exception("LLM reasoning failed for task %s: %s", task.task_id, e)
 
-        # Fallback to AI assistant if LLM not available
         elif self.ai_assistant:
             try:
                 if hasattr(self.ai_assistant, "perform_reasoning"):
@@ -792,10 +786,15 @@ class AIOrchestrator:
                     raise AttributeError("No reasoning method available")
                 result_data["reasoning"] = reasoning_results
                 components_used.append("ai_assistant")
-                confidence = reasoning_results.get("confidence", 0.8)
+
+                reasoning_confidence = reasoning_results.get("confidence", 0.8)
+                if isinstance(reasoning_confidence, (int, float)):
+                    confidence = float(reasoning_confidence)
+                else:
+                    confidence = 0.8
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("AI Assistant reasoning failed for task %s: %s", task.task_id, e)
+                logger.exception("AI Assistant reasoning failed for task %s: %s", task.task_id, e)
 
         return result_data, components_used, confidence
 
@@ -814,18 +813,16 @@ class AIOrchestrator:
 
         return recommendations[:5]  # Limit to top 5 recommendations
 
-    def _execute_frida_script_generation(self, task: AITask) -> tuple:
+    def _execute_frida_script_generation(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute Frida script generation task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         try:
-            # Import AI script generator
             from .ai_script_generator import AIScriptGenerator
 
-            # Create script generator if not available
-            script_generator = AIScriptGenerator(self)
+            script_generator = AIScriptGenerator()
             components_used.append("ai_script_generator")
 
             # Extract task parameters
@@ -857,24 +854,22 @@ class AIOrchestrator:
                 confidence = 0.0
 
         except Exception as e:
-            logger.error("Frida script generation failed for task %s: %s", task.task_id, e)
+            logger.exception("Frida script generation failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
         return result_data, components_used, confidence
 
-    def _execute_ghidra_script_generation(self, task: AITask) -> tuple:
+    def _execute_ghidra_script_generation(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute Ghidra script generation task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         try:
-            # Import AI script generator
             from .ai_script_generator import AIScriptGenerator
 
-            # Create script generator if not available
-            script_generator = AIScriptGenerator(self)
+            script_generator = AIScriptGenerator()
             components_used.append("ai_script_generator")
 
             # Extract task parameters
@@ -906,24 +901,22 @@ class AIOrchestrator:
                 confidence = 0.0
 
         except Exception as e:
-            logger.error("Ghidra script generation failed for task %s: %s", task.task_id, e)
+            logger.exception("Ghidra script generation failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
         return result_data, components_used, confidence
 
-    def _execute_unified_script_generation(self, task: AITask) -> tuple:
+    def _execute_unified_script_generation(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute unified script generation task (both Frida and Ghidra)."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         try:
-            # Import AI script generator
             from .ai_script_generator import AIScriptGenerator
 
-            # Create script generator if not available
-            script_generator = AIScriptGenerator(self)
+            script_generator = AIScriptGenerator()
             components_used.append("ai_script_generator")
 
             # Extract task parameters
@@ -973,16 +966,16 @@ class AIOrchestrator:
             )
 
         except Exception as e:
-            logger.error("Unified script generation failed for task %s: %s", task.task_id, e)
-            result_data["error"] = str(e)
+            logger.exception("Unified script generation failed for task %s: %s", task.task_id, e)
+            result_data = {"error": str(e)}
             confidence = 0.0
 
         return result_data, components_used, confidence
 
-    def _execute_script_testing(self, task: AITask) -> tuple:
+    def _execute_script_testing(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute script testing task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         try:
@@ -1028,24 +1021,22 @@ class AIOrchestrator:
             )
 
         except Exception as e:
-            logger.error("Script testing failed for task %s: %s", task.task_id, e)
-            result_data["error"] = str(e)
+            logger.exception("Script testing failed for task %s: %s", task.task_id, e)
+            result_data = {"error": str(e)}
             confidence = 0.0
 
         return result_data, components_used, confidence
 
-    def _execute_script_refinement(self, task: AITask) -> tuple:
+    def _execute_script_refinement(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute script refinement task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         try:
-            # Import AI script generator
             from .ai_script_generator import AIScriptGenerator
 
-            # Create script generator
-            script_generator = AIScriptGenerator(self)
+            script_generator = AIScriptGenerator()
             components_used.append("ai_script_generator")
 
             # Extract task parameters
@@ -1064,16 +1055,16 @@ class AIOrchestrator:
                 confidence = 0.0
 
         except Exception as e:
-            logger.error("Script refinement failed for task %s: %s", task.task_id, e)
+            logger.exception("Script refinement failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
         return result_data, components_used, confidence
 
-    def _execute_autonomous_workflow(self, task: AITask) -> tuple:
+    def _execute_autonomous_workflow(self, task: AITask) -> tuple[dict[str, Any], list[str], float]:
         """Execute autonomous workflow task."""
-        components_used = []
-        result_data = {}
+        components_used: list[str] = []
+        result_data: dict[str, Any] = {}
         confidence = 0.0
 
         try:
@@ -1104,7 +1095,7 @@ class AIOrchestrator:
                 )
 
         except Exception as e:
-            logger.error("Autonomous workflow failed for task %s: %s", task.task_id, e)
+            logger.exception("Autonomous workflow failed for task %s: %s", task.task_id, e)
             result_data["error"] = str(e)
             confidence = 0.0
 
@@ -1171,7 +1162,7 @@ class AIOrchestrator:
             errors=[] if "error" not in task_progress_status.lower() else [task_progress_status],
         )
 
-    def quick_vulnerability_scan(self, binary_path: str, callback: Callable | None = None) -> str:
+    def quick_vulnerability_scan(self, binary_path: str, callback: Callable[[Any], None] | None = None) -> str:
         """Quick vulnerability scan using fast ML models."""
         task = AITask(
             task_id=f"vuln_scan_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -1183,7 +1174,7 @@ class AIOrchestrator:
         )
         return self.submit_task(task)
 
-    def complex_license_analysis(self, binary_path: str, callback: Callable | None = None) -> str:
+    def complex_license_analysis(self, binary_path: str, callback: Callable[[Any], None] | None = None) -> str:
         """Complex license analysis using LLM reasoning."""
         task = AITask(
             task_id=f"license_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -1195,7 +1186,7 @@ class AIOrchestrator:
         )
         return self.submit_task(task)
 
-    def comprehensive_analysis(self, binary_path: str, callback: Callable | None = None) -> str:
+    def comprehensive_analysis(self, binary_path: str, callback: Callable[[Any], None] | None = None) -> str:
         """Comprehensive analysis using all available AI resources."""
         task = AITask(
             task_id=f"comprehensive_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
@@ -1270,7 +1261,7 @@ class AIOrchestrator:
             try:
                 self.progress_callbacks[task_id](task_id, progress, status)
             except Exception as e:
-                logger.error("Error calling progress callback for task %s: %s", task_id, e)
+                logger.exception("Error calling progress callback for task %s: %s", task_id, e)
 
         logger.debug("Task %s progress: %d%% - %s", task_id, progress, status)
 
@@ -1306,7 +1297,7 @@ class AIOrchestrator:
             try:
                 self.llm_manager.shutdown()
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error shutting down LLM manager during orchestrator shutdown: %s", e)
+                logger.exception("Error shutting down LLM manager during orchestrator shutdown: %s", e)
 
         self.shared_context.clear_session()
         logger.info("AI Orchestrator shutdown complete")

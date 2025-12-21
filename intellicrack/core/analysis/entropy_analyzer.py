@@ -87,7 +87,7 @@ class EntropyAnalyzer:
                 "analysis_status": "completed",
             }
         except Exception as e:
-            self.logger.error("Entropy analysis failed: %s", e)
+            self.logger.exception("Entropy analysis failed: %s", e)
             return {"error": str(e)}
 
     def _classify_entropy(self, entropy: float) -> str:

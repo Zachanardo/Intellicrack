@@ -653,7 +653,7 @@ class ArxanAnalyzer:
             end = min(pos + 256, len(binary_data))
 
             chunk = binary_data[start:end]
-            printable = sum(bool(32 <= b < 127) for b in chunk)
+            printable = sum(32 <= b < 127 for b in chunk)
 
             if printable < len(chunk) * 0.1:
                 encrypted_regions.append((start, end - start))

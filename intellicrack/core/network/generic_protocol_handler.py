@@ -102,11 +102,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     conn_thread.start()
 
                 except TimeoutError as e:
-                    logger.error("socket.timeout in generic_protocol_handler: %s", e)
+                    logger.exception("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("TCP proxy error: %s", e)
+                        self.logger.exception("TCP proxy error: %s", e)
 
         finally:
             server_socket.close()
@@ -142,11 +142,11 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                             server_socket.sendto(response, client_addr)
 
                 except TimeoutError as e:
-                    logger.error("socket.timeout in generic_protocol_handler: %s", e)
+                    logger.exception("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
                     if self.running:
-                        self.logger.error("UDP proxy error: %s", e)
+                        self.logger.exception("UDP proxy error: %s", e)
 
         finally:
             server_socket.close()
@@ -186,14 +186,14 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                     else:
                         break
                 except TimeoutError as e:
-                    logger.error("socket.timeout in generic_protocol_handler: %s", e)
+                    logger.exception("socket.timeout in generic_protocol_handler: %s", e)
                     continue
                 except Exception as e:
-                    logger.error("Exception in generic_protocol_handler: %s", e)
+                    logger.exception("Exception in generic_protocol_handler: %s", e)
                     break
 
         except Exception as e:
-            self.logger.error("Error handling TCP connection from %s: %s", client_addr, e)
+            self.logger.exception("Error handling TCP connection from %s: %s", client_addr, e)
         finally:
             client_socket.close()
             # Remove from active connections
@@ -248,7 +248,7 @@ class GenericProtocolHandler(LicenseProtocolHandler):
                 )
 
             except Exception as e:
-                self.logger.error("Failed to send response: %s", e)
+                self.logger.exception("Failed to send response: %s", e)
 
     def generate_response(self, request_data: bytes) -> bytes:
         """Generate a generic protocol response.

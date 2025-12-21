@@ -30,7 +30,7 @@ try:
 
     HAS_CRYPTOGRAPHY = True
 except ImportError as e:
-    logger.error(IMPORT_ERROR_MSG, e)
+    logger.exception(IMPORT_ERROR_MSG, e)
     HAS_CRYPTOGRAPHY = False
     Fernet = None
 
@@ -39,7 +39,7 @@ try:
 
     HAS_KEYRING = True
 except ImportError as e:
-    logger.error(IMPORT_ERROR_MSG, e)
+    logger.exception(IMPORT_ERROR_MSG, e)
     HAS_KEYRING = False
     keyring = None
 
@@ -48,7 +48,7 @@ try:
 
     HAS_DOTENV = True
 except ImportError as e:
-    logger.error(IMPORT_ERROR_MSG, e)
+    logger.exception(IMPORT_ERROR_MSG, e)
     HAS_DOTENV = False
     load_dotenv = None
 
@@ -218,7 +218,7 @@ class SecretsManager:
                 self._cipher = Fernet(Fernet.generate_key())
             self._set_encryption_status(True, False)
         except Exception as e:
-            logger.error("Failed to initialize encryption: %s", e, exc_info=True)
+            logger.exception("Failed to initialize encryption: %s", e, exc_info=True)
             self._cipher = Fernet(Fernet.generate_key())
             self._set_encryption_status(True, False)
 
@@ -286,7 +286,7 @@ class SecretsManager:
                     self._cache = json.loads(decrypted_data.decode())
                 logger.debug("Loaded secrets from file")
             except Exception as e:
-                logger.error("Failed to load secrets file: %s", e, exc_info=True)
+                logger.exception("Failed to load secrets file: %s", e, exc_info=True)
                 self._cache = {}
         else:
             self._cache = {}
@@ -308,7 +308,7 @@ class SecretsManager:
             self.secrets_file.chmod(0o600)  # Restrict permissions
             logger.debug("Saved secrets to file")
         except Exception as e:
-            logger.error("Failed to save secrets: %s", e, exc_info=True)
+            logger.exception("Failed to save secrets: %s", e, exc_info=True)
 
     def _get_from_keyring(self, key: str) -> str | None:
         """Get secret from OS keychain with error handling."""
@@ -373,7 +373,7 @@ class SecretsManager:
             try:
                 keyring.delete_password(self.SERVICE_NAME, key)
             except Exception as e:
-                logger.error("Exception in secrets_manager: %s", e, exc_info=True)
+                logger.exception("Exception in secrets_manager: %s", e, exc_info=True)
                 # Ignore if not in keychain
 
         # Save updated cache
@@ -466,7 +466,7 @@ class SecretsManager:
 
         """
         if not HAS_CRYPTOGRAPHY:
-            logger.error("Cryptography library not available for key generation")
+            logger.exception("Cryptography library not available for key generation")
             return b""
 
         if salt is None:
@@ -500,7 +500,7 @@ class SecretsManager:
             logger.info("No .env file found in search path")
             return None
         except Exception as e:
-            logger.error("Error finding .env file: %s", e, exc_info=True)
+            logger.exception("Error finding .env file: %s", e, exc_info=True)
             return None
 
     def verify_password_hash(self, password: str, stored_hash: bytes, salt: bytes) -> bool:
@@ -516,7 +516,7 @@ class SecretsManager:
 
         """
         if not HAS_CRYPTOGRAPHY:
-            logger.error("Cryptography library not available for password verification")
+            logger.exception("Cryptography library not available for password verification")
             return False
 
         try:
@@ -532,7 +532,7 @@ class SecretsManager:
             # Compare with stored hash
             return derived_key == stored_hash
         except Exception as e:
-            logger.error("Error verifying password hash: %s", e, exc_info=True)
+            logger.exception("Error verifying password hash: %s", e, exc_info=True)
             return False
 
     def _sync_metadata_to_central_config(self) -> None:

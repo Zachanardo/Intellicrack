@@ -790,7 +790,7 @@ class HASPSentinelParser:
             return request
 
         except Exception as e:
-            self.logger.error("Failed to parse HASP request: %s", e)
+            self.logger.exception("Failed to parse HASP request: %s", e)
             return None
 
     def _parse_additional_params(self, data: bytes) -> dict[str, Any]:
@@ -798,7 +798,7 @@ class HASPSentinelParser:
         params = {}
         try:
             offset = 0
-            while offset < len(data) - 4 and not offset + 4 > len(data):
+            while offset < len(data) - 4 and offset + 4 <= len(data):
                 param_type = struct.unpack("<H", data[offset : offset + 2])[0]
                 param_length = struct.unpack("<H", data[offset + 2 : offset + 4])[0]
                 offset += 4
@@ -1474,7 +1474,7 @@ class HASPSentinelParser:
             return bytes(packet)
 
         except Exception as e:
-            self.logger.error("Failed to serialize HASP response: %s", e)
+            self.logger.exception("Failed to serialize HASP response: %s", e)
             return struct.pack("<II", 0x48415350, response.status)
 
     def add_feature(self, feature: HASPFeature) -> None:
@@ -1572,7 +1572,7 @@ class HASPPacketAnalyzer:
         try:
             import dpkt
         except ImportError:
-            self.logger.error("dpkt library required for PCAP parsing")
+            self.logger.exception("dpkt library required for PCAP parsing")
             return []
 
         packets = []
@@ -1589,7 +1589,7 @@ class HASPPacketAnalyzer:
             self.logger.info("Parsed %d HASP packets from %s", len(packets), pcap_path)
 
         except Exception as e:
-            self.logger.error("Failed to parse PCAP file: %s", e)
+            self.logger.exception("Failed to parse PCAP file: %s", e)
 
         return packets
 
@@ -2087,7 +2087,7 @@ class HASPServerEmulator:
 
             except Exception as e:
                 if self.running:
-                    self.logger.error("UDP handler error: %s", e)
+                    self.logger.exception("UDP handler error: %s", e)
 
     def _handle_tcp(self, sock: socket.socket) -> None:
         """Handle TCP license requests."""
@@ -2104,7 +2104,7 @@ class HASPServerEmulator:
 
             except Exception as e:
                 if self.running:
-                    self.logger.error("TCP handler error: %s", e)
+                    self.logger.exception("TCP handler error: %s", e)
 
     def stop_server(self) -> None:
         """Stop HASP license server."""

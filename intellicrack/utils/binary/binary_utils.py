@@ -127,7 +127,7 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
         file_path = Path(file_path)
         if not file_path.exists():
             error_msg = f"File not found: {file_path}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise FileNotFoundError(error_msg)
 
         with open(file_path, "rb") as f:
@@ -139,7 +139,7 @@ def read_binary(file_path: str | Path, chunk_size: int = 8192) -> bytes:
                     break
             return b"".join(chunks)
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error reading binary file %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error reading binary file %s: %s", file_path, e, exc_info=True)
         raise
 
 
@@ -173,7 +173,7 @@ def write_binary(file_path: str | Path, data: bytes, create_backup: bool = True)
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error writing binary file %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error writing binary file %s: %s", file_path, e, exc_info=True)
         return False
 
 
@@ -236,7 +236,7 @@ def analyze_binary_format(file_path: str | Path) -> dict[str, Any]:
         return format_info
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing binary format for %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error analyzing binary format for %s: %s", file_path, e, exc_info=True)
         return {"error": str(e)}
 
 
@@ -256,7 +256,7 @@ def is_binary_file(file_path: str | Path, sample_size: int = 8192) -> bool:
             chunk = f.read(sample_size)
             return b"\x00" in chunk
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error checking if file is binary: %s", e, exc_info=True)
+        logger.exception("Error checking if file is binary: %s", e, exc_info=True)
         return False
 
 
@@ -297,7 +297,7 @@ def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
         return entropy
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error calculating file entropy: %s", e, exc_info=True)
+        logger.exception("Error calculating file entropy: %s", e, exc_info=True)
         return 0.0
 
 
@@ -342,11 +342,11 @@ def validate_binary_path(binary_path: str, logger_instance: object | None = None
     use_logger = logger_instance or logger
 
     if not binary_path:
-        use_logger.error("Binary path is empty")
+        use_logger.exception("Binary path is empty")
         return False
 
     if not os.path.exists(binary_path):
-        use_logger.error("Binary not found: %s", binary_path)
+        use_logger.exception("Binary not found: %s", binary_path)
         return False
 
     return True

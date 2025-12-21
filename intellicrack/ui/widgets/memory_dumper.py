@@ -485,11 +485,10 @@ class MemoryDumperWidget(QWidget):
         readable = protect & 0x66
         if self.readable_check.isChecked() and not readable:
             return False
-        else:
-            writable = protect & 0x44
-            executable = protect & 0xF0
+        writable = protect & 0x44
+        executable = protect & 0xF0
 
-            return False if self.writable_check.isChecked() and not writable else bool(not self.executable_check.isChecked() or executable)
+        return False if self.writable_check.isChecked() and not writable else bool(not self.executable_check.isChecked() or executable)
 
     def _should_include_region_linux(self, perms: str) -> bool:
         """Check if Linux region should be included based on filters.

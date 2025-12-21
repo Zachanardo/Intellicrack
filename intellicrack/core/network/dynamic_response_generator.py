@@ -141,7 +141,7 @@ class FlexLMProtocolHandler:
             return response_text.encode("utf-8")
 
         except Exception as e:
-            self.logger.error("FlexLM response generation error: %s", e, exc_info=True)
+            self.logger.exception("FlexLM response generation error: %s", e, exc_info=True)
             return b"SERVER this_host ANY 27000\nVENDOR vendor\nFEATURE product vendor 1.0 permanent uncounted HOSTID=ANY SIGN=VALID\n"
 
 
@@ -208,7 +208,7 @@ class HASPProtocolHandler:
             return b"HASP_STATUS_OK"
 
         except Exception as e:
-            self.logger.error("HASP response generation error: %s", e, exc_info=True)
+            self.logger.exception("HASP response generation error: %s", e, exc_info=True)
             return b'{"status":"OK","key":"VALID","expiration":"permanent"}'
 
 
@@ -252,7 +252,7 @@ class AdobeProtocolHandler:
                         request_info["product"] = json_data["product"]
 
                 except json.JSONDecodeError as e:
-                    logger.error("json.JSONDecodeError in dynamic_response_generator: %s", e, exc_info=True)
+                    logger.exception("json.JSONDecodeError in dynamic_response_generator: %s", e, exc_info=True)
 
             # Look for activation patterns
             if "activate" in text_data.lower():
@@ -300,7 +300,7 @@ class AdobeProtocolHandler:
             return b"ACTIVATION_SUCCESS"
 
         except Exception as e:
-            self.logger.error("Adobe response generation error: %s", e, exc_info=True)
+            self.logger.exception("Adobe response generation error: %s", e, exc_info=True)
             return b'{"status":"SUCCESS","message":"License is valid","expiry":"never"}'
 
 
@@ -353,7 +353,7 @@ class MicrosoftKMSHandler:
             return b"KMS_ACTIVATION_SUCCESS"
 
         except Exception as e:
-            self.logger.error("KMS response generation error: %s", e, exc_info=True)
+            self.logger.exception("KMS response generation error: %s", e, exc_info=True)
             return b"\x00\x00\x00\x00\x00\x00\x00\x00" * 4
 
 
@@ -388,7 +388,7 @@ class AutodeskProtocolHandler:
                     json_data = json.loads(json_str)
                     request_info |= json_data
                 except json.JSONDecodeError as e:
-                    logger.error("json.JSONDecodeError in dynamic_response_generator: %s", e, exc_info=True)
+                    logger.exception("json.JSONDecodeError in dynamic_response_generator: %s", e, exc_info=True)
 
             return request_info
 
@@ -426,7 +426,7 @@ class AutodeskProtocolHandler:
             return json.dumps(response).encode("utf-8")
 
         except Exception as e:
-            self.logger.error("Autodesk response generation error for %s: %s", context.source_ip, e, exc_info=True)
+            self.logger.exception("Autodesk response generation error for %s: %s", context.source_ip, e, exc_info=True)
             return b'{"status":"success","license":{"status":"ACTIVATED","type":"PERMANENT"}}'
 
 
@@ -544,7 +544,7 @@ class DynamicResponseGenerator:
             )
 
         except Exception as e:
-            self.logger.error("Response generation error: %s", e, exc_info=True)
+            self.logger.exception("Response generation error: %s", e, exc_info=True)
             self.stats["failed_responses"] += 1
 
             # Return error response
@@ -647,7 +647,7 @@ class DynamicResponseGenerator:
                 patterns.append(f"hex:{hex_header}")
 
         except Exception as e:
-            logger.error("Exception in dynamic_response_generator: %s", e, exc_info=True)
+            logger.exception("Exception in dynamic_response_generator: %s", e, exc_info=True)
 
         return patterns[:20]  # Limit pattern count
 
@@ -684,7 +684,7 @@ class DynamicResponseGenerator:
         if not patterns1 or not patterns2:
             return 0.0
 
-        matches = sum(bool(p in patterns2) for p in patterns1)
+        matches = sum(p in patterns2 for p in patterns1)
         total = len(set(patterns1 + patterns2))
 
         return matches / total if total > 0 else 0.0
@@ -747,7 +747,7 @@ class DynamicResponseGenerator:
             return b"LICENSE_OK"
 
         except Exception as e:
-            self.logger.error("Generic response generation error: %s", e, exc_info=True)
+            self.logger.exception("Generic response generation error: %s", e, exc_info=True)
             return self._create_protocol_aware_fallback(context)
 
     def _create_protocol_aware_fallback(self, context: ResponseContext) -> bytes:
@@ -919,7 +919,7 @@ class DynamicResponseGenerator:
                 self.logger.info("Imported learning data for %s protocols", len(data["learned_patterns"]))
 
         except Exception as e:
-            self.logger.error("Error importing learning data: %s", e, exc_info=True)
+            self.logger.exception("Error importing learning data: %s", e, exc_info=True)
 
 
 __all__ = ["DynamicResponseGenerator", "GeneratedResponse", "ResponseContext"]

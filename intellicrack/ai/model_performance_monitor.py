@@ -168,12 +168,11 @@ class ModelPerformanceMonitor:
 
         if self.has_gpu and self.gpu_type == "nvidia_cuda":
             try:
-                if HAS_PYNVML and pynvml:
-                    pynvml.nvmlInit()
-                    self.has_nvidia_ml = True
-                    self.gpu_count = pynvml.nvmlDeviceGetCount()
-                else:
+                if not HAS_PYNVML or not pynvml:
                     raise ImportError("pynvml not available")
+                pynvml.nvmlInit()
+                self.has_nvidia_ml = True
+                self.gpu_count = pynvml.nvmlDeviceGetCount()
             except Exception:
                 self.has_nvidia_ml = False
         else:
@@ -203,7 +202,7 @@ class ModelPerformanceMonitor:
                             benchmark_date=datetime.fromisoformat(bench_data["benchmark_date"]),
                         )
             except Exception as e:
-                logger.error(f"Failed to load benchmarks: {e}")
+                logger.exception("Failed to load benchmarks: %s", e)
 
     def _save_benchmarks(self) -> None:
         """Save benchmark data."""
@@ -229,7 +228,7 @@ class ModelPerformanceMonitor:
             with open(benchmark_file, "w") as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
-            logger.error(f"Failed to save benchmarks: {e}")
+            logger.exception("Failed to save benchmarks: %s", e)
 
     def start_inference(self, model_id: str) -> dict[str, Any]:
         """Start tracking an inference.
@@ -411,7 +410,7 @@ class ModelPerformanceMonitor:
         p99_idx = int(len(latencies) * 0.99)
 
         # Error rate
-        error_count = sum(bool(m.error is not None) for m in history)
+        error_count = sum(m.error is not None for m in history)
         error_rate = error_count / len(history) if history else 0
 
         # Create/update benchmark
@@ -681,7 +680,7 @@ class ModelPerformanceMonitor:
                 if to_device:
                     device = get_device()
                     model = to_device(model, device)
-                    logger.debug(f"Moved model to {device} for monitoring")
+                    logger.debug("Moved model to %s for monitoring", device)
 
                 # Apply GPU optimizations
                 if gpu_autoloader:
@@ -690,7 +689,7 @@ class ModelPerformanceMonitor:
                         model = optimized
                         logger.debug("Applied GPU optimizations for monitoring")
             except Exception as e:
-                logger.debug(f"Could not optimize model for monitoring: {e}")
+                logger.debug("Could not optimize model for monitoring: %s", e)
 
         return model
 
@@ -701,7 +700,7 @@ class ModelPerformanceMonitor:
                 empty_cache()
                 logger.debug("Cleared GPU cache")
             except Exception as e:
-                logger.debug(f"Could not clear GPU cache: {e}")
+                logger.debug("Could not clear GPU cache: %s", e)
         elif HAS_TORCH and torch.cuda.is_available():
             torch.cuda.empty_cache()
 

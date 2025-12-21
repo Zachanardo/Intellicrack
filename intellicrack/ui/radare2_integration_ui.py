@@ -106,7 +106,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
                 result = self._run_bypass_analysis()
             else:
                 error_msg = f"Unknown analysis type: {self.analysis_type}"
-                self.logger.error(error_msg)
+                self.logger.exception(error_msg)
                 raise ValueError(error_msg)
 
             self.progress_updated.emit(100)
@@ -114,7 +114,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
             self.analysis_completed.emit(result)
 
         except Exception as e:
-            self.logger.error(f"Analysis failed: {e}")
+            self.logger.exception("Analysis failed: %s", e)
             self.error_occurred.emit(str(e))
 
     def _run_comprehensive_analysis(self) -> dict[str, Any]:
@@ -168,7 +168,7 @@ class R2AnalysisWorker(QThread if QThread is not None else object):
                 self.progress_updated.emit(current_progress)
 
             except Exception as e:
-                self.logger.warning(f"Component {name} failed: {e}")
+                self.logger.warning("Component %s failed: %s", name, e)
                 results["components"][name] = {"error": str(e)}
 
         return results
@@ -633,7 +633,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
             formatted_json = json.dumps(data, indent=2, default=str)
             text_widget.setPlainText(formatted_json)
         except Exception as e:
-            self.logger.error("Exception in radare2_integration_ui: %s", e)
+            self.logger.exception("Exception in radare2_integration_ui: %s", e)
             text_widget.setPlainText(f"Error formatting results: {e}\n\n{data!s}")
 
         layout.addWidget(text_widget)
@@ -665,7 +665,7 @@ Validation Methods: {", ".join(license_data.get("validation_methods", []))}
                     json.dump(self.results_data, f, indent=2, default=str)
                 QMessageBox.information(self, "Export", f"Results exported to {file_path}")
             except Exception as e:
-                self.logger.error("Exception in radare2_integration_ui: %s", e)
+                self.logger.exception("Exception in radare2_integration_ui: %s", e)
                 QMessageBox.critical(self, "Export Error", f"Failed to export results: {e}")
 
 
@@ -874,7 +874,7 @@ def integrate_with_main_app(main_app: _MainAppProtocol) -> bool:
 
             return True
     except Exception as e:
-        logging.getLogger(__name__).error(f"Failed to integrate radare2 UI: {e}")
+        logging.getLogger(__name__).exception("Failed to integrate radare2 UI: %s", e)
         return False
 
     return False

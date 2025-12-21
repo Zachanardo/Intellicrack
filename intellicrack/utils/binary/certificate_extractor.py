@@ -14,12 +14,6 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-
-try:
-    from cryptography.hazmat.backends import Backend
-except ImportError:
-    Backend = object
-
 from ..logger import get_logger
 
 
@@ -30,7 +24,7 @@ try:
 
     PEFILE_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in certificate_extractor: %s", e)
+    logger.exception("Import error in certificate_extractor: %s", e)
     PEFILE_AVAILABLE = False
 
 try:
@@ -41,7 +35,7 @@ try:
 
     CRYPTOGRAPHY_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in certificate_extractor: %s", e)
+    logger.exception("Import error in certificate_extractor: %s", e)
     CRYPTOGRAPHY_AVAILABLE = False
 
 
@@ -97,8 +91,8 @@ class CertificateExtractor:
 
     def __init__(self) -> None:
         """Initialize certificate extractor with empty PE file and path state."""
-        self.pe = None
-        self.file_path = None
+        self.pe: Any = None
+        self.file_path: str | None = None
 
     def extract_certificates(self, file_path: str) -> CodeSigningInfo:
         """Extract certificate information from PE file."""
@@ -140,12 +134,15 @@ class CertificateExtractor:
             )
 
         except Exception as e:
-            logger.error("Certificate extraction failed for %s: %s", file_path, e, exc_info=True)
+            logger.exception("Certificate extraction failed for %s: %s", file_path, e)
             return CodeSigningInfo(is_signed=False)
 
     def _has_certificate_table(self) -> bool:
         """Check if PE has certificate table in data directories."""
-        if not self.pe.OPTIONAL_HEADER.DATA_DIRECTORY:
+        if self.pe is None:
+            return False
+
+        if not hasattr(self.pe, 'OPTIONAL_HEADER') or not self.pe.OPTIONAL_HEADER.DATA_DIRECTORY:
             return False
 
         # Certificate table is entry 4 in data directories
@@ -157,6 +154,9 @@ class CertificateExtractor:
 
     def _extract_certificate_data(self) -> bytes | None:
         """Extract raw certificate data from PE file."""
+        if self.pe is None or self.file_path is None:
+            return None
+
         try:
             cert_entry = self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[4]
 
@@ -166,10 +166,11 @@ class CertificateExtractor:
 
             with open(self.file_path, "rb") as f:
                 f.seek(offset)
-                return f.read(size)
+                data: bytes = f.read(size)
+                return data
 
         except Exception as e:
-            logger.error("Failed to extract certificate data: %s", e, exc_info=True)
+            logger.exception("Failed to extract certificate data: %s", e)
             return None
 
     def _parse_certificates(self, cert_data: bytes) -> list[CertificateInfo]:
@@ -178,7 +179,7 @@ class CertificateExtractor:
         offset = 0
 
         try:
-            while offset < len(cert_data) and not offset + 8 > len(cert_data):
+            while offset < len(cert_data) and offset + 8 <= len(cert_data):
                 length, _revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
 
                 if length < 8 or offset + length > len(cert_data):
@@ -196,7 +197,7 @@ class CertificateExtractor:
                 offset += (length + 7) & ~7
 
         except Exception as e:
-            logger.error("Certificate parsing failed: %s", e, exc_info=True)
+            logger.exception("Certificate parsing failed: %s", e)
 
         return certificates
 
@@ -230,12 +231,12 @@ class CertificateExtractor:
                                 certificates.append(cert_info)
 
                 except Exception as e:
-                    logger.debug("Failed to parse certificate at offset %s: %s", cert_pos, e, exc_info=True)
+                    logger.debug("Failed to parse certificate at offset %s: %s", cert_pos, e)
 
                 offset = cert_pos + 1
 
         except Exception as e:
-            logger.error("PKCS#7 parsing failed: %s", e, exc_info=True)
+            logger.exception("PKCS#7 parsing failed: %s", e)
 
         return certificates
 
@@ -309,7 +310,7 @@ class CertificateExtractor:
 
             # Create SHA1 hash for legacy compatibility with explicit security context
             # Using a secure wrapper function to encapsulate the insecure hash usage
-            def create_legacy_sha1_hash(backend: Backend) -> hashes.Hash:
+            def create_legacy_sha1_hash(backend: Any) -> hashes.Hash:
                 """Create SHA1 hash for certificate fingerprint analysis only.
 
                 WARNING: SHA1 is cryptographically broken. This is only used
@@ -358,39 +359,41 @@ class CertificateExtractor:
 
             try:
                 # Key usage
-                ku = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.KEY_USAGE).value
-                if ku.digital_signature:
+                ku_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.KEY_USAGE).value
+                if hasattr(ku_extension, 'digital_signature') and ku_extension.digital_signature:
                     key_usage.append("Digital Signature")
-                if ku.key_cert_sign:
+                if hasattr(ku_extension, 'key_cert_sign') and ku_extension.key_cert_sign:
                     key_usage.append("Certificate Sign")
-                if ku.crl_sign:
+                if hasattr(ku_extension, 'crl_sign') and ku_extension.crl_sign:
                     key_usage.append("CRL Sign")
 
             except x509.ExtensionNotFound as e:
-                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e, exc_info=True)
+                logger.exception("x509.ExtensionNotFound in certificate_extractor: %s", e)
 
             try:
                 # Extended key usage
-                eku = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
-                for usage in eku:
-                    usage_name = usage._name if hasattr(usage, "_name") else str(usage)
-                    extended_key_usage.append(usage_name)
+                eku_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.EXTENDED_KEY_USAGE).value
+                if hasattr(eku_extension, '__iter__'):
+                    for usage in eku_extension:
+                        usage_name = usage._name if hasattr(usage, "_name") else str(usage)
+                        extended_key_usage.append(usage_name)
 
-                    # Check for code signing
-                    if usage == x509.oid.ExtendedKeyUsageOID.CODE_SIGNING:
-                        is_code_signing = True
+                        # Check for code signing
+                        if usage == x509.oid.ExtendedKeyUsageOID.CODE_SIGNING:
+                            is_code_signing = True
 
             except x509.ExtensionNotFound as e:
-                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e, exc_info=True)
+                logger.exception("x509.ExtensionNotFound in certificate_extractor: %s", e)
 
             try:
                 # Subject Alternative Names
-                san = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
-                for name in san:
-                    subject_alt_names.append(str(name))
+                san_extension = cert.extensions.get_extension_for_oid(x509.oid.ExtensionOID.SUBJECT_ALTERNATIVE_NAME).value
+                if hasattr(san_extension, '__iter__'):
+                    for name in san_extension:
+                        subject_alt_names.append(str(name))
 
             except x509.ExtensionNotFound as e:
-                logger.error("x509.ExtensionNotFound in certificate_extractor: %s", e, exc_info=True)
+                logger.exception("x509.ExtensionNotFound in certificate_extractor: %s", e)
 
             return CertificateInfo(
                 subject=subject,
@@ -412,33 +415,45 @@ class CertificateExtractor:
             )
 
         except Exception as e:
-            logger.debug("X.509 certificate parsing failed: %s", e, exc_info=True)
+            logger.debug("X.509 certificate parsing failed: %s", e)
             return None
 
     def _format_name(self, name: x509.Name) -> str:
         """Format X.509 name for display."""
-        parts = []
+        parts: list[str] = []
 
         # Common name
         try:
-            cn = name.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-            parts.append(f"CN={cn}")
+            if cn_attrs := name.get_attributes_for_oid(NameOID.COMMON_NAME):
+                cn_value = cn_attrs[0].value
+                if isinstance(cn_value, bytes):
+                    parts.append(f"CN={cn_value.decode('utf-8', errors='replace')}")
+                else:
+                    parts.append(f"CN={cn_value}")
         except (IndexError, AttributeError) as e:
-            logger.error("Error in certificate_extractor: %s", e, exc_info=True)
+            logger.exception("Error in certificate_extractor: %s", e)
 
         # Organization
         try:
-            o = name.get_attributes_for_oid(NameOID.ORGANIZATION_NAME)[0].value
-            parts.append(f"O={o}")
+            if o_attrs := name.get_attributes_for_oid(NameOID.ORGANIZATION_NAME):
+                o_value = o_attrs[0].value
+                if isinstance(o_value, bytes):
+                    parts.append(f"O={o_value.decode('utf-8', errors='replace')}")
+                else:
+                    parts.append(f"O={o_value}")
         except (IndexError, AttributeError) as e:
-            logger.error("Error in certificate_extractor: %s", e, exc_info=True)
+            logger.exception("Error in certificate_extractor: %s", e)
 
         # Country
         try:
-            c = name.get_attributes_for_oid(NameOID.COUNTRY_NAME)[0].value
-            parts.append(f"C={c}")
+            if c_attrs := name.get_attributes_for_oid(NameOID.COUNTRY_NAME):
+                c_value = c_attrs[0].value
+                if isinstance(c_value, bytes):
+                    parts.append(f"C={c_value.decode('utf-8', errors='replace')}")
+                else:
+                    parts.append(f"C={c_value}")
         except (IndexError, AttributeError) as e:
-            logger.error("Error in certificate_extractor: %s", e, exc_info=True)
+            logger.exception("Error in certificate_extractor: %s", e)
 
         return ", ".join(parts) if parts else str(name)
 
@@ -497,12 +512,12 @@ class CertificateExtractor:
 
         return True
 
-    def export_certificates(self, file_path: str, output_dir: str = None) -> dict[str, str]:
+    def export_certificates(self, file_path: str, output_dir: str | None = None) -> dict[str, str]:
         """Export extracted certificates to PEM files using serialization module."""
         if not CRYPTOGRAPHY_AVAILABLE:
             return {}
 
-        exported_files = {}
+        exported_files: dict[str, str] = {}
 
         try:
             signing_info = self.extract_certificates(file_path)
@@ -519,10 +534,10 @@ class CertificateExtractor:
                 return exported_files
 
             # Parse certificates again to get x509 objects
-            certificates = []
+            certificates: list[Any] = []
             offset = 0
 
-            while offset < len(cert_data) and not offset + 8 > len(cert_data):
+            while offset < len(cert_data) and offset + 8 <= len(cert_data):
                 length, _revision, cert_type = struct.unpack("<LHH", cert_data[offset : offset + 8])
                 if length < 8 or offset + length > len(cert_data):
                     break
@@ -549,7 +564,7 @@ class CertificateExtractor:
                                     certificates.append(cert)
 
                         except Exception as e:
-                            logger.debug("Failed to parse certificate: %s", e, exc_info=True)
+                            logger.debug("Failed to parse certificate: %s", e)
 
                         cert_offset = cert_pos + 1
 
@@ -573,10 +588,10 @@ class CertificateExtractor:
                     logger.info("Exported certificate to: %s", cert_path)
 
                 except Exception as e:
-                    logger.error("Failed to export certificate %s: %s", i + 1, e, exc_info=True)
+                    logger.exception("Failed to export certificate %s: %s", i + 1, e)
 
         except Exception as e:
-            logger.error("Certificate export failed: %s", e, exc_info=True)
+            logger.exception("Certificate export failed: %s", e)
 
         return exported_files
 
@@ -589,53 +604,57 @@ def extract_pe_certificates(file_path: str) -> CodeSigningInfo:
 
 def get_certificate_security_assessment(signing_info: CodeSigningInfo) -> dict[str, Any]:
     """Assess security implications of certificate information."""
-    assessment = {
+    concerns: list[str] = []
+    recommendations: list[str] = []
+    risk_factors: list[str] = []
+
+    assessment: dict[str, Any] = {
         "security_level": "Unknown",
-        "concerns": [],
-        "recommendations": [],
-        "risk_factors": [],
+        "concerns": concerns,
+        "recommendations": recommendations,
+        "risk_factors": risk_factors,
     }
 
     if not signing_info.is_signed:
         assessment["security_level"] = "Low"
-        assessment["concerns"].append("File is not digitally signed")
-        assessment["recommendations"].append("Verify file authenticity through other means")
-        assessment["risk_factors"].append("No signature verification possible")
+        concerns.append("File is not digitally signed")
+        recommendations.append("Verify file authenticity through other means")
+        risk_factors.append("No signature verification possible")
         return assessment
 
     signing_cert = signing_info.signing_certificate
     if not signing_cert:
         assessment["security_level"] = "Low"
-        assessment["concerns"].append("No valid signing certificate found")
+        concerns.append("No valid signing certificate found")
         return assessment
 
     # Assess certificate validity
     if signing_cert.is_expired:
-        assessment["concerns"].append("Signing certificate has expired")
-        assessment["risk_factors"].append("Certificate expired")
+        concerns.append("Signing certificate has expired")
+        risk_factors.append("Certificate expired")
 
     if not signing_cert.is_code_signing:
-        assessment["concerns"].append("Certificate not intended for code signing")
-        assessment["risk_factors"].append("Invalid certificate purpose")
+        concerns.append("Certificate not intended for code signing")
+        risk_factors.append("Invalid certificate purpose")
 
     # Assess trust level
     if signing_info.trust_status == "Self-Signed":
-        assessment["concerns"].append("Certificate is self-signed")
-        assessment["risk_factors"].append("No third-party verification")
-        assessment["recommendations"].append("Verify publisher through other channels")
+        concerns.append("Certificate is self-signed")
+        risk_factors.append("No third-party verification")
+        recommendations.append("Verify publisher through other channels")
     elif signing_info.trust_status == "Unknown CA":
-        assessment["concerns"].append("Certificate issued by unknown CA")
-        assessment["risk_factors"].append("Untrusted certificate authority")
+        concerns.append("Certificate issued by unknown CA")
+        risk_factors.append("Untrusted certificate authority")
 
     # Assess key strength
     if signing_cert.public_key_size < 2048:
-        assessment["concerns"].append(f"Weak key size: {signing_cert.public_key_size} bits")
-        assessment["risk_factors"].append("Cryptographically weak signature")
+        concerns.append(f"Weak key size: {signing_cert.public_key_size} bits")
+        risk_factors.append("Cryptographically weak signature")
 
     # Determine overall security level
-    if len(assessment["concerns"]) == 0:
+    if not concerns:
         assessment["security_level"] = "High"
-    elif len(assessment["concerns"]) <= 2:
+    elif len(concerns) <= 2:
         assessment["security_level"] = "Medium"
     else:
         assessment["security_level"] = "Low"

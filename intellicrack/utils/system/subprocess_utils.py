@@ -56,7 +56,7 @@ def run_in_terminal(
 
         return terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd)
     except Exception as e:
-        logger.error("Error running command in terminal: %s", e)
+        logger.exception("Error running command in terminal: %s", e)
         raise
 
 
@@ -112,7 +112,7 @@ def run_subprocess(
         return process.returncode, stdout or "", stderr or ""
 
     except Exception as e:
-        logger.error("Error running subprocess: %s", e)
+        logger.exception("Error running subprocess: %s", e)
         return -1, "", str(e)
 
 
@@ -150,10 +150,10 @@ def run_subprocess_check(
         logger.warning("Command timed out after %s seconds: %s", timeout, cmd)
         raise
     except subprocess.CalledProcessError as e:
-        logger.error("Command failed with return code %s: %s", e.returncode, cmd)
+        logger.exception("Command failed with return code %s: %s", e.returncode, cmd)
         raise
     except Exception as e:
-        logger.error("Error running command %s: %s", cmd, e)
+        logger.exception("Error running command %s: %s", cmd, e)
         raise
 
 
@@ -194,5 +194,5 @@ def create_popen_with_encoding(cmd: list[str], encoding: str = "utf-8", timeout:
         stdout, stderr = process.communicate()
         return -1, stdout or "", stderr or ""
     except Exception as e:
-        logger.error("Error creating process: %s", e)
+        logger.exception("Error creating process: %s", e)
         return -1, "", str(e)

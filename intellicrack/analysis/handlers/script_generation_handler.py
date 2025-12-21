@@ -193,7 +193,7 @@ class ScriptGenerationWorker(QRunnable):
             self.signals.result.emit(result)
 
         except Exception as e:
-            self.logger.error("Exception in script_generation_handler: %s", e)
+            self.logger.exception("Exception in script_generation_handler: %s", e)
             import traceback
 
             self.signals.error.emit((type(e), e, traceback.format_exc()))
@@ -421,7 +421,7 @@ class ScriptDisplayDialog(QDialog):
                     f"Script saved to:\n{file_path}",
                 )
             except Exception as e:
-                logger.error("Exception in script_generation_handler: %s", e)
+                logger.exception("Exception in script_generation_handler: %s", e)
                 QMessageBox.critical(
                     self,
                     "Save Error",
@@ -456,7 +456,7 @@ class ScriptGenerationHandler(QObject):
     def on_analysis_complete(self, result: UnifiedProtectionResult) -> None:
         """Handle slot when protection analysis completes."""
         self.current_result = result
-        logger.info(f"Script generation handler received analysis for: {result.file_path}")
+        logger.info("Script generation handler received analysis for: %s", result.file_path)
 
     def generate_script(self, script_type: str = "frida", parent_widget: QWidget | None = None) -> None:
         """Generate a bypass script of the specified type.
@@ -517,7 +517,7 @@ class ScriptGenerationHandler(QObject):
         """Handle worker thread errors."""
         _exc_type, exc_value, exc_traceback = error_tuple
         error_msg = f"Script generation failed: {exc_value}"
-        logger.error(f"{error_msg}\n{exc_traceback}")
+        logger.error("%s\n%s", error_msg, exc_traceback)
         self.script_error.emit(error_msg)
 
 

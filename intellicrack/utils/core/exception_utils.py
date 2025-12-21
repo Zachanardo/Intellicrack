@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 try:
     from PyQt6.QtWidgets import QApplication, QMessageBox
 except ImportError as e:
-    logger.error("Import error in exception_utils: %s", e)
+    logger.exception("Import error in exception_utils: %s", e)
     QMessageBox = None
     QApplication = None
 
@@ -90,7 +90,7 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Deny everything else
         error_msg = f"Attempted to load unsafe class {module}.{name}"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise pickle.UnpicklingError(error_msg)
 
 
@@ -149,7 +149,7 @@ def secure_pickle_load(file_path: str) -> object:
     expected_mac = hmac.new(PICKLE_SECURITY_KEY, data, hashlib.sha256).digest()
     if not hmac.compare_digest(stored_mac, expected_mac):
         error_msg = "Pickle file integrity check failed - possible tampering detected"
-        logger.error(error_msg)
+        logger.exception(error_msg)
         raise ValueError(error_msg)
 
     # Load object using RestrictedUnpickler
@@ -206,7 +206,7 @@ def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseExce
         msg_box.exec()
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to display exception dialog: %s", e)
+        logger.exception("Failed to display exception dialog: %s", e)
 
 
 def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_traceback: TracebackType | None) -> None:
@@ -251,7 +251,7 @@ def _report_error(exc_type: type[BaseException], exc_value: BaseException, exc_t
         logger.info("Error report written to %s", error_log_path)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to write error report: %s", e)
+        logger.exception("Failed to write error report: %s", e)
 
 
 def load_config(config_path: str = "config.json") -> dict[str, Any]:
@@ -274,7 +274,7 @@ def load_config(config_path: str = "config.json") -> dict[str, Any]:
         return {}
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to load configuration: %s", e)
+        logger.exception("Failed to load configuration: %s", e)
         return {}
 
 
@@ -296,7 +296,7 @@ def save_config(config: dict[str, Any], config_path: str = "config.json") -> boo
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to save configuration: %s", e)
+        logger.exception("Failed to save configuration: %s", e)
         return False
 
 
@@ -405,7 +405,7 @@ def register():
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to create sample plugins: %s", e)
+        logger.exception("Failed to create sample plugins: %s", e)
         return False
 
 
@@ -429,14 +429,14 @@ def load_ai_model(model_path: str) -> object | None:
     """
     try:
         if not os.path.exists(model_path):
-            logger.error("Model file not found: %s", model_path)
+            logger.exception("Model file not found: %s", model_path)
             return None
 
         # Security validation
         file_size = os.path.getsize(model_path)
         max_size = 500 * 1024 * 1024  # 500MB max
         if file_size > max_size:
-            logger.error("Model file too large (%d bytes), rejecting for security", file_size)
+            logger.exception("Model file too large (%d bytes), rejecting for security", file_size)
             return None
 
         # Try different model formats
@@ -465,7 +465,7 @@ def load_ai_model(model_path: str) -> object | None:
                 logger.info("Pickle model loaded: %s", model_path)
                 return model
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Failed to load pickle model: %s", e)
+                logger.exception("Failed to load pickle model: %s", e)
 
         elif model_path.endswith(".onnx"):
             try:
@@ -481,5 +481,5 @@ def load_ai_model(model_path: str) -> object | None:
         return None
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Failed to load AI model: %s", e)
+        logger.exception("Failed to load AI model: %s", e)
         return None

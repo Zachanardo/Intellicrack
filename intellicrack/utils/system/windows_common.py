@@ -38,7 +38,7 @@ if sys.platform == "win32":
 
         WINDOWS_AVAILABLE = True
     except ImportError as e:
-        logger.error("Import error in windows_common: %s", e)
+        logger.exception("Import error in windows_common: %s", e)
         WINDOWS_AVAILABLE = False
         ctypes = None
 
@@ -64,7 +64,7 @@ def get_windows_kernel32() -> object | None:
     try:
         return ctypes.WinDLL("kernel32", use_last_error=True)
     except Exception as e:
-        logger.error("Failed to load kernel32: %s", e)
+        logger.exception("Failed to load kernel32: %s", e)
         return None
 
 
@@ -84,7 +84,7 @@ def get_windows_ntdll() -> object | None:
     try:
         return ctypes.WinDLL("ntdll.dll")
     except Exception as e:
-        logger.error("Failed to load ntdll: %s", e)
+        logger.exception("Failed to load ntdll: %s", e)
         return None
 
 
@@ -127,4 +127,4 @@ def cleanup_process_handles(
             kernel32.CloseHandle(process_info["process_handle"])
     except Exception as e:
         if logger_instance:
-            logger_instance.warning(f"Error cleaning up handles: {e}")
+            logger_instance.warning("Error cleaning up handles: %s", e)

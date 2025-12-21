@@ -59,7 +59,7 @@ from .base_dialog import BaseDialog
 logger = logging.getLogger(__name__)
 
 
-class ReportGenerationThread(QThread):
+class ReportGenerationThread(QThread):  # type: ignore[misc]
     """Thread for generating reports without blocking the UI."""
 
     progress_updated = pyqtSignal(int)
@@ -113,7 +113,7 @@ class ReportGenerationThread(QThread):
             self.generation_finished.emit(True, "Report generated successfully", self.output_path)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in report_manager_dialog: %s", e)
+            logger.exception("Error in report_manager_dialog: %s", e)
             self.generation_finished.emit(False, f"Report generation failed: {e!s}", "")
 
     def _analyze_binary(self, binary_path: str) -> dict[str, object]:
@@ -318,43 +318,43 @@ Report includes binary analysis, protection detection, and licensing mechanism a
 """
 
 
-class ReportManagerDialog(BaseDialog):
+class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
     """Dialog for managing Intellicrack reports."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the ReportManagerDialog with default values."""
-        # Initialize UI attributes
-        self.binary_path_edit = None
-        self.browse_binary_btn = None
-        self.browse_output_btn = None
-        self.create_template_btn = None
-        self.delete_btn = None
-        self.duplicate_btn = None
-        self.edit_btn = None
-        self.edit_template_btn = None
-        self.generate_btn = None
-        self.generation_thread = None
-        self.include_detailed_logs = None
-        self.include_executive_summary = None
-        self.include_recommendations = None
-        self.include_screenshots = None
-        self.open_after_generation = None
-        self.output_format_combo = None
-        self.output_path_edit = None
-        self.preview_btn = None
-        self.progress_bar = None
-        self.report_name_edit = None
-        self.report_preview = None
-        self.report_type_combo = None
-        self.status_label = None
-        self.template_description = None
-        self.template_list = None
-        self.use_template_btn = None
-        self.view_btn = None
         super().__init__(parent)
         self.reports_dir = os.path.join(os.path.dirname(__file__), "..", "..", "..", "reports")
-        self.reports = {}
-        self.current_report = None
+        self.reports: dict[str, dict[str, Any]] = {}
+        self.current_report: str | None = None
+
+        self.binary_path_edit: QLineEdit
+        self.browse_binary_btn: QPushButton
+        self.browse_output_btn: QPushButton
+        self.create_template_btn: QPushButton | None = None
+        self.delete_btn: QPushButton
+        self.duplicate_btn: QPushButton
+        self.edit_btn: QPushButton
+        self.edit_template_btn: QPushButton | None = None
+        self.generate_btn: QPushButton
+        self.generation_thread: ReportGenerationThread | None = None
+        self.include_detailed_logs: QCheckBox
+        self.include_executive_summary: QCheckBox
+        self.include_recommendations: QCheckBox
+        self.include_screenshots: QCheckBox
+        self.open_after_generation: QCheckBox
+        self.output_format_combo: QComboBox
+        self.output_path_edit: QLineEdit
+        self.preview_btn: QPushButton
+        self.progress_bar: QProgressBar
+        self.report_name_edit: QLineEdit
+        self.report_preview: QTextBrowser
+        self.report_type_combo: QComboBox
+        self.status_label: QLabel
+        self.template_description: QTextBrowser | None = None
+        self.template_list: Any = None
+        self.use_template_btn: QPushButton | None = None
+        self.view_btn: QPushButton
 
         self.setup_ui()
         self.load_reports()
@@ -708,10 +708,14 @@ class ReportManagerDialog(BaseDialog):
                 self.update_report_preview(report_id)
 
                 # Enable action buttons
-                self.view_btn.setEnabled(True)
-                self.edit_btn.setEnabled(True)
-                self.duplicate_btn.setEnabled(True)
-                self.delete_btn.setEnabled(True)
+                if self.view_btn is not None:
+                    self.view_btn.setEnabled(True)
+                if self.edit_btn is not None:
+                    self.edit_btn.setEnabled(True)
+                if self.duplicate_btn is not None:
+                    self.duplicate_btn.setEnabled(True)
+                if self.delete_btn is not None:
+                    self.delete_btn.setEnabled(True)
 
     def update_report_preview(self, report_id: str) -> None:
         """Update the report preview."""
@@ -730,11 +734,13 @@ class ReportManagerDialog(BaseDialog):
             if len(content) > 1000:
                 preview += "\n\n... (truncated)"
 
-            self.report_preview.setPlainText(preview)
+            if self.report_preview is not None:
+                self.report_preview.setPlainText(preview)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in report_manager_dialog: %s", e)
-            self.report_preview.setPlainText(f"Error loading preview: {e!s}")
+            self.logger.exception("Error in report_manager_dialog: %s", e)
+            if self.report_preview is not None:
+                self.report_preview.setPlainText(f"Error loading preview: {e!s}")
 
     def filter_reports(self) -> None:
         """Filter reports based on search criteria."""
@@ -748,9 +754,9 @@ class ReportManagerDialog(BaseDialog):
         self.report_list.clear()
 
         # Filter reports based on criteria
-        filtered_reports = []
+        filtered_reports: list[dict[str, Any]] = []
 
-        for report in self.reports:
+        for report in self.reports.values():
             # Check type filter
             if selected_type != "All Types" and report.get("type", "") != selected_type:
                 continue
@@ -767,7 +773,7 @@ class ReportManagerDialog(BaseDialog):
                         continue
                 except (ValueError, KeyError, TypeError) as e:
                     # Skip reports with invalid dates
-                    logger.debug(f"Invalid date in report: {e}")
+                    logger.debug("Invalid date in report: %s", e)
                     continue
 
             # Check search text in title and description
@@ -784,9 +790,11 @@ class ReportManagerDialog(BaseDialog):
 
         # Update report list with filtered results
         for report in filtered_reports:
-            item = QListWidgetItem(report["title"])
-            item.setData(Qt.ItemDataRole.UserRole, report)
-            self.report_list.addItem(item)
+            title = report.get("title", "Untitled")
+            if isinstance(title, str):
+                item = QListWidgetItem(title)
+                item.setData(Qt.ItemDataRole.UserRole, report)
+                self.report_list.addItem(item)
 
         # Update status
         total = len(self.reports)
@@ -812,7 +820,7 @@ class ReportManagerDialog(BaseDialog):
             else:
                 subprocess.run(["xdg-open", report_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in report_manager_dialog: %s", e)
+            self.logger.exception("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
                 QMessageBox.warning(self, "Warning", f"Could not open report: {e!s}")
 
@@ -843,7 +851,7 @@ class ReportManagerDialog(BaseDialog):
                 QMessageBox.information(self, "Success", f"Report duplicated as: {new_name}")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in report_manager_dialog: %s", e)
+            logger.exception("Error in report_manager_dialog: %s", e)
             if HAS_PYQT:
                 QMessageBox.critical(self, "Error", f"Failed to duplicate report: {e!s}")
 
@@ -876,7 +884,7 @@ class ReportManagerDialog(BaseDialog):
                 QMessageBox.information(self, "Success", "Report deleted successfully")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in report_manager_dialog: %s", e)
+                logger.exception("Error in report_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to delete report: {e!s}")
 
     def browse_binary(self) -> None:
@@ -975,7 +983,7 @@ class ReportManagerDialog(BaseDialog):
                     else:
                         subprocess.run(["xdg-open", output_path], check=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 except Exception as e:
-                    logger.error("Exception in report_manager_dialog: %s", e)
+                    logger.exception("Exception in report_manager_dialog: %s", e)
         else:
             QMessageBox.critical(self, "Error", message)
 
@@ -1004,7 +1012,7 @@ class ReportManagerDialog(BaseDialog):
                 QMessageBox.information(self, "Success", f"Report exported to: {file_path}")
 
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in report_manager_dialog: %s", e)
+                self.logger.exception("Error in report_manager_dialog: %s", e)
                 QMessageBox.critical(self, "Error", f"Failed to export report: {e!s}")
 
     def on_template_selected(self) -> None:
@@ -1025,11 +1033,14 @@ class ReportManagerDialog(BaseDialog):
             }
 
             description = descriptions.get(template_name, "No description available.")
-            self.template_description.setPlainText(description)
+            if self.template_description is not None:
+                self.template_description.setPlainText(description)
 
             # Enable action buttons
-            self.use_template_btn.setEnabled(True)
-            self.edit_template_btn.setEnabled(True)
+            if self.use_template_btn is not None:
+                self.use_template_btn.setEnabled(True)
+            if self.edit_template_btn is not None:
+                self.edit_template_btn.setEnabled(True)
 
     def use_template(self) -> None:
         """Use the selected template for report generation."""

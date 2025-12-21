@@ -47,7 +47,7 @@ if IS_WINDOWS:
 
         HAS_WINREG = True
     except ImportError as e:
-        logger.error("Import error in program_discovery: %s", e, exc_info=True)
+        logger.exception("Import error in program_discovery: %s", e)
         HAS_WINREG = False
         winreg = None
 else:
@@ -250,7 +250,7 @@ class ProgramDiscoveryEngine:
             return program_info
 
         except Exception as e:
-            self.logger.error("Error analyzing program from path %s: %s", program_path, e, exc_info=True)
+            self.logger.exception("Error analyzing program from path %s: %s", program_path, e)
             return None
 
     def discover_programs_from_path(self, search_path: str) -> list[ProgramInfo]:
@@ -280,7 +280,7 @@ class ProgramDiscoveryEngine:
                             programs.append(program_info)
 
         except Exception as e:
-            self.logger.error("Error discovering programs from path %s: %s", search_path, e, exc_info=True)
+            self.logger.exception("Error discovering programs from path %s: %s", search_path, e)
 
         return programs
 
@@ -321,7 +321,7 @@ class ProgramDiscoveryEngine:
                     discovered_programs = self.discover_programs_from_path(dir_path)
                     programs.extend(discovered_programs)
                 except Exception as e:
-                    self.logger.debug("Error scanning directory %s: %s", dir_path, e, exc_info=True)
+                    self.logger.debug("Error scanning directory %s: %s", dir_path, e)
 
         return programs
 
@@ -438,14 +438,14 @@ class ProgramDiscoveryEngine:
                                 analysis["architecture"] = arch
 
                     except OSError as e:
-                        logger.error("Error in program_discovery: %s", e, exc_info=True)
+                        logger.exception("Error in program_discovery: %s", e)
                         continue
 
             analysis["total_size"] = total_size
             analysis["file_types"] = list(file_extensions)
 
         except Exception as e:
-            self.logger.debug("Error analyzing folder %s: %s", folder_path, e, exc_info=True)
+            self.logger.debug("Error analyzing folder %s: %s", folder_path, e)
 
         return analysis
 
@@ -487,7 +487,7 @@ class ProgramDiscoveryEngine:
                 return arch_map.get(machine_type, "Unknown")
 
         except Exception as e:
-            logger.error("Exception in program_discovery: %s", e, exc_info=True)
+            logger.exception("Exception in program_discovery: %s", e)
             return "Unknown"
 
     def _get_windows_version_info(self, exe_path: Path) -> tuple[str, str]:
@@ -501,7 +501,7 @@ class ProgramDiscoveryEngine:
 
                     version = f"{version_info['FileVersionMS'] >> 16}.{version_info['FileVersionMS'] & 0xFFFF}.{version_info['FileVersionLS'] >> 16}.{version_info['FileVersionLS'] & 0xFFFF}"
                 except ImportError as e:
-                    self.logger.error("Import error in program_discovery: %s", e, exc_info=True)
+                    self.logger.exception("Import error in program_discovery: %s", e)
                     return "Unknown", "Unknown"
 
                 if string_info := version_info.get("StringFileInfo", {}):
@@ -513,7 +513,7 @@ class ProgramDiscoveryEngine:
 
                 return version, publisher
         except Exception as e:
-            self.logger.debug("Error getting Windows version info for %s: %s", exe_path, e, exc_info=True)
+            self.logger.debug("Error getting Windows version info for %s: %s", exe_path, e)
 
         return "Unknown", "Unknown"
 
@@ -533,7 +533,7 @@ class ProgramDiscoveryEngine:
                 if version_match := re.search(r"(\d+\.\d+\.\d+)", version_line):
                     return version_match[1], "Unknown"
         except Exception as e:
-            self.logger.debug("Error getting Unix version info for %s: %s", exe_path, e, exc_info=True)
+            self.logger.debug("Error getting Unix version info for %s: %s", exe_path, e)
 
         return "Unknown", "Unknown"
 
@@ -584,7 +584,7 @@ class ProgramDiscoveryEngine:
                 if result.returncode == 0:
                     programs.extend(self._parse_dpkg_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            self.logger.error("Error in program_discovery: %s", e, exc_info=True)
+            self.logger.exception("Error in program_discovery: %s", e)
 
         try:
             if rpm_path := shutil.which("rpm"):
@@ -599,7 +599,7 @@ class ProgramDiscoveryEngine:
                 if result.returncode == 0:
                     programs.extend(self._parse_rpm_output(result.stdout))
         except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-            self.logger.error("Error in program_discovery: %s", e, exc_info=True)
+            self.logger.exception("Error in program_discovery: %s", e)
 
         return programs
 
@@ -617,11 +617,10 @@ class ProgramDiscoveryEngine:
                     for item in os.listdir(app_dir):
                         if item.endswith(".app"):
                             app_path = os.path.join(app_dir, item)
-                            program = self.analyze_program_from_path(app_path)
-                            if program:
+                            if program := self.analyze_program_from_path(app_path):
                                 programs.append(program)
                 except PermissionError as e:
-                    self.logger.error("Permission error in program_discovery: %s", e, exc_info=True)
+                    self.logger.exception("Permission error in program_discovery: %s", e)
                     continue
 
         return programs
@@ -711,11 +710,11 @@ class ProgramDiscoveryEngine:
                         if program := self._extract_program_from_registry(hkey, path, subkey_name, include_system):
                             programs.append(program)
                     except (OSError, ValueError) as e:
-                        self.logger.debug("Error reading registry subkey %s: %s", subkey_name, e, exc_info=True)
+                        self.logger.debug("Error reading registry subkey %s: %s", subkey_name, e)
                         continue
 
         except (OSError, ValueError) as e:
-            self.logger.debug("Error accessing registry path %s: %s", path, e, exc_info=True)
+            self.logger.debug("Error accessing registry path %s: %s", path, e)
 
         return programs
 
@@ -772,7 +771,7 @@ class ProgramDiscoveryEngine:
                     analysis_priority=self._calculate_analysis_priority(display_name, install_location or ""),
                 )
         except Exception as e:
-            self.logger.debug("Error extracting program from registry %s: %s", subkey_name, e, exc_info=True)
+            self.logger.debug("Error extracting program from registry %s: %s", subkey_name, e)
             return None
 
     def _get_registry_value(self, key: object, value_name: str) -> str | None:
@@ -781,7 +780,7 @@ class ProgramDiscoveryEngine:
             value, _ = winreg.QueryValueEx(key, value_name)
             return str(value) if value else None
         except (OSError, ValueError) as e:
-            self.logger.error("Error in program_discovery: %s", e, exc_info=True)
+            self.logger.exception("Error in program_discovery: %s", e)
             return None
 
     def _is_system_component(self, display_name: str, subkey_name: str) -> bool:
@@ -834,7 +833,7 @@ class ProgramDiscoveryEngine:
                     self.programs_cache[key] = ProgramInfo(**program_dict)
 
         except Exception as e:
-            self.logger.debug("Error loading cache: %s", e, exc_info=True)
+            self.logger.debug("Error loading cache: %s", e)
             self.programs_cache = {}
             self.last_scan_time = None
 
@@ -850,7 +849,7 @@ class ProgramDiscoveryEngine:
                 json.dump(cache_data, f, indent=2)
 
         except Exception as e:
-            self.logger.debug("Error saving cache: %s", e, exc_info=True)
+            self.logger.debug("Error saving cache: %s", e)
 
 
 # Create global instance for easy access

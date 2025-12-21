@@ -34,7 +34,7 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in process_utils: %s", e)
+    logger.exception("Import error in process_utils: %s", e)
     psutil = None
     PSUTIL_AVAILABLE = False
 
@@ -71,10 +71,10 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> int | 
                         logger.info("Found process match: %s with PID: %s", process_name, proc.info["pid"])
                         return proc.info["pid"]
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                logger.error("Error in process_utils: %s", e, exc_info=True)
+                logger.exception("Error in process_utils: %s", e)
                 continue
     except Exception as e:
-        logger.error("Error searching for process %s: %s", process_name, e, exc_info=True)
+        logger.exception("Error searching for process %s: %s", process_name, e)
 
     return None
 
@@ -102,10 +102,10 @@ def get_all_processes(fields: list[str] | None = None) -> list[dict[str, Any]]:
             try:
                 processes.append(proc.info)
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                logger.error("Error in process_utils: %s", e, exc_info=True)
+                logger.exception("Error in process_utils: %s", e)
                 continue
     except Exception as e:
-        logger.error("Error getting process list: %s", e, exc_info=True)
+        logger.exception("Error getting process list: %s", e)
 
     return processes
 
@@ -138,7 +138,7 @@ def find_processes_matching_names(target_names: list[str]) -> list[str]:
 
         return matches
     except Exception as e:
-        logger.error("Error matching process names: %s", e, exc_info=True)
+        logger.exception("Error matching process names: %s", e)
         return []
 
 
@@ -149,7 +149,7 @@ def _get_system_path(path_type: str) -> str | None:
 
         return get_system_path(path_type)
     except ImportError as e:
-        logger.error("Import error in process_utils: %s", e)
+        logger.exception("Import error in process_utils: %s", e)
         # Fallback
         if path_type == "windows_system":
             return os.environ.get("SYSTEMROOT", r"C:\Windows")
@@ -191,7 +191,7 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str | None:
     """
     try:
         if not os.path.exists(file_path):
-            logger.error("File not found: %s", file_path)
+            logger.exception("File not found: %s", file_path)
             return None
 
         hasher = hashlib.new(algorithm)
@@ -205,7 +205,7 @@ def compute_file_hash(file_path: str, algorithm: str = "sha256") -> str | None:
         return hash_value
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error computing hash for %s: %s", file_path, e, exc_info=True)
+        logger.exception("Error computing hash for %s: %s", file_path, e)
         return None
 
 
@@ -326,13 +326,13 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
                     results.append(f"Found dongle registry key: {key_path}")
                     winreg.CloseKey(key)
                 except FileNotFoundError as e:
-                    logger.error("File not found in process_utils: %s", e)
+                    logger.exception("File not found in process_utils: %s", e)
                     # Key doesn't exist
                 except (OSError, ValueError, RuntimeError) as e:
-                    logger.debug("Error accessing registry key %s: %s", key_path, e, exc_info=True)
+                    logger.debug("Error accessing registry key %s: %s", key_path, e)
 
         except ImportError as e:
-            logger.error("Import error in process_utils: %s", e)
+            logger.exception("Import error in process_utils: %s", e)
             results.append("winreg not available - cannot check registry")
 
     if found_dongles:
@@ -385,7 +385,7 @@ def detect_tpm_protection() -> dict[str, Any]:
             except ImportError:
                 logger.debug("WMI not available for TPM detection")
             except (OSError, ValueError, RuntimeError) as e:
-                logger.warning("WMI TPM detection failed: %s", e, exc_info=True)
+                logger.warning("WMI TPM detection failed: %s", e)
 
         elif sys.platform.startswith("linux"):
             tpm_devices = ["/dev/tpm0", "/dev/tpmrm0"]
@@ -413,12 +413,12 @@ def detect_tpm_protection() -> dict[str, Any]:
                             results["detection_methods"].append(f"Kernel module: {module}")
                             results["tpm_present"] = True
             except (OSError, ValueError, RuntimeError) as e:
-                logger.debug("Could not check kernel modules: %s", e, exc_info=True)
+                logger.debug("Could not check kernel modules: %s", e)
 
         logger.info("TPM detection completed: %s", results)
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in TPM detection: %s", e, exc_info=True)
+        logger.exception("Error in TPM detection: %s", e)
         results["error"] = str(e)
 
     return results
@@ -449,11 +449,11 @@ def get_system_processes() -> list[dict[str, Any]]:
                     },
                 )
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
-                logger.error("Error in process_utils: %s", e, exc_info=True)
+                logger.exception("Error in process_utils: %s", e)
                 # Process may have terminated or access denied
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error getting process list: %s", e, exc_info=True)
+        logger.exception("Error getting process list: %s", e)
 
     return processes
 
@@ -498,9 +498,9 @@ def run_command(command: str, timeout: int = 30) -> dict[str, Any]:
 
     except subprocess.TimeoutExpired:
         result["error"] = f"Command timed out after {timeout} seconds"
-        logger.error(result["error"], exc_info=True)
+        logger.exception(result["error"])
     except (OSError, ValueError, RuntimeError) as e:
         result["error"] = str(e)
-        logger.error("Error running command: %s", e, exc_info=True)
+        logger.exception("Error running command: %s", e)
 
     return result

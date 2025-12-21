@@ -111,7 +111,7 @@ class LMStudioRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from LMStudio: {error_message}")
+            logger.exception("Failed to get models from LMStudio: %s", error_message)
             return []
 
         models = []
@@ -126,7 +126,7 @@ class LMStudioRepository(APIRepositoryBase):
             return models
 
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing LMStudio models response: {e}")
+            logger.exception("Error parsing LMStudio models response: %s", e)
             return []
 
     def get_model_details(self, model_id: str) -> ModelInfo | None:
@@ -150,7 +150,7 @@ class LMStudioRepository(APIRepositoryBase):
             try:
                 return self._create_model_info(model_id, data)
             except (KeyError, TypeError) as e:
-                logger.error(f"Error parsing LMStudio model details for {model_id}: {e}")
+                logger.exception("Error parsing LMStudio model details for %s: %s", model_id, e)
                 return None
 
         # If direct model endpoint fails, fall back to looking through all models
@@ -160,7 +160,7 @@ class LMStudioRepository(APIRepositoryBase):
         )
 
         if not success:
-            logger.error(f"Failed to get models from LMStudio: {error_message}")
+            logger.exception("Failed to get models from LMStudio: %s", error_message)
             return None
 
         try:
@@ -169,7 +169,7 @@ class LMStudioRepository(APIRepositoryBase):
                 None,
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error parsing LMStudio model details for {model_id}: {e}")
+            logger.exception("Error parsing LMStudio model details for %s: %s", model_id, e)
             return None
 
     def _create_model_info(self, model_id: str, model_data: dict[str, Any]) -> ModelInfo | None:
@@ -200,7 +200,7 @@ class LMStudioRepository(APIRepositoryBase):
                 local_path=None,  # We don't know the actual path of the local model
             )
         except (KeyError, TypeError) as e:
-            logger.error(f"Error creating ModelInfo for {model_id}: {e}")
+            logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
     def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
@@ -210,5 +210,5 @@ class LMStudioRepository(APIRepositoryBase):
             Always returns (False, "LMStudio doesn't support model downloads through API")
 
         """
-        logger.warning(f"Download requested for {model_id} to {destination_path}, but not supported")
+        logger.warning("Download requested for %s to %s, but not supported", model_id, destination_path)
         return False, "LMStudio doesn't support model downloads through API"

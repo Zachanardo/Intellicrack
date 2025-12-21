@@ -485,11 +485,11 @@ class PathDiscovery:
                                                     if os.path.isfile(bin_path):
                                                         return bin_path
                                     except OSError as e:
-                                        logger.error("OS error in path_discovery: %s", e, exc_info=True)
+                                        logger.exception("OS error in path_discovery: %s", e, exc_info=True)
                             except OSError as e:
-                                logger.error("OS error in path_discovery: %s", e, exc_info=True)
+                                logger.exception("OS error in path_discovery: %s", e, exc_info=True)
                 except OSError as e:
-                    logger.error("OS error in path_discovery: %s", e, exc_info=True)
+                    logger.exception("OS error in path_discovery: %s", e, exc_info=True)
         except ImportError:
             logger.warning("winreg module not available")
 
@@ -595,7 +595,7 @@ class PathDiscovery:
             )
             return "radare2" in result.stdout.lower()
         except Exception as e:
-            logger.error("Exception in path_discovery: %s", e, exc_info=True)
+            logger.exception("Exception in path_discovery: %s", e, exc_info=True)
             return False
 
     def _validate_frida(self, path: str) -> bool:
@@ -610,7 +610,7 @@ class PathDiscovery:
             )
             return "frida" in result.stdout.lower() or result.returncode == 0
         except Exception as e:
-            logger.error("Exception in path_discovery: %s", e, exc_info=True)
+            logger.exception("Exception in path_discovery: %s", e, exc_info=True)
             return False
 
     def _validate_python(self, path: str) -> bool:
@@ -625,7 +625,7 @@ class PathDiscovery:
             )
             return "python" in result.stdout.lower() or "python" in result.stderr.lower()
         except Exception as e:
-            logger.error("Exception in path_discovery: %s", e, exc_info=True)
+            logger.exception("Exception in path_discovery: %s", e, exc_info=True)
             return False
 
     def _validate_wireshark(self, path: str) -> bool:
@@ -657,10 +657,7 @@ class PathDiscovery:
 
         # Check environment variable
         cuda_path = os.environ.get("CUDA_PATH") or os.environ.get("CUDA_HOME")
-        if cuda_path and os.path.exists(cuda_path):
-            return cuda_path
-
-        return None
+        return cuda_path if cuda_path and os.path.exists(cuda_path) else None
 
     def ensure_tool_available(self, tool_name: str, parent_widget: object | None = None) -> str | None:
         """Ensure a tool is available, prompting user if needed.
@@ -725,7 +722,7 @@ class PathDiscovery:
                     else:
                         logger.warning("Path %s does not exist or is not a file", path)
                 except (KeyboardInterrupt, EOFError) as e:
-                    logger.error("Error in path_discovery: %s", e, exc_info=True)
+                    logger.exception("Error in path_discovery: %s", e, exc_info=True)
                 return None
 
         return path

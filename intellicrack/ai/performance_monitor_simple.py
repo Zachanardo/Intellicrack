@@ -145,7 +145,7 @@ class AsyncPerformanceMonitor:
             result = await coroutine
             success = True
         except Exception as e:
-            logger.error(f"Operation {operation_name} failed: {e}")
+            logger.exception("Operation %s failed: %s", operation_name, e)
             result = None  # type: ignore[assignment]
             success = False
         finally:
@@ -205,7 +205,7 @@ def profile_ai_operation(
                 return result
             except Exception as e:
                 _performance_monitor.end_operation(operation_id, op_name, success=False)
-                logger.error(f"Operation {op_name} failed: {e}")
+                logger.exception("Operation %s failed: %s", op_name, e)
                 raise
 
         return wrapper  # type: ignore[return-value]

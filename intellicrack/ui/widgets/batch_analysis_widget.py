@@ -138,7 +138,7 @@ class BatchAnalysisWorker(QThread):
                         self.file_completed.emit(file_path, result)
 
                     except Exception as e:
-                        logger.error(f"Analysis failed for {file_path}: {e}")
+                        logger.exception("Analysis failed for %s: %s", file_path, e)
                         # Create failed result
                         failed_result = BatchAnalysisResult(
                             file_path=file_path,
@@ -156,7 +156,7 @@ class BatchAnalysisWorker(QThread):
                 self.analysis_finished.emit(results)
 
         except Exception as e:
-            logger.error("Exception in batch_analysis_widget: %s", e, exc_info=True)
+            logger.exception("Exception in batch_analysis_widget: %s", e, exc_info=True)
             self.error_occurred.emit(f"Batch analysis failed: {e!s}")
 
     def _analyze_file(self, file_path: str) -> BatchAnalysisResult:
@@ -207,7 +207,7 @@ class BatchAnalysisWorker(QThread):
 
         except Exception as e:
             analysis_time = time.time() - start_time
-            logger.error(f"Failed to analyze {file_path}: {e}")
+            logger.exception("Failed to analyze %s: %s", file_path, e)
 
             return BatchAnalysisResult(
                 file_path=file_path,
@@ -475,7 +475,7 @@ class BatchAnalysisWidget(QWidget):
                             files.append(file_path)
 
         except Exception as e:
-            logger.error(f"Error scanning folder {folder_path}: {e}")
+            logger.exception("Error scanning folder %s: %s", folder_path, e)
 
         return files
 
@@ -563,7 +563,7 @@ class BatchAnalysisWidget(QWidget):
                     f"Results exported to {file_path}",
                 )
             except Exception as e:
-                logger.error("Exception in batch_analysis_widget: %s", e, exc_info=True)
+                logger.exception("Exception in batch_analysis_widget: %s", e, exc_info=True)
                 QMessageBox.critical(
                     self,
                     "Export Failed",
@@ -646,7 +646,7 @@ class BatchAnalysisWidget(QWidget):
         total = len(results)
         protected = sum(bool(r.is_protected) for r in results)
         packed = sum(bool(r.is_packed) for r in results)
-        failed = sum(bool(not r.success) for r in results)
+        failed = sum(not r.success for r in results)
 
         self.status_label.setText(
             f"Analysis complete: {total} files, {protected} protected, {packed} packed, {failed} failed",

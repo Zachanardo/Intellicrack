@@ -20,6 +20,42 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # pylint: disable=cyclic-import
 
 import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from intellicrack.core import analysis
+    from intellicrack.core import binary_analyzer
+    from intellicrack.core import config_migration_handler
+    from intellicrack.core import debugging_engine
+    from intellicrack.core import exploitation
+    from intellicrack.core import frida_bypass_wizard
+    from intellicrack.core import frida_constants
+    from intellicrack.core import frida_manager
+    from intellicrack.core import frida_presets
+    from intellicrack.core import gpu_acceleration
+    from intellicrack.core import hardware_spoofer
+    from intellicrack.core import license_snapshot
+    from intellicrack.core import license_validation_bypass
+    from intellicrack.core import network
+    from intellicrack.core import network_capture
+    from intellicrack.core import offline_activation_emulator
+    from intellicrack.core import patching
+    from intellicrack.core import process_manipulation
+    from intellicrack.core import processing
+    from intellicrack.core import protection_analyzer as protection_analyzer
+    from intellicrack.core import protection_bypass
+    from intellicrack.core import reporting
+    from intellicrack.core import security_utils
+    from intellicrack.core import serial_generator
+    from intellicrack.core import shared
+    from intellicrack.core import startup_checks
+    from intellicrack.core import subscription_validation_bypass
+    from intellicrack.core import task_manager
+    from intellicrack.core import tool_discovery
+    from intellicrack.core import trial_reset_engine
+    from intellicrack.core import vulnerability_research
+    from intellicrack.core.network import protocols
+    from intellicrack.core.protection_analyzer import ProtectionAnalyzer
 
 
 logger = logging.getLogger(__name__)
@@ -31,7 +67,7 @@ try:
 
     SECURITY_ENFORCEMENT_AVAILABLE = True
 except ImportError as e:
-    logging.getLogger(__name__).warning(f"Security enforcement not available: {e}")
+    logging.getLogger(__name__).warning("Security enforcement not available: %s", e)
     security_enforcement = None
     SECURITY_ENFORCEMENT_AVAILABLE = False
 
@@ -80,7 +116,7 @@ def get_frida_manager() -> type | None:
             FridaManager = _FridaManager
             FRIDA_MODULES_AVAILABLE = True
         except ImportError as e:
-            logging.getLogger(__name__).warning(f"FridaManager not available: {e}")
+            logging.getLogger(__name__).warning("FridaManager not available: %s", e)
     return FridaManager
 
 
@@ -115,7 +151,7 @@ def get_frida_presets() -> dict[str, str] | None:
 
             FRIDA_PRESETS = _PRESETS
         except ImportError as e:
-            logger.error("Import error in __init__: %s", e)
+            logger.exception("Import error in __init__: %s", e)
     return FRIDA_PRESETS
 
 
@@ -151,7 +187,7 @@ def get_frida_bypass_wizard() -> type | None:
 
             FridaBypassWizard = _Wizard
         except ImportError as e:
-            logger.error("Import error in __init__: %s", e)
+            logger.exception("Import error in __init__: %s", e)
     return FridaBypassWizard
 
 
@@ -205,7 +241,7 @@ def __getattr__(name: str) -> object:
                 global PROTECTION_ANALYZER_AVAILABLE
                 PROTECTION_ANALYZER_AVAILABLE = True
             except ImportError as e:
-                logger.warning(f"ProtectionAnalyzer not available: {e}")
+                logger.warning("ProtectionAnalyzer not available: %s", e)
                 _lazy_modules[name] = None
         return _lazy_modules[name]
 
@@ -217,7 +253,7 @@ def __getattr__(name: str) -> object:
 
                 _lazy_modules[name] = proto
             except ImportError as e:
-                logger.warning(f"protocols not available: {e}")
+                logger.warning("protocols not available: %s", e)
                 _lazy_modules[name] = None
         return _lazy_modules[name]
 
@@ -232,7 +268,7 @@ def __getattr__(name: str) -> object:
                     EXPLOITATION_MODULES_AVAILABLE = True
 
             except ImportError as e:
-                logger.warning(f"{name} not available: {e}")
+                logger.warning("%s not available: %s", name, e)
                 _lazy_modules[name] = None
         return _lazy_modules[name]
 

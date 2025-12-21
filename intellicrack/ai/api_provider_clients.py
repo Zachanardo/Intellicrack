@@ -61,16 +61,16 @@ class BaseProviderClient(ABC):
             json_response: dict[str, Any] = response.json()
             return json_response
         except requests.exceptions.Timeout:
-            logger.error(f"Request to {url} timed out")
+            logger.exception("Request to %s timed out", url)
             return None
         except requests.exceptions.ConnectionError:
-            logger.error(f"Failed to connect to {url}")
+            logger.exception("Failed to connect to %s", url)
             return None
         except requests.exceptions.HTTPError as e:
-            logger.error(f"HTTP error {e.response.status_code}: {e.response.text}")
+            logger.exception("HTTP error %d: %s", e.response.status_code, e.response.text)
             return None
         except Exception as e:
-            logger.error(f"Unexpected error making request to {url}: {e}")
+            logger.exception("Unexpected error making request to %s: %s", url, e)
             return None
 
 
@@ -372,7 +372,7 @@ class LocalProviderClient(BaseProviderClient):
                 )
 
         except Exception as e:
-            logger.warning(f"Could not load local GGUF models: {e}")
+            logger.warning("Could not load local GGUF models: %s", e)
 
         return models
 
@@ -387,7 +387,7 @@ class ProviderManager:
     def register_provider(self, provider_name: str, client: BaseProviderClient) -> None:
         """Register a provider client."""
         self.providers[provider_name] = client
-        logger.info(f"Registered provider: {provider_name}")
+        logger.info("Registered provider: %s", provider_name)
 
     def get_provider(self, provider_name: str) -> BaseProviderClient | None:
         """Get a registered provider client."""
@@ -397,13 +397,13 @@ class ProviderManager:
         """Fetch models from a specific provider."""
         provider = self.get_provider(provider_name)
         if not provider:
-            logger.warning(f"Provider not found: {provider_name}")
+            logger.warning("Provider not found: %s", provider_name)
             return []
 
         try:
             return provider.fetch_models()
         except Exception as e:
-            logger.error(f"Error fetching models from {provider_name}: {e}")
+            logger.exception("Error fetching models from %s: %s", provider_name, e)
             return []
 
     def fetch_all_models(self) -> dict[str, list[ModelInfo]]:

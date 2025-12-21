@@ -535,7 +535,10 @@ class NetworkGraphWidget(DashboardWidget):
         # Color nodes by connections
         node_adjacencies = []
         for node in nodes:
-            adjacencies = sum(bool(edge["source"] == node["id"] or edge["target"] == node["id"]) for edge in edges)
+            adjacencies = sum(
+                edge["source"] == node["id"] or edge["target"] == node["id"]
+                for edge in edges
+            )
             node_adjacencies.append(adjacencies)
 
         node_trace.marker.color = node_adjacencies
@@ -679,7 +682,7 @@ class WidgetFactory:
 
         widget_class = widget_map.get(config.widget_type)
         if not widget_class:
-            logger.warning(f"Unknown widget type: {config.widget_type}")
+            logger.warning("Unknown widget type: %s", config.widget_type)
             return DashboardWidget(config)
 
         return widget_class(config)

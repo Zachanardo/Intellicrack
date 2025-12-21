@@ -221,7 +221,7 @@ class RealTimeDashboard:
             try:
                 callback(event)
             except Exception as e:
-                self.logger.error(f"Error in event callback: {e}")
+                self.logger.exception("Error in event callback: %s", e)
 
         # Broadcast to WebSocket clients
         if self.websocket_clients:
@@ -499,7 +499,7 @@ class RealTimeDashboard:
                 path: The connection path requested by the client.
             """
             self.websocket_clients.add(websocket)
-            self.logger.info(f"WebSocket client connected: {websocket.remote_address!s}")
+            self.logger.info("WebSocket client connected: %s", websocket.remote_address)
 
             try:
                 # Send initial state
@@ -513,10 +513,10 @@ class RealTimeDashboard:
                         if data.get("type") == "ping":
                             await websocket.send(json.dumps({"type": "pong"}))
                     except json.JSONDecodeError:
-                        self.logger.warning(f"Invalid WebSocket message: {message!s}")
+                        self.logger.warning("Invalid WebSocket message: %s", message)
 
             except websockets.exceptions.ConnectionClosed:
-                self.logger.info(f"WebSocket client disconnected: {websocket.remote_address}")
+                self.logger.info("WebSocket client disconnected: %s", websocket.remote_address)
             finally:
                 self.websocket_clients.discard(websocket)
 
@@ -524,7 +524,7 @@ class RealTimeDashboard:
             """Start the WebSocket server."""
             port = self.config.get("websocket_port", 8765)
             self.websocket_server = await websockets.serve(handle_client, "localhost", port)
-            self.logger.info(f"WebSocket server started on port {port}")
+            self.logger.info("WebSocket server started on port %d", port)
             await asyncio.Future()  # Run forever
 
         def run_server() -> None:
@@ -556,7 +556,7 @@ class RealTimeDashboard:
             except websockets.exceptions.ConnectionClosed:
                 disconnected.add(client)
             except Exception as e:
-                self.logger.error(f"Error broadcasting to client: {e}")
+                self.logger.exception("Error broadcasting to client: %s", e)
                 disconnected.add(client)
 
         # Remove disconnected clients
@@ -658,7 +658,7 @@ class RealTimeDashboard:
         self.flask_thread = threading.Thread(target=run_flask, daemon=True)
         self.flask_thread.start()
 
-        self.logger.info(f"HTTP API server started on port {self.config.get('http_port', 5000)}")
+        self.logger.info("HTTP API server started on port %d", self.config.get('http_port', 5000))
 
     def _start_metrics_updater(self) -> None:
         """Start metrics update thread."""
@@ -680,7 +680,7 @@ class RealTimeDashboard:
                         asyncio.run_coroutine_threadsafe(self._broadcast_metrics(snapshot), self.websocket_loop)
 
                 except Exception as e:
-                    self.logger.error(f"Error in metrics updater: {e}")
+                    self.logger.exception("Error in metrics updater: %s", e)
 
                 time.sleep(self.metrics_update_interval)
 
@@ -706,7 +706,7 @@ class RealTimeDashboard:
             except websockets.exceptions.ConnectionClosed:
                 disconnected.add(client)
             except Exception as e:
-                self.logger.error(f"Error broadcasting metrics: {e}")
+                self.logger.exception("Error broadcasting metrics: %s", e)
                 disconnected.add(client)
 
         self.websocket_clients -= disconnected

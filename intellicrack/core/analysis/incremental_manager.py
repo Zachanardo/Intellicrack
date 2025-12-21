@@ -53,7 +53,7 @@ try:
 
     PYQT_AVAILABLE = True
 except ImportError as e:
-    logger.error("Import error in incremental_manager: %s", e)
+    logger.exception("Import error in incremental_manager: %s", e)
     PYQT_AVAILABLE = False
 
 # Security configuration for pickle
@@ -224,10 +224,10 @@ class IncrementalAnalysisManager:
         try:
             self._load_cache_metadata()
         except Exception as e:
-            self.logger.warning(f"Failed to load cache metadata: {e}")
+            self.logger.warning("Failed to load cache metadata: %s", e)
             self._init_empty_cache()
 
-        self.logger.info(f"Incremental analysis manager initialized with cache dir: {self.cache_dir}")
+        self.logger.info("Incremental analysis manager initialized with cache dir: %s", self.cache_dir)
 
     def _load_cache_metadata(self) -> None:
         """Load cache metadata from the filesystem.
@@ -362,7 +362,7 @@ class IncrementalAnalysisManager:
                 self._cleanup_invalid_entries()
 
             except (OSError, json.JSONDecodeError) as e:
-                self.logger.error("Error loading cache index: %s", e)
+                self.logger.exception("Error loading cache index: %s", e)
                 self.cache = {}
         else:
             self.logger.info("No existing cache index found")
@@ -399,7 +399,7 @@ class IncrementalAnalysisManager:
             return True
 
         except OSError as e:
-            self.logger.error("Error saving cache index: %s", e)
+            self.logger.exception("Error saving cache index: %s", e)
 
             # Restore backup if available
             backup_path = f"{index_path}.backup"
@@ -408,7 +408,7 @@ class IncrementalAnalysisManager:
                     Path(backup_path).rename(index_path)
                     self.logger.info("Restored cache index from backup")
                 except OSError as e:
-                    self.logger.error("Failed to restore backup")
+                    self.logger.exception("Failed to restore backup")
 
             return False
 
@@ -445,7 +445,7 @@ class IncrementalAnalysisManager:
 
         """
         if not os.path.exists(binary_path):
-            self.logger.error("Binary not found: %s", binary_path)
+            self.logger.exception("Binary not found: %s", binary_path)
             return False
 
         self.current_binary = os.path.abspath(binary_path)
@@ -487,7 +487,7 @@ class IncrementalAnalysisManager:
             return hash_sha256.hexdigest()
 
         except OSError as e:
-            self.logger.error("Error calculating file hash: %s", e)
+            self.logger.exception("Error calculating file hash: %s", e)
             return None
 
     def get_cached_analysis(self, analysis_type: str) -> object | None:
@@ -519,7 +519,7 @@ class IncrementalAnalysisManager:
 
         # Validate cache file before loading
         if not self._validate_cache_file(cache_file):
-            self.logger.error("Cache file validation failed: %s", cache_file)
+            self.logger.exception("Cache file validation failed: %s", cache_file)
             return None
 
         try:
@@ -530,16 +530,16 @@ class IncrementalAnalysisManager:
             return result
 
         except (OSError, pickle.PickleError) as e:
-            self.logger.error("Error loading cache file: %s", e)
+            self.logger.exception("Error loading cache file: %s", e)
             # Remove corrupted cache file
             try:
                 os.remove(cache_file)
                 self.logger.info("Removed corrupted cache file: %s", cache_file)
             except OSError as e:
-                logger.error("OS error in incremental_manager: %s", e)
+                logger.exception("OS error in incremental_manager: %s", e)
             return None
         except Exception as e:
-            self.logger.error("Unexpected error loading cache: %s", e)
+            self.logger.exception("Unexpected error loading cache: %s", e)
             return None
 
     def cache_analysis(self, analysis_type: str, results: object) -> bool:
@@ -585,7 +585,7 @@ class IncrementalAnalysisManager:
             return False
 
         except (OSError, pickle.PickleError) as e:
-            self.logger.error("Error caching analysis results: %s", e)
+            self.logger.exception("Error caching analysis results: %s", e)
             return False
 
     def clear_cache(self, binary_hash: str | None = None) -> bool:
@@ -636,7 +636,7 @@ class IncrementalAnalysisManager:
                     os.remove(cache_file)
                     self.logger.debug("Removed cache file: %s", cache_file)
                 except OSError as e:
-                    self.logger.error("Failed to remove cache file %s: %s", cache_file, e)
+                    self.logger.exception("Failed to remove cache file %s: %s", cache_file, e)
 
         # Remove from cache index
         del self.cache[binary_hash]
@@ -703,7 +703,7 @@ class IncrementalAnalysisManager:
                     if timestamp < cutoff_date:
                         old_hashes.append(binary_hash)
                 except ValueError as e:
-                    logger.error("Value error in incremental_manager: %s", e)
+                    logger.exception("Value error in incremental_manager: %s", e)
                     # Invalid timestamp, consider it old
                     old_hashes.append(binary_hash)
 
@@ -738,7 +738,7 @@ class IncrementalAnalysisManager:
             # Set the binary for cache management
             if not self.set_binary(binary_path):
                 error_msg = f"Failed to set binary for analysis: {binary_path}"
-                self.logger.error(error_msg)
+                self.logger.exception(error_msg)
                 results["errors"].append(error_msg)
                 return results
 
@@ -768,7 +768,7 @@ class IncrementalAnalysisManager:
                             self.logger.debug("Cached fresh results for %s", analysis_type)
                     else:
                         error_msg = f"Failed to perform {analysis_type} analysis"
-                        self.logger.error(error_msg)
+                        self.logger.exception(error_msg)
                         results["errors"].append(error_msg)
 
             # Performance metrics
@@ -783,7 +783,7 @@ class IncrementalAnalysisManager:
 
         except (OSError, ValueError, RuntimeError) as e:
             error_msg = f"Incremental analysis failed: {e}"
-            self.logger.error(error_msg)
+            self.logger.exception(error_msg)
             results["errors"].append(error_msg)
 
         return results
@@ -812,7 +812,7 @@ class IncrementalAnalysisManager:
             return None
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Analysis %s failed: %s", analysis_type, e)
+            self.logger.exception("Analysis %s failed: %s", analysis_type, e)
             return None
 
     def _basic_analysis(self, binary_path: str) -> dict[str, Any]:
@@ -851,7 +851,7 @@ class IncrementalAnalysisManager:
                 "analysis_type": "entropy",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in incremental_manager: %s", e)
+            logger.exception("Error in incremental_manager: %s", e)
             return {"entropy": 0.0, "analysis_type": "entropy", "error": "Failed to read file"}
 
     def _strings_analysis(self, binary_path: str) -> dict[str, Any]:
@@ -872,7 +872,7 @@ class IncrementalAnalysisManager:
                 "analysis_type": "strings",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in incremental_manager: %s", e)
+            self.logger.exception("Error in incremental_manager: %s", e)
             return {"strings_count": 0, "analysis_type": "strings", "error": "Failed to read file"}
 
     def _headers_analysis(self, binary_path: str) -> dict[str, Any]:
@@ -895,7 +895,7 @@ class IncrementalAnalysisManager:
                 "analysis_type": "headers",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in incremental_manager: %s", e)
+            self.logger.exception("Error in incremental_manager: %s", e)
             return {
                 "file_type": "unknown",
                 "analysis_type": "headers",
@@ -933,7 +933,7 @@ def run_analysis_manager(app: object) -> None:
         binary_name = os.path.basename(app.binary_path)
         app.update_output.emit(f"[Incremental Analysis] Analyzing binary: {binary_name} ({binary_size / 1024:.1f} KB)")
     except OSError as e:
-        logger.error("OS error in incremental_manager: %s", e)
+        logger.exception("OS error in incremental_manager: %s", e)
         app.update_output.emit(f"[Incremental Analysis] Error accessing binary: {e}")
         return
 

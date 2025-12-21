@@ -59,7 +59,7 @@ class LLMConfigManager:
     - Thread-safe operations through central config
     """
 
-    def __init__(self, config_dir: str | None = None) -> None:
+    def __init__(self, config_dir: str | Path | None = None) -> None:
         """Initialize the LLM configuration manager.
 
         Args:
@@ -67,19 +67,24 @@ class LLMConfigManager:
                        Defaults to ~/.intellicrack/llm_configs
 
         """
+        resolved_dir: Path
         if config_dir is None:
-            config_dir = Path.home() / ".intellicrack" / "llm_configs"
+            resolved_dir = Path.home() / ".intellicrack" / "llm_configs"
+        elif isinstance(config_dir, str):
+            resolved_dir = Path(config_dir)
+        else:
+            resolved_dir = config_dir
 
-        self.config_dir = Path(config_dir)
+        self.config_dir: Path = resolved_dir
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
-        self.config_file = self.config_dir / "models.json"
-        self.profiles_file = self.config_dir / "profiles.json"
-        self.metrics_file = self.config_dir / "metrics.json"
+        self.config_file: Path = self.config_dir / "models.json"
+        self.profiles_file: Path = self.config_dir / "profiles.json"
+        self.metrics_file: Path = self.config_dir / "metrics.json"
 
-        self.configs = {}
-        self.profiles = {}
-        self.metrics = {}
+        self.configs: dict[str, Any] = {}
+        self.profiles: dict[str, dict[str, Any]] = {}
+        self.metrics: dict[str, Any] = {}
 
         self._load_all_configs()
 
@@ -87,22 +92,33 @@ class LLMConfigManager:
         """Load all configuration files."""
         from intellicrack.core.config_manager import get_config
 
-        # Load from files first
-        self.configs = self._load_json_file(self.config_file, {})
-        self.profiles = self._load_json_file(self.profiles_file, self._get_default_profiles())
-        self.metrics = self._load_json_file(self.metrics_file, {})
+        loaded_configs = self._load_json_file(self.config_file, {})
+        if isinstance(loaded_configs, dict):
+            self.configs = dict(loaded_configs)
 
-        # Then check central config and merge (central config takes precedence)
+        loaded_profiles = self._load_json_file(self.profiles_file, self._get_default_profiles())
+        if isinstance(loaded_profiles, dict):
+            self.profiles = {str(k): v if isinstance(v, dict) else {} for k, v in loaded_profiles.items()}
+
+        loaded_metrics = self._load_json_file(self.metrics_file, {})
+        if isinstance(loaded_metrics, dict):
+            self.metrics = dict(loaded_metrics)
+
         try:
             central_config = get_config()
 
-            if central_models := central_config.get("llm_configuration.models", {}):
+            central_models = central_config.get("llm_configuration.models", {})
+            if isinstance(central_models, dict):
                 self.configs.update(central_models)
 
-            if central_profiles := central_config.get("llm_configuration.profiles", {}):
-                self.profiles.update(central_profiles)
+            central_profiles = central_config.get("llm_configuration.profiles", {})
+            if isinstance(central_profiles, dict):
+                for key, value in central_profiles.items():
+                    if isinstance(value, dict):
+                        self.profiles[str(key)] = dict(value)
 
-            if central_metrics := central_config.get("llm_configuration.metrics", {}):
+            central_metrics = central_config.get("llm_configuration.metrics", {})
+            if isinstance(central_metrics, dict):
                 self.metrics.update(central_metrics)
 
         except Exception as e:
@@ -130,7 +146,7 @@ class LLMConfigManager:
             with open(file_path, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            logger.error("Failed to load %s: %s", file_path, e)
+            logger.exception("Failed to load %s: %s", file_path, e)
             return default
 
     # NOTE: _save_json_file method has been REMOVED
@@ -273,7 +289,7 @@ class LLMConfigManager:
             }
 
     @deprecated_config_method("IntellicrackConfig.set('llm_configuration.models.{model_id}', config)")
-    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict | None = None) -> None:
+    def save_model_config(self, model_id: str, config: LLMConfig, metadata: dict[str, Any] | None = None) -> None:
         """Save a model configuration.
 
         Args:
@@ -320,33 +336,44 @@ class LLMConfigManager:
         """
         from intellicrack.core.config_manager import get_config
 
-        # Try loading from central config first
         central_config = get_config()
-        config_data = central_config.get(f"llm_configuration.models.{model_id}")
+        raw_config = central_config.get(f"llm_configuration.models.{model_id}")
 
-        # Fall back to internal cache if not in central config
+        config_data: dict[str, Any] | None = None
+        if isinstance(raw_config, dict):
+            config_data = raw_config
+        elif model_id in self.configs:
+            cached = self.configs[model_id]
+            if isinstance(cached, dict):
+                config_data = cached
+
         if config_data is None:
-            if model_id not in self.configs:
-                return None
-            config_data = self.configs[model_id]
+            return None
 
         try:
-            provider = LLMProvider(config_data["provider"])
+            provider_value = config_data.get("provider")
+            if not isinstance(provider_value, str):
+                return None
+            provider = LLMProvider(provider_value)
+
+            model_name = config_data.get("model_name")
+            if not isinstance(model_name, str):
+                return None
 
             return LLMConfig(
                 provider=provider,
-                model_name=config_data["model_name"],
-                api_key=config_data.get("api_key"),
-                api_base=config_data.get("api_base"),
-                model_path=config_data.get("model_path"),
-                context_length=config_data.get("context_length", 4096),
-                temperature=config_data.get("temperature", 0.7),
-                max_tokens=config_data.get("max_tokens", 2048),
-                tools_enabled=config_data.get("tools_enabled", True),
-                custom_params=config_data.get("custom_params", {}),
+                model_name=model_name,
+                api_key=config_data.get("api_key") if isinstance(config_data.get("api_key"), str) else None,
+                api_base=config_data.get("api_base") if isinstance(config_data.get("api_base"), str) else None,
+                model_path=config_data.get("model_path") if isinstance(config_data.get("model_path"), str) else None,
+                context_length=int(config_data.get("context_length", 4096)),
+                temperature=float(config_data.get("temperature", 0.7)),
+                max_tokens=int(config_data.get("max_tokens", 2048)),
+                tools_enabled=bool(config_data.get("tools_enabled", True)),
+                custom_params=config_data.get("custom_params") if isinstance(config_data.get("custom_params"), dict) else {},
             )
         except Exception as e:
-            logger.error("Failed to load config for %s: %s", model_id, e)
+            logger.exception("Failed to load config for %s: %s", model_id, e)
             return None
 
     def delete_model_config(self, model_id: str) -> bool:
@@ -389,15 +416,24 @@ class LLMConfigManager:
         """
         from intellicrack.core.config_manager import get_config
 
-        # Get configs from central config
         central_config = get_config()
-        if central_configs := central_config.get("llm_configuration.models", {}):
-            # Update internal cache with central config data
+        raw_configs = central_config.get("llm_configuration.models", {})
+
+        if isinstance(raw_configs, dict) and raw_configs:
+            central_configs: dict[str, dict[str, Any]] = {
+                str(key): dict(value)
+                for key, value in raw_configs.items()
+                if isinstance(value, dict)
+            }
             self.configs.update(central_configs)
             return central_configs.copy()
 
-        # Fall back to internal cache if central config is empty
-        return self.configs.copy()
+        result: dict[str, dict[str, Any]] = {
+            str(key): dict(value)
+            for key, value in self.configs.items()
+            if isinstance(value, dict)
+        }
+        return result
 
     def auto_load_models(
         self,
@@ -430,7 +466,7 @@ class LLMConfigManager:
                             logger.warning("Failed to register model: %s", model_id)
                     except Exception as e:
                         failed += 1
-                        logger.error("Error loading model %s: %s", model_id, e)
+                        logger.exception("Error loading model %s: %s", model_id, e)
                 else:
                     failed += 1
 
@@ -470,15 +506,14 @@ class LLMConfigManager:
         """
         from intellicrack.core.config_manager import get_config
 
-        # Try loading from central config first
         central_config = get_config()
-        profile_data = central_config.get(f"llm_configuration.profiles.{profile_id}")
+        raw_profile = central_config.get(f"llm_configuration.profiles.{profile_id}")
 
-        # Fall back to internal cache if not in central config
-        if profile_data is None:
-            profile_data = self.profiles.get(profile_id)
+        if isinstance(raw_profile, dict):
+            return dict(raw_profile)
 
-        return profile_data
+        cached_profile = self.profiles.get(profile_id)
+        return cached_profile if isinstance(cached_profile, dict) else None
 
     def list_profiles(self) -> dict[str, dict[str, Any]]:
         """List all available profiles.
@@ -489,14 +524,19 @@ class LLMConfigManager:
         """
         from intellicrack.core.config_manager import get_config
 
-        # Get profiles from central config
         central_config = get_config()
-        if central_profiles := central_config.get("llm_configuration.profiles", {}):
-            # Update internal cache with central config data
-            self.profiles.update(central_profiles)
+        raw_profiles = central_config.get("llm_configuration.profiles", {})
+
+        if isinstance(raw_profiles, dict) and raw_profiles:
+            central_profiles: dict[str, dict[str, Any]] = {
+                str(key): dict(value)
+                for key, value in raw_profiles.items()
+                if isinstance(value, dict)
+            }
+            for key, value in central_profiles.items():
+                self.profiles[key] = value
             return central_profiles.copy()
 
-        # Fall back to internal cache if central config is empty
         return self.profiles.copy()
 
     def apply_profile(self, config: LLMConfig, profile_id: str) -> LLMConfig:
@@ -603,15 +643,14 @@ class LLMConfigManager:
         """
         from intellicrack.core.config_manager import get_config
 
-        # Try loading from central config first
         central_config = get_config()
-        metrics_data = central_config.get(f"llm_configuration.metrics.{model_id}")
+        raw_metrics = central_config.get(f"llm_configuration.metrics.{model_id}")
 
-        # Fall back to internal cache if not in central config
-        if metrics_data is None:
-            metrics_data = self.metrics.get(model_id)
+        if isinstance(raw_metrics, dict):
+            return dict(raw_metrics)
 
-        return metrics_data
+        cached_metrics = self.metrics.get(model_id)
+        return cached_metrics if isinstance(cached_metrics, dict) else None
 
     def export_config(self, export_path: str, include_api_keys: bool = False) -> None:
         """Export all configurations to a file.
@@ -641,7 +680,7 @@ class LLMConfigManager:
                 json.dump(export_data, f, indent=2, default=str)
             logger.info("Exported configuration to %s", export_path)
         except Exception as e:
-            logger.error("Failed to export configuration: %s", e)
+            logger.exception("Failed to export configuration: %s", e)
 
     def switch_backend(self, backend_name: str) -> bool:
         """Switch to a different LLM backend.
@@ -660,27 +699,31 @@ class LLMConfigManager:
             "anthropic": LLMProvider.ANTHROPIC,
             "google": LLMProvider.GOOGLE,
             "ollama": LLMProvider.OLLAMA,
-            "local": LLMProvider.LOCAL,
-            "lmstudio": LLMProvider.LMSTUDIO,
-            "openrouter": LLMProvider.OPENROUTER,
+            "local": LLMProvider.LOCAL_API,
+            "local_api": LLMProvider.LOCAL_API,
+            "local_gguf": LLMProvider.LOCAL_GGUF,
+            "llamacpp": LLMProvider.LLAMACPP,
+            "huggingface": LLMProvider.HUGGINGFACE,
+            "pytorch": LLMProvider.PYTORCH,
         }
 
         normalized_name = backend_name.lower().strip()
 
         if normalized_name not in valid_backends:
-            logger.error("Unknown backend: %s. Valid backends: %s", backend_name, list(valid_backends.keys()))
+            logger.exception("Unknown backend: %s. Valid backends: %s", backend_name, list(valid_backends.keys()))
             return False
 
         try:
             central_config = get_config()
-            current_backend = central_config.get("llm_configuration.active_backend", "")
+            raw_current = central_config.get("llm_configuration.active_backend", "")
+            current_backend = str(raw_current) if raw_current else ""
 
             if current_backend == normalized_name:
                 logger.info("Already using backend: %s", normalized_name)
                 return True
 
-            backend_config = central_config.get(f"llm_configuration.backends.{normalized_name}", {})
-
+            raw_backend = central_config.get(f"llm_configuration.backends.{normalized_name}", {})
+            backend_config = dict(raw_backend) if isinstance(raw_backend, dict) else {}
             if not backend_config:
                 backend_config = self._create_default_backend_config(normalized_name)
                 central_config.set(f"llm_configuration.backends.{normalized_name}", backend_config)
@@ -688,15 +731,19 @@ class LLMConfigManager:
             llm_manager = get_llm_manager()
 
             provider = valid_backends[normalized_name]
-            api_key = backend_config.get("api_key") or os.environ.get(f"{normalized_name.upper()}_API_KEY", "")
-            api_base = backend_config.get("api_base", "")
-            model_name = backend_config.get("default_model", self._get_default_model_for_backend(normalized_name))
+            raw_api_key = backend_config.get("api_key")
+            api_key = str(raw_api_key) if raw_api_key else os.environ.get(f"{normalized_name.upper()}_API_KEY", "")
+            raw_api_base = backend_config.get("api_base", "")
+            api_base = str(raw_api_base) if raw_api_base else ""
+            default_model = self._get_default_model_for_backend(normalized_name)
+            raw_model = backend_config.get("default_model", default_model)
+            model_name = str(raw_model) if raw_model else default_model
 
             config = LLMConfig(
                 provider=provider,
                 model_name=model_name,
                 api_key=api_key,
-                api_base=api_base if api_base else None,
+                api_base=api_base or None,
                 context_length=backend_config.get("context_length", 4096),
                 temperature=backend_config.get("temperature", 0.7),
                 max_tokens=backend_config.get("max_tokens", 2048),
@@ -711,11 +758,11 @@ class LLMConfigManager:
 
                 logger.info("Successfully switched to backend: %s", normalized_name)
                 return True
-            logger.error("Failed to register backend: %s", normalized_name)
+            logger.exception("Failed to register backend: %s", normalized_name)
             return False
 
         except Exception as e:
-            logger.error("Error switching to backend %s: %s", backend_name, e)
+            logger.exception("Error switching to backend %s: %s", backend_name, e)
             return False
 
     def _create_default_backend_config(self, backend_name: str) -> dict[str, Any]:
@@ -868,7 +915,7 @@ class LLMConfigManager:
             logger.info("Imported configuration from %s", import_path)
 
         except Exception as e:
-            logger.error("Failed to import configuration: %s", e)
+            logger.exception("Failed to import configuration: %s", e)
 
 
 # Global instance

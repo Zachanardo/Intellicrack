@@ -120,7 +120,7 @@ class CertificateValidationDetector:
             RuntimeError: If binary cannot be parsed
 
         """
-        logger.info(f"Starting certificate validation detection for: {binary_path}")
+        logger.info("Starting certificate validation detection for: %s", binary_path)
 
         binary_path_obj = Path(binary_path)
         if not binary_path_obj.exists():
@@ -129,28 +129,28 @@ class CertificateValidationDetector:
         try:
             with BinaryScanner(binary_path) as scanner:
                 imports = scanner.scan_imports()
-                logger.debug(f"Found {len(imports)} imports")
+                logger.debug("Found %d imports", len(imports))
 
                 tls_libraries = scanner.detect_tls_libraries(imports)
-                logger.info(f"Detected TLS libraries: {tls_libraries}")
+                logger.info("Detected TLS libraries: %s", tls_libraries)
 
                 validation_functions = self._find_validation_functions(
                     scanner,
                     tls_libraries,
                 )
-                logger.info(f"Found {len(validation_functions)} validation functions")
+                logger.info("Found %d validation functions", len(validation_functions))
 
                 filtered_functions = self._filter_low_confidence(validation_functions)
-                logger.info(f"After filtering: {len(filtered_functions)} functions")
+                logger.info("After filtering: %d functions", len(filtered_functions))
 
                 recommended_method = self._recommend_bypass_method(
                     filtered_functions,
                     tls_libraries,
                 )
-                logger.debug(f"Recommended bypass method: {recommended_method.value}")
+                logger.debug("Recommended bypass method: %s", recommended_method.value)
 
                 risk_level = self._assess_risk_level(filtered_functions)
-                logger.debug(f"Assessed risk level: {risk_level}")
+                logger.debug("Assessed risk level: %s", risk_level)
 
                 report = DetectionReport(
                     binary_path=binary_path,
@@ -164,7 +164,7 @@ class CertificateValidationDetector:
                 return report
 
         except Exception as e:
-            logger.error(f"Detection failed: {e}")
+            logger.exception("Detection failed: %s", e)
             raise RuntimeError(f"Failed to detect certificate validation: {e}") from e
 
     def _find_validation_functions(
@@ -195,7 +195,7 @@ class CertificateValidationDetector:
                     confidence = scanner.calculate_confidence(context)
 
                     if is_licensing := self._analyze_licensing_context(context):
-                        logger.debug(f"Licensing context detected at 0x{address:X} (confidence boost: {is_licensing})")
+                        logger.debug("Licensing context detected at 0x%X (confidence boost: %s)", address, is_licensing)
                         confidence = min(confidence + 0.2, 1.0)
 
                     validation_func = ValidationFunction(
@@ -209,7 +209,7 @@ class CertificateValidationDetector:
                     validation_functions.append(validation_func)
 
         for func in validation_functions:
-            logger.debug(f"Found: {func}")
+            logger.debug("Found: %s", func)
 
         return validation_functions
 
@@ -259,7 +259,7 @@ class CertificateValidationDetector:
 
         if context.surrounding_code:
             code_lower = context.surrounding_code.lower()
-            keyword_count = sum(bool(kw in code_lower) for kw in licensing_keywords)
+            keyword_count = sum(kw in code_lower for kw in licensing_keywords)
             if keyword_count >= 2:
                 return True
 
@@ -310,7 +310,9 @@ class CertificateValidationDetector:
         if not validation_functions:
             return BypassMethod.NONE
 
-        high_confidence_count = sum(bool(func.confidence >= 0.7) for func in validation_functions)
+        high_confidence_count = sum(
+            func.confidence >= 0.7 for func in validation_functions
+        )
 
         library_types = {get_library_type(lib) for lib in tls_libraries if get_library_type(lib)}
 
@@ -356,7 +358,9 @@ class CertificateValidationDetector:
         if len(validation_functions) > 5:
             return "medium"
 
-        high_confidence_count = sum(bool(func.confidence >= 0.8) for func in validation_functions)
+        high_confidence_count = sum(
+            func.confidence >= 0.8 for func in validation_functions
+        )
 
         if high_confidence_count >= len(validation_functions) * 0.8:
             return "low"
@@ -378,7 +382,7 @@ class CertificateValidationDetector:
             DetectionReport with custom signature detection results
 
         """
-        logger.info(f"Detection with {len(custom_signatures)} custom signatures")
+        logger.info("Detection with %d custom signatures", len(custom_signatures))
 
         report = self.detect_certificate_validation(binary_path)
 

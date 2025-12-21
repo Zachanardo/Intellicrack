@@ -180,7 +180,7 @@ class ModelBatchTester:
 
         """
         self.test_suites[suite_id] = test_cases
-        logger.info(f"Added test suite '{suite_id}' with {len(test_cases)} tests")
+        logger.info("Added test suite '%s' with %d tests", suite_id, len(test_cases))
 
     def load_test_suite_from_file(self, file_path: str | Path) -> str:
         """Load test suite from JSON file.
@@ -317,7 +317,7 @@ class ModelBatchTester:
             )
 
         except Exception as e:
-            logger.error("Exception in model_batch_tester: %s", e)
+            logger.exception("Exception in model_batch_tester: %s", e)
             # End performance tracking with error
             self.performance_monitor.end_inference(
                 perf_context,
@@ -386,7 +386,7 @@ class ModelBatchTester:
                         result = future.result(timeout=self.timeout_per_test)
                         results.append(result)
                     except Exception as e:
-                        logger.error("Exception in model_batch_tester: %s", e)
+                        logger.exception("Exception in model_batch_tester: %s", e)
                         # Handle timeout or other errors
                         results.append(
                             TestResult(
@@ -431,7 +431,7 @@ class ModelBatchTester:
         )
 
         self.test_reports.append(report)
-        logger.info(f"Batch test completed: {total_tests} tests in {duration:.2f}s")
+        logger.info("Batch test completed: %d tests in %.2fs", total_tests, duration)
 
         return report
 
@@ -445,9 +445,11 @@ class ModelBatchTester:
         summary = {
             "total_tests": len(results),
             "successful_tests": sum(bool(r.success) for r in results),
-            "failed_tests": sum(bool(not r.success) for r in results),
-            "validation_passed": sum(bool(r.passed_validation is True) for r in results),
-            "validation_failed": sum(bool(r.passed_validation is False) for r in results),
+            "failed_tests": sum(not r.success for r in results),
+            "validation_passed": sum(r.passed_validation is True for r in results),
+            "validation_failed": sum(
+                r.passed_validation is False for r in results
+            ),
             "models": {},
             "tests": {},
         }
@@ -459,15 +461,26 @@ class ModelBatchTester:
             summary["models"][model_id] = {
                 "total": len(model_results),
                 "success": sum(bool(r.success) for r in model_results),
-                "failed": sum(bool(not r.success) for r in model_results),
-                "validation_passed": sum(bool(r.passed_validation is True) for r in model_results),
-                "avg_inference_time": sum(r.inference_time for r in model_results) / len(model_results) if model_results else 0,
-                "avg_tokens_per_second": sum(
-                    r.tokens_generated / r.inference_time for r in model_results if r.success and r.inference_time > 0
-                )
-                / len([r for r in model_results if r.success])
-                if any(r.success for r in model_results)
-                else 0,
+                "failed": sum(not r.success for r in model_results),
+                "validation_passed": sum(
+                    r.passed_validation is True for r in model_results
+                ),
+                "avg_inference_time": (
+                    sum(r.inference_time for r in model_results)
+                    / len(model_results)
+                    if model_results
+                    else 0
+                ),
+                "avg_tokens_per_second": (
+                    sum(
+                        r.tokens_generated / r.inference_time
+                        for r in model_results
+                        if r.success and r.inference_time > 0
+                    )
+                    / len([r for r in model_results if r.success])
+                    if any(r.success for r in model_results)
+                    else 0
+                ),
             }
 
         # Per-test statistics
@@ -477,7 +490,9 @@ class ModelBatchTester:
             summary["tests"][test_case.test_id] = {
                 "total": len(test_results),
                 "success": sum(bool(r.success) for r in test_results),
-                "validation_passed": sum(bool(r.passed_validation is True) for r in test_results),
+                "validation_passed": sum(
+                    r.passed_validation is True for r in test_results
+                ),
                 "fastest_model": min(
                     (r for r in test_results if r.success),
                     key=lambda r: r.inference_time,
@@ -614,7 +629,7 @@ class ModelBatchTester:
             with open(output_path, "w") as f:
                 json.dump(data, f, indent=2)
 
-        logger.info(f"Exported test report to {output_path}")
+        logger.info("Exported test report to %s", output_path)
         return output_path
 
     def _generate_html_report(self, report: BatchTestReport) -> str:

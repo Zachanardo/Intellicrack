@@ -43,7 +43,7 @@ def check_weasyprint_dependencies() -> list[str]:
         cffi_version = getattr(cffi, "__version__", "unknown")
         logger.info("OK CFFI dependency found (version: %s)", cffi_version)
     except ImportError as e:
-        logger.error("FAIL CFFI import error: %s", e, exc_info=True)
+        logger.exception("FAIL CFFI import error: %s", e)
         missing_deps.append("cffi")
 
     try:
@@ -53,7 +53,7 @@ def check_weasyprint_dependencies() -> list[str]:
         cairo_version = getattr(cairocffi, "__version__", "unknown")
         logger.info("OK Cairo dependency found (version: %s)", cairo_version)
     except ImportError as e:
-        logger.error("FAIL Cairo import error: %s", e, exc_info=True)
+        logger.exception("FAIL Cairo import error: %s", e)
         missing_deps.append("cairocffi")
 
     try:
@@ -63,7 +63,7 @@ def check_weasyprint_dependencies() -> list[str]:
         css_version = getattr(tinycss2, "__version__", "unknown")
         logger.info("OK TinyCSS2 dependency found (version: %s)", css_version)
     except ImportError as e:
-        logger.error("FAIL TinyCSS2 import error: %s", e, exc_info=True)
+        logger.exception("FAIL TinyCSS2 import error: %s", e)
         missing_deps.append("tinycss2")
 
     if sys.platform == "win32":
@@ -92,7 +92,7 @@ def check_weasyprint_dependencies() -> list[str]:
                 missing_deps.append("gtk-runtime")
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error checking GTK dependencies: %s", e, exc_info=True)
+            logger.exception("Error checking GTK dependencies: %s", e)
             missing_deps.append("gtk-runtime")
 
     return missing_deps
@@ -180,13 +180,13 @@ def install_dependencies(deps: list[str]) -> bool:
             if result.returncode == 0:
                 logger.info("OK Successfully installed %s", dep)
             else:
-                logger.error("FAIL Failed to install %s: %s", dep, result.stderr)
+                logger.exception("FAIL Failed to install %s: %s", dep, result.stderr)
                 return False
 
         return True
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error installing dependencies: %s", e, exc_info=True)
+        logger.exception("Error installing dependencies: %s", e)
         return False
 
 
@@ -232,7 +232,7 @@ def setup_required_environment() -> dict[str, Any]:
             logger.info("OK Machine learning features available (numpy %s, sklearn %s)", numpy_version, sklearn_version)
         else:
             error_msg = "NumPy not available"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ImportError(error_msg)
     except ImportError:
         logger.warning("FAIL ML features not available")
@@ -249,7 +249,7 @@ def setup_required_environment() -> dict[str, Any]:
             logger.info("OK Dynamic analysis (Frida %s) available", frida_version)
         else:
             error_msg = "Frida not available"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ImportError(error_msg)
     except ImportError:
         logger.warning("FAIL Dynamic analysis not available")

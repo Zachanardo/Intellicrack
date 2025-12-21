@@ -245,8 +245,8 @@ class EntropyVisualizer(QWidget):
                 raise ValueError(error_msg)
 
             # Identify interesting regions
-            high_entropy_blocks = sum(bool(e > 7.5) for e in self.entropy_data)
-            low_entropy_blocks = sum(bool(e < 1.0) for e in self.entropy_data)
+            high_entropy_blocks = sum(e > 7.5 for e in self.entropy_data)
+            low_entropy_blocks = sum(e < 1.0 for e in self.entropy_data)
 
             # Update info label
             info_text = (

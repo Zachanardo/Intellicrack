@@ -53,7 +53,7 @@ class RepositoryFactory:
 
         """
         cls._repository_types[type_name] = repository_class
-        logger.debug(f"Registered repository type: {type_name}")
+        logger.debug("Registered repository type: %s", type_name)
 
     @classmethod
     def create_repository(cls, config: dict[str, Any]) -> ModelRepositoryInterface | None:
@@ -72,7 +72,7 @@ class RepositoryFactory:
             return None
 
         if repo_type not in cls._repository_types:
-            logger.error(f"Unknown repository type: {repo_type}")
+            logger.error("Unknown repository type: %s", repo_type)
             return None
 
         try:
@@ -120,7 +120,7 @@ class RepositoryFactory:
             return repo_class(**config)
 
         except Exception:
-            logger.error("Failed to create repository of type %s", repo_type, exc_info=True)
+            logger.exception("Failed to create repository of type %s", repo_type)
             return None
 
     @classmethod

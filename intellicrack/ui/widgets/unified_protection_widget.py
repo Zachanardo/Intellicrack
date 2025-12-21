@@ -89,7 +89,7 @@ class UnifiedAnalysisThread(QThread):
             self.analysis_complete.emit(result)
 
         except Exception as e:
-            logger.error("Exception in unified_protection_widget: %s", e, exc_info=True)
+            logger.exception("Exception in unified_protection_widget: %s", e, exc_info=True)
             self.analysis_error.emit(str(e))
 
 
@@ -982,7 +982,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
                 f"Bypass guide exported to:\n{file_path}",
             )
         except Exception as e:
-            logger.error("Exception in unified_protection_widget: %s", e, exc_info=True)
+            logger.exception("Exception in unified_protection_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Export Error",
@@ -1063,7 +1063,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
             # Create a simple features dialog inline for now
             self._show_inline_icp_features()
         except Exception as e:
-            logger.error("Failed to show ICP features dialog: %s", e, exc_info=True)
+            logger.exception("Failed to show ICP features dialog: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "ICP Features Error",
@@ -1143,7 +1143,7 @@ Source: {self._format_source(protection.get("source", AnalysisSource.ICP))}
 
                     self.analysis_complete.emit(analysis)
                 except Exception as e:
-                    logger.error("ICP analysis error: %s", e, exc_info=True)
+                    logger.exception("ICP analysis error: %s", e, exc_info=True)
                     self.analysis_complete.emit({"error": str(e)})
 
         def update_analysis(analysis_data: dict[str, Any]) -> None:

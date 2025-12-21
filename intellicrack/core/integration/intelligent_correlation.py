@@ -169,7 +169,7 @@ class FuzzyMatcher:
         union = set(tokens1) | set(tokens2)
         jaccard = len(common) / len(union)
 
-        order_score = sum(bool(t1 == t2) for t1, t2 in zip(tokens1, tokens2, strict=False))
+        order_score = sum(t1 == t2 for t1, t2 in zip(tokens1, tokens2, strict=False))
         order_bonus = order_score / max(len(tokens1), len(tokens2))
 
         return jaccard * 0.7 + order_bonus * 0.3
@@ -249,7 +249,10 @@ class FuzzyMatcher:
         if not params1 or not params2:
             return 0.0
 
-        matches = sum(bool(self._compare_types(p1, p2) > 0.5) for p1, p2 in zip(params1, params2, strict=False))
+        matches = sum(
+            self._compare_types(p1, p2) > 0.5
+            for p1, p2 in zip(params1, params2, strict=False)
+        )
         return matches / max(len(params1), len(params2))
 
     def _compare_types(self, type1: str, type2: str) -> float:
@@ -363,7 +366,7 @@ class AddressTranslator:
                         # Potential match
                         offset = addresses2[j] - addresses1[i]
 
-                        matches = sum(bool((addr1 + offset) in addresses2) for addr1 in addresses1[:20])
+                        matches = sum(addr1 + offset in addresses2 for addr1 in addresses1[:20])
                         confidence = matches / min(20, len(addresses1))
 
                         if confidence > 0.5:
@@ -630,8 +633,6 @@ class PatternClusterer:
 
     def _extract_pattern_features(self, item: CorrelationItem) -> np.array:
         """Extract pattern features from item."""
-        features = []
-
         # Data type encoding
         type_encoding = {
             DataType.FUNCTION: 0,
@@ -644,18 +645,25 @@ class PatternClusterer:
             DataType.CONSTANT: 7,
             DataType.PATTERN: 8,
         }
-        features.extend((type_encoding.get(item.data_type, -1), item.address))
-        features.extend((item.address % 0x1000, item.size))
-        features.append(np.log(item.size + 1))
-
+        features = [
+            type_encoding.get(item.data_type, -1),
+            item.address,
+            item.address % 0x1000,
+            item.size,
+            np.log(item.size + 1),
+        ]
         # Name features
         name_len = len(item.name)
-        features.extend((name_len, 1 if item.name.startswith("sub_") else 0))
-        features.extend((
-            1 if "_" in item.name else 0,
-            1 if any(c.isupper() for c in item.name) else 0,
-        ))
-        features.extend((item.confidence, len(item.attributes)))
+        features.extend(
+            (
+                name_len,
+                1 if item.name.startswith("sub_") else 0,
+                1 if "_" in item.name else 0,
+                1 if any(c.isupper() for c in item.name) else 0,
+                item.confidence,
+                len(item.attributes),
+            )
+        )
         return np.array(features)
 
     def find_similar_patterns(
@@ -786,14 +794,13 @@ class MachineLearningCorrelator:
 
         # Address distance (normalized)
         addr_dist = abs(item1.address - item2.address) / 0x100000  # Normalize by 1MB
-        features.append(min(addr_dist, 1.0))
-
-        # Confidence product
-        features.append(item1.confidence * item2.confidence)
-
-        # Tool match
-        features.append(1 if item1.tool == item2.tool else 0)
-
+        features.extend(
+            (
+                min(addr_dist, 1.0),
+                item1.confidence * item2.confidence,
+                1 if item1.tool == item2.tool else 0,
+            )
+        )
         # Attribute overlap
         common_attrs = set(item1.attributes.keys()) & set(item2.attributes.keys())
         attr_overlap = len(common_attrs) / max(len(item1.attributes), len(item2.attributes), 1)
@@ -834,7 +841,7 @@ class MachineLearningCorrelator:
             self.training_data = model_data.get("training_data", [])
             logger.info("Model loaded from %s", path)
         except Exception:
-            logger.error("Failed to load model from %s", path, exc_info=True)
+            logger.exception("Failed to load model from %s", path)
             self._initialize_model()
 
 
@@ -1181,13 +1188,13 @@ def main() -> None:
                 logger.info("Model saved to %s", default_path)
 
         except FileNotFoundError:
-            logger.error("Training file %s not found", args.train, exc_info=True)
+            logger.exception("Training file %s not found", args.train)
             sys.exit(1)
         except json.JSONDecodeError:
-            logger.error("Invalid JSON in training file %s", args.train, exc_info=True)
+            logger.exception("Invalid JSON in training file %s", args.train)
             sys.exit(1)
         except Exception:
-            logger.error("Error loading training data from %s", args.train, exc_info=True)
+            logger.exception("Error loading training data from %s", args.train)
             sys.exit(1)
 
     else:

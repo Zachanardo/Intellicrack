@@ -104,7 +104,7 @@ class BinaryComparer:
                 self._compare_streams(f1, f2, file1_size, file2_size)
 
         except Exception as e:
-            logger.error(f"Error comparing files: {e}")
+            logger.exception("Error comparing files: %s", e)
             raise
 
         return self.differences

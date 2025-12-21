@@ -72,7 +72,7 @@ class VirtualizationDetectionBypass:
             self._hook_vm_detection_apis()
             results["methods_applied"].append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
+            self.logger.exception("Error in vm_bypass: %s", e)
             results["errors"].append(f"API hooking failed: {e!s}")
 
         # Strategy 2: Patch VM detection instructions
@@ -81,7 +81,7 @@ class VirtualizationDetectionBypass:
                 self._patch_vm_detection()
                 results["methods_applied"].append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
+            self.logger.exception("Error in vm_bypass: %s", e)
             results["errors"].append(f"Binary patching failed: {e!s}")
 
         # Strategy 3: Manipulate registry for VM artifacts
@@ -89,7 +89,7 @@ class VirtualizationDetectionBypass:
             self._hide_vm_registry_artifacts()
             results["methods_applied"].append("Registry Manipulation")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
+            self.logger.exception("Error in vm_bypass: %s", e)
             results["errors"].append(f"Registry manipulation failed: {e!s}")
 
         # Strategy 4: Hook timing functions to mitigate timing attacks
@@ -97,7 +97,7 @@ class VirtualizationDetectionBypass:
             self._hook_timing_functions()
             results["methods_applied"].append("Timing Attack Mitigation")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
+            self.logger.exception("Error in vm_bypass: %s", e)
             results["errors"].append(f"Timing hook failed: {e!s}")
 
         # Strategy 5: Hide VM artifacts (files, processes, etc.)
@@ -108,7 +108,7 @@ class VirtualizationDetectionBypass:
                 if renamed_count > 0:
                     results["renamed_vm_files"] = renamed_count
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
+            self.logger.exception("Error in vm_bypass: %s", e)
             results["errors"].append(f"VM artifact hiding failed: {e!s}")
 
         # Strategy 6: Modify system information
@@ -116,7 +116,7 @@ class VirtualizationDetectionBypass:
             if self._modify_system_info():
                 results["methods_applied"].append("System Info Modification")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in vm_bypass: %s", e, exc_info=True)
+            self.logger.exception("Error in vm_bypass: %s", e)
             results["errors"].append(f"System info modification failed: {e!s}")
 
         results["success"] = len(results["methods_applied"]) > 0
@@ -284,7 +284,7 @@ class VirtualizationDetectionBypass:
             self.logger.info("Found %s VM detection patterns to patch", patches_applied)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error patching VM detection: %s", e, exc_info=True)
+            self.logger.exception("Error patching VM detection: %s", e)
 
     def _hide_vm_registry_artifacts(self) -> None:
         """Hide VM-related registry entries."""
@@ -323,7 +323,7 @@ class VirtualizationDetectionBypass:
                     self.logger.warning("Could not delete registry key %s: %s", path, e)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Registry manipulation failed: %s", e, exc_info=True)
+            self.logger.exception("Registry manipulation failed: %s", e)
 
     def _hide_vm_artifacts(self) -> tuple[bool, int]:
         """Hide VM-specific artifacts from detection.
@@ -450,7 +450,7 @@ class VirtualizationDetectionBypass:
             return (True, renamed_files)
 
         except Exception as e:
-            self.logger.error("Error hiding VM artifacts: %s", e, exc_info=True)
+            self.logger.exception("Error hiding VM artifacts: %s", e)
             return (False, 0)
 
     def _modify_system_info(self) -> bool:
@@ -570,7 +570,7 @@ class VirtualizationDetectionBypass:
             return modifications_applied > 0
 
         except Exception as e:
-            self.logger.error("Error modifying system info: %s", e, exc_info=True)
+            self.logger.exception("Error modifying system info: %s", e)
             return False
 
     def _modify_dmi_info(self) -> bool:
@@ -600,7 +600,7 @@ class VirtualizationDetectionBypass:
             return modifications_applied > 0
 
         except Exception as e:
-            self.logger.error("Error modifying DMI info: %s", e, exc_info=True)
+            self.logger.exception("Error modifying DMI info: %s", e)
             return False
 
     def _hook_timing_functions(self) -> None:
@@ -812,9 +812,11 @@ class VMDetector:
 
             if platform.system() == "Windows":
                 result = subprocess.run(["getmac"], capture_output=True, text=True, check=False)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
-                for prefix in vm_mac_prefixes:
-                    if prefix.lower() in result.stdout.lower():
-                        indicators.append(f"VM MAC prefix detected: {prefix}")
+                indicators.extend(
+                    f"VM MAC prefix detected: {prefix}"
+                    for prefix in vm_mac_prefixes
+                    if prefix.lower() in result.stdout.lower()
+                )
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.debug("MAC address check failed: %s", e)
 
@@ -966,7 +968,7 @@ class VMDetector:
             }
 
         except Exception as e:
-            self.logger.error("VM bypass generation failed: %s", e, exc_info=True)
+            self.logger.exception("VM bypass generation failed: %s", e)
             return {
                 "vm_type": vm_type,
                 "bypass_method": "failed",
@@ -1147,7 +1149,7 @@ class VirtualizationAnalyzer:
 
         string_analysis = analyze_binary_for_strings(self.binary_path, vm_strings)
         if string_analysis["error"]:
-            self.logger.error("Error analyzing binary: %s", string_analysis["error"])
+            self.logger.exception("Error analyzing binary: %s", string_analysis["error"])
             return results
 
         found_strings = string_analysis["strings_found"]
@@ -1182,7 +1184,7 @@ class VirtualizationAnalyzer:
             results["confidence"] = min((len(found_strings) + len(detection_methods)) * 0.15, 1.0)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing VM detection: %s", e, exc_info=True)
+            self.logger.exception("Error analyzing VM detection: %s", e)
 
         return results
 

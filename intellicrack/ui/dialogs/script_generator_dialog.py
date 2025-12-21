@@ -286,7 +286,7 @@ class TestScriptDialog(BaseDialog):
         tests_list.append(f"Language detected: {language}")
 
         if language == "python":
-            results.update(self.validate_python_syntax())
+            results |= self.validate_python_syntax()
         elif language == "javascript":
             results.update(self.validate_javascript_syntax())
         elif language == "powershell":
@@ -369,10 +369,13 @@ class TestScriptDialog(BaseDialog):
                 elif isinstance(node, ast.ClassDef):
                     classes_list.append(node.name)
 
-            tests_list.append(f"OK Found {len(imports_list)} imports")
-            tests_list.append(f"OK Found {len(functions_list)} functions")
-            tests_list.append(f"OK Found {len(classes_list)} classes")
-
+            tests_list.extend(
+                (
+                    f"OK Found {len(imports_list)} imports",
+                    f"OK Found {len(functions_list)} functions",
+                    f"OK Found {len(classes_list)} classes",
+                )
+            )
         except SyntaxError as e:
             validation_results["syntax_valid"] = False
             parse_errors: list[str] = validation_results["parse_errors"]
@@ -489,10 +492,11 @@ class TestScriptDialog(BaseDialog):
 
         suspicious = ["eval(", "exec(", "system(", "shell(", "cmd.exe", "powershell.exe"]
         suspicious_list: list[str] = checks["suspicious_patterns"]
-        for pattern in suspicious:
-            if pattern in self.script_content.lower():
-                suspicious_list.append(pattern)
-
+        suspicious_list.extend(
+            pattern
+            for pattern in suspicious
+            if pattern in self.script_content.lower()
+        )
         return checks
 
     def test_security(self) -> None:
@@ -588,10 +592,11 @@ class TestScriptDialog(BaseDialog):
         }
 
         bottlenecks_list: list[str] = performance_results["bottlenecks"]
-        for bottleneck, detected in bottleneck_patterns.items():
-            if detected:
-                bottlenecks_list.append(bottleneck.replace("_", " ").title())
-
+        bottlenecks_list.extend(
+            bottleneck.replace("_", " ").title()
+            for bottleneck, detected in bottleneck_patterns.items()
+            if detected
+        )
         optimizations_list: list[str] = performance_results["optimizations"]
         if "import" in self.script_content and len([line for line in self.script_content.split("\n") if "import" in line]) > 10:
             optimizations_list.append("Consider lazy imports for better startup time")
@@ -618,7 +623,7 @@ class TestScriptDialog(BaseDialog):
         script_type_lower = self.script_type.lower()
 
         if "bypass" in script_type_lower:
-            effectiveness_results.update(self.analyze_bypass_effectiveness())
+            effectiveness_results |= self.analyze_bypass_effectiveness()
         elif "exploit" in script_type_lower:
             effectiveness_results.update(self.analyze_exploit_effectiveness())
         elif "strategy" in script_type_lower:
@@ -803,8 +808,8 @@ class TestScriptDialog(BaseDialog):
         if not self.is_testing:
             return
 
-        progress = (self.current_test_phase / len(self.test_phases)) * 100
         if self.progress_bar is not None:
+            progress = (self.current_test_phase / len(self.test_phases)) * 100
             self.progress_bar.setValue(int(progress))
 
     def complete_testing(self) -> None:
@@ -864,14 +869,17 @@ class TestScriptDialog(BaseDialog):
     def update_security_display(self) -> None:
         """Update the security analysis display."""
         results = self.test_results.get("security_analysis", {})
-        lines = ["Security Analysis Results", "=" * 30, ""]
-
         risk_level = results.get("risk_level", "unknown")
         risk_colors = {"low": "[LOW]", "medium": "[MEDIUM]", "high": "[HIGH]"}
-        lines.extend((
-            f"Overall Risk Level: {risk_colors.get(risk_level, '[UNKNOWN]')} {risk_level.upper()}",
+        lines = [
+            "Security Analysis Results",
+            "=" * 30,
             "",
-        ))
+            *(
+                f"Overall Risk Level: {risk_colors.get(risk_level, '[UNKNOWN]')} {risk_level.upper()}",
+                "",
+            ),
+        ]
         if vulnerabilities := results.get("vulnerabilities", []):
             lines.append("Security Issues Found:")
             for vuln in vulnerabilities:
@@ -897,14 +905,17 @@ class TestScriptDialog(BaseDialog):
     def update_performance_display(self) -> None:
         """Update the performance analysis display."""
         results = self.test_results.get("performance_analysis", {})
-        lines = ["Performance Analysis Results", "=" * 30, ""]
-
         complexity = results.get("complexity", "unknown")
         complexity_icons = {"low": "[LOW]", "medium": "[MEDIUM]", "high": "[HIGH]"}
-        lines.extend((
-            f"Code Complexity: {complexity_icons.get(complexity, '[?]')} {complexity.upper()}",
+        lines = [
+            "Performance Analysis Results",
+            "=" * 30,
             "",
-        ))
+            *(
+                f"Code Complexity: {complexity_icons.get(complexity, '[?]')} {complexity.upper()}",
+                "",
+            ),
+        ]
         if bottlenecks := results.get("bottlenecks", []):
             lines.append("Potential Bottlenecks:")
             lines.extend([f"  WARNING {bottleneck}" for bottleneck in bottlenecks])
@@ -926,8 +937,6 @@ class TestScriptDialog(BaseDialog):
     def update_effectiveness_display(self) -> None:
         """Update the effectiveness testing display."""
         results = self.test_results.get("effectiveness_testing", {})
-        lines = ["Effectiveness Analysis Results", "=" * 30, ""]
-
         score = results.get("effectiveness_score", 0)
         if score >= 80:
             score_icon = "[EXCELLENT]"
@@ -942,7 +951,12 @@ class TestScriptDialog(BaseDialog):
             score_icon = "[POOR]"
             rating = "POOR"
 
-        lines.extend((f"Effectiveness Score: {score_icon} {score}/100 ({rating})", ""))
+        lines = [
+            "Effectiveness Analysis Results",
+            "=" * 30,
+            "",
+            *(f"Effectiveness Score: {score_icon} {score}/100 ({rating})", ""),
+        ]
         if capabilities := results.get("capabilities", []):
             lines.append("Detected Capabilities:")
             lines.extend([f"  OK {capability}" for capability in capabilities])
@@ -963,8 +977,6 @@ class TestScriptDialog(BaseDialog):
     def update_summary_display(self) -> None:
         """Update the summary display."""
         results = self.test_results.get("summary", {})
-        lines = ["Comprehensive Test Summary", "=" * 35, ""]
-
         overall_score = results.get("overall_score", 0)
         if overall_score >= 80:
             score_icon = "[EXCELLENT]"
@@ -976,7 +988,12 @@ class TestScriptDialog(BaseDialog):
             score_icon = "[NEEDS IMPROVEMENT]"
             rating = "NEEDS IMPROVEMENT"
 
-        lines.extend((f"Overall Score: {score_icon} {overall_score}/100 ({rating})", ""))
+        lines = [
+            "Comprehensive Test Summary",
+            "=" * 35,
+            "",
+            *(f"Overall Score: {score_icon} {overall_score}/100 ({rating})", ""),
+        ]
         if test_summary := results.get("test_results_summary", {}):
             lines.append("Test Results:")
             for test_name, test_result in test_summary.items():
@@ -1149,7 +1166,7 @@ class ScriptGeneratorWorker(QThread):
             elif self.script_type == "strategy":
                 self._generate_exploit_strategy()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in script_generator_dialog: %s", e)
+            self.logger.exception("Error in script_generator_dialog: %s", e)
             self.error_occurred.emit(str(e))
 
     def _generate_bypass_script(self) -> None:
@@ -1180,7 +1197,7 @@ class ScriptGeneratorWorker(QThread):
             self.script_generated.emit(result)
 
         except Exception as e:
-            self.logger.warning(f"AI script generation failed: {e}. Falling back to template-based generation.")
+            self.logger.warning("AI script generation failed: %s. Falling back to template-based generation.", e)
             from ...utils.exploitation import generate_bypass_script
 
             protection_type = self.kwargs.get("protection_type", "license")
@@ -1808,8 +1825,7 @@ class ScriptGeneratorDialog(BaseDialog):
         if self.script_display is None:
             return
 
-        script_content = self.script_display.toPlainText()
-        if script_content:
+        if script_content := self.script_display.toPlainText():
             try:
                 clipboard = QApplication.clipboard()
                 if clipboard is not None:
@@ -1817,7 +1833,7 @@ class ScriptGeneratorDialog(BaseDialog):
                 if self.footer_status_label is not None:
                     self.footer_status_label.setText("Script copied to clipboard")
             except (OSError, ValueError, RuntimeError) as e:
-                self.logger.error("Error in script_generator_dialog: %s", e)
+                self.logger.exception("Error in script_generator_dialog: %s", e)
                 QMessageBox.information(self, "Copy", "Script copied to clipboard (fallback)")
 
     def save_script(self) -> None:
@@ -1958,36 +1974,35 @@ class ScriptGeneratorDialog(BaseDialog):
             Formatted string representation of the analysis results.
 
         """
-        lines: list[str] = ["Script Analysis Results", "=" * 50, ""]
-
-        lines.append(f"Language: {analysis_result.get('language', 'Unknown')}")
-        lines.append(f"Lines of Code: {analysis_result.get('lines_of_code', 0)}")
-        lines.append(f"Complexity: {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled') else 'Disabled'}")
-        lines.append("")
+        lines: list[str] = [
+            "Script Analysis Results",
+            "=" * 50,
+            "",
+            f"Language: {analysis_result.get('language', 'Unknown')}",
+            f"Lines of Code: {analysis_result.get('lines_of_code', 0)}",
+            f"Complexity: {analysis_result.get('complexity', 'Unknown')}",
+            f"AI Analysis: {'Enabled' if analysis_result.get('ai_enabled') else 'Disabled'}",
+            "",
+        ]
 
         if insights := analysis_result.get("insights", []):
             lines.append("Insights:")
-            for insight in insights:
-                lines.append(f"   {insight}")
+            lines.extend(f"   {insight}" for insight in insights)
             lines.append("")
 
         if security_issues := analysis_result.get("security_issues", []):
             lines.append("SECURITY ISSUES:")
-            for issue in security_issues:
-                lines.append(f"  WARNING  {issue}")
+            lines.extend(f"  WARNING  {issue}" for issue in security_issues)
             lines.append("")
 
         if suggestions := analysis_result.get("suggestions", []):
             lines.append("Suggestions:")
-            for suggestion in suggestions:
-                lines.append(f"   {suggestion}")
+            lines.extend(f"   {suggestion}" for suggestion in suggestions)
             lines.append("")
 
         if patterns := analysis_result.get("patterns", []):
             lines.append("Detected Patterns:")
-            for pattern in patterns:
-                lines.append(f"   {pattern}")
+            lines.extend(f"   {pattern}" for pattern in patterns)
             lines.append("")
 
         if timestamp := analysis_result.get("analysis_timestamp", ""):

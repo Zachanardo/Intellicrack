@@ -108,12 +108,12 @@ class NetworkForensicsEngine:
                     results["suspicious_traffic"] = suspicious
 
             except Exception as e:
-                self.logger.warning(f"Detailed analysis failed: {e}")
+                self.logger.warning("Detailed analysis failed: %s", e)
                 results["analysis_warnings"] = [str(e)]
 
             return results
         except Exception as e:
-            self.logger.error("Network capture analysis failed: %s", e)
+            self.logger.exception("Network capture analysis failed: %s", e)
             return {"error": str(e)}
 
     def analyze_live_traffic(self, interface: str, duration: int = 60) -> dict[str, Any]:
@@ -205,7 +205,7 @@ class NetworkForensicsEngine:
 
             return results
         except Exception as e:
-            self.logger.error("Live traffic analysis failed: %s", e)
+            self.logger.exception("Live traffic analysis failed: %s", e)
             return {"error": str(e)}
 
     def extract_artifacts(self, traffic_data: bytes) -> list[dict[str, Any]]:
@@ -247,7 +247,7 @@ class NetworkForensicsEngine:
                             },
                         )
                 except Exception as e:
-                    self.logger.debug(f"Error during data extraction: {e}")
+                    self.logger.debug("Error during data extraction: %s", e)
 
             # Extract email addresses
             email_pattern = rb"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
@@ -264,7 +264,7 @@ class NetworkForensicsEngine:
                         },
                     )
                 except Exception as e:
-                    self.logger.debug(f"Error during data extraction: {e}")
+                    self.logger.debug("Error during data extraction: %s", e)
 
             # Extract IP addresses
             ip_pattern = rb"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"
@@ -284,7 +284,7 @@ class NetworkForensicsEngine:
                             },
                         )
                 except Exception as e:
-                    self.logger.debug(f"Error during data extraction: {e}")
+                    self.logger.debug("Error during data extraction: %s", e)
 
             # Extract base64 encoded data (potential file transfers)
             b64_pattern = rb"[A-Za-z0-9+/]{20,}={0,2}"
@@ -301,7 +301,7 @@ class NetworkForensicsEngine:
                             "full_length": len(b64_str),
                         })
                 except Exception as e:
-                    self.logger.debug(f"Error during data extraction: {e}")
+                    self.logger.debug("Error during data extraction: %s", e)
 
             # Extract potential credentials (basic patterns)
             cred_patterns = [
@@ -326,7 +326,7 @@ class NetworkForensicsEngine:
                                 },
                             )
                     except Exception as e:
-                        self.logger.debug(f"Error during nested extraction: {e}")
+                        self.logger.debug("Error during nested extraction: %s", e)
 
             # Look for file transfer indicators
             file_patterns = [
@@ -348,7 +348,7 @@ class NetworkForensicsEngine:
                             },
                         )
                     except Exception as e:
-                        self.logger.debug(f"Error during nested extraction: {e}")
+                        self.logger.debug("Error during nested extraction: %s", e)
 
             # Remove duplicates and limit results
             seen = set()
@@ -360,11 +360,11 @@ class NetworkForensicsEngine:
                     unique_artifacts.append(artifact)
 
             # Log artifact extraction progress
-            self.logger.info(f"Extracted {len(unique_artifacts)} unique artifacts from {len(traffic_data)} bytes of traffic data")
+            self.logger.info("Extracted %d unique artifacts from %d bytes of traffic data", len(unique_artifacts), len(traffic_data))
 
             return unique_artifacts
         except Exception as e:
-            self.logger.error("Artifact extraction failed: %s", e)
+            self.logger.exception("Artifact extraction failed: %s", e)
             return []
 
     def detect_protocols(self, packet_data: bytes) -> list[str]:
@@ -435,7 +435,7 @@ class NetworkForensicsEngine:
                 b"to:",
             ]
 
-            smtp_count = sum(bool(pattern in data) for pattern in smtp_patterns)
+            smtp_count = sum(pattern in data for pattern in smtp_patterns)
             if smtp_count >= 2:  # Multiple SMTP indicators
                 protocols.append("SMTP")
 
@@ -488,12 +488,12 @@ class NetworkForensicsEngine:
 
             # Log detected protocols
             if protocols:
-                self.logger.info(f"Detected protocols in packet data: {', '.join(protocols)}")
+                self.logger.info("Detected protocols in packet data: %s", ', '.join(protocols))
             else:
-                self.logger.debug(f"No known protocols detected in {len(packet_data)} bytes of packet data")
+                self.logger.debug("No known protocols detected in %d bytes of packet data", len(packet_data))
 
             return list(set(protocols))  # Remove duplicates
 
         except Exception as e:
-            self.logger.error("Protocol detection failed: %s", e)
+            self.logger.exception("Protocol detection failed: %s", e)
             return []

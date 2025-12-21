@@ -62,7 +62,7 @@ class IntellicrackShell(cmd.Cmd):
 
         filepath = Path(arg)
         if not filepath.exists():
-            logger.error("File not found: %s", arg)
+            logger.exception("File not found: %s", arg)
             return
 
         self.current_file = filepath
@@ -71,7 +71,7 @@ class IntellicrackShell(cmd.Cmd):
     def do_analyze(self, arg: str) -> None:
         """Analyze the currently loaded file."""
         if not self.current_file:
-            logger.error("No file loaded. Use 'load' command first.")
+            logger.exception("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -79,7 +79,7 @@ class IntellicrackShell(cmd.Cmd):
             self.analysis_results = run_comprehensive_analysis(str(self.current_file))
             logger.info("Analysis complete!")
         except Exception as e:
-            logger.error("Analysis failed: %s", e, exc_info=True)
+            logger.exception("Analysis failed: %s", e, exc_info=True)
 
     def do_status(self, arg: str) -> None:
         """Show current status."""
@@ -104,7 +104,7 @@ class IntellicrackShell(cmd.Cmd):
     def do_scan(self, arg: str) -> None:
         """Scan for vulnerabilities: scan [--vulns]."""
         if not self.current_file:
-            logger.error("No file loaded. Use 'load' command first.")
+            logger.exception("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -122,12 +122,12 @@ class IntellicrackShell(cmd.Cmd):
                 logger.info("No vulnerabilities found.")
 
         except Exception as e:
-            logger.error("Scan failed: %s", e, exc_info=True)
+            logger.exception("Scan failed: %s", e, exc_info=True)
 
     def do_strings(self, arg: str) -> None:
         """Extract strings from the loaded file: strings [min_length]."""
         if not self.current_file:
-            logger.error("No file loaded. Use 'load' command first.")
+            logger.exception("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -146,12 +146,12 @@ class IntellicrackShell(cmd.Cmd):
                 logger.info("No strings found.")
 
         except Exception as e:
-            logger.error("String extraction failed: %s", e, exc_info=True)
+            logger.exception("String extraction failed: %s", e, exc_info=True)
 
     def do_export(self, arg: str) -> None:
         """Export analysis results: export <format> <output_file>."""
         if not self.analysis_results:
-            logger.error("No analysis results. Run 'analyze' first.")
+            logger.exception("No analysis results. Run 'analyze' first.")
             return
 
         parts = arg.split()
@@ -167,11 +167,11 @@ class IntellicrackShell(cmd.Cmd):
             from intellicrack.cli.advanced_export import AdvancedExporter
 
             if not self.current_file:
-                logger.error("No binary file loaded. Use 'load <filepath>' to load a binary first.")
+                logger.exception("No binary file loaded. Use 'load <filepath>' to load a binary first.")
                 return
 
             if not self.analysis_results:
-                logger.error("No analysis results available. Run 'analyze' on a loaded binary first.")
+                logger.exception("No analysis results available. Run 'analyze' on a loaded binary first.")
                 return
 
             binary_path = str(self.current_file)
@@ -198,15 +198,15 @@ class IntellicrackShell(cmd.Cmd):
             if success:
                 logger.info("Successfully exported to %s", output_file)
             else:
-                logger.error("Export failed - check dependencies for %s format", format_type)
+                logger.exception("Export failed - check dependencies for %s format", format_type)
 
         except Exception as e:
-            logger.error("Export failed: %s", e, exc_info=True)
+            logger.exception("Export failed: %s", e, exc_info=True)
 
     def do_hexview(self, arg: str) -> None:
         """Open hex viewer for the loaded file."""
         if not self.current_file:
-            logger.error("No file loaded. Use 'load' command first.")
+            logger.exception("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -218,12 +218,12 @@ class IntellicrackShell(cmd.Cmd):
             curses.wrapper(viewer.run)
 
         except Exception as e:
-            logger.error("Hex viewer failed: %s", e, exc_info=True)
+            logger.exception("Hex viewer failed: %s", e, exc_info=True)
 
     def do_protection(self, arg: str) -> None:
         """Analyze protection mechanisms."""
         if not self.current_file:
-            logger.error("No file loaded. Use 'load' command first.")
+            logger.exception("No file loaded. Use 'load' command first.")
             return
 
         try:
@@ -241,12 +241,12 @@ class IntellicrackShell(cmd.Cmd):
                 logger.info("No protections detected.")
 
         except Exception as e:
-            logger.error("Protection analysis failed: %s", e, exc_info=True)
+            logger.exception("Protection analysis failed: %s", e, exc_info=True)
 
     def do_patch(self, arg: str) -> None:
         """Generate patches for the loaded file: patch <output_file>."""
         if not self.current_file:
-            logger.error("No file loaded. Use 'load' command first.")
+            logger.exception("No file loaded. Use 'load' command first.")
             return
 
         if not arg:
@@ -271,7 +271,7 @@ class IntellicrackShell(cmd.Cmd):
                 logger.info("No patches generated.")
 
         except Exception as e:
-            logger.error("Patch generation failed: %s", e, exc_info=True)
+            logger.exception("Patch generation failed: %s", e, exc_info=True)
 
     def do_ai(self, arg: str) -> None:
         """Interact with AI assistant: ai <question>."""
@@ -289,7 +289,7 @@ class IntellicrackShell(cmd.Cmd):
             logger.info("AI: %s", response)
 
         except Exception as e:
-            logger.error("AI assistant error: %s", e, exc_info=True)
+            logger.exception("AI assistant error: %s", e, exc_info=True)
 
     def do_help(self, arg: str) -> None:
         """Show help for commands."""

@@ -585,11 +585,7 @@ class _FallbackRandom:
             return _random.randint(low, high - 1)  # noqa: S311
 
         shape: tuple[int, ...]
-        if isinstance(size, int):
-            shape = (size,)
-        else:
-            shape = size
-
+        shape = (size, ) if isinstance(size, int) else size
         total = 1
         for dim in shape:
             total *= dim
@@ -689,10 +685,7 @@ class _FallbackFunctions:
 
         """
         final_shape: tuple[int, ...]
-        if isinstance(shape, int):
-            final_shape = (shape,)
-        else:
-            final_shape = shape
+        final_shape = (shape, ) if isinstance(shape, int) else shape
         total = 1
         for dim in final_shape:
             total *= dim
@@ -711,10 +704,7 @@ class _FallbackFunctions:
 
         """
         final_shape: tuple[int, ...]
-        if isinstance(shape, int):
-            final_shape = (shape,)
-        else:
-            final_shape = shape
+        final_shape = (shape, ) if isinstance(shape, int) else shape
         total = 1
         for dim in final_shape:
             total *= dim
@@ -748,10 +738,7 @@ class _FallbackFunctions:
 
         """
         final_shape: tuple[int, ...]
-        if isinstance(shape, int):
-            final_shape = (shape,)
-        else:
-            final_shape = shape
+        final_shape = (shape, ) if isinstance(shape, int) else shape
         total = 1
         for dim in final_shape:
             total *= dim
@@ -1360,9 +1347,7 @@ class _FallbackFunctions:
             Sum of all elements
 
         """
-        if isinstance(a, FallbackArray):
-            return a.sum(axis)
-        return float(sum(a))
+        return a.sum(axis) if isinstance(a, FallbackArray) else float(sum(a))
 
     @staticmethod
     def mean_func(a: FallbackArray | list[Any], axis: int | None = None) -> float:
@@ -1465,7 +1450,7 @@ class _FallbackFunctions:
         if not a:
             return None
         min_val = min(a)
-        return int(list(a).index(min_val))
+        return list(a).index(min_val)
 
     @staticmethod
     def argmax_func(a: FallbackArray | list[Any], axis: int | None = None) -> int | None:
@@ -1484,7 +1469,7 @@ class _FallbackFunctions:
         if not a:
             return None
         max_val = max(a)
-        return int(list(a).index(max_val))
+        return list(a).index(max_val)
 
 
 class FallbackNumPy:

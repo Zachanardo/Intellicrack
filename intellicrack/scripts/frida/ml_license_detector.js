@@ -598,8 +598,8 @@ const MlLicenseDetector = {
 
     // === HOOK PLACEMENT EVALUATION ===
     evaluateHookPlacement: function (detectionResult) {
-        const confidence = detectionResult.confidence;
-        const thresholds = this.config.thresholds;
+        const {confidence} = detectionResult;
+        const {thresholds} = this.config;
         const strategy = this.config.hook_strategy;
 
         try {
@@ -1079,8 +1079,7 @@ const MlLicenseDetector = {
 
         for (let i = 0; i < trainingData.length; i++) {
             const sample = trainingData[i];
-            const features = sample.features;
-            const label = sample.label;
+            const {features, label} = sample;
 
             // Forward pass
             const prediction = features.combined_score + this.model.bias;
@@ -1240,7 +1239,7 @@ const MlLicenseDetector = {
             const detection = this.detected_functions[functionKey];
 
             // Increase confidence in patterns that led to successful bypass
-            const features = detection.features;
+            const {features} = detection;
             let adjustmentFactor = 0.01; // Small adjustment
 
             // Use features to adjust ML model weights

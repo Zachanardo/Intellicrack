@@ -137,7 +137,7 @@ class ServiceHealthChecker:
             logger.debug("HTTP check failed for %s: %s", url, e, exc_info=True)
         except Exception as e:
             result["error"] = str(e)
-            logger.error("Unexpected error checking %s: %s", url, e, exc_info=True)
+            logger.exception("Unexpected error checking %s: %s", url, e)
 
         return result
 

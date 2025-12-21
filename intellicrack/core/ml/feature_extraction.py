@@ -208,7 +208,9 @@ class BinaryFeatureExtractor:
                 features["max_section_entropy"] = max(section_entropies)
                 features["min_section_entropy"] = min(section_entropies)
                 features["avg_section_entropy"] = sum(section_entropies) / len(section_entropies)
-                features["high_entropy_section_count"] = sum(bool(e > 7.0) for e in section_entropies)
+                features["high_entropy_section_count"] = sum(
+                    e > 7.0 for e in section_entropies
+                )
             else:
                 features["max_section_entropy"] = 0.0
                 features["min_section_entropy"] = 0.0
@@ -495,7 +497,7 @@ class BinaryFeatureExtractor:
             0x0F,
         }
 
-        branch_count = sum(bool(b in branch_opcodes) for b in code)
+        branch_count = sum(b in branch_opcodes for b in code)
         return float(branch_count)
 
     def _parse_pe_basic(self, data: bytes) -> dict[str, Any]:

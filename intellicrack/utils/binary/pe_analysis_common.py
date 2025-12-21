@@ -106,7 +106,7 @@ def extract_pe_icon(pe_path: str, output_path: str | None = None) -> Image.Image
         return None
 
     except Exception as e:
-        logger.error("Error extracting PE icon: %s", e, exc_info=True)
+        logger.exception("Error extracting PE icon: %s", e, exc_info=True)
         return None
 
 
@@ -187,7 +187,7 @@ def extract_icon_from_resources(pe: object) -> bytes | None:
         return None
 
     except Exception as e:
-        logger.error("Error extracting icon from resources: %s", e, exc_info=True)
+        logger.exception("Error extracting icon from resources: %s", e, exc_info=True)
         return None
 
 
@@ -251,7 +251,7 @@ def create_image_from_icon_data(icon_data: bytes) -> Image.Image | None:
         return None
 
     except Exception as e:
-        logger.error("Error creating image from icon data: %s", e, exc_info=True)
+        logger.exception("Error creating image from icon data: %s", e, exc_info=True)
         return None
 
 
@@ -302,7 +302,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
                                         icon_index += 1
                                         logger.info("Extracted icon: %s", icon_path)
                                 except Exception as e:
-                                    logger.error("Error extracting icon %s: %s", icon_index, e, exc_info=True)
+                                    logger.exception("Error extracting icon %s: %s", icon_index, e, exc_info=True)
 
         if not saved_icons:
             logger.info("No icons found in PE file")
@@ -312,7 +312,7 @@ def extract_all_pe_icons(pe_path: str, output_dir: str) -> list[str]:
         return saved_icons
 
     except Exception as e:
-        logger.error("Error extracting all PE icons: %s", e, exc_info=True)
+        logger.exception("Error extracting all PE icons: %s", e, exc_info=True)
         return saved_icons
 
 
@@ -375,7 +375,7 @@ def get_pe_icon_info(pe_path: str) -> dict[str, object]:
         return icon_info
 
     except Exception as e:
-        logger.error("Error getting PE icon info: %s", e, exc_info=True)
+        logger.exception("Error getting PE icon info: %s", e, exc_info=True)
         return icon_info
 
 
@@ -417,7 +417,7 @@ class PEAnalyzer:
                 "entry_point": pe.OPTIONAL_HEADER.AddressOfEntryPoint,
             }
         except Exception as e:
-            self.logger.error("PE analysis failed for %s: %s", file_path, e, exc_info=True)
+            self.logger.exception("PE analysis failed for %s: %s", file_path, e, exc_info=True)
             return {"error": str(e)}
 
     def _extract_imports(self, pe: object) -> list[dict]:

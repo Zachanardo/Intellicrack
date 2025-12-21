@@ -7,9 +7,12 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
-from PyQt6.QtCore import QAbstractItemModel, QModelIndex, Qt, pyqtSignal
+from typing import Any, cast
 
-from .pe_file_model import CertificateInfo, FileStructure, PEFileModel, SectionInfo
+from PyQt6.QtCore import QAbstractItemModel, QModelIndex, QObject, Qt, pyqtSignal
+
+from ...utils.binary.certificate_extractor import CertificateInfo, CodeSigningInfo
+from .pe_file_model import FileStructure, PEFileModel, SectionInfo
 
 
 class PEStructureItem:
@@ -41,10 +44,9 @@ class PEStructureItem:
         """Get number of columns."""
         return 3  # Name, Offset, Size
 
-    def data(self, column: int) -> object:
+    def data(self, column: int) -> str:
         """Get data for column."""
         if isinstance(self.item_data, str):
-            # Root node or category
             return self.item_data if column == 0 else ""
 
         if isinstance(self.item_data, FileStructure):
@@ -86,7 +88,7 @@ class PEStructureModel(QAbstractItemModel):
     def __init__(
         self,
         pe_model: PEFileModel | None = None,
-        parent: object | None = None,
+        parent: QObject | None = None,
     ) -> None:
         """Initialize PE structure model with optional PE file data for tree representation."""
         super().__init__(parent)
@@ -106,6 +108,9 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_file_info_section(self) -> None:
         """Add file information section to the tree."""
+        if not self.pe_model:
+            return
+
         file_info = PEStructureItem("File Information", self.root_item)
         self.root_item.append_child(file_info)
 
@@ -117,6 +122,9 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_headers_section(self) -> None:
         """Add headers section to the tree."""
+        if not self.pe_model:
+            return
+
         headers = PEStructureItem("Headers", self.root_item)
         self.root_item.append_child(headers)
 
@@ -125,13 +133,15 @@ class PEStructureModel(QAbstractItemModel):
                 header_item = PEStructureItem(structure, headers)
                 headers.append_child(header_item)
 
-                # Add properties as children
                 for prop_name, prop_value in structure.properties.items():
                     prop_item = PEStructureItem(f"{prop_name}: {prop_value}", header_item)
                     header_item.append_child(prop_item)
 
     def _add_sections_section(self) -> None:
         """Add sections information to the tree."""
+        if not self.pe_model:
+            return
+
         sections = PEStructureItem("Sections", self.root_item)
         self.root_item.append_child(sections)
 
@@ -160,6 +170,9 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_data_directories_section(self) -> None:
         """Add data directories section to the tree."""
+        if not self.pe_model:
+            return
+
         directories = PEStructureItem("Data Directories", self.root_item)
         self.root_item.append_child(directories)
 
@@ -175,6 +188,9 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_imports_section(self) -> None:
         """Add imports section to the tree."""
+        if not self.pe_model:
+            return
+
         imports = self.pe_model.get_imports()
         if not imports:
             return
@@ -182,8 +198,7 @@ class PEStructureModel(QAbstractItemModel):
         imports_root = PEStructureItem("Imports", self.root_item)
         self.root_item.append_child(imports_root)
 
-        # Group by DLL
-        dll_groups = {}
+        dll_groups: dict[str, list[Any]] = {}
         for imp in imports:
             if imp.dll_name not in dll_groups:
                 dll_groups[imp.dll_name] = []
@@ -206,6 +221,9 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_exports_section(self) -> None:
         """Add exports section to the tree."""
+        if not self.pe_model:
+            return
+
         exports = self.pe_model.get_exports()
         if not exports:
             return
@@ -226,24 +244,22 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_certificate_details(
         self,
-        signing_cert: object,
+        signing_cert: CertificateInfo,
         certificates_root: PEStructureItem,
     ) -> None:
         """Add certificate details to the tree."""
         cert_info = "Signing Certificate"
         if signing_cert.subject:
-            # Extract CN from subject
             subject_parts = signing_cert.subject.split(",")
             if cn_part := next(
                 (part.strip() for part in subject_parts if part.strip().startswith("CN=")),
                 None,
             ):
-                cert_info = f"{cert_info} - {cn_part[3:]}"  # Remove 'CN=' prefix
+                cert_info = f"{cert_info} - {cn_part[3:]}"
 
         cert_item = PEStructureItem(cert_info, certificates_root)
         certificates_root.append_child(cert_item)
 
-        # Certificate details
         details = [
             f"Subject: {signing_cert.subject}",
             f"Issuer: {signing_cert.issuer}",
@@ -264,7 +280,7 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_certificate_chain(
         self,
-        certificates: CertificateInfo,
+        certificates: CodeSigningInfo,
         certificates_root: PEStructureItem,
     ) -> None:
         """Add certificate chain information to the tree."""
@@ -279,7 +295,6 @@ class PEStructureModel(QAbstractItemModel):
 
         for i, cert in enumerate(certificates.certificates[1:], 1):
             cert_name = f"Certificate {i}"
-            # Try to get CN from subject
             if cert.subject:
                 subject_parts = cert.subject.split(",")
                 if cn_part := next(
@@ -293,6 +308,9 @@ class PEStructureModel(QAbstractItemModel):
 
     def _add_certificates_section(self) -> None:
         """Add certificates section to the tree."""
+        if not self.pe_model:
+            return
+
         certificates = self.pe_model.get_certificates()
         if not certificates or not certificates.is_signed:
             return
@@ -303,11 +321,9 @@ class PEStructureModel(QAbstractItemModel):
         if signing_cert := certificates.signing_certificate:
             self._add_certificate_details(signing_cert, certificates_root)
 
-        # Trust status
         trust_item = PEStructureItem(f"Trust Status: {certificates.trust_status}", certificates_root)
         certificates_root.append_child(trust_item)
 
-        # Additional certificates in chain
         self._add_certificate_chain(certificates, certificates_root)
 
     def setup_model_data(self) -> None:
@@ -324,36 +340,38 @@ class PEStructureModel(QAbstractItemModel):
         self._add_exports_section()
         self._add_certificates_section()
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         """Return number of columns."""
-        if parent is None:
-            parent = QModelIndex()
+        if parent is None or not parent.isValid():
+            return self.root_item.column_count()
         return self.root_item.column_count()
 
-    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> object:
+    def data(self, index: QModelIndex, role: int = Qt.ItemDataRole.DisplayRole) -> str | None:
         """Return data for index and role."""
         if not index.isValid():
             return None
 
-        item = index.internalPointer()
+        item_ptr = index.internalPointer()
+        if not isinstance(item_ptr, PEStructureItem):
+            return None
 
         if role == Qt.ItemDataRole.DisplayRole:
-            return item.data(index.column())
+            return item_ptr.data(index.column())
         if role == Qt.ItemDataRole.ToolTipRole:
-            if isinstance(item.item_data, FileStructure):
-                return f"{item.item_data.description}\nOffset: 0x{item.item_data.offset:X}\nSize: 0x{item.item_data.size:X}"
-            if isinstance(item.item_data, SectionInfo):
-                tooltip = f"Section: {item.item_data.name}\n"
-                tooltip += f"Virtual Address: 0x{item.item_data.virtual_address:X}\n"
-                tooltip += f"Raw Offset: 0x{item.item_data.raw_offset:X}\n"
-                tooltip += f"Characteristics: 0x{item.item_data.characteristics:X}\n"
+            if isinstance(item_ptr.item_data, FileStructure):
+                return f"{item_ptr.item_data.description}\nOffset: 0x{item_ptr.item_data.offset:X}\nSize: 0x{item_ptr.item_data.size:X}"
+            if isinstance(item_ptr.item_data, SectionInfo):
+                tooltip = f"Section: {item_ptr.item_data.name}\n"
+                tooltip += f"Virtual Address: 0x{item_ptr.item_data.virtual_address:X}\n"
+                tooltip += f"Raw Offset: 0x{item_ptr.item_data.raw_offset:X}\n"
+                tooltip += f"Characteristics: 0x{item_ptr.item_data.characteristics:X}\n"
                 tooltip += "Permissions: "
-                perms = []
-                if item.item_data.is_readable:
+                perms: list[str] = []
+                if item_ptr.item_data.is_readable:
                     perms.append("R")
-                if item.item_data.is_writable:
+                if item_ptr.item_data.is_writable:
                     perms.append("W")
-                if item.item_data.is_executable:
+                if item_ptr.item_data.is_executable:
                     perms.append("X")
                 tooltip += "".join(perms) if perms else "None"
                 return tooltip
@@ -372,7 +390,7 @@ class PEStructureModel(QAbstractItemModel):
         section: int,
         orientation: Qt.Orientation,
         role: int = Qt.ItemDataRole.DisplayRole,
-    ) -> object:
+    ) -> str | None:
         """Return header data."""
         if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
             if section == 0:
@@ -384,52 +402,62 @@ class PEStructureModel(QAbstractItemModel):
 
         return None
 
-    def index(self, row: int, column: int, parent: QModelIndex = None) -> QModelIndex:
+    def index(self, row: int, column: int, parent: QModelIndex | None = None) -> QModelIndex:
         """Create index for row, column under parent."""
         if parent is None:
             parent = QModelIndex()
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
 
-        parent_item = parent.internalPointer() if parent.isValid() else self.root_item
-        if child_item := parent_item.child(row):
+        parent_item_ptr = parent.internalPointer() if parent.isValid() else self.root_item
+        if not isinstance(parent_item_ptr, PEStructureItem):
+            parent_item_ptr = self.root_item
+
+        if child_item := parent_item_ptr.child(row):
             return self.createIndex(row, column, child_item)
         return QModelIndex()
 
-    def parent(self, index: QModelIndex) -> QModelIndex:
+    def parent(self, index: QModelIndex) -> QModelIndex:  # type: ignore[override]
         """Return parent of index."""
         if not index.isValid():
             return QModelIndex()
 
-        child_item = index.internalPointer()
-        parent_item = child_item.parent()
+        child_item_ptr = index.internalPointer()
+        if not isinstance(child_item_ptr, PEStructureItem):
+            return QModelIndex()
 
-        if parent_item == self.root_item:
+        parent_item = child_item_ptr.parent()
+        if parent_item is None or parent_item == self.root_item:
             return QModelIndex()
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def rowCount(self, parent: QModelIndex = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Return number of rows under parent."""
         if parent is None:
             parent = QModelIndex()
         if parent.column() > 0:
             return 0
 
-        parent_item = parent.internalPointer() if parent.isValid() else self.root_item
-        return parent_item.child_count()
+        parent_item_ptr = parent.internalPointer() if parent.isValid() else self.root_item
+        if not isinstance(parent_item_ptr, PEStructureItem):
+            parent_item_ptr = self.root_item
+
+        return parent_item_ptr.child_count()
 
     def get_item_offset_and_size(self, index: QModelIndex) -> tuple[int | None, int | None]:
         """Get file offset and size for item at index."""
         if not index.isValid():
             return None, None
 
-        item = index.internalPointer()
+        item_ptr = index.internalPointer()
+        if not isinstance(item_ptr, PEStructureItem):
+            return None, None
 
-        if isinstance(item.item_data, FileStructure):
-            return item.item_data.offset, item.item_data.size
-        if isinstance(item.item_data, SectionInfo):
-            return item.item_data.raw_offset, item.item_data.raw_size
+        if isinstance(item_ptr.item_data, FileStructure):
+            return item_ptr.item_data.offset, item_ptr.item_data.size
+        if isinstance(item_ptr.item_data, SectionInfo):
+            return item_ptr.item_data.raw_offset, item_ptr.item_data.raw_size
 
         return None, None
 
@@ -438,11 +466,13 @@ class PEStructureModel(QAbstractItemModel):
         if not index.isValid():
             return None
 
-        item = index.internalPointer()
+        item_ptr = index.internalPointer()
+        if not isinstance(item_ptr, PEStructureItem):
+            return None
 
-        if isinstance(item.item_data, SectionInfo):
-            return item.item_data.virtual_address
-        if isinstance(item.item_data, FileStructure) and self.pe_model:
-            return self.pe_model.offset_to_rva(item.item_data.offset)
+        if isinstance(item_ptr.item_data, SectionInfo):
+            return item_ptr.item_data.virtual_address
+        if isinstance(item_ptr.item_data, FileStructure) and self.pe_model:
+            return self.pe_model.offset_to_rva(item_ptr.item_data.offset)
 
         return None

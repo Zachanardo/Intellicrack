@@ -211,7 +211,7 @@ class MultiFormatBinaryAnalyzer:
                             if "META-INF/MANIFEST.MF" in zip_file.namelist():
                                 return "JAR"
                     except Exception as e:
-                        self.logger.debug(f"Failed to check ZIP sub-type: {e}")
+                        self.logger.debug("Failed to check ZIP sub-type: %s", e)
                     return "ZIP"
 
                 # Check for MSI (Microsoft Installer)
@@ -229,12 +229,12 @@ class MultiFormatBinaryAnalyzer:
                         if file_size <= 65536:  # 64KB limit for COM files
                             return "COM"
                     except Exception as e:
-                        self.logger.debug(f"Failed to check COM file size: {e}")
+                        self.logger.debug("Failed to check COM file size: %s", e)
 
                 return "UNKNOWN"
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error identifying binary format: %s", e)
+            self.logger.exception("Error identifying binary format: %s", e)
             return "UNKNOWN"
 
     def analyze_binary(self, binary_path: str | Path) -> dict[str, Any]:
@@ -353,7 +353,7 @@ class MultiFormatBinaryAnalyzer:
             return info
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing PE binary: %s", e)
+            self.logger.exception("Error analyzing PE binary: %s", e)
             return {
                 "format": "PE",
                 "error": str(e),
@@ -476,7 +476,7 @@ class MultiFormatBinaryAnalyzer:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing ELF binary: %s", e)
+            self.logger.exception("Error analyzing ELF binary: %s", e)
 
         return {
             "format": "ELF",
@@ -587,7 +587,7 @@ class MultiFormatBinaryAnalyzer:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing Mach-O binary: %s", e)
+            self.logger.exception("Error analyzing Mach-O binary: %s", e)
             return {
                 "format": "MACHO",
                 "error": str(e),
@@ -764,7 +764,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing DEX binary: %s", e)
+            self.logger.exception("Error analyzing DEX binary: %s", e)
             return {
                 "format": "DEX",
                 "error": str(e),
@@ -843,7 +843,7 @@ class MultiFormatBinaryAnalyzer:
                             "note": "Binary XML format - specialized parser required for full analysis",
                         }
                     except Exception as e:
-                        logger.error("Exception in multi_format_analyzer: %s", e)
+                        logger.exception("Exception in multi_format_analyzer: %s", e)
                         info["manifest_info"] = {
                             "present": True,
                             "error": f"Failed to read manifest: {e!s}",
@@ -864,7 +864,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing APK binary: %s", e)
+            self.logger.exception("Error analyzing APK binary: %s", e)
             return {
                 "format": "APK",
                 "error": str(e),
@@ -943,7 +943,7 @@ class MultiFormatBinaryAnalyzer:
                             "created_by": manifest_attrs.get("Created-By", "Unknown"),
                         }
                     except Exception as e:
-                        logger.error("Exception in multi_format_analyzer: %s", e)
+                        logger.exception("Exception in multi_format_analyzer: %s", e)
                         info["manifest_info"] = {
                             "present": True,
                             "error": f"Failed to parse manifest: {e!s}",
@@ -963,7 +963,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing JAR binary: %s", e)
+            self.logger.exception("Error analyzing JAR binary: %s", e)
             return {
                 "format": "JAR",
                 "error": str(e),
@@ -1023,7 +1023,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing MSI binary: %s", e)
+            self.logger.exception("Error analyzing MSI binary: %s", e)
             return {
                 "format": "MSI",
                 "error": str(e),
@@ -1108,7 +1108,7 @@ class MultiFormatBinaryAnalyzer:
                 return info
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error analyzing COM binary: %s", e)
+            self.logger.exception("Error analyzing COM binary: %s", e)
             return {
                 "format": "COM",
                 "error": str(e),
@@ -1151,7 +1151,7 @@ class MultiFormatBinaryAnalyzer:
         try:
             return datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
         except Exception as e:
-            self.logger.error("Exception in multi_format_analyzer: %s", e)
+            self.logger.exception("Exception in multi_format_analyzer: %s", e)
             return f"Invalid timestamp ({timestamp})"
 
     def _get_characteristics(self, characteristics: int) -> list[str]:
@@ -1213,7 +1213,7 @@ class MultiFormatBinaryAnalyzer:
                 if binary := lief.parse(str(binary_path)):
                     result.update(self._analyze_lief_binary(binary))
             except Exception as e:
-                self.logger.error(f"LIEF analysis failed: {e}")
+                self.logger.exception("LIEF analysis failed: %s", e)
 
         return result
 
@@ -1310,9 +1310,9 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
     if binary_format == "PE":
         analyze_results.append(f"Machine: {results['machine']}")
         analyze_results.append(f"Timestamp: {results['timestamp']}")
-        analyze_results.append(f"Characteristics: {results['characteristics']}")
-
-        analyze_results.append("\nSections:")
+        analyze_results.extend(
+            (f"Characteristics: {results['characteristics']}", "\nSections:")
+        )
         for section in results["sections"]:
             entropy_str = f", Entropy: {section['entropy']:.2f}" if "entropy" in section else ""
             analyze_results.append(
@@ -1331,9 +1331,9 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
         analyze_results.append(f"Machine: {results['machine']}")
         analyze_results.append(f"Class: {results['class']}")
         analyze_results.append(f"Type: {results['type']}")
-        analyze_results.append(f"Entry Point: {results['entry_point']}")
-
-        analyze_results.append("\nSections:")
+        analyze_results.extend(
+            (f"Entry Point: {results['entry_point']}", "\nSections:")
+        )
         for section in results["sections"]:
             entropy_str = f", Entropy: {section['entropy']:.2f}" if "entropy" in section else ""
             analyze_results.append(f"  {section['name']} - Addr: {section['address']}, Size: {section['size']}{entropy_str}")
@@ -1344,13 +1344,16 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
 
     elif binary_format == "MACHO":
         analyze_results.append(f"CPU Type: {results['headers'][0]['cpu_type']}")
-        analyze_results.append(f"File Type: {results['headers'][0]['file_type']}")
-
-        analyze_results.append("\nSegments:")
+        analyze_results.extend(
+            (f"File Type: {results['headers'][0]['file_type']}", "\nSegments:")
+        )
         for segment in results["segments"]:
-            analyze_results.append(f"  {segment['name']} - Addr: {segment['address']}, Size: {segment['size']}")
-
-            analyze_results.append("  Sections:")
+            analyze_results.extend(
+                (
+                    f"  {segment['name']} - Addr: {segment['address']}, Size: {segment['size']}",
+                    "  Sections:",
+                )
+            )
             for section in segment["sections"]:
                 analyze_results.append(f"    {section['name']} - Addr: {section['address']}, Size: {section['size']}")
 
@@ -1389,8 +1392,12 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
             analyze_results.append(f"  Created By: {manifest.get('created_by', 'Unknown')}")
 
     elif binary_format == "MSI":
-        analyze_results.append(f"File Size: {results['file_size']} bytes")
-        analyze_results.append("Format: Compound Document")
+        analyze_results.extend(
+            (
+                f"File Size: {results['file_size']} bytes",
+                "Format: Compound Document",
+            )
+        )
         analyze_results.append(f"Version: {results['major_version']}.{results['minor_version']}")
         analyze_results.append(f"Sector Size: {results['sector_size']} bytes")
 
@@ -1405,20 +1412,40 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
     # Add recommendations based on format
     analyze_results.append("\nRecommendations:")
     if binary_format == "PE":
-        analyze_results.append("- Use standard Windows PE analysis techniques")
-        analyze_results.append("- Check for high-entropy sections that may indicate packing or encryption")
+        analyze_results.extend(
+            (
+                "- Use standard Windows PE analysis techniques",
+                "- Check for high-entropy sections that may indicate packing or encryption",
+            )
+        )
     elif binary_format == "ELF":
-        analyze_results.append("- Use specialized ELF analysis tools for deeper inspection")
-        analyze_results.append("- Consider using dynamic analysis with Linux-specific tools")
+        analyze_results.extend(
+            (
+                "- Use specialized ELF analysis tools for deeper inspection",
+                "- Consider using dynamic analysis with Linux-specific tools",
+            )
+        )
     elif binary_format == "MACHO":
-        analyze_results.append("- Use macOS-specific analysis tools for deeper inspection")
-        analyze_results.append("- Check for code signing and entitlements")
+        analyze_results.extend(
+            (
+                "- Use macOS-specific analysis tools for deeper inspection",
+                "- Check for code signing and entitlements",
+            )
+        )
     elif binary_format == "DEX":
-        analyze_results.append("- Use Android-specific analysis tools like JADX or dex2jar")
-        analyze_results.append("- Consider using dynamic analysis with Android emulators")
+        analyze_results.extend(
+            (
+                "- Use Android-specific analysis tools like JADX or dex2jar",
+                "- Consider using dynamic analysis with Android emulators",
+            )
+        )
     elif binary_format == "APK":
-        analyze_results.append("- Extract and analyze DEX files for code analysis")
-        analyze_results.append("- Check native libraries for potential security issues")
+        analyze_results.extend(
+            (
+                "- Extract and analyze DEX files for code analysis",
+                "- Check native libraries for potential security issues",
+            )
+        )
         analyze_results.append("- Verify certificate signatures and permissions")
     elif binary_format == "JAR":
         analyze_results.append("- Decompile class files for source code analysis")

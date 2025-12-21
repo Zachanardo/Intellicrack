@@ -28,7 +28,7 @@ import winreg
 from collections.abc import Callable
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import IO, Any
 
 
 try:
@@ -43,7 +43,7 @@ from ...utils.system.system_utils import is_admin
 try:
     from ...utils.system.subprocess_utils import run_subprocess_check
 except ImportError:
-    run_subprocess_check = None
+    run_subprocess_check = None  # type: ignore[assignment]
 
 logger = get_logger(__name__)
 
@@ -76,14 +76,14 @@ class WindowsActivator:
 
     def __init__(self) -> None:
         """Initialize the Windows activator with script path and temporary directory setup."""
-        self.script_path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
-        self.temp_dir = Path(tempfile.gettempdir()) / "intellicrack_activation"
+        self.script_path: Path = Path(__file__).parent.parent.parent / "ui" / "Windows_Patch" / "WindowsActivator.cmd"
+        self.temp_dir: Path = Path(tempfile.gettempdir()) / "intellicrack_activation"
         self.logger = get_logger(__name__)
-        self.last_validation_time = None
-        self.last_validation_result = None
-        self.validation_cache_duration = 300  # 5 minutes
+        self.last_validation_time: float | None = None
+        self.last_validation_result: dict[str, Any] | None = None
+        self.validation_cache_duration: int = 300
 
-    def activate(self, method: str = "hwid") -> dict[str, any]:
+    def activate(self, method: str = "hwid") -> dict[str, Any]:
         """Activate Windows using specified method - alias for activate_windows.
 
         Args:
@@ -100,7 +100,7 @@ class WindowsActivator:
             method_enum = ActivationMethod.ONLINE_KMS
         return self.activate_windows(method_enum)
 
-    def check_activation_status(self) -> dict[str, str]:
+    def check_activation_status(self) -> dict[str, Any]:
         """Check current Windows activation status - alias for get_activation_status.
 
         Returns:
@@ -108,10 +108,10 @@ class WindowsActivator:
 
         """
         status = self.get_activation_status()
-        # Add 'activated' key for compatibility
+        result: dict[str, Any] = dict(status)
         if "status" in status:
-            status["activated"] = status["status"] == "activated"
-        return status
+            result["activated"] = status["status"] == "activated"
+        return result
 
     def generate_hwid(self) -> str:
         """Generate Hardware ID for Windows activation.
@@ -127,7 +127,7 @@ class WindowsActivator:
             c = wmi.WMI()
 
             # Collect hardware information
-            hardware_info = []
+            hardware_info: list[str] = []
 
             # CPU info
             for processor in c.Win32_Processor():
@@ -150,14 +150,16 @@ class WindowsActivator:
                     bios.Manufacturer.strip() if bios.Manufacturer else "",
                 ))
             # Network adapter MAC addresses (physical adapters only)
-            for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True):
-                if nic.MACAddress:
-                    hardware_info.append(nic.MACAddress.replace(":", ""))
-
+            hardware_info.extend(
+                nic.MACAddress.replace(":", "")
+                for nic in c.Win32_NetworkAdapterConfiguration(IPEnabled=True)
+                if nic.MACAddress
+            )
             # System UUID
-            for system in c.Win32_ComputerSystemProduct():
-                hardware_info.append(system.UUID.strip() if system.UUID else "")
-
+            hardware_info.extend(
+                system.UUID.strip() if system.UUID else ""
+                for system in c.Win32_ComputerSystemProduct()
+            )
             # Combine all hardware info
             combined_info = "|".join(filter(None, hardware_info))
 
@@ -167,7 +169,7 @@ class WindowsActivator:
             # Format as Windows-style HWID
             hwid = f"{hwid_hash[:8]}-{hwid_hash[8:12]}-{hwid_hash[12:16]}-{hwid_hash[16:20]}-{hwid_hash[20:32]}"
 
-            self.logger.info(f"Generated HWID: {hwid[:20]}...")  # Log partial HWID for privacy
+            self.logger.info("Generated HWID: %s...", hwid[:20])  # Log partial HWID for privacy
             return hwid.upper()
 
         except ImportError:
@@ -182,7 +184,7 @@ class WindowsActivator:
                 mac = uuid.getnode()
                 machine_info += f"|{mac:012X}"
             except OSError:
-                self.logger.debug("Failed to get MAC address", exc_info=True)
+                self.logger.debug("Failed to get MAC address")
 
             # Generate fallback HWID
             fallback_hash = hashlib.sha256(machine_info.encode()).hexdigest()
@@ -191,7 +193,7 @@ class WindowsActivator:
             return hwid.upper()
 
         except Exception as e:
-            self.logger.error(f"Error generating HWID: {e}", exc_info=True)
+            self.logger.exception("Error generating HWID: %s", e)
             basic_info = f"{os.environ.get('COMPUTERNAME', 'UNKNOWN')}|{platform.platform()}"
             basic_hash = hashlib.sha256(basic_info.encode()).hexdigest()
             return f"{basic_hash[:8]}-{basic_hash[8:12]}-{basic_hash[12:16]}-{basic_hash[16:20]}-{basic_hash[20:32]}".upper()
@@ -219,7 +221,7 @@ class WindowsActivator:
 
         return not issues, issues
 
-    def get_activation_status(self) -> dict[str, str]:
+    def get_activation_status(self) -> dict[str, Any]:
         """Get current Windows activation status.
 
         Returns:
@@ -236,7 +238,7 @@ class WindowsActivator:
                 check=False,
             )
 
-            status_info = {
+            status_info: dict[str, Any] = {
                 "status": ActivationStatus.UNKNOWN.value,
                 "raw_output": result.stdout.strip(),
                 "error": result.stderr.strip() if result.stderr else None,
@@ -256,13 +258,13 @@ class WindowsActivator:
             return status_info
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error checking activation status: %s", e, exc_info=True)
+            logger.exception("Error checking activation status: %s", e)
             return {
                 "status": ActivationStatus.ERROR.value,
                 "error": str(e),
             }
 
-    def activate_windows(self, method: ActivationMethod = ActivationMethod.HWID) -> dict[str, any]:
+    def activate_windows(self, method: ActivationMethod = ActivationMethod.HWID) -> dict[str, Any]:
         """Activate Windows using specified method.
 
         Args:
@@ -321,24 +323,24 @@ class WindowsActivator:
                 # Get updated status
                 activation_result["post_activation_status"] = self.get_activation_status()
             else:
-                logger.error("Windows activation failed with %s: %s", method.value, result.stderr)
+                logger.exception("Windows activation failed with %s: %s", method.value, result.stderr)
 
             return activation_result
 
         except subprocess.TimeoutExpired:
-            logger.error("Windows activation timed out", exc_info=True)
+            logger.exception("Windows activation timed out")
             return {
                 "success": False,
                 "error": "Activation process timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error during Windows activation: %s", e, exc_info=True)
+            logger.exception("Error during Windows activation: %s", e)
             return {
                 "success": False,
                 "error": str(e),
             }
 
-    def reset_activation(self) -> dict[str, any]:
+    def reset_activation(self) -> dict[str, Any]:
         """Reset Windows activation state.
 
         Returns:
@@ -363,13 +365,13 @@ class WindowsActivator:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error resetting activation: %s", e, exc_info=True)
+            logger.exception("Error resetting activation: %s", e)
             return {
                 "success": False,
                 "error": str(e),
             }
 
-    def get_product_key_info(self) -> dict[str, str]:
+    def get_product_key_info(self) -> dict[str, Any]:
         """Get information about installed product keys.
 
         Returns:
@@ -392,21 +394,21 @@ class WindowsActivator:
             }
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting product key info: %s", e, exc_info=True)
+            logger.exception("Error getting product key info: %s", e)
             return {
                 "success": False,
                 "error": str(e),
             }
 
-    def activate_windows_kms(self) -> dict[str, any]:
+    def activate_windows_kms(self) -> dict[str, Any]:
         """Activate Windows using KMS method."""
         return self.activate_windows(ActivationMethod.KMS38)
 
-    def activate_windows_digital(self) -> dict[str, any]:
+    def activate_windows_digital(self) -> dict[str, Any]:
         """Activate Windows using HWID digital method."""
         return self.activate_windows(ActivationMethod.HWID)
 
-    def activate_office(self, office_version: str = "auto") -> dict[str, any]:
+    def activate_office(self, office_version: str = "auto") -> dict[str, Any]:
         """Activate Microsoft Office using Office-specific activation methods.
 
         Args:
@@ -446,7 +448,6 @@ class WindowsActivator:
                 if msi_result.get("success", False):
                     result = msi_result
                 else:
-                    # Combine error information
                     result["msi_error"] = msi_result.get("error", "MSI activation also failed")
 
             # Get Office activation status after attempt
@@ -454,12 +455,12 @@ class WindowsActivator:
                 result["post_activation_status"] = self._get_office_status()
                 logger.info("Office activation completed successfully")
             else:
-                logger.error("Office activation failed: %s", result.get("error", "Unknown error"))
+                logger.exception("Office activation failed: %s", result.get("error", "Unknown error"))
 
             return result
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error during Office activation: %s", e, exc_info=True)
+            logger.exception("Error during Office activation: %s", e)
             return {
                 "success": False,
                 "error": f"Office activation error: {e!s}",
@@ -499,7 +500,7 @@ class WindowsActivator:
                                 elif "Office14" in item or "14.0" in item:
                                     detected_versions.append("2010")
                     except OSError as e:
-                        logger.error("Error in windows_activator: %s", e, exc_info=True)
+                        logger.exception("Error in windows_activator: %s", e)
                         continue
 
             # Also check registry for C2R installations
@@ -519,13 +520,13 @@ class WindowsActivator:
                                 elif version_info.startswith("15."):
                                     detected_versions.append("2013")
                             except FileNotFoundError as e:
-                                logger.error("File not found in windows_activator: %s", e, exc_info=True)
+                                logger.exception("File not found in windows_activator: %s", e)
                     except FileNotFoundError as e:
-                        logger.error("File not found in windows_activator: %s", e, exc_info=True)
+                        logger.exception("File not found in windows_activator: %s", e)
                         continue
 
             except ImportError as e:
-                logger.error("Import error in windows_activator: %s", e, exc_info=True)
+                logger.exception("Import error in windows_activator: %s", e)
 
             # Return most recent version detected
             if detected_versions:
@@ -535,17 +536,14 @@ class WindowsActivator:
                     return "2019"
                 if "2016" in detected_versions:
                     return "2016"
-                if "2013" in detected_versions:
-                    return "2013"
-                return detected_versions[0]
-
+                return "2013" if "2013" in detected_versions else detected_versions[0]
             return ""
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error detecting Office version: %s", e, exc_info=True)
+            logger.exception("Error detecting Office version: %s", e)
             return ""
 
-    def _activate_office_c2r(self, office_version: str) -> dict[str, any]:
+    def _activate_office_c2r(self, office_version: str) -> dict[str, Any]:
         """Activate Office using Click-to-Run (C2R) method.
 
         Args:
@@ -589,21 +587,21 @@ class WindowsActivator:
             }
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in windows_activator: %s", e, exc_info=True)
+            logger.exception("Subprocess timeout in windows_activator: %s", e)
             return {
                 "success": False,
                 "method": "C2R",
                 "error": "Office C2R activation timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in windows_activator: %s", e, exc_info=True)
+            logger.exception("Error in windows_activator: %s", e)
             return {
                 "success": False,
                 "method": "C2R",
                 "error": f"Office C2R activation error: {e!s}",
             }
 
-    def _activate_office_msi(self, office_version: str) -> dict[str, any]:
+    def _activate_office_msi(self, office_version: str) -> dict[str, Any]:
         """Activate Office using MSI (Windows Installer) method.
 
         Args:
@@ -650,11 +648,7 @@ class WindowsActivator:
 
             logger.info("Installing Office product key for version %s", office_version)
 
-            if run_subprocess_check is None:
-                # Fallback to subprocess.run if run_subprocess_check is not available
-                result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=60)
-            else:
-                result = run_subprocess_check(install_cmd, timeout=60)
+            result = subprocess.run(install_cmd, capture_output=True, text=True, timeout=60, check=False)
 
             if result.returncode != 0:
                 return {
@@ -694,21 +688,21 @@ class WindowsActivator:
             }
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in windows_activator: %s", e, exc_info=True)
+            logger.exception("Subprocess timeout in windows_activator: %s", e)
             return {
                 "success": False,
                 "method": "MSI",
                 "error": "Office MSI activation timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error in windows_activator: %s", e, exc_info=True)
+            logger.exception("Error in windows_activator: %s", e)
             return {
                 "success": False,
                 "method": "MSI",
                 "error": f"Office MSI activation error: {e!s}",
             }
 
-    def _get_office_status(self) -> dict[str, str]:
+    def _get_office_status(self) -> dict[str, Any]:
         """Get Office activation status.
 
         Returns:
@@ -740,7 +734,7 @@ class WindowsActivator:
                 check=False,
             )
 
-            status_info = {
+            status_info: dict[str, Any] = {
                 "raw_output": result.stdout.strip(),
                 "error": result.stderr.strip() if result.stderr else None,
             }
@@ -761,7 +755,7 @@ class WindowsActivator:
             return status_info
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error getting Office status: %s", e, exc_info=True)
+            logger.exception("Error getting Office status: %s", e)
             return {
                 "status": "error",
                 "error": str(e),
@@ -811,7 +805,7 @@ class WindowsActivator:
             import threading
             import time as time_module
 
-            result = {
+            result: dict[str, Any] = {
                 "success": False,
                 "method": "hwid",
                 "return_code": -1,
@@ -820,11 +814,11 @@ class WindowsActivator:
                 "error": None,
             }
 
-            output_queue: queue.Queue = queue.Queue()
+            output_queue: queue.Queue[tuple[str, bool]] = queue.Queue()
             stdout_lines: list[str] = []
             stderr_lines: list[str] = []
 
-            def reader_thread(pipe: any, line_list: list[str], is_stderr: bool = False) -> None:
+            def reader_thread(pipe: IO[str], line_list: list[str], is_stderr: bool = False) -> None:
                 try:
                     for line in iter(pipe.readline, ""):
                         if not line:
@@ -833,7 +827,7 @@ class WindowsActivator:
                         line_list.append(line)
                         output_queue.put((line, is_stderr))
                 except Exception as e:
-                    self.logger.debug(f"Reader thread error: {e}", exc_info=True)
+                    self.logger.debug("Reader thread error: %s", e)
                 finally:
                     pipe.close()
 
@@ -898,14 +892,14 @@ class WindowsActivator:
                 if output_callback:
                     output_callback("Activation completed successfully!", False)
             else:
-                self.logger.error("Interactive Windows activation failed")
+                self.logger.exception("Interactive Windows activation failed")
                 if output_callback:
                     output_callback("Activation failed. Check output for details.", True)
 
             return result
 
         except subprocess.TimeoutExpired:
-            self.logger.error("Windows activation timed out", exc_info=True)
+            self.logger.exception("Windows activation timed out")
             if output_callback:
                 output_callback("ERROR: Activation timed out", True)
             return {
@@ -913,7 +907,7 @@ class WindowsActivator:
                 "error": "Activation process timed out",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during Windows activation: %s", e, exc_info=True)
+            self.logger.exception("Error during Windows activation: %s", e)
             if output_callback:
                 output_callback(f"ERROR: {e}", True)
             return {
@@ -921,7 +915,7 @@ class WindowsActivator:
                 "error": str(e),
             }
 
-    def activate_windows_in_terminal(self) -> dict[str, any]:
+    def activate_windows_in_terminal(self) -> dict[str, Any]:
         """Activate Windows using an embedded terminal approach.
 
         Runs the Windows activation script in a new command prompt window
@@ -990,7 +984,7 @@ class WindowsActivator:
                 return result
 
             except subprocess.TimeoutExpired:
-                self.logger.warning("Terminal activation window still open after timeout", exc_info=True)
+                self.logger.warning("Terminal activation window still open after timeout")
                 return {
                     "success": False,
                     "method": "terminal",
@@ -999,19 +993,19 @@ class WindowsActivator:
                 }
 
         except FileNotFoundError:
-            self.logger.error("Activation script not found: %s", self.script_path, exc_info=True)
+            self.logger.exception("Activation script not found: %s", self.script_path)
             return {
                 "success": False,
                 "error": f"Activation script not found: {self.script_path}",
             }
         except PermissionError:
-            self.logger.error("Permission denied - administrator privileges required", exc_info=True)
+            self.logger.exception("Permission denied - administrator privileges required")
             return {
                 "success": False,
                 "error": "Administrator privileges required for activation",
             }
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error during terminal activation: %s", e, exc_info=True)
+            self.logger.exception("Error during terminal activation: %s", e)
             return {
                 "success": False,
                 "error": str(e),
@@ -1029,7 +1023,7 @@ def create_windows_activator() -> WindowsActivator:
 
 
 # Convenience functions
-def check_windows_activation() -> dict[str, str]:
+def check_windows_activation() -> dict[str, Any]:
     """Quick check of Windows activation status.
 
     Returns:
@@ -1040,7 +1034,7 @@ def check_windows_activation() -> dict[str, str]:
     return activator.get_activation_status()
 
 
-def activate_windows_hwid() -> dict[str, any]:
+def activate_windows_hwid() -> dict[str, Any]:
     """Activate Windows using HWID method.
 
     Returns:
@@ -1051,7 +1045,7 @@ def activate_windows_hwid() -> dict[str, any]:
     return activator.activate_windows(ActivationMethod.HWID)
 
 
-def activate_windows_kms() -> dict[str, any]:
+def activate_windows_kms() -> dict[str, Any]:
     """Activate Windows using KMS38 method.
 
     Returns:
@@ -1090,7 +1084,7 @@ class WindowsActivatorInteractive:
         import queue
         import threading
 
-        result = {
+        result: dict[str, Any] = {
             "success": False,
             "return_code": -1,
             "stdout": "",
@@ -1098,11 +1092,11 @@ class WindowsActivatorInteractive:
             "error": None,
         }
 
-        output_queue: queue.Queue = queue.Queue()
+        output_queue: queue.Queue[tuple[str, bool]] = queue.Queue()
         stdout_lines: list[str] = []
         stderr_lines: list[str] = []
 
-        def reader_thread(pipe: any, line_list: list[str], is_stderr: bool = False) -> None:
+        def reader_thread(pipe: IO[str], line_list: list[str], is_stderr: bool = False) -> None:
             try:
                 for line in iter(pipe.readline, ""):
                     if not line:
@@ -1111,7 +1105,7 @@ class WindowsActivatorInteractive:
                     line_list.append(line)
                     output_queue.put((line, is_stderr))
             except Exception as e:
-                self.logger.debug(f"Reader thread error: {e}")
+                self.logger.debug("Reader thread error: %s", e)
             finally:
                 pipe.close()
 
@@ -1172,12 +1166,12 @@ class WindowsActivatorInteractive:
 
         except FileNotFoundError:
             result["error"] = "Activation script not found"
-            self.logger.error("Activation script not found")
+            self.logger.exception("Activation script not found")
         except PermissionError:
             result["error"] = "Permission denied - administrator privileges required"
-            self.logger.error("Permission denied for activation script")
+            self.logger.exception("Permission denied for activation script")
         except Exception as e:
             result["error"] = str(e)
-            self.logger.error(f"Interactive activation error: {e}")
+            self.logger.exception("Interactive activation error: %s", e)
 
         return result

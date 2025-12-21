@@ -2362,7 +2362,35 @@ class OfflineActivationEmulator:
             magic = content[offset : offset + 4]
             offset += 4
 
-            if magic == b"LICX":
+            if magic == b"ACTF":
+                offset += 4
+                iv = content[offset : offset + 16]
+                offset += 16
+                license_data["encrypted"] = True
+                license_data["iv"] = iv.hex()
+                encrypted_data = content[offset:]
+                license_data["encrypted_data_length"] = len(encrypted_data)
+                license_data["encrypted_data_hash"] = hashlib.sha256(encrypted_data).hexdigest()[:16]
+
+                if hasattr(self, "encryption_key") and self.encryption_key:
+                    try:
+                        from cryptography.hazmat.backends import default_backend
+                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+
+                        cipher = Cipher(algorithms.AES(self.encryption_key), modes.CBC(iv), backend=default_backend())
+                        decryptor = cipher.decryptor()
+                        decrypted = decryptor.update(encrypted_data) + decryptor.finalize()
+                        padding_len = decrypted[-1] if decrypted else 0
+                        if 0 < padding_len <= 16:
+                            decrypted = decrypted[:-padding_len]
+                        license_data["decrypted_data"] = decrypted.decode("utf-8", errors="replace")
+                        license_data["decryption_success"] = True
+                    except Exception as decrypt_err:
+                        license_data["decryption_error"] = str(decrypt_err)
+                        license_data["decryption_success"] = False
+                        logger.debug("Decryption error: %s", decrypt_err, exc_info=True)
+
+            elif magic == b"LICX":
                 version = struct.unpack("<I", content[offset : offset + 4])[0]
                 offset += 4
                 license_data["version"] = version
@@ -2401,34 +2429,6 @@ class OfflineActivationEmulator:
                 offset += 1
                 result["hardware_locked"] = hw_locked
                 license_data["hardware_locked"] = hw_locked
-
-            elif magic == b"ACTF":
-                offset += 4
-                iv = content[offset : offset + 16]
-                offset += 16
-                encrypted_data = content[offset:]
-                license_data["encrypted"] = True
-                license_data["iv"] = iv.hex()
-                license_data["encrypted_data_length"] = len(encrypted_data)
-                license_data["encrypted_data_hash"] = hashlib.sha256(encrypted_data).hexdigest()[:16]
-
-                if hasattr(self, "encryption_key") and self.encryption_key:
-                    try:
-                        from cryptography.hazmat.backends import default_backend
-                        from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-
-                        cipher = Cipher(algorithms.AES(self.encryption_key), modes.CBC(iv), backend=default_backend())
-                        decryptor = cipher.decryptor()
-                        decrypted = decryptor.update(encrypted_data) + decryptor.finalize()
-                        padding_len = decrypted[-1] if decrypted else 0
-                        if 0 < padding_len <= 16:
-                            decrypted = decrypted[:-padding_len]
-                        license_data["decrypted_data"] = decrypted.decode("utf-8", errors="replace")
-                        license_data["decryption_success"] = True
-                    except Exception as decrypt_err:
-                        license_data["decryption_error"] = str(decrypt_err)
-                        license_data["decryption_success"] = False
-                        logger.debug("Decryption error: %s", decrypt_err, exc_info=True)
 
         except (struct.error, IndexError) as e:
             result["errors"].append(f"Binary parsing error: {e}")

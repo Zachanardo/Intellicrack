@@ -201,7 +201,7 @@ class UnifiedProtectionEngine:
         scan_options = f"deep_scan:{deep_scan},timeout:{timeout}"
         cached_result = self.cache.get(file_path, scan_options)
         if cached_result is not None:
-            logger.debug(f"Using cached analysis for {file_path}")
+            logger.debug("Using cached analysis for %s", file_path)
             return cached_result
 
         # Initialize result
@@ -259,9 +259,9 @@ class UnifiedProtectionEngine:
                             self._merge_protection_results(result, protection_result)
 
                 except concurrent.futures.TimeoutError:
-                    logger.warning(f"{name} analysis timed out")
+                    logger.warning("%s analysis timed out", name)
                 except Exception as e:
-                    logger.error(f"{name} analysis error: {e}")
+                    logger.exception("%s analysis error: %s", name, e)
 
         # Post-process and consolidate results
         self._consolidate_results(result)
@@ -292,7 +292,7 @@ class UnifiedProtectionEngine:
                 extract_strings=True,
             )
         except Exception as e:
-            logger.error(f"Protection analysis error: {e}")
+            logger.exception("Protection analysis error: %s", e)
             return None
 
     def _run_heuristic_analysis(self, file_path: str) -> dict[str, Any] | None:
@@ -379,7 +379,7 @@ class UnifiedProtectionEngine:
             return heuristics
 
         except Exception as e:
-            logger.error(f"Heuristic analysis error: {e}")
+            logger.exception("Heuristic analysis error: %s", e)
             return None
 
     def _merge_protection_results(self, result: UnifiedProtectionResult, protection_analysis: AdvancedProtectionAnalysis) -> None:
@@ -452,7 +452,7 @@ class UnifiedProtectionEngine:
             finally:
                 loop.close()
         except Exception as e:
-            logger.error(f"ICP analysis error: {e}")
+            logger.exception("ICP analysis error: %s", e)
             return None
 
     def _merge_icp_results(self, result: UnifiedProtectionResult, icp_result: ICPScanResult) -> None:
@@ -689,7 +689,7 @@ class UnifiedProtectionEngine:
                     "confidence": 80.0,
                 }
             except Exception as e:
-                logger.debug(f"Quick protection scan failed: {e}")
+                logger.debug("Quick protection scan failed: %s", e)
 
         return {
             "protected": False,
@@ -729,7 +729,7 @@ class UnifiedProtectionEngine:
 
         """
         removed = self.cache.cleanup_invalid()
-        logger.info(f"Cleaned up {removed} invalid cache entries")
+        logger.info("Cleaned up %d invalid cache entries", removed)
         return removed
 
     def save_cache(self) -> None:
@@ -752,7 +752,7 @@ class UnifiedProtectionEngine:
         removed |= self.cache.remove(file_path, "deep_scan:False,timeout:60")
 
         if removed:
-            logger.debug(f"Removed {file_path} from cache")
+            logger.debug("Removed %s from cache", file_path)
 
         return removed
 

@@ -9,6 +9,7 @@ Licensed under GNU General Public License v3.0
 
 import logging
 from dataclasses import dataclass
+from typing import Any, cast
 
 import frida
 
@@ -80,7 +81,7 @@ class FridaStalkerEngine:
         """
         self.session = session
         self.traces: dict[int, StalkerTrace] = {}
-        self.script = None
+        self.script: frida.core.Script
         self._init_stalker()
 
     def _init_stalker(self) -> None:
@@ -275,18 +276,19 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         if message["type"] == "send":
-            payload = message.get("payload", {})
+            payload = cast("dict[str, Any]", message.get("payload", {}))
             msg_type = payload.get("type")
 
             if msg_type == "stalker_trace":
-                thread_id = payload["threadId"]
+                thread_id = int(payload["threadId"])
+                basic_blocks_raw = cast("list[dict[str, Any]]", payload["basicBlocks"])
                 self.traces[thread_id] = StalkerTrace(
                     thread_id=thread_id,
-                    timestamp=payload["timestamp"],
-                    instructions=payload["instructions"],
-                    basic_blocks=[(b["start"], b["end"]) for b in payload["basicBlocks"] if b["end"]],
-                    call_graph=payload["callGraph"],
-                    coverage=payload["coverage"],
+                    timestamp=float(payload["timestamp"]),
+                    instructions=cast("list[dict[str, object]]", payload["instructions"]),
+                    basic_blocks=[(int(b["start"]), int(b["end"])) for b in basic_blocks_raw if b.get("end") is not None],
+                    call_graph=cast("dict[int, list[int]]", payload["callGraph"]),
+                    coverage=float(payload["coverage"]),
                 )
 
     def start_trace(self, thread_id: int | None = None) -> bool:
@@ -300,10 +302,10 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         try:
-            result = self.script.exports.start_trace(thread_id)
-            return result["success"]
+            result = cast("dict[str, Any]", self.script.exports.start_trace(thread_id))
+            return bool(result["success"])
         except Exception as e:
-            logger.error("Failed to start trace: %s", e, exc_info=True)
+            logger.exception("Failed to start trace: %s", e)
             return False
 
     def stop_trace(self, thread_id: int) -> bool:
@@ -317,10 +319,10 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         try:
-            result = self.script.exports.stop_trace(thread_id)
-            return result["success"]
+            result = cast("dict[str, Any]", self.script.exports.stop_trace(thread_id))
+            return bool(result["success"])
         except Exception as e:
-            logger.error("Failed to stop trace: %s", e, exc_info=True)
+            logger.exception("Failed to stop trace: %s", e)
             return False
 
     def get_trace(self, thread_id: int) -> StalkerTrace | None:
@@ -348,7 +350,7 @@ class FridaHeapTracker:
         """
         self.session = session
         self.allocations: dict[int, HeapAllocation] = {}
-        self.script = None
+        self.script: frida.core.Script
         self._init_heap_tracker()
 
     def _init_heap_tracker(self) -> None:
@@ -543,24 +545,24 @@ send({ type: 'heap_tracking_ready' });
 
         """
         if message["type"] == "send":
-            payload = message.get("payload", {})
+            payload = cast("dict[str, Any]", message.get("payload", {}))
             msg_type = payload.get("type")
 
             if msg_type == "heap_alloc":
-                addr = payload["address"]
+                addr = int(payload["address"])
                 self.allocations[addr] = HeapAllocation(
                     address=addr,
-                    size=payload["size"],
-                    timestamp=payload["timestamp"],
-                    thread_id=payload["threadId"],
-                    call_stack=payload["callStack"],
+                    size=int(payload["size"]),
+                    timestamp=float(payload["timestamp"]),
+                    thread_id=int(payload["threadId"]),
+                    call_stack=cast("list[int]", payload["callStack"]),
                 )
 
             elif msg_type == "heap_free":
-                addr = payload["address"]
+                addr = int(payload["address"])
                 if addr in self.allocations:
                     self.allocations[addr].freed = True
-                    self.allocations[addr].freed_timestamp = payload["timestamp"]
+                    self.allocations[addr].freed_timestamp = float(payload["timestamp"])
 
     def get_stats(self) -> dict[str, object]:
         """Get heap statistics.
@@ -569,7 +571,7 @@ send({ type: 'heap_tracking_ready' });
             Dictionary containing heap allocation statistics.
 
         """
-        return self.script.exports.get_heap_stats()
+        return cast("dict[str, object]", self.script.exports.get_heap_stats())
 
     def find_leaks(self) -> list[HeapAllocation]:
         """Find potential memory leaks.
@@ -578,8 +580,13 @@ send({ type: 'heap_tracking_ready' });
             List of HeapAllocation objects representing potential memory leaks.
 
         """
-        leaks = self.script.exports.find_leaks()
-        return [self.allocations.get(leak["address"]) for leak in leaks if leak["address"] in self.allocations]
+        leaks_raw = cast("list[dict[str, Any]]", self.script.exports.find_leaks())
+        leaks_result: list[HeapAllocation] = []
+        for leak in leaks_raw:
+            addr = int(leak["address"])
+            if addr in self.allocations:
+                leaks_result.append(self.allocations[addr])
+        return leaks_result
 
 
 class FridaThreadMonitor:
@@ -594,7 +601,7 @@ class FridaThreadMonitor:
         """
         self.session = session
         self.threads: dict[int, ThreadInfo] = {}
-        self.script = None
+        self.script: frida.core.Script
         self._init_thread_monitor()
 
     def _init_thread_monitor(self) -> None:
@@ -752,25 +759,27 @@ send({ type: 'thread_monitor_ready' });
             data: Additional binary data from Frida (unused).
 
         """
-        if message["type"] == "send":
-            payload = message.get("payload", {})
-            msg_type = payload.get("type")
+        if message["type"] != "send":
+            return
+        payload = cast("dict[str, Any]", message.get("payload", {}))
+        msg_type = payload.get("type")
 
-            if msg_type == "thread_created":
-                tid = payload["threadId"]
-                self.threads[tid] = ThreadInfo(
-                    thread_id=tid,
-                    entry_point=payload["entryPoint"],
-                    stack_base=0,  # Would need platform-specific code
-                    stack_size=0,
-                    creation_time=payload["creationTime"],
-                    parent_thread_id=payload.get("parentThreadId"),
-                )
+        if msg_type == "thread_created":
+            tid = int(payload["threadId"])
+            parent_tid = payload.get("parentThreadId")
+            self.threads[tid] = ThreadInfo(
+                thread_id=tid,
+                entry_point=int(payload["entryPoint"]),
+                stack_base=0,  # Would need platform-specific code
+                stack_size=0,
+                creation_time=float(payload["creationTime"]),
+                parent_thread_id=int(parent_tid) if parent_tid is not None else None,
+            )
 
-            elif msg_type == "thread_terminated":
-                tid = payload["threadId"]
-                if tid in self.threads:
-                    self.threads[tid].termination_time = payload["timestamp"]
+        elif msg_type == "thread_terminated":
+            tid = int(payload["threadId"])
+            if tid in self.threads:
+                self.threads[tid].termination_time = float(payload["timestamp"])
 
     def get_threads(self) -> list[ThreadInfo]:
         """Get all tracked threads.
@@ -788,7 +797,7 @@ send({ type: 'thread_monitor_ready' });
             List of dictionaries containing current system thread information.
 
         """
-        return self.script.exports.get_current_threads()
+        return cast("list[dict[str, object]]", self.script.exports.get_current_threads())
 
 
 class FridaExceptionHooker:
@@ -803,7 +812,7 @@ class FridaExceptionHooker:
         """
         self.session = session
         self.exceptions: list[ExceptionInfo] = []
-        self.script = None
+        self.script: frida.core.Script
         self._init_exception_hooker()
 
     def _init_exception_hooker(self) -> None:
@@ -942,25 +951,27 @@ send({ type: 'exception_hooking_ready' });
 
         """
         if message["type"] == "send":
-            payload = message.get("payload", {})
+            payload = cast("dict[str, Any]", message.get("payload", {}))
             msg_type = payload.get("type")
 
             if msg_type == "exception_raised":
+                exc_addr_raw = payload.get("exceptionAddress")
+                exc_code_raw = payload.get("exceptionCode")
                 self.exceptions.append(
                     ExceptionInfo(
-                        exception_address=payload.get("exceptionAddress", 0),
-                        exception_code=payload.get("exceptionCode", 0),
+                        exception_address=int(exc_addr_raw) if exc_addr_raw is not None else 0,
+                        exception_code=int(exc_code_raw) if exc_code_raw is not None else 0,
                         handler_address=0,
-                        thread_id=payload["threadId"],
-                        timestamp=payload["timestamp"],
+                        thread_id=int(payload["threadId"]),
+                        timestamp=float(payload["timestamp"]),
                         handled=False,
-                        exception_record=payload,
+                        exception_record=cast("dict[str, object]", payload),
                     ),
                 )
 
             elif msg_type == "exception_handled":
                 if self.exceptions:
-                    self.exceptions[-1].handled = payload["handled"]
+                    self.exceptions[-1].handled = bool(payload["handled"])
 
     def get_exceptions(self) -> list[ExceptionInfo]:
         """Get all tracked exceptions.
@@ -993,7 +1004,7 @@ class FridaNativeReplacer:
         """
         self.session = session
         self.replacements: dict[int, dict[str, object]] = {}
-        self.script = None
+        self.script: frida.core.Script
         self._init_replacer()
 
     def _init_replacer(self) -> None:
@@ -1143,11 +1154,11 @@ send({ type: 'replacer_ready' });
 
         """
         if message["type"] == "send":
-            payload = message.get("payload", {})
+            payload = cast("dict[str, Any]", message.get("payload", {}))
             msg_type = payload.get("type")
 
             if msg_type == "function_replaced":
-                addr = payload["address"]
+                addr = int(payload["address"])
                 self.replacements[addr] = {"args": payload["args"], "result": payload["result"]}
 
     def replace_function(
@@ -1170,9 +1181,10 @@ send({ type: 'replacer_ready' });
 
         """
         try:
-            return self.script.exports.replace(address, impl_name, ret_type, arg_types or [])
+            result = self.script.exports.replace(address, impl_name, ret_type, arg_types or [])
+            return bool(result)
         except Exception as e:
-            logger.error("Failed to replace function: %s", e, exc_info=True)
+            logger.exception("Failed to replace function: %s", e)
             return False
 
     def restore_function(self, address: int) -> bool:
@@ -1186,9 +1198,10 @@ send({ type: 'replacer_ready' });
 
         """
         try:
-            return self.script.exports.restore(address)
+            result = self.script.exports.restore(address)
+            return bool(result)
         except Exception as e:
-            logger.error("Failed to restore function: %s", e, exc_info=True)
+            logger.exception("Failed to restore function: %s", e)
             return False
 
 
@@ -1203,7 +1216,7 @@ class FridaRPCInterface:
 
         """
         self.session = session
-        self.script = None
+        self.script: frida.core.Script
         self._init_rpc()
 
     def _init_rpc(self) -> None:
@@ -1552,7 +1565,8 @@ send({ type: 'rpc_ready' });
             Bytes read from the specified memory address.
 
         """
-        return self.script.exports.memory.read(address, size)
+        result = self.script.exports.memory.read(address, size)
+        return result if isinstance(result, bytes) else bytes(result)
 
     def memory_write(self, address: int, data: bytes) -> bool:
         """Write memory.
@@ -1565,7 +1579,8 @@ send({ type: 'rpc_ready' });
             True if write succeeded, False otherwise.
 
         """
-        return self.script.exports.memory.write(address, data)
+        result = self.script.exports.memory.write(address, data)
+        return bool(result)
 
     def memory_scan(self, pattern: str, limit: int = 10) -> list[dict[str, int]]:
         """Scan memory for pattern.
@@ -1578,7 +1593,7 @@ send({ type: 'rpc_ready' });
             List of dictionaries containing match address and size.
 
         """
-        return self.script.exports.memory.scan(pattern, limit)
+        return cast("list[dict[str, int]]", self.script.exports.memory.scan(pattern, limit))
 
     def module_find_export(self, module: str, name: str) -> int | None:
         """Find module export.
@@ -1591,7 +1606,8 @@ send({ type: 'rpc_ready' });
             Address of the exported function, or None if not found.
 
         """
-        return self.script.exports.module.find_export(module, name)
+        result = self.script.exports.module.find_export(module, name)
+        return int(result) if result is not None else None
 
     def evaluate(self, code: str) -> object:
         """Evaluate JavaScript code.
@@ -1617,12 +1633,12 @@ class FridaAdvancedHooking:
 
         """
         self.session = session
-        self.stalker = None
-        self.heap_tracker = None
-        self.thread_monitor = None
-        self.exception_hooker = None
-        self.native_replacer = None
-        self.rpc_interface = None
+        self.stalker: FridaStalkerEngine | None = None
+        self.heap_tracker: FridaHeapTracker | None = None
+        self.thread_monitor: FridaThreadMonitor | None = None
+        self.exception_hooker: FridaExceptionHooker | None = None
+        self.native_replacer: FridaNativeReplacer | None = None
+        self.rpc_interface: FridaRPCInterface | None = None
 
     def init_stalker(self) -> FridaStalkerEngine:
         """Initialize Stalker engine.
@@ -1631,8 +1647,9 @@ class FridaAdvancedHooking:
             FridaStalkerEngine instance for instruction-level tracing.
 
         """
-        self.stalker = FridaStalkerEngine(self.session)
-        return self.stalker
+        stalker_instance = FridaStalkerEngine(self.session)
+        self.stalker = stalker_instance
+        return stalker_instance
 
     def init_heap_tracker(self) -> FridaHeapTracker:
         """Initialize heap tracking.
@@ -1641,8 +1658,9 @@ class FridaAdvancedHooking:
             FridaHeapTracker instance for monitoring heap allocations.
 
         """
-        self.heap_tracker = FridaHeapTracker(self.session)
-        return self.heap_tracker
+        heap_tracker_instance = FridaHeapTracker(self.session)
+        self.heap_tracker = heap_tracker_instance
+        return heap_tracker_instance
 
     def init_thread_monitor(self) -> FridaThreadMonitor:
         """Initialize thread monitoring.
@@ -1651,8 +1669,9 @@ class FridaAdvancedHooking:
             FridaThreadMonitor instance for tracking thread creation and termination.
 
         """
-        self.thread_monitor = FridaThreadMonitor(self.session)
-        return self.thread_monitor
+        thread_monitor_instance = FridaThreadMonitor(self.session)
+        self.thread_monitor = thread_monitor_instance
+        return thread_monitor_instance
 
     def init_exception_hooker(self) -> FridaExceptionHooker:
         """Initialize exception hooking.
@@ -1661,8 +1680,9 @@ class FridaAdvancedHooking:
             FridaExceptionHooker instance for monitoring exception handlers.
 
         """
-        self.exception_hooker = FridaExceptionHooker(self.session)
-        return self.exception_hooker
+        exception_hooker_instance = FridaExceptionHooker(self.session)
+        self.exception_hooker = exception_hooker_instance
+        return exception_hooker_instance
 
     def init_native_replacer(self) -> FridaNativeReplacer:
         """Initialize native function replacement.
@@ -1671,8 +1691,9 @@ class FridaAdvancedHooking:
             FridaNativeReplacer instance for replacing native function implementations.
 
         """
-        self.native_replacer = FridaNativeReplacer(self.session)
-        return self.native_replacer
+        native_replacer_instance = FridaNativeReplacer(self.session)
+        self.native_replacer = native_replacer_instance
+        return native_replacer_instance
 
     def init_rpc_interface(self) -> FridaRPCInterface:
         """Initialize RPC interface.
@@ -1681,8 +1702,9 @@ class FridaAdvancedHooking:
             FridaRPCInterface instance for complex RPC operations.
 
         """
-        self.rpc_interface = FridaRPCInterface(self.session)
-        return self.rpc_interface
+        rpc_interface_instance = FridaRPCInterface(self.session)
+        self.rpc_interface = rpc_interface_instance
+        return rpc_interface_instance
 
     def init_all(self) -> "FridaAdvancedHooking":
         """Initialize all advanced features.

@@ -230,7 +230,7 @@ class VMProtectDetector:
                 detection.technical_details["string_matches"] = string_matches
 
         except Exception as e:
-            logger.error(f"VMProtect detection failed: {e}")
+            logger.exception("VMProtect detection failed: %s", e)
             detection.technical_details["error"] = str(e)
 
         return detection
@@ -299,7 +299,7 @@ class VMProtectDetector:
             pe.close()
 
         except Exception as e:
-            logger.debug(f"Section analysis failed: {e}")
+            logger.debug("Section analysis failed: %s", e)
 
         return analysis
 
@@ -435,7 +435,7 @@ class VMProtectDetector:
                     break
 
         except Exception as e:
-            logger.debug(f"Failed to extract opcodes at offset 0x{offset:08x}: {e}")
+            logger.debug("Failed to extract opcodes at offset 0x%08x: %s", offset, e)
 
         return opcodes
 
@@ -489,7 +489,7 @@ class VMProtectDetector:
                         return i
 
             except Exception as e:
-                logger.debug(f"Failed to analyze dispatcher at offset 0x{i:08x}: {e}")
+                logger.debug("Failed to analyze dispatcher at offset 0x%08x: %s", i, e)
                 continue
 
         return None
@@ -515,7 +515,7 @@ class VMProtectDetector:
             pe.close()
 
         except Exception as e:
-            logger.debug(f"Failed to find handler table: {e}")
+            logger.debug("Failed to find handler table: %s", e)
 
         return None
 
@@ -608,7 +608,7 @@ class VMProtectDetector:
                         return insn.address
 
         except Exception as e:
-            logger.debug(f"Failed to find VM exit point: {e}")
+            logger.debug("Failed to find VM exit point: %s", e)
 
         return None
 
@@ -694,7 +694,7 @@ class VMProtectDetector:
                         junk_instructions += 1
 
         except Exception as e:
-            logger.debug(f"Failed to calculate junk code ratio: {e}")
+            logger.debug("Failed to calculate junk code ratio: %s", e)
 
         if total_instructions == 0:
             return 0.0
@@ -712,15 +712,17 @@ class VMProtectDetector:
             return VMProtectLevel.UNKNOWN
 
         handler_complexity = sum(h.complexity for h in handlers) / len(handlers)
-        region_count = len(regions)
-
         avg_region_complexity = sum(r.control_flow_complexity for r in regions) / len(regions) if regions else 0
 
         if mutation_score > 0.7 or handler_complexity > 80 or avg_region_complexity > 5.0:
             return VMProtectLevel.ULTRA
-        if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5:
-            return VMProtectLevel.STANDARD
-        return VMProtectLevel.LITE
+        region_count = len(regions)
+
+        return (
+            VMProtectLevel.STANDARD
+            if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5
+            else VMProtectLevel.LITE
+        )
 
     def _detect_version(self, data: bytes, section_analysis: dict) -> str:
         """Detect VMProtect version."""
@@ -786,7 +788,7 @@ class VMProtectDetector:
                         analysis["vm_transitions"] += 1
 
             except Exception as e:
-                logger.debug(f"Failed to analyze control flow in region at 0x{region.start_offset:08x}: {e}")
+                logger.debug("Failed to analyze control flow in region at 0x%08x: %s", region.start_offset, e)
                 continue
 
         return analysis
@@ -810,17 +812,23 @@ class VMProtectDetector:
                 "Success rate: 40-60% depending on code complexity",
             ))
         elif detection.protection_level == VMProtectLevel.STANDARD:
-            recommendations.extend((
-                "Standard protection - Use pattern-based devirtualization with handler identification",
-                "Recommended tools: x64dbg with VMProtect plugin, IDA Pro with devirtualization scripts",
-            ))
-            recommendations.extend(("Expected time: 1-3 weeks", "Success rate: 65-75%"))
+            recommendations.extend(
+                (
+                    "Standard protection - Use pattern-based devirtualization with handler identification",
+                    "Recommended tools: x64dbg with VMProtect plugin, IDA Pro with devirtualization scripts",
+                    "Expected time: 1-3 weeks",
+                    "Success rate: 65-75%",
+                )
+            )
         elif detection.protection_level == VMProtectLevel.LITE:
-            recommendations.append("Lite protection - Basic handler analysis and code flow reconstruction")
-            recommendations.append("Recommended tools: IDA Pro, Ghidra with custom scripts")
-            recommendations.append("Expected time: 3-7 days")
-            recommendations.append("Success rate: 75-85%")
-
+            recommendations.extend(
+                (
+                    "Lite protection - Basic handler analysis and code flow reconstruction",
+                    "Recommended tools: IDA Pro, Ghidra with custom scripts",
+                    "Expected time: 3-7 days",
+                    "Success rate: 75-85%",
+                )
+            )
         if detection.mode == VMProtectMode.MUTATION:
             recommendations.append("Mutation mode detected - Focus on pattern normalization before analysis")
 

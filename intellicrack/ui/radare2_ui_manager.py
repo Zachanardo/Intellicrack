@@ -92,7 +92,7 @@ class R2UIManager(QObject):
             self.logger.info("UI components initialized successfully")
 
         except Exception as e:
-            self.logger.error("Failed to initialize UI components: %s", e)
+            self.logger.exception("Failed to initialize UI components: %s", e)
 
     def _setup_signal_connections(self) -> None:
         """Set up signal connections between components."""
@@ -109,7 +109,7 @@ class R2UIManager(QObject):
             self.logger.info("Signal connections established")
 
         except Exception as e:
-            self.logger.error("Failed to setup signal connections: %s", e)
+            self.logger.exception("Failed to setup signal connections: %s", e)
 
     def integrate_with_application(self, main_app: object) -> bool:
         """Integrate all radare2 UI components with the main application.
@@ -201,11 +201,11 @@ class R2UIManager(QObject):
             if integration_success:
                 self.logger.info("R2UIManager integration completed successfully")
                 return True
-            self.logger.error("R2UIManager integration failed")
+            self.logger.exception("R2UIManager integration failed")
             return False
 
         except Exception as e:
-            self.logger.error("Failed to integrate with application: %s", e)
+            self.logger.exception("Failed to integrate with application: %s", e)
             return False
 
     def _integrate_menu_items(self, main_app: object) -> None:
@@ -241,7 +241,7 @@ class R2UIManager(QObject):
                 self.logger.info("Menu integration completed")
 
         except Exception as e:
-            self.logger.error("Menu integration failed: %s", e)
+            self.logger.exception("Menu integration failed: %s", e)
 
     def _setup_binary_path_sync(self, main_app: object) -> None:
         """Set up binary path synchronization."""
@@ -257,7 +257,7 @@ class R2UIManager(QObject):
             self.logger.info("Binary path synchronization setup completed")
 
         except Exception as e:
-            self.logger.error("Binary path sync setup failed: %s", e)
+            self.logger.exception("Binary path sync setup failed: %s", e)
 
     def _integrate_status_bar(self, main_app: object) -> None:
         """Integrate with main application status bar."""
@@ -271,7 +271,7 @@ class R2UIManager(QObject):
                 self.logger.info("Status bar integration completed")
 
         except Exception as e:
-            self.logger.error("Status bar integration failed: %s", e)
+            self.logger.exception("Status bar integration failed: %s", e)
 
     def set_binary_path(self, path: str) -> None:
         """Set binary path for all components."""
@@ -291,7 +291,7 @@ class R2UIManager(QObject):
             self.logger.info("Binary path set: %s", path)
 
         except Exception as e:
-            self.logger.error("Failed to set binary path: %s", e)
+            self.logger.exception("Failed to set binary path: %s", e)
 
     def start_analysis(self, analysis_type: str, options: dict[str, Any] = None) -> bool | None:
         """Start radare2 analysis of specified type."""
@@ -323,11 +323,11 @@ class R2UIManager(QObject):
 
                 self.logger.info("Started %s analysis", analysis_type)
                 return True
-            self.logger.error("R2 widget not available")
+            self.logger.exception("R2 widget not available")
             return False
 
         except Exception as e:
-            self.logger.error("Failed to start analysis: %s", e)
+            self.logger.exception("Failed to start analysis: %s", e)
             self.analysis_failed.emit(str(e))
             return False
 
@@ -342,7 +342,7 @@ class R2UIManager(QObject):
                     self.logger.info("Configuration updated")
 
         except Exception as e:
-            self.logger.error("Failed to show configuration: %s", e)
+            self.logger.exception("Failed to show configuration: %s", e)
 
     def _apply_configuration(self, config: dict[str, Any]) -> None:
         """Apply configuration to all components."""
@@ -357,7 +357,7 @@ class R2UIManager(QObject):
             self.logger.info("Configuration applied to all components")
 
         except Exception as e:
-            self.logger.error("Failed to apply configuration: %s", e)
+            self.logger.exception("Failed to apply configuration: %s", e)
 
     def export_results(self, file_path: str = None) -> bool:
         """Export current analysis results."""
@@ -423,7 +423,7 @@ class R2UIManager(QObject):
             return True
 
         except Exception as e:
-            self.logger.error("Failed to export results to %s: %s", file_path, e)
+            self.logger.exception("Failed to export results to %s: %s", file_path, e)
             self.status_updated.emit(f"Export failed: {e!s}")
             return False
 
@@ -494,7 +494,7 @@ class R2UIManager(QObject):
             self.logger.info("R2UIManager cleanup completed")
 
         except Exception as e:
-            self.logger.error("Cleanup failed: %s", e)
+            self.logger.exception("Cleanup failed: %s", e)
 
 
 def create_r2_ui_manager(main_app: object | None = None) -> R2UIManager:
@@ -523,11 +523,11 @@ def integrate_radare2_ui_comprehensive(main_app: object) -> R2UIManager | None:
         if ui_manager.integrate_with_application(main_app):
             logger.info("Comprehensive radare2 UI integration completed successfully")
             return ui_manager
-        logger.error("Comprehensive radare2 UI integration failed")
+        logger.exception("Comprehensive radare2 UI integration failed")
         return None
 
     except Exception as e:
-        logger.error("Failed to integrate radare2 UI comprehensively: %s", e)
+        logger.exception("Failed to integrate radare2 UI comprehensively: %s", e)
         return None
 
 

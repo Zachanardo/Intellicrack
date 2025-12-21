@@ -73,7 +73,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
         self.binary_path = file_path
         self.global_detections = []
         self.detection_offsets = set()
-        logger.info(f"Initialized streaming crypto detection for: {file_path}")
+        logger.info("Initialized streaming crypto detection for: %s", file_path)
 
     def analyze_chunk(self, context: ChunkContext) -> dict[str, Any]:
         """Analyze a single chunk for cryptographic routines.
@@ -123,8 +123,8 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                 )
 
             logger.debug(
-                f"Chunk {context.chunk_number}/{context.total_chunks}: "
-                f"Found {len(filtered_detections)} crypto routines at offset 0x{context.offset:08x}",
+                "Chunk %d/%d: Found %d crypto routines at offset 0x%08x",
+                context.chunk_number, context.total_chunks, len(filtered_detections), context.offset,
             )
 
             return {
@@ -136,7 +136,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
             }
 
         except Exception as e:
-            logger.error(f"Error analyzing chunk at offset 0x{context.offset:08x}: {e}")
+            logger.exception("Error analyzing chunk at offset 0x%08x: %s", context.offset, e)
             return {
                 "chunk_offset": context.offset,
                 "chunk_size": context.size,
@@ -207,15 +207,14 @@ class StreamingCryptoDetector(StreamingAnalyzer):
                 merged["errors"] = errors
 
             logger.info(
-                f"Merged {len(results)} chunk results: "
-                f"{len(all_detections)} total detections across "
-                f"{len(total_algorithm_counts)} algorithm types",
+                "Merged %d chunk results: %d total detections across %d algorithm types",
+                len(results), len(all_detections), len(total_algorithm_counts),
             )
 
             return merged
 
         except Exception as e:
-            logger.error(f"Error merging detection results: {e}")
+            logger.exception("Error merging detection results: %s", e)
             return {"error": str(e), "total_detections": 0, "detections": []}
 
     def finalize_analysis(self, merged_results: dict[str, Any]) -> dict[str, Any]:
@@ -255,13 +254,14 @@ class StreamingCryptoDetector(StreamingAnalyzer):
             }
 
             logger.info(
-                f"Finalized analysis: {len(unique_algorithms)} unique algorithms, {len(licensing_relevant)} licensing-relevant routines",
+                "Finalized analysis: %d unique algorithms, %d licensing-relevant routines",
+                len(unique_algorithms), len(licensing_relevant),
             )
 
             return merged_results
 
         except Exception as e:
-            logger.error(f"Error finalizing analysis: {e}")
+            logger.exception("Error finalizing analysis: %s", e)
             merged_results["finalization_error"] = str(e)
             return merged_results
 
@@ -382,10 +382,10 @@ def analyze_crypto_streaming(
             try:
                 checkpoint_path.unlink()
             except Exception as e:
-                logger.debug(f"Failed to delete checkpoint file: {e}")
+                logger.debug("Failed to delete checkpoint file: %s", e)
 
         return results
 
     except Exception as e:
-        logger.error(f"Streaming crypto analysis failed: {e}")
+        logger.exception("Streaming crypto analysis failed: %s", e)
         return {"error": str(e), "status": "failed"}

@@ -99,7 +99,7 @@ class TerminalTab(BaseTab):
             logger.info("Terminal tab content setup complete")
 
         except Exception as e:
-            logger.error("Terminal tab layout setup failed: %s", e, exc_info=True)
+            logger.exception("Terminal tab layout setup failed: %s", e)
             fallback_layout = QVBoxLayout(self)
             error_label = QLabel(f"Terminal initialization failed: {e}")
             fallback_layout.addWidget(error_label)
@@ -172,7 +172,7 @@ class TerminalTab(BaseTab):
         """Create a new terminal session."""
         if self.terminal_widget:
             session_id = self.terminal_widget.create_new_session()
-            logger.info(f"Created new terminal session: {session_id}")
+            logger.info("Created new terminal session: %s", session_id)
             self._update_status()
 
     def clear_current_terminal(self) -> None:
@@ -184,7 +184,7 @@ class TerminalTab(BaseTab):
 
         if terminal:
             terminal.clear()
-            logger.info(f"Cleared terminal session: {session_id}")
+            logger.info("Cleared terminal session: %s", session_id)
 
     def export_terminal_log(self) -> None:
         """Export current terminal log to file."""
@@ -209,12 +209,12 @@ class TerminalTab(BaseTab):
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(terminal.terminal_display.toPlainText())
 
-                logger.info(f"Terminal log exported to: {filename}")
+                logger.info("Terminal log exported to: %s", filename)
 
                 self.status_label.setText(f"Status: Log exported to {filename}")
 
             except Exception as e:
-                logger.error(f"Error exporting terminal log: {e}")
+                logger.exception("Error exporting terminal log: %s", e)
                 self.status_label.setText(f"Status: Export error - {e}")
 
     def kill_current_process(self) -> None:
@@ -230,7 +230,7 @@ class TerminalTab(BaseTab):
 
         if terminal.is_running():
             terminal.stop_process()
-            logger.info(f"Killed process in session: {session_id}")
+            logger.info("Killed process in session: %s", session_id)
             self.status_label.setText("Status: Process killed")
         else:
             logger.info("No process running in current session")
@@ -246,7 +246,7 @@ class TerminalTab(BaseTab):
 
         """
         self._update_status()
-        logger.info(f"Session created: {session_id}")
+        logger.info("Session created: %s", session_id)
 
     def _on_session_closed(self, session_id: object) -> None:
         """Handle session closed event.
@@ -258,7 +258,7 @@ class TerminalTab(BaseTab):
 
         """
         self._update_status()
-        logger.info(f"Session closed: {session_id}")
+        logger.info("Session closed: %s", session_id)
 
     def _on_active_session_changed(self, session_id: object) -> None:
         """Handle active session changed event.
@@ -270,7 +270,7 @@ class TerminalTab(BaseTab):
 
         """
         self._update_status()
-        logger.info(f"Active session changed: {session_id}")
+        logger.info("Active session changed: %s", session_id)
 
     def _update_status(self) -> None:
         """Update status bar with current session info."""

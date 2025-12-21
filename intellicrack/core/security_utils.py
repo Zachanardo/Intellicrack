@@ -117,13 +117,13 @@ def secure_subprocess(
         )
         return result
     except subprocess.TimeoutExpired:
-        logger.error("Subprocess command timed out after %s seconds: %s", timeout, command)
+        logger.exception("Subprocess command timed out after %s seconds: %s", timeout, command)
         raise
     except FileNotFoundError:
-        logger.error("Subprocess command failed: Command not found: %s", command[0])
+        logger.exception("Subprocess command failed: Command not found: %s", command[0])
         raise
     except Exception as e:
-        logger.error("Subprocess command failed with an unexpected error: %s", e, exc_info=True)
+        logger.exception("Subprocess command failed with an unexpected error: %s", e)
         raise
 
 

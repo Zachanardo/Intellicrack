@@ -68,9 +68,9 @@ class AIModelManager:
             try:
                 with open(self.config_path) as f:
                     self.config = json.load(f)
-                logger.info(f"Loaded model configuration from {self.config_path}")
+                logger.info("Loaded model configuration from %s", self.config_path)
             except Exception as e:
-                logger.error(f"Failed to load model config: {e}")
+                logger.exception("Failed to load model config: %s", e)
                 self.config = self._get_default_config()
         else:
             self.config = self._get_default_config()
@@ -81,9 +81,9 @@ class AIModelManager:
         try:
             with open(self.config_path, "w") as f:
                 json.dump(self.config, f, indent=2)
-            logger.info(f"Saved model configuration to {self.config_path}")
+            logger.info("Saved model configuration to %s", self.config_path)
         except Exception as e:
-            logger.error(f"Failed to save model config: {e}")
+            logger.exception("Failed to save model config: %s", e)
 
     def _get_default_config(self) -> dict[str, Any]:
         """Get default model configuration."""
@@ -137,15 +137,15 @@ class AIModelManager:
             if model_config.get("enabled", False):
                 try:
                     self._setup_model(model_name, model_config)
-                    logger.info(f"Initialized model: {model_name}")
+                    logger.info("Initialized model: %s", model_name)
                 except Exception as e:
-                    logger.error(f"Failed to initialize model {model_name}: {e}")
+                    logger.exception("Failed to initialize model %s: %s", model_name, e)
 
         # Set default active model
         default_model = self.config.get("default_model")
         if default_model and default_model in self.models:
             self.active_model = default_model
-            logger.info(f"Set active model: {default_model}")
+            logger.info("Set active model: %s", default_model)
 
     def _setup_model(self, name: str, config: dict[str, Any]) -> None:
         """Set up individual model.
@@ -226,12 +226,12 @@ class AIModelManager:
         """Set up local model."""
         model_path = config.get("model_path")
         if not model_path or not os.path.exists(model_path):
-            logger.warning(f"Model path not found for {name}: {model_path}")
+            logger.warning("Model path not found for %s: %s", name, model_path)
             return
 
         # Local model setup would involve loading the model
         # This is framework-specific (transformers, llama.cpp, etc.)
-        logger.info(f"Local model {name} configured at {model_path}")
+        logger.info("Local model %s configured at %s", name, model_path)
 
     def get_model(self, name: str | None = None) -> object:
         """Get a model instance.
@@ -275,7 +275,7 @@ class AIModelManager:
         # Check cache first
         if self.config.get("cache_enabled", True):
             if cached_model := self.cache_manager.get_model(name):
-                logger.info(f"Loaded model {name} from cache")
+                logger.info("Loaded model %s from cache", name)
                 return cached_model
 
         # Load model based on provider
@@ -327,7 +327,7 @@ class AIModelManager:
 
                 return {"model": model, "tokenizer": None}
             except ImportError:
-                logger.error("No local model backend available")
+                logger.exception("No local model backend available")
                 raise RuntimeError("No local model backend available (install transformers or llama-cpp-python)") from None
 
     def set_active_model(self, name: str) -> None:
@@ -341,7 +341,7 @@ class AIModelManager:
             raise ValueError(f"Model {name} not found")
 
         self.active_model = name
-        logger.info(f"Set active model: {name}")
+        logger.info("Set active model: %s", name)
 
     def list_models(self) -> list[str]:
         """List available models.
@@ -388,7 +388,7 @@ class AIModelManager:
         # Reinitialize model if enabled
         if config.get("enabled"):
             self._setup_model(name, self.config["models"][name])
-            logger.info(f"Reconfigured model: {name}")
+            logger.info("Reconfigured model: %s", name)
 
     def enable_model(self, name: str) -> None:
         """Enable a model.
@@ -405,7 +405,7 @@ class AIModelManager:
 
         # Initialize the model
         self._setup_model(name, self.config["models"][name])
-        logger.info(f"Enabled model: {name}")
+        logger.info("Enabled model: %s", name)
 
     def disable_model(self, name: str) -> None:
         """Disable a model.
@@ -428,7 +428,7 @@ class AIModelManager:
         if self.active_model == name:
             self.active_model = None
 
-        logger.info(f"Disabled model: {name}")
+        logger.info("Disabled model: %s", name)
 
     def get_performance_stats(self, name: str | None = None) -> dict[str, Any]:
         """Get performance statistics for a model.

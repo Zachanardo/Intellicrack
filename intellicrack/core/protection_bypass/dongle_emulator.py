@@ -150,12 +150,12 @@ class DongleMemory:
         memory_map = {"rom": self.rom, "ram": self.ram, "eeprom": self.eeprom}
         if region not in memory_map:
             error_msg = f"Invalid memory region: {region}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
         mem = memory_map[region]
         if offset + length > len(mem):
             error_msg = f"Read beyond memory bounds: {offset}+{length} > {len(mem)}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
         return bytes(mem[offset : offset + length])
 
@@ -164,18 +164,18 @@ class DongleMemory:
         memory_map = {"rom": self.rom, "ram": self.ram, "eeprom": self.eeprom}
         if region not in memory_map:
             error_msg = f"Invalid memory region: {region}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
         if region == "rom":
             for start, end in self.read_only_areas:
                 if offset >= start and offset < end:
                     error_msg = "Cannot write to read-only area"
-                    logger.error(error_msg)
+                    logger.exception(error_msg)
                     raise PermissionError(error_msg)
         mem = memory_map[region]
         if offset + len(data) > len(mem):
             error_msg = f"Write beyond memory bounds: {offset}+{len(data)} > {len(mem)}"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
         mem[offset : offset + len(data)] = data
 
@@ -283,8 +283,8 @@ class USBEmulator:
         self.alt_setting = 0
         self.endpoints: dict[int, dict[str, Any]] = {}
         self.setup_endpoints()
-        self.control_transfer_handlers: dict[int, Callable] = {}
-        self.bulk_transfer_handlers: dict[int, Callable] = {}
+        self.control_transfer_handlers: dict[int, Callable[..., bytes]] = {}
+        self.bulk_transfer_handlers: dict[int, Callable[..., bytes]] = {}
 
     def setup_endpoints(self) -> None:
         """Configure USB endpoints."""
@@ -297,7 +297,9 @@ class USBEmulator:
         """Handle USB control transfer."""
         request_key = (bmRequestType << 8) | bRequest
         if request_key in self.control_transfer_handlers:
-            return self.control_transfer_handlers[request_key](wValue, wIndex, data)
+            handler = self.control_transfer_handlers[request_key]
+            result = handler(wValue, wIndex, data)
+            return result if isinstance(result, bytes) else b""
 
         if bRequest == 0x06:
             descriptor_type = (wValue >> 8) & 0xFF
@@ -342,33 +344,36 @@ class USBEmulator:
 
     def get_string_descriptor(self, index: int) -> bytes:
         """Get USB string descriptor."""
-        strings = {
+        strings: dict[int, bytes | str] = {
             0: b"\x04\x03\x09\x04",
             1: "SafeNet Inc.",
             2: "Sentinel Hardware Key",
             3: "0123456789ABCDEF",
         }
         if index in strings:
-            if index == 0:
-                return strings[0]
-            string = strings[index]
-            string_utf16 = string.encode("utf-16-le")
-            descriptor = struct.pack("<BB", len(string_utf16) + 2, 3) + string_utf16
-            return descriptor + string.encode("ascii")
+            string_val = strings[index]
+            if isinstance(string_val, bytes):
+                return string_val
+            if isinstance(string_val, str):
+                string_utf16 = string_val.encode("utf-16-le")
+                descriptor = struct.pack("<BB", len(string_utf16) + 2, 3) + string_utf16
+                return descriptor + string_val.encode("ascii")
         return b""
 
     def bulk_transfer(self, endpoint: int, data: bytes) -> bytes:
         """Handle USB bulk transfer."""
         if endpoint in self.bulk_transfer_handlers:
-            return self.bulk_transfer_handlers[endpoint](data)
+            handler = self.bulk_transfer_handlers[endpoint]
+            result = handler(data)
+            return result if isinstance(result, bytes) else b""
         return b""
 
-    def register_control_handler(self, bmRequestType: int, bRequest: int, handler: Callable) -> None:
+    def register_control_handler(self, bmRequestType: int, bRequest: int, handler: Callable[..., bytes]) -> None:
         """Register handler for control transfer."""
         request_key = (bmRequestType << 8) | bRequest
         self.control_transfer_handlers[request_key] = handler
 
-    def register_bulk_handler(self, endpoint: int, handler: Callable) -> None:
+    def register_bulk_handler(self, endpoint: int, handler: Callable[..., bytes]) -> None:
         """Register handler for bulk transfer."""
         self.bulk_transfer_handlers[endpoint] = handler
 
@@ -388,25 +393,26 @@ class CryptoEngine:
 
         try:
             if algorithm == "AES":
-                cipher = AES.new(
+                aes_cipher = AES.new(
                     key[:32], AES.MODE_ECB
                 )  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
                 padded_data = data + b"\x00" * (16 - len(data) % 16)
-                return cipher.encrypt(padded_data)
+                encrypted_result: bytes = aes_cipher.encrypt(padded_data)
+                return encrypted_result
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] DES required for legacy HASP dongle protocol
+                des_cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] DES required for legacy HASP dongle protocol
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
-                return cipher.encrypt(padded_data)
+                return des_cipher.encrypt(padded_data)
             elif algorithm == "DES3":
-                cipher = DES3.new(
+                des3_cipher = DES3.new(
                     key[:24], DES3.MODE_ECB
                 )  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
                 padded_data = data + b"\x00" * (8 - len(data) % 8)
-                return cipher.encrypt(padded_data)
+                return des3_cipher.encrypt(padded_data)
             else:
                 return self._xor_encrypt(data, key)
         except Exception as e:
-            self.logger.error("Encryption error: %s", e)
+            self.logger.exception("Encryption error: %s", e)
             return self._xor_encrypt(data, key)
 
     def hasp_decrypt(self, data: bytes, key: bytes, algorithm: str = "AES") -> bytes:
@@ -417,25 +423,25 @@ class CryptoEngine:
 
         try:
             if algorithm == "AES":
-                cipher = AES.new(
+                aes_cipher = AES.new(
                     key[:32], AES.MODE_ECB
                 )  # lgtm[py/weak-cryptographic-algorithm] ECB required for HASP protocol compatibility
-                decrypted = cipher.decrypt(data)
+                decrypted: bytes = aes_cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES":
-                cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] DES required for legacy HASP dongle protocol
-                decrypted = cipher.decrypt(data)
+                des_cipher = DES.new(key[:8], DES.MODE_ECB)  # noqa: S304 lgtm[py/weak-cryptographic-algorithm] DES required for legacy HASP dongle protocol
+                decrypted = des_cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             elif algorithm == "DES3":
-                cipher = DES3.new(
+                des3_cipher = DES3.new(
                     key[:24], DES3.MODE_ECB
                 )  # lgtm[py/weak-cryptographic-algorithm] DES3 required for legacy HASP dongle protocol
-                decrypted = cipher.decrypt(data)
+                decrypted = des3_cipher.decrypt(data)
                 return decrypted.rstrip(b"\x00")
             else:
                 return self._xor_encrypt(data, key)
         except Exception as e:
-            self.logger.error("Decryption error: %s", e)
+            self.logger.exception("Decryption error: %s", e)
             return self._xor_encrypt(data, key)
 
     def sentinel_challenge_response(self, challenge: bytes, key: bytes) -> bytes:
@@ -470,10 +476,11 @@ class CryptoEngine:
 
         try:
             h = SHA256.new(data)
-            signer = PKCS1_v1_5.new(private_key)
-            return signer.sign(h)
+            signer = PKCS1_v1_5.new(private_key)  # type: ignore[arg-type]
+            signature: bytes = signer.sign(h)
+            return signature
         except Exception as e:
-            self.logger.error("RSA signing error: %s", e)
+            self.logger.exception("RSA signing error: %s", e)
             return hashlib.sha256(data).digest()
 
     def _xor_encrypt(self, data: bytes, key: bytes) -> bytes:
@@ -506,7 +513,7 @@ class HardwareDongleEmulator:
         self.wibukey_dongles: dict[int, WibuKeyDongle] = {}
         self.lock = threading.Lock()
 
-    def activate_dongle_emulation(self, dongle_types: list[str] = None) -> dict[str, Any]:
+    def activate_dongle_emulation(self, dongle_types: list[str] | None = None) -> dict[str, Any]:
         """Activate hardware dongle emulation.
 
         Args:
@@ -528,51 +535,54 @@ class HardwareDongleEmulator:
                 "eToken",
             ]
 
-        results = {
+        methods_applied: list[str] = []
+        errors: list[str] = []
+
+        results: dict[str, Any] = {
             "success": False,
             "emulated_dongles": [],
-            "methods_applied": [],
-            "errors": [],
+            "methods_applied": methods_applied,
+            "errors": errors,
         }
 
         try:
             self._create_virtual_dongles(dongle_types)
-            results["methods_applied"].append("Virtual Dongle Creation")
+            methods_applied.append("Virtual Dongle Creation")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"Virtual dongle creation failed: {e!s}")
+            self.logger.exception("Error in dongle_emulator: %s", e)
+            errors.append(f"Virtual dongle creation failed: {e!s}")
 
         try:
             self._setup_usb_emulation(dongle_types)
-            results["methods_applied"].append("USB Device Emulation")
+            methods_applied.append("USB Device Emulation")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"USB emulation failed: {e!s}")
+            self.logger.exception("Error in dongle_emulator: %s", e)
+            errors.append(f"USB emulation failed: {e!s}")
 
         try:
             self._hook_dongle_apis(dongle_types)
-            results["methods_applied"].append("API Hooking")
+            methods_applied.append("API Hooking")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"API hooking failed: {e!s}")
+            self.logger.exception("Error in dongle_emulator: %s", e)
+            errors.append(f"API hooking failed: {e!s}")
 
         try:
             if self.app and hasattr(self.app, "binary_path") and self.app.binary_path:
                 self._patch_dongle_checks()
-                results["methods_applied"].append("Binary Patching")
+                methods_applied.append("Binary Patching")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"Binary patching failed: {e!s}")
+            self.logger.exception("Error in dongle_emulator: %s", e)
+            errors.append(f"Binary patching failed: {e!s}")
 
         try:
             self._spoof_dongle_registry()
-            results["methods_applied"].append("Registry Spoofing")
+            methods_applied.append("Registry Spoofing")
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error in dongle_emulator: %s", e)
-            results["errors"].append(f"Registry spoofing failed: {e!s}")
+            self.logger.exception("Error in dongle_emulator: %s", e)
+            errors.append(f"Registry spoofing failed: {e!s}")
 
         results["emulated_dongles"] = list(self.virtual_dongles.keys())
-        results["success"] = len(results["methods_applied"]) > 0
+        results["success"] = len(methods_applied) > 0
         return results
 
     def _create_virtual_dongles(self, dongle_types: list[str]) -> None:
@@ -581,48 +591,48 @@ class HardwareDongleEmulator:
             for dongle_type in dongle_types:
                 if dongle_type in {"SafeNet", "HASP"}:
                     hasp_id = len(self.hasp_dongles) + 1
-                    dongle = HASPDongle(hasp_id=0x12345678 + hasp_id)
-                    dongle.memory.protected_areas = [(0, 1024)]
-                    dongle.memory.read_only_areas = [(0, 512)]
+                    hasp_dongle = HASPDongle(hasp_id=0x12345678 + hasp_id)
+                    hasp_dongle.memory.protected_areas = [(0, 1024)]
+                    hasp_dongle.memory.read_only_areas = [(0, 512)]
 
-                    license_info = struct.pack("<IIII", dongle.feature_id, 0xFFFFFFFF, 10, 1)
-                    dongle.license_data[: len(license_info)] = license_info
+                    license_info = struct.pack("<IIII", hasp_dongle.feature_id, 0xFFFFFFFF, 10, 1)
+                    hasp_dongle.license_data[: len(license_info)] = license_info
 
-                    self.hasp_dongles[hasp_id] = dongle
+                    self.hasp_dongles[hasp_id] = hasp_dongle
                     self.virtual_dongles[f"HASP_{hasp_id}"] = {
                         "type": "HASP",
-                        "hasp_id": dongle.hasp_id,
-                        "vendor_code": dongle.vendor_code,
-                        "feature_id": dongle.feature_id,
-                        "instance": dongle,
+                        "hasp_id": hasp_dongle.hasp_id,
+                        "vendor_code": hasp_dongle.vendor_code,
+                        "feature_id": hasp_dongle.feature_id,
+                        "instance": hasp_dongle,
                     }
 
                 elif dongle_type in {"Sentinel", "SafeNet"}:
                     sentinel_id = len(self.sentinel_dongles) + 1
-                    dongle = SentinelDongle(device_id=0x87654321 + sentinel_id)
-                    dongle.memory.protected_areas = [(0, 2048)]
-                    dongle.memory.read_only_areas = [(0, 1024)]
+                    sentinel_dongle = SentinelDongle(device_id=0x87654321 + sentinel_id)
+                    sentinel_dongle.memory.protected_areas = [(0, 2048)]
+                    sentinel_dongle.memory.read_only_areas = [(0, 1024)]
 
-                    self.sentinel_dongles[sentinel_id] = dongle
+                    self.sentinel_dongles[sentinel_id] = sentinel_dongle
                     self.virtual_dongles[f"Sentinel_{sentinel_id}"] = {
                         "type": "Sentinel",
-                        "device_id": dongle.device_id,
-                        "serial_number": dongle.serial_number,
-                        "instance": dongle,
+                        "device_id": sentinel_dongle.device_id,
+                        "serial_number": sentinel_dongle.serial_number,
+                        "instance": sentinel_dongle,
                     }
 
                 elif dongle_type == "CodeMeter":
                     wibu_id = len(self.wibukey_dongles) + 1
-                    dongle = WibuKeyDongle(serial_number=1000000 + wibu_id)
-                    dongle.memory.protected_areas = [(0, 4096)]
+                    wibu_dongle = WibuKeyDongle(serial_number=1000000 + wibu_id)
+                    wibu_dongle.memory.protected_areas = [(0, 4096)]
 
-                    self.wibukey_dongles[wibu_id] = dongle
+                    self.wibukey_dongles[wibu_id] = wibu_dongle
                     self.virtual_dongles[f"WibuKey_{wibu_id}"] = {
                         "type": "WibuKey",
-                        "firm_code": dongle.firm_code,
-                        "product_code": dongle.product_code,
-                        "serial_number": dongle.serial_number,
-                        "instance": dongle,
+                        "firm_code": wibu_dongle.firm_code,
+                        "product_code": wibu_dongle.product_code,
+                        "serial_number": wibu_dongle.serial_number,
+                        "instance": wibu_dongle,
                     }
 
         self.logger.info("Created %d virtual dongles with full memory emulation", len(self.virtual_dongles))
@@ -1368,7 +1378,7 @@ class HardwareDongleEmulator:
             "script": frida_script,
             "target": f"Dongle APIs: {', '.join(dongle_types)}",
         })
-        self.logger.info("Comprehensive dongle API hooks installed for: %s", ', '.join(dongle_types))
+        self.logger.info("Comprehensive dongle API hooks installed for: %s", ", ".join(dongle_types))
 
     def _patch_dongle_checks(self) -> None:
         """Patch binary instructions that check for dongle presence."""
@@ -1428,9 +1438,16 @@ class HardwareDongleEmulator:
 
             patches_applied = 0
             for pattern_info in dongle_check_patterns:
-                pattern = pattern_info["pattern"]
-                patch = pattern_info["patch"]
-                desc = pattern_info["desc"]
+                pattern_val = pattern_info["pattern"]
+                patch_val = pattern_info["patch"]
+                desc_val = pattern_info["desc"]
+
+                if not isinstance(pattern_val, bytes) or not isinstance(patch_val, bytes) or not isinstance(desc_val, str):
+                    continue
+
+                pattern = pattern_val
+                patch = patch_val
+                desc = desc_val
 
                 offset = binary_data.find(pattern)
                 while offset != -1:
@@ -1446,7 +1463,7 @@ class HardwareDongleEmulator:
             self.logger.info("Identified %d dongle check patterns to patch", patches_applied)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Error patching dongle checks: %s", e)
+            self.logger.exception("Error patching dongle checks: %s", e)
 
     def _spoof_dongle_registry(self) -> None:
         """Manipulate Windows registry to establish dongle presence."""
@@ -1505,7 +1522,7 @@ class HardwareDongleEmulator:
                     key = winreg.CreateKey(hkey, path)
                     if isinstance(value, int):
                         winreg.SetValueEx(key, name, 0, winreg.REG_DWORD, value)
-                    else:
+                    elif isinstance(value, str):
                         winreg.SetValueEx(key, name, 0, winreg.REG_SZ, value)
                     winreg.CloseKey(key)
                     self.logger.debug("Set registry entry %s\\%s = %s", path, name, value)
@@ -1513,7 +1530,7 @@ class HardwareDongleEmulator:
                     self.logger.warning("Could not set registry entry %s\\%s: %s", path, name, e)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Registry spoofing failed: %s", e)
+            self.logger.exception("Registry spoofing failed: %s", e)
 
     def process_hasp_challenge(self, challenge: bytes, dongle_id: int = 1) -> bytes:
         """Process HASP cryptographic challenge.
@@ -1527,7 +1544,7 @@ class HardwareDongleEmulator:
 
         """
         if dongle_id not in self.hasp_dongles:
-            self.logger.error("HASP dongle %s not found", dongle_id)
+            self.logger.exception("HASP dongle %s not found", dongle_id)
             return b""
 
         dongle = self.hasp_dongles[dongle_id]
@@ -1560,10 +1577,10 @@ class HardwareDongleEmulator:
             elif dongle_type.upper() == "WIBUKEY" and dongle_id in self.wibukey_dongles:
                 return self.wibukey_dongles[dongle_id].memory.read(region, offset, length)
             else:
-                self.logger.error("Dongle %s %s not found", dongle_type, dongle_id)
+                self.logger.exception("Dongle %s %s not found", dongle_type, dongle_id)
                 return b""
         except (ValueError, PermissionError) as e:
-            self.logger.error("Memory read error: %s", e)
+            self.logger.exception("Memory read error: %s", e)
             return b""
 
     def write_dongle_memory(self, dongle_type: str, dongle_id: int, region: str, offset: int, data: bytes) -> bool:
@@ -1591,10 +1608,10 @@ class HardwareDongleEmulator:
                 self.wibukey_dongles[dongle_id].memory.write(region, offset, data)
                 return True
             else:
-                self.logger.error("Dongle %s %s not found", dongle_type, dongle_id)
+                self.logger.exception("Dongle %s %s not found", dongle_type, dongle_id)
                 return False
         except (ValueError, PermissionError) as e:
-            self.logger.error("Memory write error: %s", e)
+            self.logger.exception("Memory write error: %s", e)
             return False
 
     def generate_emulation_script(self, dongle_types: list[str]) -> str:
@@ -1857,31 +1874,31 @@ class HardwareDongleEmulator:
 
             with self.lock:
                 if dongle_type_lower == "hasp" and self.hasp_dongles:
-                    dongle = next(iter(self.hasp_dongles.values()))
+                    hasp_dongle = next(iter(self.hasp_dongles.values()))
                     config["active_instance"] = {
-                        "hasp_id": dongle.hasp_id,
-                        "vendor_code": dongle.vendor_code,
-                        "feature_id": dongle.feature_id,
-                        "logged_in": dongle.logged_in,
-                        "session_handle": dongle.session_handle,
+                        "hasp_id": hasp_dongle.hasp_id,
+                        "vendor_code": hasp_dongle.vendor_code,
+                        "feature_id": hasp_dongle.feature_id,
+                        "logged_in": hasp_dongle.logged_in,
+                        "session_handle": hasp_dongle.session_handle,
                     }
                 elif dongle_type_lower == "sentinel" and self.sentinel_dongles:
-                    dongle = next(iter(self.sentinel_dongles.values()))
+                    sentinel_dongle = next(iter(self.sentinel_dongles.values()))
                     config["active_instance"] = {
-                        "device_id": dongle.device_id,
-                        "serial_number": dongle.serial_number,
-                        "firmware_version": dongle.firmware_version,
-                        "developer_id": dongle.developer_id,
+                        "device_id": sentinel_dongle.device_id,
+                        "serial_number": sentinel_dongle.serial_number,
+                        "firmware_version": sentinel_dongle.firmware_version,
+                        "developer_id": sentinel_dongle.developer_id,
                     }
                 elif dongle_type_lower in {"wibukey", "codemeter"} and self.wibukey_dongles:
-                    dongle = next(iter(self.wibukey_dongles.values()))
+                    wibu_dongle = next(iter(self.wibukey_dongles.values()))
                     config["active_instance"] = {
-                        "firm_code": dongle.firm_code,
-                        "product_code": dongle.product_code,
-                        "feature_code": dongle.feature_code,
-                        "serial_number": dongle.serial_number,
-                        "container_handle": dongle.container_handle,
-                        "active_licenses": list(dongle.active_licenses),
+                        "firm_code": wibu_dongle.firm_code,
+                        "product_code": wibu_dongle.product_code,
+                        "feature_code": wibu_dongle.feature_code,
+                        "serial_number": wibu_dongle.serial_number,
+                        "container_handle": wibu_dongle.container_handle,
+                        "active_licenses": list(wibu_dongle.active_licenses),
                     }
 
             return config

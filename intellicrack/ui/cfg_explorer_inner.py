@@ -44,7 +44,7 @@ Dependencies:
 
 import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, cast
 
 import networkx as nx
 
@@ -89,7 +89,7 @@ class CfgExplorerInner:
 
     """
 
-    def run_cfg_explorer_inner(self, app: object, *args: object, **kwargs: object) -> None:
+    def run_cfg_explorer_inner(self, app: Any, *args: Any, **kwargs: Any) -> None:
         """Run CFG explorer for visual control flow analysis when explorer not available.
 
         Initializes the CFG explorer infrastructure with NetworkX, Matplotlib, Radare2,
@@ -114,7 +114,8 @@ class CfgExplorerInner:
         try:
             from ..core.analysis.cfg_explorer import run_cfg_explorer as core_cfg_explorer
 
-            return core_cfg_explorer(app, *args, **kwargs)
+            core_cfg_explorer(app, *args, **kwargs)
+            return
         except ImportError:
             logger.exception("Import error in main_app.py")
             if hasattr(app, "update_output"):
@@ -141,7 +142,7 @@ class CfgExplorerInner:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message(f"[CFG Explorer] Error running CFG explorer: {explorer_error}"))
 
-    def _initialize_cfg_explorer_config(self, app: object) -> None:
+    def _initialize_cfg_explorer_config(self, app: Any) -> None:
         """Initialize CFG explorer configuration.
 
         Sets up default configuration dictionary for the CFG explorer with layout
@@ -164,7 +165,7 @@ class CfgExplorerInner:
                 "export_formats": ["png", "svg", "dot", "html"],
             }
 
-    def _initialize_cfg_analysis_tools(self, app: object) -> None:
+    def _initialize_cfg_analysis_tools(self, app: Any) -> None:
         """Initialize analysis tools availability tracking.
 
         Creates a dictionary tracking which binary analysis tools are available
@@ -186,7 +187,7 @@ class CfgExplorerInner:
                 "use_fallback_analysis": True,
             }
 
-    def _setup_networkx_integration(self, app: object) -> None:
+    def _setup_networkx_integration(self, app: Any) -> None:
         """Set up NetworkX graph analysis integration.
 
         Initializes NetworkX for graph-based control flow analysis and creates
@@ -273,7 +274,7 @@ class CfgExplorerInner:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] NetworkX not available, using basic analysis"))
 
-    def _setup_matplotlib_integration(self, app: object) -> None:
+    def _setup_matplotlib_integration(self, app: Any) -> None:
         """Set up Matplotlib visualization integration.
 
         Initializes Matplotlib for rendering control flow graphs with color-coded nodes,
@@ -393,7 +394,7 @@ class CfgExplorerInner:
         except ImportError:
             logger.exception("Import error in main_app.py")
 
-    def _setup_radare2_integration(self, app: object) -> None:
+    def _setup_radare2_integration(self, app: Any) -> None:
         """Set up Radare2 binary analysis integration.
 
         Initializes Radare2 integration via r2pipe for comprehensive binary analysis
@@ -500,7 +501,7 @@ class CfgExplorerInner:
             if hasattr(app, "update_output"):
                 app.update_output.emit(log_message("[CFG Explorer] Radare2 not available, using pattern-based analysis"))
 
-    def _setup_capstone_integration(self, app: object) -> None:
+    def _setup_capstone_integration(self, app: Any) -> None:
         """Set up Capstone disassembler integration.
 
         Initializes Capstone disassembler for instruction-level analysis with support
@@ -558,7 +559,7 @@ class CfgExplorerInner:
 
                     instructions = []
                     basic_blocks = []
-                    current_block = []
+                    current_block: list[dict[str, object]] = []
 
                     for insn in cs.disasm(binary_data, offset):
                         insn_dict = {
@@ -617,7 +618,7 @@ class CfgExplorerInner:
         except ImportError:
             logger.exception("Import error in main_app.py")
 
-    def _initialize_cfg_data_structures(self, app: object) -> None:
+    def _initialize_cfg_data_structures(self, app: Any) -> None:
         """Initialize CFG-related data structures.
 
         Creates empty dictionaries for tracking detected functions and current function context.
@@ -635,7 +636,7 @@ class CfgExplorerInner:
         if not hasattr(app, "cfg_current_function"):
             app.cfg_current_function = None
 
-    def _setup_license_patterns(self, app: object) -> None:
+    def _setup_license_patterns(self, app: Any) -> None:
         """Set up license pattern detection.
 
         Initializes pattern databases for identifying licensing mechanisms in binaries
@@ -698,7 +699,7 @@ class CfgExplorerInner:
                 ],
             }
 
-    def _perform_binary_structure_analysis(self, app: object) -> None:
+    def _perform_binary_structure_analysis(self, app: Any) -> None:
         """Perform basic binary structure analysis.
 
         Analyzes binary file structure including format detection (PE/ELF/Mach-O),
@@ -745,7 +746,7 @@ class CfgExplorerInner:
         elif hasattr(app, "update_output"):
             app.update_output.emit(log_message("[CFG Explorer] No binary loaded for analysis"))
 
-    def _detect_binary_format(self, app: object, binary_data: bytes) -> str:
+    def _detect_binary_format(self, app: Any, binary_data: bytes) -> str:
         """Detect binary format from data.
 
         Identifies the binary executable format by examining magic bytes at the start
@@ -779,7 +780,7 @@ class CfgExplorerInner:
                 app.update_output.emit(log_message("[CFG Explorer] Detected Mach-O executable format"))
         return binary_format
 
-    def _detect_function_patterns(self, _app: object, binary_data: bytes, binary_format: str) -> list[dict[str, object]]:
+    def _detect_function_patterns(self, _app: Any, binary_data: bytes, binary_format: str) -> list[dict[str, object]]:
         """Detect function patterns in binary data.
 
         Identifies function entry points and prologues using architecture-specific patterns.
@@ -794,7 +795,7 @@ class CfgExplorerInner:
             List of detected function patterns with address, pattern hex, type, and confidence.
 
         """
-        function_patterns = []
+        function_patterns: list[dict[str, object]] = []
         if binary_format == "PE":
             from ..utils.analysis.pattern_search import find_function_prologues
 
@@ -811,7 +812,7 @@ class CfgExplorerInner:
             )
         return function_patterns
 
-    def _search_license_patterns(self, app: object, binary_data: bytes) -> list[dict[str, object]]:
+    def _search_license_patterns(self, app: Any, binary_data: bytes) -> list[dict[str, object]]:
         """Search for license-related patterns in binary data.
 
         Scans binary data for licensing-related keywords and captures their addresses
@@ -838,7 +839,7 @@ class CfgExplorerInner:
                 )
         return license_hits
 
-    def _initialize_graph_visualization_data(self, app: object) -> None:
+    def _initialize_graph_visualization_data(self, app: Any) -> None:
         """Initialize graph visualization data structures.
 
         Sets up dictionaries for storing graph visualization nodes, edges, layout algorithms,
@@ -861,7 +862,7 @@ class CfgExplorerInner:
                 "edge_styles": {},
             }
 
-    def _build_sample_cfg_graph(self, app: object) -> None:
+    def _build_sample_cfg_graph(self, app: Any) -> None:
         """Create sample CFG graph if functions detected.
 
         Builds a control flow graph visualization from detected functions, establishing
@@ -898,7 +899,7 @@ class CfgExplorerInner:
                 log_message(f"[CFG Explorer] Built CFG with {len(sample_nodes)} nodes and {len(sample_edges)} edges"),
             )
 
-    def _perform_real_cfg_analysis(self, _app: object, sample_nodes: list[dict[str, object]]) -> list[dict[str, object]]:
+    def _perform_real_cfg_analysis(self, _app: Any, sample_nodes: list[dict[str, object]]) -> list[dict[str, object]]:
         """Perform real CFG analysis to establish function relationships.
 
         Analyzes detected functions to establish control flow edges based on function
@@ -922,7 +923,7 @@ class CfgExplorerInner:
             for i, node in enumerate(sample_nodes[:-1])
         ]
 
-    def _compile_cfg_analysis_results(self, app: object) -> None:
+    def _compile_cfg_analysis_results(self, app: Any) -> None:
         """Compile and store CFG analysis results.
 
         Aggregates all CFG analysis results including binary format, detected functions,

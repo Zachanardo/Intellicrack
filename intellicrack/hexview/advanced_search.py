@@ -367,7 +367,7 @@ class SearchEngine:
         """
         if self.file_handler.read_only:
             error_msg = "Cannot replace in read-only file"
-            logger.error(error_msg)
+            logger.exception(error_msg)
             raise ValueError(error_msg)
 
         results = self.search_all(find_pattern, search_type, case_sensitive, whole_words)
@@ -387,14 +387,15 @@ class SearchEngine:
                     if self.file_handler.insert(result.offset, replace_bytes):
                         replaced_ranges.append((result.offset, len(replace_bytes)))
                     else:
-                        original_data = self.file_handler.read(result.offset, result.length)
-                        if original_data:
+                        if original_data := self.file_handler.read(
+                            result.offset, result.length
+                        ):
                             self.file_handler.insert(result.offset, original_data)
                         error_msg = f"Failed to insert replacement at offset {result.offset:#x}"
-                        logger.error(error_msg)
+                        logger.exception(error_msg)
                         raise RuntimeError(error_msg)
             except Exception as e:
-                logger.error(f"Error during replace operation at offset {result.offset:#x}: {e}")
+                logger.exception("Error during replace operation at offset 0x%x: %s", result.offset, e)
                 continue
 
         return list(reversed(replaced_ranges))
@@ -425,7 +426,7 @@ class SearchEngine:
                 return re.compile(escaped, flags)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error compiling pattern: %s", e)
+            logger.exception("Error compiling pattern: %s", e)
 
         return None
 
@@ -447,13 +448,12 @@ class SearchEngine:
             if not chunk_data:
                 break
 
-            match = self._find_first_match_in_chunk(
+            if match := self._find_first_match_in_chunk(
                 compiled_pattern,
                 chunk_data,
                 offset,
                 whole_words,
-            )
-            if match:
+            ):
                 return match
 
             offset += chunk_size - overlap_size
@@ -478,14 +478,13 @@ class SearchEngine:
             if not chunk_data:
                 break
 
-            matches = self._find_matches_in_chunk(
+            if matches := self._find_matches_in_chunk(
                 compiled_pattern,
                 chunk_data,
                 chunk_start,
                 SearchType.HEX,
                 whole_words,
-            )
-            if matches:
+            ):
                 return matches[-1]
 
             offset = chunk_start + overlap_size
@@ -508,10 +507,7 @@ class SearchEngine:
 
         try:
             if isinstance(compiled_pattern, bytes):
-                if is_binary_search:
-                    search_data = chunk_data
-                    search_pattern = compiled_pattern
-                elif case_sensitive:
+                if is_binary_search or case_sensitive:
                     search_data = chunk_data
                     search_pattern = compiled_pattern
                 else:
@@ -569,7 +565,7 @@ class SearchEngine:
                         matches.append(result)
 
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Error finding matches in chunk: %s", e)
+            logger.exception("Error finding matches in chunk: %s", e)
 
         return matches
 
@@ -654,10 +650,7 @@ class SearchEngine:
 
 
 _SearchThreadBase: type[QThread] | type[object]
-if PYQT6_AVAILABLE:
-    _SearchThreadBase = QThread
-else:
-    _SearchThreadBase = object
+_SearchThreadBase = QThread if PYQT6_AVAILABLE else object
 
 
 class SearchThread(_SearchThreadBase):  # type: ignore[valid-type,misc]
@@ -719,7 +712,7 @@ class SearchThread(_SearchThreadBase):  # type: ignore[valid-type,misc]
                 if result and PYQT6_AVAILABLE and hasattr(self, "result_found"):
                     self.result_found.emit(result)
         except (OSError, ValueError, RuntimeError) as e:
-            logger.error("Search thread error: %s", e)
+            logger.exception("Search thread error: %s", e)
 
     def stop(self) -> None:
         """Stop the search operation."""
@@ -727,10 +720,7 @@ class SearchThread(_SearchThreadBase):  # type: ignore[valid-type,misc]
 
 
 _AdvancedSearchDialogBase: type[QDialog] | type[object]
-if PYQT6_AVAILABLE:
-    _AdvancedSearchDialogBase = QDialog
-else:
-    _AdvancedSearchDialogBase = object
+_AdvancedSearchDialogBase = QDialog if PYQT6_AVAILABLE else object
 
 
 class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-type,misc]
@@ -1055,14 +1045,13 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
 
         if self.search_engine:
             try:
-                result = self.search_engine.search(
+                if result := self.search_engine.search(
                     pattern,
                     search_type,
                     case_sensitive=bool(options["case_sensitive"]),
                     whole_words=bool(options["whole_words"]),
                     direction="forward",
-                )
-                if result:
+                ):
                     if self.search_status_label is not None:
                         self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     parent_widget = self.parent()
@@ -1070,12 +1059,11 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                         hex_viewer = parent_widget.hex_viewer
                         if hasattr(hex_viewer, "select_range"):
                             hex_viewer.select_range(result.offset, result.offset + result.length)
-                else:
-                    if self.search_status_label is not None:
-                        self.search_status_label.setText("Pattern not found")
+                elif self.search_status_label is not None:
+                    self.search_status_label.setText("Pattern not found")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in advanced_search: %s", e)
+                logger.exception("Error in advanced_search: %s", e)
                 if self.search_status_label is not None:
                     self.search_status_label.setText(f"Search error: {e}")
 
@@ -1098,14 +1086,13 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
 
         if self.search_engine:
             try:
-                result = self.search_engine.search(
+                if result := self.search_engine.search(
                     pattern,
                     search_type,
                     case_sensitive=self.case_sensitive_check.isChecked(),
                     whole_words=self.whole_words_check.isChecked(),
                     direction="backward",
-                )
-                if result:
+                ):
                     if self.search_status_label is not None:
                         self.search_status_label.setText(f"Found at offset 0x{result.offset:X}")
                     parent_widget = self.parent()
@@ -1113,12 +1100,11 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                         hex_viewer = parent_widget.hex_viewer
                         if hasattr(hex_viewer, "select_range"):
                             hex_viewer.select_range(result.offset, result.offset + result.length)
-                else:
-                    if self.search_status_label is not None:
-                        self.search_status_label.setText("Pattern not found")
+                elif self.search_status_label is not None:
+                    self.search_status_label.setText("Pattern not found")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in advanced_search: %s", e)
+                logger.exception("Error in advanced_search: %s", e)
                 if self.search_status_label is not None:
                     self.search_status_label.setText(f"Search error: {e}")
 
@@ -1160,7 +1146,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
                     self.replace_status_label.setText(f"Replaced {len(replaced_ranges)} occurrences")
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in advanced_search: %s", e)
+                logger.exception("Error in advanced_search: %s", e)
                 if self.replace_status_label is not None:
                     self.replace_status_label.setText(f"Replace error: {e}")
 
@@ -1282,10 +1268,7 @@ class AdvancedSearchDialog(_AdvancedSearchDialogBase):  # type: ignore[valid-typ
 
 
 _FindAllDialogBase: type[QDialog] | type[object]
-if PYQT6_AVAILABLE:
-    _FindAllDialogBase = QDialog
-else:
-    _FindAllDialogBase = object
+_FindAllDialogBase = QDialog if PYQT6_AVAILABLE else object
 
 
 class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
@@ -1341,10 +1324,7 @@ class FindAllDialog(_FindAllDialogBase):  # type: ignore[valid-type,misc]
 
 
 _ReplaceDialogBase: type[QDialog] | type[object]
-if PYQT6_AVAILABLE:
-    _ReplaceDialogBase = QDialog
-else:
-    _ReplaceDialogBase = object
+_ReplaceDialogBase = QDialog if PYQT6_AVAILABLE else object
 
 
 class ReplaceDialog(_ReplaceDialogBase):  # type: ignore[valid-type,misc]

@@ -820,9 +820,7 @@ class FallbackModel:
                 if i < len(final_metrics):
                     logger.info("%s: %.4f", metric_name, final_metrics[i])
 
-        if final_metrics:
-            return [final_loss, *final_metrics]
-        return final_loss
+        return [final_loss, *final_metrics] if final_metrics else final_loss
 
     def save(self, filepath: str) -> None:
         """Save model.

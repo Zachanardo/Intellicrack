@@ -35,19 +35,19 @@ logger = logging.getLogger(__name__)
 try:
     from intellicrack.handlers.capstone_handler import capstone
 except ImportError as e:
-    logger.error("Import error in security_analysis: %s", e)
+    logger.exception("Import error in security_analysis: %s", e)
     capstone = None
 
 try:
     from intellicrack.handlers.psutil_handler import psutil
 except ImportError as e:
-    logger.error("Import error in security_analysis: %s", e)
+    logger.exception("Import error in security_analysis: %s", e)
     psutil = None
 
 try:
     from intellicrack.handlers.pefile_handler import pefile
 except ImportError as e:
-    logger.error("Import error in security_analysis: %s", e)
+    logger.exception("Import error in security_analysis: %s", e)
     pefile = None
 
 
@@ -125,8 +125,12 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
                 return None
 
             # Use the common function to iterate imports
-            for vuln_func in iterate_pe_imports_with_dll(pe, check_vulnerable_function):
-                results["vulnerable_functions"].append(vuln_func)
+            vuln_funcs_list = results["vulnerable_functions"]
+            if isinstance(vuln_funcs_list, list):
+                import_results = iterate_pe_imports_with_dll(pe, check_vulnerable_function)
+                if hasattr(import_results, "__iter__"):
+                    for vuln_func in import_results:
+                        vuln_funcs_list.append(vuln_func)
 
         # Check for _patterns in binary
         with open(binary_path, "rb") as f:
@@ -136,7 +140,9 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
         format_string_pattern = re.compile(rb"%[0-9]*[sdxnp]")
         format_strings = format_string_pattern.findall(data)
         if format_strings:
-            results["unsafe_patterns"].append({"pattern": "Format strings", "count": len(format_strings), "risk": "medium"})
+            unsafe_patterns_list = results["unsafe_patterns"]
+            if isinstance(unsafe_patterns_list, list):
+                unsafe_patterns_list.append({"pattern": "Format strings", "count": len(format_strings), "risk": "medium"})
 
         # Look for stack-based buffer patterns and vulnerability indicators
         if CAPSTONE_AVAILABLE:
@@ -145,26 +151,39 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
         else:
             # Fallback analysis without disassembly
             fallback_analysis = _analyze_patterns_without_disassembly(data)
-            results["unsafe_patterns"].extend(fallback_analysis.get("patterns", []))
+            unsafe_patterns_list = results["unsafe_patterns"]
+            if isinstance(unsafe_patterns_list, list):
+                patterns_from_fallback = fallback_analysis.get("patterns", [])
+                if isinstance(patterns_from_fallback, list):
+                    unsafe_patterns_list.extend(patterns_from_fallback)
             results["stack_canaries"] = fallback_analysis.get("stack_canaries", False)
 
         # Additional vulnerability pattern detection
         vuln_patterns = _detect_vulnerability_patterns(data)
-        results["unsafe_patterns"].extend(vuln_patterns)
+        unsafe_patterns_list = results["unsafe_patterns"]
+        if isinstance(unsafe_patterns_list, list):
+            unsafe_patterns_list.extend(vuln_patterns)
 
         # Check for ROP/JOP gadgets that could be exploited
         gadget_analysis = _analyze_rop_gadgets(data)
-        if gadget_analysis["gadget_count"] > 10:
-            results["unsafe_patterns"].append({"pattern": "ROP gadgets", "count": gadget_analysis["gadget_count"], "risk": "high"})
+        gadget_count = gadget_analysis.get("gadget_count", 0)
+        if isinstance(gadget_count, int) and gadget_count > 10:
+            unsafe_patterns_list = results["unsafe_patterns"]
+            if isinstance(unsafe_patterns_list, list):
+                unsafe_patterns_list.append({"pattern": "ROP gadgets", "count": gadget_count, "risk": "high"})
 
         # Analyze string operations for potential buffer overflows
         string_analysis = _analyze_string_operations(data)
-        results["unsafe_patterns"].extend(string_analysis)
+        unsafe_patterns_list = results["unsafe_patterns"]
+        if isinstance(unsafe_patterns_list, list):
+            unsafe_patterns_list.extend(string_analysis)
 
         # Calculate risk level
         risk_score = 0
-        risk_score += len(results["vulnerable_functions"]) * 2
-        risk_score += len(results["unsafe_patterns"])
+        vuln_funcs_list = results["vulnerable_functions"]
+        unsafe_patterns_list = results["unsafe_patterns"]
+        risk_score += len(vuln_funcs_list) * 2 if isinstance(vuln_funcs_list, list) else 0
+        risk_score += len(unsafe_patterns_list) if isinstance(unsafe_patterns_list, list) else 0
         risk_score -= 2 if results["dep_enabled"] else 0
         risk_score -= 2 if results["aslr_enabled"] else 0
 
@@ -176,7 +195,7 @@ def check_buffer_overflow(binary_path: str, functions: list[str] | None = None) 
             results["risk_level"] = "low"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error checking buffer overflow: %s", e)
+        logger.exception("Error checking buffer overflow: %s", e)
         results["error"] = str(e)
 
     return results
@@ -193,7 +212,7 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
         dict: Stack analysis results including patterns and canary detection
 
     """
-    results = {"patterns": [], "stack_canaries": False, "stack_operations": []}
+    results: dict[str, Any] = {"patterns": [], "stack_canaries": False, "stack_operations": []}
 
     try:
         if not CAPSTONE_AVAILABLE:
@@ -227,26 +246,30 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
         for pattern, description in stack_patterns.items():
             occurrences = data.count(pattern)
             if occurrences > 0:
-                results["patterns"].append(
-                    {
-                        "pattern": description,
-                        "count": occurrences,
-                        "risk": "medium" if "canary" in description else "low",
-                    },
-                )
+                patterns_list = results["patterns"]
+                if isinstance(patterns_list, list):
+                    patterns_list.append(
+                        {
+                            "pattern": description,
+                            "count": occurrences,
+                            "risk": "medium" if "canary" in description else "low",
+                        },
+                    )
                 if "canary" in description:
                     results["stack_canaries"] = True
 
         # Disassemble and analyze instructions
-        code_sections = []
+        code_sections: list[tuple[int, bytes]] = []
         if PEFILE_AVAILABLE and binary_path.lower().endswith((".exe", ".dll")):
             try:
                 pe = pefile.PE(binary_path)
-                for section in pe.sections:
-                    if section.Characteristics & 0x20000000:  # IMAGE_SCN_MEM_EXECUTE
-                        code_sections.append((section.VirtualAddress, section.get_data()))
+                code_sections.extend(
+                    (section.VirtualAddress, section.get_data())
+                    for section in pe.sections
+                    if section.Characteristics & 0x20000000
+                )
             except (pefile.PEFormatError, Exception) as e:
-                logger.error("Error in security_analysis: %s", e)
+                logger.exception("Error in security_analysis: %s", e)
                 code_sections = [(0, data)]
         else:
             code_sections = [(0, data)]
@@ -260,23 +283,27 @@ def _analyze_stack_patterns(binary_path: str, data: bytes) -> dict[str, Any]:
                         # Check for large stack allocations
                         size = int(i.op_str.split(",")[1].strip(), 16)
                         if size > 0x1000:  # 4KB threshold
-                            results["stack_operations"].append(
-                                {
-                                    "address": hex(i.address),
-                                    "operation": f"{i.mnemonic} {i.op_str}",
-                                    "size": size,
-                                    "risk": "high" if size > 0x10000 else "medium",
-                                },
-                            )
+                            stack_ops_list = results["stack_operations"]
+                            if isinstance(stack_ops_list, list):
+                                stack_ops_list.append(
+                                    {
+                                        "address": hex(i.address),
+                                        "operation": f"{i.mnemonic} {i.op_str}",
+                                        "size": size,
+                                        "risk": "high" if size > 0x10000 else "medium",
+                                    },
+                                )
                             dangerous_stack_ops += 1
                     except Exception as e:
-                        logger.error("Error in security_analysis: %s", e)
+                        logger.exception("Error in security_analysis: %s", e)
 
         if dangerous_stack_ops > 0:
-            results["patterns"].append({"pattern": "Large stack allocations", "count": dangerous_stack_ops, "risk": "high"})
+            patterns_list = results["patterns"]
+            if isinstance(patterns_list, list):
+                patterns_list.append({"pattern": "Large stack allocations", "count": dangerous_stack_ops, "risk": "high"})
 
     except Exception as e:
-        logger.error("Error in stack pattern analysis: %s", e)
+        logger.exception("Error in stack pattern analysis: %s", e)
 
     return results
 
@@ -291,7 +318,7 @@ def _analyze_patterns_without_disassembly(data: bytes) -> dict[str, Any]:
         dict: Analysis results with patterns and stack canary detection
 
     """
-    results = {"patterns": [], "stack_canaries": False}
+    results: dict[str, Any] = {"patterns": [], "stack_canaries": False}
 
     try:
         # Look for common patterns indicating stack protection
@@ -307,13 +334,15 @@ def _analyze_patterns_without_disassembly(data: bytes) -> dict[str, Any]:
         for pattern in canary_patterns:
             if pattern in data:
                 results["stack_canaries"] = True
-                results["patterns"].append(
-                    {
-                        "pattern": f"Stack protection: {pattern.decode('utf-8', errors='ignore')}",
-                        "count": 1,
-                        "risk": "low",
-                    },
-                )
+                patterns_list = results["patterns"]
+                if isinstance(patterns_list, list):
+                    patterns_list.append(
+                        {
+                            "pattern": f"Stack protection: {pattern.decode('utf-8', errors='ignore')}",
+                            "count": 1,
+                            "risk": "low",
+                        },
+                    )
                 break
 
         # Look for unsafe function references
@@ -330,16 +359,18 @@ def _analyze_patterns_without_disassembly(data: bytes) -> dict[str, Any]:
         for func, desc in unsafe_refs.items():
             count = data.count(func + b"\x00")  # Look for null-terminated strings
             if count > 0:
-                results["patterns"].append(
-                    {
-                        "pattern": desc,
-                        "count": count,
-                        "risk": "high" if func in [b"gets", b"strcpy"] else "medium",
-                    },
-                )
+                patterns_list = results["patterns"]
+                if isinstance(patterns_list, list):
+                    patterns_list.append(
+                        {
+                            "pattern": desc,
+                            "count": count,
+                            "risk": "high" if func in [b"gets", b"strcpy"] else "medium",
+                        },
+                    )
 
     except Exception as e:
-        logger.error("Error in pattern analysis without disassembly: %s", e)
+        logger.exception("Error in pattern analysis without disassembly: %s", e)
 
     return results
 
@@ -399,7 +430,7 @@ def _detect_vulnerability_patterns(data: bytes) -> list[dict[str, Any]]:
             )
 
     except Exception as e:
-        logger.error("Error detecting vulnerability patterns: %s", e)
+        logger.exception("Error detecting vulnerability patterns: %s", e)
 
     return patterns
 
@@ -414,7 +445,7 @@ def _analyze_rop_gadgets(data: bytes) -> dict[str, Any]:
         dict: ROP gadget analysis results
 
     """
-    results = {"gadget_count": 0, "gadget_types": {}, "exploitability": "low"}
+    results: dict[str, Any] = {"gadget_count": 0, "gadget_types": {}, "exploitability": "low"}
 
     try:
         # Common ROP gadget patterns (x86/x64)
@@ -441,21 +472,28 @@ def _analyze_rop_gadgets(data: bytes) -> dict[str, Any]:
         for pattern, gadget_type in gadget_patterns.items():
             count = data.count(pattern)
             if count > 0:
-                results["gadget_count"] += count
-                if gadget_type not in results["gadget_types"]:
-                    results["gadget_types"][gadget_type] = 0
-                results["gadget_types"][gadget_type] += count
+                gadget_count = results["gadget_count"]
+                if isinstance(gadget_count, int):
+                    results["gadget_count"] = gadget_count + count
+                gadget_types = results["gadget_types"]
+                if isinstance(gadget_types, dict):
+                    if gadget_type not in gadget_types:
+                        gadget_types[gadget_type] = 0
+                    current_val = gadget_types[gadget_type]
+                    if isinstance(current_val, int):
+                        gadget_types[gadget_type] = current_val + count
 
         # Assess exploitability based on gadget diversity and count
-        unique_gadget_types = len(results["gadget_types"])
+        gadget_types = results["gadget_types"]
+        unique_gadget_types = len(gadget_types) if isinstance(gadget_types, dict) else 0
         total_gadgets = results["gadget_count"]
-
-        if total_gadgets > 100 and unique_gadget_types > 5:
-            results["exploitability"] = "high"
-        elif total_gadgets > 50 and unique_gadget_types > 3:
-            results["exploitability"] = "medium"
-        else:
-            results["exploitability"] = "low"
+        if isinstance(total_gadgets, int):
+            if total_gadgets > 100 and unique_gadget_types > 5:
+                results["exploitability"] = "high"
+            elif total_gadgets > 50 and unique_gadget_types > 3:
+                results["exploitability"] = "medium"
+            else:
+                results["exploitability"] = "low"
 
         # Look for specific useful gadget chains
         useful_chains = {
@@ -467,11 +505,15 @@ def _analyze_rop_gadgets(data: bytes) -> dict[str, Any]:
 
         for chain, desc in useful_chains.items():
             if chain in data:
-                results["gadget_types"][desc] = data.count(chain)
-                results["gadget_count"] += data.count(chain)
+                gadget_types = results["gadget_types"]
+                if isinstance(gadget_types, dict):
+                    gadget_types[desc] = data.count(chain)
+                gadget_count = results["gadget_count"]
+                if isinstance(gadget_count, int):
+                    results["gadget_count"] = gadget_count + data.count(chain)
 
     except Exception as e:
-        logger.error("Error analyzing ROP gadgets: %s", e)
+        logger.exception("Error analyzing ROP gadgets: %s", e)
 
     return results
 
@@ -554,7 +596,7 @@ def _analyze_string_operations(data: bytes) -> list[dict[str, Any]]:
             patterns.append({"pattern": "Bounds checking indicators", "count": bounds_count, "risk": "low"})
 
     except Exception as e:
-        logger.error("Error analyzing string operations: %s", e)
+        logger.exception("Error analyzing string operations: %s", e)
 
     return patterns
 
@@ -621,18 +663,34 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
             imports = extract_pe_imports(pe)
             for func_name in imports:
                 if any(alloc in func_name.lower() for alloc in [f.lower() for f in allocation_funcs]):
-                    results["static_analysis"]["allocation_functions"].append(func_name)
+                    static_analysis = results["static_analysis"]
+                    if isinstance(static_analysis, dict):
+                        alloc_funcs_list = static_analysis["allocation_functions"]
+                        if isinstance(alloc_funcs_list, list):
+                            alloc_funcs_list.append(func_name)
                 elif any(dealloc in func_name.lower() for dealloc in [f.lower() for f in deallocation_funcs]):
-                    results["static_analysis"]["deallocation_functions"].append(func_name)
+                    static_analysis = results["static_analysis"]
+                    if isinstance(static_analysis, dict):
+                        dealloc_funcs_list = static_analysis["deallocation_functions"]
+                        if isinstance(dealloc_funcs_list, list):
+                            dealloc_funcs_list.append(func_name)
 
         # Check for imbalance
-        alloc_count = len(results["static_analysis"]["allocation_functions"])
-        dealloc_count = len(results["static_analysis"]["deallocation_functions"])
+        static_analysis = results["static_analysis"]
+        if isinstance(static_analysis, dict):
+            alloc_funcs_list = static_analysis["allocation_functions"]
+            dealloc_funcs_list = static_analysis["deallocation_functions"]
+            alloc_count = len(alloc_funcs_list) if isinstance(alloc_funcs_list, list) else 0
+            dealloc_count = len(dealloc_funcs_list) if isinstance(dealloc_funcs_list, list) else 0
 
-        if alloc_count > 0 and dealloc_count == 0:
-            results["static_analysis"]["potential_leaks"].append({"issue": "No deallocation functions found", "severity": "high"})
-        elif alloc_count > dealloc_count * 2:
-            results["static_analysis"]["potential_leaks"].append({"issue": "Allocation/deallocation imbalance", "severity": "medium"})
+            if alloc_count > 0 and dealloc_count == 0:
+                potential_leaks = static_analysis["potential_leaks"]
+                if isinstance(potential_leaks, list):
+                    potential_leaks.append({"issue": "No deallocation functions found", "severity": "high"})
+            elif alloc_count > dealloc_count * 2:
+                potential_leaks = static_analysis["potential_leaks"]
+                if isinstance(potential_leaks, list):
+                    potential_leaks.append({"issue": "Allocation/deallocation imbalance", "severity": "medium"})
 
         # Dynamic analysis if process is running
         if process_pid and PSUTIL_AVAILABLE:
@@ -661,19 +719,35 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
                     }
 
                     if growth_rate > 10:  # More than 10MB growth in 5 seconds
-                        results["static_analysis"]["potential_leaks"].append(
-                            {
-                                "issue": f"Rapid memory growth: {growth_rate:.2f} MB",
-                                "severity": "high",
-                            },
-                        )
+                        static_analysis = results["static_analysis"]
+                        if isinstance(static_analysis, dict):
+                            potential_leaks = static_analysis["potential_leaks"]
+                            if isinstance(potential_leaks, list):
+                                potential_leaks.append(
+                                    {
+                                        "issue": f"Rapid memory growth: {growth_rate:.2f} MB",
+                                        "severity": "high",
+                                    },
+                                )
 
             except (OSError, ValueError, RuntimeError) as e:
-                logger.error("Error in dynamic memory analysis: %s", e)
+                logger.exception("Error in dynamic memory analysis: %s", e)
 
         # Calculate risk level
-        high_severity = sum(bool(leak["severity"] == "high") for leak in results["static_analysis"]["potential_leaks"])
-        medium_severity = sum(bool(leak["severity"] == "medium") for leak in results["static_analysis"]["potential_leaks"])
+        static_analysis = results["static_analysis"]
+        if isinstance(static_analysis, dict):
+            potential_leaks = static_analysis["potential_leaks"]
+            if isinstance(potential_leaks, list):
+                high_severity = sum(bool(isinstance(leak, dict) and leak.get("severity") == "high")
+                                for leak in potential_leaks)
+                medium_severity = sum(bool(isinstance(leak, dict) and leak.get("severity") == "medium")
+                                  for leak in potential_leaks)
+            else:
+                high_severity = 0
+                medium_severity = 0
+        else:
+            high_severity = 0
+            medium_severity = 0
 
         if high_severity > 0:
             results["risk_level"] = "high"
@@ -683,7 +757,7 @@ def check_for_memory_leaks(binary_path: str, process_pid: int | None = None) -> 
             results["risk_level"] = "low"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error checking for memory leaks: %s", e)
+        logger.exception("Error checking for memory leaks: %s", e)
         results["error"] = str(e)
 
     return results
@@ -752,10 +826,10 @@ def check_memory_usage(process_pid: int) -> dict[str, Any]:
         return results
 
     except psutil.NoSuchProcess as e:
-        logger.error("No such process in security_analysis: %s", e)
+        logger.exception("No such process in security_analysis: %s", e)
         return {"error": f"Process {process_pid} not found"}
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error checking memory usage: %s", e)
+        logger.exception("Error checking memory usage: %s", e)
         return {"error": str(e)}
 
 
@@ -769,7 +843,7 @@ def bypass_tpm_checks(binary_path: str) -> dict[str, Any]:
         Dict containing TPM bypass information
 
     """
-    results = {"tpm_functions": [], "patches": [], "method": "none"}
+    results: dict[str, Any] = {"tpm_functions": [], "patches": [], "method": "none"}
 
     # TPM-related functions
     tpm_functions = [
@@ -798,29 +872,34 @@ def bypass_tpm_checks(binary_path: str) -> dict[str, Any]:
                             if imp.name:
                                 func_name = imp.name.decode("utf-8", errors="ignore")
                                 if func_name in tpm_functions:
-                                    results["tpm_functions"].append(
-                                        {
-                                            "function": func_name,
-                                            "dll": dll_name,
-                                            "address": hex(imp.address),
-                                        },
-                                    )
+                                    tpm_funcs_list = results["tpm_functions"]
+                                    if isinstance(tpm_funcs_list, list):
+                                        tpm_funcs_list.append(
+                                            {
+                                                "function": func_name,
+                                                "dll": dll_name,
+                                                "address": hex(imp.address),
+                                            },
+                                        )
 
-            # Generate bypass patches
-            if results["tpm_functions"]:
+            if tpm_funcs_list := results["tpm_functions"]:
                 results["method"] = "import_patching"
 
                 # Create patches to return success for TPM functions
-                for tpm_func in results["tpm_functions"]:
-                    results["patches"].append(
-                        {
-                            "type": "iat_hook",
-                            "function": tpm_func["function"],
-                            "original_address": tpm_func["address"],
-                            "patch": "return_success",
-                            "description": f"Hook {tpm_func['function']} to always return success",
-                        },
-                    )
+                if isinstance(tpm_funcs_list, list):
+                    for tpm_func in tpm_funcs_list:
+                        if isinstance(tpm_func, dict):
+                            patches_list = results["patches"]
+                            if isinstance(patches_list, list):
+                                patches_list.append(
+                                    {
+                                        "type": "iat_hook",
+                                        "function": tpm_func.get("function", ""),
+                                        "original_address": tpm_func.get("address", ""),
+                                        "patch": "return_success",
+                                        "description": f"Hook {tpm_func.get('function', '')} to always return success",
+                                    },
+                                )
 
         # Additional bypass methods
         results["additional_methods"] = [
@@ -830,7 +909,7 @@ def bypass_tpm_checks(binary_path: str) -> dict[str, Any]:
         ]
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error analyzing TPM checks: %s", e)
+        logger.exception("Error analyzing TPM checks: %s", e)
         results["error"] = str(e)
 
     return results
@@ -846,7 +925,7 @@ def scan_protectors(binary_path: str) -> dict[str, Any]:
         Dict containing protection scan results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "protections_found": [],
         "anti_debug": [],
         "anti_vm": [],
@@ -937,8 +1016,9 @@ def scan_protectors(binary_path: str) -> dict[str, Any]:
                 results["protections_found"].append(f"Checksum: {description}")
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error scanning protectors: %s", e)
-        results["error"] = str(e)
+        logger.exception("Error scanning protectors: %s", e)
+        results_dict: dict[str, Any] = {"error": str(e)}
+        return results_dict
 
     return results
 
@@ -978,36 +1058,46 @@ def run_vm_bypass(binary_path: str, output_path: str | None = None) -> dict[str,
         Dict containing bypass results
 
     """
-    results = {"vm_checks": [], "patches": [], "method": "none"}
+    results: dict[str, Any] = {"vm_checks": [], "patches": [], "method": "none"}
 
     try:
         # Scan for VM detection
         scan_results = scan_protectors(binary_path)
-        results["vm_checks"] = scan_results["anti_vm"]
+        anti_vm = scan_results.get("anti_vm", [])
+        if isinstance(anti_vm, list):
+            results["vm_checks"] = anti_vm
 
-        # Generate patches for each VM check
-        if results["vm_checks"]:
+        if vm_checks := results["vm_checks"]:
             results["method"] = "binary_patching"
 
-            for check in results["vm_checks"]:
-                results["patches"].append(
-                    {
-                        "type": "pattern_replacement",
-                        "pattern": check["pattern"],
-                        "replacement": "00" * (len(check["pattern"]) // 2),
-                        "description": f"Neutralize {check['technique']}",
-                    },
-                )
+            if isinstance(vm_checks, list):
+                for check in vm_checks:
+                    if isinstance(check, dict):
+                        pattern_val = check.get("pattern", "")
+                        technique_val = check.get("technique", "")
+                        if isinstance(pattern_val, str):
+                            patches_list = results["patches"]
+                            if isinstance(patches_list, list):
+                                patches_list.append(
+                                    {
+                                        "type": "pattern_replacement",
+                                        "pattern": pattern_val,
+                                        "replacement": "00" * (len(pattern_val) // 2),
+                                        "description": f"Neutralize {technique_val}",
+                                    },
+                                )
 
-        if output_path and results["patches"]:
+        patches_list = results["patches"]
+        if output_path and patches_list:
             results["output_path"] = output_path
             results["status"] = "patches_generated"
-            results["message"] = f"Generated {len(results['patches'])} patches for VM bypass"
+            patch_count = len(patches_list) if isinstance(patches_list, list) else 0
+            results["message"] = f"Generated {patch_count} patches for VM bypass"
         else:
             results["status"] = "analysis_only"
 
     except (OSError, ValueError, RuntimeError) as e:
-        logger.error("Error in VM bypass: %s", e)
+        logger.exception("Error in VM bypass: %s", e)
         results["error"] = str(e)
 
     return results

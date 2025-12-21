@@ -86,7 +86,7 @@ class BaseSnapshotHandler(ABC):
             return base_comparison
 
         except Exception as e:
-            self.logger.error("Snapshot comparison failed: %s", e, exc_info=True)
+            self.logger.exception("Snapshot comparison failed: %s", e)
             return {"error": f"Comparison failed: {e!s}"}
 
     @abstractmethod

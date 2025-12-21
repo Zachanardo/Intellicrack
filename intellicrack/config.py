@@ -23,16 +23,31 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 import os
-from typing import Any
+from collections.abc import Callable, ItemsView, KeysView, ValuesView
+from typing import Any, Protocol
 
 
 logger = logging.getLogger(__name__)
 
-# Lazy import of config_manager to prevent circular imports
-_get_new_config = None
+
+class IntellicrackConfigProtocol(Protocol):
+    """Protocol for IntellicrackConfig to avoid circular imports."""
+
+    config_file: object
+
+    def get_tool_path(self, tool_name: str) -> str | None: ...
+    def get_output_dir(self) -> object: ...
+    def get_cache_dir(self) -> object: ...
+    def get_logs_dir(self) -> object: ...
+    def get(self, key: str, default: object = None) -> object: ...
+    def set(self, key: str, value: object) -> None: ...
+    def is_tool_available(self, tool_name: str) -> bool: ...
 
 
-def _ensure_config_manager_imported() -> object:
+_get_new_config: Callable[[], IntellicrackConfigProtocol] | None = None
+
+
+def _ensure_config_manager_imported() -> Callable[[], IntellicrackConfigProtocol]:
     """Lazy import of config_manager to avoid circular dependencies."""
     global _get_new_config
     if _get_new_config is None:
@@ -64,7 +79,7 @@ _modern_config = None
 _legacy_mode = False
 
 
-def _get_modern_config() -> object:
+def _get_modern_config() -> IntellicrackConfigProtocol:
     """Get the modern configuration instance.
 
     This internal function implements a singleton pattern to ensure only one
@@ -251,7 +266,7 @@ class ConfigManager:
 
     """
 
-    def __init__(self, config_path: str = None) -> None:
+    def __init__(self, config_path: str | None = None) -> None:
         """Initialize legacy configuration manager wrapper.
 
         Args:
@@ -448,31 +463,43 @@ class ConfigManager:
     def get_model_repositories(self) -> dict[str, Any]:
         """Get model repository configuration."""
         logger.debug("ConfigManager.get_model_repositories() called.")
-        return self.config.get("model_repositories", {})
+        result = self.config.get("model_repositories", {})
+        return result if isinstance(result, dict) else {}
 
     def is_repository_enabled(self, repo_name: str) -> bool:
         """Check if a model repository is enabled."""
         logger.debug("ConfigManager.is_repository_enabled() called for repo: '%s'.", repo_name)
         repos = self.get_model_repositories()
         repo = repos.get(repo_name, {})
+        if not isinstance(repo, dict):
+            logger.debug("Repository '%s' enabled status: False.", repo_name)
+            return False
         enabled = repo.get("enabled", False)
+        if not isinstance(enabled, bool):
+            logger.debug("Repository '%s' enabled status: False.", repo_name)
+            return False
         logger.debug("Repository '%s' enabled status: %s.", repo_name, enabled)
         return enabled
 
     def get_ghidra_path(self) -> str | None:
         """Get the Ghidra installation path."""
         logger.debug("ConfigManager.get_ghidra_path() called.")
-        return self._modern_config.get_tool_path("ghidra")
+        result = self._modern_config.get_tool_path("ghidra")
+        return result if isinstance(result, (str, type(None))) else None
 
     def get_tool_path(self, tool_name: str) -> str | None:
         """Get path for any tool."""
         logger.debug("ConfigManager.get_tool_path() called for tool: '%s'.", tool_name)
-        return self._modern_config.get_tool_path(tool_name)
+        result = self._modern_config.get_tool_path(tool_name)
+        return result if isinstance(result, (str, type(None))) else None
 
     def is_tool_available(self, tool_name: str) -> bool:
         """Check if a tool is available."""
         logger.debug("ConfigManager.is_tool_available() called for tool: '%s'.", tool_name)
         available = self._modern_config.is_tool_available(tool_name)
+        if not isinstance(available, bool):
+            logger.debug("Tool '%s' availability: False.", tool_name)
+            return False
         logger.debug("Tool '%s' availability: %s.", tool_name, available)
         return available
 
@@ -533,7 +560,7 @@ class ConfigManager:
 _config_manager: ConfigManager | None = None
 
 
-def load_config(config_path: str = None) -> dict[str, Any]:
+def load_config(config_path: str | None = None) -> dict[str, Any]:
     """Load configuration using the modern config system.
 
     This function initializes the global configuration manager if not already
@@ -599,10 +626,10 @@ def save_config() -> bool:
 # Lazy initialization of CONFIG to prevent blocking during import
 # CONFIG will be loaded on first access via the _LazyConfig class
 _config_initialized = False
-_config_dict = {}
+_config_dict: dict[str, Any] = {}
 
 
-class _LazyConfig(dict):
+class _LazyConfig(dict[str, Any]):
     """Lazy-loading configuration dictionary that initializes on first access."""
 
     def __init__(self) -> None:
@@ -636,9 +663,10 @@ class _LazyConfig(dict):
         logger.debug("LazyConfig: Setting item with key '%s' to value '%s'.", key, value)
         return super().__setitem__(key, value)
 
-    def __contains__(self, key: str) -> bool:
+    def __contains__(self, key: object) -> bool:
         self._ensure_loaded()
-        logger.debug("LazyConfig: Checking containment for key '%s'.", key)
+        if isinstance(key, str):
+            logger.debug("LazyConfig: Checking containment for key '%s'.", key)
         return super().__contains__(key)
 
     def get(self, key: str, default: object = None) -> object:
@@ -646,17 +674,17 @@ class _LazyConfig(dict):
         logger.debug("LazyConfig: Getting item with key '%s'.", key)
         return super().get(key, default)
 
-    def keys(self) -> object:
+    def keys(self) -> KeysView[str]:
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting keys.")
         return super().keys()
 
-    def values(self) -> object:
+    def values(self) -> ValuesView[Any]:
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting values.")
         return super().values()
 
-    def items(self) -> object:
+    def items(self) -> ItemsView[str, Any]:
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting items.")
         return super().items()

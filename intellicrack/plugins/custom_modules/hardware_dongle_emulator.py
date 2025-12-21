@@ -56,8 +56,10 @@ class DongleType(Enum):
 
     HASP_HL = "HASP_HL"
     HASP_4 = "HASP_4"
+    HASP = "HASP"
     SENTINEL_SUPER_PRO = "Sentinel_SuperPro"
     SENTINEL_UltraPro = "Sentinel_UltraPro"
+    SENTINEL = "Sentinel"
     RAINBOW_SENTINEL = "Rainbow_Sentinel"
     CODEOMETER = "CodeMeter"
     ROCKEY = "Rockey"
@@ -66,6 +68,7 @@ class DongleType(Enum):
     WIBU_BOX = "WibuBox"
     CUSTOM_USB = "Custom_USB"
     CUSTOM_LPT = "Custom_LPT"
+    GENERIC = "Generic"
 
 
 class DongleInterface(Enum):
@@ -227,11 +230,11 @@ class BaseDongleEmulator:
     def __init__(self, spec: DongleSpec) -> None:
         """Initialize base dongle emulator with specification and crypto engine."""
         self.spec = spec
-        self.memory = DongleMemory(spec.memory_size * 1024)
+        self.memory = DongleMemory(spec.memory_size * 1024, bytearray(spec.memory_size * 1024))
         self.crypto = CryptoEngine()
         self.logger = logging.getLogger(f"{__name__}.{spec.dongle_type.value}")
         self.active = False
-        self.api_handlers = {}
+        self.api_handlers: dict[str, Callable[..., Any]] = {}
 
         # Initialize dongle-specific data
         self._initialize_memory()
@@ -321,6 +324,10 @@ class BaseDongleEmulator:
         crc = self.crypto.crc16(response)
         return response + struct.pack("<H", crc)
 
+    def generate_response(self, data: bytes) -> bytes:
+        """Generate cryptographic response for data."""
+        return hashlib.sha256(data + self.spec.serial_number.encode()).digest()
+
     def reset(self) -> None:
         """Reset dongle state to initial configuration."""
         self.active = False
@@ -362,7 +369,7 @@ class BaseDongleEmulator:
             self.logger.debug("Algorithm 0x%02X executed, input=%d bytes, output=%d bytes", algorithm_id, len(input_data), len(result))
             return result
         except Exception:
-            self.logger.error("Algorithm execution failed", exc_info=True)
+            self.logger.exception("Algorithm execution failed")
             return b"\xff" * len(input_data)
 
     def _algo_identity(self, data: bytes) -> bytes:
@@ -409,7 +416,7 @@ class BaseDongleEmulator:
         serial_hash = hashlib.sha256(self.spec.serial_number.encode()).digest()
         expected_code = struct.unpack("<I", serial_hash[:4])[0]
 
-        if feature_code == expected_code or feature_code in [1, 2, 5, 10, 100]:
+        if feature_code in [expected_code, 1, 2, 5, 10, 100]:
             return struct.pack("<I", 0) + serial_hash
         return struct.pack("<I", 0x00000002)
 
@@ -575,7 +582,7 @@ class BaseDongleEmulator:
 
         counter_addr = counter_base + (counter_id * 4)
         counter_data = self.memory.read(counter_addr, 4)
-        counter_value = struct.unpack("<I", counter_data)[0]
+        counter_value: int = struct.unpack("<I", counter_data)[0]
 
         self.logger.debug("Counter %d value: %d", counter_id, counter_value)
         return counter_value
@@ -619,7 +626,7 @@ class BaseDongleEmulator:
 
         rtc_addr = 0x34
         rtc_data = self.memory.read(rtc_addr, 4)
-        rtc_value = struct.unpack("<I", rtc_data)[0]
+        rtc_value: int = struct.unpack("<I", rtc_data)[0]
 
         if rtc_value == 0:
             rtc_value = int(time.time())
@@ -781,7 +788,7 @@ class SentinelEmulator(BaseDongleEmulator):
     def __init__(self, spec: DongleSpec) -> None:
         """Initialize Sentinel dongle emulator with cell data and memory layout."""
         super().__init__(spec)
-        self.cell_data = {}
+        self.cell_data: dict[int, dict[str, Any]] = {}
         self._init_sentinel_memory()
 
     def _init_sentinel_memory(self) -> None:
@@ -814,10 +821,12 @@ class SentinelEmulator(BaseDongleEmulator):
             raise ValueError(f"Cell {cell_id} not found")
 
         cell = self.cell_data[cell_id]
-        if "R" not in cell["permissions"]:
+        permissions = cell.get("permissions", "")
+        if not isinstance(permissions, str) or "R" not in permissions:
             raise PermissionError(f"No read permission for cell {cell_id}")
 
-        return cell["data"]
+        data_value = cell.get("data", b"")
+        return data_value if isinstance(data_value, bytes) else b""
 
     def write_cell(self, cell_id: int, data: bytes) -> bool:
         """Write to Sentinel cell."""
@@ -855,7 +864,7 @@ class USBDongleDriver:
 
     def __init__(self) -> None:
         """Initialize USB dongle driver for managing USB-connected dongles."""
-        self.dongles = {}
+        self.dongles: dict[str, BaseDongleEmulator] = {}
         self.logger = logging.getLogger(f"{__name__}.USBDriver")
 
         # Try to import USB libraries
@@ -949,6 +958,7 @@ class USBDongleDriver:
                     temp_dongle = BaseDongleEmulator(
                         DongleSpec(
                             dongle_type=DongleType.GENERIC,
+                            interface=DongleInterface.USB,
                             vendor_id=device.idVendor,
                             product_id=device.idProduct,
                             memory_size=4096,
@@ -1035,9 +1045,7 @@ class USBDongleDriver:
                     return dongle.encrypt_data(payload)
                 if operation == 0x02:  # Decrypt
                     return dongle.decrypt_data(payload)
-                if operation == 0x03:  # Hash
-                    return dongle.generate_response(payload)
-                return b"\xff"  # Unknown operation
+                return dongle.generate_response(payload) if operation == 0x03 else b"\xff"
             return b"\xff"  # Invalid data length
 
         if request != 0x05:
@@ -1049,7 +1057,7 @@ class USBDongleDriver:
             return hw_id.encode()
         return b"EMULATED:0000:0000:00:00"
 
-    def bulk_transfer(self, vendor_id: int, product_id: int, endpoint: int, data: bytes = None, length: int = 0) -> bytes:
+    def bulk_transfer(self, vendor_id: int, product_id: int, endpoint: int, data: bytes | None = None, length: int = 0) -> bytes:
         """Perform USB bulk transfer for high-speed data."""
         dongles = self.find_dongles(vendor_id, product_id)
         if not dongles:
@@ -1085,11 +1093,11 @@ class ParallelPortEmulator:
         self.data_register = 0
         self.status_register = 0
         self.control_register = 0
-        self.dongles = {}
+        self.dongles: dict[DongleType, BaseDongleEmulator] = {}
         self.logger = logging.getLogger(f"{__name__}.ParallelPort")
 
         # Platform-specific parallel port access
-        self.port_backend = None
+        self.port_backend: str | None = None
         self._init_port_access()
 
     def _init_port_access(self) -> None:
@@ -1121,6 +1129,7 @@ class ParallelPortEmulator:
                     self.logger.info("Using WinIO for parallel port access")
                 except Exception:
                     self.logger.warning("No Windows parallel port driver available")
+                    self.port_backend = None
 
         elif system == "Linux":
             try:
@@ -1144,9 +1153,11 @@ class ParallelPortEmulator:
 
             except Exception:
                 self.logger.warning("Linux parallel port initialization failed", exc_info=True)
+                self.port_backend = None
 
         else:
             self.logger.warning("Unsupported platform for parallel port: %s", system)
+            self.port_backend = None
 
     def attach_dongle(self, dongle: BaseDongleEmulator) -> None:
         """Attach dongle to parallel port."""
@@ -1214,7 +1225,8 @@ class ParallelPortEmulator:
         try:
             if self.port_backend == "inpout":
                 # InpOut32/64 direct port read
-                return self.inpout.Inp32(port) & 0xFF
+                result: int = self.inpout.Inp32(port) & 0xFF
+                return result
 
             if self.port_backend == "linux_ioperm":
                 # Linux direct port read using inline assembly via ctypes
@@ -1260,7 +1272,7 @@ class ParallelPortEmulator:
                     ctypes.c_int,
                     ctypes.c_int,
                     ctypes.c_int,
-                    ctypes.c_off_t,
+                    ctypes.c_long,
                 ]
 
                 # Allocate executable memory page
@@ -1287,7 +1299,7 @@ class ParallelPortEmulator:
 
                 # Create function pointer and call
                 port_read_func = ctypes.CFUNCTYPE(ctypes.c_ubyte, ctypes.c_ushort)(exec_mem)
-                value = port_read_func(port)
+                value: int = port_read_func(port)
 
                 # Clean up
                 munmap_func = libc.munmap
@@ -1343,7 +1355,8 @@ class ParallelPortEmulator:
         inb.argtypes = [ctypes.c_ushort]
         inb.restype = ctypes.c_ubyte
 
-        return inb(port)
+        result: int = inb(port)
+        return result
 
     def _linux_port_write(self, port: int, value: int) -> None:
         """Linux-specific port write using ctypes."""
@@ -1634,7 +1647,11 @@ class ParallelPortEmulator:
 
         if param == 0x0F:
             try:
-                result = dongle.execute_algorithm(self._algo_state["algorithm_id"], bytes(self._algo_state["input_data"]))
+                algo_id_obj = self._algo_state.get("algorithm_id", 0)
+                algo_id = int(algo_id_obj) if isinstance(algo_id_obj, (int, float)) else 0
+                input_data_obj = self._algo_state.get("input_data", bytearray())
+                input_data = bytes(input_data_obj) if isinstance(input_data_obj, (bytes, bytearray)) else b""
+                result = dongle.execute_algorithm(algo_id, input_data)
                 self._algo_result = result
                 self._algo_result_idx = 0
                 self.status_register = len(result) & 0xFF
@@ -1651,7 +1668,9 @@ class ParallelPortEmulator:
                 delattr(self, "_algo_result")
                 delattr(self, "_algo_result_idx")
         else:
-            self._algo_state["input_data"].append(param)
+            input_data_obj = self._algo_state.get("input_data")
+            if isinstance(input_data_obj, bytearray):
+                input_data_obj.append(param)
             self.status_register = 0x00
 
     def _handle_reset_command(self, dongle: BaseDongleEmulator, param: int) -> None:
@@ -1693,8 +1712,8 @@ class DongleRegistryManager:
     def __init__(self) -> None:
         """Initialize dongle registry manager for real Windows registry manipulation."""
         self.logger = logging.getLogger(f"{__name__}.Registry")
-        self.registry_backup = {}  # Store original values for restoration
-        self.installed_keys = []  # Track installed keys for cleanup
+        self.registry_backup: dict[str, Any] = {}  # Store original values for restoration
+        self.installed_keys: list[str] = []  # Track installed keys for cleanup
 
     def install_driver_entries(self, spec: DongleSpec) -> None:
         """Install registry entries for dongle driver."""
@@ -1770,7 +1789,7 @@ class DongleAPIHooker:
         """Initialize dongle API hooker for intercepting hardware dongle calls."""
         self.manager = emulator_manager
         self.logger = logging.getLogger(f"{__name__}.APIHooker")
-        self.hooks = {}
+        self.hooks: dict[str, Callable[..., Any]] = {}
 
     def install_hooks(self) -> None:
         """Install API hooks for dongle functions."""
@@ -1816,7 +1835,7 @@ class DongleAPIHooker:
         for func_name in sentinel_functions:
             self._install_function_hook("sx32w.dll", func_name, self._sentinel_api_handler)
 
-    def _install_function_hook(self, dll_name: str, func_name: str, handler: Callable) -> None:
+    def _install_function_hook(self, dll_name: str, func_name: str, handler: Callable[..., Any]) -> None:
         """Install hook for specific function."""
         try:
             # This would use actual API hooking in real implementation
@@ -1828,9 +1847,13 @@ class DongleAPIHooker:
         except Exception:
             self.logger.exception("Failed to hook %s", func_name)
 
-    def _hasp_api_handler(self, func_name: str, args: tuple) -> int:
+    def _hasp_api_handler(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle HASP API calls."""
-        dongles = self.manager.get_dongles_by_type(DongleType.HASP_HL) or self.manager.get_dongles_by_type(DongleType.HASP_4)
+        manager = self.manager
+        if hasattr(manager, "get_dongles_by_type"):
+            dongles = manager.get_dongles_by_type(DongleType.HASP_HL) or manager.get_dongles_by_type(DongleType.HASP_4)
+        else:
+            dongles = []
 
         if not dongles:
             return 0x00000001  # HASP_DONGLE_NOT_FOUND
@@ -1852,9 +1875,13 @@ class DongleAPIHooker:
         # Default success
         return 0
 
-    def _sentinel_api_handler(self, func_name: str, args: tuple) -> int:
+    def _sentinel_api_handler(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle Sentinel API calls."""
-        dongles = self.manager.get_dongles_by_type(DongleType.SENTINEL_SUPER_PRO)
+        manager = self.manager
+        if hasattr(manager, "get_dongles_by_type"):
+            dongles = manager.get_dongles_by_type(DongleType.SENTINEL_SUPER_PRO)
+        else:
+            dongles = []
         if not dongles:
             return 0x00000001  # Error
 
@@ -1866,7 +1893,7 @@ class DongleAPIHooker:
         # Default success
         return 0
 
-    def _handle_sentinel_query(self, dongle: BaseDongleEmulator, args: tuple) -> int:
+    def _handle_sentinel_query(self, dongle: BaseDongleEmulator, args: tuple[Any, ...]) -> int:
         """Handle Sentinel SuperPro query operations.
 
         Processes RNBOsproQuery API calls which query dongle cells, execute algorithms,
@@ -1882,13 +1909,11 @@ class DongleAPIHooker:
         """
         SENTINEL_SUCCESS = 0
         SENTINEL_INVALID_PARAMETER = 0x00000002
-        SENTINEL_NO_DONGLE = 0x00000003
         SENTINEL_INVALID_CELL = 0x00000004
         SENTINEL_ACCESS_DENIED = 0x00000005
 
         if not dongle or not dongle.active:
-            return SENTINEL_NO_DONGLE
-
+            return 0x00000003
         if len(args) < 2:
             return SENTINEL_INVALID_PARAMETER
 
@@ -1959,21 +1984,13 @@ class DongleAPIHooker:
             Status code (0 = HASP_STATUS_OK, non-zero = error).
         """
         HASP_STATUS_OK = 0
-        HASP_DONGLE_NOT_FOUND = 0x00000001
-        HASP_INV_HND = 0x00000006
-        HASP_TOO_SHORT = 0x0000000D
         HASP_ENC_NOT_SUPP = 0x0000001C
         HASP_INTERNAL_ERROR = 0x00000021
 
         if not dongle or not dongle.active:
-            return HASP_DONGLE_NOT_FOUND
-
-        if buffer is None:
-            return HASP_INV_HND
-
+            return 0x00000001
         if length <= 0:
-            return HASP_TOO_SHORT
-
+            return 0x0000000D
         try:
             if isinstance(buffer, (bytes, bytearray)):
                 data_to_encrypt = bytes(buffer[:length])
@@ -1990,22 +2007,21 @@ class DongleAPIHooker:
                 except (TypeError, ValueError):
                     return HASP_INTERNAL_ERROR
 
-            if hasattr(dongle, "encrypt_data"):
-                encrypted = dongle.encrypt_data(data_to_encrypt)
-
-                if isinstance(buffer, bytearray):
-                    buffer[: len(encrypted)] = encrypted
-                elif hasattr(buffer, "contents"):
-                    import ctypes
-
-                    ctypes.memmove(ctypes.addressof(buffer.contents), encrypted, len(encrypted))
-                elif hasattr(buffer, "value"):
-                    buffer.value = encrypted
-
-                return HASP_STATUS_OK
-            else:
+            if not hasattr(dongle, "encrypt_data"):
                 return HASP_ENC_NOT_SUPP
 
+            encrypted = dongle.encrypt_data(data_to_encrypt)
+
+            if isinstance(buffer, bytearray):
+                buffer[: len(encrypted)] = encrypted
+            elif hasattr(buffer, "contents"):
+                import ctypes
+
+                ctypes.memmove(ctypes.addressof(buffer.contents), encrypted, len(encrypted))
+            elif hasattr(buffer, "value") and not isinstance(buffer, (bytes, bytearray)):
+                buffer.value = encrypted
+
+            return HASP_STATUS_OK
         except Exception:
             self.logger.exception("HASP encryption error")
             return HASP_INTERNAL_ERROR
@@ -2026,25 +2042,21 @@ class DongleAPIHooker:
             Status code (0 = HASP_STATUS_OK, non-zero = error).
         """
         HASP_STATUS_OK = 0
-        HASP_DONGLE_NOT_FOUND = 0x00000001
         HASP_FEATURE_NOT_FOUND = 0x00000009
         HASP_INV_VCODE = 0x0000000F
         HASP_NO_MORE_CONNECTIONS = 0x00000016
         HASP_INTERNAL_ERROR = 0x00000021
 
         if not dongle or not dongle.active:
-            return HASP_DONGLE_NOT_FOUND
-
+            return 0x00000001
         try:
             allowed_features = {0, 1, 2, 5, 10, 100, 0xFFFF}
 
-            if hasattr(dongle, "spec") and hasattr(dongle.spec, "features"):
-                if "allowed_features" in dongle.spec.features:
-                    allowed_features = set(dongle.spec.features["allowed_features"])
+            if hasattr(dongle, "spec") and hasattr(dongle.spec, "features") and "allowed_features" in dongle.spec.features:
+                allowed_features = set(dongle.spec.features["allowed_features"])
 
-            if feature_id not in allowed_features and feature_id != 0:
-                if not (0 <= feature_id <= 0xFFFF):
-                    return HASP_FEATURE_NOT_FOUND
+            if feature_id not in allowed_features and feature_id != 0 and not (0 <= feature_id <= 0xFFFF):
+                return HASP_FEATURE_NOT_FOUND
 
             if vendor_code is not None:
                 if isinstance(vendor_code, int):
@@ -2057,23 +2069,26 @@ class DongleAPIHooker:
                     except (TypeError, ValueError):
                         return HASP_INV_VCODE
 
-                expected_vendor_id = getattr(dongle.spec, "vendor_id", 0x0529)
                 if len(vendor_bytes) >= 4:
                     provided_vendor = struct.unpack("<I", vendor_bytes[:4])[0]
+                    expected_vendor_id = getattr(dongle.spec, "vendor_id", 0x0529)
                     if provided_vendor != 0 and (provided_vendor & 0xFFFF) != expected_vendor_id:
-                        self.logger.debug(f"Vendor code mismatch: expected {expected_vendor_id:04X}, got {provided_vendor:04X}")
+                        self.logger.debug("Vendor code mismatch: expected %04X, got %04X", expected_vendor_id, provided_vendor)
 
             if not hasattr(dongle, "_sessions"):
                 dongle._sessions = {}
 
             max_sessions = 16
-            if len(dongle._sessions) >= max_sessions:
+            sessions = getattr(dongle, "_sessions", {})
+            if isinstance(sessions, dict) and len(sessions) >= max_sessions:
                 return HASP_NO_MORE_CONNECTIONS
 
             session_id = (int(time.time() * 1000) & 0x7FFFFFFF) | (feature_id << 16)
             session_id &= 0xFFFFFFFF
 
-            dongle._sessions[session_id] = {
+            sessions_dict = getattr(dongle, "_sessions", {})
+            if isinstance(sessions_dict, dict):
+                sessions_dict[session_id] = {
                 "feature_id": feature_id,
                 "login_time": time.time(),
                 "vendor_code": vendor_code,
@@ -2123,7 +2138,7 @@ class DongleAPIHooker:
 
         self.logger.info("Installed LPT port hooks for parallel port dongle emulation")
 
-    def _handle_port_read(self, func_name: str, args: tuple) -> int:
+    def _handle_port_read(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle parallel port read operations."""
         if not args:
             return 0xFF
@@ -2135,13 +2150,13 @@ class DongleAPIHooker:
         LPT3_BASE = 0x3BC
 
         for lpt_base in [LPT1_BASE, LPT2_BASE, LPT3_BASE]:
-            if lpt_base <= port_address <= lpt_base + 2:
-                if hasattr(self.manager, "lpt_emulator"):
-                    return self.manager.lpt_emulator.read_port(port_address)
+            if lpt_base <= port_address <= lpt_base + 2 and hasattr(self.manager, "lpt_emulator"):
+                result: int = self.manager.lpt_emulator.read_port(port_address)
+                return result
 
         return 0xFF
 
-    def _handle_port_write(self, func_name: str, args: tuple) -> int:
+    def _handle_port_write(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle parallel port write operations."""
         if len(args) < 2:
             return 0
@@ -2154,22 +2169,21 @@ class DongleAPIHooker:
         LPT3_BASE = 0x3BC
 
         for lpt_base in [LPT1_BASE, LPT2_BASE, LPT3_BASE]:
-            if lpt_base <= port_address <= lpt_base + 2:
-                if hasattr(self.manager, "lpt_emulator"):
-                    self.manager.lpt_emulator.write_port(port_address, value)
-                    return 0
+            if lpt_base <= port_address <= lpt_base + 2 and hasattr(self.manager, "lpt_emulator"):
+                self.manager.lpt_emulator.write_port(port_address, value)
+                return 0
 
         return 0
 
-    def _handle_driver_check(self, func_name: str, args: tuple) -> int:
+    def _handle_driver_check(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle driver availability check - always return driver is open."""
         return 1
 
-    def _handle_device_io_control(self, func_name: str, args: tuple) -> int:
+    def _handle_device_io_control(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle DeviceIoControl calls for LPT devices."""
         return 1
 
-    def _handle_create_file_lpt(self, func_name: str, args: tuple) -> int:
+    def _handle_create_file_lpt(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle CreateFile calls for LPT devices."""
         if not args:
             return -1
@@ -2179,17 +2193,20 @@ class DongleAPIHooker:
             filename = filename.decode("utf-8", errors="ignore")
 
         lpt_patterns = ["LPT1", "LPT2", "LPT3", "\\\\.\\LPT", "\\Device\\Parallel"]
-        for pattern in lpt_patterns:
-            if pattern.upper() in str(filename).upper():
-                return 0x1000
+        return next(
+            (
+                0x1000
+                for pattern in lpt_patterns
+                if pattern.upper() in str(filename).upper()
+            ),
+            -1,
+        )
 
-        return -1
-
-    def _handle_read_file_lpt(self, func_name: str, args: tuple) -> int:
+    def _handle_read_file_lpt(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle ReadFile calls for LPT handles."""
         return 1
 
-    def _handle_write_file_lpt(self, func_name: str, args: tuple) -> int:
+    def _handle_write_file_lpt(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WriteFile calls for LPT handles."""
         return 1
 
@@ -2234,55 +2251,55 @@ class DongleAPIHooker:
 
         self.logger.info("Installed USB hooks for USB dongle emulation")
 
-    def _handle_setupdi_getclassdevs(self, func_name: str, args: tuple) -> int:
+    def _handle_setupdi_getclassdevs(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle SetupDiGetClassDevs calls."""
         return 0x1001
 
-    def _handle_setupdi_enumdeviceinterfaces(self, func_name: str, args: tuple) -> int:
+    def _handle_setupdi_enumdeviceinterfaces(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle SetupDiEnumDeviceInterfaces calls."""
         return 1
 
-    def _handle_setupdi_getdeviceinterfacedetail(self, func_name: str, args: tuple) -> int:
+    def _handle_setupdi_getdeviceinterfacedetail(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle SetupDiGetDeviceInterfaceDetail calls."""
         return 1
 
-    def _handle_winusb_initialize(self, func_name: str, args: tuple) -> int:
+    def _handle_winusb_initialize(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WinUsb_Initialize calls."""
         return 1
 
-    def _handle_winusb_free(self, func_name: str, args: tuple) -> int:
+    def _handle_winusb_free(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WinUsb_Free calls."""
         return 1
 
-    def _handle_winusb_readpipe(self, func_name: str, args: tuple) -> int:
+    def _handle_winusb_readpipe(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WinUsb_ReadPipe calls."""
         return 1
 
-    def _handle_winusb_writepipe(self, func_name: str, args: tuple) -> int:
+    def _handle_winusb_writepipe(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WinUsb_WritePipe calls."""
         return 1
 
-    def _handle_winusb_controltransfer(self, func_name: str, args: tuple) -> int:
+    def _handle_winusb_controltransfer(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WinUsb_ControlTransfer calls."""
         return 1
 
-    def _handle_winusb_getdescriptor(self, func_name: str, args: tuple) -> int:
+    def _handle_winusb_getdescriptor(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle WinUsb_GetDescriptor calls."""
         return 1
 
-    def _handle_hidd_gethidguid(self, func_name: str, args: tuple) -> int:
+    def _handle_hidd_gethidguid(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle HidD_GetHidGuid calls."""
         return 1
 
-    def _handle_hidd_getattributes(self, func_name: str, args: tuple) -> int:
+    def _handle_hidd_getattributes(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle HidD_GetAttributes calls."""
         return 1
 
-    def _handle_hidd_getfeature(self, func_name: str, args: tuple) -> int:
+    def _handle_hidd_getfeature(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle HidD_GetFeature calls."""
         return 1
 
-    def _handle_hidd_setfeature(self, func_name: str, args: tuple) -> int:
+    def _handle_hidd_setfeature(self, func_name: str, args: tuple[Any, ...]) -> int:
         """Handle HidD_SetFeature calls."""
         return 1
 
@@ -2359,6 +2376,7 @@ class HardwareDongleEmulator:
             raise ValueError(f"No specification for {dongle_type}")
 
         # Create appropriate emulator
+        emulator: BaseDongleEmulator
         if dongle_type in [DongleType.HASP_HL, DongleType.HASP_4]:
             emulator = HASPEmulator(spec)
         elif dongle_type.value.startswith("Sentinel"):
@@ -2455,11 +2473,15 @@ class HardwareDongleEmulator:
 
         try:
             if isinstance(dongle_type, str):
-                dongle_type_enum = None
-                for dt in DongleType:
-                    if dt.value.lower() == dongle_type.lower() or dt.name.lower() == dongle_type.lower():
-                        dongle_type_enum = dt
-                        break
+                dongle_type_enum = next(
+                    (
+                        dt
+                        for dt in DongleType
+                        if dt.value.lower() == dongle_type.lower()
+                        or dt.name.lower() == dongle_type.lower()
+                    ),
+                    None,
+                )
                 if dongle_type_enum is None:
                     result["error"] = f"Unknown dongle type: {dongle_type}"
                     return result
@@ -2502,13 +2524,15 @@ class HardwareDongleEmulator:
 
     def export_dongles(self, output_file: str) -> None:
         """Export dongle configurations."""
-        export_data = {
+        export_data: dict[str, Any] = {
             "dongles": {},
             "timestamp": time.time(),
         }
 
         for dongle_id, dongle in self.dongles.items():
-            export_data["dongles"][dongle_id] = {
+            dongles_dict = export_data.get("dongles", {})
+            if isinstance(dongles_dict, dict):
+                dongles_dict[dongle_id] = {
                 "spec": {
                     "dongle_type": dongle.spec.dongle_type.value,
                     "interface": dongle.spec.interface.value,
@@ -2570,7 +2594,7 @@ class HardwareDongleEmulator:
 
         dongle = self.dongles[dongle_id]
 
-        results = {
+        results: dict[str, Any] = {
             "dongle_id": dongle_id,
             "type": dongle.spec.dongle_type.value,
             "tests": {},
@@ -2628,13 +2652,13 @@ class HardwareDongleEmulator:
                 results["tests"]["sentinel_features"] = self._test_sentinel_features(dongle)
 
             # Hardware interface tests
-            if hasattr(dongle, "_usb_device") and dongle._usb_device:
+            if hasattr(dongle, "_usb_device") and getattr(dongle, "_usb_device", None):
                 results["tests"]["hardware"] = {
                     "interface": "USB",
                     "connected": True,
                     "device_present": True,
                 }
-            elif self.parallel_port.port_backend:
+            elif self.lpt_emulator.port_backend:
                 results["tests"]["hardware"] = {
                     "interface": "Parallel",
                     "port_accessible": True,
@@ -2654,7 +2678,7 @@ class HardwareDongleEmulator:
 
     def _test_hasp_features(self, dongle: BaseDongleEmulator) -> dict[str, object]:
         """Test HASP-specific features."""
-        results = {}
+        results: dict[str, object] = {}
 
         try:
             # Test HASP memory file system
@@ -2685,7 +2709,7 @@ class HardwareDongleEmulator:
 
     def _test_sentinel_features(self, dongle: BaseDongleEmulator) -> dict[str, object]:
         """Test Sentinel-specific features."""
-        results = {}
+        results: dict[str, object] = {}
 
         try:
             # Test Sentinel algorithm execution

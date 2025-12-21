@@ -134,7 +134,7 @@ class R2SessionWrapper:
                 return True
 
             except Exception as e:
-                logger.error("Failed to connect session %s: %s", self.session_id, e)
+                logger.exception("Failed to connect session %s: %s", self.session_id, e)
                 self.state = SessionState.ERROR
                 self.metrics.errors_count += 1
                 return False
@@ -187,7 +187,7 @@ class R2SessionWrapper:
 
             except Exception as e:
                 self.metrics.errors_count += 1
-                logger.error("Command failed in session %s: %s, Error: %s", self.session_id, command, e)
+                logger.exception("Command failed in session %s: %s, Error: %s", self.session_id, command, e)
                 raise
 
     def reconnect(self) -> bool:
@@ -475,7 +475,7 @@ class R2SessionPool:
             try:
                 self._cleanup_idle_sessions()
             except Exception as e:
-                logger.error("Error in cleanup loop: %s", e)
+                logger.exception("Error in cleanup loop: %s", e)
 
             self._stop_cleanup.wait(self.cleanup_interval)
 
@@ -520,7 +520,9 @@ class R2SessionPool:
 
         """
         with self._lock:
-            active_sessions = sum(bool(s.state == SessionState.ACTIVE) for s in self._sessions.values())
+            active_sessions = sum(
+                s.state == SessionState.ACTIVE for s in self._sessions.values()
+            )
 
             total_commands = sum(s.metrics.commands_executed for s in self._sessions.values())
 

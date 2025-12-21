@@ -356,7 +356,7 @@ Process.enumerateModules().forEach(function(module) {
             self.editor.current_file = path
             self.setWindowTitle(f"Plugin Editor - {os.path.basename(path)}")
         except Exception as e:
-            self.logger.error("Exception in plugin_editor_dialog: %s", e)
+            self.logger.exception("Exception in plugin_editor_dialog: %s", e)
             QMessageBox.critical(self, "Error", f"Failed to load plugin:\n{e!s}")
 
     def save_plugin(self) -> None:
@@ -425,7 +425,7 @@ Process.enumerateModules().forEach(function(module) {
             debugger_dialog.exec()
 
         except ImportError as e:
-            self.logger.error("Import error in plugin_editor_dialog: %s", e)
+            self.logger.exception("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self,
                 "Not Available",
@@ -514,7 +514,7 @@ Process.enumerateModules().forEach(function(module) {
             test_dialog.exec()
 
         except ImportError as e:
-            self.logger.error("Import error in plugin_editor_dialog: %s", e)
+            self.logger.exception("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self,
                 "Not Available",
@@ -534,7 +534,7 @@ Process.enumerateModules().forEach(function(module) {
             ci_cd_dialog.exec()
 
         except ImportError as e:
-            self.logger.error("Import error in plugin_editor_dialog: %s", e)
+            self.logger.exception("Import error in plugin_editor_dialog: %s", e)
             QMessageBox.warning(
                 self,
                 "Not Available",

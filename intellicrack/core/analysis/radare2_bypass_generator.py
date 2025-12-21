@@ -25,7 +25,7 @@ import zlib
 from contextlib import AbstractContextManager
 from typing import Any
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, R2SessionPoolAdapter, r2_session
 from .radare2_ai_integration import R2AIEngine
 from .radare2_decompiler import R2DecompilationEngine
 from .radare2_vulnerability_engine import R2VulnerabilityEngine
@@ -57,18 +57,17 @@ class R2BypassGenerator:
         self.vulnerability_engine = R2VulnerabilityEngine(binary_path, radare2_path)
         self.ai_engine = R2AIEngine(binary_path, radare2_path)
 
-    def _get_r2_session(self, binary_path: str) -> AbstractContextManager[R2Session]:
+    def _get_r2_session(self, binary_path: str) -> AbstractContextManager[R2Session | R2SessionPoolAdapter]:
         """Get an r2 session context manager for the specified binary.
 
         Args:
             binary_path: Path to the binary file to analyze.
 
         Returns:
-            Context manager yielding an R2Session instance for radare2 operations.
+            Context manager yielding an R2Session or R2SessionPoolAdapter instance.
 
         """
-        session: AbstractContextManager[R2Session] = r2_session(binary_path, self.radare2_path)
-        return session
+        return r2_session(binary_path, self.radare2_path)
 
     def generate_comprehensive_bypass(self) -> dict[str, Any]:
         """Generate comprehensive license bypass solutions."""
@@ -115,7 +114,7 @@ class R2BypassGenerator:
 
         except R2Exception as e:
             result["error"] = str(e)
-            self.logger.error("Bypass generation failed: %s", e, exc_info=True)
+            self.logger.exception("Bypass generation failed: %s", e)
 
         return result
 
@@ -137,7 +136,7 @@ class R2BypassGenerator:
 
         return result
 
-    def _analyze_license_mechanisms(self, r2: R2Session) -> dict[str, Any]:
+    def _analyze_license_mechanisms(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, Any]:
         """Analyze license validation mechanisms in detail."""
         analysis: dict[str, Any] = {
             "validation_functions": [],
@@ -186,7 +185,7 @@ class R2BypassGenerator:
             analysis["validation_flow"] = self._build_validation_flow(analysis)
 
         except R2Exception as e:
-            self.logger.error("License mechanism analysis failed: %s", e, exc_info=True)
+            self.logger.exception("License mechanism analysis failed: %s", e)
 
         return analysis
 
@@ -289,7 +288,7 @@ class R2BypassGenerator:
 
         return crypto_ops
 
-    def _analyze_license_strings(self, r2: R2Session) -> list[dict[str, Any]]:
+    def _analyze_license_strings(self, r2: R2Session | R2SessionPoolAdapter) -> list[dict[str, Any]]:
         """Analyze license-related strings."""
         patterns = []
 
@@ -316,7 +315,7 @@ class R2BypassGenerator:
                         for result in search_results:
                             if addr := result.get("offset", 0):
                                 string_content = r2._execute_command(f"ps @ {hex(addr)}")
-                                if string_content:
+                                if string_content and isinstance(string_content, str):
                                     patterns.append(
                                         {
                                             "keyword": keyword,
@@ -327,15 +326,15 @@ class R2BypassGenerator:
                                         },
                                     )
                 except R2Exception as e:
-                    logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
+                    logger.exception("R2Exception in radare2_bypass_generator: %s", e)
                     continue
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
+            logger.exception("R2Exception in radare2_bypass_generator: %s", e)
 
         return patterns
 
-    def _analyze_validation_apis(self, r2: R2Session) -> dict[str, list[dict[str, Any]]]:
+    def _analyze_validation_apis(self, r2: R2Session | R2SessionPoolAdapter) -> dict[str, list[dict[str, Any]]]:
         """Analyze API calls used in validation."""
         api_analysis: dict[str, list[dict[str, Any]]] = {
             "registry_operations": [],
@@ -404,7 +403,7 @@ class R2BypassGenerator:
                         )
 
         except R2Exception as e:
-            logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
+            logger.exception("R2Exception in radare2_bypass_generator: %s", e)
 
         return api_analysis
 
@@ -494,7 +493,7 @@ class R2BypassGenerator:
 
         return strategies
 
-    def _generate_automated_patches(self, r2: R2Session, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_automated_patches(self, r2: R2Session | R2SessionPoolAdapter, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate sophisticated automated binary patches using control flow analysis.
 
         This method performs deep analysis of binary logic to create intelligent patches
@@ -550,7 +549,7 @@ class R2BypassGenerator:
                             patches.append(basic_patch)
 
             except Exception as e:
-                logger.error("Error generating patches for function at %s: %s", hex(func_addr), e, exc_info=True)
+                logger.exception("Error generating patches for function at %s: %s", hex(func_addr), e)
                 continue
 
         # Sort patches by confidence and sophistication
@@ -636,8 +635,9 @@ class R2BypassGenerator:
                     if f"{const:x}" in func_bytes.lower():
                         constants_list.append({"type": "SHA1", "value": f"{const:x}"})
 
-                sbox_pattern = r2.cmd(f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}")
-                if sbox_pattern:
+                if sbox_pattern := r2.cmd(
+                    f"/ \\x63\\x7c\\x77\\x7b @ {hex(func_addr)}"
+                ):
                     logger.debug("S-box pattern found at %s: %s", hex(func_addr), sbox_pattern)
                     s_boxes_list: list[dict[str, Any]] = analysis["s_boxes"]
                     s_boxes_list.append(
@@ -650,10 +650,10 @@ class R2BypassGenerator:
                     )
 
                 loops = r2.cmdj(f"aflj @ {hex(func_addr)}")
-                if loops:
+                if isinstance(loops, list):
                     round_functions_list: list[dict[str, Any]] = analysis["round_functions"]
                     for loop in loops:
-                        if loop.get("nbbs", 0) > 10:
+                        if isinstance(loop, dict) and loop.get("nbbs", 0) > 10:
                             loop_offset = loop.get("offset", 0)
                             round_functions_list.append(
                                 {
@@ -662,15 +662,14 @@ class R2BypassGenerator:
                                 },
                             )
 
-                key_expansion = self._find_key_expansion(r2, func_addr)
-                if key_expansion:
+                if key_expansion := self._find_key_expansion(r2, func_addr):
                     analysis["key_schedule"] = key_expansion
 
                 analysis["initialization_vectors"] = self._find_ivs(r2, func_addr)
                 analysis["salt_values"] = self._find_salts(r2, func_addr)
 
         except Exception as e:
-            self.logger.error("Crypto analysis error: %s", e, exc_info=True)
+            self.logger.exception("Crypto analysis error: %s", e)
 
         return analysis
 
@@ -827,7 +826,9 @@ if __name__ == "__main__":
                 strings = r2.cmdj("izj")
                 r2.cmdj("axtj")
 
-                for s in strings:
+                for s in (strings if isinstance(strings, list) else []):
+                    if not isinstance(s, dict):
+                        continue
                     string_val = s.get("string", "").lower()
                     if "user" in string_val or "name" in string_val:
                         construction["uses_username"] = True
@@ -853,7 +854,7 @@ if __name__ == "__main__":
                     construction["transformation"] = "partial"
 
         except Exception as e:
-            self.logger.error("Hash construction analysis error: %s", e, exc_info=True)
+            self.logger.exception("Hash construction analysis error: %s", e)
 
         return construction
 
@@ -940,25 +941,29 @@ if __name__ == "__main__":
             "pattern_analysis": self._analyze_key_patterns(crypto_op),
         }
 
-    def _extract_sbox_data(self, r2: R2Session, func_addr: int) -> list[int]:
+    def _extract_sbox_data(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[int]:
         """Extract S-box data from function."""
         try:
-            # Read 256 bytes for full S-box
             sbox_data = r2.cmdj(f"pxj 256 @ {hex(func_addr)}")
-            return sbox_data or []
+            if isinstance(sbox_data, list):
+                return [int(x) for x in sbox_data if isinstance(x, int)]
+            return []
         except Exception:
             return []
 
-    def _analyze_loop_iterations(self, r2: R2Session, loop_addr: int) -> int:
+    def _analyze_loop_iterations(self, r2: R2Session | R2SessionPoolAdapter, loop_addr: int) -> int:
         """Analyze loop to determine iteration count."""
         try:
-            # Analyze loop counter
             loop_info = r2.cmdj(f"afbj @ {hex(loop_addr)}")
-            return loop_info[0].get("ninstr", 0) if loop_info and len(loop_info) > 0 else 0
+            if isinstance(loop_info, list) and len(loop_info) > 0:
+                first_item = loop_info[0]
+                if isinstance(first_item, dict):
+                    return int(first_item.get("ninstr", 0))
+            return 0
         except Exception:
             return 0
 
-    def _find_key_expansion(self, r2: R2Session, func_addr: int) -> dict[str, Any] | None:
+    def _find_key_expansion(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> dict[str, Any] | None:
         """Find and analyze key expansion routine."""
         try:
             # Look for key expansion patterns
@@ -973,7 +978,7 @@ if __name__ == "__main__":
         except Exception:
             return None
 
-    def _find_ivs(self, r2: R2Session, func_addr: int) -> list[str]:
+    def _find_ivs(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[str]:
         """Find initialization vectors."""
         ivs = []
         try:
@@ -987,20 +992,22 @@ if __name__ == "__main__":
                     if len(ivs) >= 3:  # Limit to first 3 potential IVs
                         break
         except Exception as e:
-            logger.debug("Failed to find initialization vectors: %s", e, exc_info=True)
+            logger.debug("Failed to find initialization vectors: %s", e)
         return ivs
 
-    def _find_salts(self, r2: R2Session, func_addr: int) -> list[str]:
+    def _find_salts(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[str]:
         """Find salt values used in crypto."""
-        salts = []
+        salts: list[str] = []
         try:
-            if strings := r2.cmdj(f"izzj @ {hex(func_addr)}"):
+            strings = r2.cmdj(f"izzj @ {hex(func_addr)}")
+            if isinstance(strings, list):
                 for s in strings:
-                    string_val = s.get("string", "")
-                    if 8 <= len(string_val) <= 32:  # Typical salt size
-                        salts.append(string_val)
+                    if isinstance(s, dict):
+                        string_val = str(s.get("string", ""))
+                        if 8 <= len(string_val) <= 32:
+                            salts.append(string_val)
         except Exception as e:
-            logger.debug("Failed to find salts: %s", e, exc_info=True)
+            logger.debug("Failed to find salts: %s", e)
         return salts
 
     def _extract_crypto_validation_logic(self, crypto_op: dict[str, Any]) -> dict[str, Any]:
@@ -1066,27 +1073,21 @@ if __name__ == "__main__":
                 modulus_sizes = [128, 256, 512]  # bytes for 1024, 2048, 4096 bit keys
 
                 for size in modulus_sizes:
-                    # Search near the crypto function for large integers
                     search_cmd = f"/x 00010001 @ {hex(addr)}-0x1000~{hex(addr)}+0x1000"
-                    if results := r2._execute_command(search_cmd, expect_json=False):
-                        # Found potential RSA public exponent (0x10001 = 65537)
+                    results = r2._execute_command(search_cmd, expect_json=False)
+                    if results and isinstance(results, str):
                         lines = results.strip().split("\n")
                         for line in lines:
                             if "hit" in line.lower():
                                 if parts := line.split():
                                     exp_addr = int(parts[0], 16) if "0x" in parts[0] else None
                                     if exp_addr:
-                                        # Look for modulus near the exponent
-                                        # Modulus is typically stored before or after exponent
                                         for offset in [-size - 4, 4]:
                                             mod_addr = exp_addr + offset
-                                            # Read potential modulus bytes
                                             read_cmd = f"p8 {size} @ {hex(mod_addr)}"
                                             hex_data = r2._execute_command(read_cmd)
 
-                                            if hex_data and len(hex_data.strip()) > 32:
-                                                # Check if it looks like a valid modulus
-                                                # RSA moduli should have high bits set
+                                            if hex_data and isinstance(hex_data, str) and len(hex_data.strip()) > 32:
                                                 hex_str = hex_data.strip()
                                                 if hex_str[:2] in [
                                                     "ff",
@@ -1125,20 +1126,22 @@ if __name__ == "__main__":
                                                     return str(hex_str)
 
                 imports = r2.get_imports()
-                rsa_imports = [
-                    imp for imp in imports if any(x in imp.get("name", "").lower() for x in ["rsa", "bignum", "bn_", "modexp", "publickey"])
-                ]
-                if rsa_imports:
+                if rsa_imports := [
+                    imp
+                    for imp in imports
+                    if any(
+                        x in imp.get("name", "").lower()
+                        for x in ["rsa", "bignum", "bn_", "modexp", "publickey"]
+                    )
+                ]:
                     for imp in rsa_imports:
-                        imp_addr = imp.get("plt", 0) or imp.get("addr", 0)
-                        if imp_addr:
+                        if imp_addr := imp.get("plt", 0) or imp.get("addr", 0):
                             xrefs_cmd = f"axtj @ {hex(imp_addr)}"
                             xrefs = r2._execute_command(xrefs_cmd, expect_json=True)
 
                             if xrefs and isinstance(xrefs, list):
                                 for xref in xrefs[:5]:
-                                    ref_addr = xref.get("from", 0)
-                                    if ref_addr:
+                                    if ref_addr := xref.get("from", 0):
                                         const_cmd = f"aoj @ {hex(ref_addr)}"
                                         const_data = r2._execute_command(const_cmd, expect_json=True)
 
@@ -1150,7 +1153,7 @@ if __name__ == "__main__":
 
                 bignum_cmd = f"/ \\xff[\\x00-\\xff]{{127,}} @ {hex(addr)}-0x10000"
                 bignum_results = r2._execute_command(bignum_cmd)
-                if bignum_results:
+                if bignum_results and isinstance(bignum_results, str):
                     lines = bignum_results.strip().split("\n")
                     for line in lines:
                         if "hit" in line.lower():
@@ -1161,11 +1164,11 @@ if __name__ == "__main__":
                                     for test_size in [128, 256, 512]:
                                         read_cmd = f"p8 {test_size} @ {hex(hit_addr)}"
                                         hex_data = r2._execute_command(read_cmd)
-                                        if hex_data and len(hex_data.strip()) >= test_size * 2:
-                                            return str(hex_data.strip())
+                                        if hex_data and isinstance(hex_data, str) and len(hex_data.strip()) >= test_size * 2:
+                                            return hex_data.strip()
 
         except Exception as e:
-            self.logger.debug("Failed to extract RSA modulus: %s", e, exc_info=True)
+            self.logger.debug("Failed to extract RSA modulus: %s", e)
 
         # Return None if extraction failed - caller should handle this
         return None
@@ -1281,7 +1284,7 @@ if __name__ == "__main__":
             for file_op in file_ops
         ]
 
-    def _generate_memory_patches(self, r2: R2Session, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
+    def _generate_memory_patches(self, r2: R2Session | R2SessionPoolAdapter, license_analysis: dict[str, Any]) -> list[dict[str, Any]]:
         """Generate runtime memory patches."""
         patches = []
 
@@ -1675,7 +1678,7 @@ void apply_patch() {{
             "confidence": len(registry_patterns) * 0.2 + len(license_keys) * 0.15,
         }
 
-    def _create_binary_patch(self, r2: R2Session, func_info: dict[str, Any], bypass_point: dict[str, Any]) -> dict[str, Any] | None:
+    def _create_binary_patch(self, r2: R2Session | R2SessionPoolAdapter, func_info: dict[str, Any], bypass_point: dict[str, Any]) -> dict[str, Any] | None:
         """Create binary patch for bypass point."""
         func_addr = func_info["function"].get("offset", 0)
         if not func_addr:
@@ -1689,10 +1692,9 @@ void apply_patch() {{
             target_line = bypass_point.get("line_number", 0)
             bypass_method = bypass_point.get("bypass_method", "nop_instruction")
 
-            # Parse disassembly to find exact instruction address and bytes
             target_addr = None
             original_bytes = None
-            if disasm and target_line > 0:
+            if disasm and isinstance(disasm, str) and target_line > 0:
                 disasm_lines = disasm.split("\n")
                 if target_line < len(disasm_lines):
                     line = disasm_lines[target_line]
@@ -1719,7 +1721,7 @@ void apply_patch() {{
                 "patch_bytes": self._generate_patch_bytes_for_method(bypass_method),
             }
         except R2Exception as e:
-            logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
+            logger.exception("R2Exception in radare2_bypass_generator: %s", e)
             return None
 
     def _generate_keygen_implementation(self, crypto_op: dict[str, Any]) -> dict[str, str]:
@@ -2085,15 +2087,15 @@ Compatible=1.0,1.5,2.0"""
             return "encrypted"
         return "ini"
 
-    def _get_original_bytes(self, r2: R2Session, func_addr: int) -> str:
+    def _get_original_bytes(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> str:
         """Get original bytes at function address."""
         try:
             bytes_data = r2._execute_command(f"p8 16 @ {hex(func_addr)}")
-            if bytes_data:
-                return str(bytes_data.strip())
+            if bytes_data and isinstance(bytes_data, str):
+                return bytes_data.strip()
             return "00" * 16
         except R2Exception as e:
-            self.logger.error("R2Exception in radare2_bypass_generator: %s", e, exc_info=True)
+            self.logger.exception("R2Exception in radare2_bypass_generator: %s", e)
             return "00" * 16
 
     def _generate_patch_bytes(self, func_info: dict[str, Any]) -> str:
@@ -2111,8 +2113,6 @@ Compatible=1.0,1.5,2.0"""
         if func_size and func_size < 10:
             nop_count = min(func_size, 5)
             return "90" * nop_count
-        if func_type == "bool" or "bool" in func_name.lower():
-            return "b8010000c3"
         return "b8010000c3"
 
     def _generate_registry_hook_code(self, reg_op: dict[str, Any]) -> str:
@@ -3097,33 +3097,36 @@ def generate_key():
 
         return list(set(precautions))
 
-    def _analyze_control_flow_graph(self, r2: R2Session, func_addr: int) -> dict[str, Any]:
+    def _analyze_control_flow_graph(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> dict[str, Any]:
         """Analyze the control flow graph of a function.
 
         Builds a comprehensive understanding of the function's control flow
         including basic blocks, edges, loops, and conditional branches.
         """
         try:
-            # Get basic blocks
-            blocks_json = r2._execute_command(f"agfj @ {hex(func_addr)}")
-            blocks = r2._parse_json(blocks_json) if blocks_json else []
+            blocks_result = r2.cmdj(f"agfj @ {hex(func_addr)}")
+            blocks = blocks_result if isinstance(blocks_result, list) else []
 
-            # Get function info for additional context
-            func_info_json = r2._execute_command(f"afij @ {hex(func_addr)}")
-            func_info = r2._parse_json(func_info_json)[0] if func_info_json else {}
+            func_info_result = r2.cmdj(f"afij @ {hex(func_addr)}")
+            func_info: dict[str, Any] = {}
+            if isinstance(func_info_result, list) and len(func_info_result) > 0:
+                first_item = func_info_result[0]
+                if isinstance(first_item, dict):
+                    func_info = first_item
 
-            # Build control flow graph
-            cfg = {
+            cfg: dict[str, Any] = {
                 "blocks": {},
                 "edges": [],
                 "entry_point": func_addr,
                 "exit_points": [],
                 "loops": [],
                 "conditionals": [],
-                "complexity": func_info.get("cc", 1),  # Cyclomatic complexity
+                "complexity": func_info.get("cc", 1),
             }
 
             for block in blocks:
+                if not isinstance(block, dict):
+                    continue
                 block_addr = block.get("offset", 0)
                 cfg["blocks"][block_addr] = {
                     "address": block_addr,
@@ -3165,10 +3168,10 @@ def generate_key():
             return cfg
 
         except Exception as e:
-            logger.error("Error analyzing control flow graph: %s", e, exc_info=True)
+            logger.exception("Error analyzing control flow graph: %s", e)
             return {"blocks": {}, "edges": [], "conditionals": []}
 
-    def _identify_decision_points(self, r2: R2Session, func_addr: int, cfg: dict[str, Any]) -> list[dict[str, Any]]:
+    def _identify_decision_points(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int, cfg: dict[str, Any]) -> list[dict[str, Any]]:
         """Identify critical decision points in the control flow.
 
         Finds the optimal locations for patches by analyzing conditional branches,
@@ -3181,12 +3184,10 @@ def generate_key():
             block = cfg["blocks"].get(cond_addr, {})
 
             try:
-                # Get detailed disassembly for the block
                 disasm = r2._execute_command(f"pdb @ {hex(cond_addr)}")
-                if not disasm:
+                if not disasm or not isinstance(disasm, str):
                     continue
 
-                # Analyze the condition
                 condition_analysis = self._analyze_condition(r2, cond_addr, disasm)
 
                 decision_point = {
@@ -3203,7 +3204,7 @@ def generate_key():
                 decision_points.append(decision_point)
 
             except Exception as e:
-                logger.error("Error analyzing decision point at %s: %s", hex(cond_addr), e, exc_info=True)
+                logger.exception("Error analyzing decision point at %s: %s", hex(cond_addr), e)
                 continue
 
         # Also identify function entry points that perform immediate checks
@@ -3215,7 +3216,7 @@ def generate_key():
 
         return decision_points
 
-    def _determine_patch_strategy(self, r2: R2Session, decision_point: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    def _determine_patch_strategy(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
         """Determine the optimal patching strategy for a decision point.
 
         Analyzes the context around the decision point to determine the most
@@ -3300,7 +3301,7 @@ def generate_key():
 
         return strategy
 
-    def _generate_register_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_register_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that manipulates register values."""
         patch = {
             "type": "register_manipulation",
@@ -3328,7 +3329,7 @@ def generate_key():
 
         return patch
 
-    def _generate_stack_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_stack_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that manipulates stack values."""
         return {
             "type": "stack_manipulation",
@@ -3342,7 +3343,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_flow_redirect_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_flow_redirect_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that redirects control flow."""
         return {
             "type": "control_flow_redirect",
@@ -3356,7 +3357,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_memory_override_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_memory_override_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that overrides memory values."""
         return {
             "type": "memory_value_override",
@@ -3370,7 +3371,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _generate_return_injection_patch(self, r2: R2Session, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
+    def _generate_return_injection_patch(self, r2: R2Session | R2SessionPoolAdapter, decision_point: dict[str, Any], strategy: dict[str, Any]) -> dict[str, Any]:
         """Generate a patch that injects a return value."""
         return {
             "type": "return_value_injection",
@@ -3384,7 +3385,7 @@ def generate_key():
             "side_effects": strategy["side_effects"],
         }
 
-    def _analyze_condition(self, r2: R2Session, address: int, disasm: str) -> dict[str, Any]:
+    def _analyze_condition(self, r2: R2Session | R2SessionPoolAdapter, address: int, disasm: str) -> dict[str, Any]:
         """Analyze the condition being checked at a decision point."""
         condition: dict[str, Any] = {
             "type": "unknown",
@@ -3468,13 +3469,13 @@ def generate_key():
 
         return min(importance, 1.0)
 
-    def _find_entry_validation_checks(self, r2: R2Session, func_addr: int) -> list[dict[str, Any]]:
+    def _find_entry_validation_checks(self, r2: R2Session | R2SessionPoolAdapter, func_addr: int) -> list[dict[str, Any]]:
         """Find validation checks at function entry."""
         entry_checks: list[dict[str, Any]] = []
 
         try:
             disasm = r2._execute_command(f"pd 20 @ {hex(func_addr)}")
-            if disasm:
+            if disasm and isinstance(disasm, str):
                 lines = disasm.split("\n")[:20]
                 entry_checks.extend(
                     {
@@ -3489,7 +3490,7 @@ def generate_key():
                     if any(check in line.lower() for check in ["cmp", "test", "call"])
                 )
         except Exception as e:
-            logger.error("Error finding entry validation checks: %s", e, exc_info=True)
+            logger.exception("Error finding entry validation checks: %s", e)
 
         return entry_checks
 
@@ -3650,11 +3651,11 @@ def generate_key():
         upper = (value >> 16) & 0xFFFF
         return f"{lower:04X}{reg_num:01X}0E3{upper:04X}{reg_num:01X}4E3"
 
-    def _get_original_bytes_at(self, r2: R2Session, address: int, size: int) -> str:
+    def _get_original_bytes_at(self, r2: R2Session | R2SessionPoolAdapter, address: int, size: int) -> str:
         """Get original bytes at a specific address."""
         try:
-            if hex_bytes := r2._execute_command(f"px {size} @ {hex(address)}"):
-                # Extract just the hex bytes from radare2 output
+            hex_bytes = r2._execute_command(f"px {size} @ {hex(address)}")
+            if hex_bytes and isinstance(hex_bytes, str):
                 lines = hex_bytes.split("\n")
                 bytes_str = ""
                 for line in lines:
@@ -3663,7 +3664,7 @@ def generate_key():
                         bytes_str += "".join(parts)
                 return bytes_str[: size * 2]  # Each byte is 2 hex chars
         except Exception as e:
-            logger.error("Error getting original bytes: %s", e, exc_info=True)
+            logger.exception("Error getting original bytes: %s", e)
         return "90" * size  # Return NOPs as fallback
 
     def _is_already_patched(self, bypass_point: dict[str, Any], patches: list[dict[str, Any]]) -> bool:

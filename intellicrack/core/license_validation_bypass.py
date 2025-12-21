@@ -844,8 +844,8 @@ class LicenseValidationBypass:
             num_offset = 24
             if num_offset + (top * 8) > len(data):
                 num_offset = 0
-                if num_offset + (top * 8) > len(data):
-                    return None
+            if num_offset + (top * 8) > len(data):
+                return None
 
             num_bytes = []
             for i in range(top):

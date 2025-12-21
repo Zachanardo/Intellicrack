@@ -59,8 +59,8 @@ if "DISPLAY" not in os.environ and "QT_QPA_PLATFORM" not in os.environ:
 else:
     logger.debug(
         "DISPLAY is '%s' or QT_QPA_PLATFORM is '%s', skipping offscreen mode configuration.",
-        os.environ.get('DISPLAY'),
-        os.environ.get('QT_QPA_PLATFORM'),
+        os.environ.get("DISPLAY"),
+        os.environ.get("QT_QPA_PLATFORM"),
     )
 
 # Configure Qt font handling for Windows
@@ -70,23 +70,23 @@ if os.name == "nt":
     if "QT_QPA_FONTDIR" not in os.environ:
         windir = os.environ.get("WINDIR", "C:\\Windows")
         os.environ["QT_QPA_FONTDIR"] = os.path.join(windir, "Fonts")
-        logger.debug("QT_QPA_FONTDIR not set, setting to '%s'.", os.environ['QT_QPA_FONTDIR'])
+        logger.debug("QT_QPA_FONTDIR not set, setting to '%s'.", os.environ["QT_QPA_FONTDIR"])
     else:
-        logger.debug("QT_QPA_FONTDIR already set to '%s'.", os.environ['QT_QPA_FONTDIR'])
+        logger.debug("QT_QPA_FONTDIR already set to '%s'.", os.environ["QT_QPA_FONTDIR"])
 
     # Suppress Qt font warnings to reduce console noise
     if "QT_LOGGING_RULES" not in os.environ:
         os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.fonts=false"
         logger.debug("QT_LOGGING_RULES not set, setting to suppress Qt font warnings.")
     else:
-        logger.debug("QT_LOGGING_RULES already set to '%s'.", os.environ['QT_LOGGING_RULES'])
+        logger.debug("QT_LOGGING_RULES already set to '%s'.", os.environ["QT_LOGGING_RULES"])
 
     # Force software rendering for Windows (especially Intel Arc compatibility)
     if "QT_OPENGL" not in os.environ:
         os.environ["QT_OPENGL"] = "software"
         logger.debug("QT_OPENGL not set, forcing 'software' rendering for Windows.")
     else:
-        logger.debug("QT_OPENGL already set to '%s'.", os.environ['QT_OPENGL'])
+        logger.debug("QT_OPENGL already set to '%s'.", os.environ["QT_OPENGL"])
 
     # Additional Intel Arc compatibility settings
     gpu_vendor = os.environ.get("INTELLICRACK_GPU_VENDOR", "Unknown")
@@ -98,9 +98,9 @@ if os.name == "nt":
         logger.info("Intel GPU detected, forcing software rendering and specific Qt backend/platform for compatibility.")
         logger.debug(
             "QT_OPENGL set to '%s', QT_QUICK_BACKEND set to '%s', QT_ANGLE_PLATFORM set to '%s'.",
-            os.environ['QT_OPENGL'],
-            os.environ['QT_QUICK_BACKEND'],
-            os.environ['QT_ANGLE_PLATFORM'],
+            os.environ["QT_OPENGL"],
+            os.environ["QT_QUICK_BACKEND"],
+            os.environ["QT_ANGLE_PLATFORM"],
         )
     else:
         logger.debug("Intel GPU not detected or not specified as vendor.")

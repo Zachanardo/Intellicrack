@@ -7,13 +7,13 @@ import shutil
 import tempfile
 import time
 import traceback
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.logger import logger
 
 
 if TYPE_CHECKING:
-    from intellicrack.ui.main_app import MainWindow
+    from intellicrack.ui.main_app import IntellicrackApp as MainWindow
 
 from ..exploitation.exploitation import run_automated_patch_agent
 from ..logger import log_message
@@ -535,47 +535,83 @@ def _process_deep_analysis_candidates(app: MainWindow) -> tuple[list[dict[str, A
         Tuple of (patches list, strategy used)
 
     """
-    patches = []
+    patches: list[dict[str, Any]] = []
     strategy_used = "None"
 
     app.update_output.emit(log_message("[License Rewrite] Running deep license analysis to find candidates..."))
     from ...core.analysis.core_analysis import enhanced_deep_license_analysis
 
-    candidates = enhanced_deep_license_analysis(app.binary_path)
+    analysis_results = enhanced_deep_license_analysis(app.binary_path)
 
-    if not candidates:
+    if not analysis_results:
         return patches, strategy_used
 
-    app.update_output.emit(log_message(f"[License Rewrite] Deep analysis found {len(candidates)} candidates. Processing top candidates..."))
+    candidate_list = _extract_candidates_from_analysis(analysis_results)
+
+    if not candidate_list:
+        return patches, strategy_used
+
+    app.update_output.emit(log_message(f"[License Rewrite] Deep analysis found {len(candidate_list)} candidates. Processing top candidates..."))
     strategy_used = "Deep Analysis"
 
-    # Sort candidates by confidence
-    candidates = _sort_candidates_by_confidence(candidates)
-    top_candidates = candidates[:5]  # Limit number of candidates to patch
+    sorted_candidates = _sort_candidates_by_confidence(candidate_list)
+    top_candidates = sorted_candidates[:5]
 
-    # Process candidates with pefile/capstone/keystone
-    patches = _process_candidates_with_tools(app, top_candidates, candidates)
+    patches = _process_candidates_with_tools(app, top_candidates, sorted_candidates)
 
     return patches, strategy_used
 
 
-def _sort_candidates_by_confidence(
-    candidates: list[dict[str, Any]] | dict[str, Any],
-) -> list[dict[str, Any]]:
+def _extract_candidates_from_analysis(analysis_results: dict[str, Any]) -> list[dict[str, Any]]:
+    """Extract candidate patches from analysis results.
+
+    Args:
+        analysis_results: Results from enhanced_deep_license_analysis
+
+    Returns:
+        List of candidate dicts with start address, confidence, and keywords
+
+    """
+    candidates: list[dict[str, Any]] = []
+
+    validation_routines = analysis_results.get("validation_routines", [])
+    for routine in validation_routines:
+        if isinstance(routine, dict):
+            candidates.append(routine)
+        elif isinstance(routine, str):
+            candidates.append({
+                "name": routine,
+                "start": 0,
+                "confidence": 0.5,
+                "keywords": [routine],
+            })
+
+    license_patterns = analysis_results.get("license_patterns", [])
+    for pattern in license_patterns:
+        if isinstance(pattern, dict):
+            candidates.append(pattern)
+        elif isinstance(pattern, str):
+            candidates.append({
+                "name": pattern,
+                "start": 0,
+                "confidence": 0.4,
+                "keywords": [pattern],
+            })
+
+    return candidates
+
+
+def _sort_candidates_by_confidence(candidates: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Sort candidates by confidence score.
 
     Args:
-        candidates: List or dict of candidates with confidence scores
+        candidates: List of candidates with confidence scores
 
     Returns:
-        Sorted list of candidates
+        Sorted list of candidates (sorted in place, returns same list)
 
     """
-    if isinstance(candidates, list):
-        candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
-    elif isinstance(candidates, dict):
-        # Convert dict to list if needed
-        candidates = list(candidates.values()) if hasattr(candidates, "values") else []
+    candidates.sort(key=lambda x: x.get("confidence", 0), reverse=True)
     return candidates
 
 
@@ -593,7 +629,7 @@ def _process_candidates_with_tools(
         List of patches generated
 
     """
-    patches = []
+    patches: list[dict[str, Any]] = []
 
     if not pefile or not Cs or not keystone:
         app.update_output.emit(log_message("[License Rewrite] Error: Required modules (pefile, capstone, keystone) not found."))
@@ -659,7 +695,7 @@ def _setup_disassembly_tools(is_64bit: bool) -> dict[str, Any]:
     return {"ks": ks, "md": md}
 
 
-def _get_text_section(pe: object, app: MainWindow) -> object:
+def _get_text_section(pe: Any, app: MainWindow) -> Any:
     """Get the .text section from PE file.
 
     Args:
@@ -720,7 +756,7 @@ def _process_single_candidate(
     )
 
 
-def _generate_patch_bytes(is_64bit: bool, ks: object) -> tuple[bytes, str]:
+def _generate_patch_bytes(is_64bit: bool, ks: Any) -> tuple[bytes, str]:
     """Generate patch bytes for the architecture.
 
     Args:
@@ -732,8 +768,8 @@ def _generate_patch_bytes(is_64bit: bool, ks: object) -> tuple[bytes, str]:
 
     """
     patch_asm = "mov rax, 1; ret" if is_64bit else "mov eax, 1; ret"
-    patch_bytes, _ = ks.asm(patch_asm)
-    patch_bytes = bytes(patch_bytes)
+    patch_bytes_raw, _ = ks.asm(patch_asm)
+    patch_bytes = bytes(patch_bytes_raw)
 
     return patch_bytes, patch_asm
 
@@ -745,7 +781,7 @@ def _perform_safety_check_and_patch(
     code_base_addr: int,
     patch_bytes: bytes,
     patch_asm: str,
-    md: object,
+    md: Any,
     candidates: list[dict[str, Any]],
 ) -> dict[str, Any] | None:
     """Perform safety check and create patch if safe.
@@ -1082,7 +1118,7 @@ def _process_ai_patches(app: MainWindow, original_patches: list[dict[str, Any]] 
     if patches and len(patches) > 0:
         app.update_output.emit(log_message(f"[License Rewrite] First patch details: {patches[0]!s}"))
 
-    return patches
+    return cast("list[dict[str, Any]]", patches)
 
 
 def _apply_patches_and_finalize(app: MainWindow, patches: list[dict[str, Any]], strategy_used: str) -> None:
@@ -1132,7 +1168,7 @@ def rewrite_license_functions_with_parsing(app: MainWindow) -> None:
 
     # Strategy 1: Deep License Analysis
     patches, strategy_used = _process_deep_analysis_candidates(app)
-    candidates = []  # Initialize for later use
+    candidates: list[dict[str, Any]] = []  # Initialize for later use
 
     # Alternative approaches when deep analysis fails
     if not patches and not candidates:

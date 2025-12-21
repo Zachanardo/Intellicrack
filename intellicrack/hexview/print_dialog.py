@@ -571,4 +571,4 @@ class PrintOptionsDialog(QDialog):
         finally:
             painter.end()
 
-        logger.info(f"Printed {to_page - from_page + 1} pages")
+        logger.info("Printed %d pages", to_page - from_page + 1)

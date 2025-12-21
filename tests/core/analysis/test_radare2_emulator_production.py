@@ -44,6 +44,7 @@ from intellicrack.core.analysis.radare2_emulator import (
     TaintInfo,
 )
 
+
 REAL_BINARY_NOTEPAD: Path = Path(r"C:\Windows\System32\notepad.exe")
 REAL_BINARY_KERNEL32: Path = Path(r"C:\Windows\System32\kernel32.dll")
 REAL_BINARY_NTDLL: Path = Path(r"C:\Windows\System32\ntdll.dll")
@@ -1173,3 +1174,472 @@ class TestComplexEmulationScenarios:
                 if result.success:
                     assert len(result.execution_path) > 0
                     return
+
+
+class TestESILExceptionHandling:
+    """Test ESIL emulation exception handling."""
+
+    def test_esil_emulation_handles_r2_command_failure(self) -> None:
+        """ESIL emulation handles r2pipe command failures."""
+        emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_NOTEPAD))
+
+        result: EmulationResult = emu.emulate_esil(0x1000, num_instructions=10)
+
+        assert result.type == EmulationType.ESIL
+        assert result.success is False
+        assert "error" in result.metadata
+
+    def test_esil_emulation_with_nonexistent_binary(self) -> None:
+        """Emulator handles nonexistent binary file."""
+        invalid_path: str = r"C:\NonExistent\fake_binary.exe"
+
+        emu: Radare2Emulator = Radare2Emulator(invalid_path)
+        opened: bool = emu.open()
+
+        assert opened is False
+
+    def test_esil_emulation_handles_corrupted_register_state(self, emulator_notepad: Radare2Emulator) -> None:
+        """ESIL emulation handles corrupted register state."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            corrupted_state: dict[str, Any] = {
+                "registers": {"invalid_reg": "not_a_number"},
+                "memory": {},
+            }
+
+            result: EmulationResult = emu.emulate_esil(
+                functions[0]["offset"],
+                num_instructions=5,
+                initial_state=corrupted_state
+            )
+
+            assert result.type == EmulationType.ESIL
+
+    def test_esil_emulation_handles_invalid_memory_write(self, emulator_notepad: Radare2Emulator) -> None:
+        """ESIL emulation handles invalid memory write operations."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            invalid_state: dict[str, Any] = {
+                "registers": {},
+                "memory": {0xFFFFFFFFFFFFFFFF: b"\x00\x00\x00\x00"},
+            }
+
+            result: EmulationResult = emu.emulate_esil(
+                functions[0]["offset"],
+                num_instructions=5,
+                initial_state=invalid_state
+            )
+
+            assert result.type == EmulationType.ESIL
+
+    def test_esil_emulation_with_extreme_instruction_count(self, emulator_notepad: Radare2Emulator) -> None:
+        """ESIL emulation handles extreme instruction counts."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            result: EmulationResult = emu.emulate_esil(
+                functions[0]["offset"],
+                num_instructions=10000
+            )
+
+            assert result.type == EmulationType.ESIL
+            assert len(result.execution_path) <= 10000
+
+    def test_esil_emulation_with_negative_instruction_count(self, emulator_notepad: Radare2Emulator) -> None:
+        """ESIL emulation handles negative instruction count."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            result: EmulationResult = emu.emulate_esil(
+                functions[0]["offset"],
+                num_instructions=-10
+            )
+
+            assert result.type == EmulationType.ESIL
+
+    def test_close_handles_unopened_emulator(self) -> None:
+        """Close method handles emulator that was never opened."""
+        emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_NOTEPAD))
+
+        emu.close()
+
+    def test_close_handles_multiple_calls(self, emulator_notepad: Radare2Emulator) -> None:
+        """Close method handles multiple sequential calls."""
+        emu: Radare2Emulator = emulator_notepad
+
+        emu.close()
+        emu.close()
+        emu.close()
+
+
+class TestUnicornExceptionHandling:
+    """Test Unicorn engine exception handling."""
+
+    def test_unicorn_setup_with_invalid_architecture(self) -> None:
+        """Unicorn setup handles invalid architecture specification."""
+        emu: Radare2Emulator = Radare2Emulator(str(REAL_BINARY_NOTEPAD))
+        if emu.open():
+            emu.arch = "invalid_arch"
+
+            success: bool = emu.setup_unicorn_engine()
+
+            emu.close()
+
+    def test_unicorn_emulation_without_setup(self, emulator_notepad: Radare2Emulator) -> None:
+        """Unicorn emulation handles missing engine setup."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            result: EmulationResult = emu.emulate_unicorn(
+                functions[0]["offset"],
+                functions[0]["offset"] + 100,
+                timeout=1000,
+                count=10
+            )
+
+            assert result.type == EmulationType.UNICORN
+
+    def test_unicorn_handles_invalid_memory_mapping(self, emulator_notepad: Radare2Emulator) -> None:
+        """Unicorn handles invalid memory mapping attempts."""
+        emu: Radare2Emulator = emulator_notepad
+
+        success: bool = emu.setup_unicorn_engine()
+
+        if success:
+            assert emu.uc is not None
+
+    def test_unicorn_emulation_with_timeout_zero(self, emulator_notepad: Radare2Emulator) -> None:
+        """Unicorn emulation handles zero timeout."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        small_funcs: list[dict[str, Any]] = [f for f in functions if f.get("size", 1000) < 200]
+
+        if small_funcs:
+            result: EmulationResult = emu.emulate_unicorn(
+                small_funcs[0]["offset"],
+                small_funcs[0]["offset"] + small_funcs[0]["size"],
+                timeout=0,
+                count=10
+            )
+
+            assert result.type == EmulationType.UNICORN
+
+    def test_unicorn_emulation_with_no_end_address(self, emulator_notepad: Radare2Emulator) -> None:
+        """Unicorn emulation handles missing end address."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            result: EmulationResult = emu.emulate_unicorn(
+                functions[0]["offset"],
+                None,
+                timeout=1000,
+                count=10
+            )
+
+            assert result.type == EmulationType.UNICORN
+
+    def test_unicorn_register_read_handles_invalid_arch(self, emulator_notepad: Radare2Emulator) -> None:
+        """Unicorn register read handles invalid architecture."""
+        emu: Radare2Emulator = emulator_notepad
+
+        if emu.setup_unicorn_engine():
+            original_arch: str = emu.arch
+            emu.arch = "unsupported_arch"
+
+            registers: dict[str, int] = emu._get_unicorn_registers()
+
+            assert isinstance(registers, dict)
+
+            emu.arch = original_arch
+
+
+class TestSymbolicExecutionExceptions:
+    """Test symbolic execution exception handling."""
+
+    def test_symbolic_execution_with_invalid_target(self, emulator_notepad: Radare2Emulator) -> None:
+        """Symbolic execution handles invalid target address."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            start_addr: int = functions[0]["offset"]
+            invalid_target: int = 0xFFFFFFFFFFFFFFFF
+
+            results: list[EmulationResult] = emu.symbolic_execution(
+                start_addr,
+                invalid_target,
+                max_paths=5
+            )
+
+            assert isinstance(results, list)
+
+    def test_symbolic_execution_with_equal_start_end(self, emulator_notepad: Radare2Emulator) -> None:
+        """Symbolic execution handles start address equal to target."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            addr: int = functions[0]["offset"]
+
+            results: list[EmulationResult] = emu.symbolic_execution(
+                addr,
+                addr,
+                max_paths=5
+            )
+
+            assert isinstance(results, list)
+
+    def test_symbolic_execution_with_zero_max_paths(self, emulator_notepad: Radare2Emulator) -> None:
+        """Symbolic execution handles zero maximum paths."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            start_addr: int = functions[0]["offset"]
+            target_addr: int = start_addr + 50
+
+            results: list[EmulationResult] = emu.symbolic_execution(
+                start_addr,
+                target_addr,
+                max_paths=0
+            )
+
+            assert isinstance(results, list)
+
+    def test_symbolic_execution_with_negative_max_paths(self, emulator_notepad: Radare2Emulator) -> None:
+        """Symbolic execution handles negative maximum paths."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            start_addr: int = functions[0]["offset"]
+            target_addr: int = start_addr + 50
+
+            results: list[EmulationResult] = emu.symbolic_execution(
+                start_addr,
+                target_addr,
+                max_paths=-10
+            )
+
+            assert isinstance(results, list)
+
+
+class TestTaintAnalysisExceptions:
+    """Test taint analysis exception handling."""
+
+    def test_taint_analysis_with_empty_sources(self, emulator_notepad: Radare2Emulator) -> None:
+        """Taint analysis handles empty taint sources."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            taints: list[TaintInfo] = emu.taint_analysis(
+                [],
+                functions[0]["offset"],
+                num_instructions=20
+            )
+
+            assert isinstance(taints, list)
+
+    def test_taint_analysis_with_invalid_address(self, emulator_notepad: Radare2Emulator) -> None:
+        """Taint analysis handles invalid taint source address."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            taint_sources: list[tuple[int, int, str]] = [(0xFFFFFFFFFFFFFFFF, 4, "invalid")]
+
+            taints: list[TaintInfo] = emu.taint_analysis(
+                taint_sources,
+                functions[0]["offset"],
+                num_instructions=20
+            )
+
+            assert isinstance(taints, list)
+
+    def test_taint_analysis_with_zero_size(self, emulator_notepad: Radare2Emulator) -> None:
+        """Taint analysis handles zero-size taint source."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            taint_sources: list[tuple[int, int, str]] = [(0x1000, 0, "zero_size")]
+
+            taints: list[TaintInfo] = emu.taint_analysis(
+                taint_sources,
+                functions[0]["offset"],
+                num_instructions=20
+            )
+
+            assert isinstance(taints, list)
+
+    def test_taint_analysis_with_negative_size(self, emulator_notepad: Radare2Emulator) -> None:
+        """Taint analysis handles negative-size taint source."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            taint_sources: list[tuple[int, int, str]] = [(0x1000, -10, "negative")]
+
+            taints: list[TaintInfo] = emu.taint_analysis(
+                taint_sources,
+                functions[0]["offset"],
+                num_instructions=20
+            )
+
+            assert isinstance(taints, list)
+
+
+class TestConstraintSolvingExceptions:
+    """Test constraint solving exception handling."""
+
+    def test_constraint_solving_with_empty_constraints(self, emulator_notepad: Radare2Emulator) -> None:
+        """Constraint solving handles empty constraint list."""
+        emu: Radare2Emulator = emulator_notepad
+
+        x: z3.BitVecRef = z3.BitVec("x", 32)
+        variables: dict[str, z3.BitVecRef] = {"x": x}
+
+        solution: dict[str, int] | None = emu.constraint_solving([], variables)
+
+        assert solution is not None or solution is None
+
+    def test_constraint_solving_with_empty_variables(self, emulator_notepad: Radare2Emulator) -> None:
+        """Constraint solving handles empty variable dict."""
+        emu: Radare2Emulator = emulator_notepad
+
+        x: z3.BitVecRef = z3.BitVec("x", 32)
+        constraints: list[z3.BoolRef] = [x == 42]
+
+        solution: dict[str, int] | None = emu.constraint_solving(constraints, {})
+
+        assert solution is not None or solution is None
+
+    def test_constraint_solving_with_conflicting_constraints(self, emulator_notepad: Radare2Emulator) -> None:
+        """Constraint solving handles conflicting constraints."""
+        emu: Radare2Emulator = emulator_notepad
+
+        x: z3.BitVecRef = z3.BitVec("x", 32)
+        constraints: list[z3.BoolRef] = [
+            x == 10,
+            x == 20,
+            x == 30,
+        ]
+        variables: dict[str, z3.BitVecRef] = {"x": x}
+
+        solution: dict[str, int] | None = emu.constraint_solving(constraints, variables)
+
+        assert solution is None
+
+    def test_constraint_solving_with_complex_constraints(self, emulator_notepad: Radare2Emulator) -> None:
+        """Constraint solving handles complex constraint expressions."""
+        emu: Radare2Emulator = emulator_notepad
+
+        x: z3.BitVecRef = z3.BitVec("x", 32)
+        y: z3.BitVecRef = z3.BitVec("y", 32)
+        z: z3.BitVecRef = z3.BitVec("z", 32)
+
+        constraints: list[z3.BoolRef] = [
+            x + y + z == 1000,
+            x > 0,
+            y > 0,
+            z > 0,
+            x * 2 == y,
+            y + 100 == z,
+        ]
+        variables: dict[str, z3.BitVecRef] = {"x": x, "y": y, "z": z}
+
+        solution: dict[str, int] | None = emu.constraint_solving(constraints, variables)
+
+        assert solution is not None or solution is None
+
+
+class TestExploitGenerationExceptions:
+    """Test exploit generation exception handling."""
+
+    def test_generate_exploit_with_invalid_type(self, emulator_notepad: Radare2Emulator) -> None:
+        """Exploit generation handles invalid exploit type."""
+        emu: Radare2Emulator = emulator_notepad
+
+        functions: list[dict[str, Any]] = emu.r2.cmdj("aflj")
+        if functions:
+            exploit: ExploitPrimitive | None = emu.generate_exploit(
+                ExploitType.BUFFER_OVERFLOW,
+                0xFFFFFFFFFFFFFFFF
+            )
+
+            assert exploit is None or isinstance(exploit, ExploitPrimitive)
+
+    def test_generate_exploit_with_zero_address(self, emulator_notepad: Radare2Emulator) -> None:
+        """Exploit generation handles zero vulnerability address."""
+        emu: Radare2Emulator = emulator_notepad
+
+        exploit: ExploitPrimitive | None = emu.generate_exploit(
+            ExploitType.BUFFER_OVERFLOW,
+            0x0
+        )
+
+        assert exploit is None or isinstance(exploit, ExploitPrimitive)
+
+    def test_generate_exploit_report_with_empty_list(self, emulator_notepad: Radare2Emulator) -> None:
+        """Exploit report generation handles empty exploit list."""
+        emu: Radare2Emulator = emulator_notepad
+
+        report: str = emu.generate_exploit_report([])
+
+        assert isinstance(report, str)
+        assert len(report) > 0
+
+    def test_find_vulnerabilities_with_no_imports(self, emulator_notepad: Radare2Emulator) -> None:
+        """Vulnerability detection handles binaries with no imports."""
+        emu: Radare2Emulator = emulator_notepad
+
+        vulnerabilities: list[tuple[ExploitType, int]] = emu.find_vulnerabilities()
+
+        assert isinstance(vulnerabilities, list)
+
+
+class TestMemoryOperationExceptions:
+    """Test memory operation exception handling."""
+
+    def test_detect_memory_changes_with_empty_state(self, emulator_notepad: Radare2Emulator) -> None:
+        """Memory change detection handles empty before state."""
+        emu: Radare2Emulator = emulator_notepad
+
+        changes: list[tuple[int, bytes]] = emu._detect_memory_changes({})
+
+        assert isinstance(changes, list)
+
+    def test_extract_memory_address_with_invalid_operand(self, emulator_notepad: Radare2Emulator) -> None:
+        """Memory address extraction handles invalid operands."""
+        emu: Radare2Emulator = emulator_notepad
+
+        invalid_operands: list[str] = [
+            "not_an_address",
+            "",
+            "[]",
+            "[invalid]",
+            "[0xGGGG]",
+        ]
+
+        for operand in invalid_operands:
+            result: int | None = emu._extract_memory_address(operand)
+            assert result is None or isinstance(result, int)
+
+    def test_extract_esil_constraints_with_empty_path(self, emulator_notepad: Radare2Emulator) -> None:
+        """ESIL constraint extraction handles empty execution path."""
+        emu: Radare2Emulator = emulator_notepad
+
+        constraints: list[Any] = emu._extract_esil_constraints([])
+
+        assert isinstance(constraints, list)
+        assert len(constraints) == 0

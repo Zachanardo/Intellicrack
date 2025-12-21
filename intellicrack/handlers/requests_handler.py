@@ -24,8 +24,9 @@ import ssl
 import urllib.error
 import urllib.parse
 import urllib.request
-from collections.abc import Generator
-from typing import Optional, Union
+from collections.abc import Callable, Generator, Iterable, Mapping, MutableMapping
+from http.cookiejar import CookieJar
+from typing import Any, cast
 
 from intellicrack.utils.logger import logger
 
@@ -85,59 +86,133 @@ try:
 except ImportError as e:
     logger.error("Requests not available, using fallback implementations: %s", e)
     HAS_REQUESTS = False
-    REQUESTS_VERSION = None
+    _REQUESTS_VERSION_FALLBACK: str | None = None
 
-    # Production-ready fallback implementations using urllib
-
-    # Exception classes
-    class RequestError(Exception):
+    class _FallbackRequestError(Exception):
         """Base exception for requests."""
 
-    class IntellicrackConnectionError(RequestError):
+    class _FallbackConnectionError(_FallbackRequestError):
         """Connection error."""
 
-    class HTTPError(RequestError):
+    class _FallbackHTTPError(_FallbackRequestError):
         """HTTP error."""
 
-    class IntellicrackTimeoutError(RequestError):
+    class _FallbackTimeoutError(_FallbackRequestError):
         """Timeout error."""
 
-    class TooManyRedirectsError(RequestError):
+    class _FallbackTooManyRedirectsError(_FallbackRequestError):
         """Too many redirects."""
 
-    class InvalidURLError(RequestError):
+    class _FallbackInvalidURLError(_FallbackRequestError):
         """Invalid URL."""
 
-    class ConnectTimeoutError(TimeoutError):
+    class _FallbackConnectTimeoutError(TimeoutError):
         """Connection timeout."""
 
-    class ReadTimeoutError(TimeoutError):
+    class _FallbackReadTimeoutError(TimeoutError):
         """Read timeout."""
 
-    class SSLError(ConnectionError):
+    class _FallbackSSLError(ConnectionError):
         """SSL error."""
 
-    class ProxyError(ConnectionError):
+    class _FallbackProxyError(ConnectionError):
         """Proxy error."""
 
-    # Response class
-    class Response:
+    class _FallbackCaseInsensitiveDict(dict[str, Any]):
+        """Case-insensitive dictionary for headers.
+
+        Provides dict-like access with case-insensitive string keys, useful
+        for HTTP headers which are case-insensitive.
+        """
+
+        def __init__(self, data: dict[str, Any] | None = None) -> None:
+            """Initialize case-insensitive dictionary.
+
+            Args:
+                data: Optional dictionary to initialize with.
+
+            """
+            super().__init__()
+            if data:
+                for key, value in data.items():
+                    self[key] = value
+
+        def __setitem__(self, key: str, value: Any) -> None:
+            """Set item with case-insensitive key.
+
+            Args:
+                key: Dictionary key (lowercased if string).
+                value: Dictionary value.
+
+            """
+            super().__setitem__(key.lower(), value)
+
+        def __getitem__(self, key: str) -> Any:
+            """Get item with case-insensitive key.
+
+            Args:
+                key: Dictionary key (lowercased if string).
+
+            Returns:
+                Any: Value associated with the key.
+
+            Raises:
+                KeyError: If key not found in dictionary.
+
+            """
+            return super().__getitem__(key.lower())
+
+        def get(self, key: str, default: Any = None) -> Any:
+            """Get value with case-insensitive key.
+
+            Args:
+                key: Dictionary key (lowercased if string).
+                default: Default value if key not found.
+
+            Returns:
+                Any: Value associated with key, or default if not found.
+
+            """
+            try:
+                return self[key]
+            except KeyError:
+                return default
+
+    class _FallbackRequestsCookieJar(dict[str, str]):
+        """Cookie jar for storing cookies.
+
+        Provides a dict-like interface for managing HTTP cookies.
+        """
+
+        def set(self, name: str, value: str, domain: str | None = None, path: str | None = None) -> None:
+            """Set cookie in jar.
+
+            Args:
+                name: Cookie name.
+                value: Cookie value.
+                domain: Optional cookie domain.
+                path: Optional cookie path.
+
+            """
+            self[name] = value
+
+    class _FallbackResponse:
         """HTTP response object."""
 
         def __init__(self) -> None:
             """Initialize response."""
-            self.status_code = 200
-            self.headers = CaseInsensitiveDict()
-            self.url = ""
-            self.content = b""
-            self.text = ""
-            self.encoding = "utf-8"
-            self.cookies = RequestsCookieJar()
-            self.elapsed = None
-            self.request = None
-            self.reason = "OK"
-            self.raw = None
-            self.history = []
+            self.status_code: int = 200
+            self.headers: _FallbackCaseInsensitiveDict = _FallbackCaseInsensitiveDict()
+            self.url: str = ""
+            self.content: bytes = b""
+            self.text: str = ""
+            self.encoding: str = "utf-8"
+            self.cookies: _FallbackRequestsCookieJar = _FallbackRequestsCookieJar()
+            self.elapsed: Any = None
+            self.request: Any = None
+            self.reason: str = "OK"
+            self.raw: Any = None
+            self.history: list[Any] = []
 
         def json(self) -> object:
             """Parse JSON response.
@@ -157,11 +232,11 @@ except ImportError as e:
             """Raise exception for bad status codes.
 
             Raises:
-                HTTPError: If response status code indicates an error (4xx or 5xx).
+                _FallbackHTTPError: If response status code indicates an error (4xx or 5xx).
 
             """
             if 400 <= self.status_code < 600:
-                raise HTTPError(f"{self.status_code} Error: {self.reason}")
+                raise _FallbackHTTPError(f"{self.status_code} Error: {self.reason}")
 
         @property
         def ok(self) -> bool:
@@ -200,101 +275,7 @@ except ImportError as e:
             text = self.text if decode_unicode else self.content.decode(self.encoding)
             yield from text.splitlines()
 
-    # Case-insensitive dictionary
-    class CaseInsensitiveDict(dict):
-        """Case-insensitive dictionary for headers.
-
-        Provides dict-like access with case-insensitive string keys, useful
-        for HTTP headers which are case-insensitive.
-        """
-
-        def __init__(self, data: dict[object, object] | None = None) -> None:
-            """Initialize case-insensitive dictionary.
-
-            Args:
-                data: Optional dictionary to initialize with.
-
-            """
-            super().__init__()
-            if data:
-                for key, value in data.items():
-                    self[key] = value
-
-        def __setitem__(self, key: object, value: object) -> None:
-            """Set item with case-insensitive key.
-
-            Args:
-                key: Dictionary key (lowercased if string).
-                value: Dictionary value.
-
-            """
-            super().__setitem__(key.lower() if isinstance(key, str) else key, value)
-
-        def __getitem__(self, key: object) -> object:
-            """Get item with case-insensitive key.
-
-            Args:
-                key: Dictionary key (lowercased if string).
-
-            Returns:
-                object: Value associated with the key.
-
-            Raises:
-                KeyError: If key not found in dictionary.
-
-            """
-            return super().__getitem__(key.lower() if isinstance(key, str) else key)
-
-        def get(self, key: object, default: object = None) -> object:
-            """Get value with case-insensitive key.
-
-            Args:
-                key: Dictionary key (lowercased if string).
-                default: Default value if key not found.
-
-            Returns:
-                object: Value associated with key, or default if not found.
-
-            """
-            try:
-                return self[key]
-            except KeyError:
-                return default
-
-    # Cookie jar
-    class RequestsCookieJar(dict):
-        """Cookie jar for storing cookies.
-
-        Provides a dict-like interface for managing HTTP cookies.
-        """
-
-        def set(self, name: str, value: str, domain: str | None = None, path: str | None = None) -> None:
-            """Set cookie in jar.
-
-            Args:
-                name: Cookie name.
-                value: Cookie value.
-                domain: Optional cookie domain.
-                path: Optional cookie path.
-
-            """
-            self[name] = value
-
-        def get(self, name: str, default: object = None) -> object:
-            """Get cookie from jar.
-
-            Args:
-                name: Cookie name.
-                default: Default value if cookie not found.
-
-            Returns:
-                object: Cookie value or default if not found.
-
-            """
-            return super().get(name, default)
-
-    # Prepared request
-    class PreparedRequest:
+    class _FallbackPreparedRequest:
         """Prepared HTTP request.
 
         Represents a prepared HTTP request with all components assembled
@@ -303,24 +284,24 @@ except ImportError as e:
 
         def __init__(self) -> None:
             """Initialize prepared request."""
-            self.method = "GET"
-            self.url = ""
-            self.headers = CaseInsensitiveDict()
+            self.method: str = "GET"
+            self.url: str = ""
+            self.headers: _FallbackCaseInsensitiveDict = _FallbackCaseInsensitiveDict()
             self.body: bytes | None = None
-            self.hooks: dict[str, object] = {}
+            self.hooks: dict[str, Any] = {}
 
         def prepare(
             self,
             method: str | None = None,
             url: str | None = None,
-            headers: dict[str, object] | None = None,
-            files: object | None = None,
-            data: dict[str, object] | bytes | str | None = None,
-            params: dict[str, object] | None = None,
-            auth: object | None = None,
-            cookies: dict[str, object] | None = None,
-            hooks: dict[str, object] | None = None,
-            json: object | None = None,
+            headers: dict[str, Any] | None = None,
+            files: Any | None = None,
+            data: dict[str, Any] | bytes | str | None = None,
+            params: dict[str, Any] | None = None,
+            auth: Any | None = None,
+            cookies: dict[str, str] | None = None,
+            hooks: dict[str, Any] | None = None,
+            json: Any | None = None,
         ) -> None:
             """Prepare the HTTP request.
 
@@ -341,12 +322,14 @@ except ImportError as e:
             self.url = url or self.url
 
             if headers:
-                self.headers.update(headers)
+                for k, v in headers.items():
+                    self.headers[k] = v
 
             if params:
                 parsed = urllib.parse.urlparse(self.url)
                 query = urllib.parse.parse_qs(parsed.query)
-                query.update(params)
+                for k, v in params.items():
+                    query[k] = [str(x) for x in v] if isinstance(v, list) else [str(v)]
                 query_string = urllib.parse.urlencode(query, doseq=True)
                 self.url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 
@@ -360,8 +343,7 @@ except ImportError as e:
                 else:
                     self.body = data if isinstance(data, bytes) else str(data).encode("utf-8")
 
-    # Session class
-    class Session:
+    class _FallbackSession:
         """HTTP session with connection pooling and cookie persistence.
 
         Maintains state across multiple HTTP requests including headers,
@@ -370,17 +352,17 @@ except ImportError as e:
 
         def __init__(self) -> None:
             """Initialize HTTP session."""
-            self.headers: CaseInsensitiveDict = CaseInsensitiveDict()
-            self.cookies: RequestsCookieJar = RequestsCookieJar()
-            self.auth: object | None = None
+            self.headers: _FallbackCaseInsensitiveDict = _FallbackCaseInsensitiveDict()
+            self.cookies: _FallbackRequestsCookieJar = _FallbackRequestsCookieJar()
+            self.auth: Any | None = None
             self.proxies: dict[str, str] = {}
             self.verify: bool | str = True
             self.cert: str | None = None
             self.max_redirects: int = 30
             self.trust_env: bool = True
-            self.adapters: dict[str, object] = {}
+            self.adapters: dict[str, Any] = {}
 
-        def request(self, method: str, url: str, **kwargs: object) -> Response:
+        def request(self, method: str, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send HTTP request.
 
             Args:
@@ -389,12 +371,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
-            return request(method, url, session=self, **kwargs)
+            return _fallback_request(method, url, session=self, **kwargs)
 
-        def get(self, url: str, **kwargs: object) -> Response:
+        def get(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send GET request.
 
             Args:
@@ -402,12 +384,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("GET", url, **kwargs)
 
-        def post(self, url: str, data: object | None = None, json: object | None = None, **kwargs: object) -> Response:
+        def post(self, url: str, data: Any | None = None, json: Any | None = None, **kwargs: Any) -> _FallbackResponse:
             """Send POST request.
 
             Args:
@@ -417,12 +399,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("POST", url, data=data, json=json, **kwargs)
 
-        def put(self, url: str, data: object | None = None, **kwargs: object) -> Response:
+        def put(self, url: str, data: Any | None = None, **kwargs: Any) -> _FallbackResponse:
             """Send PUT request.
 
             Args:
@@ -431,12 +413,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("PUT", url, data=data, **kwargs)
 
-        def patch(self, url: str, data: object | None = None, **kwargs: object) -> Response:
+        def patch(self, url: str, data: Any | None = None, **kwargs: Any) -> _FallbackResponse:
             """Send PATCH request.
 
             Args:
@@ -445,12 +427,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("PATCH", url, data=data, **kwargs)
 
-        def delete(self, url: str, **kwargs: object) -> Response:
+        def delete(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send DELETE request.
 
             Args:
@@ -458,12 +440,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("DELETE", url, **kwargs)
 
-        def head(self, url: str, **kwargs: object) -> Response:
+        def head(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send HEAD request.
 
             Args:
@@ -471,12 +453,12 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("HEAD", url, **kwargs)
 
-        def options(self, url: str, **kwargs: object) -> Response:
+        def options(self, url: str, **kwargs: Any) -> _FallbackResponse:
             """Send OPTIONS request.
 
             Args:
@@ -484,7 +466,7 @@ except ImportError as e:
                 **kwargs: Additional request parameters.
 
             Returns:
-                Response: HTTP response object.
+                _FallbackResponse: HTTP response object.
 
             """
             return self.request("OPTIONS", url, **kwargs)
@@ -492,16 +474,16 @@ except ImportError as e:
         def close(self) -> None:
             """Close session and clean up resources."""
 
-        def __enter__(self) -> "Session":
+        def __enter__(self) -> "_FallbackSession":
             """Context manager entry.
 
             Returns:
-                Session: Session instance for use in with statement.
+                _FallbackSession: Session instance for use in with statement.
 
             """
             return self
 
-        def __exit__(self, *args: object) -> None:
+        def __exit__(self, *args: Any) -> None:
             """Context manager exit.
 
             Args:
@@ -510,8 +492,7 @@ except ImportError as e:
             """
             self.close()
 
-    # Auth classes
-    class HTTPBasicAuth:
+    class _FallbackHTTPBasicAuth:
         """HTTP Basic Authentication.
 
         Provides Basic authentication credentials for HTTP requests.
@@ -528,7 +509,7 @@ except ImportError as e:
             self.username = username
             self.password = password
 
-    class HTTPDigestAuth:
+    class _FallbackHTTPDigestAuth:
         """HTTP Digest Authentication.
 
         Provides Digest authentication credentials for HTTP requests.
@@ -545,8 +526,7 @@ except ImportError as e:
             self.username = username
             self.password = password
 
-    # Adapter and retry classes
-    class HTTPAdapter:
+    class _FallbackHTTPAdapter:
         """HTTP adapter for connection pooling.
 
         Configures connection pool parameters for HTTP sessions.
@@ -565,7 +545,7 @@ except ImportError as e:
             self.pool_maxsize = pool_maxsize
             self.max_retries = max_retries
 
-    class Retry:
+    class _FallbackRetry:
         """Retry configuration.
 
         Defines retry behavior for failed requests.
@@ -592,8 +572,7 @@ except ImportError as e:
             self.connect = connect
             self.backoff_factor = backoff_factor
 
-    # Main request function
-    def request(method: str, url: str, **kwargs: object) -> Response:
+    def _fallback_request(method: str, url: str, **kwargs: Any) -> _FallbackResponse:
         """Send HTTP request using urllib.
 
         Args:
@@ -603,7 +582,7 @@ except ImportError as e:
                 headers, cookies, auth, timeout, verify, etc.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         Raises:
             TimeoutError: If request times out.
@@ -614,41 +593,50 @@ except ImportError as e:
         params = kwargs.get("params")
         data = kwargs.get("data")
         json_data = kwargs.get("json")
-        headers = kwargs.get("headers", {})
-        cookies = kwargs.get("cookies")
+        headers_arg = kwargs.get("headers", {})
+        headers: dict[str, Any] = cast("dict[str, Any]", headers_arg if isinstance(headers_arg, dict) else {})
+        cookies_arg = kwargs.get("cookies")
+        cookies: dict[str, str] | None = cast("dict[str, str] | None", cookies_arg if isinstance(cookies_arg, dict) else None)
         auth = kwargs.get("auth")
-        timeout = kwargs.get("timeout", 30)
+        timeout_arg = kwargs.get("timeout", 30)
+        timeout: float = float(timeout_arg) if isinstance(timeout_arg, (int, float)) else 30.0
         kwargs.get("allow_redirects", True)
         kwargs.get("stream", False)
         verify = kwargs.get("verify", True)
         kwargs.get("cert")
         session = kwargs.get("session")
 
-        # Build URL with params
         if params:
             parsed = urllib.parse.urlparse(url)
             query = urllib.parse.parse_qs(parsed.query)
-            query.update(params)
+            params_dict = cast("dict[str, Any]", params if isinstance(params, dict) else {})
+            for k, v in params_dict.items():
+                query[k] = [str(x) for x in v] if isinstance(v, list) else [str(v)]
             query_string = urllib.parse.urlencode(query, doseq=True)
             url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 
-        # Prepare headers
-        req_headers = CaseInsensitiveDict()
-        if session and session.headers:
-            req_headers.update(session.headers)
-        if headers:
-            req_headers.update(headers)
+        req_headers = _FallbackCaseInsensitiveDict()
+        if session:
+            session_typed = cast("_FallbackSession", session)
+            for k, v in session_typed.headers.items():
+                req_headers[k] = v
+        for k, v in headers.items():
+            req_headers[k] = v
 
-        # Handle cookies
-        if session and session.cookies:
-            if cookie_header := "; ".join(f"{k}={v}" for k, v in session.cookies.items()):
+        if session:
+            session_typed = cast("_FallbackSession", session)
+            if cookie_header := "; ".join(f"{k}={v}" for k, v in session_typed.cookies.items()):
                 req_headers["Cookie"] = cookie_header
         if cookies:
             if cookie_header := "; ".join(f"{k}={v}" for k, v in cookies.items()):
-                req_headers["Cookie"] = req_headers.get("Cookie", "") + "; " + cookie_header
+                current_cookie = req_headers.get("Cookie", "")
+                req_headers["Cookie"] = (
+                    f"{current_cookie}; {cookie_header}"
+                    if current_cookie
+                    else cookie_header
+                )
 
-        # Prepare data
-        body = None
+        body: bytes | None = None
         if json_data is not None:
             body = json_module.dumps(json_data).encode("utf-8")
             req_headers["Content-Type"] = "application/json"
@@ -659,39 +647,35 @@ except ImportError as e:
             else:
                 body = data if isinstance(data, bytes) else str(data).encode("utf-8")
 
-        # Handle auth
         if auth:
             import base64
 
-            credentials = f"{auth.username}:{auth.password}"
+            auth_typed = cast("_FallbackHTTPBasicAuth", auth)
+            credentials = f"{auth_typed.username}:{auth_typed.password}"
             encoded = base64.b64encode(credentials.encode()).decode()
             req_headers["Authorization"] = f"Basic {encoded}"
 
-        # Create request
-        req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)  # noqa: S310  # Legitimate HTTP request for security research tool
+        req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)  # noqa: S310
 
-        # Configure SSL
-        context = None
+        context: ssl.SSLContext | None = None
         if not verify:
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
-        # Send request
         try:
-            with urllib.request.urlopen(req, timeout=timeout, context=context) as response:  # noqa: S310  # Legitimate HTTP request for security research tool
-                # Create Response object
-                resp = Response()
+            with urllib.request.urlopen(req, timeout=timeout, context=context) as response:  # noqa: S310
+                resp = _FallbackResponse()
                 resp.status_code = response.code
-                resp.reason = response.reason
-                resp.url = response.url
+                resp.reason = response.reason or "OK"
+                resp.url = response.url or url
                 resp.content = response.read()
-                resp.headers = CaseInsensitiveDict(dict(response.headers))
+                resp.headers = _FallbackCaseInsensitiveDict(dict(response.headers))
 
-                # Detect encoding
-                content_type = resp.headers.get("content-type", "")
-                if "charset=" in content_type:
-                    resp.encoding = content_type.split("charset=")[-1].split(";")[0].strip()
+                content_type_val = resp.headers.get("content-type", "")
+                content_type_str = str(content_type_val) if content_type_val else ""
+                if "charset=" in content_type_str:
+                    resp.encoding = content_type_str.split("charset=")[-1].split(";")[0].strip()
                 else:
                     resp.encoding = "utf-8"
 
@@ -700,25 +684,24 @@ except ImportError as e:
                 except UnicodeDecodeError:
                     resp.text = resp.content.decode("utf-8", errors="replace")
 
-                # Parse cookies from response
                 if "Set-Cookie" in response.headers:
                     for cookie in response.headers.get_all("Set-Cookie"):
                         parts = cookie.split(";")[0].split("=", 1)
                         if len(parts) == 2:
                             resp.cookies[parts[0]] = parts[1]
                             if session:
-                                session.cookies[parts[0]] = parts[1]
+                                session_typed = cast("_FallbackSession", session)
+                                session_typed.cookies[parts[0]] = parts[1]
 
                 return resp
 
         except urllib.error.HTTPError as e:
-            # Create error response
-            resp = Response()
+            resp = _FallbackResponse()
             resp.status_code = e.code
-            resp.reason = e.reason
+            resp.reason = e.reason or "Error"
             resp.url = url
             resp.content = e.read() if hasattr(e, "read") else b""
-            resp.headers = CaseInsensitiveDict(dict(e.headers)) if hasattr(e, "headers") else CaseInsensitiveDict()
+            resp.headers = _FallbackCaseInsensitiveDict(dict(e.headers)) if hasattr(e, "headers") else _FallbackCaseInsensitiveDict()
 
             try:
                 resp.text = resp.content.decode("utf-8")
@@ -731,23 +714,22 @@ except ImportError as e:
             if isinstance(e.reason, socket.timeout):
                 error_msg = f"Request timed out: {url}"
                 logger.error(error_msg)
-                raise TimeoutError(error_msg) from e
+                raise _FallbackTimeoutError(error_msg) from e
             error_msg = f"Connection error: {e.reason}"
             logger.error(error_msg)
-            raise ConnectionError(error_msg) from e
+            raise _FallbackConnectionError(error_msg) from e
 
         except builtins.TimeoutError as e:
             error_msg = f"Request timed out: {url}"
             logger.error(error_msg)
-            raise TimeoutError(error_msg) from e
+            raise _FallbackTimeoutError(error_msg) from e
 
         except Exception as e:
             error_msg = f"Request failed: {e}"
             logger.error(error_msg)
-            raise RequestError(error_msg) from e
+            raise _FallbackRequestError(error_msg) from e
 
-    # Convenience functions
-    def get(url: str, **kwargs: object) -> Response:
+    def _fallback_get(url: str, **kwargs: Any) -> _FallbackResponse:
         """Send GET request.
 
         Args:
@@ -755,12 +737,12 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("GET", url, **kwargs)
+        return _fallback_request("GET", url, **kwargs)
 
-    def post(url: str, data: object | None = None, json: object | None = None, **kwargs: object) -> Response:
+    def _fallback_post(url: str, data: Any | None = None, json: Any | None = None, **kwargs: Any) -> _FallbackResponse:
         """Send POST request.
 
         Args:
@@ -770,12 +752,12 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("POST", url, data=data, json=json, **kwargs)
+        return _fallback_request("POST", url, data=data, json=json, **kwargs)
 
-    def put(url: str, data: object | None = None, **kwargs: object) -> Response:
+    def _fallback_put(url: str, data: Any | None = None, **kwargs: Any) -> _FallbackResponse:
         """Send PUT request.
 
         Args:
@@ -784,12 +766,12 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("PUT", url, data=data, **kwargs)
+        return _fallback_request("PUT", url, data=data, **kwargs)
 
-    def patch(url: str, data: object | None = None, **kwargs: object) -> Response:
+    def _fallback_patch(url: str, data: Any | None = None, **kwargs: Any) -> _FallbackResponse:
         """Send PATCH request.
 
         Args:
@@ -798,12 +780,12 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("PATCH", url, data=data, **kwargs)
+        return _fallback_request("PATCH", url, data=data, **kwargs)
 
-    def delete(url: str, **kwargs: object) -> Response:
+    def _fallback_delete(url: str, **kwargs: Any) -> _FallbackResponse:
         """Send DELETE request.
 
         Args:
@@ -811,12 +793,12 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("DELETE", url, **kwargs)
+        return _fallback_request("DELETE", url, **kwargs)
 
-    def head(url: str, **kwargs: object) -> Response:
+    def _fallback_head(url: str, **kwargs: Any) -> _FallbackResponse:
         """Send HEAD request.
 
         Args:
@@ -824,12 +806,12 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("HEAD", url, **kwargs)
+        return _fallback_request("HEAD", url, **kwargs)
 
-    def options(url: str, **kwargs: object) -> Response:
+    def _fallback_options(url: str, **kwargs: Any) -> _FallbackResponse:
         """Send OPTIONS request.
 
         Args:
@@ -837,12 +819,11 @@ except ImportError as e:
             **kwargs: Additional request parameters.
 
         Returns:
-            Response: HTTP response object.
+            _FallbackResponse: HTTP response object.
 
         """
-        return request("OPTIONS", url, **kwargs)
+        return _fallback_request("OPTIONS", url, **kwargs)
 
-    # Create module-like object
     class FallbackRequests:
         """Fallback requests module.
 
@@ -850,62 +831,55 @@ except ImportError as e:
         Python standard library components (urllib).
         """
 
-        # Functions
-        request = staticmethod(request)
-        get = staticmethod(get)
-        post = staticmethod(post)
-        put = staticmethod(put)
-        patch = staticmethod(patch)
-        delete = staticmethod(delete)
-        head = staticmethod(head)
-        options = staticmethod(options)
+        request = staticmethod(_fallback_request)
+        get = staticmethod(_fallback_get)
+        post = staticmethod(_fallback_post)
+        put = staticmethod(_fallback_put)
+        patch = staticmethod(_fallback_patch)
+        delete = staticmethod(_fallback_delete)
+        head = staticmethod(_fallback_head)
+        options = staticmethod(_fallback_options)
 
-        # Classes
-        Response = Response
-        Session = Session
-        PreparedRequest = PreparedRequest
-        RequestsCookieJar = RequestsCookieJar
-        HTTPAdapter = HTTPAdapter
+        Response = _FallbackResponse
+        Session = _FallbackSession
+        PreparedRequest = _FallbackPreparedRequest
+        RequestsCookieJar = _FallbackRequestsCookieJar
+        HTTPAdapter = _FallbackHTTPAdapter
 
-        # Auth
-        auth = type("auth", (), {"HTTPBasicAuth": HTTPBasicAuth, "HTTPDigestAuth": HTTPDigestAuth})()
+        auth = type("auth", (), {"HTTPBasicAuth": _FallbackHTTPBasicAuth, "HTTPDigestAuth": _FallbackHTTPDigestAuth})()
 
-        # Exceptions
-        RequestException = RequestError
-        ConnectionError = IntellicrackConnectionError
-        HTTPError = HTTPError
-        Timeout = TimeoutError
-        TooManyRedirects = TooManyRedirectsError
-        InvalidURL = InvalidURLError
-        ConnectTimeout = ConnectTimeoutError
-        ReadTimeout = ReadTimeoutError
-        SSLError = SSLError
-        ProxyError = ProxyError
+        RequestException = _FallbackRequestError
+        ConnectionError = _FallbackConnectionError
+        HTTPError = _FallbackHTTPError
+        Timeout = _FallbackTimeoutError
+        TooManyRedirects = _FallbackTooManyRedirectsError
+        InvalidURL = _FallbackInvalidURLError
+        ConnectTimeout = _FallbackConnectTimeoutError
+        ReadTimeout = _FallbackReadTimeoutError
+        SSLError = _FallbackSSLError
+        ProxyError = _FallbackProxyError
 
         exceptions = type(
             "exceptions",
             (),
             {
-                "RequestException": RequestError,
-                "ConnectionError": IntellicrackConnectionError,
-                "HTTPError": HTTPError,
-                "Timeout": Timeout,
-                "TooManyRedirects": TooManyRedirects,
-                "InvalidURL": InvalidURL,
-                "ConnectTimeout": ConnectTimeout,
-                "ReadTimeout": ReadTimeout,
-                "SSLError": SSLError,
-                "ProxyError": ProxyError,
+                "RequestException": _FallbackRequestError,
+                "ConnectionError": _FallbackConnectionError,
+                "HTTPError": _FallbackHTTPError,
+                "Timeout": _FallbackTimeoutError,
+                "TooManyRedirects": _FallbackTooManyRedirectsError,
+                "InvalidURL": _FallbackInvalidURLError,
+                "ConnectTimeout": _FallbackConnectTimeoutError,
+                "ReadTimeout": _FallbackReadTimeoutError,
+                "SSLError": _FallbackSSLError,
+                "ProxyError": _FallbackProxyError,
             },
         )()
 
-        # Structures
-        structures = type("structures", (), {"CaseInsensitiveDict": CaseInsensitiveDict})()
+        structures = type("structures", (), {"CaseInsensitiveDict": _FallbackCaseInsensitiveDict})()
 
-        # Adapters
-        adapters = type("adapters", (), {"HTTPAdapter": HTTPAdapter})()
+        adapters = type("adapters", (), {"HTTPAdapter": _FallbackHTTPAdapter})()
 
-        # Packages
         packages = type(
             "packages",
             (),
@@ -913,12 +887,41 @@ except ImportError as e:
                 "urllib3": type(
                     "urllib3",
                     (),
-                    {"util": type("util", (), {"retry": type("retry", (), {"Retry": Retry})()})()},
+                    {"util": type("util", (), {"retry": type("retry", (), {"Retry": _FallbackRetry})()})()},
                 )()
             },
         )()
 
-    requests = FallbackRequests()
+    Response = _FallbackResponse  # type: ignore[assignment, misc]
+    Session = _FallbackSession  # type: ignore[assignment, misc]
+    PreparedRequest = _FallbackPreparedRequest  # type: ignore[assignment, misc]
+    RequestsCookieJar = _FallbackRequestsCookieJar  # type: ignore[assignment, misc]
+    CaseInsensitiveDict = _FallbackCaseInsensitiveDict  # type: ignore[assignment, misc]
+    HTTPAdapter = _FallbackHTTPAdapter  # type: ignore[assignment, misc]
+    HTTPBasicAuth = _FallbackHTTPBasicAuth  # type: ignore[assignment, misc]
+    HTTPDigestAuth = _FallbackHTTPDigestAuth  # type: ignore[assignment, misc]
+    Retry = _FallbackRetry
+    HTTPError = _FallbackHTTPError  # type: ignore[assignment, misc]
+    SSLError = _FallbackSSLError  # type: ignore[assignment, misc]
+    ProxyError = _FallbackProxyError  # type: ignore[assignment, misc]
+    ConnectTimeoutError = _FallbackConnectTimeoutError  # type: ignore[assignment, misc]
+    ReadTimeoutError = _FallbackReadTimeoutError  # type: ignore[assignment, misc]
+    TooManyRedirectsError = _FallbackTooManyRedirectsError  # type: ignore[assignment, misc]
+    RequestError = _FallbackRequestError  # type: ignore[assignment, misc]
+    InvalidURLError = _FallbackInvalidURLError
+
+    request = _fallback_request
+    get = _fallback_get  # type: ignore[assignment]
+    post = _fallback_post  # type: ignore[assignment]
+    put = _fallback_put  # type: ignore[assignment]
+    patch = _fallback_patch  # type: ignore[assignment]
+    delete = _fallback_delete  # type: ignore[assignment]
+    head = _fallback_head  # type: ignore[assignment]
+    options = _fallback_options  # type: ignore[assignment]
+
+    REQUESTS_VERSION: str | None = _REQUESTS_VERSION_FALLBACK  # type: ignore[no-redef]
+
+    requests = FallbackRequests()  # type: ignore[assignment]
 
 
 # Export all requests objects and availability flag

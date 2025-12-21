@@ -22,9 +22,11 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 """
 
 import logging
+from typing import Any, Protocol, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     QLabel,
+    QMainWindow,
     QPlainTextEdit,
     QPushButton,
     QSplitter,
@@ -50,11 +52,40 @@ from .theme_manager import get_theme_manager
 logger = logging.getLogger(__name__)
 
 
+class _MainWindowProtocol(Protocol):
+    """Protocol defining the main window interface expected by UIManager."""
+
+    central_widget: QWidget
+    main_layout: QVBoxLayout
+    main_splitter: QSplitter
+    tabs: QTabWidget
+    output_panel: QWidget
+    output_layout: QVBoxLayout
+    output: QTextEdit
+    raw_console_output: QPlainTextEdit
+    clear_output_btn: QPushButton
+    dashboard_tab: DashboardTab
+    analysis_tab: AnalysisTab
+    exploitation_tab: ExploitationTab
+    ai_assistant_tab: AIAssistantTab
+    tools_tab: ToolsTab
+    terminal_tab: TerminalTab
+    settings_tab: SettingsTab
+    workspace_tab: WorkspaceTab
+    app_context: Any
+    task_manager: Any
+
+    def setCentralWidget(self, widget: QWidget) -> None: ...
+    def create_toolbar(self) -> None: ...
+    def clear_output(self) -> None: ...
+    def log_message(self, message: str, level: str = "INFO") -> None: ...
+
+
 @log_all_methods
 class UIManager:
     """Manages the creation and layout of the main UI components."""
 
-    def __init__(self, main_window: object) -> None:
+    def __init__(self, main_window: _MainWindowProtocol) -> None:
         """Initialize the UI Manager.
 
         Args:
@@ -62,7 +93,7 @@ class UIManager:
 
         """
         self.logger = logger
-        self.main_window = main_window
+        self.main_window: _MainWindowProtocol = main_window
         self.theme_manager = get_theme_manager()
 
     def create_main_layout(self) -> None:
@@ -119,14 +150,15 @@ class UIManager:
             "task_manager": self.main_window.task_manager,
         }
 
-        self.main_window.dashboard_tab = DashboardTab(shared_context, self.main_window)
-        self.main_window.analysis_tab = AnalysisTab(shared_context, self.main_window)
-        self.main_window.exploitation_tab = ExploitationTab(shared_context, self.main_window)
-        self.main_window.ai_assistant_tab = AIAssistantTab(shared_context, self.main_window)
-        self.main_window.tools_tab = ToolsTab(shared_context, self.main_window)
-        self.main_window.terminal_tab = TerminalTab(shared_context, self.main_window)
-        self.main_window.settings_tab = SettingsTab(shared_context, self.main_window)
-        self.main_window.workspace_tab = WorkspaceTab(shared_context, self.main_window)
+        parent_widget = cast(QWidget, self.main_window)
+        self.main_window.dashboard_tab = DashboardTab(shared_context, parent_widget)
+        self.main_window.analysis_tab = AnalysisTab(shared_context, parent_widget)
+        self.main_window.exploitation_tab = ExploitationTab(shared_context, parent_widget)
+        self.main_window.ai_assistant_tab = AIAssistantTab(shared_context, parent_widget)
+        self.main_window.tools_tab = ToolsTab(shared_context, parent_widget)
+        self.main_window.terminal_tab = TerminalTab(shared_context, parent_widget)
+        self.main_window.settings_tab = SettingsTab(shared_context, parent_widget)
+        self.main_window.workspace_tab = WorkspaceTab(shared_context, parent_widget)
 
         self.main_window.tabs.addTab(self.main_window.dashboard_tab, "Dashboard")
         self.main_window.tabs.addTab(self.main_window.workspace_tab, "Workspace")

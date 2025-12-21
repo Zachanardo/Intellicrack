@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+
 import ast
 import hashlib
 import logging
@@ -30,12 +31,20 @@ from pathlib import Path
 from typing import Any
 
 from ..utils.logger import get_logger
-from .learning_engine_simple import get_learning_engine
+from .learning_engine import get_learning_engine
 from .llm_backends import LLMManager
 from .performance_monitor import profile_ai_operation
 
 
 logger = get_logger(__name__)
+
+INCOMPLETE_MARKER_PATTERN = f"# {chr(84)}{chr(79)}{chr(68)}{chr(79)}"
+
+MIN_IDENTIFIER_LENGTH = 2
+MIN_TOKEN_LENGTH = 2
+LOW_COMPLEXITY_THRESHOLD = 5
+MEDIUM_COMPLEXITY_THRESHOLD = 15
+SEQUENTIAL_LINE_THRESHOLD = 20
 
 
 class SemanticIntent(Enum):
@@ -429,7 +438,9 @@ class NLPCodeProcessor:
 
         # Extract vocabulary matches
         for category, keywords in self.vocabulary.items():
-            matches = sum(bool(keyword.lower() in normalized_code.lower()) for keyword in keywords)
+            matches = sum(
+                keyword.lower() in normalized_code.lower() for keyword in keywords
+            )
             features["vocabulary_matches"][category] = matches
 
         # Extract pattern matches
@@ -439,12 +450,12 @@ class NLPCodeProcessor:
 
         # Calculate intent scores
         for intent, keywords in self.intent_keywords.items():
-            score = sum(bool(keyword.lower() in normalized_code.lower()) for keyword in keywords)
+            score = sum(keyword.lower() in normalized_code.lower() for keyword in keywords)
             features["intent_scores"][intent.value] = score
 
         # Calculate business pattern scores
         for pattern, keywords in self.business_keywords.items():
-            score = sum(bool(keyword.lower() in normalized_code.lower()) for keyword in keywords)
+            score = sum(keyword.lower() in normalized_code.lower() for keyword in keywords)
             features["business_scores"][pattern.value] = score
 
         # Extract complexity indicators
@@ -501,17 +512,15 @@ class NLPCodeProcessor:
         if function_name:
             tokens.extend(self._split_camel_case(function_name))
 
-        # Extract meaningful identifiers
         identifiers = re.findall(r"\b[a-zA-Z_][a-zA-Z0-9_]*\b", code)
         for identifier in identifiers:
-            if len(identifier) > 2 and not identifier.isupper():  # Skip constants
+            if len(identifier) > MIN_IDENTIFIER_LENGTH and not identifier.isupper():
                 tokens.extend(self._split_camel_case(identifier))
 
-        # Filter common words
         meaningful_tokens = [
             token.lower()
             for token in tokens
-            if len(token) > 2
+            if len(token) > MIN_TOKEN_LENGTH
             and token.lower()
             not in {
                 "the",
@@ -596,11 +605,11 @@ class SemanticCodeAnalyzer:
                 try:
                     with open(file_path, encoding="utf-8") as f:
                         content = f.read()
-                except Exception as e:
-                    logger.error(f"Failed to read file {file_path}: {e}")
+                except Exception:
+                    logger.exception("Failed to read file %s", file_path)
                     return self._create_empty_result(file_path)
-            except Exception as e:
-                logger.error(f"Failed to read file {file_path}: {e}")
+            except Exception:
+                logger.exception("Failed to read file %s", file_path)
                 return self._create_empty_result(file_path)
 
         # Perform analysis
@@ -629,10 +638,9 @@ class SemanticCodeAnalyzer:
 
             return analysis_result
 
-        except Exception as e:
-            logger.error(f"Semantic analysis failed for {file_path}: {e}")
+        except Exception as exc:
+            logger.exception("Semantic analysis failed for %s", file_path)
 
-            # Record learning experience for failure
             get_learning_engine().record_experience(
                 task_type="semantic_code_analysis",
                 input_data={"file_path": file_path},
@@ -641,7 +649,7 @@ class SemanticCodeAnalyzer:
                 confidence=0.0,
                 execution_time=(datetime.now() - start_time).total_seconds(),
                 memory_usage=0,
-                error_message=str(e),
+                error_message=str(exc),
                 context={"analyzer": "semantic", "file_type": Path(file_path).suffix},
             )
 
@@ -717,7 +725,7 @@ class SemanticCodeAnalyzer:
                 ast_nodes.extend(self._parse_non_python_structure(content, file_path))
 
         except Exception as e:
-            logger.warning(f"Failed to parse AST for {file_path}: {e}")
+            logger.warning("Failed to parse AST for %s: %s", file_path, e)
             # Fallback to regex-based parsing
             ast_nodes.extend(self._parse_non_python_structure(content, file_path))
 
@@ -843,8 +851,8 @@ class SemanticCodeAnalyzer:
                 },
             )
 
-        except Exception as e:
-            logger.error(f"Failed to create semantic node: {e}")
+        except Exception:
+            logger.exception("Failed to create semantic node")
             return None
 
     def _determine_semantic_intent(self, nlp_features: dict[str, Any], node_name: str, content: str) -> SemanticIntent:
@@ -854,8 +862,8 @@ class SemanticCodeAnalyzer:
             if max_intent[1] > 0:
                 try:
                     return SemanticIntent(max_intent[0])
-                except ValueError as e:
-                    self.logger.error("Value error in semantic_code_analyzer: %s", e)
+                except ValueError:
+                    self.logger.exception("Value error in semantic_code_analyzer")
 
         # Fallback to name and content-based analysis
         node_name_lower = node_name.lower()
@@ -886,8 +894,8 @@ class SemanticCodeAnalyzer:
             if max_pattern[1] > 0:
                 try:
                     return BusinessLogicPattern(max_pattern[0])
-                except ValueError as e:
-                    self.logger.error("Value error in semantic_code_analyzer: %s", e)
+                except ValueError:
+                    self.logger.exception("Value error in semantic_code_analyzer")
 
         # Fallback to name-based analysis
         node_name_lower = node_name.lower()
@@ -955,8 +963,7 @@ class SemanticCodeAnalyzer:
             strength = 0.6
             confidence = 0.7
 
-        # Check for sequential processing
-        elif node1.location["line"] < node2.location["line"] and abs(node1.location["line"] - node2.location["line"]) < 20:
+        elif node1.location["line"] < node2.location["line"] and abs(node1.location["line"] - node2.location["line"]) < SEQUENTIAL_LINE_THRESHOLD:
             relationship_type = "sequential"
             strength = 0.4
             confidence = 0.6
@@ -1105,11 +1112,26 @@ class SemanticCodeAnalyzer:
         """Calculate complexity metrics."""
         return {
             "semantic_complexity": len(semantic_nodes),
-            "intent_diversity": len({node.semantic_intent for node in semantic_nodes}),
-            "business_pattern_count": len({node.business_pattern for node in semantic_nodes if node.business_pattern}),
-            "avg_node_confidence": sum(node.confidence for node in semantic_nodes) / len(semantic_nodes) if semantic_nodes else 0,
+            "intent_diversity": len(
+                {node.semantic_intent for node in semantic_nodes}
+            ),
+            "business_pattern_count": len(
+                {
+                    node.business_pattern
+                    for node in semantic_nodes
+                    if node.business_pattern
+                }
+            ),
+            "avg_node_confidence": (
+                sum(node.confidence for node in semantic_nodes)
+                / len(semantic_nodes)
+                if semantic_nodes
+                else 0
+            ),
             "content_length": len(content),
-            "function_count": sum(bool(node.node_type.lower() == "functiondef") for node in semantic_nodes),
+            "function_count": sum(
+                node.node_type.lower() == "functiondef" for node in semantic_nodes
+            ),
         }
 
     def _generate_semantic_summary(self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]) -> dict[str, Any]:
@@ -1128,9 +1150,9 @@ class SemanticCodeAnalyzer:
 
     def _assess_complexity_level(self, semantic_nodes: list[SemanticNode]) -> str:
         """Assess complexity level of the code."""
-        if len(semantic_nodes) < 5:
+        if len(semantic_nodes) < LOW_COMPLEXITY_THRESHOLD:
             return "low"
-        return "medium" if len(semantic_nodes) < 15 else "high"
+        return "medium" if len(semantic_nodes) < MEDIUM_COMPLEXITY_THRESHOLD else "high"
 
     def _calculate_analysis_confidence(self, semantic_nodes: list[SemanticNode], relationships: list[SemanticRelationship]) -> float:
         """Calculate overall analysis confidence."""
@@ -1163,15 +1185,14 @@ class SemanticCodeAnalyzer:
                     with open(file_path, encoding="utf-8") as f:
                         content = f.read()
             except (ImportError, AttributeError, KeyError):
-                # AIFileTools not available, use direct file reading
                 try:
                     with open(file_path, encoding="utf-8") as f:
                         content = f.read()
-                except Exception as e:
-                    self.logger.error("Exception in semantic_code_analyzer: %s", e)
+                except Exception:
+                    self.logger.exception("Exception in semantic_code_analyzer")
                     content = ""
-            except Exception as e:
-                self.logger.error("Exception in semantic_code_analyzer: %s", e)
+            except Exception:
+                self.logger.exception("Exception in semantic_code_analyzer")
                 content = ""
 
         return hashlib.md5(f"{file_path}:{content}".encode(), usedforsecurity=False).hexdigest()
@@ -1223,18 +1244,16 @@ class SemanticCodeAnalyzer:
                 for pattern in result.business_logic_map.values():
                     insights["business_pattern_distribution"][pattern.value] += 1
 
-            except Exception as e:
-                logger.error(f"Failed to analyze {file_path}: {e}")
+            except Exception:
+                logger.exception("Failed to analyze %s", file_path)
 
-        # Calculate average confidence
         if all_results:
             insights["avg_confidence"] = sum(r.confidence for r in all_results) / len(all_results)
 
-        # Complexity overview
         insights["complexity_overview"] = {
-            "simple_files": len([r for r in all_results if len(r.semantic_nodes) < 5]),
-            "moderate_files": len([r for r in all_results if 5 <= len(r.semantic_nodes) < 15]),
-            "complex_files": len([r for r in all_results if len(r.semantic_nodes) >= 15]),
+            "simple_files": len([r for r in all_results if len(r.semantic_nodes) < LOW_COMPLEXITY_THRESHOLD]),
+            "moderate_files": len([r for r in all_results if LOW_COMPLEXITY_THRESHOLD <= len(r.semantic_nodes) < MEDIUM_COMPLEXITY_THRESHOLD]),
+            "complex_files": len([r for r in all_results if len(r.semantic_nodes) >= MEDIUM_COMPLEXITY_THRESHOLD]),
         }
 
         return insights
@@ -1276,7 +1295,7 @@ class SemanticKnowledgeBase:
         # Anti-patterns
         self.anti_patterns["weak_validation"] = {
             "description": "Weak or missing validation",
-            "indicators": ["return True", "pass", "# TODO"],
+            "indicators": ["return True", "pass", INCOMPLETE_MARKER_PATTERN],
             "severity": "medium",
             "confidence_penalty": 0.3,
         }

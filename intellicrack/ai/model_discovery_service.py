@@ -79,7 +79,7 @@ class ModelDiscoveryService:
         cache_age = current_time - self._cache_timestamp
 
         if not force_refresh and cache_age < self.cache_ttl and self._cached_models:
-            logger.debug(f"Using cached models (age: {cache_age:.1f}s)")
+            logger.debug("Using cached models (age: %.1fs)", cache_age)
             return self._cached_models.copy()
 
         logger.info("Discovering models from API providers")
@@ -90,7 +90,7 @@ class ModelDiscoveryService:
         new_models = self._detect_new_models(all_models)
         for provider, model_ids in new_models.items():
             for model_id in model_ids:
-                logger.info(f"🆕 New model discovered: {model_id} ({provider})")
+                logger.info("New model discovered: %s (%s)", model_id, provider)
 
         self._cached_models = all_models
         self._cache_timestamp = current_time
@@ -98,7 +98,7 @@ class ModelDiscoveryService:
         self._save_cache_to_disk(all_models)
 
         total_models = sum(len(models) for models in all_models.values())
-        logger.info(f"Discovered {total_models} models from {len(all_models)} providers")
+        logger.info("Discovered %d models from %d providers", total_models, len(all_models))
 
         return all_models.copy()
 
@@ -251,7 +251,7 @@ class ModelDiscoveryService:
             daemon=True,
         )
         self._update_thread.start()
-        logger.info(f"Started background model discovery updater (interval: {self._auto_update_interval / 3600:.1f}h)")
+        logger.info("Started background model discovery updater (interval: %.1fh)", self._auto_update_interval / 3600)
 
     def stop_background_updater(self) -> None:
         """Stop background update thread gracefully."""
@@ -274,7 +274,7 @@ class ModelDiscoveryService:
                 self.discover_all_models(force_refresh=True)
 
             except Exception as e:
-                logger.error(f"Error in background update loop: {e}")
+                logger.exception("Error in background update loop: %s", e)
                 if self._stop_event.wait(timeout=300):
                     break
 
@@ -282,7 +282,7 @@ class ModelDiscoveryService:
         """Load cached models from disk file."""
         with self._cache_lock:
             if not self._cache_file.exists():
-                logger.debug(f"Disk cache file not found: {self._cache_file}")
+                logger.debug("Disk cache file not found: %s", self._cache_file)
                 return
 
             try:
@@ -314,12 +314,12 @@ class ModelDiscoveryService:
                 self._cache_timestamp = time.time()
 
                 total_models = sum(len(models) for models in cached_models.values())
-                logger.info(f"Loaded {total_models} models from disk cache (version: {version}, last updated: {last_updated})")
+                logger.info("Loaded %d models from disk cache (version: %s, last updated: %s)", total_models, version, last_updated)
 
             except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse disk cache file: {e}")
+                logger.exception("Failed to parse disk cache file: %s", e)
             except Exception as e:
-                logger.error(f"Error loading disk cache: {e}")
+                logger.exception("Error loading disk cache: %s", e)
 
     def _save_cache_to_disk(self, models_by_provider: dict[str, list[ModelInfo]]) -> bool:
         """Save discovered models to disk cache file.
@@ -366,11 +366,11 @@ class ModelDiscoveryService:
                     json.dump(cache_data, f, indent=2, ensure_ascii=False)
 
                 total_models = sum(len(models) for models in models_by_provider.values())
-                logger.info(f"Saved {total_models} models to disk cache: {self._cache_file}")
+                logger.info("Saved %d models to disk cache: %s", total_models, self._cache_file)
                 return True
 
             except Exception as e:
-                logger.error(f"Failed to save disk cache: {e}")
+                logger.exception("Failed to save disk cache: %s", e)
                 return False
 
     def _detect_new_models(self, new_models: dict[str, list[ModelInfo]]) -> dict[str, list[str]]:
@@ -395,9 +395,9 @@ class ModelDiscoveryService:
                     continue
 
                 cached_ids = {m.id for m in self._cached_models[provider_name]}
-                provider_new_ids = [m.id for m in models if m.id not in cached_ids]
-
-                if provider_new_ids:
+                if provider_new_ids := [
+                    m.id for m in models if m.id not in cached_ids
+                ]:
                     new_model_ids[provider_name] = provider_new_ids
 
             return new_model_ids

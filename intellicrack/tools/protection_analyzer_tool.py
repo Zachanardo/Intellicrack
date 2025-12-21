@@ -86,15 +86,18 @@ class ProtectionAnalyzerTool:
 
                 if result and hasattr(result, "detections"):
                     predictions_list: list[dict[str, Any]] = ml_results["predictions"]
-                    for detection in result.detections:
-                        predictions_list.append(
-                            {
-                                "name": detection.name,
-                                "type": detection.type.value if hasattr(detection.type, "value") else str(detection.type),
-                                "confidence": detection.confidence,
-                            }
-                        )
-
+                    predictions_list.extend(
+                        {
+                            "name": detection.name,
+                            "type": (
+                                detection.type.value
+                                if hasattr(detection.type, "value")
+                                else str(detection.type)
+                            ),
+                            "confidence": detection.confidence,
+                        }
+                        for detection in result.detections
+                    )
                 ai_analysis = self.ai_assistant.analyze_binary_complex(binary_path, ml_results)
 
                 if ai_analysis and not ai_analysis.get("error"):
@@ -349,9 +352,12 @@ class ProtectionAnalyzerTool:
             elif "vmprotect" in name_lower:
                 indicators.extend(("Code virtualization detected", ".vmp sections present"))
             elif "themida" in name_lower or "winlicense" in name_lower:
-                indicators.append("SecureEngine protection detected")
-                indicators.append("Advanced anti-debugging present")
-
+                indicators.extend(
+                    (
+                        "SecureEngine protection detected",
+                        "Advanced anti-debugging present",
+                    )
+                )
         return list(set(indicators))
 
     def _get_bypass_guidance(self, die_result: ProtectionAnalysis) -> dict[str, Any]:
@@ -626,23 +632,23 @@ class ProtectionAnalyzerTool:
                 "binary_path": binary_path,
             }
 
-            patterns_list: list[dict[str, Any]] = input_data["patterns"]
             if hasattr(result, "detections"):
-                for detection in result.detections:
-                    if detection.type in [
+                patterns_list: list[dict[str, Any]] = input_data["patterns"]
+                patterns_list.extend(
+                    {
+                        "name": detection.name,
+                        "type": detection.type.value,
+                        "version": detection.version,
+                        "confidence": detection.confidence,
+                    }
+                    for detection in result.detections
+                    if detection.type
+                    in [
                         ProtectionType.LICENSE,
                         ProtectionType.DONGLE,
                         ProtectionType.DRM,
-                    ]:
-                        patterns_list.append(
-                            {
-                                "name": detection.name,
-                                "type": detection.type.value,
-                                "version": detection.version,
-                                "confidence": detection.confidence,
-                            }
-                        )
-
+                    ]
+                )
             license_analysis = self.ai_assistant.analyze_license_patterns(input_data)
 
             if license_analysis and not license_analysis.get("error"):
@@ -755,19 +761,25 @@ class ProtectionAnalyzerTool:
         protection = analysis["protection_analysis"]
         file_info = analysis["file_info"]
 
-        output: list[str] = ["=" * 60, "PROTECTION ANALYSIS REPORT", "=" * 60]
-        output.append(f"\nFile: {file_info['name']}")
-        output.append(f"Size: {file_info['size_human']}")
-        output.append(f"Path: {file_info['path']}")
-
-        output.append(f"\nFile Type: {protection['file_type']}")
-        output.append(f"Architecture: {protection['architecture']}")
+        output: list[str] = [
+            "=" * 60,
+            "PROTECTION ANALYSIS REPORT",
+            "=" * 60,
+            f"\nFile: {file_info['name']}",
+            f"Size: {file_info['size_human']}",
+            f"Path: {file_info['path']}",
+            f"\nFile Type: {protection['file_type']}",
+            f"Architecture: {protection['architecture']}",
+        ]
         if protection.get("compiler"):
             output.append(f"Compiler: {protection['compiler']}")
 
-        output.append(f"\nPacked: {'Yes' if protection['is_packed'] else 'No'}")
-        output.append(f"Protected: {'Yes' if protection['is_protected'] else 'No'}")
-
+        output.extend(
+            (
+                f"\nPacked: {'Yes' if protection['is_packed'] else 'No'}",
+                f"Protected: {'Yes' if protection['is_protected'] else 'No'}",
+            )
+        )
         if protection.get("detections"):
             output.append("\nDetections:")
             for det_type, detections in protection["detections"].items():
@@ -780,16 +792,22 @@ class ProtectionAnalyzerTool:
             output.append("\nNo protections detected")
 
         if guidance := analysis.get("bypass_guidance", {}):
-            output.append(f"\nBypass Approach: {guidance.get('approach', 'Unknown')}")
-            output.append(f"Estimated Time: {guidance.get('estimated_time', 'Unknown')}")
-            output.append(f"Difficulty Score: {guidance.get('difficulty_score', 0)}/10")
-
+            output.extend(
+                (
+                    f"\nBypass Approach: {guidance.get('approach', 'Unknown')}",
+                    f"Estimated Time: {guidance.get('estimated_time', 'Unknown')}",
+                    f"Difficulty Score: {guidance.get('difficulty_score', 0)}/10",
+                )
+            )
             if "recommended_technique" in guidance:
                 tech = guidance["recommended_technique"]
-                output.append(f"\nRecommended Technique: {tech['name']}")
-                output.append(f"  Success Rate: {tech['success_rate']:.0%}")
-                output.append(f"  Time: {tech['time_estimate']}")
-
+                output.extend(
+                    (
+                        f"\nRecommended Technique: {tech['name']}",
+                        f"  Success Rate: {tech['success_rate']:.0%}",
+                        f"  Time: {tech['time_estimate']}",
+                    )
+                )
         if tools := analysis.get("tool_recommendations", []):
             output.append("\nRecommended Tools:")
             for tool in tools:

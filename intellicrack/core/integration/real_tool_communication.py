@@ -143,6 +143,8 @@ class SharedMemoryManager:
     def _write_header(self) -> None:
         """Write header to shared memory."""
         with self.lock:
+            if self.memory is None:
+                return
             self.memory.seek(0)
             # Magic bytes
             self.memory.write(b"INTC")
@@ -167,6 +169,8 @@ class SharedMemoryManager:
         """
         with self.lock:
             try:
+                if self.memory is None:
+                    return False
                 # Get write pointer
                 self.memory.seek(8)
                 write_ptr = struct.unpack("<I", self.memory.read(4))[0]
@@ -175,7 +179,7 @@ class SharedMemoryManager:
                 if write_ptr + len(message) + 8 > self.size:
                     # Wrap around or error
                     if len(message) + 8 + 64 > self.size:
-                        logger.error("Message too large for shared memory")
+                        logger.exception("Message too large for shared memory")
                         return False
                     # Reset write pointer
                     write_ptr = 64
@@ -200,7 +204,7 @@ class SharedMemoryManager:
                 return True
 
             except Exception as e:
-                logger.error("Failed to write message: %s", e, exc_info=True)
+                logger.exception("Failed to write message: %s", e, exc_info=True)
                 return False
 
     def read_message(self) -> bytes | None:
@@ -212,6 +216,8 @@ class SharedMemoryManager:
         """
         with self.lock:
             try:
+                if self.memory is None:
+                    return None
                 # Get read pointer
                 self.memory.seek(12)
                 read_ptr = struct.unpack("<I", self.memory.read(4))[0]
@@ -249,12 +255,14 @@ class SharedMemoryManager:
                 return message
 
             except Exception as e:
-                logger.error("Failed to read message: %s", e, exc_info=True)
+                logger.exception("Failed to read message: %s", e, exc_info=True)
                 return None
 
     def _reset_pointers(self) -> None:
         """Reset read/write pointers."""
         with self.lock:
+            if self.memory is None:
+                return
             self.memory.seek(8)
             self.memory.write(struct.pack("<I", 64))  # Write pointer
             self.memory.write(struct.pack("<I", 64))  # Read pointer
@@ -294,11 +302,13 @@ class SerializationProtocol:
         if format == SerializationFormat.JSON:
             return json.dumps(data).encode("utf-8")
         if format == SerializationFormat.MSGPACK:
-            packed = msgpack.packb(data)
+            packed_data: bytes = msgpack.packb(data)
             # Compress with LZ4 for efficiency
-            return lz4.frame.compress(packed)
+            compressed_data: bytes = lz4.frame.compress(packed_data)
+            return compressed_data
         # Default to msgpack
-        return msgpack.packb(data)
+        default_packed: bytes = msgpack.packb(data)
+        return default_packed
 
     @staticmethod
     def deserialize(data: bytes, format: SerializationFormat = SerializationFormat.MSGPACK) -> ToolMessage | None:
@@ -336,7 +346,7 @@ class SerializationProtocol:
             )
 
         except Exception as e:
-            logger.error("Failed to deserialize message: %s", e, exc_info=True)
+            logger.exception("Failed to deserialize message: %s", e, exc_info=True)
             return None
 
 
@@ -415,7 +425,7 @@ class ToolMonitor:
                             status.status = "running"
 
                     except Exception as e:
-                        logger.error("Failed to monitor %s: %s", tool.value, e, exc_info=True)
+                        logger.exception("Failed to monitor %s: %s", tool.value, e, exc_info=True)
                         status.status = "error"
 
             time.sleep(1)
@@ -455,16 +465,16 @@ class FailureRecovery:
 
     def __init__(self) -> None:
         """Initialize the FailureRecovery with retry configuration."""
-        self.retry_config = {
+        self.retry_config: dict[str, int | float] = {
             "max_retries": 3,
             "base_delay": 1.0,
             "max_delay": 30.0,
             "exponential_base": 2,
         }
         self.failed_messages: dict[str, list[ToolMessage]] = {}
-        self.recovery_handlers: dict[ToolType, Callable] = {}
+        self.recovery_handlers: dict[ToolType, Callable[[ToolMessage], None]] = {}
 
-    def add_recovery_handler(self, tool: ToolType, handler: Callable) -> None:
+    def add_recovery_handler(self, tool: ToolType, handler: Callable[[ToolMessage], None]) -> None:
         """Add recovery handler for a tool.
 
         Args:
@@ -494,15 +504,26 @@ class FailureRecovery:
 
         # Check retry count
         retry_count = len(self.failed_messages[correlation_id])
-        if retry_count > self.retry_config["max_retries"]:
-            logger.error("Message %s exceeded max retries", correlation_id)
+        max_retries_value = self.retry_config["max_retries"]
+        max_retries = int(max_retries_value) if isinstance(max_retries_value, int) else 3
+        if retry_count > max_retries:
+            logger.exception("Message %s exceeded max retries", correlation_id)
             self._handle_permanent_failure(message, error)
             return False
 
         # Calculate retry delay
+        base_delay_value = self.retry_config["base_delay"]
+        base_delay = float(base_delay_value) if isinstance(base_delay_value, (int, float)) else 1.0
+
+        exp_base_value = self.retry_config["exponential_base"]
+        exp_base = float(exp_base_value) if isinstance(exp_base_value, (int, float)) else 2.0
+
+        max_delay_value = self.retry_config["max_delay"]
+        max_delay = float(max_delay_value) if isinstance(max_delay_value, (int, float)) else 30.0
+
         delay = min(
-            self.retry_config["base_delay"] * (self.retry_config["exponential_base"] ** (retry_count - 1)),
-            self.retry_config["max_delay"],
+            base_delay * (exp_base ** (retry_count - 1)),
+            max_delay,
         )
 
         # Schedule retry
@@ -535,7 +556,7 @@ class FailureRecovery:
             error: Exception that caused the permanent failure.
 
         """
-        logger.error("Permanent failure for message %s: %s", message.correlation_id, error)
+        logger.exception("Permanent failure for message %s: %s", message.correlation_id, error)
 
         # Clean up
         if message.correlation_id in self.failed_messages:
@@ -595,7 +616,7 @@ class ConflictResolver:
             return None
 
         # Count votes
-        votes = {}
+        votes: dict[str, list[ToolMessage]] = {}
         for msg in messages:
             data_hash = hashlib.sha256(str(msg.data).encode()).hexdigest()
             if data_hash not in votes:
@@ -623,21 +644,22 @@ class ConflictResolver:
             return None
 
         # Group by tool
-        tool_results = {}
+        tool_results: dict[ToolType, list[object]] = {}
         for msg in messages:
             if msg.source not in tool_results:
                 tool_results[msg.source] = []
             tool_results[msg.source].append(msg.data)
 
         # Calculate weighted result
-        weighted_sum = 0
-        total_weight = 0
+        weighted_sum: float = 0.0
+        total_weight: float = 0.0
 
         for tool, results in tool_results.items():
             weight = self.tool_weights.get(tool, 1.0)
             # For numeric results
             if all(isinstance(r, (int, float)) for r in results):
-                avg_result = sum(results) / len(results)
+                numeric_results = [r for r in results if isinstance(r, (int, float))]
+                avg_result: float = sum(float(r) for r in numeric_results) / len(numeric_results)
                 weighted_sum += avg_result * weight
                 total_weight += weight
 
@@ -661,9 +683,13 @@ class ConflictResolver:
             return None
 
         # Extract confidence scores
-        scored_messages = []
+        scored_messages: list[tuple[float, ToolMessage]] = []
         for msg in messages:
-            confidence = msg.metadata.get("confidence", 0.5)
+            confidence_value = msg.metadata.get("confidence", 0.5)
+            if isinstance(confidence_value, (int, float)):
+                confidence = float(confidence_value)
+            else:
+                confidence = 0.5
             scored_messages.append((confidence, msg))
 
         # Sort by confidence
@@ -717,7 +743,7 @@ class LoadBalancer:
     def __init__(self) -> None:
         """Initialize the LoadBalancer with empty tool instances and task queues."""
         self.tool_instances: dict[ToolType, list[int]] = {}  # Tool -> PIDs
-        self.task_queues: dict[ToolType, queue.Queue] = {}
+        self.task_queues: dict[ToolType, queue.Queue[tuple[int, object]]] = {}
         self.load_metrics: dict[int, dict[str, float]] = {}  # PID -> metrics
         self.lock = threading.Lock()
 
@@ -732,13 +758,13 @@ class LoadBalancer:
         with self.lock:
             if tool not in self.tool_instances:
                 self.tool_instances[tool] = []
-                self.task_queues[tool] = queue.Queue()
+                self.task_queues[tool] = queue.Queue[tuple[int, object]]()
 
             self.tool_instances[tool].append(pid)
             self.load_metrics[pid] = {
                 "cpu": 0.0,
                 "memory": 0.0,
-                "queue_size": 0,
+                "queue_size": 0.0,
                 "response_time": 0.0,
             }
 
@@ -785,7 +811,7 @@ class LoadBalancer:
             scores.sort(key=lambda x: x[0])
             return scores[0][1]
 
-    def update_metrics(self, pid: int, **metrics: object) -> None:
+    def update_metrics(self, pid: int, **metrics: float) -> None:
         """Update instance metrics.
 
         Args:
@@ -795,7 +821,9 @@ class LoadBalancer:
         """
         with self.lock:
             if pid in self.load_metrics:
-                self.load_metrics[pid].update(metrics)
+                for key, value in metrics.items():
+                    if key in self.load_metrics[pid]:
+                        self.load_metrics[pid][key] = value
 
     def distribute_task(self, tool: ToolType, task: object) -> bool:
         """Distribute task to best instance.
@@ -815,7 +843,7 @@ class LoadBalancer:
         # Add to task queue
         if tool in self.task_queues:
             self.task_queues[tool].put((pid, task))
-            self.update_metrics(pid, queue_size=self.task_queues[tool].qsize())
+            self.update_metrics(pid, queue_size=float(self.task_queues[tool].qsize()))
             return True
 
         return False
@@ -838,10 +866,10 @@ class RealToolCommunicator:
         self.resolver = ConflictResolver()
         self.balancer = LoadBalancer()
         self.running = False
-        self.message_handlers: dict[ToolType, Callable] = {}
+        self.message_handlers: dict[ToolType, Callable[[ToolMessage], None]] = {}
         self.worker_thread: threading.Thread | None = None
 
-    def register_tool(self, tool: ToolType, pid: int, handler: Callable | None = None) -> None:
+    def register_tool(self, tool: ToolType, pid: int, handler: Callable[[ToolMessage], None] | None = None) -> None:
         """Register a tool with the communicator.
 
         Args:
@@ -886,7 +914,7 @@ class RealToolCommunicator:
                     continue
 
             except Exception as e:
-                logger.error("Error in message loop: %s", e, exc_info=True)
+                logger.exception("Error in message loop: %s", e, exc_info=True)
 
     def _process_message(self, message: ToolMessage) -> None:
         """Process incoming message.
@@ -902,7 +930,8 @@ class RealToolCommunicator:
 
         # Handle status updates
         if message.message_type == MessageType.STATUS:
-            self.monitor.update_status(message.source, **message.data)
+            if isinstance(message.data, dict):
+                self.monitor.update_status(message.source, **message.data)
             return
 
         # Route to handler
@@ -910,16 +939,20 @@ class RealToolCommunicator:
             handler = self.message_handlers[message.destination]
             try:
                 handler(message)
-                self.monitor.update_status(
-                    message.destination,
-                    success_count=self.monitor.get_status(message.destination).success_count + 1,
-                )
+                dest_status = self.monitor.get_status(message.destination)
+                if dest_status is not None:
+                    self.monitor.update_status(
+                        message.destination,
+                        success_count=dest_status.success_count + 1,
+                    )
             except Exception as e:
-                logger.error("Handler failed for %s: %s", message.destination.value, e, exc_info=True)
-                self.monitor.update_status(
-                    message.destination,
-                    error_count=self.monitor.get_status(message.destination).error_count + 1,
-                )
+                logger.exception("Handler failed for %s: %s", message.destination.value, e, exc_info=True)
+                dest_status_err = self.monitor.get_status(message.destination)
+                if dest_status_err is not None:
+                    self.monitor.update_status(
+                        message.destination,
+                        error_count=dest_status_err.error_count + 1,
+                    )
                 self.recovery.handle_failure(message, e)
 
     def send_message(self, message: ToolMessage) -> bool:
@@ -945,7 +978,7 @@ class RealToolCommunicator:
             return success
 
         except Exception as e:
-            logger.error("Failed to send message: %s", e, exc_info=True)
+            logger.exception("Failed to send message: %s", e, exc_info=True)
             self.recovery.handle_failure(message, e)
             return False
 

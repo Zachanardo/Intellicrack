@@ -23,7 +23,7 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
@@ -55,6 +55,11 @@ from intellicrack.handlers.pyqt6_handler import (
 )
 from intellicrack.utils.subprocess_security import secure_run
 
+
+if TYPE_CHECKING:
+    from PyQt6.QtCore import QModelIndex
+    from PyQt6.QtWidgets import QMenu, QScrollBar, QStyle
+
 from ...ai.code_analysis_tools import AIAssistant
 from ...utils.logger import get_logger
 from ..widgets.syntax_highlighters import JavaScriptHighlighter, PythonHighlighter
@@ -74,7 +79,7 @@ class FileTreeWidget(QTreeWidget):
         self.setHeaderLabel("Project Files")
         self.setRootIsDecorated(True)
         self.setAlternatingRowColors(True)
-        self.current_root = None
+        self.current_root: Path | None = None
         self.file_watcher = QFileSystemWatcher()
         self.file_watcher.directoryChanged.connect(self.refresh_tree)
 
@@ -118,7 +123,7 @@ class FileTreeWidget(QTreeWidget):
 
         # Add root item
         root_item = QTreeWidgetItem(self, [self.current_root.name])
-        root_item.setData(0, Qt.UserRole, str(self.current_root))
+        root_item.setData(0, Qt.ItemDataRole.UserRole, str(self.current_root))
         root_item.setExpanded(True)
 
         self._add_directory_items(root_item, self.current_root)
@@ -134,35 +139,34 @@ class FileTreeWidget(QTreeWidget):
                     continue  # Skip hidden files
 
                 tree_item = QTreeWidgetItem(parent_item, [item.name])
-                tree_item.setData(0, Qt.UserRole, str(item))
+                tree_item.setData(0, Qt.ItemDataRole.UserRole, str(item))
 
                 if item.is_dir():
                     try:
                         from PyQt6.QtWidgets import QStyle
-
-                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_DirIcon))
+                        if style := self.style():
+                            tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_DirIcon))
                     except (ImportError, AttributeError):
                         pass
                     # Add subdirectories (up to 3 levels deep to avoid performance issues)
-                    if len(item.parts) - len(self.current_root.parts) < 3:
+                    if self.current_root and len(item.parts) - len(self.current_root.parts) < 3:
                         self._add_directory_items(tree_item, item)
-                # Set file icon based on extension
                 elif item.suffix.lower() in self.supported_extensions:
                     try:
                         from PyQt6.QtWidgets import QStyle
-
-                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_FileIcon))
+                        if style := self.style():
+                            tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_FileIcon))
                     except (ImportError, AttributeError):
                         pass
                 else:
                     try:
                         from PyQt6.QtWidgets import QStyle
-
-                        tree_item.setIcon(0, self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
+                        if style := self.style():
+                            tree_item.setIcon(0, style.standardIcon(QStyle.StandardPixmap.SP_ComputerIcon))
                     except (ImportError, AttributeError):
                         pass
         except PermissionError as e:
-            logger.error("Permission error in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("Permission error in ai_coding_assistant_dialog: %s", e)
             # Skip directories we can't read
 
     def refresh_tree(self) -> None:
@@ -175,19 +179,23 @@ class FileTreeWidget(QTreeWidget):
 
     def get_expanded_items(self) -> list[str]:
         """Get list of expanded item paths."""
-        expanded = []
+        expanded: list[str] = []
 
         def traverse(item: QTreeWidgetItem) -> None:
             if item.isExpanded():
-                path = item.data(0, Qt.UserRole)
+                path = item.data(0, Qt.ItemDataRole.UserRole)
                 if path:
-                    expanded.append(path)
+                    expanded.append(str(path))
 
             for i in range(item.childCount()):
-                traverse(item.child(i))
+                child = item.child(i)
+                if child:
+                    traverse(child)
 
         for i in range(self.topLevelItemCount()):
-            traverse(self.topLevelItem(i))
+            top_item = self.topLevelItem(i)
+            if top_item:
+                traverse(top_item)
 
         return expanded
 
@@ -195,29 +203,33 @@ class FileTreeWidget(QTreeWidget):
         """Restore expanded state of items."""
 
         def traverse(item: QTreeWidgetItem) -> None:
-            path = item.data(0, Qt.UserRole)
+            path = item.data(0, Qt.ItemDataRole.UserRole)
             if path in expanded_paths:
                 item.setExpanded(True)
 
             for i in range(item.childCount()):
-                traverse(item.child(i))
+                child = item.child(i)
+                if child:
+                    traverse(child)
 
         for i in range(self.topLevelItemCount()):
-            traverse(self.topLevelItem(i))
+            top_item = self.topLevelItem(i)
+            if top_item:
+                traverse(top_item)
 
     def on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item click."""
         logger.debug("Item clicked in column %s", column)
-        path = item.data(0, Qt.UserRole)
-        if path and Path(path).is_file():
-            self.file_selected.emit(path)
+        path = item.data(0, Qt.ItemDataRole.UserRole)
+        if path and Path(str(path)).is_file():
+            self.file_selected.emit(str(path))
 
     def on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle item double click."""
         logger.debug("Item double-clicked in column %s", column)
-        path = item.data(0, Qt.UserRole)
-        if path and Path(path).is_file():
-            self.file_selected.emit(path)
+        path = item.data(0, Qt.ItemDataRole.UserRole)
+        if path and Path(str(path)).is_file():
+            self.file_selected.emit(str(path))
 
 
 class CodeEditor(QPlainTextEdit):
@@ -229,9 +241,9 @@ class CodeEditor(QPlainTextEdit):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the CodeEditor with default values."""
         super().__init__(parent)
-        self.current_file = None
-        self.is_modified = False
-        self.syntax_highlighter = None
+        self.current_file: str | None = None
+        self.is_modified: bool = False
+        self.syntax_highlighter: PythonHighlighter | JavaScriptHighlighter | None = None
 
         # Set font
         font = QFont("Consolas", 11)
@@ -242,7 +254,7 @@ class CodeEditor(QPlainTextEdit):
         self.textChanged.connect(self.on_text_changed)
 
         # Line numbers (basic implementation)
-        self.setLineWrapMode(QPlainTextEdit.NoWrap)
+        self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
     def load_file(self, file_path: str) -> None:
         """Load a file into the editor."""
@@ -260,15 +272,15 @@ class CodeEditor(QPlainTextEdit):
             logger.info("Loaded file: %s", file_path)
 
         except Exception as e:
-            logger.error("Failed to load file %s: %s", file_path, e, exc_info=True)
+            logger.exception("Failed to load file %s: %s", file_path, e)
             QMessageBox.warning(self, "Error", f"Failed to load file:\n{e}")
 
-    def save_file(self, file_path: str = None) -> bool | None:
+    def save_file(self, file_path: str | None = None) -> bool:
         """Save the current content to file."""
-        if not file_path:
+        if file_path is None:
             file_path = self.current_file
 
-        if not file_path:
+        if file_path is None:
             return False
 
         try:
@@ -281,7 +293,7 @@ class CodeEditor(QPlainTextEdit):
             return True
 
         except Exception as e:
-            logger.error("Failed to save file %s: %s", file_path, e, exc_info=True)
+            logger.exception("Failed to save file %s: %s", file_path, e)
             QMessageBox.warning(self, "Error", f"Failed to save file:\n{e}")
             return False
 
@@ -345,8 +357,8 @@ class ChatWidget(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the ChatWidget with default values."""
         super().__init__(parent)
-        self.conversation_history = []
-        self.available_models = []
+        self.conversation_history: list[dict[str, str]] = []
+        self.available_models: list[str] = []
         self.setup_ui()
         self.load_available_models()
 
@@ -435,9 +447,8 @@ class ChatWidget(QWidget):
 
         self.chat_history.append(formatted)
 
-        # Auto-scroll to bottom
-        scrollbar = self.chat_history.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        if scrollbar := self.chat_history.verticalScrollBar():
+            scrollbar.setValue(scrollbar.maximum())
 
     def clear_history(self) -> None:
         """Clear the chat history."""
@@ -477,11 +488,16 @@ class ChatWidget(QWidget):
                     if models:
                         self.model_combo.insertSeparator(self.model_combo.count())
                         self.model_combo.addItem(f"── {provider_name} API Models ──")
-                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(False)
+                        combo_model = self.model_combo.model()
+                        if combo_model and hasattr(combo_model, 'item'):
+                            if item := combo_model.item(
+                                self.model_combo.count() - 1
+                            ):
+                                item.setEnabled(False)
 
-                        for model in models:
-                            display_name = f"🌐 {provider_name}: {model.name}"
-                            self.available_models.append(model.id)
+                        for model_info in models:
+                            display_name = f"🌐 {provider_name}: {model_info.name}"
+                            self.available_models.append(model_info.id)
                             self.model_combo.addItem(display_name)
 
             if not self.available_models:
@@ -504,14 +520,14 @@ class ChatWidget(QWidget):
             )
 
         except ImportError as e:
-            logger.error("ChatWidget failed to import model discovery modules: %s", e, exc_info=True)
+            logger.exception("ChatWidget failed to import model discovery modules: %s", e)
             self.available_models = []
             self.model_combo.clear()
             self.model_combo.addItem("Discovery module unavailable")
             self.model_combo.setEnabled(False)
             self._show_error_message("Model discovery module not available")
         except Exception as e:
-            logger.error("ChatWidget failed to discover AI models: %s", e, exc_info=True)
+            logger.exception("ChatWidget failed to discover AI models: %s", e)
             self.available_models = []
             self.model_combo.clear()
             self.model_combo.addItem("Error discovering models")
@@ -529,7 +545,7 @@ class ChatWidget(QWidget):
 
             logger.info("ChatWidget: Model refresh completed successfully")
         except Exception as e:
-            logger.error("ChatWidget: Failed to refresh models: %s", e, exc_info=True)
+            logger.exception("ChatWidget: Failed to refresh models: %s", e)
         finally:
             self.refresh_models_btn.setEnabled(True)
             self.refresh_models_btn.setText("🔄")
@@ -584,20 +600,21 @@ class AICodingAssistantWidget(QWidget):
         super().__init__(parent)
 
         # Main state
-        self.current_project_dir = None
-        self.current_file = None
-        self.llm_enabled = True
+        self.current_project_dir: str | None = None
+        self.current_file: str | None = None
+        self.llm_enabled: bool = True
 
         # Threading
-        self.worker_thread = None
-        self.generation_thread = None
+        self.worker_thread: Any = None
+        self.generation_thread: Any = None
 
         # AI Tools
+        self.ai_tools: AIAssistant | None
         try:
             self.ai_tools = AIAssistant()
             logger.info("AI tools initialized successfully")
         except Exception as e:
-            logger.warning("Failed to initialize AI tools: %s", e, exc_info=True)
+            logger.warning("Failed to initialize AI tools: %s", e)
             self.ai_tools = None
             self.llm_enabled = False
 
@@ -617,7 +634,7 @@ class AICodingAssistantWidget(QWidget):
         self.setup_menu_bar(layout)
 
         # Main content area with three panels
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel: File tree
         left_panel = self.create_file_panel()
@@ -648,7 +665,7 @@ class AICodingAssistantWidget(QWidget):
     def create_file_panel(self) -> QWidget:
         """Create the left file navigation panel with license research project support."""
         panel = QFrame()
-        panel.setFrameStyle(QFrame.StyledPanel)
+        panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(300)
 
         layout = QVBoxLayout(panel)
@@ -687,7 +704,7 @@ class AICodingAssistantWidget(QWidget):
     def create_editor_panel(self) -> QWidget:
         """Create the center code editor panel with license bypass development tools."""
         panel = QFrame()
-        panel.setFrameStyle(QFrame.StyledPanel)
+        panel.setFrameStyle(QFrame.Shape.StyledPanel)
 
         layout = QVBoxLayout(panel)
 
@@ -703,13 +720,15 @@ class AICodingAssistantWidget(QWidget):
 
         # Execute license bypass script
         run_bypass_action = QAction("Run Bypass", self)
-        run_bypass_action.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
+        if style := self.style():
+            run_bypass_action.setIcon(style.standardIcon(style.StandardPixmap.SP_MediaPlay))
         run_bypass_action.triggered.connect(self.execute_license_bypass_script)
         toolbar.addAction(run_bypass_action)
 
         # Analyze binary for license protection
         analyze_action = QAction("Analyze Protection", self)
-        analyze_action.setIcon(self.style().standardIcon(self.style().SP_ComputerIcon))
+        if style := self.style():
+            analyze_action.setIcon(style.standardIcon(style.StandardPixmap.SP_ComputerIcon))
         analyze_action.triggered.connect(self.analyze_license_protection)
         toolbar.addAction(analyze_action)
 
@@ -735,7 +754,7 @@ class AICodingAssistantWidget(QWidget):
     def create_ai_panel(self) -> QWidget:
         """Create the right AI assistant panel with license bypass research capabilities."""
         panel = QFrame()
-        panel.setFrameStyle(QFrame.StyledPanel)
+        panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(400)
 
         layout = QVBoxLayout(panel)
@@ -754,7 +773,7 @@ class AICodingAssistantWidget(QWidget):
 
         # License bypass code generation group
         generation_group = QFrame()
-        generation_group.setFrameStyle(QFrame.StyledPanel)
+        generation_group.setFrameStyle(QFrame.Shape.StyledPanel)
         gen_layout = QVBoxLayout(generation_group)
 
         gen_layout.addWidget(QLabel("License Bypass Generation"))
@@ -781,7 +800,7 @@ class AICodingAssistantWidget(QWidget):
 
         # License analysis context
         context_group = QFrame()
-        context_group.setFrameStyle(QFrame.StyledPanel)
+        context_group.setFrameStyle(QFrame.Shape.StyledPanel)
         ctx_layout = QVBoxLayout(context_group)
 
         ctx_layout.addWidget(QLabel("License Analysis Context"))
@@ -844,7 +863,7 @@ class AICodingAssistantWidget(QWidget):
                 # Source file selected - open in editor
                 self.open_file_in_research_editor(file_path)
         except Exception as e:
-            logger.error("Error handling file selection: %s", e, exc_info=True)
+            logger.exception("Error handling file selection: %s", e)
 
     def create_new_research_file(self) -> None:
         """Create a new license research file."""
@@ -867,7 +886,7 @@ class AICodingAssistantWidget(QWidget):
                 self.open_file_in_research_editor(file_path)
                 logger.info("Created new research file: %s", file_path)
         except Exception as e:
-            logger.error("Error creating research file: %s", e, exc_info=True)
+            logger.exception("Error creating research file: %s", e)
 
     def get_research_file_template(self, file_ext: str) -> str:
         """Get template content for license research files."""
@@ -921,12 +940,12 @@ class LicenseAnalyzer:
 
                 # Check for crypto APIs (license key validation)
                 if 'crypt' in dll_name or 'bcrypt' in dll_name:
-                    self.protection_info['crypto_imports'].append(dll_name)
+                    protection_info['crypto_imports'].append(dll_name)
                     for imp in entry.imports:
                         if imp.name:
                             func_name = imp.name.decode('utf-8')
                             if any(x in func_name.lower() for x in ['hash', 'encrypt', 'decrypt', 'sign', 'verify']):
-                                self.protection_info['license_functions'].append({
+                                protection_info['license_functions'].append({
                                     'dll': dll_name,
                                     'function': func_name,
                                     'address': hex(imp.address)
@@ -938,7 +957,7 @@ class LicenseAnalyzer:
                         if imp.name:
                             func_name = imp.name.decode('utf-8')
                             if any(x in func_name for x in ['RegOpenKey', 'RegQueryValue', 'RegSetValue']):
-                                self.protection_info['registry_operations'].append({
+                                protection_info['registry_operations'].append({
                                     'function': func_name,
                                     'address': hex(imp.address)
                                 })
@@ -949,19 +968,19 @@ class LicenseAnalyzer:
                         if imp.name:
                             func_name = imp.name.decode('utf-8')
                             if any(x in func_name for x in ['GetSystemTime', 'GetLocalTime', 'GetTickCount']):
-                                self.protection_info['time_checks'].append({
+                                protection_info['time_checks'].append({
                                     'function': func_name,
                                     'address': hex(imp.address)
                                 })
                             elif any(x in func_name for x in ['GetVolumeInformation', 'GetComputerName']):
-                                self.protection_info['hardware_checks'].append({
+                                protection_info['hardware_checks'].append({
                                     'function': func_name,
                                     'address': hex(imp.address)
                                 })
 
                 # Check for network validation
                 elif any(x in dll_name for x in ['ws2_32', 'wininet', 'winhttp']):
-                    self.protection_info['network_validations'].append(dll_name)
+                    protection_info['network_validations'].append(dll_name)
 
             # Scan for license string patterns in binary
             with open(self.target_path, 'rb') as f:
@@ -979,7 +998,7 @@ class LicenseAnalyzer:
                 for pattern in patterns:
                     matches = re.findall(pattern, binary_data, re.IGNORECASE)
                     if matches:
-                        self.protection_info['protections'].append({
+                        protection_info['protections'].append({
                             'type': 'License Pattern',
                             'pattern': pattern.decode('utf-8') if isinstance(pattern, bytes) else pattern,
                             'occurrences': len(matches)
@@ -988,17 +1007,17 @@ class LicenseAnalyzer:
             # Detect common packers/protectors
             packers = self._detect_packers(pe)
             if packers:
-                self.protection_info['protections'].extend(packers)
+                protection_info['protections'].extend(packers)
 
             # Analyze entry point for anti-debugging
             anti_debug = self._detect_anti_debugging(pe)
             if anti_debug:
-                self.protection_info['protections'].extend(anti_debug)
+                protection_info['protections'].extend(anti_debug)
 
         except Exception as e:
-            self.protection_info['error'] = str(e)
+            protection_info['error'] = str(e)
 
-        return self.protection_info
+        return protection_info
 
     def generate_bypass(self) -> str:
         """Generate license bypass code."""
@@ -1613,7 +1632,7 @@ def validate_license_key(key: str) -> bool:
                 self.current_target_binary = file_path
                 logger.info("Loaded target binary: %s", file_path)
         except Exception as e:
-            logger.error("Error loading target binary: %s", e, exc_info=True)
+            logger.exception("Error loading target binary: %s", e)
 
     def open_file_in_research_editor(self, file_path: str) -> None:
         """Open a file in the research editor tabs."""
@@ -1622,7 +1641,9 @@ def validate_license_key(key: str) -> bool:
             if hasattr(self, "editor_tabs"):
                 for i in range(self.editor_tabs.count()):
                     editor = self.editor_tabs.widget(i)
-                    if hasattr(editor, "current_file") and editor.current_file == file_path:
+                    if not editor:
+                        continue
+                    if hasattr(editor, "current_file") and getattr(editor, "current_file", None) == file_path:
                         self.editor_tabs.setCurrentIndex(i)
                         return
 
@@ -1635,7 +1656,7 @@ def validate_license_key(key: str) -> bool:
                 self.editor_tabs.setCurrentIndex(tab_index)
                 logger.info("Opened file in research editor: %s", file_path)
         except Exception as e:
-            logger.error("Error opening file in research editor: %s", e, exc_info=True)
+            logger.exception("Error opening file in research editor: %s", e)
 
     def close_research_tab(self, index: int) -> None:
         """Close a research editor tab."""
@@ -1644,7 +1665,7 @@ def validate_license_key(key: str) -> bool:
                 self.editor_tabs.removeTab(index)
                 logger.info("Closed research tab at index: %s", index)
         except Exception as e:
-            logger.error("Error closing research tab: %s", e, exc_info=True)
+            logger.exception("Error closing research tab: %s", e)
 
     def execute_license_bypass_script(self) -> None:
         """Execute the current license bypass script."""
@@ -1662,7 +1683,10 @@ def validate_license_key(key: str) -> bool:
                 self.chat_widget.add_message("System", "No script loaded in editor")
                 return
 
-            script_content = current_editor.toPlainText()
+            if not hasattr(current_editor, "toPlainText"):
+                self.chat_widget.add_message("System", "ERROR: Invalid editor widget")
+                return
+            script_content = current_editor.toPlainText()  # type: ignore[attr-defined]
             script_path = getattr(current_editor, "current_file", None)
 
             if not script_content.strip():
@@ -1686,7 +1710,7 @@ def validate_license_key(key: str) -> bool:
                 self._execute_python_bypass_script(script_content, "temp_bypass.py")
 
         except Exception as e:
-            logger.error("Error executing license bypass script: %s", e, exc_info=True)
+            logger.exception("Error executing license bypass script: %s", e)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"Script execution failed: {e}")
 
@@ -1756,7 +1780,7 @@ def validate_license_key(key: str) -> bool:
 
             # Create and load script
             script = session.create_script(script_content)
-            script.on("message", self._on_frida_message)
+            script.on("message", self._on_frida_message)  # type: ignore[call-overload]
             script.load()
 
             self.chat_widget.add_message("System", "OK Frida bypass script loaded successfully")
@@ -1813,7 +1837,7 @@ def validate_license_key(key: str) -> bool:
         except Exception as e:
             self.chat_widget.add_message("System", f"ERROR Keygen execution failed: {e}")
 
-    def _generate_key_from_template(self, config: dict, user_info: str) -> str:
+    def _generate_key_from_template(self, config: dict[str, Any], user_info: str) -> str:
         """Generate key using template configuration."""
         import hashlib
         import secrets
@@ -1827,7 +1851,7 @@ def validate_license_key(key: str) -> bool:
         # Default pattern
         return f"{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}"
 
-    def _validate_key_from_template(self, config: dict, key: str) -> bool:
+    def _validate_key_from_template(self, config: dict[str, Any], key: str) -> bool:
         """Validate key using template pattern."""
         import re
 
@@ -1861,7 +1885,7 @@ def validate_license_key(key: str) -> bool:
             class LicenseAnalyzer:
                 def __init__(self, target_path: str) -> None:
                     self.target_path = target_path
-                    self.protection_info = {}
+                    self.protection_info: dict[str, Any] = {}
 
                 def analyze_protection(self) -> dict[str, Any]:
                     """Perform comprehensive license protection analysis."""
@@ -1869,10 +1893,11 @@ def validate_license_key(key: str) -> bool:
 
                     import pefile
 
+                    protection_info: dict[str, Any] = {}
                     try:
                         pe = pefile.PE(self.target_path)
 
-                        self.protection_info = {
+                        protection_info = {
                             "file_path": self.target_path,
                             "file_size": os.path.getsize(self.target_path),
                             "protections": [],
@@ -1907,7 +1932,7 @@ def validate_license_key(key: str) -> bool:
                                                     "regopen",
                                                 ]
                                             ):
-                                                self.protection_info["license_functions"].append(
+                                                protection_info["license_functions"].append(
                                                     {
                                                         "dll": dll_name,
                                                         "function": func_name,
@@ -1934,7 +1959,7 @@ def validate_license_key(key: str) -> bool:
 
                             for pattern, desc in patterns:
                                 if matches := re.findall(pattern, binary_data, re.IGNORECASE):
-                                    self.protection_info["string_patterns"].append(
+                                    protection_info["string_patterns"].append(
                                         {
                                             "type": desc,
                                             "count": len(matches),
@@ -1944,25 +1969,25 @@ def validate_license_key(key: str) -> bool:
 
                         # Detect protection level
                         protection_score = 0
-                        if self.protection_info["license_functions"]:
+                        if protection_info["license_functions"]:
                             protection_score += 30
-                        if self.protection_info["string_patterns"]:
+                        if protection_info["string_patterns"]:
                             protection_score += 20
-                        if any(p["type"] == "Hardware Binding" for p in self.protection_info["string_patterns"]):
+                        if any(p["type"] == "Hardware Binding" for p in protection_info["string_patterns"]):
                             protection_score += 25
-                        if any(p["type"] == "Date Patterns" for p in self.protection_info["string_patterns"]):
+                        if any(p["type"] == "Date Patterns" for p in protection_info["string_patterns"]):
                             protection_score += 15
 
-                        self.protection_info["protection_level"] = (
+                        protection_info["protection_level"] = (
                             "High" if protection_score >= 70 else "Medium" if protection_score >= 40 else "Low"
                         )
-                        self.protection_info["protection_score"] = protection_score
+                        protection_info["protection_score"] = protection_score
 
                     except Exception as e:
-                        self.protection_info["error"] = str(e)
-                        analyzer_logger.error("Analysis error: %s", e, exc_info=True)
+                        protection_info["error"] = str(e)
+                        analyzer_logger.exception("Analysis error: %s", e)
 
-                    return self.protection_info
+                    return protection_info
 
             # Perform the analysis
             analyzer = LicenseAnalyzer(target_binary)
@@ -1988,7 +2013,7 @@ def validate_license_key(key: str) -> bool:
             self.license_analysis_results = results
 
         except Exception as e:
-            logger.error("Error analyzing license protection: %s", e, exc_info=True)
+            logger.exception("Error analyzing license protection: %s", e)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"ERROR Analysis failed: {e}")
 
@@ -2245,7 +2270,7 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("AI", "OK Keygen template generated in memory")
 
         except Exception as e:
-            logger.error("Error generating keygen template: %s", e, exc_info=True)
+            logger.exception("Error generating keygen template: %s", e)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR Template generation failed: {e}")
 
@@ -2696,7 +2721,7 @@ console.log("[+] All HWID hooks installed");
                 self.chat_widget.add_message("AI", "OK HWID spoofing code generated")
 
         except Exception as e:
-            logger.error("Error generating HWID spoof: %s", e, exc_info=True)
+            logger.exception("Error generating HWID spoof: %s", e)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR HWID spoofing generation failed: {e}")
 
@@ -3132,7 +3157,7 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("System", " Comprehensive patch reporting")
 
         except Exception as e:
-            logger.error("Error opening patch assistant: %s", e, exc_info=True)
+            logger.exception("Error opening patch assistant: %s", e)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("System", f"ERROR Patch assistant failed: {e}")
 
@@ -3179,24 +3204,31 @@ This research is for strengthening software protection mechanisms."""
 
             # Get AI response with license research context
             try:
-                if response := self.ai_tools.ask_ai_about_analysis(enhanced_message, context):
-                    formatted_response = self._format_license_research_response(response)
-                    if hasattr(self, "chat_widget"):
-                        self.chat_widget.add_message("AI", formatted_response)
-                    logger.info("AI license research response generated successfully")
+                if self.ai_tools and hasattr(self.ai_tools, "generate_response"):
+                    if response := self.ai_tools.generate_response(
+                        enhanced_message, context
+                    ):
+                        formatted_response = self._format_license_research_response(response)
+                        if hasattr(self, "chat_widget"):
+                            self.chat_widget.add_message("AI", formatted_response)
+                        logger.info("AI license research response generated successfully")
+                    else:
+                        fallback_response = self._generate_license_research_fallback(message)
+                        if hasattr(self, "chat_widget"):
+                            self.chat_widget.add_message("AI", fallback_response)
                 else:
                     fallback_response = self._generate_license_research_fallback(message)
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message("AI", fallback_response)
 
             except Exception as ai_error:
-                logger.error("AI processing failed: %s", ai_error, exc_info=True)
+                logger.exception("AI processing failed: %s", ai_error)
                 fallback_response = self._generate_license_research_fallback(message)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message("AI", fallback_response)
 
         except Exception as e:
-            logger.error("Error handling license AI message: %s", e, exc_info=True)
+            logger.exception("Error handling license AI message: %s", e)
             error_response = f"ERROR License research query failed: {e}\nPlease try again or check your AI configuration."
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
@@ -3210,7 +3242,7 @@ This research is for strengthening software protection mechanisms."""
             formatted += "WARNING️  Note: Use this information responsibly in controlled research environments only."
             return formatted
         except Exception as e:
-            logger.error("Failed to format license research response: %s", e, exc_info=True)
+            logger.exception("Failed to format license research response: %s", e)
             return f"License Research Response:\n{response}"
 
     def _generate_license_research_fallback(self, message: str) -> str:
@@ -3283,7 +3315,7 @@ For specific technical guidance, please:
 WARNING️  All research should be conducted on your own software in controlled environments."""
 
         except Exception as e:
-            logger.error("Failed to generate license research fallback: %s", e, exc_info=True)
+            logger.exception("Failed to generate license research fallback: %s", e)
             return f"License research query received but AI is unavailable. Please check your configuration.\nQuery: {message}"
 
     def generate_bypass(self) -> str:
@@ -3292,17 +3324,18 @@ WARNING️  All research should be conducted on your own software in controlled 
         Returns:
             Generated bypass script as a string.
         """
-        bypass_code: list[str] = []
-        bypass_code.append("#!/usr/bin/env python3")
-        bypass_code.append('"""')
-        bypass_code.append("License Protection Bypass Script")
-        bypass_code.append("Generated by Intellicrack AI Coding Assistant")
-        bypass_code.append("")
-        bypass_code.append("Purpose: Security research for strengthening license protection mechanisms")
-        bypass_code.append('"""')
-        bypass_code.append("")
-        bypass_code.append("import os")
-        bypass_code.append("import sys")
+        bypass_code: list[str] = [
+            "#!/usr/bin/env python3",
+            '"""',
+            "License Protection Bypass Script",
+            "Generated by Intellicrack AI Coding Assistant",
+            "",
+            "Purpose: Security research for strengthening license protection mechanisms",
+            '"""',
+            "",
+            "import os",
+            "import sys",
+        ]
         bypass_code.append("import ctypes")
         bypass_code.append("import struct")
         bypass_code.append("import logging")
@@ -3664,7 +3697,9 @@ Please generate a comprehensive, production-ready bypass script with all necessa
 
             try:
                 # Request AI-generated bypass code
-                ai_response = self.ai_tools.ask_ai_about_analysis(ai_prompt, context)
+                ai_response = ""
+                if self.ai_tools and hasattr(self.ai_tools, "generate_response"):
+                    ai_response = self.ai_tools.generate_response(ai_prompt, context)
 
                 if ai_response and len(ai_response.strip()) > 50:
                     # Format and enhance the AI response
@@ -3707,7 +3742,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         self._create_editor_tab(filename, standard_bypass)
 
             except Exception as ai_error:
-                logger.error("AI bypass generation failed: %s", ai_error, exc_info=True)
+                logger.exception("AI bypass generation failed: %s", ai_error)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
                         "AI",
@@ -3721,7 +3756,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         filename = f"fallback_{bypass_type.lower().replace(' ', '_')}_bypass.py"
                         self._create_editor_tab(filename, standard_bypass)
                 except Exception as fallback_error:
-                    logger.error("Fallback bypass generation also failed: %s", fallback_error, exc_info=True)
+                    logger.exception("Fallback bypass generation also failed: %s", fallback_error)
                     if hasattr(self, "chat_widget"):
                         self.chat_widget.add_message(
                             "AI",
@@ -3729,7 +3764,7 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                         )
 
         except Exception as e:
-            logger.error("Error generating AI license bypass: %s", e, exc_info=True)
+            logger.exception("Error generating AI license bypass: %s", e)
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", f"ERROR License bypass generation failed: {e}")
 
@@ -3788,7 +3823,7 @@ if __name__ == "__main__":
 
             return header + "\n\n" + ai_response.strip() + "\n\n" + footer
         except Exception as e:
-            logger.error("Failed to enhance AI bypass response: %s", e, exc_info=True)
+            logger.exception("Failed to enhance AI bypass response: %s", e)
             # Return original response with minimal enhancement
             return f'''"""
 AI-Generated {bypass_type} Bypass - Enhanced with Safety Context
@@ -3807,7 +3842,7 @@ WARNING️  Use for authorized security research only WARNING️
                 # Create new tab
                 new_tab = CodeEditor()
                 new_tab.set_content(content)
-                new_tab.file_path = filename
+                new_tab.file_path = filename  # type: ignore[attr-defined]
 
                 # Add to tab widget
                 tab_index = self.editor_tabs.addTab(new_tab, filename)
@@ -3818,7 +3853,7 @@ WARNING️  Use for authorized security research only WARNING️
                 logger.warning("Editor tabs not available, content not displayed")
 
         except Exception as e:
-            logger.error("Failed to create editor tab %s: %s", filename, e, exc_info=True)
+            logger.exception("Failed to create editor tab %s: %s", filename, e)
 
     def send_quick_license_message(self, message: str) -> None:
         """Send a quick license research message to AI."""
@@ -3877,7 +3912,8 @@ Keep the response focused and actionable while maintaining technical accuracy.""
 
             try:
                 # Get quick AI response
-                ai_response = self.ai_tools.ask_question(quick_prompt)
+                ai_response = self.ai_tools.ask_question(
+            quick_prompt)
 
                 if ai_response and ai_response.strip():
                     # Format quick response
@@ -3894,7 +3930,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                         self.chat_widget.add_message("AI", fallback_response)
 
             except Exception as ai_error:
-                logger.error("AI quick processing failed: %s", ai_error, exc_info=True)
+                logger.exception("AI quick processing failed: %s", ai_error)
                 fallback_response = self._generate_quick_license_fallback(message)
                 if hasattr(self, "chat_widget"):
                     self.chat_widget.add_message(
@@ -3903,7 +3939,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
                     )
 
         except Exception as e:
-            logger.error("Error sending quick license message: %s", e, exc_info=True)
+            logger.exception("Error sending quick license message: %s", e)
             error_response = f"ERROR Quick license query failed: {e}"
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("AI", error_response)
@@ -3930,7 +3966,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             return "general_license_research"
 
         except Exception as e:
-            logger.error("Failed to classify query: %s", e, exc_info=True)
+            logger.exception("Failed to classify query: %s", e)
             return "general_license_research"
 
     def _format_quick_license_response(self, response: str, original_query: str) -> str:
@@ -3945,7 +3981,7 @@ Keep the response focused and actionable while maintaining technical accuracy.""
             return formatted
 
         except Exception as e:
-            logger.error("Failed to format quick response: %s", e, exc_info=True)
+            logger.exception("Failed to format quick response: %s", e)
             return f"Quick Response:\n{response}"
 
     def _generate_quick_license_fallback(self, message: str) -> str:
@@ -4042,7 +4078,7 @@ For specific guidance:
             return response
 
         except Exception as e:
-            logger.error("Failed to generate quick fallback: %s", e, exc_info=True)
+            logger.exception("Failed to generate quick fallback: %s", e)
             return f"Quick license research query received: {message}\n\nAI is currently unavailable. Please check your configuration for enhanced responses."
 
 
@@ -4072,6 +4108,7 @@ class AICodingAssistantDialog(QDialog):
         self.llm_enabled = self.ai_widget.llm_enabled
         self.worker_thread = self.ai_widget.worker_thread
         self.generation_thread = self.ai_widget.generation_thread
+        self.ai_tools = self.ai_widget.ai_tools
 
         logger.info("AI Coding Assistant Dialog initialized with widget")
 
@@ -4079,11 +4116,15 @@ class AICodingAssistantDialog(QDialog):
         """Set up the three-panel UI layout."""
         layout = QVBoxLayout(self)
 
+        # Initialize state
+        self.modified_files: set[str] = set()
+        self.current_project: Path | None = None
+
         # Menu bar
         self.setup_menu_bar(layout)
 
         # Main content area with three panels
-        main_splitter = QSplitter(Qt.Horizontal)
+        main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel: File tree
         left_panel = self.create_file_panel()
@@ -4111,48 +4152,42 @@ class AICodingAssistantDialog(QDialog):
         """Set up the menu bar."""
         menubar = QMenuBar()
 
-        # File menu
-        file_menu = menubar.addMenu("File")
+        if file_menu := menubar.addMenu("File"):
+            open_action = QAction("Open Project", self)
+            open_action.triggered.connect(self.open_project)
+            file_menu.addAction(open_action)
 
-        open_action = QAction("Open Project", self)
-        open_action.triggered.connect(self.open_project)
-        file_menu.addAction(open_action)
+            save_action = QAction("Save Current File", self)
+            save_action.setShortcut("Ctrl+S")
+            save_action.triggered.connect(self.save_current_file)
+            file_menu.addAction(save_action)
 
-        save_action = QAction("Save Current File", self)
-        save_action.setShortcut("Ctrl+S")
-        save_action.triggered.connect(self.save_current_file)
-        file_menu.addAction(save_action)
+            save_all_action = QAction("Save All", self)
+            save_all_action.setShortcut("Ctrl+Shift+S")
+            save_all_action.triggered.connect(self.save_all_files)
+            file_menu.addAction(save_all_action)
 
-        save_all_action = QAction("Save All", self)
-        save_all_action.setShortcut("Ctrl+Shift+S")
-        save_all_action.triggered.connect(self.save_all_files)
-        file_menu.addAction(save_all_action)
+        if ai_menu := menubar.addMenu("AI"):
+            generate_script_action = QAction("Generate Script", self)
+            generate_script_action.triggered.connect(self.generate_script_dialog)
+            ai_menu.addAction(generate_script_action)
 
-        # AI menu
-        ai_menu = menubar.addMenu("AI")
+            analyze_code_action = QAction("Analyze Code", self)
+            analyze_code_action.triggered.connect(self.analyze_current_code)
+            ai_menu.addAction(analyze_code_action)
 
-        generate_script_action = QAction("Generate Script", self)
-        generate_script_action.triggered.connect(self.generate_script_dialog)
-        ai_menu.addAction(generate_script_action)
-
-        analyze_code_action = QAction("Analyze Code", self)
-        analyze_code_action.triggered.connect(self.analyze_current_code)
-        ai_menu.addAction(analyze_code_action)
-
-        # Tools menu
-        tools_menu = menubar.addMenu("Tools")
-
-        run_script_action = QAction("Run Current Script", self)
-        run_script_action.setShortcut("F5")
-        run_script_action.triggered.connect(self.run_current_script)
-        tools_menu.addAction(run_script_action)
+        if tools_menu := menubar.addMenu("Tools"):
+            run_script_action = QAction("Run Current Script", self)
+            run_script_action.setShortcut("F5")
+            run_script_action.triggered.connect(self.run_current_script)
+            tools_menu.addAction(run_script_action)
 
         layout.setMenuBar(menubar)
 
     def create_file_panel(self) -> QWidget:
         """Create the left file navigation panel."""
         panel = QFrame()
-        panel.setFrameStyle(QFrame.StyledPanel)
+        panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(300)
 
         layout = QVBoxLayout(panel)
@@ -4184,7 +4219,7 @@ class AICodingAssistantDialog(QDialog):
     def create_editor_panel(self) -> QWidget:
         """Create the center code editor panel."""
         panel = QFrame()
-        panel.setFrameStyle(QFrame.StyledPanel)
+        panel.setFrameStyle(QFrame.Shape.StyledPanel)
 
         layout = QVBoxLayout(panel)
 
@@ -4200,7 +4235,8 @@ class AICodingAssistantDialog(QDialog):
 
         # Run button
         run_action = QAction("Run", self)
-        run_action.setIcon(self.style().standardIcon(self.style().SP_MediaPlay))
+        if style := self.style():
+            run_action.setIcon(style.standardIcon(style.StandardPixmap.SP_MediaPlay))
         run_action.triggered.connect(self.run_current_script)
         toolbar.addAction(run_action)
 
@@ -4211,7 +4247,8 @@ class AICodingAssistantDialog(QDialog):
 
         # AI generate button
         ai_action = QAction("AI Generate", self)
-        ai_action.setIcon(self.style().standardIcon(self.style().SP_ComputerIcon))
+        if style := self.style():
+            ai_action.setIcon(style.standardIcon(style.StandardPixmap.SP_ComputerIcon))
         ai_action.triggered.connect(self.ai_generate_code)
         toolbar.addAction(ai_action)
 
@@ -4222,7 +4259,7 @@ class AICodingAssistantDialog(QDialog):
     def create_ai_panel(self) -> QWidget:
         """Create the right AI assistant panel."""
         panel = QFrame()
-        panel.setFrameStyle(QFrame.StyledPanel)
+        panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(400)
 
         layout = QVBoxLayout(panel)
@@ -4238,7 +4275,7 @@ class AICodingAssistantDialog(QDialog):
 
         # AI generation options
         generation_group = QFrame()
-        generation_group.setFrameStyle(QFrame.StyledPanel)
+        generation_group.setFrameStyle(QFrame.Shape.StyledPanel)
         gen_layout = QVBoxLayout(generation_group)
 
         gen_layout.addWidget(QLabel("Code Generation"))
@@ -4255,7 +4292,7 @@ class AICodingAssistantDialog(QDialog):
 
         # Context information
         context_group = QFrame()
-        context_group.setFrameStyle(QFrame.StyledPanel)
+        context_group.setFrameStyle(QFrame.Shape.StyledPanel)
         ctx_layout = QVBoxLayout(context_group)
 
         ctx_layout.addWidget(QLabel("Context"))
@@ -4318,7 +4355,9 @@ class AICodingAssistantDialog(QDialog):
         # Check if file is already open
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
-            if hasattr(editor, "current_file") and editor.current_file == file_path:
+            if not editor:
+                continue
+            if hasattr(editor, "current_file") and getattr(editor, "current_file", None) == file_path:
                 self.editor_tabs.setCurrentIndex(i)
                 return
 
@@ -4339,16 +4378,19 @@ class AICodingAssistantDialog(QDialog):
     def close_tab(self, index: int) -> None:
         """Close an editor tab."""
         editor = self.editor_tabs.widget(index)
-        if editor and hasattr(editor, "is_modified") and editor.is_modified:
+        if editor and hasattr(editor, "is_modified") and getattr(editor, "is_modified", False):
             reply = QMessageBox.question(
                 self,
                 "Unsaved Changes",
                 "File has unsaved changes. Save before closing?",
-                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
             )
 
-            if (reply == QMessageBox.Save and not editor.save_file()) or (reply != QMessageBox.Save and reply == QMessageBox.Cancel):
-                return  # Don't close if save failed
+            if reply == QMessageBox.StandardButton.Save:
+                if hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None)) and not cast("Any", editor).save_file():
+                    return
+            elif reply == QMessageBox.StandardButton.Cancel:
+                return
         self.editor_tabs.removeTab(index)
 
         # Update status if this was the current tab
@@ -4366,8 +4408,8 @@ class AICodingAssistantDialog(QDialog):
         """Save all modified files."""
         for i in range(self.editor_tabs.count()):
             editor = self.editor_tabs.widget(i)
-            if editor and hasattr(editor, "is_modified") and editor.is_modified:
-                editor.save_file()
+            if editor and hasattr(editor, "is_modified") and getattr(editor, "is_modified", False) and (hasattr(editor, "save_file") and callable(getattr(editor, "save_file", None))):
+                cast("Any", editor).save_file()
 
         self.update_modified_status()
 
@@ -4423,7 +4465,7 @@ class AICodingAssistantDialog(QDialog):
             self.ai_status_label.setText("AI Ready")
 
         except Exception as e:
-            logger.error("AI processing error: %s", e, exc_info=True)
+            logger.exception("AI processing error: %s", e)
             self.chat_widget.add_message("AI", f"Error: {e}")
             self.ai_status_label.setText("AI Error")
 
@@ -4454,7 +4496,9 @@ class AICodingAssistantDialog(QDialog):
                 # Create a more specific question with context
                 code_snippet = context["selected_text"][:500]  # Limit code length
                 question = f"Please explain this code:\n```\n{code_snippet}\n```"
-                return self.ai_tools.ask_question(question)
+                if self.ai_tools:
+                    return self.ai_tools.ask_question(
+            question)
             if "generate" in message.lower():
                 # Handle code generation requests
                 script_type = self.script_type_combo.currentText()
@@ -4463,29 +4507,31 @@ class AICodingAssistantDialog(QDialog):
                     question = f"Generate a {script_type} based on this context:\n{context['file_content'][:1000]}"
                 else:
                     question = f"Generate a {script_type} for: {message}"
-                response = self.ai_tools.ask_question(question)
-                return response
-
+                return self.ai_tools.ask_question(  # type: ignore[union-attr]
+                    question
+                )
             if "optimize" in message.lower() and context.get("selected_text"):
                 # Handle optimization requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Please optimize this code:\n```\n{code_snippet}\n```"
-                response = self.ai_tools.ask_question(question)
-                return response
-
+                return self.ai_tools.ask_question(  # type: ignore[union-attr]
+                    question
+                )
             if "debug" in message.lower() and context.get("selected_text"):
                 # Handle debugging requests
                 code_snippet = context["selected_text"][:500]
                 question = f"Help me debug this code:\n```\n{code_snippet}\n```"
-                response = self.ai_tools.ask_question(question)
+                response = self.ai_tools.ask_question(  # type: ignore[union-attr]
+            question)
                 return response
 
             # For general questions, use ask_question directly
-            response = self.ai_tools.ask_question(message)
+            response = self.ai_tools.ask_question(  # type: ignore[union-attr]
+            message)
             return response
 
         except Exception as e:
-            logger.error("Error processing AI request: %s", e, exc_info=True)
+            logger.exception("Error processing AI request: %s", e)
             # Fallback to basic responses if AI fails
             if "explain" in message.lower():
                 return "Please select some code to explain."
@@ -4532,7 +4578,7 @@ def example_function():
         if not hasattr(self, "script_execution_manager"):
             from ...core.execution import ScriptExecutionManager
 
-            self.script_execution_manager = ScriptExecutionManager(self)
+            self.script_execution_manager = ScriptExecutionManager(self)  # type: ignore[call-arg]
 
         # Determine script type based on file extension
         script_type = None
@@ -4593,10 +4639,10 @@ def example_function():
             self.chat_widget.add_message("System", f"Script execution result:\n{output}")
 
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
         except Exception as e:
-            logger.error("Exception in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def run_javascript_script(self, file_path: str) -> None:
@@ -4614,13 +4660,13 @@ def example_function():
             self.chat_widget.add_message("System", f"Script execution result:\n{output}")
 
         except FileNotFoundError as e:
-            logger.error("File not found in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("File not found in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Node.js not found. Cannot run JavaScript files.")
         except subprocess.TimeoutExpired as e:
-            logger.error("Subprocess timeout in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("Subprocess timeout in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Script execution timed out.")
         except Exception as e:
-            logger.error("Exception in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Script execution error: {e}")
 
     def format_current_code(self) -> None:
@@ -4666,10 +4712,10 @@ def example_function():
                 Path(temp_file_path).unlink()
 
         except FileNotFoundError as e:
-            logger.error("File not found in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("File not found in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", "Black formatter not found. Please install: pip install black")
         except Exception as e:
-            logger.error("Exception in ai_coding_assistant_dialog: %s", e, exc_info=True)
+            logger.exception("Exception in ai_coding_assistant_dialog: %s", e)
             self.chat_widget.add_message("System", f"Formatting error: {e}")
 
     def analyze_current_code(self) -> None:
@@ -4702,10 +4748,12 @@ def example_function():
             self.chat_widget.add_message("AI", "Analyzing code, please wait...")
 
             # Perform analysis using ai_tools
-            analysis_result = self.ai_tools.analyze_code(code_content, language)
+            analysis_result: dict[str, Any] | None = None
+            if self.ai_tools:
+                analysis_result = self.ai_tools.analyze_code(code_content, language)
 
             # Format and display results
-            if analysis_result.get("status") == "success":
+            if analysis_result and analysis_result.get("status") == "success":
                 formatted_analysis = self._format_analysis_results(analysis_result)
                 self.chat_widget.add_message("AI", formatted_analysis)
 
@@ -4713,50 +4761,46 @@ def example_function():
                 if analysis_result.get("security_issues"):
                     self._highlight_security_issues(analysis_result["security_issues"])
 
-            else:
+            elif analysis_result:
                 error_msg = analysis_result.get("error", "Unknown error occurred")
                 self.chat_widget.add_message("AI", f"Analysis failed: {error_msg}")
 
             self.ai_status_label.setText("AI Ready")
 
         except Exception as e:
-            logger.error("Code analysis error: %s", e, exc_info=True)
+            logger.exception("Code analysis error: %s", e)
             self.chat_widget.add_message("AI", f"Error during code analysis: {e!s}")
             self.ai_status_label.setText("AI Error")
 
     def _format_analysis_results(self, analysis_result: dict[str, Any]) -> str:
         """Format code analysis results for display."""
-        lines = [" **Code Analysis Results**\n"]
-
-        # Basic info
-        lines.append(f"**Language:** {analysis_result.get('language', 'Unknown')}")
-        lines.append(f"**Lines of Code:** {analysis_result.get('lines_of_code', 0)}")
-        lines.append(f"**Complexity:** {analysis_result.get('complexity', 'Unknown')}")
-        lines.append(f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled') else 'Disabled'}")
-        lines.append("")
+        lines = [
+            " **Code Analysis Results**\n",
+            f"**Language:** {analysis_result.get('language', 'Unknown')}",
+            f"**Lines of Code:** {analysis_result.get('lines_of_code', 0)}",
+            f"**Complexity:** {analysis_result.get('complexity', 'Unknown')}",
+            f"**AI Analysis:** {'Enabled' if analysis_result.get('ai_enabled') else 'Disabled'}",
+            "",
+        ]
 
         if insights := analysis_result.get("insights", []):
             lines.append("** Insights:**")
-            for insight in insights:
-                lines.append(f"   {insight}")
+            lines.extend(f"   {insight}" for insight in insights)
             lines.append("")
 
         if security_issues := analysis_result.get("security_issues", []):
             lines.append("** Security Issues:**")
-            for issue in security_issues:
-                lines.append(f"  WARNING️ {issue}")
+            lines.extend(f"  WARNING️ {issue}" for issue in security_issues)
             lines.append("")
 
         if suggestions := analysis_result.get("suggestions", []):
             lines.append("** Suggestions:**")
-            for suggestion in suggestions:
-                lines.append(f"   {suggestion}")
+            lines.extend(f"   {suggestion}" for suggestion in suggestions)
             lines.append("")
 
         if patterns := analysis_result.get("patterns", []):
             lines.append("** Detected Patterns:**")
-            for pattern in patterns:
-                lines.append(f"   {pattern}")
+            lines.extend(f"   {pattern}" for pattern in patterns)
             lines.append("")
 
         if timestamp := analysis_result.get("analysis_timestamp", ""):

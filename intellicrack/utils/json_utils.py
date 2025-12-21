@@ -168,7 +168,7 @@ def safe_serialize(obj: object, filepath: Path, use_pickle: bool = False) -> Non
             with open(filepath, "w") as f:
                 dump(obj, f)
         except (TypeError, ValueError) as e:
-            logger.error("JSON serialization failed, falling back to pickle: %s", e)
+            logger.exception("JSON serialization failed, falling back to pickle: %s", e)
             import pickle  # noqa: S403
 
             with open(filepath, "wb") as f:
@@ -291,7 +291,7 @@ def safe_deserialize(filepath: Path, use_pickle: bool = False) -> object:
                             return getattr(__import__(module, level=0), name)
                         # For other cases, raise an exception
                         error_msg = f"Global '{module}.{name}' is forbidden"
-                        logger.error(error_msg)
+                        logger.exception(error_msg)
                         raise pickle.UnpicklingError(error_msg) from None
 
                 unpickler = RestrictedUnpickler(f)

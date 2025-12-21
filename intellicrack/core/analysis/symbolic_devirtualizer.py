@@ -84,6 +84,9 @@ class HandlerSemantic(Enum):
     LOGICAL_AND = "logical_and"
     LOGICAL_OR = "logical_or"
     LOGICAL_XOR = "logical_xor"
+    LOGICAL_NOT = "logical_not"
+    SHIFT_LEFT = "shift_left"
+    SHIFT_RIGHT = "shift_right"
     BRANCH_CONDITIONAL = "branch_conditional"
     BRANCH_UNCONDITIONAL = "branch_unconditional"
     CALL = "call"
@@ -161,35 +164,35 @@ class GuidedVMExploration(ExplorationTechnique):
 
     def __init__(self, vm_dispatcher: int, handler_table: int, max_depth: int = 100) -> None:
         """Initialize guided VM exploration."""
-        super().__init__()
+        super().__init__()  # type: ignore[no-untyped-call]
         self.vm_dispatcher = vm_dispatcher
         self.handler_table = handler_table
         self.max_depth = max_depth
-        self.visited_handlers = set()
+        self.visited_handlers: set[int] = set()
 
-    def step(self, exploration_mgr: object, stash: str = "active", **kwargs: object) -> object:
+    def step(self, simgr: Any, stash: Any = "active", **kwargs: Any) -> Any:
         """Perform guided exploration step.
 
         Args:
-            exploration_mgr: The exploration manager instance.
+            simgr: The angr exploration manager instance.
             stash: The stash name to process (default: "active").
             **kwargs: Additional keyword arguments passed to step method.
 
         Returns:
-            The updated exploration manager.
+            The updated angr exploration manager.
 
         """
-        exploration_mgr = exploration_mgr.step(stash=stash, **kwargs)
+        simgr = simgr.step(stash=stash, **kwargs)
 
-        if stash in exploration_mgr.stashes:
-            for state in exploration_mgr.stashes[stash]:
+        if stash in simgr.stashes:
+            for state in simgr.stashes[stash]:
                 if state.history.depth > self.max_depth:
-                    exploration_mgr.stashes[stash].remove(state)
-                    if "pruned" not in exploration_mgr.stashes:
-                        exploration_mgr.stashes["pruned"] = []
-                    exploration_mgr.stashes["pruned"].append(state)
+                    simgr.stashes[stash].remove(state)
+                    if "pruned" not in simgr.stashes:
+                        simgr.stashes["pruned"] = []
+                    simgr.stashes["pruned"].append(state)
 
-        return exploration_mgr
+        return simgr
 
 
 class PathExplosionMitigation(ExplorationTechnique):
@@ -197,33 +200,33 @@ class PathExplosionMitigation(ExplorationTechnique):
 
     def __init__(self, max_active: int = 50, max_total: int = 500) -> None:
         """Initialize path explosion mitigation."""
-        super().__init__()
+        super().__init__()  # type: ignore[no-untyped-call]
         self.max_active = max_active
         self.max_total = max_total
         self.total_stepped = 0
 
-    def step(self, exploration_mgr: object, stash: str = "active", **kwargs: object) -> object:
+    def step(self, simgr: Any, stash: Any = "active", **kwargs: Any) -> Any:
         """Perform path explosion mitigation step.
 
         Args:
-            exploration_mgr: The exploration manager instance.
+            simgr: The angr exploration manager instance.
             stash: The stash name to process (default: "active").
             **kwargs: Additional keyword arguments passed to step method.
 
         Returns:
-            The updated exploration manager after mitigation.
+            The updated angr exploration manager after mitigation.
 
         """
         if self.total_stepped >= self.max_total:
-            return exploration_mgr
+            return simgr
 
-        if stash in exploration_mgr.stashes and len(exploration_mgr.stashes[stash]) > self.max_active:
-            exploration_mgr.stashes[stash] = exploration_mgr.stashes[stash][: self.max_active]
+        if stash in simgr.stashes and len(simgr.stashes[stash]) > self.max_active:
+            simgr.stashes[stash] = simgr.stashes[stash][: self.max_active]
 
-        exploration_mgr = exploration_mgr.step(stash=stash, **kwargs)
+        simgr = simgr.step(stash=stash, **kwargs)
         self.total_stepped += 1
 
-        return exploration_mgr
+        return simgr
 
 
 class SymbolicDevirtualizer:
@@ -280,8 +283,8 @@ class SymbolicDevirtualizer:
         self.vm_dispatcher = self._find_dispatcher_symbolic(vm_entry_point)
         self.handler_table = self._find_handler_table_symbolic(vm_entry_point)
 
-        logger.info("Dispatcher: 0x%x", self.vm_dispatcher if self.vm_dispatcher else 0)
-        logger.info("Handler table: 0x%x", self.handler_table if self.handler_table else 0)
+        logger.info("Dispatcher: 0x%x", self.vm_dispatcher or 0)
+        logger.info("Handler table: 0x%x", self.handler_table or 0)
 
         handler_addresses = self._extract_handler_addresses()
         logger.info("Extracted %d handler addresses", len(handler_addresses))
@@ -341,15 +344,18 @@ class SymbolicDevirtualizer:
         return VMType.GENERIC
 
     def _find_dispatcher_symbolic(self, start_addr: int) -> int | None:
-        initial_state = self.project.factory.blank_state(addr=start_addr)
+        if self.project is None:
+            return None
 
-        exploration_manager = self.project.factory.simgr(initial_state)
+        initial_state = self.project.factory.blank_state(addr=start_addr)  # type: ignore[no-untyped-call]
+
+        exploration_manager = self.project.factory.simgr(initial_state)  # type: ignore[no-untyped-call]
 
         try:
             exploration_manager.explore(find=self._is_dispatcher_state, num_find=1, n=100)
 
             if exploration_manager.found:
-                dispatcher_addr = exploration_manager.found[0].addr
+                dispatcher_addr: int = exploration_manager.found[0].addr
                 logger.debug("Found dispatcher at 0x%x", dispatcher_addr)
                 return dispatcher_addr
         except Exception as e:
@@ -357,13 +363,19 @@ class SymbolicDevirtualizer:
 
         return self._find_dispatcher_pattern()
 
-    def _is_dispatcher_state(self, state: SimState) -> bool:
+    def _is_dispatcher_state(self, state: Any) -> bool:
+        if self.project is None:
+            return False
+
         block = self.project.factory.block(state.addr)
 
         if not block.capstone:
             return False
 
-        indirect_jumps = sum(bool(insn.mnemonic == "jmp" and "[" in insn.op_str) for insn in block.capstone.insns)
+        indirect_jumps: int = sum(
+            insn.mnemonic == "jmp" and "[" in insn.op_str
+            for insn in block.capstone.insns
+        )
         return indirect_jumps >= 1
 
     def _find_dispatcher_pattern(self) -> int | None:
@@ -384,7 +396,7 @@ class SymbolicDevirtualizer:
         return None
 
     def _find_handler_table_symbolic(self, start_addr: int) -> int | None:
-        if not self.vm_dispatcher:
+        if not self.vm_dispatcher or self.project is None:
             return None
 
         try:
@@ -450,7 +462,10 @@ class SymbolicDevirtualizer:
         return sorted(set(handlers))
 
     def _read_handler_table(self) -> list[int]:
-        handlers = []
+        handlers: list[int] = []
+
+        if self.handler_table is None:
+            return handlers
 
         with open(self.binary_path, "rb") as f:
             f.seek(self.handler_table)
@@ -478,18 +493,21 @@ class SymbolicDevirtualizer:
         return handlers
 
     def _trace_dispatcher_targets(self) -> list[int]:
-        handlers = []
+        handlers: list[int] = []
+
+        if self.project is None or self.vm_dispatcher is None:
+            return handlers
 
         try:
-            state = self.project.factory.blank_state(addr=self.vm_dispatcher)
+            state = self.project.factory.blank_state(addr=self.vm_dispatcher)  # type: ignore[no-untyped-call]
 
-            exec_manager = self.project.factory.simgr(state)
+            exec_manager = self.project.factory.simgr(state)  # type: ignore[no-untyped-call]
             target_dispatcher = self.vm_dispatcher
             exec_manager.explore(n=100, find=lambda s: s.addr != target_dispatcher)
 
             for found_state in exec_manager.found + exec_manager.active:
                 try:
-                    addr = found_state.addr
+                    addr: int = found_state.addr
                     if 0x1000 < addr < 0x7FFFFFFFFFFF and addr not in handlers:
                         handlers.append(addr)
 
@@ -503,17 +521,21 @@ class SymbolicDevirtualizer:
                     continue
 
             block = self.project.factory.block(self.vm_dispatcher)
-            for successor in block.successors:
-                if 0x1000 < successor < 0x7FFFFFFFFFFF and successor not in handlers:
-                    handlers.append(successor)
+            if hasattr(block, "successors"):
+                for successor in block.successors:
+                    if 0x1000 < successor < 0x7FFFFFFFFFFF and successor not in handlers:
+                        handlers.append(successor)
         except Exception as e:
             logger.debug("Dispatcher target tracing failed: %s", e)
 
         return handlers
 
     def _lift_handler_symbolic(self, handler_addr: int) -> LiftedHandler | None:
+        if self.project is None:
+            return None
+
         try:
-            state = self.project.factory.call_state(
+            state = self.project.factory.call_state(  # type: ignore[no-untyped-call]
                 handler_addr,
                 add_options={
                     angr.options.SYMBOLIC_WRITE_ADDRESSES,
@@ -537,11 +559,11 @@ class SymbolicDevirtualizer:
 
             state.mem[state.regs.sp].qword = vm_stack
 
-            exploration_manager = self.project.factory.simgr(state)
+            exploration_manager = self.project.factory.simgr(state)  # type: ignore[no-untyped-call]
             exploration_manager.explore(n=50)
 
-            symbolic_effects = []
-            constraints = []
+            symbolic_effects: list[tuple[str, Any]] = []
+            constraints: list[Any] = []
 
             if exploration_manager.active or exploration_manager.deadended:
                 final_states = exploration_manager.active + exploration_manager.deadended
@@ -580,6 +602,9 @@ class SymbolicDevirtualizer:
             return None
 
     def _infer_handler_semantic(self, handler_addr: int, effects: list[tuple[str, Any]], constraints: list[Any]) -> HandlerSemantic:
+        if self.project is None:
+            return HandlerSemantic.UNKNOWN
+
         try:
             block = self.project.factory.block(handler_addr)
 
@@ -632,7 +657,7 @@ class SymbolicDevirtualizer:
         semantic: HandlerSemantic,
         effects: list[tuple[str, Any]],
     ) -> tuple[bytes | None, list[str]]:
-        semantic_to_asm = {
+        semantic_to_asm: dict[HandlerSemantic, tuple[str, bytes]] = {
             HandlerSemantic.STACK_PUSH: ("push eax", b"\x50"),
             HandlerSemantic.STACK_POP: ("pop eax", b"\x58"),
             HandlerSemantic.ARITHMETIC_ADD: ("add eax, ebx", b"\x01\xd8"),
@@ -656,6 +681,9 @@ class SymbolicDevirtualizer:
         if semantic in semantic_to_asm:
             asm, bytecode = semantic_to_asm[semantic]
             return bytecode, [asm]
+
+        if self.project is None:
+            return None, [f"unknown_handler_0x{handler_addr:x}"]
 
         try:
             block = self.project.factory.block(handler_addr)
@@ -695,10 +723,13 @@ class SymbolicDevirtualizer:
         max_paths: int,
         timeout: int,
     ) -> list[DevirtualizedBlock]:
-        blocks = []
+        blocks: list[DevirtualizedBlock] = []
+
+        if self.project is None:
+            return blocks
 
         try:
-            state = self.project.factory.call_state(
+            state = self.project.factory.call_state(  # type: ignore[no-untyped-call]
                 entry_point,
                 add_options={
                     angr.options.SYMBOLIC,
@@ -706,7 +737,7 @@ class SymbolicDevirtualizer:
                 },
             )
 
-            exploration_manager = self.project.factory.simgr(state)
+            exploration_manager = self.project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
             if self.vm_dispatcher and self.handler_table:
                 exploration_manager.use_technique(GuidedVMExploration(self.vm_dispatcher, self.handler_table, max_depth=max_paths))
@@ -714,12 +745,12 @@ class SymbolicDevirtualizer:
             exploration_manager.use_technique(PathExplosionMitigation(max_active=50, max_total=max_paths))
 
             if strategy == ExplorationStrategy.DFS:
-                exploration_manager.use_technique(DFS())
+                exploration_manager.use_technique(DFS())  # type: ignore[no-untyped-call]
 
             import threading
 
             exploration_complete = threading.Event()
-            exploration_error = None
+            exploration_error: Exception | None = None
 
             def run_exploration() -> None:
                 nonlocal exploration_error
@@ -747,30 +778,30 @@ class SymbolicDevirtualizer:
                     blocks.append(block)
 
         except Exception as e:
-            logger.error("VM execution tracing failed: %s", e)
+            logger.exception("VM execution tracing failed: %s", e)
 
         return blocks
 
-    def _reconstruct_block_from_state(self, state: SimState, entry: int) -> DevirtualizedBlock | None:
+    def _reconstruct_block_from_state(self, state: Any, entry: int) -> DevirtualizedBlock | None:
         try:
-            path_addrs = list(state.history.bbl_addrs)
+            path_addrs: list[int] = list(state.history.bbl_addrs)
 
-            handlers_exec = [addr for addr in path_addrs if addr in self.lifted_handlers]
+            handlers_exec: list[int] = [addr for addr in path_addrs if addr in self.lifted_handlers]
             if not handlers_exec:
                 return None
 
-            lifted_seq = [self.lifted_handlers[h] for h in handlers_exec if h in self.lifted_handlers]
+            lifted_seq: list[LiftedHandler] = [self.lifted_handlers[h] for h in handlers_exec if h in self.lifted_handlers]
 
-            native_code = bytearray()
-            assembly = []
+            native_code: bytearray = bytearray()
+            assembly: list[str] = []
 
             for lifted in lifted_seq:
                 if lifted.native_translation:
                     native_code.extend(lifted.native_translation)
                 assembly.extend(lifted.assembly_code)
 
-            cf_edges = [(path_addrs[i], path_addrs[i + 1]) for i in range(len(path_addrs) - 1)]
-            avg_confidence = sum(h.confidence for h in lifted_seq) / len(lifted_seq) if lifted_seq else 0.0
+            cf_edges: list[tuple[int, int]] = [(path_addrs[i], path_addrs[i + 1]) for i in range(len(path_addrs) - 1)]
+            avg_confidence: float = sum(h.confidence for h in lifted_seq) / len(lifted_seq) if lifted_seq else 0.0
 
             return DevirtualizedBlock(
                 original_vm_entry=entry,

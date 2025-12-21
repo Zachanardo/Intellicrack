@@ -316,7 +316,7 @@ class IntellicrackApp(QMainWindow):
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to initialize AI Orchestrator: %s", e, exc_info=True)
+            self.logger.exception("Failed to initialize AI Orchestrator: %s", e)
             self.ai_orchestrator = None
             self.ai_coordinator = None
             self.logger.warning("Continuing without agentic AI system")
@@ -382,7 +382,7 @@ class IntellicrackApp(QMainWindow):
                         icon_loaded = True
                         break
                 except Exception as e:
-                    logger.debug("Failed to load icon from %s: %s", icon_path, e, exc_info=True)
+                    logger.debug("Failed to load icon from %s: %s", icon_path, e)
 
         if not icon_loaded:
             logger.debug("Failed to load application icon from any path")
@@ -472,13 +472,13 @@ class IntellicrackApp(QMainWindow):
             self.ai_agent = AIAgentClass()
             logger.info("AIAgent initialized successfully")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize AIAgent: %s", e, exc_info=True)
+            logger.warning("Failed to initialize AIAgent: %s", e)
 
         self.memory_optimized_loader: MemoryOptimizedBinaryLoader | None = None
         try:
             self.memory_optimized_loader = MemoryOptimizedBinaryLoader()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e, exc_info=True)
+            logger.warning("Failed to initialize MemoryOptimizedBinaryLoader: %s", e)
 
         self.symbolic_execution_engine: object | None = None
         logger.info("SymbolicExecutionEngine will be initialized when binary is loaded")
@@ -487,7 +487,7 @@ class IntellicrackApp(QMainWindow):
         try:
             self.taint_analysis_engine = TaintAnalysisEngine()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize TaintAnalysisEngine: %s", e, exc_info=True)
+            logger.warning("Failed to initialize TaintAnalysisEngine: %s", e)
 
         self.concolic_execution_engine: object | None = None
         logger.info("ConcolicExecutionEngine will be initialized when binary is loaded")
@@ -496,19 +496,19 @@ class IntellicrackApp(QMainWindow):
         try:
             self.rop_chain_generator = ROPChainGenerator()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize ROPChainGenerator: %s", e, exc_info=True)
+            logger.warning("Failed to initialize ROPChainGenerator: %s", e)
 
         self.parallel_processing_manager: ParallelProcessingManager | None = None
         try:
             self.parallel_processing_manager = ParallelProcessingManager()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize ParallelProcessingManager: %s", e, exc_info=True)
+            logger.warning("Failed to initialize ParallelProcessingManager: %s", e)
 
         self.gpu_accelerator: GPUAccelerator | None = None
         try:
             self.gpu_accelerator = GPUAccelerator()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize GPUAccelerator: %s", e, exc_info=True)
+            logger.warning("Failed to initialize GPUAccelerator: %s", e)
 
     def _initialize_network_components(self) -> None:
         """Initialize network analysis and traffic components."""
@@ -518,7 +518,7 @@ class IntellicrackApp(QMainWindow):
 
             self.network_traffic_analyzer = NetworkTrafficAnalyzer()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize NetworkTrafficAnalyzer: %s", e, exc_info=True)
+            logger.warning("Failed to initialize NetworkTrafficAnalyzer: %s", e)
 
         self.ssl_interceptor: SSLTLSInterceptor | None = None
         try:
@@ -526,7 +526,7 @@ class IntellicrackApp(QMainWindow):
 
             self.ssl_interceptor = SSLInt()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize SSLTLSInterceptor: %s", e, exc_info=True)
+            logger.warning("Failed to initialize SSLTLSInterceptor: %s", e)
 
         self.protocol_fingerprinter: ProtocolFingerprinter | None = None
         try:
@@ -534,7 +534,7 @@ class IntellicrackApp(QMainWindow):
 
             self.protocol_fingerprinter = ProtocolFingerprinter()
         except (OSError, ValueError, RuntimeError) as e:
-            logger.warning("Failed to initialize ProtocolFingerprinter: %s", e, exc_info=True)
+            logger.warning("Failed to initialize ProtocolFingerprinter: %s", e)
 
         self.network_license_server: NetworkLicenseServerEmulator | None = None
         try:
@@ -542,7 +542,7 @@ class IntellicrackApp(QMainWindow):
 
             self.network_license_server = NetworkLicenseServerEmulator()
         except (OSError, ValueError, RuntimeError, ImportError) as e:
-            logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e, exc_info=True)
+            logger.warning("Failed to initialize NetworkLicenseServerEmulator: %s", e)
 
     def _create_main_ui_layout(self) -> None:
         """Create the main UI layout with central widget, tabs, and output panel."""
@@ -580,7 +580,7 @@ class IntellicrackApp(QMainWindow):
             self.icon_manager = IconManager()
         except Exception as e:
             # Continue initialization even if theme application fails
-            logger.debug("Theme application failed: %s", e, exc_info=True)
+            logger.debug("Theme application failed: %s", e)
 
         self.tabs.setTabPosition(QTabWidget.TabPosition.North)
         self.tabs.setTabsClosable(False)
@@ -676,50 +676,50 @@ class IntellicrackApp(QMainWindow):
         try:
             self.setup_project_dashboard_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup project dashboard tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup project dashboard tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
         try:
             self.setup_analysis_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup analysis tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup analysis tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
         try:
             self.setup_patching_exploitation_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup patching exploitation tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup patching exploitation tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
         try:
             self.setup_ai_assistant_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup AI assistant tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup AI assistant tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
         try:
             self.setup_netanalysis_emulation_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup network analysis emulation tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup network analysis emulation tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
         try:
             self.setup_tools_plugins_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup tools plugins tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup tools plugins tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
         try:
             self.setup_settings_tab()
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Failed to setup settings tab: %s", e)
-            self.logger.error(traceback.format_exc())
+            self.logger.exception("Failed to setup settings tab: %s", e)
+            self.logger.exception(traceback.format_exc())
             raise
 
     def _finalize_ui_initialization(self) -> None:
@@ -737,7 +737,7 @@ class IntellicrackApp(QMainWindow):
         try:
             self.apply_comprehensive_tooltips()
         except (AttributeError, ValueError, TypeError, RuntimeError, KeyError, OSError) as e:
-            self.logger.warning("Could not apply tooltips: %s", e, exc_info=True)
+            self.logger.warning("Could not apply tooltips: %s", e)
 
         # Ensure window is properly configured
         self.setGeometry(100, 100, 1200, 800)
@@ -751,12 +751,13 @@ class IntellicrackApp(QMainWindow):
             create_sample_plugins()
             self.available_plugins = self.load_available_plugins()
             self.logger.info(
-                f"Loaded {len(self.available_plugins.get('custom', []))} custom plugins, "
-                f"{len(self.available_plugins.get('frida', []))} Frida scripts, "
-                f"{len(self.available_plugins.get('ghidra', []))} Ghidra scripts",
+                "Loaded %d custom plugins, %d Frida scripts, %d Ghidra scripts",
+                len(self.available_plugins.get("custom", [])),
+                len(self.available_plugins.get("frida", [])),
+                len(self.available_plugins.get("ghidra", [])),
             )
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.warning("Failed to initialize plugins: %s", e, exc_info=True)
+            self.logger.warning("Failed to initialize plugins: %s", e)
             self.available_plugins = {
                 self.PLUGIN_TYPE_CUSTOM: [],
                 self.PLUGIN_TYPE_FRIDA: [],
@@ -787,7 +788,7 @@ class IntellicrackApp(QMainWindow):
                     self.update_output.emit(result_summary)
 
         except Exception as e:
-            self.logger.error("Error handling AI task completion: %s", e, exc_info=True)
+            self.logger.exception("Error handling AI task completion: %s", e)
 
     def _on_coordinated_analysis_complete(self, event_data: dict[str, Any]) -> None:
         """Handle coordinated analysis completion events from AI coordinator.
@@ -817,7 +818,7 @@ class IntellicrackApp(QMainWindow):
                     self.update_output.emit(rec_msg)
 
         except Exception as e:
-            self.logger.error("Error handling coordinated analysis completion: %s", e, exc_info=True)
+            self.logger.exception("Error handling coordinated analysis completion: %s", e)
 
     def append_output(self, text: str) -> None:
         """Append text to the main output widget.
@@ -981,9 +982,8 @@ class IntellicrackApp(QMainWindow):
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_name}"))
             self.logger.info("Binary loaded: %s", binary_info["path"])
 
-            if hasattr(self, "analysis_tab") and self.analysis_tab is not None:
-                if hasattr(self.analysis_tab, "set_binary_path"):
-                    self.analysis_tab.set_binary_path(str(path_val))
+            if hasattr(self, "analysis_tab") and self.analysis_tab is not None and hasattr(self.analysis_tab, "set_binary_path"):
+                self.analysis_tab.set_binary_path(str(path_val))
         else:
             self.binary_path = str(binary_info) if binary_info else None
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_info}"))
@@ -1038,7 +1038,7 @@ class IntellicrackApp(QMainWindow):
 
         """
         self.update_status.emit(f"Task failed: {task_name} - {error}")
-        self.logger.error("Task failed: %s - %s", task_name, error)
+        self.logger.exception("Task failed: %s - %s", task_name, error)
 
     def apply_comprehensive_tooltips(self) -> None:
         """Apply comprehensive tooltips to UI elements."""
@@ -1057,7 +1057,7 @@ class IntellicrackApp(QMainWindow):
 
             self.logger.debug("Applied tooltips to UI elements")
         except Exception as e:
-            self.logger.warning("Failed to apply tooltips: %s", e, exc_info=True)
+            self.logger.warning("Failed to apply tooltips: %s", e)
 
     def restore_window_state(self) -> None:
         """Restore window state from configuration."""
@@ -1072,7 +1072,7 @@ class IntellicrackApp(QMainWindow):
                 if geometry is not None and isinstance(geometry, (list, tuple)) and len(geometry) >= 4:
                     self.setGeometry(int(geometry[0]), int(geometry[1]), int(geometry[2]), int(geometry[3]))
         except Exception as e:
-            self.logger.debug("Could not restore window state: %s", e, exc_info=True)
+            self.logger.debug("Could not restore window state: %s", e)
 
     def _initialize_font_manager(self) -> None:
         """Initialize custom fonts."""
@@ -1115,11 +1115,9 @@ class IntellicrackApp(QMainWindow):
         try:
             with open(cache_file, encoding="utf-8") as f:
                 result = json.load(f)
-                if isinstance(result, dict):
-                    return cast("dict[str, Any]", result)
-                return None
+                return cast("dict[str, Any]", result) if isinstance(result, dict) else None
         except (json.JSONDecodeError, OSError) as e:
-            self.logger.debug("Failed to load cache data: %s", e, exc_info=True)
+            self.logger.debug("Failed to load cache data: %s", e)
             return None
 
     def _check_file_modifications(self, plugin_dir: Path, cached_filenames: dict[str, float]) -> tuple[bool, dict[str, float]]:
@@ -1146,7 +1144,7 @@ class IntellicrackApp(QMainWindow):
                         return False, {}
                     del remaining[file_name]
         except OSError as e:
-            self.logger.debug("Error checking file modifications: %s", e, exc_info=True)
+            self.logger.debug("Error checking file modifications: %s", e)
             return False, {}
 
         return True, remaining
@@ -1281,7 +1279,7 @@ class IntellicrackApp(QMainWindow):
                 self.logger.info("Loaded %s plugins from cache", sum(len(p) for p in plugins.values()))
                 return plugins
             except (KeyError, OSError) as e:
-                self.logger.warning("Failed to load plugin cache, rescanning: %s", e, exc_info=True)
+                self.logger.warning("Failed to load plugin cache, rescanning: %s", e)
 
         plugins = {
             self.PLUGIN_TYPE_CUSTOM: [],
@@ -1330,7 +1328,7 @@ class IntellicrackApp(QMainWindow):
                                     plugins[plugin_type].append(plugin_info_item)
 
                                 except (OSError, UnicodeDecodeError) as file_error:
-                                    self.logger.warning("Failed to validate plugin %s: %s", entry.name, file_error, exc_info=True)
+                                    self.logger.warning("Failed to validate plugin %s: %s", entry.name, file_error)
                                     plugins[plugin_type].append(
                                         {
                                             "name": entry.stem,
@@ -1343,7 +1341,7 @@ class IntellicrackApp(QMainWindow):
                                     )
 
                 except OSError as dir_error:
-                    self.logger.error("Error accessing plugin directory %s: %s", plugin_dir, dir_error, exc_info=True)
+                    self.logger.exception("Error accessing plugin directory %s: %s", plugin_dir, dir_error)
 
             try:
                 cache_dir.mkdir(parents=True, exist_ok=True)
@@ -1351,10 +1349,10 @@ class IntellicrackApp(QMainWindow):
                     json.dump({"plugins": plugins, "cache_version": "1.0"}, wf, indent=2)
                 self.logger.debug("Plugin cache saved to %s", cache_file)
             except OSError as cache_error:
-                self.logger.warning("Failed to save plugin cache: %s", cache_error, exc_info=True)
+                self.logger.warning("Failed to save plugin cache: %s", cache_error)
 
         except (OSError, ValueError, RuntimeError) as e:
-            self.logger.error("Critical error loading plugins: %s", e, exc_info=True)
+            self.logger.exception("Critical error loading plugins: %s", e)
             return {
                 self.PLUGIN_TYPE_CUSTOM: [],
                 self.PLUGIN_TYPE_FRIDA: [],
@@ -1371,7 +1369,7 @@ class IntellicrackApp(QMainWindow):
                 self.dashboard_tab.setVisible(True)
                 self.logger.info("Dashboard tab initialized successfully")
         except Exception as e:
-            self.logger.error("Failed to setup dashboard tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup dashboard tab: %s", e)
             if hasattr(self, "dashboard_tab"):
                 self.dashboard_tab.setVisible(True)
 
@@ -1385,7 +1383,7 @@ class IntellicrackApp(QMainWindow):
             if hasattr(self, "symbolic_execution_engine"):
                 self.symbolic_execution_engine = None
         except Exception as e:
-            self.logger.error("Failed to setup analysis tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup analysis tab: %s", e)
             if hasattr(self, "analysis_tab"):
                 self.analysis_tab.setVisible(True)
 
@@ -1396,7 +1394,7 @@ class IntellicrackApp(QMainWindow):
                 self.exploitation_tab.setVisible(True)
                 self.logger.info("Exploitation tab initialized successfully")
         except Exception as e:
-            self.logger.error("Failed to setup patching exploitation tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup patching exploitation tab: %s", e)
             if hasattr(self, "exploitation_tab"):
                 self.exploitation_tab.setVisible(True)
 
@@ -1407,7 +1405,7 @@ class IntellicrackApp(QMainWindow):
                 self.ai_assistant_tab.setVisible(True)
                 self.logger.info("AI assistant tab initialized successfully")
         except Exception as e:
-            self.logger.error("Failed to setup AI assistant tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup AI assistant tab: %s", e)
             if hasattr(self, "ai_assistant_tab"):
                 self.ai_assistant_tab.setVisible(True)
 
@@ -1416,7 +1414,7 @@ class IntellicrackApp(QMainWindow):
         try:
             self.logger.info("Network analysis emulation tab initialized successfully")
         except Exception as e:
-            self.logger.error("Failed to setup network analysis emulation tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup network analysis emulation tab: %s", e)
 
     def setup_tools_plugins_tab(self) -> None:
         """Set up tools plugins tab with license protection research tool integration."""
@@ -1425,7 +1423,7 @@ class IntellicrackApp(QMainWindow):
                 self.tools_tab.setVisible(True)
                 self.logger.info("Tools tab initialized successfully")
         except Exception as e:
-            self.logger.error("Failed to setup tools plugins tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup tools plugins tab: %s", e)
             if hasattr(self, "tools_tab"):
                 self.tools_tab.setVisible(True)
 
@@ -1436,7 +1434,7 @@ class IntellicrackApp(QMainWindow):
                 self.settings_tab.setVisible(True)
                 self.logger.info("Settings tab initialized successfully")
         except Exception as e:
-            self.logger.error("Failed to setup settings tab: %s", e, exc_info=True)
+            self.logger.exception("Failed to setup settings tab: %s", e)
             if hasattr(self, "settings_tab"):
                 self.settings_tab.setVisible(True)
 
@@ -1464,7 +1462,7 @@ def launch() -> int:
 
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("ZacharyFlint.Intellicrack.BinaryAnalysis.2.0")
         except Exception as e:
-            logger.debug("Could not set App User Model ID (expected on non-Windows): %s", e, exc_info=True)
+            logger.debug("Could not set App User Model ID (expected on non-Windows): %s", e)
 
         # Create QApplication instance if it doesn't exist
         app = QApplication.instance()
@@ -1500,7 +1498,7 @@ def launch() -> int:
                             app.setWindowIcon(icon)
                             break
                     except Exception as e:
-                        logger.debug("Failed to load icon from %s: %s", icon_path, e, exc_info=True)
+                        logger.debug("Failed to load icon from %s: %s", icon_path, e)
                         continue
 
         # Create and show splash screen
@@ -1526,5 +1524,5 @@ def launch() -> int:
         return app.exec()
 
     except Exception as e:
-        logger.error("Failed to launch Intellicrack application: %s", e, exc_info=True)
+        logger.exception("Failed to launch Intellicrack application: %s", e)
         return 1

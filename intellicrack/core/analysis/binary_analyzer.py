@@ -129,7 +129,7 @@ class BinaryAnalyzer:
             }
 
         except Exception as e:
-            self.logger.error("Binary analysis failed: %s", e)
+            self.logger.exception("Binary analysis failed: %s", e)
             return {"error": str(e), "analysis_status": "failed"}
 
     def _analyze_streaming(self, binary_path: Path, file_info: dict[str, Any]) -> dict[str, Any]:
@@ -174,7 +174,7 @@ class BinaryAnalyzer:
             }
 
         except Exception as e:
-            self.logger.error("Streaming analysis failed: %s", e)
+            self.logger.exception("Streaming analysis failed: %s", e)
             return {"error": str(e), "analysis_status": "failed"}
 
     def _open_mmap(self, file_path: Path) -> tuple[Any, Any]:
@@ -501,7 +501,9 @@ class BinaryAnalyzer:
                 else:
                     return {"error": "Invalid Mach-O magic"}
 
-                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", mm[4:28])
+                cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(
+                    f"{endian}IIIIII", mm[4:28]
+                )
                 offset = 32 if is_64 else 28
                 macho_info |= {
                     "architecture": "64-bit" if is_64 else "32-bit",
@@ -517,7 +519,7 @@ class BinaryAnalyzer:
                     if offset + 8 > len(mm):
                         break
 
-                    cmd, cmdsize = struct.unpack(endian + "II", mm[offset : offset + 8])
+                    cmd, cmdsize = struct.unpack(f"{endian}II", mm[offset : offset + 8])
 
                     macho_info["load_commands"].append(
                         {
@@ -702,7 +704,7 @@ class BinaryAnalyzer:
             }
 
         except Exception as e:
-            self.logger.error("Analysis with progress failed: %s", e)
+            self.logger.exception("Analysis with progress failed: %s", e)
             return {"error": str(e), "analysis_status": "failed"}
 
     def save_analysis_checkpoint(self, analysis_results: dict[str, Any], checkpoint_path: str | Path) -> bool:
@@ -726,7 +728,7 @@ class BinaryAnalyzer:
             return True
 
         except Exception as e:
-            self.logger.error("Failed to save checkpoint: %s", e)
+            self.logger.exception("Failed to save checkpoint: %s", e)
             return False
 
     def load_analysis_checkpoint(self, checkpoint_path: str | Path) -> dict[str, Any] | None:
@@ -749,7 +751,7 @@ class BinaryAnalyzer:
                 return json.load(f)
 
         except Exception as e:
-            self.logger.error("Failed to load checkpoint: %s", e)
+            self.logger.exception("Failed to load checkpoint: %s", e)
             return None
 
     def scan_for_patterns_streaming(
@@ -805,7 +807,7 @@ class BinaryAnalyzer:
             return results
 
         except Exception as e:
-            self.logger.error("Pattern scanning failed: %s", e)
+            self.logger.exception("Pattern scanning failed: %s", e)
             return {"error": str(e)}
 
     def scan_for_license_strings_streaming(self, binary_path: str | Path) -> list[dict[str, Any]]:
@@ -860,13 +862,13 @@ class BinaryAnalyzer:
                                             },
                                         )
                                     except Exception as e:
-                                        self.logger.debug(f"Error decoding license string at offset {chunk_offset + string_start}: {e}")
+                                        self.logger.debug("Error decoding license string at offset %d: %s", chunk_offset + string_start, e)
                                     break
 
             return results[:500]
 
         except Exception as e:
-            self.logger.error("License string scanning failed: %s", e)
+            self.logger.exception("License string scanning failed: %s", e)
             return [{"error": str(e)}]
 
     def analyze_sections_streaming(self, binary_path: str | Path, section_ranges: list[tuple[int, int]]) -> dict[str, Any]:
@@ -906,7 +908,7 @@ class BinaryAnalyzer:
                             probability = count / section_size
                             entropy -= probability * math.log2(probability)
 
-                    printable_count = sum(bool(32 <= byte <= 126) for byte in section_data)
+                    printable_count = sum(32 <= byte <= 126 for byte in section_data)
                     null_count = byte_counts.get(0, 0)
 
                     results[f"section_{idx}"] = {
@@ -928,7 +930,7 @@ class BinaryAnalyzer:
                 file_handle.close()
 
         except Exception as e:
-            self.logger.error("Section analysis failed: %s", e)
+            self.logger.exception("Section analysis failed: %s", e)
             return {"error": str(e)}
 
     def _classify_section_characteristics(self, entropy: float, printable_ratio: float) -> str:
@@ -1194,7 +1196,9 @@ class BinaryAnalyzer:
             else:
                 return {"error": "Invalid Mach-O magic"}
 
-            cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(endian + "IIIIII", data[4:28])
+            cpu_type, _, file_type, ncmds, sizeofcmds, flags = struct.unpack(
+                f"{endian}IIIIII", data[4:28]
+            )
             # Parse header
             offset = 32 if is_64 else 28
             macho_info |= {
@@ -1212,7 +1216,7 @@ class BinaryAnalyzer:
                 if offset + 8 > len(data):
                     break
 
-                cmd, cmdsize = struct.unpack(endian + "II", data[offset : offset + 8])
+                cmd, cmdsize = struct.unpack(f"{endian}II", data[offset : offset + 8])
 
                 macho_info["load_commands"].append(
                     {
@@ -1451,7 +1455,7 @@ class BinaryAnalyzer:
                         )
 
                 except Exception as e:
-                    self.logger.debug(f"Arxan detection failed: {e}")
+                    self.logger.debug("Arxan detection failed: %s", e)
 
             return security_info
 

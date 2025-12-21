@@ -75,7 +75,7 @@ class ICPAnalysisThread(QThread):
                 self.result_ready.emit(result)
 
         except Exception as e:
-            logger.error(f"ICP analysis thread error: {e}")
+            logger.exception("ICP analysis thread error: %s", e)
             self.error_occurred.emit(str(e))
 
 
