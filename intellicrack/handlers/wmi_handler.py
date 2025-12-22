@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import warnings
+from typing import Any
 
 from intellicrack.utils.logger import logger
 

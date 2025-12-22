@@ -33,6 +33,7 @@ from typing import Any, Protocol, cast
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.resource_helper import get_resource_path
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 from ...handlers.matplotlib_handler import MATPLOTLIB_AVAILABLE, plt
 from ...handlers.pdfkit_handler import PDFKIT_AVAILABLE, pdfkit
@@ -1081,7 +1082,7 @@ class PDFReportGenerator:
                 else:
                     config = None
                 options = {
-                    "page-size": self.report_config.get("page_size", "letter").upper(),
+                    "page-size": validate_type(self.report_config.get("page_size", "letter"), str).upper(),
                     "margin-top": "0.75in",
                     "margin-right": "0.75in",
                     "margin-bottom": "0.75in",
@@ -1174,7 +1175,7 @@ class PDFReportGenerator:
             )
 
             styles = getSampleStyleSheet()
-            content = []
+            content: list[Any] = []
 
             text_content = re.sub(r"<style[^>]*>.*?</style>", "", html_content, flags=re.DOTALL | re.IGNORECASE)
             text_content = re.sub(r"<script[^>]*>.*?</script>", "", text_content, flags=re.DOTALL | re.IGNORECASE)
@@ -1295,16 +1296,16 @@ class PDFReportGenerator:
             if isinstance(analysis_results, dict):
                 for key, value in analysis_results.items():
                     if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in vuln_keywords):
-                        vuln_count = summary.get("vulnerabilities_found", 0)
-                        summary["vulnerabilities_found"] = cast("int", vuln_count) + 1
+                        vuln_count = get_typed_item(summary, "vulnerabilities_found", int, 0)
+                        summary["vulnerabilities_found"] = vuln_count + 1
 
             if isinstance(analysis_results, dict):
                 # Look for license checks
                 license_keywords = ["license", "activation", "serial", "key"]
                 for key, value in analysis_results.items():
                     if any(keyword in str(key).lower() or keyword in str(value).lower() for keyword in license_keywords):
-                        license_count = summary.get("license_checks", 0)
-                        summary["license_checks"] = cast("int", license_count) + 1
+                        license_count = get_typed_item(summary, "license_checks", int, 0)
+                        summary["license_checks"] = license_count + 1
 
         except Exception as e:
             logger.exception("Exception in pdf_generator: %s", e)
@@ -1338,7 +1339,7 @@ def run_report_generation(app: ApplicationInstance) -> None:
 
     # Ask for report type
     report_types = ["Comprehensive", "Vulnerability", "License"]
-    report_type, ok = QInputDialog.getItem(cast("QWidget | None", app), "Report Type", "Select report type:", report_types, 0, False)
+    report_type, ok = QInputDialog.getItem(validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None, "Report Type", "Select report type:", report_types, 0, False)
     if not ok:
         app.update_output.emit("[Report] Cancelled")
         return
@@ -1346,7 +1347,7 @@ def run_report_generation(app: ApplicationInstance) -> None:
     # Ask for report format
     report_formats = ["PDF", "HTML"]
     report_format, ok = QInputDialog.getItem(
-        cast("QWidget | None", app), "Report Format", "Select report format:", report_formats, 0, False
+        validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None, "Report Format", "Select report format:", report_formats, 0, False
     )
     if not ok:
         app.update_output.emit("[Report] Cancelled")
@@ -1433,7 +1434,7 @@ def run_report_generation(app: ApplicationInstance) -> None:
         # Ask if user wants to open the report
         open_report = (
             QMessageBox.question(
-                cast("QWidget | None", app),
+                validate_type(app, QWidget) if hasattr(app, "isWidgetType") else None,
                 "Open Report",
                 f"Report generated successfully. Open {report_format} report?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,

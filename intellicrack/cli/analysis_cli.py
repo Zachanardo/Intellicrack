@@ -272,7 +272,7 @@ class AnalysisCLI:
             "ShellExecute",
         ]
 
-        found = []
+        found: list[str] = []
         for funcs in imports.values():
             found.extend(func for func in funcs if func in suspicious_apis)
         return found

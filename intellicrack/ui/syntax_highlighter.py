@@ -40,7 +40,7 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         """
         super().__init__(document)
         self.language = language.lower()
-        self.rules: list[tuple[re.Pattern, QTextCharFormat]] = []
+        self.rules: list[tuple[re.Pattern[str], QTextCharFormat]] = []
         self._setup_rules()
 
     def _setup_rules(self) -> None:
@@ -674,20 +674,23 @@ class SyntaxHighlighter(QSyntaxHighlighter):
         self.rules.append((re.compile(r"#[^\n]*"), comment_format))
         self.rules.append((re.compile(r"/\*.*?\*/", re.DOTALL), comment_format))
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str | None) -> None:
         """Apply syntax highlighting to a block of text.
 
         Args:
-            text: Text block to highlight
+            text: The text block to highlight
 
         """
-        for pattern, text_format in self.rules:
+        if text is None:
+            return
+
+        for pattern, fmt in self.rules:
             expression = pattern
             match = expression.search(text)
             while match:
                 start = match.start()
                 length = match.end() - match.start()
-                self.setFormat(start, length, text_format)
+                self.setFormat(start, length, fmt)
                 match = expression.search(text, match.end())
 
     def set_language(self, language: str) -> None:

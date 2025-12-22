@@ -1118,12 +1118,13 @@ class IntellicrackApp(QMainWindow):
 
     def restore_window_state(self) -> None:
         """Restore window state from configuration."""
-                try:
-                    from ..core.config_manager import get_config
-        
-                    config = get_config()
-                    config_dict = validate_type(config, dict)
-                    ui_config = config_dict.get("ui", {})            if isinstance(ui_config, dict):
+        try:
+            from ..core.config_manager import get_config
+
+            config = get_config()
+            config_dict = validate_type(config, dict)
+            ui_config = config_dict.get("ui", {})
+            if isinstance(ui_config, dict):
                 geometry = ui_config.get("window_geometry")
                 if geometry is not None and isinstance(geometry, (list, tuple)) and len(geometry) >= 4:
                     self.setGeometry(int(geometry[0]), int(geometry[1]), int(geometry[2]), int(geometry[3]))

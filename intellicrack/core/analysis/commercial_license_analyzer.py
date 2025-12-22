@@ -166,18 +166,18 @@ class CommercialLicenseAnalyzer:
 
         if flexlm_detected := self._detect_flexlm():
             logger.debug("FlexLM detected: %s", flexlm_detected)
-            detected_systems.append("FlexLM")
-            bypass_strategies["flexlm"] = self._generate_flexlm_bypass()
+            detected_systems_list.append("FlexLM")
+            bypass_strategies_dict["flexlm"] = self._generate_flexlm_bypass()
 
         if hasp_detected := self._detect_hasp():
             logger.debug("HASP detected: %s", hasp_detected)
-            detected_systems.append("HASP")
-            bypass_strategies["hasp"] = self._generate_hasp_bypass()
+            detected_systems_list.append("HASP")
+            bypass_strategies_dict["hasp"] = self._generate_hasp_bypass()
 
         if codemeter_detected := self._detect_codemeter():
             logger.debug("CodeMeter detected: %s", codemeter_detected)
-            detected_systems.append("CodeMeter")
-            bypass_strategies["codemeter"] = self._generate_codemeter_bypass()
+            detected_systems_list.append("CodeMeter")
+            bypass_strategies_dict["codemeter"] = self._generate_codemeter_bypass()
 
         # Analyze network protocols
         protocol_analysis = self._analyze_network_protocols()
@@ -186,6 +186,8 @@ class CommercialLicenseAnalyzer:
 
         # Calculate confidence
         results["confidence"] = self._calculate_confidence(results)
+        self.detected_systems = detected_systems_list
+        self.bypass_strategies = bypass_strategies_dict
 
         return results
 

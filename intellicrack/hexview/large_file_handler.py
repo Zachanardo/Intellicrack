@@ -262,7 +262,7 @@ class MemoryMonitor:
         """Run main monitoring loop."""
         while self.monitoring:
             try:
-                if PSUTIL_AVAILABLE:
+                if PSUTIL_AVAILABLE and psutil is not None:
                     # Get current memory usage
                     process = psutil.Process()
                     memory_info = process.memory_info()

@@ -147,7 +147,7 @@ def create_list_widget(
         list_widget.itemClicked.connect(item_clicked_callback)
 
     if context_menu_callback:
-        list_widget.setContextMenuPolicy(Qt.CustomContextMenu)
+        list_widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         list_widget.customContextMenuRequested.connect(context_menu_callback)
 
     return list_widget

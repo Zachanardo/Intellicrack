@@ -73,4 +73,4 @@ def validate_type(value: Any, expected_type: type[T], name: str = "value") -> T:
     """
     if not isinstance(value, expected_type):
         raise TypeError(f"Expected '{name}' to be {expected_type.__name__}, got {type(value).__name__}")
-    return cast(expected_type, value)
+    return value

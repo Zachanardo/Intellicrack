@@ -301,14 +301,12 @@ class FridaProtectionBypasser:
                         detections.append(info)
                         log_security(
                             f"Anti-debug detected: {method_val}",
-                            category=MessageCategory.SECURITY,
                             context={"payload": payload},
                         )
             except (KeyError, TypeError, ValueError) as e:
                 log_error(
                     "Error processing anti-debug detection message",
-                    category=MessageCategory.SECURITY,
-                    details={"error": str(e), "message": message},
+                    context={"error": str(e), "message": message},
                     exception=e,
                 )
 
@@ -487,14 +485,12 @@ class FridaProtectionBypasser:
                         detections.append(info)
                         log_security(
                             f"Certificate pinning detected: {payload.get('method', 'Unknown')}",
-                            category=MessageCategory.SECURITY,
                             context={"payload": payload},
                         )
             except (KeyError, TypeError, ValueError) as e:
                 log_error(
                     "Error processing cert pinning detection message",
-                    category=MessageCategory.SECURITY,
-                    details={"error": str(e), "message": message},
+                    context={"error": str(e), "message": message},
                     exception=e,
                 )
 
@@ -692,14 +688,12 @@ class FridaProtectionBypasser:
                         detections.append(info)
                         log_security(
                             f"Integrity check detected: {payload.get('method', 'Unknown')}",
-                            category=MessageCategory.SECURITY,
                             context={"payload": payload},
                         )
             except (KeyError, TypeError, ValueError) as e:
                 log_error(
                     "Error processing integrity check detection message",
-                    category=MessageCategory.SECURITY,
-                    details={"error": str(e), "message": message},
+                    context={"error": str(e), "message": message},
                     exception=e,
                 )
 
@@ -923,14 +917,12 @@ class FridaProtectionBypasser:
                         detections.append(info)
                         log_security(
                             f"VM detection detected: {payload.get('method', 'Unknown')}",
-                            category=MessageCategory.SECURITY,
                             context={"payload": payload},
                         )
             except (KeyError, TypeError, ValueError) as e:
                 log_error(
                     "Error processing VM detection message",
-                    category=MessageCategory.SECURITY,
-                    details={"error": str(e), "message": message},
+                    context={"error": str(e), "message": message},
                     exception=e,
                 )
 
@@ -1000,14 +992,12 @@ class FridaProtectionBypasser:
                                 header_data = bytes(data_arr)
                                 log_analysis(
                                     "Received module header data",
-                                    category=MessageCategory.ANALYSIS,
                                     context={"data_length": len(header_data)},
                                 )
                 except (KeyError, TypeError, ValueError) as e:
                     log_error(
                         "Error processing header data message",
-                        category=MessageCategory.ANALYSIS,
-                        details={"error": str(e), "message": message},
+                        context={"error": str(e), "message": message},
                         exception=e,
                     )
 
@@ -1159,14 +1149,12 @@ class FridaProtectionBypasser:
                             detections.append(info)
                             log_security(
                                 f"Packer heuristic detected: {payload.get('method', 'Heuristic')}",
-                                category=MessageCategory.SECURITY,
                                 context={"payload": payload},
                             )
                 except (KeyError, TypeError, ValueError) as e:
                     log_error(
                         "Error processing packer heuristic message",
-                        category=MessageCategory.SECURITY,
-                        details={"error": str(e), "message": message},
+                        context={"error": str(e), "message": message},
                         exception=e,
                     )
 
@@ -1582,7 +1570,6 @@ class FridaProtectionBypasser:
                         payload = message.get("payload")
                         log_analysis(
                             f"Bypass result: {payload}",
-                            category=MessageCategory.ANALYSIS,
                             context={"payload": payload},
                         )
                         logger.info("Bypass result: %s", payload)
@@ -1590,15 +1577,13 @@ class FridaProtectionBypasser:
                         error_msg = f"Bypass error: {message}"
                         log_error(
                             error_msg,
-                            category=MessageCategory.ANALYSIS,
-                            details={"message": message},
+                            context={"message": message},
                         )
                         logger.error("Bypass error: %s", message)
                 except (KeyError, TypeError, ValueError) as e:
                     log_error(
                         "Error processing bypass message",
-                        category=MessageCategory.ANALYSIS,
-                        details={"error": str(e), "message": message},
+                        context={"error": str(e), "message": message},
                         exception=e,
                     )
 

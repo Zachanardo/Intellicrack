@@ -23,6 +23,7 @@ import logging
 import os
 from typing import Any, Protocol, cast
 
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QComboBox,
@@ -161,7 +162,7 @@ class R2AnalysisWorker(QThread):
                 else:
                     result = f"Unknown analysis component: {name}"
 
-                components = cast(dict[str, Any], results["components"])
+                components = validate_type(results["components"], dict)
                 components[name] = result
 
                 # Update progress
@@ -170,7 +171,7 @@ class R2AnalysisWorker(QThread):
 
             except Exception as e:
                 self.logger.warning("Component %s failed: %s", name, e)
-                components = cast(dict[str, Any], results["components"])
+                components = validate_type(results["components"], dict)
                 components[name] = {"error": str(e)}
 
         return results
@@ -864,7 +865,7 @@ def integrate_with_main_app(main_app: _MainAppProtocol) -> bool:
     try:
         if hasattr(main_app, "tab_widget") and hasattr(main_app.tab_widget, "addTab"):
             r2_widget = R2IntegrationWidget(None)
-            cast(Any, main_app.tab_widget).addTab(r2_widget, "Radare2 Analysis")
+            validate_type(main_app.tab_widget, QTabWidget).addTab(r2_widget, "Radare2 Analysis")
 
             if hasattr(main_app, "binary_path") and main_app.binary_path is not None:
                 r2_widget.set_binary_path(main_app.binary_path)

@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, cast
 
 from intellicrack.handlers.numpy_handler import numpy as np
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 from ..utils.logger import get_logger
 
@@ -355,8 +356,8 @@ class ModelFormatConverter:
 
                 config = AutoConfig.from_pretrained(str(source_path))
 
-                batch_size_val = cast("int", kwargs.get("batch_size", 1))
-                sequence_length_val = cast("int", kwargs.get("sequence_length", 128))
+                batch_size_val = get_typed_item(kwargs, "batch_size", int, 1)
+                sequence_length_val = get_typed_item(kwargs, "sequence_length", int, 128)
 
                 sample_input = torch.randint(
                     0,
@@ -378,7 +379,7 @@ class ModelFormatConverter:
                     logger.exception("input_shape required for standalone PyTorch models")
                     return None
 
-                input_shape_tuple = cast("tuple[int, ...]", input_shape_val)
+                input_shape_tuple = validate_type(input_shape_val, tuple, "input_shape")
                 sample_input = torch.randn(*input_shape_tuple)
 
             model.eval()  # type: ignore[no-untyped-call]
@@ -401,11 +402,11 @@ class ModelFormatConverter:
             if not isinstance(dynamic_axes_val, dict):
                 dynamic_axes_val = dynamic_axes_default
 
-            opset_version_val = cast("int", kwargs.get("opset_version", 14))
-            do_constant_folding_val = cast("bool", kwargs.get("do_constant_folding", True))
-            input_names_val = cast("list[str]", kwargs.get("input_names", ["input_ids"]))
-            output_names_val = cast("list[str]", kwargs.get("output_names", ["output"]))
-            verbose_val = cast("bool", kwargs.get("verbose", False))
+            opset_version_val = get_typed_item(kwargs, "opset_version", int, 14)
+            do_constant_folding_val = get_typed_item(kwargs, "do_constant_folding", bool, True)
+            input_names_val = get_typed_item(kwargs, "input_names", list, ["input_ids"])
+            output_names_val = get_typed_item(kwargs, "output_names", list, ["output"])
+            verbose_val = get_typed_item(kwargs, "verbose", bool, False)
 
             torch.onnx.export(
                 model,
@@ -967,27 +968,27 @@ class ModelFormatConverter:
         if isinstance(output_path_val, Path):
             output_path_obj = output_path_val
         else:
-            output_path_obj = Path(cast("str", output_path_val))
+            output_path_obj = Path(validate_type(output_path_val, str, "output_path"))
 
         try:
             if target_format == "onnx" and HAS_ONNX and HAS_TORCH and torch is not None and AutoConfig is not None:
                 model.eval()
 
                 config = AutoConfig.from_pretrained(str(source_path))
-                batch_size_val = cast("int", kwargs.get("batch_size", 1))
-                seq_length_val = cast("int", kwargs.get("sequence_length", 128))
+                batch_size_val = get_typed_item(kwargs, "batch_size", int, 1)
+                seq_length_val = get_typed_item(kwargs, "sequence_length", int, 128)
 
                 sample_input: Any = None
                 if hasattr(config, "vocab_size"):
                     sample_input = torch.randint(0, config.vocab_size, (batch_size_val, seq_length_val))
                 else:
                     input_shape_val = kwargs.get("input_shape", (batch_size_val, 3, 224, 224))
-                    input_shape_tuple = cast("tuple[int, ...]", input_shape_val)
+                    input_shape_tuple = validate_type(input_shape_val, tuple, "input_shape")
                     sample_input = torch.randn(*input_shape_tuple)
 
-                opset_version_val = cast("int", kwargs.get("opset_version", 14))
-                input_names_val = cast("list[str]", kwargs.get("input_names", ["input"]))
-                output_names_val = cast("list[str]", kwargs.get("output_names", ["output"]))
+                opset_version_val = get_typed_item(kwargs, "opset_version", int, 14)
+                input_names_val = get_typed_item(kwargs, "input_names", list, ["input"])
+                output_names_val = get_typed_item(kwargs, "output_names", list, ["output"])
                 dynamic_axes_default: dict[str, dict[int, str]] = {"input": {0: "batch_size"}, "output": {0: "batch_size"}}
                 dynamic_axes_val = kwargs.get("dynamic_axes", dynamic_axes_default)
                 if not isinstance(dynamic_axes_val, dict):

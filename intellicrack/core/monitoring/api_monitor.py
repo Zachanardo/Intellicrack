@@ -8,8 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import time
-from collections.abc import Callable
-from typing import Any
+from typing import Any, cast
 
 import frida
 
@@ -72,7 +71,7 @@ class APIMonitor(BaseMonitor):
                 print(f"[APIMonitor] Error detaching session: {e}")
             self.session = None
 
-    def _on_frida_message(self, message: dict[str, Any], data: bytes | None) -> None:
+    def _on_frida_message(self, message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None) -> None:
         """Handle messages from Frida script.
 
         Args:
@@ -80,8 +79,9 @@ class APIMonitor(BaseMonitor):
             data: Additional data payload.
 
         """
-        if message.get("type") == "send":
-            payload = message.get("payload", {})
+        message_dict = cast(dict[str, Any], message)
+        if message_dict.get("type") == "send":
+            payload = cast(dict[str, Any], message_dict.get("payload", {}))
             event_type = payload.get("event_type")
 
             if event_type == "api_call":

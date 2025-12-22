@@ -787,7 +787,7 @@ class R2SessionPoolAdapter:
             result = self.session_wrapper.execute(cmd, expect_json)
             if result is None:
                 return {} if expect_json else ""
-            return cast(str | dict[str, Any] | list[Any], result)
+            return result
         except Exception as e:
             self.logger.error(f"Command failed: {cmd}, Error: {e}")
             error_handler.handle_error(

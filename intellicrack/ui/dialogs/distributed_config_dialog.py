@@ -19,7 +19,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import multiprocessing
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -60,7 +60,11 @@ class DistributedProcessingConfigDialog(BaseDialog):
         """
         super().__init__(parent, "Distributed Processing Configuration")
         self.binary_path = binary_path
-        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
+        layout = self.content_widget.layout()
+        if isinstance(layout, QVBoxLayout):
+            self.setup_content(layout)
+        else:
+            self.setup_content(QVBoxLayout(self.content_widget))
 
     def setup_content(self, layout: QVBoxLayout) -> None:
         """Set up the dialog user interface.

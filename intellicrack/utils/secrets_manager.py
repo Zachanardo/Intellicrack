@@ -37,9 +37,9 @@ try:
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
     HAS_CRYPTOGRAPHY = False
-    Fernet = None  # type: ignore[assignment,misc]
-    PBKDF2HMAC = None  # type: ignore[assignment,misc]
-    hashes = None  # type: ignore[assignment,misc]
+    Fernet: Any = None
+    PBKDF2HMAC: Any = None
+    hashes: Any = None
 
 try:
     import keyring as keyring_module

@@ -30,6 +30,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import validate_type
+
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +183,7 @@ class MigrationBackup:
         """
         try:
             with open(backup_file) as f:
-                config_data = cast(dict[str, Any], json.load(f))
+                config_data = validate_type(json.load(f), dict)
             logger.info("Restored configuration from: %s", backup_file)
             return config_data
         except Exception as e:

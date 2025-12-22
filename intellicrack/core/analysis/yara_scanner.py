@@ -21,16 +21,64 @@ from __future__ import annotations
 import json
 import logging
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, ClassVar, cast
+from typing import TYPE_CHECKING, Any, ClassVar, Protocol, cast
 
 import yara
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from intellicrack.core.debugging_engine import LicenseDebugger
+    from intellicrack.core.process_manipulation import LicenseAnalyzer
+
+
+class LicenseAnalyzerProtocol(Protocol):
+    """Protocol for advanced process analysis helpers."""
+
+    process_handle: int | None
+
+    def enumerate_memory_regions(self) -> list[dict[str, Any]]:
+        ...
+
+    def read_process_memory(self, address: int, size: int) -> bytes | None:
+        ...
+
+    def enumerate_modules(self) -> list[dict[str, Any]]:
+        ...
+
+
+class DebuggerProtocol(Protocol):
+    """Protocol for debugger integrations."""
+
+    thread_handles: dict[int, Any]
+
+    def set_hardware_breakpoint(
+        self,
+        address: int,
+        dr_index: int = -1,
+        access_type: str = "execute",
+        size: int = 1,
+        callback: Callable[..., Any] | None = None,
+        *,
+        apply_to_all_threads: bool = True,
+    ) -> bool:
+        ...
+
+    def set_breakpoint(
+        self,
+        address: int,
+        callback: Callable[..., Any] | None = None,
+        description: str = "",
+        condition: str | None = None,
+    ) -> bool:
+        ...
+
+    def trace_thread_execution(self, thread_id: int, max_instructions: int = 1000) -> list[dict[str, Any]]:
+        ...
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +222,8 @@ class YaraScanner:
             "matches": 0,
             "current_region": None,
         }
+        self.debugger: DebuggerProtocol | None = None
+        self.breakpoint_mapping: dict[int, dict[str, Any]] = {}
 
         # Initialize rule categories
         self._rule_categories: dict[str, RuleCategory] = {}
@@ -1641,7 +1691,7 @@ rule Delphi_Compiler {
 
     def scan_process_with_analyzer(
         self,
-        license_analyzer: object,
+        license_analyzer: LicenseAnalyzerProtocol,
         categories: list[RuleCategory] | None = None,
         scan_dlls: bool = True,
         scan_heap: bool = True,
@@ -1672,10 +1722,7 @@ rule Delphi_Compiler {
 
         try:
             # Enumerate memory regions using LicenseAnalyzer
-            if not hasattr(license_analyzer, "enumerate_memory_regions"):
-                logger.exception("LicenseAnalyzer missing enumerate_memory_regions method")
-                return []
-            memory_regions = cast("Any", license_analyzer).enumerate_memory_regions()
+            memory_regions = license_analyzer.enumerate_memory_regions()
             total_regions = len(memory_regions)
 
             if progress_callback:
@@ -1712,9 +1759,7 @@ rule Delphi_Compiler {
             for region in filtered_regions:
                 try:
                     # Read memory region using LicenseAnalyzer
-                    if not hasattr(license_analyzer, "read_process_memory"):
-                        continue
-                    memory_data = cast("Any", license_analyzer).read_process_memory(region["base_address"], region["size"])
+                    memory_data = license_analyzer.read_process_memory(region["base_address"], region["size"])
                     if not memory_data:
                         continue
 
@@ -1778,9 +1823,7 @@ rule Delphi_Compiler {
             for rule_name, rules in self.custom_rules.items():
                 for region in filtered_regions:
                     try:
-                        if not hasattr(license_analyzer, "read_process_memory"):
-                            continue
-                        memory_data = cast("Any", license_analyzer).read_process_memory(region["base_address"], region["size"])
+                        memory_data = license_analyzer.read_process_memory(region["base_address"], region["size"])
                         if not memory_data:
                             continue
 
@@ -1811,7 +1854,7 @@ rule Delphi_Compiler {
             logger.exception("Process scanning error")
             return matches
 
-    def _is_dll_region(self, license_analyzer: object, region: dict[str, Any]) -> bool:
+    def _is_dll_region(self, license_analyzer: LicenseAnalyzerProtocol, region: dict[str, Any]) -> bool:
         """Check if memory region belongs to a DLL."""
         try:
             # Check if region has IMAGE characteristics
@@ -1830,7 +1873,7 @@ rule Delphi_Compiler {
 
         return False
 
-    def _is_heap_region(self, _license_analyzer: object, region: dict[str, Any]) -> bool:
+    def _is_heap_region(self, _license_analyzer: LicenseAnalyzerProtocol, region: dict[str, Any]) -> bool:
         """Check if memory region belongs to heap."""
         try:
             # Check for typical heap characteristics
@@ -3200,7 +3243,7 @@ extern "C" {{
             "statistics": self.patch_statistics,
         }
 
-    def connect_to_debugger(self, debugger_instance: object) -> None:
+    def connect_to_debugger(self, debugger_instance: DebuggerProtocol) -> None:
         """Connect YaraScanner to a debugger instance for breakpoint integration.
 
         Args:
@@ -3208,7 +3251,7 @@ extern "C" {{
 
         """
         self.debugger = debugger_instance
-        self.breakpoint_mapping: dict[int, dict[str, Any]] = {}
+        self.breakpoint_mapping = {}
         logger.info("Connected to debugger for breakpoint integration")
 
     def set_breakpoints_from_matches(
@@ -3228,7 +3271,8 @@ extern "C" {{
             List of created breakpoints
 
         """
-        if not hasattr(self, "debugger") or not self.debugger:
+        debugger = self.debugger
+        if debugger is None:
             logger.exception("No debugger connected. Use connect_to_debugger() first")
             return []
 
@@ -3262,14 +3306,19 @@ extern "C" {{
             try:
                 if bp_type == "hardware":
                     # Use hardware breakpoint for critical matches
-                    if not hasattr(self.debugger, "set_hardware_breakpoint"):
-                        continue
-                    bp_id = cast("Any", self.debugger).set_hardware_breakpoint(match.offset, condition=condition or "exec", size=1)
+                    bp_id = debugger.set_hardware_breakpoint(
+                        match.offset,
+                        access_type="execute",
+                        size=1,
+                    )
                 else:
                     # Use software breakpoint
-                    if not hasattr(self.debugger, "set_breakpoint"):
-                        continue
-                    bp_id = cast("Any", self.debugger).set_breakpoint(match.offset)
+                    description: str = cast(str, bp_data["description"])
+                    bp_id = debugger.set_breakpoint(
+                        match.offset,
+                        description=description,
+                        condition=condition,
+                    )
 
                 if bp_id:
                     bp_data["id"] = bp_id
@@ -3403,21 +3452,21 @@ extern "C" {{
             trace_depth: Number of instructions to trace
 
         """
-        if not hasattr(self, "debugger") or not self.debugger:
+        debugger = self.debugger
+        if debugger is None:
             logger.exception("No debugger connected")
             return
 
         for match in matches:
             try:
-                # Set trace point
-                if not hasattr(self.debugger, "trace_thread_execution"):
-                    continue
-                cast("Any", self.debugger).trace_thread_execution(
-                    start_address=match.offset,
-                    num_instructions=trace_depth,
-                    log_registers=True,
-                    log_memory_access=True,
-                )
+                thread_id = next(iter(debugger.thread_handles), None)
+                if thread_id is None:
+                    logger.exception("Debugger has no active thread handles for tracing")
+                    return
+
+                trace_log = debugger.trace_thread_execution(thread_id, max_instructions=trace_depth)
+                if trace_log:
+                    self._execution_log.extend(trace_log)
 
                 logger.info("Enabled tracing at 0x%X for %s", match.offset, match.rule_name)
 

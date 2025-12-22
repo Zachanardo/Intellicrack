@@ -11,6 +11,7 @@ import ctypes
 import ctypes.wintypes
 import threading
 import time
+from typing import Any
 
 from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
 

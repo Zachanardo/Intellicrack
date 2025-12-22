@@ -16,10 +16,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, cast
 
-from ...utils.logger import get_logger
-
-
-logger = get_logger(__name__)
+from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import validate_type
 
 try:
     import yara
@@ -920,7 +918,7 @@ rule Basic_PE_Detection
     def _determine_category(self, match: Any) -> PatternCategory:
         """Determine pattern category from YARA match."""
         # Check rule name first
-        rule_name: str = cast(str, match.rule).lower()
+        rule_name: str = validate_type(match.rule, str).lower()
 
         if any(keyword in rule_name for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]):
             return PatternCategory.PROTECTION

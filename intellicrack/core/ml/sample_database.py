@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 from intellicrack.core.ml.feature_extraction import BinaryFeatureExtractor
 
@@ -222,7 +223,7 @@ class SampleDatabase:
         self,
         min_confidence: float = 0.5,
         verified_only: bool = False,
-    ) -> tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[npt.NDArray[np.float32], npt.NDArray[Any]]:
         """Extract feature vectors and labels for training.
 
         Args:

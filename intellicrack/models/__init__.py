@@ -18,9 +18,14 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 from ..utils.severity_levels import SeverityLevel, VulnerabilityLevel
 from .model_manager import ModelManager
+
+if TYPE_CHECKING:
+    from .protection_knowledge_base import ProtectionKnowledgeBase
 
 
 """
@@ -36,8 +41,11 @@ logger = logging.getLogger(__name__)
 # Import model manager for compatibility
 
 # Import protection knowledge base
+get_protection_knowledge_base: Callable[[], ProtectionKnowledgeBase] | None
 try:
-    from .protection_knowledge_base import get_protection_knowledge_base
+    from .protection_knowledge_base import get_protection_knowledge_base as _get_protection_knowledge_base
+
+    get_protection_knowledge_base = _get_protection_knowledge_base
 except ImportError:
     logger.exception("Import error in __init__")
     get_protection_knowledge_base = None

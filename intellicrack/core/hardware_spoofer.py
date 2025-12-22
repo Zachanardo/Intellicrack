@@ -10,11 +10,12 @@ import struct
 import subprocess
 import uuid
 import winreg
-from ctypes import c_void_p
+from ctypes import POINTER, c_void_p
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar, TypeAlias, cast
 
+from intellicrack.utils.type_safety import validate_type
 import netifaces
 
 from intellicrack.handlers.wmi_handler import wmi
@@ -927,11 +928,11 @@ class HardwareFingerPrintSpoofer:
         services = c_void_p()
         namespace_bstr = oleaut32.SysAllocString(WMI_NAMESPACE)
 
-        vtable_ptr = cast(locator, POINTER(c_void_p))
+        vtable_ptr = validate_type(locator, POINTER(c_void_p))
         vtable = vtable_ptr.contents
         if vtable.value is None:
             return False
-        connect_server_ptr = cast(vtable.value + 3 * sizeof(c_void_p), POINTER(c_void_p))
+        connect_server_ptr = validate_type(vtable.value + 3 * sizeof(c_void_p), POINTER(c_void_p))
         connect_server = connect_server_ptr.contents
 
         ConnectServerFunc = ctypes.WINFUNCTYPE(
@@ -957,11 +958,11 @@ class HardwareFingerPrintSpoofer:
         if hr != 0 or not services:
             return False
 
-        services_vtable_ptr = cast(services, POINTER(c_void_p))
+        services_vtable_ptr = validate_type(services, POINTER(c_void_p))
         services_vtable = services_vtable_ptr.contents
         if services_vtable.value is None:
             return False
-        exec_query_ptr = cast(services_vtable.value + IWBEMSERVICES_EXECQUERY * sizeof(c_void_p), POINTER(c_void_p))
+        exec_query_ptr = validate_type(services_vtable.value + IWBEMSERVICES_EXECQUERY * sizeof(c_void_p), POINTER(c_void_p))
 
         self.original_exec_query = exec_query_ptr.contents.value
 
@@ -988,7 +989,7 @@ class HardwareFingerPrintSpoofer:
 
             """
             if strQuery:
-                query_ptr = cast(strQuery, POINTER(ctypes.c_wchar))
+                query_ptr = validate_type(strQuery, POINTER(ctypes.c_wchar))
                 query = ctypes.wstring_at(query_ptr)
 
                 hardware_queries = [
@@ -1024,7 +1025,7 @@ class HardwareFingerPrintSpoofer:
             0x40,
             byref(old_protect),
         ):
-            exec_query_ptr.contents = cast(self.exec_query_hook, c_void_p)
+            exec_query_ptr.contents = validate_type(self.exec_query_hook, c_void_p)
             kernel32.VirtualProtect(exec_query_ptr, sizeof(c_void_p), old_protect, byref(old_protect))
 
         return True
@@ -1157,7 +1158,7 @@ class HardwareFingerPrintSpoofer:
             enumerator_instance.lpVtbl = pointer(vtable)
 
             if ppEnum:
-                ppEnum.contents = cast(pointer(enumerator_instance), c_void_p)
+                ppEnum.contents = validate_type(pointer(enumerator_instance), c_void_p)
 
             return S_OK
 
@@ -1327,8 +1328,8 @@ class HardwareFingerPrintSpoofer:
                 ],
             )
 
-            func_addr = cast(target_func, c_void_p).value
-            hook_addr = cast(hook_func, c_void_p).value
+            func_addr = validate_type(target_func, c_void_p).value
+            hook_addr = validate_type(hook_func, c_void_p).value
 
             if func_addr is None or hook_addr is None:
                 return False
@@ -1496,14 +1497,14 @@ class HardwareFingerPrintSpoofer:
                     0x00,
                 ],
             )
-            original_addr = cast(self.original_RegQueryValueExW, c_void_p).value
+            original_addr = validate_type(self.original_RegQueryValueExW, c_void_p).value
             if original_addr is not None:
                 jump_addr = original_addr + trampoline_size
                 jump_back.extend(struct.pack("<Q", jump_addr))
 
                 ctypes.memmove(trampoline + trampoline_size, bytes(jump_back), len(jump_back))
 
-                self.original_RegQueryValueExW_trampoline = cast(trampoline, RegQueryValueExW_func)
+                self.original_RegQueryValueExW_trampoline = validate_type(trampoline, RegQueryValueExW_func)
 
                 success = create_inline_hook(self.original_RegQueryValueExW, self.RegQueryValueExW_hook)
 
@@ -1561,7 +1562,7 @@ class HardwareFingerPrintSpoofer:
                 ],
             )
 
-            hook_addr = cast(hook_func, c_void_p).value
+            hook_addr = validate_type(hook_func, c_void_p).value
             if hook_addr is None:
                 return False
 
@@ -1628,9 +1629,9 @@ class HardwareFingerPrintSpoofer:
             self.original_GetSystemInfo(lpSystemInfo)
 
             if self.spoofed_hardware and lpSystemInfo:
-                lpSystemInfo_value = cast(lpSystemInfo, c_void_p).value
+                lpSystemInfo_value = validate_type(lpSystemInfo, c_void_p).value
                 if lpSystemInfo_value is not None:
-                    processor_count_ptr = cast(lpSystemInfo_value + 32, POINTER(wintypes.DWORD))
+                    processor_count_ptr = validate_type(lpSystemInfo_value + 32, POINTER(wintypes.DWORD))
                     proc_count_val = ctypes.c_ulong(8)
                     ctypes.memmove(processor_count_ptr, byref(proc_count_val), ctypes.sizeof(ctypes.c_ulong))
 
@@ -1647,9 +1648,9 @@ class HardwareFingerPrintSpoofer:
             result: int = self.original_GlobalMemoryStatusEx(lpBuffer)
 
             if result and lpBuffer and self.spoofed_hardware:
-                lpBuffer_value = cast(lpBuffer, c_void_p).value
+                lpBuffer_value = validate_type(lpBuffer, c_void_p).value
                 if lpBuffer_value is not None:
-                    total_phys_ptr = cast(lpBuffer_value + 8, POINTER(ctypes.c_ulonglong))
+                    total_phys_ptr = validate_type(lpBuffer_value + 8, POINTER(ctypes.c_ulonglong))
                     phys_mem_val = ctypes.c_ulonglong(32 * 1024 * 1024 * 1024)
                     ctypes.memmove(total_phys_ptr, byref(phys_mem_val), ctypes.sizeof(ctypes.c_ulonglong))
 
@@ -1710,10 +1711,10 @@ class HardwareFingerPrintSpoofer:
         self.GlobalMemoryStatusEx_hook = GlobalMemoryStatusEx_func(hooked_GlobalMemoryStatusEx)
         self.GetComputerNameExW_hook = GetComputerNameExW_func(hooked_GetComputerNameExW)
 
-        original_vol_addr = cast(self.original_GetVolumeInformation, c_void_p).value
-        original_sys_addr = cast(self.original_GetSystemInfo, c_void_p).value
-        original_mem_addr = cast(self.original_GlobalMemoryStatusEx, c_void_p).value
-        original_name_addr = cast(self.original_GetComputerNameExW, c_void_p).value
+        original_vol_addr = validate_type(self.original_GetVolumeInformation, c_void_p).value
+        original_sys_addr = validate_type(self.original_GetSystemInfo, c_void_p).value
+        original_mem_addr = validate_type(self.original_GlobalMemoryStatusEx, c_void_p).value
+        original_name_addr = validate_type(self.original_GetComputerNameExW, c_void_p).value
 
         if original_vol_addr is not None:
             install_inline_hook(original_vol_addr, self.GetVolumeInformationW_hook)
@@ -1883,13 +1884,13 @@ class HardwareFingerPrintSpoofer:
                 ],
             )
 
-            hook_addr = cast(hook_func, c_void_p).value
+            hook_addr = validate_type(hook_func, c_void_p).value
             if hook_addr is None:
                 return False
 
             struct.pack_into("<Q", jmp_code, 6, hook_addr)
 
-            func_addr = cast(target_func, c_void_p).value
+            func_addr = validate_type(target_func, c_void_p).value
             if func_addr is None:
                 return False
 
@@ -1975,7 +1976,9 @@ class HardwareFingerPrintSpoofer:
             ("LeaseExpires", ctypes.c_ulong),
         ]
 
-        def hooked_GetAdaptersInfo(pAdapterInfo: c_void_p, pOutBufLen: Any) -> int:
+        IpAdapterInfoPointer: TypeAlias = POINTER(IpAdapterInfo)
+
+        def hooked_GetAdaptersInfo(pAdapterInfo: IpAdapterInfoPointer | None, pOutBufLen: Any) -> int:
             """Intercept GetAdaptersInfo to return spoofed MAC addresses.
 
             Args:
@@ -1989,7 +1992,7 @@ class HardwareFingerPrintSpoofer:
             result: int = self.original_GetAdaptersInfo(pAdapterInfo, pOutBufLen)
 
             if result == 0 and pAdapterInfo and self.spoofed_hardware:
-                current: _Pointer[IpAdapterInfo] | None = cast(pAdapterInfo, POINTER(IpAdapterInfo))
+                current: IpAdapterInfoPointer | None = pAdapterInfo
                 adapter_idx = 0
 
                 while current:
@@ -2002,7 +2005,7 @@ class HardwareFingerPrintSpoofer:
                             current.contents.Address[i] = mac_bytes[i]
 
                     adapter_idx += 1
-                    current = current.contents.Next or None
+                    current = current.contents.Next if current.contents.Next else None
 
             return result
 
@@ -2029,21 +2032,22 @@ class HardwareFingerPrintSpoofer:
             result: int = self.original_GetAdaptersAddresses(Family, Flags, Reserved, pAdapterAddresses, pOutBufLen)
 
             if result == 0 and pAdapterAddresses and self.spoofed_hardware:
-                current_val = cast(pAdapterAddresses, c_void_p).value
+                current_val = validate_type(pAdapterAddresses, c_void_p).value
                 adapter_idx = 0
 
                 while current_val is not None and adapter_idx < len(self.spoofed_hardware.mac_addresses):
                     mac_str = self.spoofed_hardware.mac_addresses[adapter_idx]
                     mac_bytes = bytes.fromhex(mac_str)
 
-                    phys_addr_ptr = cast(current_val + 160, POINTER(ctypes.c_ubyte))
-                    phys_len_ptr = cast(current_val + 168, POINTER(wintypes.DWORD))
+                    phys_addr_ptr = validate_type(current_val + 160, POINTER(ctypes.c_ubyte))
+                    phys_len_ptr = validate_type(current_val + 168, POINTER(wintypes.DWORD))
 
-                    ctypes.memmove(phys_len_ptr, ctypes.c_ulong(len(mac_bytes)), ctypes.sizeof(ctypes.c_ulong))
+                    val_to_move = ctypes.c_ulong(len(mac_bytes))
+                    ctypes.memmove(phys_len_ptr, ctypes.byref(val_to_move), ctypes.sizeof(ctypes.c_ulong))
                     for i in range(len(mac_bytes)):
                         phys_addr_ptr[i] = mac_bytes[i]
 
-                    next_ptr = cast(current_val, POINTER(c_void_p))
+                    next_ptr = validate_type(current_val, POINTER(c_void_p))
                     current_val = next_ptr.contents.value
                     adapter_idx += 1
 
@@ -2079,13 +2083,13 @@ class HardwareFingerPrintSpoofer:
                 ],
             )
 
-            hook_addr = cast(hook_func, c_void_p).value
+            hook_addr = validate_type(hook_func, c_void_p).value
             if hook_addr is None:
                 return False
 
             struct.pack_into("<Q", jmp_code, 6, hook_addr)
 
-            func_addr = cast(target_func, c_void_p).value
+            func_addr = validate_type(target_func, c_void_p).value
             if func_addr is None:
                 return False
 

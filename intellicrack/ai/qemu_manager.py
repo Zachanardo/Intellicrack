@@ -36,7 +36,7 @@ from io import StringIO
 from pathlib import Path
 from typing import Any
 
-import paramiko  # type: ignore[import-untyped]
+import paramiko
 from paramiko import HostKeys, MissingHostKeyPolicy, RSAKey, SSHClient
 
 from intellicrack.core.logging.audit_logger import (

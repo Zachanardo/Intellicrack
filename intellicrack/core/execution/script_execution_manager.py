@@ -25,6 +25,7 @@ import subprocess
 from pathlib import Path
 from typing import Any, TYPE_CHECKING, cast
 
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, QWidget, pyqtSignal
 
 if TYPE_CHECKING:
@@ -214,7 +215,7 @@ class ScriptExecutionManager(QObject):
             logger.warning("QEMUTestDialog not available, defaulting to host execution")
             return "run_host"
 
-        parent_widget = cast(QWidget | None, self.parent())
+        parent_widget = validate_type(self.parent(), QWidget) if self.parent() is not None else None
         dialog = self.QEMUTestDialog(
             script_type=script_type,
             target_binary=target_binary,
@@ -290,7 +291,7 @@ class ScriptExecutionManager(QObject):
     def _show_qemu_results_and_confirm(self, qemu_results: dict[str, Any]) -> bool:
         """Show QEMU test results and ask for confirmation to proceed."""
         if not self.QEMUTestResultsDialog:
-            parent_widget = cast(QWidget | None, self.parent())
+            parent_widget = validate_type(self.parent(), QWidget) if self.parent() is not None else None
             msg = QMessageBox(parent_widget)
             msg.setWindowTitle("QEMU Test Results")
             msg.setText("QEMU test completed successfully.\nProceed with host execution?")
@@ -298,7 +299,7 @@ class ScriptExecutionManager(QObject):
             result = msg.exec()
             return result == int(QMessageBox.StandardButton.Yes)
 
-        parent_widget = cast(QWidget | None, self.parent())
+        parent_widget = validate_type(self.parent(), QWidget) if self.parent() is not None else None
         dialog = self.QEMUTestResultsDialog(  # type: ignore[call-arg]
             test_results=qemu_results,
             parent=parent_widget,

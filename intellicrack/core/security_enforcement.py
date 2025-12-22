@@ -30,6 +30,7 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, Any, cast
 
+from intellicrack.utils.type_safety import validate_type
 from ..utils.logger import log_all_methods, log_function_call
 
 
@@ -226,7 +227,7 @@ def _secure_subprocess_run(*args: Any, **kwargs: Any) -> subprocess.CompletedPro
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for subprocess.run.")
-        return cast("subprocess.CompletedProcess[Any]", sec._original_functions["subprocess.run"](*args, **kwargs))
+        return validate_type(sec._original_functions["subprocess.run"](*args, **kwargs), subprocess.CompletedProcess)
 
     shell = kwargs.get("shell", False)
     if shell and not sec.security_config.get("subprocess", {}).get("allow_shell_true", False):
@@ -248,7 +249,7 @@ def _secure_subprocess_run(*args: Any, **kwargs: Any) -> subprocess.CompletedPro
         if whitelist:
             logger.debug("Command '%s' is in shell whitelist.", cmd_str)
 
-    return cast("subprocess.CompletedProcess[Any]", sec._original_functions["subprocess.run"](*args, **kwargs))
+    return validate_type(sec._original_functions["subprocess.run"](*args, **kwargs), subprocess.CompletedProcess)
 
 
 @log_function_call
@@ -273,7 +274,7 @@ def _secure_subprocess_popen(*args: Any, **kwargs: Any) -> subprocess.Popen[Any]
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for subprocess.Popen.")
-        return cast("subprocess.Popen[Any]", sec._original_functions["subprocess.Popen"](*args, **kwargs))
+        return validate_type(sec._original_functions["subprocess.Popen"](*args, **kwargs), subprocess.Popen)
 
     shell = kwargs.get("shell", False)
     if shell and not sec.security_config.get("subprocess", {}).get("allow_shell_true", False):
@@ -295,7 +296,7 @@ def _secure_subprocess_popen(*args: Any, **kwargs: Any) -> subprocess.Popen[Any]
         if whitelist:
             logger.debug("Command '%s' is in shell whitelist.", cmd_str)
 
-    return cast("subprocess.Popen[Any]", sec._original_functions["subprocess.Popen"](*args, **kwargs))
+    return validate_type(sec._original_functions["subprocess.Popen"](*args, **kwargs), subprocess.Popen)
 
 
 @log_function_call
@@ -319,7 +320,7 @@ def _secure_subprocess_call(*args: Any, **kwargs: Any) -> int:
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for subprocess.call.")
-        return cast("int", sec._original_functions["subprocess.call"](*args, **kwargs))
+        return validate_type(sec._original_functions["subprocess.call"](*args, **kwargs), int)
 
     shell = kwargs.get("shell", False)
     if shell and not sec.security_config.get("subprocess", {}).get("allow_shell_true", False):
@@ -329,7 +330,7 @@ def _secure_subprocess_call(*args: Any, **kwargs: Any) -> int:
         raise SecurityError(error_msg)
 
     logger.debug("subprocess.call: %s", args)
-    return cast("int", sec._original_functions["subprocess.call"](*args, **kwargs))
+    return validate_type(sec._original_functions["subprocess.call"](*args, **kwargs), int)
 
 
 @log_function_call
@@ -353,7 +354,7 @@ def _secure_subprocess_check_call(*args: Any, **kwargs: Any) -> int:
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for subprocess.check_call.")
-        return cast("int", sec._original_functions["subprocess.check_call"](*args, **kwargs))
+        return validate_type(sec._original_functions["subprocess.check_call"](*args, **kwargs), int)
 
     shell = kwargs.get("shell", False)
     if shell and not sec.security_config.get("subprocess", {}).get("allow_shell_true", False):
@@ -363,7 +364,7 @@ def _secure_subprocess_check_call(*args: Any, **kwargs: Any) -> int:
         raise SecurityError(error_msg)
 
     logger.debug("subprocess.check_call: %s", args)
-    return cast("int", sec._original_functions["subprocess.check_call"](*args, **kwargs))
+    return validate_type(sec._original_functions["subprocess.check_call"](*args, **kwargs), int)
 
 
 @log_function_call
@@ -387,7 +388,7 @@ def _secure_subprocess_check_output(*args: Any, **kwargs: Any) -> bytes:
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for subprocess.check_output.")
-        return cast("bytes", sec._original_functions["subprocess.check_output"](*args, **kwargs))
+        return validate_type(sec._original_functions["subprocess.check_output"](*args, **kwargs), bytes)
 
     shell = kwargs.get("shell", False)
     if shell and not sec.security_config.get("subprocess", {}).get("allow_shell_true", False):
@@ -397,7 +398,7 @@ def _secure_subprocess_check_output(*args: Any, **kwargs: Any) -> bytes:
         raise SecurityError(error_msg)
 
     logger.debug("subprocess.check_output: %s", args)
-    return cast("bytes", sec._original_functions["subprocess.check_output"](*args, **kwargs))
+    return validate_type(sec._original_functions["subprocess.check_output"](*args, **kwargs), bytes)
 
 
 @log_function_call
@@ -479,8 +480,8 @@ def _secure_pickle_dumps(
     sec = _get_security()
     if sec._bypass_security:
         logger.debug("Security bypass active for pickle.dumps.")
-        return cast(
-            "bytes", sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback)
+        return validate_type(
+            sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback), bytes
         )
 
     if sec.security_config.get("serialization", {}).get("restrict_pickle", True):
@@ -496,7 +497,7 @@ def _secure_pickle_dumps(
             logger.debug("JSON serialization failed for pickle.dumps: %s. Falling back to original pickle.dumps.", e)
 
     logger.debug("pickle.dumps: object type=%s", type(obj).__name__)
-    return cast("bytes", sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback))
+    return validate_type(sec._original_functions["pickle.dumps"](obj, protocol, fix_imports=fix_imports, buffer_callback=buffer_callback), bytes)
 
 
 @log_function_call

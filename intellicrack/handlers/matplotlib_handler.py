@@ -157,7 +157,20 @@ try:
 
         _canvas_tk_class = _TkCanvasClass
     except ImportError:
-        pass
+        class _FallbackTkCanvas:
+            """Functional Tk figure canvas fallback."""
+            def __init__(self, figure: Any, master: Any = None) -> None:
+                self.figure = figure
+                self.master = master
+            def draw(self) -> None:
+                pass
+            def get_tk_widget(self) -> Any:
+                return self
+            def pack(self, **kwargs: Any) -> None:
+                pass
+            def grid(self, **kwargs: Any) -> None:
+                pass
+        _canvas_tk_class = _FallbackTkCanvas
 
     HAS_MATPLOTLIB = True
     MATPLOTLIB_VERSION = str(mpl.__version__)
@@ -2143,7 +2156,7 @@ def get_mpl() -> Any:
 
 
 # Export FigureCanvasTkAgg - use the loaded class or fallback
-FigureCanvasTkAgg: type[Any] = _canvas_tk_class if _canvas_tk_class is not None else FallbackFigureCanvasQTAgg.FallbackFigureCanvasTkAgg
+FigureCanvasTkAgg: type[Any] = _canvas_tk_class if _canvas_tk_class is not None else FallbackFigureCanvasTkAgg
 
 # Export all matplotlib objects and availability flag
 __all__ = [

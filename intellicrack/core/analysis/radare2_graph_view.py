@@ -29,14 +29,14 @@ from typing import Any, cast
 try:
     import r2pipe as r2pipe_module
 except ImportError:
-    r2pipe_module = cast(ModuleType | None, None)
+    r2pipe_module = None
 
 try:
     import networkx as nx_module
 
     NETWORKX_AVAILABLE = True
 except ImportError:
-    nx_module = cast(ModuleType | None, None)
+    nx_module = None
     NETWORKX_AVAILABLE = False
 
 try:
@@ -47,8 +47,8 @@ try:
     plt_module: ModuleType | None = _plt_module
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    mpatches_module = cast(ModuleType | None, None)
-    plt_module = cast(ModuleType | None, None)
+    mpatches_module = None
+    plt_module = None
     MATPLOTLIB_AVAILABLE = False
 
 logger = logging.getLogger(__name__)

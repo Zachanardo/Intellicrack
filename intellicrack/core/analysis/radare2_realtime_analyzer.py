@@ -27,12 +27,7 @@ from datetime import datetime
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
-
-if TYPE_CHECKING:
-    from watchdog.events import FileSystemEventHandler as WatchdogFileSystemEventHandlerType
-else:
-    WatchdogFileSystemEventHandlerType = object
-
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.utils.logger import logger
 
 from ...utils.logger import get_logger
@@ -150,6 +145,11 @@ except ImportError:
 
             """
 
+if TYPE_CHECKING:
+    from watchdog.events import FileSystemEventHandler as WatchdogFileSystemEventHandlerType
+else:
+    WatchdogFileSystemEventHandlerType = FileSystemEventHandler
+
 
 try:
     import r2pipe
@@ -200,7 +200,7 @@ class AnalysisUpdate:
     related_updates: list[str] = field(default_factory=list)
 
 
-class BinaryFileWatcher(WatchdogFileSystemEventHandlerType):  # type: ignore[misc]
+class BinaryFileWatcher(WatchdogFileSystemEventHandlerType):
     """File system watcher for binary file changes."""
 
     def __init__(self, callback: Callable[[str, AnalysisEvent], None], watched_files: set[str]) -> None:
@@ -885,7 +885,7 @@ class R2RealtimeAnalyzer:
             if self._is_analysis_cached(binary_path, component):
                 cached_result = self.analysis_cache[binary_path][component].get("result")
                 if isinstance(cached_result, dict):
-                    return cast("dict[str, Any]", cached_result)
+                    return validate_type(cached_result, dict)
 
             result: dict[str, Any] | None = None
 

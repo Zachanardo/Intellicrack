@@ -23,6 +23,7 @@ import os
 import queue
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.handlers.pyqt6_handler import (
     QAction,
     QCloseEvent,
@@ -593,7 +594,7 @@ class DebuggerDialog(QDialog):
         if msg_type == "paused":
             self.update_ui_state("paused")
             if isinstance(data, dict):
-                self.current_line = cast("int", data.get("line"))
+                self.current_line = get_typed_item(data, "line", int)
                 self.code_editor.highlight_line(self.current_line)
                 file_name = data.get("file", "unknown")
                 line_num = data.get("line", 0)
@@ -609,11 +610,11 @@ class DebuggerDialog(QDialog):
 
         elif msg_type == "stack":
             if isinstance(data, list):
-                self.update_stack_display(cast("list[dict[str, Any]]", data))
+                self.update_stack_display(validate_type(data, list))
 
         elif msg_type == "watches":
             if isinstance(data, dict):
-                self.update_watch_display(cast("dict[str, Any]", data))
+                self.update_watch_display(validate_type(data, dict))
 
         elif msg_type == "eval_result":
             if isinstance(data, dict):

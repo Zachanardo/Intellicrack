@@ -25,8 +25,9 @@ import threading
 import time
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
+from intellicrack.utils.type_safety import validate_type
 import capstone
 import pefile
 import yara
@@ -605,9 +606,10 @@ except ImportError:
             # Create bound signal for specific instance
             bound_signal = BoundSignal(self, obj)
             # Cache it on the instance to maintain connections
-            if not hasattr(obj, "_bound_signals"):
-                obj._bound_signals = {}
-            bound_signals = obj._bound_signals
+            obj_any = validate_type(obj, Any)
+            if not hasattr(obj_any, "_bound_signals"):
+                setattr(obj_any, "_bound_signals", {})
+            bound_signals = getattr(obj_any, "_bound_signals")
             if isinstance(bound_signals, dict):
                 bound_signals[id(self)] = bound_signal
             return bound_signal

@@ -9,9 +9,10 @@ Licensed under GNU General Public License v3.0
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import frida
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 if TYPE_CHECKING:
     from frida.core import ScriptExportsSync, ScriptMessage
@@ -279,18 +280,18 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         if message["type"] == "send":
-            payload = cast("dict[str, Any]", message.get("payload", {}))
+            payload = validate_type(message.get("payload", {}), dict)
             msg_type = payload.get("type")
 
             if msg_type == "stalker_trace":
                 thread_id = int(payload["threadId"])
-                basic_blocks_raw = cast("list[dict[str, Any]]", payload["basicBlocks"])
+                basic_blocks_raw = validate_type(payload["basicBlocks"], list)
                 self.traces[thread_id] = StalkerTrace(
                     thread_id=thread_id,
                     timestamp=float(payload["timestamp"]),
-                    instructions=cast("list[dict[str, object]]", payload["instructions"]),
+                    instructions=validate_type(payload["instructions"], list),
                     basic_blocks=[(int(b["start"]), int(b["end"])) for b in basic_blocks_raw if b.get("end") is not None],
-                    call_graph=cast("dict[int, list[int]]", payload["callGraph"]),
+                    call_graph=validate_type(payload["callGraph"], dict),
                     coverage=float(payload["coverage"]),
                 )
 
@@ -306,8 +307,8 @@ startThreadTrace(Process.getCurrentThreadId());
         """
         try:
             exports: ScriptExportsSync = self.script.exports_sync
-            start_trace_func = cast("Any", getattr(exports, "start_trace"))
-            result = cast("dict[str, Any]", start_trace_func(thread_id))
+            start_trace_func = cast(Callable[..., Any], getattr(exports, "start_trace"))
+            result = validate_type(start_trace_func(thread_id), dict)
             return bool(result["success"])
         except Exception as e:
             logger.exception("Failed to start trace: %s", e)
@@ -325,8 +326,8 @@ startThreadTrace(Process.getCurrentThreadId());
         """
         try:
             exports: ScriptExportsSync = self.script.exports_sync
-            stop_trace_func = cast("Any", getattr(exports, "stop_trace"))
-            result = cast("dict[str, Any]", stop_trace_func(thread_id))
+            stop_trace_func = cast(Callable[..., Any], getattr(exports, "stop_trace"))
+            result = validate_type(stop_trace_func(thread_id), dict)
             return bool(result["success"])
         except Exception as e:
             logger.exception("Failed to stop trace: %s", e)
@@ -552,7 +553,7 @@ send({ type: 'heap_tracking_ready' });
 
         """
         if message["type"] == "send":
-            payload = cast("dict[str, Any]", message.get("payload", {}))
+            payload = validate_type(message.get("payload", {}), dict)
             msg_type = payload.get("type")
 
             if msg_type == "heap_alloc":
@@ -562,7 +563,7 @@ send({ type: 'heap_tracking_ready' });
                     size=int(payload["size"]),
                     timestamp=float(payload["timestamp"]),
                     thread_id=int(payload["threadId"]),
-                    call_stack=cast("list[int]", payload["callStack"]),
+                    call_stack=validate_type(payload["callStack"], list),
                 )
 
             elif msg_type == "heap_free":
@@ -579,8 +580,9 @@ send({ type: 'heap_tracking_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        get_heap_stats = cast("Any", getattr(exports, "get_heap_stats"))
-        return cast("dict[str, object]", get_heap_stats())
+        get_heap_stats = cast(Callable[..., Any], getattr(exports, "get_heap_stats"))
+        stats = validate_type(get_heap_stats(), dict)
+        return stats
 
     def find_leaks(self) -> list[HeapAllocation]:
         """Find potential memory leaks.
@@ -590,10 +592,10 @@ send({ type: 'heap_tracking_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        find_leaks_func = cast("Any", getattr(exports, "find_leaks"))
-        leaks_raw = cast("list[dict[str, Any]]", find_leaks_func())
+        find_leaks_func = cast(Callable[..., Any], getattr(exports, "find_leaks"))
+        leaks = validate_type(find_leaks_func(), list)
         leaks_result: list[HeapAllocation] = []
-        for leak in leaks_raw:
+        for leak in leaks:
             addr = int(leak["address"])
             if addr in self.allocations:
                 leaks_result.append(self.allocations[addr])
@@ -808,9 +810,14 @@ send({ type: 'thread_monitor_ready' });
             List of dictionaries containing current system thread information.
 
         """
-        exports: ScriptExportsSync = self.script.exports_sync
-        get_current_threads_func = cast("Any", getattr(exports, "get_current_threads"))
-        return cast("list[dict[str, object]]", get_current_threads_func())
+        try:
+            exports: ScriptExportsSync = self.script.exports_sync
+            get_current_threads_func = cast(Callable[..., Any], getattr(exports, "get_current_threads"))
+            threads = validate_type(get_current_threads_func(), list)
+            return threads
+        except Exception as e:
+            logger.exception("Failed to get current threads: %s", e)
+            return []
 
 
 class FridaExceptionHooker:
@@ -964,7 +971,7 @@ send({ type: 'exception_hooking_ready' });
 
         """
         if message["type"] == "send":
-            payload = cast("dict[str, Any]", message.get("payload", {}))
+            payload = validate_type(message.get("payload", {}), dict)
             msg_type = payload.get("type")
 
             if msg_type == "exception_raised":
@@ -978,7 +985,7 @@ send({ type: 'exception_hooking_ready' });
                         thread_id=int(payload["threadId"]),
                         timestamp=float(payload["timestamp"]),
                         handled=False,
-                        exception_record=cast("dict[str, object]", payload),
+                        exception_record=validate_type(payload, dict),
                     ),
                 )
 
@@ -1003,7 +1010,7 @@ send({ type: 'exception_hooking_ready' });
         """
         self.exceptions.clear()
         exports: ScriptExportsSync = self.script.exports_sync
-        clear_exceptions_func = cast("Any", getattr(exports, "clear_exceptions"))
+        clear_exceptions_func = cast(Callable[..., Any], getattr(exports, "clear_exceptions"))
         clear_exceptions_func()
 
 
@@ -1169,7 +1176,7 @@ send({ type: 'replacer_ready' });
 
         """
         if message["type"] == "send":
-            payload = cast("dict[str, Any]", message.get("payload", {}))
+            payload = validate_type(message.get("payload", {}), dict)
             msg_type = payload.get("type")
 
             if msg_type == "function_replaced":
@@ -1197,28 +1204,28 @@ send({ type: 'replacer_ready' });
         """
         try:
             exports: ScriptExportsSync = self.script.exports_sync
-            replace_func = cast("Any", getattr(exports, "replace"))
-            result = replace_func(address, impl_name, ret_type, arg_types or [])
-            return bool(result)
+            replace_func = cast(Callable[..., Any], getattr(exports, "replace"))
+            result = validate_type(replace_func(address, impl_name, ret_type, arg_types), dict)
+            return bool(result["success"])
         except Exception as e:
             logger.exception("Failed to replace function: %s", e)
             return False
 
-    def restore_function(self, address: int) -> bool:
-        """Restore original function.
+    def restore(self, target_address: int) -> bool:
+        """Restore a replaced function.
 
         Args:
-            address: Memory address of the function to restore.
+            target_address: Address of the function to restore.
 
         Returns:
-            True if restoration succeeded, False otherwise.
+            True if restored successfully, False otherwise.
 
         """
         try:
             exports: ScriptExportsSync = self.script.exports_sync
-            restore_func = cast("Any", getattr(exports, "restore"))
-            result = restore_func(address)
-            return bool(result)
+            restore_func = cast(Callable[..., Any], getattr(exports, "restore"))
+            result = validate_type(restore_func(target_address), dict)
+            return bool(result["success"])
         except Exception as e:
             logger.exception("Failed to restore function: %s", e)
             return False
@@ -1585,7 +1592,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast("Any", getattr(exports, "memory"))
+        memory = cast(Any, getattr(exports, "memory"))
         result = memory.read(address, size)
         return result if isinstance(result, bytes) else bytes(result)
 
@@ -1601,7 +1608,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast("Any", getattr(exports, "memory"))
+        memory = cast(Any, getattr(exports, "memory"))
         result = memory.write(address, data)
         return bool(result)
 
@@ -1617,8 +1624,8 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        memory = cast("Any", getattr(exports, "memory"))
-        return cast("list[dict[str, int]]", memory.scan(pattern, limit))
+        memory = cast(Any, getattr(exports, "memory"))
+        return validate_type(memory.scan(pattern, limit), list)
 
     def module_find_export(self, module: str, name: str) -> int | None:
         """Find module export.
@@ -1632,7 +1639,7 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        module_obj = cast("Any", getattr(exports, "module"))
+        module_obj = cast(Any, getattr(exports, "module"))
         result = module_obj.find_export(module, name)
         return int(result) if result is not None else None
 
@@ -1647,8 +1654,9 @@ send({ type: 'rpc_ready' });
 
         """
         exports: ScriptExportsSync = self.script.exports_sync
-        evaluate_func = cast("Any", getattr(exports, "evaluate"))
-        return evaluate_func(code)
+        evaluate_func = cast(Callable[..., Any], getattr(exports, "evaluate"))
+        result = evaluate_func(code)
+        return result
 
 
 class FridaAdvancedHooking:

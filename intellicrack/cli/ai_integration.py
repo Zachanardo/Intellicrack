@@ -316,7 +316,7 @@ class LangChainIntegration:
 
         """
         try:
-            from langchain_core.tools import Tool  # type: ignore[import-not-found,import-untyped]
+            from langchain_core.tools import Tool
 
             tools: list[Any] = []
 

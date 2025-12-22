@@ -10,12 +10,16 @@ import logging
 import random
 import struct
 import time
-from typing import Any, cast
+from datetime import datetime
+from enum import IntEnum
+from typing import Any, TYPE_CHECKING, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 try:
     import psutil
+except ImportError:
+    psutil = None
 
 from intellicrack.utils.logger import log_all_methods
 
@@ -2546,7 +2550,7 @@ class LicenseAnalyzer:
 
         for region in all_regions:
             if region["base_address"] not in vad_addresses and region["is_executable"]:
-                anomalies_list = cast("list[dict[str, Any]]", detection_results["anomalies"])
+                anomalies_list = validate_type(detection_results["anomalies"], list)
                 anomalies_list.append(
                     {
                         "type": "unlisted_executable",
@@ -2577,7 +2581,7 @@ class LicenseAnalyzer:
 
                     for pattern in suspicious_patterns:
                         if first_bytes.startswith(pattern):
-                            suspicious_regions_list = cast("list[dict[str, Any]]", detection_results["suspicious_regions"])
+                            suspicious_regions_list = validate_type(detection_results["suspicious_regions"], list)
                             suspicious_regions_list.append(
                                 {
                                     "address": region["base_address"],
@@ -2592,7 +2596,7 @@ class LicenseAnalyzer:
         # 3. Check for VAD unlink signs
         if len(vad_entries) < 10 and self.pid:
             # Suspiciously few VAD entries for an active process
-            anomalies_list = cast("list[dict[str, Any]]", detection_results["anomalies"])
+            anomalies_list = validate_type(detection_results["anomalies"], list)
             anomalies_list.append({"type": "low_vad_count", "count": len(vad_entries), "expected_minimum": 10})
 
         # Calculate confidence score
@@ -2941,7 +2945,7 @@ class LicenseAnalyzer:
             # Check if we can read/write to the cave
             validation_data = self.read_memory(address, min(size, 16))
             if not validation_data:
-                issues_list = cast("list[str]", validation["issues"])
+                issues_list = validate_type(validation["issues"], list)
                 issues_list.append("Cannot read cave memory")
                 return validation
 
@@ -2950,7 +2954,7 @@ class LicenseAnalyzer:
             # Check if cave is empty/padding
             non_padding = sum(b not in [0x00, 0x90, 0xCC] for b in validation_data)
             if non_padding > len(validation_data) * 0.2:  # More than 20% non-padding
-                issues_list = cast("list[str]", validation["issues"])
+                issues_list = validate_type(validation["issues"], list)
                 issues_list.append("Cave contains non-padding data")
             else:
                 validation["is_safe"] = True
@@ -2964,7 +2968,7 @@ class LicenseAnalyzer:
                 ctypes.sizeof(mbi),
             ):
                 logger.debug("Memory query for cave validation returned %s bytes", result)
-                current_score = cast("int", validation["score"])
+                current_score = get_typed_item(validation, "score", int)
                 if mbi.Protect & 0xF0:  # Executable
                     current_score += 5
                 if mbi.Protect & 0xCC:  # Writable
@@ -2974,7 +2978,7 @@ class LicenseAnalyzer:
                 validation["score"] = current_score
 
                 if mbi.RegionSize < size:
-                    issues_list = cast("list[str]", validation["issues"])
+                    issues_list = validate_type(validation["issues"], list)
                     issues_list.append("Cave crosses region boundary")
                     validation["is_safe"] = False
 
@@ -2982,11 +2986,11 @@ class LicenseAnalyzer:
             validation["is_valid"] = validation["is_accessible"] and validation["is_safe"]
 
             if validation["is_valid"]:
-                current_score = cast("int", validation["score"])
+                current_score = get_typed_item(validation, "score", int)
                 validation["score"] = max(1, current_score)
 
         except Exception as e:
-            issues_list = cast("list[str]", validation["issues"])
+            issues_list = validate_type(validation["issues"], list)
             issues_list.append(f"Validation error: {e}")
 
         return validation

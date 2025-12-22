@@ -12,8 +12,8 @@ from datetime import datetime
 from typing import Any
 
 import psutil
-from PyQt6.QtCore import QCloseEvent, Qt, QThread, pyqtSignal
-from PyQt6.QtGui import QColor, QFont, QTextCursor
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QColor, QFont, QCloseEvent, QTextCursor
 from PyQt6.QtWidgets import (
     QCheckBox,
     QComboBox,

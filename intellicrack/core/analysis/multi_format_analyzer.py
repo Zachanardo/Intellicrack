@@ -29,6 +29,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 # Import common patterns from centralized module
 from ...utils.core.import_patterns import (
@@ -1068,24 +1069,24 @@ class MultiFormatBinaryAnalyzer:
                 if header_bytes.startswith(b"\xe9"):  # JMP instruction
                     jump_offset = int.from_bytes(header_bytes[1:3], byteorder="little", signed=True)
                     info["header_analysis"]["first_instruction"] = f"JMP {jump_offset:+d}"
-                    cast("list[str]", info["header_analysis"]["possible_instructions"]).append("Near jump")
+                    validate_type(info["header_analysis"]["possible_instructions"], list).append("Near jump")
 
                 elif header_bytes.startswith(b"\xeb"):  # Short JMP instruction
                     jump_offset = int.from_bytes(header_bytes[1:2], byteorder="little", signed=True)
                     info["header_analysis"]["first_instruction"] = f"JMP SHORT {jump_offset:+d}"
-                    cast("list[str]", info["header_analysis"]["possible_instructions"]).append("Short jump")
+                    validate_type(info["header_analysis"]["possible_instructions"], list).append("Short jump")
 
                 elif header_bytes.startswith(b"\xb8"):  # MOV AX, imm16
                     immediate = int.from_bytes(header_bytes[1:3], byteorder="little")
                     info["header_analysis"]["first_instruction"] = f"MOV AX, 0x{immediate:04X}"
-                    cast("list[str]", info["header_analysis"]["possible_instructions"]).append("Load immediate to AX")
+                    validate_type(info["header_analysis"]["possible_instructions"], list).append("Load immediate to AX")
 
                 # Check for common DOS system calls
                 if b"\xcd\x21" in header_bytes:  # INT 21h (DOS interrupt)
-                    cast("list[str]", info["header_analysis"]["possible_instructions"]).append("DOS system call (INT 21h)")
+                    validate_type(info["header_analysis"]["possible_instructions"], list).append("DOS system call (INT 21h)")
 
                 if b"\xcd\x20" in header_bytes:  # INT 20h (terminate program)
-                    cast("list[str]", info["header_analysis"]["possible_instructions"]).append("Program termination (INT 20h)")
+                    validate_type(info["header_analysis"]["possible_instructions"], list).append("Program termination (INT 20h)")
 
                 # Calculate basic entropy
                 if len(header_bytes) > 0:
@@ -1300,7 +1301,7 @@ def run_multi_format_analysis(app: object, binary_path: str | Path | None = None
 
     # Add to analyze results
     if not hasattr(app, "analyze_results"):
-        app.analyze_results = []
+        setattr(app, "analyze_results", [])
 
     analyze_results: list[str] = getattr(app, "analyze_results", [])
 

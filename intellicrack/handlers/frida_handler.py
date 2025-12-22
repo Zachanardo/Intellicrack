@@ -458,12 +458,13 @@ except ImportError as e:
 
                 # Get the terminal widget
                 if hasattr(terminal_mgr, "_terminal_widget") and terminal_mgr._terminal_widget:
-                    terminal_widget = terminal_mgr._terminal_widget  # type: ignore[unreachable]
+                    terminal_widget = terminal_mgr._terminal_widget
 
                     # Get active session
                     active_session = terminal_widget.get_active_session()
-                    if active_session and hasattr(active_session, "_pid"):
-                        pid_value = active_session._pid
+                    if isinstance(active_session, tuple) and len(active_session) == 2:
+                        _, terminal_instance = active_session
+                        pid_value = getattr(terminal_instance, "_pid", None)
                         if isinstance(pid_value, int):
                             return pid_value
 

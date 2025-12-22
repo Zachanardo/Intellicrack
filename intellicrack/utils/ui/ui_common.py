@@ -163,8 +163,7 @@ def create_binary_selection_header(
     if extra_buttons:
         from .ui_button_common import add_extra_buttons
 
-        extra_buttons_cast = cast(list[tuple[str, object]], extra_buttons)
-        buttons = add_extra_buttons(header_layout, extra_buttons_cast, widgets)
+        buttons = add_extra_buttons(header_layout, extra_buttons, widgets)
         extra_buttons_dict = cast(dict[str, Any], widgets["extra_buttons"])
         extra_buttons_dict.update(buttons)
 

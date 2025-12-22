@@ -202,8 +202,11 @@ class PythonHighlighter(QSyntaxHighlighter):
         self.triple_single_quote_format = QTextCharFormat()
         self.triple_single_quote_format.setForeground(QColor("#CE9178"))  # Orange
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str | None) -> None:
         """Apply syntax highlighting to block."""
+        if text is None:
+            return
+
         # Single line rules
         for pattern, text_format in self.highlighting_rules:
             expression = QRegularExpression(pattern)
@@ -448,8 +451,11 @@ class JavaScriptHighlighter(QSyntaxHighlighter):
         self.multiline_comment_format.setForeground(QColor("#6A9955"))  # Green
         self.multiline_comment_format.setFontItalic(True)
 
-    def highlightBlock(self, text: str) -> None:
+    def highlightBlock(self, text: str | None) -> None:
         """Apply syntax highlighting to block."""
+        if text is None:
+            return
+
         # Single line rules
         for pattern, text_format in self.highlighting_rules:
             expression = QRegularExpression(pattern)

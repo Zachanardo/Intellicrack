@@ -1531,9 +1531,8 @@ class FallbackNumPy:
 
 
 if TYPE_CHECKING:
-    import numpy as np
-
-    NpOrFallback = np.ndarray[Any, Any] | FallbackArray
+    import numpy as _np
+    NpOrFallback = _np.ndarray[Any, Any] | FallbackArray
 
 
 HAS_NUMPY: bool
@@ -1596,67 +1595,68 @@ cross: Any
 
 
 try:
-    import numpy as np
+    import numpy as _real_np
 
     HAS_NUMPY = True
-    NUMPY_VERSION = str(np.__version__)
-    numpy = np
+    NUMPY_VERSION = str(_real_np.__version__)
+    np = _real_np
+    numpy = _real_np
 
-    ndarray = np.ndarray
-    dtype = np.dtype
-    float32 = np.float32
-    float64 = np.float64
-    int32 = np.int32
-    int64 = np.int64
-    uint8 = np.uint8
-    uint16 = np.uint16
-    uint32 = np.uint32
+    ndarray = _real_np.ndarray
+    dtype = _real_np.dtype
+    float32 = _real_np.float32
+    float64 = _real_np.float64
+    int32 = _real_np.int32
+    int64 = _real_np.int64
+    uint8 = _real_np.uint8
+    uint16 = _real_np.uint16
+    uint32 = _real_np.uint32
 
-    linalg = np.linalg
-    fft = np.fft
-    random = np.random
+    linalg = _real_np.linalg
+    fft = _real_np.fft
+    random = _real_np.random
 
-    array = np.array
-    zeros = np.zeros
-    ones = np.ones
-    empty = np.empty
-    full = np.full
-    eye = np.eye
-    arange = np.arange
-    linspace = np.linspace
-    meshgrid = np.meshgrid
-    sqrt = np.sqrt
-    np_abs = np.abs
-    np_round = np.round
-    floor = np.floor
-    ceil = np.ceil
-    concatenate = np.concatenate
-    stack = np.stack
-    reshape = np.reshape
-    transpose = np.transpose
-    unique = np.unique
-    sort = np.sort
-    argsort = np.argsort
-    where = np.where
-    allclose = np.allclose
-    array_equal = np.array_equal
-    asarray = np.asarray
-    np_sum = np.sum
-    mean = np.mean
-    std = np.std
-    var = np.var
-    np_min = np.min
-    np_max = np.max
-    argmin = np.argmin
-    argmax = np.argmax
-    gradient = np.gradient
-    diff = np.diff
-    cumsum = np.cumsum
-    histogram = np.histogram
-    percentile = np.percentile
-    median = np.median
-    dot = np.dot
-    cross = np.cross
+    array = _real_np.array
+    zeros = _real_np.zeros
+    ones = _real_np.ones
+    empty = _real_np.empty
+    full = _real_np.full
+    eye = _real_np.eye
+    arange = _real_np.arange
+    linspace = _real_np.linspace
+    meshgrid = _real_np.meshgrid
+    sqrt = _real_np.sqrt
+    np_abs = _real_np.abs
+    np_round = _real_np.round
+    floor = _real_np.floor
+    ceil = _real_np.ceil
+    concatenate = _real_np.concatenate
+    stack = _real_np.stack
+    reshape = _real_np.reshape
+    transpose = _real_np.transpose
+    unique = _real_np.unique
+    sort = _real_np.sort
+    argsort = _real_np.argsort
+    where = _real_np.where
+    allclose = _real_np.allclose
+    array_equal = _real_np.array_equal
+    asarray = _real_np.asarray
+    np_sum = _real_np.sum
+    mean = _real_np.mean
+    std = _real_np.std
+    var = _real_np.var
+    np_min = _real_np.min
+    np_max = _real_np.max
+    argmin = _real_np.argmin
+    argmax = _real_np.argmax
+    gradient = _real_np.gradient
+    diff = _real_np.diff
+    cumsum = _real_np.cumsum
+    histogram = _real_np.histogram
+    percentile = _real_np.percentile
+    median = _real_np.median
+    dot = _real_np.dot
+    cross = _real_np.cross
 
 except ImportError as e:
     logger.error("NumPy not available, using fallback implementations: %s", e)

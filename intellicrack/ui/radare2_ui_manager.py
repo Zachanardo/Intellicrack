@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import os
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import QMessageBox, QObject, QTabWidget, QWidget, pyqtSignal
 
 from ..utils.logger import get_logger
@@ -183,7 +184,7 @@ class R2UIManager(QObject):
                 self.logger.info("Attempting integration with existing app structure")
 
                 # Use the existing integration functions (casting to Any for compatibility)
-                main_app_any = cast(Any, main_app)
+                main_app_any = validate_type(main_app, Any)
                 if integrate_with_main_app(main_app_any):
                     self.logger.info("Used existing integration method")
                 else:

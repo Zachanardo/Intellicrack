@@ -21,6 +21,7 @@ import os
 import sys
 from typing import TYPE_CHECKING, cast
 
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as HAS_QT,
     QDialog,
@@ -103,7 +104,7 @@ class ProgramDiscoveryWorker(QThread):
 
             try:
                 if program_discovery_engine is not None:
-                    programs: list[object] = cast(list[object], program_discovery_engine.discover_programs_from_path(path))
+                    programs = validate_type(program_discovery_engine.discover_programs_from_path(path), list)
                     all_programs.extend(programs)
                     self.progress_updated.emit(f"Found {len(programs)} programs in {path}")
             except Exception as e:

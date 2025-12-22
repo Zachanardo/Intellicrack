@@ -8,6 +8,7 @@ import traceback
 from subprocess import Popen
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.data import CA_CERT_PATH, CA_KEY_PATH
 from intellicrack.utils.logger import logger
 
@@ -123,8 +124,8 @@ class SSLTLSInterceptor:
         """
         try:
             # Generate CA certificate if needed
-            ca_cert_path: str = cast("str", self.config["ca_cert_path"])
-            ca_key_path: str = cast("str", self.config["ca_key_path"])
+            ca_cert_path = get_typed_item(self.config, "ca_cert_path", str)
+            ca_key_path = get_typed_item(self.config, "ca_key_path", str)
             if not os.path.exists(ca_cert_path) or not os.path.exists(ca_key_path):
                 self.logger.info("Generating CA certificate...")
                 cert_pem, key_pem = self.generate_ca_certificate()
@@ -223,8 +224,8 @@ def response(flow: http.HTTPFlow) -> None:
 """)
 
                 # Start mitmproxy
-                listen_ip: str = cast("str", self.config["listen_ip"])
-                listen_port: int = cast("int", self.config["listen_port"])
+                listen_ip = get_typed_item(self.config, "listen_ip", str)
+                listen_port = get_typed_item(self.config, "listen_port", int)
                 cmd: list[str] = [
                     mitmdump_path,
                     "-s",
@@ -330,7 +331,7 @@ def response(flow: http.HTTPFlow) -> None:
             host: Hostname to intercept
 
         """
-        target_hosts: list[str] = cast("list[str]", self.config["target_hosts"])
+        target_hosts = validate_type(self.config["target_hosts"], list)
         if host not in target_hosts:
             target_hosts.append(host)
             self.logger.info("Added target host: %s", host)
@@ -342,7 +343,7 @@ def response(flow: http.HTTPFlow) -> None:
             host: Hostname to remove
 
         """
-        target_hosts: list[str] = cast("list[str]", self.config["target_hosts"])
+        target_hosts = validate_type(self.config["target_hosts"], list)
         if host in target_hosts:
             target_hosts.remove(host)
             self.logger.info("Removed target host: %s", host)
@@ -354,7 +355,7 @@ def response(flow: http.HTTPFlow) -> None:
             list: List of target hostnames
 
         """
-        target_hosts: list[str] = cast("list[str]", self.config["target_hosts"])
+        target_hosts = validate_type(self.config["target_hosts"], list)
         return target_hosts.copy()
 
     def configure(self, config: dict[str, Any]) -> bool:
@@ -426,8 +427,8 @@ def response(flow: http.HTTPFlow) -> None:
 
             # Validate certificate paths if changed
             if "ca_cert_path" in config or "ca_key_path" in config:
-                ca_cert_path: str = cast("str", self.config["ca_cert_path"])
-                ca_key_path: str = cast("str", self.config["ca_key_path"])
+                ca_cert_path = get_typed_item(self.config, "ca_cert_path", str)
+                ca_key_path = get_typed_item(self.config, "ca_key_path", str)
                 if not os.path.exists(ca_cert_path):
                     self.logger.warning("CA certificate not found at %s", ca_cert_path)
                     # Generate new certificate if needed
@@ -490,12 +491,12 @@ def response(flow: http.HTTPFlow) -> None:
 
         # Redact sensitive information
         if "ca_key_path" in safe_config:
-            ca_key_path_val: str = cast("str", self.config["ca_key_path"])
+            ca_key_path_val = get_typed_item(self.config, "ca_key_path", str)
             safe_config["ca_key_path"] = "<redacted>" if os.path.exists(ca_key_path_val) else "not found"
 
         # Add runtime status
-        ca_cert_path: str = cast("str", self.config["ca_cert_path"])
-        ca_key_path: str = cast("str", self.config["ca_key_path"])
+        ca_cert_path = get_typed_item(self.config, "ca_cert_path", str)
+        ca_key_path = get_typed_item(self.config, "ca_key_path", str)
         safe_config["status"] = {
             "running": self.proxy_process is not None,
             "traffic_captured": len(self.traffic_log),

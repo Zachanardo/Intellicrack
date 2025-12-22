@@ -86,7 +86,7 @@ try:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import tensorflow as _tf_module
+    from intellicrack.handlers.tensorflow_handler import tf as _tf_module
 
     tf = _tf_module
     HAS_TENSORFLOW = True

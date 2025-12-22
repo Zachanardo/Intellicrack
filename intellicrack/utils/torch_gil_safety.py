@@ -14,6 +14,7 @@ import sys
 import threading
 from collections.abc import Callable
 from types import ModuleType, TracebackType
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +30,7 @@ os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
 os.environ.setdefault("BLIS_NUM_THREADS", "1")
 
 
-def torch_thread_safe(func: Callable) -> Callable:
+def torch_thread_safe(func: Callable[..., Any]) -> Callable[..., Any]:
     """Ensure PyTorch operations are thread-safe.
 
     This decorator wraps PyTorch operations with proper locking
@@ -95,7 +96,7 @@ class TorchGILSafeContext:
         _torch_lock.release()
 
 
-def with_torch_gil_safety(torch_func: Callable) -> Callable:
+def with_torch_gil_safety(torch_func: Callable[..., Any]) -> Callable[..., Any]:
     """Wrap a PyTorch function call with GIL safety.
 
     Args:

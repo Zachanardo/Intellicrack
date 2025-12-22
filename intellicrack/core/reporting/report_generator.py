@@ -83,11 +83,7 @@ class ReportGenerator:
         try:
             from intellicrack.utils.core.plugin_paths import get_reports_dir
 
-            result = get_reports_dir()
-            if isinstance(result, Path):
-                reports_dir = result
-            else:
-                reports_dir = Path(str(result))
+            reports_dir = get_reports_dir()
         except ImportError:
             # Fallback to default location
             reports_dir = Path.home() / ".intellicrack" / "reports"

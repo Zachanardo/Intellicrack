@@ -696,7 +696,7 @@ except ImportError as e:
                 True if section type is SHT_NULL, False otherwise.
 
             """
-            return self.header.sh_type == ENUM_SH_TYPE.SHT_NULL
+            return bool(self.header.sh_type == ENUM_SH_TYPE.SHT_NULL)
 
         @property
         def data_size(self) -> int:

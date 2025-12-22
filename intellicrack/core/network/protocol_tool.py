@@ -33,6 +33,7 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import logging
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
+from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QApplication, QHBoxLayout, QLabel, QLineEdit, QPushButton, QSizePolicy, QTextEdit, QVBoxLayout, QWidget
 
 # Import protocol parsers for real functionality
@@ -247,7 +248,9 @@ class ProtocolToolWindow(QWidget):
         logger.info("Protocol tool description updated to: %s", description)
         ProtocolToolWindow.signals.description_updated.emit(description)
         if self.app_instance:
-            self.app_instance.update_output.emit(f"Protocol tool description updated: {description}")
+            update_signal = getattr(self.app_instance, "update_output", None)
+            if update_signal is not None and hasattr(update_signal, "emit"):
+                update_signal.emit(f"Protocol tool description updated: {description}")
 
     def _execute_protocol_analysis(self, protocol_name: str, hex_data: str) -> None:
         """Execute real protocol analysis on hex data."""
@@ -406,7 +409,7 @@ class ProtocolToolWindow(QWidget):
 
         self.output_text_edit.append(f"[TOTAL] {len(available_parsers)} parsers available")
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle the close event for the window."""
         logger.info("Protocol Tool window closing.")
         ProtocolToolWindow.signals.tool_closed.emit("Protocol Tool closed.")

@@ -15,12 +15,14 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
 import time
-from typing import Any, cast
+from typing import Any, ClassVar, cast
 
 from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 try:
     import psutil
+except ImportError:
+    psutil = None
 
 from ..utils.logger import get_logger
 
@@ -5429,11 +5431,11 @@ class LicenseDebugger:
                 shellcode.extend(dll_path)
                 return bytes(shellcode)
 
-        try:
-            patch_addr = get_typed_item(params, "address", int, 0)
-            patch_bytes = get_typed_item(params, "bytes", bytes, b"")
+            if shellcode_type == "patch":
+                patch_addr = get_typed_item(params, "address", int, 0)
+                patch_bytes = get_typed_item(params, "bytes", bytes, b"")
 
-            if not patch_addr or not patch_bytes:
+                if not patch_addr or not patch_bytes:
                     return b""
 
                 shellcode = bytearray()

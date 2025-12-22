@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import importlib
 import json
 import logging
 import os
@@ -28,18 +29,22 @@ import traceback
 from types import ModuleType
 from typing import Any
 
+capstone: ModuleType | None
+frida: ModuleType | None
+pefile: ModuleType | None
+
 try:
-    import capstone
+    capstone = importlib.import_module("capstone")
 except ImportError:
     capstone = None
 
 try:
-    import frida
+    frida = importlib.import_module("frida")
 except ImportError:
     frida = None
 
 try:
-    import pefile
+    pefile = importlib.import_module("pefile")
 except ImportError:
     pefile = None
 
@@ -405,7 +410,6 @@ def wrapper_disassemble_address(app_instance: Any, parameters: dict[str, Any]) -
 
         # Real disassembly using Capstone engine
         if capstone is None:
-            # Fallback to objdump if Capstone not available
             try:
                 binary_path = app_instance.binary_path
                 if platform.system() == "Windows":
@@ -446,8 +450,9 @@ def wrapper_disassemble_address(app_instance: Any, parameters: dict[str, Any]) -
                     }
             except Exception as e:
                 logger.error(f"Objdump disassembly failed: {e}")
+                return {"status": "error", "message": f"Objdump disassembly failed: {str(e)}"}
 
-        # Use Capstone for disassembly
+            return {"status": "error", "message": "Capstone library not available for disassembly."}
         try:
             with open(app_instance.binary_path, "rb") as f:
                 f.seek(address)

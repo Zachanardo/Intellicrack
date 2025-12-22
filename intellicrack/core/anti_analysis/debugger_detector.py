@@ -24,7 +24,9 @@ import os
 import platform
 import shutil
 import time
-from typing import Any, cast
+from typing import Any, Callable, cast
+
+from intellicrack.utils.type_safety import validate_type
 
 import psutil
 
@@ -49,7 +51,7 @@ class DebuggerDetector(BaseDetector):
     """Comprehensive debugger detection using multiple techniques."""
 
     logger: logging.Logger
-    detection_methods: dict[str, object]
+    detection_methods: dict[str, Callable[[], tuple[bool, float, Any]]]
     debugger_signatures: dict[str, dict[str, list[str]]]
 
     def __init__(self) -> None:
@@ -1031,7 +1033,7 @@ class DebuggerDetector(BaseDetector):
 
     def _check_hardware_breakpoints(
         self,
-    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]]:
+    ) -> tuple[bool, float, dict[str, Any]]:
         """Check for hardware breakpoints in debug registers.
 
         Examines CPU debug registers (DR0-DR7) to detect hardware breakpoints
@@ -1042,8 +1044,8 @@ class DebuggerDetector(BaseDetector):
             breakpoint information.
 
         """
-        details: dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool] = {
-            "dr_registers": [],
+        details: dict[str, Any] = {
+            "dr_registers": {},
             "breakpoints_found": 0,
             "active_registers": [],
         }
@@ -1062,8 +1064,8 @@ class DebuggerDetector(BaseDetector):
         return False, elapsed, details
 
     def _check_hardware_breakpoints_windows(
-        self, details: dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]
-    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]]:
+        self, details: dict[str, Any]
+    ) -> tuple[bool, float, dict[str, Any]]:
         """Check for hardware breakpoints on Windows using debug registers.
 
         Reads the CONTEXT structure to access debug registers and analyze
@@ -1119,7 +1121,7 @@ class DebuggerDetector(BaseDetector):
                     "DR6": hex(dr6_status),
                     "DR7": hex(dr7_control),
                 }
-                details["dr_registers"] = cast(dict[str, bool | list[int] | str], dr_regs_dict)
+                details["dr_registers"] = dr_regs_dict
 
                 # Check DR7 control register for enabled breakpoints
                 # DR7 bits: L0,G0,L1,G1,L2,G2,L3,G3 (local/global enable bits)
@@ -1130,9 +1132,10 @@ class DebuggerDetector(BaseDetector):
                     if local_enable or global_enable:
                         breakpoint_enables.append(i)
                         active_regs = details.get("active_registers", [])
-                        if isinstance(active_regs, list):
-                            active_regs.append(f"DR{i}")
-                            details["active_registers"] = active_regs
+                        if not isinstance(active_regs, list):
+                            active_regs = []
+                        active_regs.append(f"DR{i}")
+                        details["active_registers"] = active_regs
 
                 # Count active breakpoints
                 active_breakpoints = 0
@@ -1171,8 +1174,8 @@ class DebuggerDetector(BaseDetector):
         return False, elapsed, details
 
     def _check_hardware_breakpoints_linux(
-        self, details: dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]
-    ) -> tuple[bool, float, dict[str, list[str] | int | str | dict[str, bool | list[int] | str] | bool]]:
+        self, details: dict[str, Any]
+    ) -> tuple[bool, float, dict[str, Any]]:
         """Check for hardware breakpoints on Linux using ptrace.
 
         Uses ptrace and /proc filesystem to detect debug registers and
@@ -1243,7 +1246,7 @@ class DebuggerDetector(BaseDetector):
                         except Exception:
                             debug_regs[reg_name] = "inaccessible"
 
-                    details["dr_registers"] = cast(dict[str, bool | list[int] | str], debug_regs)
+                    details["dr_registers"] = validate_type(debug_regs, dict)
                     details["ptrace_available"] = True
 
                     # Count potentially active registers

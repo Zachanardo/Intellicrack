@@ -25,7 +25,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.utils.logger import log_function_call
 
@@ -60,15 +60,15 @@ def _get_tensorflow() -> tuple[Any, bool]:
         try:
             from intellicrack.handlers.tensorflow_handler import (
                 ensure_tensorflow_loaded,
-                tensorflow as tf,
+                tf,
             )
 
             ensure_tensorflow_loaded()
-            _tf_module = tf
+            _tf_module = cast(Any, tf)
             _tf_available = True
             _tf_module.config.set_visible_devices([], "GPU")
-            logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", tf.__version__)
-            logger.debug("TensorFlow: Visible devices after configuration: %s", tf.config.get_visible_devices())
+            logger.info("TensorFlow: Imported successfully (version: %s). GPU devices set to invisible.", _tf_module.__version__)
+            logger.debug("TensorFlow: Visible devices after configuration: %s", _tf_module.config.get_visible_devices())
         except Exception as e:
             logger.warning("TensorFlow: Import failed: %s", e, exc_info=True)
             _tf_available = False

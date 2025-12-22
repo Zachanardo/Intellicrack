@@ -60,6 +60,7 @@ from ..handlers.pyqt6_handler import (
 
 if TYPE_CHECKING:
     from re import Match, Pattern
+    from .file_handler import VirtualFileAccess
 
 
 logger = logging.getLogger(__name__)
@@ -246,9 +247,9 @@ class SearchHistory:
 class SearchEngine:
     """Core search engine for finding patterns in binary data."""
 
-    def __init__(self, file_handler: BaseFileHandler) -> None:
+    def __init__(self, file_handler: BaseFileHandler | "VirtualFileAccess") -> None:
         """Initialize the SearchEngine with file handler and chunk size."""
-        self.file_handler: BaseFileHandler = file_handler
+        self.file_handler: BaseFileHandler | VirtualFileAccess = file_handler
 
         from intellicrack.core.config_manager import get_config
 

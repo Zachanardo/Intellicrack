@@ -27,6 +27,8 @@ from pathlib import Path
 from typing import Any, cast
 from types import ModuleType
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 
 try:
     import capstone
@@ -283,8 +285,8 @@ class ArxanAnalyzer:
         tamper_checks: list[TamperCheckLocation] = []
 
         for check_type, info in self.TAMPER_CHECK_SIGNATURES.items():
-            patterns: list[bytes] = cast(list[bytes], info["patterns"])
-            complexity: str = cast(str, info["complexity"])
+            patterns = validate_type(info["patterns"], list)
+            complexity = get_typed_item(info, "complexity", str)
             for pattern in patterns:
                 offset: int = 0
                 while True:

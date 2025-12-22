@@ -18,6 +18,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import math
 from collections import Counter
+from typing import cast
 
 import pyqtgraph as pg
 
@@ -158,7 +159,7 @@ class EntropyVisualizer(QWidget):
 
         return positions, entropy_values
 
-    def load_data(self, data: bytes, block_size: int = 1024) -> None:
+    def load_data(self, data: object, block_size: int = 1024) -> None:
         """Load binary data and calculate entropy with comprehensive error handling.
 
         Validates input data, calculates entropy statistics, and updates the
@@ -174,12 +175,13 @@ class EntropyVisualizer(QWidget):
 
         """
         try:
-            if not isinstance(data, bytes):
+            if not isinstance(data, (bytes, bytearray, memoryview)):
                 error_msg = f"Expected bytes data, got {type(data)}"
                 logger.error(error_msg)
                 raise TypeError(error_msg)
+            validated_data = cast(bytes | bytearray | memoryview, data)
 
-            if not data:
+            if not validated_data:
                 error_msg = "Cannot process empty data"
                 logger.error(error_msg)
                 raise ValueError(error_msg)
@@ -189,11 +191,12 @@ class EntropyVisualizer(QWidget):
                 logger.error(error_msg)
                 raise ValueError(error_msg)
 
-            if len(data) < block_size:
-                block_size = max(1, len(data) // 4)  # Adaptive block size for small files
+            if len(validated_data) < block_size:
+                block_size = max(1, len(validated_data) // 4)  # Adaptive block size for small files
 
-            self.file_data = data
-            self.block_positions, self.entropy_data = self.calculate_entropy(data, block_size)
+            normalized_data = bytes(validated_data)
+            self.file_data = normalized_data
+            self.block_positions, self.entropy_data = self.calculate_entropy(normalized_data, block_size)
             self.update_plot()
 
         except (TypeError, ValueError, MemoryError) as e:
@@ -278,7 +281,7 @@ class EntropyVisualizer(QWidget):
             suspicious region found.
 
         """
-        suspicious = []
+        suspicious: list[tuple[float, str, str]] = []
 
         if len(self.entropy_data) < 2:
             return suspicious

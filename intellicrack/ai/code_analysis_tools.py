@@ -25,6 +25,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
+
 
 logger = logging.getLogger(__name__)
 
@@ -495,11 +497,11 @@ class CodeAnalyzer:
             security_issues = format_analysis.get("security_issues", [])
             protection_mechanisms = format_analysis.get("protection_mechanisms", [])
             if isinstance(findings, list) and isinstance(result.get("findings"), list):
-                cast("list[str]", result["findings"]).extend(findings)
+                validate_type(result["findings"], list).extend(findings)
             if isinstance(security_issues, list) and isinstance(result.get("security_issues"), list):
-                cast("list[str]", result["security_issues"]).extend(security_issues)
+                validate_type(result["security_issues"], list).extend(security_issues)
             if isinstance(protection_mechanisms, list) and isinstance(result.get("protection_mechanisms"), list):
-                cast("list[str]", result["protection_mechanisms"]).extend(protection_mechanisms)
+                validate_type(result["protection_mechanisms"], list).extend(protection_mechanisms)
 
             # Perform AI-enhanced analysis if available
             ai_analysis = self._perform_ai_binary_analysis(file_path, result)
@@ -508,11 +510,11 @@ class CodeAnalyzer:
                 ai_recommendations = ai_analysis.get("recommendations", [])
                 ai_confidence = ai_analysis.get("confidence", 0.0)
                 if isinstance(ai_findings, list) and isinstance(result.get("findings"), list):
-                    cast("list[str]", result["findings"]).extend(ai_findings)
+                    validate_type(result["findings"], list).extend(ai_findings)
                 if isinstance(ai_recommendations, list) and isinstance(result.get("recommendations"), list):
-                    cast("list[str]", result["recommendations"]).extend(ai_recommendations)
+                    validate_type(result["recommendations"], list).extend(ai_recommendations)
                 if isinstance(ai_confidence, (int, float)) and isinstance(result.get("confidence"), (int, float)):
-                    current_conf = cast("float", result["confidence"])
+                    current_conf = get_typed_item(result, "confidence", float)
                     result["confidence"] = max(current_conf, float(ai_confidence))
                 result["ai_insights"] = ai_analysis.get("insights", [])
 
@@ -558,7 +560,7 @@ class CodeAnalyzer:
             # Perform vulnerability analysis
             vuln_analysis = self._analyze_assembly_vulnerabilities(assembly_code)
             if isinstance(vuln_analysis, list) and isinstance(result.get("vulnerabilities"), list):
-                cast("list[str]", result["vulnerabilities"]).extend(vuln_analysis)
+                validate_type(result["vulnerabilities"], list).extend(vuln_analysis)
 
             # Perform AI-enhanced analysis if available
             ai_analysis = self._perform_ai_assembly_analysis(assembly_code)
@@ -567,11 +569,11 @@ class CodeAnalyzer:
                 ai_vulnerabilities = ai_analysis.get("vulnerabilities", [])
                 ai_recommendations = ai_analysis.get("recommendations", [])
                 if isinstance(ai_patterns, list) and isinstance(result.get("patterns"), list):
-                    cast("list[str]", result["patterns"]).extend(ai_patterns)
+                    validate_type(result["patterns"], list).extend(ai_patterns)
                 if isinstance(ai_vulnerabilities, list) and isinstance(result.get("vulnerabilities"), list):
-                    cast("list[str]", result["vulnerabilities"]).extend(ai_vulnerabilities)
+                    validate_type(result["vulnerabilities"], list).extend(ai_vulnerabilities)
                 if isinstance(ai_recommendations, list) and isinstance(result.get("recommendations"), list):
-                    cast("list[str]", result["recommendations"]).extend(ai_recommendations)
+                    validate_type(result["recommendations"], list).extend(ai_recommendations)
                 result["ai_insights"] = ai_analysis.get("insights", [])
 
             # Calculate confidence based on analysis depth

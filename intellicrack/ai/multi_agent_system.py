@@ -35,6 +35,7 @@ from enum import Enum
 from queue import Empty, PriorityQueue, Queue
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from ..utils.logger import get_logger
 from .learning_engine import get_learning_engine
 from .llm_backends import LLMManager
@@ -1698,7 +1699,7 @@ class StaticAnalysisAgent(BaseAgent):
 
         vulnerabilities = []
 
-        for child in ast.walk(cast("ast.AST", node)):
+        for child in ast.walk(validate_type(node, ast.AST)):
             if isinstance(child, ast.Call):
                 if hasattr(child.func, "id"):
                     func_name = child.func.id
@@ -2620,9 +2621,9 @@ class DynamicAnalysisAgent(BaseAgent):
 
             def on_message(message: Any, data: Any) -> None:
                 if isinstance(message, dict) and message.get("type") == "send" and isinstance(message.get("payload"), dict):
-                    payload = cast("dict[str, Any]", message["payload"])
-                    if payload.get("type") == "api_call" and isinstance(payload.get("data"), dict):
-                        payload_data = cast("dict[str, Any]", payload["data"])
+                    payload = validate_type(message["payload"], dict)
+                    if "data" in payload:
+                        payload_data = validate_type(payload["data"], dict)
                         api_calls.append({
                             "function": payload_data.get("function", "unknown"),
                             "args": payload_data.get("args", ""),

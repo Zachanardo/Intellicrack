@@ -136,7 +136,8 @@ class ThemeManager:
             # Get the stylesheet content
             stylesheet_content = self._get_theme_stylesheet()
 
-            if app := QApplication.instance():
+            app = QApplication.instance()
+            if isinstance(app, QApplication):
                 app.setStyleSheet(stylesheet_content)
                 logger.info("Applied %s theme successfully", self.current_theme)
             else:
@@ -988,7 +989,8 @@ QPushButton#resetButton:pressed {
         theme loading fails or when no QApplication instance is available.
         """
         try:
-            if app := QApplication.instance():
+            app = QApplication.instance()
+            if isinstance(app, QApplication):
                 app.setStyleSheet(self._get_builtin_dark_stylesheet())
                 logger.info("Applied built-in dark theme as fallback")
         except Exception as e:

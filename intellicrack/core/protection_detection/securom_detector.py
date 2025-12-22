@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.utils.logger import get_logger
 
 
@@ -282,8 +283,10 @@ class SecuROMDetector:
         """
 
         try:
-            return cast(object, yara.compile(source=rules_source))
-        except Exception:
+            logger.debug("Compiling SecuROM YARA rules...")
+            return validate_type(yara.compile(source=rules_source), object)
+        except Exception as e:
+            logger.error("Failed to compile SecuROM YARA rules: %s", e)
             return None
 
     def detect(self, target_path: Path) -> SecuROMDetection:

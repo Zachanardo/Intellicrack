@@ -18,6 +18,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import validate_type
 import lz4.frame
 import msgpack
 
@@ -656,7 +657,7 @@ class GhidraProjectManager:
         serialized = msgpack.packb(data, use_bin_type=True)
 
         compressed = lz4.frame.compress(serialized, compression_level=lz4.frame.COMPRESSIONLEVEL_MAX)
-        return cast(bytes, compressed)
+        return validate_type(compressed, bytes)
 
     def _decompress_analysis(self, compressed_data: bytes) -> GhidraAnalysisResult:
         """Decompress analysis result from storage."""
@@ -665,7 +666,7 @@ class GhidraProjectManager:
 
         # Deserialize
         unpacked_data = msgpack.unpackb(decompressed, raw=False)
-        data = cast(dict[str, Any], unpacked_data)
+        data = validate_type(unpacked_data, dict)
 
         functions = {int(addr): GhidraFunction(**func_data) for addr, func_data in data["functions"].items()}
         data_types = {name: GhidraDataType(**dt_data) for name, dt_data in data["data_types"].items()}

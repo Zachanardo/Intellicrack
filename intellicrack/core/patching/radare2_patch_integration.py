@@ -38,9 +38,9 @@ class R2PatchIntegrator:
 
     def __init__(self) -> None:
         """Initialize the R2 patch integrator."""
-        self.bypass_generator = R2BypassGenerator()
+        self.bypass_generator: R2BypassGenerator | None = None
         self.binary_patcher = BinaryPatcherPlugin()
-        self.patch_cache = {}
+        self.patch_cache: dict[str, list[BinaryPatch]] = {}
 
     def generate_integrated_patches(self, binary_path: str, license_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate patches using R2 bypass generator and convert to binary patches.
@@ -93,11 +93,15 @@ class R2PatchIntegrator:
     def _generate_r2_bypass_patches(self, binary_path: str, license_analysis: dict[str, Any]) -> dict[str, Any]:
         """Generate bypass patches using the enhanced R2 bypass generator."""
         try:
+            generator = self.bypass_generator or R2BypassGenerator(binary_path)
+            if generator is not self.bypass_generator:
+                self.bypass_generator = generator
+
             # Use the existing R2 bypass generator with enhanced patch instructions
-            with self.bypass_generator._get_r2_session(binary_path) as r2:
+            with generator._get_r2_session(binary_path) as r2:
                 return {
-                    "automated_patches": self.bypass_generator._generate_automated_patches(r2, license_analysis),
-                    "memory_patches": self.bypass_generator._generate_memory_patches(r2, license_analysis),
+                    "automated_patches": generator._generate_automated_patches(r2, license_analysis),
+                    "memory_patches": generator._generate_memory_patches(r2, license_analysis),
                 }
         except Exception as e:
             logger.exception("Error generating R2 bypass patches: %s", e)

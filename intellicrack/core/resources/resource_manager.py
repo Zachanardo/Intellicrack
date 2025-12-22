@@ -23,6 +23,8 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, ParamSpec, cast
 
+from intellicrack.utils.type_safety import validate_type
+
 if TYPE_CHECKING:
     from subprocess import Popen as PopenGeneric
 else:
@@ -1076,7 +1078,7 @@ class FallbackHandler:
         """
         if tool_name in self.fallback_registry:
             try:
-                fallback_func: Callable[..., object | None] = cast("Callable[..., object | None]", self.fallback_registry[tool_name])
+                fallback_func = validate_type(self.fallback_registry[tool_name], Any)
                 return fallback_func(*args, **kwargs)
             except Exception as e:
                 logger.exception("Fallback for %s failed: %s", tool_name, e)
@@ -1212,7 +1214,7 @@ class FallbackHandler:
                     raise ImportError("pyelftools not available")
 
                 with open(binary_path, "rb") as f:
-                    elf_file: Any = cast(Any, ELFFile)(f)
+                    elf_file: Any = validate_type(ELFFile, Any)(f)
 
                     if "-h" in (options or []):
                         result.extend((
@@ -1254,7 +1256,7 @@ class FallbackHandler:
 
             result: list[str] = []
             with open(binary_path, "rb") as f:
-                elf_file: Any = cast(Any, ELFFile)(f)
+                elf_file: Any = validate_type(ELFFile, Any)(f)
 
                 if "-h" in (options or []):
                     # ELF header

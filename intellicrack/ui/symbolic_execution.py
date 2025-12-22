@@ -22,6 +22,7 @@ import os
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
     QDialog,
@@ -577,7 +578,7 @@ class SymbolicExecution:
                     if hasattr(path, "constraints"):
                         for constraint in path.constraints:
                             if self._check_buffer_overflow_constraint(constraint):
-                                vuln_list = cast(list[dict[str, Any]], results["vulnerabilities"])
+                                vuln_list = validate_type(results["vulnerabilities"], list)
                                 vuln_list.append({
                                     "type": "buffer_overflow",
                                     "description": "Potential buffer overflow detected",
@@ -587,7 +588,7 @@ class SymbolicExecution:
                                 })
 
                             if self._check_integer_overflow_constraint(constraint):
-                                vuln_list = cast(list[dict[str, Any]], results["vulnerabilities"])
+                                vuln_list = validate_type(results["vulnerabilities"], list)
                                 vuln_list.append({
                                     "type": "integer_overflow",
                                     "description": "Potential integer overflow detected",
@@ -603,7 +604,7 @@ class SymbolicExecution:
                             if access.type == "free":
                                 freed_addrs.add(access.addr)
                             elif access.type in ["read", "write"] and access.addr in freed_addrs:
-                                vuln_list = cast(list[dict[str, Any]], results["vulnerabilities"])
+                                vuln_list = validate_type(results["vulnerabilities"], list)
                                 vuln_list.append({
                                     "type": "use_after_free",
                                     "description": f"Use-after-free detected at address 0x{access.addr:x}",
@@ -615,7 +616,7 @@ class SymbolicExecution:
                     if hasattr(path, "memory_accesses"):
                         for access in path.memory_accesses:
                             if access.addr == 0 or (access.addr < 0x1000 and access.type in ["read", "write"]):
-                                vuln_list = cast(list[dict[str, Any]], results["vulnerabilities"])
+                                vuln_list = validate_type(results["vulnerabilities"], list)
                                 vuln_list.append({
                                     "type": "null_pointer_dereference",
                                     "description": "Null pointer dereference detected",
@@ -624,8 +625,8 @@ class SymbolicExecution:
                                     "address": f"0x{access.addr:x}",
                                 })
 
-            paths_explored = cast(int, results["paths_explored"])
-            vulnerabilities = cast(list[Any], results["vulnerabilities"])
+            paths_explored = get_typed_item(results, "paths_explored", int)
+            vulnerabilities = validate_type(results["vulnerabilities"], list)
             if paths_explored > 0 and not vulnerabilities and hasattr(app, "update_output"):
                 app.update_output.emit(f"[SYMBOLIC] Analysis complete: {paths_explored} paths explored, no vulnerabilities found")
 
@@ -669,7 +670,7 @@ class SymbolicExecution:
 
                 # Display vulnerability details
                 if isinstance(vulnerabilities, list):
-                    for i, vuln in enumerate(cast(list[dict[str, Any]], vulnerabilities)[:5]):
+                    for i, vuln in enumerate(validate_type(vulnerabilities, list)[:5]):
                         vuln_type = vuln.get("type", "unknown")
                         severity = vuln.get("severity", "unknown")
                         description = vuln.get("description", "No description")

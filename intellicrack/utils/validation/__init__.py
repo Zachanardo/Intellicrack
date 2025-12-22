@@ -29,7 +29,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 # Import validation modules
 ImportValidator: type | None
-validate_imports: Callable[..., bool] | None
+validate_imports: Callable[[str], tuple[bool, list[str]]] | None
 
 try:
     from .import_validator import ImportValidator, validate_imports

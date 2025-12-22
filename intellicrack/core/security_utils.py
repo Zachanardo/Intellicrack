@@ -23,6 +23,7 @@ import json
 import logging
 import shlex
 import subprocess
+from typing import Any
 
 import yaml
 
@@ -72,7 +73,7 @@ def secure_hash(data: str | bytes, algorithm: str = "sha256") -> str:
 
 @log_function_call
 def secure_subprocess(
-    command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs: object
+    command: str | list[str], shell: bool = False, timeout: int | None = 30, **kwargs: Any
 ) -> subprocess.CompletedProcess[str]:
     """Execute a subprocess command securely.
 

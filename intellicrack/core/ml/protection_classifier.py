@@ -92,8 +92,8 @@ class ProtectionClassifier:
 
     def train(
         self,
-        X: NDArray[np.float64],
-        y: NDArray[np.object_],
+        X: NDArray[np.floating[Any]],
+        y: NDArray[Any],
         test_size: float = 0.2,
         n_estimators: int = 200,
         random_state: int = 42,

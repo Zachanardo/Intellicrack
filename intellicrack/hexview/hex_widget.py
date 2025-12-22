@@ -323,8 +323,8 @@ class HexViewerWidget(QAbstractScrollArea):
         self.editing_offset = -1
         self.highlighter.clear_highlights()
 
-        self.search_engine = SearchEngine(self.file_handler)
-        self.performance_monitor.set_file_handler(self.file_handler)
+        self.search_engine = SearchEngine(new_handler)
+        self.performance_monitor.set_file_handler(new_handler)
         self.update_scrollbars()
 
         logger.debug("Forcing viewport update")

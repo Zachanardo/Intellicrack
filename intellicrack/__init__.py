@@ -59,7 +59,7 @@ _gil_safety_initialized: bool = False
 
 def _initialize_gil_safety() -> None:
     """Initialize GIL safety measures lazily."""
-    global _gil_safety_initialized  # type: ignore[PLW0603]
+    global _gil_safety_initialized
     if not _gil_safety_initialized:
         try:
             from .utils.torch_gil_safety import initialize_gil_safety
@@ -118,7 +118,7 @@ def _initialize_gpu_with_timeout(timeout_seconds: int = 5) -> str:
     """
     import threading
 
-    global _default_device, _gpu_initialized  # type: ignore[PLW0603]
+    global _default_device, _gpu_initialized
     if _gpu_initialized:
         return _default_device
 

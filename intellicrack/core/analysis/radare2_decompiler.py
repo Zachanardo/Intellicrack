@@ -23,7 +23,7 @@ import logging
 import re
 from typing import Any
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import R2Exception, R2Session, R2SessionPoolAdapter, r2_session
 
 
 logger = logging.getLogger(__name__)
@@ -160,7 +160,7 @@ class R2DecompilationEngine:
 
         return results
 
-    def _extract_variables(self, r2: R2Session, address: int) -> list[dict[str, Any]]:
+    def _extract_variables(self, r2: R2Session | R2SessionPoolAdapter, address: int) -> list[dict[str, Any]]:
         """Extract function variables and their types."""
         variables: list[dict[str, Any]] = []
 
@@ -410,7 +410,7 @@ class R2DecompilationEngine:
 
         return api_calls
 
-    def _get_string_references(self, r2: R2Session, address: int) -> list[dict[str, Any]]:
+    def _get_string_references(self, r2: R2Session | R2SessionPoolAdapter, address: int) -> list[dict[str, Any]]:
         """Get string references used by the function."""
         strings = []
 

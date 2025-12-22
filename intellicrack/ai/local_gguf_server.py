@@ -749,7 +749,7 @@ class LocalGGUFServer:
                 f"http://{self.host}:{self.port}/health",
                 timeout=5,
             )
-            return response.status_code == 200
+            return bool(response.status_code == 200)
         except Exception as e:
             self.logger.exception("Exception in local_gguf_server: %s", e)
             return False
@@ -771,7 +771,7 @@ class LocalGGUFServer:
                 f"{self.get_server_url()}/health",
                 timeout=2,
             )
-            return response.status_code == 200
+            return bool(response.status_code == 200)
         except Exception as e:
             self.logger.exception("Exception in local_gguf_server: %s", e)
             return False

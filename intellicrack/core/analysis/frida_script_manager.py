@@ -25,7 +25,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import frida
 
@@ -426,8 +426,8 @@ class FridaScriptManager:
             script = session.create_script(script_content)
 
             # Set up message handler
-            def on_message(message: dict[str, Any], data: bytes | None) -> None:
-                self._handle_message(result, message, data, output_callback)
+            def on_message(message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None) -> None:
+                self._handle_message(result, cast(dict[str, Any], message), data, output_callback)
 
             script.on("message", on_message)
             script.load()

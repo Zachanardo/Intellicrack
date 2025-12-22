@@ -27,9 +27,12 @@ import types
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, TYPE_CHECKING, cast
 
+if TYPE_CHECKING:
+    import frida.core
 
+from intellicrack.utils.type_safety import validate_type
 try:
     import frida
 except ImportError:
@@ -134,11 +137,14 @@ class StalkerSession:
         """Log message via callback."""
         self.message_callback(f"[StalkerSession] {message}")
 
-    def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
+    def _on_message(
+        self, message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage, data: bytes | None
+    ) -> None:
         """Handle messages from Frida script."""
+        message_dict = cast(dict[str, Any], message)
         try:
-            if message.get("type") == "send":
-                payload = message.get("payload", {})
+            if message_dict.get("type") == "send":
+                payload = cast(dict[str, Any], message_dict.get("payload", {}))
                 msg_type = payload.get("type", "unknown")
 
                 if msg_type == "status":
@@ -170,8 +176,8 @@ class StalkerSession:
                 elif msg_type == "error":
                     self._log(f"Error: {payload.get('message', 'Unknown error')}")
 
-            elif message.get("type") == "error":
-                stack = message.get("stack", "No stack trace")
+            elif message_dict.get("type") == "error":
+                stack = message_dict.get("stack", "No stack trace")
                 self._log(f"Script Error: {stack}")
 
         except Exception as e:
@@ -315,7 +321,7 @@ class StalkerSession:
             self._log(f"Attached to PID {self.pid}")
 
             self.script = self.session.create_script(script_source)
-            self.script.on("message", cast(Any, self._on_message))
+            self.script.on("message", self._on_message)
             self.script.load()
 
             self.device.resume(self.pid)

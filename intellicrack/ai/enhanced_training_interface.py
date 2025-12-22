@@ -25,7 +25,9 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, cast
+
+from intellicrack.utils.type_safety import validate_type
 
 
 logger = logging.getLogger(__name__)
@@ -144,13 +146,12 @@ except ImportError as e:
             self._plots: list[Any] = []
 
             self.figure = Figure(figsize=(8, 6), dpi=100)
-            from typing import cast
 
             from intellicrack.handlers.matplotlib_handler import FigureCanvasQTAgg
 
             if FigureCanvasQTAgg is not None and callable(FigureCanvasQTAgg):
                 canvas_raw: Any = FigureCanvasQTAgg(self.figure)
-                self.canvas: QWidget = cast(QWidget, canvas_raw)
+                self.canvas: QWidget = validate_type(canvas_raw, QWidget)
             else:
                 self.canvas = QWidget()
             self.ax = self.figure.add_subplot(111)
@@ -371,8 +372,9 @@ class TrainingThread(QThread):
                 if self.should_stop:
                     break
 
-                while self.paused:
-                    time.sleep(0.1)
+                if self.paused:
+                    while self.paused and not self.should_stop:
+                        time.sleep(0.1)
                     if self.should_stop:
                         break
 
@@ -534,7 +536,7 @@ class TrainingThread(QThread):
             for sample_idx, sample in enumerate(batch_data):
                 try:
                     features: list[float] | None = None
-                    label: int | None = None
+                    label: int = 0
 
                     if isinstance(sample, dict):
                         features_raw = sample.get("features", sample.get("data", []))
@@ -554,8 +556,6 @@ class TrainingThread(QThread):
 
                     if features is None:
                         features = [0.0]
-                    if label is None:
-                        label = 0
 
                     prediction = self._forward_pass(features, epoch)
 
@@ -602,7 +602,7 @@ class TrainingThread(QThread):
             for sample in validation_data:
                 try:
                     features: list[float] | None = None
-                    label: int | None = None
+                    label: int = 0
 
                     if isinstance(sample, dict):
                         features_raw = sample.get("features", sample.get("data", []))
@@ -622,8 +622,6 @@ class TrainingThread(QThread):
 
                     if features is None:
                         features = [0.0]
-                    if label is None:
-                        label = 0
 
                     prediction = self._forward_pass(features, validation=True)
 
@@ -1184,12 +1182,10 @@ class TrainingVisualizationWidget(QWidget):
         self.accuracy_plot.setLabel("bottom", "Epoch")
         self.accuracy_plot.showGrid(x=True, y=True)
 
-        from typing import cast
-
         layout.addWidget(QLabel("Loss Over Time"))
-        layout.addWidget(cast(QWidget, self.loss_plot))
+        layout.addWidget(validate_type(self.loss_plot, QWidget))
         layout.addWidget(QLabel("Accuracy Over Time"))
-        layout.addWidget(cast(QWidget, self.accuracy_plot))
+        layout.addWidget(validate_type(self.accuracy_plot, QWidget))
 
         self.setLayout(layout)
 
@@ -1300,10 +1296,10 @@ class DatasetAnalysisWidget(QWidget):
         from typing import cast
 
         analysis_layout.addWidget(self.stats_text)
-        analysis_layout.addWidget(cast(QWidget, self.distribution_plot))
+        analysis_layout.addWidget(validate_type(self.distribution_plot, QWidget))
 
         if hasattr(self, "matplotlib_canvas") and self.matplotlib_canvas:
-            analysis_layout.addWidget(cast(QWidget, self.matplotlib_canvas))
+            analysis_layout.addWidget(validate_type(self.matplotlib_canvas, QWidget))
         analysis_group.setLayout(analysis_layout)
 
         preprocess_group = QGroupBox("Preprocessing Options")
@@ -1594,7 +1590,7 @@ class HyperparameterOptimizationWidget(QWidget):
         results_layout.addWidget(QLabel("Best Parameters:"))
         results_layout.addWidget(self.best_params_text)
         results_layout.addWidget(QLabel("Optimization Progress:"))
-        results_layout.addWidget(cast(QWidget, self.progress_plot))
+        results_layout.addWidget(validate_type(self.progress_plot, QWidget))
         results_group.setLayout(results_layout)
 
         layout.addWidget(params_group)

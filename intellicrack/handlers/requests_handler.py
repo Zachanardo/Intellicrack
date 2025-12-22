@@ -28,6 +28,7 @@ from collections.abc import Callable, Generator, Iterable, Mapping, MutableMappi
 from http.cookiejar import CookieJar
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.utils.logger import logger
 
 
@@ -594,9 +595,9 @@ except ImportError as e:
         data = kwargs.get("data")
         json_data = kwargs.get("json")
         headers_arg = kwargs.get("headers", {})
-        headers: dict[str, Any] = cast("dict[str, Any]", headers_arg if isinstance(headers_arg, dict) else {})
+        headers: dict[str, Any] = validate_type(headers_arg, dict) if isinstance(headers_arg, dict) else {}
         cookies_arg = kwargs.get("cookies")
-        cookies: dict[str, str] | None = cast("dict[str, str] | None", cookies_arg if isinstance(cookies_arg, dict) else None)
+        cookies: dict[str, str] | None = validate_type(cookies_arg, dict) if isinstance(cookies_arg, dict) else None
         auth = kwargs.get("auth")
         timeout_arg = kwargs.get("timeout", 30)
         timeout: float = float(timeout_arg) if isinstance(timeout_arg, (int, float)) else 30.0
@@ -609,7 +610,7 @@ except ImportError as e:
         if params:
             parsed = urllib.parse.urlparse(url)
             query = urllib.parse.parse_qs(parsed.query)
-            params_dict = cast("dict[str, Any]", params if isinstance(params, dict) else {})
+            params_dict = validate_type(params, dict) if isinstance(params, dict) else {}
             for k, v in params_dict.items():
                 query[k] = [str(x) for x in v] if isinstance(v, list) else [str(v)]
             query_string = urllib.parse.urlencode(query, doseq=True)
@@ -617,14 +618,14 @@ except ImportError as e:
 
         req_headers = _FallbackCaseInsensitiveDict()
         if session and hasattr(session, "headers"):
-            session_typed = cast("_FallbackSession", session)
+            session_typed = validate_type(session, _FallbackSession)
             for k, v in session_typed.headers.items():
                 req_headers[k] = v
         for k, v in headers.items():
             req_headers[k] = v
 
         if session and hasattr(session, "cookies"):
-            session_typed = cast("_FallbackSession", session)
+            session_typed = validate_type(session, _FallbackSession)
             if cookie_header := "; ".join(f"{k}={v}" for k, v in session_typed.cookies.items()):
                 req_headers["Cookie"] = cookie_header
         if cookies:
@@ -696,7 +697,7 @@ except ImportError as e:
                         if len(parts) == 2:
                             resp.cookies[parts[0]] = parts[1]
                             if session:
-                                session_typed = cast("_FallbackSession", session)
+                                session_typed = validate_type(session, _FallbackSession)
                                 session_typed.cookies[parts[0]] = parts[1]
 
                 return resp

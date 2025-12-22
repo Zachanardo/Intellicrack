@@ -150,7 +150,7 @@ class CertificateExtractor:
             return False
 
         cert_entry = self.pe.OPTIONAL_HEADER.DATA_DIRECTORY[4]
-        return cert_entry.VirtualAddress != 0 and cert_entry.Size != 0
+        return bool(cert_entry.VirtualAddress != 0 and cert_entry.Size != 0)
 
     def _extract_certificate_data(self) -> bytes | None:
         """Extract raw certificate data from PE file."""

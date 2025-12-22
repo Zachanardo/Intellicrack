@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections.abc import ItemsView
 from typing import TYPE_CHECKING, Any, cast
 
+from intellicrack.utils.type_safety import validate_type
 from intellicrack.ai.interactive_assistant import IntellicrackAIAssistant
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
@@ -673,7 +674,7 @@ class AIAssistantTab(BaseTab):
                 from intellicrack.models.model_manager import ModelManager
 
                 config_manager = get_config()
-                config_items_view = cast(ItemsView[str, Any], config_manager.items())
+                config_items_view = validate_type(config_manager.items(), ItemsView)
                 config_items = list(config_items_view)
                 config_dict: dict[str, Any] = dict(config_items)
                 model_manager = ModelManager(config_dict)
@@ -728,7 +729,7 @@ class AIAssistantTab(BaseTab):
                 from intellicrack.models.model_manager import ModelManager
 
                 config_manager = get_config()
-                config_items_view = cast(ItemsView[str, Any], config_manager.items())
+                config_items_view = validate_type(config_manager.items(), ItemsView)
                 config_items = list(config_items_view)
                 config_dict: dict[str, Any] = dict(config_items)
                 model_manager = ModelManager(config_dict)

@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.tensorflow_handler import HAS_TENSORFLOW
@@ -81,7 +81,7 @@ keras: Any = None
 try:
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import tensorflow as _tf
+    from intellicrack.handlers.tensorflow_handler import tf as _tf
 
     tf = _tf
     keras = tf.keras
@@ -2052,9 +2052,16 @@ Interceptor.attach(IsDebuggerPresent, {
             elif model_type.lower() == "tensorflow":
                 # TensorFlow/Keras training implementation
                 try:
-                    from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+                    from types import ModuleType
 
-                    keras = tf.keras
+                    from intellicrack.handlers.tensorflow_handler import ensure_tensorflow_loaded, tf as tensorflow_module
+
+                    ensure_tensorflow_loaded()
+                    if not isinstance(tensorflow_module, ModuleType):
+                        logger.error("TensorFlow not available after initialization")
+                        return False
+
+                    keras = cast(ModuleType, tensorflow_module.keras)
                     from tensorflow.keras import layers
 
                     logger.info("Starting TensorFlow model training")

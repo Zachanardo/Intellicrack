@@ -18,7 +18,7 @@ import subprocess
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from intellicrack.handlers.pyqt6_handler import (
     PYQT6_AVAILABLE,
@@ -234,8 +234,11 @@ class AdobeInjectorProcess:
             self.hwnd = None
 
 
-# Determine base class based on PyQt6 availability
-BaseWidget = QWidget if PYQT6_AVAILABLE else object
+if TYPE_CHECKING:
+    BaseWidget = QWidget
+else:
+    # Determine base class based on PyQt6 availability
+    BaseWidget = QWidget if PYQT6_AVAILABLE else object
 
 
 class AdobeInjectorWidget(BaseWidget):
