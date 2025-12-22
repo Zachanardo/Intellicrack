@@ -42,7 +42,7 @@ black==25.12.0
 blinker==1.9.0
 bokeh==3.8.1
 boolean_py==5.0
-boto3==1.41.5
+boto3==1.42.14
 botocore==1.41.5
 build==1.3.0
 bump2version==1.0.1
