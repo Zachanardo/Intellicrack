@@ -101,7 +101,7 @@ dparse==0.6.4
 dpcpp_cpp_rt==2025.2.1
 dpctl==0.20.2
 dpkt==1.9.8
-dulwich==0.24.10
+dulwich==0.25.0
 enum_compat==0.0.3
 execnet==2.1.2
 executing==2.2.1
