@@ -19,11 +19,12 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import Any
 
 
 _init_logger = logging.getLogger(__name__)
 
-_lazy_imports = {}
+_lazy_imports: dict[str, Any] = {}
 
 _MOD_BINARY_UTILS = "binary.binary_utils"
 _MOD_PATCHING_UTILS = "patching.patch_utils"

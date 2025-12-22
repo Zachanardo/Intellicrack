@@ -39,6 +39,7 @@ import time
 import traceback
 import uuid
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any
@@ -277,7 +278,8 @@ class DistributedAnalysisManager:
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.settimeout(0.1)
             s.connect(("8.8.8.8", 80))
-            ip_address = s.getsockname()[0]
+            sockname = s.getsockname()
+            ip_address = str(sockname[0]) if isinstance(sockname, tuple) else "127.0.0.1"
             s.close()
             return ip_address
         except OSError:
@@ -380,7 +382,7 @@ class DistributedAnalysisManager:
                     self.logger.exception("Error accepting connection: %s", e)
                 break
 
-    def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple) -> None:
+    def _handle_client_connection(self, client_socket: socket.socket, client_address: tuple[str, int]) -> None:
         """Handle communication with a connected worker node."""
         node_id = None
         try:
@@ -392,40 +394,49 @@ class DistributedAnalysisManager:
                 msg_type = message.get("type")
 
                 if msg_type == "register":
-                    node_id = message.get("node_id")
-                    node_info = message.get("node_info")
-                    self._register_worker_node(node_id, node_info, client_socket)
-                    self._send_message(client_socket, {"type": "registered", "status": "success"})
+                    node_id_val = message.get("node_id")
+                    node_info_val = message.get("node_info")
+                    if isinstance(node_id_val, str) and isinstance(node_info_val, dict):
+                        node_id = node_id_val
+                        self._register_worker_node(node_id_val, node_info_val, client_socket)
+                        self._send_message(client_socket, {"type": "registered", "status": "success"})
 
                 elif msg_type == "heartbeat":
-                    node_id = message.get("node_id")
-                    self._update_node_heartbeat(node_id, message.get("status", {}))
-                    self._send_message(client_socket, {"type": "heartbeat_ack"})
+                    node_id_val = message.get("node_id")
+                    status_val = message.get("status", {})
+                    if isinstance(node_id_val, str) and isinstance(status_val, dict):
+                        node_id = node_id_val
+                        self._update_node_heartbeat(node_id_val, status_val)
+                        self._send_message(client_socket, {"type": "heartbeat_ack"})
 
                 elif msg_type == "task_result":
-                    task_id = message.get("task_id")
-                    result = message.get("result")
-                    self._handle_task_result(task_id, result)
-                    self._send_message(client_socket, {"type": "result_ack"})
+                    task_id_val = message.get("task_id")
+                    result_val = message.get("result")
+                    if isinstance(task_id_val, str) and isinstance(result_val, dict):
+                        self._handle_task_result(task_id_val, result_val)
+                        self._send_message(client_socket, {"type": "result_ack"})
 
                 elif msg_type == "task_failed":
-                    task_id = message.get("task_id")
-                    error = message.get("error")
-                    self._handle_task_failure(task_id, error)
-                    self._send_message(client_socket, {"type": "failure_ack"})
+                    task_id_val = message.get("task_id")
+                    error_val = message.get("error")
+                    if isinstance(task_id_val, str) and isinstance(error_val, str):
+                        self._handle_task_failure(task_id_val, error_val)
+                        self._send_message(client_socket, {"type": "failure_ack"})
 
                 elif msg_type == "request_task":
-                    node_id = message.get("node_id")
-                    if task := self._assign_task_to_node(node_id):
-                        self._send_message(
-                            client_socket,
-                            {
-                                "type": "task_assigned",
-                                "task": asdict(task),
-                            },
-                        )
-                    else:
-                        self._send_message(client_socket, {"type": "no_tasks"})
+                    node_id_val = message.get("node_id")
+                    if isinstance(node_id_val, str):
+                        node_id = node_id_val
+                        if task := self._assign_task_to_node(node_id_val):
+                            self._send_message(
+                                client_socket,
+                                {
+                                    "type": "task_assigned",
+                                    "task": asdict(task),
+                                },
+                            )
+                        else:
+                            self._send_message(client_socket, {"type": "no_tasks"})
 
         except OSError as e:
             self.logger.exception("Client connection error from %s: %s", client_address, e)
@@ -497,8 +508,9 @@ class DistributedAnalysisManager:
 
                 if response.get("type") == "task_assigned":
                     task_data = response.get("task")
-                    task = AnalysisTask(**task_data)
-                    self._execute_task_locally(task, coordinator_socket)
+                    if isinstance(task_data, dict):
+                        task = AnalysisTask(**task_data)
+                        self._execute_task_locally(task, coordinator_socket)
                 elif response.get("type") == "no_tasks":
                     time.sleep(2.0)
 
@@ -1084,10 +1096,28 @@ class DistributedAnalysisManager:
 
             cfg = proj.analyses.CFGFast()
 
+            node_count = 0
+            if hasattr(cfg, "graph") and hasattr(cfg.graph, "nodes"):
+                try:
+                    nodes_method: Callable[[], Any] = cfg.graph.nodes
+                    nodes_result = nodes_method()
+                    nodes_list: list[Any] = list(nodes_result)
+                    node_count = len(nodes_list)
+                except (TypeError, AttributeError):
+                    node_count = 0
+            elif hasattr(cfg, "model") and hasattr(cfg.model, "nodes"):
+                try:
+                    nodes_method_model: Callable[[], Any] = cfg.model.nodes
+                    nodes_result_model = nodes_method_model()
+                    nodes_list_model: list[Any] = list(nodes_result_model)
+                    node_count = len(nodes_list_model)
+                except (TypeError, AttributeError):
+                    node_count = 0
+
             return {
                 "task_type": "angr_analysis",
                 "function_count": len(cfg.functions),
-                "basic_block_count": len(list(cfg.nodes())),
+                "basic_block_count": node_count,
                 "entry_point": hex(proj.entry),
                 "architecture": proj.arch.name,
             }
@@ -1473,7 +1503,7 @@ class DistributedAnalysisManager:
             self.logger.info("Exported results to %s", output_path)
             return True
 
-        except (OSError, json.JSONEncodeError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             self.logger.exception("Failed to export results: %s", e)
             return False
 

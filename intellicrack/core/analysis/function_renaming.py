@@ -399,7 +399,7 @@ class FunctionRenamingEngine:
                     scores[func_type] += 15.0
                     evidence[func_type].append(f"Import '{import_name}' detected")
 
-        best_type = max(scores, key=scores.get)
+        best_type = max(scores, key=lambda k: scores[k])
         confidence = min(scores[best_type] / 100.0, 1.0)
 
         if confidence < 0.2:
@@ -584,7 +584,7 @@ class FunctionRenamingEngine:
 
     def _generate_radare2_script(self, results: list[FunctionRenameResult]) -> str:
         """Generate radare2 script for renaming."""
-        lines = []
+        lines: list[str] = []
 
         for result in results:
             lines.extend((

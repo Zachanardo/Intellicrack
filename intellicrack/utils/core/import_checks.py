@@ -22,26 +22,34 @@ This module consolidates repeated import checking patterns
 to avoid code duplication across modules.
 """
 
+from __future__ import annotations
+
 import logging
 import platform
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from types import ModuleType
 
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Binary analysis libraries
 try:
-    from intellicrack.handlers.pefile_handler import pefile
+    from intellicrack.handlers.pefile_handler import pefile as _pefile_import
 
-    PEFILE_AVAILABLE = True
+    pefile: ModuleType | None = _pefile_import
+    PEFILE_AVAILABLE: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     PEFILE_AVAILABLE = False
     pefile = None
 
 try:
-    from intellicrack.handlers.lief_handler import HAS_LIEF, lief
+    from intellicrack.handlers.lief_handler import HAS_LIEF, lief as _lief_import
 
-    LIEF_AVAILABLE = HAS_LIEF
+    lief: ModuleType | None = _lief_import
+    LIEF_AVAILABLE: bool = HAS_LIEF
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     LIEF_AVAILABLE = False
@@ -49,30 +57,33 @@ except ImportError as e:
     lief = None
 
 try:
-    from intellicrack.handlers.capstone_handler import capstone
+    from intellicrack.handlers.capstone_handler import capstone as _capstone_import
 
-    CAPSTONE_AVAILABLE = True
+    capstone: ModuleType | None = _capstone_import
+    CAPSTONE_AVAILABLE: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     CAPSTONE_AVAILABLE = False
     capstone = None
 
 try:
-    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, elffile
+    from intellicrack.handlers.pyelftools_handler import ELFFile as _ELFFile_import
+    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS
 
-    PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
+    ELFFile: type[Any] | None = _ELFFile_import
+    PYELFTOOLS_AVAILABLE: bool = HAS_PYELFTOOLS
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     PYELFTOOLS_AVAILABLE = False
     HAS_PYELFTOOLS = False
     ELFFile = None
-    elffile = None
 
 # System monitoring
 try:
-    from intellicrack.handlers.psutil_handler import psutil
+    from intellicrack.handlers.psutil_handler import psutil as _psutil_import
 
-    PSUTIL_AVAILABLE = True
+    psutil: ModuleType | None = _psutil_import
+    PSUTIL_AVAILABLE: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     PSUTIL_AVAILABLE = False
@@ -80,10 +91,11 @@ except ImportError as e:
 
 # Instrumentation
 try:
-    import frida
+    import frida as _frida_import
 
-    HAS_FRIDA = True
-    FRIDA_AVAILABLE = True
+    frida: ModuleType | None = _frida_import
+    HAS_FRIDA: bool = True
+    FRIDA_AVAILABLE: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     FRIDA_AVAILABLE = False
@@ -92,9 +104,11 @@ except ImportError as e:
 
 # Visualization
 try:
-    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB, plt
+    from intellicrack.handlers.matplotlib_handler import HAS_MATPLOTLIB
+    from intellicrack.handlers.matplotlib_handler import plt as _plt_import
 
-    MATPLOTLIB_AVAILABLE = HAS_MATPLOTLIB
+    plt: ModuleType | None = _plt_import
+    MATPLOTLIB_AVAILABLE: bool = HAS_MATPLOTLIB
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     MATPLOTLIB_AVAILABLE = False
@@ -103,9 +117,10 @@ except ImportError as e:
 
 # PDF generation
 try:
-    from intellicrack.handlers.pdfkit_handler import pdfkit
+    from intellicrack.handlers.pdfkit_handler import pdfkit as _pdfkit_import
 
-    PDFKIT_AVAILABLE = True
+    pdfkit: ModuleType | None = _pdfkit_import
+    PDFKIT_AVAILABLE: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     PDFKIT_AVAILABLE = False
@@ -122,11 +137,13 @@ try:
     # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import tensorflow as tf
+    from intellicrack.handlers.tensorflow_handler import tf as _tf_import
 
+    tf: Any = _tf_import
     # Disable GPU for TensorFlow to prevent Intel Arc B580 compatibility issues
-    tf.config.set_visible_devices([], "GPU")
-    TENSORFLOW_AVAILABLE = True
+    if hasattr(tf, "config") and hasattr(tf.config, "set_visible_devices"):
+        tf.config.set_visible_devices([], "GPU")
+    TENSORFLOW_AVAILABLE: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     TENSORFLOW_AVAILABLE = False
@@ -137,17 +154,18 @@ try:
     import PyQt6
 
     _ = PyQt6.__name__  # Verify PyQt6 is properly imported and available
-    HAS_PYQT = True
+    HAS_PYQT: bool = True
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     HAS_PYQT = False
 
 # Numerical computing
 try:
-    from intellicrack.handlers.numpy_handler import (
-        HAS_NUMPY,
-        numpy as np,
-    )
+    from intellicrack.handlers.numpy_handler import HAS_NUMPY as _HAS_NUMPY_import
+    from intellicrack.handlers.numpy_handler import numpy as _np_import
+
+    np: ModuleType | None = _np_import
+    HAS_NUMPY: bool = _HAS_NUMPY_import
 except ImportError as e:
     logger.exception("Import error in import_checks: %s", e)
     HAS_NUMPY = False
@@ -156,9 +174,10 @@ except ImportError as e:
 # Windows-specific modules
 try:
     if platform.system() == "Windows":
-        import winreg
+        import winreg as _winreg_import
 
-        WINREG_AVAILABLE = True
+        winreg: ModuleType | None = _winreg_import
+        WINREG_AVAILABLE: bool = True
     else:
         WINREG_AVAILABLE = False
         winreg = None

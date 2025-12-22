@@ -22,8 +22,10 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from typing import Any, BinaryIO
 
 from ..utils.logger import get_logger
 
@@ -70,11 +72,11 @@ class BinaryComparer:
             block_size: Size of blocks to read for comparison
 
         """
-        self.block_size = block_size
-        self.differences = []
-        self.progress_callback = None
+        self.block_size: int = block_size
+        self.differences: list[DifferenceBlock] = []
+        self.progress_callback: Callable[[int, int], None] | None = None
 
-    def set_progress_callback(self, callback: object) -> None:
+    def set_progress_callback(self, callback: Callable[[int, int], None]) -> None:
         """Set callback for progress updates.
 
         Args:
@@ -127,7 +129,7 @@ class BinaryComparer:
 
         return self.differences
 
-    def _compare_streams(self, f1: object, f2: object, size1: int, size2: int) -> None:
+    def _compare_streams(self, f1: BinaryIO, f2: BinaryIO, size1: int, size2: int) -> None:
         """Compare two file streams block by block.
 
         Args:
@@ -137,17 +139,17 @@ class BinaryComparer:
             size2: Size of second file
 
         """
-        offset = 0
-        max_size = max(size1, size2)
-        total_blocks = (max_size + self.block_size - 1) // self.block_size
-        current_block = 0
+        offset: int = 0
+        max_size: int = max(size1, size2)
+        total_blocks: int = (max_size + self.block_size - 1) // self.block_size
+        current_block: int = 0
 
-        current_diff = None
+        current_diff: DifferenceBlock | None = None
 
         while offset < max_size:
             # Read blocks
-            block1 = f1.read(self.block_size) if offset < size1 else b""
-            block2 = f2.read(self.block_size) if offset < size2 else b""
+            block1: bytes = f1.read(self.block_size) if offset < size1 else b""
+            block2: bytes = f2.read(self.block_size) if offset < size2 else b""
 
             # Compare blocks
             if block1 == block2:
@@ -156,7 +158,7 @@ class BinaryComparer:
                     self.differences.append(current_diff)
                     current_diff = None
             # Blocks differ
-            elif current_diff:
+            elif current_diff is not None:
                 # Extend existing difference
                 if block1:
                     current_diff.length1 += len(block1)
@@ -164,7 +166,7 @@ class BinaryComparer:
                     current_diff.length2 += len(block2)
             else:
                 # Start new difference
-                diff_type = self._determine_diff_type(block1, block2)
+                diff_type: DifferenceType = self._determine_diff_type(block1, block2)
                 current_diff = DifferenceBlock(
                     offset1=offset,
                     offset2=offset,
@@ -213,8 +215,9 @@ class BinaryComparer:
             return
 
         # Build LCS table
-        m, n = len(data1), len(data2)
-        lcs = [[0] * (n + 1) for _ in range(m + 1)]
+        m: int = len(data1)
+        n: int = len(data2)
+        lcs: list[list[int]] = [[0] * (n + 1) for _ in range(m + 1)]
 
         for i in range(1, m + 1):
             for j in range(1, n + 1):
@@ -234,17 +237,17 @@ class BinaryComparer:
             data2: Second data
 
         """
-        i = 0
-        j = 0
-        current_diff = None
+        i: int = 0
+        j: int = 0
+        current_diff: DifferenceBlock | None = None
 
         while i < len(data1) or j < len(data2):
             if i >= len(data1):
                 # Rest of data2 is inserted
-                if current_diff and current_diff.diff_type == DifferenceType.INSERTED:
+                if current_diff is not None and current_diff.diff_type == DifferenceType.INSERTED:
                     current_diff.length2 += len(data2) - j
                 else:
-                    if current_diff:
+                    if current_diff is not None:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
                         offset1=i,
@@ -257,10 +260,10 @@ class BinaryComparer:
 
             if j >= len(data2):
                 # Rest of data1 is deleted
-                if current_diff and current_diff.diff_type == DifferenceType.DELETED:
+                if current_diff is not None and current_diff.diff_type == DifferenceType.DELETED:
                     current_diff.length1 += len(data1) - i
                 else:
-                    if current_diff:
+                    if current_diff is not None:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
                         offset1=i,
@@ -273,16 +276,16 @@ class BinaryComparer:
 
             if data1[i] == data2[j]:
                 # Bytes match
-                if current_diff:
+                if current_diff is not None:
                     self.differences.append(current_diff)
                     current_diff = None
             else:
                 # Bytes differ
-                if current_diff and current_diff.diff_type == DifferenceType.MODIFIED:
+                if current_diff is not None and current_diff.diff_type == DifferenceType.MODIFIED:
                     current_diff.length1 += 1
                     current_diff.length2 += 1
                 else:
-                    if current_diff:
+                    if current_diff is not None:
                         self.differences.append(current_diff)
                     current_diff = DifferenceBlock(
                         offset1=i,
@@ -294,10 +297,10 @@ class BinaryComparer:
             j += 1
 
             i += 1
-        if current_diff:
+        if current_diff is not None:
             self.differences.append(current_diff)
 
-    def _trace_lcs(self, data1: bytes, data2: bytes, lcs: object) -> None:
+    def _trace_lcs(self, data1: bytes, data2: bytes, lcs: list[list[int]]) -> None:
         """Trace LCS table to find differences.
 
         Args:
@@ -306,7 +309,8 @@ class BinaryComparer:
             lcs: LCS table
 
         """
-        i, j = len(data1), len(data2)
+        i: int = len(data1)
+        j: int = len(data2)
 
         while i > 0 or j > 0:
             if i == 0:
@@ -338,7 +342,7 @@ class BinaryComparer:
 
             elif lcs[i - 1][j] > lcs[i][j - 1]:
                 # Deletion from data1
-                start_i = i - 1
+                start_i: int = i - 1
                 while i > 1 and lcs[i - 1][j] == lcs[i - 2][j]:
                     i -= 1
 
@@ -356,7 +360,7 @@ class BinaryComparer:
 
             else:
                 # Insertion in data2
-                start_j = j - 1
+                start_j: int = j - 1
                 while j > 1 and lcs[i][j - 1] == lcs[i][j - 2]:
                     j -= 1
 
@@ -380,8 +384,8 @@ class BinaryComparer:
         if len(self.differences) <= 1:
             return
 
-        merged = []
-        current = self.differences[0]
+        merged: list[DifferenceBlock] = []
+        current: DifferenceBlock = self.differences[0]
 
         for diff in self.differences[1:]:
             # Check if adjacent and same type
@@ -397,14 +401,14 @@ class BinaryComparer:
         merged.append(current)
         self.differences = merged
 
-    def get_statistics(self) -> dict:
+    def get_statistics(self) -> dict[str, int]:
         """Get statistics about the comparison.
 
         Returns:
             Dictionary with comparison statistics
 
         """
-        stats = {
+        stats: dict[str, int] = {
             "total_differences": len(self.differences),
             "modified_blocks": 0,
             "inserted_blocks": 0,
@@ -438,8 +442,8 @@ class ComparisonNavigator:
             differences: List of difference blocks
 
         """
-        self.differences = differences
-        self.current_index = -1
+        self.differences: list[DifferenceBlock] = differences
+        self.current_index: int = -1
 
     def has_differences(self) -> bool:
         """Check if there are any differences.

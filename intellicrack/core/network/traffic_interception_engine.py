@@ -111,7 +111,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         self.running = False
 
         # Statistics
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "packets_captured": 0,
             "license_packets_detected": 0,
             "protocols_detected": set(),
@@ -230,7 +230,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
                 return "scapy"
             self.logger.warning("Scapy not available, using socket-based capture")
             return "socket"
-        if sys.platform.startswith("linux"):
+        elif sys.platform.startswith("linux"):
             # Check if running as root (geteuid only available on Unix-like systems)
             is_root = hasattr(os, "geteuid") and os.geteuid() == 0  # pylint: disable=no-member
             if HAS_SCAPY and is_root:
@@ -239,13 +239,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             # Note: libpcap support removed - using Scapy for all packet capture
             self.logger.warning("Limited capture capabilities, using socket-based capture")
             return "socket"
-        if HAS_SCAPY:
-            self.logger.info("Using Scapy for packet capture")
-            return "scapy"
-        self.logger.warning("Using socket-based capture")
-        return "socket"
+        else:
+            # Default for other platforms
+            if HAS_SCAPY:
+                self.logger.info("Using Scapy for packet capture")
+                return "scapy"
+            self.logger.warning("Using socket-based capture")
+            return "socket"
 
-    def start_interception(self, ports: list[int] = None) -> bool:
+    def start_interception(self, ports: list[int] | None = None) -> bool:
         """Start traffic interception on specified ports.
 
         Args:
@@ -334,22 +336,25 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             self.logger.info("Starting Scapy capture with filter: %s", filter_expr)
 
             # Define packet processing function
-            def process_license_packet(packet: object, IP: object, TCP: object) -> None:
+            def process_license_packet(packet: Any, IP: Any, TCP: Any) -> None:
                 """Process packets for license interception."""
-                if TCP in packet:
+                if hasattr(packet, "__contains__") and TCP in packet:
                     tcp_layer = packet[TCP]
                     ip_layer = packet[IP]
 
-                    # Extract packet data
+                    # Extract packet data with safe attribute access
+                    packet_data = bytes(tcp_layer.payload) if hasattr(tcp_layer, "payload") and tcp_layer.payload else b""
+                    packet_len = len(packet) if hasattr(packet, "__len__") else 0
+
                     intercepted = InterceptedPacket(
-                        source_ip=ip_layer.src,
-                        dest_ip=ip_layer.dst,
-                        source_port=tcp_layer.sport,
-                        dest_port=tcp_layer.dport,
+                        source_ip=str(ip_layer.src),
+                        dest_ip=str(ip_layer.dst),
+                        source_port=int(tcp_layer.sport),
+                        dest_port=int(tcp_layer.dport),
                         protocol="tcp",
-                        data=bytes(tcp_layer.payload) if tcp_layer.payload else b"",
+                        data=packet_data,
                         timestamp=time.time(),
-                        packet_size=len(packet),
+                        packet_size=packet_len,
                         flags={
                             "syn": bool(tcp_layer.flags & 0x02),
                             "ack": bool(tcp_layer.flags & 0x10),
@@ -368,10 +373,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             )
 
             # Start capture
+            def stop_filter_fn(x: Any) -> bool:
+                """Stop filter function for scapy sniff."""
+                logger.debug("Packet in stop_filter: %s", x)
+                return not self.running
+
             scapy.sniff(
                 filter=filter_expr,
                 prn=packet_handler,
-                stop_filter=lambda x: (logger.debug("Packet in stop_filter: %s", x) or True) and not self.running,
+                stop_filter=stop_filter_fn,
                 timeout=1,
             )
 
@@ -523,9 +533,14 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
         with self.queue_lock:
             self.packet_queue.append(packet)
 
-            # Update statistics
-            self.stats["packets_captured"] += 1
-            self.stats["total_bytes"] += packet.packet_size
+            # Update statistics with type narrowing
+            packets_captured = self.stats["packets_captured"]
+            if isinstance(packets_captured, int):
+                self.stats["packets_captured"] = packets_captured + 1
+
+            total_bytes = self.stats["total_bytes"]
+            if isinstance(total_bytes, int):
+                self.stats["total_bytes"] = total_bytes + packet.packet_size
 
             # Limit queue size
             if len(self.packet_queue) > 10000:
@@ -604,10 +619,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
             if confidence < 0.2:
                 return None
 
-            # Update statistics
+            # Update statistics with type narrowing
             if is_license_related:
-                self.stats["license_packets_detected"] += 1
-                self.stats["protocols_detected"].add(protocol_type)
+                license_packets = self.stats["license_packets_detected"]
+                if isinstance(license_packets, int):
+                    self.stats["license_packets_detected"] = license_packets + 1
+
+                protocols_detected = self.stats["protocols_detected"]
+                if isinstance(protocols_detected, set):
+                    protocols_detected.add(protocol_type)
 
             analysis_metadata = {
                 "keywords_found": patterns_matched,
@@ -662,12 +682,25 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
     def get_statistics(self) -> dict[str, Any]:
         """Get traffic interception statistics."""
         current_time = time.time()
-        uptime = current_time - self.stats["start_time"] if self.stats["start_time"] else 0
+        start_time = self.stats["start_time"]
+        uptime = current_time - start_time if isinstance(start_time, (int, float)) else 0.0
 
         stats = self.stats.copy()
-        stats["protocols_detected"] = list(stats["protocols_detected"])
+
+        # Convert protocols_detected set to list
+        protocols_detected = stats["protocols_detected"]
+        if isinstance(protocols_detected, set):
+            stats["protocols_detected"] = list(protocols_detected)
+
         stats["uptime_seconds"] = uptime
-        stats["packets_per_second"] = stats["packets_captured"] / max(uptime, 1)
+
+        # Calculate packets per second with type narrowing
+        packets_captured = stats["packets_captured"]
+        if isinstance(packets_captured, int):
+            stats["packets_per_second"] = float(packets_captured) / max(uptime, 1.0)
+        else:
+            stats["packets_per_second"] = 0.0
+
         stats["active_connections"] = len(self.active_connections)
         stats["capture_backend"] = self.capture_backend
         stats["dns_redirections"] = len(self.dns_redirections)
@@ -677,7 +710,7 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
     def get_active_connections(self) -> list[dict[str, Any]]:
         """Get list of active connections."""
-        connections = []
+        connections: list[dict[str, Any]] = []
         current_time = time.time()
 
         with self.connection_lock:
@@ -841,13 +874,15 @@ class TrafficInterceptionEngine(BaseNetworkAnalyzer):
 
         if protocol_name == "flexlm":
             if len(data) >= 4:
-                expected_len = struct.unpack(">H", data[2:4])[0]
-                return len(data) >= expected_len + 4
+                flexlm_expected_len: int = struct.unpack(">H", data[2:4])[0]
+                return bool(len(data) >= flexlm_expected_len + 4)
+            return False
 
-        elif protocol_name == "hasp":
+        if protocol_name == "hasp":
             if len(data) >= 6:
-                expected_len = struct.unpack("<H", data[4:6])[0]
-                return len(data) >= expected_len + 6
+                hasp_expected_len: int = struct.unpack("<H", data[4:6])[0]
+                return bool(len(data) >= hasp_expected_len + 6)
+            return False
 
         if data.endswith(b"\x00") or data.endswith(b"\r\n"):
             return True

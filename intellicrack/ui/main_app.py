@@ -108,6 +108,7 @@ from intellicrack.utils.logger import log_all_methods
 from intellicrack.utils.protection_utils import inject_comprehensive_api_hooks
 from intellicrack.utils.resource_helper import get_resource_path
 from intellicrack.utils.runtime.runner_functions import run_frida_script, run_qemu_analysis, run_selected_analysis, run_ssl_tls_interceptor
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 if TYPE_CHECKING:
@@ -209,6 +210,7 @@ class IntellicrackApp(QMainWindow):
     set_keygen_version = pyqtSignal(str)
     switch_tab = pyqtSignal(int)
     generate_key_signal = pyqtSignal()
+    analysis_completed = pyqtSignal(str)
 
     PLUGIN_TYPE_CUSTOM = "custom"
     PLUGIN_TYPE_FRIDA = "frida"
@@ -284,7 +286,7 @@ class IntellicrackApp(QMainWindow):
         self.task_manager = get_task_manager()
         self.logger.info("Initialized AppContext and TaskManager for state management")
 
-        config_dict = cast("dict[str, Any]", CONFIG)
+        config_dict = validate_type(CONFIG, dict)
         model_repos = config_dict.get("model_repositories", {})
         local_config = model_repos.get("local", {}) if isinstance(model_repos, dict) else {}
         models_dir = local_config.get("models_directory", "models") if isinstance(local_config, dict) else "models"
@@ -309,8 +311,8 @@ class IntellicrackApp(QMainWindow):
             )
             self.logger.info("AI Coordination Layer initialized successfully")
 
-            self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete, "main_ui")
-            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe("task_complete", self._on_ai_task_complete_wrapper, "main_ui")
+            self.ai_orchestrator.event_bus.subscribe("coordinated_analysis_complete", self._on_coordinated_analysis_complete_wrapper, "main_ui")
 
             self.logger.info("Exploitation Orchestrator initialized successfully")
             self.logger.info("IntellicrackApp initialization complete with agentic AI system.")
@@ -390,7 +392,10 @@ class IntellicrackApp(QMainWindow):
     def _initialize_application_properties(self) -> None:
         """Initialize important application properties and variables."""
         self.binary_path: str | None = None
-        config_dict = cast("dict[str, Any]", CONFIG)
+        self.current_binary: str = ""
+        self.ghidra_analysis_result: Any = None
+        self.ghidra_scripts_used: list[dict[str, Any]] = []
+        config_dict = validate_type(CONFIG, dict)
         selected_path = config_dict.get("selected_model_path", None)
         self.selected_model_path: str | None = str(selected_path) if selected_path is not None else None
 
@@ -419,8 +424,23 @@ class IntellicrackApp(QMainWindow):
     def _bind_external_functions(self) -> None:
         """Bind external function wrappers as instance methods using partial."""
         self.inject_comprehensive_api_hooks: Callable[..., Any] = partial(inject_comprehensive_api_hooks, self)
-        self.run_frida_plugin_from_file_bound: Callable[..., Any] = partial(run_frida_plugin_from_file, self)
-        self.run_ghidra_plugin_from_file_bound: Callable[..., Any] = partial(run_ghidra_plugin_from_file, self)
+
+        def run_frida_plugin_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if self.binary_path is None:
+                raise ValueError("No binary loaded - binary_path is required for Frida plugin execution")
+            from intellicrack.plugins.plugin_system import AppProtocol as FridaAppProtocol
+            app_for_frida = cast(FridaAppProtocol, self)
+            return run_frida_plugin_from_file(app_for_frida, *args, **kwargs)
+
+        def run_ghidra_plugin_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if self.binary_path is None:
+                raise ValueError("No binary loaded - binary_path is required for Ghidra plugin execution")
+            from intellicrack.plugins.plugin_system import AppProtocol as GhidraAppProtocol
+            app_for_ghidra = cast(GhidraAppProtocol, self)
+            return run_ghidra_plugin_from_file(app_for_ghidra, *args, **kwargs)
+
+        self.run_frida_plugin_from_file_bound: Callable[..., Any] = run_frida_plugin_wrapper
+        self.run_ghidra_plugin_from_file_bound: Callable[..., Any] = run_ghidra_plugin_wrapper
         self.setup_memory_patching_ref: Callable[..., Any] = setup_memory_patching
         self.run_rop_chain_generator_bound: Callable[..., Any] = partial(run_rop_chain_generator, self)
         self.run_automated_patch_agent_ref: Callable[..., Any] = run_automated_patch_agent
@@ -434,7 +454,22 @@ class IntellicrackApp(QMainWindow):
         self.run_multi_format_analysis_bound: Callable[..., Any] = partial(run_multi_format_analysis, self)
         self.run_distributed_processing: Callable[..., Any] = partial(DistributedProcessing().run_distributed_processing, self)
         self.run_gpu_accelerated_analysis: Callable[..., Any] = partial(GpuAnalysis().run_gpu_accelerated_analysis, self)
-        self.run_advanced_ghidra_analysis_bound: Callable[..., Any] = partial(run_advanced_ghidra_analysis, self)
+
+        def run_advanced_ghidra_analysis_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not self.current_binary:
+                raise ValueError("No binary loaded - current_binary is required for Ghidra analysis")
+            from intellicrack.core.analysis.ghidra_analyzer import MainAppProtocol as GhidraMainAppProtocol
+            app_for_ghidra_analysis = cast(GhidraMainAppProtocol, self)
+            return run_advanced_ghidra_analysis(app_for_ghidra_analysis, *args, **kwargs)
+
+        def run_dynamic_instrumentation_wrapper(*args: Any, **kwargs: Any) -> Any:
+            if not self.current_binary:
+                raise ValueError("No binary loaded - current_binary is required for dynamic instrumentation")
+            from intellicrack.core.analysis.dynamic_instrumentation import MainAppProtocol as DynInstrMainAppProtocol
+            app_for_dyn_instr = cast(DynInstrMainAppProtocol, self)
+            return run_dynamic_instrumentation(app_for_dyn_instr, *args, **kwargs)
+
+        self.run_advanced_ghidra_analysis_bound: Callable[..., Any] = run_advanced_ghidra_analysis_wrapper
         self.run_symbolic_execution: Callable[..., Any] = partial(SymbolicExecution().run_symbolic_execution, self)
         self.run_incremental_analysis_bound: Callable[..., Any] = partial(run_incremental_analysis, self)
         self.run_memory_optimized_analysis_ref: Callable[..., Any] = run_memory_optimized_analysis
@@ -443,7 +478,7 @@ class IntellicrackApp(QMainWindow):
         self.run_selected_analysis_partial: Callable[..., dict[str, object]] = partial(run_selected_analysis, self)
         self.run_network_license_emulator_ref: Callable[..., Any] = run_network_license_emulator
         self.run_frida_analysis_bound: Callable[..., Any] = partial(run_frida_analysis, self)
-        self.run_dynamic_instrumentation_bound: Callable[..., Any] = partial(run_dynamic_instrumentation, self)
+        self.run_dynamic_instrumentation_bound: Callable[..., Any] = run_dynamic_instrumentation_wrapper
         self.run_frida_script_bound: Callable[..., dict[str, object]] = partial(run_frida_script, self)
 
     def _bind_exploitation_handlers(self) -> None:
@@ -454,14 +489,14 @@ class IntellicrackApp(QMainWindow):
         self.save_exploitation_output: Callable[..., Any] = partial(exploitation_handlers.save_exploitation_output, self)
 
     def _bind_class_methods(self) -> None:
-        """Bind standalone method definitions to the class."""
-        self.__class__.start_network_capture = start_network_capture
-        self.__class__.stop_network_capture = stop_network_capture
-        self.__class__.clear_network_capture = clear_network_capture
-        self.__class__.launch_protocol_tool = launch_protocol_tool
-        self.__class__.update_protocol_tool_description = update_protocol_tool_description
-        self.__class__.generate_report = generate_report
-        self.__class__.view_report = view_report
+        """Bind standalone method definitions to the instance."""
+        self.start_network_capture = start_network_capture.__get__(self, type(self))
+        self.stop_network_capture = stop_network_capture.__get__(self, type(self))
+        self.clear_network_capture = clear_network_capture.__get__(self, type(self))
+        self.launch_protocol_tool = launch_protocol_tool.__get__(self, type(self))
+        self.update_protocol_tool_description = update_protocol_tool_description.__get__(self, type(self))
+        self.generate_report = generate_report.__get__(self, type(self))
+        self.view_report = view_report.__get__(self, type(self))
 
     def _initialize_analyzer_engines(self) -> None:
         """Initialize various analyzer engines with graceful fallbacks."""
@@ -764,6 +799,16 @@ class IntellicrackApp(QMainWindow):
                 self.PLUGIN_TYPE_GHIDRA: [],
             }
 
+    def _on_ai_task_complete_wrapper(self, event_data: dict[str, Any], source_component: str) -> None:
+        """Wrapper for AI task completion that accepts source_component parameter.
+
+        Args:
+            event_data: Dictionary containing task completion information.
+            source_component: Name of the component that emitted the event.
+
+        """
+        self._on_ai_task_complete(event_data)
+
     def _on_ai_task_complete(self, event_data: dict[str, Any]) -> None:
         """Handle AI task completion events from the orchestrator.
 
@@ -789,6 +834,16 @@ class IntellicrackApp(QMainWindow):
 
         except Exception as e:
             self.logger.exception("Error handling AI task completion: %s", e)
+
+    def _on_coordinated_analysis_complete_wrapper(self, event_data: dict[str, Any], source_component: str) -> None:
+        """Wrapper for coordinated analysis completion that accepts source_component parameter.
+
+        Args:
+            event_data: Dictionary containing coordinated analysis results.
+            source_component: Name of the component that emitted the event.
+
+        """
+        self._on_coordinated_analysis_complete(event_data)
 
     def _on_coordinated_analysis_complete(self, event_data: dict[str, Any]) -> None:
         """Handle coordinated analysis completion events from AI coordinator.
@@ -978,6 +1033,7 @@ class IntellicrackApp(QMainWindow):
         if isinstance(binary_info, dict) and "path" in binary_info:
             path_val = binary_info["path"]
             self.binary_path = str(path_val) if path_val is not None else None
+            self.current_binary = str(path_val) if path_val is not None else ""
             binary_name = binary_info.get("name", os.path.basename(str(path_val)))
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_name}"))
             self.logger.info("Binary loaded: %s", binary_info["path"])
@@ -986,6 +1042,7 @@ class IntellicrackApp(QMainWindow):
                 self.analysis_tab.set_binary_path(str(path_val))
         else:
             self.binary_path = str(binary_info) if binary_info else None
+            self.current_binary = str(binary_info) if binary_info else ""
             self.update_output.emit(self.log_message(f"Binary loaded: {binary_info}"))
             self.logger.info("Binary loaded: %s", binary_info)
 
@@ -1061,13 +1118,12 @@ class IntellicrackApp(QMainWindow):
 
     def restore_window_state(self) -> None:
         """Restore window state from configuration."""
-        try:
-            from ..core.config_manager import get_config
-
-            config = get_config()
-            config_dict = cast("dict[str, Any]", config)
-            ui_config = config_dict.get("ui", {})
-            if isinstance(ui_config, dict):
+                try:
+                    from ..core.config_manager import get_config
+        
+                    config = get_config()
+                    config_dict = validate_type(config, dict)
+                    ui_config = config_dict.get("ui", {})            if isinstance(ui_config, dict):
                 geometry = ui_config.get("window_geometry")
                 if geometry is not None and isinstance(geometry, (list, tuple)) and len(geometry) >= 4:
                     self.setGeometry(int(geometry[0]), int(geometry[1]), int(geometry[2]), int(geometry[3]))
@@ -1115,7 +1171,7 @@ class IntellicrackApp(QMainWindow):
         try:
             with open(cache_file, encoding="utf-8") as f:
                 result = json.load(f)
-                return cast("dict[str, Any]", result) if isinstance(result, dict) else None
+                return validate_type(result, dict) if isinstance(result, dict) else None
         except (json.JSONDecodeError, OSError) as e:
             self.logger.debug("Failed to load cache data: %s", e)
             return None

@@ -98,10 +98,10 @@ class VisualPatchEditorDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.binary_path = binary_path
-        self.patches = patches.copy() if patches else []
-        self.original_patches = patches.copy() if patches else []
-        self.disassembly_cache = {}
+        self.binary_path: str = binary_path
+        self.patches: list[dict[str, Any]] = patches.copy() if patches else []
+        self.original_patches: list[dict[str, Any]] = patches.copy() if patches else []
+        self.disassembly_cache: dict[int, str] = {}
 
         self.setWindowTitle("Visual Patch Editor")
         self.setGeometry(100, 100, 1000, 800)
@@ -123,7 +123,7 @@ class VisualPatchEditorDialog(QDialog):
         layout.addLayout(header_layout)
 
         # Main splitter
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Patch list
         left_panel = QWidget()
@@ -147,8 +147,8 @@ class VisualPatchEditorDialog(QDialog):
 
         # Patch list with drag-drop support
         self.patch_list = QListWidget()
-        self.patch_list.setDragDropMode(QAbstractItemView.InternalMove)
-        self.patch_list.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.patch_list.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.patch_list.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.patch_list.currentItemChanged.connect(self.patch_selected)
         left_layout.addWidget(self.patch_list)
 
@@ -251,7 +251,7 @@ class VisualPatchEditorDialog(QDialog):
             description = patch.get("description", "No description")
 
             item = QListWidgetItem(f"Patch {i + 1}: 0x{address:X} - {description[:30]}")
-            item.setData(Qt.UserRole, i)  # Store patch index
+            item.setData(Qt.ItemDataRole.UserRole, i)  # Store patch index
             self.patch_list.addItem(item)
 
         if self.patches:
@@ -270,7 +270,10 @@ class VisualPatchEditorDialog(QDialog):
             self.clear_patch_form()
             return
 
-        index = current.data(Qt.UserRole)
+        index_data = current.data(Qt.ItemDataRole.UserRole)
+        if not isinstance(index_data, int):
+            return
+        index = index_data
         if index < 0 or index >= len(self.patches):
             return
 
@@ -309,7 +312,10 @@ class VisualPatchEditorDialog(QDialog):
         if not current_item:
             return
 
-        index = current_item.data(Qt.UserRole)
+        index_data = current_item.data(Qt.ItemDataRole.UserRole)
+        if not isinstance(index_data, int):
+            return
+        index = index_data
         if index < 0 or index >= len(self.patches):
             return
 
@@ -451,11 +457,8 @@ class VisualPatchEditorDialog(QDialog):
             self.original_bytes_view.setText(original_hex)
 
             # Format new bytes
-            if isinstance(new_bytes, bytes):
-                new_hex = " ".join(f"{b:02X}" for b in new_bytes)
-                self.patched_bytes_view.setText(new_hex)
-            else:
-                self.patched_bytes_view.setText(str(new_bytes))
+            new_hex = " ".join(f"{b:02X}" for b in new_bytes)
+            self.patched_bytes_view.setText(new_hex)
 
         except (OSError, ValueError, RuntimeError) as e:
             logger.error("Error in visual_patch_editor: %s", e)
@@ -477,7 +480,7 @@ class VisualPatchEditorDialog(QDialog):
         # Add to list widget
         index = len(self.patches) - 1
         item = QListWidgetItem(f"Patch {index + 1}: 0x0 - New patch")
-        item.setData(Qt.UserRole, index)
+        item.setData(Qt.ItemDataRole.UserRole, index)
         self.patch_list.addItem(item)
 
         # Select the new item
@@ -491,7 +494,10 @@ class VisualPatchEditorDialog(QDialog):
         if not current_item:
             return
 
-        index = current_item.data(Qt.UserRole)
+        index_data = current_item.data(Qt.ItemDataRole.UserRole)
+        if not isinstance(index_data, int):
+            return
+        index = index_data
         if index < 0 or index >= len(self.patches):
             return
 
@@ -500,10 +506,10 @@ class VisualPatchEditorDialog(QDialog):
             self,
             "Remove Patch",
             f"Are you sure you want to remove patch {index + 1}?",
-            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-        if response == QMessageBox.No:
+        if response == QMessageBox.StandardButton.No:
             return
 
         # Remove patch
@@ -520,7 +526,10 @@ class VisualPatchEditorDialog(QDialog):
         if not current_item:
             return
 
-        index = current_item.data(Qt.UserRole)
+        index_data = current_item.data(Qt.ItemDataRole.UserRole)
+        if not isinstance(index_data, int):
+            return
+        index = index_data
         if index < 0 or index >= len(self.patches):
             return
 

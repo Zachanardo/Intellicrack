@@ -24,7 +24,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
+from types import ModuleType
 
 
 try:
@@ -33,7 +34,7 @@ try:
     CAPSTONE_AVAILABLE = True
 except ImportError:
     CAPSTONE_AVAILABLE = False
-    capstone = None
+    capstone = cast(ModuleType, None)
 
 try:
     import lief
@@ -41,7 +42,7 @@ try:
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
-    lief = None
+    lief = cast(ModuleType, None)
 
 try:
     import pefile
@@ -49,7 +50,7 @@ try:
     PEFILE_AVAILABLE = True
 except ImportError:
     PEFILE_AVAILABLE = False
-    pefile = None
+    pefile = cast(ModuleType, None)
 
 from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
 
@@ -133,7 +134,7 @@ class ArxanAnalysisResult:
 class ArxanAnalyzer:
     """Analyzes Arxan TransformIT protected binaries."""
 
-    TAMPER_CHECK_SIGNATURES = {
+    TAMPER_CHECK_SIGNATURES: dict[str, dict[str, list[bytes] | str]] = {
         "crc32": {
             "patterns": [
                 b"\x33\xd2\x8a\x10\x8b\xc2\xc1\xe8\x08",
@@ -164,7 +165,7 @@ class ArxanAnalyzer:
         },
     }
 
-    OPAQUE_PREDICATE_PATTERNS = [
+    OPAQUE_PREDICATE_PATTERNS: list[bytes] = [
         b"\x85\xc0\x75\x02\x75\x00",
         b"\x85\xc0\x74\x02\x74\x00",
         b"\x33\xc0\x85\xc0\x74",
@@ -173,7 +174,7 @@ class ArxanAnalyzer:
         b"\x0f\x85..\x00\x00\x0f\x84",
     ]
 
-    RASP_DETECTION_PATTERNS = {
+    RASP_DETECTION_PATTERNS: dict[str, list[bytes]] = {
         "anti_frida": [
             b"frida",
             b"gum-js-loop",
@@ -197,7 +198,7 @@ class ArxanAnalyzer:
         ],
     }
 
-    LICENSE_VALIDATION_SIGNATURES = {
+    LICENSE_VALIDATION_SIGNATURES: dict[str, list[bytes]] = {
         "rsa_validation": [
             b"\x00\x01\xff\xff",
             b"\x00\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01",
@@ -214,7 +215,10 @@ class ArxanAnalyzer:
 
     def __init__(self) -> None:
         """Initialize ArxanAnalyzer with disassemblers and pattern matchers."""
-        self.logger = logging.getLogger(__name__)
+        self.logger: logging.Logger = logging.getLogger(__name__)
+
+        self.md_32: Any = None
+        self.md_64: Any = None
 
         if CAPSTONE_AVAILABLE:
             self.md_32 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
@@ -222,11 +226,9 @@ class ArxanAnalyzer:
             self.md_64 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
             self.md_64.detail = True
         else:
-            self.md_32 = None
-            self.md_64 = None
             self.logger.warning("Capstone not available - disassembly features disabled")
 
-        self.detector = ArxanDetector()
+        self.detector: ArxanDetector = ArxanDetector()
 
     def analyze(self, binary_path: str | Path) -> ArxanAnalysisResult:
         """Perform comprehensive Arxan analysis.
@@ -278,11 +280,13 @@ class ArxanAnalyzer:
 
     def _analyze_tamper_checks(self, binary_path: Path, binary_data: bytes) -> list[TamperCheckLocation]:
         """Analyze anti-tampering mechanisms."""
-        tamper_checks = []
+        tamper_checks: list[TamperCheckLocation] = []
 
         for check_type, info in self.TAMPER_CHECK_SIGNATURES.items():
-            for pattern in info["patterns"]:
-                offset = 0
+            patterns: list[bytes] = cast(list[bytes], info["patterns"])
+            complexity: str = cast(str, info["complexity"])
+            for pattern in patterns:
+                offset: int = 0
                 while True:
                     pos = binary_data.find(pattern, offset)
                     if pos == -1:
@@ -297,7 +301,7 @@ class ArxanAnalyzer:
                         check_type="tamper_detection",
                         target_region=(target_start, target_end),
                         algorithm=check_type,
-                        bypass_complexity=info["complexity"],
+                        bypass_complexity=complexity,
                     )
                     tamper_checks.append(tamper_check)
 
@@ -325,7 +329,7 @@ class ArxanAnalyzer:
 
     def _scan_section_for_tamper_checks(self, section_data: bytes, section_va: int, tamper_checks: list[TamperCheckLocation]) -> None:
         """Scan executable section for tamper check patterns."""
-        memory_read_patterns = [
+        memory_read_patterns: list[bytes] = [
             b"\x8b\x45",
             b"\x8b\x55",
             b"\x8b\x4d",
@@ -349,10 +353,10 @@ class ArxanAnalyzer:
 
     def _analyze_control_flow(self, binary_path: Path, binary_data: bytes) -> ControlFlowAnalysis:
         """Analyze control flow obfuscation."""
-        analysis = ControlFlowAnalysis()
+        analysis: ControlFlowAnalysis = ControlFlowAnalysis()
 
         for pattern in self.OPAQUE_PREDICATE_PATTERNS:
-            offset = 0
+            offset: int = 0
             while True:
                 pos = binary_data.find(pattern, offset)
                 if pos == -1:
@@ -361,7 +365,7 @@ class ArxanAnalyzer:
                 analysis.opaque_predicates.append(pos)
                 offset = pos + 1
 
-        indirect_jump_patterns = [
+        indirect_jump_patterns: list[bytes] = [
             b"\xff\x25",
             b"\xff\x15",
             b"\xff\xe0",
@@ -379,6 +383,9 @@ class ArxanAnalyzer:
 
                 analysis.indirect_jumps.append(pos)
                 offset = pos + 1
+
+        total_instructions: int = len(binary_data) // 4
+        obfuscated_instructions: int = len(analysis.opaque_predicates) + len(analysis.indirect_jumps) + len(analysis.junk_code_blocks) * 10
 
         if len(analysis.opaque_predicates) > 100:
             analysis.control_flow_flattening = True
@@ -398,18 +405,15 @@ class ArxanAnalyzer:
         except Exception:
             self.logger.debug("Control flow analysis error", exc_info=True)
 
-        total_instructions = len(binary_data) // 4
-        obfuscated_instructions = len(analysis.opaque_predicates) + len(analysis.indirect_jumps) + len(analysis.junk_code_blocks) * 10
-
         analysis.obfuscation_density = min(obfuscated_instructions / max(total_instructions, 1), 1.0)
 
         return analysis
 
     def _detect_junk_code(self, section_data: bytes, section_va: int) -> list[tuple[int, int]]:
         """Detect junk code blocks."""
-        junk_blocks = []
+        junk_blocks: list[tuple[int, int]] = []
 
-        junk_patterns = [
+        junk_patterns: list[bytes] = [
             b"\x90\x90\x90\x90\x90",
             b"\xcc\xcc\xcc\xcc\xcc",
             b"\x0f\x1f\x00",
@@ -427,16 +431,18 @@ class ArxanAnalyzer:
 
     def _analyze_rasp(self, binary_data: bytes) -> list[RASPMechanism]:
         """Analyze Runtime Application Self-Protection mechanisms."""
-        rasp_mechanisms = []
+        rasp_mechanisms: list[RASPMechanism] = []
 
         for mechanism_type, patterns in self.RASP_DETECTION_PATTERNS.items():
             for pattern in patterns:
-                offset = 0
+                offset: int = 0
                 while True:
                     pos = binary_data.find(pattern, offset)
                     if pos == -1:
                         break
 
+                    detection_method: str
+                    severity: str
                     if mechanism_type == "anti_frida":
                         detection_method = "string_detection"
                         severity = "high"
@@ -478,9 +484,9 @@ class ArxanAnalyzer:
 
     def _find_exception_handlers(self, binary_data: bytes) -> list[int]:
         """Find exception handler installations."""
-        handler_addresses = []
+        handler_addresses: list[int] = []
 
-        seh_patterns = [
+        seh_patterns: list[bytes] = [
             b"\x64\xa1\x00\x00\x00\x00\x50",
             b"\x64\x89\x25\x00\x00\x00\x00",
             b"\xff\x15....\x50",
@@ -500,16 +506,19 @@ class ArxanAnalyzer:
 
     def _analyze_license_validation(self, binary_path: Path, binary_data: bytes) -> list[LicenseValidationRoutine]:
         """Analyze license validation routines."""
-        license_routines = []
+        license_routines: list[LicenseValidationRoutine] = []
 
         for validation_type, patterns in self.LICENSE_VALIDATION_SIGNATURES.items():
             for pattern in patterns:
-                offset = 0
+                offset: int = 0
                 while True:
                     pos = binary_data.find(pattern, offset)
                     if pos == -1:
                         break
 
+                    algorithm: str
+                    key_length: int
+                    crypto_ops: list[str]
                     if validation_type == "rsa_validation":
                         algorithm = "RSA"
                         key_length = 2048
@@ -547,7 +556,7 @@ class ArxanAnalyzer:
 
     def _find_license_strings(self, binary_data: bytes) -> list[tuple[int, str]]:
         """Find license-related strings."""
-        license_keywords = [
+        license_keywords: list[bytes] = [
             b"license",
             b"serial",
             b"activation",
@@ -557,10 +566,10 @@ class ArxanAnalyzer:
             b"expir",
         ]
 
-        found_strings = []
+        found_strings: list[tuple[int, str]] = []
 
         for keyword in license_keywords:
-            offset = 0
+            offset: int = 0
             while True:
                 pos = binary_data.find(keyword, offset)
                 if pos == -1:
@@ -583,15 +592,15 @@ class ArxanAnalyzer:
 
     def _analyze_integrity_checks(self, binary_path: Path, binary_data: bytes) -> list[IntegrityCheckMechanism]:
         """Analyze integrity check mechanisms."""
-        integrity_checks = []
+        integrity_checks: list[IntegrityCheckMechanism] = []
 
-        crc_patterns = [
+        crc_patterns: list[tuple[bytes, str, str, str]] = [
             (b"\xc1\xe8\x08\x33", "CRC32", "code", "periodic"),
             (b"\x33\x81", "CRC32", "data", "on_load"),
         ]
 
         for pattern, hash_algo, target, frequency in crc_patterns:
-            offset = 0
+            offset: int = 0
             while True:
                 pos = binary_data.find(pattern, offset)
                 if pos == -1:
@@ -639,10 +648,10 @@ class ArxanAnalyzer:
 
     def _find_encrypted_strings(self, binary_data: bytes) -> list[tuple[int, int]]:
         """Find encrypted string regions."""
-        encrypted_regions = []
+        encrypted_regions: list[tuple[int, int]] = []
 
-        xor_loop_pattern = b"\x30\x04"
-        offset = 0
+        xor_loop_pattern: bytes = b"\x30\x04"
+        offset: int = 0
 
         while True:
             pos = binary_data.find(xor_loop_pattern, offset)
@@ -664,7 +673,7 @@ class ArxanAnalyzer:
 
     def _find_white_box_tables(self, binary_data: bytes) -> list[tuple[int, int]]:
         """Find white-box cryptography lookup tables."""
-        tables = []
+        tables: list[tuple[int, int]] = []
 
         for i in range(0, len(binary_data) - 2048, 256):
             chunk = binary_data[i : i + 2048]
@@ -672,7 +681,7 @@ class ArxanAnalyzer:
             unique_bytes = len(set(chunk))
 
             if unique_bytes > 200:
-                byte_freq = {}
+                byte_freq: dict[int, int] = {}
                 for byte in chunk:
                     byte_freq[byte] = byte_freq.get(byte, 0) + 1
 
@@ -744,8 +753,8 @@ def main() -> None:
             main_logger.info("  - 0x%x: %s (%s)", routine.address, routine.algorithm, routine.validation_type)
 
         main_logger.info("Integrity Checks: %d", len(result.integrity_checks))
-        for check in result.integrity_checks[:5]:
-            main_logger.info("  - 0x%x: %s (%s)", check.address, check.hash_algorithm, check.bypass_strategy)
+        for integrity_check in result.integrity_checks[:5]:
+            main_logger.info("  - 0x%x: %s (%s)", integrity_check.address, integrity_check.hash_algorithm, integrity_check.bypass_strategy)
 
         main_logger.info("Encrypted String Regions: %d", len(result.encrypted_strings))
         main_logger.info("White-Box Crypto Tables: %d", len(result.white_box_crypto_tables))

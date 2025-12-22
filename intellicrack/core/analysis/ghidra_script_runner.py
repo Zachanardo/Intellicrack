@@ -64,6 +64,7 @@ class GhidraScriptRunner:
         self.intellicrack_scripts_dir = Path(__file__).parent.parent.parent / "scripts" / "ghidra"
 
         self.discovered_scripts: dict[str, GhidraScript] = {}
+        self.custom_scripts: dict[str, GhidraScript] = {}
         self._discover_all_scripts()
 
     def _get_headless_path(self) -> Path:
@@ -387,12 +388,14 @@ class GhidraScriptRunner:
 
     def _parse_script_output(self, output_dir: Path, format: str, stdout: str, stderr: str) -> dict[str, Any]:
         """Parse script output based on format."""
-        results = {"stdout": stdout, "stderr": stderr, "files": []}
+        results: dict[str, Any] = {"stdout": stdout, "stderr": stderr, "files": []}
 
         # List output files
         for file in output_dir.iterdir():
             if file.is_file():
-                results["files"].append(str(file))
+                file_list = results["files"]
+                if isinstance(file_list, list):
+                    file_list.append(str(file))
 
         # Parse based on format
         if format == "json":
@@ -410,7 +413,7 @@ class GhidraScriptRunner:
 
         return results
 
-    def list_available_scripts(self) -> list[dict[str, str]]:
+    def list_available_scripts(self) -> list[dict[str, str | int]]:
         """List all dynamically discovered scripts."""
         return [
             {

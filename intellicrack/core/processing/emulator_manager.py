@@ -3,7 +3,7 @@
 import logging
 import os
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
 
@@ -36,16 +36,33 @@ except ImportError as e:
     logger.error("Import error in emulator_manager: %s", e)
     from PyQt6.QtCore import QObject, pyqtSignal
 
-# QEMU emulator temporarily disabled during VM framework consolidation
+class QilingEmulatorProtocol(Protocol):
+    """Protocol for QilingEmulator type checking."""
+
+    def __init__(self, binary_path: str) -> None: ...
+
+
+class QemuEmulatorProtocol(Protocol):
+    """Protocol for QemuEmulator type checking."""
+
+    binary_path: str
+
+    def __init__(self, config: dict[str, Any]) -> None: ...
+    def start_system(self) -> None: ...
+    def stop_system(self) -> None: ...
+
+
 QEMU_AVAILABLE = False
-QemuEmulator = None
+QemuEmulator: type[QemuEmulatorProtocol] | None = None
 
 try:
     from .qiling_emulator import QILING_AVAILABLE, QilingEmulator
 except ImportError as e:
     logger.error("Import error in emulator_manager: %s", e)
     QILING_AVAILABLE = False
-    QilingEmulator = None
+    QilingEmulator_class: type[QilingEmulatorProtocol] | None = None
+else:
+    QilingEmulator_class = QilingEmulator
 
 
 class EmulatorManager(QObject):
@@ -65,7 +82,7 @@ class EmulatorManager(QObject):
         """Initialize the emulator manager with signal handling and emulator setup."""
         super().__init__()
         self.logger = logging.getLogger(__name__)
-        self.emulators = {}
+        self.emulators: dict[str, Any] = {}
         self.is_running = False
         self.stats = {
             "total_executions": 0,
@@ -79,10 +96,10 @@ class EmulatorManager(QObject):
         import threading
 
         self.lock = threading.RLock()
-        self.qemu_instance = None
+        self.qemu_instance: QemuEmulatorProtocol | None = None
         self.qemu_running = False
         self.qemu_starting = False
-        self.qiling_instances = {}  # Maps binary_path -> QilingEmulator instance
+        self.qiling_instances: dict[str, QilingEmulatorProtocol] = {}
 
     def ensure_qemu_running(self, binary_path: str, config: dict[str, Any] | None = None) -> bool:
         """Ensure QEMU is running for the given binary.
@@ -112,9 +129,9 @@ class EmulatorManager(QObject):
 
         with self.lock:
             # Check if already running
-            if self.qemu_running and self.qemu_instance:
+            if self.qemu_running and self.qemu_instance is not None:
                 # Check if we're using the same binary
-                if hasattr(self.qemu_instance, "binary_path") and self.qemu_instance.binary_path == binary_path:
+                if self.qemu_instance.binary_path == binary_path:
                     self.logger.debug("QEMU already running for binary: %s", binary_path)
                     return True
                 # Different binary, need to restart
@@ -139,14 +156,14 @@ class EmulatorManager(QObject):
             config["binary_path"] = binary_path
 
             # Create QEMU instance if needed
-            if not self.qemu_instance:
+            if QemuEmulator is not None and self.qemu_instance is None:
                 self.qemu_instance = QemuEmulator(config=config)
                 # Store binary path for future reference
-                if hasattr(self.qemu_instance, "__dict__"):
-                    self.qemu_instance.binary_path = binary_path
+                self.qemu_instance.binary_path = binary_path
 
             # Start the system
-            self.qemu_instance.start_system()
+            if self.qemu_instance is not None:
+                self.qemu_instance.start_system()
 
             with self.lock:
                 self.qemu_running = True
@@ -170,7 +187,7 @@ class EmulatorManager(QObject):
             self.emulator_status_changed.emit("QEMU", False, "QEMU failed to start")
             return False
 
-    def ensure_qiling_ready(self, binary_path: str) -> QilingEmulator | None:
+    def ensure_qiling_ready(self, binary_path: str) -> QilingEmulatorProtocol | None:
         """Ensure Qiling is ready for the given binary.
 
         Args:
@@ -188,11 +205,11 @@ class EmulatorManager(QObject):
             self.emulator_status_changed.emit("Qiling", True, "Initializing Qiling emulator...")
 
             # Create Qiling instance for this binary
-            if binary_path not in self.qiling_instances:
-                self.qiling_instances[binary_path] = QilingEmulator(binary_path)
+            if QilingEmulator_class is not None and binary_path not in self.qiling_instances:
+                self.qiling_instances[binary_path] = QilingEmulator_class(binary_path)
 
             self.emulator_status_changed.emit("Qiling", True, "Qiling emulator ready")
-            return self.qiling_instances[binary_path]
+            return self.qiling_instances.get(binary_path)
 
         except Exception as e:
             error_msg = f"Failed to initialize Qiling: {e!s}"
@@ -203,7 +220,7 @@ class EmulatorManager(QObject):
 
     def stop_qemu(self) -> None:
         """Stop QEMU emulator if running."""
-        if self.qemu_instance and self.qemu_running:
+        if self.qemu_instance is not None and self.qemu_running:
             try:
                 self.qemu_instance.stop_system()
                 with self.lock:
@@ -230,7 +247,7 @@ def get_emulator_manager() -> EmulatorManager:
     return _emulator_manager
 
 
-def run_with_qemu(binary_path: str, analysis_func: Callable, config: dict[str, Any] | None = None) -> dict[str, Any]:
+def run_with_qemu(binary_path: str, analysis_func: Callable[[], dict[str, Any]], config: dict[str, Any] | None = None) -> dict[str, Any]:
     """Run an analysis function with QEMU automatically started.
 
     Args:
@@ -261,7 +278,7 @@ def run_with_qemu(binary_path: str, analysis_func: Callable, config: dict[str, A
         }
 
 
-def run_with_qiling(binary_path: str, analysis_func: Callable) -> dict[str, Any]:
+def run_with_qiling(binary_path: str, analysis_func: Callable[[QilingEmulatorProtocol], dict[str, Any]]) -> dict[str, Any]:
     """Run an analysis function with Qiling automatically initialized.
 
     Args:

@@ -25,7 +25,6 @@ from typing import Any
 
 from intellicrack.handlers.numpy_handler import numpy as np
 
-
 logger = logging.getLogger(__name__)
 
 XPU_DEVICE = "xpu:0"
@@ -37,6 +36,15 @@ NUMBA_CUDA_AVAILABLE = False
 XPU_AVAILABLE = False
 PYTORCH_AVAILABLE = False
 
+# Declare optional dependency variables at module level
+torch: Any = None
+cp: Any = None
+cuda: Any = None
+compiler: Any = None
+gpuarray: Any = None
+numba: Any = None
+numba_cuda: Any = None
+
 # Check if CUDA is disabled via environment
 CUDA_DISABLED = os.environ.get("CUDA_VISIBLE_DEVICES") == "-1"
 INTEL_GPU_PREFERRED = os.environ.get("INTELLICRACK_GPU_TYPE") == "intel"
@@ -44,8 +52,9 @@ INTEL_GPU_PREFERRED = os.environ.get("INTELLICRACK_GPU_TYPE") == "intel"
 # Try importing PyTorch with XPU support first if preferred
 if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
     try:
-        import torch
+        import torch as _torch  # type: ignore[import-not-found,unused-ignore]
 
+        torch = _torch
         PYTORCH_AVAILABLE = True
         logger.debug("PyTorch available")
 
@@ -66,10 +75,14 @@ if INTEL_GPU_PREFERRED or not CUDA_DISABLED:
 # Try importing CUDA frameworks only if not disabled
 if not CUDA_DISABLED:
     try:
-        import pycuda.autoinit
-        import pycuda.driver as cuda
-        from pycuda import compiler, gpuarray
+        import pycuda.autoinit  # type: ignore[import-not-found,unused-ignore]
+        import pycuda.driver as _cuda  # type: ignore[import-not-found,unused-ignore]
+        from pycuda import compiler as _compiler  # type: ignore[import-not-found,unused-ignore]
+        from pycuda import gpuarray as _gpuarray  # type: ignore[import-not-found,unused-ignore]
 
+        cuda = _cuda
+        compiler = _compiler
+        gpuarray = _gpuarray
         PYCUDA_AVAILABLE = True
         logger.info("PyCUDA initialized successfully")
     except ImportError:
@@ -78,8 +91,9 @@ if not CUDA_DISABLED:
         logger.debug("PyCUDA initialization failed: %s", e)
 
     try:
-        import cupy as cp
+        import cupy as _cp  # type: ignore[import-not-found,unused-ignore]
 
+        cp = _cp
         CUPY_AVAILABLE = True
         logger.info("CuPy initialized successfully")
     except ImportError:
@@ -88,9 +102,11 @@ if not CUDA_DISABLED:
         logger.debug("CuPy initialization failed: %s", e)
 
     try:
-        import numba
-        from numba import cuda as numba_cuda
+        import numba as _numba  # type: ignore[import-not-found,unused-ignore]
+        from numba import cuda as _numba_cuda  # type: ignore[import-not-found,unused-ignore]
 
+        numba = _numba
+        numba_cuda = _numba_cuda
         NUMBA_CUDA_AVAILABLE = True
         logger.info("Numba CUDA initialized successfully")
     except ImportError:
@@ -259,7 +275,7 @@ class GPUAccelerator:
                 }
 
             # Create sliding windows of data for comparison
-            matches = []
+            matches: list[dict[str, Any]] = []
             window_size = pattern_len
 
             # Use unfold to create sliding windows efficiently on GPU
@@ -396,22 +412,24 @@ class GPUAccelerator:
             logger.exception("Numba pattern search failed: %s", e)
             return self._cpu_pattern_search(data, pattern)
 
-    def _create_pattern_match_kernel(self) -> object:
+    def _create_pattern_match_kernel(self) -> Any:
         """Create Numba CUDA pattern matching kernel.
 
         Returns:
             Numba CUDA compiled function for pattern matching.
 
         """
+        if not NUMBA_CUDA_AVAILABLE or numba_cuda is None:
+            raise RuntimeError("Numba CUDA not available")
 
-        @numba_cuda.jit
+        @numba_cuda.jit  # type: ignore[misc,attr-defined,unused-ignore,untyped-decorator]
         def pattern_match_kernel(
-            data: object,
-            pattern: object,
-            matches: object,
-            positions: object,
+            data: Any,
+            pattern: Any,
+            matches: Any,
+            positions: Any,
         ) -> None:
-            idx = numba_cuda.grid(1)
+            idx = numba_cuda.grid(1)  # type: ignore[attr-defined,unused-ignore]
             if idx <= len(data) - len(pattern):
                 match = True
                 for i in range(len(pattern)):
@@ -420,7 +438,7 @@ class GPUAccelerator:
                         break
 
                 if match:
-                    match_idx = numba_cuda.atomic.add(matches, 0, 1)
+                    match_idx = numba_cuda.atomic.add(matches, 0, 1)  # type: ignore[attr-defined,unused-ignore]
                     if match_idx < len(positions):
                         positions[match_idx] = idx
 
@@ -649,24 +667,26 @@ class GPUAccelerator:
             logger.exception("Numba entropy calculation failed: %s", e)
             return self._cpu_entropy(data, block_size)
 
-    def _create_entropy_kernel(self) -> object:
+    def _create_entropy_kernel(self) -> Any:
         """Create Numba CUDA entropy calculation kernel.
 
         Returns:
             Numba CUDA compiled function for entropy calculation.
 
         """
+        if not NUMBA_CUDA_AVAILABLE or numba_cuda is None or numba is None:
+            raise RuntimeError("Numba CUDA not available")
 
-        @numba_cuda.jit
+        @numba_cuda.jit  # type: ignore[misc,attr-defined,unused-ignore,untyped-decorator]
         def entropy_kernel(
-            data: object,
-            block_size: object,
-            entropies: object,
+            data: Any,
+            block_size: Any,
+            entropies: Any,
         ) -> None:
-            block_idx = numba_cuda.grid(1)
+            block_idx = numba_cuda.grid(1)  # type: ignore[attr-defined,unused-ignore]
             if block_idx < len(entropies):
                 # Calculate histogram for this block
-                hist = numba_cuda.local.array(256, numba.float32)
+                hist = numba_cuda.local.array(256, numba.float32)  # type: ignore[attr-defined,unused-ignore]
                 for i in range(256):
                     hist[i] = 0
 
@@ -681,7 +701,7 @@ class GPUAccelerator:
                 for i in range(256):
                     if hist[i] > 0:
                         p = hist[i] / block_size
-                        entropy -= p * numba.cuda.libdevice.log2f(p)
+                        entropy -= p * numba.cuda.libdevice.log2f(p)  # type: ignore[attr-defined,unused-ignore]
 
                 entropies[block_idx] = entropy
 
@@ -713,7 +733,7 @@ class GPUAccelerator:
             "method": "cpu",
         }
 
-    def hash_computation(self, data: bytes, algorithms: list[str] = None) -> dict[str, Any]:
+    def hash_computation(self, data: bytes, algorithms: list[str] | None = None) -> dict[str, Any]:
         """GPU-accelerated hash computation.
 
         Args:
@@ -734,7 +754,6 @@ class GPUAccelerator:
             if algo == "crc32" and self.framework == "cupy" and CUPY_AVAILABLE:
                 results[algo] = self._cupy_crc32(data)
             else:
-                # CPU fallback for now
                 import zlib
 
                 if algo == "crc32":

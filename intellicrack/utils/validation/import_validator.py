@@ -74,7 +74,7 @@ class ImportValidator:
             Dictionary with 'missing' list and optionally 'success' boolean
 
         """
-        missing = []
+        missing: list[str] = []
 
         try:
             with open(file_path, encoding="utf-8") as f:
@@ -91,7 +91,7 @@ class ImportValidator:
             return {"missing": missing, "success": False}
 
     @staticmethod
-    def get_import_nodes(code: str) -> list[dict[str, str | list[str]]]:
+    def get_import_nodes(code: str) -> list[dict[str, str | list[str] | int | None]]:
         """Extract all import nodes from code.
 
         Args:
@@ -101,7 +101,7 @@ class ImportValidator:
             List of import information dictionaries
 
         """
-        imports = []
+        imports: list[dict[str, str | list[str] | int | None]] = []
 
         try:
             tree = ast.parse(code)
@@ -204,8 +204,8 @@ class PluginStructureValidator:
         if required_methods is None:
             required_methods = {"run"}
 
-        errors = []
-        found_methods = set()
+        errors: list[str] = []
+        found_methods: set[str] = set()
 
         try:
             tree = ast.parse(code)
@@ -261,7 +261,7 @@ class PluginStructureValidator:
             return {"valid": False, "errors": [str(e)]}
 
     @staticmethod
-    def get_function_definitions(code: str) -> list[dict[str, str | int]]:
+    def get_function_definitions(code: str) -> list[dict[str, str | int | list[str]]]:
         """Extract all function definitions from code.
 
         Args:
@@ -271,7 +271,7 @@ class PluginStructureValidator:
             List of function information dictionaries
 
         """
-        functions = []
+        functions: list[dict[str, str | int | list[str]]] = []
 
         try:
             tree = ast.parse(code)

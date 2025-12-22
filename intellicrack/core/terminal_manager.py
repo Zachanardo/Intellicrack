@@ -27,12 +27,12 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 
 if TYPE_CHECKING:
     from intellicrack.ui.main_app import IntellicrackApp
-    from intellicrack.ui.widgets import TerminalSessionWidget
+    from intellicrack.ui.widgets.terminal_session_widget import TerminalSessionWidget
 
 logger = logging.getLogger(__name__)
 
@@ -48,27 +48,28 @@ class TerminalManager:
     - Script path resolution
     """
 
-    _instance = None
+    _instance: "TerminalManager | None" = None
 
     def __new__(cls) -> "TerminalManager":
         """Singleton pattern implementation."""
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
-            cls._instance._initialized = False
+            instance = super().__new__(cls)
+            instance._initialized = False
+            cls._instance = instance
 
         return cls._instance
 
     def __init__(self) -> None:
         """Initialize terminal manager."""
-        if self._initialized:
+        if getattr(self, "_initialized", False):
             return
 
-        self._terminal_widget = None
-        self._main_app = None
-        self._sessions = {}
-        self._logger = logging.getLogger(__name__)
+        self._terminal_widget: "TerminalSessionWidget | None" = None
+        self._main_app: "IntellicrackApp | None" = None
+        self._sessions: dict[str, Any] = {}
+        self._logger: logging.Logger = logging.getLogger(__name__)
 
-        self._initialized = True
+        self._initialized: bool = True
 
         logger.info("TerminalManager singleton initialized")
 
@@ -82,13 +83,6 @@ class TerminalManager:
             TypeError: If widget is not correct type
 
         """
-        from intellicrack.ui.widgets import TerminalSessionWidget
-
-        if not isinstance(widget, TerminalSessionWidget):
-            error_msg = f"Expected TerminalSessionWidget, got {type(widget).__name__}"
-            logger.error(error_msg)
-            raise TypeError(error_msg)
-
         self._terminal_widget = widget
         logger.info("Terminal widget registered with TerminalManager")
 
@@ -114,10 +108,6 @@ class TerminalManager:
         """Switch main app to Terminal tab."""
         if not self._main_app:
             logger.warning("Cannot switch to terminal tab: main app not registered")
-            return
-
-        if not hasattr(self._main_app, "tabs"):
-            logger.error("Main app does not have tabs attribute")
             return
 
         tabs = self._main_app.tabs
@@ -237,12 +227,14 @@ class TerminalManager:
             session_id = self._terminal_widget.create_new_session()
             session_id, terminal = self._terminal_widget.get_active_session()
 
-        if pid := terminal.start_process(command, cwd=cwd):
-            logger.info("Script started in terminal session %s with PID %s", session_id, pid)
-        else:
-            logger.error("Failed to start script in terminal")
+        if terminal is not None:
+            cwd_str = str(cwd) if isinstance(cwd, Path) else cwd
+            if pid := terminal.start_process(command, cwd=cwd_str):
+                logger.info("Script started in terminal session %s with PID %s", session_id, pid)
+            else:
+                logger.error("Failed to start script in terminal")
 
-        return session_id
+        return session_id if session_id is not None else ""
 
     def execute_command(
         self,
@@ -309,12 +301,14 @@ class TerminalManager:
                 session_id = self._terminal_widget.create_new_session()
                 session_id, terminal = self._terminal_widget.get_active_session()
 
-            if pid := terminal.start_process(command, cwd=cwd):
-                logger.info("Command started in terminal session %s with PID %s", session_id, pid)
-            else:
-                logger.error("Failed to start command in terminal")
+            if terminal is not None:
+                cwd_str = str(cwd) if isinstance(cwd, Path) else cwd
+                if pid := terminal.start_process(command, cwd=cwd_str):
+                    logger.info("Command started in terminal session %s with PID %s", session_id, pid)
+                else:
+                    logger.error("Failed to start command in terminal")
 
-            return session_id
+            return session_id if session_id is not None else ""
 
     def is_terminal_available(self) -> bool:
         """Check if terminal widget is available for use.

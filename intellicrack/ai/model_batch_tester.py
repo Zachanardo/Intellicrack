@@ -22,7 +22,7 @@ import json
 import time
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -46,7 +46,7 @@ class TestCase:
     max_tokens: int = 100
     temperature: float = 0.7
     system_prompt: str | None = None
-    metadata: dict[str, Any] = None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -214,7 +214,8 @@ class ModelBatchTester:
             test_cases.append(test_case)
 
         self.add_test_suite(suite_id, test_cases)
-        return suite_id
+        result_suite_id: str = suite_id if isinstance(suite_id, str) else str(suite_id)
+        return result_suite_id
 
     def run_single_test(
         self,
@@ -288,15 +289,15 @@ class ModelBatchTester:
             )
 
             # Validate output
-            passed_validation = None
-            validation_details = {}
+            passed_validation: bool | None = None
+            validation_details: dict[str, Any] = {}
 
             if test_case.expected_output is not None:
                 passed_validation = output.strip() == test_case.expected_output.strip()
                 validation_details["exact_match"] = passed_validation
 
             if test_case.expected_patterns:
-                pattern_matches = {pattern: pattern.lower() in output.lower() for pattern in test_case.expected_patterns}
+                pattern_matches: dict[str, bool] = {pattern: pattern.lower() in output.lower() for pattern in test_case.expected_patterns}
                 all_patterns_found = all(pattern_matches.values())
                 passed_validation = all_patterns_found if passed_validation is None else (passed_validation and all_patterns_found)
                 validation_details["pattern_matches"] = pattern_matches
@@ -442,7 +443,7 @@ class ModelBatchTester:
         test_cases: list[TestCase],
     ) -> dict[str, Any]:
         """Generate summary statistics from test results."""
-        summary = {
+        summary: dict[str, Any] = {
             "total_tests": len(results),
             "successful_tests": sum(bool(r.success) for r in results),
             "failed_tests": sum(not r.success for r in results),
@@ -456,7 +457,9 @@ class ModelBatchTester:
         for model_id in model_ids:
             model_results = [r for r in results if r.model_id == model_id]
 
-            summary["models"][model_id] = {
+            models_dict = summary["models"]
+            assert isinstance(models_dict, dict)
+            models_dict[model_id] = {
                 "total": len(model_results),
                 "success": sum(bool(r.success) for r in model_results),
                 "failed": sum(not r.success for r in model_results),
@@ -474,7 +477,9 @@ class ModelBatchTester:
         for test_case in test_cases:
             test_results = [r for r in results if r.test_id == test_case.test_id]
 
-            summary["tests"][test_case.test_id] = {
+            tests_dict = summary["tests"]
+            assert isinstance(tests_dict, dict)
+            tests_dict[test_case.test_id] = {
                 "total": len(test_results),
                 "success": sum(bool(r.success) for r in test_results),
                 "validation_passed": sum(r.passed_validation is True for r in test_results),
@@ -505,7 +510,7 @@ class ModelBatchTester:
         # Run batch test
         report = self.run_batch_test(model_ids, suite_id)
 
-        comparison = {
+        comparison: dict[str, Any] = {
             "test_suite": suite_id,
             "models": {},
             "rankings": {},
@@ -513,8 +518,14 @@ class ModelBatchTester:
 
         # Extract model performance
         for model_id in model_ids:
-            model_summary = report.summary["models"][model_id]
-            comparison["models"][model_id] = {
+            models_summary = report.summary["models"]
+            assert isinstance(models_summary, dict)
+            model_summary = models_summary[model_id]
+            assert isinstance(model_summary, dict)
+
+            comp_models = comparison["models"]
+            assert isinstance(comp_models, dict)
+            comp_models[model_id] = {
                 "success_rate": model_summary["success"] / model_summary["total"] if model_summary["total"] > 0 else 0,
                 "validation_rate": model_summary["validation_passed"] / model_summary["success"] if model_summary["success"] > 0 else 0,
                 "avg_inference_time": model_summary["avg_inference_time"],
@@ -524,25 +535,34 @@ class ModelBatchTester:
         # Generate rankings
         metrics = ["success_rate", "validation_rate", "avg_tokens_per_second"]
         for metric in metrics:
+            comp_models_dict = comparison["models"]
+            assert isinstance(comp_models_dict, dict)
+
             if metric == "avg_inference_time":
                 # Lower is better
                 ranked = sorted(
-                    comparison["models"].items(),
+                    comp_models_dict.items(),
                     key=lambda x: x[1][metric],
                 )
             else:
                 # Higher is better
                 ranked = sorted(
-                    comparison["models"].items(),
+                    comp_models_dict.items(),
                     key=lambda x: x[1][metric],
                     reverse=True,
                 )
 
-            comparison["rankings"][metric] = [model_id for model_id, _ in ranked]
+            rankings_dict = comparison["rankings"]
+            assert isinstance(rankings_dict, dict)
+            rankings_dict[metric] = [model_id for model_id, _ in ranked]
 
         # Overall winner (based on validation rate primarily)
-        if comparison["rankings"].get("validation_rate"):
-            comparison["recommended_model"] = comparison["rankings"]["validation_rate"][0]
+        rankings_dict_check = comparison["rankings"]
+        assert isinstance(rankings_dict_check, dict)
+        validation_ranking = rankings_dict_check.get("validation_rate")
+        if validation_ranking:
+            assert isinstance(validation_ranking, list)
+            comparison["recommended_model"] = validation_ranking[0]
 
         return comparison
 

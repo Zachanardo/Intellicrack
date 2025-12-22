@@ -24,7 +24,7 @@ import sys
 from pathlib import Path
 from typing import Any, Protocol, TypeVar, cast
 
-from intellicrack.handlers.pyqt6_handler import QMessageBox
+from intellicrack.handlers.pyqt6_handler import QMessageBox, QWidget
 
 from ...utils.logger import get_logger
 
@@ -543,7 +543,8 @@ if __name__ == "__main__":
         msg += f"2. Run: python {os.path.basename(launcher_path)}\\n\\n"
         msg += "The launcher will apply patches in memory without modifying the file."
 
-        QMessageBox.information(app, "Launcher Created", msg)
+        parent_widget: QWidget | None = app if isinstance(app, QWidget) else None
+        QMessageBox.information(parent_widget, "Launcher Created", msg)
 
         return launcher_path
 
@@ -590,16 +591,18 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
         protections.append("Code Obfuscation")
         app.update_output.emit(log_message("[Memory Patch] Detected: Code obfuscation"))
 
+    parent_widget: QWidget | None = app if isinstance(app, QWidget) else None
+
     if not protections:
         app.update_output.emit(log_message("[Memory Patch] No special protections detected. Static patching may work."))
 
         response = QMessageBox.question(
-            app,
+            parent_widget,
             "Memory Patching Setup",
             "No special protections detected.\\n\\n"
             "Static patching might work for this binary.\\n"
             "Do you still want to set up memory patching?",
-            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
     else:
@@ -613,19 +616,20 @@ def setup_memory_patching(app: ApplicationInterface) -> None:
         msg += "Continue with memory patching setup?"
 
         response = QMessageBox.question(
-            app,
+            parent_widget,
             "Memory Patching Required",
             msg,
-            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-    if response != QMessageBox.Yes:
+    if response != QMessageBox.StandardButton.Yes:
         return
     # Check if we have patches to apply
     if not hasattr(app, "potential_patches") or not app.potential_patches:
         app.update_output.emit(log_message("[Memory Patch] No patches available. Run analysis first."))
+        parent_widget_check: QWidget | None = app if isinstance(app, QWidget) else None
         QMessageBox.warning(
-            app,
+            parent_widget_check,
             "No Patches",
             "No patches are available to apply.\\n\\nPlease run analysis to identify patches first.",
         )

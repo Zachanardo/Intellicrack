@@ -552,7 +552,7 @@ class BinaryPatternDetector:
 
     def _wildcard_match(self, data: bytes, pattern: BinaryPattern) -> list[PatternMatch]:
         """Perform wildcard pattern matching with mask support."""
-        matches = []
+        matches: list[PatternMatch] = []
         key = f"{pattern.category}:{pattern.name}"
         segments = self.compiled_patterns.get(key, [])
 
@@ -611,9 +611,9 @@ class BinaryPatternDetector:
         if not CAPSTONE_AVAILABLE:
             return self._wildcard_match(data, pattern)
 
-        matches = []
+        matches: list[PatternMatch] = []
         key = f"{pattern.category}:{pattern.name}"
-        pic_info = self.compiled_patterns.get(key, {})
+        pic_info: dict[str, Any] = self.compiled_patterns.get(key, {})
 
         if "instructions" not in pic_info:
             return matches
@@ -646,7 +646,7 @@ class BinaryPatternDetector:
 
         return matches
 
-    def _match_instruction_sequence(self, data: bytes, offset: int, pattern_insns: list[dict], cs: Cs) -> bool:
+    def _match_instruction_sequence(self, data: bytes, offset: int, pattern_insns: list[dict[str, Any]], cs: Cs) -> bool:
         """Match instruction sequence semantically."""
         try:
             code = data[offset : offset + 100]
@@ -683,7 +683,7 @@ class BinaryPatternDetector:
 
     def _reloc_match(self, data: bytes, pattern: BinaryPattern) -> list[PatternMatch]:
         """Match patterns with relocation awareness."""
-        matches = []
+        matches: list[PatternMatch] = []
         key = f"{pattern.category}:{pattern.name}"
         reloc_info = self.compiled_patterns.get(key, {})
 
@@ -695,7 +695,7 @@ class BinaryPatternDetector:
         reloc_offsets = reloc_info["reloc_offsets"]
 
         # Get PE relocations if available
-        relocations = self._get_pe_relocations(data) if PEFILE_AVAILABLE else []
+        relocations: list[tuple[int, str]] = self._get_pe_relocations(data) if PEFILE_AVAILABLE else []
 
         # Scan with relocation awareness
         for offset in range(len(data) - len(base_pattern)):
@@ -772,7 +772,7 @@ class BinaryPatternDetector:
             pe = pefile.PE(data=data, fast_load=True)
             pe.parse_data_directories(directories=[pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_BASERELOC"]])
 
-            relocations = []
+            relocations: list[tuple[int, str]] = []
             if hasattr(pe, "DIRECTORY_ENTRY_BASERELOC"):
                 for reloc in pe.DIRECTORY_ENTRY_BASERELOC:
                     relocations.extend((entry.rva, f"TYPE_{entry.type}") for entry in reloc.entries if entry.type != 0)
@@ -838,7 +838,7 @@ class BinaryPatternDetector:
             return []
 
         cs = self.cs_x86  # Default to 32-bit
-        disasm = []
+        disasm: list[str] = []
 
         try:
             code = data[offset : offset + size]
@@ -855,7 +855,7 @@ class BinaryPatternDetector:
         name: str,
         category: str,
         match_type: PatternMatchType = PatternMatchType.WILDCARD,
-        **kwargs: object,
+        **kwargs: Any,
     ) -> bool:
         """Add a custom pattern from hex strings."""
         try:
@@ -943,15 +943,18 @@ class BinaryPatternDetector:
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get pattern database statistics."""
-        stats = {
-            "total_patterns": sum(len(p) for p in self.patterns.values()),
-            "categories": {},
-            "match_types": defaultdict(int),
-        }
+        match_types: dict[str, int] = defaultdict(int)
+        categories: dict[str, int] = {}
 
         for category, patterns in self.patterns.items():
-            stats["categories"][category] = len(patterns)
+            categories[category] = len(patterns)
             for pattern in patterns:
-                stats["match_types"][pattern.match_type.value] += 1
+                match_types[pattern.match_type.value] += 1
+
+        stats: dict[str, Any] = {
+            "total_patterns": sum(len(p) for p in self.patterns.values()),
+            "categories": categories,
+            "match_types": match_types,
+        }
 
         return stats

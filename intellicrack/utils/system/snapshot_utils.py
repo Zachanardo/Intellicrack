@@ -39,7 +39,7 @@ def compare_snapshots(snapshot1: dict[str, Any], snapshot2: dict[str, Any]) -> d
         Dictionary containing differences between snapshots
 
     """
-    differences = {
+    differences: dict[str, Any] = {
         "files": {
             "added": [],
             "removed": [],

@@ -20,7 +20,7 @@ Common snapshot comparison utilities to avoid code duplication.
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 
 def validate_snapshots(
@@ -128,7 +128,7 @@ def get_snapshot_data(
         Snapshot data dictionary, or empty dict if snapshot not found.
 
     """
-    return snapshots_dict.get(snapshot_name, {})
+    return cast("dict[str, Any]", snapshots_dict.get(snapshot_name, {}))
 
 
 def compare_file_lists(

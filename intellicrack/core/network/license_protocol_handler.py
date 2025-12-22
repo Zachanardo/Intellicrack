@@ -350,18 +350,18 @@ class FlexLMProtocolHandler(LicenseProtocolHandler):
         """Initialize FlexLM protocol handler."""
         super().__init__(config)
         self.flexlm_port = self.config.get("flexlm_port", 27000)
-        self.captured_requests = []
-        self.captured_responses = []
-        self.session_data = {}
-        self.client_connections = {}
+        self.captured_requests: list[dict[str, Any]] = []
+        self.captured_responses: list[dict[str, Any]] = []
+        self.session_data: dict[str, Any] = {}
+        self.client_connections: dict[str, Any] = {}
         self.vendor_daemon_port = self.config.get("vendor_daemon_port", 27001)
 
         # Configure FlexLM response parameters
-        self.flexlm_version = self.config.get("flexlm_version", "11.16.2")
-        self.license_count = self.config.get("license_count", 9999)
-        self.license_type = self.config.get("license_type", "permanent")
-        self.feature_version = self.config.get("feature_version", "2.0")
-        self.server_status = self.config.get("server_status", "UP")
+        self.flexlm_version: str = str(self.config.get("flexlm_version", "11.16.2"))
+        self.license_count: int = int(self.config.get("license_count", 9999))
+        self.license_type: str = str(self.config.get("license_type", "permanent"))
+        self.feature_version: str = str(self.config.get("feature_version", "2.0"))
+        self.server_status: str = str(self.config.get("server_status", "UP"))
 
     def clear_data(self) -> None:
         """Clear FlexLM-specific captured data."""
@@ -531,18 +531,18 @@ class HASPProtocolHandler(LicenseProtocolHandler):
         """Initialize HASP protocol handler."""
         super().__init__(config)
         self.hasp_port = self.config.get("hasp_port", 1947)
-        self.captured_requests = []
-        self.captured_responses = []
-        self.session_data = {}
-        self.client_connections = {}
-        self._hasp_aes_key = None
-        self._hasp_nonce = None
+        self.captured_requests: list[dict[str, Any]] = []
+        self.captured_responses: list[dict[str, Any]] = []
+        self.session_data: dict[str, Any] = {}
+        self.client_connections: dict[str, Any] = {}
+        self._hasp_aes_key: bytes | None = None
+        self._hasp_nonce: bytes | None = None
 
         # Configure HASP response parameters
-        self.hasp_memory_size = self.config.get("hasp_memory_size", 0x20000)  # 128KB default
-        self.hasp_version = self.config.get("hasp_version", "7.50")
-        self.hasp_vendor_id = self.config.get("hasp_vendor_id", 0x1234)
-        self.license_features = self.config.get(
+        self.hasp_memory_size: int = int(self.config.get("hasp_memory_size", 0x20000))  # 128KB default
+        self.hasp_version: str = str(self.config.get("hasp_version", "7.50"))
+        self.hasp_vendor_id: int = int(self.config.get("hasp_vendor_id", 0x1234))
+        license_features_raw = self.config.get(
             "license_features",
             [
                 "PROFESSIONAL",
@@ -551,7 +551,8 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                 "RUNTIME",
             ],
         )
-        self.hasp_emulator_version = self.config.get("hasp_emulator_version", "HASP_EMU_v2.1")
+        self.license_features: list[str] = list(license_features_raw) if isinstance(license_features_raw, list) else ["PROFESSIONAL"]
+        self.hasp_emulator_version: str = str(self.config.get("hasp_emulator_version", "HASP_EMU_v2.1"))
 
     def clear_data(self) -> None:
         """Clear HASP-specific captured data."""
@@ -695,14 +696,18 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         from intellicrack.handlers.cryptography_handler import Cipher, algorithms, default_backend, modes
 
                         # Generate or use stored key/nonce for this session
-                        if self._hasp_aes_key is None:
+                        if self._hasp_aes_key is None or self._hasp_nonce is None:
                             self._hasp_aes_key = os.urandom(32)  # AES-256
                             self._hasp_nonce = os.urandom(16)
 
+                        # Type narrowing: at this point, both are bytes
+                        enc_key: bytes = self._hasp_aes_key
+                        enc_nonce: bytes = self._hasp_nonce
+
                         # Encrypt data
                         cipher = Cipher(
-                            algorithms.AES(self._hasp_aes_key),
-                            modes.CTR(self._hasp_nonce),
+                            algorithms.AES(enc_key),
+                            modes.CTR(enc_nonce),
                             backend=default_backend(),
                         )
                         encryptor = cipher.encryptor()
@@ -725,17 +730,21 @@ class HASPProtocolHandler(LicenseProtocolHandler):
                         from intellicrack.handlers.cryptography_handler import Cipher, algorithms, default_backend, modes
 
                         # Use stored key/nonce from encryption
-                        if self._hasp_aes_key is not None:
+                        if self._hasp_aes_key is not None and self._hasp_nonce is not None:
+                            # Type narrowing: at this point, both are bytes
+                            dec_key: bytes = self._hasp_aes_key
+                            dec_nonce: bytes = self._hasp_nonce
+
                             cipher = Cipher(
-                                algorithms.AES(self._hasp_aes_key),
-                                modes.CTR(self._hasp_nonce),
+                                algorithms.AES(dec_key),
+                                modes.CTR(dec_nonce),
                                 backend=default_backend(),
                             )
                             decryptor = cipher.decryptor()
                             decrypted = decryptor.update(data_to_decrypt) + decryptor.finalize()
                         else:
                             # No key established yet
-                            self.logger.exception("No encryption key established for decryption")
+                            self.logger.error("No encryption key established for decryption")
                             decrypted = data_to_decrypt
 
                         return struct.pack("<I", 0x00000000) + decrypted

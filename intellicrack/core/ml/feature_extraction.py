@@ -27,12 +27,13 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import numpy.typing as npt
 
 
 class BinaryFeatureExtractor:
     """Extract features from PE binaries for machine learning classification."""
 
-    PROTECTOR_PATTERNS = {
+    PROTECTOR_PATTERNS: dict[str, dict[str, Any]] = {
         "vmprotect": {
             "section_names": [b".vmp0", b".vmp1", b".vmp2"],
             "byte_patterns": [b"VMProtect", b"PolyEnE", b"\x9c\x8d\x64"],
@@ -121,7 +122,7 @@ class BinaryFeatureExtractor:
             *opcode_names,
         ]
 
-    def extract_features(self, binary_path: str | Path) -> np.ndarray:
+    def extract_features(self, binary_path: str | Path) -> npt.NDArray[np.float32]:
         """Extract feature vector from binary file.
 
         Args:
@@ -142,7 +143,7 @@ class BinaryFeatureExtractor:
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-            features = {}
+            features: dict[str, float] = {}
 
             features |= self._extract_entropy_features(data)
             features.update(self._extract_pe_features(data))
@@ -366,58 +367,66 @@ class BinaryFeatureExtractor:
             for protector, patterns in self.PROTECTOR_PATTERNS.items():
                 feature_name = f"signature_{protector}"
                 score = 0.0
-                matches = []
+                matches: list[str] = []
 
-                if "byte_patterns" in patterns:
-                    for pattern in patterns["byte_patterns"]:
-                        if pattern in data:
+                byte_patterns = patterns.get("byte_patterns")
+                if isinstance(byte_patterns, list):
+                    for pattern in byte_patterns:
+                        if isinstance(pattern, bytes) and pattern in data:
                             score += 0.3
-                            matches.append(f"byte:{pattern[:20]}")
+                            matches.append(f"byte:{pattern[:20]!r}")
                             break
 
-                if "section_names" in patterns:
+                section_patterns = patterns.get("section_names")
+                if isinstance(section_patterns, list):
                     section_match_found = False
                     for section in sections:
                         if section_match_found:
                             break
                         section_name = section.get("name", "").encode("utf-8", errors="ignore")
-                        for pattern in patterns["section_names"]:
-                            if pattern in section_name or section_name in pattern:
+                        for pattern in section_patterns:
+                            if isinstance(pattern, bytes) and (pattern in section_name or section_name in pattern):
                                 score += 0.4
-                                matches.append(f"section:{section_name[:20]}")
+                                matches.append(f"section:{section_name[:20]!r}")
                                 section_match_found = True
                                 break
 
-                if "section_flags" in patterns:
-                    flags = patterns["section_flags"]
-                    if flags.get("zero_size"):
+                section_flags = patterns.get("section_flags")
+                if isinstance(section_flags, dict):
+                    if section_flags.get("zero_size"):
                         for section in sections:
                             if section.get("raw_size", 1) == 0 and section.get("virtual_size", 0) > 0:
                                 score += 0.2
                                 matches.append("zero_size_section")
                                 break
 
-                if "entry_point_sig" in patterns and entry_point.startswith(patterns["entry_point_sig"]):
+                entry_point_sig = patterns.get("entry_point_sig")
+                if isinstance(entry_point_sig, bytes) and entry_point.startswith(entry_point_sig):
                     score += 0.5
                     matches.append("entry_point_match")
 
-                if "timestamp" in patterns and timestamp == patterns["timestamp"]:
+                pattern_timestamp = patterns.get("timestamp")
+                if isinstance(pattern_timestamp, int) and timestamp == pattern_timestamp:
                     score += 0.6
                     matches.append(f"timestamp:{hex(timestamp)}")
 
-                if "min_entropy" in patterns:
+                min_entropy = patterns.get("min_entropy")
+                if isinstance(min_entropy, (int, float)):
                     overall_entropy = self._calculate_entropy(data)
-                    if overall_entropy >= patterns["min_entropy"]:
+                    if overall_entropy >= min_entropy:
                         score += 0.2
                         matches.append(f"high_entropy:{overall_entropy:.2f}")
 
-                if patterns.get("last_section_sig") and sections:
+                last_section_sig = patterns.get("last_section_sig")
+                if last_section_sig and sections:
                     last_section_data = sections[-1].get("data", b"")
-                    for pattern in patterns.get("byte_patterns", []):
-                        if pattern in last_section_data:
-                            score += 0.4
-                            matches.append("last_section_match")
-                            break
+                    byte_patterns_check = patterns.get("byte_patterns")
+                    if isinstance(byte_patterns_check, list):
+                        for pattern in byte_patterns_check:
+                            if isinstance(pattern, bytes) and pattern in last_section_data:
+                                score += 0.4
+                                matches.append("last_section_match")
+                                break
 
                 features[feature_name] = min(score, 1.0)
 
@@ -521,9 +530,12 @@ class BinaryFeatureExtractor:
         if data[pe_offset : pe_offset + 4] != b"PE\x00\x00":
             raise ValueError("Invalid PE signature")
 
-        result = {
-            "sections": [],
-            "imports": [],
+        sections_list: list[dict[str, Any]] = []
+        imports_list: list[dict[str, Any]] = []
+
+        result: dict[str, Any] = {
+            "sections": sections_list,
+            "imports": imports_list,
             "has_tls": False,
             "overlay_size": 0,
             "resource_size": 0,
@@ -568,7 +580,7 @@ class BinaryFeatureExtractor:
                 end = min(raw_offset + raw_size, len(data))
                 section_data = data[raw_offset:end]
 
-            result["sections"].append({
+            section_dict: dict[str, Any] = {
                 "name": section_name,
                 "virtual_size": virtual_size,
                 "virtual_address": virtual_address,
@@ -577,24 +589,29 @@ class BinaryFeatureExtractor:
                 "characteristics": characteristics,
                 "executable": executable,
                 "data": section_data,
-            })
+            }
+            sections_list.append(section_dict)
 
-        if number_of_sections > 0:
-            last_section = result["sections"][-1]
-            last_section_end = last_section["raw_offset"] + last_section["raw_size"]
-            if last_section_end < len(data):
-                result["overlay_size"] = len(data) - last_section_end
+        if number_of_sections > 0 and sections_list:
+            last_section = sections_list[-1]
+            last_raw_offset = last_section.get("raw_offset", 0)
+            last_raw_size = last_section.get("raw_size", 0)
+            if isinstance(last_raw_offset, int) and isinstance(last_raw_size, int):
+                last_section_end = last_raw_offset + last_raw_size
+                if last_section_end < len(data):
+                    result["overlay_size"] = len(data) - last_section_end
 
         if entry_point_rva > 0:
-            for section in result["sections"]:
+            for section in sections_list:
                 va = section.get("virtual_address", 0)
                 vsize = section.get("virtual_size", 0)
-                if va <= entry_point_rva < va + vsize:
-                    section_data = section.get("data", b"")
-                    offset_in_section = entry_point_rva - va
-                    if offset_in_section < len(section_data):
-                        result["entry_point_data"] = section_data[offset_in_section : min(offset_in_section + 32, len(section_data))]
-                    break
+                if isinstance(va, int) and isinstance(vsize, int) and va <= entry_point_rva < va + vsize:
+                    section_data_item = section.get("data", b"")
+                    if isinstance(section_data_item, bytes):
+                        offset_in_section = entry_point_rva - va
+                        if offset_in_section < len(section_data_item):
+                            result["entry_point_data"] = section_data_item[offset_in_section : min(offset_in_section + 32, len(section_data_item))]
+                        break
 
         try:
             import_pattern = re.compile(rb"(?:[\x20-\x7E]{3,})\x00")
@@ -603,9 +620,9 @@ class BinaryFeatureExtractor:
             for match in import_matches[:500]:
                 import_str = match.decode("ascii", errors="ignore").strip("\x00")
                 if "." in import_str and import_str.lower().endswith(".dll"):
-                    result["imports"].append({"dll": import_str, "function": ""})
+                    imports_list.append({"dll": import_str, "function": ""})
                 elif import_str and "." not in import_str and len(import_str) > 2:
-                    result["imports"].append({"dll": "", "function": import_str})
+                    imports_list.append({"dll": "", "function": import_str})
 
         except Exception as e:
             self.logger.warning("Failed to parse PE imports: %s", e)

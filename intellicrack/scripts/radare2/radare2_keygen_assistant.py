@@ -162,7 +162,7 @@ class R2KeygenAssistant:
         "6x4": r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$",
     }
 
-    def __init__(self, r2: r2pipe.open = None, filename: str = None) -> None:
+    def __init__(self, r2: r2pipe.open | None = None, filename: str | None = None) -> None:
         """Initialize the keygen assistant."""
         self.r2 = r2 or r2pipe.open(filename)
         self.crypto_operations: list[CryptoOperation] = []
@@ -388,13 +388,15 @@ class R2KeygenAssistant:
 
         return self.extracted_keys
 
-    def _search_constants(self, algo_name: str, constants: dict[str, Any]) -> None:
+    def _search_constants(self, algo_name: str, constants: object) -> None:
         """Search for algorithm-specific constants."""
+        if not isinstance(constants, dict):
+            return
         for const_type, values in constants.items():
             if isinstance(values, list):
                 for val in values:
                     self._search_constant_value(algo_name, const_type, val)
-            else:
+            elif isinstance(values, int):
                 self._search_constant_value(algo_name, const_type, values)
 
     def _search_constant_value(self, algo_name: str, const_type: str, value: int) -> None:
@@ -599,7 +601,7 @@ class R2KeygenAssistant:
 
     def _get_function_constants(self, func_addr: int) -> list[dict[str, Any]]:
         """Extract constants from function."""
-        constants = []
+        constants: list[dict[str, Any]] = []
 
         # Get function size
         func_info = self.r2.cmdj(f"afij @ {func_addr}")
@@ -630,7 +632,7 @@ class R2KeygenAssistant:
 
         return constants
 
-    def generate_keygens(self, languages: list[KeygenLanguage] = None) -> list[KeygenTemplate]:
+    def generate_keygens(self, languages: list[KeygenLanguage] | None = None) -> list[KeygenTemplate]:
         """Generate keygen source code."""
         if not languages:
             languages = [KeygenLanguage.PYTHON, KeygenLanguage.CPP, KeygenLanguage.JAVA]
@@ -669,8 +671,8 @@ class R2KeygenAssistant:
 
     def _generate_python_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate Python keygen."""
-        code = []
-        dependencies = []
+        code: list[str] = []
+        dependencies: list[str] = []
 
         code.extend(
             (
@@ -828,8 +830,8 @@ class R2KeygenAssistant:
 
     def _generate_cpp_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate C++ keygen."""
-        code = []
-        dependencies = []
+        code: list[str] = []
+        dependencies: list[str] = []
 
         code.extend(
             (
@@ -952,8 +954,8 @@ class R2KeygenAssistant:
 
     def _generate_java_keygen(self, flow: ValidationFlow, algo_chain: list[CryptoAlgorithm]) -> KeygenTemplate:
         """Generate Java keygen."""
-        code = []
-        dependencies = []
+        code: list[str] = []
+        dependencies: list[str] = []
 
         code.extend(
             (
@@ -1106,7 +1108,7 @@ class R2KeygenAssistant:
                 f.write("Usage:\n")
                 f.write(template.usage_instructions + "\n")
 
-    def analyze_from_license_functions(self, license_functions: list[dict]) -> list[KeygenTemplate]:
+    def analyze_from_license_functions(self, license_functions: list[dict[str, Any]]) -> list[KeygenTemplate]:
         """Analyze validation from detected license functions."""
         logger.info("Analyzing license functions for keygen generation...")
 

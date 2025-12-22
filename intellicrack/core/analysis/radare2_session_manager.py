@@ -152,7 +152,7 @@ class R2SessionWrapper:
                     self.state = SessionState.CLOSED
                     logger.debug("Session %s closed", self.session_id)
 
-    def execute(self, command: str, expect_json: bool = False) -> str | dict | list | None:
+    def execute(self, command: str, expect_json: bool = False) -> str | dict[str, Any] | list[Any] | None:
         """Execute radare2 command with error handling.
 
         Args:
@@ -173,7 +173,9 @@ class R2SessionWrapper:
 
             start_time = time.time()
             try:
-                result = self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
+                result: str | dict[str, Any] | list[Any] | None = (
+                    self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
+                )
                 execution_time = time.time() - start_time
                 self.metrics.commands_executed += 1
                 self.metrics.last_command_time = execution_time
@@ -300,7 +302,7 @@ class R2SessionPool:
         self.cleanup_interval = cleanup_interval
 
         self._sessions: dict[str, R2SessionWrapper] = {}
-        self._available_sessions: dict[str, Queue] = {}
+        self._available_sessions: dict[str, Queue[R2SessionWrapper]] = {}
         self._lock = threading.RLock()
         self._cleanup_thread: threading.Thread | None = None
         self._stop_cleanup = threading.Event()
@@ -367,17 +369,17 @@ class R2SessionPool:
 
         with self._lock:
             if pool_key not in self._available_sessions:
-                self._available_sessions[pool_key] = Queue()
+                self._available_sessions[pool_key] = Queue[R2SessionWrapper]()
 
             try:
-                session = self._available_sessions[pool_key].get_nowait()
-                if session.is_alive():
-                    logger.debug("Reusing session %s from pool", session.session_id)
-                    return session
-                logger.info("Session %s not alive, reconnecting", session.session_id)
-                if session.reconnect():
-                    return session
-                session.disconnect()
+                session_from_queue: R2SessionWrapper = self._available_sessions[pool_key].get_nowait()
+                if session_from_queue.is_alive():
+                    logger.debug("Reusing session %s from pool", session_from_queue.session_id)
+                    return session_from_queue
+                logger.info("Session %s not alive, reconnecting", session_from_queue.session_id)
+                if session_from_queue.reconnect():
+                    return session_from_queue
+                session_from_queue.disconnect()
             except Empty:
                 pass
 

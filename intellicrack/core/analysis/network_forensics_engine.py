@@ -183,11 +183,14 @@ class NetworkForensicsEngine:
                 }
 
                 # Basic traffic analysis
+                protocols_observed: list[str] = results["protocols_observed"]  # type: ignore[assignment]
+                anomalies_detected: list[str] = results["anomalies_detected"]  # type: ignore[assignment]
+
                 if bytes_sent > 10000 or bytes_recv > 10000:
-                    results["protocols_observed"].append("High-volume traffic detected")
+                    protocols_observed.append("High-volume traffic detected")
 
                 if packets_sent > 100 or packets_recv > 100:
-                    results["anomalies_detected"].append("High packet rate detected")
+                    anomalies_detected.append("High packet rate detected")
 
                 # Connection analysis
                 connections = psutil.net_connections(kind="inet")
@@ -351,8 +354,8 @@ class NetworkForensicsEngine:
                         self.logger.debug("Error during nested extraction: %s", e)
 
             # Remove duplicates and limit results
-            seen = set()
-            unique_artifacts = []
+            seen: set[tuple[str, str]] = set()
+            unique_artifacts: list[dict[str, Any]] = []
             for artifact in artifacts:
                 key = (artifact["type"], artifact["value"])
                 if key not in seen and len(unique_artifacts) < 100:
@@ -378,7 +381,7 @@ class NetworkForensicsEngine:
 
         """
         try:
-            protocols = []
+            protocols: list[str] = []
 
             if not packet_data:
                 return protocols

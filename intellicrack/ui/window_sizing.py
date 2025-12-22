@@ -16,6 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any
+
 from intellicrack.handlers.pyqt6_handler import QApplication
 
 
@@ -46,7 +48,7 @@ def get_default_window_size(
     return min_width, min_height
 
 
-def center_window_on_screen(window: object) -> None:
+def center_window_on_screen(window: Any) -> None:
     """Center a window on the primary screen.
 
     Args:
@@ -76,7 +78,7 @@ def get_dialog_size(dialog_type: str = "standard") -> tuple[int, int, int, int]:
     """
     screen_width, screen_height = get_default_window_size(1.0, 1.0, 1024, 768)
 
-    dialog_configs = {
+    dialog_configs: dict[str, dict[str, float | int]] = {
         "small": {
             "width_pct": 0.4,
             "height_pct": 0.3,
@@ -105,13 +107,13 @@ def get_dialog_size(dialog_type: str = "standard") -> tuple[int, int, int, int]:
 
     config = dialog_configs.get(dialog_type, dialog_configs["standard"])
 
-    width = max(int(screen_width * config["width_pct"]), config["min_width"])
-    height = max(int(screen_height * config["height_pct"]), config["min_height"])
+    width = max(int(screen_width * float(config["width_pct"])), int(config["min_width"]))
+    height = max(int(screen_height * float(config["height_pct"])), int(config["min_height"]))
 
-    return width, height, config["min_width"], config["min_height"]
+    return width, height, int(config["min_width"]), int(config["min_height"])
 
 
-def apply_dialog_sizing(dialog: object, dialog_type: str = "standard") -> None:
+def apply_dialog_sizing(dialog: Any, dialog_type: str = "standard") -> None:
     """Apply dynamic sizing to a dialog based on screen size.
 
     Args:

@@ -60,7 +60,7 @@ class UILayoutHelpers:
         dialog.setWindowTitle(window_title)
         dialog.setMinimumSize(size[0], size[1])
 
-        if is_modal:
+        if is_modal and hasattr(dialog, "setModal"):
             dialog.setModal(True)
 
         # Create main layout
@@ -73,7 +73,7 @@ class UILayoutHelpers:
         return main_layout, tab_widget
 
     @staticmethod
-    def create_dialog_buttons(button_specs: list[tuple[str, Callable, bool]], layout: QVBoxLayout) -> list[QPushButton]:
+    def create_dialog_buttons(button_specs: list[tuple[str, Callable[[], None], bool]], layout: QVBoxLayout) -> list[QPushButton]:
         """Create standard dialog buttons with consistent layout.
 
         Args:
@@ -112,7 +112,7 @@ class UILayoutHelpers:
     @staticmethod
     def create_file_browse_widget(
         line_edit_text: str = "",
-        browse_callback: Callable | None = None,
+        browse_callback: Callable[[], None] | None = None,
         browse_text: str = "Browse...",
     ) -> tuple[QHBoxLayout, QLineEdit, QPushButton]:
         """Create a file browse widget with line edit and browse button.
@@ -130,11 +130,7 @@ class UILayoutHelpers:
 
         line_edit = QLineEdit()
         if line_edit_text:
-            # Configure the hint text property for the line edit widget
-            line_edit.setInputMethodHints(line_edit.inputMethodHints())
-            # Set using direct property assignment for display hints
-            line_edit._hint_text = line_edit_text
-            # Apply hint via tooltip for guidance during input
+            line_edit.setPlaceholderText(line_edit_text)
             line_edit.setToolTip(line_edit_text)
 
         browse_btn = QPushButton(browse_text)
@@ -147,7 +143,7 @@ class UILayoutHelpers:
         return layout, line_edit, browse_btn
 
     @staticmethod
-    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QVBoxLayout]:
+    def create_config_group(title: str, use_form_layout: bool = True) -> tuple[QGroupBox, QFormLayout | QVBoxLayout]:
         """Create a configuration group box with appropriate layout.
 
         Args:
@@ -160,7 +156,7 @@ class UILayoutHelpers:
         """
         group = QGroupBox(title)
 
-        layout = QFormLayout() if use_form_layout else QVBoxLayout()
+        layout: QFormLayout | QVBoxLayout = QFormLayout() if use_form_layout else QVBoxLayout()
         group.setLayout(layout)
         return group, layout
 

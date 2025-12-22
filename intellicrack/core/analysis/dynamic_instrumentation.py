@@ -22,11 +22,32 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 import time
 from threading import Thread
+from typing import Any, Protocol
 
 import frida
 
 
-def on_message(main_app: object, message: dict[str, object], data: object) -> None:
+class SignalProtocol(Protocol):
+    """Protocol for Qt signal."""
+
+    def emit(self, arg: str) -> None:
+        """Emit signal with string argument."""
+        ...
+
+
+class MainAppProtocol(Protocol):
+    """Protocol for main application interface."""
+
+    current_binary: str
+    update_output: SignalProtocol
+    analysis_completed: SignalProtocol
+
+
+def on_message(
+    main_app: MainAppProtocol,
+    message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage,
+    data: bytes | None,
+) -> None:
     """Handle messages from Frida scripts.
 
     Processes messages received from Frida instrumentation scripts and relays
@@ -36,22 +57,23 @@ def on_message(main_app: object, message: dict[str, object], data: object) -> No
     Args:
         main_app: Reference to the main application window that receives output
             updates via signals.
-        message: Dictionary containing message metadata including "type" field
-            ("send" or "error") and relevant payload or stack trace data.
+        message: Frida message object containing either payload data or error information.
         data: Optional binary data payload from Frida script (typically unused).
 
     Returns:
         None
 
     """
-    if message["type"] == "send":
-        payload = message["payload"]
+    msg_type: str = message.get("type", "")
+    if msg_type == "send":
+        payload: Any = message.get("payload", "")
         main_app.update_output.emit(f"[Frida] {payload}")
-    elif message["type"] == "error":
-        main_app.update_output.emit(f"[Frida Error] {message['stack']}")
+    elif msg_type == "error":
+        stack: Any = message.get("stack", "")
+        main_app.update_output.emit(f"[Frida Error] {stack}")
 
 
-def run_instrumentation_thread(main_app: object, binary_path: str, script_source: str) -> None:
+def run_instrumentation_thread(main_app: MainAppProtocol, binary_path: str, script_source: str) -> None:
     """Run instrumentation logic in a separate thread.
 
     Executes binary instrumentation using Frida in a separate thread to avoid
@@ -77,24 +99,21 @@ def run_instrumentation_thread(main_app: object, binary_path: str, script_source
     """
     try:
         main_app.update_output.emit("[Dynamic Instrumentation] Starting instrumentation thread...")
-        device = frida.get_local_device()
+        device: Any = frida.get_local_device()
 
         main_app.update_output.emit(f"[Dynamic Instrumentation] Spawning process: {binary_path}")
-        pid = device.spawn([binary_path])
-        session = device.attach(pid)
+        pid: Any = device.spawn([binary_path])
+        session: Any = device.attach(pid)
         main_app.update_output.emit(f"[Dynamic Instrumentation] Attached to PID: {pid}")
 
-        script = session.create_script(script_source)
+        script: Any = session.create_script(script_source)
 
-        # Set up the message handler
         script.on("message", lambda message, data: on_message(main_app, message, data))
 
         script.load()
         main_app.update_output.emit("[Dynamic Instrumentation] Frida script loaded. Resuming process...")
         device.resume(pid)
 
-        # Allow time for the application to run and generate events.
-        # In a real scenario, this might be controlled by the user.
         time.sleep(15)
 
         main_app.update_output.emit("[Dynamic Instrumentation] Detaching from process.")
@@ -108,12 +127,10 @@ def run_instrumentation_thread(main_app: object, binary_path: str, script_source
     except Exception as e:
         main_app.update_output.emit(f"[Dynamic Instrumentation] An unexpected error occurred: {e}")
     finally:
-        # Notify the main thread that the analysis is complete
-        if hasattr(main_app, "analysis_completed"):
-            main_app.analysis_completed.emit("Dynamic Instrumentation")
+        main_app.analysis_completed.emit("Dynamic Instrumentation")
 
 
-def run_dynamic_instrumentation(main_app: object) -> None:
+def run_dynamic_instrumentation(main_app: MainAppProtocol) -> None:
     """Launch dynamic instrumentation session using Frida.
 
     Initiates a Frida-based dynamic instrumentation session targeting the
@@ -138,11 +155,9 @@ def run_dynamic_instrumentation(main_app: object) -> None:
         main_app.update_output.emit("[Dynamic Instrumentation] Error: No binary loaded.")
         return
 
-    binary_path = main_app.current_binary
+    binary_path: str = main_app.current_binary
 
-    # This example Frida script traces file access by hooking `open` on Linux/macOS
-    # and `CreateFileW` on Windows. It demonstrates a real, effective use case.
-    script_source = """
+    script_source: str = """
     const platform = Process.platform;
 
     if (platform === 'windows') {
@@ -164,7 +179,6 @@ def run_dynamic_instrumentation(main_app: object) -> None:
     }
     """
 
-    # Run the instrumentation in a background thread to keep the UI responsive
-    thread = Thread(target=run_instrumentation_thread, args=(main_app, binary_path, script_source), daemon=True)
+    thread: Thread = Thread(target=run_instrumentation_thread, args=(main_app, binary_path, script_source), daemon=True)
     thread.start()
     main_app.update_output.emit("[Dynamic Instrumentation] Task submitted to background thread.")

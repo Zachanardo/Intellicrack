@@ -30,6 +30,7 @@ from enum import Enum
 from typing import Any, cast
 
 from intellicrack.utils.logger import logger
+from intellicrack.utils.type_safety import validate_type
 
 from ..utils.logger import get_logger
 
@@ -168,13 +169,14 @@ class AISharedContext:
     def get_analysis_cache(self, binary_hash: str) -> dict[str, Any] | None:
         """Get cached analysis results for a binary."""
         with self._lock:
-            cached_analyses = cast("dict[str, Any]", self._context["cached_analyses"])
-            return cast("dict[str, Any] | None", cached_analyses.get(binary_hash))
+            cached_analyses = validate_type(self._context["cached_analyses"], dict)
+            result = cached_analyses.get(binary_hash)
+            return validate_type(result, dict) if result is not None else None
 
     def cache_analysis(self, binary_hash: str, results: dict[str, Any]) -> None:
         """Cache analysis results for a binary."""
         with self._lock:
-            cached_analyses = cast("dict[str, Any]", self._context["cached_analyses"])
+            cached_analyses = validate_type(self._context["cached_analyses"], dict)
             cached_analyses[binary_hash] = {
                 "results": results,
                 "timestamp": datetime.now(),

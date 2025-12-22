@@ -45,7 +45,7 @@ class AnalysisStatsGenerator:
             if not items:
                 return {}
 
-            counts = Counter()
+            counts: Counter[str] = Counter()
             for item in items:
                 if isinstance(item, dict) and attribute in item:
                     value = item[attribute]
@@ -151,7 +151,7 @@ class AnalysisStatsGenerator:
                             values.append(float(value))
                 attribute_values[attr] = values
 
-            correlation_matrix = {}
+            correlation_matrix: dict[str, dict[str, float]] = {}
             for attr1 in attributes:
                 correlation_matrix[attr1] = {}
                 for attr2 in attributes:
@@ -293,9 +293,7 @@ class AnalysisStatsGenerator:
         """
         try:
             result = compute_recommendations()
-            if isinstance(result, list):
-                return result
-            return [str(result)] if result else ["No specific recommendations available"]
+            return result
         except TypeError as e:
             logger.debug("Recommendation generation type error: %s", e, exc_info=True)
             return ["Unable to generate recommendations - type error occurred"]
@@ -331,7 +329,7 @@ class AnalysisStatsGenerator:
                 report_lines.append("No data to analyze.")
                 return "\n".join(report_lines)
 
-            all_attributes = set()
+            all_attributes: set[str] = set()
             for item in items:
                 if isinstance(item, dict):
                     all_attributes.update(item.keys())
@@ -453,7 +451,7 @@ class AnalysisStatsGenerator:
             return []
 
     @staticmethod
-    def generate_percentiles(values: list[int | float], percentiles: list[int] = None) -> dict[int, float]:
+    def generate_percentiles(values: list[int | float], percentiles: list[int] | None = None) -> dict[int, float]:
         """Calculate percentiles for a list of values.
 
         Args:
@@ -464,13 +462,13 @@ class AnalysisStatsGenerator:
             Dictionary mapping percentile to value
 
         """
+        if not values:
+            return {}
+
+        if percentiles is None:
+            percentiles = [25, 50, 75, 90, 95]
+
         try:
-            if not values:
-                return {}
-
-            if percentiles is None:
-                percentiles = [25, 50, 75, 90, 95]
-
             sorted_values = sorted(values)
             n = len(sorted_values)
 
@@ -500,8 +498,8 @@ class PerformanceTracker:
 
     def __init__(self) -> None:
         """Initialize the performance tracker with empty metrics and timing data."""
-        self.metrics = {}
-        self.start_times = {}
+        self.metrics: dict[str, dict[str, float | int]] = {}
+        self.start_times: dict[str, float] = {}
 
     def start_operation(self, operation_name: str) -> None:
         """Start tracking an operation."""

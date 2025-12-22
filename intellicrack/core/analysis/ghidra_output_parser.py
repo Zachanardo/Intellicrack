@@ -251,7 +251,7 @@ class GhidraOutputParser:
 
     def parse_call_graph(self, graph_path: Path) -> dict[str, list[str]]:
         """Parse Ghidra call graph export."""
-        call_graph = {}
+        call_graph: dict[str, list[str]] = {}
 
         try:
             with open(graph_path, encoding="utf-8") as f:
@@ -466,7 +466,7 @@ class GhidraOutputParser:
 
     def get_call_targets(self, function_name: str) -> list[str]:
         """Get all functions called by a function."""
-        targets = []
+        targets: list[str] = []
         if func := self.get_function_by_name(function_name):
             targets.extend(xref.to_function for xref in self.get_xrefs_from(func.address) if xref.ref_type == "CALL" and xref.to_function)
         return targets

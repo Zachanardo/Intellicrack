@@ -26,8 +26,10 @@ from intellicrack.handlers.pyqt6_handler import (
     QGroupBox,
     QHBoxLayout,
     QLabel,
+    QPixmap,
     QPushButton,
     QRadioButton,
+    QStyle,
     Qt,
     QTextEdit,
     QVBoxLayout,
@@ -80,14 +82,20 @@ class QEMUTestDialog(QDialog):
 
         # Warning icon
         icon_label: QLabel = QLabel()
-        icon_label.setPixmap(
-            self
-            .style()
-            .standardPixmap(
-                self.style().SP_MessageBoxWarning,
+        style: QStyle | None = self.style()
+        if style is not None:
+            pixmap: QPixmap = style.standardPixmap(
+                QStyle.StandardPixmap.SP_MessageBoxWarning,
             )
-            .scaled(48, 48, Qt.KeepAspectRatio, Qt.SmoothTransformation),
-        )
+            scaled_pixmap: QPixmap = pixmap.scaled(
+                48,
+                48,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+            icon_label.setPixmap(scaled_pixmap)
+        else:
+            icon_label.setPixmap(QPixmap())
         header_layout.addWidget(icon_label)
 
         # Warning text

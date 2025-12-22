@@ -424,7 +424,7 @@ Return validation results in structured JSON format.""",
             if the protection types list is empty.
 
         """
-        requirements = []
+        requirements: list[str] = []
 
         for ptype in protection_types:
             if "license" in ptype.lower():
@@ -479,7 +479,7 @@ Return validation results in structured JSON format.""",
             is empty.
 
         """
-        objectives = []
+        objectives: list[str] = []
 
         for ptype in protection_types:
             if "license" in ptype.lower():

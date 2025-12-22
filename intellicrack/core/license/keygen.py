@@ -118,7 +118,7 @@ class ExtractedAlgorithm:
 
     algorithm_name: str
     parameters: dict[str, Any]
-    validation_function: Callable | None = None
+    validation_function: Callable[[str], Any] | None = None
     key_format: SerialFormat | None = None
     constraints: list[KeyConstraint] = field(default_factory=list)
     confidence: float = 0.0
@@ -314,7 +314,7 @@ class ValidationAnalyzer:
             List of identified API function names
 
         """
-        api_calls = []
+        api_calls: list[str] = []
         crypto_apis = {
             "CryptVerifySignature": "RSA signature verification",
             "CryptDecrypt": "Decryption operation",
@@ -588,7 +588,7 @@ class ValidationAnalyzer:
             List of recommendation strings
 
         """
-        recommendations = []
+        recommendations: list[str] = []
 
         if algorithm_type == AlgorithmType.MD5:
             recommendations.extend((
@@ -873,7 +873,7 @@ class ConstraintExtractor:
         return self.algorithms
 
     def _group_constraints_by_algorithm(self, constraints: list[KeyConstraint]) -> dict[str, list[KeyConstraint]]:
-        groups = {}
+        groups: dict[str, list[KeyConstraint]] = {}
 
         for constraint in constraints:
             if constraint.constraint_type == "algorithm":
@@ -1023,7 +1023,7 @@ class KeySynthesizer:
             candidate = self.generator.generate_serial(constraints, seed=deterministic_seed)
 
             try:
-                if algorithm.validation_function(candidate.serial):
+                if algorithm.validation_function is not None and algorithm.validation_function(candidate.serial):
                     candidate.confidence = algorithm.confidence
                     candidate.algorithm = algorithm.algorithm_name
                     return candidate
@@ -1040,8 +1040,12 @@ class KeySynthesizer:
     ) -> GeneratedSerial:
         constraints = self._build_serial_constraints(algorithm)
 
-        seed = target_data or None
-        return self.generator.generate_serial(constraints, seed=seed)
+        seed_value: int | None = None
+        if target_data:
+            seed_str = hashlib.sha256(str(target_data).encode()).hexdigest()[:16]
+            seed_value = int(seed_str, 16)
+
+        return self.generator.generate_serial(constraints, seed=seed_value)
 
     def _build_serial_constraints(self, algorithm: ExtractedAlgorithm) -> SerialConstraints:
         length = 16
@@ -1217,15 +1221,21 @@ class LicenseKeygen:
         **kwargs: object,
     ) -> GeneratedSerial:
         """Generate a key from a known algorithm."""
+        length_arg = kwargs.get("length", 16)
+        length_val = int(length_arg) if isinstance(length_arg, (int, float, str)) else 16
+
+        groups_arg = kwargs.get("groups", 4)
+        groups_val = int(groups_arg) if isinstance(groups_arg, (int, float, str)) else 4
+
         if algorithm_name == "crc32":
             return GeneratedSerial(
-                serial=self.generator._generate_crc32_serial(kwargs.get("length", 16)),
+                serial=self.generator._generate_crc32_serial(length_val),
                 algorithm="crc32",
                 confidence=0.85,
             )
         elif algorithm_name == "luhn":
             return GeneratedSerial(
-                serial=self.generator._generate_luhn_serial(kwargs.get("length", 16)),
+                serial=self.generator._generate_luhn_serial(length_val),
                 algorithm="luhn",
                 confidence=0.9,
             )
@@ -1242,9 +1252,9 @@ class LicenseKeygen:
             )
         else:
             constraints = SerialConstraints(
-                length=kwargs.get("length", 16),
+                length=length_val,
                 format=SerialFormat.ALPHANUMERIC,
-                groups=kwargs.get("groups", 4),
+                groups=groups_val,
             )
 
         return self.generator.generate_serial(constraints)

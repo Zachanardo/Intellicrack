@@ -47,7 +47,7 @@ class ModelInfo:
         provider: str = "unknown",
         parameters: int | None = None,
         context_length: int | None = None,
-        capabilities: list[str] = None,
+        capabilities: list[str] | None = None,
         version: str = "1.0",
         checksum: str | None = None,
         download_url: str | None = None,

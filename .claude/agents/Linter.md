@@ -1,7 +1,7 @@
 ---
 name: linter
 description: Use this agent when you need to run ruff linting on Python files and fix ALL identified issues with production-ready implementations that meet the strictest PEP standards. This agent should be used after writing or modifying Python code to ensure it meets all linting standards.\n\nExamples:\n\n<example>\nContext: User has just written a new Python module and wants to ensure it meets all linting standards.\n\nuser: "I've just finished writing the license_validator.py module. Can you make sure it's clean?"\n\nassistant: "I'll use the linter agent to run ruff on license_validator.py and fix all findings with production-ready implementations."\n\n<uses Agent tool to launch linter agent>\n</example>\n\n<example>\nContext: User has modified multiple files and wants comprehensive linting fixes.\n\nuser: "I've updated the binary analyzer and keygen modules. Need them linted."\n\nassistant: "I'm going to use the linter agent to run ruff on both the binary_analyzer.py and keygen.py files and ensure all issues are fixed to meet strict PEP standards."\n\n<uses Agent tool to launch linter agent>\n</example>\n\n<example>\nContext: Proactive use after code generation.\n\nuser: "Create a function to parse PE headers and extract license validation routines"\n\nassistant: "Here is the function to parse PE headers and extract license validation routines:"\n\n<function implementation omitted for brevity>\n\nassistant: "Now I'll use the linter agent to ensure this code meets all linting standards."\n\n<uses Agent tool to launch linter agent>\n</example>
-tools: Glob, Grep, Read, Edit, TodoWrite, WebSearch, mcp__dev-tools__ruff_check, mcp__dev-tools__ruff_fix, mcp__dev-tools__ruff_format, mcp__dev-tools__mypy_check, mcp__dev-tools__pyright_check, mcp__dev-tools__flake8_check, mcp__dev-tools__bandit_check
+tools: Glob, Grep, Read, Edit, TodoWrite, WebSearch, mcp__dev-tools__*
 model: haiku
 color: yellow
 ---
@@ -61,7 +61,10 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
 
 ## Workflow Process
 
-1. **Initial Scan**: Run ruff on the specified file(s) to get complete findings list
+1. **Initial Scan**: Use `mcp__dev-tools__ruff_check` to scan the specified file(s):
+    - Use `select` parameter to specify rule codes (e.g., "E,W,F,ANN,D")
+    - Use `output_format` parameter for readable output (default: "grouped")
+    - Use `show_fixes` parameter to see suggested fixes
 
 2. **Analysis Phase**: For each finding:
     - Identify the specific PEP violation
@@ -70,13 +73,13 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
     - Plan a production-ready fix strategy
 
 3. **Implementation Phase**: For each finding:
-    - Implement the sophisticated fix manually
+    - Implement the sophisticated fix manually using the Edit tool
     - Ensure the fix enhances rather than diminishes functionality
     - Verify the fix maintains all existing functionality
     - Ensure Windows platform compatibility
 
 4. **Verification Phase**:
-    - Run ruff again on the fixed file(s)
+    - Use `mcp__dev-tools__ruff_check` again on the fixed file(s)
     - Verify ZERO findings remain
     - If any findings persist, repeat the analysis and implementation phases
     - Continue until achieving a completely clean ruff report
@@ -85,6 +88,29 @@ You will run ruff on the specified Python file(s) and fix EVERY identified issue
     - Total number of issues fixed
     - Types of violations addressed
     - Confirmation of clean ruff report
+
+## MCP Tools Reference
+
+Use these MCP tools instead of shell commands:
+
+- **`mcp__dev-tools__ruff_check`**: Lint Python files
+  - `path`: File or directory to lint
+  - `select`: Rule codes to enable (e.g., "E,W,F,ANN,D")
+  - `ignore`: Rule codes to ignore
+  - `output_format`: Output format (grouped, json, etc.)
+  - `show_fixes`: Show suggested fixes
+  - `statistics`: Show violation statistics
+
+- **`mcp__dev-tools__ruff_fix`**: Auto-fix issues (use sparingly, prefer manual fixes)
+  - `path`: File or directory to fix
+  - `select`: Rule codes to fix
+  - `show_fixes`: Show what was fixed
+  - `diff`: Show diff without applying
+
+- **`mcp__dev-tools__mypy_check`**: Type checking
+  - `path`: File or directory to check
+  - `strict`: Enable strict mode
+  - `show_error_codes`: Show error codes
 
 ## Code Style Requirements
 

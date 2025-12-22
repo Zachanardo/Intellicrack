@@ -472,7 +472,7 @@ class ActivationAnalyzer:
 
                 call_pattern = rb"\xE8.{4}"
                 for match in re.finditer(call_pattern, section_data):
-                    call_offset = section.PointerToRawData + match.start()
+                    call_offset = int(section.PointerToRawData) + match.start()
                     if abs(call_offset - offset) < 1024:
                         return call_offset
 
@@ -543,7 +543,7 @@ class ActivationAnalyzer:
 
                 cmp_pattern = rb"[\x3B\x39\x83]"
                 for match in re.finditer(cmp_pattern, section_data):
-                    cmp_offset = section.PointerToRawData + match.start()
+                    cmp_offset = int(section.PointerToRawData) + match.start()
                     if abs(cmp_offset - offset) < 256:
                         return cmp_offset
 

@@ -30,7 +30,7 @@ import os
 import sys
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..utils.logger import get_logger
 
@@ -78,7 +78,7 @@ class DetectionResult:
     version: str | None = None
     type: ProtectionType = ProtectionType.UNKNOWN
     confidence: float = 100.0
-    details: dict[str, any] = field(default_factory=dict)
+    details: dict[str, Any] = field(default_factory=dict)
     bypass_recommendations: list[str] = field(default_factory=list)
 
 
@@ -97,10 +97,10 @@ class ProtectionAnalysis:
     has_overlay: bool = False
     has_resources: bool = False
     entry_point: str | None = None
-    sections: list[dict[str, any]] = field(default_factory=list)
+    sections: list[dict[str, Any]] = field(default_factory=list)
     imports: list[str] = field(default_factory=list)
     strings: list[str] = field(default_factory=list)
-    metadata: dict[str, any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class IntellicrackProtectionCore:
@@ -242,7 +242,8 @@ class IntellicrackProtectionCore:
             engine_path: Legacy parameter for compatibility, ignored in favor of native integration
 
         """
-        self.engine_path = engine_path  # Keep for compatibility
+        self.engine_path = engine_path
+        self.icp_backend: ICPBackend | None
         try:
             from .icp_backend import ICPBackend
 
@@ -253,8 +254,11 @@ class IntellicrackProtectionCore:
             logger.info("Protection detection will use fallback methods")
             self.icp_backend = None
 
-    def _validate_engine_installation(self) -> bool | None:
+    def _validate_engine_installation(self) -> bool:
         """Validate that native ICP Engine integration is working."""
+        if self.icp_backend is None:
+            return False
+
         try:
             version = self.icp_backend.get_engine_version()
             logger.info("ICP Engine: %s", version)
@@ -299,7 +303,7 @@ class IntellicrackProtectionCore:
             try:
                 # Run native ICP Engine analysis
                 icp_result = loop.run_until_complete(
-                    self.icp_backend.analyze_file(file_path, ScanMode.DEEP, timeout=30.0),
+                    self.icp_backend.analyze_file(file_path, ScanMode.DEEP),
                 )
             finally:
                 loop.close()
@@ -370,7 +374,7 @@ class IntellicrackProtectionCore:
                 name=detection.name,
                 version=detection.version or None,
                 type=det_type,
-                confidence=detection.confidence * 100.0,  # Convert to percentage
+                confidence=detection.confidence * 100.0,
             )
 
             # Add bypass recommendations
@@ -399,19 +403,26 @@ class IntellicrackProtectionCore:
         analysis.is_protected = icp_result.is_protected
 
         # Add metadata
-        analysis.metadata = {
-            "engine_version": self.icp_backend.get_engine_version(),
-            "scan_mode": "DEEP",
-            "native_integration": True,
-        }
+        if self.icp_backend is not None:
+            analysis.metadata = {
+                "engine_version": self.icp_backend.get_engine_version(),
+                "scan_mode": "DEEP",
+                "native_integration": True,
+            }
+        else:
+            analysis.metadata = {
+                "engine_version": "Unknown",
+                "scan_mode": "DEEP",
+                "native_integration": True,
+            }
 
         # Add entropy info if available
         if hasattr(icp_result, "metadata") and icp_result.metadata:
-            analysis.metadata |= icp_result.metadata
+            analysis.metadata = {**analysis.metadata, **icp_result.metadata}
 
         return analysis
 
-    def _parse_json_output(self, file_path: str, engine_data: dict) -> ProtectionAnalysis:
+    def _parse_json_output(self, file_path: str, engine_data: dict[str, Any]) -> ProtectionAnalysis:
         """Parse legacy JSON output into structured results (kept for compatibility)."""
         analysis = ProtectionAnalysis(file_path=file_path, file_type="Unknown", architecture="Unknown")
 
@@ -570,8 +581,6 @@ class IntellicrackProtectionCore:
             file_type=file_type,
             architecture=architecture,
             detections=[],
-            has_protections=False,
-            license_type=LicenseType.UNKNOWN,
             metadata={"fallback_mode": True, "reason": "ICP Engine not available"},
         )
 

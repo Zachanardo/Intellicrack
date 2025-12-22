@@ -556,7 +556,7 @@ class TemplateSelectionPage(QWizardPage):
 
         for template in templates:
             item = QListWidgetItem(template["name"])
-            item.setData(Qt.UserRole, template)
+            item.setData(Qt.ItemDataRole.UserRole, template)
             self.template_list.addItem(item)
 
     def get_templates_for_type(self, plugin_type: str) -> list[dict[str, Any]]:
@@ -632,7 +632,7 @@ class TemplateSelectionPage(QWizardPage):
         """
         _ = previous
         if current:
-            template = current.data(Qt.UserRole)
+            template = current.data(Qt.ItemDataRole.UserRole)
             self.description_label.setText(template["description"])
 
     def get_selected_template(self) -> dict[str, Any] | None:
@@ -643,7 +643,9 @@ class TemplateSelectionPage(QWizardPage):
 
         """
         if current := self.template_list.currentItem():
-            return current.data(Qt.UserRole)
+            data = current.data(Qt.ItemDataRole.UserRole)
+            if isinstance(data, dict):
+                return data
         return None
 
 
@@ -755,8 +757,9 @@ class CodeGenerationPage(QWizardPage):
     def copy_code(self) -> None:
         """Copy code to clipboard."""
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.code_edit.toPlainText())
-        QMessageBox.information(self, "Copied", "Code copied to clipboard!")
+        if clipboard is not None:
+            clipboard.setText(self.code_edit.toPlainText())
+            QMessageBox.information(self, "Copied", "Code copied to clipboard!")
 
     def validate_code(self) -> None:
         """Validate the plugin code."""

@@ -28,7 +28,7 @@ from collections.abc import Callable
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 logger = logging.getLogger(__name__)
@@ -181,7 +181,7 @@ class MigrationBackup:
         """
         try:
             with open(backup_file) as f:
-                config_data = json.load(f)
+                config_data = cast(dict[str, Any], json.load(f))
             logger.info("Restored configuration from: %s", backup_file)
             return config_data
         except Exception as e:
@@ -215,13 +215,13 @@ class ConfigMigrationHandler:
         self.config_path = config_path
         self.backup_handler = MigrationBackup(config_path)
         self.validator = MigrationValidator()
-        self.migration_log = []
+        self.migration_log: list[dict[str, str]] = []
         self.migration_status = MigrationStatus.NOT_STARTED
 
     def migrate_with_recovery(
         self,
         config_data: dict[str, Any],
-        migration_func: Callable,
+        migration_func: Callable[[dict[str, Any]], dict[str, Any]],
         migration_name: str,
     ) -> tuple[bool, dict[str, Any]]:
         """Execute migration with error handling and recovery.
@@ -283,7 +283,7 @@ class ConfigMigrationHandler:
                 # Return original data as last resort
                 return False, config_data
 
-    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, Callable]) -> dict[str, Any]:
+    def handle_partial_migration(self, config_data: dict[str, Any], migrations: dict[str, Callable[[dict[str, Any]], dict[str, Any]]]) -> dict[str, Any]:
         """Handle multiple migrations with partial success support.
 
         Args:
@@ -334,8 +334,7 @@ class ConfigMigrationHandler:
         }
         self.migration_log.append(log_entry)
 
-        # Also log to standard logger
-        log_func = getattr(logger, level, logger.info)
+        log_func: Callable[[str], None] = getattr(logger, level, logger.info)
         log_func(message)
 
     def save_migration_log(self) -> None:
@@ -355,16 +354,16 @@ class ConfigMigrationHandler:
             Dictionary containing migration report
 
         """
-        errors = [entry for entry in self.migration_log if entry["level"] in ["error", "critical"]]
-        warnings = [entry for entry in self.migration_log if entry["level"] == "warning"]
+        errors: list[dict[str, str]] = [entry for entry in self.migration_log if entry.get("level") in ["error", "critical"]]
+        warnings: list[dict[str, str]] = [entry for entry in self.migration_log if entry.get("level") == "warning"]
 
         return {
             "status": self.migration_status.value,
             "total_entries": len(self.migration_log),
             "errors": len(errors),
             "warnings": len(warnings),
-            "error_messages": [e["message"] for e in errors],
-            "warning_messages": [w["message"] for w in warnings],
+            "error_messages": [e.get("message", "") for e in errors],
+            "warning_messages": [w.get("message", "") for w in warnings],
             "latest_backup": str(self.backup_handler.get_latest_backup()),
         }
 
@@ -373,7 +372,7 @@ class SafeMigrationWrapper:
     """Wrap to safely execute migration functions with timeout and resource limits."""
 
     @staticmethod
-    def migrate_with_timeout(migration_func: Callable, config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
+    def migrate_with_timeout(migration_func: Callable[[dict[str, Any]], dict[str, Any]], config_data: dict[str, Any], timeout: int = 30) -> dict[str, Any]:
         """Execute migration with timeout protection.
 
         Args:
@@ -387,8 +386,8 @@ class SafeMigrationWrapper:
         """
         import threading
 
-        result = [None]
-        exception = [None]
+        result: list[dict[str, Any] | None] = [None]
+        exception: list[Exception | None] = [None]
 
         def run_migration() -> None:
             try:
@@ -401,13 +400,15 @@ class SafeMigrationWrapper:
         thread.join(timeout)
 
         if thread.is_alive():
-            # Migration took too long
             error_msg = f"Migration timed out after {timeout} seconds"
             logger.error(error_msg)
             raise MigrationError(error_msg)
 
-        if exception[0]:
+        if exception[0] is not None:
             raise exception[0]
+
+        if result[0] is None:
+            raise MigrationError("Migration function returned no result")
 
         return result[0]
 

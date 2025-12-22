@@ -45,7 +45,7 @@ class ProjectManager:
         self.projects_dir = Path.home() / ".intellicrack" / "projects"
         logger.debug("Projects directory: %s", self.projects_dir)
         self.projects_dir.mkdir(parents=True, exist_ok=True)
-        self.current_project = None
+        self.current_project: dict[str, Any] | None = None
 
     def create_project(self, name: str, description: str = "") -> Path:
         """Create a new analysis project."""
@@ -89,7 +89,7 @@ class ProjectManager:
             raise ValueError(f"Project '{name}' not found")
 
         with open(project_dir / "project.json") as f:
-            metadata = json.load(f)
+            metadata: dict[str, Any] = json.load(f)
 
         self.current_project = {"name": name, "path": project_dir, "metadata": metadata}
 
@@ -138,7 +138,7 @@ class ProjectManager:
 
         logger.info("Deleted project: %s (backup: %s)", name, backup_path)
 
-        if self.current_project and self.current_project["name"] == name:
+        if self.current_project is not None and self.current_project["name"] == name:
             self.current_project = None
 
     def add_file_to_project(self, project_name: str, file_path: str) -> dict[str, Any]:
@@ -177,7 +177,7 @@ class ProjectManager:
         logger.info("Added %s to project %s", source_file.name, project_name)
         return file_info
 
-    def _calculate_file_hash(self, file_path: str) -> str:
+    def _calculate_file_hash(self, file_path: str | Path) -> str:
         """Calculate SHA256 hash of file."""
         import hashlib
 
@@ -196,28 +196,28 @@ class ProjectManager:
             raise ValueError(f"Project '{project_name}' not found")
 
         if output_path is None:
-            output_path = Path.cwd() / f"{project_name}_export.zip"
+            output_archive_path: Path = Path.cwd() / f"{project_name}_export.zip"
         else:
-            output_path = Path(output_path)
+            output_archive_path = Path(output_path)
 
         # Create archive
-        shutil.make_archive(str(output_path.with_suffix("")), "zip", str(project_dir))
+        shutil.make_archive(str(output_archive_path.with_suffix("")), "zip", str(project_dir))
 
-        logger.info("Exported project to: %s", output_path)
-        return output_path
+        logger.info("Exported project to: %s", output_archive_path)
+        return output_archive_path
 
     def import_project(self, archive_path: str) -> str:
         """Import project from archive."""
-        archive_path = Path(archive_path)
+        archive_file: Path = Path(archive_path)
 
-        if not archive_path.exists():
-            raise FileNotFoundError(f"Archive not found: {archive_path}")
+        if not archive_file.exists():
+            raise FileNotFoundError(f"Archive not found: {archive_file}")
 
         # Extract to temporary location
         import tempfile
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            shutil.unpack_archive(archive_path, temp_dir)
+            shutil.unpack_archive(archive_file, temp_dir)
 
             project_json = next(
                 (Path(root) / "project.json" for root, _dirs, files in os.walk(temp_dir) if "project.json" in files),
@@ -228,9 +228,9 @@ class ProjectManager:
 
             # Read metadata
             with open(project_json) as f:
-                metadata = json.load(f)
+                metadata: dict[str, Any] = json.load(f)
 
-            project_name = metadata["name"]
+            project_name: str = metadata["name"]
 
             # Check if project already exists
             dest_dir = self.projects_dir / project_name

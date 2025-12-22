@@ -24,10 +24,10 @@ import time
 import traceback
 from collections.abc import Callable, Generator
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any
+from typing import Any, TypedDict
 
 from ...utils.logger import get_logger
 
@@ -61,6 +61,23 @@ class RecoveryStrategy(Enum):
     USER_INTERVENTION = "user_intervention"
 
 
+class CircuitBreakerState(TypedDict):
+    """Circuit breaker state structure."""
+
+    failure_count: int
+    success_count: int
+    state: str
+    last_failure: datetime | None
+    degraded: bool
+
+
+class FailureRateStats(TypedDict):
+    """Failure rate statistics structure."""
+
+    successes: int
+    failures: int
+
+
 @dataclass
 class ErrorEvent:
     """Error event data structure."""
@@ -82,11 +99,11 @@ class RecoveryAction:
 
     name: str
     description: str
-    action: Callable
+    action: Callable[[ErrorEvent], bool]
     max_attempts: int = 3
     delay: float = 1.0
     exponential_backoff: bool = True
-    prerequisites: list[str] = None
+    prerequisites: list[str] | None = None
 
 
 class R2ErrorHandler:
@@ -111,19 +128,17 @@ class R2ErrorHandler:
         self.max_errors_per_session = max_errors_per_session
         self.error_history: list[ErrorEvent] = []
         self.recovery_actions: dict[str, RecoveryAction] = {}
-        self.session_stats = {
+        self.session_stats: dict[str, Any] = {
             "total_errors": 0,
             "recovered_errors": 0,
             "critical_errors": 0,
             "session_start": datetime.now(),
             "last_error": None,
         }
-        self.circuit_breakers = {}
-        self.performance_monitor = {
-            "operation_times": {},
-            "failure_rates": {},
-            "recovery_success_rates": {},
-        }
+        self.circuit_breakers: dict[str, CircuitBreakerState] = {}
+        self.operation_times: dict[str, list[float]] = {}
+        self.failure_rates: dict[str, FailureRateStats] = {}
+        self.recovery_success_rates: dict[str, FailureRateStats] = {}
 
         # Initialize built-in recovery actions
         self._initialize_recovery_actions()
@@ -213,7 +228,7 @@ class R2ErrorHandler:
             duration = time.time() - start_time
             self._record_performance(operation_name, duration, success=True)
 
-    def handle_error(self, error: Exception, operation_name: str, context: dict[str, Any] = None) -> bool:
+    def handle_error(self, error: Exception, operation_name: str, context: dict[str, Any] | None = None) -> bool:
         """Handle error as main entry point.
 
         Args:
@@ -247,7 +262,9 @@ class R2ErrorHandler:
                     success = self._execute_recovery(error_event)
                     if success:
                         error_event.resolved = True
-                        self.session_stats["recovered_errors"] += 1
+                        recovered_count = self.session_stats["recovered_errors"]
+                        if isinstance(recovered_count, int):
+                            self.session_stats["recovered_errors"] = recovered_count + 1
                         return True
 
                 # Update circuit breaker on failure
@@ -259,7 +276,7 @@ class R2ErrorHandler:
                 self.logger.critical("Error in error handler: %s", recovery_error)
                 return False
 
-    def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any]) -> ErrorEvent:
+    def _create_error_event(self, error: Exception, operation_name: str, context: dict[str, Any] | None) -> ErrorEvent:
         """Create error event from exception."""
         error_type = type(error).__name__
         severity = self._classify_error_severity(error, operation_name)
@@ -309,7 +326,8 @@ class R2ErrorHandler:
             return RecoveryStrategy.USER_INTERVENTION
 
         # Too many errors in session - graceful degradation
-        if self.session_stats["total_errors"] > self.max_errors_per_session:
+        total_errors = self.session_stats["total_errors"]
+        if isinstance(total_errors, int) and total_errors > self.max_errors_per_session:
             return RecoveryStrategy.GRACEFUL_DEGRADATION
 
         # R2 session issues - restart session
@@ -393,14 +411,17 @@ class R2ErrorHandler:
         error_event.context["intervention_message"] = intervention_message
 
         # Record in session stats for intervention tracking
-        if "interventions_required" not in self.session_stats:
-            self.session_stats["interventions_required"] = []
-        self.session_stats["interventions_required"].append({
-            "timestamp": datetime.now(),
-            "operation": error_event.context.get("operation", "unknown"),
-            "error_type": error_event.error_type,
-            "message": intervention_message,
-        })
+        interventions_key = "interventions_required"
+        if interventions_key not in self.session_stats:
+            self.session_stats[interventions_key] = []
+        interventions = self.session_stats[interventions_key]
+        if isinstance(interventions, list):
+            interventions.append({
+                "timestamp": datetime.now(),
+                "operation": error_event.context.get("operation", "unknown"),
+                "error_type": error_event.error_type,
+                "message": intervention_message,
+            })
 
         return False
 
@@ -431,14 +452,17 @@ class R2ErrorHandler:
             error_event.recovery_attempts += 1
             success = action.action(error_event)
 
-            if success:
+            # Ensure success is a bool
+            result = bool(success)
+
+            if result:
                 self.logger.info("Recovery action %s succeeded", action_name)
                 self._record_recovery_success(action_name)
             else:
                 self.logger.warning("Recovery action %s failed", action_name)
                 self._record_recovery_failure(action_name)
 
-            return success
+            return result
 
         except Exception as e:
             self.logger.exception("Recovery action %s threw exception: %s", action_name, e)
@@ -539,17 +563,18 @@ class R2ErrorHandler:
     def _graceful_degradation(self, error_event: ErrorEvent) -> bool:
         """Implement graceful degradation."""
         try:
-            # Mark operation as degraded
             operation = error_event.context.get("operation", "unknown")
+            if not isinstance(operation, str):
+                operation = "unknown"
 
             if operation not in self.circuit_breakers:
-                self.circuit_breakers[operation] = {
-                    "failure_count": 0,
-                    "success_count": 0,
-                    "state": "closed",  # closed, open, half_open
-                    "last_failure": None,
-                    "degraded": False,
-                }
+                self.circuit_breakers[operation] = CircuitBreakerState(
+                    failure_count=0,
+                    success_count=0,
+                    state="closed",
+                    last_failure=None,
+                    degraded=False,
+                )
 
             self.circuit_breakers[operation]["degraded"] = True
 
@@ -571,8 +596,9 @@ class R2ErrorHandler:
 
         if breaker["state"] == "open":
             # Check if enough time has passed to try half-open
-            if breaker["last_failure"]:
-                time_since_failure = datetime.now() - breaker["last_failure"]
+            last_failure = breaker["last_failure"]
+            if last_failure is not None:
+                time_since_failure = datetime.now() - last_failure
                 if time_since_failure > timedelta(minutes=5):  # 5 minute cooldown
                     breaker["state"] = "half_open"
                     return False
@@ -583,71 +609,68 @@ class R2ErrorHandler:
     def _update_circuit_breaker(self, operation_name: str, success: bool) -> None:
         """Update circuit breaker state."""
         if operation_name not in self.circuit_breakers:
-            self.circuit_breakers[operation_name] = {
-                "failure_count": 0,
-                "success_count": 0,
-                "state": "closed",
-                "last_failure": None,
-                "degraded": False,
-            }
+            self.circuit_breakers[operation_name] = CircuitBreakerState(
+                failure_count=0,
+                success_count=0,
+                state="closed",
+                last_failure=None,
+                degraded=False,
+            )
 
         breaker = self.circuit_breakers[operation_name]
 
         if success:
             breaker["success_count"] += 1
-            breaker["failure_count"] = 0  # Reset failure count on success
+            breaker["failure_count"] = 0
             if breaker["state"] == "half_open":
-                breaker["state"] = "closed"  # Close circuit on success
+                breaker["state"] = "closed"
         else:
             breaker["failure_count"] += 1
             breaker["last_failure"] = datetime.now()
 
-            # Open circuit if too many failures
-            if breaker["failure_count"] >= 5:  # Threshold of 5 failures
+            if breaker["failure_count"] >= 5:
                 breaker["state"] = "open"
 
     # Performance monitoring
 
     def _record_performance(self, operation_name: str, duration: float, success: bool) -> None:
         """Record performance metrics."""
-        if operation_name not in self.performance_monitor["operation_times"]:
-            self.performance_monitor["operation_times"][operation_name] = []
-            self.performance_monitor["failure_rates"][operation_name] = {
-                "successes": 0,
-                "failures": 0,
-            }
+        if operation_name not in self.operation_times:
+            self.operation_times[operation_name] = []
+            self.failure_rates[operation_name] = FailureRateStats(
+                successes=0,
+                failures=0,
+            )
 
-        self.performance_monitor["operation_times"][operation_name].append(duration)
+        self.operation_times[operation_name].append(duration)
 
-        # Keep only last 100 measurements
-        if len(self.performance_monitor["operation_times"][operation_name]) > 100:
-            self.performance_monitor["operation_times"][operation_name] = self.performance_monitor["operation_times"][operation_name][-100:]
+        if len(self.operation_times[operation_name]) > 100:
+            self.operation_times[operation_name] = self.operation_times[operation_name][-100:]
 
-        # Update failure rate
         if success:
-            self.performance_monitor["failure_rates"][operation_name]["successes"] += 1
+            self.failure_rates[operation_name]["successes"] += 1
         else:
-            self.performance_monitor["failure_rates"][operation_name]["failures"] += 1
+            self.failure_rates[operation_name]["failures"] += 1
 
     def _record_recovery_success(self, action_name: str) -> None:
         """Record successful recovery."""
-        if action_name not in self.performance_monitor["recovery_success_rates"]:
-            self.performance_monitor["recovery_success_rates"][action_name] = {
-                "successes": 0,
-                "failures": 0,
-            }
+        if action_name not in self.recovery_success_rates:
+            self.recovery_success_rates[action_name] = FailureRateStats(
+                successes=0,
+                failures=0,
+            )
 
-        self.performance_monitor["recovery_success_rates"][action_name]["successes"] += 1
+        self.recovery_success_rates[action_name]["successes"] += 1
 
     def _record_recovery_failure(self, action_name: str) -> None:
         """Record failed recovery."""
-        if action_name not in self.performance_monitor["recovery_success_rates"]:
-            self.performance_monitor["recovery_success_rates"][action_name] = {
-                "successes": 0,
-                "failures": 0,
-            }
+        if action_name not in self.recovery_success_rates:
+            self.recovery_success_rates[action_name] = FailureRateStats(
+                successes=0,
+                failures=0,
+            )
 
-        self.performance_monitor["recovery_success_rates"][action_name]["failures"] += 1
+        self.recovery_success_rates[action_name]["failures"] += 1
 
     def _record_error(self, error_event: ErrorEvent) -> None:
         """Record error in history."""
@@ -658,11 +681,15 @@ class R2ErrorHandler:
             self.error_history = self.error_history[-500:]
 
         # Update session stats
-        self.session_stats["total_errors"] += 1
+        total_errors = self.session_stats["total_errors"]
+        if isinstance(total_errors, int):
+            self.session_stats["total_errors"] = total_errors + 1
         self.session_stats["last_error"] = error_event.timestamp
 
         if error_event.severity == ErrorSeverity.CRITICAL:
-            self.session_stats["critical_errors"] += 1
+            critical_errors = self.session_stats["critical_errors"]
+            if isinstance(critical_errors, int):
+                self.session_stats["critical_errors"] = critical_errors + 1
 
     # Public API methods
 
@@ -684,7 +711,7 @@ class R2ErrorHandler:
 
     def _get_error_count_by_type(self) -> dict[str, int]:
         """Get error counts grouped by type."""
-        counts = {}
+        counts: dict[str, int] = {}
         for error in self.error_history:
             counts[error.error_type] = counts.get(error.error_type, 0) + 1
         return counts
@@ -705,14 +732,14 @@ class R2ErrorHandler:
                 "min_duration": min(times),
                 "total_calls": len(times),
             }
-            for operation, times in self.performance_monitor["operation_times"].items()
+            for operation, times in self.operation_times.items()
             if times
         }
 
     def _get_recovery_rates(self) -> dict[str, float]:
         """Get recovery success rates."""
-        rates = {}
-        for action, stats in self.performance_monitor["recovery_success_rates"].items():
+        rates: dict[str, float] = {}
+        for action, stats in self.recovery_success_rates.items():
             total = stats["successes"] + stats["failures"]
             rates[action] = stats["successes"] / total if total > 0 else 0.0
         return rates
@@ -720,19 +747,20 @@ class R2ErrorHandler:
     def is_operation_degraded(self, operation_name: str) -> bool:
         """Check if operation is in degraded mode."""
         if operation_name in self.circuit_breakers:
-            return self.circuit_breakers[operation_name].get("degraded", False)
+            degraded = self.circuit_breakers[operation_name].get("degraded", False)
+            return bool(degraded)
         return False
 
     def reset_circuit_breaker(self, operation_name: str) -> None:
         """Reset circuit breaker for operation."""
         if operation_name in self.circuit_breakers:
-            self.circuit_breakers[operation_name] = {
-                "failure_count": 0,
-                "success_count": 0,
-                "state": "closed",
-                "last_failure": None,
-                "degraded": False,
-            }
+            self.circuit_breakers[operation_name] = CircuitBreakerState(
+                failure_count=0,
+                success_count=0,
+                state="closed",
+                last_failure=None,
+                degraded=False,
+            )
             self.logger.info("Reset circuit breaker for %s", operation_name)
 
     def clear_error_history(self) -> None:
@@ -773,7 +801,8 @@ def handle_r2_error(error: Exception, operation_name: str, **context: object) ->
 
     """
     handler = get_error_handler()
-    return handler.handle_error(error, operation_name, context)
+    context_dict: dict[str, Any] = {k: v for k, v in context.items()}
+    return handler.handle_error(error, operation_name, context_dict)
 
 
 @contextmanager

@@ -54,7 +54,10 @@ def run_in_terminal(
         if isinstance(cmd, str):
             cmd = cmd.split()
 
-        return terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd)
+        result = terminal_mgr.execute_command(command=cmd, capture_output=False, auto_switch=auto_switch, cwd=cwd)
+        if isinstance(result, str):
+            return result
+        return ""
     except Exception as e:
         logger.exception("Error running command in terminal: %s", e)
         raise
@@ -66,7 +69,7 @@ def run_subprocess(
     capture_output: bool = True,
     text: bool = True,
     cwd: str | None = None,
-    env: dict | None = None,
+    env: dict[str, str] | None = None,
     use_terminal: bool = False,
 ) -> tuple[int, str, str]:
     """Run a subprocess command with standard error handling.
@@ -122,7 +125,7 @@ def run_subprocess_check(
     capture_output: bool = True,
     text: bool = True,
     check: bool = False,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Run subprocess with standard settings used in qemu_emulator and other modules.
 
     This is the common pattern extracted from duplicate code.

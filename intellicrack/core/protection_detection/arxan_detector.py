@@ -25,7 +25,7 @@ import logging
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 
 try:
@@ -34,7 +34,10 @@ try:
     LIEF_AVAILABLE = True
 except ImportError:
     LIEF_AVAILABLE = False
-    lief = None
+    if TYPE_CHECKING:
+        import lief
+    else:
+        lief = None  # type: ignore[assignment]
 
 try:
     import pefile
@@ -223,11 +226,11 @@ class ArxanDetector:
             with open(binary_path, "rb") as f:
                 binary_data = f.read()
 
-            signatures_found = []
-            sections = []
-            import_hints = []
+            signatures_found: list[str] = []
+            sections: list[str] = []
+            import_hints: list[str] = []
             features = ArxanProtectionFeatures()
-            metadata = {}
+            metadata: dict[str, Any] = {}
 
             signature_score = self._check_string_signatures(binary_data, signatures_found)
             section_score = self._check_section_names(binary_path, sections)
@@ -299,13 +302,18 @@ class ArxanDetector:
             elif LIEF_AVAILABLE:
                 if binary := lief.parse(str(binary_path)):
                     for section in binary.sections:
-                        section_name = section.name.encode()
+                        section_name_raw = section.name
+                        if isinstance(section_name_raw, str):
+                            section_name = section_name_raw.encode()
+                        else:
+                            section_name = section_name_raw
 
                         for arxan_section in self.ARXAN_SECTION_NAMES:
                             if arxan_section in section_name.lower():
-                                sections.append(section.name)
+                                section_str = section_name_raw if isinstance(section_name_raw, str) else section_name_raw.decode("utf-8", errors="ignore")
+                                sections.append(section_str)
                                 found_count += 1
-                                self.logger.debug("Found Arxan section: %s", section.name)
+                                self.logger.debug("Found Arxan section: %s", section_str)
                                 break
 
         except Exception as e:
@@ -339,13 +347,17 @@ class ArxanDetector:
 
             elif LIEF_AVAILABLE:
                 if binary := lief.parse(str(binary_path)):
-                    for func in binary.imported_functions:
-                        if func.name in self.ARXAN_API_PATTERNS:
-                            if func.name not in import_hints:
-                                import_hints.append(func.name)
-                                suspicious_count += 1
+                    if hasattr(binary, "imported_functions"):
+                        for func in binary.imported_functions:
+                            func_name_raw = func.name
+                            func_name = func_name_raw if isinstance(func_name_raw, str) else (func_name_raw.decode("utf-8", errors="ignore") if isinstance(func_name_raw, bytes) else str(func_name_raw))
 
-                            found_count += 1
+                            if func_name in self.ARXAN_API_PATTERNS:
+                                if func_name not in import_hints:
+                                    import_hints.append(func_name)
+                                    suspicious_count += 1
+
+                                found_count += 1
 
         except Exception as e:
             self.logger.debug("Import analysis error: %s", e, exc_info=True)

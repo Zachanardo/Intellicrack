@@ -267,7 +267,7 @@ def list_ghidra_scripts() -> list[Path]:
 
     """
     ghidra_dir = get_ghidra_scripts_dir()
-    scripts = []
+    scripts: list[Path] = []
     if ghidra_dir.exists():
         scripts.extend(ghidra_dir.glob("**/*.java"))
         scripts.extend(ghidra_dir.glob("**/*.py"))

@@ -6,6 +6,8 @@ Copyright (C) 2025 Zachary Flint
 Licensed under GNU General Public License v3.0
 """
 
+from typing import Any
+
 from .binary_analysis_tool import BinaryAnalysisTool, create_binary_tool
 from .firmware_analysis_tool import FirmwareAnalysisTool, create_firmware_analysis_tool
 from .intellicrack_protection_analysis_tool import DIEAnalysisTool, create_die_tool
@@ -31,7 +33,7 @@ __all__ = [
 ]
 
 
-def get_all_tools():
+def get_all_tools() -> dict[str, Any]:
     """Get all available LLM tools"""
     return {
         "die_analysis": create_die_tool(),
@@ -43,7 +45,7 @@ def get_all_tools():
     }
 
 
-def register_tools_with_llm(llm_backend):
+def register_tools_with_llm(llm_backend: Any) -> None:
     """Register all tools with an LLM backend
 
     Args:
@@ -54,6 +56,12 @@ def register_tools_with_llm(llm_backend):
 
     for tool_name, tool in tools.items():
         if hasattr(llm_backend, "register_tool"):
-            llm_backend.register_tool(tool_name, tool)
+            register_func = getattr(llm_backend, "register_tool", None)
+            if callable(register_func):
+                register_func(tool_name, tool)
         elif hasattr(llm_backend, "add_tool"):
-            llm_backend.add_tool(tool.get_tool_definition(), tool.execute)
+            add_tool_func = getattr(llm_backend, "add_tool", None)
+            get_def_func = getattr(tool, "get_tool_definition", None)
+            execute_func = getattr(tool, "execute", None)
+            if callable(add_tool_func) and callable(get_def_func) and callable(execute_func):
+                add_tool_func(get_def_func(), execute_func)

@@ -20,7 +20,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 # pylint: disable=cyclic-import
 
 import logging
-from typing import TYPE_CHECKING
+from types import ModuleType
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from intellicrack.core import analysis
@@ -62,26 +63,26 @@ logger = logging.getLogger(__name__)
 logger.debug("Core module loaded")
 
 # Import security enforcement early to apply patches
+security_enforcement: ModuleType | None = None
+SECURITY_ENFORCEMENT_AVAILABLE: bool = False
 try:
     from . import security_enforcement
 
     SECURITY_ENFORCEMENT_AVAILABLE = True
 except ImportError as e:
     logging.getLogger(__name__).warning("Security enforcement not available: %s", e)
-    security_enforcement = None
-    SECURITY_ENFORCEMENT_AVAILABLE = False
 
 # All individual core modules are now lazy-loaded through __getattr__ to prevent circular imports
 # No eager imports here - modules will be loaded on first access
 
-PROTECTION_ANALYZER_AVAILABLE = False
-EXPLOITATION_MODULES_AVAILABLE = False
+PROTECTION_ANALYZER_AVAILABLE: bool = False
+EXPLOITATION_MODULES_AVAILABLE: bool = False
 
 # Frida modules - lazy import to avoid cycles
-FRIDA_MODULES_AVAILABLE = False
-FridaManager = None
-FRIDA_PRESETS = None
-FridaBypassWizard = None
+FRIDA_MODULES_AVAILABLE: bool = False
+FridaManager: type | None = None
+FRIDA_PRESETS: dict[str, Any] | None = None
+FridaBypassWizard: type | None = None
 
 
 def get_frida_manager() -> type | None:
@@ -120,7 +121,7 @@ def get_frida_manager() -> type | None:
     return FridaManager
 
 
-def get_frida_presets() -> dict[str, str] | None:
+def get_frida_presets() -> dict[str, Any] | None:
     """Get FRIDA_PRESETS with lazy import to avoid circular dependencies.
 
     This function implements lazy loading for the FRIDA_PRESETS dictionary
@@ -191,10 +192,10 @@ def get_frida_bypass_wizard() -> type | None:
     return FridaBypassWizard
 
 
-_lazy_modules = {}
+_lazy_modules: dict[str, Any] = {}
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Any:
     """Lazy load module attributes to prevent circular imports."""
     module_names = [
         "analysis",
@@ -275,7 +276,7 @@ def __getattr__(name: str) -> object:
     raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
 
 
-__all__ = [
+__all__: list[str] = [
     "EXPLOITATION_MODULES_AVAILABLE",
     "FRIDA_MODULES_AVAILABLE",
     "PROTECTION_ANALYZER_AVAILABLE",
@@ -320,4 +321,5 @@ __all__ = [
 ]
 
 # Update __all__ to only include modules that are actually available
-__all__ = [item for item in __all__ if item in locals() and locals().get(item) is not None]
+_locals: dict[str, Any] = locals()
+__all__ = [item for item in __all__ if item in _locals and _locals.get(item) is not None]

@@ -549,8 +549,12 @@ class DashboardManager:
         try:
             # Try to get metrics from tool
             if hasattr(handler, "get_metrics"):
-                return handler.get_metrics()
-            return handler.get_status() if hasattr(handler, "get_status") else {}
+                metrics: Any = handler.get_metrics()
+                return dict(metrics) if metrics else {}
+            if hasattr(handler, "get_status"):
+                status: Any = handler.get_status()
+                return dict(status) if status else {}
+            return {}
         except Exception as e:
             self.logger.exception("Error collecting data from %s: %s", tool_name, e)
             return {}
@@ -597,7 +601,12 @@ class DashboardManager:
         widget = self.widgets["vulnerabilities_table"]
         current = widget.get_current_data()
 
-        rows = current.values.get("rows", []) if current else []
+        rows: list[dict[str, Any]] = []
+        if current:
+            rows_value = current.values.get("rows", [])
+            if isinstance(rows_value, list):
+                rows = rows_value
+
         columns = ["Type", "Severity", "Tool", "Location", "Description"]
 
         rows.append(
@@ -623,7 +632,12 @@ class DashboardManager:
         widget = self.widgets["protections_table"]
         current = widget.get_current_data()
 
-        rows = current.values.get("rows", []) if current else []
+        rows: list[dict[str, Any]] = []
+        if current:
+            rows_value = current.values.get("rows", [])
+            if isinstance(rows_value, list):
+                rows = rows_value
+
         columns = ["Type", "Tool", "Strength", "Location", "Description"]
 
         rows.append(

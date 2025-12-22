@@ -148,7 +148,7 @@ class NodeJSSetupDialog(BaseDialog):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize Node.js setup dialog."""
         super().__init__(parent=parent, title="Node.js Setup Required", width=600, height=500, resizable=False)
-        self.install_worker = None
+        self.install_worker: NodeJSInstallWorker | None = None
         self.setup_content(self.content_layout)
 
         # Customize button text
@@ -314,10 +314,11 @@ class NodeJSSetupDialog(BaseDialog):
 
         # Start installation in worker thread with real progress tracking
         self.install_worker = NodeJSInstallWorker()
-        self.install_worker.progress.connect(self.on_install_progress)
-        self.install_worker.progress_value.connect(self.progress_bar.setValue)  # Connect real progress values
-        self.install_worker.finished.connect(self.on_install_finished)
-        self.install_worker.start()
+        if self.install_worker is not None:
+            self.install_worker.progress.connect(self.on_install_progress)
+            self.install_worker.progress_value.connect(self.progress_bar.setValue)  # Connect real progress values
+            self.install_worker.finished.connect(self.on_install_finished)
+            self.install_worker.start()
 
     def on_install_progress(self, message: str) -> None:
         """Handle installation progress updates."""

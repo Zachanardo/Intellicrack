@@ -24,7 +24,7 @@ import os
 import zipfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 
 logger = logging.getLogger(__name__)
@@ -37,15 +37,15 @@ except ImportError:
 try:
     from jinja2 import Environment, FileSystemLoader, Template
 
-    _ = Template.__name__  # Verify Template class is available for template processing
+    _ = Template.__name__
     HAS_JINJA2 = True
 except ImportError:
     HAS_JINJA2 = False
 
 try:
-    import markdown
+    import markdown  # type: ignore[import-untyped]
 
-    _ = markdown.__name__  # Verify markdown module is available for text processing
+    _ = markdown.__name__
     HAS_MARKDOWN = True
 except ImportError:
     HAS_MARKDOWN = False
@@ -97,7 +97,7 @@ class ReportGenerator:
         self.template_dir = Path(__file__).parent.parent / "templates" / "reports"
         self.template_dir.mkdir(parents=True, exist_ok=True)
 
-        # Initialize Jinja2 environment if available
+        self.jinja_env: Environment | None
         if HAS_JINJA2:
             self.jinja_env = Environment(loader=FileSystemLoader(str(self.template_dir)), autoescape=True)
         else:
@@ -157,11 +157,10 @@ class ReportGenerator:
 
     def _generate_html_report(self, result: AnalysisResult, output_path: Path) -> str:
         """Generate HTML format report."""
-        if HAS_JINJA2 and (self.template_dir / "report.html").exists():
+        if HAS_JINJA2 and self.jinja_env is not None and (self.template_dir / "report.html").exists():
             template = self.jinja_env.get_template("report.html")
             html_content = template.render(result=result)
         else:
-            # Generate HTML without template
             html_content = self._generate_html_without_template(result)
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -462,8 +461,8 @@ class ReportGenerator:
         for r in result.recommendations:
             md_content += f"- {r}\n"
 
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(md_content)
+        with open(output_path, "w", encoding="utf-8") as file:
+            file.write(md_content)
 
         return str(output_path)
 
@@ -520,8 +519,8 @@ RECOMMENDATIONS
         for r in result.recommendations:
             text_content += f" {r}\n"
 
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(text_content)
+        with open(output_path, "w", encoding="utf-8") as file:
+            file.write(text_content)
 
         return str(output_path)
 
@@ -545,7 +544,7 @@ RECOMMENDATIONS
 
         return str(archive_path)
 
-    def export_to_archive(self, report_paths: list[str], archive_name: str = None) -> str:
+    def export_to_archive(self, report_paths: list[str], archive_name: str | None = None) -> str:
         """Export multiple reports to an archive."""
         if not archive_name:
             timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -584,19 +583,21 @@ class ComparisonReportGenerator:
 
     def _analyze_differences(self, results: list[dict[str, Any]]) -> dict[str, Any]:
         """Analyze differences between results."""
-        comparison = {
+        files_compared: list[dict[str, Any]] = []
+        unique_vulnerabilities: dict[str, Any] = {}
+
+        comparison: dict[str, Any] = {
             "timestamp": datetime.datetime.now().isoformat(),
-            "files_compared": [],
+            "files_compared": files_compared,
             "common_vulnerabilities": [],
-            "unique_vulnerabilities": {},
+            "unique_vulnerabilities": unique_vulnerabilities,
             "common_protections": [],
             "unique_protections": {},
             "similarity_score": 0.0,
         }
 
-        # Extract file information
         for r in results:
-            comparison["files_compared"].append(
+            files_compared.append(
                 {
                     "file": r.get("target_file", "Unknown"),
                     "hash": r.get("file_hash", ""),
@@ -604,18 +605,16 @@ class ComparisonReportGenerator:
                 },
             )
 
-        # Find common and unique vulnerabilities
-        all_vulns = []
+        all_vulns: list[set[str]] = []
         for i, r in enumerate(results):
             vulns = r.get("vulnerabilities", [])
             all_vulns.append({v.get("type", "") for v in vulns})
-            comparison["unique_vulnerabilities"][f"file_{i + 1}"] = vulns
+            unique_vulnerabilities[f"file_{i + 1}"] = vulns
 
         if all_vulns:
-            common = set.intersection(*all_vulns) if all_vulns else set()
+            common: set[str] = set.intersection(*all_vulns) if all_vulns else set()
             comparison["common_vulnerabilities"] = list(common)
 
-        # Calculate similarity score
         if len(results) == 2 and all_vulns and (all_vulns[0] or all_vulns[1]):
             intersection = len(all_vulns[0] & all_vulns[1])
             union = len(all_vulns[0] | all_vulns[1])

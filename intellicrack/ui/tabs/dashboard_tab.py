@@ -21,6 +21,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 from datetime import datetime
+from typing import Any, Protocol
 
 from intellicrack.handlers.pyqt6_handler import (
     QDialog,
@@ -46,6 +47,19 @@ from ..widgets.system_monitor_widget import SystemMonitorWidget
 from .base_tab import BaseTab
 
 
+class AppContextProtocol(Protocol):
+    """Protocol for app context objects with binary loading capability."""
+
+    def load_binary(self, file_path: str) -> None:
+        """Load a binary file for analysis.
+
+        Args:
+            file_path: Path to the binary file to load.
+
+        """
+        ...
+
+
 class DashboardTab(BaseTab):
     """Dashboard Tab - Manages project files, binary information, and workspace overview.
 
@@ -57,7 +71,11 @@ class DashboardTab(BaseTab):
     project_opened = pyqtSignal(str)
     project_closed = pyqtSignal()
 
-    def __init__(self, shared_context: object = None, parent: QWidget | None = None) -> None:
+    def __init__(
+        self,
+        shared_context: dict[str, Any] | AppContextProtocol | None = None,
+        parent: QWidget | None = None,
+    ) -> None:
         """Initialize dashboard tab with system overview and status monitoring.
 
         Args:
@@ -66,8 +84,15 @@ class DashboardTab(BaseTab):
 
         """
         self.config_manager = get_ui_config_manager()
+        self._typed_context: AppContextProtocol | None = None
+        if shared_context is not None and not isinstance(shared_context, dict):
+            self._typed_context = shared_context
 
-        super().__init__(shared_context, parent)
+        context_dict: dict[str, Any] | None = None
+        if isinstance(shared_context, dict):
+            context_dict = shared_context
+
+        super().__init__(context_dict, parent)
 
         # Subscribe to configuration changes
         self.config_manager.register_callback("theme", self.apply_theme)
@@ -77,7 +102,10 @@ class DashboardTab(BaseTab):
     def setup_content(self) -> None:
         """Set up the simplified dashboard content."""
         layout_config = self.config_manager.get_layout_config()
-        layout = self.layout()  # Use existing layout from BaseTab
+        layout = self.layout()
+        if layout is None:
+            return
+
         layout.setSpacing(layout_config.panel_spacing)
         layout.setContentsMargins(
             layout_config.margin_size,
@@ -86,29 +114,29 @@ class DashboardTab(BaseTab):
             layout_config.margin_size,
         )
 
-        # Top section - Quick Start (prominent)
         quick_start_panel = self.create_quick_start_panel()
         layout.addWidget(quick_start_panel)
 
-        # Bottom section - Less prominent panels in tabs
         self.bottom_panel = QTabWidget()
 
-        # Configure tab widget appearance from config
-        if self.config_manager.get_setting("dashboard.show_tabs", True):
+        show_tabs = self.config_manager.get_setting("dashboard.show_tabs", True)
+        if isinstance(show_tabs, bool) and show_tabs:
             self.bottom_panel.addTab(self.create_recent_files_panel(), "Recent Files")
 
-            if self.config_manager.get_setting("dashboard.show_system_monitor", True):
+            show_system_monitor = self.config_manager.get_setting("dashboard.show_system_monitor", True)
+            if isinstance(show_system_monitor, bool) and show_system_monitor:
                 self.bottom_panel.addTab(self.create_system_monitor_panel(), "System Monitor")
 
-            if self.config_manager.get_setting("dashboard.show_gpu_status", True):
+            show_gpu_status = self.config_manager.get_setting("dashboard.show_gpu_status", True)
+            if isinstance(show_gpu_status, bool) and show_gpu_status:
                 self.bottom_panel.addTab(self.create_gpu_status_panel(), "GPU Status")
 
-            if self.config_manager.get_setting("dashboard.show_cpu_status", True):
+            show_cpu_status = self.config_manager.get_setting("dashboard.show_cpu_status", True)
+            if isinstance(show_cpu_status, bool) and show_cpu_status:
                 self.bottom_panel.addTab(self.create_cpu_status_panel(), "CPU Status")
 
         layout.addWidget(self.bottom_panel)
 
-        # Store layout to avoid recreation
         self.main_layout = layout
 
     def create_quick_start_panel(self) -> QGroupBox:
@@ -310,13 +338,11 @@ class DashboardTab(BaseTab):
         )
 
         if file_path:
-            # Add to recent files and emit signal
             self.add_to_recent_files(file_path)
             self.binary_selected.emit(file_path)
 
-            # Use AppContext if available
-            if self.app_context:
-                self.app_context.load_binary(file_path)
+            if self._typed_context is not None:
+                self._typed_context.load_binary(file_path)
                 self.log_activity(f"Opened file via AppContext: {os.path.basename(file_path)}")
             else:
                 self.log_activity(f"Opened file: {os.path.basename(file_path)}")
@@ -333,8 +359,8 @@ class DashboardTab(BaseTab):
                     self.add_to_recent_files(selected_program)
                     self.binary_selected.emit(selected_program)
 
-                    if self.app_context:
-                        self.app_context.load_binary(selected_program)
+                    if self._typed_context is not None:
+                        self._typed_context.load_binary(selected_program)
                     self.log_activity(f"Selected target program: {os.path.basename(selected_program)}")
                 elif selected_program:
                     QMessageBox.warning(
@@ -348,7 +374,6 @@ class DashboardTab(BaseTab):
                 self.log_activity("Program selection cancelled by user")
 
         except ImportError as e:
-            # Fallback to regular file dialog if ProgramSelectorDialog not available
             QMessageBox.information(
                 self,
                 "Feature Unavailable",
@@ -356,7 +381,6 @@ class DashboardTab(BaseTab):
             )
             self.open_file_action()
         except Exception as e:
-            # Handle any other errors
             QMessageBox.critical(
                 self,
                 "Program Selection Error",
@@ -384,12 +408,12 @@ class DashboardTab(BaseTab):
         self.system_monitor = SystemMonitorWidget()
         self.system_monitor.alert_triggered.connect(self.handle_system_alert)
 
-        # Configure monitoring based on settings
-        refresh_interval = self.config_manager.get_setting("dashboard.monitor_refresh_interval", 5000)
+        refresh_interval_setting = self.config_manager.get_setting("dashboard.monitor_refresh_interval", 5000)
+        refresh_interval = refresh_interval_setting if isinstance(refresh_interval_setting, int) else 5000
         self.system_monitor.set_refresh_interval(refresh_interval)
 
-        # Only start monitoring if enabled
-        if self.config_manager.get_setting("dashboard.auto_start_monitoring", True):
+        auto_start = self.config_manager.get_setting("dashboard.auto_start_monitoring", True)
+        if isinstance(auto_start, bool) and auto_start:
             self.system_monitor.start_monitoring()
 
         return self.system_monitor
@@ -412,12 +436,12 @@ class DashboardTab(BaseTab):
         """
         self.gpu_status = GPUStatusWidget()
 
-        # Configure GPU monitoring based on settings
-        refresh_interval = self.config_manager.get_setting("dashboard.gpu_refresh_interval", 3000)
+        refresh_interval_setting = self.config_manager.get_setting("dashboard.gpu_refresh_interval", 3000)
+        refresh_interval = refresh_interval_setting if isinstance(refresh_interval_setting, int) else 3000
         self.gpu_status.set_refresh_interval(refresh_interval)
 
-        # Only start monitoring if enabled
-        if self.config_manager.get_setting("dashboard.auto_start_gpu_monitoring", True):
+        auto_start = self.config_manager.get_setting("dashboard.auto_start_gpu_monitoring", True)
+        if isinstance(auto_start, bool) and auto_start:
             self.gpu_status.start_monitoring()
 
         return self.gpu_status
@@ -431,12 +455,12 @@ class DashboardTab(BaseTab):
         """
         self.cpu_status = CPUStatusWidget()
 
-        # Configure CPU monitoring based on settings
-        refresh_interval = self.config_manager.get_setting("dashboard.cpu_refresh_interval", 2000)
+        refresh_interval_setting = self.config_manager.get_setting("dashboard.cpu_refresh_interval", 2000)
+        refresh_interval = refresh_interval_setting if isinstance(refresh_interval_setting, int) else 2000
         self.cpu_status.set_refresh_interval(refresh_interval)
 
-        # Only start monitoring if enabled
-        if self.config_manager.get_setting("dashboard.auto_start_cpu_monitoring", True):
+        auto_start = self.config_manager.get_setting("dashboard.auto_start_cpu_monitoring", True)
+        if isinstance(auto_start, bool) and auto_start:
             self.cpu_status.start_monitoring()
 
         return self.cpu_status
@@ -459,22 +483,28 @@ class DashboardTab(BaseTab):
         """Populate the recent files list."""
         self.recent_files_list.clear()
 
-        recent_files = self.config_manager.get_setting("recent_files", [])
-        max_recent = self.config_manager.get_setting("dashboard.max_recent_files", 10)
+        recent_files_setting = self.config_manager.get_setting("recent_files", [])
+        recent_files: list[Any] = recent_files_setting if isinstance(recent_files_setting, list) else []
 
-        # Limit to configured maximum
+        max_recent_setting = self.config_manager.get_setting("dashboard.max_recent_files", 10)
+        max_recent = max_recent_setting if isinstance(max_recent_setting, int) else 10
+
         recent_files = recent_files[:max_recent]
 
-        for file_path in recent_files:
+        for file_path_obj in recent_files:
+            if not isinstance(file_path_obj, str):
+                continue
+
+            file_path: str = file_path_obj
             if os.path.exists(file_path):
                 item = QListWidgetItem(os.path.basename(file_path))
                 item.setData(Qt.ItemDataRole.UserRole, file_path)
                 item.setToolTip(file_path)
 
-                # Add file type icon if available
-                if self.config_manager.get_setting("dashboard.show_file_icons", True):
+                show_file_icons = self.config_manager.get_setting("dashboard.show_file_icons", True)
+                if isinstance(show_file_icons, bool) and show_file_icons:
                     file_ext = os.path.splitext(file_path)[1].lower()
-                    icon_prefix = "🗃️"  # Default file icon
+                    icon_prefix = "🗃️"
                     if file_ext in [".exe", ".dll"]:
                         icon_prefix = "[CFG]️"
                     elif file_ext in [".so", ".dylib", ".icp"]:
@@ -491,14 +521,12 @@ class DashboardTab(BaseTab):
 
         """
         file_path = item.data(Qt.ItemDataRole.UserRole)
-        if file_path and os.path.exists(file_path):
-            # Add to recent files and emit signal
+        if isinstance(file_path, str) and os.path.exists(file_path):
             self.add_to_recent_files(file_path)
             self.binary_selected.emit(file_path)
 
-            # Use AppContext if available
-            if self.app_context:
-                self.app_context.load_binary(file_path)
+            if self._typed_context is not None:
+                self._typed_context.load_binary(file_path)
                 self.log_activity(f"Loaded recent file via AppContext: {os.path.basename(file_path)}")
             else:
                 self.log_activity(f"Loaded recent file: {os.path.basename(file_path)}")
@@ -510,23 +538,24 @@ class DashboardTab(BaseTab):
             file_path: Absolute path to the file to add to recent files history.
 
         """
-        recent_files = self.config_manager.get_setting("recent_files", [])
-        max_recent = self.config_manager.get_setting("dashboard.max_recent_files", 10)
+        recent_files_setting = self.config_manager.get_setting("recent_files", [])
+        recent_files: list[str] = []
 
-        # Remove the file path if it already exists
+        if isinstance(recent_files_setting, list):
+            recent_files = [f for f in recent_files_setting if isinstance(f, str)]
+
+        max_recent_setting = self.config_manager.get_setting("dashboard.max_recent_files", 10)
+        max_recent = max_recent_setting if isinstance(max_recent_setting, int) else 10
+
         if file_path in recent_files:
             recent_files.remove(file_path)
 
-        # Insert the file path at the beginning of the list
         recent_files.insert(0, file_path)
 
-        # Limit the list to the configured maximum
         recent_files = recent_files[:max_recent]
 
-        # Save the updated list back to config manager
         self.config_manager.set_setting("recent_files", recent_files)
 
-        # Refresh the UI
         self.populate_recent_files()
 
     def clear_recent_files(self) -> None:
@@ -653,10 +682,10 @@ class DashboardTab(BaseTab):
 
         layout_config = self.config_manager.get_layout_config()
 
-        # Update layout spacing and margins
-        if self.layout():
-            self.layout().setSpacing(layout_config.panel_spacing)
-            self.layout().setContentsMargins(
+        layout = self.layout()
+        if layout is not None:
+            layout.setSpacing(layout_config.panel_spacing)
+            layout.setContentsMargins(
                 layout_config.margin_size,
                 layout_config.margin_size,
                 layout_config.margin_size,

@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 # Standard library imports
 import argparse
+import csv
 import json
 import logging
 import os
@@ -28,7 +29,7 @@ import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Sequence
 
 
 logger = logging.getLogger(__name__)
@@ -95,46 +96,32 @@ class PipelineStage(ABC):
     # pylint: disable=too-many-branches
     def validate_input(self, input_data: PipelineData) -> bool:
         """Validate input data format."""
-        # Check if input_data is valid
-        if not isinstance(input_data, PipelineData):
-            return False
-
-        # Validate content based on format
         if input_data.format == "json":
-            # For JSON format, content should be serializable
             if input_data.content is None:
                 return False
             try:
-                # Test if content can be serialized to JSON
                 json.dumps(input_data.content)
             except (TypeError, ValueError):
                 return False
-
         elif input_data.format == "binary":
-            # For binary format, content should be bytes or have a path
-            if not isinstance(input_data.content, (bytes, bytearray)):
-                if not isinstance(input_data.content, (str, Path)):
-                    return False
-
+            if isinstance(input_data.content, (bytes, bytearray)):
+                pass
+            elif isinstance(input_data.content, (str, Path)):
                 path = Path(input_data.content)
                 if not path.exists() or not path.is_file():
                     return False
+            else:
+                return False
         elif input_data.format == "text":
-            # For text format, content should be string-like
             if not isinstance(input_data.content, (str, bytes)):
                 return False
-
         elif input_data.format == "csv":
-            # For CSV format, content should be list of dicts or similar
             if not isinstance(input_data.content, (list, dict, str)):
                 return False
 
-        # Validate metadata
         if not isinstance(input_data.metadata, dict):
-            return False
+            return False  # type: ignore[unreachable]
 
-        # Additional security checks
-        # Prevent path traversal in file paths
         if isinstance(input_data.content, (str, Path)):
             try:
                 path_str = str(input_data.content)
@@ -312,7 +299,6 @@ class TransformStage(PipelineStage):
             CSV-formatted string representation of content.
 
         """
-        import csv
         import io
 
         output = io.StringIO()
@@ -320,20 +306,20 @@ class TransformStage(PipelineStage):
         if isinstance(content, list) and content:
             # List of dicts
             if isinstance(content[0], dict):
-                writer = csv.DictWriter(output, fieldnames=content[0].keys())
-                writer.writeheader()
-                writer.writerows(content)
+                dict_writer: csv.DictWriter[str] = csv.DictWriter(output, fieldnames=content[0].keys())
+                dict_writer.writeheader()
+                dict_writer.writerows(content)
             else:
                 # List of values
-                writer = csv.writer(output)
+                writer: Any = csv.writer(output)
                 for item in content:
                     writer.writerow([str(item)])
 
         elif isinstance(content, dict):
             # Single dict
-            writer = csv.DictWriter(output, fieldnames=content.keys())
-            writer.writeheader()
-            writer.writerow(content)
+            dict_writer_2: csv.DictWriter[str] = csv.DictWriter(output, fieldnames=content.keys())
+            dict_writer_2.writeheader()
+            dict_writer_2.writerow(content)
 
         return output.getvalue()
 
@@ -454,7 +440,7 @@ class Pipeline:
         self.stages.append(stage)
         return self
 
-    def execute(self, initial_input: str | dict | PipelineData) -> PipelineData:
+    def execute(self, initial_input: str | dict[str, Any] | PipelineData) -> PipelineData:
         """Execute the pipeline."""
         # Convert initial input to PipelineData
         if isinstance(initial_input, PipelineData):

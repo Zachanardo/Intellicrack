@@ -9,6 +9,8 @@ Licensed under GNU General Public License v3.0
 
 import hashlib
 import zlib
+from collections.abc import Callable
+from typing import Any
 
 from ..utils.logger import get_logger
 
@@ -207,8 +209,8 @@ def calculate_checksum_chunked(file_path: str, algorithm: str, chunk_size: int =
 class ChecksumCalculator:
     """Helper class for managing checksum calculations with progress tracking."""
 
-    algorithms: dict[str, object]
-    progress_callback: object | None
+    algorithms: dict[str, Callable[[bytes], int | str]]
+    progress_callback: Callable[[int, int], None] | None
 
     def __init__(self) -> None:
         """Initialize checksum calculator."""
@@ -222,7 +224,7 @@ class ChecksumCalculator:
         }
         self.progress_callback = None
 
-    def set_progress_callback(self, callback: object) -> None:
+    def set_progress_callback(self, callback: Callable[[int, int], None] | None) -> None:
         """Set callback for progress updates.
 
         Args:
@@ -253,10 +255,16 @@ class ChecksumCalculator:
             raise ValueError(error_msg)
 
         try:
+            algo_func = self.algorithms[algorithm]
             if algorithm.startswith("CRC"):
-                result = self.algorithms[algorithm](data)
-                return f"{result:04X}" if algorithm == "CRC-16" else f"{result:08X}"
-            return self.algorithms[algorithm](data).upper()
+                result = algo_func(data)
+                if isinstance(result, int):
+                    return f"{result:04X}" if algorithm == "CRC-16" else f"{result:08X}"
+                return str(result)
+            result = algo_func(data)
+            if isinstance(result, str):
+                return result.upper()
+            return str(result).upper()
 
         except Exception as e:
             logger.exception("Error calculating %s: %s", algorithm, e)
@@ -276,11 +284,11 @@ class ChecksumCalculator:
         if algorithms is None:
             algorithms = list(self.algorithms.keys())
 
-        results = {}
+        results: dict[str, str] = {}
         total = len(algorithms)
 
         for i, algorithm in enumerate(algorithms):
-            if self.progress_callback:
+            if self.progress_callback is not None:
                 self.progress_callback(i, total)
 
             try:
@@ -289,7 +297,7 @@ class ChecksumCalculator:
                 results[algorithm] = f"Error: {e}"
                 logger.exception("Failed to calculate %s: %s", algorithm, e)
 
-        if self.progress_callback:
+        if self.progress_callback is not None:
             self.progress_callback(total, total)
 
         return results

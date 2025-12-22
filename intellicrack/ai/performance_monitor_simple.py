@@ -144,10 +144,11 @@ class AsyncPerformanceMonitor:
         try:
             result = await coroutine
             success = True
+            return result
         except Exception as e:
             logger.exception("Operation %s failed: %s", operation_name, e)
-            result = None  # type: ignore[assignment]
             success = False
+            raise
         finally:
             end_time = time.time()
             with self.lock:
@@ -161,8 +162,6 @@ class AsyncPerformanceMonitor:
                             "timestamp": end_time,
                         },
                     )
-
-        return result
 
     def get_active_count(self) -> int:
         """Get number of currently active operations.
@@ -208,7 +207,7 @@ def profile_ai_operation(
                 logger.exception("Operation %s failed: %s", op_name, e)
                 raise
 
-        return wrapper  # type: ignore[return-value]
+        return wrapper
 
     return decorator
 

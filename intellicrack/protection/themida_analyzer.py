@@ -636,7 +636,7 @@ class ThemidaAnalyzer:
 
             offset = search_area.find(add_esp_pattern)
             if offset != -1 and offset + 6 <= len(search_area):
-                return struct.unpack("<I", search_area[offset + 2 : offset + 6])[0]
+                return int(struct.unpack("<I", search_area[offset + 2 : offset + 6])[0])
         return 0x100
 
     def _extract_register_mapping(self, entry: int) -> dict[str, int]:

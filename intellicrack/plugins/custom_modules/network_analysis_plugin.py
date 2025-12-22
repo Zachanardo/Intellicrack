@@ -39,14 +39,14 @@ class NetworkAnalysisPlugin:
     def __init__(self) -> None:
         """Initialize the network analysis plugin."""
         super().__init__()
-        self.capture_thread = None
-        self.packet_queue = queue.Queue()
-        self.filter_expression = ""
-        self.logger = logging.getLogger(__name__)
-        self.is_capturing = False
-        self.monitoring = False
-        self.active_sockets = {}
-        self.socket_monitor_thread = None
+        self.capture_thread: threading.Thread | None = None
+        self.packet_queue: queue.Queue[Any] = queue.Queue()
+        self.filter_expression: str = ""
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.is_capturing: bool = False
+        self.monitoring: bool = False
+        self.active_sockets: dict[str, socket.socket] = {}
+        self.socket_monitor_thread: threading.Thread | None = None
 
     def analyze(self, binary_path: str) -> list[str]:
         """Analyze binary for network-related functionality.
@@ -331,15 +331,16 @@ class NetworkAnalysisPlugin:
             }
 
         # Start monitoring in a separate thread
-        self.socket_monitor_thread = threading.Thread(target=monitor_thread)
-        self.socket_monitor_thread.daemon = True
-        self.socket_monitor_thread.start()
+        monitor_thread_obj = threading.Thread(target=monitor_thread)
+        monitor_thread_obj.daemon = True
+        monitor_thread_obj.start()
+        self.socket_monitor_thread = monitor_thread_obj
 
         return result
 
     def analyze_socket_traffic(self, capture_file: str | None = None) -> dict[str, Any]:
         """Analyze socket traffic patterns."""
-        result = {
+        result: dict[str, Any] = {
             "analysis_time": time.time(),
             "patterns": [],
             "suspicious_activity": [],
@@ -352,8 +353,8 @@ class NetworkAnalysisPlugin:
             connections = psutil.net_connections(kind="inet")
 
             # Analyze connection patterns
-            port_frequency = {}
-            ip_frequency = {}
+            port_frequency: dict[int, int] = {}
+            ip_frequency: dict[str, int] = {}
             suspicious_ports = [22, 23, 135, 139, 445, 1433, 3389, 4444, 5555, 8080]
 
             for conn in connections:
@@ -427,8 +428,9 @@ class NetworkAnalysisPlugin:
 
         if self.monitoring:
             self.monitoring = False
-            if self.socket_monitor_thread and self.socket_monitor_thread.is_alive():
-                self.socket_monitor_thread.join(timeout=2)
+
+        if self.socket_monitor_thread and self.socket_monitor_thread.is_alive():
+            self.socket_monitor_thread.join(timeout=2)
 
     def monitor_traffic(self, target_process: int | None = None) -> list[str]:
         """Monitor network traffic and connections.

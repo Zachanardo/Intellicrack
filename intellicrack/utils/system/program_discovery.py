@@ -28,6 +28,7 @@ import sys
 import time
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
 from ..core.path_discovery import PathDiscovery
 from .file_resolution import file_resolver
@@ -44,15 +45,18 @@ IS_MACOS = sys.platform.startswith("darwin")
 if IS_WINDOWS:
     try:
         import winreg
+        from winreg import HKEYType
 
         HAS_WINREG = True
     except ImportError as e:
         logger.exception("Import error in program_discovery: %s", e)
         HAS_WINREG = False
-        winreg = None
+        winreg = None  # type: ignore[assignment]
+        HKEYType = None  # type: ignore[assignment,misc]
 else:
     HAS_WINREG = False
-    winreg = None
+    winreg = None  # type: ignore[assignment]
+    HKEYType = None  # type: ignore[assignment,misc]
 
 
 @dataclass
@@ -82,7 +86,7 @@ class ProgramDiscoveryEngine:
     """Engine for discovering installed programs and potential analysis targets."""
 
     # Common executable directories for different platforms
-    COMMON_EXECUTABLE_DIRS = {
+    COMMON_EXECUTABLE_DIRS: dict[str, list[str]] = {
         "windows": [
             r"C:\Program Files",
             r"C:\Program Files (x86)",
@@ -112,16 +116,16 @@ class ProgramDiscoveryEngine:
     }
 
     # Registry paths for Windows program discovery
-    WINDOWS_REGISTRY_PATHS = [
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
+    WINDOWS_REGISTRY_PATHS: list[tuple[int | None, str | None]] = [
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG and winreg is not None else (None, None),
         (
             winreg.HKEY_LOCAL_MACHINE,
             r"SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall",
         )
-        if HAS_WINREG
+        if HAS_WINREG and winreg is not None
         else (None, None),
-        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG else (None, None),
-        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications") if HAS_WINREG else (None, None),
+        (winreg.HKEY_CURRENT_USER, r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall") if HAS_WINREG and winreg is not None else (None, None),
+        (winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Classes\Applications") if HAS_WINREG and winreg is not None else (None, None),
     ]
 
     # Priority targets for analysis (higher score = higher priority)
@@ -194,18 +198,18 @@ class ProgramDiscoveryEngine:
 
         """
         try:
-            program_path = Path(program_path)
+            program_path_obj = Path(program_path)
 
-            if not program_path.exists():
+            if not program_path_obj.exists():
                 return None
 
             # If it's a file, analyze the file and its parent directory
-            if program_path.is_file():
-                executable_path = program_path
-                install_location = program_path.parent
+            if program_path_obj.is_file():
+                executable_path: Path | None = program_path_obj
+                install_location = program_path_obj.parent
             else:
                 # It's a directory, find main executable
-                install_location = program_path
+                install_location = program_path_obj
                 executable_path = self._find_main_executable(install_location)
 
             # Get basic file information
@@ -263,15 +267,15 @@ class ProgramDiscoveryEngine:
             List of discovered programs
 
         """
-        programs = []
-        search_path = Path(search_path)
+        programs: list[ProgramInfo] = []
+        search_path_obj = Path(search_path)
 
-        if not search_path.exists():
+        if not search_path_obj.exists():
             return programs
 
         try:
             # Look for shortcuts and executables
-            for file_path in search_path.iterdir():
+            for file_path in search_path_obj.iterdir():
                 if file_path.is_file() and file_path.suffix.lower() in [".lnk", ".url", ".exe", ".app"]:
                     resolved_path, metadata = file_resolver.resolve_file_path(file_path)
 
@@ -280,7 +284,7 @@ class ProgramDiscoveryEngine:
                             programs.append(program_info)
 
         except Exception as e:
-            self.logger.exception("Error discovering programs from path %s: %s", search_path, e)
+            self.logger.exception("Error discovering programs from path %s: %s", search_path_obj, e)
 
         return programs
 
@@ -299,7 +303,7 @@ class ProgramDiscoveryEngine:
 
     def scan_executable_directories(self) -> list[ProgramInfo]:
         """Scan common executable directories for programs."""
-        programs = []
+        programs: list[ProgramInfo] = []
 
         # Get platform-specific directories
         if IS_WINDOWS:
@@ -347,9 +351,9 @@ class ProgramDiscoveryEngine:
 
         return None
 
-    def _analyze_installation_folder(self, folder_path: Path) -> dict[str, any]:
+    def _analyze_installation_folder(self, folder_path: Path) -> dict[str, Any]:
         """Analyze program installation folder for metadata."""
-        analysis = {
+        analysis: dict[str, Any] = {
             "total_size": 0,
             "file_types": [],
             "architecture": "Unknown",
@@ -429,7 +433,9 @@ class ProgramDiscoveryEngine:
                             ".bin",
                         ]:
                             analysis["has_licensing"] = True
-                            analysis["licensing_files"].append(str(file_path))
+                            licensing_files = analysis["licensing_files"]
+                            if isinstance(licensing_files, list):
+                                licensing_files.append(str(file_path))
 
                         # Determine architecture from executables
                         if file_path.suffix.lower() in [".exe", ".dll"]:
@@ -697,10 +703,13 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _scan_registry_path(self, hkey: object, path: str, include_system: bool) -> list[ProgramInfo]:
+    def _scan_registry_path(self, hkey: int | None, path: str, include_system: bool) -> list[ProgramInfo]:
         """Scan a specific registry path for installed programs."""
-        programs = []
+        programs: list[ProgramInfo] = []
         self.logger.debug("Scanning registry path %s, include_system=%s", path, include_system)
+
+        if not HAS_WINREG or winreg is None or hkey is None:
+            return programs
 
         try:
             with winreg.OpenKey(hkey, path) as key:
@@ -718,8 +727,11 @@ class ProgramDiscoveryEngine:
 
         return programs
 
-    def _extract_program_from_registry(self, hkey: object, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
+    def _extract_program_from_registry(self, hkey: int, path: str, subkey_name: str, include_system: bool) -> ProgramInfo | None:
         """Extract program information from a registry entry."""
+        if not HAS_WINREG or winreg is None:
+            return None
+
         try:
             with winreg.OpenKey(hkey, f"{path}\\{subkey_name}") as subkey:
                 # Get basic information
@@ -737,7 +749,14 @@ class ProgramDiscoveryEngine:
                 install_location = self._get_registry_value(subkey, "InstallLocation")
                 uninstall_string = self._get_registry_value(subkey, "UninstallString")
                 install_date = self._get_registry_value(subkey, "InstallDate")
-                estimated_size = self._get_registry_value(subkey, "EstimatedSize")
+                estimated_size_str = self._get_registry_value(subkey, "EstimatedSize")
+
+                estimated_size: int | None = None
+                if estimated_size_str:
+                    try:
+                        estimated_size = int(estimated_size_str)
+                    except (ValueError, TypeError):
+                        estimated_size = None
 
                 # Try to get architecture
                 architecture = "Unknown"
@@ -746,7 +765,7 @@ class ProgramDiscoveryEngine:
                     architecture = folder_analysis.get("architecture", "Unknown")
 
                 # Find executable paths
-                executable_paths = []
+                executable_paths: list[str] = []
                 if install_location and os.path.exists(install_location):
                     if main_exe := self._find_main_executable(Path(install_location)):
                         executable_paths.append(str(main_exe))
@@ -774,8 +793,11 @@ class ProgramDiscoveryEngine:
             self.logger.debug("Error extracting program from registry %s: %s", subkey_name, e)
             return None
 
-    def _get_registry_value(self, key: object, value_name: str) -> str | None:
+    def _get_registry_value(self, key: Any, value_name: str) -> str | None:
         """Get a value from a registry key safely."""
+        if not HAS_WINREG or winreg is None:
+            return None
+
         try:
             value, _ = winreg.QueryValueEx(key, value_name)
             return str(value) if value else None

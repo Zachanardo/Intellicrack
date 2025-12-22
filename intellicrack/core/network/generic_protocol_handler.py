@@ -51,9 +51,9 @@ class GenericProtocolHandler(LicenseProtocolHandler):
         """
         super().__init__(config)
         self.protocol = config.get("protocol", "tcp") if config else "tcp"
-        self.captured_requests = []
-        self.captured_responses = []
-        self.active_connections = {}
+        self.captured_requests: list[dict[str, Any]] = []
+        self.captured_responses: list[dict[str, Any]] = []
+        self.active_connections: dict[str, dict[str, Any]] = {}
 
     def _run_proxy(self, port: int) -> None:
         """Run the proxy server implementation.

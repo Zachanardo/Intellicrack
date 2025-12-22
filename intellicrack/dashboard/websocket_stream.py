@@ -28,10 +28,13 @@ from collections import deque
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import websockets
 from websockets.server import WebSocketServerProtocol
+
+if TYPE_CHECKING:
+    from websockets.server import WebSocketServer
 
 
 logger = logging.getLogger(__name__)
@@ -97,10 +100,10 @@ class WebSocketEventStream:
         self.port = port
         self.clients: set[WebSocketServerProtocol] = set()
         self.client_registry: dict[WebSocketServerProtocol, dict[str, Any]] = {}
-        self.event_queue: deque = deque(maxlen=10000)
-        self.event_handlers: dict[EventType, list[Callable]] = {}
+        self.event_queue: deque[AnalysisEvent] = deque(maxlen=10000)
+        self.event_handlers: dict[EventType, list[Callable[[AnalysisEvent], None]]] = {}
         self.sessions: dict[str, dict[str, Any]] = {}
-        self.server = None
+        self.server: WebSocketServer | None = None
         self.running = False
 
         # Statistics
@@ -141,8 +144,7 @@ class WebSocketEventStream:
         if self.server:
             self.server.close()
             await self.server.wait_closed()
-
-        logger.info("WebSocket stream server stopped")
+            logger.info("WebSocket stream server stopped")
 
     async def handle_client(self, websocket: WebSocketServerProtocol, path: str) -> None:
         """Handle new WebSocket client connection."""
@@ -179,7 +181,8 @@ class WebSocketEventStream:
         try:
             # Handle client messages
             async for message in websocket:
-                await self._handle_client_message(websocket, client_id, message)
+                if isinstance(message, str):
+                    await self._handle_client_message(websocket, client_id, message)
 
         except websockets.exceptions.ConnectionClosed:
             logger.info("Client %s disconnected", client_id)
@@ -307,7 +310,9 @@ class WebSocketEventStream:
         params = data.get("params", {})
 
         # Execute control action
-        result = await self._execute_control_action(action, target, params)
+        action_str = action if isinstance(action, str) else ""
+        target_str = target if isinstance(target, str) else ""
+        result = await self._execute_control_action(action_str, target_str, params)
 
         # Send result
         await websocket.send(
@@ -324,7 +329,7 @@ class WebSocketEventStream:
 
     async def _execute_control_action(self, action: str, target: str, params: dict[str, Any]) -> dict[str, Any]:
         """Execute control action on analysis components."""
-        result = {"success": False, "data": None}
+        result: dict[str, Any] = {"success": False, "data": None}
 
         if action == "configure":
             # Configure analysis parameters
@@ -492,7 +497,7 @@ class WebSocketEventStream:
     def _get_client_id(self, websocket: WebSocketServerProtocol) -> str:
         """Get client ID from websocket connection."""
         # In production, maintain proper client ID mapping
-        return id(websocket)
+        return str(id(websocket))
 
     def _should_send_to_client(self, client_id: str, event: AnalysisEvent) -> bool:
         """Check if event should be sent to specific client."""
@@ -573,7 +578,7 @@ class WebSocketEventStream:
                 except Exception as e:
                     logger.exception("Event handler error: %s", e)
 
-    def register_event_handler(self, event_type: EventType, handler: Callable) -> None:
+    def register_event_handler(self, event_type: EventType, handler: Callable[[AnalysisEvent], None]) -> None:
         """Register handler for specific event type."""
         if event_type not in self.event_handlers:
             self.event_handlers[event_type] = []

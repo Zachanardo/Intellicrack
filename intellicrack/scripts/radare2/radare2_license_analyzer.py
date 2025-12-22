@@ -26,10 +26,12 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 # Third-party imports
 import networkx as nx
 import r2pipe
+from r2pipe import RapidRadare2
 
 
 logger = logging.getLogger(__name__)
@@ -159,15 +161,15 @@ class R2LicenseAnalyzer:
         },
     }
 
-    def __init__(self, r2: r2pipe.open = None, filename: str = None) -> None:
+    def __init__(self, r2: RapidRadare2 | None = None, filename: str | None = None) -> None:
         """Initialize the license analyzer."""
-        self.r2 = r2 or r2pipe.open(filename)
+        self.r2: RapidRadare2 = r2 or r2pipe.open(filename)
         self.license_functions: list[LicenseFunction] = []
-        self.call_graph = nx.DiGraph()
+        self.call_graph: nx.DiGraph = nx.DiGraph()
         self.string_refs: dict[int, list[str]] = defaultdict(list)
         self.api_refs: dict[int, list[str]] = defaultdict(list)
         self.crypto_locations: dict[str, list[int]] = defaultdict(list)
-        self.logger = logging.getLogger(f"{__name__}.R2LicenseAnalyzer")
+        self.logger: logging.Logger = logging.getLogger(f"{__name__}.R2LicenseAnalyzer")
 
         # Initialize analysis
         self._init_analysis()
@@ -180,9 +182,9 @@ class R2LicenseAnalyzer:
         self.r2.cmd("aaa")
 
         # Get binary info
-        self.info = self.r2.cmdj("ij")
-        self.arch = self.info.get("bin", {}).get("arch", "unknown")
-        self.bits = self.info.get("bin", {}).get("bits", 32)
+        self.info: dict[str, Any] = self.r2.cmdj("ij")
+        self.arch: str = self.info.get("bin", {}).get("arch", "unknown")
+        self.bits: int = self.info.get("bin", {}).get("bits", 32)
 
         # Load strings
         self._load_strings()
@@ -459,13 +461,18 @@ class R2LicenseAnalyzer:
             if self._has_license_control_pattern(blocks):
                 lic_func.confidence *= 1.2
 
-    def _has_license_control_pattern(self, blocks: list[dict]) -> bool:
+    def _has_license_control_pattern(self, blocks: list[dict[str, int | str | list[Any]]]) -> bool:
         """Check for common license validation patterns."""
         if len(blocks) < 3:
             return False
 
         # Look for multiple return paths
-        return_blocks = [b for b in blocks if b.get("ninstr", 0) > 0 and any("ret" in str(b.get("disasm", "")) for b in blocks)]
+        return_blocks: list[dict[str, int | str | list[Any]]] = []
+        for b in blocks:
+            ninstr_val = b.get("ninstr")
+            if isinstance(ninstr_val, int) and ninstr_val > 0:
+                if any("ret" in str(b.get("disasm", "")) for block in blocks):
+                    return_blocks.append(b)
 
         # License functions often have multiple returns (success/failure)
         return len(return_blocks) >= 2
@@ -515,7 +522,7 @@ class R2LicenseAnalyzer:
         logger.info("Performing pattern matching...")
 
         # Common license validation patterns
-        patterns = [
+        patterns: list[dict[str, list[str] | LicenseType]] = [
             # Registry access pattern
             {
                 "apis": ["RegOpenKeyEx", "RegQueryValueEx"],
@@ -546,11 +553,14 @@ class R2LicenseAnalyzer:
         for pattern in patterns:
             self._check_pattern(pattern)
 
-    def _check_pattern(self, pattern: dict) -> None:
+    def _check_pattern(self, pattern: dict[str, list[str] | LicenseType]) -> None:
         """Check if pattern matches any function."""
-        required_apis = set(pattern.get("apis", []))
-        required_strings = set(pattern.get("strings", []))
-        license_type = pattern.get("type", LicenseType.CUSTOM)
+        apis_value = pattern.get("apis")
+        required_apis: set[str] = set(apis_value) if isinstance(apis_value, list) else set()
+        strings_value = pattern.get("strings")
+        required_strings: set[str] = set(strings_value) if isinstance(strings_value, list) else set()
+        license_type_value = pattern.get("type")
+        license_type: LicenseType = license_type_value if isinstance(license_type_value, LicenseType) else LicenseType.CUSTOM
 
         for addr, apis in self.api_refs.items():
             api_set = set(apis)
@@ -758,7 +768,7 @@ class R2LicenseAnalyzer:
         self.generate_r2_script()
 
         # Also generate binary patches
-        patches = []
+        patches: list[dict[str, int | bytes | str]] = []
 
         for lic_func in self.license_functions:
             if lic_func.confidence < 0.7:
@@ -767,7 +777,7 @@ class R2LicenseAnalyzer:
             # Simple patch: change first conditional jump
             patch_addr, patch_bytes = self._find_patch_location(lic_func)
 
-            if patch_addr:
+            if patch_addr and patch_bytes is not None:
                 patches.append(
                     {
                         "address": patch_addr,
@@ -784,9 +794,9 @@ class R2LicenseAnalyzer:
             json.dump(
                 [
                     {
-                        "address": f"0x{p['address']:x}",
-                        "original": p["original"].hex(),
-                        "patched": p["patched"].hex(),
+                        "address": f"0x{p['address']:x}" if isinstance(p['address'], int) else str(p['address']),
+                        "original": p["original"].hex() if isinstance(p["original"], bytes) else str(p["original"]),
+                        "patched": p["patched"].hex() if isinstance(p["patched"], bytes) else str(p["patched"]),
                         "function": p["function"],
                     }
                     for p in patches
@@ -877,7 +887,7 @@ class R2LicenseAnalyzer:
 
         return None, None
 
-    def _find_patch_location_fallback(self, lic_func: LicenseFunction, func_bytes: list) -> tuple[int | None, bytes | None]:
+    def _find_patch_location_fallback(self, lic_func: LicenseFunction, func_bytes: list[int]) -> tuple[int | None, bytes | None]:
         """Fallback instruction detection without capstone using opcode patterns."""
         if self.arch == "x86":
             # x86/x64 conditional jump opcodes

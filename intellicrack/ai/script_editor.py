@@ -41,7 +41,7 @@ from typing import Any
 from intellicrack.ai.qemu_manager import QEMUManager
 from intellicrack.utils.logger import logger
 
-from .ai_script_generator import LLMScriptInterface, PromptEngineer, ScriptType
+from .ai_script_generator import AIScriptGenerator, ScriptType
 
 
 class EditType(Enum):
@@ -112,8 +112,8 @@ class ScriptTester:
     """Automated testing framework for generated scripts."""
 
     def __init__(self) -> None:
-        """Initialize script tester with LLM interface for validation."""
-        self.llm_interface = LLMScriptInterface()
+        """Initialize script tester with AI script generator for validation."""
+        self.ai_generator = AIScriptGenerator()
 
     def validate_script(self, script_content: str, script_type: str) -> tuple[ValidationResult, dict[str, Any]]:
         """Validate script using LLM for comprehensive analysis."""
@@ -158,10 +158,13 @@ Return your analysis as a JSON object with the following structure:
 Provide only the JSON response, no explanations."""
 
         try:
-            # Use LLM for validation
-
-            # Get LLM analysis
-            response, _ = self.llm_interface.generate_script(validation_prompt)
+            # Use AI generator for validation
+            # For validation, we'll use a simple response format
+            response = self.ai_generator.generate_script(
+                _prompt=validation_prompt,
+                base_script=script_content,
+                context={"validation": True}
+            )
 
             # Parse LLM response
             try:
@@ -291,7 +294,7 @@ Provide only the JSON response, no explanations."""
 
     def _scan_security_issues(self, script: str) -> dict[str, Any]:
         """Scan for potential security issues."""
-        issues = {"critical_issues": [], "warnings": [], "info": []}
+        issues: dict[str, list[str]] = {"critical_issues": [], "warnings": [], "info": []}
 
         # Check for dangerous patterns
         dangerous_patterns = {
@@ -312,7 +315,9 @@ Provide only the JSON response, no explanations."""
         for severity, patterns in dangerous_patterns.items():
             for pattern in patterns:
                 if matches := re.findall(pattern, script, re.IGNORECASE):
-                    issues[f"{severity}_issues" if severity == "critical" else "warnings"].extend(matches)
+                    key = f"{severity}_issues" if severity == "critical" else "warnings"
+                    if key in issues:
+                        issues[key].extend(matches)
 
         return issues
 
@@ -341,11 +346,13 @@ Provide only the JSON response, no explanations."""
             metrics["complexity_score"] = min(total_complexity / line_count, 1.0)
 
         # Performance suggestions
-        if complexity_factors["loops"] > 10:
-            metrics["optimization_suggestions"].append("Consider reducing nested loops")
+        suggestions = metrics["optimization_suggestions"]
+        if isinstance(suggestions, list):
+            if complexity_factors["loops"] > 10:
+                suggestions.append("Consider reducing nested loops")
 
-        if complexity_factors["memory_operations"] > 20:
-            metrics["optimization_suggestions"].append("High memory operation count - consider batching")
+            if complexity_factors["memory_operations"] > 20:
+                suggestions.append("High memory operation count - consider batching")
 
         return metrics
 
@@ -430,9 +437,9 @@ class ScriptVersionManager:
 
         try:
             with open(version_file, encoding="utf-8") as f:
-                data = json.load(f)
+                data: dict[str, Any] = json.load(f)
 
-            return data["content"]
+            return str(data["content"])
 
         except Exception as e:
             logger.error(f"Rollback failed: {e}")
@@ -478,14 +485,13 @@ class AIScriptEditor:
 
     def __init__(self) -> None:
         """Initialize AI script editor with all necessary components for advanced editing."""
-        self.llm_interface = LLMScriptInterface()
-        self.prompt_engineer = PromptEngineer()
+        self.ai_generator = AIScriptGenerator()
         self.tester = ScriptTester()
         import intellicrack
 
         root = Path(intellicrack.__file__).parent
         self.version_manager = ScriptVersionManager(str(root / "scripts"))
-        self.edit_history = {}  # script_path -> List[ScriptEdit]
+        self.edit_history: dict[str, list[ScriptEdit]] = {}
         logger.info("AIScriptEditor initialized with advanced editing capabilities")
 
     def edit_script(
@@ -519,14 +525,18 @@ class AIScriptEditor:
                 preserve_functionality=preserve_functionality,
             )
 
-            # Generate modification prompt for LLM
-            llm_prompt = self._build_edit_prompt(original_content, edit_request, script_type)
+            # Generate modification prompt for AI generator
+            ai_prompt = self._build_edit_prompt(original_content, edit_request, script_type)
 
-            # Generate modified script
-            modified_content = self.llm_interface.generate_script(llm_prompt)
+            # Generate modified script using AI generator
+            modified_content = self.ai_generator.generate_script(
+                _prompt=ai_prompt,
+                base_script=original_content,
+                context={"edit_type": edit_request.edit_type.value, "preserve_functionality": edit_request.preserve_functionality}
+            )
 
             # Validate modified script
-            validation_result, validation_details = self.tester.validate_script(modified_content, script_type, test_binary)
+            validation_result, validation_details = self.tester.validate_script(modified_content, script_type)
 
             # Test execution if validation passes
             execution_results = {}
@@ -552,7 +562,18 @@ class AIScriptEditor:
             self.edit_history[script_path].append(edit_record)
 
             # Create new version
-            version = self.version_manager.create_version(script_path, modified_content, self.edit_history[script_path])
+            # Get parent version ID if exists
+            parent_version_id: str | None = None
+            if self.edit_history[script_path]:
+                history = self.edit_history[script_path]
+                if history and len(history) > 1:
+                    parent_version_id = history[-2].edit_id
+
+            version = self.version_manager.create_version(
+                content=modified_content,
+                edit_history=self.edit_history[script_path],
+                parent_version=parent_version_id
+            )
 
             # Save modified script if validation passed
             if validation_result == ValidationResult.SUCCESS and execution_results.get("success", False):
@@ -591,7 +612,7 @@ class AIScriptEditor:
         test_binary: str | None = None,
     ) -> dict[str, Any]:
         """Improve a script iteratively through multiple edit cycles using QEMU feedback."""
-        results = {
+        results: dict[str, Any] = {
             "iterations": [],
             "final_success": False,
             "improvement_metrics": {},
@@ -611,7 +632,9 @@ class AIScriptEditor:
             # Test current script in QEMU first to get baseline
             qemu_result = self.tester.test_script_execution(current_content, script_type, test_binary, timeout=60)
 
-            results["qemu_feedback"].append(qemu_result)
+            feedback_list = results["qemu_feedback"]
+            if isinstance(feedback_list, list):
+                feedback_list.append(qemu_result)
 
             # Analyze QEMU results to determine if goals are achieved
             goals_achieved = self._analyze_qemu_results_for_goals(qemu_result, improvement_goals)
@@ -619,14 +642,16 @@ class AIScriptEditor:
             # If goals are achieved, we're done
             if goals_achieved:
                 results["final_success"] = True
-                results["iterations"].append(
-                    {
-                        "iteration": iteration + 1,
-                        "result": {"success": True, "message": "Goals achieved"},
-                        "qemu_result": qemu_result,
-                        "goals_achieved": True,
-                    },
-                )
+                iterations_list = results["iterations"]
+                if isinstance(iterations_list, list):
+                    iterations_list.append(
+                        {
+                            "iteration": iteration + 1,
+                            "result": {"success": True, "message": "Goals achieved"},
+                            "qemu_result": qemu_result,
+                            "goals_achieved": True,
+                        },
+                    )
                 break
 
             # Create improvement prompt with QEMU feedback
@@ -635,14 +660,16 @@ class AIScriptEditor:
             # Edit script based on QEMU feedback
             edit_result = self.edit_script(script_path, improvement_prompt, EditType.OPTIMIZATION, test_binary)
 
-            results["iterations"].append(
-                {
-                    "iteration": iteration + 1,
-                    "result": edit_result,
-                    "qemu_result": qemu_result,
-                    "goals_achieved": goals_achieved,
-                },
-            )
+            iterations_list = results["iterations"]
+            if isinstance(iterations_list, list):
+                iterations_list.append(
+                    {
+                        "iteration": iteration + 1,
+                        "result": edit_result,
+                        "qemu_result": qemu_result,
+                        "goals_achieved": goals_achieved,
+                    },
+                )
 
             # Update current content if edit was successful
             if edit_result.get("success"):
@@ -1129,7 +1156,7 @@ Generate the complete modified script:"""
 
     def _suggest_fixes(self, validation_result: ValidationResult, validation_details: dict[str, Any]) -> list[str]:
         """Suggest fixes for validation issues."""
-        fixes = []
+        fixes: list[str] = []
 
         if validation_result == ValidationResult.SYNTAX_ERROR:
             fixes.extend((
@@ -1161,7 +1188,7 @@ Generate the complete modified script:"""
 
         # Architecture-specific suggestions
         arch = binary_analysis.get("arch", "").lower()
-        if arch == "x64" and script_type == ScriptType.FRIDA and "ptr(" not in script_content:
+        if arch == "x64" and script_type == "frida" and "ptr(" not in script_content:
             suggestions.append(
                 {
                     "type": "compatibility",

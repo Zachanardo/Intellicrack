@@ -29,6 +29,8 @@ import time
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, cast
 
+from intellicrack.utils.type_safety import validate_type
+
 
 if TYPE_CHECKING:
     from claripy.ast.bv import BV
@@ -58,16 +60,24 @@ class SimProcedureBase:
         pass
 
 
-try:
-    import angr
-    import claripy
-    from angr.exploration_techniques import DFS
+ANGR_AVAILABLE: bool
+angr: Any
+claripy: Any
+DFS: Any
 
-    ANGR_AVAILABLE: bool = True
+try:
+    import angr as angr_module
+    import claripy as claripy_module
+    from angr.exploration_techniques import DFS as DFS_class
+
+    angr = angr_module
+    claripy = claripy_module
+    DFS = DFS_class
+    ANGR_AVAILABLE = True
 except ImportError:
-    angr = cast("Any", None)
-    claripy = cast("Any", None)
-    DFS = cast("Any", None)
+    angr = cast(type[Any], None)
+    claripy = cast(type[Any], None)
+    DFS = cast(type[Any], None)
     ANGR_AVAILABLE = False
 
 
@@ -541,7 +551,7 @@ class WindowsLicensingSimProcedure(SimProcedureBase):
 
     @property
     def _globals(self) -> dict[str, Any]:
-        return cast("dict[str, Any]", self._state.globals)
+        return validate_type(self._state.globals, dict)
 
 
 class CryptVerifySignature(WindowsLicensingSimProcedure):
@@ -1765,17 +1775,24 @@ def create_enhanced_simgr(project: Any, initial_state: Any, *, enable_state_merg
     if enable_state_merging:
         simgr.use_technique(StateMerger(merge_threshold=10, max_merge_count=5))
 
-    if hasattr(angr.exploration_techniques, "DFS"):
-        simgr.use_technique(DFS())
+    if ANGR_AVAILABLE and hasattr(angr, "exploration_techniques"):
+        if hasattr(angr.exploration_techniques, "DFS"):
+            simgr.use_technique(cast("Any", DFS)())
 
-    if hasattr(angr.exploration_techniques, "Spiller"):
-        simgr.use_technique(angr.exploration_techniques.Spiller())
+        if hasattr(angr.exploration_techniques, "Spiller"):
+            spiller_class = cast("Any", getattr(angr.exploration_techniques, "Spiller", None))
+            if spiller_class is not None:
+                simgr.use_technique(spiller_class())
 
-    if hasattr(angr.exploration_techniques, "Veritesting"):
-        simgr.use_technique(angr.exploration_techniques.Veritesting())
+        if hasattr(angr.exploration_techniques, "Veritesting"):
+            veritesting_class = cast("Any", getattr(angr.exploration_techniques, "Veritesting", None))
+            if veritesting_class is not None:
+                simgr.use_technique(veritesting_class())
 
-    if hasattr(angr.exploration_techniques, "LoopSeer"):
-        simgr.use_technique(angr.exploration_techniques.LoopSeer(bound=5))
+        if hasattr(angr.exploration_techniques, "LoopSeer"):
+            loopseer_class = cast("Any", getattr(angr.exploration_techniques, "LoopSeer", None))
+            if loopseer_class is not None:
+                simgr.use_technique(loopseer_class(bound=5))
 
     logger.info("Enhanced execution manager configured with license-focused techniques")
     return simgr

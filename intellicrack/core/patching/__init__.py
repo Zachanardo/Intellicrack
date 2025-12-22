@@ -19,6 +19,8 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from collections.abc import Callable
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ try:
         create_windows_activator,
     )
 
-    def activate_windows_interactive(output_callback: object = None) -> object:
+    def activate_windows_interactive(output_callback: Callable[[str, bool], None] | None = None) -> dict[str, Any]:
         """Launch Windows activation interactively.
 
         Args:
@@ -49,7 +51,7 @@ try:
         activator = create_windows_activator()
         return activator.activate_windows_interactive(output_callback)
 
-    def activate_windows_in_terminal() -> object:
+    def activate_windows_in_terminal() -> dict[str, Any]:
         """Activate Windows using embedded terminal (recommended).
 
         Returns:
@@ -72,9 +74,10 @@ except ImportError as e:
     logger.warning("Failed to import memory_patcher: %s", e, exc_info=True)
 
 logger.debug("Importing radare2_patch_integration...")
+R2PatchIntegrator: type[Any] | None
 try:
-    from .radare2_patch_integration import R2PatchIntegrator
-
+    from .radare2_patch_integration import R2PatchIntegrator as _R2PatchIntegrator
+    R2PatchIntegrator = _R2PatchIntegrator
     logger.debug("radare2_patch_integration imported OK")
 except ImportError as e:
     logger.warning("Failed to import radare2_patch_integration: %s", e, exc_info=True)

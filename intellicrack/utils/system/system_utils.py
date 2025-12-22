@@ -42,12 +42,14 @@ except ImportError as e:
 
 try:
     from PIL import Image, ImageDraw
+    from PIL import Image as ImageModule
+    from PIL import ImageDraw as ImageDrawModule
 
     PIL_AVAILABLE = True
 except ImportError as e:
     logger.exception("Import error in system_utils: %s", e)
-    Image = None
-    ImageDraw = None
+    ImageModule = None  # type: ignore[assignment]
+    ImageDrawModule = None  # type: ignore[assignment]
     PIL_AVAILABLE = False
 
 
@@ -117,14 +119,20 @@ def get_targetprocess_pid(binary_path: str) -> int | None:
             pid_info["pid"],
             pid_info["match"],
         )
-        return pid_info["pid"]
+        pid_value = pid_info.get("pid")
+        if isinstance(pid_value, int):
+            return pid_value
+        return None
     # Multiple processes found - in a library context, just return the first
     # In the full application, this would prompt the user
     logger.warning(
         "[PID Finder] Found %s potential processes. Returning first match.",
         len(potential_pids),
     )
-    return potential_pids[0]["pid"]
+    first_pid = potential_pids[0].get("pid")
+    if isinstance(first_pid, int):
+        return first_pid
+    return None
 
 
 def get_system_info() -> dict[str, Any]:
@@ -189,7 +197,7 @@ def run_command(
     shell: bool = False,
     capture_output: bool = True,
     timeout: int | None = None,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     """Run a system command with proper error handling.
 
     Args:
@@ -356,9 +364,13 @@ def check_admin_privileges() -> bool:
         if is_windows():
             import ctypes
 
-            return ctypes.windll.shell32.IsUserAnAdmin() != 0
+            admin_result = ctypes.windll.shell32.IsUserAnAdmin()
+            return bool(admin_result != 0)
         # Unix-like systems
-        return hasattr(os, "geteuid") and getattr(os, "geteuid", lambda: -1)() == 0
+        if hasattr(os, "geteuid"):
+            geteuid_func = getattr(os, "geteuid", lambda: -1)
+            return geteuid_func() == 0
+        return False
     except (OSError, ValueError, RuntimeError) as e:
         logger.warning("Could not check admin privileges: %s", e)
         return False
@@ -397,7 +409,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
             powershell_path = shutil.which("powershell")
             if not powershell_path:
                 logger.exception("PowerShell not found in PATH")
-                return False, "PowerShell not available"
+                return False
 
             result = subprocess.run(  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
                 [powershell_path, "-Command", ps_command],
@@ -420,7 +432,7 @@ def run_as_admin(command: str | list[str], shell: bool = False) -> bool:
         return False
 
 
-def extract_executable_icon(exe_path: str, output_path: str = None) -> str | None:
+def extract_executable_icon(exe_path: str, output_path: str | None = None) -> str | None:
     """Extract icon from an executable file.
 
     Args:
@@ -431,133 +443,130 @@ def extract_executable_icon(exe_path: str, output_path: str = None) -> str | Non
         Optional[str]: Path to the extracted icon file, or None if failed
 
     """
-    try:
-        if not PIL_AVAILABLE:
-            logger.warning("PIL not available for icon extraction")
-            return None
+    if not PIL_AVAILABLE:
+        logger.warning("PIL not available for icon extraction")
+        return None
 
-        if not os.path.exists(exe_path):
-            logger.exception("Executable not found: %s", exe_path)
-            return None
+    if not os.path.exists(exe_path):
+        logger.exception("Executable not found: %s", exe_path)
+        return None
 
-        # Default output path
-        if output_path is None:
-            output_path = f"{os.path.splitext(exe_path)[0]}_icon.png"
+    # Default output path
+    if output_path is None:
+        output_path = f"{os.path.splitext(exe_path)[0]}_icon.png"
 
-        if is_windows():
-            try:
-                # Windows-specific icon extraction using win32api
-                import win32api
-                import win32con
-                import win32gui
-                import win32ui
-
-                # Extract icon
-                ico_x = win32api.GetSystemMetrics(win32con.SM_CXICON)
-                ico_y = win32api.GetSystemMetrics(win32con.SM_CYICON)
-
-                large, small = win32gui.ExtractIconEx(exe_path, 0)
-                if large:
-                    win32gui.DestroyIcon(small[0])
-
-                    # Convert to PIL Image
-                    hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
-                    hbmp = win32ui.CreateBitmap()
-                    hbmp.CreateCompatibleBitmap(hdc, ico_x, ico_y)
-                    hdc_mem = hdc.CreateCompatibleDC()
-                    hdc_mem.SelectObject(hbmp)
-
-                    win32gui.DrawIconEx(
-                        hdc_mem.GetHandleOutput(),
-                        0,
-                        0,
-                        large[0],
-                        ico_x,
-                        ico_y,
-                        0,
-                        None,
-                        win32con.DI_NORMAL,
-                    )
-
-                    # Save to file
-                    bmpinfo = hbmp.GetInfo()
-                    bmpstr = hbmp.GetBitmapBits(True)
-
-                    img = Image.frombuffer(
-                        "RGB",
-                        (bmpinfo["bmWidth"], bmpinfo["bmHeight"]),
-                        bmpstr,
-                        "raw",
-                        "BGRX",
-                        0,
-                        1,
-                    )
-
-                    img.save(output_path, "PNG")
-                    win32gui.DestroyIcon(large[0])
-
-                    logger.info("Icon extracted to: %s", output_path)
-                    return output_path
-
-            except ImportError:
-                logger.warning("win32api not available, trying alternative method")
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.exception("Windows icon extraction failed: %s", e)
-
-        # Cross-platform fallback: Try to extract from PE file
+    if is_windows():
         try:
-            from intellicrack.handlers.pefile_handler import pefile
+            # Windows-specific icon extraction using win32api
+            import win32api
+            import win32con
+            import win32gui
+            import win32ui
 
-            pe = pefile.PE(exe_path)
+            # Extract icon
+            ico_x = win32api.GetSystemMetrics(win32con.SM_CXICON)
+            ico_y = win32api.GetSystemMetrics(win32con.SM_CYICON)
 
-            # Look for RT_ICON resources
-            if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
-                for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
-                    if resource_type.name and str(resource_type.name) == "RT_ICON":
-                        for resource_id in resource_type.directory.entries:
-                            for resource_lang in resource_id.directory.entries:
-                                data = pe.get_data(
-                                    resource_lang.data.struct.OffsetToData,
-                                    resource_lang.data.struct.Size,
-                                )
+            large, small = win32gui.ExtractIconEx(exe_path, 0)
+            if large:
+                win32gui.DestroyIcon(small[0])
 
-                                # Save as ICO file first
-                                ico_path = output_path.replace(".png", ".ico")
-                                with open(ico_path, "wb") as f:
-                                    f.write(data)
+                # Convert to PIL Image
+                hdc = win32ui.CreateDCFromHandle(win32gui.GetDC(0))
+                hbmp = win32ui.CreateBitmap()
+                hbmp.CreateCompatibleBitmap(hdc, ico_x, ico_y)
+                hdc_mem = hdc.CreateCompatibleDC()
+                hdc_mem.SelectObject(hbmp)
 
-                                # Convert ICO to PNG using PIL
-                                try:
-                                    img = Image.open(ico_path)
-                                    img.save(output_path, "PNG")
-                                    os.remove(ico_path)  # Clean up ICO file
-                                    logger.info("Icon extracted to: %s", output_path)
-                                    return output_path
-                                except (OSError, ValueError, RuntimeError) as e:
-                                    logger.exception("Failed to convert ICO to PNG: %s", e)
+                win32gui.DrawIconEx(
+                    hdc_mem.GetHandleOutput(),
+                    0,
+                    0,
+                    large[0],
+                    ico_x,
+                    ico_y,
+                    0,
+                    None,
+                    win32con.DI_NORMAL,
+                )
+
+                # Save to file
+                bmpinfo = hbmp.GetInfo()
+                bmpstr = hbmp.GetBitmapBits(True)
+
+                img = Image.frombuffer(
+                    "RGB",
+                    (bmpinfo["bmWidth"], bmpinfo["bmHeight"]),
+                    bmpstr,
+                    "raw",
+                    "BGRX",
+                    0,
+                    1,
+                )
+
+                img.save(output_path, "PNG")
+                win32gui.DestroyIcon(large[0])
+
+                logger.info("Icon extracted to: %s", output_path)
+                return output_path
 
         except ImportError:
-            logger.exception("pefile not available for icon extraction")
+            logger.warning("win32api not available, trying alternative method")
         except (OSError, ValueError, RuntimeError) as e:
-            logger.exception("PE icon extraction failed: %s", e)
+            logger.exception("Windows icon extraction failed: %s", e)
 
-        # If all methods fail, create a default icon
-        logger.warning("All icon extraction methods failed, creating default icon")
-        if PIL_AVAILABLE:
-            try:
-                # Create a simple default icon
-                img = Image.new("RGBA", (64, 64), (100, 100, 100, 255))
-                draw = ImageDraw.Draw(img)
-                draw.rectangle([10, 10, 54, 54], outline=(200, 200, 200), width=2)
-                draw.text((20, 25), "EXE", fill=(255, 255, 255))
-                img.save(output_path, "PNG")
-                return output_path
-            except (OSError, ValueError, RuntimeError) as e:
-                logger.exception("Failed to create default icon: %s", e)
+    # Cross-platform fallback: Try to extract from PE file
+    try:
+        from intellicrack.handlers.pefile_handler import pefile
 
+        pe = pefile.PE(exe_path)
+
+        # Look for RT_ICON resources
+        if hasattr(pe, "DIRECTORY_ENTRY_RESOURCE"):
+            for resource_type in pe.DIRECTORY_ENTRY_RESOURCE.entries:
+                if resource_type.name and str(resource_type.name) == "RT_ICON":
+                    for resource_id in resource_type.directory.entries:
+                        for resource_lang in resource_id.directory.entries:
+                            data = pe.get_data(
+                                resource_lang.data.struct.OffsetToData,
+                                resource_lang.data.struct.Size,
+                            )
+
+                            # Save as ICO file first
+                            ico_path = output_path.replace(".png", ".ico")
+                            with open(ico_path, "wb") as f:
+                                f.write(data)
+
+                            # Convert ICO to PNG using PIL
+                            try:
+                                img = Image.open(ico_path)
+                                img.save(output_path, "PNG")
+                                os.remove(ico_path)
+                                logger.info("Icon extracted to: %s", output_path)
+                                return output_path
+                            except (OSError, ValueError, RuntimeError) as e:
+                                logger.exception("Failed to convert ICO to PNG: %s", e)
+
+    except ImportError:
+        logger.exception("pefile not available for icon extraction")
     except (OSError, ValueError, RuntimeError) as e:
-        logger.exception("Icon extraction failed: %s", e)
-        return None
+        logger.exception("PE icon extraction failed: %s", e)
+
+    # If all methods fail, create a default icon
+    logger.warning("All icon extraction methods failed, creating default icon")
+    if PIL_AVAILABLE:
+        try:
+            # Create a simple default icon
+            img = Image.new("RGBA", (64, 64), (100, 100, 100, 255))
+            draw = ImageDraw.Draw(img)
+            draw.rectangle([10, 10, 54, 54], outline=(200, 200, 200), width=2)
+            draw.text((20, 25), "EXE", fill=(255, 255, 255))
+            img.save(output_path, "PNG")
+            return output_path
+        except (OSError, ValueError, RuntimeError) as e:
+            logger.exception("Failed to create default icon: %s", e)
+
+    return None
 
 
 # Backward compatibility aliases
@@ -638,8 +647,15 @@ def optimize_memory_usage() -> dict[str, Any]:
         }
 
         # Calculate freed memory
-        stats["freed"] = stats["before"]["used"] - stats["after"]["used"]
-        logger.info("Memory optimization freed: %.2f MB", stats["freed"] / 1024 / 1024)
+        before_dict = stats.get("before", {})
+        after_dict = stats.get("after", {})
+        if isinstance(before_dict, dict) and isinstance(after_dict, dict):
+            before_used = before_dict.get("used", 0)
+            after_used = after_dict.get("used", 0)
+            if isinstance(before_used, int) and isinstance(after_used, int):
+                freed_bytes = before_used - after_used
+                stats["freed"] = freed_bytes
+                logger.info("Memory optimization freed: %.2f MB", freed_bytes / 1024 / 1024)
 
     return stats
 

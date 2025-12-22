@@ -26,12 +26,12 @@ from intellicrack.handlers.pyqt6_handler import (
     QCloseEvent,
     QDialog,
     QDialogButtonBox,
-    QEvent,
     QHBoxLayout,
     QKeySequence,
     QLabel,
     QPushButton,
     QShortcut,
+    QShowEvent,
     Qt,
     QVBoxLayout,
     QWidget,
@@ -380,16 +380,22 @@ class BaseDialog(QDialog):
         # Clear existing layout
         while self.content_layout.count():
             item = self.content_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    widget.deleteLater()
 
         # Add new layout items
         for i in range(layout.count()):
             item = layout.itemAt(i)
-            if item.widget():
-                self.content_layout.addWidget(item.widget())
-            elif item.layout():
-                self.content_layout.addLayout(item.layout())
+            if item is not None:
+                widget = item.widget()
+                if widget is not None:
+                    self.content_layout.addWidget(widget)
+                else:
+                    item_layout = item.layout()
+                    if item_layout is not None:
+                        self.content_layout.addLayout(item_layout)
 
     def add_content_widget(self, widget: QWidget) -> None:
         """Add a widget to the content area.
@@ -418,7 +424,8 @@ class BaseDialog(QDialog):
 
         """
         self._is_loading = loading
-        self.ok_button.setEnabled(not loading)
+        if self.ok_button is not None:
+            self.ok_button.setEnabled(not loading)
 
         if loading:
             self.show_status(message, "info")
@@ -457,8 +464,10 @@ class BaseDialog(QDialog):
         """
         self.status_label.setText(message)
         self.status_label.setObjectName(f"status_{status_type}")
-        self.status_label.style().unpolish(self.status_label)
-        self.status_label.style().polish(self.status_label)
+        style = self.status_label.style()
+        if style is not None:
+            style.unpolish(self.status_label)
+            style.polish(self.status_label)
         self.status_label.show()
 
     def hide_status(self) -> None:
@@ -474,7 +483,8 @@ class BaseDialog(QDialog):
             enabled: Whether OK button should be enabled
 
         """
-        self.ok_button.setEnabled(enabled)
+        if self.ok_button is not None:
+            self.ok_button.setEnabled(enabled)
 
     def set_ok_text(self, text: str) -> None:
         """Set custom text for the OK button.
@@ -483,7 +493,8 @@ class BaseDialog(QDialog):
             text: Text to display on OK button
 
         """
-        self.ok_button.setText(text)
+        if self.ok_button is not None:
+            self.ok_button.setText(text)
 
     def set_cancel_text(self, text: str) -> None:
         """Set custom text for the Cancel button.
@@ -492,7 +503,8 @@ class BaseDialog(QDialog):
             text: Text to display on Cancel button
 
         """
-        self.cancel_button.setText(text)
+        if self.cancel_button is not None:
+            self.cancel_button.setText(text)
 
     def add_custom_button(self, text: str, callback: Callable[[], None], button_type: str = "default") -> QPushButton:
         """Add a custom button to the button box.
@@ -554,7 +566,7 @@ class BaseDialog(QDialog):
 
             QMessageBox.information(self, "Help", self._help_text)
 
-    def get_result(self) -> dict:
+    def get_result(self) -> dict[str, object]:
         """Get the dialog result data.
 
         Override this method in subclasses to return dialog data.
@@ -565,7 +577,7 @@ class BaseDialog(QDialog):
         """
         return {}
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close event for cleanup.
 
         Args:
@@ -581,7 +593,7 @@ class BaseDialog(QDialog):
 
         super().closeEvent(event)
 
-    def showEvent(self, event: QEvent) -> None:
+    def showEvent(self, event: QShowEvent | None) -> None:
         """Handle dialog show event for focus management.
 
         Args:

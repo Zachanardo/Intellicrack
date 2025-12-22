@@ -162,7 +162,7 @@ class DashboardManager:
         """
         return self.recent_activities
 
-    def _format_size(self, size: int) -> str:
+    def _format_size(self, size: float) -> str:
         """Format file size in human readable format.
 
         Args:

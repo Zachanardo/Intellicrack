@@ -156,9 +156,9 @@ class LazyModelWrapper:
         self._load_error: Exception | None = None
 
         # Metadata for tracking
-        self.creation_time = time.time()
-        self.last_access_time = None
-        self.access_count = 0
+        self.creation_time: float = time.time()
+        self.last_access_time: float | None = None
+        self.access_count: int = 0
 
         if preload:
             if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
@@ -188,49 +188,54 @@ class LazyModelWrapper:
 
     def _initialize_backend(self) -> bool:
         """Initialize the backend (thread-safe)."""
-        with self._initialization_lock:
-            if self._initialized:
-                return self._backend is not None
+        # Wait until we can start loading or until loading is complete
+        while True:
+            with self._initialization_lock:
+                # Check if already initialized (by this or another thread)
+                if self._initialized:
+                    return self._backend is not None
+                # If not loading and not initialized, we start loading
+                if not self._loading:
+                    self._loading = True
+                    self._load_error = None
+                    break
+            # Another thread is loading, wait before checking again
+            time.sleep(0.1)
 
-            if self._loading:
-                # Another thread is loading, wait for it
-                while self._loading and not self._initialized:
-                    time.sleep(0.1)
-                return self._backend is not None
+        try:
+            if self.load_callback:
+                self.load_callback(f"Loading {self.config.model_name}...", False)
 
-            self._loading = True
-            self._load_error = None
+            logger.info("Initializing lazy-loaded backend: %s", self.config.model_name)
+            backend: LLMBackend = self.backend_class(self.config)
 
-            try:
-                if self.load_callback:
-                    self.load_callback(f"Loading {self.config.model_name}...", False)
+            success: bool = backend.initialize()
+            if not success:
+                raise RuntimeError(f"Failed to initialize backend for {self.config.model_name}")
 
-                logger.info("Initializing lazy-loaded backend: %s", self.config.model_name)
-                self._backend = self.backend_class(self.config)
+            with self._initialization_lock:
+                self._backend = backend
 
-                success = self._backend.initialize()
-                if not success:
-                    self._backend = None
-                    raise RuntimeError(f"Failed to initialize backend for {self.config.model_name}")
+            logger.info("Successfully loaded lazy backend: %s", self.config.model_name)
 
-                logger.info("Successfully loaded lazy backend: %s", self.config.model_name)
+            if self.load_callback:
+                self.load_callback(f"Loaded {self.config.model_name}", True)
 
-                if self.load_callback:
-                    self.load_callback(f"Loaded {self.config.model_name}", True)
+            return True
 
-                return True
-
-            except Exception as e:
-                logger.exception("Error initializing lazy backend %s: %s", self.config.model_name, e)
+        except Exception as e:
+            logger.exception("Error initializing lazy backend %s: %s", self.config.model_name, e)
+            with self._initialization_lock:
                 self._load_error = e
                 self._backend = None
 
-                if self.load_callback:
-                    self.load_callback(f"Failed to load {self.config.model_name}: {e!s}", True)
+            if self.load_callback:
+                self.load_callback(f"Failed to load {self.config.model_name}: {e!s}", True)
 
-                return False
+            return False
 
-            finally:
+        finally:
+            with self._initialization_lock:
                 self._initialized = True
                 self._loading = False
 
@@ -281,16 +286,18 @@ class LazyModelWrapper:
             return "Not loaded"
 
         # Try to get actual memory usage if possible
-        try:
-            if hasattr(self._backend, "get_memory_usage"):
-                return self._backend.get_memory_usage()
-        except Exception as e:
-            logger.debug("Could not get memory usage from backend: %s", e)
+        if self._backend is not None:
+            try:
+                if hasattr(self._backend, "get_memory_usage"):
+                    usage: str = self._backend.get_memory_usage()
+                    return usage
+            except Exception as e:
+                logger.debug("Could not get memory usage from backend: %s", e)
 
         # Estimate based on model type and size
-        if self.config.model_path and os.path.exists(self.config.model_path):
+        if self.config.model_path is not None and os.path.exists(self.config.model_path):
             try:
-                size_mb = os.path.getsize(self.config.model_path) / (1024 * 1024)
+                size_mb: float = os.path.getsize(self.config.model_path) / (1024 * 1024)
                 return f"~{size_mb:.1f} MB"
             except OSError as e:
                 self.logger.exception("OS error in lazy_model_loader: %s", e)
@@ -323,6 +330,7 @@ class LazyModelManager:
         self.idle_unload_time = 1800  # Unload after 30 minutes of inactivity
 
         # Start background cleanup thread (skip during testing)
+        self._cleanup_thread: threading.Thread | None
         if not (os.environ.get("INTELLICRACK_TESTING") or os.environ.get("DISABLE_BACKGROUND_THREADS")):
             self._cleanup_thread = threading.Thread(target=self._background_cleanup, daemon=True)
             self._cleanup_thread.start()
@@ -413,17 +421,20 @@ class LazyModelManager:
 
     def _cleanup_least_used_models(self, count_to_unload: int) -> None:
         """Unload the least recently used models."""
-        loaded_models = [
+        loaded_models: list[tuple[float, str, LazyModelWrapper]] = [
             (wrapper.last_access_time, model_id, wrapper)
             for model_id, wrapper in self.models.items()
-            if wrapper.is_loaded and wrapper.last_access_time
+            if wrapper.is_loaded and wrapper.last_access_time is not None
         ]
         # Sort by access time (oldest first)
         loaded_models.sort(key=lambda x: x[0])
 
         # Unload the oldest models
         for i in range(min(count_to_unload, len(loaded_models))):
-            _, model_id, wrapper = loaded_models[i]
+            access_time: float
+            model_id: str
+            wrapper: LazyModelWrapper
+            access_time, model_id, wrapper = loaded_models[i]
             wrapper.unload()
             logger.info("Auto-unloaded least used model: %s", model_id)
 
@@ -438,11 +449,11 @@ class LazyModelManager:
 
     def _cleanup_idle_models(self) -> None:
         """Unload models that have been idle for too long."""
-        current_time = time.time()
+        current_time: float = time.time()
 
         with self._access_lock:
             for model_id, wrapper in list(self.models.items()):
-                if wrapper.is_loaded and wrapper.last_access_time and current_time - wrapper.last_access_time > self.idle_unload_time:
+                if wrapper.is_loaded and wrapper.last_access_time is not None and current_time - wrapper.last_access_time > self.idle_unload_time:
                     wrapper.unload()
                     logger.info("Auto-unloaded idle model: %s", model_id)
 

@@ -145,7 +145,7 @@ class PinningDetector:
 
     def __init__(self) -> None:
         """Initialize pinning detector."""
-        self.binary: lief.Binary | None = None
+        self.binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary | None = None
         self.binary_path: Path | None = None
         self.platform: str | None = None
 
@@ -241,9 +241,9 @@ class PinningDetector:
 
     def _detect_android_pinning_logic(self) -> list[PinningLocation]:
         """Detect Android-specific pinning logic."""
-        locations = []
+        locations: list[PinningLocation] = []
 
-        if self.binary_path.suffix.lower() in [".apk", ".aab"]:
+        if self.binary_path is not None and self.binary_path.suffix.lower() in [".apk", ".aab"]:
             try:
                 with APKAnalyzer() as analyzer:
                     analyzer.extract_apk(str(self.binary_path))
@@ -326,7 +326,7 @@ class PinningDetector:
 
     def _detect_windows_pinning_logic(self) -> list[PinningLocation]:
         """Detect Windows-specific pinning logic."""
-        locations = []
+        locations: list[PinningLocation] = []
 
         if not isinstance(self.binary, lief.PE.Binary):
             return locations
@@ -356,7 +356,7 @@ class PinningDetector:
 
     def _detect_linux_pinning_logic(self) -> list[PinningLocation]:
         """Detect Linux-specific pinning logic."""
-        locations = []
+        locations: list[PinningLocation] = []
 
         if not isinstance(self.binary, lief.ELF.Binary):
             return locations
@@ -400,12 +400,15 @@ class PinningDetector:
             logger.warning("OkHttp detection requires APK file")
             return []
 
+        pins: list[PinningInfo] = []
         try:
             with APKAnalyzer() as analyzer:
-                return analyzer.detect_okhttp_pinning(binary_path)
+                analyzer.extract_apk(binary_path)
+                pins = analyzer.detect_okhttp_pinning()
         except Exception as e:
             logger.exception("OkHttp detection failed: %s", e, exc_info=True)
-            return []
+
+        return pins
 
     def detect_afnetworking_pinning(self, binary_path: str) -> list[PinningInfo]:
         """Detect AFNetworking pinning (iOS-specific).
@@ -493,7 +496,7 @@ class PinningDetector:
             Dictionary mapping hash -> addresses that reference it
 
         """
-        cross_refs = {}
+        cross_refs: dict[str, list[int]] = {}
 
         hashes = self.scan_for_certificate_hashes(binary_path)
 
@@ -676,19 +679,21 @@ class PinningDetector:
         if not self.binary:
             return set()
 
-        imports = set()
+        imports: set[str] = set()
 
         try:
             if isinstance(self.binary, lief.PE.Binary):
                 for import_entry in self.binary.imports:
                     for func in import_entry.entries:
                         if func.name:
-                            imports.add(func.name)
+                            name = func.name if isinstance(func.name, str) else func.name.decode("utf-8", errors="ignore")
+                            imports.add(name)
 
             elif isinstance(self.binary, (lief.ELF.Binary, lief.MachO.Binary)):
                 for symbol in self.binary.imported_symbols:
                     if symbol.name:
-                        imports.add(symbol.name)
+                        name = symbol.name if isinstance(symbol.name, str) else symbol.name.decode("utf-8", errors="ignore")
+                        imports.add(name)
 
         except Exception as e:
             logger.debug("Import extraction failed: %s", e, exc_info=True)

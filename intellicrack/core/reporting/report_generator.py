@@ -29,14 +29,21 @@ import tempfile
 import webbrowser
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, TYPE_CHECKING
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.subprocess_security import secure_run
 
+if TYPE_CHECKING:
+    from PyQt6.QtWidgets import QWidget
+    from jinja2 import Environment, Template
+else:
+    QWidget = object
+    Environment = object
+    Template = object
 
 try:
-    from PyQt6.QtWidgets import QFileDialog, QMessageBox
+    from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
     PYQT_AVAILABLE = True
 except ImportError:
@@ -60,11 +67,10 @@ class ReportGenerator:
         self.logger = logging.getLogger(__name__)
         self.reports_dir = self._get_reports_directory()
         self.templates_dir = self._get_templates_directory()
+        self.jinja_env: Any = None
 
-        if JINJA_AVAILABLE and self.templates_dir.exists():
+        if JINJA_AVAILABLE and self.templates_dir.exists() and Environment is not None:
             self.jinja_env = Environment(loader=FileSystemLoader(str(self.templates_dir)), autoescape=True)
-        else:
-            self.jinja_env = None
 
     def _get_reports_directory(self) -> Path:
         """Get or create the reports directory.
@@ -73,10 +79,15 @@ class ReportGenerator:
             Path to the reports directory
 
         """
+        reports_dir: Path
         try:
             from intellicrack.utils.core.plugin_paths import get_reports_dir
 
-            reports_dir = get_reports_dir()
+            result = get_reports_dir()
+            if isinstance(result, Path):
+                reports_dir = result
+            else:
+                reports_dir = Path(str(result))
         except ImportError:
             # Fallback to default location
             reports_dir = Path.home() / ".intellicrack" / "reports"
@@ -121,7 +132,8 @@ class ReportGenerator:
             try:
                 # Try to load template
                 template = self.jinja_env.get_template("report_template.html")
-                return template.render(data=data, timestamp=datetime.now())
+                result = template.render(data=data, timestamp=datetime.now())
+                return str(result)
             except Exception as e:
                 # Fall back to basic HTML generation
                 logger.debug(f"Template loading failed, using basic HTML generation: {e}")
@@ -450,7 +462,7 @@ class ReportGenerator:
 
         # Add PDF if available
         try:
-            from .pdf_generator import PDFGenerator
+            from .pdf_generator import PDFReportGenerator
 
             return [*basic_formats, "pdf"]
         except ImportError:
@@ -470,7 +482,7 @@ class ReportGenerator:
             "pdf": "application/pdf",
         }
 
-    def create_template_from_string(self, template_string: str) -> Optional["Template"]:
+    def create_template_from_string(self, template_string: str) -> Any:
         """Create a Jinja2 template from string content.
 
         Args:
@@ -480,10 +492,8 @@ class ReportGenerator:
             Jinja2 Template object or None if creation fails
 
         """
-        if JINJA_AVAILABLE:
+        if JINJA_AVAILABLE and Template is not None:
             try:
-                from jinja2 import Template
-
                 return Template(template_string)
             except Exception as e:
                 self.logger.warning("Failed to create template from string: %s", e)
@@ -507,13 +517,14 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
         generator = ReportGenerator()
 
         # Collect analysis data from app instance
-        data = {}
+        data: dict[str, Any] = {}
 
         # Get analysis results
         if hasattr(app_instance, "analyze_results"):
             results = app_instance.analyze_results
             if isinstance(results, list):
-                data["summary"] = "\n".join(results[:5]) if results else "No analysis results available"
+                summary_lines: list[Any] = results[:5] if results else []
+                data["summary"] = "\n".join(str(line) for line in summary_lines) if summary_lines else "No analysis results available"
                 data["full_results"] = results
             elif isinstance(results, dict):
                 data |= results
@@ -527,20 +538,28 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
 
         # Get protection analysis
         if hasattr(app_instance, "protections_detected"):
-            data["protections"] = app_instance.protections_detected
+            protections = getattr(app_instance, "protections_detected", None)
+            if protections is not None:
+                data["protections"] = protections
 
         # Get vulnerabilities
         if hasattr(app_instance, "vulnerabilities"):
-            data["vulnerabilities"] = app_instance.vulnerabilities
+            vulnerabilities = getattr(app_instance, "vulnerabilities", None)
+            if vulnerabilities is not None:
+                data["vulnerabilities"] = vulnerabilities
 
         # Get exploitation results
         if hasattr(app_instance, "exploitation_results"):
-            data["exploitation"] = app_instance.exploitation_results
+            exploitation = getattr(app_instance, "exploitation_results", None)
+            if exploitation is not None:
+                data["exploitation"] = exploitation
 
         # Get recommendations
         if hasattr(app_instance, "recommendations"):
-            data["recommendations"] = app_instance.recommendations
-        else:
+            recommendations = getattr(app_instance, "recommendations", None)
+            if recommendations is not None:
+                data["recommendations"] = recommendations
+        if "recommendations" not in data:
             # Generate default recommendations
             data["recommendations"] = [
                 "Implement stronger anti-debugging mechanisms",
@@ -551,6 +570,7 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
             ]
 
         # Generate report content based on format
+        content: str
         if format == "html":
             content = generator.generate_html_report(data)
         elif format == "json":
@@ -562,15 +582,18 @@ def generate_report(app_instance: object, format: str = "html", save: bool = Tru
                 from intellicrack.core.reporting.pdf_generator import PDFReportGenerator
 
                 pdf_gen = PDFReportGenerator()
-                return pdf_gen.generate_from_html(html_content)
+                pdf_result = pdf_gen.generate_from_html(html_content)
+                if pdf_result is not None:
+                    return str(pdf_result)
+                logger.warning("PDF generation returned None, saving as HTML instead")
+                content = html_content
             except ImportError:
                 logger.warning("PDF generation not available, saving as HTML instead")
-                report_format = "html"
                 content = html_content
         elif format == "txt":
             content = generator.generate_text_report(data)
         else:
-            logger.error(f"Unsupported report format: {report_format}")
+            logger.error(f"Unsupported report format: {format}")
             return None
 
         # Save or return content
@@ -603,11 +626,16 @@ def view_report(app_instance: object, filepath: str | None = None) -> bool:
 
     """
     try:
+        # Determine parent widget for dialogs
+        parent_widget: Any = None
+        if PYQT_AVAILABLE and QWidget is not None and isinstance(app_instance, QWidget):
+            parent_widget = app_instance
+
         # If no filepath provided, show file dialog
         if filepath is None:
-            if PYQT_AVAILABLE and hasattr(app_instance, "window"):
+            if PYQT_AVAILABLE and hasattr(app_instance, "window") and QWidget is not None:
                 filepath, _ = QFileDialog.getOpenFileName(
-                    app_instance,
+                    parent_widget,
                     "Select Report to View",
                     str(Path.home() / ".intellicrack" / "reports"),
                     "Report Files (*.html *.json *.txt *.pdf);;All Files (*.*)",
@@ -625,8 +653,8 @@ def view_report(app_instance: object, filepath: str | None = None) -> bool:
         # Check if file exists
         if not os.path.exists(filepath):
             logger.error(f"Report file not found: {filepath}")
-            if PYQT_AVAILABLE and hasattr(app_instance, "window"):
-                QMessageBox.critical(app_instance, "Error", f"Report file not found: {filepath}")
+            if PYQT_AVAILABLE and hasattr(app_instance, "window") and QWidget is not None:
+                QMessageBox.critical(parent_widget, "Error", f"Report file not found: {filepath}")
             return False
 
         # Determine file type and open appropriately
@@ -665,8 +693,11 @@ def view_report(app_instance: object, filepath: str | None = None) -> bool:
 
     except Exception as e:
         logger.error(f"Error viewing report: {e}")
-        if PYQT_AVAILABLE and hasattr(app_instance, "window"):
-            QMessageBox.critical(app_instance, "Error", f"Failed to open report: {e}")
+        if PYQT_AVAILABLE and hasattr(app_instance, "window") and QWidget is not None:
+            error_parent_widget: Any = None
+            if isinstance(app_instance, QWidget):
+                error_parent_widget = app_instance
+            QMessageBox.critical(error_parent_widget, "Error", f"Failed to open report: {e}")
         return False
 
 

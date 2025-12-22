@@ -106,8 +106,8 @@ class FlexLMProtocolParser:
     def __init__(self) -> None:
         """Initialize the FlexLM protocol parser with license tracking and server features."""
         self.logger = get_logger(__name__)
-        self.active_checkouts = {}  # Track active license checkouts
-        self.server_features = {}  # Available features on server
+        self.active_checkouts: dict[str, dict[str, Any]] = {}
+        self.server_features: dict[str, dict[str, Any]] = {}
         self.encryption_seed = self._generate_encryption_seed()
         self._load_default_features()
 
@@ -312,13 +312,13 @@ class FlexLMProtocolParser:
                 if field_type == 0x0001:  # Host ID
                     additional["hostid"] = field_data.hex()
                 elif field_type == 0x0002:  # Encryption info
-                    additional["encryption"] = field_data
+                    additional["encryption"] = field_data.hex()
                 elif field_type == 0x0003:  # Vendor data
-                    additional["vendor_data"] = field_data
+                    additional["vendor_data"] = field_data.hex()
                 elif field_type == 0x0004:  # License path
                     additional["license_path"] = field_data.decode("utf-8", errors="ignore")
                 else:
-                    additional[f"field_{field_type:04X}"] = field_data
+                    additional[f"field_{field_type:04X}"] = field_data.hex()
 
         except Exception as e:
             self.logger.debug("Error parsing additional data: %s", e)
@@ -1006,7 +1006,7 @@ class FlexLMLicenseGenerator:
                     })
 
             elif keyword == "VENDOR":
-                vendor_info = {"name": parts[1] if len(parts) > 1 else ""}
+                vendor_info: dict[str, Any] = {"name": parts[1] if len(parts) > 1 else ""}
                 for part in parts[2:]:
                     if "=" in part:
                         key, value = part.split("=", 1)

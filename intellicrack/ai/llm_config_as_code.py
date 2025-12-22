@@ -30,17 +30,22 @@ from ..utils.logger import get_logger
 from .llm_backends import LLMManager
 from .llm_fallback_chains import FallbackManager
 
+if TYPE_CHECKING:
+    from types import ModuleType
+else:
+    ModuleType = object
 
 logger = get_logger(__name__)
 
 HAS_YAML = False
+yaml: ModuleType | None = None
 try:
-    import yaml
+    import yaml as _yaml
 
+    yaml = _yaml
     HAS_YAML = True
 except ImportError:
     logger.warning("PyYAML not available - YAML support disabled. Install with: pip install pyyaml")
-    yaml = None
 
 HAS_JSONSCHEMA = False
 if TYPE_CHECKING:
@@ -152,21 +157,24 @@ class ConfigValidationError(Exception):
 class ConfigAsCodeManager:
     """Manages configuration files with YAML/JSON support and schema validation."""
 
-    def __init__(self, config_dir: str | None = None) -> None:
+    def __init__(self, config_dir: str | Path | None = None) -> None:
         """Initialize the config-as-code manager.
 
         Args:
             config_dir: Directory for configuration files
 
         """
+        config_dir_path: Path
         if config_dir is None:
-            config_dir = Path.home() / ".intellicrack" / "config"
+            config_dir_path = Path.home() / ".intellicrack" / "config"
+        else:
+            config_dir_path = Path(config_dir)
 
-        self.config_dir = Path(config_dir)
+        self.config_dir: Path = config_dir_path
         self.config_dir.mkdir(parents=True, exist_ok=True)
 
         # Schema definitions
-        self.schemas = self._load_schemas()
+        self.schemas: dict[str, dict[str, Any]] = self._load_schemas()
 
         logger.info("ConfigAsCodeManager initialized with directory: %s", self.config_dir)
 
@@ -222,6 +230,17 @@ class ConfigAsCodeManager:
         }
 
         # Fallback Chain Configuration Schema
+        llm_model_props = schemas["llm_model"]["properties"]
+        llm_model_required = schemas["llm_model"]["required"]
+
+        if not isinstance(llm_model_props, dict):
+            llm_model_props = {}
+        if not isinstance(llm_model_required, list):
+            llm_model_required = []
+
+        model_item_props = {"model_id": {"type": "string"}}
+        model_item_props.update(llm_model_props)
+
         schemas["fallback_chain"] = {
             "type": "object",
             "properties": {
@@ -234,11 +253,8 @@ class ConfigAsCodeManager:
                     "type": "array",
                     "items": {
                         "type": "object",
-                        "properties": {
-                            "model_id": {"type": "string"},
-                            **schemas["llm_model"]["properties"],
-                        },
-                        "required": ["model_id"] + schemas["llm_model"]["required"],
+                        "properties": model_item_props,
+                        "required": ["model_id"] + llm_model_required,
                     },
                     "minItems": 1,
                 },
@@ -368,42 +384,50 @@ class ConfigAsCodeManager:
         # Determine file format
         suffix = file_path.suffix.lower()
 
+        config_data: object
         try:
             with open(file_path, encoding="utf-8") as f:
                 if suffix in {".yaml", ".yml"}:
-                    if not HAS_YAML:
+                    if not HAS_YAML or yaml is None:
                         raise ConfigValidationError("YAML support not available - install PyYAML")
-                    config = yaml.safe_load(f)
+                    config_data = yaml.safe_load(f)
                 elif suffix == ".json":
-                    config = json.load(f)
+                    config_data = json.load(f)
                 else:
                     # Try to auto-detect format
                     content = f.read()
                     f.seek(0)
 
                     if content.strip().startswith("{"):
-                        config = json.load(f)
+                        config_data = json.load(f)
                     else:
-                        if not HAS_YAML:
+                        if not HAS_YAML or yaml is None:
                             raise ConfigValidationError("Could not determine file format and YAML not available")
-                        config = yaml.safe_load(f)
+                        config_data = yaml.safe_load(f)
 
             logger.info("Loaded configuration from: %s", file_path)
 
             # Perform environment variable substitution
-            config = self._substitute_env_vars(config)
+            config_substituted = self._substitute_env_vars(config_data)
+
+            # Type narrowing - ensure we have a dict
+            if not isinstance(config_substituted, dict):
+                raise ConfigValidationError(f"Configuration must be a dictionary, got {type(config_substituted).__name__}")
 
             # Validate if requested
             if validate:
-                self.validate_config(config)
+                self.validate_config(config_substituted)
 
-            return config
+            return config_substituted
 
         except json.JSONDecodeError as e:
             raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
         except Exception as e:
             # Handle YAML errors if YAML is available, otherwise generic Exception
-            if (HAS_YAML and isinstance(e, yaml.YAMLError)) or not HAS_YAML:
+            if HAS_YAML and yaml is not None and hasattr(yaml, "YAMLError"):
+                if isinstance(e, yaml.YAMLError):
+                    raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
+            elif not HAS_YAML:
                 raise ConfigValidationError(f"Failed to parse configuration file: {e}") from e
             raise
 
@@ -445,7 +469,7 @@ class ConfigAsCodeManager:
         try:
             with open(file_path, "w", encoding="utf-8") as f:
                 if format_type == "yaml":
-                    if not HAS_YAML:
+                    if not HAS_YAML or yaml is None:
                         raise ConfigValidationError("YAML support not available - install PyYAML")
                     yaml.dump(
                         config,
@@ -641,21 +665,12 @@ class ConfigAsCodeManager:
         if fallback_manager is None:
             fallback_manager = get_fallback_manager()
 
-        config = {
-            "version": "1.0",
-            "environment": "exported",
-            "metadata": {
-                "name": "Exported Intellicrack Configuration",
-                "description": "Exported from running system",
-                "exported_at": datetime.now().isoformat(),
-            },
-            "models": {},
-            "fallback_chains": {},
-            "profiles": {},
-            "default_settings": {
-                "enable_fallback_chains": True,
-                "auto_load_models": True,
-            },
+        models_dict: dict[str, Any] = {}
+        fallback_chains_dict: dict[str, Any] = {}
+        profiles_dict: dict[str, Any] = {}
+        default_settings_dict: dict[str, Any] = {
+            "enable_fallback_chains": True,
+            "auto_load_models": True,
         }
 
         # Export LLM models
@@ -667,11 +682,25 @@ class ConfigAsCodeManager:
                     "context_length": info["context_length"],
                     "tools_enabled": info["tools_enabled"],
                 }
-                config["models"][llm_id] = model_config
+                models_dict[llm_id] = model_config
 
         # Export fallback chains
-        config["fallback_chains"] = fallback_manager.export_configuration().get("chains", {})
-        config["default_settings"]["default_chain"] = fallback_manager.default_chain_id
+        fallback_chains_dict = fallback_manager.export_configuration().get("chains", {})
+        default_settings_dict["default_chain"] = fallback_manager.default_chain_id
+
+        config: dict[str, Any] = {
+            "version": "1.0",
+            "environment": "exported",
+            "metadata": {
+                "name": "Exported Intellicrack Configuration",
+                "description": "Exported from running system",
+                "exported_at": datetime.now().isoformat(),
+            },
+            "models": models_dict,
+            "fallback_chains": fallback_chains_dict,
+            "profiles": profiles_dict,
+            "default_settings": default_settings_dict,
+        }
 
         return config
 
@@ -732,7 +761,9 @@ class ConfigAsCodeManager:
         except Exception as e:
             logger.exception("Failed to apply fallback chains: %s", e)
 
-    def generate_config_files(self, output_dir: str | None = None, environments: list[str] = None) -> list[Path]:
+    def generate_config_files(
+        self, output_dir: str | Path | None = None, environments: list[str] | None = None
+    ) -> list[Path]:
         """Generate configuration files for multiple environments.
 
         Args:
@@ -743,11 +774,16 @@ class ConfigAsCodeManager:
             List of generated file paths
 
         """
-        output_dir = self.config_dir if output_dir is None else Path(output_dir)
+        output_dir_path: Path
+        if output_dir is None:
+            output_dir_path = self.config_dir
+        else:
+            output_dir_path = Path(output_dir)
+
         if environments is None:
             environments = ["development", "staging", "production"]
 
-        generated_files = []
+        generated_files: list[Path] = []
 
         for env in environments:
             template = self.create_template_config(env)
@@ -755,26 +791,35 @@ class ConfigAsCodeManager:
             # Customize for environment
             if env == "production":
                 # More conservative settings for production
-                template["default_settings"]["auto_load_models"] = False
-                for chain in template["fallback_chains"].values():
-                    chain["max_retries"] = 2
-                    chain["circuit_failure_threshold"] = 3
+                default_settings = template.get("default_settings")
+                if isinstance(default_settings, dict):
+                    default_settings["auto_load_models"] = False
+
+                fallback_chains = template.get("fallback_chains")
+                if isinstance(fallback_chains, dict):
+                    for chain in fallback_chains.values():
+                        if isinstance(chain, dict):
+                            chain["max_retries"] = 2
+                            chain["circuit_failure_threshold"] = 3
             elif env == "development":
                 # More aggressive settings for development
-                for chain in template["fallback_chains"].values():
-                    chain["enable_adaptive_ordering"] = True
-                    chain["max_retries"] = 5
+                fallback_chains = template.get("fallback_chains")
+                if isinstance(fallback_chains, dict):
+                    for chain in fallback_chains.values():
+                        if isinstance(chain, dict):
+                            chain["enable_adaptive_ordering"] = True
+                            chain["max_retries"] = 5
 
-            file_path = output_dir / f"llm_config_{env}.yaml"
+            file_path = output_dir_path / f"llm_config_{env}.yaml"
             self.save_config(template, file_path)
             generated_files.append(file_path)
 
-        logger.info("Generated %d configuration files in %s", len(generated_files), output_dir)
+        logger.info("Generated %d configuration files in %s", len(generated_files), output_dir_path)
         return generated_files
 
 
 # Global instance
-_CONFIG_AS_CODE_MANAGER = None
+_CONFIG_AS_CODE_MANAGER: ConfigAsCodeManager | None = None
 
 
 def get_config_as_code_manager() -> ConfigAsCodeManager:

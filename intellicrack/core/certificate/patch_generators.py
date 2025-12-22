@@ -655,19 +655,23 @@ def get_patch_for_architecture(
             return generate_always_succeed_arm64()
 
     elif patch_type == PatchType.NOP_SLED:
-        size = kwargs.get("size", 0)
+        size_value = kwargs.get("size", 0)
+        size: int = size_value if isinstance(size_value, int) else 0
         return generate_nop_sled(size, arch)
 
     elif patch_type == PatchType.CONDITIONAL_INVERT:
-        original = kwargs.get("original_bytes", b"")
+        original_value = kwargs.get("original_bytes", b"")
+        original: bytes = original_value if isinstance(original_value, bytes) else b""
         if arch in (Architecture.X86, Architecture.X64):
             return generate_conditional_invert_x86(original)
         if arch in (Architecture.ARM32, Architecture.ARM64):
             return generate_conditional_invert_arm(original)
 
     elif patch_type == PatchType.TRAMPOLINE:
-        target = kwargs.get("target_addr", 0)
-        hook = kwargs.get("hook_addr", 0)
+        target_value = kwargs.get("target_addr", 0)
+        hook_value = kwargs.get("hook_addr", 0)
+        target: int = target_value if isinstance(target_value, int) else 0
+        hook: int = hook_value if isinstance(hook_value, int) else 0
         if arch == Architecture.X86:
             return generate_trampoline_x86(target, hook)
         if arch == Architecture.X64:

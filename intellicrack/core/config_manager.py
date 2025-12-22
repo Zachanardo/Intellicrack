@@ -60,18 +60,19 @@ class IntellicrackConfig:
     - Legacy config files → appropriate central sections
     """
 
-    _instance = None
+    _instance: "IntellicrackConfig | None" = None
     _lock = threading.Lock()
 
     def __new__(cls) -> "IntellicrackConfig":
         """Singleton pattern for global config access."""
-        if cls._instance is None:
-            with cls._lock:
-                if cls._instance is None:
-                    logger.debug("IntellicrackConfig: Creating new instance.")
-                    cls._instance = super().__new__(cls)
-        else:
-            logger.debug("IntellicrackConfig: Returning existing instance.")
+        if cls._instance is not None:
+            return cls._instance
+
+        with cls._lock:
+            if cls._instance is None:
+                logger.debug("IntellicrackConfig: Creating new instance.")
+                cls._instance = super().__new__(cls)
+
         return cls._instance
 
     def __init__(self) -> None:
@@ -285,9 +286,10 @@ class IntellicrackConfig:
             "IntellicrackConfig: Performing deep merge. Base keys: %s, Override keys: %s", list(base.keys()), list(override.keys())
         )
         for key, value in override.items():
-            if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            base_value = base.get(key)
+            if isinstance(base_value, dict) and isinstance(value, dict):
                 self.logger.debug("IntellicrackConfig: Deep merging nested dictionary for key: '%s'.", key)
-                self._deep_merge(base[key], value)
+                self._deep_merge(base_value, value)
             else:
                 self.logger.debug("IntellicrackConfig: Merging key '%s' with value '%s'.", key, value)
                 base[key] = value
@@ -308,11 +310,14 @@ class IntellicrackConfig:
                     self.logger.debug("IntellicrackConfig: Removing runtime field '%s' from defaults.", field)
                     del defaults[field]
 
-            if "secrets" in defaults and "last_sync" in defaults["secrets"]:
+            secrets_section = defaults.get("secrets")
+            if isinstance(secrets_section, dict) and "last_sync" in secrets_section:
                 self.logger.debug("IntellicrackConfig: Removing 'secrets.last_sync' from defaults.")
-                del defaults["secrets"]["last_sync"]
-            if "tools" in defaults:
-                for tool_name, tool_data in defaults["tools"].items():
+                del secrets_section["last_sync"]
+
+            tools_section = defaults.get("tools")
+            if isinstance(tools_section, dict):
+                for tool_name, tool_data in tools_section.items():
                     if isinstance(tool_data, dict) and "auto_discovered" in tool_data:
                         self.logger.debug("IntellicrackConfig: Removing 'auto_discovered' from tool '%s' defaults.", tool_name)
                         del tool_data["auto_discovered"]
@@ -343,12 +348,9 @@ class IntellicrackConfig:
                 self.logger.exception("IntellicrackConfig: Failed to load unified config, creating default.")
 
         self.logger.info("IntellicrackConfig: Creating new default configuration with auto-discovery.")
-        default_config = {
+        default_config: dict[str, object] = {
             "version": "3.0",
-            # ... (rest of the default config)
         }
-        # ... (rest of the method is unchanged)
-        # ... I will not paste the whole giant config again
         with self._config_lock:
             self._config = default_config
 
@@ -372,7 +374,7 @@ class IntellicrackConfig:
         self.logger.debug("IntellicrackConfig: Attempting to get config key: '%s' with default: '%s'.", key, default)
         with self._config_lock:
             keys = key.split(".")
-            value = self._config
+            value: object = self._config
             try:
                 for k in keys:
                     if isinstance(value, dict):
@@ -381,7 +383,7 @@ class IntellicrackConfig:
                         self.logger.debug(
                             "IntellicrackConfig: Intermediate key '%s' in path '%s' is not a dictionary. Returning default.", k, key
                         )
-                        return default  # Path segment is not a dict, cannot descent further
+                        return default
 
                 expanded_value = self._expand_environment_variables(value)
                 if expanded_value != value:
@@ -408,13 +410,13 @@ class IntellicrackConfig:
         self.logger.debug("IntellicrackConfig: Attempting to set config key: '%s' to value: '%s'.", key, value)
         with self._config_lock:
             keys = key.split(".")
-            config = self._config
+            config: object = self._config
             for _i, k in enumerate(keys[:-1]):
                 if not isinstance(config, dict):
                     self.logger.error(
                         "IntellicrackConfig: Cannot set key '%s'. Intermediate path segment '%s' is not a dictionary.", key, k
                     )
-                    return  # Cannot set if intermediate is not a dict
+                    return
                 if k not in config:
                     self.logger.debug("IntellicrackConfig: Creating new dictionary for intermediate key '%s'.", k)
                     config[k] = {}
@@ -549,24 +551,21 @@ class IntellicrackConfig:
         current_version = self._config.get("version", "1.0")
         self.logger.debug("IntellicrackConfig: Current config version: %s", current_version)
 
-        # Example upgrade logic (can be expanded)
+        if not isinstance(current_version, str):
+            self.logger.warning("IntellicrackConfig: Version is not a string, defaulting to '1.0'")
+            current_version = "1.0"
+
         if current_version < "2.0":
             self.logger.info("IntellicrackConfig: Upgrading config from <2.0 to 2.0.")
-            # Perform upgrade steps for version 2.0
-            # e.g., self._config["new_section"] = "default_value"
             self._config["version"] = "2.0"
             self._save_config()
             self.logger.info("IntellicrackConfig: Config upgraded to 2.0.")
-            # Recurse to catch further upgrades
             self._upgrade_config_if_needed()
         elif current_version < "3.0":
             self.logger.info("IntellicrackConfig: Upgrading config from <3.0 to 3.0.")
-            # Perform upgrade steps for version 3.0
-            # e.g., self._config["another_new_setting"] = False
             self._config["version"] = "3.0"
             self._save_config()
             self.logger.info("IntellicrackConfig: Config upgraded to 3.0.")
-            # Recurse to catch further upgrades
             self._upgrade_config_if_needed()
         else:
             self.logger.debug("IntellicrackConfig: Configuration is up to date.")
@@ -613,16 +612,18 @@ class IntellicrackConfig:
 
         """
         self.logger.debug("IntellicrackConfig: Requesting path for tool: '%s'.", tool_name)
-        if path := self.get(f"tools.{tool_name}.path"):
+        path = self.get(f"tools.{tool_name}.path")
+        if isinstance(path, str):
             self.logger.debug("IntellicrackConfig: Found configured path for tool '%s': '%s'.", tool_name, path)
             return path
 
         self.logger.debug("IntellicrackConfig: No explicit path for '%s', attempting auto-discovery.", tool_name)
         import shutil
 
-        if discovered_path := shutil.which(tool_name):
+        discovered_path = shutil.which(tool_name)
+        if discovered_path:
             self.logger.info("IntellicrackConfig: Auto-discovered path for tool '%s': '%s'.", tool_name, discovered_path)
-            self.set(f"tools.{tool_name}.path", discovered_path, save=False)  # Save for future, but don't force immediate disk write
+            self.set(f"tools.{tool_name}.path", discovered_path, save=False)
             self.set(f"tools.{tool_name}.auto_discovered", True, save=False)
             return discovered_path
 
@@ -687,16 +688,20 @@ class IntellicrackConfig:
         """
         with self._runtime_state_lock:
             keys = key.split(".")
-            current = self._runtime_state
+            current: object = self._runtime_state
 
             for k in keys[:-1]:
+                if not isinstance(current, dict):
+                    return default
                 if k not in current:
                     return default
                 current = current.get(k, {})
                 if not isinstance(current, dict):
                     return default
 
-            return current.get(keys[-1], default)
+            if isinstance(current, dict):
+                return current.get(keys[-1], default)
+            return default
 
     def _set_runtime_state_property(self, key: str, value: object) -> None:
         """Set a runtime state property value.
@@ -711,14 +716,17 @@ class IntellicrackConfig:
         """
         with self._runtime_state_lock:
             keys = key.split(".")
-            current = self._runtime_state
+            current: object = self._runtime_state
 
             for k in keys[:-1]:
+                if not isinstance(current, dict):
+                    return
                 if k not in current or not isinstance(current[k], dict):
                     current[k] = {}
                 current = current[k]
 
-            current[keys[-1]] = value
+            if isinstance(current, dict):
+                current[keys[-1]] = value
 
 
 _config_instance: IntellicrackConfig | None = None

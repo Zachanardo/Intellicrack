@@ -22,7 +22,7 @@ import os
 from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
-from .interface import ModelInfo
+from .interface import DownloadProgressCallback, ModelInfo
 
 
 """
@@ -128,14 +128,19 @@ class OpenRouterRepository(APIRepositoryBase):
             logger.error("Failed to get models from OpenRouter: %s", error_message)
             return []
 
-        models = []
+        models: list[ModelInfo] = []
 
         try:
             # Extract model information from the response
-            for model_data in data.get("data", []):
-                model_id = model_data.get("id")
-                if model_info := self._create_model_info(model_id, model_data):
-                    models.append(model_info)
+            if isinstance(data, dict):
+                data_list = data.get("data", [])
+                if isinstance(data_list, list):
+                    for model_data in data_list:
+                        if isinstance(model_data, dict):
+                            model_id = model_data.get("id")
+                            if isinstance(model_id, str):
+                                if model_info := self._create_model_info(model_id, model_data):
+                                    models.append(model_info)
 
             return models
 
@@ -166,10 +171,13 @@ class OpenRouterRepository(APIRepositoryBase):
             return None
 
         try:
-            return next(
-                (self._create_model_info(model_id, model_data) for model_data in data.get("data", []) if model_data.get("id") == model_id),
-                None,
-            )
+            if isinstance(data, dict):
+                data_list = data.get("data", [])
+                if isinstance(data_list, list):
+                    for model_data in data_list:
+                        if isinstance(model_data, dict) and model_data.get("id") == model_id:
+                            return self._create_model_info(model_id, model_data)
+            return None
         except (KeyError, TypeError) as e:
             logger.exception("Error parsing OpenRouter model details for %s: %s", model_id, e)
             return None
@@ -221,8 +229,18 @@ class OpenRouterRepository(APIRepositoryBase):
             logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
         """OpenRouter doesn't support model downloads, this is an API-only service.
+
+        Args:
+            model_id: The ID of the model to download
+            destination_path: Path where the model should be saved
+            progress_callback: Optional callback for download progress updates
 
         Returns:
             Always returns (False, "OpenRouter doesn't support model downloads")

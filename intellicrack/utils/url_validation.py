@@ -1,6 +1,5 @@
 """URL validation utilities for secure domain and URL checking."""
 
-from typing import cast
 from urllib.parse import urlparse
 
 
@@ -19,7 +18,6 @@ def is_domain_in_url(domain: str, url: str) -> bool:
         hostname = parsed.hostname
         if not hostname:
             return False
-        hostname = cast("str", hostname)
         return hostname == domain or hostname.endswith(f".{domain}")
     except (ValueError, AttributeError):
         return False

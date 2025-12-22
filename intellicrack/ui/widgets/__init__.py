@@ -16,12 +16,24 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from .embedded_terminal_widget import (
+        EmbeddedTerminalWidget as EmbeddedTerminalWidgetType,
+    )
+    from .terminal_session_widget import (
+        TerminalSessionWidget as TerminalSessionWidgetType,
+    )
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
-# Import widgets with error handling
+EmbeddedTerminalWidget: type[EmbeddedTerminalWidgetType] | None
+TerminalSessionWidget: type[TerminalSessionWidgetType] | None
+
 try:
     from .embedded_terminal_widget import EmbeddedTerminalWidget
 except ImportError as e:
@@ -34,10 +46,14 @@ except ImportError as e:
     logger.warning("Failed to import terminal_session_widget: %s", e)
     TerminalSessionWidget = None
 
-__all__ = [
+__all__: list[str] = [
     "EmbeddedTerminalWidget",
     "TerminalSessionWidget",
 ]
 
-# Filter out None values from __all__
-__all__ = [item for item in __all__ if locals().get(item) is not None]
+_locals: dict[str, Any] = {
+    "EmbeddedTerminalWidget": EmbeddedTerminalWidget,
+    "TerminalSessionWidget": TerminalSessionWidget,
+}
+
+__all__ = [item for item in __all__ if _locals.get(item) is not None]

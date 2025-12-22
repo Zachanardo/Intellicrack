@@ -9,9 +9,12 @@ Licensed under GNU General Public License v3.0
 
 import logging
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 import frida
+
+if TYPE_CHECKING:
+    from frida.core import ScriptExportsSync, ScriptMessage
 
 
 logger = logging.getLogger(__name__)
@@ -267,7 +270,7 @@ startThreadTrace(Process.getCurrentThreadId());
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: dict[str, object], data: object) -> None:
+    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
         """Handle Stalker messages.
 
         Args:
@@ -302,7 +305,9 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         try:
-            result = cast("dict[str, Any]", self.script.exports.start_trace(thread_id))
+            exports: ScriptExportsSync = self.script.exports_sync
+            start_trace_func = cast("Any", getattr(exports, "start_trace"))
+            result = cast("dict[str, Any]", start_trace_func(thread_id))
             return bool(result["success"])
         except Exception as e:
             logger.exception("Failed to start trace: %s", e)
@@ -319,7 +324,9 @@ startThreadTrace(Process.getCurrentThreadId());
 
         """
         try:
-            result = cast("dict[str, Any]", self.script.exports.stop_trace(thread_id))
+            exports: ScriptExportsSync = self.script.exports_sync
+            stop_trace_func = cast("Any", getattr(exports, "stop_trace"))
+            result = cast("dict[str, Any]", stop_trace_func(thread_id))
             return bool(result["success"])
         except Exception as e:
             logger.exception("Failed to stop trace: %s", e)
@@ -536,7 +543,7 @@ send({ type: 'heap_tracking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: dict[str, object], data: object) -> None:
+    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
         """Handle heap tracking messages.
 
         Args:
@@ -571,7 +578,9 @@ send({ type: 'heap_tracking_ready' });
             Dictionary containing heap allocation statistics.
 
         """
-        return cast("dict[str, object]", self.script.exports.get_heap_stats())
+        exports: ScriptExportsSync = self.script.exports_sync
+        get_heap_stats = cast("Any", getattr(exports, "get_heap_stats"))
+        return cast("dict[str, object]", get_heap_stats())
 
     def find_leaks(self) -> list[HeapAllocation]:
         """Find potential memory leaks.
@@ -580,7 +589,9 @@ send({ type: 'heap_tracking_ready' });
             List of HeapAllocation objects representing potential memory leaks.
 
         """
-        leaks_raw = cast("list[dict[str, Any]]", self.script.exports.find_leaks())
+        exports: ScriptExportsSync = self.script.exports_sync
+        find_leaks_func = cast("Any", getattr(exports, "find_leaks"))
+        leaks_raw = cast("list[dict[str, Any]]", find_leaks_func())
         leaks_result: list[HeapAllocation] = []
         for leak in leaks_raw:
             addr = int(leak["address"])
@@ -751,7 +762,7 @@ send({ type: 'thread_monitor_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: dict[str, object], data: object) -> None:
+    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
         """Handle thread monitoring messages.
 
         Args:
@@ -797,7 +808,9 @@ send({ type: 'thread_monitor_ready' });
             List of dictionaries containing current system thread information.
 
         """
-        return cast("list[dict[str, object]]", self.script.exports.get_current_threads())
+        exports: ScriptExportsSync = self.script.exports_sync
+        get_current_threads_func = cast("Any", getattr(exports, "get_current_threads"))
+        return cast("list[dict[str, object]]", get_current_threads_func())
 
 
 class FridaExceptionHooker:
@@ -942,7 +955,7 @@ send({ type: 'exception_hooking_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: dict[str, object], data: object) -> None:
+    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
         """Handle exception messages.
 
         Args:
@@ -989,7 +1002,9 @@ send({ type: 'exception_hooking_ready' });
 
         """
         self.exceptions.clear()
-        self.script.exports.clear_exceptions()
+        exports: ScriptExportsSync = self.script.exports_sync
+        clear_exceptions_func = cast("Any", getattr(exports, "clear_exceptions"))
+        clear_exceptions_func()
 
 
 class FridaNativeReplacer:
@@ -1145,7 +1160,7 @@ send({ type: 'replacer_ready' });
         self.script.on("message", self._on_message)
         self.script.load()
 
-    def _on_message(self, message: dict[str, object], data: object) -> None:
+    def _on_message(self, message: "ScriptMessage", data: bytes | None) -> None:
         """Handle replacement messages.
 
         Args:
@@ -1181,7 +1196,9 @@ send({ type: 'replacer_ready' });
 
         """
         try:
-            result = self.script.exports.replace(address, impl_name, ret_type, arg_types or [])
+            exports: ScriptExportsSync = self.script.exports_sync
+            replace_func = cast("Any", getattr(exports, "replace"))
+            result = replace_func(address, impl_name, ret_type, arg_types or [])
             return bool(result)
         except Exception as e:
             logger.exception("Failed to replace function: %s", e)
@@ -1198,7 +1215,9 @@ send({ type: 'replacer_ready' });
 
         """
         try:
-            result = self.script.exports.restore(address)
+            exports: ScriptExportsSync = self.script.exports_sync
+            restore_func = cast("Any", getattr(exports, "restore"))
+            result = restore_func(address)
             return bool(result)
         except Exception as e:
             logger.exception("Failed to restore function: %s", e)
@@ -1565,7 +1584,9 @@ send({ type: 'rpc_ready' });
             Bytes read from the specified memory address.
 
         """
-        result = self.script.exports.memory.read(address, size)
+        exports: ScriptExportsSync = self.script.exports_sync
+        memory = cast("Any", getattr(exports, "memory"))
+        result = memory.read(address, size)
         return result if isinstance(result, bytes) else bytes(result)
 
     def memory_write(self, address: int, data: bytes) -> bool:
@@ -1579,7 +1600,9 @@ send({ type: 'rpc_ready' });
             True if write succeeded, False otherwise.
 
         """
-        result = self.script.exports.memory.write(address, data)
+        exports: ScriptExportsSync = self.script.exports_sync
+        memory = cast("Any", getattr(exports, "memory"))
+        result = memory.write(address, data)
         return bool(result)
 
     def memory_scan(self, pattern: str, limit: int = 10) -> list[dict[str, int]]:
@@ -1593,7 +1616,9 @@ send({ type: 'rpc_ready' });
             List of dictionaries containing match address and size.
 
         """
-        return cast("list[dict[str, int]]", self.script.exports.memory.scan(pattern, limit))
+        exports: ScriptExportsSync = self.script.exports_sync
+        memory = cast("Any", getattr(exports, "memory"))
+        return cast("list[dict[str, int]]", memory.scan(pattern, limit))
 
     def module_find_export(self, module: str, name: str) -> int | None:
         """Find module export.
@@ -1606,7 +1631,9 @@ send({ type: 'rpc_ready' });
             Address of the exported function, or None if not found.
 
         """
-        result = self.script.exports.module.find_export(module, name)
+        exports: ScriptExportsSync = self.script.exports_sync
+        module_obj = cast("Any", getattr(exports, "module"))
+        result = module_obj.find_export(module, name)
         return int(result) if result is not None else None
 
     def evaluate(self, code: str) -> object:
@@ -1619,7 +1646,9 @@ send({ type: 'rpc_ready' });
             Result of the JavaScript evaluation.
 
         """
-        return self.script.exports.evaluate(code)
+        exports: ScriptExportsSync = self.script.exports_sync
+        evaluate_func = cast("Any", getattr(exports, "evaluate"))
+        return evaluate_func(code)
 
 
 class FridaAdvancedHooking:

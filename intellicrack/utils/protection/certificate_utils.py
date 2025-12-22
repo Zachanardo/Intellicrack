@@ -20,6 +20,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import datetime
 import logging
+from typing import Any
 
 from intellicrack.utils.logger import logger
 
@@ -86,8 +87,8 @@ def generate_self_signed_cert(
             ],
         )
 
-        # Create certificate
-        cert = (
+        # Create certificate builder
+        cert_builder = (
             x509
             .CertificateBuilder()
             .subject_name(
@@ -108,8 +109,8 @@ def generate_self_signed_cert(
         from .certificate_common import get_certificate_validity_dates
 
         not_valid_before, not_valid_after = get_certificate_validity_dates(valid_days)
-        cert = (
-            cert
+        cert_builder = (
+            cert_builder
             .not_valid_before(not_valid_before)
             .not_valid_after(not_valid_after)
             .add_extension(
@@ -140,8 +141,10 @@ def generate_self_signed_cert(
                 ),
                 critical=True,
             )
-            .sign(private_key, hashes.SHA256())
         )
+
+        # Sign and get final certificate object
+        cert: x509.Certificate = cert_builder.sign(private_key, hashes.SHA256())
 
         # Serialize certificate and key to PEM format
         cert_pem = cert.public_bytes(serialization.Encoding.PEM)
@@ -207,7 +210,7 @@ def verify_certificate_validity(cert: x509.Certificate) -> bool:
         return False
 
 
-def get_certificate_info(cert: x509.Certificate) -> dict:
+def get_certificate_info(cert: x509.Certificate) -> dict[str, Any]:
     """Extract information from certificate.
 
     Args:
@@ -218,33 +221,37 @@ def get_certificate_info(cert: x509.Certificate) -> dict:
 
     """
     try:
-        info = {
-            "subject": {},
-            "issuer": {},
+        subject_dict: dict[str, Any] = {}
+        issuer_dict: dict[str, Any] = {}
+        extensions_list: list[dict[str, Any]] = []
+
+        info: dict[str, Any] = {
+            "subject": subject_dict,
+            "issuer": issuer_dict,
             "serial_number": str(cert.serial_number),
             "not_valid_before": cert.not_valid_before.isoformat(),
             "not_valid_after": cert.not_valid_after.isoformat(),
             "is_valid": verify_certificate_validity(cert),
             "signature_algorithm": cert.signature_algorithm_oid._name,
-            "extensions": [],
+            "extensions": extensions_list,
         }
 
         # Extract subject information
         for attribute in cert.subject:
-            info["subject"][attribute.oid._name] = attribute.value
+            subject_dict[attribute.oid._name] = attribute.value
 
         # Extract issuer information
         for attribute in cert.issuer:
-            info["issuer"][attribute.oid._name] = attribute.value
+            issuer_dict[attribute.oid._name] = attribute.value
 
         # Extract extensions
         for extension in cert.extensions:
-            ext_info = {
+            ext_info: dict[str, Any] = {
                 "oid": extension.oid._name,
                 "critical": extension.critical,
                 "value": str(extension.value),
             }
-            info["extensions"].append(ext_info)
+            extensions_list.append(ext_info)
 
         return info
 

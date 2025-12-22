@@ -43,7 +43,7 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module: str, name: str) -> type:
+    def find_class(self, module: str, name: str) -> type[object]:
         """Override ``find_class`` to restrict allowed classes."""
         # Allow only safe modules and classes
         ALLOWED_MODULES = {
@@ -65,17 +65,17 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
-            return super().find_class(module, name)
+            return super().find_class(module, name)  # type: ignore[no-any-return]
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return super().find_class(module, name)
+            return super().find_class(module, name)  # type: ignore[no-any-return]
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
 
 
-def secure_pickle_dump(obj: object, file_path: str) -> None:
+def secure_pickle_dump(obj: object, file_path: str | Path) -> None:
     """Securely dump object with integrity check.
 
     Args:
@@ -95,7 +95,7 @@ def secure_pickle_dump(obj: object, file_path: str) -> None:
         f.write(data)
 
 
-def secure_pickle_load(file_path: str) -> object:
+def secure_pickle_load(file_path: str | Path) -> object:
     """Securely load object with integrity verification.
 
     Args:
@@ -144,10 +144,12 @@ class CacheEntry:
     access_count: int = 0
     last_access: float = 0.0
     cache_key: str = ""
+    logger: logging.Logger = logging.getLogger(f"{__name__}.CacheEntry")
 
     def __post_init__(self) -> None:
         """Initialize logger after dataclass initialization."""
-        self.logger = logging.getLogger(f"{__name__}.CacheEntry")
+        if not hasattr(self, "logger") or self.logger is None:
+            self.logger = logging.getLogger(f"{__name__}.CacheEntry")
 
     def is_valid(self, file_path: str) -> bool:
         """Check if cache entry is still valid."""
@@ -225,26 +227,26 @@ class AnalysisCache:
         """
         # Set up cache directory
         if cache_dir is None:
-            cache_dir = Path.home() / ".intellicrack" / "cache"
-
-        self.cache_dir = Path(cache_dir)
+            self.cache_dir: Path = Path.home() / ".intellicrack" / "cache"
+        else:
+            self.cache_dir = Path(cache_dir)
         self.cache_dir.mkdir(parents=True, exist_ok=True)
 
         # Cache settings
-        self.max_entries = max_entries
-        self.max_size_bytes = max_size_mb * 1024 * 1024
-        self.auto_save = auto_save
+        self.max_entries: int = max_entries
+        self.max_size_bytes: int = max_size_mb * 1024 * 1024
+        self.auto_save: bool = auto_save
 
         # Cache storage
         self._cache: dict[str, CacheEntry] = {}
-        self._lock = Lock()
+        self._lock: Lock = Lock()
 
         # Statistics
-        self._stats = CacheStats()
+        self._stats: CacheStats = CacheStats()
 
         # Cache files
-        self.cache_file = self.cache_dir / "analysis_cache.pkl"
-        self.stats_file = self.cache_dir / "cache_stats.json"
+        self.cache_file: Path = self.cache_dir / "analysis_cache.pkl"
+        self.stats_file: Path = self.cache_dir / "cache_stats.json"
 
         # Load existing cache
         self._load_cache()
@@ -512,7 +514,12 @@ class AnalysisCache:
         try:
             # Load cache data
             if self.cache_file.exists():
-                self._cache = secure_pickle_load(self.cache_file)
+                loaded_cache = secure_pickle_load(self.cache_file)
+                if isinstance(loaded_cache, dict):
+                    self._cache = loaded_cache
+                else:
+                    logger.warning("Loaded cache is not a dict, initializing new cache")
+                    self._cache = {}
                 logger.info("Loaded cache: %d entries", len(self._cache))
 
             # Load statistics

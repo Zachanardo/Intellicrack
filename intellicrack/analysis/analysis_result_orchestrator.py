@@ -22,7 +22,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, cast
 
 from PyQt6.QtCore import QObject, pyqtSignal
 
@@ -31,24 +31,25 @@ if TYPE_CHECKING:
     from ..protection.icp_backend import ICPScanResult
     from ..protection.unified_protection_engine import UnifiedProtectionResult
 
+_UnifiedProtectionResult: type[Any] | None = None
+_ICPScanResult: type[Any] | None = None
+
 try:
     from ..protection.unified_protection_engine import UnifiedProtectionResult as _UnifiedProtectionResult
 except ImportError:
-    _UnifiedProtectionResult = None
+    pass
 
 try:
     from ..protection.icp_backend import ICPScanResult as _ICPScanResult
 except ImportError:
-    _ICPScanResult = None
+    pass
 
 try:
     from ..utils.logger import get_logger, log_all_methods
 except ImportError:
-    import logging
-
-    def get_logger(name: str) -> logging.Logger:
+    def get_logger(name: str | None = None) -> logging.Logger:
         """Create a logger instance for the given name."""
-        return logging.getLogger(name)
+        return logging.getLogger(name or __name__)
 
 
 logger = get_logger(__name__)
@@ -74,7 +75,7 @@ class AnalysisResultOrchestrator(QObject):
 
         """
         super().__init__(parent)
-        self.handlers = []
+        self.handlers: list[QObject] = []
         self._current_result: UnifiedProtectionResult | None = None
 
     def register_handler(self, handler: QObject) -> None:
@@ -109,14 +110,14 @@ class AnalysisResultOrchestrator(QObject):
         self._current_result = result
         logger.info("Orchestrator received analysis result for: %s", result.file_path)
 
-        # Distribute to all handlers
         for handler in self.handlers:
             try:
-                handler.on_analysis_complete(result)
-                self.handler_status.emit(
-                    handler.__class__.__name__,
-                    "Processing complete",
-                )
+                if hasattr(handler, "on_analysis_complete"):
+                    getattr(handler, "on_analysis_complete")(result)
+                    self.handler_status.emit(
+                        handler.__class__.__name__,
+                        "Processing complete",
+                    )
             except Exception as e:
                 logger.exception("Handler %s error: %s", handler.__class__.__name__, e)
                 self.handler_status.emit(
@@ -138,19 +139,16 @@ class AnalysisResultOrchestrator(QObject):
             # Add ICP data to existing result
             self._current_result.icp_analysis = result
 
-        # Distribute to handlers that support ICP analysis
         for handler in self.handlers:
             try:
-                # Check if handler has ICP-specific method
                 if hasattr(handler, "on_icp_analysis_complete"):
-                    handler.on_icp_analysis_complete(result)
+                    getattr(handler, "on_icp_analysis_complete")(result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
                         "ICP processing complete",
                     )
-                # Fallback to general analysis method if ICP result can be converted
                 elif hasattr(handler, "on_analysis_complete") and hasattr(self, "_current_result") and self._current_result:
-                    handler.on_analysis_complete(self._current_result)
+                    getattr(handler, "on_analysis_complete")(self._current_result)
                     self.handler_status.emit(
                         handler.__class__.__name__,
                         "Analysis processing complete",
@@ -162,7 +160,7 @@ class AnalysisResultOrchestrator(QObject):
                     f"ICP Error: {e!s}",
                 )
 
-    def get_current_result(self) -> Optional["UnifiedProtectionResult"]:
+    def get_current_result(self) -> "UnifiedProtectionResult | None":
         """Get the most recent analysis result."""
         return self._current_result
 
@@ -176,7 +174,7 @@ class AnalysisResultOrchestrator(QObject):
             True if valid, False otherwise
 
         """
-        if not _ICPScanResult:
+        if _ICPScanResult is None:
             logger.warning("ICPScanResult class not available for validation")
             return False
 
@@ -184,18 +182,15 @@ class AnalysisResultOrchestrator(QObject):
             logger.error("Invalid result type: expected ICPScanResult, got %s", type(result))
             return False
 
-        # Validate required fields
         if not hasattr(result, "file_path") or not result.file_path:
             logger.error("ICPScanResult missing required file_path")
             return False
 
-        # Validate protection data if present
         if hasattr(result, "protections") and result.protections:
             for protection in result.protections:
                 if not hasattr(protection, "type") or not hasattr(protection, "confidence"):
                     logger.warning("Incomplete protection data in ICPScanResult: %s", protection)
 
-        # Check for analysis status
         if hasattr(result, "status") and result.status not in ["completed", "partial", "failed", "in_progress"]:
             logger.warning("Unexpected ICPScanResult status: %s", result.status)
 
@@ -205,8 +200,8 @@ class AnalysisResultOrchestrator(QObject):
     def merge_icp_with_unified_result(
         self,
         icp_result: "ICPScanResult",
-        unified_result: Optional["UnifiedProtectionResult"] = None,
-    ) -> Optional["UnifiedProtectionResult"]:
+        unified_result: "UnifiedProtectionResult | None" = None,
+    ) -> "UnifiedProtectionResult | None":
         """Merge ICP scan results with unified protection result.
 
         Args:
@@ -233,15 +228,22 @@ class AnalysisResultOrchestrator(QObject):
     def _create_or_get_unified_result(
         self,
         icp_result: "ICPScanResult",
-        unified_result: Optional["UnifiedProtectionResult"],
-    ) -> Optional["UnifiedProtectionResult"]:
+        unified_result: "UnifiedProtectionResult | None",
+    ) -> "UnifiedProtectionResult | None":
         """Create a new UnifiedProtectionResult if one is not provided."""
         if unified_result:
             return unified_result
-        if _UnifiedProtectionResult:
-            new_result = _UnifiedProtectionResult()
-            new_result.file_path = getattr(icp_result, "file_path", None)
-            new_result.analysis_timestamp = getattr(icp_result, "timestamp", None)
+        if _UnifiedProtectionResult is not None:
+            file_path_value = getattr(icp_result, "file_path", "")
+            if not isinstance(file_path_value, str):
+                file_path_value = str(file_path_value) if file_path_value else ""
+
+            result_class = cast("type[UnifiedProtectionResult]", _UnifiedProtectionResult)
+            new_result: "UnifiedProtectionResult" = result_class(
+                file_path=file_path_value,
+                file_type="unknown",
+                architecture="unknown",
+            )
             return new_result
         logger.error("UnifiedProtectionResult not available")
         return None
@@ -263,7 +265,7 @@ class AnalysisResultOrchestrator(QObject):
             else:
                 unified_result.confidence = icp_result.overall_confidence
 
-    def extract_icp_recommendations(self, result: "ICPScanResult") -> list:
+    def extract_icp_recommendations(self, result: "ICPScanResult") -> list[str]:
         """Extract bypass recommendations from ICP scan result.
 
         Args:
@@ -273,10 +275,10 @@ class AnalysisResultOrchestrator(QObject):
             List of recommendation strings
 
         """
-        if not _ICPScanResult or not isinstance(result, _ICPScanResult):
+        if _ICPScanResult is None or not isinstance(result, _ICPScanResult):
             return []
 
-        recommendations = []
+        recommendations: list[str] = []
         if hasattr(result, "recommendations"):
             recommendations.extend(result.recommendations)
 
@@ -287,7 +289,7 @@ class AnalysisResultOrchestrator(QObject):
 
     def _get_bypass_recommendations_from_protections(self, result: "ICPScanResult") -> list[str]:
         """Generate bypass recommendations based on detected protections."""
-        recommendations = []
+        recommendations: list[str] = []
         if hasattr(result, "protections"):
             for protection in result.protections:
                 if hasattr(protection, "type") and hasattr(protection, "bypass_difficulty"):

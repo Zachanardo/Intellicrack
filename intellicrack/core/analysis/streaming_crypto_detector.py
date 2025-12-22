@@ -23,12 +23,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
 from intellicrack.core.analysis.cryptographic_routine_detector import CryptoDetection, CryptographicRoutineDetector
-from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer
+from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer, StreamingProgress
 
 
 logger = logging.getLogger(__name__)
@@ -98,7 +99,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
 
             filtered_detections = []
             constants_found = []
-            algorithm_counts = defaultdict(int)
+            algorithm_counts: dict[str, int] = defaultdict(int)
 
             for detection in detections:
                 actual_offset = detection.offset
@@ -162,7 +163,7 @@ class StreamingCryptoDetector(StreamingAnalyzer):
         try:
             all_detections = []
             all_constants = []
-            total_algorithm_counts = defaultdict(int)
+            total_algorithm_counts: dict[str, int] = defaultdict(int)
             chunks_with_crypto = 0
             errors = []
 
@@ -352,7 +353,7 @@ def analyze_crypto_streaming(
     binary_path: Path,
     quick_mode: bool = False,
     use_radare2: bool = False,
-    progress_callback: object | None = None,
+    progress_callback: Callable[[StreamingProgress], None] | None = None,
 ) -> dict[str, Any]:
     """Perform streaming cryptographic analysis on large binary.
 
@@ -360,7 +361,7 @@ def analyze_crypto_streaming(
         binary_path: Path to binary file for cryptographic analysis.
         quick_mode: Skip expensive analysis for faster processing. Defaults to False.
         use_radare2: Enable radare2 integration for enhanced analysis. Defaults to False.
-        progress_callback: Optional callback object for progress updates. Defaults to None.
+        progress_callback: Optional callback for progress updates. Defaults to None.
 
     Returns:
         Dictionary containing complete cryptographic analysis results with detections,

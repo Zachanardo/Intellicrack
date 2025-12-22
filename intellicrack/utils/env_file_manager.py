@@ -23,7 +23,9 @@ import os
 import re
 import shutil
 import tempfile
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -46,8 +48,10 @@ class EnvFileManager:
 
         if env_file_path is None:
             # Get .env file path from central config
-            env_path_str = self.central_config.get("environment.env_file_path")
-            if not env_path_str:
+            env_path_obj = self.central_config.get("environment.env_file_path")
+            if isinstance(env_path_obj, str) and env_path_obj:
+                env_path_str = env_path_obj
+            else:
                 # Fall back to default path if not configured
                 import intellicrack
 
@@ -79,7 +83,7 @@ class EnvFileManager:
             Dictionary of environment variables
 
         """
-        env_vars = {}
+        env_vars: dict[str, str] = {}
 
         if not self.env_path.exists():
             return env_vars
@@ -291,7 +295,7 @@ class EnvFileManager:
             return False, "API key is empty"
 
         # Basic format validation
-        validations = {
+        validations: dict[str, Callable[[str], bool]] = {
             "openai": lambda k: k.startswith("sk-") and len(k) > 20,
             "anthropic": lambda k: k.startswith("sk-ant-") and len(k) > 20,
             "google": lambda k: len(k) > 20,
@@ -304,7 +308,8 @@ class EnvFileManager:
 
         service_lower = service.lower()
         if service_lower in validations:
-            if validations[service_lower](api_key):
+            validator = validations[service_lower]
+            if validator(api_key):
                 return True, f"API key format is valid for {service}"
             return False, f"API key format is invalid for {service}"
 
@@ -359,9 +364,15 @@ class EnvFileManager:
     def _sync_from_central_config(self) -> None:
         """Sync environment variables from central config to .env file."""
         try:
-            if env_vars := self.central_config.get("environment.variables", {}):
-                self.write_env(env_vars)
-                logger.debug("Synced %s environment variables from central config", len(env_vars))
+            env_vars_obj = self.central_config.get("environment.variables", {})
+            if isinstance(env_vars_obj, dict) and env_vars_obj:
+                env_vars_typed: dict[str, str] = {}
+                for key, value in env_vars_obj.items():
+                    if isinstance(key, str) and isinstance(value, str):
+                        env_vars_typed[key] = value
+                if env_vars_typed:
+                    self.write_env(env_vars_typed)
+                    logger.debug("Synced %s environment variables from central config", len(env_vars_typed))
         except Exception as e:
             logger.warning("Could not sync environment variables from central config: %s", e, exc_info=True)
 

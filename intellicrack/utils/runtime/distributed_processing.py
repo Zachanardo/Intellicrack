@@ -31,6 +31,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.handlers.torch_handler import TORCH_AVAILABLE, torch
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 from ..analysis.entropy_utils import calculate_byte_entropy
 
@@ -181,7 +182,7 @@ def process_binary_chunks(
     start_time = time.time()
 
     try:
-        file_size: int = cast("int", results["file_size"])
+        file_size: int = get_typed_item(results, "file_size", int)
         chunks: list[dict[str, int]] = []
 
         for offset in range(0, file_size, chunk_size):
@@ -197,13 +198,14 @@ def process_binary_chunks(
         with ProcessPoolExecutor(max_workers=num_workers) as executor:
             future_to_chunk = {executor.submit(process_chunk, binary_path, chunk, processor_func): chunk for chunk in chunks}
 
-            chunk_results_list: list[dict[str, Any]] = cast("list[dict[str, Any]]", results["chunk_results"])
+            chunk_results_list: list[dict[str, Any]] = validate_type(results["chunk_results"], list)
             for future in as_completed(future_to_chunk):
                 chunk = future_to_chunk[future]
                 try:
                     chunk_result = future.result()
                     chunk_results_list.append(chunk_result)
-                    results["chunks_processed"] = cast("int", results["chunks_processed"]) + 1
+                    current_processed = get_typed_item(results, "chunks_processed", int)
+                    results["chunks_processed"] = current_processed + 1
                 except (OSError, ValueError, RuntimeError) as e:
                     logger.exception("Error processing chunk %s: %s", chunk["index"], e)
                     chunk_results_list.append(
@@ -223,7 +225,7 @@ def process_binary_chunks(
             results["final_gpu_memory"] = final_gpu_memory
 
             if "initial_gpu_memory" in results:
-                initial_mem = cast("dict[str, float]", results["initial_gpu_memory"])
+                initial_mem: dict[str, float] = validate_type(results["initial_gpu_memory"], dict)
                 results["gpu_memory_delta"] = {
                     "allocated_delta_mb": final_gpu_memory["allocated_mb"] - initial_mem["allocated_mb"],
                     "reserved_delta_mb": final_gpu_memory["reserved_mb"] - initial_mem["reserved_mb"],
@@ -261,7 +263,7 @@ def process_chunk(
             f.seek(chunk_info["offset"])
             data = f.read(chunk_info["size"])
 
-        result = processor_func(data, cast("dict[str, Any]", chunk_info))
+        result = processor_func(data, validate_type(chunk_info, dict))
 
         return {
             "chunk": chunk_info,
@@ -308,10 +310,12 @@ def process_distributed_results(
     for result in results:
         if result.get("success", False):
             successful_results.append(result)
-            aggregated["successful"] = cast("int", aggregated["successful"]) + 1
+            current_successful = get_typed_item(aggregated, "successful", int)
+            aggregated["successful"] = current_successful + 1
         else:
             failed_results.append(result)
-            aggregated["failed"] = cast("int", aggregated["failed"]) + 1
+            current_failed = get_typed_item(aggregated, "failed", int)
+            aggregated["failed"] = current_failed + 1
 
     if successful_results:
         aggregated["aggregated_data"] = aggregation_func(successful_results)
@@ -381,7 +385,7 @@ def run_distributed_analysis(
         else:
             tasks_to_run = [analysis_type] if analysis_type in analysis_tasks else []
 
-        analyses_dict: dict[str, Any] = cast("dict[str, Any]", results["analyses"])
+        analyses_dict: dict[str, Any] = validate_type(results["analyses"], dict)
         with ThreadPoolExecutor(max_workers=len(tasks_to_run)) as executor:
             future_to_task = {executor.submit(analysis_tasks[task]): task for task in tasks_to_run}
 
@@ -394,7 +398,9 @@ def run_distributed_analysis(
                     analyses_dict[task] = {"error": str(e)}
 
         results["end_time"] = time.time()
-        results["total_time"] = cast("float", results["end_time"]) - cast("float", results["start_time"])
+        end_time = get_typed_item(results, "end_time", float)
+        start_time_val = get_typed_item(results, "start_time", float)
+        results["total_time"] = end_time - start_time_val
 
         _torch_empty_cache()
 
@@ -453,7 +459,7 @@ def run_distributed_entropy_analysis(
     )
 
     if results.get("aggregated"):
-        chunk_results_list = cast("list[dict[str, Any]]", results["chunk_results"])
+        chunk_results_list = validate_type(results["chunk_results"], list)
         entropies = [r["result"]["entropy"] for r in chunk_results_list if r.get("success") and "entropy" in r.get("result", {})]
 
         if entropies:
@@ -548,7 +554,7 @@ def run_distributed_pattern_search(
     )
 
     all_matches: list[dict[str, Any]] = []
-    chunk_results_list = cast("list[dict[str, Any]]", results.get("chunk_results", []))
+    chunk_results_list = validate_type(results.get("chunk_results", []), list)
     for chunk_result in chunk_results_list:
         if chunk_result.get("success") and "matches" in chunk_result.get("result", {}):
             all_matches.extend(chunk_result["result"]["matches"])
@@ -746,7 +752,7 @@ def run_incremental_analysis(
     os.makedirs(cache_dir, exist_ok=True)
     cache_file = os.path.join(cache_dir, f"{file_hash}.json")
 
-    cached_results_dict: dict[str, Any] = cast("dict[str, Any]", results["cached_results"])
+    cached_results_dict: dict[str, Any] = validate_type(results["cached_results"], dict)
     if os.path.exists(cache_file) and not force_full:
         try:
             with open(cache_file, encoding="utf-8") as f:
@@ -765,9 +771,10 @@ def run_incremental_analysis(
     for analysis in required_analyses:
         if analysis not in cached_results_dict:
             analyses_to_run.append(analysis)
-            results["cache_misses"] = cast("int", results["cache_misses"]) + 1
+            current_misses = get_typed_item(results, "cache_misses", int)
+            results["cache_misses"] = current_misses + 1
 
-    new_results_dict: dict[str, Any] = cast("dict[str, Any]", results["new_results"])
+    new_results_dict: dict[str, Any] = validate_type(results["new_results"], dict)
     if analyses_to_run:
         new_analyses = run_distributed_analysis(
             binary_path,
@@ -1012,7 +1019,7 @@ def _distributed_string_extraction(
     )
 
     all_strings: list[dict[str, Any]] = []
-    chunk_results_list = cast("list[dict[str, Any]]", results.get("chunk_results", []))
+    chunk_results_list = validate_type(results.get("chunk_results", []), list)
     for chunk_result in chunk_results_list:
         if chunk_result.get("success") and "strings" in chunk_result.get("result", {}):
             all_strings.extend(chunk_result["result"]["strings"])
@@ -1062,7 +1069,7 @@ def _distributed_hash_calculation(
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_algo = {executor.submit(calculate_hash, algo): algo for algo in algorithms}
 
-        hashes_dict: dict[str, str] = cast("dict[str, str]", results["hashes"])
+        hashes_dict: dict[str, str] = validate_type(results["hashes"], dict)
         for future in as_completed(future_to_algo):
             try:
                 algo, hash_value = future.result()

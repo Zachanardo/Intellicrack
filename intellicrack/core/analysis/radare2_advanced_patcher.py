@@ -16,9 +16,12 @@ import logging
 import struct
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 import r2pipe
+
+if TYPE_CHECKING:
+    from r2pipe import open as R2Open
 
 
 logger = logging.getLogger(__name__)
@@ -73,7 +76,7 @@ class Radare2AdvancedPatcher:
 
         """
         self.binary_path = binary_path
-        self.r2: r2pipe.open | None = None
+        self.r2: Any = None
         self.patches: list[PatchInfo] = []
         self.architecture: Architecture | None = None
         self.bits: int = 0
@@ -103,7 +106,10 @@ class Radare2AdvancedPatcher:
             elif arch == "ppc":
                 self.architecture = Architecture.PPC
 
-            logger.info("Opened %s: %s %s-bit %s", self.binary_path, self.architecture.value, self.bits, self.endianness)
+            if self.architecture:
+                logger.info("Opened %s: %s %s-bit %s", self.binary_path, self.architecture.value, self.bits, self.endianness)
+            else:
+                logger.info("Opened %s: unknown architecture %s-bit %s", self.binary_path, self.bits, self.endianness)
             return True
 
         except Exception as e:
@@ -112,10 +118,13 @@ class Radare2AdvancedPatcher:
 
     def generate_nop_sled(self, address: int, size: int) -> PatchInfo:
         """Generate multi-byte NOP sled."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         nop_bytes = self._get_nop_instruction() * (size // len(self._get_nop_instruction()))
 
         # Read original bytes
-        original = self.r2.cmdj(f"pxj {size} @ {address}")
+        original: Any = self.r2.cmdj(f"pxj {size} @ {address}")
         original_bytes = bytes(original)
 
         # Create patch
@@ -137,23 +146,28 @@ class Radare2AdvancedPatcher:
 
     def _get_nop_instruction(self) -> bytes:
         """Get NOP instruction for current architecture."""
-        nop_map = {
-            Architecture.X86: b"\x90",  # NOP
-            Architecture.X86_64: b"\x90",  # NOP
-            Architecture.ARM: b"\x00\x00\x00\xe1",  # MOV R0, R0
-            Architecture.ARM64: b"\x1f\x20\x03\xd5",  # NOP
-            Architecture.MIPS: b"\x00\x00\x00\x00",  # NOP
-            Architecture.PPC: b"\x60\x00\x00\x00",  # NOP
+        nop_map: dict[Architecture, bytes] = {
+            Architecture.X86: b"\x90",
+            Architecture.X86_64: b"\x90",
+            Architecture.ARM: b"\x00\x00\x00\xe1",
+            Architecture.ARM64: b"\x1f\x20\x03\xd5",
+            Architecture.MIPS: b"\x00\x00\x00\x00",
+            Architecture.PPC: b"\x60\x00\x00\x00",
         }
+        if self.architecture is None:
+            return b"\x90"
         return nop_map.get(self.architecture, b"\x90")
 
     def modify_jump_table(self, table_address: int, entries: list[int]) -> PatchInfo:
         """Modify jump table entries."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         entry_size = 8 if self.bits == 64 else 4
         table_size = len(entries) * entry_size
 
         # Read original table
-        original = self.r2.cmdj(f"pxj {table_size} @ {table_address}")
+        original: Any = self.r2.cmdj(f"pxj {table_size} @ {table_address}")
         original_bytes = bytes(original)
 
         # Create new table
@@ -182,6 +196,9 @@ class Radare2AdvancedPatcher:
 
     def patch_function_prologue(self, func_address: int, skip_bytes: int = 0, custom_prologue: bytes | None = None) -> PatchInfo:
         """Patch function prologue."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         if custom_prologue:
             prologue_bytes = custom_prologue
         else:
@@ -190,7 +207,7 @@ class Radare2AdvancedPatcher:
 
         # Read original prologue
         prologue_size = len(prologue_bytes)
-        original = self.r2.cmdj(f"pxj {prologue_size} @ {func_address}")
+        original: Any = self.r2.cmdj(f"pxj {prologue_size} @ {func_address}")
         original_bytes = bytes(original)
 
         patch = PatchInfo(
@@ -247,6 +264,9 @@ class Radare2AdvancedPatcher:
 
     def patch_function_epilogue(self, func_address: int, func_size: int, custom_epilogue: bytes | None = None) -> PatchInfo:
         """Patch function epilogue."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Find epilogue location
         epilogue_address = self._find_epilogue(func_address, func_size)
 
@@ -257,7 +277,7 @@ class Radare2AdvancedPatcher:
 
         # Read original epilogue
         epilogue_size = len(epilogue_bytes)
-        original = self.r2.cmdj(f"pxj {epilogue_size} @ {epilogue_address}")
+        original: Any = self.r2.cmdj(f"pxj {epilogue_size} @ {epilogue_address}")
         original_bytes = bytes(original)
 
         patch = PatchInfo(
@@ -278,18 +298,26 @@ class Radare2AdvancedPatcher:
 
     def _find_epilogue(self, func_address: int, func_size: int) -> int:
         """Find function epilogue location."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Disassemble function
-        disasm = self.r2.cmdj(f"pdj {func_size} @ {func_address}")
+        disasm: Any = self.r2.cmdj(f"pdj {func_size} @ {func_address}")
 
         # Look for return instructions
         for inst in reversed(disasm):
             if self.architecture in [Architecture.X86, Architecture.X86_64]:
-                if inst["mnemonic"] in ["ret", "retn", "leave"]:
-                    # Found epilogue, back up to restoration code
-                    return inst["offset"] - 8
+                if inst.get("mnemonic") in ["ret", "retn", "leave"]:
+                    offset: Any = inst.get("offset")
+                    if isinstance(offset, int):
+                        return offset - 8
             elif self.architecture in [Architecture.ARM, Architecture.ARM64]:
-                if "bx" in inst["mnemonic"] and "lr" in inst["opcode"]:
-                    return inst["offset"] - 8
+                mnemonic: Any = inst.get("mnemonic", "")
+                opcode: Any = inst.get("opcode", "")
+                if "bx" in mnemonic and "lr" in opcode:
+                    offset = inst.get("offset")
+                    if isinstance(offset, int):
+                        return offset - 8
 
         # Default to end of function minus typical epilogue size
         return func_address + func_size - 16
@@ -325,9 +353,13 @@ class Radare2AdvancedPatcher:
 
     def invert_conditional_jump(self, address: int) -> PatchInfo:
         """Invert conditional jump instruction."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Get instruction at address
-        inst = self.r2.cmdj(f"pdj 1 @ {address}")[0]
-        mnemonic = inst["mnemonic"]
+        inst_list: Any = self.r2.cmdj(f"pdj 1 @ {address}")
+        inst: Any = inst_list[0]
+        mnemonic: Any = inst["mnemonic"]
         opcode_bytes = bytes.fromhex(inst["bytes"])
 
         # Map of x86/x64 conditional jumps and their inversions
@@ -445,12 +477,16 @@ class Radare2AdvancedPatcher:
 
     def modify_return_value(self, func_address: int, return_value: int) -> PatchInfo:
         """Modify function return value."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Find all return points in function
-        func_info = self.r2.cmdj(f"afij @ {func_address}")[0]
-        func_size = func_info["size"]
+        func_info_list: Any = self.r2.cmdj(f"afij @ {func_address}")
+        func_info: Any = func_info_list[0]
+        func_size: Any = func_info["size"]
 
         # Disassemble function
-        disasm = self.r2.cmdj(f"pdj {func_size} @ {func_address}")
+        disasm: Any = self.r2.cmdj(f"pdj {func_size} @ {func_address}")
 
         patches_made = []
         for inst in disasm:
@@ -484,8 +520,8 @@ class Radare2AdvancedPatcher:
                 patch_address = ret_address - len(mod_bytes)
 
                 # Read original bytes
-                original = self.r2.cmdj(f"pxj {len(mod_bytes)} @ {patch_address}")
-                original_bytes = bytes(original)
+                original_data: Any = self.r2.cmdj(f"pxj {len(mod_bytes)} @ {patch_address}")
+                original_bytes = bytes(original_data)
 
                 # Apply patch
                 self._write_bytes(patch_address, mod_bytes)
@@ -534,9 +570,13 @@ class Radare2AdvancedPatcher:
 
     def redirect_call_target(self, call_address: int, new_target: int) -> PatchInfo:
         """Redirect function call to new target."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Get call instruction
-        inst = self.r2.cmdj(f"pdj 1 @ {call_address}")[0]
-        mnemonic = inst["mnemonic"]
+        inst_list: Any = self.r2.cmdj(f"pdj 1 @ {call_address}")
+        inst: Any = inst_list[0]
+        mnemonic: Any = inst["mnemonic"]
         original_bytes = bytes.fromhex(inst["bytes"])
 
         if mnemonic.lower() != "call":
@@ -992,8 +1032,8 @@ class Radare2AdvancedPatcher:
                         jump_to_hook = b"\xb8" + struct.pack("<I", hook_cave)
                     jump_to_hook += b"\xff\xe0"
             # Read original prologue bytes before overwriting
-            original = self.r2.cmdj(f"pxj {len(jump_to_hook)} @ {func_address}")
-            original_bytes = bytes(original) if original else b""
+            original_data: Any = self.r2.cmdj(f"pxj {len(jump_to_hook)} @ {func_address}")
+            original_bytes = bytes(original_data) if original_data else b""
 
             # Write jump_to_hook to function prologue to redirect to hook
             self._write_bytes(func_address, jump_to_hook)
@@ -1014,11 +1054,14 @@ class Radare2AdvancedPatcher:
             )
         else:
             # Simple replacement
+            if not self.r2:
+                raise RuntimeError("Radare2 session not opened")
+
             complete_hook = hook_code
 
             # Read original bytes
-            original = self.r2.cmdj(f"pxj {len(complete_hook)} @ {func_address}")
-            original_bytes = bytes(original) if original else b""
+            original_hook_data: Any = self.r2.cmdj(f"pxj {len(complete_hook)} @ {func_address}")
+            original_bytes = bytes(original_hook_data) if original_hook_data else b""
 
             patch = PatchInfo(
                 type=PatchType.FUNCTION_HOOK,
@@ -1042,11 +1085,14 @@ class Radare2AdvancedPatcher:
 
     def _create_trampoline(self, original_address: int, hook_size: int) -> int:
         """Create trampoline for preserving original function."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Find code cave
         code_cave = self._find_code_cave(hook_size + 16)
 
         # Copy original instructions
-        original_code = self.r2.cmdj(f"pxj {hook_size} @ {original_address}")
+        original_code: Any = self.r2.cmdj(f"pxj {hook_size} @ {original_address}")
         self._write_bytes(code_cave, bytes(original_code))
 
         # Add jump back to original function
@@ -1059,14 +1105,17 @@ class Radare2AdvancedPatcher:
 
     def _find_code_cave(self, size: int) -> int:
         """Find suitable code cave for patches."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         # Get sections
-        sections = self.r2.cmdj("iSj")
+        sections: Any = self.r2.cmdj("iSj")
 
         for section in sections:
             # Look for executable sections with padding
-            if section["perm"] & 0x1:  # Executable
+            if section["perm"] & 0x1:
                 # Scan for consecutive zeros
-                section_data = self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}")
+                section_data: Any = self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}")
                 zero_count = 0
                 cave_start = 0
 
@@ -1086,11 +1135,14 @@ class Radare2AdvancedPatcher:
 
     def defeat_anti_debugging(self) -> list[PatchInfo]:
         """Apply anti-debugging defeat patches."""
-        patches_applied = []
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
+        patches_applied: list[PatchInfo] = []
 
         if self.architecture in [Architecture.X86, Architecture.X86_64]:
             # Patch IsDebuggerPresent
-            imports = self.r2.cmdj("iij")
+            imports: Any = self.r2.cmdj("iij")
             for imp in imports:
                 if imp["name"] == "IsDebuggerPresent":
                     # Replace with XOR EAX, EAX; RET
@@ -1101,12 +1153,13 @@ class Radare2AdvancedPatcher:
                     logger.info("Defeated IsDebuggerPresent at %s", hex(imp["plt"]))
 
             # Find and patch inline checks
-            peb_checks = self.r2.cmd("/x 64a13000000000")  # mov eax, fs:[0x30]
+            peb_checks: Any = self.r2.cmd("/x 64a13000000000")
             for line in peb_checks.split("\n"):
                 if line and "0x" in line:
                     addr = int(line.split()[0], 16)
                     # Check if it's accessing BeingDebugged flag
-                    next_inst = self.r2.cmdj(f"pdj 1 @ {addr + 8}")[0]
+                    next_inst_list: Any = self.r2.cmdj(f"pdj 1 @ {addr + 8}")
+                    next_inst: Any = next_inst_list[0]
                     if "0x2" in next_inst.get("opcode", ""):
                         # Patch to always return 0
                         patch = self.generate_nop_sled(addr, 16)
@@ -1114,18 +1167,18 @@ class Radare2AdvancedPatcher:
                         logger.info("Defeated PEB.BeingDebugged check at %s", hex(addr))
 
             # Patch NtQueryInformationProcess
-            nt_query = self.r2.cmd("/x b8ea000000")  # mov eax, 0xEA (NtQueryInformationProcess)
+            nt_query: Any = self.r2.cmd("/x b8ea000000")
             for line in nt_query.split("\n"):
                 if line and "0x" in line:
                     addr = int(line.split()[0], 16)
                     # Replace with successful return
-                    patch_bytes = b"\x31\xc0\xc3"  # xor eax, eax; ret
-                    original = self.r2.cmdj(f"pxj 3 @ {addr}")
+                    patch_bytes = b"\x31\xc0\xc3"
+                    original_data: Any = self.r2.cmdj(f"pxj 3 @ {addr}")
 
                     patch = PatchInfo(
                         type=PatchType.ANTI_DEBUG_DEFEAT,
                         address=addr,
-                        original_bytes=bytes(original),
+                        original_bytes=bytes(original_data),
                         patched_bytes=patch_bytes,
                         description=f"Defeated NtQueryInformationProcess at {hex(addr)}",
                         metadata={"method": "NtQueryInformationProcess"},
@@ -1137,6 +1190,9 @@ class Radare2AdvancedPatcher:
 
     def _write_bytes(self, address: int, data: bytes) -> None:
         """Write bytes to address."""
+        if not self.r2:
+            raise RuntimeError("Radare2 session not opened")
+
         hex_data = data.hex()
         self.r2.cmd(f"wx {hex_data} @ {address}")
 

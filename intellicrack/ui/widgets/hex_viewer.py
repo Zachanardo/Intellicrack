@@ -279,6 +279,8 @@ class HexDisplay(QWidget):
 
         """
         super().__init__(parent)
+        if parent is None:
+            raise ValueError("HexDisplay requires a parent HexViewerWidget")
         self.hex_viewer: HexViewerWidget = parent
         self.data: bytearray = bytearray()
         self.bytes_per_row: int = 16
@@ -295,7 +297,7 @@ class HexDisplay(QWidget):
         self.char_height: int = fm.height()
         self.offset_width: int = self.char_width * 11
         self.hex_width: int = self.char_width * 3 * 16
-        self.font: QFont = font
+        self.display_font: QFont = font
 
         self.setMinimumSize(600, 400)
         self.setMouseTracking(True)
@@ -310,18 +312,18 @@ class HexDisplay(QWidget):
         """
         return self.height() // self.char_height
 
-    def paintEvent(self, event: QPaintEvent) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Paint the hex display.
 
         Args:
             event: Paint event containing the region to repaint.
 
         """
-        if not self.hex_viewer.data:
+        if not self.hex_viewer.data or event is None:
             return
 
         painter = QPainter(self)
-        painter.setFont(self.font)
+        painter.setFont(self.display_font)
 
         # Background
         painter.fillRect(event.rect(), QColor(240, 240, 240))
@@ -399,13 +401,15 @@ class HexDisplay(QWidget):
                 painter.drawText(x, y, ascii_char)
                 x += self.char_width
 
-    def mousePressEvent(self, event: QMouseEvent) -> None:
+    def mousePressEvent(self, event: QMouseEvent | None) -> None:
         """Handle mouse clicks.
 
         Args:
             event: Mouse press event with button and position information.
 
         """
+        if event is None:
+            return
         pos = self.get_offset_from_pos(event.pos())
         if pos != -1:
             self.hex_viewer.cursor_pos = pos
@@ -414,26 +418,30 @@ class HexDisplay(QWidget):
             self.update()
             self.cursor_moved.emit(pos)
 
-    def mouseMoveEvent(self, event: QMouseEvent) -> None:
+    def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         """Handle mouse drag for selection.
 
         Args:
             event: Mouse move event with position and button state.
 
         """
+        if event is None:
+            return
         if event.buttons() & Qt.MouseButton.LeftButton:
             pos = self.get_offset_from_pos(event.pos())
             if pos != -1:
                 self.hex_viewer.selection_end = pos + 1
                 self.update()
 
-    def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+    def mouseReleaseEvent(self, event: QMouseEvent | None) -> None:
         """Handle mouse release.
 
         Args:
             event: Mouse release event with button information.
 
         """
+        if event is None:
+            return
         if self.hex_viewer.selection_start != -1 and self.hex_viewer.selection_end != -1:
             start = min(self.hex_viewer.selection_start, self.hex_viewer.selection_end)
             end = max(self.hex_viewer.selection_start, self.hex_viewer.selection_end)
@@ -441,14 +449,14 @@ class HexDisplay(QWidget):
             self.hex_viewer.selection_end = end
             self.hex_viewer.selection_changed.emit(start, end)
 
-    def keyPressEvent(self, event: QKeyEvent) -> None:
+    def keyPressEvent(self, event: QKeyEvent | None) -> None:
         """Handle keyboard input.
 
         Args:
             event: Key press event with key code and modifiers.
 
         """
-        if not self.hex_viewer.data:
+        if not self.hex_viewer.data or event is None:
             return
 
         key = event.key()

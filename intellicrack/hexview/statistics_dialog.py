@@ -21,6 +21,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any, Protocol
+
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QDialog,
@@ -32,10 +34,37 @@ from PyQt6.QtWidgets import (
     QTabWidget,
     QTextEdit,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..utils.logger import get_logger
 from .statistics import StatisticsCalculator
+
+
+class FileHandlerProtocol(Protocol):
+    """Protocol for file handler objects."""
+
+    @property
+    def file_size(self) -> int:
+        """Get file size."""
+        ...
+
+    @property
+    def file_path(self) -> str:
+        """Get file path."""
+        ...
+
+    def read_data(self, offset: int, size: int) -> bytes | None:
+        """Read data from file."""
+        ...
+
+
+class HexViewerProtocol(Protocol):
+    """Protocol for hex viewer objects."""
+
+    file_handler: FileHandlerProtocol
+    selection_start: int
+    selection_end: int
 
 
 logger = get_logger(__name__)
@@ -57,9 +86,9 @@ class StatisticsWorker(QThread):
 
         """
         super().__init__()
-        self.data = data
-        self.file_path = file_path
-        self.calculator = StatisticsCalculator()
+        self.data: bytes | None = data
+        self.file_path: str | None = file_path
+        self.calculator: StatisticsCalculator = StatisticsCalculator()
         self.calculator.set_progress_callback(self._progress_callback)
 
     def _progress_callback(self, current: int, total: int) -> None:
@@ -97,7 +126,7 @@ class StatisticsWorker(QThread):
 class StatisticsDialog(QDialog):
     """Dialog for displaying statistical analysis."""
 
-    def __init__(self, parent: object | None = None, hex_viewer: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, hex_viewer: HexViewerProtocol | None = None) -> None:
         """Initialize statistics dialog.
 
         Args:
@@ -106,8 +135,18 @@ class StatisticsDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.hex_viewer = hex_viewer
-        self.worker = None
+        self.hex_viewer: HexViewerProtocol | None = hex_viewer
+        self.worker: StatisticsWorker | None = None
+        self.entire_file_radio: QRadioButton
+        self.selection_radio: QRadioButton
+        self.tabs: QTabWidget
+        self.overview_text: QTextEdit
+        self.distribution_text: QTextEdit
+        self.patterns_text: QTextEdit
+        self.file_type_text: QTextEdit
+        self.progress_bar: QProgressBar
+        self.analyze_btn: QPushButton
+        self.copy_btn: QPushButton
         self.init_ui()
         self.setWindowTitle("Statistical Analysis")
         self.resize(700, 600)
@@ -187,8 +226,9 @@ class StatisticsDialog(QDialog):
         self.copy_btn.setEnabled(False)
         button_box.addButton(self.copy_btn, QDialogButtonBox.ButtonRole.ActionRole)
 
-        close_btn = button_box.addButton(QDialogButtonBox.StandardButton.Close)
-        close_btn.clicked.connect(self.close)
+        close_btn: QPushButton | None = button_box.addButton(QDialogButtonBox.StandardButton.Close)
+        if close_btn is not None:
+            close_btn.clicked.connect(self.close)
 
         layout.addWidget(button_box)
 
@@ -204,14 +244,14 @@ class StatisticsDialog(QDialog):
         self.copy_btn.setEnabled(False)
 
         # Determine data source
-        data = None
-        file_path = None
+        data: bytes | None = None
+        file_path: str | None = None
 
         if self.selection_radio.isChecked() and self.selection_radio.isEnabled():
             # Get selected data
-            if self.hex_viewer:
-                start = self.hex_viewer.selection_start
-                end = self.hex_viewer.selection_end
+            if self.hex_viewer is not None:
+                start: int = self.hex_viewer.selection_start
+                end: int = self.hex_viewer.selection_end
                 if start != -1 and end != -1:
                     data = self.hex_viewer.file_handler.read_data(start, end - start)
                     if data is None:
@@ -223,13 +263,12 @@ class StatisticsDialog(QDialog):
             else:
                 self.overview_text.setPlainText("Hex viewer not available.")
                 return
-        # Use entire file
-        elif self.hex_viewer and hasattr(self.hex_viewer, "file_handler"):
+        elif self.hex_viewer is not None:
             if hasattr(self.hex_viewer.file_handler, "file_path"):
                 file_path = self.hex_viewer.file_handler.file_path
             else:
                 # Read entire file into memory
-                file_size = self.hex_viewer.file_handler.file_size
+                file_size: int = self.hex_viewer.file_handler.file_size
                 data = self.hex_viewer.file_handler.read_data(0, file_size)
                 if data is None:
                     self.overview_text.setPlainText("Failed to read file data.")
@@ -260,7 +299,7 @@ class StatisticsDialog(QDialog):
         """
         self.progress_bar.setValue(current)
 
-    def display_results(self, results: dict) -> None:
+    def display_results(self, results: dict[str, Any]) -> None:
         """Display analysis results.
 
         Args:
@@ -273,11 +312,11 @@ class StatisticsDialog(QDialog):
 
         # Data source info
         if self.selection_radio.isChecked() and self.selection_radio.isEnabled():
-            if self.hex_viewer:
-                start = self.hex_viewer.selection_start
-                end = self.hex_viewer.selection_end
+            if self.hex_viewer is not None:
+                start: int = self.hex_viewer.selection_start
+                end: int = self.hex_viewer.selection_end
                 overview += f"Data: Selection (offset {start:#x} to {end:#x})\n"
-        elif self.hex_viewer and hasattr(self.hex_viewer.file_handler, "file_path"):
+        elif self.hex_viewer is not None and hasattr(self.hex_viewer.file_handler, "file_path"):
             overview += f"File: {self.hex_viewer.file_handler.file_path}\n"
 
         overview += f"Size: {results['size']} bytes\n\n"
@@ -393,10 +432,11 @@ class StatisticsDialog(QDialog):
             from PyQt6.QtWidgets import QApplication
 
             clipboard = QApplication.clipboard()
-            clipboard.setText(text)
+            if clipboard is not None:
+                clipboard.setText(text)
 
-            # Show brief confirmation
-            original_text = self.copy_btn.text()
-            self.copy_btn.setText("Copied!")
-            QThread.msleep(1000)
-            self.copy_btn.setText(original_text)
+                # Show brief confirmation
+                original_text: str = self.copy_btn.text()
+                self.copy_btn.setText("Copied!")
+                QThread.msleep(1000)
+                self.copy_btn.setText(original_text)

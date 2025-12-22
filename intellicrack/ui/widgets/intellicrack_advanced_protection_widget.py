@@ -9,6 +9,8 @@ Licensed under GNU General Public License v3.0
 
 import os
 
+from typing import TYPE_CHECKING, Any
+
 from intellicrack.handlers.pyqt6_handler import (
     QBrush,
     QCheckBox,
@@ -56,9 +58,14 @@ try:
     )
 except ImportError:
     HAS_MATPLOTLIB = False
-    plt = None
+    plt = None  # type: ignore[assignment]
     FigureCanvas = None
-    Figure = None
+    Figure = None  # type: ignore[assignment,misc]
+
+if TYPE_CHECKING:
+    from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg
+    from matplotlib.figure import Figure as MatplotlibFigure
+    from matplotlib import pyplot
 
 
 logger = get_logger(__name__)
@@ -101,73 +108,92 @@ class AdvancedAnalysisThread(QThread):
             self.analysis_complete.emit(analysis)
 
         except Exception as e:
-            self.logger.exception("Exception in intellicrack_advanced_protection_widget: %s", e)
+            logger.exception("Exception in intellicrack_advanced_protection_widget: %s", e)
             self.analysis_error.emit(str(e))
 
 
-class EntropyGraphWidget(FigureCanvas):
-    """Widget for displaying entropy graph."""
+if HAS_MATPLOTLIB and FigureCanvas is not None:
+    class EntropyGraphWidget(FigureCanvas):  # type: ignore[misc,valid-type]
+        """Widget for displaying entropy graph."""
 
-    def __init__(self, parent: QWidget | None = None) -> None:
-        """Initialize entropy graph widget with matplotlib figure and parent widget."""
-        self.figure = Figure(figsize=(8, 4))
-        super().__init__(self.figure)
-        self.setParent(parent)
+        def __init__(self, parent: QWidget | None = None) -> None:
+            """Initialize entropy graph widget with matplotlib figure and parent widget."""
+            if Figure is None:
+                raise ImportError("matplotlib Figure not available")
+            self.figure = Figure(figsize=(8, 4))
+            super().__init__(self.figure)
+            self.setParent(parent)
 
-    def plot_entropy(self, entropy_data: list[EntropyInfo]) -> None:
-        """Plot entropy data for sections."""
-        self.figure.clear()
-        ax = self.figure.add_subplot(111)
+        def plot_entropy(self, entropy_data: list[EntropyInfo]) -> None:
+            """Plot entropy data for sections."""
+            self.figure.clear()
+            ax = self.figure.add_subplot(111)
 
-        if not entropy_data:
-            ax.text(
-                0.5,
-                0.5,
-                "No entropy data available",
-                ha="center",
-                va="center",
-                transform=ax.transAxes,
-            )
+            if not entropy_data:
+                ax.text(
+                    0.5,
+                    0.5,
+                    "No entropy data available",
+                    ha="center",
+                    va="center",
+                    transform=ax.transAxes,
+                )
+                self.draw()
+                return
+
+            # Prepare data
+            sections = [e.section_name for e in entropy_data]
+            entropies = [e.entropy for e in entropy_data]
+            colors = ["red" if e.packed else "green" for e in entropy_data]
+
+            # Create bar chart
+            bars = ax.bar(sections, entropies, color=colors)
+
+            # Add value labels on bars
+            for bar in bars:
+                height = bar.get_height()
+                ax.annotate(
+                    f"{height:.2f}",
+                    xy=(bar.get_x() + bar.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha="center",
+                    va="bottom",
+                    fontsize=8,
+                )
+
+            # Add threshold line
+            ax.axhline(y=7.0, color="orange", linestyle="--", label="Packing threshold")
+            ax.axhline(y=7.5, color="red", linestyle="--", label="Encryption threshold")
+
+            # Customize
+            ax.set_xlabel("Section")
+            ax.set_ylabel("Entropy")
+            ax.set_title("Section Entropy Analysis")
+            ax.set_ylim(0, 8)
+            ax.legend()
+
+            # Rotate x labels
+            if plt is not None:
+                plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
+
+            self.figure.tight_layout()
             self.draw()
-            return
+else:
+    class EntropyGraphWidget(QWidget):  # type: ignore[no-redef]
+        """Fallback widget when matplotlib is not available."""
 
-        # Prepare data
-        sections = [e.section_name for e in entropy_data]
-        entropies = [e.entropy for e in entropy_data]
-        colors = ["red" if e.packed else "green" for e in entropy_data]
+        def __init__(self, parent: QWidget | None = None) -> None:
+            """Initialize fallback widget."""
+            super().__init__(parent)
+            layout = QVBoxLayout()
+            label = QLabel("Matplotlib not available - entropy graph disabled")
+            layout.addWidget(label)
+            self.setLayout(layout)
 
-        # Create bar chart
-        bars = ax.bar(sections, entropies, color=colors)
-
-        # Add value labels on bars
-        for bar in bars:
-            height = bar.get_height()
-            ax.annotate(
-                f"{height:.2f}",
-                xy=(bar.get_x() + bar.get_width() / 2, height),
-                xytext=(0, 3),  # 3 points vertical offset
-                textcoords="offset points",
-                ha="center",
-                va="bottom",
-                fontsize=8,
-            )
-
-        # Add threshold line
-        ax.axhline(y=7.0, color="orange", linestyle="--", label="Packing threshold")
-        ax.axhline(y=7.5, color="red", linestyle="--", label="Encryption threshold")
-
-        # Customize
-        ax.set_xlabel("Section")
-        ax.set_ylabel("Entropy")
-        ax.set_title("Section Entropy Analysis")
-        ax.set_ylim(0, 8)
-        ax.legend()
-
-        # Rotate x labels
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=45)
-
-        self.figure.tight_layout()
-        self.draw()
+        def plot_entropy(self, entropy_data: list[EntropyInfo]) -> None:
+            """Placeholder for plotting entropy data."""
+            pass
 
 
 class IntellicrackAdvancedProtectionWidget(QWidget):
@@ -195,7 +221,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         layout.addWidget(header_widget)
 
         # Main content area
-        self.main_splitter = QSplitter(Qt.Horizontal)
+        self.main_splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Results tree
         left_panel = self.create_left_panel()
@@ -363,8 +389,10 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Bypass Available",
             ],
         )
-        self.detections_table.horizontalHeader().setStretchLastSection(True)
-        self.detections_table.setSelectionBehavior(QTableWidget.SelectRows)
+        header = self.detections_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
+        self.detections_table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.detections_table.itemSelectionChanged.connect(self.on_detection_selected)
         layout.addWidget(self.detections_table)
 
@@ -399,7 +427,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Status",
             ],
         )
-        self.entropy_table.horizontalHeader().setStretchLastSection(True)
+        header = self.entropy_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
         layout.addWidget(self.entropy_table)
 
         widget.setLayout(layout)
@@ -422,7 +452,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Status",
             ],
         )
-        self.certificates_table.horizontalHeader().setStretchLastSection(True)
+        header = self.certificates_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
         layout.addWidget(self.certificates_table)
 
         widget.setLayout(layout)
@@ -444,7 +476,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Hash",
             ],
         )
-        self.resources_table.horizontalHeader().setStretchLastSection(True)
+        header = self.resources_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
         layout.addWidget(self.resources_table)
 
         widget.setLayout(layout)
@@ -475,7 +509,9 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
                 "Suspicious",
             ],
         )
-        self.strings_table.horizontalHeader().setStretchLastSection(True)
+        header = self.strings_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
         layout.addWidget(self.strings_table)
 
         widget.setLayout(layout)
@@ -923,7 +959,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
     def on_detection_selected(self) -> None:
         """Handle detection selection."""
         current_row = self.detections_table.currentRow()
-        if current_row < 0:
+        if current_row < 0 or self.current_analysis is None:
             return
 
         # Get detection
@@ -966,7 +1002,7 @@ class IntellicrackAdvancedProtectionWidget(QWidget):
         else:
             # Use standard export
             export_format = ExportFormat[format_text]
-            self.logger.debug("Export format selected: %s", export_format)
+            logger.debug("Export format selected: %s", export_format)
             detector = IntellicrackAdvancedProtection()
             preview = detector.export_results(self.current_analysis, format_text.lower())
 

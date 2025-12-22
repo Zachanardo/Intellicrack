@@ -18,6 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 
 from intellicrack.handlers.pyqt6_handler import (
@@ -45,8 +46,15 @@ class PluginDialogBase(QDialog):
 
         """
         super().__init__(parent)
-        self.plugin_path = plugin_path
-        self.plugin_label = None
+        self.logger: logging.Logger = logging.getLogger(self.__class__.__name__)
+        self.plugin_path: str | None = plugin_path
+        self.plugin_label: QLabel | None = None
+        self.content_area: QWidget | None = None
+        self.content_layout: QVBoxLayout | None = None
+        self.ok_button: QPushButton | None = None
+        self.cancel_button: QPushButton | None = None
+        self._loaded_plugins: dict[str, dict[str, str | object]] = {}
+        self._last_loaded_plugin: str | None = None
         self.init_dialog()
 
     def init_dialog(self) -> None:
@@ -97,7 +105,8 @@ class PluginDialogBase(QDialog):
         plugin_layout.addWidget(QLabel("Plugin:"))
 
         self.plugin_label = QLabel("No plugin selected")
-        self.plugin_label.setStyleSheet("font-weight: bold;")
+        if self.plugin_label is not None:
+            self.plugin_label.setStyleSheet("font-weight: bold;")
         plugin_layout.addWidget(self.plugin_label)
 
         browse_btn = QPushButton("Browse...")
@@ -126,7 +135,8 @@ class PluginDialogBase(QDialog):
             return False
 
         self.plugin_path = plugin_path
-        self.plugin_label.setText(os.path.basename(plugin_path))
+        if self.plugin_label is not None:
+            self.plugin_label.setText(os.path.basename(plugin_path))
 
         # Subclasses should override this to add specific loading logic
         self.on_plugin_loaded(plugin_path)
@@ -136,15 +146,9 @@ class PluginDialogBase(QDialog):
         """Handle a plugin is loaded - to be overridden by subclasses."""
         self.logger.debug("Plugin loaded from: %s", plugin_path)
 
-        # Store plugin metadata
-        plugin_name = os.path.basename(plugin_path)
-        plugin_dir = os.path.dirname(plugin_path)
+        plugin_name: str = os.path.basename(plugin_path)
+        plugin_dir: str = os.path.dirname(plugin_path)
 
-        # Initialize plugin state tracking
-        if not hasattr(self, "_loaded_plugins"):
-            self._loaded_plugins = {}
-
-        # Store plugin information
         self._loaded_plugins[plugin_path] = {
             "name": plugin_name,
             "directory": plugin_dir,
@@ -152,26 +156,23 @@ class PluginDialogBase(QDialog):
             "status": "loaded",
         }
 
-        # Update window title to reflect loaded plugin
-        current_title = self.windowTitle()
+        current_title: str = self.windowTitle()
         if " - " not in current_title:
             self.setWindowTitle(f"{current_title} - {plugin_name}")
         else:
-            # Replace existing plugin name in title
-            base_title = current_title.split(" - ")[0]
+            base_title: str = current_title.split(" - ")[0]
             self.setWindowTitle(f"{base_title} - {plugin_name}")
 
-        # Enable any plugin-dependent UI elements
         if hasattr(self, "plugin_dependent_widgets"):
-            for widget in self.plugin_dependent_widgets:
-                widget.setEnabled(True)
+            plugin_dependent_widgets = getattr(self, "plugin_dependent_widgets")
+            if plugin_dependent_widgets is not None:
+                for widget in plugin_dependent_widgets:
+                    widget.setEnabled(True)
 
-        # Emit custom signal if available
         if hasattr(self, "plugin_loaded_signal"):
-            self.plugin_loaded_signal.emit(plugin_path)
+            plugin_loaded_signal = getattr(self, "plugin_loaded_signal")
+            if plugin_loaded_signal is not None:
+                plugin_loaded_signal.emit(plugin_path)
 
-        # Log successful plugin loading
         self.logger.info("Successfully loaded plugin: %s", plugin_name)
-
-        # Store last loaded plugin for quick access
         self._last_loaded_plugin = plugin_path

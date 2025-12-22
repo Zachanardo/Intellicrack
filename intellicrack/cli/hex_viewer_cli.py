@@ -24,7 +24,7 @@ import curses
 import logging
 import os
 import sys
-
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -49,9 +49,9 @@ class TerminalHexViewer:
         """
         self.filepath: str = filepath
         self.file_size: int = 0
-        self.data: bytes | bytearray | mmap.mmap | None = None
+        self.data: bytes | bytearray | mmap.mmap
         self.mmap_file: mmap.mmap | None = None
-        self.file_handle: object | None = None
+        self.file_handle: Any = None
 
         # Display settings
         self.bytes_per_line: int = 16
@@ -74,7 +74,7 @@ class TerminalHexViewer:
         self.hex_area_height: int = 0
         self.status_line: int = 0
         self.help_visible: bool = False
-        self.stdscr: curses._CursesWindow | None = None
+        self.stdscr: Any
 
         # Color pairs
         self.colors: dict[str, int] = {
@@ -97,18 +97,16 @@ class TerminalHexViewer:
         self.file_size = os.path.getsize(self.filepath)
 
         try:
-            self.file_handle = open(self.filepath, "r+b")  # noqa: SIM115
+            file_handle_temp = open(self.filepath, "r+b")  # noqa: SIM115
             if MMAP_AVAILABLE and self.file_size > 0:
-                # Use memory mapping for efficient large file handling
+                self.file_handle = file_handle_temp
                 self.mmap_file = mmap.mmap(self.file_handle.fileno(), 0)
                 self.data = self.mmap_file
             else:
-                # Fallback to reading entire file
-                with self.file_handle:
-                    self.data = self.file_handle.read()
+                with file_handle_temp:
+                    self.data = file_handle_temp.read()
                 self.file_handle = None
         except OSError as e:
-            # Try read-only mode
             try:
                 with open(self.filepath, "rb") as f:
                     self.data = f.read()
@@ -133,7 +131,7 @@ class TerminalHexViewer:
         curses.init_pair(self.colors["status"], curses.COLOR_WHITE, curses.COLOR_BLUE)
         curses.init_pair(self.colors["help"], curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
-    def run(self, stdscr: curses._CursesWindow) -> None:
+    def run(self, stdscr: Any) -> None:
         """Run main application loop."""
         self.stdscr = stdscr
         self._setup_colors()
@@ -825,7 +823,7 @@ class TerminalHexViewer:
         """Clean up resources."""
         if self.mmap_file:
             self.mmap_file.close()
-        if self.file_handle:
+        if self.file_handle and hasattr(self.file_handle, "close"):
             self.file_handle.close()
 
 

@@ -658,6 +658,8 @@ class FingerprintEngine:
         except Exception:
             logger.exception("Error identifying license system", exc_info=True)
 
+        return license_systems
+
     def compare_fingerprints(self, fp1: BinaryFingerprint, fp2: BinaryFingerprint) -> float:
         """Compare two binary fingerprints for similarity.
 
@@ -671,7 +673,7 @@ class FingerprintEngine:
         if fp1.sha256 == fp2.sha256:
             return 1.0
 
-        similarity_scores = []
+        similarity_scores: list[float] = []
 
         if SSDEEP_AVAILABLE and fp1.ssdeep and fp2.ssdeep:
             try:

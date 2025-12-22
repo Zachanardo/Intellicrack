@@ -8,6 +8,8 @@ Licensed under GNU General Public License v3.0
 
 import os
 
+from typing import Any, Protocol
+
 from PyQt6.QtCore import QObject, QProcess, QTimer, pyqtSignal
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -16,6 +18,24 @@ from ..utils.logger import get_logger
 
 
 logger = get_logger(__name__)
+
+
+class HexWidgetProtocol(Protocol):
+    """Protocol for hex viewer widget interface."""
+
+    file_path: str | None
+
+    def goto_offset(self, offset: int) -> None:
+        """Jump to specified offset."""
+        ...
+
+    def parent(self) -> object | None:
+        """Get parent widget."""
+        ...
+
+    def add_bookmark(self, offset: int, label: str) -> None:
+        """Add bookmark at offset."""
+        ...
 
 
 class IntellicrackHexProtectionIntegration(QObject):
@@ -27,7 +47,7 @@ class IntellicrackHexProtectionIntegration(QObject):
     #: Signal to request jumping to a specific section (type: str)
     section_requested = pyqtSignal(str)
 
-    def __init__(self, hex_widget: object | None = None) -> None:
+    def __init__(self, hex_widget: HexWidgetProtocol | None = None) -> None:
         """Initialize hex protection integration.
 
         Args:
@@ -35,15 +55,15 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         """
         super().__init__()
-        self.hex_widget = hex_widget
-        self.protection_detector = IntellicrackProtectionCore()
-        self.icp_detector = self.protection_detector
-        self.engine_process = None
+        self.hex_widget: HexWidgetProtocol | None = hex_widget
+        self.protection_detector: IntellicrackProtectionCore = IntellicrackProtectionCore()
+        self.icp_detector: IntellicrackProtectionCore = self.protection_detector
+        self.engine_process: QProcess | None = None
 
         # Setup two-way synchronization monitoring
-        self.sync_timer = QTimer()
+        self.sync_timer: QTimer = QTimer()
         self.sync_timer.timeout.connect(self._monitor_protection_viewer_offset)
-        self.last_synced_offset = -1
+        self.last_synced_offset: int = -1
         self.sync_timer.start(500)  # Check every 500ms
 
     def open_in_protection_viewer(self, file_path: str, offset: int | None = None) -> None:
@@ -169,10 +189,10 @@ class IntellicrackHexProtectionIntegration(QObject):
             logger.exception("Failed to sync offset to protection viewer: %s", e)
 
         # If we have a running process, try to send via stdin as well
-        if self.engine_process and self.engine_process.state() == QProcess.ProcessState.Running:
+        if self.engine_process is not None and self.engine_process.state() == QProcess.ProcessState.Running:
             try:
                 # Send offset command through stdin
-                command = f"goto:{offset}\n"
+                command: str = f"goto:{offset}\n"
                 self.engine_process.write(command.encode())
                 logger.debug("Sent goto command to protection viewer process: %s", command.strip())
             except Exception as e:
@@ -214,14 +234,15 @@ class IntellicrackHexProtectionIntegration(QObject):
         """
         try:
             analysis = self.icp_detector.detect_protections(file_path)
-            section_offsets = {}
+            section_offsets: dict[str, int] = {}
 
             if analysis and analysis.sections:
                 for section in analysis.sections:
-                    name = section.get("name", "")
-                    offset = section.get("offset", 0)
-                    if name and offset:
-                        section_offsets[name] = offset
+                    name_val: Any = section.get("name", "")
+                    offset_val: Any = section.get("offset", 0)
+                    if isinstance(name_val, str) and isinstance(offset_val, int):
+                        if name_val and offset_val:
+                            section_offsets[name_val] = offset_val
 
             return section_offsets
 
@@ -270,7 +291,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             Dictionary of feature availability
 
         """
-        features = {
+        features: dict[str, bool] = {
             "Basic Viewing": False,
             "Text Search": False,
             "ANSI/Unicode Search": False,
@@ -292,6 +313,7 @@ class IntellicrackHexProtectionIntegration(QObject):
         }
 
         # Check if we have a hex widget reference
+        widget_class: type[Any]
         if not self.hex_widget:
             # Try to import and check the hex widget class
             try:
@@ -301,7 +323,7 @@ class IntellicrackHexProtectionIntegration(QObject):
             except ImportError:
                 return features
         else:
-            widget_class = self.hex_widget.__class__
+            widget_class = type(self.hex_widget)
 
         # Check for basic viewing (always present if widget exists)
         features["Basic Viewing"] = True
@@ -312,13 +334,13 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         # Check for advanced search module
         try:
-            from .advanced_search import AdvancedSearchEngine
-
-            _ = AdvancedSearchEngine.__name__  # Verify advanced search capabilities
-            features["Advanced Search"] = True
-            features["ANSI/Unicode Search"] = True
-            features["Pattern Matching"] = True
-        except ImportError:
+            import importlib.util
+            spec = importlib.util.find_spec(".advanced_search", package="intellicrack.hexview")
+            if spec is not None:
+                features["Advanced Search"] = True
+                features["ANSI/Unicode Search"] = True
+                features["Pattern Matching"] = True
+        except (ImportError, ValueError):
             pass
 
         # Check for export capabilities
@@ -349,8 +371,8 @@ class IntellicrackHexProtectionIntegration(QObject):
 
         # Check for multi-view capabilities
         if self.hex_widget:
-            parent = self.hex_widget.parent()
-            if parent and hasattr(parent, "split_view_horizontal"):
+            parent_widget: object | None = self.hex_widget.parent()
+            if parent_widget is not None and hasattr(parent_widget, "split_view_horizontal"):
                 features["Multi-View"] = True
         else:
             # Check if split view methods exist in dialog
@@ -430,7 +452,7 @@ class IntellicrackHexProtectionIntegration(QObject):
 class ProtectionIntegrationWidget(QWidget):
     """Widget for protection viewer hex viewer integration controls."""
 
-    def __init__(self, hex_widget: object | None = None, parent: object | None = None) -> None:
+    def __init__(self, hex_widget: HexWidgetProtocol | None = None, parent: QWidget | None = None) -> None:
         """Initialize protection viewer integration widget.
 
         Args:
@@ -439,21 +461,24 @@ class ProtectionIntegrationWidget(QWidget):
 
         """
         super().__init__(parent)
-        self.hex_widget = hex_widget
-        self.integration = IntellicrackHexProtectionIntegration(hex_widget)
+        self.hex_widget: HexWidgetProtocol | None = hex_widget
+        self.integration: IntellicrackHexProtectionIntegration = IntellicrackHexProtectionIntegration(hex_widget)
+        self.info_label: QLabel
+        self.open_in_protection_viewer_btn: QPushButton
+        self.sync_sections_btn: QPushButton
         self.init_ui()
 
     def init_ui(self) -> None:
         """Initialize UI."""
-        layout = QVBoxLayout()
+        layout: QVBoxLayout = QVBoxLayout()
 
         # Header
-        header = QLabel("Protection Viewer Integration")
+        header: QLabel = QLabel("Protection Viewer Integration")
         header.setStyleSheet("font-weight: bold;")
         layout.addWidget(header)
 
         # Buttons
-        button_layout = QHBoxLayout()
+        button_layout: QHBoxLayout = QHBoxLayout()
 
         self.open_in_protection_viewer_btn = QPushButton("Open in Protection Viewer")
         self.open_in_protection_viewer_btn.clicked.connect(self._open_in_protection_viewer)
@@ -477,8 +502,9 @@ class ProtectionIntegrationWidget(QWidget):
 
     def _open_in_protection_viewer(self) -> None:
         """Open current file in protection viewer."""
-        if self.hex_widget and hasattr(self.hex_widget, "file_path"):
-            if file_path := self.hex_widget.file_path:
+        if self.hex_widget is not None:
+            file_path: str | None = self.hex_widget.file_path
+            if file_path:
                 self.integration.open_in_icp(file_path)
                 self.info_label.setText("Opened in protection viewer - Press 'H' for hex viewer")
             else:
@@ -488,13 +514,14 @@ class ProtectionIntegrationWidget(QWidget):
 
     def sync_sections_from_icp(self) -> None:
         """Sync section information from protection viewer."""
-        if self.hex_widget and hasattr(self.hex_widget, "file_path"):
-            if file_path := self.hex_widget.file_path:
-                if sections := self.integration.get_section_offsets(file_path):
+        if self.hex_widget is not None:
+            file_path: str | None = self.hex_widget.file_path
+            if file_path:
+                sections: dict[str, int] = self.integration.get_section_offsets(file_path)
+                if sections:
                     # Add bookmarks for sections
                     for name, offset in sections.items():
-                        if hasattr(self.hex_widget, "add_bookmark"):
-                            self.hex_widget.add_bookmark(offset, f"Section: {name}")
+                        self.hex_widget.add_bookmark(offset, f"Section: {name}")
                     self.info_label.setText(f"Synced {len(sections)} sections from protection viewer")
                 else:
                     self.info_label.setText("No sections found")
@@ -503,7 +530,7 @@ class ProtectionIntegrationWidget(QWidget):
 
 
 def create_intellicrack_hex_integration(
-    hex_widget: object | None = None,
+    hex_widget: HexWidgetProtocol | None = None,
 ) -> IntellicrackHexProtectionIntegration:
     """Create Intellicrack hex viewer integration.
 

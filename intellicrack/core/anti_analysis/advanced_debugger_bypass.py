@@ -474,7 +474,8 @@ class HypervisorDebugger:
             if Path(msr_path).exists():
                 with Path(msr_path).open("rb") as f:
                     f.seek(msr_index)
-                    return struct.unpack("<Q", f.read(8))[0]
+                    result: int = struct.unpack("<Q", f.read(8))[0]
+                    return result
             return 0
 
         except Exception:
@@ -537,10 +538,10 @@ class TimingNeutralizer:
     def __init__(self) -> None:
         """Initialize timing neutralizer."""
         self.logger = logging.getLogger("IntellicrackLogger.TimingNeutralizer")
-        self.base_timestamp = None
+        self.base_timestamp: int | None = None
         self.rdtsc_offset = 0
         self.qpc_offset = 0
-        self.hooked_functions: dict[str, Callable] = {}
+        self.hooked_functions: dict[str, int] = {}
 
     def neutralize_rdtsc(self) -> bool:
         """Neutralize RDTSC/RDTSCP timing checks."""
@@ -586,7 +587,8 @@ class TimingNeutralizer:
                 return False
 
             kernel32 = ctypes.windll.kernel32
-            original_qpc = ctypes.cast(kernel32.QueryPerformanceCounter, ctypes.c_void_p).value
+            original_qpc_ptr = ctypes.cast(kernel32.QueryPerformanceCounter, ctypes.c_void_p)
+            original_qpc: int = original_qpc_ptr.value if original_qpc_ptr.value is not None else 0
 
             if not original_qpc:
                 return False
@@ -609,11 +611,15 @@ class TimingNeutralizer:
 
             kernel32 = ctypes.windll.kernel32
 
-            if original_gtc := ctypes.cast(kernel32.GetTickCount, ctypes.c_void_p).value:
+            gtc_ptr = ctypes.cast(kernel32.GetTickCount, ctypes.c_void_p)
+            original_gtc: int | None = gtc_ptr.value if gtc_ptr.value is not None else None
+            if original_gtc:
                 self.hooked_functions["GetTickCount"] = original_gtc
 
             if hasattr(kernel32, "GetTickCount64"):
-                if original_gtc64 := ctypes.cast(kernel32.GetTickCount64, ctypes.c_void_p).value:
+                gtc64_ptr = ctypes.cast(kernel32.GetTickCount64, ctypes.c_void_p)
+                original_gtc64: int | None = gtc64_ptr.value if gtc64_ptr.value is not None else None
+                if original_gtc64:
                     self.hooked_functions["GetTickCount64"] = original_gtc64
 
             self.logger.info("GetTickCount functions hooked for timing normalization")
@@ -684,7 +690,7 @@ class AdvancedDebuggerBypass:
             Dictionary containing results of each bypass technique installation
 
         """
-        results = {
+        results: dict[str, Any] = {
             "usermode_ntapi_hooks": {},
             "hypervisor": {},
             "timing": {},
@@ -694,21 +700,27 @@ class AdvancedDebuggerBypass:
         try:
             self.logger.info("Installing full anti-anti-debug bypass suite (user-mode)")
 
-            results["usermode_ntapi_hooks"]["NtQueryInformationProcess"] = self.kernel_hooks.hook_ntquery_information_process()
-            results["usermode_ntapi_hooks"]["NtSetInformationThread"] = self.kernel_hooks.hook_ntset_information_thread()
-            results["usermode_ntapi_hooks"]["NtQuerySystemInformation"] = self.kernel_hooks.hook_ntquery_system_information()
+            ntapi_hooks: dict[str, bool] = {}
+            ntapi_hooks["NtQueryInformationProcess"] = self.kernel_hooks.hook_ntquery_information_process()
+            ntapi_hooks["NtSetInformationThread"] = self.kernel_hooks.hook_ntset_information_thread()
+            ntapi_hooks["NtQuerySystemInformation"] = self.kernel_hooks.hook_ntquery_system_information()
+            results["usermode_ntapi_hooks"] = ntapi_hooks
 
+            hypervisor_results: dict[str, Any] = {}
             vt_support = self.hypervisor.check_virtualization_support()
-            results["hypervisor"]["support"] = vt_support
+            hypervisor_results["support"] = vt_support
 
             if vt_support.get("vmx") or vt_support.get("svm"):
-                results["hypervisor"]["vmcs_shadowing"] = self.hypervisor.setup_vmcs_shadowing()
+                hypervisor_results["vmcs_shadowing"] = self.hypervisor.setup_vmcs_shadowing()
                 if vt_support.get("ept"):
-                    results["hypervisor"]["ept_hooks"] = self.hypervisor.setup_ept_hooks()
+                    hypervisor_results["ept_hooks"] = self.hypervisor.setup_ept_hooks()
+            results["hypervisor"] = hypervisor_results
 
-            results["timing"]["rdtsc"] = self.timing_neutralizer.neutralize_rdtsc()
-            results["timing"]["qpc"] = self.timing_neutralizer.hook_query_performance_counter()
-            results["timing"]["tick_count"] = self.timing_neutralizer.hook_get_tick_count()
+            timing_results: dict[str, bool] = {}
+            timing_results["rdtsc"] = self.timing_neutralizer.neutralize_rdtsc()
+            timing_results["qpc"] = self.timing_neutralizer.hook_query_performance_counter()
+            timing_results["tick_count"] = self.timing_neutralizer.hook_get_tick_count()
+            results["timing"] = timing_results
 
             successful_bypasses = sum(
                 1
@@ -718,8 +730,9 @@ class AdvancedDebuggerBypass:
                 if isinstance(success, bool) and success
             )
 
-            results["overall_success"] = successful_bypasses > 0
-            self.bypass_active = results["overall_success"]
+            overall_success: bool = successful_bypasses > 0
+            results["overall_success"] = overall_success
+            self.bypass_active = overall_success
 
             self.logger.info("Bypass installation complete: %s techniques installed successfully", successful_bypasses)
 
@@ -730,7 +743,7 @@ class AdvancedDebuggerBypass:
             results["error"] = str(e)
             return results
 
-    def install_scyllahide_resistant_bypass(self) -> dict[str, bool]:
+    def install_scyllahide_resistant_bypass(self) -> dict[str, bool | str]:
         """Install bypass techniques specifically designed to defeat ScyllaHide.
 
         Uses user-mode NT API hooks combined with timing neutralization to bypass
@@ -740,7 +753,7 @@ class AdvancedDebuggerBypass:
             Dictionary of bypass technique names and their installation status
 
         """
-        results = {}
+        results: dict[str, bool | str] = {}
 
         try:
             self.logger.info("Installing ScyllaHide-resistant bypass techniques (user-mode)")
@@ -758,7 +771,8 @@ class AdvancedDebuggerBypass:
 
             results["system_info_spoof_usermode"] = self.kernel_hooks.hook_ntquery_system_information()
 
-            self.logger.info("ScyllaHide-resistant bypass: %s/%s techniques active", sum(results.values()), len(results))
+            bool_results_count = sum(1 for v in results.values() if isinstance(v, bool) and v)
+            self.logger.info("ScyllaHide-resistant bypass: %s/%s techniques active", bool_results_count, len(results))
 
             return results
 

@@ -48,7 +48,7 @@ class WindowsContext:
 
     def __init__(self) -> None:
         """Initialize Windows context manager."""
-        self.kernel32 = ctypes.windll.kernel32 if STRUCTURES_AVAILABLE else None
+        self.kernel32: Any = ctypes.windll.kernel32 if STRUCTURES_AVAILABLE else None
 
     def create_context_structure(self) -> tuple[type[ctypes.Structure], int] | tuple[None, None]:
         """Create appropriate CONTEXT structure based on architecture."""
@@ -58,7 +58,7 @@ class WindowsContext:
         try:
             if ctypes.sizeof(ctypes.c_void_p) == 8:  # 64-bit
 
-                class CONTEXT(ctypes.Structure):
+                class CONTEXT64(ctypes.Structure):
                     """Windows 64-bit thread context structure."""
 
                     _fields_ = [
@@ -102,10 +102,11 @@ class WindowsContext:
                         ("Rip", ctypes.c_ulonglong),
                     ]
 
-                CONTEXT_FULL = 0x10000B
+                context_class: type[ctypes.Structure] = CONTEXT64
+                context_full: int = 0x10000B
             else:  # 32-bit
 
-                class CONTEXT(ctypes.Structure):
+                class CONTEXT32(ctypes.Structure):
                     """Windows 32-bit thread context structure."""
 
                     _fields_ = [
@@ -135,9 +136,10 @@ class WindowsContext:
                         ("SegSs", ctypes.wintypes.DWORD),
                     ]
 
-                CONTEXT_FULL = 0x10007
+                context_class = CONTEXT32
+                context_full = 0x10007
 
-            return CONTEXT, CONTEXT_FULL
+            return context_class, context_full
 
         except Exception as e:
             logger.exception("Failed to create CONTEXT structure: %s", e, exc_info=True)
@@ -187,7 +189,11 @@ class WindowsContext:
     def get_entry_point(self, context: ctypes.Structure) -> int:
         """Get entry point from context."""
         try:
-            return context.Rip if ctypes.sizeof(ctypes.c_void_p) == 8 else context.Eip
+            if ctypes.sizeof(ctypes.c_void_p) == 8:
+                entry_point = getattr(context, "Rip", 0)
+            else:
+                entry_point = getattr(context, "Eip", 0)
+            return int(entry_point)
         except Exception as e:
             logger.exception("Failed to get entry point: %s", e, exc_info=True)
             return 0
@@ -246,7 +252,7 @@ class WindowsProcessStructures:
 
         return PROCESS_INFORMATION
 
-    def create_suspended_process(self, exe_path: str, command_line: str = None) -> dict | None:
+    def create_suspended_process(self, exe_path: str, command_line: str | None = None) -> dict[str, int] | None:
         """Create a process in suspended state using shared implementation."""
         if not STRUCTURES_AVAILABLE:
             return None
@@ -285,10 +291,10 @@ class WindowsProcessStructures:
                 return None
 
             return {
-                "process_handle": process_info.hProcess,
-                "thread_handle": process_info.hThread,
-                "process_id": process_info.dwProcessId,
-                "thread_id": process_info.dwThreadId,
+                "process_handle": int(process_info.hProcess),
+                "thread_handle": int(process_info.hThread),
+                "process_id": int(process_info.dwProcessId),
+                "thread_id": int(process_info.dwThreadId),
             }
 
         except Exception as e:
@@ -296,8 +302,7 @@ class WindowsProcessStructures:
             return None
 
 
-# Common license domains for SSL interceptor and UI
-COMMON_LICENSE_DOMAINS = [
+COMMON_LICENSE_DOMAINS: list[str] = [
     "licensing.adobe.com",
     "lm.autodesk.com",
     "activation.cloud.techsmith.com",

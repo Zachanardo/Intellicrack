@@ -251,18 +251,26 @@ class ValidationLayerDetector:
 
         return list(detected_layers.values())
 
-    def _detect_os_level(self, binary: lief.Binary) -> LayerInfo | None:
+    def _detect_os_level(
+        self,
+        binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
+    ) -> LayerInfo | None:
         """Detect OS-level validation (CryptoAPI, Schannel, system trust store)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.OS_LEVEL,
             confidence=0.0,
         )
 
-        imported_libs = set()
+        imported_libs: set[str] = set()
         if hasattr(binary, "imports"):
             for imported_lib in binary.imports:
-                lib_name = imported_lib.name.lower() if hasattr(imported_lib, "name") else ""
-                imported_libs.add(lib_name)
+                if hasattr(imported_lib, "name"):
+                    lib_name_raw = imported_lib.name
+                    if isinstance(lib_name_raw, bytes):
+                        lib_name = lib_name_raw.decode("utf-8", errors="ignore").lower()
+                    else:
+                        lib_name = str(lib_name_raw).lower()
+                    imported_libs.add(lib_name)
 
         if os_dll_matches := imported_libs.intersection(
             {dll.lower() for dll in self.OS_LEVEL_DLLS},
@@ -279,18 +287,26 @@ class ValidationLayerDetector:
 
         return layer_info if layer_info.confidence > 0.0 else None
 
-    def _detect_library_level(self, binary: lief.Binary) -> LayerInfo | None:
+    def _detect_library_level(
+        self,
+        binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
+    ) -> LayerInfo | None:
         """Detect library-level validation (OpenSSL, NSS, BoringSSL)."""
         layer_info = LayerInfo(
             layer_type=ValidationLayer.LIBRARY_LEVEL,
             confidence=0.0,
         )
 
-        imported_libs = set()
+        imported_libs: set[str] = set()
         if hasattr(binary, "imports"):
             for imported_lib in binary.imports:
-                lib_name = imported_lib.name.lower() if hasattr(imported_lib, "name") else ""
-                imported_libs.add(lib_name)
+                if hasattr(imported_lib, "name"):
+                    lib_name_raw = imported_lib.name
+                    if isinstance(lib_name_raw, bytes):
+                        lib_name = lib_name_raw.decode("utf-8", errors="ignore").lower()
+                    else:
+                        lib_name = str(lib_name_raw).lower()
+                    imported_libs.add(lib_name)
 
         if lib_matches := imported_libs.intersection(
             {lib.lower() for lib in self.LIBRARY_LEVEL_LIBS},
@@ -313,7 +329,7 @@ class ValidationLayerDetector:
 
     def _detect_application_level(
         self,
-        binary: lief.Binary,
+        binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
         target_path: Path,
     ) -> LayerInfo | None:
         """Detect application-level pinning (hardcoded certs, custom logic)."""
@@ -323,10 +339,13 @@ class ValidationLayerDetector:
         )
 
         try:
-            strings_found = set()
+            strings_found: set[str] = set()
             if hasattr(binary, "strings"):
                 for string in binary.strings:
-                    strings_found.add(string.lower())
+                    if isinstance(string, bytes):
+                        strings_found.add(string.decode("utf-8", errors="ignore").lower())
+                    else:
+                        strings_found.add(str(string).lower())
 
             if indicator_matches := [
                 indicator for indicator in self.APPLICATION_LEVEL_INDICATORS if any(indicator.lower() in s for s in strings_found)
@@ -354,7 +373,7 @@ class ValidationLayerDetector:
 
     def _detect_server_level(
         self,
-        binary: lief.Binary,
+        binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary,
         target_path: Path,
     ) -> LayerInfo | None:
         """Detect server-level validation (network-based license checking)."""
@@ -364,10 +383,13 @@ class ValidationLayerDetector:
         )
 
         try:
-            strings_found = set()
+            strings_found: set[str] = set()
             if hasattr(binary, "strings"):
                 for string in binary.strings:
-                    strings_found.add(string.lower())
+                    if isinstance(string, bytes):
+                        strings_found.add(string.decode("utf-8", errors="ignore").lower())
+                    else:
+                        strings_found.add(str(string).lower())
 
             if indicator_matches := [
                 indicator for indicator in self.SERVER_LEVEL_INDICATORS if any(indicator.lower() in s for s in strings_found)

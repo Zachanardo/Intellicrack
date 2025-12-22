@@ -103,10 +103,12 @@ VERIFICATION:
 
 import logging
 from dataclasses import dataclass, field
+from typing import NoReturn, assert_never
 
 from intellicrack.core.certificate.cert_patcher import CertificatePatcher
 from intellicrack.core.certificate.frida_cert_hooks import FridaCertificateHooks
 from intellicrack.core.certificate.layer_detector import DependencyGraph, LayerInfo, ValidationLayer
+from intellicrack.core.certificate.patch_generators import Architecture
 from intellicrack.core.certificate.patch_templates import select_template
 from intellicrack.core.certificate.validation_detector import CertificateValidationDetector
 
@@ -153,7 +155,7 @@ class MultiLayerBypass:
 
     def __init__(self) -> None:
         """Initialize multi-layer bypass orchestrator."""
-        self._patcher = CertificatePatcher()
+        self._patcher: CertificatePatcher | None = None
         self._frida_hooks = FridaCertificateHooks()
         self._detector = CertificateValidationDetector()
 
@@ -238,18 +240,14 @@ class MultiLayerBypass:
         """Execute bypass for a specific layer."""
         if layer == ValidationLayer.OS_LEVEL:
             return self._bypass_os_level(stage_number, layer, target)
-        if layer == ValidationLayer.LIBRARY_LEVEL:
+        elif layer == ValidationLayer.LIBRARY_LEVEL:
             return self._bypass_library_level(stage_number, layer, target)
-        if layer == ValidationLayer.APPLICATION_LEVEL:
+        elif layer == ValidationLayer.APPLICATION_LEVEL:
             return self._bypass_application_level(stage_number, layer, target)
-        if layer == ValidationLayer.SERVER_LEVEL:
+        elif layer == ValidationLayer.SERVER_LEVEL:
             return self._bypass_server_level(stage_number, layer, target)
-        return StageResult(
-            stage_number=stage_number,
-            layer=layer,
-            success=False,
-            error_message=f"Unknown layer type: {layer}",
-        )
+        else:
+            assert_never(layer)
 
     def _bypass_os_level(
         self,
@@ -280,9 +278,11 @@ class MultiLayerBypass:
 
             bypassed = []
             for func in os_level_functions[:5]:
-                if template := select_template(func.api_name, "x64"):
+                if template := select_template(func.api_name, Architecture.X64):
                     logger.debug("Using template for %s: %s", func.api_name, template.name)
                     try:
+                        if self._patcher is None:
+                            self._patcher = CertificatePatcher(target)
                         patch_result = self._patcher.patch_certificate_validation(
                             detection_report,
                         )
@@ -355,9 +355,11 @@ class MultiLayerBypass:
                 logger.warning("Frida injection failed, trying binary patching: %s", e, exc_info=True)
 
                 for func in library_functions[:3]:
-                    if template := select_template(func.api_name, "x64"):
+                    if template := select_template(func.api_name, Architecture.X64):
                         logger.debug("Applying binary patch template for %s: %s", func.api_name, template.name)
                         try:
+                            if self._patcher is None:
+                                self._patcher = CertificatePatcher(target)
                             patch_result = self._patcher.patch_certificate_validation(
                                 detection_report,
                             )
@@ -401,7 +403,7 @@ class MultiLayerBypass:
                         bypassed.append("Frida: Universal bypass")
 
                     status = self._frida_hooks.get_bypass_status()
-                    if status.get("pinning_bypassed"):
+                    if status.intercepted_data.get("pinning_bypassed"):
                         bypassed.append("Frida: Certificate pinning bypass")
             except Exception as e:
                 logger.warning("Frida-based application bypass failed: %s", e, exc_info=True)
@@ -414,6 +416,8 @@ class MultiLayerBypass:
 
                 for func in app_functions[:5]:
                     try:
+                        if self._patcher is None:
+                            self._patcher = CertificatePatcher(target)
                         patch_result = self._patcher.patch_certificate_validation(
                             detection_report,
                         )
@@ -455,8 +459,9 @@ class MultiLayerBypass:
                 if self._frida_hooks.attach(target):
                     status = self._frida_hooks.get_bypass_status()
 
-                    detected_libs = status.get("detected_libraries", [])
-                    if "winhttp" in [lib.lower() for lib in detected_libs] and self._frida_hooks.inject_specific_bypass("winhttp"):
+                    detected_libs = status.detected_libraries
+                    detected_lib_names = [lib.get("name", "").lower() for lib in detected_libs if isinstance(lib, dict)]
+                    if "winhttp" in detected_lib_names and self._frida_hooks.inject_specific_bypass("winhttp"):
                         bypassed.append("Frida: WinHTTP bypass")
 
             except Exception as e:
@@ -508,13 +513,14 @@ class MultiLayerBypass:
         try:
             if layer == ValidationLayer.OS_LEVEL:
                 return self._verify_os_level_bypass(target)
-            if layer == ValidationLayer.LIBRARY_LEVEL:
+            elif layer == ValidationLayer.LIBRARY_LEVEL:
                 return self._verify_library_level_bypass(target)
-            if layer == ValidationLayer.APPLICATION_LEVEL:
+            elif layer == ValidationLayer.APPLICATION_LEVEL:
                 return self._verify_application_level_bypass(target)
-            if layer == ValidationLayer.SERVER_LEVEL:
+            elif layer == ValidationLayer.SERVER_LEVEL:
                 return self._verify_server_level_bypass(target)
-            return False
+            else:
+                assert_never(layer)
 
         except Exception as e:
             logger.exception("Verification failed for %s: %s", layer.value, e, exc_info=True)
@@ -525,7 +531,8 @@ class MultiLayerBypass:
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
-                return status.get("cryptoapi_bypassed", False)
+                cryptoapi_bypassed = status.intercepted_data.get("cryptoapi_bypassed")
+                return bool(cryptoapi_bypassed) if cryptoapi_bypassed is not None else False
             return True
         except Exception as e:
             logger.warning("OS-level verification failed: %s", e, exc_info=True)
@@ -536,7 +543,14 @@ class MultiLayerBypass:
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
-                return status.get("openssl_bypassed", False) or status.get("nss_bypassed", False) or status.get("boringssl_bypassed", False)
+                openssl_bypassed = status.intercepted_data.get("openssl_bypassed")
+                nss_bypassed = status.intercepted_data.get("nss_bypassed")
+                boringssl_bypassed = status.intercepted_data.get("boringssl_bypassed")
+                return (
+                    bool(openssl_bypassed if openssl_bypassed is not None else False)
+                    or bool(nss_bypassed if nss_bypassed is not None else False)
+                    or bool(boringssl_bypassed if boringssl_bypassed is not None else False)
+                )
             return True
         except Exception as e:
             logger.warning("Library-level verification failed: %s", e, exc_info=True)
@@ -547,7 +561,8 @@ class MultiLayerBypass:
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
-                return status.get("pinning_bypassed", False)
+                pinning_bypassed = status.intercepted_data.get("pinning_bypassed")
+                return bool(pinning_bypassed) if pinning_bypassed is not None else False
             return True
         except Exception as e:
             logger.warning("Application-level verification failed: %s", e, exc_info=True)
@@ -558,7 +573,8 @@ class MultiLayerBypass:
         try:
             if hasattr(self._frida_hooks, "_script") and self._frida_hooks._script:
                 status = self._frida_hooks.get_bypass_status()
-                return status.get("winhttp_bypassed", False)
+                winhttp_bypassed = status.intercepted_data.get("winhttp_bypassed")
+                return bool(winhttp_bypassed) if winhttp_bypassed is not None else False
             return True
         except Exception as e:
             logger.warning("Server-level verification failed: %s", e, exc_info=True)

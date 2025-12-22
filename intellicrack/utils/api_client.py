@@ -24,8 +24,13 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import asyncio
 import logging
 import types
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from intellicrack.handlers.aiohttp_handler import ClientTimeout, aiohttp as aiohttp_module
+else:
+    aiohttp_module = None
+    ClientTimeout = None
 
 logger = logging.getLogger(__name__)
 
@@ -35,8 +40,8 @@ try:
     HAS_AIOHTTP = True
 except ImportError as e:
     logger.exception("Import error in api_client: %s", e)
-    aiohttp = None
-    ClientTimeout = None
+    aiohttp = None  # type: ignore[assignment]
+    ClientTimeout = None  # type: ignore[assignment,misc]
     HAS_AIOHTTP = False
 
 
@@ -50,17 +55,21 @@ class APIClient:
         if not HAS_AIOHTTP:
             logger.warning("aiohttp not available - API client will use fallback implementation")
         self.base_url = base_url or get_secret("API_BASE_URL", "https://api.intellicrack.com")
-        self.timeout = int(get_secret("API_TIMEOUT", "60"))
-        self.retry_attempts = int(get_secret("API_RETRY_ATTEMPTS", "3"))
-        self.retry_delay = int(get_secret("API_RETRY_DELAY", "1000")) / 1000  # Convert ms to seconds
-        self.session = None
+        timeout_str = get_secret("API_TIMEOUT", "60")
+        self.timeout = int(timeout_str) if timeout_str else 60
+        retry_attempts_str = get_secret("API_RETRY_ATTEMPTS", "3")
+        self.retry_attempts = int(retry_attempts_str) if retry_attempts_str else 3
+        retry_delay_str = get_secret("API_RETRY_DELAY", "1000")
+        self.retry_delay = (int(retry_delay_str) if retry_delay_str else 1000) / 1000  # Convert ms to seconds
+        self.session: Any = None
 
     async def __aenter__(self) -> "APIClient":
         """Async context manager entry."""
         if not HAS_AIOHTTP:
             return self
-        timeout = ClientTimeout(total=self.timeout)
-        self.session = aiohttp.ClientSession(timeout=timeout)
+        if ClientTimeout is not None and aiohttp is not None:
+            timeout = ClientTimeout(total=self.timeout)
+            self.session = aiohttp.ClientSession(timeout=timeout)
         return self
 
     async def __aexit__(
@@ -70,7 +79,7 @@ class APIClient:
         exc_tb: types.TracebackType | None,
     ) -> None:
         """Async context manager exit."""
-        if self.session and HAS_AIOHTTP:
+        if self.session is not None:
             await self.session.close()
 
     async def fetch(
@@ -126,6 +135,8 @@ class APIClient:
         # Retry logic
         for attempt in range(self.retry_attempts):
             try:
+                if self.session is None:
+                    raise RuntimeError("Session not initialized - use async context manager")
                 async with self.session.request(
                     method=method,
                     url=url,
@@ -153,7 +164,8 @@ class APIClient:
                         raise aiohttp.ClientError(error_msg)
 
                     # Parse response
-                    return await response.json()
+                    result: dict[str, Any] = await response.json()
+                    return result
 
             except (TimeoutError, aiohttp.ClientError) as e:
                 logger.warning("API request attempt %s failed: %s", attempt + 1, e, exc_info=True)

@@ -27,13 +27,13 @@ import types
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 
 try:
     import frida
 except ImportError:
-    frida = None
+    frida = None  # type: ignore[assignment]
 
 
 @dataclass
@@ -132,8 +132,7 @@ class StalkerSession:
 
     def _log(self, message: str) -> None:
         """Log message via callback."""
-        if self.message_callback:
-            self.message_callback(f"[StalkerSession] {message}")
+        self.message_callback(f"[StalkerSession] {message}")
 
     def _on_message(self, message: dict[str, Any], data: bytes | None) -> None:
         """Handle messages from Frida script."""
@@ -316,7 +315,7 @@ class StalkerSession:
             self._log(f"Attached to PID {self.pid}")
 
             self.script = self.session.create_script(script_source)
-            self.script.on("message", self._on_message)
+            self.script.on("message", cast(Any, self._on_message))
             self.script.load()
 
             self.device.resume(self.pid)

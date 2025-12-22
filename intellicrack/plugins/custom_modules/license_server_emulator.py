@@ -2427,11 +2427,12 @@ class BinaryKeyExtractor:
         try:
             from cryptography.hazmat.primitives import serialization
 
-            return key.private_bytes(
+            result: bytes = key.private_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
             )
+            return result
         except (AttributeError, TypeError, ValueError):
             return None
 
@@ -5375,6 +5376,7 @@ class ProxyInterceptor:
         self.state_machine = ProtocolStateMachine(self.key_extractor)
         self.binary_cache: dict[str, Any] = {}
         self.session_states: dict[str, Any] = {}
+        self.current_session: str | None = None
         self.bypass_domains = set(
             self.config.get(
                 "bypass_domains",
@@ -6105,9 +6107,10 @@ class ProxyInterceptor:
         }
         try:
             if not os.path.exists(binary_path):
-                binary_path = self._find_kms_binary()
-                if not binary_path:
+                found_binary: str | None = self._find_kms_binary()
+                if not found_binary:
                     raise ExtractionError("No KMS binary found for extraction")
+                binary_path = found_binary
             pe = pefile.PE(binary_path)
             for section in pe.sections:
                 data = section.get_data()
@@ -6717,16 +6720,18 @@ class LicenseServerEmulator:
             """Handle proxied license validation requests."""
             body = await request.body()
             client_addr = request.client.host if request.client else "127.0.0.1"
-            analysis = self.protocol_analyzer.analyze_traffic(body, client_addr, request.url.port if request.url else 0)
+            port: int = request.url.port if request.url and request.url.port is not None else 0
+            analysis = self.protocol_analyzer.analyze_traffic(body, client_addr, port)
             should_modify, response = await self.proxy_interceptor.intercept_request(request)
             if should_modify and response:
                 if isinstance(response, dict) and "body" in response:
-                    return Response(
+                    response_obj: Response = Response(
                         content=json.dumps(response["body"]) if isinstance(response["body"], dict) else response["body"],
                         status_code=response.get("status_code", 200),
                         media_type=response.get("content_type", "application/json"),
                     )
-                return response
+                    return response_obj
+                return cast(Response, response)
             return {
                 "status": "success",
                 "licensed": True,
@@ -6744,7 +6749,8 @@ class LicenseServerEmulator:
             """Analyze captured traffic to identify license protocol."""
             body = await request.body()
             client_addr = request.client.host if request.client else "127.0.0.1"
-            analysis = self.protocol_analyzer.analyze_traffic(body, client_addr, request.url.port if request.url else 0)
+            port: int = request.url.port if request.url and request.url.port is not None else 0
+            analysis = self.protocol_analyzer.analyze_traffic(body, client_addr, port)
             return {
                 "protocol": str(analysis.get("protocol", "UNKNOWN")),
                 "method": analysis.get("method", "UNKNOWN"),
@@ -6792,7 +6798,7 @@ class LicenseServerEmulator:
     async def _handle_license_validation(self, request: LicenseRequest, client_request: Request) -> LicenseResponse:
         """Handle license validation request."""
         try:
-            client_ip = client_request.client.host
+            client_ip: str = client_request.client.host if client_request.client else "127.0.0.1"
             self.db_manager.log_operation(
                 request.license_key, "validate", client_ip, success=True, details=f"Product: {request.product_name}"
             )
@@ -6830,7 +6836,7 @@ class LicenseServerEmulator:
     async def _handle_license_activation(self, request: ActivationRequest, client_request: Request) -> ActivationResponse:
         """Handle license activation request."""
         try:
-            client_ip = client_request.client.host
+            client_ip: str = client_request.client.host if client_request.client else "127.0.0.1"
             activation_id = uuid.uuid4().hex
             cert_data = {
                 "license_key": request.license_key,

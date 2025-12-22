@@ -7,9 +7,10 @@ kernel drivers, services, registry keys, and protected executable signatures.
 import ctypes
 import logging
 import winreg
-from ctypes import wintypes
+from ctypes import WinDLL, wintypes
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 
 try:
@@ -52,7 +53,7 @@ class StarForceDetection:
     registry_keys: list[str]
     protected_sections: list[str]
     confidence: float
-    details: dict[str, any]
+    details: dict[str, Any]
 
 
 class StarForceDetector:
@@ -110,10 +111,10 @@ class StarForceDetector:
     def __init__(self) -> None:
         """Initialize StarForce detector."""
         self.logger = logging.getLogger(__name__)
-        self._advapi32 = None
-        self._kernel32 = None
+        self._advapi32: WinDLL | None = None
+        self._kernel32: WinDLL | None = None
         self._setup_winapi()
-        self._yara_rules = self._compile_yara_rules() if YARA_AVAILABLE else None
+        self._yara_rules: Any | None = self._compile_yara_rules() if YARA_AVAILABLE else None
 
     def _setup_winapi(self) -> None:
         """Set up Windows API functions with proper signatures."""
@@ -141,7 +142,7 @@ class StarForceDetector:
         except Exception as e:
             self.logger.debug("Failed to setup Windows API functions: %s", e)
 
-    def _compile_yara_rules(self) -> object | None:
+    def _compile_yara_rules(self) -> Any | None:
         """Compile YARA rules for StarForce signature detection."""
         if not YARA_AVAILABLE:
             return None
@@ -284,14 +285,14 @@ class StarForceDetector:
         if not self._advapi32:
             return []
 
-        detected = []
+        detected: list[str] = []
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_QUERY_CONFIG = 0x0001
 
         try:
             sc_manager = self._advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
             if not sc_manager:
-                return []
+                return detected
 
             try:
                 for service_name in self.SERVICE_NAMES:
@@ -399,10 +400,10 @@ class StarForceDetector:
         if not self._yara_rules:
             return []
 
-        matches = []
+        matches: list[dict[str, str]] = []
 
         try:
-            results = self._yara_rules.match(str(target_path))
+            results: Any = self._yara_rules.match(str(target_path))
 
             matches.extend(
                 {
@@ -462,7 +463,7 @@ class StarForceDetector:
         if not self._advapi32:
             return {}
 
-        status_info = {}
+        status_info: dict[str, str] = {}
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_QUERY_STATUS = 0x0004
 
@@ -477,7 +478,7 @@ class StarForceDetector:
                 ("dwWaitHint", wintypes.DWORD),
             ]
 
-        states = {
+        states: dict[int, str] = {
             1: "STOPPED",
             2: "START_PENDING",
             3: "STOP_PENDING",
@@ -490,7 +491,7 @@ class StarForceDetector:
         try:
             sc_manager = self._advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
             if not sc_manager:
-                return {}
+                return status_info
 
             try:
                 for service_name in services:

@@ -26,6 +26,7 @@ from typing import Any, cast
 
 from intellicrack.handlers.pyqt6_handler import PYQT6_AVAILABLE, QObject, pyqtSignal
 from intellicrack.utils.logger import get_logger
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 
 
 logger = get_logger(__name__)
@@ -134,7 +135,7 @@ if PYQT6_AVAILABLE:
             """Get information about the currently loaded binary."""
             result = self._state["current_binary"]
             if result is None or isinstance(result, dict):
-                return cast("dict[str, Any] | None", result)
+                return validate_type(result, dict) if result is not None else None
             return None
 
         # Analysis Results Management
@@ -156,8 +157,8 @@ if PYQT6_AVAILABLE:
                 return {}
             if analysis_type:
                 result = analysis_results.get(analysis_type, {})
-                return cast("dict[str, Any]", result) if isinstance(result, dict) else {}
-            return cast("dict[str, Any]", analysis_results)
+                return validate_type(result, dict) if isinstance(result, dict) else {}
+            return validate_type(analysis_results, dict)
 
         def start_analysis(self, analysis_type: str, options: dict[str, Any] | None = None) -> None:
             """Signal that an analysis has started."""
@@ -222,7 +223,7 @@ if PYQT6_AVAILABLE:
                 current_binary = self._state["current_binary"]
                 binary_path_value: str | None = None
                 if current_binary and isinstance(current_binary, dict):
-                    binary_path_value = cast("str", current_binary.get("path"))
+                    binary_path_value = get_typed_item(current_binary, "path", str)
 
                 project_data: dict[str, Any] = {
                     "name": Path(project_path).stem,
@@ -291,7 +292,7 @@ if PYQT6_AVAILABLE:
         def get_loaded_plugins(self) -> dict[str, Any]:
             """Get information about all loaded plugins."""
             loaded_plugins = self._state["loaded_plugins"]
-            return cast("dict[str, Any]", loaded_plugins) if isinstance(loaded_plugins, dict) else {}
+            return validate_type(loaded_plugins, dict) if isinstance(loaded_plugins, dict) else {}
 
         # Model Management
         def register_model(self, model_name: str, model_info: dict[str, Any]) -> None:
@@ -316,7 +317,7 @@ if PYQT6_AVAILABLE:
         def get_loaded_models(self) -> dict[str, Any]:
             """Get information about all loaded models."""
             loaded_models = self._state["loaded_models"]
-            return cast("dict[str, Any]", loaded_models) if isinstance(loaded_models, dict) else {}
+            return validate_type(loaded_models, dict) if isinstance(loaded_models, dict) else {}
 
         # Task Management
         def register_task(self, task_id: str, description: str) -> None:
@@ -370,7 +371,7 @@ if PYQT6_AVAILABLE:
 
                 description = "N/A"
                 if isinstance(task_info, dict):
-                    description = cast("str", task_info.get("description", "N/A"))
+                    description = get_typed_item(task_info, "description", str, "N/A")
 
                 logger.error(
                     "Task failed: %s (%s) - %s",
@@ -383,7 +384,7 @@ if PYQT6_AVAILABLE:
         def get_active_tasks(self) -> dict[str, Any]:
             """Get all active tasks."""
             active_tasks = self._state["active_tasks"]
-            return cast("dict[str, Any]", active_tasks) if isinstance(active_tasks, dict) else {}
+            return validate_type(active_tasks, dict) if isinstance(active_tasks, dict) else {}
 
         # Settings Management
         def set_setting(self, key: str, value: object) -> None:
@@ -408,7 +409,7 @@ if PYQT6_AVAILABLE:
         def get_all_settings(self) -> dict[str, Any]:
             """Get all settings."""
             settings = self._state["settings"]
-            return cast("dict[str, Any]", settings) if isinstance(settings, dict) else {}
+            return validate_type(settings, dict) if isinstance(settings, dict) else {}
 
         # History Management
         def add_to_session_history(self, action: str, details: dict[str, Any]) -> None:
@@ -429,17 +430,17 @@ if PYQT6_AVAILABLE:
         def get_session_history(self) -> list[dict[str, Any]]:
             """Get the session history."""
             session_history = self._state["session_history"]
-            return cast("list[dict[str, Any]]", session_history) if isinstance(session_history, list) else []
+            return validate_type(session_history, list) if isinstance(session_history, list) else []
 
         def get_recent_files(self) -> list[str]:
             """Get list of recently opened files."""
             recent_files = self._state["recent_files"]
-            return cast("list[str]", recent_files) if isinstance(recent_files, list) else []
+            return validate_type(recent_files, list) if isinstance(recent_files, list) else []
 
         def get_recent_projects(self) -> list[str]:
             """Get list of recently opened projects."""
             recent_projects = self._state["recent_projects"]
-            return cast("list[str]", recent_projects) if isinstance(recent_projects, list) else []
+            return validate_type(recent_projects, list) if isinstance(recent_projects, list) else []
 
         def _get_timestamp(self) -> str:
             """Return a formatted timestamp string."""

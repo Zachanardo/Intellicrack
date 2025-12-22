@@ -22,16 +22,24 @@ Common report generation utilities to avoid code duplication.
 """
 
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Protocol
 
 from intellicrack.utils.logger import logger
+
+
+class ReportGenerator(Protocol):
+    """Protocol for objects with generate_report method."""
+
+    def generate_report(self, filename: str) -> str | None:
+        """Generate report and return path."""
+        ...
 
 
 def generate_analysis_report(
     app: object,
     report_type: str,
     results_data: object,
-    generator_func: Callable[[str, object], str] | None = None,
+    generator_func: Callable[[str, object], str | None] | None = None,
 ) -> str | None:
     """Generate analysis reports.
 
@@ -46,10 +54,9 @@ def generate_analysis_report(
 
     """
     try:
-        from ..ui.ui_common import ask_yes_no_question, show_file_dialog
+        from ..ui.ui_helpers import ask_yes_no_question, show_file_dialog
     except ImportError as e:
         logger.error("Import error in report_common: %s", e)
-        # Fallback if UI common not available
         return None
 
     generate_report = ask_yes_no_question(
@@ -129,7 +136,7 @@ def ensure_html_extension(filename: str) -> str:
     return filename if filename.endswith(".html") else f"{filename}.html"
 
 
-def handle_pyqt6_report_generation(app: object, report_type: str, generator: object) -> str | None:
+def handle_pyqt6_report_generation(app: object, report_type: str, generator: ReportGenerator) -> str | None:
     """Handle PyQt6 report generation workflow.
 
     Args:
@@ -142,10 +149,9 @@ def handle_pyqt6_report_generation(app: object, report_type: str, generator: obj
 
     """
     try:
-        # Check if PyQt6 is available
         import importlib.util
 
-        PYQT6_AVAILABLE = importlib.util.find_spec("PyQt6") is not None
+        PYQT6_AVAILABLE: bool = importlib.util.find_spec("PyQt6") is not None
     except ImportError as e:
         logger.error("Import error in report_common: %s", e)
         PYQT6_AVAILABLE = False
@@ -165,5 +171,6 @@ def handle_pyqt6_report_generation(app: object, report_type: str, generator: obj
             if not filename.endswith(".html"):
                 filename += ".html"
 
-            return generator.generate_report(filename)
+            report_path: str | None = generator.generate_report(filename)
+            return report_path
     return None

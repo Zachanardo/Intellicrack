@@ -36,7 +36,12 @@ try:
 except ImportError:
     YARA_AVAILABLE = False
 
-from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer
+from intellicrack.core.processing.streaming_analysis_manager import (
+    ChunkContext,
+    StreamingAnalysisManager,
+    StreamingAnalyzer,
+    StreamingProgress,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -230,7 +235,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
         """
         try:
             all_matches = []
-            rules_matched = set()
+            rules_matched: set[str] = set()
             chunks_with_matches = 0
             errors = []
 
@@ -248,7 +253,7 @@ class StreamingYaraScanner(StreamingAnalyzer):
 
             all_matches.sort(key=lambda m: m.get("offset", 0))
 
-            rule_distribution = defaultdict(int)
+            rule_distribution: dict[str, int] = defaultdict(int)
             for match in all_matches:
                 rule_distribution[match["rule"]] += 1
 
@@ -527,7 +532,11 @@ def scan_binary_streaming(
         manager = StreamingAnalysisManager()
 
         if progress_callback:
-            manager.register_progress_callback(progress_callback)
+
+            def wrapper(progress: StreamingProgress) -> None:
+                progress_callback(progress.bytes_processed, progress.total_bytes)
+
+            manager.register_progress_callback(wrapper)
 
         return manager.analyze_streaming(binary_path, scanner)
     except Exception as e:

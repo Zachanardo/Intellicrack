@@ -281,7 +281,7 @@ def get_file_entropy(file_path: str | Path, block_size: int = 256) -> float:
             return 0.0
 
         # Calculate byte frequency
-        frequency = {}
+        frequency: dict[int, int] = {}
         for byte in data:
             frequency[byte] = frequency.get(byte, 0) + 1
 
@@ -326,7 +326,7 @@ def check_suspicious_pe_sections(pe_obj: object) -> list[str]:
     return suspicious_sections
 
 
-def validate_binary_path(binary_path: str, logger_instance: object | None = None) -> bool:
+def validate_binary_path(binary_path: str, logger_instance: logging.Logger | None = None) -> bool:
     """Validate that a binary path exists and log appropriate error.
 
     This is the common pattern extracted from duplicate code in analysis modules.

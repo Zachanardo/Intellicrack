@@ -89,7 +89,20 @@ except ImportError:
 
 logger = get_logger(__name__)
 
-# Try to import conversion libraries
+tf: Any = None
+try:
+    # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
+    import os
+
+    os.environ["MKL_THREADING_LAYER"] = "GNU"
+
+    from intellicrack.handlers.tensorflow_handler import tf
+
+    HAS_TF = True
+except ImportError as e:
+    logger.exception("Import error in model_format_converter: %s", e)
+    HAS_TF = False
+
 try:
     import onnx
     import onnxruntime as ort
@@ -100,20 +113,6 @@ except ImportError as e:
     onnx = None  # type: ignore[assignment]
     ort = None
     HAS_ONNX = False
-
-try:
-    # Fix PyTorch + TensorFlow import conflict by using GNU threading layer
-    import os
-
-    os.environ["MKL_THREADING_LAYER"] = "GNU"
-
-    from intellicrack.handlers.tensorflow_handler import tensorflow as tf
-
-    HAS_TF = True
-except ImportError as e:
-    logger.exception("Import error in model_format_converter: %s", e)
-    tf = None  # type: ignore[assignment]
-    HAS_TF = False
 
 try:
     from transformers import AutoConfig, AutoModel, AutoModelForCausalLM, AutoTokenizer
@@ -602,7 +601,7 @@ class ModelFormatConverter:
                 import tf2onnx
 
                 if source_path.is_dir():
-                    model = tf.saved_model.load(str(source_path))  # type: ignore[attr-defined]
+                    model = tf.saved_model.load(str(source_path))
                 elif hasattr(tf, "keras"):
                     model = tf.keras.models.load_model(str(source_path))
                 else:
@@ -618,7 +617,7 @@ class ModelFormatConverter:
                         logger.exception("input_spec required for Keras models")
                         return None
 
-                    @tf.function  # type: ignore[attr-defined, untyped-decorator]
+                    @tf.function  # type: ignore[untyped-decorator]
                     def inference_func(x: Any) -> Any:
                         return model(x)
 
@@ -779,7 +778,7 @@ class ModelFormatConverter:
                     return {"output": output.cpu().numpy()}
 
             if format == "tensorflow" and HAS_TF and tf is not None:
-                model = tf.saved_model.load(str(model_path))  # type: ignore[attr-defined]
+                model = tf.saved_model.load(str(model_path))
 
                 infer = model.signatures.get("serving_default", model)
 

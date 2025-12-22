@@ -22,6 +22,7 @@ Utility functions for hex manipulation and display.
 """
 
 import logging
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -114,7 +115,7 @@ def bytes_to_hex(data: bytes, format_style: str = "plain", uppercase: bool = Fal
     return hex_str
 
 
-def find_pattern(data: bytes, pattern: bytes, max_results: int = None) -> list[int]:
+def find_pattern(data: bytes, pattern: bytes, max_results: int | None = None) -> list[int]:
     """Find all occurrences of a pattern in data.
 
     Args:
@@ -241,7 +242,7 @@ def nop_range(data: bytearray, start: int, end: int, arch: str = "x86") -> bool:
     return patch_bytes(data, start, patch_data)
 
 
-def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> list[dict]:
+def compare_bytes(data1: bytes, data2: bytes, context: int = 3) -> list[dict[str, Any]]:
     """Compare two byte sequences and find differences.
 
     Args:

@@ -37,8 +37,7 @@ def calculate_entropy(data: bytes | str) -> float:
     if not data:
         return 0.0
 
-    # Count frequencies
-    freq = {}
+    freq: dict[int | str, int] = {}
     for item in data:
         freq[item] = freq.get(item, 0) + 1
 
@@ -80,7 +79,7 @@ def calculate_string_entropy(data: str) -> float:
     return calculate_entropy(data)
 
 
-def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
+def safe_entropy_calculation(data: bytes, max_entropy: float | None = None) -> float:
     """Safe entropy calculation with optional maximum cap.
 
     Args:
@@ -99,7 +98,7 @@ def safe_entropy_calculation(data: bytes, max_entropy: float = None) -> float:
     return min(entropy, max_entropy) if max_entropy is not None else entropy
 
 
-def calculate_frequency_distribution(data: bytes | str) -> dict:
+def calculate_frequency_distribution(data: bytes | str) -> dict[int | str, dict[str, int | float]]:
     """Calculate frequency distribution of data.
 
     Args:
@@ -112,7 +111,7 @@ def calculate_frequency_distribution(data: bytes | str) -> dict:
     if not data:
         return {}
 
-    freq = {}
+    freq: dict[int | str, int] = {}
     for item in data:
         freq[item] = freq.get(item, 0) + 1
 
@@ -142,7 +141,7 @@ def is_high_entropy(data: bytes | str, threshold: float = 7.0) -> bool:
     return entropy >= threshold
 
 
-def analyze_entropy_sections(data: bytes, block_size: int = 256) -> dict:
+def analyze_entropy_sections(data: bytes, block_size: int = 256) -> dict[str, float | list[dict[str, int | float | bool]] | dict[str, float | int]]:
     """Analyze entropy across different sections of data.
 
     Args:

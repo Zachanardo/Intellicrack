@@ -24,7 +24,7 @@ from typing import Any
 from intellicrack.utils.service_utils import get_service_url
 
 from .base import APIRepositoryBase, RateLimitConfig
-from .interface import ModelInfo
+from .interface import DownloadProgressCallback, ModelInfo
 
 
 """
@@ -117,10 +117,18 @@ class LMStudioRepository(APIRepositoryBase):
         models = []
 
         try:
+            if not isinstance(data, dict):
+                logger.error("Expected dict response from API, got %s", type(data))
+                return []
+
             # Extract model information from the response
             for model_data in data.get("data", []):
-                model_id = model_data.get("id")
-                if model_info := self._create_model_info(model_id, model_data):
+                if not isinstance(model_data, dict):
+                    continue
+                model_id_obj = model_data.get("id")
+                if not isinstance(model_id_obj, str):
+                    continue
+                if model_info := self._create_model_info(model_id_obj, model_data):
                     models.append(model_info)
 
             return models
@@ -148,6 +156,9 @@ class LMStudioRepository(APIRepositoryBase):
 
         if success:
             try:
+                if not isinstance(data, dict):
+                    logger.error("Expected dict response from API, got %s", type(data))
+                    return None
                 return self._create_model_info(model_id, data)
             except (KeyError, TypeError) as e:
                 logger.exception("Error parsing LMStudio model details for %s: %s", model_id, e)
@@ -164,8 +175,16 @@ class LMStudioRepository(APIRepositoryBase):
             return None
 
         try:
+            if not isinstance(data, dict):
+                logger.error("Expected dict response from API, got %s", type(data))
+                return None
+
             return next(
-                (self._create_model_info(model_id, model_data) for model_data in data.get("data", []) if model_data.get("id") == model_id),
+                (
+                    self._create_model_info(model_id, model_data)
+                    for model_data in data.get("data", [])
+                    if isinstance(model_data, dict) and model_data.get("id") == model_id
+                ),
                 None,
             )
         except (KeyError, TypeError) as e:
@@ -203,12 +222,24 @@ class LMStudioRepository(APIRepositoryBase):
             logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
         """LMStudio doesn't support model downloads through its API.
+
+        Args:
+            model_id: ID of the model to download
+            destination_path: Path where the model should be saved
+            progress_callback: Optional callback for progress updates (unused)
 
         Returns:
             Always returns (False, "LMStudio doesn't support model downloads through API")
 
         """
         logger.warning("Download requested for %s to %s, but not supported", model_id, destination_path)
+        if progress_callback:
+            progress_callback.on_complete(False, "LMStudio doesn't support model downloads through API")
         return False, "LMStudio doesn't support model downloads through API"

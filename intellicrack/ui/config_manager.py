@@ -25,6 +25,7 @@ import contextlib
 import logging
 from collections.abc import Callable
 from dataclasses import asdict, dataclass
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -201,7 +202,7 @@ class UIConfigManager:
         self._load_from_main_config()
 
         # Change callbacks
-        self.change_callbacks: dict[str, list] = {
+        self.change_callbacks: dict[str, list[Callable[[], None]]] = {
             "theme": [],
             "font": [],
             "layout": [],
@@ -244,48 +245,80 @@ class UIConfigManager:
 
     def _load_from_main_config(self) -> None:
         """Load UI configurations from main config."""
-        ui_config = self.main_config.get("ui", {})
+        ui_config_raw: object = self.main_config.get("ui", {})
+
+        # Type guard for ui_config
+        if not isinstance(ui_config_raw, dict):
+            logger.warning("Invalid ui_config type: %s, using empty dict", type(ui_config_raw))
+            ui_config_raw = {}
+
+        ui_config: dict[str, Any] = ui_config_raw
 
         # Load theme
-        theme_data = ui_config.get("theme", asdict(self.DEFAULT_THEMES["dark"]))
+        theme_data_raw: object = ui_config.get("theme", asdict(self.DEFAULT_THEMES["dark"]))
         # Handle case where theme_data is a string instead of dict
-        if isinstance(theme_data, str):
-            theme_name = theme_data.lower()
+        if isinstance(theme_data_raw, str):
+            theme_name: str = theme_data_raw.lower()
             if theme_name in self.DEFAULT_THEMES:
-                theme_data = asdict(self.DEFAULT_THEMES[theme_name])
+                theme_data: dict[str, Any] = asdict(self.DEFAULT_THEMES[theme_name])
             else:
                 logger.warning("Unknown theme '%s', using dark theme", theme_name)
                 theme_data = asdict(self.DEFAULT_THEMES["dark"])
-        elif not isinstance(theme_data, dict):
-            logger.warning("Invalid theme data type: %s, using dark theme", type(theme_data))
+        elif isinstance(theme_data_raw, dict):
+            theme_data = theme_data_raw
+        else:
+            logger.warning("Invalid theme data type: %s, using dark theme", type(theme_data_raw))
             theme_data = asdict(self.DEFAULT_THEMES["dark"])
         self.theme = ThemeConfig(**theme_data)
 
         # Load font
-        font_data = ui_config.get("font", asdict(FontConfig()))
+        font_data_raw: object = ui_config.get("font", asdict(FontConfig()))
+        if isinstance(font_data_raw, dict):
+            font_data: dict[str, Any] = font_data_raw
+        else:
+            font_data = asdict(FontConfig())
         self.font = FontConfig(**font_data)
 
         # Load layout
-        layout_data = ui_config.get("layout", asdict(LayoutConfig()))
+        layout_data_raw: object = ui_config.get("layout", asdict(LayoutConfig()))
+        if isinstance(layout_data_raw, dict):
+            layout_data: dict[str, Any] = layout_data_raw
+        else:
+            layout_data = asdict(LayoutConfig())
         self.layout = LayoutConfig(**layout_data)
 
         # Load editor
-        editor_data = ui_config.get("editor", asdict(EditorConfig()))
+        editor_data_raw: object = ui_config.get("editor", asdict(EditorConfig()))
+        if isinstance(editor_data_raw, dict):
+            editor_data: dict[str, Any] = editor_data_raw
+        else:
+            editor_data = asdict(EditorConfig())
         self.editor = EditorConfig(**editor_data)
 
         # Load animation
-        animation_data = ui_config.get("animation", asdict(AnimationConfig()))
+        animation_data_raw: object = ui_config.get("animation", asdict(AnimationConfig()))
+        if isinstance(animation_data_raw, dict):
+            animation_data: dict[str, Any] = animation_data_raw
+        else:
+            animation_data = asdict(AnimationConfig())
         self.animation = AnimationConfig(**animation_data)
 
         # Load accessibility
-        accessibility_data = ui_config.get("accessibility", asdict(AccessibilityConfig()))
+        accessibility_data_raw: object = ui_config.get("accessibility", asdict(AccessibilityConfig()))
+        if isinstance(accessibility_data_raw, dict):
+            accessibility_data: dict[str, Any] = accessibility_data_raw
+        else:
+            accessibility_data = asdict(AccessibilityConfig())
         self.accessibility = AccessibilityConfig(**accessibility_data)
 
         # Load custom themes
         self.custom_themes = {}
-        custom_themes_data = ui_config.get("custom_themes", {})
-        for name, theme_data in custom_themes_data.items():
-            self.custom_themes[name] = ThemeConfig(**theme_data)
+        custom_themes_data_raw: object = ui_config.get("custom_themes", {})
+        if isinstance(custom_themes_data_raw, dict):
+            custom_themes_data: dict[str, Any] = custom_themes_data_raw
+            for name, theme_data_item in custom_themes_data.items():
+                if isinstance(theme_data_item, dict):
+                    self.custom_themes[name] = ThemeConfig(**theme_data_item)
 
     def _save_to_main_config(self) -> None:
         """Save UI configurations to main config."""

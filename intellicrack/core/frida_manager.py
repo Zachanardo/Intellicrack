@@ -853,6 +853,8 @@ class FridaPerformanceOptimizer:
             - Creates psutil Process object
             - Initializes performance tracking structures
         """
+        if psutil is None:
+            raise ImportError("psutil is not available")
         self.process = psutil.Process()
         self.baseline_memory = 0
         self.baseline_cpu = 0
@@ -2731,6 +2733,8 @@ class FridaManager:
             start_time = time.time()
 
             # Get device
+            if frida is None:
+                raise ImportError("frida is not available")
             self.device = frida.get_local_device()
 
             # Attach to process
@@ -3980,7 +3984,7 @@ class FridaManager:
                             )
 
             except Exception as e:
-                self.logger.exception("Data analysis failed: %s", e)
+                logger.exception("Data analysis failed: %s", e)
                 analysis_results["error"] = str(e)
 
         # Log analysis results with data info

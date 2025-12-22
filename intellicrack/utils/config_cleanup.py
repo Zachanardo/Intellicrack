@@ -24,9 +24,19 @@ along with Intellicrack. If not, see <https://www.gnu.org/licenses/>.
 import ast
 import logging
 from pathlib import Path
+from typing import TypedDict
 
 
 logger = logging.getLogger(__name__)
+
+
+class UnusedCodeInfo(TypedDict):
+    """Structure for unused configuration code information."""
+
+    unused_imports: list[tuple[str, int]]
+    unused_methods: list[tuple[str, int]]
+    qsettings_usage: list[int]
+    legacy_patterns: list[tuple[str, int]]
 
 
 class UnusedConfigCodeDetector(ast.NodeVisitor):
@@ -34,7 +44,7 @@ class UnusedConfigCodeDetector(ast.NodeVisitor):
 
     def __init__(self) -> None:
         """Initialize the detector."""
-        self.unused_imports = set()
+        self.unused_imports: set[tuple[str, int]] = set()
         self.unused_methods: set[tuple[str, int]] = set()
         self.qsettings_usage: list[int] = []
         self.legacy_config_patterns: list[tuple[str, int]] = []
@@ -123,7 +133,7 @@ def analyze_file(file_path: Path) -> tuple[set[tuple[str, int]], set[tuple[str, 
         return set(), set(), [], []
 
 
-def find_unused_config_code(root_dir: Path) -> dict:
+def find_unused_config_code(root_dir: Path) -> dict[str, UnusedCodeInfo]:
     """Find all unused configuration code in the project.
 
     Args:
@@ -133,7 +143,7 @@ def find_unused_config_code(root_dir: Path) -> dict:
         Dictionary mapping file paths to unused code information
 
     """
-    results = {}
+    results: dict[str, UnusedCodeInfo] = {}
 
     for py_file in root_dir.rglob("*.py"):
         # Skip test files and migration scripts
@@ -153,7 +163,7 @@ def find_unused_config_code(root_dir: Path) -> dict:
     return results
 
 
-def generate_cleanup_report(results: dict) -> str:
+def generate_cleanup_report(results: dict[str, UnusedCodeInfo]) -> str:
     """Generate a cleanup report from analysis results.
 
     Args:

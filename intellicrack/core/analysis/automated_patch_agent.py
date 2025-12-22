@@ -38,8 +38,8 @@ class AutomatedPatchAgent:
         bypass pattern initialization, and exploitation technique loading.
         Prepares the agent for binary analysis and automated patching operations.
         """
-        self.patch_history = []
-        self.patch_signatures = {}
+        self.patch_history: list[dict[str, Any]] = []
+        self.patch_signatures: dict[str, Any] = {}
         self.bypass_patterns = self._initialize_bypass_patterns()
         self.exploitation_techniques = self._load_exploitation_techniques()
 
@@ -153,12 +153,10 @@ class AutomatedPatchAgent:
 
     def analyze_binary(self, binary_path: str) -> dict[str, Any]:
         """Analyze binary for patch points."""
-        analysis_results = {
-            "protection_schemes": [],
-            "patch_points": [],
-            "vulnerability_score": 0,
-            "recommended_patches": [],
-        }
+        protection_schemes: list[str] = []
+        patch_points_list: list[dict[str, Any]] = []
+        vulnerability_score: int = 0
+        recommended_patches: list[dict[str, Any]] = []
 
         try:
             with open(binary_path, "rb") as f:
@@ -166,23 +164,22 @@ class AutomatedPatchAgent:
 
             # Detect protection schemes
             if b"UPX" in binary_data[:1000]:
-                analysis_results["protection_schemes"].append("UPX Packing")
+                protection_schemes.append("UPX Packing")
             if b"Themida" in binary_data or b"WinLicense" in binary_data:
-                analysis_results["protection_schemes"].append("Themida/WinLicense")
+                protection_schemes.append("Themida/WinLicense")
             if b".vmp" in binary_data:
-                analysis_results["protection_schemes"].append("VMProtect")
+                protection_schemes.append("VMProtect")
 
             # Find patch points
-            patch_points = self._find_patch_points(binary_data)
-            analysis_results["patch_points"] = patch_points
+            patch_points_list = self._find_patch_points(binary_data)
 
             # Calculate vulnerability score
-            analysis_results["vulnerability_score"] = len(patch_points) * 10
+            vulnerability_score = len(patch_points_list) * 10
 
             # Recommend patches
-            for point in patch_points:
+            for point in patch_points_list:
                 if point["type"] == "license_check":
-                    analysis_results["recommended_patches"].append(
+                    recommended_patches.append(
                         {
                             "offset": point["offset"],
                             "patch": self.bypass_patterns["license_check_ret_true"],
@@ -190,7 +187,7 @@ class AutomatedPatchAgent:
                         },
                     )
                 elif point["type"] == "anti_debug":
-                    analysis_results["recommended_patches"].append(
+                    recommended_patches.append(
                         {
                             "offset": point["offset"],
                             "patch": self.bypass_patterns["isdebuggerpresent_bypass"],
@@ -201,7 +198,12 @@ class AutomatedPatchAgent:
         except Exception as e:
             logger.exception("Binary analysis failed: %s", e)
 
-        return analysis_results
+        return {
+            "protection_schemes": protection_schemes,
+            "patch_points": patch_points_list,
+            "vulnerability_score": vulnerability_score,
+            "recommended_patches": recommended_patches,
+        }
 
     def _find_patch_points(self, binary_data: bytes) -> list[dict[str, Any]]:
         """Find patchable points in binary."""
@@ -427,14 +429,20 @@ def run_automated_patch_agent(target_binary: str, patch_mode: str = "auto") -> d
     # Analyze the binary
     analysis = agent.analyze_binary(target_binary)
 
-    results = {"analysis": analysis, "patches_applied": [], "success": False}
+    patches_applied: list[dict[str, Any]] = []
+    success: bool = False
 
-    if patch_mode == "auto" and analysis["recommended_patches"]:
+    recommended_patches = analysis["recommended_patches"]
+    if patch_mode == "auto" and isinstance(recommended_patches, list):
         # Apply recommended patches
-        for patch in analysis["recommended_patches"]:
-            if agent.apply_patch(target_binary, patch):
-                results["patches_applied"].append(patch)
+        for patch in recommended_patches:
+            if isinstance(patch, dict) and agent.apply_patch(target_binary, patch):
+                patches_applied.append(patch)
 
-        results["success"] = len(results["patches_applied"]) > 0
+        success = len(patches_applied) > 0
 
-    return results
+    return {
+        "analysis": analysis,
+        "patches_applied": patches_applied,
+        "success": success,
+    }

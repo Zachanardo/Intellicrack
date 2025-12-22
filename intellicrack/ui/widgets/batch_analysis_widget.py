@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
+    QAbstractItemView,
     QBrush,
     QCheckBox,
     QColor,
@@ -23,6 +24,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QFont,
     QGroupBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QMessageBox,
     QProgressBar,
@@ -177,7 +179,7 @@ class BatchAnalysisWorker(QThread):
             is_protected = result.is_protected if result else False
             file_type = result.file_type if result else "Unknown"
             architecture = result.architecture if result else "Unknown"
-            entropy = result.entropy if result else 0.0
+            entropy = getattr(result, "entropy", 0.0) if result else 0.0
 
             # Count ICP detections and calculate confidence
             icp_detections = 0
@@ -244,7 +246,7 @@ class BatchAnalysisWidget(QWidget):
         layout.addWidget(control_panel)
 
         # Main content area
-        main_splitter = QSplitter(Qt.Vertical)
+        main_splitter = QSplitter(Qt.Orientation.Vertical)
 
         # Results table
         self.results_table = self._create_results_table()
@@ -374,9 +376,11 @@ class BatchAnalysisWidget(QWidget):
 
         # Configure table
         table.setAlternatingRowColors(True)
-        table.setSelectionBehavior(QTableWidget.SelectRows)
+        table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         table.setSortingEnabled(True)
-        table.horizontalHeader().setStretchLastSection(True)
+        header = table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
 
         # Connect signals
         table.cellDoubleClicked.connect(self._on_cell_double_clicked)

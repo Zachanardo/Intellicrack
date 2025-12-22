@@ -23,7 +23,7 @@ This module consolidates Ghidra-related utilities to avoid code duplication.
 
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Any, cast
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ def get_ghidra_headless_path() -> str | None:
     try:
         from .core.path_discovery import find_tool
 
-        return find_tool("analyzeHeadless")
+        return cast("str | None", find_tool("analyzeHeadless"))
     except ImportError:
         # Intentionally silent - fall back to manual path checking
         # This is expected when path_discovery module is not available

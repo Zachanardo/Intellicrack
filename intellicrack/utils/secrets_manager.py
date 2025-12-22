@@ -10,7 +10,7 @@ Licensed under GNU General Public License v3.0
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 from intellicrack.core.config_manager import IntellicrackConfig
 
@@ -25,6 +25,11 @@ ENCRYPTION_ENABLED_KEY = "secrets.encryption_enabled"
 KEYRING_IN_USE_KEY = "secrets.keyring_in_use"
 
 # Optional dependencies with fallbacks
+if TYPE_CHECKING:
+    from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, Fernet, hashes
+    import keyring as keyring_module
+    from dotenv import find_dotenv, load_dotenv
+
 try:
     from intellicrack.handlers.cryptography_handler import PBKDF2HMAC, Fernet, hashes
 
@@ -32,16 +37,18 @@ try:
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
     HAS_CRYPTOGRAPHY = False
-    Fernet = None
+    Fernet = None  # type: ignore[assignment,misc]
+    PBKDF2HMAC = None  # type: ignore[assignment,misc]
+    hashes = None  # type: ignore[assignment,misc]
 
 try:
-    import keyring
+    import keyring as keyring_module
 
     HAS_KEYRING = True
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
     HAS_KEYRING = False
-    keyring = None
+    keyring_module = None  # type: ignore[assignment]
 
 try:
     from dotenv import find_dotenv, load_dotenv
@@ -50,7 +57,8 @@ try:
 except ImportError as e:
     logger.exception(IMPORT_ERROR_MSG, e)
     HAS_DOTENV = False
-    load_dotenv = None
+    load_dotenv = None  # type: ignore[assignment]
+    find_dotenv = None  # type: ignore[assignment]
 
 
 class SecretsManager:
@@ -98,17 +106,21 @@ class SecretsManager:
 
     def __init__(self, config_dir: Path | None = None) -> None:
         """Initialize the secrets manager."""
-        self._central_config = None
+        self._central_config: IntellicrackConfig | None = None
         self._config_dir_override = config_dir
+        self._cipher: Any = None  # Will be Fernet or None
 
         # Get config directory from central config or use provided/default
         if config_dir is None:
-            config_dir_str = self.central_config.get(CONFIG_DIR_KEY)
-            if not config_dir_str:
+            config_dir_str_obj = self.central_config.get(CONFIG_DIR_KEY)
+            if not config_dir_str_obj:
                 config_dir = self._get_default_config_dir()
                 config_dir_str = str(config_dir)
                 # Store the default in central config
                 self.central_config.set(CONFIG_DIR_KEY, config_dir_str)
+            else:
+                # Type narrowing: convert object to str
+                config_dir_str = str(config_dir_str_obj)
             self.config_dir = Path(config_dir_str)
         else:
             self.config_dir = Path(config_dir)
@@ -159,7 +171,7 @@ class SecretsManager:
 
     def _load_env_files(self) -> None:
         """Load environment variables from .env files."""
-        if not HAS_DOTENV:
+        if not HAS_DOTENV or load_dotenv is None:
             logger.warning("python-dotenv not available - .env files will not be loaded")
             return
 
@@ -203,10 +215,14 @@ class SecretsManager:
 
     def _load_encryption_key(self) -> None:
         """Load encryption key from keychain or file."""
+        if not HAS_CRYPTOGRAPHY or Fernet is None:
+            self._cipher = None
+            return
+
         keyring_backend = self.central_config.get("secrets.keyring_backend", "auto")
         try:
-            if HAS_KEYRING and keyring_backend != "disabled":
-                if key_str := keyring.get_password(self.SERVICE_NAME, "encryption_key"):
+            if HAS_KEYRING and keyring_module is not None and keyring_backend != "disabled":
+                if key_str := keyring_module.get_password(self.SERVICE_NAME, "encryption_key"):
                     self._cipher = Fernet(key_str.encode())
                     self._set_encryption_status(True, True)
                     return
@@ -233,7 +249,7 @@ class SecretsManager:
         use_encryption = self.central_config.get("secrets.use_encryption", True)
         keyring_backend = self.central_config.get("secrets.keyring_backend", "auto")
 
-        if not HAS_CRYPTOGRAPHY:
+        if not HAS_CRYPTOGRAPHY or Fernet is None:
             logger.warning("Cryptography not available - secrets will be stored as plain text")
             self._disable_encryption()
             return
@@ -247,9 +263,9 @@ class SecretsManager:
             # Generate a new encryption key
             key = Fernet.generate_key()
             # Try to store in OS keychain first based on backend config
-            if HAS_KEYRING and keyring_backend != "disabled":
+            if HAS_KEYRING and keyring_module is not None and keyring_backend != "disabled":
                 try:
-                    keyring.set_password(self.SERVICE_NAME, "encryption_key", key.decode())
+                    keyring_module.set_password(self.SERVICE_NAME, "encryption_key", key.decode())
                     # Also save to file as backup
                     self._write_key_file(key)
                     self.central_config.set(KEYRING_IN_USE_KEY, True)
@@ -273,22 +289,23 @@ class SecretsManager:
 
     def _load_secrets(self) -> None:
         """Load secrets from encrypted file."""
-        if self.secrets_file.exists():
-            try:
-                if self._cipher is None:
-                    # No encryption available, load as plain text
-                    data = self.secrets_file.read_text()
-                    self._cache = json.loads(data)
-                else:
-                    # Decrypt data
-                    encrypted_data = self.secrets_file.read_bytes()
-                    decrypted_data = self._cipher.decrypt(encrypted_data)
-                    self._cache = json.loads(decrypted_data.decode())
-                logger.debug("Loaded secrets from file")
-            except Exception as e:
-                logger.exception("Failed to load secrets file: %s", e, exc_info=True)
-                self._cache = {}
-        else:
+        if not self.secrets_file.exists():
+            self._cache = {}
+            return
+
+        try:
+            if self._cipher is None:
+                # No encryption available, load as plain text
+                data = self.secrets_file.read_text()
+                self._cache = json.loads(data)
+            else:
+                # Decrypt data
+                encrypted_data = self.secrets_file.read_bytes()
+                decrypted_data = self._cipher.decrypt(encrypted_data)
+                self._cache = json.loads(decrypted_data.decode())
+            logger.debug("Loaded secrets from file")
+        except Exception as e:
+            logger.exception("Failed to load secrets file: %s", e, exc_info=True)
             self._cache = {}
 
     def _save_secrets(self) -> None:
@@ -299,23 +316,24 @@ class SecretsManager:
                 logger.warning("Saving secrets as plain text - install cryptography for encryption")
                 data = json.dumps(self._cache, indent=2)
                 self.secrets_file.write_text(data)
+                self.secrets_file.chmod(0o600)  # Restrict permissions
             else:
                 # Encrypt data
-                data = json.dumps(self._cache).encode()
-                encrypted_data = self._cipher.encrypt(data)
+                data_bytes = json.dumps(self._cache).encode()
+                encrypted_data = self._cipher.encrypt(data_bytes)
                 self.secrets_file.write_bytes(encrypted_data)
+                self.secrets_file.chmod(0o600)  # Restrict permissions
 
-            self.secrets_file.chmod(0o600)  # Restrict permissions
             logger.debug("Saved secrets to file")
         except Exception as e:
             logger.exception("Failed to save secrets: %s", e, exc_info=True)
 
     def _get_from_keyring(self, key: str) -> str | None:
         """Get secret from OS keychain with error handling."""
-        if not HAS_KEYRING:
+        if not HAS_KEYRING or keyring_module is None:
             return None
         try:
-            return keyring.get_password(self.SERVICE_NAME, key)
+            return keyring_module.get_password(self.SERVICE_NAME, key)
         except Exception as e:
             logger.debug("Keychain lookup failed for %s: %s", key, e, exc_info=True)
             return None
@@ -350,9 +368,9 @@ class SecretsManager:
         self._cache[key] = value
 
         # Try to store in keychain if available
-        if use_keychain and HAS_KEYRING:
+        if use_keychain and HAS_KEYRING and keyring_module is not None:
             try:
-                keyring.set_password(self.SERVICE_NAME, key, value)
+                keyring_module.set_password(self.SERVICE_NAME, key, value)
                 logger.debug("Stored secret in OS keychain")
             except Exception:
                 logger.warning("Failed to store secret in keychain", exc_info=True)
@@ -369,9 +387,9 @@ class SecretsManager:
         self._cache.pop(key, None)
 
         # Try to remove from keychain if available
-        if HAS_KEYRING:
+        if HAS_KEYRING and keyring_module is not None:
             try:
-                keyring.delete_password(self.SERVICE_NAME, key)
+                keyring_module.delete_password(self.SERVICE_NAME, key)
             except Exception as e:
                 logger.exception("Exception in secrets_manager: %s", e, exc_info=True)
                 # Ignore if not in keychain
@@ -382,7 +400,7 @@ class SecretsManager:
         # Sync metadata to central config
         self._sync_metadata_to_central_config()
 
-    def list_keys(self) -> list:
+    def list_keys(self) -> list[str]:
         """List all available secret keys."""
         keys = {key for key in self.KNOWN_SECRETS if os.getenv(key)} | set(self._cache)
         return sorted(keys)
@@ -465,7 +483,7 @@ class SecretsManager:
             Derived key bytes
 
         """
-        if not HAS_CRYPTOGRAPHY:
+        if not HAS_CRYPTOGRAPHY or PBKDF2HMAC is None or hashes is None:
             logger.exception("Cryptography library not available for key generation")
             return b""
 
@@ -488,7 +506,7 @@ class SecretsManager:
             Path to .env file or None if not found
 
         """
-        if not HAS_DOTENV:
+        if not HAS_DOTENV or find_dotenv is None:
             logger.warning("python-dotenv not available for finding .env files")
             return None
 
@@ -515,7 +533,7 @@ class SecretsManager:
             True if password matches, False otherwise
 
         """
-        if not HAS_CRYPTOGRAPHY:
+        if not HAS_CRYPTOGRAPHY or PBKDF2HMAC is None or hashes is None:
             logger.exception("Cryptography library not available for password verification")
             return False
 
@@ -539,36 +557,33 @@ class SecretsManager:
         """Sync encrypted keys metadata to central config."""
         try:
             # Build metadata about encrypted keys
-            metadata = {
-                "total_keys": len(self._cache),
-                "encrypted_keys": [],
-                "last_sync": self.secrets_file.stat().st_mtime if self.secrets_file.exists() else None,
-            }
+            encrypted_keys_list: list[dict[str, Any]] = []
+            last_sync: float | None = self.secrets_file.stat().st_mtime if self.secrets_file.exists() else None
 
             # Add key names (but not values) to metadata
             for key in self._cache:
-                key_info = {
+                key_info: dict[str, Any] = {
                     "name": key,
                     "is_api_key": key.endswith(("_API_KEY", "_API_TOKEN", "_KEY", "_TOKEN")),
                     "in_keychain": False,
                 }
 
                 # Check if key is in keychain
-                if HAS_KEYRING:
+                if HAS_KEYRING and keyring_module is not None:
                     try:
-                        keychain_value = keyring.get_password(self.SERVICE_NAME, key)
+                        keychain_value = keyring_module.get_password(self.SERVICE_NAME, key)
                         key_info["in_keychain"] = bool(keychain_value)
                     except Exception as e:
                         logger.debug("Error checking keychain: %s", e, exc_info=True)
 
-                metadata["encrypted_keys"].append(key_info)
+                encrypted_keys_list.append(key_info)
 
             # Store metadata in central config
-            self.central_config.set("secrets.encrypted_keys", metadata["encrypted_keys"])
-            self.central_config.set("secrets.total_keys", metadata["total_keys"])
-            self.central_config.set("secrets.last_sync", metadata["last_sync"])
+            self.central_config.set("secrets.encrypted_keys", encrypted_keys_list)
+            self.central_config.set("secrets.total_keys", len(self._cache))
+            self.central_config.set("secrets.last_sync", last_sync)
 
-            logger.debug("Synced %s keys metadata to central config", metadata["total_keys"])
+            logger.debug("Synced %s keys metadata to central config", len(self._cache))
         except Exception as e:
             logger.warning("Could not sync keys metadata to central config: %s", e, exc_info=True)
 

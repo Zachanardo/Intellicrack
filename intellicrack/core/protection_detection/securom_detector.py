@@ -9,7 +9,7 @@ import winreg
 from ctypes import wintypes
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.utils.logger import get_logger
 
@@ -282,7 +282,7 @@ class SecuROMDetector:
         """
 
         try:
-            return yara.compile(source=rules_source)
+            return cast(object, yara.compile(source=rules_source))
         except Exception:
             return None
 
@@ -729,7 +729,7 @@ class SecuROMDetector:
         if not self._yara_rules:
             return []
 
-        matches = []
+        matches: list[dict[str, Any]] = []
 
         try:
             results = self._yara_rules.match(str(target_path))

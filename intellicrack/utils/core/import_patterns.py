@@ -23,59 +23,69 @@ with consistent error handling and availability flags.
 """
 
 import logging
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
 
+pefile: Any = None
 # Binary analysis tools
 try:
     from intellicrack.handlers.pefile_handler import pefile
 
     PEFILE_AVAILABLE = True
 except ImportError:
-    pefile = None
     PEFILE_AVAILABLE = False
     logger.debug("pefile not available")
 
+CS_ARCH_X86: Any = None
+CS_MODE_32: Any = None
+CS_MODE_64: Any = None
+Cs: Any = None
+lief: Any = None
+ELFFile: Any = None
+zipfile: Any = None
+MachO: Any = None
+psutil: Any = None
+
 try:
-    from intellicrack.handlers.capstone_handler import CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
+    from intellicrack.handlers.capstone_handler import (
+        CS_ARCH_X86,
+        CS_MODE_32,
+        CS_MODE_64,
+        Cs,
+    )
 
     CAPSTONE_AVAILABLE = True
 except ImportError:
-    CS_ARCH_X86 = None
-    CS_MODE_32 = None
-    CS_MODE_64 = None
-    Cs = None
     CAPSTONE_AVAILABLE = False
     logger.debug("capstone not available")
 
+HAS_LIEF: bool = False
 try:
     from intellicrack.handlers.lief_handler import HAS_LIEF, lief
 
     LIEF_AVAILABLE = HAS_LIEF
 except ImportError:
-    lief = None
     LIEF_AVAILABLE = False
     HAS_LIEF = False
     logger.debug("lief not available")
 
+HAS_PYELFTOOLS: bool = False
 try:
-    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile, elffile
+    from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
 
     PYELFTOOLS_AVAILABLE = HAS_PYELFTOOLS
 except ImportError:
-    ELFFile = None
-    elffile = None
     PYELFTOOLS_AVAILABLE = False
     HAS_PYELFTOOLS = False
     logger.debug("pyelftools not available")
 
 try:
-    from macholib.MachO import MachO
+    from macholib.MachO import MachO  # type: ignore[no-redef]
 
     MACHOLIB_AVAILABLE = True
 except ImportError:
-    MachO = None
     MACHOLIB_AVAILABLE = False
     logger.debug("macholib not available")
 
@@ -85,12 +95,12 @@ try:
 
     ZIPFILE_AVAILABLE = True
 except ImportError:
-    zipfile = None
     ZIPFILE_AVAILABLE = False
     logger.debug("zipfile not available")
 
+ET: Any = None
 try:
-    import defusedxml.ElementTree as ET  # noqa: N817
+    import defusedxml.ElementTree as ET  # type: ignore[no-redef]  # noqa: N817
 
     XML_AVAILABLE = True
 except ImportError:
@@ -99,7 +109,6 @@ except ImportError:
 
         XML_AVAILABLE = True
     except ImportError:
-        ET = None
         XML_AVAILABLE = False
         logger.debug("xml.etree.ElementTree not available")
 
@@ -109,12 +118,11 @@ try:
 
     PSUTIL_AVAILABLE = True
 except ImportError:
-    psutil = None
     PSUTIL_AVAILABLE = False
     logger.debug("psutil not available")
 
 
-def get_pefile() -> object | None:
+def get_pefile() -> Any:
     """Get pefile module if available.
 
     Returns:
@@ -140,7 +148,7 @@ def get_capstone() -> dict[str, object]:
     }
 
 
-def get_lief() -> object | None:
+def get_lief() -> Any:
     """Get lief module if available.
 
     Returns:
@@ -202,7 +210,7 @@ def get_xml() -> dict[str, object]:
     }
 
 
-def get_psutil() -> object | None:
+def get_psutil() -> Any:
     """Get psutil module if available.
 
     Returns:

@@ -22,7 +22,7 @@ import logging
 import os
 from typing import Any
 
-from PyQt6.QtWidgets import QApplication, QDialog
+from PyQt6.QtWidgets import QApplication, QDialog, QWidget
 
 from .ai_bridge import AIBinaryBridge, BinaryContextBuilder
 from .file_handler import VirtualFileAccess
@@ -174,7 +174,7 @@ def suggest_binary_edits(data: bytes, edit_intent: str, model_manager: object | 
 # UI operations
 
 
-def create_hex_viewer_widget(parent: object | None = None) -> HexViewerWidget:
+def create_hex_viewer_widget(parent: QWidget | None = None) -> HexViewerWidget:
     """Create a new hex viewer widget.
 
     Args:
@@ -187,7 +187,7 @@ def create_hex_viewer_widget(parent: object | None = None) -> HexViewerWidget:
     return HexViewerWidget(parent)
 
 
-def create_hex_viewer_dialog(parent: object | None = None, file_path: str | None = None, read_only: bool = True) -> HexViewerDialog:
+def create_hex_viewer_dialog(parent: QWidget | None = None, file_path: str | None = None, read_only: bool = True) -> HexViewerDialog:
     """Create a new hex viewer dialog.
 
     Args:
@@ -233,7 +233,8 @@ def integrate_with_intellicrack(app_instance: object) -> bool:
         True if integration was successful, False otherwise
 
     """
-    return integrate_enhanced_hex_viewer(app_instance)
+    result = integrate_enhanced_hex_viewer(app_instance)
+    return result if result is not None else False
 
 
 def add_hex_viewer_to_application(app_instance: object) -> bool:

@@ -88,19 +88,17 @@ class Radare2SignatureDetector:
 
         """
         self.binary_path = binary_path
-        self.r2: r2pipe.open | None = None
+        self.r2: Any = None
         self.matches: list[SignatureMatch] = []
         self.yara_rules: list[yara.Rules] = []
         self.custom_signatures: dict[str, bytes] = {}
         self.file_hash = self._calculate_file_hash()
 
-    def _calculate_file_hash(self) -> dict[str, str]:
+    def _calculate_file_hash(self) -> dict[str, str | int]:
         """Calculate various hashes of the binary."""
-        hashes = {}
+        hashes: dict[str, str | int] = {}
         with open(self.binary_path, "rb") as f:
             data = f.read()
-            # For signature detection we only calculate secure hash functions
-            # MD5 and SHA1 have been removed for security reasons
             hashes["sha256"] = hashlib.sha256(data).hexdigest()
             hashes["sha512"] = hashlib.sha512(data).hexdigest()
             hashes["size"] = len(data)
@@ -565,11 +563,14 @@ rule CryptoAPI_Usage {
                         if len(parts) >= 2:
                             threat_name = parts[1].strip().replace(" FOUND", "")
 
+                            file_size = self.file_hash["size"]
+                            if not isinstance(file_size, int):
+                                file_size = 0
                             sig_match = SignatureMatch(
                                 signature_type=SignatureType.CLAMAV,
                                 name=threat_name,
                                 offset=0,
-                                size=self.file_hash["size"],
+                                size=file_size,
                                 confidence=0.95,
                                 metadata={"scanner": "ClamAV", "file_path": self.binary_path},
                             )
@@ -664,11 +665,15 @@ rule CryptoAPI_Usage {
 
     def detect_protection_schemes(self) -> list[SignatureMatch]:
         """Detect protection schemes using Radare2 analysis."""
-        matches = []
+        matches: list[SignatureMatch] = []
+
+        if self.r2 is None:
+            return matches
 
         try:
-            # Check for packed sections
             sections = self.r2.cmdj("iSj")
+            if not isinstance(sections, list):
+                return matches
             for section in sections:
                 entropy = self._calculate_entropy(section)
 
@@ -728,14 +733,17 @@ rule CryptoAPI_Usage {
         self.matches.extend(matches)
         return matches
 
-    def _calculate_entropy(self, section: dict) -> float:
+    def _calculate_entropy(self, section: dict[str, Any]) -> float:
         """Calculate entropy of a section."""
+        if self.r2 is None:
+            return 0.0
+
         try:
             data = self.r2.cmdj(f"pxj {section['size']} @ {section['vaddr']}")
             if not data:
                 return 0.0
 
-            byte_counts = {}
+            byte_counts: dict[int, int] = {}
             for byte in data:
                 byte_counts[byte] = byte_counts.get(byte, 0) + 1
 
@@ -754,12 +762,17 @@ rule CryptoAPI_Usage {
 
     def detect_compiler(self) -> CompilerInfo | None:
         """Detect compiler and version."""
+        if self.r2 is None:
+            return None
+
         try:
-            # Get binary info
             info = self.r2.cmdj("ij")
             imports = self.r2.cmdj("iij")
             self.r2.cmdj("iSj")
             strings = self.r2.cmdj("izj")
+
+            if not isinstance(info, dict) or not isinstance(imports, list) or not isinstance(strings, list):
+                return None
 
             compiler = "Unknown"
             version = "Unknown"
@@ -843,15 +856,22 @@ rule CryptoAPI_Usage {
 
     def detect_libraries(self) -> list[LibraryInfo]:
         """Detect library versions."""
-        libraries = []
+        libraries: list[LibraryInfo] = []
+
+        if self.r2 is None:
+            return libraries
 
         try:
             imports = self.r2.cmdj("iij")
             strings = self.r2.cmdj("izj")
 
-            # Group imports by library
-            lib_imports = {}
+            if not isinstance(imports, list) or not isinstance(strings, list):
+                return libraries
+
+            lib_imports: dict[str, list[str]] = {}
             for imp in imports:
+                if not isinstance(imp, dict):
+                    continue
                 libname = imp.get("libname", "unknown")
                 if libname not in lib_imports:
                     lib_imports[libname] = []
@@ -919,21 +939,18 @@ rule CryptoAPI_Usage {
             f"Size: {self.file_hash['size']} bytes",
             "",
         ]
-        # Group matches by type
-        by_type = {}
+        by_type: dict[SignatureType, list[SignatureMatch]] = {}
         for match in self.matches:
             if match.signature_type not in by_type:
                 by_type[match.signature_type] = []
             by_type[match.signature_type].append(match)
 
-        # Report each type
         for sig_type, matches in by_type.items():
             report.extend((
                 f"\n{sig_type.value.upper()} SIGNATURES ({len(matches)} matches)",
                 "-" * 40,
             ))
-            # Group by unique names
-            unique_sigs = {}
+            unique_sigs: dict[str, list[SignatureMatch]] = {}
             for match in matches:
                 if match.name not in unique_sigs:
                     unique_sigs[match.name] = []
@@ -998,10 +1015,11 @@ rule CryptoAPI_Usage {
         """Export detected signatures to file."""
         try:
             if format == "json":
-                data = {"binary": self.binary_path, "hashes": self.file_hash, "matches": []}
+                data: dict[str, Any] = {"binary": self.binary_path, "hashes": self.file_hash, "matches": []}
+                matches_list: list[dict[str, Any]] = []
 
                 for match in self.matches:
-                    data["matches"].append(
+                    matches_list.append(
                         {
                             "type": match.signature_type.value,
                             "name": match.name,
@@ -1009,8 +1027,9 @@ rule CryptoAPI_Usage {
                             "size": match.size,
                             "confidence": match.confidence,
                             "metadata": match.metadata,
-                        },
+                        }
                     )
+                data["matches"] = matches_list
 
                 with open(output_file, "w") as f:
                     json.dump(data, f, indent=2)

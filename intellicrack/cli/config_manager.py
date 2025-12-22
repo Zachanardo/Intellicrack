@@ -68,17 +68,23 @@ class ConfigManager:
 
             # Load old config
             with open(self.config_file) as f:
-                old_config = json.load(f)
+                old_config: dict[str, object] = json.load(f)
 
             # Get current CLI config
-            cli_config = self.central_config.get("cli_configuration", {})
+            cli_config_raw: object = self.central_config.get("cli_configuration", {})
+            if not isinstance(cli_config_raw, dict):
+                cli_config_raw = {}
+            cli_config: dict[str, object] = cli_config_raw
 
             # Merge old config into CLI section (old values take precedence for first migration)
             for key, value in old_config.items():
                 # Map to appropriate subsection or direct field
                 if key == "profiles" and isinstance(value, dict):
                     # Merge profiles
-                    current_profiles = cli_config.get("profiles", {})
+                    current_profiles_raw: object = cli_config.get("profiles", {})
+                    if not isinstance(current_profiles_raw, dict):
+                        current_profiles_raw = {}
+                    current_profiles: dict[str, object] = current_profiles_raw
                     current_profiles.update(value)
                     cli_config["profiles"] = current_profiles
                 elif key == "aliases" and isinstance(value, dict):
@@ -159,7 +165,10 @@ class ConfigManager:
             Dictionary of all CLI configuration settings
 
         """
-        return self.central_config.get("cli_configuration", {})
+        settings_raw: object = self.central_config.get("cli_configuration", {})
+        if not isinstance(settings_raw, dict):
+            return {}
+        return settings_raw
 
 
 def main() -> int:

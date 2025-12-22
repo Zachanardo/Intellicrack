@@ -129,13 +129,13 @@ class DataCollector:
         data gathering from various AI components for real-time
         visualization and analytics.
         """
-        self.data_store: dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
-        self.collectors: dict[MetricType, Callable] = {}
+        self.data_store: dict[str, deque[DataPoint]] = defaultdict(lambda: deque(maxlen=1000))
+        self.collectors: dict[MetricType, Callable[[], list[DataPoint]]] = {}
         self.collection_enabled = True
         self.collection_interval = 10  # seconds
         self.learning_engine = get_learning_engine()
-        self.learning_records = {}
-        self.error_history = deque(maxlen=1000)
+        self.learning_records: dict[str, dict[str, Any]] = {}
+        self.error_history: deque[dict[str, Any]] = deque(maxlen=1000)
 
         # Initialize data collectors
         self._initialize_collectors()
@@ -377,7 +377,7 @@ class DataCollector:
             # Return conservative estimate if calculation fails
             return 2.5
 
-    def _has_error_indicators(self, record: dict) -> bool:
+    def _has_error_indicators(self, record: dict[str, Any]) -> bool:
         """Check if a learning record contains error indicators."""
         try:
             # Check for explicit error flags
@@ -412,7 +412,9 @@ class DataCollector:
 
             # Check for execution time anomalies (might indicate errors)
             execution_time = record.get("execution_time", 0)
-            return execution_time > 30000
+            if isinstance(execution_time, (int, float)):
+                return execution_time > 30000
+            return False
 
         except Exception as e:
             logger.exception("Error checking error indicators: %s", e)
@@ -644,7 +646,7 @@ class ChartGenerator:
         }
 
     @profile_ai_operation("chart_generation")
-    def generate_chart(self, template_name: str, custom_options: dict[str, Any] = None) -> ChartData:
+    def generate_chart(self, template_name: str, custom_options: dict[str, Any] | None = None) -> ChartData:
         """Generate chart from template."""
         if template_name not in self.chart_templates:
             raise ValueError(f"Unknown chart template: {template_name}")
@@ -859,10 +861,11 @@ class DashboardManager:
         for template_name in self.chart_generator.chart_templates:
             template = self.chart_generator.chart_templates[template_name]
             if template["title"] == chart.title:
-                return self.chart_generator.generate_chart(template_name)
+                refreshed_chart: ChartData = self.chart_generator.generate_chart(template_name)
+                return refreshed_chart
 
         # For custom charts, regenerate with same configuration
-        chart_config = {
+        chart_config: dict[str, Any] = {
             "chart_type": chart.chart_type.value,
             "title": chart.title,
             "metrics": [],  # Would need to extract from original chart
@@ -875,7 +878,7 @@ class DashboardManager:
         """Get dashboard by ID."""
         return self.dashboards.get(dashboard_id)
 
-    def list_dashboards(self) -> list[dict[str, str]]:
+    def list_dashboards(self) -> list[dict[str, str | int]]:
         """List all dashboards."""
         return [
             {
@@ -1153,7 +1156,7 @@ class VisualizationAnalytics:
         """Get dashboard by ID."""
         return self.dashboard_manager.get_dashboard(dashboard_id)
 
-    def list_dashboards(self) -> list[dict[str, str]]:
+    def list_dashboards(self) -> list[dict[str, str | int]]:
         """List all available dashboards."""
         return self.dashboard_manager.list_dashboards()
 
@@ -1470,17 +1473,18 @@ class VisualizationAnalytics:
 
         for pattern_def in pattern_signatures:
             for sig in pattern_def["bytes"]:
-                pos = binary_data.find(sig)
-                if pos != -1:
-                    patterns.append({
-                        "type": pattern_def["type"],
-                        "name": pattern_def["name"],
-                        "description": pattern_def["description"],
-                        "offset": pos,
-                        "signature": sig.hex() if isinstance(sig, bytes) else sig,
-                        "confidence": 0.7,
-                    })
-                    break
+                if isinstance(sig, bytes):
+                    pos = binary_data.find(sig)
+                    if pos != -1:
+                        patterns.append({
+                            "type": pattern_def["type"],
+                            "name": pattern_def["name"],
+                            "description": pattern_def["description"],
+                            "offset": pos,
+                            "signature": sig.hex(),
+                            "confidence": 0.7,
+                        })
+                        break
 
         return patterns
 

@@ -24,7 +24,7 @@ import os
 import platform
 import struct
 import sys
-from typing import Any
+from typing import Any, Callable
 
 
 class DebuggerBypass:
@@ -53,11 +53,16 @@ class DebuggerBypass:
 
     def __init__(self) -> None:
         """Initialize user-mode debugger bypass system."""
-        self.logger = logging.getLogger("IntellicrackLogger.DebuggerBypass")
-        self.hooks_installed = False
-        self.original_functions = {}
-        self.timing_base = None
-        self.hypervisor_enabled = False
+        self.logger: logging.Logger = logging.getLogger("IntellicrackLogger.DebuggerBypass")
+        self.hooks_installed: bool = False
+        self.original_functions: dict[str, int] = {}
+        self.timing_base: float | None = None
+        self.hypervisor_enabled: bool = False
+        self.hook_metadata: dict[str, dict[str, Any]] = {}
+        self.bypass_methods: dict[str, Callable[[], bool]] = {}
+        self.kernel32: Any = None
+        self.ntdll: Any = None
+        self.user32: Any = None
 
         if platform.system() == "Windows":
             self._init_windows_bypass()
@@ -104,7 +109,7 @@ class DebuggerBypass:
         except Exception as e:
             self.logger.exception("Failed to initialize Linux bypass: %s", e, exc_info=True)
 
-    def install_bypasses(self, methods: list[str] = None) -> dict[str, bool]:
+    def install_bypasses(self, methods: list[str] | None = None) -> dict[str, bool]:
         """Install anti-anti-debug bypasses using user-mode techniques.
 
         All bypasses operate in user-mode and modify the current process only.
@@ -117,7 +122,7 @@ class DebuggerBypass:
             Dict mapping method names to success status
 
         """
-        results = {}
+        results: dict[str, bool] = {}
 
         if methods is None:
             methods = list(self.bypass_methods.keys())
@@ -713,7 +718,7 @@ class DebuggerBypass:
         }
 
 
-def install_anti_antidebug(methods: list[str] = None) -> dict[str, bool]:
+def install_anti_antidebug(methods: list[str] | None = None) -> dict[str, bool]:
     """Install anti-anti-debug bypasses using user-mode techniques.
 
     All bypasses operate in user-mode (Ring 3) and modify only the current process.
@@ -726,5 +731,5 @@ def install_anti_antidebug(methods: list[str] = None) -> dict[str, bool]:
         Dict mapping method names to success status
 
     """
-    bypass = DebuggerBypass()
+    bypass: DebuggerBypass = DebuggerBypass()
     return bypass.install_bypasses(methods)

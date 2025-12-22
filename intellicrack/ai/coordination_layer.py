@@ -30,16 +30,12 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional, TypedDict
+from typing import TYPE_CHECKING, Any, TypedDict
 
 
 if TYPE_CHECKING:
     from .model_manager_module import ModelManager
     from .orchestrator import AIEventBus, AISharedContext
-else:
-    AISharedContext = type(None)
-    AIEventBus = type(None)
-    ModelManager = type(None)
 
 
 class CacheEntry(TypedDict):
@@ -59,17 +55,22 @@ except ImportError as e:
     logger = logging.getLogger(__name__)
     logger.exception("Import error in coordination_layer: %s", e)
 
-if not TYPE_CHECKING:
-    try:
-        from .model_manager_module import ModelManager
-    except ImportError:
-        ModelManager = None
+try:
+    from .model_manager_module import ModelManager as ModelManagerClass
 
-    try:
-        from .orchestrator import AIEventBus, AISharedContext
-    except ImportError:
-        AISharedContext = None
-        AIEventBus = None
+    _MODELMANAGER_AVAILABLE = True
+except ImportError:
+    ModelManagerClass = None  # type: ignore[assignment, misc]
+    _MODELMANAGER_AVAILABLE = False
+
+try:
+    from .orchestrator import AIEventBus as AIEventBusClass, AISharedContext as AISharedContextClass
+
+    _ORCHESTRATOR_AVAILABLE = True
+except ImportError:
+    AISharedContextClass = None  # type: ignore[assignment, misc]
+    AIEventBusClass = None  # type: ignore[assignment, misc]
+    _ORCHESTRATOR_AVAILABLE = False
 
 
 class AnalysisStrategy(Enum):
@@ -123,18 +124,31 @@ class AICoordinationLayer:
 
     def __init__(
         self,
-        shared_context: Optional["AISharedContext"] = None,
-        event_bus: Optional["AIEventBus"] = None,
+        shared_context: "AISharedContext | None" = None,
+        event_bus: "AIEventBus | None" = None,
     ) -> None:
         """Initialize the coordination layer."""
         logger.info("Initializing AI Coordination Layer...")
 
-        self.shared_context = shared_context or AISharedContext()
-        self.event_bus = event_bus or AIEventBus()
+        self.shared_context: Any
+        if shared_context is not None:
+            self.shared_context = shared_context
+        elif _ORCHESTRATOR_AVAILABLE and AISharedContextClass is not None:
+            self.shared_context = AISharedContextClass()
+        else:
+            self.shared_context = None
+
+        self.event_bus: Any
+        if event_bus is not None:
+            self.event_bus = event_bus
+        elif _ORCHESTRATOR_AVAILABLE and AIEventBusClass is not None:
+            self.event_bus = AIEventBusClass()
+        else:
+            self.event_bus = None
 
         # Initialize components
-        self.model_manager = None
-        self._llm_manager = None
+        self.model_manager: "ModelManager | None" = None
+        self._llm_manager: Any = None
         self._initialize_components()
 
         # Performance tracking
@@ -155,10 +169,9 @@ class AICoordinationLayer:
 
     def _initialize_components(self) -> None:
         """Initialize LLM components."""
-        # Initialize model manager
         try:
-            if ModelManager:
-                self.model_manager = ModelManager()
+            if _MODELMANAGER_AVAILABLE and ModelManagerClass is not None:
+                self.model_manager = ModelManagerClass()
                 logger.info("Model Manager initialized in coordination layer")
             else:
                 logger.warning("Model Manager not available")
@@ -172,9 +185,7 @@ class AICoordinationLayer:
 
     def _is_cache_valid(self, cache_entry: CacheEntry) -> bool:
         """Check if cache entry is still valid."""
-        cached_time = cache_entry.get("timestamp")
-        if not isinstance(cached_time, datetime):
-            return False
+        cached_time = cache_entry["timestamp"]
         return datetime.now() - cached_time < self.cache_ttl
 
     def _cache_result(self, cache_key: str, result: CoordinatedResult) -> None:
@@ -254,16 +265,17 @@ class AICoordinationLayer:
                 self._cache_result(cache_key, result)
 
             # Emit completion event
-            self.event_bus.emit(
-                "coordinated_analysis_complete",
-                {
-                    "strategy": strategy,
-                    "processing_time": result.processing_time,
-                    "confidence": result.combined_confidence,
-                    "escalated": result.escalated,
-                },
-                "coordination_layer",
-            )
+            if self.event_bus is not None:
+                self.event_bus.emit(
+                    "coordinated_analysis_complete",
+                    {
+                        "strategy": strategy,
+                        "processing_time": result.processing_time,
+                        "confidence": result.combined_confidence,
+                        "escalated": result.escalated,
+                    },
+                    "coordination_layer",
+                )
 
             logger.info("Coordinated analysis complete in %fs", result.processing_time)
             return result

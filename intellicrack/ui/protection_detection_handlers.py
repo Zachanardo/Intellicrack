@@ -19,12 +19,13 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
+from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import QMessageBox
+from intellicrack.handlers.pyqt6_handler import QMessageBox, QWidget
 
 from ..core.analysis.core_analysis import decrypt_embedded_script
 from ..core.protection_bypass.dongle_emulator import HardwareDongleEmulator
-from ..core.protection_bypass.tpm_bypass import TPMProtectionBypass
+from ..core.protection_bypass.tpm_bypass import TPMBypassEngine
 from ..core.protection_bypass.vm_bypass import VirtualizationDetectionBypass as VMDetectionBypass
 
 # Import protection detection functions
@@ -37,6 +38,9 @@ logger = logging.getLogger(__name__)
 
 class ProtectionDetectionHandlers:
     """Mixin class providing protection detection handler methods for IntellicrackApp."""
+
+    binary_path: str | None
+    protection_results: Any
 
     def __init__(self) -> None:
         """Initialize protection detection handlers."""
@@ -51,10 +55,21 @@ class ProtectionDetectionHandlers:
         """
         logger.info(message)
 
+    def _get_parent_widget(self) -> QWidget | None:
+        """Get parent widget for QMessageBox dialogs.
+
+        Returns:
+            Parent widget if available, otherwise None.
+
+        """
+        if isinstance(self, QWidget):
+            return self
+        return None
+
     def run_commercial_protection_scan(self) -> None:
         """Handle detecting commercial software protections."""
         if not self.binary_path:
-            QMessageBox.warning(self, "Warning", "Please load a binary file first!")
+            QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
 
         try:
@@ -92,7 +107,7 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during commercial protection scan: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_hardware_dongle_detection(self) -> None:
         """Handle detecting hardware dongles."""
@@ -119,7 +134,7 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during hardware dongle detection: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_tpm_detection(self) -> None:
         """Handle detecting TPM protection."""
@@ -158,12 +173,12 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during TPM detection: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_checksum_detection(self) -> None:
         """Handle detecting checksum/integrity verification."""
         if not self.binary_path:
-            QMessageBox.warning(self, "Warning", "Please load a binary file first!")
+            QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
 
         try:
@@ -204,12 +219,12 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during checksum detection: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_self_healing_detection(self) -> None:
         """Handle detecting self-healing/self-modifying code."""
         if not self.binary_path:
-            QMessageBox.warning(self, "Warning", "Please load a binary file first!")
+            QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
 
         try:
@@ -250,12 +265,12 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during self-healing code detection: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_tpm_bypass(self) -> None:
         """Handle TPM bypass functionality."""
         if not self.binary_path:
-            QMessageBox.warning(self, "Warning", "Please load a binary file first!")
+            QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
 
         try:
@@ -263,7 +278,7 @@ class ProtectionDetectionHandlers:
             logger.info("Starting TPM bypass for: %s", self.binary_path)
 
             # Create TPM bypass instance
-            tpm_bypass = TPMProtectionBypass(self)
+            tpm_bypass = TPMBypassEngine()
 
             # Run the bypass
             results = tpm_bypass.bypass_tpm_checks()
@@ -292,12 +307,12 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during TPM bypass: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_vm_bypass(self) -> None:
         """Handle VM detection bypass functionality."""
         if not self.binary_path:
-            QMessageBox.warning(self, "Warning", "Please load a binary file first!")
+            QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
 
         try:
@@ -334,7 +349,7 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during VM detection bypass: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_dongle_emulation(self) -> None:
         """Handle hardware dongle emulation functionality."""
@@ -381,12 +396,12 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during hardware dongle emulation: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)
 
     def run_embedded_script_detection(self) -> None:
         """Handle embedded/encrypted script detection."""
         if not self.binary_path:
-            QMessageBox.warning(self, "Warning", "Please load a binary file first!")
+            QMessageBox.warning(self._get_parent_widget(), "Warning", "Please load a binary file first!")
             return
 
         try:
@@ -416,4 +431,4 @@ class ProtectionDetectionHandlers:
             error_msg = f"Error during embedded script detection: {e!s}"
             logger.exception(error_msg)
             self.update_status(error_msg)
-            QMessageBox.critical(self, "Error", error_msg)
+            QMessageBox.critical(self._get_parent_widget(), "Error", error_msg)

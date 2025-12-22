@@ -22,7 +22,7 @@ import os
 from typing import Any
 
 from .base import APIRepositoryBase, RateLimitConfig
-from .interface import ModelInfo
+from .interface import DownloadProgressCallback, ModelInfo
 
 
 """
@@ -128,9 +128,20 @@ class OpenAIRepository(APIRepositoryBase):
         models = []
 
         try:
+            if not isinstance(data, dict):
+                logger.error("Unexpected response format from OpenAI API")
+                return []
             # Extract model information from the response
-            for model_data in data.get("data", []):
+            models_list = data.get("data", [])
+            if not isinstance(models_list, list):
+                logger.error("Unexpected 'data' format in OpenAI API response")
+                return []
+            for model_data in models_list:
+                if not isinstance(model_data, dict):
+                    continue
                 model_id = model_data.get("id")
+                if not isinstance(model_id, str):
+                    continue
 
                 # For most API usage we'll only care about chat and embedding models
                 if not (model_id.startswith("gpt-") or "embedding" in model_id or model_id == "dall-e-3"):
@@ -177,8 +188,11 @@ class OpenAIRepository(APIRepositoryBase):
             return None
 
         try:
+            if not isinstance(data, dict):
+                logger.error("Unexpected response format for model details")
+                return None
             # Determine model capabilities based on model ID
-            capabilities = []
+            capabilities: list[str] = []
             if model_id.startswith("gpt-"):
                 capabilities.append("text-generation")
                 if "vision" in model_id or model_id in {"gpt-4-turbo", "gpt-4o"}:
@@ -188,17 +202,28 @@ class OpenAIRepository(APIRepositoryBase):
             elif model_id == "dall-e-3":
                 capabilities.append("image-generation")
 
+            name_value = data.get("name")
+            if not isinstance(name_value, str):
+                name_value = model_id
+            description_value = data.get("description")
+            if not isinstance(description_value, str):
+                description_value = ""
+            context_length_value = data.get("context_length")
+            version_value = data.get("version")
+            if not isinstance(version_value, str):
+                version_value = "1.0"
+
             return ModelInfo(
                 model_id=model_id,
-                name=data.get("name", model_id),
-                description=data.get("description", ""),
-                size_bytes=0,  # Not relevant for API-only models
+                name=name_value,
+                description=description_value,
+                size_bytes=0,
                 format="api",
                 provider="openai",
                 parameters=None,
-                context_length=data.get("context_length"),
+                context_length=context_length_value,
                 capabilities=capabilities,
-                version=data.get("version", "1.0"),
+                version=version_value,
                 checksum=None,
                 download_url=None,
                 local_path=None,
@@ -207,8 +232,18 @@ class OpenAIRepository(APIRepositoryBase):
             logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
         """OpenAI doesn't support model downloads for most models, this is primarily an API-only service.
+
+        Args:
+            model_id: The ID of the model to download
+            destination_path: The path where the model should be saved
+            progress_callback: Optional callback for download progress
 
         Returns:
             Always returns (False, "OpenAI doesn't support model downloads")

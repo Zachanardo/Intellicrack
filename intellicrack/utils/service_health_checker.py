@@ -38,10 +38,10 @@ class ServiceHealthChecker:
 
     def __init__(self) -> None:
         """Initialize the service health checker."""
-        self._config = None
-        self.health_cache = {}
-        self.cache_duration = 300  # 5 minutes
-        self.last_check_times = {}
+        self._config: dict[str, Any] | None = None
+        self.health_cache: dict[str, dict[str, Any]] = {}
+        self.cache_duration: int = 300
+        self.last_check_times: dict[str, float] = {}
 
     @property
     def config(self) -> dict[str, Any]:
@@ -55,7 +55,8 @@ class ServiceHealthChecker:
             try:
                 from intellicrack.core.config_manager import get_config
 
-                self._config = get_config()
+                config_obj = get_config()
+                self._config = config_obj if isinstance(config_obj, dict) else {}
             except ImportError as e:
                 logger.warning("Could not import config manager: %s", e, exc_info=True)
                 self._config = {}
@@ -166,7 +167,7 @@ class ServiceHealthChecker:
             async with asyncio.timeout(default_timeout):
                 async with (
                     aiohttp.ClientSession() as session,
-                    session.ws_connect(url, timeout=default_timeout) as ws,
+                    session.ws_connect(url) as ws,
                 ):
                     result["connected"] = True
                     result["response_time"] = time.time() - start_time
@@ -192,11 +193,11 @@ class ServiceHealthChecker:
             Dictionary with service health information
 
         """
-        # Check cache first
         cache_key = service_name
         if cache_key in self.health_cache:
             cached_result = self.health_cache[cache_key]
-            if time.time() - cached_result["timestamp"] < self.cache_duration:
+            cached_timestamp = cached_result.get("timestamp")
+            if isinstance(cached_timestamp, (int, float)) and time.time() - cached_timestamp < self.cache_duration:
                 logger.debug("Using cached health check for %s", service_name)
                 return cached_result
 
@@ -257,7 +258,6 @@ class ServiceHealthChecker:
             tasks.append(self.check_service(service_name))
             service_names.append(service_name)
 
-        # Execute all checks in parallel
         if tasks:
             check_results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -269,12 +269,8 @@ class ServiceHealthChecker:
                         "error": str(result),
                         "timestamp": time.time(),
                     }
-                else:
+                elif isinstance(result, dict):
                     results[service_name] = result
-
-        # Save results to config
-        self.config.set("service_health.last_check", results)
-        self.config.set("service_health.last_check_time", time.time())
 
         return results
 

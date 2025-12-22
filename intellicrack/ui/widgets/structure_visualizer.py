@@ -50,10 +50,10 @@ class StructureVisualizerWidget(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize structure visualizer widget with binary structure analysis capabilities."""
         super().__init__(parent)
-        self.current_binary = None
-        self.structures = {}
-        self.structure_data = {}
-        self.binary_format = "Unknown"
+        self.current_binary: str | None = None
+        self.structures: dict[str, Any] = {}
+        self.structure_data: dict[str, Any] = {}
+        self.binary_format: str = "Unknown"
         self._setup_ui()
 
     def _setup_ui(self) -> None:
@@ -133,7 +133,8 @@ class StructureVisualizerWidget(QWidget):
         self.headers_table = QTableWidget()
         self.headers_table.setColumnCount(3)
         self.headers_table.setHorizontalHeaderLabels(["Field", "Value", "Description"])
-        self.headers_table.horizontalHeader().setStretchLastSection(True)
+        if header := self.headers_table.horizontalHeader():
+            header.setStretchLastSection(True)
         self.structure_widget.addTab(self.headers_table, "Headers")
 
         # Sections table
@@ -615,7 +616,7 @@ class StructureVisualizerWidget(QWidget):
 
         self.tree_view.expandAll()
 
-    def _add_dict_to_tree(self, data: dict | list, parent: QTreeWidgetItem) -> None:
+    def _add_dict_to_tree(self, data: dict[str, Any] | list[Any], parent: QTreeWidgetItem) -> None:
         """Recursively add dictionary/list data to tree."""
         if isinstance(data, dict):
             for key, value in data.items():
@@ -848,7 +849,7 @@ class StructureVisualizerWidget(QWidget):
             details += f"Executable Sections: {exec_count}\n"
             details += f"Writable Sections: {write_count}\n\n"
         # Suspicious indicators
-        suspicious = []
+        suspicious: list[str] = []
 
         if "sections" in self.structure_data:
             suspicious.extend(
@@ -893,7 +894,9 @@ class StructureVisualizerWidget(QWidget):
         if virtual_size > 0 and raw_size == 0:
             return True
 
-        return raw_size > virtual_size * 2
+        if isinstance(virtual_size, int) and isinstance(raw_size, int):
+            return raw_size > virtual_size * 2
+        return False
 
     def _is_suspicious_import(self, func_name: str) -> bool:
         """Check if an import is suspicious."""
@@ -1010,8 +1013,8 @@ class StructureVisualizerWidget(QWidget):
         if items := self.tree_view.selectedItems():
             item = items[0]
             # Get path to item
-            path = []
-            current = item
+            path: list[str] = []
+            current: QTreeWidgetItem | None = item
             while current:
                 path.insert(0, current.text(0))
                 current = current.parent()

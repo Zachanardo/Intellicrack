@@ -24,6 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import logging
 import os
 from collections.abc import Callable, ItemsView, KeysView, ValuesView
+from pathlib import Path
 from typing import Any, Protocol
 
 
@@ -55,11 +56,13 @@ def _ensure_config_manager_imported() -> Callable[[], IntellicrackConfigProtocol
         try:
             from .core.config_manager import get_config as imported_get_config
 
-            _get_new_config = imported_get_config
+            _get_new_config = imported_get_config  # type: ignore[assignment]
             logger.debug("config_manager imported successfully.")
         except ImportError as e:
             logger.critical("Failed to import config_manager: %s", e, exc_info=True)
             raise
+    if _get_new_config is None:
+        raise RuntimeError("Failed to import config_manager")
     return _get_new_config
 
 
@@ -193,7 +196,7 @@ def get_system_path(path_type: str) -> str | None:
     logger.debug("Requesting system path for type: '%s'.", path_type)
     try:
         config = _get_modern_config()
-        path = None
+        path: str | None = None
         if path_type == "output":
             path = str(config.get_output_dir())
         elif path_type == "cache":
@@ -201,7 +204,8 @@ def get_system_path(path_type: str) -> str | None:
         elif path_type == "logs":
             path = str(config.get_logs_dir())
         elif path_type == "temp":
-            path = config.get("directories.temp")
+            temp_path = config.get("directories.temp")
+            path = str(temp_path) if temp_path is not None else None
 
         if path:
             logger.debug("Modern config found path for '%s': '%s'.", path_type, path)
@@ -327,7 +331,7 @@ class ConfigManager:
             "output_dir": str(config.get_output_dir()),
             "temp_dir": config.get("directories.temp", str(config.get_cache_dir())),
             "plugin_directory": "intellicrack/intellicrack/plugins",
-            "download_directory": str(config.get_cache_dir() / "downloads"),
+            "download_directory": str(Path(str(config.get_cache_dir())) / "downloads"),
             # Tool paths
             "ghidra_path": config.get_tool_path("ghidra"),
             "radare2_path": config.get_tool_path("radare2"),
@@ -380,7 +384,7 @@ class ConfigManager:
                 "local": {
                     "type": "local",
                     "enabled": True,
-                    "models_directory": str(config.get_cache_dir() / "models"),
+                    "models_directory": str(Path(str(config.get_cache_dir())) / "models"),
                 },
             },
             "api_cache": {
@@ -484,8 +488,7 @@ class ConfigManager:
     def get_ghidra_path(self) -> str | None:
         """Get the Ghidra installation path."""
         logger.debug("ConfigManager.get_ghidra_path() called.")
-        result = self._modern_config.get_tool_path("ghidra")
-        return result if isinstance(result, (str, type(None))) else None
+        return self._modern_config.get_tool_path("ghidra")
 
     def get_tool_path(self, tool_name: str) -> str | None:
         """Get path for any tool."""
@@ -497,9 +500,6 @@ class ConfigManager:
         """Check if a tool is available."""
         logger.debug("ConfigManager.is_tool_available() called for tool: '%s'.", tool_name)
         available = self._modern_config.is_tool_available(tool_name)
-        if not isinstance(available, bool):
-            logger.debug("Tool '%s' availability: False.", tool_name)
-            return False
         logger.debug("Tool '%s' availability: %s.", tool_name, available)
         return available
 
@@ -674,17 +674,17 @@ class _LazyConfig(dict[str, Any]):
         logger.debug("LazyConfig: Getting item with key '%s'.", key)
         return super().get(key, default)
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> KeysView[str]:  # type: ignore[override]
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting keys.")
         return super().keys()
 
-    def values(self) -> ValuesView[Any]:
+    def values(self) -> ValuesView[Any]:  # type: ignore[override]
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting values.")
         return super().values()
 
-    def items(self) -> ItemsView[str, Any]:
+    def items(self) -> ItemsView[str, Any]:  # type: ignore[override]
         self._ensure_loaded()
         logger.debug("LazyConfig: Getting items.")
         return super().items()

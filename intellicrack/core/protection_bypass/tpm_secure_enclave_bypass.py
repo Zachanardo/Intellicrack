@@ -600,10 +600,11 @@ class TPMEmulator:
         from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
         if isinstance(public_key, (rsa.RSAPublicKey, ec.EllipticCurvePublicKey)):
-            return public_key.public_bytes(
+            result: bytes = public_key.public_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PublicFormat.SubjectPublicKeyInfo,
             )
+            return result
         raise TypeError("Invalid public key type")
 
     def _serialize_private_key(self, private_key: object) -> bytes:
@@ -611,11 +612,12 @@ class TPMEmulator:
         from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
         if isinstance(private_key, (rsa.RSAPrivateKey, ec.EllipticCurvePrivateKey)):
-            return private_key.private_bytes(
+            result: bytes = private_key.private_bytes(
                 encoding=serialization.Encoding.DER,
                 format=serialization.PrivateFormat.PKCS8,
                 encryption_algorithm=serialization.NoEncryption(),
             )
+            return result
         raise TypeError("Invalid private key type")
 
     def sign(self, key_handle: int, data: bytes, auth: bytes) -> tuple[TPM_RC, bytes | None]:
@@ -637,19 +639,18 @@ class TPMEmulator:
         # Deserialize private key
         private_key = serialization.load_der_private_key(key.private_key, password=None, backend=default_backend())
 
-        if (
-            key.algorithm == TPM_ALG.RSA
-            and not isinstance(private_key, rsa.RSAPrivateKey)
-            or key.algorithm not in [TPM_ALG.RSA, TPM_ALG.ECC]
-        ):
-            return TPM_RC.TYPE, None
-        elif key.algorithm == TPM_ALG.RSA:
+        signature: bytes
+        if key.algorithm == TPM_ALG.RSA:
+            if not isinstance(private_key, rsa.RSAPrivateKey):
+                return TPM_RC.TYPE, None
             signature = private_key.sign(
                 data,
                 padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
                 hashes.SHA256(),
             )
-        elif isinstance(private_key, ec.EllipticCurvePrivateKey):
+        elif key.algorithm == TPM_ALG.ECC:
+            if not isinstance(private_key, ec.EllipticCurvePrivateKey):
+                return TPM_RC.TYPE, None
             signature = private_key.sign(data, ec.ECDSA(hashes.SHA256()))
         else:
             return TPM_RC.TYPE, None
@@ -1505,11 +1506,12 @@ class SecureEnclaveBypass:
         attestation_key = self._load_attestation_key()
         if not isinstance(attestation_key, rsa.RSAPrivateKey):
             raise TypeError("Attestation key must be RSA private key")
-        return attestation_key.sign(
+        result: bytes = attestation_key.sign(
             quote_data,
             padding.PSS(mgf=padding.MGF1(hashes.SHA256()), salt_length=padding.PSS.MAX_LENGTH),
             hashes.SHA256(),
         )
+        return result
 
     def _sign_sgx_quote(self, report_data: bytes) -> bytes:
         """Sign SGX quote using ECDSA attestation key."""
@@ -1520,7 +1522,8 @@ class SecureEnclaveBypass:
         if not isinstance(attestation_key, ec.EllipticCurvePrivateKey):
             raise TypeError("SGX attestation key must be ECC private key")
 
-        return attestation_key.sign(report_data, ec.ECDSA(hashes.SHA256()))
+        result: bytes = attestation_key.sign(report_data, ec.ECDSA(hashes.SHA256()))
+        return result
 
     def _load_attestation_key(self) -> rsa.RSAPrivateKey:
         """Load TPM attestation key from system or cache."""
@@ -1832,7 +1835,8 @@ class SecureEnclaveBypass:
             ),
         )
 
-        return cert.public_bytes(serialization.Encoding.DER)
+        result: bytes = cert.public_bytes(serialization.Encoding.DER)
+        return result
 
     def _generate_sgx_certificate(self, platform_info: dict[str, Any]) -> bytes:
         """Generate SGX Platform Certification Key certificate."""
@@ -1897,7 +1901,8 @@ class SecureEnclaveBypass:
             ),
         )
 
-        return cert.public_bytes(serialization.Encoding.DER)
+        result: bytes = cert.public_bytes(serialization.Encoding.DER)
+        return result
 
     def _capture_platform_manifest(self) -> dict[str, Any]:
         """Capture real platform security manifest from system."""

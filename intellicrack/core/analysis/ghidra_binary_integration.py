@@ -400,29 +400,30 @@ class GhidraBinaryIntegration:
         """
         self.logger.info("Starting licensing crack workflow for %s", binary_path.name)
 
-        workflow_results = {
+        workflow_results: dict[str, Any] = {
             "binary": str(binary_path),
             "success": True,
             "stages": {},
         }
 
-        workflow_results["stages"]["protection_detection"] = self.detect_protections(binary_path)
+        stages: dict[str, Any] = workflow_results["stages"]
+        stages["protection_detection"] = self.detect_protections(binary_path)
 
         if any(
-            prot in workflow_results["stages"]["protection_detection"].get("protections", []) for prot in ["VMProtect", "Themida", "Enigma"]
+            prot in stages["protection_detection"].get("protections", []) for prot in ["VMProtect", "Themida", "Enigma"]
         ):
             self.logger.info("Packer detected, attempting to unpack...")
-            workflow_results["stages"]["unpacking"] = self.unpack_binary(binary_path)
+            stages["unpacking"] = self.unpack_binary(binary_path)
 
-        workflow_results["stages"]["license_analysis"] = self.analyze_license_validation(binary_path, deep_analysis=True)
+        stages["license_analysis"] = self.analyze_license_validation(binary_path, deep_analysis=True)
 
-        workflow_results["stages"]["crypto_analysis"] = self.analyze_crypto_routines(binary_path)
+        stages["crypto_analysis"] = self.analyze_crypto_routines(binary_path)
 
-        workflow_results["stages"]["keygen_generation"] = self.generate_keygen_template(binary_path)
+        stages["keygen_generation"] = self.generate_keygen_template(binary_path)
 
-        workflow_results["stages"]["string_decryption"] = self.decrypt_strings(binary_path)
+        stages["string_decryption"] = self.decrypt_strings(binary_path)
 
-        workflow_results["stages"]["anti_analysis"] = self.detect_anti_analysis(binary_path)
+        stages["anti_analysis"] = self.detect_anti_analysis(binary_path)
 
         self.logger.info("Licensing crack workflow completed for %s", binary_path.name)
 

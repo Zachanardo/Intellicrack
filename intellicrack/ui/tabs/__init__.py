@@ -18,84 +18,117 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
-# Import tab classes using absolute imports
+from typing import Any
+
+_analysis_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.tabs.analysis_tab import AnalysisTab
+    from intellicrack.ui.tabs.analysis_tab import AnalysisTab as _AnalysisTabImport
+    _analysis_tab_cls = _AnalysisTabImport
 except ImportError:
-    AnalysisTab = None
+    _analysis_tab_cls = None
+AnalysisTab: type[Any] | None = _analysis_tab_cls
 
+_analysis_tab_original_cls: type[Any] | None
 try:
-    from intellicrack.ui.analysis_tab_original import AnalysisTabOriginal
+    from intellicrack.ui.analysis_tab_original import AnalysisTabOriginal as _AnalysisTabOriginalImport
+    _analysis_tab_original_cls = _AnalysisTabOriginalImport
 except ImportError:
-    AnalysisTabOriginal = None
+    _analysis_tab_original_cls = None
+AnalysisTabOriginal: type[Any] | None = _analysis_tab_original_cls
 
+_base_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.base_tab import BaseTab
+    from intellicrack.ui.base_tab import BaseTab as _BaseTabImport
+    _base_tab_cls = _BaseTabImport
 except ImportError:
-    BaseTab = None
+    _base_tab_cls = None
+BaseTab: type[Any] | None = _base_tab_cls
 
+_base_tab_original_cls: type[Any] | None
 try:
-    from intellicrack.ui.base_tab_original import BaseTabOriginal
+    from intellicrack.ui.base_tab_original import BaseTabOriginal as _BaseTabOriginalImport
+    _base_tab_original_cls = _BaseTabOriginalImport
 except ImportError:
-    BaseTabOriginal = None
+    _base_tab_original_cls = None
+BaseTabOriginal: type[Any] | None = _base_tab_original_cls
 
+_dashboard_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.dashboard_tab import DashboardTab
+    from intellicrack.ui.dashboard_tab import DashboardTab as _DashboardTabImport
+    _dashboard_tab_cls = _DashboardTabImport
 except ImportError:
-    DashboardTab = None
+    _dashboard_tab_cls = None
+DashboardTab: type[Any] | None = _dashboard_tab_cls
 
+_dashboard_tab_original_cls: type[Any] | None
 try:
-    from intellicrack.ui.dashboard_tab_original import DashboardTabOriginal
+    from intellicrack.ui.dashboard_tab_original import DashboardTabOriginal as _DashboardTabOriginalImport
+    _dashboard_tab_original_cls = _DashboardTabOriginalImport
 except ImportError:
-    DashboardTabOriginal = None
+    _dashboard_tab_original_cls = None
+DashboardTabOriginal: type[Any] | None = _dashboard_tab_original_cls
 
+_exploitation_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.exploitation_tab import ExploitationTab
+    from intellicrack.ui.exploitation_tab import ExploitationTab as _ExploitationTabImport
+    _exploitation_tab_cls = _ExploitationTabImport
 except ImportError:
-    ExploitationTab = None
+    _exploitation_tab_cls = None
+ExploitationTab: type[Any] | None = _exploitation_tab_cls
 
+_project_workspace_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.project_workspace_tab import ProjectWorkspaceTab
+    from intellicrack.ui.project_workspace_tab import ProjectWorkspaceTab as _ProjectWorkspaceTabImport
+    _project_workspace_tab_cls = _ProjectWorkspaceTabImport
 except ImportError:
-    ProjectWorkspaceTab = None
+    _project_workspace_tab_cls = None
+ProjectWorkspaceTab: type[Any] | None = _project_workspace_tab_cls
 
+_settings_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.settings_tab import SettingsTab
+    from intellicrack.ui.settings_tab import SettingsTab as _SettingsTabImport
+    _settings_tab_cls = _SettingsTabImport
 except ImportError:
-    SettingsTab = None
+    _settings_tab_cls = None
+SettingsTab: type[Any] | None = _settings_tab_cls
 
+_tools_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.tools_tab import ToolsTab
+    from intellicrack.ui.tools_tab import ToolsTab as _ToolsTabImport
+    _tools_tab_cls = _ToolsTabImport
 except ImportError:
-    ToolsTab = None
+    _tools_tab_cls = None
+ToolsTab: type[Any] | None = _tools_tab_cls
 
+_ai_assistant_tab_cls: type[Any] | None
 try:
-    from intellicrack.ui.ai_assistant_tab import AIAssistantTab
+    from intellicrack.ui.ai_assistant_tab import AIAssistantTab as _AIAssistantTabImport
+    _ai_assistant_tab_cls = _AIAssistantTabImport
 except ImportError:
-    AIAssistantTab = None
+    _ai_assistant_tab_cls = None
+AIAssistantTab: type[Any] | None = _ai_assistant_tab_cls
 
-# Export available tabs
-__all__ = []
+__all__: list[str] = []
 
-if AnalysisTab:
+if AnalysisTab is not None:
     __all__.append("AnalysisTab")
-if AnalysisTabOriginal:
+if AnalysisTabOriginal is not None:
     __all__.append("AnalysisTabOriginal")
-if BaseTab:
+if BaseTab is not None:
     __all__.append("BaseTab")
-if BaseTabOriginal:
+if BaseTabOriginal is not None:
     __all__.append("BaseTabOriginal")
-if DashboardTab:
+if DashboardTab is not None:
     __all__.append("DashboardTab")
-if DashboardTabOriginal:
+if DashboardTabOriginal is not None:
     __all__.append("DashboardTabOriginal")
-if ExploitationTab:
+if ExploitationTab is not None:
     __all__.append("ExploitationTab")
-if ProjectWorkspaceTab:
+if ProjectWorkspaceTab is not None:
     __all__.append("ProjectWorkspaceTab")
-if SettingsTab:
+if SettingsTab is not None:
     __all__.append("SettingsTab")
-if ToolsTab:
+if ToolsTab is not None:
     __all__.append("ToolsTab")
-if AIAssistantTab:
+if AIAssistantTab is not None:
     __all__.append("AIAssistantTab")

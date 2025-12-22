@@ -26,7 +26,13 @@ import csv
 import json
 import logging
 from typing import Any
+from typing import cast
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from _csv import _writer as CSVWriter
+else:
+    CSVWriter = Any
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +138,7 @@ class AnalysisExporter:
             return False
 
     @staticmethod
-    def _write_vulnerability_csv(writer: object, result: dict[str, Any]) -> None:
+    def _write_vulnerability_csv(writer: CSVWriter, result: dict[str, Any]) -> None:
         """Write vulnerability-specific CSV format."""
         writer.writerow(["Type", "File", "Line", "Severity", "Confidence", "Description"])
 
@@ -149,7 +155,7 @@ class AnalysisExporter:
             )
 
     @staticmethod
-    def _write_diff_csv(writer: object, result: dict[str, Any]) -> None:
+    def _write_diff_csv(writer: CSVWriter, result: dict[str, Any]) -> None:
         """Write binary diff-specific CSV format."""
         writer.writerow(["Type", "Old_Value", "New_Value", "Severity", "Description"])
 
@@ -165,7 +171,7 @@ class AnalysisExporter:
             )
 
     @staticmethod
-    def _write_generic_csv(writer: object, result: dict[str, Any]) -> None:
+    def _write_generic_csv(writer: CSVWriter, result: dict[str, Any]) -> None:
         """Write generic CSV format."""
         if not result:
             return

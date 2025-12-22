@@ -11,12 +11,15 @@ import os
 import time
 from collections.abc import Callable
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
 from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
+
+if TYPE_CHECKING:
+    from watchdog.observers.api import BaseObserver
 
 
 class LicenseFileHandler(FileSystemEventHandler):
@@ -75,8 +78,9 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        if not event.is_directory and self._is_license_file(event.src_path):
-            self.callback(EventType.CREATE, event.src_path, "file_created")
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        if not event.is_directory and self._is_license_file(src_path):
+            self.callback(EventType.CREATE, src_path, "file_created")
 
     def on_modified(self, event: FileSystemEvent) -> None:
         """Handle file modification.
@@ -85,8 +89,9 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        if not event.is_directory and self._is_license_file(event.src_path):
-            self.callback(EventType.MODIFY, event.src_path, "file_modified")
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        if not event.is_directory and self._is_license_file(src_path):
+            self.callback(EventType.MODIFY, src_path, "file_modified")
 
     def on_deleted(self, event: FileSystemEvent) -> None:
         """Handle file deletion.
@@ -95,8 +100,9 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        if not event.is_directory and self._is_license_file(event.src_path):
-            self.callback(EventType.DELETE, event.src_path, "file_deleted")
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        if not event.is_directory and self._is_license_file(src_path):
+            self.callback(EventType.DELETE, src_path, "file_deleted")
 
     def on_moved(self, event: FileSystemEvent) -> None:
         """Handle file move/rename.
@@ -105,8 +111,10 @@ class LicenseFileHandler(FileSystemEventHandler):
             event: File system event.
 
         """
-        if not event.is_directory and (self._is_license_file(event.src_path) or self._is_license_file(event.dest_path)):
-            self.callback(EventType.MODIFY, f"{event.src_path} -> {event.dest_path}", "file_moved")
+        src_path: str = event.src_path if isinstance(event.src_path, str) else event.src_path.decode('utf-8', errors='replace')
+        dest_path: str = event.dest_path if isinstance(event.dest_path, str) else event.dest_path.decode('utf-8', errors='replace')
+        if not event.is_directory and (self._is_license_file(src_path) or self._is_license_file(dest_path)):
+            self.callback(EventType.MODIFY, f"{src_path} -> {dest_path}", "file_moved")
 
 
 class FileMonitor(BaseMonitor):
@@ -129,7 +137,10 @@ class FileMonitor(BaseMonitor):
 
         """
         super().__init__("FileMonitor", process_info)
-        self.observer: Observer | None = None
+        if TYPE_CHECKING:
+            self.observer: BaseObserver | None = None
+        else:
+            self.observer: Observer | None = None
         self.watch_paths: list[str] = watch_paths or self._get_default_watch_paths()
         self.license_extensions: set[str] = {
             ".lic",

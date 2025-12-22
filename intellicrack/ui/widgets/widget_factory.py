@@ -26,9 +26,10 @@ import logging
 from collections.abc import Callable
 from typing import Any
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLineEdit, QListWidget, QPushButton, QTextEdit, QTreeWidget, QVBoxLayout, QWidget
 
-from intellicrack.handlers.pyqt6_handler import QFont, Qt
+from intellicrack.handlers.pyqt6_handler import QFont
 
 
 logger = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 def create_tree_widget(
     headers: list[str],
-    item_changed_callback: Callable | None = None,
+    item_changed_callback: Callable[..., None] | None = None,
 ) -> QTreeWidget:
     """Create a QTreeWidget with standard configuration.
 
@@ -127,8 +128,8 @@ def create_button_layout(
 
 
 def create_list_widget(
-    item_clicked_callback: Callable | None = None,
-    context_menu_callback: Callable | None = None,
+    item_clicked_callback: Callable[..., None] | None = None,
+    context_menu_callback: Callable[..., None] | None = None,
 ) -> QListWidget:
     """Create a QListWidget with optional callbacks.
 
@@ -170,7 +171,7 @@ def create_grouped_widget(title: str, content_widget: QWidget) -> QGroupBox:
     return group_box
 
 
-def create_standard_dialog_buttons(buttons: list[str], callbacks: list[Callable]) -> QHBoxLayout:
+def create_standard_dialog_buttons(buttons: list[str], callbacks: list[Callable[..., None]]) -> QHBoxLayout:
     """Create standard dialog buttons (OK, Cancel, Apply, etc.).
 
     Args:

@@ -18,8 +18,9 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
+from typing import Any
 
-from intellicrack.handlers.pyqt6_handler import QCloseEvent, QDialog, QMenu, QMessageBox, QPoint, QThread, QTimer, QWidget
+from intellicrack.handlers.pyqt6_handler import QAction, QCloseEvent, QDialog, QMenu, QMessageBox, QPoint, QThread, QTimer, QWidget
 
 
 """
@@ -39,7 +40,7 @@ class DialogEventHandler:
         condition_check: Callable[[], bool],
         title: str,
         message: str,
-        cleanup_action: Callable | None = None,
+        cleanup_action: Callable[[], None] | None = None,
     ) -> Callable[[QCloseEvent], None]:
         """Create a close event handler with confirmation dialog.
 
@@ -61,9 +62,9 @@ class DialogEventHandler:
                     dialog,
                     title,
                     message,
-                    QMessageBox.Yes | QMessageBox.No,
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 )
-                if reply == QMessageBox.Yes:
+                if reply == QMessageBox.StandardButton.Yes:
                     if cleanup_action:
                         cleanup_action()
                     event.accept()
@@ -75,7 +76,7 @@ class DialogEventHandler:
         return close_event_handler
 
     @staticmethod
-    def connect_thread_signals(thread: QThread, signal_connections: dict[str, Callable]) -> None:
+    def connect_thread_signals(thread: QThread, signal_connections: dict[str, Callable[..., None]]) -> None:
         """Connect multiple thread signals to their handlers.
 
         Args:
@@ -91,9 +92,9 @@ class DialogEventHandler:
     def create_context_menu(
         parent: QWidget,
         position_widget: QWidget,
-        actions: dict[str, Callable],
-        condition_check: Callable | None = None,
-    ) -> Callable:
+        actions: dict[str, Callable[[], None]],
+        condition_check: Callable[[], bool] | None = None,
+    ) -> Callable[[QPoint], None]:
         """Create a context menu handler.
 
         Args:
@@ -113,15 +114,16 @@ class DialogEventHandler:
 
             menu = QMenu(parent)
             for action_text, callback in actions.items():
-                action = menu.addAction(action_text)
-                action.triggered.connect(callback)
+                action: QAction | None = menu.addAction(action_text)
+                if action is not None:
+                    action.triggered.connect(callback)
 
-            menu.exec_(position_widget.mapToGlobal(position))
+            menu.exec(position_widget.mapToGlobal(position))
 
         return context_menu_handler
 
     @staticmethod
-    def create_periodic_timer(interval_ms: int, callback: Callable) -> QTimer:
+    def create_periodic_timer(interval_ms: int, callback: Callable[[], None]) -> QTimer:
         """Create a timer that calls a function periodically.
 
         Args:
@@ -158,7 +160,7 @@ class UIStateManager:
 
     def __init__(self) -> None:
         """Initialize the UIStateManager with default values."""
-        self.state_mappings = {}
+        self.state_mappings: dict[str, dict[QWidget, bool]] = {}
 
     def register_state_mapping(self, state_name: str, widget_states: dict[QWidget, bool]) -> None:
         """Register a state mapping for widgets.
@@ -197,12 +199,13 @@ def format_file_size(size_bytes: int) -> str:
 
     size_names = ["B", "KB", "MB", "GB", "TB"]
     i = 0
+    size_float: float = float(size_bytes)
 
-    while size_bytes >= 1024 and i < len(size_names) - 1:
-        size_bytes /= 1024.0
+    while size_float >= 1024 and i < len(size_names) - 1:
+        size_float /= 1024.0
         i += 1
 
-    return f"{size_bytes:.1f} {size_names[i]}"
+    return f"{size_float:.1f} {size_names[i]}"
 
 
 def create_colored_message(message: str, message_type: str = "info") -> str:

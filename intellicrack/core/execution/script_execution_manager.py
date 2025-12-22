@@ -23,9 +23,14 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING, cast
 
-from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, pyqtSignal
+from intellicrack.handlers.pyqt6_handler import QDialog, QMessageBox, QObject, QWidget, pyqtSignal
+
+if TYPE_CHECKING:
+    from intellicrack.ai.qemu_manager import QEMUManager
+    from intellicrack.ui.dialogs.qemu_test_dialog import QEMUTestDialog
+    from intellicrack.ui.dialogs.qemu_test_results_dialog import QEMUTestResultsDialog
 
 from ...utils.logger import get_logger
 from ..config_manager import get_config
@@ -60,15 +65,15 @@ class ScriptExecutionManager(QObject):
     def __init__(self) -> None:
         """Initialize the script execution manager with task queues and monitoring."""
         super().__init__()
-        self.running_scripts = {}
-        self.script_history = {}
-        self.script_queue = []
+        self.running_scripts: dict[str, Any] = {}
+        self.script_history: dict[str, Any] = {}
+        self.script_queue: list[dict[str, Any]] = []
         self.logger = get_logger(__name__)
         self.max_concurrent_scripts = 5
         self.config = get_config()
-        self.qemu_manager = None
-        self.QEMUTestDialog = None
-        self.QEMUTestResultsDialog = None
+        self.qemu_manager: QEMUManager | None = None
+        self.QEMUTestDialog: type[QEMUTestDialog] | None = None
+        self.QEMUTestResultsDialog: type[QEMUTestResultsDialog] | None = None
         self._initialize_managers()
 
     def _initialize_managers(self) -> None:
@@ -208,16 +213,18 @@ class ScriptExecutionManager(QObject):
         if not self.QEMUTestDialog:
             logger.warning("QEMUTestDialog not available, defaulting to host execution")
             return "run_host"
+
+        parent_widget = cast(QWidget | None, self.parent())
         dialog = self.QEMUTestDialog(
             script_type=script_type,
             target_binary=target_binary,
-            script_preview=script_content[:500],  # Show first 500 chars
-            parent=self.parent(),
+            script_preview=script_content[:500],
+            parent=parent_widget,  # type: ignore[arg-type]
         )
 
         result = dialog.exec()
-
-        return dialog.get_user_choice() if result == QDialog.Accepted else "cancelled"
+        accepted_value = getattr(QDialog, "Accepted", 1)
+        return dialog.get_user_choice() if result == accepted_value else "cancelled"
 
     def _run_qemu_test(self, script_type: str, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
         """Run script in QEMU environment."""
@@ -228,21 +235,20 @@ class ScriptExecutionManager(QObject):
         self.qemu_test_started.emit(script_type, target_binary)
 
         try:
-            # Create snapshot for testing
             snapshot_id = self._create_qemu_snapshot(target_binary, options)
 
             if not snapshot_id:
                 return {"success": False, "error": "Failed to create QEMU snapshot"}
 
-            # Run the appropriate test based on script type
+            results: dict[str, Any]
             if script_type == "frida":
-                results = self.qemu_manager.test_frida_script_enhanced(
+                results = self.qemu_manager.test_frida_script_enhanced(  # type: ignore[attr-defined]
                     snapshot_id,
                     script_content,
                     target_binary,
                 )
             elif script_type == "ghidra":
-                results = self.qemu_manager.test_ghidra_script_enhanced(
+                results = self.qemu_manager.test_ghidra_script_enhanced(  # type: ignore[attr-defined]
                     snapshot_id,
                     script_content,
                     target_binary,
@@ -255,7 +261,7 @@ class ScriptExecutionManager(QObject):
 
         except Exception as e:
             logger.exception("Error during QEMU test: %s", e)
-            error_results = {"success": False, "error": str(e)}
+            error_results: dict[str, Any] = {"success": False, "error": str(e)}
             self.qemu_test_completed.emit(script_type, False, error_results)
             return error_results
 
@@ -264,13 +270,11 @@ class ScriptExecutionManager(QObject):
         if not self.qemu_manager:
             return None
         try:
-            # Generate unique snapshot ID
             snapshot_id = (
                 f"test_{hashlib.sha256(target_binary.encode()).hexdigest()[:8]}_{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}"
             )
 
-            # Create snapshot with binary
-            success = self.qemu_manager.create_snapshot(
+            success = self.qemu_manager.create_snapshot(  # type: ignore[call-arg]
                 snapshot_id=snapshot_id,
                 binary_path=target_binary,
                 os_type=options.get("os_type", "windows"),
@@ -286,39 +290,40 @@ class ScriptExecutionManager(QObject):
     def _show_qemu_results_and_confirm(self, qemu_results: dict[str, Any]) -> bool:
         """Show QEMU test results and ask for confirmation to proceed."""
         if not self.QEMUTestResultsDialog:
-            # Fallback to simple message box
-            msg = QMessageBox(self.parent())
+            parent_widget = cast(QWidget | None, self.parent())
+            msg = QMessageBox(parent_widget)
             msg.setWindowTitle("QEMU Test Results")
             msg.setText("QEMU test completed successfully.\nProceed with host execution?")
-            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            return msg.exec() == QMessageBox.Yes
+            msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            result = msg.exec()
+            return result == int(QMessageBox.StandardButton.Yes)
 
-        dialog = self.QEMUTestResultsDialog(
+        parent_widget = cast(QWidget | None, self.parent())
+        dialog = self.QEMUTestResultsDialog(  # type: ignore[call-arg]
             test_results=qemu_results,
-            parent=self.parent(),
+            parent=parent_widget,
         )
 
-        dialog.add_action_button("Deploy to Host", "deploy")
-        dialog.add_action_button("Cancel Deployment", "cancel")
+        dialog.add_action_button("Deploy to Host", "deploy")  # type: ignore[attr-defined]
+        dialog.add_action_button("Cancel Deployment", "cancel")  # type: ignore[attr-defined]
 
         result = dialog.exec()
-        user_action = dialog.get_user_action()
+        user_action: str = dialog.get_user_action()  # type: ignore[attr-defined]
 
-        # Handle dialog result based on both exec result and user action
-        if result == dialog.Accepted:
-            # Dialog was accepted - check user action
+        accepted_value = getattr(dialog, "Accepted", 1)
+        rejected_value = getattr(dialog, "Rejected", 0)
+
+        if result == accepted_value:
             if user_action == "deploy":
                 logger.info("User confirmed deployment to host after reviewing QEMU results")
                 return True
             logger.info("User cancelled deployment despite dialog acceptance")
             return False
-        if result == dialog.Rejected:
-            # Dialog was rejected (X button, Escape, etc.)
+        if result == rejected_value:
             logger.info("User rejected QEMU results dialog")
             return False
-        # Handle other dialog results
         logger.warning("Unexpected dialog result: %s", result)
-        return user_action == "deploy"
+        return bool(user_action == "deploy")
 
     def _execute_on_host(self, script_type: str, script_content: str, target_binary: str, options: dict[str, Any]) -> dict[str, Any]:
         """Execute script on the host system."""

@@ -25,9 +25,13 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.psutil_handler import psutil
+
+if TYPE_CHECKING:
+    from rich.layout import Layout
+    from rich.panel import Panel
 
 
 logger = logging.getLogger(__name__)
@@ -123,18 +127,18 @@ class TerminalDashboard:
         }
 
         # Activity log
-        self.activity_log = []
+        self.activity_log: list[dict[str, str]] = []
         self.max_activity_entries = 10
 
         # Performance history
-        self.cpu_history = []
-        self.memory_history = []
+        self.cpu_history: list[float] = []
+        self.memory_history: list[float] = []
         self.max_history = 30
 
         # Callbacks for external updates
-        self.callbacks = {}
+        self.callbacks: dict[str, list[Callable[..., Any]]] = {}
 
-    def register_callback(self, event: str, callback: Callable) -> None:
+    def register_callback(self, event: str, callback: Callable[..., Any]) -> None:
         """Register callback for dashboard events.
 
         Args:
@@ -225,7 +229,10 @@ class TerminalDashboard:
 
             # Load average (Unix systems)
             try:
-                self.system_metrics.load_average = os.getloadavg()
+                if hasattr(os, "getloadavg"):
+                    self.system_metrics.load_average = list(os.getloadavg())
+                else:
+                    self.system_metrics.load_average = None
             except (OSError, AttributeError):
                 self.system_metrics.load_average = None
 
@@ -241,9 +248,12 @@ class TerminalDashboard:
         except Exception:
             self.logger.debug("Failed to collect system metrics", exc_info=True)
 
-    def _create_system_panel(self) -> Panel:
+    def _create_system_panel(self) -> "Panel | None":
         """Create system metrics panel."""
         if not self.console:
+            return None
+
+        if not RICH_AVAILABLE:
             return None
 
         # CPU indicator
@@ -288,9 +298,12 @@ class TerminalDashboard:
 
         return Panel(content, title="🖥️ System", border_style="green")
 
-    def _create_analysis_panel(self) -> Panel:
+    def _create_analysis_panel(self) -> "Panel | None":
         """Create analysis statistics panel."""
         if not self.console:
+            return None
+
+        if not RICH_AVAILABLE:
             return None
 
         # Calculate success rate
@@ -322,9 +335,12 @@ class TerminalDashboard:
 
         return Panel(content, title=" Analysis", border_style="blue")
 
-    def _create_session_panel(self) -> Panel:
+    def _create_session_panel(self) -> "Panel | None":
         """Create session information panel."""
         if not self.console:
+            return None
+
+        if not RICH_AVAILABLE:
             return None
 
         # Session duration
@@ -349,9 +365,12 @@ class TerminalDashboard:
 
         return Panel(content, title=" Session", border_style="yellow")
 
-    def _create_activity_panel(self) -> Panel:
+    def _create_activity_panel(self) -> "Panel | None":
         """Create recent activity panel."""
         if not self.console:
+            return None
+
+        if not RICH_AVAILABLE:
             return None
 
         if not self.activity_log:
@@ -379,9 +398,12 @@ class TerminalDashboard:
 
         return Panel(content, title="📋 Recent Activity", border_style="cyan")
 
-    def _create_quick_stats_panel(self) -> Panel:
+    def _create_quick_stats_panel(self) -> "Panel | None":
         """Create quick statistics panel."""
         if not self.console:
+            return None
+
+        if not RICH_AVAILABLE:
             return None
 
         # Performance trend
@@ -511,7 +533,7 @@ Memory: {"🟢" if self.system_metrics.memory_percent < 80 else "🟡" if self.s
         except KeyboardInterrupt:
             self.logger.debug("Dashboard update thread interrupted")
 
-    def _create_dashboard_layout(self) -> Layout:
+    def _create_dashboard_layout(self) -> "Layout":
         """Create dashboard layout."""
         layout = Layout()
 

@@ -316,7 +316,7 @@ class LangChainIntegration:
 
         """
         try:
-            from langchain.tools import Tool
+            from langchain_core.tools import Tool  # type: ignore[import-not-found,import-untyped]
 
             tools: list[Any] = []
 
@@ -388,15 +388,27 @@ class IntellicrackAIServer:
 
     def get_adapter(self, model_type: str) -> AIModelAdapter | None:
         """Get adapter for specific model type."""
-        return self.adapters.get(model_type)
+        adapter = self.adapters.get(model_type)
+        if adapter is not None and isinstance(adapter, AIModelAdapter):
+            return adapter
+        return None
 
     def handle_request(self, request: dict[str, Any]) -> dict[str, Any]:
         """Handle an AI model request."""
-        model_type = request.get("model_type", "claude")
+        model_type_value = request.get("model_type", "claude")
+        model_type = str(model_type_value) if model_type_value is not None else "claude"
         tool_name = request.get("tool")
-        parameters = request.get("parameters", {})
+        parameters_value = request.get("parameters", {})
+        parameters = parameters_value if isinstance(parameters_value, dict) else {}
 
-        if adapter := self.get_adapter(model_type):
+        if tool_name is None or not isinstance(tool_name, str):
+            return {
+                "status": "error",
+                "message": "Missing or invalid tool name",
+            }
+
+        adapter = self.get_adapter(model_type)
+        if adapter is not None:
             return adapter.handle_tool_call(tool_name, parameters)
         else:
             return {
@@ -481,9 +493,12 @@ def main() -> None:
 
     # Get tool definitions for Claude
     claude_adapter = server.get_adapter("claude")
-    tools = claude_adapter._create_tool_definitions()
-    logger.info("Claude Tools:")
-    logger.info("%s", json.dumps(tools, indent=2))
+    if claude_adapter is not None:
+        tools = claude_adapter._create_tool_definitions()
+        logger.info("Claude Tools:")
+        logger.info("%s", json.dumps(tools, indent=2))
+    else:
+        logger.error("Failed to get Claude adapter")
 
 
 if __name__ == "__main__":

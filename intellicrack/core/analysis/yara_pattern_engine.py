@@ -14,7 +14,7 @@ import tempfile
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from ...utils.logger import get_logger
 
@@ -917,10 +917,10 @@ rule Basic_PE_Detection
                 except Exception as cleanup_error:
                     logger.warning("Failed to cleanup temp directory: %s", cleanup_error)
 
-    def _determine_category(self, match: object) -> PatternCategory:
+    def _determine_category(self, match: Any) -> PatternCategory:
         """Determine pattern category from YARA match."""
         # Check rule name first
-        rule_name = match.rule.lower()
+        rule_name: str = cast(str, match.rule).lower()
 
         if any(keyword in rule_name for keyword in ["protection", "protect", "vmprotect", "themida", "enigma"]):
             return PatternCategory.PROTECTION
@@ -938,7 +938,7 @@ rule Basic_PE_Detection
             return PatternCategory.LICENSE_BYPASS
         return PatternCategory.SUSPICIOUS
 
-    def _calculate_confidence(self, match: object) -> float:
+    def _calculate_confidence(self, match: Any) -> float:
         """Calculate confidence score for a match."""
         # Check metadata first
         if hasattr(match, "meta") and "confidence" in match.meta:
@@ -1147,7 +1147,7 @@ rule Basic_PE_Detection
             return {}
 
         # Categorize matches for ICP integration
-        supplemental_data = {
+        supplemental_data: dict[str, Any] = {
             "yara_analysis": {
                 "total_matches": len(scan_result.matches),
                 "high_confidence_matches": len(scan_result.high_confidence_matches),

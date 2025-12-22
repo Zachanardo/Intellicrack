@@ -256,7 +256,7 @@ def _benchmark_numba_framework(framework_results: dict[str, Any], test_data: dic
             # Perform pattern search operation using GPU acceleration
             search_start = time.time()
 
-            @numba_cuda.jit  # type: ignore[misc]
+            @numba_cuda.jit  # type: ignore[untyped-decorator]
             def pattern_search_kernel(
                 data: numba_cuda.uint8[:],
                 pattern: numba_cuda.uint8[:],
@@ -290,7 +290,7 @@ def _benchmark_numba_framework(framework_results: dict[str, Any], test_data: dic
         logger.exception("Numba benchmark failed: %s", e, exc_info=True)
 
 
-def _benchmark_pycuda_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+def _benchmark_pycuda_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
     """Benchmark PyCUDA framework."""
     try:
         import pycuda.driver as cuda
@@ -316,7 +316,7 @@ def _benchmark_pycuda_framework(framework_results: dict, test_data: dict[int, by
         logger.exception("PyCUDA benchmark failed: %s", e, exc_info=True)
 
 
-def _benchmark_cpu_framework(framework_results: dict, test_data: dict[int, bytes]) -> None:
+def _benchmark_cpu_framework(framework_results: dict[str, Any], test_data: dict[int, bytes]) -> None:
     """Benchmark CPU baseline."""
     pattern = b"LICENSE"
 
@@ -405,7 +405,7 @@ def benchmark_gpu_frameworks(app: object, test_sizes: list[int] | None = None) -
             50 * 1024 * 1024,  # 50 MB
         ]
 
-    results = {
+    results: dict[str, Any] = {
         "frameworks_tested": [],
         "benchmarks": {},
         "best_framework": None,
@@ -454,26 +454,43 @@ def benchmark_gpu_frameworks(app: object, test_sizes: list[int] | None = None) -
             _benchmark_cpu_framework(framework_results, test_data)
 
         # Calculate total time
-        for size_mb in framework_results["pattern_search"]:
-            search_time = framework_results["pattern_search"].get(size_mb, 0)
-            transfer_time = framework_results.get("data_transfer", {}).get(size_mb, 0)
-            framework_results["total_time"] += search_time + transfer_time
+        pattern_search_results = framework_results.get("pattern_search", {})
+        if isinstance(pattern_search_results, dict):
+            for size_mb in pattern_search_results:
+                search_time_val = pattern_search_results.get(size_mb, 0)
+                search_time = float(search_time_val) if isinstance(search_time_val, (int, float)) else 0
+                data_transfer_dict = framework_results.get("data_transfer", {})
+                transfer_time_val = data_transfer_dict.get(size_mb, 0) if isinstance(data_transfer_dict, dict) else 0
+                transfer_time = float(transfer_time_val) if isinstance(transfer_time_val, (int, float)) else 0
+                total_time_val = framework_results.get("total_time", 0)
+                current_total = float(total_time_val) if isinstance(total_time_val, (int, float)) else 0
+                framework_results["total_time"] = current_total + search_time + transfer_time
 
-        if framework_results["pattern_search"]:
-            results["benchmarks"][framework] = framework_results
-            results["frameworks_tested"].append(framework)
+        if framework_results.get("pattern_search"):
+            benchmarks_dict = results["benchmarks"]
+            if isinstance(benchmarks_dict, dict):
+                benchmarks_dict[framework] = framework_results
+            frameworks_tested_list = results["frameworks_tested"]
+            if isinstance(frameworks_tested_list, list):
+                frameworks_tested_list.append(framework)
 
     # Determine best framework
     _determine_best_framework(results)
 
     # Output speedup information if available
     if hasattr(app, "update_output"):
-        for framework in results["frameworks_tested"]:
-            if framework != "cpu" and "speedup" in results["benchmarks"].get(framework, {}):
-                speedup = results["benchmarks"][framework]["speedup"]
-                app.update_output.emit(
-                    f"[GPU] {framework} speedup: {speedup:.1f}x over CPU",
-                )
+        frameworks_tested_list = results.get("frameworks_tested", [])
+        if isinstance(frameworks_tested_list, list):
+            for framework in frameworks_tested_list:
+                benchmarks_dict = results.get("benchmarks", {})
+                if isinstance(benchmarks_dict, dict):
+                    framework_data = benchmarks_dict.get(framework, {})
+                    if framework != "cpu" and isinstance(framework_data, dict) and "speedup" in framework_data:
+                        speedup_val = framework_data["speedup"]
+                        if isinstance(speedup_val, (int, float)):
+                            app.update_output.emit(
+                                f"[GPU] {framework} speedup: {speedup_val:.1f}x over CPU",
+                            )
 
     # Generate recommendations
     _generate_recommendations(results)

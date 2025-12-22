@@ -127,7 +127,7 @@ class RegistryMonitor(BaseMonitor):
             except Exception as e:
                 print(f"[RegistryMonitor] Error closing watcher: {e}")
 
-    def _create_watcher(self, hive_key: int, hive_name: str, subkey: str) -> dict | None:
+    def _create_watcher(self, hive_key: int, hive_name: str, subkey: str) -> dict[str, Any] | None:
         """Create registry watcher for a key.
 
         Args:
@@ -174,7 +174,7 @@ class RegistryMonitor(BaseMonitor):
             "last_notification": time.time(),
         }
 
-    def _check_watcher(self, watcher: dict) -> None:
+    def _check_watcher(self, watcher: dict[str, Any]) -> None:
         """Check if watcher has detected changes.
 
         Args:

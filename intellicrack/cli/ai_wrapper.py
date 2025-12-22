@@ -87,7 +87,7 @@ class ConfirmationManager:
         self.pending_actions: dict[str, PendingAction] = {}
         self.action_history: list[dict[str, Any]] = []
         self.auto_approve_low_risk = auto_approve_low_risk
-        self.confirmation_queue = queue.Queue()
+        self.confirmation_queue: queue.Queue[Any] = queue.Queue()
 
     # pylint: disable=too-many-branches
     def request_confirmation(self, action: PendingAction) -> bool:
@@ -193,7 +193,7 @@ class IntellicrackAIInterface:
         """Initialize Intellicrack AI interface with confirmation management and session handling."""
         self.confirmation_manager = confirmation_manager or ConfirmationManager()
         self.cli_path = os.path.join(script_dir, "main.py")
-        self.current_analysis = {}
+        self.current_analysis: dict[str, Any] = {}
         self.session_id = self._generate_session_id()
 
     def _generate_session_id(self) -> str:
@@ -334,7 +334,7 @@ class IntellicrackAIInterface:
                 "action": action,
             }
 
-    def analyze_binary(self, binary_path: str, analyses: list[str] = None) -> dict[str, Any]:
+    def analyze_binary(self, binary_path: str, analyses: list[str] | None = None) -> dict[str, Any]:
         """Perform comprehensive analysis on a binary.
 
         Args:

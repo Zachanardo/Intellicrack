@@ -223,7 +223,7 @@ class BypassStrategySelector:
 
         """
         if hasattr(detection_report, "is_packed"):
-            return detection_report.is_packed
+            return bool(detection_report.is_packed)
 
         low_confidence_count = sum(func.confidence < 0.5 for func in detection_report.validation_functions)
 

@@ -19,8 +19,11 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 from collections.abc import Callable
+from typing import Any, TypeVar
 
 from intellicrack.utils.logger import logger
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 try:
@@ -36,13 +39,15 @@ class EmulatorStatusWidget(QWidget):
     def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the emulator status widget with UI components and status tracking."""
         super().__init__(parent)
-        self.setup_ui()
-
-        # Status tracking
-        self.emulator_status = {
+        self.qemu_label: QLabel
+        self.qemu_status: QLabel
+        self.qiling_label: QLabel
+        self.qiling_status: QLabel
+        self.emulator_status: dict[str, dict[str, bool | str]] = {
             "QEMU": {"running": False, "message": "Not started"},
             "Qiling": {"running": False, "message": "Not initialized"},
         }
+        self.setup_ui()
 
     def setup_ui(self) -> None:
         """Create the status indicator UI."""
@@ -167,13 +172,17 @@ class EmulatorRequiredDecorator:
     """
 
     @staticmethod
-    def requires_qemu(func: Callable) -> Callable:
+    def requires_qemu(func: F) -> F:
         """Decorate functions requiring QEMU."""
 
-        def wrapper(self: object, *args: object, **kwargs: object) -> object:
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             from ..core.processing.emulator_manager import get_emulator_manager
 
-            if not hasattr(self, "binary_path") or not self.binary_path:
+            if not isinstance(self, QWidget):
+                return None
+
+            binary_path = getattr(self, "binary_path", None)
+            if not binary_path:
                 QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
                 return None
 
@@ -181,7 +190,7 @@ class EmulatorRequiredDecorator:
             if not manager.qemu_running:
                 feature_name = func.__name__.replace("_", " ").title()
                 if show_emulator_warning(self, "QEMU", feature_name):
-                    if not manager.ensure_qemu_running(self.binary_path):
+                    if not manager.ensure_qemu_running(binary_path):
                         QMessageBox.critical(self, "QEMU Error", "Failed to start QEMU. Check the logs for details.")
                         return None
                 else:
@@ -189,21 +198,25 @@ class EmulatorRequiredDecorator:
 
             return func(self, *args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]
 
     @staticmethod
-    def requires_qiling(func: Callable) -> Callable:
+    def requires_qiling(func: F) -> F:
         """Decorate functions requiring Qiling."""
 
-        def wrapper(self: object, *args: object, **kwargs: object) -> object:
+        def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             from ..core.processing.emulator_manager import get_emulator_manager
 
-            if not hasattr(self, "binary_path") or not self.binary_path:
+            if not isinstance(self, QWidget):
+                return None
+
+            binary_path = getattr(self, "binary_path", None)
+            if not binary_path:
                 QMessageBox.warning(self, "No Binary", "Please select a binary file first.")
                 return None
 
             manager = get_emulator_manager()
-            if not manager.ensure_qiling_ready(self.binary_path):
+            if not manager.ensure_qiling_ready(binary_path):
                 QMessageBox.critical(
                     self,
                     "Qiling Error",
@@ -213,4 +226,4 @@ class EmulatorRequiredDecorator:
 
             return func(self, *args, **kwargs)
 
-        return wrapper
+        return wrapper  # type: ignore[return-value]

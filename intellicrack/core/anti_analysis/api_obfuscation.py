@@ -59,14 +59,15 @@ class APIObfuscator:
         }
 
         # Known API hash databases
-        self.api_hash_db = {}
-        self.encrypted_strings_db = {}
+        self.api_hash_db: dict[str, tuple[str, str]] = {}
+        self.api_address_db: dict[int, str] = {}
+        self.encrypted_strings_db: dict[int, str] = {}
 
         # Load known hash databases
         self._load_api_databases()
 
         # Statistics and cache
-        self.resolved_apis_cache = {}
+        self.resolved_apis_cache: dict[str, int] = {}
         self.resolved_apis = 0
         self.failed_resolutions = 0
 
@@ -118,8 +119,9 @@ class APIObfuscator:
             cache_key = f"{dll_name}!{api_name}"
 
             # Check cache
-            if cache_key in self.resolved_apis_cache:
-                return self.resolved_apis_cache[cache_key]
+            cached_address: int | None = self.resolved_apis_cache.get(cache_key)
+            if cached_address is not None:
+                return cached_address
 
             address = None
 
@@ -153,8 +155,13 @@ class APIObfuscator:
 
             kernel32 = ctypes.windll.kernel32
 
-            if h_module := kernel32.GetModuleHandleW(dll_name) or kernel32.LoadLibraryW(dll_name):
-                return kernel32.GetProcAddress(h_module, api_name.encode())
+            h_module: int = kernel32.GetModuleHandleW(dll_name)
+            if not h_module:
+                h_module = kernel32.LoadLibraryW(dll_name)
+
+            if h_module:
+                proc_addr: int = kernel32.GetProcAddress(h_module, api_name.encode())
+                return proc_addr if proc_addr else None
         except Exception as e:
             self.logger.debug("Normal resolution failed: %s", e)
 
@@ -248,7 +255,8 @@ class APIObfuscator:
                     # Get ordinal and function address
                     ordinal = ctypes.c_uint16.from_address(ordinals_array + i * 2).value
                     func_rva = ctypes.c_uint32.from_address(functions_array + ordinal * 4).value
-                    return h_module + func_rva
+                    func_addr: int = h_module + func_rva
+                    return func_addr
 
             return None
 
@@ -311,14 +319,15 @@ class APIObfuscator:
                 if func_rva == 0:
                     return None
 
-                func_addr = h_module + func_rva
+                func_addr: int = h_module + func_rva
 
                 # Check if this is a forwarded export
                 export_dir_end = export_dir + ctypes.c_uint32.from_address(export_dir + 0x04).value
                 if export_dir <= func_addr < export_dir_end:
                     # This is a forwarded export, need to resolve further
                     forward_str = ctypes.string_at(func_addr).decode("ascii", errors="ignore")
-                    return self._resolve_forwarded_export(forward_str)
+                    forwarded_addr: int | None = self._resolve_forwarded_export(forward_str)
+                    return forwarded_addr
 
                 return func_addr
 
@@ -327,8 +336,8 @@ class APIObfuscator:
 
                 # Fallback: Use GetProcAddress with MAKEINTRESOURCE
                 try:
-                    address = kernel32.GetProcAddress(h_module, ordinal)
-                    return address or None
+                    address: int = kernel32.GetProcAddress(h_module, ordinal)
+                    return address if address else None
                 except Exception:
                     return None
 
@@ -355,17 +364,17 @@ class APIObfuscator:
             shuffled_api = "".join(api_chars[i] for i in api_indices)
 
             # Reconstruct
-            reconstructed_dll = [""] * len(dll_chars)
-            reconstructed_api = [""] * len(api_chars)
+            reconstructed_dll_list: list[str] = [""] * len(dll_chars)
+            reconstructed_api_list: list[str] = [""] * len(api_chars)
             for i, idx in enumerate(indices):
-                reconstructed_dll[idx] = shuffled_dll[i]
+                reconstructed_dll_list[idx] = shuffled_dll[i]
             for i, idx in enumerate(api_indices):
-                reconstructed_api[idx] = shuffled_api[i]
-            reconstructed_dll = "".join(reconstructed_dll)
-            reconstructed_api = "".join(reconstructed_api)
+                reconstructed_api_list[idx] = shuffled_api[i]
+            reconstructed_dll_str: str = "".join(reconstructed_dll_list)
+            reconstructed_api_str: str = "".join(reconstructed_api_list)
 
             # Now resolve normally
-            return self._normal_resolve(reconstructed_dll, reconstructed_api)
+            return self._normal_resolve(reconstructed_dll_str, reconstructed_api_str)
 
         except Exception as e:
             self.logger.debug("Dynamic resolution failed: %s", e)
@@ -672,9 +681,10 @@ if (p{api_name}) {{
             self.logger.exception("Failed to load API databases: %s", e)
             # Initialize empty databases
             self.api_hash_db = {}
+            self.api_address_db = {}
             self.encrypted_strings_db = {}
 
-    def _resolve_encrypted_strings(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _resolve_encrypted_strings(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve encrypted API strings.
 
         Args:
@@ -718,7 +728,7 @@ if (p{api_name}) {{
             self.logger.exception("Failed to resolve encrypted strings: %s", e)
             return code, {"error": str(e)}
 
-    def _resolve_dynamic_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _resolve_dynamic_imports(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve dynamically loaded API imports.
 
         Args:
@@ -739,8 +749,8 @@ if (p{api_name}) {{
                 if code[i : i + 2] == b"\xff\x15":  # CALL DWORD PTR
                     # Extract potential API name
                     api_addr = int.from_bytes(code[i + 2 : i + 6], "little")
-                    if api_addr in self.api_hash_db:
-                        api_name = self.api_hash_db[api_addr]
+                    if api_addr in self.api_address_db:
+                        api_name = self.api_address_db[api_addr]
                         dynamic_imports.append({"offset": i, "api": api_name, "method": "GetProcAddress"})
 
             return bytes(resolved_code), {
@@ -753,7 +763,7 @@ if (p{api_name}) {{
             self.logger.exception("Failed to resolve dynamic imports: %s", e)
             return code, {"error": str(e)}
 
-    def _resolve_redirected_apis(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _resolve_redirected_apis(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve redirected API calls.
 
         Args:
@@ -776,8 +786,8 @@ if (p{api_name}) {{
                     target = i + 5 + offset
 
                     # Check if target is a known API
-                    if target in self.api_hash_db:
-                        api_name = self.api_hash_db[target]
+                    if target in self.api_address_db:
+                        api_name = self.api_address_db[target]
                         redirected_apis.append({
                             "offset": i,
                             "api": api_name,
@@ -795,7 +805,7 @@ if (p{api_name}) {{
             self.logger.exception("Failed to resolve redirected APIs: %s", e)
             return code, {"error": str(e)}
 
-    def _generate_indirect_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _generate_indirect_calls(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate indirect API calls through function pointers.
 
         Args:
@@ -818,8 +828,8 @@ if (p{api_name}) {{
                     call_target = i + 5 + call_offset
 
                     # Check if this calls a known API
-                    if call_target in self.api_hash_db:
-                        api_name = self.api_hash_db[call_target]
+                    if call_target in self.api_address_db:
+                        api_name = self.api_address_db[call_target]
 
                         # Generate indirect call sequence
                         # MOV EAX, [API_ADDR]
@@ -879,7 +889,7 @@ if (p{api_name}) {{
             self.logger.exception("Failed to generate indirect calls: %s", e)
             return code, {"error": str(e)}
 
-    def _generate_trampoline_calls(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _generate_trampoline_calls(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate trampoline-based API calls.
 
         Args:
@@ -1035,7 +1045,7 @@ if (p{api_name}) {{
 
         return shellcode
 
-    def _generate_encrypted_payloads(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _generate_encrypted_payloads(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate encrypted API call payloads.
 
         Args:
@@ -1089,7 +1099,7 @@ if (p{api_name}) {{
             self.logger.exception("Failed to generate encrypted payloads: %s", e)
             return code, {"error": str(e)}
 
-    def _generate_polymorphic_wrappers(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _generate_polymorphic_wrappers(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Generate polymorphic wrappers for API calls.
 
         Args:
@@ -1152,7 +1162,7 @@ if (p{api_name}) {{
             self.logger.exception("Failed to generate polymorphic wrappers: %s", e)
             return code, {"error": str(e)}
 
-    def _resolve_delayed_imports(self, code: bytes, params: dict) -> tuple[bytes, dict]:
+    def _resolve_delayed_imports(self, code: bytes, params: dict[str, Any]) -> tuple[bytes, dict[str, Any]]:
         """Resolve delayed/lazy loaded API imports.
 
         Args:
@@ -1178,8 +1188,8 @@ if (p{api_name}) {{
                         actual_addr = import_addr & 0x7FFFFFFF
 
                         # Try to resolve the delayed import
-                        if actual_addr in self.api_hash_db:
-                            api_name = self.api_hash_db[actual_addr]
+                        if actual_addr in self.api_address_db:
+                            api_name = self.api_address_db[actual_addr]
                             delayed_imports.append(
                                 {
                                     "offset": i,
@@ -1198,8 +1208,8 @@ if (p{api_name}) {{
                         call_target = int.from_bytes(code[i + 7 : i + 11], "little")
 
                         # Check if this calls LoadLibrary
-                        if call_target in self.api_hash_db:
-                            api_name = self.api_hash_db[call_target]
+                        if call_target in self.api_address_db:
+                            api_name = self.api_address_db[call_target]
                             if "LoadLibrary" in api_name:
                                 delayed_imports.append(
                                     {

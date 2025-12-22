@@ -8,9 +8,9 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, Dict, List
+from typing import Any
 
-from ...core.analysis.yara_pattern_engine import get_yara_engine, is_yara_available
+from ...core.analysis.yara_pattern_engine import YaraPatternEngine, get_yara_engine, is_yara_available
 from ...utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -19,10 +19,10 @@ logger = get_logger(__name__)
 class YARAPatternAnalysisTool:
     """LLM tool for running YARA pattern analysis on binary files"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize YARA pattern analysis tool"""
-        self.engine = get_yara_engine()
-        self.analysis_cache = {}
+        self.engine: YaraPatternEngine | None = get_yara_engine()
+        self.analysis_cache: dict[str, dict[str, Any]] = {}
 
     def get_tool_definition(self) -> dict[str, Any]:
         """Get tool definition for LLM registration
@@ -84,7 +84,7 @@ class YARAPatternAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> dict[str, Any]:
+    def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute YARA pattern analysis
 
         Args:
@@ -101,6 +101,9 @@ class YARAPatternAnalysisTool:
         if not is_yara_available():
             return {"success": False, "error": "YARA engine not available"}
 
+        if self.engine is None:
+            return {"success": False, "error": "YARA engine not initialized"}
+
         # Get parameters
         rule_categories = kwargs.get("rule_categories", ["ALL"])
         custom_rules = kwargs.get("custom_rules", [])
@@ -113,7 +116,7 @@ class YARAPatternAnalysisTool:
             cache_key = f"{file_path}:{':'.join(rule_categories)}:{len(custom_rules)}"
             if cache_key in self.analysis_cache:
                 logger.debug(f"Returning cached YARA analysis for {file_path}")
-                cached_result = self.analysis_cache[cache_key]
+                cached_result = self.analysis_cache[cache_key].copy()
                 cached_result["from_cache"] = True
                 return cached_result
 
@@ -377,7 +380,7 @@ class YARAPatternAnalysisTool:
 
     def _categorize_patterns(self, matches: list[Any]) -> dict[str, list[str]]:
         """Categorize detected patterns by type"""
-        categories = {}
+        categories: dict[str, list[str]] = {}
 
         for match in matches:
             category = match.category.value if hasattr(match.category, "value") else str(match.category)
@@ -433,7 +436,7 @@ class YARAPatternAnalysisTool:
 
     def _analyze_protection_layers(self, matches: list[Any]) -> dict[str, Any]:
         """Analyze layered protection schemes"""
-        layers = {
+        layers: dict[str, Any] = {
             "packing_layer": False,
             "encryption_layer": False,
             "anti_analysis_layer": False,
@@ -447,22 +450,32 @@ class YARAPatternAnalysisTool:
 
             if category == "PACKER" and not layers["packing_layer"]:
                 layers["packing_layer"] = True
-                layers["total_layers"] += 1
+                total_layers = layers["total_layers"]
+                if isinstance(total_layers, int):
+                    layers["total_layers"] = total_layers + 1
             elif category == "CRYPTOR" and not layers["encryption_layer"]:
                 layers["encryption_layer"] = True
-                layers["total_layers"] += 1
+                total_layers = layers["total_layers"]
+                if isinstance(total_layers, int):
+                    layers["total_layers"] = total_layers + 1
             elif category in ["ANTI_DEBUG", "ANTI_VM"] and not layers["anti_analysis_layer"]:
                 layers["anti_analysis_layer"] = True
-                layers["total_layers"] += 1
+                total_layers = layers["total_layers"]
+                if isinstance(total_layers, int):
+                    layers["total_layers"] = total_layers + 1
             elif category == "LICENSING" and not layers["licensing_layer"]:
                 layers["licensing_layer"] = True
-                layers["total_layers"] += 1
+                total_layers = layers["total_layers"]
+                if isinstance(total_layers, int):
+                    layers["total_layers"] = total_layers + 1
 
         # Assess complexity based on layer count
-        if layers["total_layers"] >= 3:
-            layers["complexity_assessment"] = "advanced"
-        elif layers["total_layers"] >= 2:
-            layers["complexity_assessment"] = "moderate"
+        total_layers = layers["total_layers"]
+        if isinstance(total_layers, int):
+            if total_layers >= 3:
+                layers["complexity_assessment"] = "advanced"
+            elif total_layers >= 2:
+                layers["complexity_assessment"] = "moderate"
 
         return layers
 
@@ -480,6 +493,9 @@ class YARAPatternAnalysisTool:
         try:
             if not is_yara_available():
                 return {"success": False, "error": "YARA engine not available"}
+
+            if self.engine is None:
+                return {"success": False, "error": "YARA engine not initialized"}
 
             # Parse and validate custom rules
             if not custom_rules_text.strip():

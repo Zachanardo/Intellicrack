@@ -29,6 +29,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QDialog,
     QHBoxLayout,
     QHeaderView,
+    QItemSelectionModel,
     QMessageBox,
     QModelIndex,
     QPushButton,
@@ -36,6 +37,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QTableView,
     QVariant,
     QVBoxLayout,
+    QWidget,
 )
 
 from ...ai.qemu_manager import QEMUManager
@@ -48,7 +50,7 @@ logger = get_logger(__name__)
 class VMTableModel(QAbstractTableModel):
     """Table model for displaying VM information."""
 
-    def __init__(self, vm_data: list[dict]) -> None:
+    def __init__(self, vm_data: list[dict[str, Any]]) -> None:
         """Initialize the VM table model with VM data for display in the table view."""
         super().__init__()
         self.vm_data = vm_data
@@ -63,13 +65,13 @@ class VMTableModel(QAbstractTableModel):
             "Version",
         ]
 
-    def rowCount(self, parent: QModelIndex = None) -> int:
+    def rowCount(self, parent: QModelIndex | None = None) -> int:
         """Return number of rows."""
         if parent is None:
             parent = QModelIndex()
         return len(self.vm_data)
 
-    def columnCount(self, parent: QModelIndex = None) -> int:
+    def columnCount(self, parent: QModelIndex | None = None) -> int:
         """Return number of columns."""
         if parent is None:
             parent = QModelIndex()
@@ -134,7 +136,7 @@ class VMTableModel(QAbstractTableModel):
             return self.headers[section]
         return QVariant()
 
-    def update_data(self, new_data: list[dict]) -> None:
+    def update_data(self, new_data: list[dict[str, Any]]) -> None:
         """Update the model with new VM data."""
         self.beginResetModel()
         self.vm_data = new_data
@@ -144,7 +146,7 @@ class VMTableModel(QAbstractTableModel):
 class VMManagerDialog(QDialog):
     """Dialog for managing QEMU virtual machines."""
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the VM Manager dialog for QEMU virtual machine management."""
         super().__init__(parent)
         self.qemu_manager = QEMUManager()
@@ -167,7 +169,8 @@ class VMManagerDialog(QDialog):
 
         # Set horizontal header resize mode
         header = self.vm_table.horizontalHeader()
-        header.setResizeMode(QHeaderView.ResizeMode.Stretch)
+        if header is not None:
+            header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
 
         main_layout.addWidget(self.vm_table)
 
@@ -227,7 +230,7 @@ class VMManagerDialog(QDialog):
     def _get_selected_vm_id(self) -> str | None:
         """Get the snapshot ID of the currently selected VM."""
         selection_model = self.vm_table.selectionModel()
-        if not selection_model.hasSelection():
+        if selection_model is None or not selection_model.hasSelection():
             return None
 
         selected_rows = selection_model.selectedRows()
@@ -238,7 +241,10 @@ class VMManagerDialog(QDialog):
         if row < 0 or row >= len(self.vm_model.vm_data):
             return None
 
-        return self.vm_model.vm_data[row].get("snapshot_id")
+        snapshot_id = self.vm_model.vm_data[row].get("snapshot_id")
+        if isinstance(snapshot_id, str):
+            return snapshot_id
+        return None
 
     def _start_selected_vm(self) -> None:
         """Start the selected VM."""

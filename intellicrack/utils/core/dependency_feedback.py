@@ -183,11 +183,11 @@ class DependencyFeedback:
     def __init__(self) -> None:
         """Initialize dependency feedback system."""
         self.system = platform.system()
-        self.missing_critical = []
-        self.missing_optional = []
-        self.available_alternatives = {}
+        self.missing_critical: list[str] = []
+        self.missing_optional: list[str] = []
+        self.available_alternatives: dict[str, list[str]] = {}
 
-    def get_dependency_status(self, dependency_name: str) -> dict:
+    def get_dependency_status(self, dependency_name: str) -> dict[str, object]:
         """Get comprehensive status information for a dependency."""
         if dependency_name not in self.DEPENDENCY_INFO:
             return {
@@ -239,61 +239,77 @@ class DependencyFeedback:
             "alternatives": info["alternatives"],
         }
 
-    def _generate_feedback_message(self, name: str, info: dict, available: bool) -> str:
+    def _generate_feedback_message(self, name: str, info: dict[str, object], available: bool) -> str:
         """Generate comprehensive feedback message for a dependency."""
+        dep_name = info.get("name", name)
+        if not isinstance(dep_name, str):
+            dep_name = name
+
         if available:
-            return f"OK {info['name']} is available and ready to use."
+            return f"OK {dep_name} is available and ready to use."
+
+        description = info.get("description", "")
+        if not isinstance(description, str):
+            description = ""
 
         message_parts = [
-            f"ERROR {info['name']} is not available.",
-            f"   Purpose: {info['description']}",
+            f"ERROR {dep_name} is not available.",
+            f"   Purpose: {description}",
         ]
-        # Installation instructions
-        if self.system in info["install_commands"]:
-            commands = info["install_commands"][self.system]
-            message_parts.append(f"   Installation for {self.system}:")
-            message_parts.extend(f"      {cmd}" for cmd in commands)
-        # Alternatives
-        if info["alternatives"]:
+
+        install_commands = info.get("install_commands", {})
+        if isinstance(install_commands, dict) and self.system in install_commands:
+            commands = install_commands[self.system]
+            if isinstance(commands, list):
+                message_parts.append(f"   Installation for {self.system}:")
+                message_parts.extend(f"      {cmd}" for cmd in commands if isinstance(cmd, str))
+
+        alternatives = info.get("alternatives", [])
+        if isinstance(alternatives, list) and alternatives:
             message_parts.append("   Alternatives:")
-            message_parts.extend(f"      {alt}" for alt in info["alternatives"])
-        # Criticality
-        if info["critical"]:
+            message_parts.extend(f"      {alt}" for alt in alternatives if isinstance(alt, str))
+
+        critical = info.get("critical", False)
+        if critical:
             message_parts.append("   WARNING️  This is a CRITICAL dependency for core functionality.")
         else:
             message_parts.append("   i  This is an optional dependency - reduced functionality available.")
 
         return "\n".join(message_parts)
 
-    def check_all_dependencies(self) -> dict:
+    def check_all_dependencies(self) -> dict[str, object]:
         """Check status of all known dependencies."""
-        results = {
-            "critical_missing": [],
-            "optional_missing": [],
-            "available": [],
-            "total_checked": len(self.DEPENDENCY_INFO),
-            "summary": "",
-        }
+        critical_missing: list[str] = []
+        optional_missing: list[str] = []
+        available: list[str] = []
 
         for dep_name, dep_info in self.DEPENDENCY_INFO.items():
             status = self.get_dependency_status(dep_name)
 
             if status["available"]:
-                results["available"].append(dep_name)
+                available.append(dep_name)
             elif dep_info["critical"]:
-                results["critical_missing"].append(dep_name)
+                critical_missing.append(dep_name)
             else:
-                results["optional_missing"].append(dep_name)
+                optional_missing.append(dep_name)
 
-        # Generate summary
-        total_available = len(results["available"])
-        total_critical_missing = len(results["critical_missing"])
-        total_optional_missing = len(results["optional_missing"])
+        total_available = len(available)
+        total_critical_missing = len(critical_missing)
+        total_optional_missing = len(optional_missing)
+        total_checked = len(self.DEPENDENCY_INFO)
 
-        results["summary"] = (
-            f"Dependencies: {total_available}/{results['total_checked']} available. "
+        summary = (
+            f"Dependencies: {total_available}/{total_checked} available. "
             f"Missing: {total_critical_missing} critical, {total_optional_missing} optional."
         )
+
+        results: dict[str, object] = {
+            "critical_missing": critical_missing,
+            "optional_missing": optional_missing,
+            "available": available,
+            "total_checked": total_checked,
+            "summary": summary,
+        }
 
         return results
 
@@ -311,21 +327,29 @@ class DependencyFeedback:
         for dep_name in missing_deps:
             if dep_name in self.DEPENDENCY_INFO:
                 info = self.DEPENDENCY_INFO[dep_name]
-                script_lines.append(f"# Installing {info['name']} - {info['description']}")
+                name = info.get("name", "")
+                description = info.get("description", "")
+                if isinstance(name, str) and isinstance(description, str):
+                    script_lines.append(f"# Installing {name} - {description}")
 
-                if self.system in info["install_commands"]:
-                    script_lines.extend(info["install_commands"][self.system])
-                    script_lines.append("")
+                install_commands = info.get("install_commands", {})
+                if isinstance(install_commands, dict) and self.system in install_commands:
+                    commands = install_commands[self.system]
+                    if isinstance(commands, list):
+                        script_lines.extend(str(cmd) for cmd in commands)
+                        script_lines.append("")
 
         return "\n".join(script_lines)
 
     def get_category_alternatives(self, category: str) -> list[str]:
         """Get alternative tools for a specific category."""
-        alternatives = []
+        alternatives: list[str] = []
         for dep_info in self.DEPENDENCY_INFO.values():
             if dep_info.get("category") == category:
-                alternatives.extend(dep_info.get("alternatives", []))
-        return list(set(alternatives))  # Remove duplicates
+                alts = dep_info.get("alternatives", [])
+                if isinstance(alts, list):
+                    alternatives.extend(str(alt) for alt in alts)
+        return list(set(alternatives))
 
     def generate_missing_dependency_report(self, missing_deps: list[str]) -> str:
         """Generate comprehensive report for missing dependencies."""
@@ -345,31 +369,30 @@ class DependencyFeedback:
                 else:
                     optional_deps.append(dep_name)
 
-        # Critical dependencies
         if critical_deps:
-            report_lines.extend((
-                "🔴 CRITICAL MISSING DEPENDENCIES:",
-                "These are required for core functionality.",
-                "",
-            ))
+            report_lines.append("🔴 CRITICAL MISSING DEPENDENCIES:")
+            report_lines.append("These are required for core functionality.")
+            report_lines.append("")
             for dep_name in critical_deps:
                 status = self.get_dependency_status(dep_name)
-                report_lines.extend((status["message"], ""))
-        # Optional dependencies
+                message = status.get("message", "")
+                if isinstance(message, str):
+                    report_lines.append(message)
+                    report_lines.append("")
+
         if optional_deps:
-            report_lines.extend((
-                "🟡 OPTIONAL MISSING DEPENDENCIES:",
-                "These provide enhanced functionality.",
-                "",
-            ))
+            report_lines.append("🟡 OPTIONAL MISSING DEPENDENCIES:")
+            report_lines.append("These provide enhanced functionality.")
+            report_lines.append("")
             for dep_name in optional_deps:
                 status = self.get_dependency_status(dep_name)
-                report_lines.extend((status["message"], ""))
-        report_lines.extend((
-            "📜 BATCH INSTALLATION SCRIPT:",
-            "-" * 40,
-            self.get_installation_batch_script(missing_deps),
-        ))
+                message = status.get("message", "")
+                if isinstance(message, str):
+                    report_lines.append(message)
+                    report_lines.append("")
+        report_lines.append("📜 BATCH INSTALLATION SCRIPT:")
+        report_lines.append("-" * 40)
+        report_lines.append(self.get_installation_batch_script(missing_deps))
         return "\n".join(report_lines)
 
     def suggest_alternatives(self, missing_dep: str, task_context: str = "") -> str:
@@ -378,49 +401,76 @@ class DependencyFeedback:
             return f"No alternatives found for unknown dependency: {missing_dep}"
 
         info = self.DEPENDENCY_INFO[missing_dep]
-        alternatives = info["alternatives"]
+        alternatives = info.get("alternatives", [])
+        name = info.get("name", missing_dep)
 
-        if not alternatives:
-            return f"No alternatives available for {info['name']}."
+        if not isinstance(alternatives, list) or not alternatives:
+            if isinstance(name, str):
+                return f"No alternatives available for {name}."
+            return f"No alternatives available for {missing_dep}."
+
+        if not isinstance(name, str):
+            name = missing_dep
 
         suggestion_lines = [
-            f" ALTERNATIVES FOR {info['name'].upper()}:",
-            f"Since {info['name']} is not available" + (f" for {task_context}" if task_context else "") + ", try:",
+            f" ALTERNATIVES FOR {name.upper()}:",
+            f"Since {name} is not available" + (f" for {task_context}" if task_context else "") + ", try:",
         ]
 
-        suggestion_lines.extend(f"   {alt}" for alt in alternatives)
-        if category_alts := self.get_category_alternatives(info.get("category", "")):
-            if additional_alts := [alt for alt in category_alts if alt not in alternatives]:
-                suggestion_lines.append("  Additional options in this category:")
-                suggestion_lines.extend(f"    ◦ {alt}" for alt in additional_alts[:3])
+        suggestion_lines.extend(f"   {alt}" for alt in alternatives if isinstance(alt, str))
+
+        category = info.get("category", "")
+        if isinstance(category, str):
+            category_alts = self.get_category_alternatives(category)
+            if category_alts:
+                additional_alts = [alt for alt in category_alts if alt not in alternatives]
+                if additional_alts:
+                    suggestion_lines.append("  Additional options in this category:")
+                    suggestion_lines.extend(f"    ◦ {alt}" for alt in additional_alts[:3])
+
         return "\n".join(suggestion_lines)
 
     def log_dependency_status(self, dep_name: str, context: str = "") -> None:
         """Log dependency status with appropriate level."""
         status = self.get_dependency_status(dep_name)
 
-        if status["available"]:
+        if status.get("available"):
             logger.info("%s dependency available for %s", dep_name, context)
         else:
             info = status.get("info", {})
-            if info and info.get("critical"):
-                logger.error("Critical dependency %s missing for %s", dep_name, context, exc_info=True)
+            if isinstance(info, dict):
+                critical = info.get("critical", False)
+                if critical:
+                    logger.error("Critical dependency %s missing for %s", dep_name, context, exc_info=True)
+                else:
+                    logger.warning("Optional dependency %s missing for %s", dep_name, context)
             else:
                 logger.warning("Optional dependency %s missing for %s", dep_name, context)
 
     def create_user_friendly_error(self, dep_name: str, operation: str, error: Exception) -> str:
         """Create user-friendly error message with helpful guidance."""
         status = self.get_dependency_status(dep_name)
+        message = status.get("message", "")
+        if not isinstance(message, str):
+            message = ""
 
-        error_lines = [f"ERROR ERROR in {operation}:", f"   {error!s}", "", status["message"], ""]
+        error_lines: list[str] = [
+            f"ERROR ERROR in {operation}:",
+            f"   {error!s}",
+            "",
+            message,
+            "",
+        ]
 
-        # Add quick fix suggestion
-        if not status["available"]:
-            if alternatives := status.get("alternatives", []):
-                error_lines.extend((
-                    f" QUICK FIX: Try using {alternatives[0]} instead",
-                    f"   Or install {dep_name} using the commands above",
-                ))
+        available = status.get("available", False)
+        if not available:
+            alternatives = status.get("alternatives", [])
+            if isinstance(alternatives, list) and alternatives:
+                first_alt = alternatives[0]
+                if isinstance(first_alt, str):
+                    error_lines.append(f" QUICK FIX: Try using {first_alt} instead")
+                    error_lines.append(f"   Or install {dep_name} using the commands above")
+
         return "\n".join(error_lines)
 
 
@@ -432,7 +482,8 @@ def check_dependency(name: str, context: str = "") -> bool:
     """Quick check if dependency is available with logging."""
     status = dependency_feedback.get_dependency_status(name)
     dependency_feedback.log_dependency_status(name, context)
-    return status["available"]
+    available = status.get("available", False)
+    return bool(available)
 
 
 def get_user_friendly_error(dep_name: str, operation: str, error: Exception) -> str:

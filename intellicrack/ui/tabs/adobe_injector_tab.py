@@ -14,7 +14,6 @@ import threading
 from collections.abc import Callable
 from typing import Any
 
-
 logger = logging.getLogger(__name__)
 
 from intellicrack.core.adobe_injector_integration import AdobeInjectorWidget
@@ -52,13 +51,21 @@ class AdobeInjectorTab(BaseTab):
         """
         self.adobe_injector_process: subprocess.Popen[bytes] | None = None
         self.integration_method: str = "embedded"
+        self.method_combo: QComboBox | None = None
+        self.method_tabs: QTabWidget | None = None
+        self.embedded_widget: AdobeInjectorWidget | None = None
+        self.cmd_args: QLineEdit | None = None
+        self.subprocess_output: QTextEdit | None = None
+        self.terminal_cmd: QLineEdit | None = None
+        self.terminal_display: QTextEdit | None = None
         super().__init__(shared_context, parent)
 
     def setup_content(self) -> None:
         """Set up the Adobe Injector tab content."""
         layout = self.layout()
+        if layout is None:
+            layout = QVBoxLayout(self)
 
-        # Integration method selector
         method_group = QGroupBox("Integration Method")
         method_layout = QHBoxLayout(method_group)
 
@@ -81,7 +88,6 @@ class AdobeInjectorTab(BaseTab):
 
         layout.addWidget(method_group)
 
-        # Create tabbed interface for different methods
         self.method_tabs = QTabWidget()
         self.method_tabs.addTab(self.create_embedded_tab(), "Embedded")
         self.method_tabs.addTab(self.create_subprocess_tab(), "Subprocess")
@@ -101,7 +107,8 @@ class AdobeInjectorTab(BaseTab):
         layout = QVBoxLayout(tab)
 
         self.embedded_widget = AdobeInjectorWidget()
-        self.embedded_widget.status_updated.connect(self.on_status_update)
+        if hasattr(self.embedded_widget, 'status_updated'):
+            self.embedded_widget.status_updated.connect(self.on_status_update)
         layout.addWidget(self.embedded_widget)
 
         return tab
@@ -293,6 +300,9 @@ class AdobeInjectorTab(BaseTab):
 
     def launch_subprocess(self, hidden: bool = False) -> None:
         """Launch Adobe Injector as subprocess with control."""
+        if self.subprocess_output is None or self.cmd_args is None:
+            return
+
         adobe_injector_path = get_project_root() / "tools/AdobeInjector/AdobeInjector.exe"
 
         if not adobe_injector_path.exists():
@@ -305,12 +315,10 @@ class AdobeInjectorTab(BaseTab):
                 cmd.extend(args.split())
 
             if hidden:
-                # Launch hidden with output capture
                 startupinfo = subprocess.STARTUPINFO()
                 startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
                 startupinfo.wShowWindow = subprocess.SW_HIDE
 
-                # Validate that cmd contains only safe, expected commands
                 if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
                     error_msg = f"Unsafe command: {cmd}"
                     logger.error(error_msg)
@@ -327,12 +335,9 @@ class AdobeInjectorTab(BaseTab):
                 )
                 self.subprocess_output.append("Adobe Injector launched in hidden mode")
 
-                # Start monitoring thread
                 threading.Thread(target=self.monitor_subprocess, daemon=True).start()
 
             else:
-                # Launch visible
-                # Validate that cmd contains only safe, expected commands
                 if not isinstance(cmd, list) or not all(isinstance(arg, str) for arg in cmd):
                     error_msg = f"Unsafe command: {cmd}"
                     logger.error(error_msg)
@@ -350,14 +355,22 @@ class AdobeInjectorTab(BaseTab):
             return
 
         try:
-            for line in iter(self.adobe_injector_process.stdout.readline, b""):
-                if line:
-                    self.subprocess_output.append(line.decode("utf-8", errors="ignore").strip())
+            stdout = self.adobe_injector_process.stdout
+            if stdout is None:
+                return
 
-            self.subprocess_output.append("Process terminated")
+            for line in iter(stdout.readline, b""):
+                if line:
+                    output_text = line.decode("utf-8", errors="ignore").strip()
+                    if self.subprocess_output is not None:
+                        self.subprocess_output.append(output_text)
+
+            if self.subprocess_output is not None:
+                self.subprocess_output.append("Process terminated")
 
         except Exception as e:
-            self.subprocess_output.append(f"Monitor error: {e}")
+            if self.subprocess_output is not None:
+                self.subprocess_output.append(f"Monitor error: {e}")
 
     def scan_in_terminal(self) -> None:
         """Run scan operation in terminal."""
@@ -369,6 +382,8 @@ class AdobeInjectorTab(BaseTab):
 
     def custom_terminal_command(self) -> None:
         """Execute custom command in terminal."""
+        if self.terminal_cmd is None:
+            return
         if cmd := self.terminal_cmd.text():
             self.execute_in_terminal(cmd)
 
@@ -378,6 +393,9 @@ class AdobeInjectorTab(BaseTab):
 
     def execute_in_terminal(self, command: str) -> None:
         """Execute command in embedded terminal."""
+        if self.terminal_display is None:
+            return
+
         try:
             terminal_manager = get_terminal_manager()
 
@@ -404,11 +422,14 @@ class AdobeInjectorTab(BaseTab):
 
     def compile_as_dll(self) -> None:
         """Compile AutoIt3 script as DLL."""
-        # This would use AutoIt3 compiler with DLL output option
+        if self.subprocess_output is None:
+            return
         self.subprocess_output.append("DLL compilation requires AutoIt3 compiler with DLL support")
 
     def register_autoit_com(self) -> None:
         """Register AutoIt3X.dll for COM usage."""
+        if self.subprocess_output is None:
+            return
         try:
             result = subprocess.run(["regsvr32", "/s", "AutoIt3X.dll"], capture_output=True, text=True)
             if result.returncode == 0:
@@ -420,6 +441,8 @@ class AdobeInjectorTab(BaseTab):
 
     def test_com_interface(self) -> None:
         """Test AutoIt3X COM interface."""
+        if self.subprocess_output is None:
+            return
         try:
             import win32com.client
 
@@ -431,12 +454,15 @@ class AdobeInjectorTab(BaseTab):
 
     def extract_resources(self) -> None:
         """Extract resources from Adobe Injector executable."""
+        if self.subprocess_output is None:
+            return
         self.subprocess_output.append("Resource extraction would use tools like ResourceHacker")
 
     def modify_resources(self) -> None:
         """Modify and rebrand resources."""
-        # Create rebranding configuration
-        rebrand = {
+        if self.subprocess_output is None:
+            return
+        rebrand: dict[str, str] = {
             "ProductName": "Adobe Injector",
             "CompanyName": "Intellicrack",
             "FileDescription": "Adobe License Bypass Module",
@@ -453,11 +479,15 @@ class AdobeInjectorTab(BaseTab):
 
     def rebuild_executable(self) -> None:
         """Rebuild executable with modified resources."""
+        if self.subprocess_output is None:
+            return
         self.subprocess_output.append("Rebuild would use AutoIt3Wrapper with custom resources")
 
     def create_silent_config(self) -> None:
         """Create configuration for silent/automated operation."""
-        config = {
+        if self.subprocess_output is None:
+            return
+        config: dict[str, bool | str] = {
             "auto_scan": True,
             "auto_patch": True,
             "target_path": "C:\\Program Files\\Adobe",
@@ -476,7 +506,10 @@ class AdobeInjectorTab(BaseTab):
 
     def on_method_changed(self, method: str) -> None:
         """Handle integration method change."""
-        method_map = {
+        if self.method_tabs is None:
+            return
+
+        method_map: dict[str, int] = {
             "Embedded Window (Native)": 0,
             "Subprocess Control": 1,
             "Terminal Execution": 2,
@@ -489,6 +522,6 @@ class AdobeInjectorTab(BaseTab):
 
     def on_status_update(self, status: str) -> None:
         """Handle status updates from integration."""
-        if hasattr(self, "subprocess_output"):
+        if self.subprocess_output is not None:
             self.subprocess_output.append(status)
         self.injector_started.emit(status)

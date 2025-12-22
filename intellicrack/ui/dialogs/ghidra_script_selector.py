@@ -223,7 +223,7 @@ class GhidraScriptSelector(QDialog):
         layout.addLayout(search_layout)
 
         # Main content splitter
-        splitter: QSplitter = QSplitter(Qt.Horizontal)
+        splitter: QSplitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left side - Script tree
         left_widget: QWidget = QWidget()
@@ -394,11 +394,11 @@ class GhidraScriptSelector(QDialog):
         item = QTreeWidgetItem([script.name, script.type.upper(), status])
 
         # Store script path in item data
-        item.setData(0, Qt.UserRole, script.path)
+        item.setData(0, Qt.ItemDataRole.UserRole, script.path)
 
         # Set colors
         if script.is_valid:
-            item.setForeground(2, Qt.darkGreen)
+            item.setForeground(2, Qt.GlobalColor.darkGreen)
         else:
             item.setForeground(2, Qt.GlobalColor.red)
             # Make invalid scripts slightly grayed out
@@ -423,7 +423,7 @@ class GhidraScriptSelector(QDialog):
         item = items[0]
 
         # Check if it's a category item
-        script_path = item.data(0, Qt.UserRole)
+        script_path = item.data(0, Qt.ItemDataRole.UserRole)
         if not script_path:
             self.info_widget.update_script_info(None)
             self.select_btn.setEnabled(False)
@@ -441,7 +441,7 @@ class GhidraScriptSelector(QDialog):
         """Handle search text change."""
         _ = text
         # Debounce search with timer
-        if hasattr(self, "_search_timer"):
+        if self._search_timer is not None:
             self._search_timer.stop()
 
         self._search_timer = QTimer()
@@ -456,13 +456,13 @@ class GhidraScriptSelector(QDialog):
 
     def _on_show_invalid_changed(self, state: int) -> None:
         """Handle show invalid checkbox change."""
-        self.show_invalid = state == Qt.Checked
+        self.show_invalid = state == 2
         self._populate_tree()
 
     def _on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
         """Handle double-click on item."""
         _ = column
-        if script_path := item.data(0, Qt.UserRole):
+        if script_path := item.data(0, Qt.ItemDataRole.UserRole):
             script = self.script_manager.get_script(script_path)
             if script and script.is_valid:
                 self._on_select_clicked()

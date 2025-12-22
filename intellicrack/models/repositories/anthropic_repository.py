@@ -24,7 +24,7 @@ from typing import Any
 from intellicrack.core.config_manager import get_config
 
 from .base import APIRepositoryBase, RateLimitConfig
-from .interface import ModelInfo
+from .interface import DownloadProgressCallback, ModelInfo
 
 
 """
@@ -129,6 +129,10 @@ class AnthropicRepository(APIRepositoryBase):
             logger.error("Failed to get models from Anthropic: %s", error_message)
             return []
 
+        if not isinstance(data, dict):
+            logger.error("Invalid response type from Anthropic API")
+            return []
+
         models = []
 
         try:
@@ -164,6 +168,10 @@ class AnthropicRepository(APIRepositoryBase):
 
         if not success:
             logger.error("Failed to get models from Anthropic: %s", error_message)
+            return None
+
+        if not isinstance(data, dict):
+            logger.error("Invalid response type from Anthropic API")
             return None
 
         try:
@@ -215,8 +223,18 @@ class AnthropicRepository(APIRepositoryBase):
             logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
         """Anthropic doesn't support model downloads, this is an API-only service.
+
+        Args:
+            model_id: ID of the model to download (unused)
+            destination_path: Path where the model should be saved (unused)
+            progress_callback: Optional callback for progress updates (unused)
 
         Returns:
             Always returns (False, "Anthropic doesn't support model downloads")

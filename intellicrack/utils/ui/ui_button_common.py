@@ -20,6 +20,9 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from collections.abc import Callable
+from typing import Any
+
 from intellicrack.utils.logger import logger
 
 
@@ -33,10 +36,10 @@ except ImportError as e:
 
 
 def add_extra_buttons(
-    header_layout: object,
-    extra_buttons: list[tuple[str, object]],
-    widget_refs: dict[str, object] | None = None,
-) -> dict[str, object]:
+    header_layout: Any,
+    extra_buttons: list[tuple[str, Callable[..., Any]]],
+    widget_refs: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Add extra buttons to a header layout with consistent styling.
 
     Args:

@@ -59,7 +59,7 @@ from .base_dialog import BaseDialog
 logger = logging.getLogger(__name__)
 
 
-class ReportGenerationThread(QThread):  # type: ignore[misc]
+class ReportGenerationThread(QThread):
     """Thread for generating reports without blocking the UI."""
 
     progress_updated = pyqtSignal(int)
@@ -318,7 +318,7 @@ Report includes binary analysis, protection detection, and licensing mechanism a
 """
 
 
-class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
+class ReportManagerDialog(BaseDialog):
     """Dialog for managing Intellicrack reports."""
 
     def __init__(self, parent: QWidget | None = None) -> None:
@@ -331,11 +331,9 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
         self.binary_path_edit: QLineEdit
         self.browse_binary_btn: QPushButton
         self.browse_output_btn: QPushButton
-        self.create_template_btn: QPushButton | None = None
         self.delete_btn: QPushButton
         self.duplicate_btn: QPushButton
         self.edit_btn: QPushButton
-        self.edit_template_btn: QPushButton | None = None
         self.generate_btn: QPushButton
         self.generation_thread: ReportGenerationThread | None = None
         self.include_detailed_logs: QCheckBox
@@ -351,10 +349,15 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
         self.report_preview: QTextBrowser
         self.report_type_combo: QComboBox
         self.status_label: QLabel
-        self.template_description: QTextBrowser | None = None
-        self.template_list: Any = None
-        self.use_template_btn: QPushButton | None = None
         self.view_btn: QPushButton
+        self.search_edit: QLineEdit
+        self.type_filter: QComboBox
+        self.date_filter: QComboBox
+        self.reports_table: QTableWidget
+        self.refresh_btn: QPushButton
+        self.export_btn: QPushButton
+        self.close_btn: QPushButton
+        self.tab_widget: Any
 
         self.setup_ui()
         self.load_reports()
@@ -449,7 +452,9 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
                 "Actions",
             ],
         )
-        self.reports_table.horizontalHeader().setStretchLastSection(True)
+        header = self.reports_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
         self.reports_table.itemSelectionChanged.connect(self.on_report_selected)
         layout.addWidget(self.reports_table)
 
@@ -603,12 +608,7 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
             "Technical Deep Dive Report",
         ]
 
-        # Use base class to create template widget
         widget = self.create_template_widget("Report Templates", templates)
-
-        # Update reference to template description
-        self.template_description = self.template_details
-
         return widget
 
     def load_reports(self) -> None:
@@ -658,27 +658,30 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
         self.reports_table.setRowCount(len(self.reports))
 
         for row, (report_id, report_info) in enumerate(self.reports.items()):
-            # Name
-            name_item = QTableWidgetItem(report_info["name"])
-            name_item.setData(Qt.UserRole, report_id)
+            name_item = QTableWidgetItem(str(report_info["name"]))
+            name_item.setData(Qt.ItemDataRole.UserRole, report_id)
             self.reports_table.setItem(row, 0, name_item)
 
-            # Type
-            type_item = QTableWidgetItem(report_info["type"])
+            type_item = QTableWidgetItem(str(report_info["type"]))
             self.reports_table.setItem(row, 1, type_item)
 
-            # Created
-            created_str = report_info["created"].strftime("%Y-%m-%d %H:%M")
+            created_value = report_info["created"]
+            if isinstance(created_value, datetime):
+                created_str = created_value.strftime("%Y-%m-%d %H:%M")
+            else:
+                created_str = str(created_value)
             created_item = QTableWidgetItem(created_str)
             self.reports_table.setItem(row, 2, created_item)
 
-            # Size
-            size_str = self.format_file_size(report_info["size"])
+            size_value = report_info["size"]
+            if isinstance(size_value, int):
+                size_str = self.format_file_size(size_value)
+            else:
+                size_str = str(size_value)
             size_item = QTableWidgetItem(size_str)
             self.reports_table.setItem(row, 3, size_item)
 
-            # Status
-            status_item = QTableWidgetItem(report_info["status"])
+            status_item = QTableWidgetItem(str(report_info["status"]))
             self.reports_table.setItem(row, 4, status_item)
 
             # Actions
@@ -701,20 +704,13 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
         current_row = self.reports_table.currentRow()
         if current_row >= 0:
             if name_item := self.reports_table.item(current_row, 0):
-                report_id = name_item.data(Qt.UserRole)
-                self.current_report = report_id
-
-                # Update preview
-                self.update_report_preview(report_id)
-
-                # Enable action buttons
-                if self.view_btn is not None:
+                report_id_value = name_item.data(Qt.ItemDataRole.UserRole)
+                if isinstance(report_id_value, str):
+                    self.current_report = report_id_value
+                    self.update_report_preview(report_id_value)
                     self.view_btn.setEnabled(True)
-                if self.edit_btn is not None:
                     self.edit_btn.setEnabled(True)
-                if self.duplicate_btn is not None:
                     self.duplicate_btn.setEnabled(True)
-                if self.delete_btn is not None:
                     self.delete_btn.setEnabled(True)
 
     def update_report_preview(self, report_id: str) -> None:
@@ -744,64 +740,58 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
 
     def filter_reports(self) -> None:
         """Filter reports based on search criteria."""
-        # Get search criteria
-        search_text = self.search_entry.text().lower()
-        selected_type = self.filter_combo.currentText()
-        from_date = self.from_date.date().toPyDate()
-        to_date = self.to_date.date().toPyDate()
+        if not HAS_PYQT:
+            return
 
-        # Clear current display
-        self.report_list.clear()
+        search_text = self.search_edit.text().lower()
+        selected_type = self.type_filter.currentText()
 
-        # Filter reports based on criteria
-        filtered_reports: list[dict[str, Any]] = []
+        self.reports_table.setRowCount(0)
 
-        for report in self.reports.values():
-            # Check type filter
-            if selected_type != "All Types" and report.get("type", "") != selected_type:
+        row = 0
+        for report_id, report_info in self.reports.items():
+            if selected_type != "All" and report_info.get("type", "") != selected_type:
                 continue
 
-            if report_date := report.get("date"):
-                try:
-                    # Convert string date to date object if needed
-                    if isinstance(report_date, str):
-                        report_date_obj = datetime.strptime(report_date, "%Y-%m-%d").replace(tzinfo=UTC).date()
-                    else:
-                        report_date_obj = report_date
-
-                    if report_date_obj < from_date or report_date_obj > to_date:
-                        continue
-                except (ValueError, KeyError, TypeError) as e:
-                    # Skip reports with invalid dates
-                    logger.debug("Invalid date in report: %s", e)
-                    continue
-
-            # Check search text in title and description
             if search_text:
-                title_match = search_text in report.get("title", "").lower()
-                desc_match = search_text in report.get("description", "").lower()
-                target_match = search_text in report.get("target", "").lower()
+                name_str = str(report_info.get("name", "")).lower()
+                type_str = str(report_info.get("type", "")).lower()
 
-                if not (title_match or desc_match or target_match):
+                if search_text not in name_str and search_text not in type_str:
                     continue
 
-            # Report passed all filters
-            filtered_reports.append(report)
+            self.reports_table.insertRow(row)
 
-        # Update report list with filtered results
-        for report in filtered_reports:
-            title = report.get("title", "Untitled")
-            if isinstance(title, str):
-                item = QListWidgetItem(title)
-                item.setData(Qt.ItemDataRole.UserRole, report)
-                self.report_list.addItem(item)
+            name_item = QTableWidgetItem(str(report_info["name"]))
+            name_item.setData(Qt.ItemDataRole.UserRole, report_id)
+            self.reports_table.setItem(row, 0, name_item)
 
-        # Update status
-        total = len(self.reports)
-        filtered = len(filtered_reports)
-        status_text = f"Showing {filtered} of {total} reports"
-        if hasattr(self, "status_label"):
-            self.status_label.setText(status_text)
+            type_item = QTableWidgetItem(str(report_info["type"]))
+            self.reports_table.setItem(row, 1, type_item)
+
+            created_value = report_info["created"]
+            if isinstance(created_value, datetime):
+                created_str = created_value.strftime("%Y-%m-%d %H:%M")
+            else:
+                created_str = str(created_value)
+            created_item = QTableWidgetItem(created_str)
+            self.reports_table.setItem(row, 2, created_item)
+
+            size_value = report_info["size"]
+            if isinstance(size_value, int):
+                size_str = self.format_file_size(size_value)
+            else:
+                size_str = str(size_value)
+            size_item = QTableWidgetItem(size_str)
+            self.reports_table.setItem(row, 3, size_item)
+
+            status_item = QTableWidgetItem(str(report_info["status"]))
+            self.reports_table.setItem(row, 4, status_item)
+
+            actions_btn = QPushButton("Actions")
+            self.reports_table.setCellWidget(row, 5, actions_btn)
+
+            row += 1
 
     def view_report(self) -> None:
         """View the selected report."""
@@ -864,10 +854,10 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
             self,
             "Confirm Delete",
             f"Are you sure you want to delete report '{self.current_report}'?",
-            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 report_info = self.reports[self.current_report]
                 os.remove(report_info["path"])
@@ -1033,13 +1023,12 @@ class ReportManagerDialog(BaseDialog):  # type: ignore[misc]
             }
 
             description = descriptions.get(template_name, "No description available.")
-            if self.template_description is not None:
-                self.template_description.setPlainText(description)
+            if hasattr(self, "template_details") and self.template_details is not None:
+                self.template_details.setPlainText(description)
 
-            # Enable action buttons
-            if self.use_template_btn is not None:
+            if hasattr(self, "use_template_btn") and self.use_template_btn is not None:
                 self.use_template_btn.setEnabled(True)
-            if self.edit_template_btn is not None:
+            if hasattr(self, "edit_template_btn") and self.edit_template_btn is not None:
                 self.edit_template_btn.setEnabled(True)
 
     def use_template(self) -> None:

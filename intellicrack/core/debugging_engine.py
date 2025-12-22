@@ -14,7 +14,13 @@ from collections.abc import Callable
 from ctypes import wintypes
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, ClassVar, cast
+import time
+from typing import Any, cast
+
+from intellicrack.utils.type_safety import get_typed_item, validate_type
+
+try:
+    import psutil
 
 from ..utils.logger import get_logger
 
@@ -5043,19 +5049,19 @@ class LicenseDebugger:
                     # Convert to NOP
                     return b"\x90\x90"  # Two NOPs for JCC
                 if condition == "invert":
-                    if original_opcode := cast("int", kwargs.get("original_opcode", 0)):
+                    if original_opcode := get_typed_item(kwargs, "original_opcode", int, 0):
                         # Invert the condition bit
                         return bytes([original_opcode ^ 1])
 
             elif patch_type == "call":
-                if dest_addr := cast("int", kwargs.get("destination", 0)):
+                if dest_addr := get_typed_item(kwargs, "destination", int, 0):
                     offset = self.calculate_relative_jump(target_addr, dest_addr, 5)
                     return b"\xe8" + offset
 
             elif patch_type == "hook":
                 # Generate hook trampoline
-                hook_addr = cast("int", kwargs.get("hook_address", 0))
-                original_bytes = cast("bytes", kwargs.get("original_bytes", b""))
+                hook_addr = get_typed_item(kwargs, "hook_address", int, 0)
+                original_bytes = get_typed_item(kwargs, "original_bytes", bytes, b"")
 
                 if hook_addr and original_bytes:
                     patch = bytearray()
@@ -5093,7 +5099,7 @@ class LicenseDebugger:
                     return bytes(patch)
 
             elif patch_type == "jmp":
-                if dest_addr := cast("int", kwargs.get("destination", 0)):
+                if dest_addr := get_typed_item(kwargs, "destination", int, 0):
                     # Try short jump first
                     try:
                         offset = self.calculate_relative_jump(target_addr, dest_addr, 2)
@@ -5105,11 +5111,11 @@ class LicenseDebugger:
 
             elif patch_type == "nop":
                 # Generate NOP sled of specified length
-                length = cast("int", kwargs.get("length", 1))
+                length = get_typed_item(kwargs, "length", int, 1)
                 return self.generate_nop_sled(length)
 
             elif patch_type == "redirect":
-                if new_function := cast("int", kwargs.get("new_function", 0)):
+                if new_function := get_typed_item(kwargs, "new_function", int, 0):
                     # JMP to new function
                     offset = self.calculate_relative_jump(target_addr, new_function, 5)
                     return b"\xe9" + offset
@@ -5423,12 +5429,11 @@ class LicenseDebugger:
                 shellcode.extend(dll_path)
                 return bytes(shellcode)
 
-            if shellcode_type == "patch":
-                # Memory patching shellcode
-                patch_addr = cast("int", params.get("address", 0))
-                patch_bytes = cast("bytes", params.get("bytes", b""))
+        try:
+            patch_addr = get_typed_item(params, "address", int, 0)
+            patch_bytes = get_typed_item(params, "bytes", bytes, b"")
 
-                if not patch_addr or not patch_bytes:
+            if not patch_addr or not patch_bytes:
                     return b""
 
                 shellcode = bytearray()
@@ -6311,105 +6316,6 @@ class LicenseDebugger:
         return traced_instructions
 
 
-# DEBUG_EVENT structure for Windows debugging
-class EXCEPTION_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("ExceptionRecord", ctypes.c_void_p),  # Simplified
-        ("dwFirstChance", wintypes.DWORD),
-    ]
-
-
-class CREATE_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("hThread", wintypes.HANDLE),
-        ("lpThreadLocalBase", ctypes.c_void_p),
-        ("lpStartAddress", ctypes.c_void_p),
-    ]
-
-
-class CREATE_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("hFile", wintypes.HANDLE),
-        ("hProcess", wintypes.HANDLE),
-        ("hThread", wintypes.HANDLE),
-        ("lpBaseOfImage", ctypes.c_void_p),
-        ("dwDebugInfoFileOffset", wintypes.DWORD),
-        ("nDebugInfoSize", wintypes.DWORD),
-        ("lpThreadLocalBase", ctypes.c_void_p),
-        ("lpStartAddress", ctypes.c_void_p),
-        ("lpImageName", ctypes.c_void_p),
-        ("fUnicode", wintypes.WORD),
-    ]
-
-
-class EXIT_THREAD_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("dwExitCode", wintypes.DWORD),
-    ]
-
-
-class EXIT_PROCESS_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("dwExitCode", wintypes.DWORD),
-    ]
-
-
-class LOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("hFile", wintypes.HANDLE),
-        ("lpBaseOfDll", ctypes.c_void_p),
-        ("dwDebugInfoFileOffset", wintypes.DWORD),
-        ("nDebugInfoSize", wintypes.DWORD),
-        ("lpImageName", ctypes.c_void_p),
-        ("fUnicode", wintypes.WORD),
-    ]
-
-
-class UNLOAD_DLL_DEBUG_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("lpBaseOfDll", ctypes.c_void_p),
-    ]
-
-
-class OUTPUT_DEBUG_STRING_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("lpDebugStringData", ctypes.c_char_p),
-        ("fUnicode", wintypes.WORD),
-        ("nDebugStringLength", wintypes.WORD),
-    ]
-
-
-class RIP_INFO(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("dwError", wintypes.DWORD),
-        ("dwType", wintypes.DWORD),
-    ]
-
-
-class DEBUG_EVENT_UNION(ctypes.Union):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("Exception", EXCEPTION_DEBUG_INFO),
-        ("CreateThread", CREATE_THREAD_DEBUG_INFO),
-        ("CreateProcessInfo", CREATE_PROCESS_DEBUG_INFO),
-        ("ExitThread", EXIT_THREAD_DEBUG_INFO),
-        ("ExitProcess", EXIT_PROCESS_DEBUG_INFO),
-        ("LoadDll", LOAD_DLL_DEBUG_INFO),
-        ("UnloadDll", UNLOAD_DLL_DEBUG_INFO),
-        ("DebugString", OUTPUT_DEBUG_STRING_INFO),
-        ("RipInfo", RIP_INFO),
-    ]
-
-
-class DEBUG_EVENT(ctypes.Structure):  # noqa: N801
-    _fields_: ClassVar[list[tuple[str, type]]] = [
-        ("dwDebugEventCode", wintypes.DWORD),
-        ("dwProcessId", wintypes.DWORD),
-        ("dwThreadId", wintypes.DWORD),
-        ("u", DEBUG_EVENT_UNION),
-    ]
-
-
-# Export functions
 __all__ = [
     "Breakpoint",
     "DebugEvent",

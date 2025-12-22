@@ -1,6 +1,7 @@
 """Offline activation emulator for bypassing software activation mechanisms."""
 
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -163,7 +164,7 @@ class OfflineActivationEmulator:
         logger.debug("Initialized %s activation algorithms.", len(algorithms))
         return algorithms
 
-    def _load_known_schemes(self) -> dict[str, dict]:
+    def _load_known_schemes(self) -> dict[str, dict[str, Any]]:
         """Load database of known activation schemes."""
         schemes = {
             "microsoft_office": {
@@ -248,7 +249,8 @@ class OfflineActivationEmulator:
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for cpu in self.wmi_client.Win32_Processor():
-                    return cpu.ProcessorId.strip()
+                    processor_id: str = str(cpu.ProcessorId).strip()
+                    return processor_id
             else:
                 # Linux/Unix
                 result = subprocess.run(["dmidecode", "-t", "processor"], capture_output=True, text=True)
@@ -274,7 +276,8 @@ class OfflineActivationEmulator:
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for board in self.wmi_client.Win32_BaseBoard():
-                    return board.SerialNumber.strip()
+                    serial_number: str = str(board.SerialNumber).strip()
+                    return serial_number
             else:
                 result = subprocess.run(["dmidecode", "-t", "baseboard"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
@@ -299,7 +302,8 @@ class OfflineActivationEmulator:
             if platform.system() == "Windows" and self.wmi_client:
                 for disk in self.wmi_client.Win32_PhysicalMedia():
                     if disk.SerialNumber:
-                        return disk.SerialNumber.strip()
+                        disk_serial: str = str(disk.SerialNumber).strip()
+                        return disk_serial
             else:
                 result = subprocess.run(["hdparm", "-I", "/dev/sda"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
@@ -344,9 +348,11 @@ class OfflineActivationEmulator:
             List of MAC addresses from enabled network adapters on Windows.
 
         """
-        macs: list[str] = [
-            nic.MACAddress.replace(":", "") for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True) if nic.MACAddress
-        ]
+        macs: list[str] = []
+        if self.wmi_client is not None:
+            macs = [
+                str(nic.MACAddress).replace(":", "") for nic in self.wmi_client.Win32_NetworkAdapterConfiguration(IPEnabled=True) if nic.MACAddress
+            ]
         return macs
 
     def _get_non_windows_macs(self) -> list[str]:
@@ -395,7 +401,8 @@ class OfflineActivationEmulator:
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for bios in self.wmi_client.Win32_BIOS():
-                    return bios.SerialNumber.strip()
+                    bios_serial: str = str(bios.SerialNumber).strip()
+                    return bios_serial
             else:
                 result = subprocess.run(["dmidecode", "-t", "bios"], capture_output=True, text=True)
                 for line in result.stdout.split("\n"):
@@ -419,7 +426,8 @@ class OfflineActivationEmulator:
         try:
             if platform.system() == "Windows" and self.wmi_client:
                 for system in self.wmi_client.Win32_ComputerSystemProduct():
-                    return system.UUID.strip()
+                    system_uuid: str = str(system.UUID).strip()
+                    return system_uuid
             else:
                 result = subprocess.run(["dmidecode", "-s", "system-uuid"], capture_output=True, text=True)
                 return result.stdout.strip()
@@ -469,7 +477,8 @@ class OfflineActivationEmulator:
         try:
             if platform.system() == "Windows":
                 with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
-                    return winreg.QueryValueEx(key, "MachineGuid")[0]
+                    guid_value: str = str(winreg.QueryValueEx(key, "MachineGuid")[0])
+                    return guid_value
             else:
                 # Linux machine-id
                 with open("/etc/machine-id") as f:
@@ -668,7 +677,8 @@ class OfflineActivationEmulator:
         logger.debug("Detected activation algorithm: %s", algorithm)
 
         if algorithm in self.activation_algorithms:
-            response = self.activation_algorithms[algorithm](request, product_key)
+            algo_func = self.activation_algorithms[algorithm]
+            response: ActivationResponse = algo_func(request, product_key)
             logger.debug("Generated activation response using %s algorithm.", algorithm)
             return response
         # Default activation
@@ -844,7 +854,8 @@ class OfflineActivationEmulator:
             feat = ElementTree.SubElement(features, "Feature")
             feat.text = feature
 
-        return ElementTree.tostring(root, encoding="utf-8")
+        result: bytes = ElementTree.tostring(root, encoding="utf-8")
+        return result
 
     def _autodesk_activation(self, request: ActivationRequest, product_key: str | None = None) -> ActivationResponse:
         """Generate Autodesk activation response with XOR-based transformation.
@@ -1076,11 +1087,12 @@ class OfflineActivationEmulator:
         activation_code = base64.b64encode(signature[:32]).decode("ascii")
         logger.debug("Generated RSA-based activation code: %s", activation_code)
 
+        features_list: list[str] = list(activation_data["features"])
         return ActivationResponse(
             activation_code=activation_code,
             license_key=product_key or self._generate_product_key("custom"),
             expiry_date=datetime.now() + timedelta(days=365),
-            features=activation_data["features"],
+            features=features_list,
             hardware_locked=True,
             signature=signature,
         )
@@ -1337,7 +1349,8 @@ class OfflineActivationEmulator:
             sig = ElementTree.SubElement(root, "Signature")
             sig.text = base64.b64encode(response.signature).decode("ascii")
 
-        return ElementTree.tostring(root, encoding="utf-8")
+        result: bytes = ElementTree.tostring(root, encoding="utf-8")
+        return result
 
     def _create_json_license(self, response: ActivationResponse) -> bytes:
         """Create JSON-formatted license file with structured metadata.
@@ -1867,7 +1880,8 @@ class OfflineActivationEmulator:
         signature = self._sign_request(xml_str.encode())
         ElementTree.SubElement(root, "Signature").text = base64.b64encode(signature).decode()
 
-        return ElementTree.tostring(root, encoding="unicode")
+        result: str = str(ElementTree.tostring(root, encoding="unicode"))
+        return result
 
     def _format_json_request(self, request: ExtendedActivationRequest) -> str:
         """Format activation request as JSON with RSA signature.
@@ -2136,7 +2150,7 @@ class OfflineActivationEmulator:
         try:
             challenge_bytes = base64.b64decode(challenge)
             logger.debug("Challenge successfully base64 decoded.")
-        except (base64.binascii.Error, ValueError) as e:
+        except (binascii.Error, ValueError) as e:
             challenge_bytes = challenge.encode()
             logger.debug("Challenge not base64 encoded, using raw bytes: %s", e, exc_info=True)
 
@@ -2520,7 +2534,7 @@ class OfflineActivationEmulator:
                 result["signature_valid"] = False
                 result["errors"].append("Invalid signature length")
 
-        except (base64.binascii.Error, ValueError) as e:
+        except (binascii.Error, ValueError) as e:
             logger.debug("Invalid signature encoding: %s", e, exc_info=True)
             result["signature_valid"] = False
             result["errors"].append("Invalid signature encoding")

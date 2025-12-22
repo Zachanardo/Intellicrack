@@ -35,6 +35,14 @@ import keystone
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.utils.logger import logger
 
+try:
+    import unicorn
+
+    UNICORN_AVAILABLE = True
+except ImportError:
+    UNICORN_AVAILABLE = False
+    unicorn = None  # type: ignore[assignment]
+
 
 """
 VM Protection Unwrapper
@@ -209,7 +217,7 @@ class VMProtectHandler:
 
     def _vmprotect_3x_key_schedule(self, key: bytes) -> list[int]:
         """VMProtect 3.x key schedule (most complex)."""
-        schedule = []
+        schedule: list[int] = []
         key_data = key[:64] if len(key) >= 64 else key.ljust(64, b"\x00")
 
         # Initialize with SHA-256 like expansion
@@ -508,7 +516,7 @@ class VMEmulator:
 
     def _init_handlers(self) -> dict[ProtectionType, Any]:
         """Initialize protection-specific handlers."""
-        handlers = {ProtectionType.VMPROTECT_1X: VMProtectHandler()}
+        handlers: dict[ProtectionType, Any] = {ProtectionType.VMPROTECT_1X: VMProtectHandler()}
         handlers[ProtectionType.VMPROTECT_2X] = VMProtectHandler()
         handlers[ProtectionType.VMPROTECT_3X] = VMProtectHandler()
         handlers[ProtectionType.THEMIDA] = ThemidaHandler()
@@ -517,24 +525,24 @@ class VMEmulator:
 
     def _init_unicorn(self) -> None:
         """Initialize Unicorn emulation engine."""
+        if not UNICORN_AVAILABLE or unicorn is None:
+            self.logger.warning("Unicorn not available, using fallback emulation")
+            return
         try:
-            from unicorn import UC_ARCH_X86, UC_MODE_32, Uc
-
-            self.uc = Uc(UC_ARCH_X86, UC_MODE_32)
+            uc_instance: Any = unicorn.Uc(unicorn.UC_ARCH_X86, unicorn.UC_MODE_32)  # type: ignore[attr-defined,no-untyped-call]
+            self.uc = uc_instance
             self._setup_unicorn()
-        except ImportError as e:
-            self.logger.warning("Unicorn not available, using fallback emulation: %s", e, exc_info=True)
+        except (ImportError, AttributeError) as e:
+            self.logger.warning("Unicorn initialization failed: %s", e, exc_info=True)
 
     def _setup_unicorn(self) -> None:
         """Configure Unicorn emulation engine."""
-        if not self.uc:
+        if not self.uc or not UNICORN_AVAILABLE or unicorn is None:  # type: ignore[unreachable]
             return
-        try:
-            from unicorn import x86_const
-
+        try:  # type: ignore[unreachable]
             self.uc.mem_map(0x400000, 2 * 1024 * 1024)  # 2MB for code
             self.uc.mem_map(0x600000, 1024 * 1024)  # 1MB for stack
-            self.uc.reg_write(x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
+            self.uc.reg_write(unicorn.x86_const.UC_X86_REG_ESP, 0x600000 + 1024 * 1024 - 0x1000)
         except Exception as e:
             self.logger.warning("Unicorn setup failed: %s", e, exc_info=True)
 
@@ -686,9 +694,10 @@ class VMEmulator:
 
         elif "STORE" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
-                address = self.context.stack.pop()
-                value = self.context.stack.pop()
-                self.context.memory[address] = struct.pack("<I", value)
+                address_value = self.context.stack.pop()
+                int_value_to_store = self.context.stack.pop()
+                packed_value: bytes = struct.pack("<I", int_value_to_store)
+                self.context.memory[address_value] = packed_value
 
         return True
 
@@ -724,12 +733,9 @@ class VMEmulator:
             if len(self.context.stack) >= 2:
                 dest = self.context.stack.pop()
                 src = self.context.stack.pop()
-                # Update the destination register
-                if isinstance(dest, str) and dest in self.context.registers:
-                    self.context.registers[dest] = src
-                else:
-                    # Fallback to EAX if destination is not a valid register
-                    self.context.registers["EAX"] = src
+                # Destination should be an integer in stack-based VM
+                # This represents the value, not a register name
+                self.context.registers["EAX"] = src
 
         elif "XCHG" in instruction.mnemonic:
             if len(self.context.stack) >= 2:
@@ -1026,8 +1032,8 @@ class VMProtectionUnwrapper:
         """Initialize VM protection unwrapper with analyzer, emulators, and statistics tracking."""
         self.logger = logging.getLogger(__name__)
         self.analyzer = VMAnalyzer()
-        self.emulators = {}
-        self.stats = {
+        self.emulators: dict[ProtectionType, VMEmulator] = {}
+        self.stats: dict[str, Any] = {
             "files_processed": 0,
             "successful_unwraps": 0,
             "failed_unwraps": 0,
@@ -1047,7 +1053,11 @@ class VMProtectionUnwrapper:
 
             # Detect protection
             protection_type = self.analyzer.detect_vm_protection(binary_data)
-            self.stats["protection_types_detected"][protection_type] += 1
+            prot_types = self.stats["protection_types_detected"]
+            if isinstance(prot_types, dict):
+                current_count = prot_types.get(protection_type, 0)
+                if isinstance(current_count, int):
+                    prot_types[protection_type] = current_count + 1
 
             # Find entry points
             entry_points = self.analyzer.find_vm_entry_points(binary_data, protection_type)
@@ -1071,35 +1081,45 @@ class VMProtectionUnwrapper:
 
             elapsed_time = time.time() - start_time
 
+            vm_sections = vm_analysis.get("vm_code_sections", [])
+            vm_stats = vm_analysis.get("statistics", {})
+
             result = {
                 "success": True,
                 "protection_type": protection_type.value,
                 "entry_points": len(entry_points),
-                "vm_sections": len(vm_analysis["vm_code_sections"]),
+                "vm_sections": len(vm_sections) if isinstance(vm_sections, list) else 0,
                 "original_size": len(binary_data),
                 "unwrapped_size": len(reconstructed),
                 "processing_time": elapsed_time,
-                "statistics": vm_analysis["statistics"],
+                "statistics": vm_stats if isinstance(vm_stats, dict) else {},
             }
 
-            self.stats["successful_unwraps"] += 1
+            successful_unwraps = self.stats.get("successful_unwraps", 0)
+            if isinstance(successful_unwraps, int):
+                self.stats["successful_unwraps"] = successful_unwraps + 1
             self.logger.info("Successfully unwrapped %s", input_file)
 
             return result
 
         except Exception as e:
             self.logger.exception("Error unwrapping %s: %s", input_file, e, exc_info=True)
-            self.stats["failed_unwraps"] += 1
+            failed_unwraps = self.stats.get("failed_unwraps", 0)
+            if isinstance(failed_unwraps, int):
+                self.stats["failed_unwraps"] = failed_unwraps + 1
             return {"success": False, "error": str(e)}
 
         finally:
-            self.stats["files_processed"] += 1
+            files_processed = self.stats.get("files_processed", 0)
+            if isinstance(files_processed, int):
+                self.stats["files_processed"] = files_processed + 1
 
     def _unwrap_vm_sections(self, binary_data: bytes, vm_analysis: dict[str, Any], protection_type: ProtectionType) -> list[bytes]:
         """Unwrap VM sections."""
-        unwrapped_sections = []
+        unwrapped_sections: list[bytes] = []
 
         # Get appropriate handler
+        handler: VMProtectHandler | ThemidaHandler
         if protection_type in [
             ProtectionType.VMPROTECT_1X,
             ProtectionType.VMPROTECT_2X,
@@ -1115,14 +1135,24 @@ class VMProtectionUnwrapper:
         # Extract encryption key (heuristic)
         key = self._extract_encryption_key(binary_data, vm_analysis, protection_type)
 
-        for section in vm_analysis["vm_code_sections"]:
-            section_data = section["data"]
+        vm_sections = vm_analysis.get("vm_code_sections", [])
+        if not isinstance(vm_sections, list):
+            return unwrapped_sections
+
+        for section in vm_sections:
+            if not isinstance(section, dict):
+                continue
+            section_data = section.get("data", b"")
+            if not isinstance(section_data, bytes):
+                continue
 
             try:
-                if protection_type == ProtectionType.THEMIDA:
+                if protection_type == ProtectionType.THEMIDA and isinstance(handler, ThemidaHandler):
                     decrypted = handler.decrypt_themida_vm(section_data, key)
-                else:
+                elif isinstance(handler, VMProtectHandler):
                     decrypted = handler.decrypt_vm_code(section_data, key, protection_type)
+                else:
+                    decrypted = section_data
 
                 unwrapped_sections.append(decrypted)
 
@@ -1275,7 +1305,8 @@ class VMProtectionUnwrapper:
                 raw_offset = struct.unpack("<I", binary_data[section_offset + 20 : section_offset + 24])[0]
 
                 if virtual_addr <= rva < virtual_addr + virtual_size:
-                    return raw_offset + (rva - virtual_addr)
+                    file_offset: int = raw_offset + (rva - virtual_addr)
+                    return file_offset
         except Exception as e:
             self.logger.debug("RVA to offset conversion failed: %s", e, exc_info=True)
         return None
@@ -1394,7 +1425,7 @@ class VMProtectionUnwrapper:
             List of parsed VMInstruction objects with pattern metadata.
 
         """
-        instructions = []
+        instructions: list[VMInstruction] = []
         offset = 0
         protection_type = self.analyzer.detect_vm_protection(vm_data)
 

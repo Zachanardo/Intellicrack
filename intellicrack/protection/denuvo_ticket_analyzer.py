@@ -1004,7 +1004,7 @@ class DenuvoTicketAnalyzer:
             b"token",
         ]
 
-        data_lower = data.lower() if isinstance(data, str) else data
+        data_lower = data.lower()
 
         return any(pattern.lower() in data_lower for pattern in activation_patterns)
 

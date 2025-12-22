@@ -6,7 +6,12 @@ from typing import Any
 
 from intellicrack.utils.logger import logger
 
-from ...utils.tools.radare2_utils import R2Exception, R2Session, r2_session
+from ...utils.tools.radare2_utils import (
+    R2Exception,
+    R2Session,
+    R2SessionPoolAdapter,
+    r2_session,
+)
 
 
 """
@@ -53,9 +58,9 @@ class ESILAnalysisEngine:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.emulation_cache = {}
+        self.emulation_cache: dict[str, dict[str, Any]] = {}
 
-    def initialize_esil_vm(self, r2: R2Session) -> bool:
+    def initialize_esil_vm(self, r2: R2Session | R2SessionPoolAdapter) -> bool:
         """Initialize ESIL virtual machine with optimal settings.
 
         Args:
@@ -98,9 +103,10 @@ class ESILAnalysisEngine:
         """
         cache_key = f"{address}_{max_steps}"
         if cache_key in self.emulation_cache:
-            return self.emulation_cache[cache_key]
+            cached_result: dict[str, Any] = self.emulation_cache[cache_key]
+            return cached_result
 
-        result = {
+        result: dict[str, Any] = {
             "function_address": hex(address),
             "execution_trace": [],
             "register_states": [],
@@ -129,34 +135,42 @@ class ESILAnalysisEngine:
 
                 # Get initial register state
                 initial_registers = r2.get_esil_registers()
-                result["register_states"].append(
-                    {
-                        "step": 0,
-                        "address": hex(address),
-                        "registers": initial_registers,
-                    },
-                )
+                register_states = result["register_states"]
+                if isinstance(register_states, list):
+                    register_states.append(
+                        {
+                            "step": 0,
+                            "address": hex(address),
+                            "registers": initial_registers,
+                        }
+                    )
 
                 # Perform step-by-step emulation
+                step = 0
                 for step in range(max_steps):
                     try:
                         # Execute one ESIL instruction
-                        esil_output = r2._execute_command("aes")
+                        esil_output_raw = r2._execute_command("aes")
 
-                        if current_pc := r2._execute_command("dr?PC"):
-                            current_pc = current_pc.strip()
+                        current_pc_raw = r2._execute_command("dr?PC")
+                        if current_pc_raw:
+                            current_pc = current_pc_raw.strip() if isinstance(current_pc_raw, str) else str(current_pc_raw)
 
                             # Get instruction at current PC
-                            instruction = r2._execute_command(f"pd 1 @ {current_pc}")
+                            instruction_raw = r2._execute_command(f"pd 1 @ {current_pc}")
+                            instruction = instruction_raw.strip() if isinstance(instruction_raw, str) else str(instruction_raw)
+                            esil_output = esil_output_raw.strip() if isinstance(esil_output_raw, str) else str(esil_output_raw)
 
                             # Record execution trace
-                            trace_entry = {
+                            trace_entry: dict[str, Any] = {
                                 "step": step + 1,
                                 "address": current_pc,
-                                "instruction": instruction.strip() if instruction else "",
-                                "esil_output": esil_output.strip() if esil_output else "",
+                                "instruction": instruction,
+                                "esil_output": esil_output,
                             }
-                            result["execution_trace"].append(trace_entry)
+                            execution_trace = result["execution_trace"]
+                            if isinstance(execution_trace, list):
+                                execution_trace.append(trace_entry)
 
                             # Analyze instruction for patterns
                             self._analyze_instruction_patterns(trace_entry, result)
@@ -164,13 +178,15 @@ class ESILAnalysisEngine:
                             # Get register state periodically
                             if step % 10 == 0 or step < 5:
                                 registers = r2.get_esil_registers()
-                                result["register_states"].append(
-                                    {
-                                        "step": step + 1,
-                                        "address": current_pc,
-                                        "registers": registers,
-                                    },
-                                )
+                                register_states_list = result["register_states"]
+                                if isinstance(register_states_list, list):
+                                    register_states_list.append(
+                                        {
+                                            "step": step + 1,
+                                            "address": current_pc,
+                                            "registers": registers,
+                                        }
+                                    )
 
                             # Check for function exit conditions
                             if self._is_function_exit(instruction):
@@ -329,7 +345,7 @@ class ESILAnalysisEngine:
         unique_addresses = len({entry.get("address", "") for entry in trace})
 
         # Detect loops
-        address_counts = {}
+        address_counts: dict[str, int] = {}
         for entry in trace:
             if addr := entry.get("address", ""):
                 address_counts[addr] = address_counts.get(addr, 0) + 1
@@ -387,8 +403,8 @@ class ESILAnalysisEngine:
             return
 
         # Group consecutive API calls
-        call_sequences = []
-        current_sequence = []
+        call_sequences: list[list[Any]] = []
+        current_sequence: list[Any] = []
 
         for call in api_calls:
             if not current_sequence or call["step"] - current_sequence[-1]["step"] <= 5:
@@ -456,7 +472,7 @@ class ESILAnalysisEngine:
             Comparative emulation results
 
         """
-        results = {
+        results: dict[str, Any] = {
             "emulation_summary": {
                 "functions_emulated": len(function_addresses),
                 "total_steps_executed": 0,
@@ -488,13 +504,11 @@ class ESILAnalysisEngine:
 
     def _perform_comparative_analysis(self, function_results: dict[str, Any]) -> dict[str, Any]:
         """Perform comparative analysis across multiple function emulations."""
-        analysis = {
-            "most_complex_function": None,
-            "most_api_calls": None,
-            "most_license_checks": None,
-            "common_patterns": [],
-            "suspicious_functions": [],
-        }
+        most_complex_function: str | None = None
+        most_api_calls: str | None = None
+        most_license_checks: str | None = None
+        common_patterns: list[Any] = []
+        suspicious_functions: list[dict[str, Any]] = []
 
         max_steps = 0
         max_api_calls = 0
@@ -511,28 +525,34 @@ class ESILAnalysisEngine:
             # Track maximums
             if steps > max_steps:
                 max_steps = steps
-                analysis["most_complex_function"] = addr
+                most_complex_function = addr
 
             if api_calls > max_api_calls:
                 max_api_calls = api_calls
-                analysis["most_api_calls"] = addr
+                most_api_calls = addr
 
             if license_checks > max_license_checks:
                 max_license_checks = license_checks
-                analysis["most_license_checks"] = addr
+                most_license_checks = addr
 
             # Identify suspicious functions
             if license_checks > 0 or len(result.get("anti_analysis_techniques", [])) > 0:
-                analysis["suspicious_functions"].append(
+                suspicious_functions.append(
                     {
                         "address": addr,
                         "license_checks": license_checks,
                         "anti_analysis_techniques": len(result.get("anti_analysis_techniques", [])),
                         "suspicion_score": license_checks * 2 + len(result.get("anti_analysis_techniques", [])),
-                    },
+                    }
                 )
 
-        return analysis
+        return {
+            "most_complex_function": most_complex_function,
+            "most_api_calls": most_api_calls,
+            "most_license_checks": most_license_checks,
+            "common_patterns": common_patterns,
+            "suspicious_functions": suspicious_functions,
+        }
 
 
 def analyze_binary_esil(

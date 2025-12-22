@@ -24,7 +24,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.ai.llm_backends import LLMConfig, LLMManager, LLMProvider
 from intellicrack.ai.model_cache_manager import get_cache_manager
@@ -46,12 +46,13 @@ class AIModelManager:
             config_path: Path to model configuration file
 
         """
-        self.config_path = config_path or self._get_default_config_path()
-        self.models = {}
-        self.active_model = None
-        self.llm_manager = LLMManager()
-        self.cache_manager = get_cache_manager()
-        self.performance_monitor = get_performance_monitor()
+        self.config_path: str = config_path or self._get_default_config_path()
+        self.models: dict[str, dict[str, Any]] = {}
+        self.active_model: str | None = None
+        self.config: dict[str, Any] = {}
+        self.llm_manager: LLMManager = LLMManager()
+        self.cache_manager: Any = get_cache_manager()
+        self.performance_monitor: Any = get_performance_monitor()
 
         self._load_configuration()
         self._initialize_models()
@@ -233,7 +234,7 @@ class AIModelManager:
         # This is framework-specific (transformers, llama.cpp, etc.)
         logger.info("Local model %s configured at %s", name, model_path)
 
-    def get_model(self, name: str | None = None) -> object:
+    def get_model(self, name: str | None = None) -> Any:
         """Get a model instance.
 
         Args:
@@ -243,14 +244,14 @@ class AIModelManager:
             Model instance
 
         """
-        model_name = name or self.active_model
+        model_name: str | None = name or self.active_model
         if not model_name:
             raise ValueError("No model specified and no active model set")
 
         if model_name not in self.models:
             raise ValueError(f"Model {model_name} not found")
 
-        model_info = self.models[model_name]
+        model_info: dict[str, Any] = self.models[model_name]
 
         # Lazy load model instance
         if model_info["instance"] is None:
@@ -258,7 +259,7 @@ class AIModelManager:
 
         return model_info["instance"]
 
-    def _load_model(self, name: str, model_info: dict[str, Any]) -> object:
+    def _load_model(self, name: str, model_info: dict[str, Any]) -> Any:
         """Load actual model instance.
 
         Args:
@@ -269,12 +270,13 @@ class AIModelManager:
             Loaded model instance
 
         """
-        provider = model_info["provider"]
-        config = model_info["config"]
+        provider: str = model_info["provider"]
+        config: dict[str, Any] = model_info["config"]
 
         # Check cache first
         if self.config.get("cache_enabled", True):
-            if cached_model := self.cache_manager.get_model(name):
+            cached_model: Any = self.cache_manager.get_model(name)
+            if cached_model is not None:
                 logger.info("Loaded model %s from cache", name)
                 return cached_model
 
@@ -298,14 +300,17 @@ class AIModelManager:
             Loaded model
 
         """
-        model_path = config.get("model_path")
+        model_path: Any = config.get("model_path")
 
         try:
             # Try to load with transformers
             from transformers import AutoModel, AutoTokenizer
 
-            model = AutoModel.from_pretrained(model_path)
-            tokenizer = AutoTokenizer.from_pretrained(model_path)
+            if not isinstance(model_path, str):
+                raise ValueError(f"Invalid model path: {model_path}")
+
+            model: Any = AutoModel.from_pretrained(model_path)
+            tokenizer: Any = AutoTokenizer.from_pretrained(model_path)  # type: ignore[no-untyped-call]
 
             # Cache the model
             if self.config.get("cache_enabled", True):
@@ -319,13 +324,16 @@ class AIModelManager:
                 # Try llama.cpp as fallback
                 import llama_cpp
 
-                model = llama_cpp.Llama(model_path=model_path)
+                if not isinstance(model_path, str):
+                    raise ValueError(f"Invalid model path: {model_path}")
+
+                model_instance: Any = llama_cpp.Llama(model_path=model_path)
 
                 # Cache the model
                 if self.config.get("cache_enabled", True):
-                    self.cache_manager.cache_model(name, model, None)
+                    self.cache_manager.cache_model(name, model_instance, None)
 
-                return {"model": model, "tokenizer": None}
+                return {"model": model_instance, "tokenizer": None}
             except ImportError:
                 logger.exception("No local model backend available")
                 raise RuntimeError("No local model backend available (install transformers or llama-cpp-python)") from None
@@ -362,14 +370,15 @@ class AIModelManager:
             Model information dictionary
 
         """
-        model_name = name or self.active_model
+        model_name: str | None = name or self.active_model
         if not model_name:
             raise ValueError("No model specified and no active model set")
 
         if model_name not in self.models:
             raise ValueError(f"Model {model_name} not found")
 
-        return self.models[model_name]
+        result: dict[str, Any] = self.models[model_name]
+        return result
 
     def configure_model(self, name: str, config: dict[str, Any]) -> None:
         """Configure a model.
@@ -440,14 +449,15 @@ class AIModelManager:
             Performance statistics
 
         """
-        if model_name := name or self.active_model:
-            return (
+        model_name: str | None = name or self.active_model
+        if model_name:
+            stats: dict[str, Any] = (
                 self.performance_monitor.get_stats(model_name)
                 if self.config.get("performance_monitoring", True)
                 else {"message": "Performance monitoring disabled"}
             )
-        else:
-            raise ValueError("No model specified and no active model set")
+            return stats
+        raise ValueError("No model specified and no active model set")
 
     def cleanup(self) -> None:
         """Cleanup resources."""
@@ -462,8 +472,7 @@ class AIModelManager:
         logger.info("AI Model Manager cleaned up")
 
 
-# Singleton instance
-_model_manager = None
+_model_manager: AIModelManager | None = None
 
 
 def get_model_manager(config_path: str | None = None) -> AIModelManager:

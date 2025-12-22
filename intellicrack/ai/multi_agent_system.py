@@ -466,9 +466,6 @@ class BaseAgent:
         if learned_pattern not in self.learned_patterns:
             self.learned_patterns.append(learned_pattern)
 
-        if self.learning_engine:
-            await self.learning_engine.update_knowledge(agent_id=self.agent_id, knowledge_entry=knowledge_entry)
-
     def _extract_patterns(self, data: dict[str, Any]) -> list[str]:
         """Extract reusable patterns from data."""
         patterns = []
@@ -2621,8 +2618,8 @@ class DynamicAnalysisAgent(BaseAgent):
 
             script = session.create_script(script_code)
 
-            def on_message(message: dict[str, object], data: object) -> None:
-                if message.get("type") == "send" and isinstance(message.get("payload"), dict):
+            def on_message(message: Any, data: Any) -> None:
+                if isinstance(message, dict) and message.get("type") == "send" and isinstance(message.get("payload"), dict):
                     payload = cast("dict[str, Any]", message["payload"])
                     if payload.get("type") == "api_call" and isinstance(payload.get("data"), dict):
                         payload_data = cast("dict[str, Any]", payload["data"])
@@ -3596,7 +3593,7 @@ class MultiAgentSystem:
         self.message_router.route_message(message)
         self.collaboration_stats["messages_sent"] += 1
 
-    @profile_ai_operation("multi_agent_collaboration")  # type: ignore[untyped-decorator]
+    @profile_ai_operation("multi_agent_collaboration")
     async def execute_collaborative_task(self, task: AgentTask) -> CollaborationResult:
         """Execute task using multiple agents."""
         start_time = time.time()

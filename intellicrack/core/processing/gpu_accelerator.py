@@ -18,6 +18,8 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any
+
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.opencl_handler import OPENCL_AVAILABLE, cl
 from intellicrack.utils.logger import logger
@@ -28,11 +30,14 @@ from ...utils.logger import get_logger
 
 
 # Optional GPU backend imports
+from types import ModuleType
+
 try:
     import pyopencl.array as cl_array
+    cl_array_module: ModuleType | None = cl_array
 except ImportError as e:
     logger.error("Import error in gpu_accelerator: %s", e)
-    cl_array = None
+    cl_array_module = None
 
 try:
     import cupy as cp
@@ -80,11 +85,11 @@ class GPUAccelerationManager:
 
         # Legacy attributes for compatibility
         self.gpu_backend = self._determine_backend()
-        self.context = None
-        self.queue = None
-        self.cl = cl
-        self.cl_array = cl_array
-        self.cupy = cp
+        self.context: Any | None = None
+        self.queue: Any | None = None
+        self.cl: Any | None = cl
+        self.cl_array: ModuleType | None = cl_array_module
+        self.cupy: Any | None = cp
 
         # Initialize OpenCL if available and needed
         if OPENCL_AVAILABLE and self.gpu_type not in ["intel_xpu", "nvidia_cuda", "amd_rocm"]:
@@ -121,7 +126,7 @@ class GPUAccelerationManager:
                     self.logger.debug("OpenCL platform error: %s", e)
                     continue
 
-            if best_device:
+            if best_device and best_platform:
                 self.context = cl.Context([best_device])
                 self.queue = cl.CommandQueue(self.context)
                 self.logger.info("OpenCL initialized: %s, %s", best_platform.name, best_device.name)
@@ -131,11 +136,14 @@ class GPUAccelerationManager:
 
     def is_acceleration_available(self) -> bool:
         """Check if GPU acceleration is available."""
-        return self.gpu_available
+        return bool(self.gpu_available)
 
     def get_gpu_type(self) -> str | None:
         """Get the type of GPU acceleration available."""
-        return self.gpu_type
+        gpu_type = self.gpu_type
+        if gpu_type is None:
+            return None
+        return str(gpu_type) if not isinstance(gpu_type, str) else gpu_type
 
     def get_backend(self) -> str | None:
         """Get the GPU backend type."""
@@ -157,13 +165,20 @@ class GPUAccelerationManager:
             return self._cpu_pattern_matching(data, patterns)
 
         try:
-            if self.gpu_backend == "pyopencl" and self.context:
+            backend: str | None = self.gpu_backend
+
+            use_opencl = backend == "pyopencl" and self.context is not None
+            use_cupy = backend == "cupy" and cp is not None
+            use_torch = self._torch is not None and not (use_opencl or use_cupy)
+
+            if use_opencl:
                 return self._opencl_pattern_matching(data, patterns)
-            if self.gpu_backend == "cupy" and cp:
+            if use_cupy:
                 return self._cupy_pattern_matching(data, patterns)
-            if self._torch:
+            if use_torch:
                 return self._torch_pattern_matching(data, patterns)
-            self.logger.warning("Pattern matching not implemented for backend: %s", self.gpu_backend)
+
+            self.logger.warning("Pattern matching not implemented for backend: %s", backend)
             return self._cpu_pattern_matching(data, patterns)
         except Exception as e:
             self.logger.exception("GPU pattern matching failed: %s", e)
@@ -216,7 +231,7 @@ class GPUAccelerationManager:
 
     def _opencl_pattern_matching(self, data: bytes, patterns: list[bytes]) -> list[int]:
         """OpenCL-based pattern matching."""
-        if not self.cl or not self.context:
+        if self.cl is None or self.context is None or self.queue is None:
             return self._cpu_pattern_matching(data, patterns)
 
         # OpenCL kernel for pattern matching
@@ -388,11 +403,11 @@ class GPUAccelerator(GPUAccelerationManager):
         self.intel_pytorch_available = self.gpu_type == "intel_xpu"
 
         # Legacy device lists
-        self.cuda_devices = []
-        self.opencl_devices = []
-        self.tensorflow_devices = []
-        self.pytorch_devices = []
-        self.intel_devices = []
+        self.cuda_devices: list[dict[str, object]] = []
+        self.opencl_devices: list[dict[str, object]] = []
+        self.tensorflow_devices: list[dict[str, object]] = []
+        self.pytorch_devices: list[dict[str, object]] = []
+        self.intel_devices: list[dict[str, object]] = []
 
         # Populate legacy device info
         if self.gpu_available:
@@ -421,18 +436,20 @@ class GPUAccelerator(GPUAccelerationManager):
         self.detected_gpu_name = self.gpu_info.get("device_name", "Unknown")
 
         # Benchmarking and error handling
-        self.backend_benchmarks = {}
-        self.error_counts = {}
-        self.blacklisted_backends = set()
+        self.backend_benchmarks: dict[str, float] = {}
+        self.error_counts: dict[str, int] = {}
+        self.blacklisted_backends: set[str] = set()
 
     def _detect_vendor(self) -> str:
         """Detect GPU vendor from type."""
-        if self.gpu_type:
-            if "intel" in self.gpu_type:
+        gpu_type = self.gpu_type
+        if gpu_type is not None:
+            gpu_type_str = str(gpu_type).lower()
+            if "intel" in gpu_type_str:
                 return "Intel"
-            if "nvidia" in self.gpu_type or "cuda" in self.gpu_type:
+            if "nvidia" in gpu_type_str or "cuda" in gpu_type_str:
                 return "NVIDIA"
-            if "amd" in self.gpu_type or "rocm" in self.gpu_type:
+            if "amd" in gpu_type_str or "rocm" in gpu_type_str:
                 return "AMD"
         return "Unknown"
 
@@ -485,7 +502,8 @@ def is_gpu_acceleration_available() -> bool:
     """
     try:
         gpu_info = get_gpu_info()
-        return gpu_info.get("available", False)
+        available = gpu_info.get("available", False)
+        return bool(available)
     except Exception as e:
         logger.debug("GPU availability check failed: %s", e)
         return False

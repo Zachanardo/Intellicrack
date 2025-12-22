@@ -85,13 +85,13 @@ class PerformanceMonitor:
         """
         self.logger = logging.getLogger(f"{__name__}.PerformanceMonitor")
         self.max_history = max_history
-        self.metrics: dict[str, deque] = defaultdict(lambda: deque(maxlen=max_history))
-        self.profiles: deque = deque(maxlen=max_history)
+        self.metrics: dict[str, deque[PerformanceMetric]] = defaultdict(lambda: deque(maxlen=max_history))
+        self.profiles: deque[PerformanceProfile] = deque(maxlen=max_history)
         self.active_operations: dict[str, dict[str, Any]] = {}
-        self.optimization_rules: list[Callable] = []
+        self.optimization_rules: list[Callable[[str, str, float], None]] = []
 
         # Performance thresholds
-        self.thresholds = {
+        self.thresholds: dict[str, dict[str, float]] = {
             "execution_time": {"warning": 5.0, "critical": 15.0},
             "memory_usage": {"warning": 500 * 1024 * 1024, "critical": 1024 * 1024 * 1024},
             "cpu_usage": {"warning": 80.0, "critical": 95.0},
@@ -110,7 +110,7 @@ class PerformanceMonitor:
 
         # Background monitoring
         self._monitoring_active = False
-        self._monitor_thread = None
+        self._monitor_thread: threading.Thread | None = None
 
         # Performance cache
         self.performance_cache: dict[str, Any] = {}
@@ -124,20 +124,21 @@ class PerformanceMonitor:
             return
 
         self._monitoring_active = True
-        self._monitor_thread = threading.Thread(
+        thread = threading.Thread(
             target=self._monitor_system,
             args=(interval,),
             daemon=True,
         )
-        self._monitor_thread.start()
+        self._monitor_thread = thread
+        thread.start()
         logger.info("Background performance monitoring started")
 
     def stop_monitoring(self) -> None:
         """Stop background monitoring."""
         self._monitoring_active = False
-        if self._monitor_thread:
+        if self._monitor_thread is not None:
             self._monitor_thread.join(timeout=2.0)
-        logger.info("Background performance monitoring stopped")
+            logger.info("Background performance monitoring stopped")
 
     def _monitor_system(self, interval: float) -> None:
         """Background system monitoring loop."""
@@ -167,19 +168,21 @@ class PerformanceMonitor:
 
     def _check_thresholds(self, cpu_usage: float, memory_usage: int, memory_growth: int) -> None:
         """Check if metrics exceed thresholds."""
-        checks = [
+        checks: list[tuple[str, float]] = [
             ("cpu_usage", cpu_usage),
-            ("memory_usage", memory_usage),
-            ("memory_growth", memory_growth),
+            ("memory_usage", float(memory_usage)),
+            ("memory_growth", float(memory_growth)),
         ]
 
         for metric_name, value in checks:
-            thresholds = self.thresholds.get(metric_name, {})
+            metric_thresholds = self.thresholds.get(metric_name, {})
+            critical_threshold = metric_thresholds.get("critical", float("inf"))
+            warning_threshold = metric_thresholds.get("warning", float("inf"))
 
-            if value > thresholds.get("critical", float("inf")):
+            if value > critical_threshold:
                 logger.critical("Critical %s: %s", metric_name, value)
                 self._trigger_optimization(metric_name, "critical", value)
-            elif value > thresholds.get("warning", float("inf")):
+            elif value > warning_threshold:
                 logger.warning("High %s: %s", metric_name, value)
                 self._trigger_optimization(metric_name, "warning", value)
 
@@ -202,7 +205,7 @@ class PerformanceMonitor:
         value: float,
         unit: str,
         category: str = "general",
-        context: dict[str, Any] = None,
+        context: dict[str, Any] | None = None,
     ) -> None:
         """Record a performance metric."""
         metric = PerformanceMetric(
@@ -325,7 +328,7 @@ class PerformanceMonitor:
         """Get summary of metrics within time window."""
         cutoff_time = datetime.now() - (time_window or timedelta(hours=1))
 
-        summary = {
+        summary: dict[str, Any] = {
             "timeframe": str(time_window or timedelta(hours=1)),
             "metrics": {},
             "operation_summary": {},
@@ -336,7 +339,8 @@ class PerformanceMonitor:
         for metric_name, metric_list in self.metrics.items():
             if recent_metrics := [m for m in metric_list if m.timestamp >= cutoff_time]:
                 values = [m.value for m in recent_metrics]
-                summary["metrics"][metric_name] = {
+                metrics_dict: dict[str, Any] = summary["metrics"]
+                metrics_dict[metric_name] = {
                     "count": len(values),
                     "avg": sum(values) / len(values),
                     "min": min(values),
@@ -348,7 +352,7 @@ class PerformanceMonitor:
         # Operation summary
         recent_profiles = [p for p in self.profiles if p.timestamp >= cutoff_time]
 
-        operation_stats = defaultdict(list)
+        operation_stats: defaultdict[str, list[PerformanceProfile]] = defaultdict(list)
         for profile in recent_profiles:
             operation_stats[profile.operation_name].append(profile)
 
@@ -357,7 +361,8 @@ class PerformanceMonitor:
             memory_usage = [p.memory_usage for p in profiles]
             success_rate = sum(bool(p.success) for p in profiles) / len(profiles)
 
-            summary["operation_summary"][op_name] = {
+            op_summary_dict: dict[str, Any] = summary["operation_summary"]
+            op_summary_dict[op_name] = {
                 "count": len(profiles),
                 "avg_execution_time": sum(exec_times) / len(exec_times),
                 "max_execution_time": max(exec_times),
@@ -380,21 +385,29 @@ class PerformanceMonitor:
                 cpu_usage = 0
 
             health_score = 100.0
-            issues = []
+            issues: list[str] = []
 
             # Memory assessment
-            if memory_growth > self.thresholds["memory_growth"]["critical"]:
+            memory_thresholds = self.thresholds.get("memory_growth", {})
+            memory_critical = memory_thresholds.get("critical", float("inf"))
+            memory_warning = memory_thresholds.get("warning", float("inf"))
+
+            if memory_growth > memory_critical:
                 health_score -= 30
                 issues.append("Critical memory growth")
-            elif memory_growth > self.thresholds["memory_growth"]["warning"]:
+            elif memory_growth > memory_warning:
                 health_score -= 15
                 issues.append("High memory growth")
 
             # CPU assessment
-            if cpu_usage > self.thresholds["cpu_usage"]["critical"]:
+            cpu_thresholds = self.thresholds.get("cpu_usage", {})
+            cpu_critical = cpu_thresholds.get("critical", float("inf"))
+            cpu_warning = cpu_thresholds.get("warning", float("inf"))
+
+            if cpu_usage > cpu_critical:
                 health_score -= 25
                 issues.append("Critical CPU usage")
-            elif cpu_usage > self.thresholds["cpu_usage"]["warning"]:
+            elif cpu_usage > cpu_warning:
                 health_score -= 10
                 issues.append("High CPU usage")
 
@@ -493,9 +506,12 @@ class PerformanceMonitor:
 
         """
         if cache_key in self.performance_cache:
-            timestamp, result = self.performance_cache[cache_key]
-            if time.time() - timestamp < self.cache_ttl:
-                return result
+            cache_entry: Any = self.performance_cache[cache_key]
+            if isinstance(cache_entry, tuple) and len(cache_entry) == 2:
+                timestamp, result = cache_entry
+                if isinstance(timestamp, (int, float)) and isinstance(result, dict):
+                    if time.time() - timestamp < self.cache_ttl:
+                        return result
             del self.performance_cache[cache_key]
         return None
 
@@ -538,16 +554,13 @@ class PerformanceMonitor:
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool:
+    ) -> None:
         """Stop background monitoring and log metrics on context exit.
 
         Args:
             exc_type: Exception type if an exception occurred
             exc_val: Exception value if an exception occurred
             exc_tb: Exception traceback if an exception occurred
-
-        Returns:
-            bool: False to not suppress any exceptions
 
         """
         if exc_type:
@@ -556,7 +569,6 @@ class PerformanceMonitor:
             if exc_tb:
                 logger.debug("Exception traceback from %s:%s", exc_tb.tb_frame.f_code.co_filename, exc_tb.tb_lineno)
         self.stop_monitoring()
-        return False  # Don't suppress exceptions
 
 
 # Global performance monitor instance

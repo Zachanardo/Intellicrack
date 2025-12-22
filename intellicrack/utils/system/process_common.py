@@ -30,7 +30,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 
-def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess:
+def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: bool = True) -> subprocess.CompletedProcess[str]:
     """Run a subprocess with common safety patterns.
 
     Args:
@@ -59,7 +59,7 @@ def run_subprocess_safely(cmd: list[str], timeout: int = 30, capture_output: boo
         raise
 
 
-def create_popen_safely(cmd: list[str], **kwargs: object) -> subprocess.Popen[str]:
+def create_popen_safely(cmd: list[str], **kwargs: Any) -> subprocess.Popen[str]:
     """Create a Popen process with common patterns.
 
     Args:
@@ -70,11 +70,12 @@ def create_popen_safely(cmd: list[str], **kwargs: object) -> subprocess.Popen[st
         Popen process object
 
     """
-    defaults = {
+    defaults: dict[str, Any] = {
         "stdout": subprocess.PIPE,
         "stderr": subprocess.PIPE,
         "text": True,
-    } | kwargs
+    }
+    defaults.update(kwargs)
     return subprocess.Popen(cmd, **defaults)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
 

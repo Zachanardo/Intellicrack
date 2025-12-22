@@ -92,6 +92,7 @@ import xml.etree.ElementTree as ET  # noqa: S405
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Literal
 
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -332,7 +333,7 @@ class APKAnalyzer:
             logger.warning("APK decompilation failed, cannot detect OkHttp pinning")
             return []
 
-        pinning_infos = []
+        pinning_infos: list[PinningInfo] = []
 
         okhttp_pattern = re.compile(
             r'CertificatePinner\.Builder\(\).*?\.add\s*\(\s*["\']([^"\']+)["\']\s*,\s*["\']sha256/([^"\']+)["\']',
@@ -495,6 +496,9 @@ class APKAnalyzer:
             except x509.ExtensionNotFound:
                 pass
 
+            if not self.extracted_path:
+                return None
+
             return PinningInfo(
                 location=str(cert_file.relative_to(self.extracted_path)),
                 pin_type="hardcoded_cert",
@@ -620,7 +624,7 @@ class APKAnalyzer:
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool:
+    ) -> Literal[False]:
         """Context manager exit."""
         self.cleanup()
         return False

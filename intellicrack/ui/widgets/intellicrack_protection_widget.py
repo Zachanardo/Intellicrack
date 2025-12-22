@@ -36,7 +36,7 @@ from intellicrack.handlers.pyqt6_handler import (
 from ...ai.ai_file_tools import get_ai_file_tools
 from ...ai.code_analysis_tools import AIAssistant
 from ...ai.interactive_assistant import IntellicrackAIAssistant
-from ...protection.intellicrack_protection_core import IntellicrackProtectionCore, ProtectionAnalysis
+from ...protection.intellicrack_protection_core import DetectionResult, IntellicrackProtectionCore, ProtectionAnalysis
 from ...utils.logger import get_logger
 
 
@@ -91,17 +91,17 @@ class ProtectionAnalysisThread(QThread):
                     license_file_results = self.ai_file_tools.search_for_license_files(binary_dir)
 
                     if license_file_results.get("status") == "success":
-                        # Add license files to analysis object
-                        if not hasattr(analysis, "license_files"):
-                            analysis.license_files = []
-                        analysis.license_files = license_file_results.get("files_found", [])
+                        # Add license files to analysis object using setattr for dynamic attributes
+                        files_found = license_file_results.get("files_found", [])
+                        setattr(analysis, "license_files", files_found)
 
                         # Also add summary info
-                        analysis.license_file_summary = {
-                            "total_found": len(license_file_results.get("files_found", [])),
+                        license_summary = {
+                            "total_found": len(files_found),
                             "search_directory": binary_dir,
                             "patterns_matched": license_file_results.get("patterns_matched", []),
                         }
+                        setattr(analysis, "license_file_summary", license_summary)
                 except Exception as e:
                     logger.warning("License file search failed: %s", e, exc_info=True)
 
@@ -177,7 +177,7 @@ class IntellicrackProtectionWidget(QWidget):
         layout.addLayout(header_layout)
 
         # Main content area with splitter
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left side - Detection results tree
         left_widget = QWidget()
@@ -185,7 +185,7 @@ class IntellicrackProtectionWidget(QWidget):
         left_layout.setContentsMargins(0, 0, 0, 0)
 
         left_label = QLabel("Detections")
-        left_label.setFont(QFont("Arial", 10, QFont.Bold))
+        left_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
         left_layout.addWidget(left_label)
 
         self.detection_tree = QTreeWidget()
@@ -312,7 +312,7 @@ class IntellicrackProtectionWidget(QWidget):
         self.detection_tree.clear()
 
         # Group detections by type
-        detections_by_type = {}
+        detections_by_type: dict[str, list[DetectionResult]] = {}
         for detection in analysis.detections:
             det_type = detection.type.value
             if det_type not in detections_by_type:
@@ -324,7 +324,7 @@ class IntellicrackProtectionWidget(QWidget):
             # Create type node
             type_item = QTreeWidgetItem(self.detection_tree)
             type_item.setText(0, det_type.upper())
-            type_item.setFont(0, QFont("Arial", 9, QFont.Bold))
+            type_item.setFont(0, QFont("Arial", 9, QFont.Weight.Bold))
 
             # Color code by type
             if det_type == "protector":
@@ -340,7 +340,7 @@ class IntellicrackProtectionWidget(QWidget):
                 det_item.setText(0, detection.name)
                 det_item.setText(1, detection.type.value)
                 det_item.setText(2, detection.version or "N/A")
-                det_item.setData(0, Qt.UserRole, detection)
+                det_item.setData(0, Qt.ItemDataRole.UserRole, detection)
 
         # Expand all items
         self.detection_tree.expandAll()
@@ -396,10 +396,11 @@ class IntellicrackProtectionWidget(QWidget):
             summary_lines.append("No protections detected")
 
         # License files
-        if hasattr(analysis, "license_files") and analysis.license_files:
-            summary_lines.extend(("", f"License Files Found: {len(analysis.license_files)}"))
+        license_files = getattr(analysis, "license_files", None)
+        if license_files:
+            summary_lines.extend(("", f"License Files Found: {len(license_files)}"))
             summary_lines.extend(
-                f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})" for file_info in analysis.license_files[:5]
+                f"   {file_info['name']} ({file_info.get('size_str', 'Unknown size')})" for file_info in license_files[:5]
             )
         self.summary_text.setText("\n".join(summary_lines))
 
@@ -441,11 +442,12 @@ class IntellicrackProtectionWidget(QWidget):
             return
 
         item = items[0]
-        if detection := item.data(0, Qt.UserRole):
+        detection = item.data(0, Qt.ItemDataRole.UserRole)
+        if detection is not None and isinstance(detection, DetectionResult):
             # Display bypass recommendations
             self.display_bypass_recommendations(detection)
 
-    def display_bypass_recommendations(self, detection: object) -> None:
+    def display_bypass_recommendations(self, detection: DetectionResult) -> None:
         """Display bypass recommendations for selected detection.
 
         Args:
@@ -484,9 +486,11 @@ class IntellicrackProtectionWidget(QWidget):
         if not self.current_analysis:
             return
 
-        # Get export format
+        # Get export format using a simple dialog
+        from PyQt6.QtWidgets import QInputDialog
+
         formats = ["JSON", "Text", "CSV"]
-        format_choice, ok = QMessageBox.getItem(
+        format_choice, ok = QInputDialog.getItem(
             self,
             "Export Format",
             "Select export format:",
@@ -558,7 +562,8 @@ class IntellicrackProtectionWidget(QWidget):
 
         try:
             # Prepare task data for AI reasoning
-            task_data = {
+            patterns_list: list[dict[str, object]] = []
+            task_data: dict[str, object] = {
                 "type": "protection_detection",
                 "file_path": self.current_analysis.file_path,
                 "binary_info": {
@@ -568,13 +573,13 @@ class IntellicrackProtectionWidget(QWidget):
                     "is_protected": self.current_analysis.is_protected,
                     "compiler": self.current_analysis.compiler,
                 },
-                "patterns": [],
+                "patterns": patterns_list,
             }
 
             # Add detection patterns
             if self.current_analysis.detections:
                 for detection in self.current_analysis.detections:
-                    task_data["patterns"].append(
+                    patterns_list.append(
                         {
                             "name": detection.name,
                             "type": detection.type.value,
@@ -607,7 +612,7 @@ class IntellicrackProtectionWidget(QWidget):
             self.ai_reasoning_btn.setEnabled(True)
             self.status_label.setText("AI reasoning failed")
 
-    def display_ai_reasoning(self, reasoning_result: dict) -> None:
+    def display_ai_reasoning(self, reasoning_result: dict[str, object]) -> None:
         """Display AI reasoning results in the UI."""
         reasoning_lines = ["=== AI Reasoning Analysis ===\n"]
 
@@ -617,31 +622,43 @@ class IntellicrackProtectionWidget(QWidget):
             self.ai_reasoning_text.setText("\n".join(reasoning_lines))
             return
 
+        task_type = reasoning_result.get("task_type", "Unknown")
+        reasoning_confidence = reasoning_result.get("reasoning_confidence", 0)
+        if isinstance(reasoning_confidence, (int, float)):
+            confidence_pct = reasoning_confidence * 100
+        else:
+            confidence_pct = 0.0
+
         reasoning_lines.extend((
-            f"Task Type: {reasoning_result.get('task_type', 'Unknown')}",
-            f"Reasoning Confidence: {reasoning_result.get('reasoning_confidence', 0) * 100:.0f}%",
+            f"Task Type: {task_type}",
+            f"Reasoning Confidence: {confidence_pct:.0f}%",
             "",
         ))
+
         # Display evidence
-        if reasoning_result.get("evidence"):
+        evidence = reasoning_result.get("evidence")
+        if evidence and isinstance(evidence, list):
             reasoning_lines.append("Evidence Found:")
-            reasoning_lines.extend(f"   {evidence}" for evidence in reasoning_result["evidence"])
+            reasoning_lines.extend(f"   {ev}" for ev in evidence)
             reasoning_lines.append("")
 
         # Display conclusions
-        if reasoning_result.get("conclusions"):
+        conclusions = reasoning_result.get("conclusions")
+        if conclusions and isinstance(conclusions, list):
             reasoning_lines.append("Conclusions:")
-            reasoning_lines.extend(f"   {conclusion}" for conclusion in reasoning_result["conclusions"])
+            reasoning_lines.extend(f"   {conclusion}" for conclusion in conclusions)
             reasoning_lines.append("")
 
         # Display next steps
-        if reasoning_result.get("next_steps"):
+        next_steps = reasoning_result.get("next_steps")
+        if next_steps and isinstance(next_steps, list):
             reasoning_lines.append("Recommended Next Steps:")
-            reasoning_lines.extend(f"  {i}. {step}" for i, step in enumerate(reasoning_result["next_steps"], 1))
+            for i, step in enumerate(next_steps, 1):
+                reasoning_lines.append(f"  {i}. {step}")
             reasoning_lines.append("")
 
         # Add protection-specific reasoning
-        if self.current_analysis.detections:
+        if self.current_analysis and self.current_analysis.detections:
             reasoning_lines.extend(("Protection-Specific Analysis:", ""))
             for detection in self.current_analysis.detections:
                 reasoning_lines.append(f"For {detection.name} ({detection.type.value}):")
@@ -690,7 +707,8 @@ class IntellicrackProtectionWidget(QWidget):
             license_file_results = ai_file_tools.search_for_license_files(binary_dir)
 
             if license_file_results.get("status") == "success":
-                if files_found := license_file_results.get("files_found", []):
+                files_found = license_file_results.get("files_found", [])
+                if files_found:
                     # Display results in a message box
                     message_lines = [f"Found {len(files_found)} potential license files:\n"]
                     for file_info in files_found[:10]:  # Show up to 10
@@ -703,10 +721,8 @@ class IntellicrackProtectionWidget(QWidget):
 
                     QMessageBox.information(self, "License Files Found", "\n".join(message_lines))
 
-                    # Update the analysis object
-                    if not hasattr(self.current_analysis, "license_files"):
-                        self.current_analysis.license_files = []
-                    self.current_analysis.license_files = files_found
+                    # Update the analysis object using setattr
+                    setattr(self.current_analysis, "license_files", files_found)
 
                     # Refresh display
                     self.display_summary(self.current_analysis)
@@ -751,8 +767,8 @@ class IntellicrackProtectionWidget(QWidget):
         button_box = QDialogButtonBox()
         ask_button = QPushButton("Ask")
         close_button = QPushButton("Close")
-        button_box.addButton(ask_button, QDialogButtonBox.ActionRole)
-        button_box.addButton(close_button, QDialogButtonBox.RejectRole)
+        button_box.addButton(ask_button, QDialogButtonBox.ButtonRole.ActionRole)
+        button_box.addButton(close_button, QDialogButtonBox.ButtonRole.RejectRole)
 
         def ask_question() -> None:
             question = question_input.text().strip()

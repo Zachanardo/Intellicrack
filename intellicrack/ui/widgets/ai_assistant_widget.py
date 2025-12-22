@@ -18,7 +18,10 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QCheckBox,
@@ -38,6 +41,10 @@ from intellicrack.handlers.pyqt6_handler import (
 
 from ...utils.logger import get_logger
 
+if TYPE_CHECKING:
+    from PyQt6.QtGui import QClipboard
+    from PyQt6.QtWidgets import QScrollBar
+    from PyQt6.QtCore import QAbstractItemModel
 
 logger = get_logger(__name__)
 
@@ -55,11 +62,11 @@ class AIAssistantWidget(QWidget):
         super().__init__(parent)
 
         # State
-        self.current_file = None
-        self.conversation_history = []
-        self.llm_enabled = True
-        self.current_context = ""
-        self.available_models = []
+        self.current_file: str | None = None
+        self.conversation_history: list[dict[str, str]] = []
+        self.llm_enabled: bool = True
+        self.current_context: str = ""
+        self.available_models: list[str] = []
 
         # Setup UI
         self.setup_ui()
@@ -506,8 +513,9 @@ class AIAssistantWidget(QWidget):
         self.chat_history.append(formatted)
 
         # Auto-scroll to bottom
-        scrollbar = self.chat_history.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        scrollbar: QScrollBar | None = self.chat_history.verticalScrollBar()
+        if scrollbar is not None:
+            scrollbar.setValue(scrollbar.maximum())
 
     def process_ai_request(self, message: str, context: str = "") -> None:
         """Process AI request using available AI backends."""
@@ -664,9 +672,10 @@ class AIAssistantWidget(QWidget):
         """Copy generated script to clipboard."""
         from PyQt6.QtWidgets import QApplication
 
-        clipboard = QApplication.clipboard()
-        clipboard.setText(self.script_output.toPlainText())
-        logger.info("Script copied to clipboard")
+        clipboard: QClipboard | None = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(self.script_output.toPlainText())
+            logger.info("Script copied to clipboard")
 
     def save_script(self) -> None:
         """Save generated script to file."""
@@ -894,9 +903,10 @@ Return ONLY the code, no explanations."""
         """Copy keygen code to clipboard."""
         from PyQt6.QtWidgets import QApplication
 
-        clipboard = QApplication.clipboard()
-        clipboard.setText(self.keygen_output.toPlainText())
-        logger.info("Keygen code copied to clipboard")
+        clipboard: QClipboard | None = QApplication.clipboard()
+        if clipboard is not None:
+            clipboard.setText(self.keygen_output.toPlainText())
+            logger.info("Keygen code copied to clipboard")
 
     def save_keygen(self) -> None:
         """Save keygen to file."""
@@ -1104,7 +1114,11 @@ Return ONLY the code, no explanations."""
                     if models:
                         self.model_combo.insertSeparator(self.model_combo.count())
                         self.model_combo.addItem(f"── {provider_name} API Models ──")
-                        self.model_combo.model().item(self.model_combo.count() - 1).setEnabled(False)
+                        combo_model: QAbstractItemModel | None = self.model_combo.model()
+                        if combo_model is not None and hasattr(combo_model, "item"):
+                            item = combo_model.item(self.model_combo.count() - 1)
+                            if item is not None:
+                                item.setEnabled(False)
 
                         for model in models:
                             display_name = f"🌐 {provider_name}: {model.name}"

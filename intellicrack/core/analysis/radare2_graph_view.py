@@ -23,30 +23,32 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Any
-
+from types import ModuleType
+from typing import Any, cast
 
 try:
-    import r2pipe
+    import r2pipe as r2pipe_module
 except ImportError:
-    r2pipe = None
+    r2pipe_module = cast(ModuleType | None, None)
 
 try:
-    import networkx as nx
+    import networkx as nx_module
 
     NETWORKX_AVAILABLE = True
 except ImportError:
-    nx = None
+    nx_module = cast(ModuleType | None, None)
     NETWORKX_AVAILABLE = False
 
 try:
-    import matplotlib.patches as mpatches
-    import matplotlib.pyplot as plt
+    import matplotlib.patches as _mpatches_module
+    import matplotlib.pyplot as _plt_module
 
+    mpatches_module: ModuleType | None = _mpatches_module
+    plt_module: ModuleType | None = _plt_module
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
-    plt = None
-    mpatches = None
+    mpatches_module = cast(ModuleType | None, None)
+    plt_module = cast(ModuleType | None, None)
     MATPLOTLIB_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
@@ -99,25 +101,24 @@ class R2GraphGenerator:
             binary_path: Path to the binary file
 
         """
-        self.binary_path = binary_path
-        self.logger = logger
-        self.r2 = None
+        self.binary_path: str = binary_path
+        self.logger: logging.Logger = logger
+        self.r2: Any = None
+        self.r2pipe_available: bool = r2pipe_module is not None
 
-        if r2pipe is None:
+        if not self.r2pipe_available:
             self.logger.warning("r2pipe not available, graph generation limited")
-            self.r2pipe_available = False
         else:
-            self.r2pipe_available = True
             self._initialize_r2()
 
     def _initialize_r2(self) -> None:
         """Initialize r2pipe session."""
-        if not self.r2pipe_available:
+        if not self.r2pipe_available or r2pipe_module is None:
             return
 
         try:
-            self.r2 = r2pipe.open(self.binary_path)
-            self.r2.cmd("aaa")  # Analyze all
+            self.r2 = r2pipe_module.open(self.binary_path)
+            self.r2.cmd("aaa")
             self.logger.info("Initialized r2 session for graph generation: %s", self.binary_path)
         except Exception as e:
             self.logger.exception("Failed to initialize r2 session: %s", e)
@@ -133,11 +134,11 @@ class R2GraphGenerator:
             GraphData containing CFG
 
         """
+        graph_data: GraphData = GraphData(metadata={"type": "control_flow", "function": function_name, "binary": self.binary_path})
+
         if not self.r2:
             self.logger.exception("R2 session not initialized")
-            return GraphData()
-
-        graph_data = GraphData(metadata={"type": "control_flow", "function": function_name, "binary": self.binary_path})
+            return graph_data
 
         try:
             # Seek to function
@@ -238,11 +239,11 @@ class R2GraphGenerator:
             GraphData containing call graph
 
         """
+        graph_data: GraphData = GraphData(metadata={"type": "call_graph", "max_depth": max_depth, "binary": self.binary_path})
+
         if not self.r2:
             self.logger.exception("R2 session not initialized")
-            return GraphData()
-
-        graph_data = GraphData(metadata={"type": "call_graph", "max_depth": max_depth, "binary": self.binary_path})
+            return graph_data
 
         try:
             # Get all functions
@@ -317,11 +318,11 @@ class R2GraphGenerator:
             GraphData containing xref graph
 
         """
+        graph_data: GraphData = GraphData(metadata={"type": "xref_graph", "address": address, "binary": self.binary_path})
+
         if not self.r2:
             self.logger.exception("R2 session not initialized")
-            return GraphData()
-
-        graph_data = GraphData(metadata={"type": "xref_graph", "address": address, "binary": self.binary_path})
+            return graph_data
 
         try:
             # Create central node
@@ -406,11 +407,11 @@ class R2GraphGenerator:
             GraphData containing import dependencies
 
         """
+        graph_data: GraphData = GraphData(metadata={"type": "import_dependency", "binary": self.binary_path})
+
         if not self.r2:
             self.logger.exception("R2 session not initialized")
-            return GraphData()
-
-        graph_data = GraphData(metadata={"type": "import_dependency", "binary": self.binary_path})
+            return graph_data
 
         try:
             # Create main binary node
@@ -426,7 +427,7 @@ class R2GraphGenerator:
             imports = json.loads(self.r2.cmd("iij") or "[]")
 
             # Group imports by library
-            libs: dict[str, list[dict]] = {}
+            libs: dict[str, list[dict[str, Any]]] = {}
             for imp in imports:
                 lib = imp.get("libname", "unknown")
                 if lib not in libs:
@@ -529,13 +530,13 @@ class R2GraphGenerator:
             True if successful
 
         """
-        if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE:
+        if not NETWORKX_AVAILABLE or not MATPLOTLIB_AVAILABLE or nx_module is None or plt_module is None or mpatches_module is None:
             self.logger.exception("NetworkX or Matplotlib not available for visualization")
             return False
 
         try:
             # Create NetworkX graph
-            G = nx.DiGraph()
+            G = nx_module.DiGraph()
 
             # Add nodes
             for node in graph_data.nodes:
@@ -546,50 +547,51 @@ class R2GraphGenerator:
                 G.add_edge(edge.source, edge.target, type=edge.type, label=edge.label, weight=edge.weight)
 
             # Calculate layout
+            pos: dict[Any, Any]
             if layout == "spring":
-                pos = nx.spring_layout(G, k=2, iterations=50)
+                pos = nx_module.spring_layout(G, k=2, iterations=50)
             elif layout == "circular":
-                pos = nx.circular_layout(G)
+                pos = nx_module.circular_layout(G)
             elif layout == "shell":
-                pos = nx.shell_layout(G)
+                pos = nx_module.shell_layout(G)
             elif layout == "kamada_kawai":
-                pos = nx.kamada_kawai_layout(G)
+                pos = nx_module.kamada_kawai_layout(G)
             else:
-                pos = nx.spring_layout(G)
+                pos = nx_module.spring_layout(G)
 
             # Create figure
-            plt.figure(figsize=(12, 8))
-            plt.title(f"{graph_data.metadata.get('type', 'Graph')} - {graph_data.metadata.get('binary', '')}")
+            plt_module.figure(figsize=(12, 8))
+            plt_module.title(f"{graph_data.metadata.get('type', 'Graph')} - {graph_data.metadata.get('binary', '')}")
 
             # Draw nodes
-            node_colors = [graph_data.nodes[i].color for i in range(len(graph_data.nodes))]
-            nx.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=500, alpha=0.9)
+            node_colors: list[str] = [graph_data.nodes[i].color for i in range(len(graph_data.nodes))]
+            nx_module.draw_networkx_nodes(G, pos, node_color=node_colors, node_size=500, alpha=0.9)
 
             # Draw edges
-            edge_colors = [e.color for e in graph_data.edges]
-            nx.draw_networkx_edges(G, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6)
+            edge_colors: list[str] = [e.color for e in graph_data.edges]
+            nx_module.draw_networkx_edges(G, pos, edge_color=edge_colors, arrows=True, arrowsize=20, alpha=0.6)
 
             # Draw labels
-            labels = {node.id: node.label.split("\n")[0] for node in graph_data.nodes}
-            nx.draw_networkx_labels(G, pos, labels, font_size=8)
+            labels: dict[str, str] = {node.id: node.label.split("\n")[0] for node in graph_data.nodes}
+            nx_module.draw_networkx_labels(G, pos, labels, font_size=8)
 
             # Add legend
-            legend_elements = []
-            node_types = {n.type for n in graph_data.nodes}
+            legend_elements: list[Any] = []
+            node_types: set[str] = {n.type for n in graph_data.nodes}
             for ntype in node_types:
-                color = next((n.color for n in graph_data.nodes if n.type == ntype), "#000000")
-                legend_elements.append(mpatches.Patch(color=color, label=ntype))
+                color: str = next((n.color for n in graph_data.nodes if n.type == ntype), "#000000")
+                legend_elements.append(mpatches_module.Patch(color=color, label=ntype))
 
-            plt.legend(handles=legend_elements, loc="upper right")
+            plt_module.legend(handles=legend_elements, loc="upper right")
 
-            plt.axis("off")
-            plt.tight_layout()
+            plt_module.axis("off")
+            plt_module.tight_layout()
 
             if output_path:
-                plt.savefig(output_path, dpi=150, bbox_inches="tight")
+                plt_module.savefig(output_path, dpi=150, bbox_inches="tight")
                 self.logger.info("Saved graph visualization to %s", output_path)
 
-            plt.show()
+            plt_module.show()
             return True
 
         except Exception as e:

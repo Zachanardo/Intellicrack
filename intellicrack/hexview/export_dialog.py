@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import os
+from typing import Any, Protocol
 
 from PyQt6.QtWidgets import (
     QCheckBox,
@@ -37,12 +38,34 @@ from PyQt6.QtWidgets import (
     QRadioButton,
     QSpinBox,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..utils.logger import get_logger
 
 
 logger = get_logger(__name__)
+
+
+class FileHandlerProtocol(Protocol):
+    """Protocol for file handler objects."""
+
+    @property
+    def file_size(self) -> int:
+        """Get file size."""
+        ...
+
+    def read_data(self, offset: int, size: int) -> bytes | None:
+        """Read data from file."""
+        ...
+
+
+class HexViewerProtocol(Protocol):
+    """Protocol for hex viewer objects."""
+
+    file_handler: FileHandlerProtocol
+    selection_start: int
+    selection_end: int
 
 
 class ExportDialog(QDialog):
@@ -61,7 +84,7 @@ class ExportDialog(QDialog):
         "Data URI": "uri",
     }
 
-    def __init__(self, parent: object | None = None, hex_viewer: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, hex_viewer: HexViewerProtocol | None = None) -> None:
         """Initialize export dialog.
 
         Args:
@@ -70,7 +93,7 @@ class ExportDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.hex_viewer = hex_viewer
+        self.hex_viewer: HexViewerProtocol | None = hex_viewer
         self.setWindowTitle("Export Data")
         self.resize(500, 400)
         self.init_ui()
@@ -199,9 +222,13 @@ class ExportDialog(QDialog):
         }
 
         self.hex_uppercase_check.setVisible(is_hex_text or is_array)
-        self.items_per_line_spin.parent().setVisible(is_array)
+        items_per_line_parent = self.items_per_line_spin.parent()
+        if isinstance(items_per_line_parent, QWidget):
+            items_per_line_parent.setVisible(is_array)
         self.include_size_check.setVisible(is_array)
-        self.var_name_edit.parent().setVisible(is_array)
+        var_name_parent = self.var_name_edit.parent()
+        if isinstance(var_name_parent, QWidget):
+            var_name_parent.setVisible(is_array)
 
         # Update default extension
         if self.file_path_edit.text():
@@ -250,6 +277,7 @@ class ExportDialog(QDialog):
 
         try:
             # Convert data to selected format
+            output: bytes | str
             if format_name == "Raw Binary":
                 output = data
             elif format_name == "Hex Text":
@@ -275,10 +303,12 @@ class ExportDialog(QDialog):
 
             # Write to file
             file_path = self.file_path_edit.text()
-            mode = "wb" if isinstance(output, bytes) else "w"
-
-            with open(file_path, mode) as f:
-                f.write(output)
+            if isinstance(output, bytes):
+                with open(file_path, "wb") as f:
+                    f.write(output)
+            else:
+                with open(file_path, "w") as f:
+                    f.write(output)
 
             QMessageBox.information(self, "Export Complete", f"Data exported successfully to:\n{file_path}")
             self.accept()
@@ -300,10 +330,10 @@ class ExportDialog(QDialog):
 
         if self.selection_radio.isChecked() and self.selection_radio.isEnabled():
             # Export selection
-            start = self.hex_viewer.selection_start
-            end = self.hex_viewer.selection_end
+            start: int = self.hex_viewer.selection_start
+            end: int = self.hex_viewer.selection_end
             if start != -1 and end != -1:
-                data = self.hex_viewer.file_handler.read_data(start, end - start)
+                data: bytes | None = self.hex_viewer.file_handler.read_data(start, end - start)
                 if data is None:
                     QMessageBox.warning(self, "Read Error", "Failed to read selected data.")
                     return None
@@ -311,12 +341,12 @@ class ExportDialog(QDialog):
             QMessageBox.warning(self, "No Selection", "No data is selected.")
             return None
         # Export entire file
-        file_size = self.hex_viewer.file_handler.file_size
-        data = self.hex_viewer.file_handler.read_data(0, file_size)
-        if data is None:
+        file_size: int = self.hex_viewer.file_handler.file_size
+        result: bytes | None = self.hex_viewer.file_handler.read_data(0, file_size)
+        if result is None:
             QMessageBox.warning(self, "Read Error", "Failed to read file data.")
             return None
-        return data
+        return result
 
     def format_hex_text(self, data: bytes) -> str:
         """Format data as hex text.
@@ -345,7 +375,7 @@ class ExportDialog(QDialog):
         items_per_line = self.items_per_line_spin.value()
         hex_format = "0x{:02X}" if self.hex_uppercase_check.isChecked() else "0x{:02x}"
 
-        lines = []
+        lines: list[str] = []
 
         if self.include_size_check.isChecked():
             lines.extend((f"#define {var_name.upper()}_SIZE {len(data)}", ""))
@@ -377,7 +407,7 @@ class ExportDialog(QDialog):
         items_per_line = self.items_per_line_spin.value()
         hex_format = "0x{:02X}" if self.hex_uppercase_check.isChecked() else "0x{:02x}"
 
-        lines = []
+        lines: list[str] = []
 
         if self.include_size_check.isChecked():
             lines.extend((f"constexpr size_t {var_name}_size = {len(data)};", ""))
@@ -408,7 +438,7 @@ class ExportDialog(QDialog):
         var_name = self.var_name_edit.text() or "data"
         items_per_line = self.items_per_line_spin.value()
 
-        lines = []
+        lines: list[str] = []
 
         if self.include_size_check.isChecked():
             lines.extend((
@@ -420,7 +450,7 @@ class ExportDialog(QDialog):
         for i in range(0, len(data), items_per_line):
             chunk = data[i : i + items_per_line]
             # Java bytes are signed, so we need to handle values > 127
-            items = []
+            items: list[str] = []
             for b in chunk:
                 if b > 127:
                     items.append(f"(byte) 0x{b:02X}")
@@ -448,7 +478,7 @@ class ExportDialog(QDialog):
         var_name = self.var_name_edit.text() or "data"
         items_per_line = self.items_per_line_spin.value()
 
-        lines = []
+        lines: list[str] = []
 
         if self.include_size_check.isChecked():
             lines.extend((f"{var_name.upper()}_SIZE = {len(data)}", ""))

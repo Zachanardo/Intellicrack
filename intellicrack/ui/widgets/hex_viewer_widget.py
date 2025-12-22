@@ -358,7 +358,7 @@ class HexViewerWidget(QWidget):
         # Try to create PE file model for analysis
         try:
             self.file_model = create_file_model(file_path)
-            if self.file_model:
+            if self.file_model and isinstance(self.file_model, PEFileModel):
                 # Set up structure model
                 self.structure_model = PEStructureModel(self.file_model)
                 self.structure_tree.setModel(self.structure_model)
@@ -372,10 +372,9 @@ class HexViewerWidget(QWidget):
                 self.goto_rva_btn.setEnabled(True)
 
                 # Update RVA range
-                if isinstance(self.file_model, PEFileModel):
-                    # Set RVA range based on image base
-                    image_base = self.file_model.image_base
-                    self.rva_spin.setMaximum(image_base + self.file_model.file_size)
+                # Set RVA range based on image base
+                image_base = self.file_model.image_base
+                self.rva_spin.setMaximum(image_base + self.file_model.file_size)
 
                 logger.info("PE analysis successful for %s", file_path)
             else:
@@ -502,16 +501,16 @@ class HexViewerWidget(QWidget):
 
         # Apply to hex display
         cursor = self.hex_display.textCursor()
-        cursor.movePosition(QTextCursor.Start)
+        cursor.movePosition(QTextCursor.MoveOperation.Start)
 
         # Move to start line
         for _ in range(start_line):
-            cursor.movePosition(QTextCursor.Down)
+            cursor.movePosition(QTextCursor.MoveOperation.Down)
 
         # Highlight bytes in the range
         self.bytes_per_line * 3
         for line_idx in range(start_line, min(end_line + 1, len(self.file_data) // self.bytes_per_line + 1)):
-            cursor.movePosition(QTextCursor.StartOfBlock)
+            cursor.movePosition(QTextCursor.MoveOperation.StartOfBlock)
 
             if line_idx == start_line:
                 byte_in_line = (start - self.current_offset) % self.bytes_per_line
@@ -520,7 +519,7 @@ class HexViewerWidget(QWidget):
                 char_offset = 10
 
             for _ in range(char_offset):
-                cursor.movePosition(QTextCursor.Right)
+                cursor.movePosition(QTextCursor.MoveOperation.Right)
 
             if line_idx == end_line:
                 bytes_to_highlight = (end - self.current_offset) % self.bytes_per_line + 1
@@ -528,13 +527,13 @@ class HexViewerWidget(QWidget):
                 bytes_to_highlight = self.bytes_per_line - (byte_in_line if line_idx == start_line else 0)
 
             for _ in range(bytes_to_highlight * 3):
-                cursor.movePosition(QTextCursor.Right, QTextCursor.KeepAnchor)
+                cursor.movePosition(QTextCursor.MoveOperation.Right, QTextCursor.MoveMode.KeepAnchor)
 
             if cursor.hasSelection():
                 cursor.setCharFormat(fmt)
 
             if line_idx < end_line:
-                cursor.movePosition(QTextCursor.Down)
+                cursor.movePosition(QTextCursor.MoveOperation.Down)
 
     def go_to_offset(self, offset: int) -> None:
         """Navigate to specific offset."""
@@ -544,7 +543,7 @@ class HexViewerWidget(QWidget):
 
     def go_to_rva(self, rva: int) -> None:
         """Navigate to specific RVA."""
-        if not self.file_model:
+        if not self.file_model or not isinstance(self.file_model, PEFileModel):
             QMessageBox.warning(self, "No PE Analysis", "RVA navigation requires PE file analysis")
             return
 
@@ -651,7 +650,7 @@ class HexViewerWidget(QWidget):
         line = cursor.blockNumber()
         byte_offset = line * self.bytes_per_line
 
-        if byte_offset < len(self.file_data):
+        if self.file_data is not None and byte_offset < len(self.file_data):
             self.interpret_bytes(byte_offset)
 
     def interpret_bytes(self, offset: int) -> None:
@@ -664,7 +663,7 @@ class HexViewerWidget(QWidget):
         # Get available bytes
         available = len(self.file_data) - offset
 
-        interpretations = []
+        interpretations: list[tuple[str, str]] = []
 
         # 8-bit values
         if available >= 1:
@@ -844,14 +843,15 @@ class HexViewerWidget(QWidget):
 
         # Highlight in hex view if valid offset
         if offset is not None and size is not None:
-            # Add temporary highlight for clicked structure
-            self.highlighted_regions = [region for region in self.highlighted_regions if not hasattr(region, "_temporary")]
+            # Remove all temporary highlights
+            self.highlighted_regions = [
+                region for region in self.highlighted_regions
+                if len(region) == 3
+            ]
 
             # Add new temporary highlight
             highlight_color = QColor(100, 200, 255, 80)  # Light blue
-            temp_region = (offset, offset + size, highlight_color)
-            temp_region._temporary = True
-            self.highlighted_regions.append(temp_region)
+            self.highlighted_regions.append((offset, offset + size, highlight_color))
 
             self.apply_highlighting()
 
@@ -900,7 +900,7 @@ class HexViewerWidget(QWidget):
             return
 
         # Get basic info
-        name = self.structure_model.data(index, Qt.DisplayRole)
+        name = self.structure_model.data(index, Qt.ItemDataRole.DisplayRole)
         self.structure_info_text.append(f"Selected: {name}")
 
         # Get offset and size
@@ -917,7 +917,7 @@ class HexViewerWidget(QWidget):
             self.structure_info_text.append(f"RVA: 0x{rva:X}")
 
         # Add tooltip info if available
-        tooltip = self.structure_model.data(index, Qt.ToolTipRole)
+        tooltip = self.structure_model.data(index, Qt.ItemDataRole.ToolTipRole)
         if tooltip and tooltip != name:
             self.structure_info_text.append(f"\nDetails:\n{tooltip}")
 
@@ -1093,7 +1093,7 @@ class HexViewerWidget(QWidget):
                 results.append(f"{'=' * 60}\n")
 
                 # Group strings by potential category
-                categories = {
+                categories: dict[str, list[str]] = {
                     "URLs": [],
                     "Paths": [],
                     "License": [],
@@ -1151,8 +1151,9 @@ class HexViewerWidget(QWidget):
             def copy_all() -> None:
                 """Copy all results to clipboard."""
                 clipboard = QApplication.clipboard()
-                clipboard.setText(results_text.toPlainText())
-                stats_label.setText("Results copied to clipboard")
+                if clipboard is not None:
+                    clipboard.setText(results_text.toPlainText())
+                    stats_label.setText("Results copied to clipboard")
 
             # Connect signals
             refresh_btn.clicked.connect(extract_and_display)
@@ -1316,11 +1317,13 @@ class HexViewerWidget(QWidget):
             # Clean up hex for copying
             hex_only = "".join(c for c in selected_text if c in "0123456789ABCDEFabcdef ")
             clipboard = QApplication.clipboard()
-            clipboard.setText(hex_only)
+            if clipboard is not None:
+                clipboard.setText(hex_only)
 
     def _copy_ascii_selection(self) -> None:
         """Copy ASCII representation to clipboard."""
         cursor = self.ascii_display.textCursor()
         if selected_text := cursor.selectedText():
             clipboard = QApplication.clipboard()
-            clipboard.setText(selected_text)
+            if clipboard is not None:
+                clipboard.setText(selected_text)

@@ -75,7 +75,7 @@ class FlexLMProtocolHandler:
             text_data = data.decode("utf-8", errors="ignore")
 
             # Look for FlexLM command patterns
-            request_info = {
+            request_info: dict[str, Any] = {
                 "command": "unknown",
                 "features": [],
                 "version": None,
@@ -90,13 +90,15 @@ class FlexLMProtocolHandler:
                 if line.startswith("FEATURE"):
                     parts = line.split()
                     if len(parts) >= 4:
-                        request_info["features"].append(
-                            {
-                                "name": parts[1],
-                                "vendor": parts[2],
-                                "version": parts[3],
-                            },
-                        )
+                        features = request_info["features"]
+                        if isinstance(features, list):
+                            features.append(
+                                {
+                                    "name": parts[1],
+                                    "vendor": parts[2],
+                                    "version": parts[3],
+                                },
+                            )
 
                 elif line.startswith("SERVER"):
                     parts = line.split()
@@ -287,14 +289,14 @@ class AdobeProtocolHandler:
 
             if parsed and parsed.get("type") == "activation":
                 # XML-style response
-                response = f"""<?xml version="1.0"?>
+                response_xml = f"""<?xml version="1.0"?>
 <activationResponse>
     <status>SUCCESS</status>
     <activationId>{uuid.uuid4()}</activationId>
     <expiry>never</expiry>
     <features>all</features>
 </activationResponse>"""
-                return response.encode("utf-8")
+                return response_xml.encode("utf-8")
 
             # Simple text response
             return b"ACTIVATION_SUCCESS"
@@ -418,10 +420,16 @@ class AutodeskProtocolHandler:
 
             # Customize response based on parsed request
             if parsed_request:
-                if parsed_request.get("product"):
-                    response["license"]["product"] = parsed_request["product"]
-                if parsed_request.get("version"):
-                    response["license"]["version"] = parsed_request["version"]
+                product = parsed_request.get("product")
+                if product:
+                    license_data = response["license"]
+                    if isinstance(license_data, dict):
+                        license_data["product"] = product
+                version = parsed_request.get("version")
+                if version:
+                    license_data = response["license"]
+                    if isinstance(license_data, dict):
+                        license_data["version"] = version
 
             return json.dumps(response).encode("utf-8")
 
@@ -442,7 +450,7 @@ class DynamicResponseGenerator:
         self.logger = logging.getLogger("IntellicrackLogger.ResponseGenerator")
 
         # Protocol handlers
-        self.handlers = {
+        self.handlers: dict[str, FlexLMProtocolHandler | HASPProtocolHandler | AdobeProtocolHandler | MicrosoftKMSHandler | AutodeskProtocolHandler] = {
             "flexlm": FlexLMProtocolHandler(),
             "hasp": HASPProtocolHandler(),
             "adobe": AdobeProtocolHandler(),
@@ -451,7 +459,7 @@ class DynamicResponseGenerator:
         }
 
         # Statistics
-        self.stats = {
+        self.stats: dict[str, Any] = {
             "total_requests": 0,
             "successful_responses": 0,
             "failed_responses": 0,
@@ -477,7 +485,9 @@ class DynamicResponseGenerator:
         start_time = time.time()
 
         try:
-            self.stats["total_requests"] += 1
+            total_requests = self.stats["total_requests"]
+            if isinstance(total_requests, int):
+                self.stats["total_requests"] = total_requests + 1
 
             # Check cache first
             cache_key = self._generate_cache_key(context)
@@ -499,10 +509,17 @@ class DynamicResponseGenerator:
                 self._cache_response(cache_key, response_data)
 
                 # Update statistics
-                self.stats["successful_responses"] += 1
-                if context.protocol_type not in self.stats["protocols_handled"]:
-                    self.stats["protocols_handled"][context.protocol_type] = 0
-                self.stats["protocols_handled"][context.protocol_type] += 1
+                successful_responses = self.stats["successful_responses"]
+                if isinstance(successful_responses, int):
+                    self.stats["successful_responses"] = successful_responses + 1
+
+                protocols_handled = self.stats["protocols_handled"]
+                if isinstance(protocols_handled, dict):
+                    if context.protocol_type not in protocols_handled:
+                        protocols_handled[context.protocol_type] = 0
+                    protocol_count = protocols_handled[context.protocol_type]
+                    if isinstance(protocol_count, int):
+                        protocols_handled[context.protocol_type] = protocol_count + 1
 
                 # Learn from this request
                 self._learn_from_request(context, response_data)
@@ -520,7 +537,9 @@ class DynamicResponseGenerator:
 
             if adaptive_response := self._generate_adaptive_response(context):
                 self._cache_response(cache_key, adaptive_response)
-                self.stats["successful_responses"] += 1
+                successful_responses = self.stats["successful_responses"]
+                if isinstance(successful_responses, int):
+                    self.stats["successful_responses"] = successful_responses + 1
 
                 return GeneratedResponse(
                     response_data=adaptive_response,
@@ -533,7 +552,9 @@ class DynamicResponseGenerator:
             # Fallback to generic response
             generic_response = self._generate_generic_response(context)
             self._cache_response(cache_key, generic_response)
-            self.stats["successful_responses"] += 1
+            successful_responses = self.stats["successful_responses"]
+            if isinstance(successful_responses, int):
+                self.stats["successful_responses"] = successful_responses + 1
 
             return GeneratedResponse(
                 response_data=generic_response,
@@ -545,7 +566,9 @@ class DynamicResponseGenerator:
 
         except Exception as e:
             self.logger.exception("Response generation error: %s", e, exc_info=True)
-            self.stats["failed_responses"] += 1
+            failed_responses = self.stats["failed_responses"]
+            if isinstance(failed_responses, int):
+                self.stats["failed_responses"] = failed_responses + 1
 
             # Return error response
             return GeneratedResponse(
@@ -561,7 +584,8 @@ class DynamicResponseGenerator:
             response_time = time.time() - start_time
             current_avg = self.stats["average_response_time"]
             total_requests = self.stats["total_requests"]
-            self.stats["average_response_time"] = (current_avg * (total_requests - 1) + response_time) / total_requests
+            if isinstance(current_avg, (int, float)) and isinstance(total_requests, int) and total_requests > 0:
+                self.stats["average_response_time"] = (current_avg * (total_requests - 1) + response_time) / total_requests
 
     def _generate_cache_key(self, context: ResponseContext) -> str:
         """Generate cache key for request."""
@@ -660,14 +684,16 @@ class DynamicResponseGenerator:
 
             # Find similar requests
             request_patterns = self._extract_patterns(context.request_data)
-            best_match = None
-            best_score = 0
+            best_match: dict[str, Any] | None = None
+            best_score: float = 0.0
 
             for learned_entry in self.learned_patterns[protocol]:
-                score = self._calculate_similarity(request_patterns, learned_entry["request_patterns"])
-                if score > best_score:
-                    best_score = score
-                    best_match = learned_entry
+                entry_patterns = learned_entry["request_patterns"]
+                if isinstance(entry_patterns, list):
+                    score = self._calculate_similarity(request_patterns, entry_patterns)
+                    if score > best_score:
+                        best_score = score
+                        best_match = learned_entry
 
             # Use best match if similarity is high enough
             if best_match and best_score > 0.5:
@@ -735,8 +761,8 @@ class DynamicResponseGenerator:
 
             # XML-style response
             if "<" in request_text or "xml" in request_text:
-                response = '<?xml version="1.0"?><response><status>OK</status><license>valid</license></response>'
-                return response.encode("utf-8")
+                response_xml = '<?xml version="1.0"?><response><status>OK</status><license>valid</license></response>'
+                return response_xml.encode("utf-8")
 
             # Binary response for binary requests
             if len(context.request_data) > 0 and not context.request_data.decode("utf-8", errors="ignore").isprintable():

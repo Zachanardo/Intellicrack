@@ -1,7 +1,7 @@
 ---
 name: test-reviewer
 description: Use this agent to review tests written by the test-writer agent for the Intellicrack project. This agent verifies tests are production-ready, contain no mocks or stubs, are placed in the correct tests/ subdirectory, and genuinely validate Intellicrack's offensive capabilities against real binaries. Invoke proactively after test-writer completes to ensure quality compliance.
-tools: Glob, Grep, Read, Write, TodoWrite, WebSearch, mcp__dev-tools__pytest_run, mcp__dev-tools__coverage_report
+tools: Glob, Grep, Read, Write, TodoWrite, WebSearch, mcp__dev-tools__*
 model: sonnet
 color: red
 ---
@@ -357,9 +357,11 @@ For each test file:
 
 ### Step 1: Scan for Prohibited Imports
 
-```bash
-grep -n "from unittest.mock import\|from unittest import mock\|import mock\|MagicMock\|@patch\|@mock.patch\|mocker\." <file>
-```
+Use the Grep tool to search for prohibited mock patterns:
+
+- Pattern: `from unittest.mock import|from unittest import mock|import mock|MagicMock|@patch|@mock.patch|mocker\.`
+- Use `output_mode: "content"` to see line numbers
+- Search each test file for these patterns
 
 Flag any found as CRITICAL violations.
 

@@ -120,7 +120,7 @@ import time
 import types
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 import frida
 
@@ -168,10 +168,10 @@ class BypassStatus:
     library: str | None
     platform: str | None
     hooks_installed: list[str]
-    detected_libraries: list[dict]
+    detected_libraries: list[dict[str, Any]]
     message_count: int
     errors: list[str]
-    intercepted_data: dict[str, list] = field(default_factory=dict)
+    intercepted_data: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
 
 class FridaCertificateHooks:
@@ -219,8 +219,8 @@ class FridaCertificateHooks:
         self.script: frida.core.Script | None = None
         self.target: str | int | None = None
         self.messages: list[FridaMessage] = []
-        self.intercepted_certificates: list[dict] = []
-        self.bypassed_connections: list[dict] = []
+        self.intercepted_certificates: list[dict[str, Any]] = []
+        self.bypassed_connections: list[dict[str, Any]] = []
         self.errors: list[str] = []
         self._message_lock = threading.Lock()
         self._attached = False
@@ -332,7 +332,7 @@ class FridaCertificateHooks:
         try:
             logger.info("Injecting script (%d bytes)", len(script_content))
             self.script = self.session.create_script(script_content)
-            self.script.on("message", self._on_message)
+            self.script.on("message", self._on_frida_message)
             self.script.load()
             self._script_loaded = True
             logger.info("Script injected and loaded successfully")
@@ -410,25 +410,30 @@ class FridaCertificateHooks:
             self.errors.append(error_msg)
             return False
 
-    def _on_message(self, message: dict, data: bytes | None) -> None:
+    def _on_frida_message(
+        self,
+        message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage,
+        data: bytes | None,
+    ) -> None:
         """Handle messages received from injected Frida scripts.
 
         This callback processes all messages sent from the JavaScript hooks including
         logs, certificate interceptions, bypass notifications, and errors.
 
         Args:
-            message: Message dictionary from Frida with 'type' and 'payload' keys.
+            message: Message from Frida (ScriptPayloadMessage or ScriptErrorMessage).
             data: Optional binary data accompanying the message.
 
         """
         with self._message_lock:
-            msg_type = message.get("type")
-            payload = message.get("payload")
+            msg_dict = dict(message)
+            msg_type = msg_dict.get("type")
+            payload = msg_dict.get("payload")
 
             if msg_type == "send":
                 self._handle_send_message(payload, data)
             elif msg_type == "error":
-                self._handle_error_message(message)
+                self._handle_error_message(msg_dict)
             else:
                 logger.warning("Unknown message type: %s", msg_type)
 
@@ -501,7 +506,7 @@ class FridaCertificateHooks:
             lib_data = payload.get("data", {})
             logger.info("Detected TLS library: %s - %s", lib_data.get("type"), lib_data.get("name"))
 
-    def _handle_error_message(self, message: dict) -> None:
+    def _handle_error_message(self, message: dict[str, Any]) -> None:
         """Process error messages from Frida scripts.
 
         Logs script errors with stack traces and appends to error list.
@@ -562,6 +567,9 @@ class FridaCertificateHooks:
         try:
             rpc_status = self.call_rpc("getBypassStatus")
 
+            if not isinstance(rpc_status, dict):
+                raise TypeError(f"Expected dict from RPC, got {type(rpc_status)}")
+
             return BypassStatus(
                 active=rpc_status.get("active", False),
                 library=rpc_status.get("library"),
@@ -587,7 +595,7 @@ class FridaCertificateHooks:
                 errors=[*self.errors, str(e)],
             )
 
-    def get_intercepted_certificates(self) -> list[dict]:
+    def get_intercepted_certificates(self) -> list[dict[str, Any]]:
         """Get all intercepted certificate data.
 
         Returns:
@@ -596,7 +604,7 @@ class FridaCertificateHooks:
         """
         return self.intercepted_certificates.copy()
 
-    def get_bypassed_connections(self) -> list[dict]:
+    def get_bypassed_connections(self) -> list[dict[str, Any]]:
         """Get all bypassed HTTPS connection data.
 
         Returns:
@@ -624,7 +632,11 @@ class FridaCertificateHooks:
 
         try:
             logger.debug("Calling RPC function: %s with args: %s", function_name, args)
-            result = self.script.exports_sync[function_name](*args)
+            exports = self.script.exports_sync
+            if not hasattr(exports, function_name):
+                raise AttributeError(f"RPC function '{function_name}' not found in exports")
+            rpc_func = getattr(exports, function_name)
+            result = rpc_func(*args)
             logger.debug("RPC call result: %s", result)
             return result
         except (KeyError, AttributeError) as e:
@@ -756,7 +768,6 @@ class FridaCertificateHooks:
         exc_type: type[BaseException] | None,
         exc_val: BaseException | None,
         exc_tb: types.TracebackType | None,
-    ) -> bool:
+    ) -> None:
         """Exit context manager and detach from process."""
         self.detach()
-        return False

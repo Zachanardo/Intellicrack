@@ -3,10 +3,15 @@ Minimal pytest configuration for testing import issues.
 """
 
 import os
-import pytest
 import sys
 from pathlib import Path
+
+import pytest
 from dotenv import load_dotenv
+
+COLLECT_TYPES = os.environ.get("PYANNOTATE_COLLECT", "0") == "1"
+if COLLECT_TYPES:
+    from pyannotate_runtime import collect_types
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -64,7 +69,15 @@ def temp_workspace():
 
 # Simple markers for test categorization
 def pytest_configure(config):
-    """Register custom markers."""
+    """Register custom markers and initialize type collection."""
     config.addinivalue_line(
         "markers", "real_data: test validates real functionality"
     )
+    if COLLECT_TYPES:
+        collect_types.init_types_collection()
+
+
+def pytest_unconfigure(config):
+    """Dump collected type information after test session."""
+    if COLLECT_TYPES:
+        collect_types.dump_stats(str(PROJECT_ROOT / "type_info.json"))

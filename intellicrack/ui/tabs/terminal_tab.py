@@ -22,12 +22,15 @@ Main tab containing the terminal session widget for interactive process executio
 """
 
 import logging
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.core.terminal_manager import get_terminal_manager
-from intellicrack.handlers.pyqt6_handler import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
-from intellicrack.ui.widgets import TerminalSessionWidget
+from intellicrack.handlers.pyqt6_handler import QFileDialog, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from .base_tab import BaseTab
+
+if TYPE_CHECKING:
+    from intellicrack.ui.widgets.terminal_session_widget import TerminalSessionWidget
 
 
 logger = logging.getLogger(__name__)
@@ -44,18 +47,21 @@ class TerminalTab(BaseTab):
     - Session status tracking
     """
 
-    def __init__(self, shared_context: object = None, parent: object = None) -> None:
+    def __init__(self, shared_context: dict[str, Any] | None = None, parent: QWidget | None = None) -> None:
         """Initialize terminal tab.
 
         Args:
-            shared_context: Optional shared context object passed from parent widget.
+            shared_context: Optional shared context dictionary with app_context, task_manager, and main_window.
             parent: Optional parent widget.
 
         """
-        self.terminal_widget = None
-        self.status_label = None
-        self.sessions_label = None
-        self.cwd_label = None
+        if TYPE_CHECKING:
+            self.terminal_widget: TerminalSessionWidget | None = None
+        else:
+            self.terminal_widget: Any = None
+        self.status_label: QLabel | None = None
+        self.sessions_label: QLabel | None = None
+        self.cwd_label: QLabel | None = None
 
         super().__init__(shared_context, parent)
 
@@ -64,13 +70,16 @@ class TerminalTab(BaseTab):
     def setup_content(self) -> None:
         """Set up the terminal tab content."""
         from intellicrack.handlers.pyqt6_handler import QSizePolicy
+        from intellicrack.ui.widgets.terminal_session_widget import TerminalSessionWidget as TerminalSessionWidgetClass
 
         try:
             if old_layout := self.layout():
                 while old_layout.count():
                     item = old_layout.takeAt(0)
-                    if item.widget():
-                        item.widget().deleteLater()
+                    if item is not None:
+                        widget = item.widget()
+                        if widget is not None:
+                            widget.deleteLater()
                 old_layout.deleteLater()
 
             layout = QVBoxLayout(self)
@@ -80,7 +89,7 @@ class TerminalTab(BaseTab):
             toolbar = self._create_toolbar()
             layout.addLayout(toolbar, stretch=0)
 
-            self.terminal_widget = TerminalSessionWidget(self)
+            self.terminal_widget = TerminalSessionWidgetClass(self)
             self.terminal_widget.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             self.terminal_widget.setMinimumSize(640, 500)
             layout.addWidget(self.terminal_widget, stretch=1)
@@ -170,30 +179,30 @@ class TerminalTab(BaseTab):
 
     def create_new_session(self) -> None:
         """Create a new terminal session."""
-        if self.terminal_widget:
+        if self.terminal_widget is not None:
             session_id = self.terminal_widget.create_new_session()
             logger.info("Created new terminal session: %s", session_id)
             self._update_status()
 
     def clear_current_terminal(self) -> None:
         """Clear the current terminal display."""
-        if not self.terminal_widget:
+        if self.terminal_widget is None:
             return
 
         session_id, terminal = self.terminal_widget.get_active_session()
 
-        if terminal:
+        if terminal is not None:
             terminal.clear()
             logger.info("Cleared terminal session: %s", session_id)
 
     def export_terminal_log(self) -> None:
         """Export current terminal log to file."""
-        if not self.terminal_widget:
+        if self.terminal_widget is None:
             return
 
         _session_id, terminal = self.terminal_widget.get_active_session()
 
-        if not terminal:
+        if terminal is None:
             logger.warning("No active terminal session to export")
             return
 
@@ -204,7 +213,7 @@ class TerminalTab(BaseTab):
             "Text Files (*.txt);;Log Files (*.log);;All Files (*.*)",
         )
 
-        if filename:
+        if filename and self.status_label is not None:
             try:
                 with open(filename, "w", encoding="utf-8") as f:
                     f.write(terminal.terminal_display.toPlainText())
@@ -219,13 +228,16 @@ class TerminalTab(BaseTab):
 
     def kill_current_process(self) -> None:
         """Kill the currently running process."""
-        if not self.terminal_widget:
+        if self.terminal_widget is None:
             return
 
         session_id, terminal = self.terminal_widget.get_active_session()
 
-        if not terminal:
+        if terminal is None:
             logger.warning("No active terminal session")
+            return
+
+        if self.status_label is None:
             return
 
         if terminal.is_running():
@@ -274,17 +286,21 @@ class TerminalTab(BaseTab):
 
     def _update_status(self) -> None:
         """Update status bar with current session info."""
-        if not self.terminal_widget:
+        if self.terminal_widget is None:
             return
 
         sessions = self.terminal_widget.get_all_sessions()
         session_count = len(sessions)
 
-        self.sessions_label.setText(f"Sessions: {session_count}")
+        if self.sessions_label is not None:
+            self.sessions_label.setText(f"Sessions: {session_count}")
 
         _session_id, terminal = self.terminal_widget.get_active_session()
 
-        if terminal:
+        if self.status_label is None:
+            return
+
+        if terminal is not None:
             if terminal.is_running():
                 pid = terminal.get_pid()
                 self.status_label.setText(f"Status: Running (PID: {pid})")
@@ -293,14 +309,14 @@ class TerminalTab(BaseTab):
         else:
             self.status_label.setText("Status: No session")
 
-    def get_terminal_widget(self) -> object:
+    def get_terminal_widget(self) -> Any:
         """Get the terminal session widget.
 
         Retrieves the TerminalSessionWidget instance used for managing
         multiple terminal sessions and command execution.
 
         Returns:
-            TerminalSessionWidget: The terminal session widget or None if not initialized.
+            TerminalSessionWidget or None if not initialized.
 
         """
         return self.terminal_widget

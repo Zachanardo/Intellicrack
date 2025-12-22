@@ -22,7 +22,7 @@ import os
 from collections.abc import Callable
 from datetime import datetime
 from threading import Thread
-from typing import Any, TypeVar, cast
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar, cast
 
 from intellicrack.utils.logger import logger
 from intellicrack.utils.torch_gil_safety import _torch_lock, safe_torch_import
@@ -35,81 +35,268 @@ This module provides the central ModelManager class that coordinates
 model repositories and handles model import, loading, and verification.
 """
 
-try:
+
+class DownloadProgressCallbackProtocol(Protocol):
+    """Protocol for download progress callbacks."""
+
+    def on_progress(self, bytes_downloaded: int, total_bytes: int) -> None:
+        """Handle progress updates.
+
+        Args:
+            bytes_downloaded: Number of bytes downloaded
+            total_bytes: Total bytes to download
+
+        """
+        ...
+
+    def on_complete(self, success: bool, message: str) -> None:
+        """Handle download completion.
+
+        Args:
+            success: Whether the download was successful
+            message: Status message
+
+        """
+        ...
+
+
+class ModelInfoProtocol(Protocol):
+    """Protocol for model information."""
+
+    name: str
+    size: int
+    local_path: str | None
+
+
+class ModelRepositoryProtocol(Protocol):
+    """Protocol for model repository interface."""
+
+    def get_available_models(self) -> list[ModelInfoProtocol]:
+        """Get available models from repository.
+
+        Returns:
+            List of model information objects
+
+        """
+        ...
+
+    def get_model_details(self, model_id: str) -> ModelInfoProtocol | None:
+        """Get details for a specific model.
+
+        Args:
+            model_id: ID of the model
+
+        Returns:
+            Model information object or None
+
+        """
+        ...
+
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallbackProtocol | None = None,
+    ) -> tuple[bool, str]:
+        """Download model from repository.
+
+        Args:
+            model_id: ID of the model to download
+            destination_path: Path to save the model to
+            progress_callback: Optional progress callback
+
+        Returns:
+            Tuple of (success, message)
+
+        """
+        ...
+
+
+class LocalFileRepositoryProtocol(ModelRepositoryProtocol):
+    """Protocol for local file repository."""
+
+    def add_model(self, file_path: str) -> ModelInfoProtocol | None:
+        """Add model to repository.
+
+        Args:
+            file_path: Path to the model file
+
+        Returns:
+            Model information object or None
+
+        """
+        ...
+
+    def remove_model(self, model_id: str) -> bool:
+        """Remove model from repository.
+
+        Args:
+            model_id: ID of the model to remove
+
+        Returns:
+            True if successful
+
+        """
+        return False
+
+
+if TYPE_CHECKING:
     from .repositories.factory import RepositoryFactory
     from .repositories.interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
     from .repositories.local_repository import LocalFileRepository
-except ImportError:
-    # Fallback classes if repositories not available
-    class RepositoryFactory:
-        """Fallback repository factory when repositories unavailable."""
+else:
+    try:
+        from .repositories.factory import RepositoryFactory
+        from .repositories.interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
+        from .repositories.local_repository import LocalFileRepository
 
-        @staticmethod
-        def create_repository(*args: object, **kwargs: object) -> object | None:
-            """Create repository instance.
+        _REPOSITORIES_AVAILABLE = True
+    except ImportError:
+        _REPOSITORIES_AVAILABLE = False
 
-            Args:
-                *args: Variable positional arguments
-                **kwargs: Variable keyword arguments
+        class RepositoryFactory:  # type: ignore[no-redef]
+            """Fallback repository factory when repositories unavailable."""
 
-            Returns:
-                None for fallback implementation
+            @staticmethod
+            def create_repository(*args: object, **kwargs: object) -> object | None:
+                """Create repository instance.
 
-            """
-            logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
-            return None
+                Args:
+                    *args: Variable positional arguments
+                    **kwargs: Variable keyword arguments
 
-    class DownloadProgressCallback:
-        """Fallback progress callback for downloads."""
+                Returns:
+                    None for fallback implementation
 
-        def __call__(self, *args: object, **kwargs: object) -> None:
-            """Handle progress callback with fallback logging.
+                """
+                logger.debug(f"Fallback repository creation called with {len(args)} args and {len(kwargs)} kwargs")
+                return None
 
-            Args:
-                *args: Variable positional arguments
-                **kwargs: Variable keyword arguments
+        class DownloadProgressCallback:  # type: ignore[no-redef]
+            """Fallback progress callback for downloads."""
 
-            """
-            logger.debug(f"Progress callback called with {len(args)} args and {len(kwargs)} kwargs")
+            def __call__(self, *args: object, **kwargs: object) -> None:
+                """Handle progress callback with fallback logging.
 
-    class ModelInfo:
-        """Fallback model information container."""
+                Args:
+                    *args: Variable positional arguments
+                    **kwargs: Variable keyword arguments
 
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            """Initialize fallback ModelInfo with default values and debug logging.
+                """
+                logger.debug(f"Progress callback called with {len(args)} args and {len(kwargs)} kwargs")
 
-            Args:
-                *args: Variable positional arguments
-                **kwargs: Variable keyword arguments
+            def on_progress(self, bytes_downloaded: int, total_bytes: int) -> None:
+                """Handle progress updates."""
+                logger.debug(f"Progress: {bytes_downloaded}/{total_bytes}")
 
-            """
-            logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
-            self.name: str = "unknown"
-            self.size: int = 0
+            def on_complete(self, success: bool, message: str) -> None:
+                """Handle download completion."""
+                logger.debug(f"Complete: {success}, {message}")
 
-    class ModelRepositoryInterface:
-        """Fallback model repository interface."""
+        class ModelInfo:  # type: ignore[no-redef]
+            """Fallback model information container."""
 
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            """Initialize the abstract model repository interface.
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                """Initialize fallback ModelInfo with default values and debug logging.
 
-            Args:
-                *args: Variable positional arguments
-                **kwargs: Variable keyword arguments
+                Args:
+                    *args: Variable positional arguments
+                    **kwargs: Variable keyword arguments
 
-            """
+                """
+                logger.debug(f"ModelInfo fallback initialized with {len(args)} args and {len(kwargs)} kwargs")
+                self.name: str = "unknown"
+                self.size: int = 0
+                self.local_path: str | None = None
 
-    class LocalFileRepository:
-        """Fallback local file repository."""
+        class ModelRepositoryInterface:  # type: ignore[no-redef]
+            """Fallback model repository interface."""
 
-        def __init__(self, *args: object, **kwargs: object) -> None:
-            """Initialize the local file repository for model storage.
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                """Initialize the abstract model repository interface.
 
-            Args:
-                *args: Variable positional arguments
-                **kwargs: Variable keyword arguments
+                Args:
+                    *args: Variable positional arguments
+                    **kwargs: Variable keyword arguments
 
-            """
+                """
+
+            def get_available_models(self) -> list[ModelInfo]:
+                """Get available models from repository.
+
+                Returns:
+                    Empty list for fallback implementation
+
+                """
+                return []
+
+            def get_model_details(self, model_id: str) -> ModelInfo | None:
+                """Get details for a specific model.
+
+                Args:
+                    model_id: ID of the model
+
+                Returns:
+                    None for fallback implementation
+
+                """
+                return None
+
+            def download_model(
+                self,
+                model_id: str,
+                destination_path: str,
+                progress_callback: DownloadProgressCallback | None = None,
+            ) -> tuple[bool, str]:
+                """Download model from repository.
+
+                Args:
+                    model_id: ID of the model to download
+                    destination_path: Path to save the model to
+                    progress_callback: Optional progress callback
+
+                Returns:
+                    Tuple of (False, error message) for fallback implementation
+
+                """
+                return False, "Repository not available"
+
+        class LocalFileRepository(ModelRepositoryInterface):  # type: ignore[no-redef,misc]
+            """Fallback local file repository."""
+
+            def __init__(self, *args: object, **kwargs: object) -> None:
+                """Initialize the local file repository for model storage.
+
+                Args:
+                    *args: Variable positional arguments
+                    **kwargs: Variable keyword arguments
+
+                """
+                super().__init__()
+
+            def add_model(self, file_path: str) -> ModelInfo | None:
+                """Add model to repository.
+
+                Args:
+                    file_path: Path to the model file
+
+                Returns:
+                    None for fallback implementation
+
+                """
+                return None
+
+            def remove_model(self, model_id: str) -> bool:
+                """Remove model from repository.
+
+                Args:
+                    model_id: ID of the model to remove
+
+                Returns:
+                    False for fallback implementation
+
+                """
+                return False
 
 
 class ProgressHandler(DownloadProgressCallback):
@@ -168,21 +355,27 @@ class ModelManager:
 
     def _init_repositories(self) -> None:
         """Initialize repositories from configuration."""
-        # Check if we have a proper Config instance with is_repository_enabled method
+        from typing import TYPE_CHECKING
+
+        if TYPE_CHECKING:
+            from intellicrack.config import ConfigManager
+
+        config_instance: ConfigManager | None = None
+        use_config_method = False
+
         try:
             from intellicrack.config import get_config
 
             config_instance = get_config()
             use_config_method = hasattr(config_instance, "is_repository_enabled")
         except ImportError:
-            config_instance = None
-            use_config_method = False
+            pass
 
         repositories_config = self.config.get("model_repositories", {})
 
         for repo_name, repo_config in repositories_config.items():
             # Check if repository is enabled using the proper method if available
-            if use_config_method:
+            if use_config_method and config_instance is not None:
                 if not config_instance.is_repository_enabled(repo_name):
                     logger.info(f"Repository {repo_name} is disabled in configuration")
                     continue
@@ -345,7 +538,11 @@ class ModelManager:
 
         """
         # Download the model
-        success, message = repository.download_model(
+        # Cast to Any to handle both fallback and real repository types
+        from typing import cast as type_cast
+
+        repo_any = type_cast(Any, repository)
+        success, message = repo_any.download_model(
             model_id=model_id,
             destination_path=destination_path,
             progress_callback=progress_handler,
@@ -433,8 +630,10 @@ class ModelManager:
             return False
 
         # Special handling for local repository
-        if repository_name == "local" and isinstance(self.repositories[repository_name], LocalFileRepository):
-            return self.repositories[repository_name].remove_model(model_id)
+        if repository_name == "local":
+            repo = self.repositories[repository_name]
+            if isinstance(repo, LocalFileRepository):
+                return repo.remove_model(model_id)
 
         # For API repositories, we just remove the local copy if it exists
         model_info = self.repositories[repository_name].get_model_details(model_id)
@@ -484,14 +683,14 @@ class ModelManager:
 
                     # Prepare data (assuming training_data has 'features' and 'labels')
                     if hasattr(training_data, "features") and hasattr(training_data, "labels"):
-                        X = training_data.features
-                        y = training_data.labels
+                        X = getattr(training_data, "features")
+                        y = getattr(training_data, "labels")
                     elif isinstance(training_data, dict):
                         X = training_data.get("features", training_data.get("X", []))
                         y = training_data.get("labels", training_data.get("y", []))
                     else:
-                        # Assume it's a tuple or list of (X, y)
-                        X, y = training_data[0], training_data[1]
+                        logger.error("Invalid training data format")
+                        return False
 
                     # Split data
                     X_train, X_test, y_train, y_test = train_test_split(
@@ -527,7 +726,8 @@ class ModelManager:
                         X = training_data.get("features", [])
                         y = training_data.get("targets", [])
                     else:
-                        X, y = training_data[0], training_data[1]
+                        logger.error("Invalid training data format")
+                        return False
 
                     # Train model
                     model = LinearRegression()

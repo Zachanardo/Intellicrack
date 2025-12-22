@@ -65,11 +65,15 @@ def find_process_by_name(process_name: str, exact_match: bool = False) -> int | 
                     proc_name_lower = proc.info["name"].lower()
                     if exact_match:
                         if proc_name_lower == target_name:
-                            logger.info("Found exact process match: %s with PID: %s", process_name, proc.info["pid"])
-                            return proc.info["pid"]
+                            pid: int | None = proc.info["pid"]
+                            logger.info("Found exact process match: %s with PID: %s", process_name, pid)
+                            if isinstance(pid, int):
+                                return pid
                     elif target_name in proc_name_lower:
-                        logger.info("Found process match: %s with PID: %s", process_name, proc.info["pid"])
-                        return proc.info["pid"]
+                        pid_match: int | None = proc.info["pid"]
+                        logger.info("Found process match: %s with PID: %s", process_name, pid_match)
+                        if isinstance(pid_match, int):
+                            return pid_match
             except (psutil.NoSuchProcess, psutil.AccessDenied) as e:
                 logger.exception("Error in process_utils: %s", e)
                 continue
@@ -147,7 +151,8 @@ def _get_system_path(path_type: str) -> str | None:
     try:
         from .core.path_discovery import get_system_path
 
-        return get_system_path(path_type)
+        path_result: str | None = get_system_path(path_type)
+        return path_result
     except ImportError as e:
         logger.exception("Import error in process_utils: %s", e)
         # Fallback
@@ -242,16 +247,18 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
         "Keylok": ["keylok.sys", "keylok3.sys"],
     }
 
-    # Check installed drivers in system directories
-    system_dirs = [
+    system_root: str = _get_system_path("windows_system") or "C:\\Windows"
+    system_dirs_raw: list[str | None] = [
         _get_system_path("windows_system"),
         _get_system_path("windows_system32"),
-        os.path.join(_get_system_path("windows_system") or "C:\\Windows", "SysWOW64"),
+        os.path.join(system_root, "SysWOW64"),
         _get_system_path("windows_drivers"),
     ]
 
-    results = ["Scanning for hardware dongle drivers..."]
-    found_dongles = set()
+    system_dirs: list[str] = [d for d in system_dirs_raw if d is not None]
+
+    results: list[str] = ["Scanning for hardware dongle drivers..."]
+    found_dongles: set[str] = set()
 
     for dir_path in system_dirs:
         if not os.path.exists(dir_path):
@@ -261,11 +268,12 @@ def detect_hardware_dongles(app: object = None) -> list[str]:
 
         for dongle, files in dongle_drivers.items():
             for file in files:
-                if os.path.exists(os.path.join(dir_path, file)):
+                file_path: str = os.path.join(dir_path, file)
+                if os.path.exists(file_path):
                     found_dongles.add(dongle)
-                    driver_path = os.path.join(dir_path, file)
+                    driver_path: str = os.path.join(dir_path, file)
                     logger.info("Found %s driver: %s", dongle, driver_path)
-                    detection_message = f"Found {dongle} dongle driver: {driver_path}"
+                    detection_message: str = f"Found {dongle} dongle driver: {driver_path}"
                     results.append(detection_message)
 
                     # Update app instance with real-time detection
@@ -350,7 +358,7 @@ def detect_tpm_protection() -> dict[str, Any]:
         Dictionary containing TPM detection results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "tpm_present": False,
         "tpm_version": None,
         "tpm_enabled": False,
@@ -372,7 +380,9 @@ def detect_tpm_protection() -> dict[str, Any]:
 
                 if tpm_instances := c.Win32_Tpm():
                     results["tpm_present"] = True
-                    results["detection_methods"].append("WMI Win32_Tpm")
+                    detection_methods: list[str] = results["detection_methods"]
+                    if isinstance(detection_methods, list):
+                        detection_methods.append("WMI Win32_Tpm")
 
                     for tmp in tpm_instances:
                         if hasattr(tmp, "IsEnabled_InitialValue"):
@@ -400,7 +410,9 @@ def detect_tpm_protection() -> dict[str, Any]:
             tpm_processes = ["tpm2-abrmd", "tcsd", "trousers"]
             for proc in psutil.process_iter(["name"]):
                 if proc.info["name"] and any(tmp_proc_name in proc.info["name"].lower() for tmp_proc_name in tpm_processes):
-                    results["detection_methods"].append(f"TPM process: {proc.info['name']}")
+                    detection_methods_list: list[str] = results["detection_methods"]
+                    if isinstance(detection_methods_list, list):
+                        detection_methods_list.append(f"TPM process: {proc.info['name']}")
 
         # Check for TPM kernel modules on Linux
         if sys.platform.startswith("linux"):
@@ -419,7 +431,8 @@ def detect_tpm_protection() -> dict[str, Any]:
 
     except (OSError, ValueError, RuntimeError) as e:
         logger.exception("Error in TPM detection: %s", e)
-        results["error"] = str(e)
+        error_str: str = str(e)
+        results["error"] = error_str
 
     return results
 
@@ -431,7 +444,7 @@ def get_system_processes() -> list[dict[str, Any]]:
         List of process information dictionaries
 
     """
-    processes = []
+    processes: list[dict[str, Any]] = []
 
     if not psutil:
         logger.warning("psutil not available - cannot get process list")

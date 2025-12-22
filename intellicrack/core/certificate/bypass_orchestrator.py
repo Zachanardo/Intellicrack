@@ -156,13 +156,13 @@ class BypassResult:
     method_used: BypassMethod
     detection_report: DetectionReport
     patch_result: PatchResult | None = None
-    frida_status: dict | None = None
+    frida_status: dict[str, object] | None = None
     verification_passed: bool = False
     errors: list[str] = field(default_factory=list)
     rollback_data: bytes = b""
     timestamp: datetime = field(default_factory=datetime.now)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, object]:
         """Convert result to dictionary.
 
         Returns:
@@ -217,8 +217,8 @@ class CertificateBypassOrchestrator:
         """
         logger.info("Starting certificate bypass for target: %s", target)
 
-        errors = []
-        detection_report = None
+        errors: list[str] = []
+        detection_report: DetectionReport | None = None
 
         try:
             target_path, is_running = self._analyze_target(target)
@@ -257,12 +257,15 @@ class CertificateBypassOrchestrator:
 
             elif method == BypassMethod.FRIDA_HOOK:
                 frida_status = self._execute_frida_hook(target)
-                success = frida_status.get("success", False)
+                success_value = frida_status.get("success", False)
+                success = bool(success_value) if isinstance(success_value, bool) else False
 
             elif method == BypassMethod.HYBRID:
                 patch_result = self._execute_binary_patch(detection_report)
                 frida_status = self._execute_frida_hook(target)
-                success = patch_result.success and frida_status.get("success", False)
+                frida_success_value = frida_status.get("success", False)
+                frida_success = bool(frida_success_value) if isinstance(frida_success_value, bool) else False
+                success = patch_result.success and frida_success
 
             elif method == BypassMethod.MITM_PROXY:
                 success = self._execute_mitm_proxy(target)
@@ -385,7 +388,7 @@ class CertificateBypassOrchestrator:
             logger.exception("Binary patch failed: %s", e, exc_info=True)
             raise
 
-    def _execute_frida_hook(self, target: str) -> dict:
+    def _execute_frida_hook(self, target: str) -> dict[str, object]:
         """Execute Frida hooking bypass.
 
         Args:
@@ -410,11 +413,22 @@ class CertificateBypassOrchestrator:
                 return {"success": False, "error": "Failed to inject bypass"}
 
             status = self.frida_hooks.get_bypass_status()
-            status["success"] = True
 
-            logger.info("Frida hook successful: %s hooks active", len(status.get("active_hooks", [])))
+            result: dict[str, object] = {
+                "success": True,
+                "active": status.active,
+                "library": status.library,
+                "platform": status.platform,
+                "hooks_installed": status.hooks_installed,
+                "detected_libraries": status.detected_libraries,
+                "message_count": status.message_count,
+                "errors": status.errors,
+                "intercepted_data": status.intercepted_data,
+            }
 
-            return status
+            logger.info("Frida hook successful: %s hooks active", len(status.hooks_installed))
+
+            return result
 
         except Exception as e:
             logger.exception("Frida hook failed: %s", e, exc_info=True)
@@ -517,7 +531,7 @@ class CertificateBypassOrchestrator:
 
         from intellicrack.core.certificate.binary_scanner import BinaryScanner
 
-        domains = []
+        domains: list[str] = []
 
         try:
             target_path = Path(target)
@@ -673,8 +687,8 @@ class CertificateBypassOrchestrator:
 
             status = self.frida_hooks.get_bypass_status()
 
-            if status.active and len(status.active_hooks) > 0:
-                logger.debug("Active Frida hooks: %s", status.active_hooks)
+            if status.active and len(status.hooks_installed) > 0:
+                logger.debug("Active Frida hooks: %s", status.hooks_installed)
                 return True
 
             return False

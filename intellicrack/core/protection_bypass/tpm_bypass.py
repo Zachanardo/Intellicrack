@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from types import ModuleType
 
 
-def _import_crypto() -> tuple[bool, Any, Any, Any, Any, Any, Any, Any, Any, Any]:
+def _import_crypto() -> tuple[bool, type[Any] | None, type[Any] | None, type[Any] | None, Any | None, type[Any] | None, Any | None, Any | None, Any | None, Any | None]:
     """Import cryptography modules safely."""
     try:
         from cryptography.hazmat.primitives import hashes
@@ -1386,16 +1386,17 @@ class TPMBypassEngine:
             key_material = hashlib.sha256(key_material).digest()
 
         try:
-            if _AES is not None:
+            if _AES is not None and algorithms is not None and modes is not None:
                 cipher = _AES(algorithms.AES(key_material[:32]), modes.CBC(iv))
                 decryptor = cipher.decryptor()
                 decrypted = decryptor.update(ciphertext) + decryptor.finalize()
 
                 if len(decrypted) > 0:
                     try:
-                        if _unpad is not None:
+                        if _unpad is not None and algorithms is not None:
                             unpadder = _unpad.PKCS7(algorithms.AES.block_size * 8).unpadder()
-                            return unpadder.update(decrypted) + unpadder.finalize()
+                            result: bytes = unpadder.update(decrypted) + unpadder.finalize()
+                            return result
                     except ValueError:
                         pass
                     return bytes(decrypted)
@@ -1424,7 +1425,7 @@ class TPMBypassEngine:
             seed = hashlib.sha256(seed).digest()
 
         try:
-            if _PBKDF2 is not None and _AES is not None:
+            if _PBKDF2 is not None and _AES is not None and hashes is not None and algorithms is not None and modes is not None:
                 kdf = _PBKDF2(algorithm=hashes.SHA1(), length=48, salt=b"IDENTITY", iterations=1)
                 kdf_output = kdf.derive(seed)
 
@@ -1440,9 +1441,10 @@ class TPMBypassEngine:
 
                     if len(decrypted) > 0:
                         try:
-                            if _unpad is not None:
+                            if _unpad is not None and algorithms is not None:
                                 unpadder = _unpad.PKCS7(algorithms.AES.block_size * 8).unpadder()
-                                return unpadder.update(decrypted) + unpadder.finalize()
+                                result: bytes = unpadder.update(decrypted) + unpadder.finalize()
+                                return result
                         except ValueError:
                             pass
                         return bytes(decrypted)
@@ -1462,7 +1464,7 @@ class TPMBypassEngine:
             bytes(32),
         ]
 
-        if _AES is None:
+        if _AES is None or algorithms is None or modes is None:
             return None
 
         for key_material in common_keys:
@@ -1486,7 +1488,7 @@ class TPMBypassEngine:
 
                     if len(decrypted) > 0:
                         try:
-                            if _unpad is not None:
+                            if _unpad is not None and algorithms is not None:
                                 unpadder = _unpad.PKCS7(algorithms.AES.block_size * 8).unpadder()
                                 unpadded = unpadder.update(decrypted) + unpadder.finalize()
                                 if self._looks_like_valid_key(bytes(unpadded)):
@@ -1583,7 +1585,8 @@ class TPMBypassEngine:
                     return os.urandom(256)
 
                 if _pkcs1_15 is not None:
-                    return rsa_key.sign(attestation_data, _pkcs1_15(), _SHA256())
+                    signature: bytes = rsa_key.sign(attestation_data, _pkcs1_15(), _SHA256())
+                    return signature
         except Exception as e:
             self.logger.exception("Signature forging failed: %s", e)
         return os.urandom(256)

@@ -197,7 +197,7 @@ def setup_required_environment() -> dict[str, Any]:
         Dict with environment setup status and available features
 
     """
-    env_status = {
+    env_status: dict[str, Any] = {
         "core_available": True,
         "gui_available": False,
         "ml_available": False,

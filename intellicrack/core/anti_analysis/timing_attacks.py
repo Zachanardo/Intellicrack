@@ -41,14 +41,14 @@ class TimingAttackDefense:
     def __init__(self) -> None:
         """Initialize the timing attack defense system with available timing methods."""
         self.logger = logging.getLogger("IntellicrackLogger.TimingAttackDefense")
-        self.timing_threads = []
+        self.timing_threads: list[threading.Thread] = []
         self.timing_checks = {
             "rdtsc_available": self._check_rdtsc_availability(),
             "performance_counter": True,
             "tick_count": True,
         }
 
-    def secure_sleep(self, duration: float, callback: Callable = None) -> bool:
+    def secure_sleep(self, duration: float, callback: Callable[[], None] | None = None) -> bool:
         """Sleep with protection against acceleration.
 
         Args:
@@ -89,7 +89,7 @@ class TimingAttackDefense:
                 time.sleep(sleep_time)
 
                 # Execute callback if provided
-                if callback:
+                if callback is not None:
                     callback()
 
                 # Check for timing anomalies
@@ -107,11 +107,12 @@ class TimingAttackDefense:
                 # Check tick count if available
                 if start_tick is not None:
                     current_tick = self._get_tick_count()
-                    tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
-                    tick_drift = abs(tick_elapsed - elapsed_perf)
-                    if tick_drift > 0.1:
-                        self.logger.warning("Tick count timing anomaly detected: %.3fs drift", tick_drift)
-                        return False
+                    if current_tick is not None:
+                        tick_elapsed = (current_tick - start_tick) / 1000.0  # Convert to seconds
+                        tick_drift = abs(tick_elapsed - elapsed_perf)
+                        if tick_drift > 0.1:
+                            self.logger.warning("Tick count timing anomaly detected: %.3fs drift", tick_drift)
+                            return False
 
                 # Check if time is accelerated
                 drift = abs(elapsed_real - elapsed_perf)
@@ -175,7 +176,7 @@ class TimingAttackDefense:
         except Exception as e:
             self.logger.exception("Stalling code failed: %s", e, exc_info=True)
 
-    def time_bomb(self, trigger_time: float, action: Callable) -> threading.Thread:
+    def time_bomb(self, trigger_time: float, action: Callable[[], None]) -> threading.Thread:
         """Create a time bomb that triggers after specific duration.
 
         Args:
@@ -223,7 +224,7 @@ class TimingAttackDefense:
             if check_environment:
                 # Perform checks during delay
                 check_interval = 5.0
-                elapsed = 0
+                elapsed = 0.0
 
                 while elapsed < delay:
                     # Check for debugger
@@ -331,7 +332,8 @@ class TimingAttackDefense:
 
             if platform.system() == "Windows":
                 kernel32 = ctypes.windll.kernel32
-                return kernel32.GetTickCount64()
+                tick_count: int = kernel32.GetTickCount64()
+                return tick_count
         except Exception as e:
             self.logger.debug("Error getting system tick count: %s", e)
         return None

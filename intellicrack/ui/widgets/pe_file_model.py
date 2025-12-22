@@ -187,6 +187,9 @@ class PEFileModel(BinaryFileModel):
         """Parse PE sections."""
         self.sections = []
 
+        if self.pe is None:
+            return
+
         for section in self.pe.sections:
             section_info = SectionInfo(
                 name=section.Name.decode("utf-8", errors="ignore").rstrip("\x00"),
@@ -240,7 +243,7 @@ class PEFileModel(BinaryFileModel):
         """Parse PE imports."""
         self.imports = []
 
-        if not hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
+        if self.pe is None or not hasattr(self.pe, "DIRECTORY_ENTRY_IMPORT"):
             return
 
         try:
@@ -264,7 +267,7 @@ class PEFileModel(BinaryFileModel):
         """Parse PE exports."""
         self.exports = []
 
-        if not hasattr(self.pe, "DIRECTORY_ENTRY_EXPORT"):
+        if self.pe is None or not hasattr(self.pe, "DIRECTORY_ENTRY_EXPORT"):
             return
 
         try:
@@ -292,6 +295,9 @@ class PEFileModel(BinaryFileModel):
     def _build_structures(self) -> None:
         """Build structure hierarchy for tree view."""
         self.structures = []
+
+        if self.pe is None:
+            return
 
         # DOS Header
         dos_header = FileStructure(
@@ -351,7 +357,7 @@ class PEFileModel(BinaryFileModel):
             self.structures.append(section_struct)
 
         # Data Directories
-        if hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"):
+        if self.pe is not None and hasattr(self.pe, "OPTIONAL_HEADER") and hasattr(self.pe.OPTIONAL_HEADER, "DATA_DIRECTORY"):
             # pylint: disable=no-member
             for i, directory in enumerate(self.pe.OPTIONAL_HEADER.DATA_DIRECTORY):
                 if directory.VirtualAddress and directory.Size:
@@ -400,7 +406,10 @@ class PEFileModel(BinaryFileModel):
             return None
 
         try:
-            return self.pe.get_offset_from_rva(rva)
+            offset = self.pe.get_offset_from_rva(rva)
+            if isinstance(offset, int):
+                return offset
+            return None
         except Exception as e:
             logger.exception("Exception in pe_file_model: %s", e)
             return None
@@ -411,7 +420,10 @@ class PEFileModel(BinaryFileModel):
             return None
 
         try:
-            return self.pe.get_rva_from_offset(offset)
+            rva = self.pe.get_rva_from_offset(offset)
+            if isinstance(rva, int):
+                return rva
+            return None
         except Exception as e:
             logger.exception("Exception in pe_file_model: %s", e)
             return None

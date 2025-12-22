@@ -347,7 +347,7 @@ class DiffGenerator:
         modified_lines = modified.splitlines()
 
         differ = difflib.SequenceMatcher(None, original_lines, modified_lines)
-        diff_data = {
+        diff_data: dict[str, Any] = {
             "original_lines": [],
             "modified_lines": [],
             "changes": [],
@@ -474,7 +474,7 @@ class IntelligentCodeModifier:
         self.backup_directory = Path.home() / ".intellicrack" / "code_backups"
         self.backup_directory.mkdir(parents=True, exist_ok=True)
 
-    def gather_project_context(self, project_root: str, target_files: list[str] = None) -> dict[str, CodeContext]:
+    def gather_project_context(self, project_root: str, target_files: list[str] | None = None) -> dict[str, CodeContext]:
         """Gather context about the entire project."""
         logger.info("Gathering project context from: %s", project_root)
 
@@ -510,9 +510,9 @@ class IntelligentCodeModifier:
         self,
         description: str,
         target_files: list[str],
-        requirements: list[str] = None,
-        constraints: list[str] = None,
-        context_files: list[str] = None,
+        requirements: list[str] | None = None,
+        constraints: list[str] | None = None,
+        context_files: list[str] | None = None,
     ) -> ModificationRequest:
         """Create a new modification request."""
         request_id = f"mod_{int(datetime.now().timestamp())}"
@@ -633,7 +633,7 @@ Requirements:
 
     def _parse_modification_response(self, response: str, file_path: str, request: ModificationRequest) -> list[CodeChange]:
         """Parse AI response into CodeChange objects."""
-        changes = []
+        changes: list[CodeChange] = []
 
         try:
             # Extract JSON from response
@@ -684,23 +684,21 @@ Requirements:
 
     def preview_changes(self, change_ids: list[str]) -> dict[str, Any]:
         """Preview changes before applying them."""
-        preview_data = {
-            "changes": [],
-            "files_affected": set(),
-            "total_changes": 0,
-            "high_risk_changes": 0,
-        }
+        files_affected_set: set[str] = set()
+        changes_list: list[dict[str, Any]] = []
+        total_changes_count: int = 0
+        high_risk_changes_count: int = 0
 
         for change_id in change_ids:
             if change_id not in self.pending_changes:
                 continue
 
             change = self.pending_changes[change_id]
-            preview_data["files_affected"].add(change.file_path)
-            preview_data["total_changes"] += 1
+            files_affected_set.add(change.file_path)
+            total_changes_count += 1
 
             if change.confidence < self.confidence_threshold:
-                preview_data["high_risk_changes"] += 1
+                high_risk_changes_count += 1
 
             # Generate diff
             diff = self.diff_generator.generate_unified_diff(
@@ -721,14 +719,19 @@ Requirements:
                 "impact": change.impact_analysis,
             }
 
-            preview_data["changes"].append(change_info)
+            changes_list.append(change_info)
 
-        preview_data["files_affected"] = list(preview_data["files_affected"])
+        preview_data: dict[str, Any] = {
+            "changes": changes_list,
+            "files_affected": list(files_affected_set),
+            "total_changes": total_changes_count,
+            "high_risk_changes": high_risk_changes_count,
+        }
         return preview_data
 
     def apply_changes(self, change_ids: list[str], create_backup: bool = True) -> dict[str, Any]:
         """Apply the specified changes to files."""
-        results = {
+        results: dict[str, Any] = {
             "applied": [],
             "failed": [],
             "backups_created": [],
@@ -736,7 +739,7 @@ Requirements:
         }
 
         # Group changes by file
-        changes_by_file = {}
+        changes_by_file: dict[str, list[CodeChange]] = {}
         for change_id in change_ids:
             if change_id not in self.pending_changes:
                 results["failed"].append(change_id)
@@ -851,7 +854,7 @@ Requirements:
 
     def reject_changes(self, change_ids: list[str]) -> dict[str, Any]:
         """Reject the specified changes."""
-        results = {"rejected": [], "not_found": []}
+        results: dict[str, Any] = {"rejected": [], "not_found": []}
 
         for change_id in change_ids:
             if change_id in self.pending_changes:

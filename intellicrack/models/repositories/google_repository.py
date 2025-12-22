@@ -24,7 +24,7 @@ from typing import Any
 from intellicrack.core.config_manager import get_config
 
 from .base import APIRepositoryBase, RateLimitConfig
-from .interface import ModelInfo
+from .interface import DownloadProgressCallback, ModelInfo
 
 
 """
@@ -133,11 +133,23 @@ class GoogleRepository(APIRepositoryBase):
         models = []
 
         try:
-            # Extract model information from the response
-            for model_data in data.get("models", []):
+            if not isinstance(data, dict):
+                logger.error("Invalid response type from Google API, expected dict")
+                return []
+
+            model_list = data.get("models", [])
+            if not isinstance(model_list, list):
+                logger.error("Invalid models list from Google API")
+                return []
+
+            for model_data in model_list:
+                if not isinstance(model_data, dict):
+                    continue
+
                 if model_id := model_data.get("name"):
-                    # Extract just the model name from the full path
-                    # Format is usually "models/gemini-pro" or similar
+                    if not isinstance(model_id, str):
+                        continue
+
                     if "/" in model_id:
                         model_id = model_id.split("/")[-1]
 
@@ -176,6 +188,10 @@ class GoogleRepository(APIRepositoryBase):
             return None
 
         try:
+            if not isinstance(data, dict):
+                logger.error("Invalid response type from Google API for model %s", model_id)
+                return None
+
             return self._create_model_info(model_id, data)
         except (KeyError, TypeError) as e:
             logger.exception("Error parsing Google model details for %s: %s", model_id, e)
@@ -241,8 +257,18 @@ class GoogleRepository(APIRepositoryBase):
             logger.exception("Error creating ModelInfo for %s: %s", model_id, e)
             return None
 
-    def download_model(self, model_id: str, destination_path: str) -> tuple[bool, str]:
+    def download_model(
+        self,
+        model_id: str,
+        destination_path: str,
+        progress_callback: DownloadProgressCallback | None = None,
+    ) -> tuple[bool, str]:
         """Google doesn't support model downloads, this is an API-only service.
+
+        Args:
+            model_id: The model ID (unused)
+            destination_path: The destination path (unused)
+            progress_callback: Optional progress callback (unused)
 
         Returns:
             Always returns (False, "Google doesn't support model downloads")

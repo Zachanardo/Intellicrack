@@ -19,6 +19,7 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import os
 import sys
+from typing import TYPE_CHECKING, cast
 
 from intellicrack.handlers.pyqt6_handler import (
     HAS_PYQT as HAS_QT,
@@ -32,9 +33,14 @@ from intellicrack.handlers.pyqt6_handler import (
     QThread,
     QTimer,
     QVBoxLayout,
+    QWidget,
     pyqtSignal,
 )
 from intellicrack.utils.logger import logger
+
+if TYPE_CHECKING:
+    from ...utils.system.file_resolution import FileResolver
+    from ...utils.system.program_discovery import ProgramDiscoveryEngine, ProgramInfo
 
 
 """Smart program selector dialog for choosing target applications."""
@@ -46,18 +52,24 @@ Provides an intelligent interface for selecting programs for analysis
 via desktop shortcuts, file resolution, and program discovery.
 """
 
-# Import program discovery components
-try:
-    from ...utils.system.file_resolution import file_resolver
-    from ...utils.system.program_discovery import ProgramInfo, program_discovery_engine
+program_discovery_engine: ProgramDiscoveryEngine | None = None
+file_resolver: FileResolver | None = None
+ProgramInfo_actual: type[ProgramInfo] | None = None
+HAS_PROGRAM_DISCOVERY: bool = False
 
+try:
+    from ...utils.system.file_resolution import file_resolver as _file_resolver
+    from ...utils.system.program_discovery import (
+        ProgramInfo as _ProgramInfo,
+        program_discovery_engine as _program_discovery_engine,
+    )
+
+    program_discovery_engine = _program_discovery_engine
+    file_resolver = _file_resolver
+    ProgramInfo_actual = _ProgramInfo
     HAS_PROGRAM_DISCOVERY = True
 except ImportError as e:
     logger.error("Import error in smart_program_selector_dialog: %s", e)
-    program_discovery_engine = None
-    ProgramInfo = None
-    file_resolver = None
-    HAS_PROGRAM_DISCOVERY = False
 
 
 class ProgramDiscoveryWorker(QThread):
@@ -70,8 +82,9 @@ class ProgramDiscoveryWorker(QThread):
     def __init__(self, discovery_paths: list[str]) -> None:
         """Initialize the program discovery worker with specified paths."""
         super().__init__()
-        self.discovery_paths = discovery_paths
-        self.running = True
+        self.discovery_paths: list[str] = discovery_paths
+        self.running: bool = True
+        self.logger = logger
 
     def run(self) -> None:
         """Run program discovery in background thread."""
@@ -80,7 +93,7 @@ class ProgramDiscoveryWorker(QThread):
             self.finished.emit()
             return
 
-        all_programs = []
+        all_programs: list[object] = []
 
         for path in self.discovery_paths:
             if not self.running:
@@ -89,9 +102,10 @@ class ProgramDiscoveryWorker(QThread):
             self.progress_updated.emit(f"Scanning {path}...")
 
             try:
-                programs = program_discovery_engine.discover_programs_from_path(path)
-                all_programs.extend(programs)
-                self.progress_updated.emit(f"Found {len(programs)} programs in {path}")
+                if program_discovery_engine is not None:
+                    programs: list[object] = cast(list[object], program_discovery_engine.discover_programs_from_path(path))
+                    all_programs.extend(programs)
+                    self.progress_updated.emit(f"Found {len(programs)} programs in {path}")
             except Exception as e:
                 self.logger.exception("Exception in smart_program_selector_dialog: %s", e)
                 self.progress_updated.emit(f"Error scanning {path}: {e!s}")
@@ -107,17 +121,21 @@ class ProgramDiscoveryWorker(QThread):
 class SmartProgramSelectorDialog(QDialog):
     """Smart program selector dialog with intelligent discovery."""
 
-    def __init__(self, parent: object | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the smart program selector dialog with UI components and discovery functionality."""
         super().__init__(parent)
         self.setWindowTitle("Smart Program Selector")
         self.setModal(True)
         self.resize(800, 600)
 
-        # Initialize attributes
         self.selected_program: ProgramInfo | None = None
         self.discovery_worker: ProgramDiscoveryWorker | None = None
-        self.discovery_timer = QTimer()
+        self.discovery_timer: QTimer = QTimer()
+        self.programs_list: QListWidget | None = None
+        self.progress_text: QTextEdit | None = None
+        self.scan_button: QPushButton | None = None
+        self.analyze_button: QPushButton | None = None
+        self.cancel_button: QPushButton | None = None
 
         if HAS_QT:
             self.setup_ui()
@@ -125,23 +143,19 @@ class SmartProgramSelectorDialog(QDialog):
 
     def setup_ui(self) -> None:
         """Set up the user interface."""
-        layout = QVBoxLayout(self)
+        layout: QVBoxLayout = QVBoxLayout(self)
 
-        # Title
-        title_label = QLabel("Select a Program for Analysis")
+        title_label: QLabel = QLabel("Select a Program for Analysis")
         layout.addWidget(title_label)
 
-        # Programs list
         self.programs_list = QListWidget()
         layout.addWidget(self.programs_list)
 
-        # Progress area
         self.progress_text = QTextEdit()
         self.progress_text.setMaximumHeight(100)
         layout.addWidget(self.progress_text)
 
-        # Buttons
-        button_layout = QHBoxLayout()
+        button_layout: QHBoxLayout = QHBoxLayout()
 
         self.scan_button = QPushButton("Scan for Programs")
         self.analyze_button = QPushButton("Analyze Selected")
@@ -155,7 +169,7 @@ class SmartProgramSelectorDialog(QDialog):
 
     def connect_signals(self) -> None:
         """Connect UI signals."""
-        if HAS_QT:
+        if HAS_QT and self.scan_button is not None and self.analyze_button is not None and self.cancel_button is not None:
             self.scan_button.clicked.connect(self.start_program_discovery)
             self.analyze_button.clicked.connect(self.analyze_selected_program)
             self.cancel_button.clicked.connect(self.reject)
@@ -163,24 +177,24 @@ class SmartProgramSelectorDialog(QDialog):
     def start_program_discovery(self) -> None:
         """Start program discovery process."""
         if not HAS_PROGRAM_DISCOVERY:
-            self.progress_text.append("Program discovery not available")
+            if self.progress_text is not None:
+                self.progress_text.append("Program discovery not available")
             return
 
-        # Get common program locations
-        discovery_paths = self.get_discovery_paths()
+        discovery_paths: list[str] = self.get_discovery_paths()
 
-        # Start worker thread
         self.discovery_worker = ProgramDiscoveryWorker(discovery_paths)
         self.discovery_worker.programs_found.connect(self.handle_programs_found)
         self.discovery_worker.progress_updated.connect(self.update_progress)
         self.discovery_worker.finished.connect(self.discovery_finished)
 
         self.discovery_worker.start()
-        self.scan_button.setEnabled(False)
+        if self.scan_button is not None:
+            self.scan_button.setEnabled(False)
 
     def get_discovery_paths(self) -> list[str]:
         """Get paths to scan for programs."""
-        paths = []
+        paths: list[str] = []
 
         if sys.platform.startswith("win"):
             if user_profile := os.environ.get("USERPROFILE", ""):
@@ -236,41 +250,50 @@ class SmartProgramSelectorDialog(QDialog):
         # Filter to existing paths
         return [path for path in paths if os.path.exists(path)]
 
-    def handle_programs_found(self, programs: list[ProgramInfo]) -> None:
+    def handle_programs_found(self, programs: list[object]) -> None:
         """Handle discovered programs."""
+        if self.programs_list is None:
+            return
+
         self.programs_list.clear()
 
         for program in programs:
-            item = QListWidgetItem(f"{program.display_name} ({program.discovery_method})")
-            item.setData(32, program)  # Store program object
-            self.programs_list.addItem(item)
+            if ProgramInfo_actual is not None and isinstance(program, ProgramInfo_actual):
+                item: QListWidgetItem = QListWidgetItem(f"{program.display_name} ({program.discovery_method})")
+                item.setData(32, program)
+                self.programs_list.addItem(item)
 
     def update_progress(self, message: str) -> None:
         """Update progress display."""
-        self.progress_text.append(message)
+        if self.progress_text is not None:
+            self.progress_text.append(message)
 
     def discovery_finished(self) -> None:
         """Handle discovery completion."""
-        self.scan_button.setEnabled(True)
-        self.progress_text.append("Discovery completed.")
+        if self.scan_button is not None:
+            self.scan_button.setEnabled(True)
+        if self.progress_text is not None:
+            self.progress_text.append("Discovery completed.")
 
     def analyze_selected_program(self) -> None:
         """Analyze the selected program."""
-        if current_item := self.programs_list.currentItem():
-            self.selected_program = current_item.data(32)
-            self.accept()
+        if self.programs_list is not None:
+            current_item = self.programs_list.currentItem()
+            if current_item is not None:
+                self.selected_program = current_item.data(32)
+                self.accept()
 
     def get_selected_program(self) -> ProgramInfo | None:
         """Get the selected program."""
         return self.selected_program
 
 
-def show_smart_program_selector(parent: object | None = None) -> ProgramInfo | None:
+def show_smart_program_selector(parent: QWidget | None = None) -> object | None:
     """Show the smart program selector dialog."""
     if not HAS_QT:
         return None
 
-    dialog = SmartProgramSelectorDialog(parent)
-    if dialog.exec() == QDialog.Accepted:
+    dialog: SmartProgramSelectorDialog = SmartProgramSelectorDialog(parent)
+    if dialog.exec() == 1:
         return dialog.get_selected_program()
     return None

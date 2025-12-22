@@ -351,7 +351,8 @@ class WorkspaceTab(QWidget):
 
         # Auto-scroll to bottom
         scrollbar = self.activity_log_text.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        if scrollbar is not None:
+            scrollbar.setValue(scrollbar.maximum())
 
     def filter_activity_log(self, filter_text: str) -> None:
         """Filter activity log entries based on search text.
@@ -561,7 +562,7 @@ class WorkspaceTab(QWidget):
             self.export_analysis_btn.setEnabled(True)
 
             # Load binary into app context for system-wide availability
-            if self.app_context:
+            if self.app_context and hasattr(self.app_context, "load_binary"):
                 try:
                     metadata = {
                         "name": binary_name,
@@ -569,7 +570,8 @@ class WorkspaceTab(QWidget):
                         "type": ext.upper(),
                         "source": "workspace_tab",
                     }
-                    if self.app_context.load_binary(binary_file, metadata):
+                    load_binary_method = getattr(self.app_context, "load_binary", None)
+                    if callable(load_binary_method) and load_binary_method(binary_file, metadata):
                         self.log_activity("Binary loaded into analysis system", "SUCCESS")
                     else:
                         self.log_activity("Binary loaded locally only (app context unavailable)", "WARNING")
@@ -602,23 +604,19 @@ class WorkspaceTab(QWidget):
 
         # Perform actual binary analysis
         try:
-            from ...protection.protection_detector import detect_basic_protections
-            from ...utils.binary.pe_analysis_common import analyze_pe_file
+            from ...protection import protection_detector
 
-            # Analyze the binary file
-            analysis_results = analyze_pe_file(self.loaded_binary_path)
-            protection_results = detect_basic_protections(self.loaded_binary_path)
+            if hasattr(protection_detector, "detect_all_protections"):
+                detect_protections = getattr(protection_detector, "detect_all_protections")
+                protection_results = detect_protections(self.loaded_binary_path)
 
-            # Log actual analysis results
-            if analysis_results:
-                for key, value in analysis_results.items():
-                    self.log_activity(f"{key}: {value}", "INFO")
+                if protection_results:
+                    for protection in protection_results:
+                        self.log_activity(f"Protection detected: {protection}", "WARNING")
 
-            if protection_results:
-                for protection in protection_results:
-                    self.log_activity(f"Protection detected: {protection}", "WARNING")
-
-            self.log_activity("Quick analysis complete", "SUCCESS")
+                self.log_activity("Quick analysis complete", "SUCCESS")
+            else:
+                raise ImportError("Protection detection module not available")
 
         except ImportError:
             # Fallback analysis using basic file operations
@@ -751,19 +749,20 @@ class WorkspaceTab(QWidget):
 
         """
         parts = Path(folder_path).parts
-        parent = None
+        parent: QTreeWidgetItem | None = None
 
         for part in parts:
             # Find existing item
             found = False
-            items = []
+            items: list[QTreeWidgetItem | None] = []
 
             if parent is None:
                 items.extend(self.file_tree.topLevelItem(i) for i in range(self.file_tree.topLevelItemCount()))
             else:
                 items.extend(parent.child(i) for i in range(parent.childCount()))
+
             for item in items:
-                if item.text(0) == part and item.text(1) == "Folder":
+                if item is not None and item.text(0) == part and item.text(1) == "Folder":
                     parent = item
                     found = True
                     break
@@ -776,6 +775,9 @@ class WorkspaceTab(QWidget):
                 else:
                     parent.addChild(new_item)
                 parent = new_item
+
+        if parent is None:
+            raise RuntimeError(f"Failed to create folder for path: {folder_path}")
 
         return parent
 
@@ -825,6 +827,11 @@ class WorkspaceTab(QWidget):
             position: The position where the context menu was requested (typically QPoint).
 
         """
+        from PyQt6.QtCore import QPoint
+
+        if not isinstance(position, QPoint):
+            return
+
         item = self.file_tree.itemAt(position)
         if not item:
             return

@@ -23,19 +23,20 @@ This module consolidates Windows-specific functionality to reduce code duplicati
 
 import logging
 import sys
-
+from types import ModuleType
+from typing import Any
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-# Global Windows availability check
 WINDOWS_AVAILABLE: bool = False
-ctypes: object = None
+ctypes: ModuleType | None = None
 
 if sys.platform == "win32":
     try:
-        import ctypes
+        import ctypes as ctypes_module
         import ctypes.wintypes
 
+        ctypes = ctypes_module
         WINDOWS_AVAILABLE = True
     except ImportError as e:
         logger.exception("Import error in windows_common: %s", e)
@@ -48,7 +49,7 @@ def is_windows_available() -> bool:
     return WINDOWS_AVAILABLE
 
 
-def get_windows_kernel32() -> object | None:
+def get_windows_kernel32() -> Any:
     """Get kernel32 library if available.
 
     Loads the Windows kernel32.dll library if Windows is available and
@@ -62,13 +63,14 @@ def get_windows_kernel32() -> object | None:
     if not WINDOWS_AVAILABLE or ctypes is None:
         return None
     try:
-        return ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32_dll: Any = ctypes.WinDLL("kernel32", use_last_error=True)
+        return kernel32_dll
     except Exception as e:
         logger.exception("Failed to load kernel32: %s", e)
         return None
 
 
-def get_windows_ntdll() -> object | None:
+def get_windows_ntdll() -> Any:
     """Get ntdll library if available.
 
     Loads the Windows ntdll.dll library if Windows is available and
@@ -82,7 +84,8 @@ def get_windows_ntdll() -> object | None:
     if not WINDOWS_AVAILABLE or ctypes is None:
         return None
     try:
-        return ctypes.WinDLL("ntdll.dll")
+        ntdll_dll: Any = ctypes.WinDLL("ntdll.dll")
+        return ntdll_dll
     except Exception as e:
         logger.exception("Failed to load ntdll: %s", e)
         return None
@@ -92,16 +95,16 @@ def get_windows_ntdll() -> object | None:
 class WindowsConstants:
     """Provide Windows constants used across modules."""
 
-    CREATE_SUSPENDED = 0x00000004
-    CREATE_NO_WINDOW = 0x08000000
-    MEM_COMMIT = 0x1000
-    MEM_RESERVE = 0x2000
-    PAGE_EXECUTE_READWRITE = 0x40
+    CREATE_SUSPENDED: int = 0x00000004
+    CREATE_NO_WINDOW: int = 0x08000000
+    MEM_COMMIT: int = 0x1000
+    MEM_RESERVE: int = 0x2000
+    PAGE_EXECUTE_READWRITE: int = 0x40
 
 
 def cleanup_process_handles(
-    kernel32: object,
-    process_info: dict[str, object],
+    kernel32: Any,
+    process_info: dict[str, Any],
     logger_instance: logging.Logger | None = None,
 ) -> None:
     """Clean up Windows process handles.
@@ -121,10 +124,12 @@ def cleanup_process_handles(
 
     """
     try:
-        if process_info.get("thread_handle"):
-            kernel32.CloseHandle(process_info["thread_handle"])
-        if process_info.get("process_handle"):
-            kernel32.CloseHandle(process_info["process_handle"])
+        thread_handle: Any = process_info.get("thread_handle")
+        if thread_handle is not None:
+            kernel32.CloseHandle(thread_handle)
+        process_handle: Any = process_info.get("process_handle")
+        if process_handle is not None:
+            kernel32.CloseHandle(process_handle)
     except Exception as e:
-        if logger_instance:
+        if logger_instance is not None:
             logger_instance.warning("Error cleaning up handles: %s", e)

@@ -8,9 +8,10 @@ Licensed under GNU General Public License v3.0
 """
 
 from collections.abc import Callable
+from typing import Any
 
 from intellicrack.core.monitoring.api_monitor import APIMonitor
-from intellicrack.core.monitoring.base_monitor import MonitorEvent, ProcessInfo
+from intellicrack.core.monitoring.base_monitor import BaseMonitor, MonitorEvent, ProcessInfo
 from intellicrack.core.monitoring.event_aggregator import EventAggregator
 from intellicrack.core.monitoring.file_monitor import FileMonitor
 from intellicrack.core.monitoring.frida_server_manager import FridaServerManager
@@ -24,11 +25,11 @@ class MonitoringConfig:
 
     def __init__(self) -> None:
         """Initialize default configuration."""
-        self.enable_api = True
-        self.enable_registry = True
-        self.enable_file = True
-        self.enable_network = False
-        self.enable_memory = True
+        self.enable_api: bool = True
+        self.enable_registry: bool = True
+        self.enable_file: bool = True
+        self.enable_network: bool = False
+        self.enable_memory: bool = True
 
         self.file_watch_paths: list[str] | None = None
         self.network_ports: list[int] | None = None
@@ -51,16 +52,16 @@ class MonitoringSession:
             config: Monitoring configuration.
 
         """
-        self.pid = pid
-        self.process_path = process_path
-        self.config = config or MonitoringConfig()
+        self.pid: int = pid
+        self.process_path: str = process_path
+        self.config: MonitoringConfig = config or MonitoringConfig()
 
-        self.process_info = ProcessInfo(pid=pid, name=self._get_process_name(process_path), path=process_path)
+        self.process_info: ProcessInfo = ProcessInfo(pid=pid, name=self._get_process_name(process_path), path=process_path)
 
-        self.aggregator = EventAggregator()
-        self.monitors: dict[str, object] = {}
-        self.frida_server = FridaServerManager()
-        self._running = False
+        self.aggregator: EventAggregator = EventAggregator()
+        self.monitors: dict[str, BaseMonitor] = {}
+        self.frida_server: FridaServerManager = FridaServerManager()
+        self._running: bool = False
 
     def start(self) -> bool:
         """Start monitoring session.
@@ -78,34 +79,34 @@ class MonitoringSession:
 
         self.aggregator.start()
 
-        success = True
+        success: bool = True
 
         if self.config.enable_api:
-            monitor = APIMonitor(self.pid, self.process_info)
-            if self._start_monitor("api", monitor):
-                self.monitors["api"] = monitor
+            api_monitor: APIMonitor = APIMonitor(self.pid, self.process_info)
+            if self._start_monitor("api", api_monitor):
+                self.monitors["api"] = api_monitor
             else:
                 success = False
 
         if self.config.enable_registry:
-            monitor = RegistryMonitor(self.process_info)
-            if self._start_monitor("registry", monitor):
-                self.monitors["registry"] = monitor
+            registry_monitor: RegistryMonitor = RegistryMonitor(self.process_info)
+            if self._start_monitor("registry", registry_monitor):
+                self.monitors["registry"] = registry_monitor
 
         if self.config.enable_file:
-            monitor = FileMonitor(self.process_info, self.config.file_watch_paths)
-            if self._start_monitor("file", monitor):
-                self.monitors["file"] = monitor
+            file_monitor: FileMonitor = FileMonitor(self.process_info, self.config.file_watch_paths)
+            if self._start_monitor("file", file_monitor):
+                self.monitors["file"] = file_monitor
 
         if self.config.enable_network:
-            monitor = NetworkMonitor(self.process_info, self.config.network_ports)
-            if self._start_monitor("network", monitor):
-                self.monitors["network"] = monitor
+            network_monitor: NetworkMonitor = NetworkMonitor(self.process_info, self.config.network_ports)
+            if self._start_monitor("network", network_monitor):
+                self.monitors["network"] = network_monitor
 
         if self.config.enable_memory:
-            monitor = MemoryMonitor(self.pid, self.process_info, self.config.memory_scan_interval)
-            if self._start_monitor("memory", monitor):
-                self.monitors["memory"] = monitor
+            memory_monitor: MemoryMonitor = MemoryMonitor(self.pid, self.process_info, self.config.memory_scan_interval)
+            if self._start_monitor("memory", memory_monitor):
+                self.monitors["memory"] = memory_monitor
 
         if self.monitors:
             self._running = True
@@ -141,14 +142,14 @@ class MonitoringSession:
         """
         return self._running
 
-    def get_stats(self) -> dict[str, object]:
+    def get_stats(self) -> dict[str, Any]:
         """Get monitoring statistics.
 
         Returns:
             Dictionary of statistics from all monitors.
 
         """
-        stats = {
+        stats: dict[str, Any] = {
             "session_running": self._running,
             "frida_server": self.frida_server.get_status(),
             "aggregator": self.aggregator.get_stats(),
@@ -157,7 +158,8 @@ class MonitoringSession:
 
         for name, monitor in self.monitors.items():
             try:
-                stats["monitors"][name] = monitor.get_stats()
+                monitor_stats: dict[str, Any] = monitor.get_stats()
+                stats["monitors"][name] = monitor_stats
             except Exception as e:
                 stats["monitors"][name] = {"error": str(e)}
 
@@ -172,7 +174,7 @@ class MonitoringSession:
         """
         self.aggregator.on_event(callback)
 
-    def on_stats_update(self, callback: Callable[[dict[str, object]], None]) -> None:
+    def on_stats_update(self, callback: Callable[[dict[str, Any]], None]) -> None:
         """Register callback for statistics updates.
 
         Args:
@@ -206,7 +208,7 @@ class MonitoringSession:
         """
         return self.aggregator.get_history(limit)
 
-    def _start_monitor(self, name: str, monitor: object) -> bool:
+    def _start_monitor(self, name: str, monitor: BaseMonitor) -> bool:
         """Start a monitor and connect it to aggregator.
 
         Args:
@@ -217,8 +219,11 @@ class MonitoringSession:
             True if started successfully.
 
         """
+        def event_callback(event: MonitorEvent) -> None:
+            self.aggregator.submit_event(event)
+
         try:
-            monitor.on_event(self.aggregator.submit_event)
+            monitor.on_event(event_callback)
 
             if monitor.start():
                 return True

@@ -22,6 +22,7 @@ import json
 import logging
 import sys
 import traceback
+from argparse import Namespace
 from collections.abc import Callable
 from typing import Any
 
@@ -29,7 +30,7 @@ from typing import Any
 logger = logging.getLogger(__name__)
 
 # Tool registry for dispatch system
-TOOL_REGISTRY = {}
+TOOL_REGISTRY: dict[str, Callable[[object, dict[str, Any]], dict[str, Any]]] = {}
 
 
 def main(args: list[str] | None = None) -> int:
@@ -122,7 +123,7 @@ def main(args: list[str] | None = None) -> int:
         return 1
 
 
-def run_gui_mode(args: object) -> int:
+def run_gui_mode(args: Namespace) -> int:
     """Run Intellicrack in GUI mode.
 
     Args:
@@ -156,7 +157,7 @@ def run_gui_mode(args: object) -> int:
         return 1
 
 
-def run_cli_mode(args: object) -> int:
+def run_cli_mode(args: Namespace) -> int:
     """Run Intellicrack in CLI mode.
 
     Args:
@@ -173,7 +174,7 @@ def run_cli_mode(args: object) -> int:
     try:
         from ..runtime.additional_runners import run_autonomous_crack, run_comprehensive_analysis
 
-        results = {}
+        results: dict[str, Any] = {}
 
         # Run analysis if requested
         if args.analyze:
@@ -259,16 +260,16 @@ def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, An
         tool_func = TOOL_REGISTRY[tool_name]
 
         # Execute tool
-        result = tool_func(app_instance, parameters)
+        result_dict: dict[str, Any] = tool_func(app_instance, parameters)
 
         # Update UI with result
         if app_instance and hasattr(app_instance, "update_output"):
-            status = result.get("status", "unknown")
+            status = result_dict.get("status", "unknown")
             app_instance.update_output.emit(
                 f"[Tool Dispatch] Tool '{tool_name}' executed. Status: {status}",
             )
 
-        return result
+        return result_dict
 
     except (OSError, ValueError, RuntimeError) as e:
         error_trace = traceback.format_exc()
@@ -291,7 +292,7 @@ def dispatch_tool(app_instance: object, tool_name: str, parameters: dict[str, An
         }
 
 
-def register_tool(name: str, func: Callable, category: str = "general") -> bool:
+def register_tool(name: str, func: Callable[[object, dict[str, Any]], dict[str, Any]], category: str = "general") -> bool:
     """Register a tool in the tool registry.
 
     Args:

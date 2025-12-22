@@ -96,10 +96,10 @@ class RemotePluginExecutor:
 
             secret = secrets.token_hex(32)
             # Try to store it for future use
-            from ..utils.secrets_manager import store_secret
+            from ..utils.secrets_manager import set_secret
 
             try:
-                store_secret("INTELLICRACK_REMOTE_SECRET", secret)
+                set_secret("INTELLICRACK_REMOTE_SECRET", secret)
                 self.logger.info("Generated and stored new secure remote execution secret")
             except Exception as e:
                 logger.warning(f"Could not store generated secret: {e}")
@@ -232,7 +232,11 @@ class RemotePluginExecutor:
                 serialization_type = response_data.get("serialization", "json")
 
                 try:
-                    return self._deserialize_safe(encoded_results, expected_type=serialization_type)
+                    results = self._deserialize_safe(encoded_results, expected_type=serialization_type)
+                    # Ensure results is a list of strings
+                    if isinstance(results, list):
+                        return [str(item) for item in results]
+                    return [str(results)]
                 except Exception as e:
                     logger.exception("Failed to deserialize results: %s", e)
                     return [f"Deserialization error: {e}"]
@@ -323,8 +327,17 @@ class RemotePluginExecutor:
                 # Deserialize arguments based on type
                 executor = RemotePluginExecutor()
                 try:
-                    args = executor._deserialize_safe(request.get("args", ""), expected_type=serialization_type)
-                    kwargs = executor._deserialize_safe(request.get("kwargs", ""), expected_type=serialization_type)
+                    args_obj = executor._deserialize_safe(request.get("args", ""), expected_type=serialization_type)
+                    kwargs_obj = executor._deserialize_safe(request.get("kwargs", ""), expected_type=serialization_type)
+
+                    # Type narrowing for variadic arguments
+                    if not isinstance(args_obj, (list, tuple)):
+                        args_obj = []
+                    if not isinstance(kwargs_obj, dict):
+                        kwargs_obj = {}
+
+                    args: tuple[object, ...] = tuple(args_obj)
+                    kwargs: dict[str, object] = dict(kwargs_obj)
                 except Exception as e:
                     logger.exception("Failed to deserialize arguments: %s", e)
                     response = {"status": "error", "error": f"Deserialization failed: {e}"}

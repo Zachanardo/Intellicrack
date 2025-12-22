@@ -23,23 +23,53 @@ import hashlib
 import json
 import os
 from pathlib import Path
+from typing import Any, Protocol
 
 from intellicrack.core.config_manager import get_config
 
 
+class MainAppProtocol(Protocol):
+    """Protocol defining the required interface for main application objects.
+
+    This protocol defines the minimal interface required by the incremental
+    analysis system to interact with the main application instance.
+    """
+
+    current_binary: str
+    update_output: Any
+    update_analysis_results: Any
+    analysis_completed: Any
+
+    def emit(self, *args: Any) -> None:
+        """Emit a signal."""
+        ...
+
+    def run_selected_analysis_partial(self, analysis_type: str) -> None:
+        """Run a partial analysis of the specified type."""
+        ...
+
+
 def get_cache_path(binary_path: str) -> Path:
-    """Generate a consistent cache file path for a given binary."""
+    """Generate a consistent cache file path for a given binary.
+
+    Args:
+        binary_path: Absolute path to the binary file
+
+    Returns:
+        Path to the cache file for this binary
+
+    """
     config = get_config()
-    # Use a dedicated subdirectory for incremental analysis cache
-    cache_dir = Path(config.get("directories.cache", ".cache")) / "incremental"
+    cache_value: object = config.get("directories.cache", ".cache")
+    cache_str: str = str(cache_value) if cache_value is not None else ".cache"
+    cache_dir: Path = Path(cache_str) / "incremental"
     cache_dir.mkdir(parents=True, exist_ok=True)
 
-    # Hash the absolute path to create a unique, filesystem-safe cache key
-    file_hash = hashlib.sha256(binary_path.encode()).hexdigest()
+    file_hash: str = hashlib.sha256(binary_path.encode()).hexdigest()
     return cache_dir / f"{file_hash}.json"
 
 
-def run_incremental_analysis(main_app: object) -> None:
+def run_incremental_analysis(main_app: MainAppProtocol) -> None:
     """Run analysis on the target binary, using cached results if available.
 
     Performs incremental caching of analysis results based on file modification
@@ -54,22 +84,23 @@ def run_incremental_analysis(main_app: object) -> None:
         main_app.update_output.emit("[Incremental] Error: No binary loaded.")
         return
 
-    binary_path = main_app.current_binary
-    cache_file = get_cache_path(binary_path)
+    binary_path: str = main_app.current_binary
+    cache_file: Path = get_cache_path(binary_path)
 
     try:
-        # Use file modification time and size as the cache validation strategy.
-        # For full integrity, a file hash would be better but slower.
-        current_mtime = Path(binary_path).stat().st_mtime
-        current_size = os.path.getsize(binary_path)
+        current_mtime: float = Path(binary_path).stat().st_mtime
+        current_size: int = os.path.getsize(binary_path)
 
         if cache_file.exists():
             with open(cache_file, encoding="utf-8") as f:
-                cached_data = json.load(f)
+                cached_data: dict[str, Any] = json.load(f)
 
-            if cached_data.get("mtime") == current_mtime and cached_data.get("size") == current_size:
+            cached_mtime: Any = cached_data.get("mtime")
+            cached_size: Any = cached_data.get("size")
+
+            if cached_mtime == current_mtime and cached_size == current_size:
                 main_app.update_output.emit(f"[Incremental] Loading cached results for {os.path.basename(binary_path)}.")
-                results = cached_data.get("results", {})
+                results: dict[str, Any] = cached_data.get("results", {})
                 main_app.update_analysis_results.emit(json.dumps(results, indent=2))
                 if hasattr(main_app, "analysis_completed"):
                     main_app.analysis_completed.emit("Incremental Analysis (Cached)")
@@ -77,18 +108,10 @@ def run_incremental_analysis(main_app: object) -> None:
 
         main_app.update_output.emit(f"[Incremental] No valid cache. Running full analysis for {os.path.basename(binary_path)}.")
 
-        # If no valid cache, run a new comprehensive analysis.
-        # This function is assumed to be on the main_app instance and to be blocking or threaded.
         if hasattr(main_app, "run_selected_analysis_partial"):
-            # This will trigger the analysis and the results will be handled by the app's signal/slot mechanism.
-            # We don't get the results back directly here.
             main_app.run_selected_analysis_partial("comprehensive")
-            # The caching of the *new* result should be handled by the analysis completion signal handler.
         else:
             main_app.update_output.emit("[Incremental] Error: The 'run_selected_analysis_partial' function is not available.")
 
     except Exception as e:
         main_app.update_output.emit(f"[Incremental] An error occurred: {e}")
-    finally:
-        # The completion signal is emitted by the called analysis function.
-        pass

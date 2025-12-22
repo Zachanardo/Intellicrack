@@ -22,14 +22,14 @@ from typing import Any
 try:
     from ..core.analysis.binary_analyzer import BinaryAnalyzer
 except ImportError:
-    BinaryAnalyzer = None
+    BinaryAnalyzer = None  # type: ignore[misc,assignment]
 
 try:
     from ..utils.logger import get_logger
 except ImportError:
 
-    def get_logger(name: str) -> logging.Logger:
-        return logging.getLogger(name)
+    def get_logger(name: str | None = None) -> logging.Logger:
+        return logging.getLogger(name or __name__)
 
 
 logger = get_logger(__name__)
@@ -93,11 +93,11 @@ class AIScriptGenerator:
 
     def __init__(self) -> None:
         """Initialize the AI script generator."""
-        self.binary_analyzer = BinaryAnalyzer() if BinaryAnalyzer else None
+        self.binary_analyzer = BinaryAnalyzer() if BinaryAnalyzer is not None else None
         self.optimization_patterns = self._load_optimization_patterns()
         self.anti_detection_techniques = self._load_anti_detection_techniques()
 
-    def _load_optimization_patterns(self) -> dict:
+    def _load_optimization_patterns(self) -> dict[str, dict[str, str | list[str]]]:
         """Load optimization patterns for script enhancement."""
         return {
             "memory_hooks": {
@@ -138,7 +138,7 @@ class AIScriptGenerator:
             },
         }
 
-    def _load_anti_detection_techniques(self) -> dict:
+    def _load_anti_detection_techniques(self) -> dict[str, list[str]]:
         """Load anti-detection techniques for enhanced stealth."""
         return {
             "hook_obfuscation": [
@@ -167,7 +167,7 @@ class AIScriptGenerator:
             ],
         }
 
-    def generate_script(self, _prompt: str, base_script: str, context: dict) -> str:
+    def generate_script(self, _prompt: str, base_script: str, context: dict[str, Any]) -> str:
         """Generate enhanced bypass script using AI techniques.
 
         Args:
@@ -216,7 +216,7 @@ class AIScriptGenerator:
                 raise
             return base_script
 
-    def _analyze_script_structure(self, script: str) -> dict:
+    def _analyze_script_structure(self, script: str) -> dict[str, bool | int]:
         """Analyze script structure to identify enhancement opportunities."""
         return {
             "has_memory_ops": bool(re.search(r"Memory\.|ptr\(", script)),
@@ -305,12 +305,12 @@ class AIScriptGenerator:
 
         return script
 
-    def _apply_protection_enhancements(self, script: str, protection: dict) -> str:
+    def _apply_protection_enhancements(self, script: str, protection: dict[str, Any]) -> str:
         """Apply protection-specific enhancements to the script."""
         protection_type = protection.get("type", "").lower()
 
         # Collect enhancements grouped by their logical position
-        enhancements_by_position = {
+        enhancements_by_position: dict[str, list[str]] = {
             "initialization": [],  # Global variables, caches, initial setup
             "hooks": [],  # Hook installations and interceptors
             "utilities": [],  # Helper functions and utilities
@@ -380,7 +380,7 @@ class AIScriptGenerator:
 
         return "\n".join(hook_lines) if hook_lines else code
 
-    def _insert_grouped_enhancements(self, script: str, enhancements_by_position: dict) -> str:
+    def _insert_grouped_enhancements(self, script: str, enhancements_by_position: dict[str, list[str]]) -> str:
         """Insert grouped enhancements at appropriate positions in the script."""
         lines = script.split("\n")
 
@@ -494,7 +494,7 @@ AntiDetection.normalizeTiming();
 """
         return evasion_code + "\n\n" + script
 
-    def _optimize_script_performance(self, script: str, analysis: dict) -> str:
+    def _optimize_script_performance(self, script: str, analysis: dict[str, bool | int]) -> str:
         """Optimize script performance based on detected patterns."""
         optimized = script
 
@@ -1674,7 +1674,7 @@ DateSpoofer.spoofAllDateSources();
             }
 
             enhanced_script = self.generate_script(
-                prompt=f"Generate Frida bypass for {binary_path}",
+                _prompt=f"Generate Frida bypass for {binary_path}",
                 base_script=base_script,
                 context=context,
             )

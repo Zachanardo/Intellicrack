@@ -26,6 +26,7 @@ from typing import Any
 
 import joblib
 import numpy as np
+from numpy.typing import NDArray
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from sklearn.model_selection import cross_val_score, train_test_split
@@ -41,7 +42,7 @@ class ClassificationResult:
     primary_protection: str
     confidence: float
     top_predictions: list[tuple[str, float]]
-    feature_vector: np.ndarray
+    feature_vector: NDArray[np.floating[Any]]
     model_version: str
 
 
@@ -91,8 +92,8 @@ class ProtectionClassifier:
 
     def train(
         self,
-        X: np.ndarray,
-        y: np.ndarray,
+        X: NDArray[np.float64],
+        y: NDArray[np.object_],
         test_size: float = 0.2,
         n_estimators: int = 200,
         random_state: int = 42,

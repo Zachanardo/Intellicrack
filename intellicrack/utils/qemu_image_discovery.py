@@ -57,7 +57,7 @@ class QEMUImageDiscovery:
 
     def __init__(self) -> None:
         """Initialize QEMU image discovery."""
-        self._cache = []
+        self._cache: list[QEMUImageInfo] = []
         self._cache_valid = False
 
     def get_search_directories(self) -> list[Path]:

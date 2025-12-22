@@ -128,6 +128,8 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
     heuristic_detections: list[DetectionResult] = field(default_factory=list)
     similarity_hash: str | None = None
     file_format_details: dict[str, Any] = field(default_factory=dict)
+    is_64bit: bool = False
+    endianess: str = "little"
 
     def __init__(  # noqa: PLR0917 - Comprehensive dataclass requires many positional args
         self,
@@ -154,6 +156,8 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
         heuristic_detections: list[DetectionResult] | None = None,
         similarity_hash: str | None = None,
         file_format_details: dict[str, Any] | None = None,
+        is_64bit: bool = False,
+        endianess: str = "little",
     ) -> None:
         """Initialize advanced protection analysis with comprehensive binary analysis data."""
         super().__init__(
@@ -181,6 +185,8 @@ class AdvancedProtectionAnalysis(ProtectionAnalysis):
         self.heuristic_detections = heuristic_detections or []
         self.similarity_hash = similarity_hash
         self.file_format_details = file_format_details or {}
+        self.is_64bit = is_64bit
+        self.endianess = endianess
 
 
 class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
@@ -203,7 +209,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
         super().__init__(engine_path)
         self.custom_db_path = custom_db_path or self._find_custom_db()
         self.cache_enabled = enable_cache
-        self.result_cache = {} if enable_cache else None
+        self.result_cache: dict[str, tuple[AdvancedProtectionAnalysis, str]] | None = {} if enable_cache else None
 
     def _find_custom_db(self) -> str | None:
         """Find custom database directory."""
@@ -243,7 +249,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         """
         # Check cache first
-        if self.cache_enabled and file_path in self.result_cache:
+        if self.cache_enabled and self.result_cache is not None and file_path in self.result_cache:
             file_hash = self._calculate_file_hash(file_path)
             cached_result, cached_hash = self.result_cache[file_path]
             if file_hash == cached_hash:
@@ -251,7 +257,13 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
                 return cached_result
 
         # Build command with advanced options
-        cmd = [self.engine_path]
+        cmd: list[str] = [self.engine_path] if self.engine_path else []
+        if not cmd:
+            return AdvancedProtectionAnalysis(
+                file_path=file_path,
+                file_type="Error",
+                architecture="Unknown",
+            )
 
         # Add format option
         if export_format == ExportFormat.JSON:
@@ -322,7 +334,7 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
             analysis.similarity_hash = self._calculate_similarity_hash(file_path)
 
             # Cache result
-            if self.cache_enabled:
+            if self.cache_enabled and self.result_cache is not None:
                 file_hash = self._calculate_file_hash(file_path)
                 self.result_cache[file_path] = (analysis, file_hash)
 
@@ -567,7 +579,9 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
         try:
             # Use protection engine's string extraction
-            cmd = [self.engine_path, "-s", file_path]
+            if not self.engine_path:
+                return []
+            cmd: list[str] = [self.engine_path, "-s", file_path]
             result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=30, shell=False)  # nosec S603 - Legitimate subprocess usage for security research and binary analysis
 
             if result.returncode == 0:
@@ -794,8 +808,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
                 for dll in common_dlls:
                     if dll in import_area:
-                        dll_name = dll.decode("utf-8", errors="ignore").lower()
-                        import_strings.append(dll_name)
+                        dll_name_str = dll.decode("utf-8", errors="ignore").lower()
+                        import_strings.append(dll_name_str)
 
             # Generate hash from whatever imports we found
             if import_strings:
@@ -823,7 +837,8 @@ class IntellicrackAdvancedProtection(IntellicrackProtectionCore):
 
             with open(file_path, "rb") as f:
                 file_data = f.read()
-            return ssdeep.hash(file_data)
+            ssdeep_result = ssdeep.hash(file_data)
+            return str(ssdeep_result) if ssdeep_result else None
         except ImportError:
             logger.debug("ssdeep not available, trying TLSH")
         except Exception as e:
@@ -1085,8 +1100,8 @@ function detect(bShowType, bShowVersion, bShowOptions)
         main_rule_name = Path(analysis.file_path).stem.replace(" ", "_").replace("-", "_")
 
         # Build comprehensive strings section
-        strings_section = []
-        conditions_list = []
+        strings_section: list[str] = []
+        conditions_list: list[str] = []
 
         # Add file format specific patterns
         if "PE" in analysis.file_type:
@@ -1221,7 +1236,6 @@ rule {rule_name}_Specific {{
             elif detection.type == ProtectionType.PROTECTOR:
                 patterns.append("$anti_debug = { 64 A1 30 00 00 00 }  // Check PEB for debugging")
                 patterns.append("$is_debugger = { FF 15 ?? ?? ?? ?? 85 C0 }  // IsDebuggerPresent")
-            elif detection.type == ProtectionType.OBFUSCATOR:
                 patterns.append("$obfuscated = { [10-20] ( E9 | E8 | EB ) ?? ?? ?? ?? }  // Jump obfuscation")
             elif detection.type == ProtectionType.CRYPTOR:
                 patterns.append("$xor_loop = { 80 34 ?? ?? 40 3D ?? ?? ?? ?? }  // XOR decryption loop")

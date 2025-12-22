@@ -8,7 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from ...core.analysis.memory_forensics_engine import (
     get_memory_forensics_engine,
@@ -22,7 +22,7 @@ logger = get_logger(__name__)
 class MemoryForensicsTool:
     """LLM tool for running memory forensics analysis using Volatility3"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize memory forensics tool"""
         self.engine: Any | None = get_memory_forensics_engine()
         self.analysis_cache: dict[str, dict[str, Any]] = {}
@@ -96,7 +96,7 @@ class MemoryForensicsTool:
             },
         }
 
-    def execute(self, **kwargs) -> dict[str, Any]:
+    def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute memory forensics analysis
 
         Args:

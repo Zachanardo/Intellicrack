@@ -26,51 +26,53 @@ import logging
 import struct
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
+if TYPE_CHECKING:
+    from types import ModuleType
 
 try:
     import capstone
-
-    CAPSTONE_AVAILABLE = True
 except ImportError:
-    CAPSTONE_AVAILABLE = False
     capstone = None
+CAPSTONE_AVAILABLE = capstone is not None
 
 try:
     import frida
-
-    FRIDA_AVAILABLE = True
 except ImportError:
-    FRIDA_AVAILABLE = False
-    frida = None
+    frida = None  # type: ignore[assignment]
+FRIDA_AVAILABLE = frida is not None
 
 try:
     import keystone
-
-    KEYSTONE_AVAILABLE = True
 except ImportError:
-    KEYSTONE_AVAILABLE = False
     keystone = None
+KEYSTONE_AVAILABLE = keystone is not None
 
 try:
     import lief
-
-    LIEF_AVAILABLE = True
 except ImportError:
-    LIEF_AVAILABLE = False
-    lief = None
+    lief = None  # type: ignore[assignment]
+LIEF_AVAILABLE = lief is not None
 
 try:
     import pefile
-
-    PEFILE_AVAILABLE = True
 except ImportError:
-    PEFILE_AVAILABLE = False
     pefile = None
+PEFILE_AVAILABLE = pefile is not None
 
-from intellicrack.core.analysis.arxan_analyzer import ArxanAnalyzer, LicenseValidationRoutine, RASPMechanism, TamperCheckLocation
+from intellicrack.core.analysis.arxan_analyzer import (
+    ArxanAnalysisResult,
+    ArxanAnalyzer,
+    IntegrityCheckMechanism,
+    LicenseValidationRoutine,
+    RASPMechanism,
+    TamperCheckLocation,
+)
 from intellicrack.core.protection_detection.arxan_detector import ArxanDetector
+
+if TYPE_CHECKING:
+    import pefile as pefile_type
 
 
 logger = logging.getLogger(__name__)
@@ -105,19 +107,21 @@ class ArxanBypassResult:
 class ArxanBypass:
     """Bypasses Arxan TransformIT protection mechanisms."""
 
-    NOP_OPCODE = b"\x90"
-    RET_OPCODE = b"\xc3"
-    XOR_EAX_EAX = b"\x33\xc0"
-    MOV_EAX_1 = b"\xb8\x01\x00\x00\x00"
-    JMP_SHORT_0 = b"\xeb\x00"
+    NOP_OPCODE: bytes = b"\x90"
+    RET_OPCODE: bytes = b"\xc3"
+    XOR_EAX_EAX: bytes = b"\x33\xc0"
+    MOV_EAX_1: bytes = b"\xb8\x01\x00\x00\x00"
+    JMP_SHORT_0: bytes = b"\xeb\x00"
 
     def __init__(self) -> None:
         """Initialize ArxanBypass with analyzer and assemblers."""
-        self.logger = logging.getLogger(__name__)
-        self.detector = ArxanDetector()
-        self.analyzer = ArxanAnalyzer()
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.detector: ArxanDetector = ArxanDetector()
+        self.analyzer: ArxanAnalyzer = ArxanAnalyzer()
 
-        if KEYSTONE_AVAILABLE:
+        self.ks_32: Any
+        self.ks_64: Any
+        if KEYSTONE_AVAILABLE and keystone:
             self.ks_32 = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_32)
             self.ks_64 = keystone.Ks(keystone.KS_ARCH_X86, keystone.KS_MODE_64)
         else:
@@ -125,7 +129,9 @@ class ArxanBypass:
             self.ks_64 = None
             self.logger.warning("Keystone not available - assembly features disabled")
 
-        if CAPSTONE_AVAILABLE:
+        self.md_32: Any
+        self.md_64: Any
+        if CAPSTONE_AVAILABLE and capstone:
             self.md_32 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_32)
             self.md_32.detail = True
             self.md_64 = capstone.Cs(capstone.CS_ARCH_X86, capstone.CS_MODE_64)
@@ -135,8 +141,8 @@ class ArxanBypass:
             self.md_64 = None
             self.logger.warning("Capstone not available - disassembly features disabled")
 
-        self.frida_session = None
-        self.frida_script = None
+        self.frida_session: Any = None
+        self.frida_script: Any = None
 
     def bypass(
         self,
@@ -189,7 +195,7 @@ class ArxanBypass:
         with open(binary_path, "rb") as f:
             binary_data = bytearray(f.read())
 
-        patches = []
+        patches: list[BypassPatch] = []
 
         self._bypass_tamper_checks(binary_data, analysis_result.tamper_checks, patches)
         self._bypass_integrity_checks(binary_data, analysis_result.integrity_checks, patches)
@@ -198,7 +204,7 @@ class ArxanBypass:
         self._decrypt_strings(binary_data, analysis_result.encrypted_strings, patches)
 
         try:
-            if binary_path.suffix.lower() in {".exe", ".dll", ".sys"} and PEFILE_AVAILABLE:
+            if binary_path.suffix.lower() in {".exe", ".dll", ".sys"} and PEFILE_AVAILABLE and pefile:
                 pe = pefile.PE(data=bytes(binary_data))
 
                 for patch in patches:
@@ -247,7 +253,7 @@ class ArxanBypass:
         self.logger.info("Patched binary saved: %s", output_path)
 
         if runtime_bypass and process_name:
-            if not FRIDA_AVAILABLE:
+            if not FRIDA_AVAILABLE or not frida:
                 self.logger.warning("Frida not available - runtime bypass disabled")
             else:
                 frida_script = self._generate_frida_bypass_script(analysis_result)
@@ -274,7 +280,14 @@ class ArxanBypass:
         tamper_checks: list[TamperCheckLocation],
         patches: list[BypassPatch],
     ) -> None:
-        """Bypass anti-tampering checks."""
+        """Bypass anti-tampering checks.
+
+        Args:
+            binary_data: Binary data to patch.
+            tamper_checks: List of tamper check locations.
+            patches: List to append generated patches to.
+
+        """
         for check in tamper_checks:
             if check.address < len(binary_data):
                 patch_bytes = (
@@ -298,10 +311,17 @@ class ArxanBypass:
     def _bypass_integrity_checks(
         self,
         binary_data: bytearray,
-        integrity_checks: list,
+        integrity_checks: list[IntegrityCheckMechanism],
         patches: list[BypassPatch],
     ) -> None:
-        """Neutralize integrity check mechanisms."""
+        """Neutralize integrity check mechanisms.
+
+        Args:
+            binary_data: Binary data to patch.
+            integrity_checks: List of integrity check mechanisms.
+            patches: List to append generated patches to.
+
+        """
         for check in integrity_checks:
             if check.hash_algorithm == "CRC32":
                 patch_bytes = b"\xb8\x00\x00\x00\x00\xc3"
@@ -330,7 +350,14 @@ class ArxanBypass:
         license_routines: list[LicenseValidationRoutine],
         patches: list[BypassPatch],
     ) -> None:
-        """Bypass license validation routines."""
+        """Bypass license validation routines.
+
+        Args:
+            binary_data: Binary data to patch.
+            license_routines: List of license validation routines.
+            patches: List to append generated patches to.
+
+        """
         for routine in license_routines:
             if routine.address < len(binary_data):
                 patch_bytes = (
@@ -357,7 +384,14 @@ class ArxanBypass:
         rasp_mechanisms: list[RASPMechanism],
         patches: list[BypassPatch],
     ) -> None:
-        """Defeat RASP mechanisms."""
+        """Defeat RASP mechanisms.
+
+        Args:
+            binary_data: Binary data to patch.
+            rasp_mechanisms: List of RASP mechanisms.
+            patches: List to append generated patches to.
+
+        """
         for rasp in rasp_mechanisms:
             if rasp.mechanism_type == "anti_debug":
                 patch_bytes = b"\x33\xc0\xc3"
@@ -390,7 +424,14 @@ class ArxanBypass:
         encrypted_regions: list[tuple[int, int]],
         patches: list[BypassPatch],
     ) -> None:
-        """Decrypt encrypted strings (where possible)."""
+        """Decrypt encrypted strings (where possible).
+
+        Args:
+            binary_data: Binary data to patch.
+            encrypted_regions: List of encrypted region addresses and lengths.
+            patches: List to append generated patches to.
+
+        """
         for address, length in encrypted_regions[:10]:
             if address + length > len(binary_data):
                 continue
@@ -415,7 +456,7 @@ class ArxanBypass:
                     self.logger.debug("Decrypting string at 0x%x with XOR key %d", address, xor_key)
                     break
 
-    def _generate_frida_bypass_script(self, analysis_result: object) -> str:
+    def _generate_frida_bypass_script(self, analysis_result: ArxanAnalysisResult) -> str:
         """Generate Frida script for runtime bypass.
 
         Args:
@@ -425,7 +466,7 @@ class ArxanBypass:
             Frida JavaScript code for runtime protection bypass.
 
         """
-        script_parts = [
+        script_parts: list[str] = [
             "console.log('[Arxan Bypass] Initializing runtime hooks...');",
             "",
             "// Anti-debugging bypass",
@@ -529,8 +570,17 @@ class ArxanBypass:
 
         return "\n".join(script_parts)
 
-    def _rva_to_offset(self, pe: pefile.PE, rva: int) -> int | None:
-        """Convert RVA to file offset."""
+    def _rva_to_offset(self, pe: Any, rva: int) -> int | None:
+        """Convert RVA to file offset.
+
+        Args:
+            pe: PE file object from pefile library.
+            rva: Relative Virtual Address to convert.
+
+        Returns:
+            File offset corresponding to the RVA, or None if not found.
+
+        """
         return next(
             (
                 section.PointerToRawData + (rva - section.VirtualAddress)
@@ -541,7 +591,15 @@ class ArxanBypass:
         )
 
     def _calculate_pe_checksum(self, binary_data: bytes) -> int:
-        """Calculate PE checksum."""
+        """Calculate PE checksum.
+
+        Args:
+            binary_data: PE binary data.
+
+        Returns:
+            Calculated checksum value.
+
+        """
         checksum = 0
 
         for i in range(0, len(binary_data), 4):
@@ -560,7 +618,7 @@ class ArxanBypass:
 
         return checksum & 0xFFFFFFFF
 
-    def _on_frida_message(self, message: dict[str, object], data: object) -> None:
+    def _on_frida_message(self, message: dict[str, Any], data: Any) -> None:
         """Handle Frida script messages.
 
         Args:
@@ -568,13 +626,20 @@ class ArxanBypass:
             data: Binary data associated with the message.
 
         """
-        if message["type"] == "send":
-            self.logger.info("[Frida] %s", message["payload"])
-        elif message["type"] == "error":
-            self.logger.error("[Frida Error] %s", message.get("stack", message))
+        msg_type = message.get("type")
+        if msg_type == "send":
+            payload = message.get("payload")
+            self.logger.info("[Frida] %s", payload)
+        elif msg_type == "error":
+            stack = message.get("stack", message)
+            self.logger.error("[Frida Error] %s", stack)
 
     def cleanup(self) -> None:
-        """Clean up Frida session."""
+        """Clean up Frida session.
+
+        Unloads Frida script and detaches session if active.
+
+        """
         if self.frida_script:
             try:
                 self.frida_script.unload()

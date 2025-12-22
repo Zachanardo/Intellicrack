@@ -560,7 +560,7 @@ class PolymorphicAnalyzer:
             "".join(semantic_hashes).encode(),
         ).hexdigest()
 
-    def _create_instruction_node(self, insn: object) -> InstructionNode:
+    def _create_instruction_node(self, insn: Any) -> InstructionNode:
         """Create normalized instruction node from disassembled instruction."""
         semantic_class = self.INSTRUCTION_SEMANTICS.get(insn.mnemonic, "other")
 
@@ -573,9 +573,9 @@ class PolymorphicAnalyzer:
             elif operand.type == X86_OP_MEM:
                 operand_types.append("mem")
 
-        data_deps = set()
-        control_deps = set()
-        side_effects = set()
+        data_deps: set[str] = set()
+        control_deps: set[str] = set()
+        side_effects: set[str] = set()
 
         if semantic_class == "arithmetic":
             if len(insn.operands) >= 2:
@@ -834,23 +834,23 @@ class PolymorphicAnalyzer:
 
         return dict(dependencies)
 
-    def _operands_equal(self, op1: object, op2: object) -> bool:
+    def _operands_equal(self, op1: Any, op2: Any) -> bool:
         """Check if two operands are equal."""
         if op1.type != op2.type:
             return False
 
         if op1.type == X86_OP_REG:
-            return op1.reg == op2.reg
+            return bool(op1.reg == op2.reg)
         if op1.type == X86_OP_IMM:
-            return op1.imm == op2.imm
+            return bool(op1.imm == op2.imm)
         if op1.type == X86_OP_MEM:
-            return op1.mem.base == op2.mem.base and op1.mem.index == op2.mem.index and op1.mem.disp == op2.mem.disp
+            return bool(op1.mem.base == op2.mem.base and op1.mem.index == op2.mem.index and op1.mem.disp == op2.mem.disp)
 
         return False
 
-    def _is_register_operand(self, operand: object) -> bool:
+    def _is_register_operand(self, operand: Any) -> bool:
         """Check if operand is a register."""
-        return operand.type == X86_OP_REG
+        return bool(operand.type == X86_OP_REG)
 
     def compare_code_variants(
         self,

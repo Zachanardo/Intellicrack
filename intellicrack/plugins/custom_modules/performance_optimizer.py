@@ -38,6 +38,7 @@ from enum import Enum
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from intellicrack.handlers.numpy_handler import numpy as np
 from intellicrack.handlers.psutil_handler import psutil
 from intellicrack.handlers.sqlite3_handler import sqlite3
@@ -482,7 +483,7 @@ class GPUOptimizer:
         self.torch_is_available: bool = TORCH_AVAILABLE and torch is not None
 
         if self.torch_is_available and torch is not None:
-            self.gpu_available = torch.cuda.is_available()  # type: ignore[unreachable]
+            self.gpu_available = torch.cuda.is_available()
             if self.gpu_available:
                 self.device_count = torch.cuda.device_count()
 
@@ -494,7 +495,7 @@ class GPUOptimizer:
         if not self.gpu_available or not self.torch_is_available or torch is None:
             return 1
 
-        cache_key = f"{model_name}_{input_shape}"  # type: ignore[unreachable]
+        cache_key = f"{model_name}_{input_shape}"
         if cache_key in self.optimal_batch_sizes:
             return self.optimal_batch_sizes[cache_key]
 
@@ -521,7 +522,7 @@ class GPUOptimizer:
             return
 
         # Clear cache
-        torch.cuda.empty_cache()  # type: ignore[unreachable]
+        torch.cuda.empty_cache()
 
         # Collect memory statistics
         for device_id in range(self.device_count):
@@ -733,8 +734,8 @@ class DatabaseOptimizer:
         # Check cache for SELECT queries
         if query.strip().upper().startswith("SELECT") and query_hash in self.query_cache:
             cache_entry = self.query_cache[query_hash]
-            if time.time() - cast("float", cache_entry["timestamp"]) < 300:  # 5 minutes TTL
-                return cast("list[tuple[Any, ...]]", cache_entry["result"])
+            if time.time() - get_typed_item(cache_entry, "timestamp", float) < 300:  # 5 minutes TTL
+                return validate_type(cache_entry["result"], list)
 
         # Execute query and collect stats
         start_time = time.time()
@@ -812,7 +813,7 @@ class DatabaseOptimizer:
             "avg_execution_time": avg_execution_time,
             "cache_size": len(self.query_cache),
             "connection_pool_size": len(self.connection_pool),
-            "slow_queries": len([s for stats in self.query_stats.values() for s in stats if cast("float", s["execution_time"]) > 1.0]),
+            "slow_queries": len([s for stats in self.query_stats.values() for s in stats if get_typed_item(s, "execution_time", float) > 1.0]),
         }
 
 
@@ -890,7 +891,7 @@ class PerformanceProfiler:
 
                 # GPU metrics (unused for now but kept for potential future use)
                 if TORCH_AVAILABLE and torch is not None:
-                    if torch.cuda.is_available():  # type: ignore[unreachable]
+                    if torch.cuda.is_available():
                         for device_id in range(torch.cuda.device_count()):
                             _ = torch.cuda.memory_allocated(device_id)
 
@@ -1019,14 +1020,14 @@ class AdaptiveOptimizer:
             return
 
         # Find best performing configurations
-        sorted_history = sorted(self.optimization_history, key=lambda x: cast("float", x["score"]), reverse=True)
+        sorted_history = sorted(self.optimization_history, key=lambda x: get_typed_item(x, "score", float), reverse=True)
         best_configs = sorted_history[:5]  # Top 5 configurations
 
         # Calculate average of best configurations
         new_config: dict[str, int] = {}
         for key in self.current_config:
             if values := [
-                cast("dict[str, int]", config["config"])[key] for config in best_configs if key in cast("dict[str, int]", config["config"])
+                validate_type(config["config"], dict)[key] for config in best_configs if key in validate_type(config["config"], dict)
             ]:
                 new_config[key] = int(np.mean(values))
 
@@ -1042,7 +1043,7 @@ class AdaptiveOptimizer:
             return {}
 
         recent_metrics = self.optimization_history[-10:]
-        avg_score = float(np.mean([cast("float", h["score"]) for h in recent_metrics]))
+        avg_score = float(np.mean([get_typed_item(h, "score", float) for h in recent_metrics]))
 
         recommendations: list[dict[str, str]] = []
 
@@ -1061,7 +1062,7 @@ class AdaptiveOptimizer:
                 },
             ))
         # Check for memory pressure
-        recent_memory = float(np.mean([cast("dict[str, float]", h["metrics"]).get("memory_percent", 0) for h in recent_metrics]))
+        recent_memory = float(np.mean([validate_type(h["metrics"], dict).get("memory_percent", 0) for h in recent_metrics]))
         if recent_memory > 80:
             recommendations.append(
                 {
@@ -1100,7 +1101,7 @@ class PerformanceOptimizer:
         # Database optimizer (if database is specified)
         self.db_optimizer: DatabaseOptimizer | None = None
         if "database_path" in self.config:
-            self.db_optimizer = DatabaseOptimizer(cast("str", self.config["database_path"]))
+            self.db_optimizer = DatabaseOptimizer(get_typed_item(self.config, "database_path", str))
 
         # Performance tracking
         self.optimization_results: list[OptimizationResult] = []
@@ -1503,16 +1504,16 @@ if __name__ == "__main__":
     report = optimizer.get_performance_report()
 
     logger.info("Performance Report Summary:")
-    logger.info("- CPU Usage: %.1f%%", cast("dict[str, object]", report["system_metrics"])["cpu_percent"])
-    logger.info("- Memory Usage: %.1f%%", cast("dict[str, object]", report["system_metrics"])["memory_percent"])
-    logger.info("- Cache Hit Rate: %.2f%%", cast("float", cast("dict[str, object]", report["cache_performance"])["hit_rate"]) * 100)
-    logger.info("- Thread Pool Workers: %s", cast("dict[str, object]", report["thread_pool_stats"])["current_workers"])
+    logger.info("- CPU Usage: %.1f%%", validate_type(report["system_metrics"], dict)["cpu_percent"])
+    logger.info("- Memory Usage: %.1f%%", validate_type(report["system_metrics"], dict)["memory_percent"])
+    logger.info("- Cache Hit Rate: %.2f%%", get_typed_item(validate_type(report["cache_performance"], dict), "hit_rate", float) * 100)
+    logger.info("- Thread Pool Workers: %s", validate_type(report["thread_pool_stats"], dict)["current_workers"])
 
     # Test optimization recommendations
     recommendations = optimizer.adaptive_optimizer.get_recommendations()
     if recommendations.get("recommendations"):
         logger.info("Optimization Recommendations:")
-        for rec in cast("list[dict[str, str]]", recommendations["recommendations"]):
+        for rec in validate_type(recommendations["recommendations"], list):
             logger.info("- %s", rec["description"])
 
     logger.info("Performance optimization test completed.")

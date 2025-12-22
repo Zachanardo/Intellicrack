@@ -235,6 +235,8 @@ class BaseDongleEmulator:
         self.logger = logging.getLogger(f"{__name__}.{spec.dongle_type.value}")
         self.active = False
         self.api_handlers: dict[str, Callable[..., Any]] = {}
+        self._usb_device: Any = None
+        self._sessions: dict[int, dict[str, Any]] = {}
 
         # Initialize dongle-specific data
         self._initialize_memory()
@@ -1922,7 +1924,9 @@ class DongleAPIHooker:
 
         try:
             if query_type == 0x00:
-                if not hasattr(dongle, "cell_data") or cell_id not in dongle.cell_data:
+                if not isinstance(dongle, SentinelEmulator):
+                    return sentinel_invalid_parameter
+                if cell_id not in dongle.cell_data:
                     return sentinel_invalid_cell
                 cell = dongle.cell_data[cell_id]
                 if "R" not in cell.get("permissions", ""):
@@ -1930,7 +1934,7 @@ class DongleAPIHooker:
                 return sentinel_success
 
             elif query_type == 0x01:
-                if not hasattr(dongle, "read_cell"):
+                if not isinstance(dongle, SentinelEmulator):
                     return sentinel_invalid_parameter
                 dongle.read_cell(cell_id)
                 return sentinel_success
@@ -1938,7 +1942,7 @@ class DongleAPIHooker:
             elif query_type == 0x02:
                 if len(args) < 4:
                     return sentinel_invalid_parameter
-                if not hasattr(dongle, "transform_data"):
+                if not isinstance(dongle, SentinelEmulator):
                     return sentinel_invalid_parameter
                 input_data = args[2] if len(args) > 2 else b""
                 if isinstance(input_data, bytes):
@@ -1949,7 +1953,7 @@ class DongleAPIHooker:
                 return sentinel_success
 
             elif query_type == 0x04:
-                if not hasattr(dongle, "cell_data"):
+                if not isinstance(dongle, SentinelEmulator):
                     return sentinel_invalid_parameter
                 return sentinel_success
 
@@ -1968,7 +1972,7 @@ class DongleAPIHooker:
             self.logger.exception("Sentinel query error")
             return sentinel_invalid_parameter
 
-    def _handle_hasp_encrypt(self, dongle: BaseDongleEmulator, buffer: bytes, length: int) -> int:
+    def _handle_hasp_encrypt(self, dongle: BaseDongleEmulator, buffer: Any, length: int) -> int:
         """Handle HASP encryption API calls.
 
         Performs in-place encryption of data using the dongle's cryptographic engine.
@@ -1992,7 +1996,10 @@ class DongleAPIHooker:
         if length <= 0:
             return 0x0000000D
         try:
-            if isinstance(buffer, (bytes, bytearray)):
+            data_to_encrypt: bytes
+            if isinstance(buffer, bytes):
+                data_to_encrypt = buffer[:length]
+            elif isinstance(buffer, bytearray):
                 data_to_encrypt = bytes(buffer[:length])
             elif hasattr(buffer, "contents"):
                 import ctypes
@@ -2018,7 +2025,7 @@ class DongleAPIHooker:
                 import ctypes
 
                 ctypes.memmove(ctypes.addressof(buffer.contents), encrypted, len(encrypted))
-            elif hasattr(buffer, "value") and not isinstance(buffer, (bytes, bytearray)):
+            elif hasattr(buffer, "value"):
                 buffer.value = encrypted
 
             return hasp_status_ok
@@ -2026,7 +2033,7 @@ class DongleAPIHooker:
             self.logger.exception("HASP encryption error")
             return hasp_internal_error
 
-    def _handle_hasp_login(self, dongle: BaseDongleEmulator, feature_id: int, vendor_code: bytes | int) -> int:
+    def _handle_hasp_login(self, dongle: BaseDongleEmulator, feature_id: int, vendor_code: Any) -> int:
         """Handle HASP login API calls.
 
         Authenticates with the dongle and establishes a session for the specified feature.
@@ -2058,6 +2065,7 @@ class DongleAPIHooker:
             if feature_id not in allowed_features and feature_id != 0 and not (0 <= feature_id <= 0xFFFF):
                 return hasp_feature_not_found
 
+            vendor_bytes: bytes | None = None
             if vendor_code is not None:
                 if isinstance(vendor_code, int):
                     vendor_bytes = struct.pack("<I", vendor_code)
@@ -2069,14 +2077,11 @@ class DongleAPIHooker:
                     except (TypeError, ValueError):
                         return hasp_inv_vcode
 
-                if len(vendor_bytes) >= 4:
+                if vendor_bytes and len(vendor_bytes) >= 4:
                     provided_vendor = struct.unpack("<I", vendor_bytes[:4])[0]
                     expected_vendor_id = getattr(dongle.spec, "vendor_id", 0x0529)
                     if provided_vendor != 0 and (provided_vendor & 0xFFFF) != expected_vendor_id:
                         self.logger.debug("Vendor code mismatch: expected %04X, got %04X", expected_vendor_id, provided_vendor)
-
-            if not hasattr(dongle, "_sessions"):
-                dongle._sessions = {}
 
             max_sessions = 16
             sessions = getattr(dongle, "_sessions", {})

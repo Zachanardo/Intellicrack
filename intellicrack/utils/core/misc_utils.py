@@ -58,7 +58,7 @@ def get_timestamp(format_string: str = "%Y-%m-%d %H:%M:%S") -> str:
     return datetime.datetime.now().strftime(format_string)
 
 
-def format_bytes(size: int, precision: int = 2) -> str:
+def format_bytes(size: float, precision: int = 2) -> str:
     """Format a byte size into a human-readable string.
 
     Args:

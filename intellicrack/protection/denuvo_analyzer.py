@@ -26,13 +26,19 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import math
 import os
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..handlers.lief_handler import Binary
 from ..utils.logger import get_logger
 
 
 logger = get_logger(__name__)
+
+if TYPE_CHECKING:
+    import lief
+
+    LiefBinary = lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary
+else:
+    LiefBinary = Any
 
 try:
     import lief
@@ -207,44 +213,49 @@ class DenuvoAnalyzer:
             if binary is None:
                 return self._analyze_without_lief(binary_path)
 
-            confidence_scores = []
-            version = None
-            triggers = []
-            integrity_checks = []
-            timing_checks = []
-            vm_regions = []
-            encrypted_sections = []
-            analysis_details = {}
+            confidence_scores: list[float] = []
+            version: DenuvoVersion | None = None
+            triggers: list[DenuvoTrigger] = []
+            integrity_checks: list[IntegrityCheck] = []
+            timing_checks: list[TimingCheck] = []
+            vm_regions: list[VMRegion] = []
+            encrypted_sections: list[dict[str, Any]] = []
+            analysis_details: dict[str, Any] = {}
 
             if version_result := self._detect_version(binary, binary_path):
                 version = version_result
                 confidence_scores.append(version_result.confidence)
                 analysis_details["version_detection"] = f"Detected {version_result.name}"
 
-            if encrypted_result := self._detect_encrypted_sections(binary):
+            encrypted_result = self._detect_encrypted_sections(binary)
+            if encrypted_result:
                 encrypted_sections = encrypted_result
                 confidence_scores.append(0.85)
-                analysis_details["encrypted_sections"] = len(encrypted_result)
+            analysis_details["encrypted_sections"] = len(encrypted_result)
 
-            if vm_result := self._detect_vm_regions(binary):
+            vm_result = self._detect_vm_regions(binary)
+            if vm_result:
                 vm_regions = vm_result
                 confidence_scores.append(0.80)
-                analysis_details["vm_regions"] = len(vm_result)
+            analysis_details["vm_regions"] = len(vm_result)
 
-            if integrity_result := self._detect_integrity_checks(binary):
+            integrity_result = self._detect_integrity_checks(binary)
+            if integrity_result:
                 integrity_checks = integrity_result
                 confidence_scores.append(0.75)
-                analysis_details["integrity_checks"] = len(integrity_result)
+            analysis_details["integrity_checks"] = len(integrity_result)
 
-            if timing_result := self._detect_timing_checks(binary):
+            timing_result = self._detect_timing_checks(binary)
+            if timing_result:
                 timing_checks = timing_result
                 confidence_scores.append(0.70)
-                analysis_details["timing_checks"] = len(timing_result)
+            analysis_details["timing_checks"] = len(timing_result)
 
-            if trigger_result := self._detect_triggers(binary):
+            trigger_result = self._detect_triggers(binary)
+            if trigger_result:
                 triggers = trigger_result
                 confidence_scores.append(0.65)
-                analysis_details["triggers"] = len(trigger_result)
+            analysis_details["triggers"] = len(trigger_result)
 
             if confidence_scores:
                 overall_confidence = sum(confidence_scores) / len(confidence_scores)
@@ -292,8 +303,8 @@ class DenuvoAnalyzer:
             with open(binary_path, "rb") as f:
                 data = f.read()
 
-            confidence_scores = []
-            version = None
+            confidence_scores: list[float] = []
+            version: DenuvoVersion | None = None
 
             for sig_list, ver_name in [
                 (self.DENUVO_V7_SIGNATURES, "Denuvo 7.x+"),
@@ -343,7 +354,7 @@ class DenuvoAnalyzer:
             logger.exception("Basic Denuvo analysis failed: %s", e)
             return self._create_negative_result(f"Basic analysis error: {e}")
 
-    def _detect_version(self, binary: Binary, binary_path: str) -> DenuvoVersion | None:
+    def _detect_version(self, binary: LiefBinary, binary_path: str) -> DenuvoVersion | None:
         """Detect Denuvo version from binary signatures.
 
         Args:
@@ -383,7 +394,7 @@ class DenuvoAnalyzer:
             logger.debug("Version detection failed: %s", e)
             return None
 
-    def _detect_encrypted_sections(self, binary: Binary) -> list[dict[str, Any]]:
+    def _detect_encrypted_sections(self, binary: LiefBinary) -> list[dict[str, Any]]:
         """Detect encrypted sections with high entropy.
 
         Args:
@@ -404,13 +415,15 @@ class DenuvoAnalyzer:
                 entropy = self._calculate_entropy(content)
 
                 if entropy > 7.2:
-                    encrypted_sections.append({
+                    section_info: dict[str, Any] = {
                         "name": section.name,
                         "virtual_address": section.virtual_address,
                         "size": section.size,
                         "entropy": entropy,
-                        "characteristics": section.characteristics,
-                    })
+                    }
+                    if hasattr(section, "characteristics"):
+                        section_info["characteristics"] = section.characteristics
+                    encrypted_sections.append(section_info)
 
             return encrypted_sections
 
@@ -418,7 +431,7 @@ class DenuvoAnalyzer:
             logger.debug("Encrypted section detection failed: %s", e)
             return []
 
-    def _detect_vm_regions(self, binary: Binary) -> list[VMRegion]:
+    def _detect_vm_regions(self, binary: LiefBinary) -> list[VMRegion]:
         """Detect Denuvo VM-protected regions.
 
         Args:
@@ -432,8 +445,9 @@ class DenuvoAnalyzer:
 
         try:
             for section in binary.sections:
-                if not (section.characteristics & 0x20000000):
-                    continue
+                if hasattr(section, "characteristics"):
+                    if not (section.characteristics & 0x20000000):
+                        continue
 
                 content = bytes(section.content)
                 if len(content) < 1024:
@@ -470,7 +484,7 @@ class DenuvoAnalyzer:
             logger.debug("VM region detection failed: %s", e)
             return []
 
-    def _detect_integrity_checks(self, binary: Binary) -> list[IntegrityCheck]:
+    def _detect_integrity_checks(self, binary: LiefBinary) -> list[IntegrityCheck]:
         """Detect integrity check routines.
 
         Args:
@@ -484,8 +498,9 @@ class DenuvoAnalyzer:
 
         try:
             for section in binary.sections:
-                if not (section.characteristics & 0x20000000):
-                    continue
+                if hasattr(section, "characteristics"):
+                    if not (section.characteristics & 0x20000000):
+                        continue
 
                 content = bytes(section.content)
 
@@ -526,7 +541,7 @@ class DenuvoAnalyzer:
             logger.debug("Integrity check detection failed: %s", e)
             return []
 
-    def _detect_timing_checks(self, binary: Binary) -> list[TimingCheck]:
+    def _detect_timing_checks(self, binary: LiefBinary) -> list[TimingCheck]:
         """Detect timing-based anti-debugging checks.
 
         Args:
@@ -540,8 +555,9 @@ class DenuvoAnalyzer:
 
         try:
             for section in binary.sections:
-                if not (section.characteristics & 0x20000000):
-                    continue
+                if hasattr(section, "characteristics"):
+                    if not (section.characteristics & 0x20000000):
+                        continue
 
                 content = bytes(section.content)
 
@@ -581,7 +597,7 @@ class DenuvoAnalyzer:
             logger.debug("Timing check detection failed: %s", e)
             return []
 
-    def _detect_triggers(self, binary: Binary) -> list[DenuvoTrigger]:
+    def _detect_triggers(self, binary: LiefBinary) -> list[DenuvoTrigger]:
         """Detect Denuvo activation triggers.
 
         Args:
@@ -595,8 +611,9 @@ class DenuvoAnalyzer:
 
         try:
             for section in binary.sections:
-                if not (section.characteristics & 0x20000000):
-                    continue
+                if hasattr(section, "characteristics"):
+                    if not (section.characteristics & 0x20000000):
+                        continue
 
                 content = bytes(section.content)
 
@@ -797,7 +814,7 @@ class DenuvoAnalyzer:
             List of bypass recommendations
 
         """
-        recommendations = []
+        recommendations: list[str] = []
 
         if version:
             if version.major >= 7:

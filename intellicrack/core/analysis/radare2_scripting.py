@@ -57,17 +57,20 @@ class R2ScriptingEngine:
         self.binary_path = binary_path
         self.radare2_path = radare2_path
         self.logger = logging.getLogger(__name__)
-        self.script_cache = {}
+        self.script_cache: dict[str, Any] = {}
 
     def execute_custom_analysis(self, script_commands: list[str]) -> dict[str, Any]:
         """Execute custom analysis using r2 commands."""
-        result = {
+        command_results: list[dict[str, Any]] = []
+        errors: list[str] = []
+
+        result: dict[str, Any] = {
             "binary_path": self.binary_path,
             "commands_executed": script_commands,
-            "command_results": [],
+            "command_results": command_results,
             "analysis_summary": {},
             "execution_time": 0,
-            "errors": [],
+            "errors": errors,
         }
 
         try:
@@ -79,12 +82,12 @@ class R2ScriptingEngine:
                 for i, command in enumerate(script_commands):
                     try:
                         # Execute command
-                        if command.endswith("j"):  # JSON output expected
+                        if command.endswith("j"):
                             cmd_result = r2._execute_command(command, expect_json=True)
                         else:
                             cmd_result = r2._execute_command(command)
 
-                        result["command_results"].append(
+                        command_results.append(
                             {
                                 "command": command,
                                 "result": cmd_result,
@@ -95,7 +98,7 @@ class R2ScriptingEngine:
 
                     except R2Exception as e:
                         logger.exception("R2Exception in radare2_scripting: %s", e)
-                        result["command_results"].append(
+                        command_results.append(
                             {
                                 "command": command,
                                 "error": str(e),
@@ -103,10 +106,10 @@ class R2ScriptingEngine:
                                 "index": i,
                             },
                         )
-                        result["errors"].append(f"Command {i}: {command} failed: {e}")
+                        errors.append(f"Command {i}: {command} failed: {e}")
 
                 result["execution_time"] = time.time() - start_time
-                result["analysis_summary"] = self._generate_analysis_summary(result["command_results"])
+                result["analysis_summary"] = self._generate_analysis_summary(command_results)
 
         except R2Exception as e:
             result["error"] = str(e)
@@ -602,9 +605,8 @@ class R2ScriptingEngine:
 
     def _extract_license_strings(self, command_results: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Extract license-related strings from command results."""
-        license_strings = []
+        license_strings: list[dict[str, Any]] = []
 
-        # Search results for license-related terms
         license_keywords = [
             "license",
             "registration",
@@ -924,7 +926,7 @@ class R2ScriptingEngine:
 
     def _generate_security_recommendations(self, workflow_result: dict[str, Any]) -> list[str]:
         """Generate security recommendations based on analysis."""
-        recommendations = []
+        recommendations: list[str] = []
 
         if workflow_result.get("buffer_overflow_risks"):
             recommendations.extend((
@@ -965,10 +967,13 @@ class R2ScriptingEngine:
 
     def _generate_function_insights(self, function_result: dict[str, Any]) -> dict[str, Any]:
         """Generate insights for function analysis."""
-        insights = {
+        potential_issues: list[str] = []
+        interesting_features: list[str] = []
+
+        insights: dict[str, Any] = {
             "complexity": "unknown",
-            "potential_issues": [],
-            "interesting_features": [],
+            "potential_issues": potential_issues,
+            "interesting_features": interesting_features,
         }
 
         if decompiled := function_result.get("decompiled_code", ""):
@@ -979,19 +984,17 @@ class R2ScriptingEngine:
             else:
                 insights["complexity"] = "low"
 
-            # Check for potential issues
             if any(keyword in decompiled.lower() for keyword in ["strcpy", "sprintf", "gets"]):
-                insights["potential_issues"].append("unsafe_string_functions")
+                potential_issues.append("unsafe_string_functions")
 
             if "malloc" in decompiled.lower() and "free" not in decompiled.lower():
-                insights["potential_issues"].append("potential_memory_leak")
+                potential_issues.append("potential_memory_leak")
 
-            # Check for interesting features
             if any(keyword in decompiled.lower() for keyword in ["license", "key", "valid"]):
-                insights["interesting_features"].append("license_related_code")
+                interesting_features.append("license_related_code")
 
             if any(keyword in decompiled.lower() for keyword in ["crypt", "hash", "encrypt"]):
-                insights["interesting_features"].append("cryptographic_operations")
+                interesting_features.append("cryptographic_operations")
 
         return insights
 

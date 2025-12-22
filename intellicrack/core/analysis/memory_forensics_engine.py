@@ -200,7 +200,8 @@ class MemoryForensicsEngine:
             self.logger.warning("Volatility not available - memory analysis will be limited")
 
         # Results storage
-        self.analysis_results = {}
+        self.analysis_results: dict[str, MemoryAnalysisResult] = {}
+        self.analyzed_dumps: set[str] = set()
 
     def _init_volatility(self) -> None:
         """Initialize Volatility3 framework."""
@@ -1224,7 +1225,7 @@ class MemoryForensicsEngine:
             import re
 
             # Check if we have permission
-            if os.geteuid() != 0:
+            if hasattr(os, "geteuid") and os.geteuid() != 0:
                 return {
                     "process_id": process_id,
                     "error": "Root privileges required for live process analysis",
@@ -1370,9 +1371,17 @@ class MemoryForensicsEngine:
             except Exception as e:
                 logger.debug("Error parsing network connections: %s", e)
 
-            injected_regions = [
-                region["address"] for region in memory_regions if not region.get("pathname") and "x" in region.get("permissions", "")
-            ]
+            injected_regions: list[Any] = []
+            for region in memory_regions:
+                if not region.get("pathname"):
+                    perms = region.get("permissions", "")
+                    if isinstance(perms, str) and "x" in perms:
+                        injected_regions.append(region["address"])
+            suspicious_string_count = 0
+            for r in memory_regions:
+                interesting_strings = r.get("interesting_strings", [])
+                if isinstance(interesting_strings, list):
+                    suspicious_string_count += len(interesting_strings)
             return {
                 "process_id": process_id,
                 "status": "success",
@@ -1383,7 +1392,7 @@ class MemoryForensicsEngine:
                 "memory_regions": memory_regions,
                 "connections": connections,
                 "total_regions": len(memory_regions),
-                "suspicious_strings": sum(len(r.get("interesting_strings", [])) for r in memory_regions),
+                "suspicious_strings": suspicious_string_count,
                 "possible_injections": injected_regions,
             }
 
@@ -1484,26 +1493,15 @@ class MemoryForensicsEngine:
         if analysis_result.error:
             return {"error": analysis_result.error}
 
-        supplemental_data = {
-            "memory_forensics": {
-                "analysis_profile": analysis_result.analysis_profile,
-                "total_processes": len(analysis_result.processes),
-                "total_modules": len(analysis_result.modules),
-                "network_connections": len(analysis_result.network_connections),
-                "security_findings": len(analysis_result.security_findings),
-                "analysis_time": analysis_result.analysis_time,
-                "has_suspicious_activity": analysis_result.has_suspicious_activity,
-            },
-            "process_indicators": [],
-            "module_indicators": [],
-            "network_indicators": [],
-            "security_indicators": [],
-        }
+        process_indicators: list[dict[str, Any]] = []
+        module_indicators: list[dict[str, Any]] = []
+        network_indicators: list[dict[str, Any]] = []
+        security_indicators: list[dict[str, Any]] = []
 
         # Process suspicious processes
         for process in analysis_result.processes:
             if process.suspicious_indicators or process.is_hidden:
-                supplemental_data["process_indicators"].append(
+                process_indicators.append(
                     {
                         "pid": process.pid,
                         "name": process.name,
@@ -1516,7 +1514,7 @@ class MemoryForensicsEngine:
         # Process suspicious modules
         for module in analysis_result.modules:
             if module.is_suspicious:
-                supplemental_data["module_indicators"].append(
+                module_indicators.append(
                     {
                         "name": module.name,
                         "path": module.path,
@@ -1528,7 +1526,7 @@ class MemoryForensicsEngine:
         # Process network connections
         for conn in analysis_result.network_connections:
             if not conn.remote_addr.startswith(("127.", "192.168.", "10.")):
-                supplemental_data["network_indicators"].append(
+                network_indicators.append(
                     {
                         "local_endpoint": f"{conn.local_addr}:{conn.local_port}",
                         "remote_endpoint": f"{conn.remote_addr}:{conn.remote_port}",
@@ -1540,7 +1538,7 @@ class MemoryForensicsEngine:
 
         # Process security findings
         for finding in analysis_result.security_findings:
-            supplemental_data["security_indicators"].append(
+            security_indicators.append(
                 {
                     "type": finding.get("type", "unknown"),
                     "severity": finding.get("severity", "low"),
@@ -1548,6 +1546,22 @@ class MemoryForensicsEngine:
                     "evidence": finding,
                 },
             )
+
+        supplemental_data: dict[str, Any] = {
+            "memory_forensics": {
+                "analysis_profile": analysis_result.analysis_profile,
+                "total_processes": len(analysis_result.processes),
+                "total_modules": len(analysis_result.modules),
+                "network_connections": len(analysis_result.network_connections),
+                "security_findings": len(analysis_result.security_findings),
+                "analysis_time": analysis_result.analysis_time,
+                "has_suspicious_activity": analysis_result.has_suspicious_activity,
+            },
+            "process_indicators": process_indicators,
+            "module_indicators": module_indicators,
+            "network_indicators": network_indicators,
+            "security_indicators": security_indicators,
+        }
 
         return supplemental_data
 

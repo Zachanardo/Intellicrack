@@ -22,6 +22,7 @@ import logging
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class FileTypeInfo:
         description: str,
         category: str,
         supported: bool = True,
-        analyzer_hint: str = None,
+        analyzer_hint: str | None = None,
     ) -> None:
         """Initialize file type information.
 
@@ -133,7 +134,7 @@ class FileResolver:
         """Initialize the file resolver."""
         self.logger = logger
 
-    def resolve_file_path(self, file_path: str | Path) -> tuple[str, dict[str, any]]:
+    def resolve_file_path(self, file_path: str | Path) -> tuple[str, dict[str, Any]]:
         """Resolve a file path, handling shortcuts and returning target information.
 
         Args:
@@ -210,7 +211,7 @@ class FileResolver:
 
     def get_supported_file_filters(self) -> str:
         """Generate Qt file dialog filter string for all supported types."""
-        categories = {}
+        categories: dict[str, list[str]] = {}
 
         # Group by category
         for file_type in self.FILE_TYPES.values():
@@ -247,7 +248,7 @@ class FileResolver:
 
         return ";;".join(filters)
 
-    def _resolve_windows_shortcut(self, lnk_path: Path) -> tuple[str | None, dict[str, any]]:
+    def _resolve_windows_shortcut(self, lnk_path: Path) -> tuple[str | None, dict[str, Any]]:
         """Resolve Windows .lnk shortcut file."""
         if not IS_WINDOWS or not HAS_WIN32:
             return None, {"error": "Windows COM not available for shortcut resolution"}
@@ -285,7 +286,7 @@ class FileResolver:
             self.logger.exception("Error resolving Windows shortcut %s: %s", lnk_path, e, exc_info=True)
             return None, {"error": f"Failed to resolve shortcut: {e!s}"}
 
-    def _resolve_url_shortcut(self, url_path: Path) -> tuple[str | None, dict[str, any]]:
+    def _resolve_url_shortcut(self, url_path: Path) -> tuple[str | None, dict[str, Any]]:
         """Resolve Windows .url internet shortcut file."""
         try:
             # .url files are INI-style text files
@@ -362,7 +363,7 @@ class FileResolver:
 
         return None
 
-    def get_file_metadata(self, file_path: str | Path) -> dict[str, any]:
+    def get_file_metadata(self, file_path: str | Path) -> dict[str, Any]:
         """Get comprehensive metadata for a file."""
         file_path = Path(file_path)
 
@@ -411,15 +412,16 @@ class FileResolver:
 
     def _format_bytes(self, bytes_size: int) -> str:
         """Format bytes into human readable string."""
+        size_float: float = float(bytes_size)
         for unit in ["B", "KB", "MB", "GB", "TB"]:
-            if bytes_size < 1024.0:
-                return f"{bytes_size:.1f} {unit}"
-            bytes_size /= 1024.0
-        return f"{bytes_size:.1f} PB"
+            if size_float < 1024.0:
+                return f"{size_float:.1f} {unit}"
+            size_float /= 1024.0
+        return f"{size_float:.1f} PB"
 
-    def _get_windows_metadata(self, file_path: Path) -> dict[str, any]:
+    def _get_windows_metadata(self, file_path: Path) -> dict[str, Any]:
         """Get Windows-specific file metadata."""
-        metadata = {}
+        metadata: dict[str, Any] = {}
 
         try:
             # Get file version info if available
@@ -445,9 +447,9 @@ class FileResolver:
 
         return metadata
 
-    def _get_linux_metadata(self, file_path: Path) -> dict[str, any]:
+    def _get_linux_metadata(self, file_path: Path) -> dict[str, Any]:
         """Get Linux-specific file metadata."""
-        metadata = {}
+        metadata: dict[str, Any] = {}
 
         try:
             # Check if it's an ELF file
@@ -476,9 +478,9 @@ class FileResolver:
 
         return metadata
 
-    def _get_macos_metadata(self, file_path: Path) -> dict[str, any]:
+    def _get_macos_metadata(self, file_path: Path) -> dict[str, Any]:
         """Get macOS-specific file metadata."""
-        metadata = {}
+        metadata: dict[str, Any] = {}
 
         try:
             # Check for Mach-O format

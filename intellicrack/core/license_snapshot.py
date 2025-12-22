@@ -510,7 +510,7 @@ class LicenseSnapshot:
             that might be related to software licensing.
 
         """
-        certificates = []
+        certificates: list[dict[str, Any]] = []
 
         try:
             # Check certificate stores

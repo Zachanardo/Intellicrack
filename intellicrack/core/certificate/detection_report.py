@@ -90,6 +90,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
+from typing import Any
 
 
 class BypassMethod(Enum):
@@ -113,7 +114,7 @@ class ValidationFunction:
     context: str = ""
     references: list[int] = field(default_factory=list)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
 
@@ -145,7 +146,7 @@ class DetectionReport:
         data["recommended_method"] = self.recommended_method.value
         return json.dumps(data, indent=2)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Export report as dictionary.
 
         Returns:
@@ -214,7 +215,7 @@ class DetectionReport:
         return "\n".join(lines)
 
     @classmethod
-    def from_dict(cls, data: dict) -> "DetectionReport":
+    def from_dict(cls, data: dict[str, Any]) -> "DetectionReport":
         """Create DetectionReport from dictionary.
 
         Args:

@@ -21,6 +21,7 @@ Font loader utility for Intellicrack
 
 import logging
 import os
+from typing import Any
 
 from PyQt6.QtGui import QFont, QFontDatabase
 
@@ -41,18 +42,18 @@ class FontManager:
         self.loaded_fonts: list[str] = []
         # Load configuration from central config system
         self.central_config = get_config()
-        self.config: dict = self._load_config()
+        self.config: dict[str, Any] = self._load_config()
 
-    def _load_config(self) -> dict:
+    def _load_config(self) -> dict[str, Any]:
         """Load font configuration from central config system."""
         try:
             # Get font configuration from central config
-            font_config = self.central_config.get("font_configuration", {})
+            font_config: Any = self.central_config.get("font_configuration", {})
             if not font_config:
                 # If central config is empty, try to trigger migration
                 self.central_config.upgrade_config()
                 font_config = self.central_config.get("font_configuration", {})
-            return font_config
+            return font_config if isinstance(font_config, dict) else {}
         except Exception as e:
             logger.warning("Could not load font config from central config: %s", e, exc_info=True)
             # Return default configuration structure

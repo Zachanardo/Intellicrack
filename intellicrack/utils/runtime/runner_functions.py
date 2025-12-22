@@ -136,7 +136,14 @@ def run_network_license_server(app_instance: object | None = None, **kwargs: obj
     """
     try:
         # Configure server based on kwargs
-        port = kwargs.get("port", 27000)
+        port_raw = kwargs.get("port", 27000)
+        port = 27000
+        try:
+            port = int(port_raw) if port_raw is not None else 27000
+        except (ValueError, TypeError):
+            logger.warning("Invalid port '%s' provided, using default 27000", port_raw)
+            port = 27000
+
         # Get license server URL from configuration
         from intellicrack.utils.service_utils import get_service_url
 
@@ -202,7 +209,14 @@ def run_ssl_tls_interceptor(app_instance: object | None = None, **kwargs: object
     try:
         # Configure interceptor based on kwargs
         target_host = kwargs.get("target_host")
-        target_port = kwargs.get("target_port", 443)
+        target_port_raw = kwargs.get("target_port", 443)
+        target_port = 443
+        try:
+            target_port = int(target_port_raw) if target_port_raw is not None else 443
+        except (ValueError, TypeError):
+            logger.warning("Invalid target_port '%s' provided, using default 443", target_port_raw)
+            target_port = 443
+
         certificate_path = kwargs.get("certificate_path")
 
         logger.info("Starting SSL/TLS interceptor for %s:%s", target_host or "any", target_port)

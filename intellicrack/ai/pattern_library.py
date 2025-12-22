@@ -51,7 +51,7 @@ class ProtectionPattern:
     ghidra_template: str
     success_rate: float = 0.85
     description: str = ""
-    variants: list[str] | None = field(default_factory=list)
+    variants: list[str] = field(default_factory=list)
 
 
 class AdvancedPatternLibrary:
@@ -66,9 +66,9 @@ class AdvancedPatternLibrary:
         Sets up pattern storage, success tracking, and learning data structures
         for AI-driven pattern recognition and exploitation.
         """
-        self.patterns = {}
-        self.success_history = {}
-        self.learning_data = {}
+        self.patterns: dict[str, ProtectionPattern] = {}
+        self.success_history: dict[str, dict[str, int]] = {}
+        self.learning_data: dict[str, Any] = {}
         self._initialize_patterns()
 
     def _initialize_patterns(self) -> None:
@@ -643,7 +643,7 @@ for crypto_func in crypto_functions:
 
     def get_pattern_statistics(self) -> dict[str, Any]:
         """Get statistics about pattern usage and success rates."""
-        stats = {
+        stats: dict[str, Any] = {
             "total_patterns": len(self.patterns),
             "pattern_usage": {},
             "average_success_rate": 0.0,
@@ -652,26 +652,29 @@ for crypto_func in crypto_functions:
         }
 
         if self.success_history:
-            success_rates = []
+            success_rates: list[float] = []
             for pattern_name, history in self.success_history.items():
                 if history["attempts"] > 0:
                     rate = history["successes"] / history["attempts"]
                     success_rates.append(rate)
-                    stats["pattern_usage"][pattern_name] = {
-                        "attempts": history["attempts"],
-                        "successes": history["successes"],
-                        "success_rate": rate,
-                    }
+                    pattern_usage = stats["pattern_usage"]
+                    if isinstance(pattern_usage, dict):
+                        pattern_usage[pattern_name] = {
+                            "attempts": history["attempts"],
+                            "successes": history["successes"],
+                            "success_rate": rate,
+                        }
 
             if success_rates:
                 stats["average_success_rate"] = sum(success_rates) / len(success_rates)
 
-                # Find most and least successful
-                best_pattern = max(stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"])
-                worst_pattern = min(stats["pattern_usage"].items(), key=lambda x: x[1]["success_rate"])
+                pattern_usage = stats["pattern_usage"]
+                if isinstance(pattern_usage, dict) and pattern_usage:
+                    best_pattern = max(pattern_usage.items(), key=lambda x: x[1]["success_rate"])
+                    worst_pattern = min(pattern_usage.items(), key=lambda x: x[1]["success_rate"])
 
-                stats["most_successful"] = best_pattern[0]
-                stats["least_successful"] = worst_pattern[0]
+                    stats["most_successful"] = best_pattern[0]
+                    stats["least_successful"] = worst_pattern[0]
 
         return stats
 

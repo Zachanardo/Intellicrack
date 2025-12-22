@@ -33,7 +33,7 @@ def run_ghidra_plugin(
     binary_path: str,
     script_dir: str,
     script_name: str,
-    app: object = None,
+    app: Any = None,
     overwrite: bool = True,
     timeout: int = 300,
 ) -> tuple[int, str, str]:

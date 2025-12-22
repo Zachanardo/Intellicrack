@@ -54,7 +54,7 @@ class DirectR2Session:
         """
         self.binary_path = binary_path
         self.flags = flags or ["-2"]
-        self.r2: r2pipe.open | None = None
+        self.r2: Any = None
 
         if not R2PIPE_AVAILABLE:
             raise RuntimeError("r2pipe not available")
@@ -97,7 +97,12 @@ class DirectR2Session:
         if not self.r2:
             raise RuntimeError("Not connected")
 
-        return self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
+        result: Any = self.r2.cmdj(command) if expect_json else self.r2.cmd(command)
+        if expect_json:
+            if isinstance(result, dict):
+                return result
+            return {}
+        return str(result) if result is not None else ""
 
 
 @contextmanager
@@ -106,7 +111,7 @@ def get_r2_session(
     flags: list[str] | None = None,
     use_pooling: bool = True,
     auto_analyze: bool = True,
-) -> Generator[R2SessionWrapper | DirectR2Session, None, None]:
+) -> Generator[Any, None, None]:
     """Get an r2 session with automatic pooling.
 
     Args:
@@ -123,15 +128,15 @@ def get_r2_session(
         with r2_session_pooled(binary_path, flags=flags) as session:
             yield session
     else:
-        session = DirectR2Session(binary_path, flags)
+        direct_session = DirectR2Session(binary_path, flags)
         try:
-            if not session.connect():
+            if not direct_session.connect():
                 raise RuntimeError(f"Failed to connect to {binary_path}")
             if auto_analyze:
-                session.execute("aaa")
-            yield session
+                direct_session.execute("aaa")
+            yield direct_session
         finally:
-            session.disconnect()
+            direct_session.disconnect()
 
 
 def execute_r2_command(
@@ -155,7 +160,10 @@ def execute_r2_command(
 
     """
     with get_r2_session(binary_path, flags, use_pooling) as session:
-        return session.execute(command, expect_json)
+        result: Any = session.execute(command, expect_json)
+        if isinstance(result, (dict, str)):
+            return result
+        return str(result) if result is not None else ""
 
 
 def get_pool_statistics() -> dict[str, Any]:
@@ -273,10 +281,10 @@ class R2CommandBatch:
 
 
 def migrate_r2pipe_to_pooled(
-    original_r2: r2pipe.open,
+    original_r2: Any,
     binary_path: str,
     flags: list[str] | None = None,
-) -> R2SessionWrapper:
+) -> Any:
     """Migrate from direct r2pipe usage to pooled sessions.
 
     Args:

@@ -81,8 +81,8 @@ class ParallelProcessingManager:
         self.tasks: list[dict[str, Any]] = []
         self.workers: list[multiprocessing.Process] = []
         self.results: dict[str, Any] = {}
-        self.task_queue: multiprocessing.Queue | None = None
-        self.result_queue: multiprocessing.Queue | None = None
+        self.task_queue: multiprocessing.Queue[dict[str, Any] | None] | None = None
+        self.result_queue: multiprocessing.Queue[tuple[int, dict[str, Any], dict[str, Any]]] | None = None
         self.running: bool = False
 
         # Performance tracking
@@ -127,16 +127,17 @@ class ParallelProcessingManager:
             int: Task ID (index in task list)
 
         """
+        task_id: int = len(self.tasks)
         task = {
-            "id": len(self.tasks),
+            "id": task_id,
             "type": task_type,
             "params": task_params or {},
             "description": task_description or f"Task: {task_type}",
         }
 
         self.tasks.append(task)
-        self.logger.info("Added task: %s (ID: %s)", task_type, task["id"])
-        return task["id"]
+        self.logger.info("Added task: %s (ID: %s)", task_type, task_id)
+        return task_id
 
     def process_binary_chunks(self, process_func: Callable[[bytes, int], Any] | None = None) -> list[Any] | None:
         """Process a binary file in chunks using parallel workers.
@@ -173,7 +174,7 @@ class ParallelProcessingManager:
 
         return self._process_with_multiprocessing(process_func, num_chunks)
 
-    def _process_with_multiprocessing(self, process_func: Callable, num_chunks: int) -> list[Any]:
+    def _process_with_multiprocessing(self, process_func: Callable[[bytes, int], Any], num_chunks: int) -> list[Any]:
         """Process binary chunks using multiprocessing.
 
         Args:
@@ -196,12 +197,17 @@ class ParallelProcessingManager:
                 The result of process_func on the chunk data, or an error dict.
 
             """
+            offset: int = chunk_idx * self.chunk_size
             try:
-                offset = chunk_idx * self.chunk_size
+                if self.binary_path is None:
+                    return {"error": "No binary path set", "offset": offset, "chunk_idx": chunk_idx}
                 with open(self.binary_path, "rb") as f:
                     f.seek(offset)
                     chunk_data = f.read(self.chunk_size)
-                return process_func(chunk_data, offset)
+                result: Any = process_func(chunk_data, offset)
+                if isinstance(result, dict):
+                    return result
+                return {"result": result, "offset": offset, "chunk_idx": chunk_idx}
             except (OSError, ValueError, RuntimeError) as e:
                 logger.exception("Error in parallel_processing_manager: %s", e)
                 return {"error": str(e), "offset": offset, "chunk_idx": chunk_idx}
@@ -292,8 +298,8 @@ class ParallelProcessingManager:
     def _worker_process(
         self,
         worker_id: int,
-        task_queue: multiprocessing.Queue,
-        result_queue: multiprocessing.Queue,
+        task_queue: multiprocessing.Queue[dict[str, Any] | None],
+        result_queue: multiprocessing.Queue[tuple[int, dict[str, Any], dict[str, Any]]],
         binary_path: str,
         chunk_size: int,
     ) -> None:
@@ -576,7 +582,7 @@ class ParallelProcessingManager:
             proj = angr.Project(binary_path, auto_load_libs=False)
 
             # Get function address (simplified)
-            target_address = None
+            target_address: int | None = None
             try:
                 # Try to resolve function by name in symbols
                 for sym in proj.loader.main_object.symbols:
@@ -591,8 +597,8 @@ class ParallelProcessingManager:
 
             logger.info("Resolved %s to address 0x%d", target_function, target_address)
 
-            initial_state = proj.factory.call_state(target_address)
-            execution_mgr = proj.factory.simgr(initial_state)
+            initial_state: Any = proj.factory.call_state(target_address)  # type: ignore[no-untyped-call]
+            execution_mgr: Any = proj.factory.simgr(initial_state)  # type: ignore[no-untyped-call]
 
             # Chunk-based exploration with timeout
             start_time = time.time()
@@ -726,6 +732,9 @@ class ParallelProcessingManager:
 
                 # Get result from queue
                 try:
+                    if self.result_queue is None:
+                        self.logger.exception("Result queue is None")
+                        break
                     worker_id, task, result = self.result_queue.get(timeout=1.0)
                 except queue.Empty:
                     # Check if all workers are still alive

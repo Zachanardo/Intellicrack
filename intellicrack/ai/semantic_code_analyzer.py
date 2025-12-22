@@ -423,7 +423,7 @@ class NLPCodeProcessor:
 
     def extract_semantic_features(self, code: str, function_name: str = "") -> dict[str, Any]:
         """Extract semantic features from code."""
-        features = {
+        features: dict[str, Any] = {
             "vocabulary_matches": {},
             "pattern_matches": {},
             "intent_scores": {},
@@ -436,24 +436,32 @@ class NLPCodeProcessor:
         normalized_code = self._normalize_code(code)
 
         # Extract vocabulary matches
+        vocab_matches: dict[str, int] = {}
         for category, keywords in self.vocabulary.items():
             matches = sum(keyword.lower() in normalized_code.lower() for keyword in keywords)
-            features["vocabulary_matches"][category] = matches
+            vocab_matches[category] = matches
+        features["vocabulary_matches"] = vocab_matches
 
         # Extract pattern matches
+        pattern_matches_dict: dict[str, int] = {}
         for pattern_name, patterns in self.semantic_patterns.items():
             matches = sum(len(re.findall(pattern, code, re.IGNORECASE)) for pattern in patterns)
-            features["pattern_matches"][pattern_name] = matches
+            pattern_matches_dict[pattern_name] = matches
+        features["pattern_matches"] = pattern_matches_dict
 
         # Calculate intent scores
+        intent_scores_dict: dict[str, int] = {}
         for intent, keywords in self.intent_keywords.items():
             score = sum(keyword.lower() in normalized_code.lower() for keyword in keywords)
-            features["intent_scores"][intent.value] = score
+            intent_scores_dict[intent.value] = score
+        features["intent_scores"] = intent_scores_dict
 
         # Calculate business pattern scores
+        business_scores_dict: dict[str, int] = {}
         for pattern, keywords in self.business_keywords.items():
             score = sum(keyword.lower() in normalized_code.lower() for keyword in keywords)
-            features["business_scores"][pattern.value] = score
+            business_scores_dict[pattern.value] = score
+        features["business_scores"] = business_scores_dict
 
         # Extract complexity indicators
         features["complexity_indicators"] = self._extract_complexity_indicators(code)
@@ -698,7 +706,7 @@ class SemanticCodeAnalyzer:
 
     def _parse_code_structure(self, content: str, file_path: str) -> list[dict[str, Any]]:
         """Parse code structure using AST."""
-        ast_nodes = []
+        ast_nodes: list[dict[str, Any]] = []
 
         try:
             if file_path.endswith(".py"):
@@ -730,7 +738,7 @@ class SemanticCodeAnalyzer:
 
     def _parse_non_python_structure(self, content: str, file_path: str) -> list[dict[str, Any]]:
         """Parse non-Python code structure using regex."""
-        ast_nodes = []
+        ast_nodes: list[dict[str, Any]] = []
 
         # JavaScript/TypeScript function patterns
         if file_path.endswith((".js", ".ts", ".jsx", ".tsx")):
@@ -1199,18 +1207,21 @@ class SemanticCodeAnalyzer:
 
     def get_semantic_insights(self, file_paths: list[str]) -> dict[str, Any]:
         """Get semantic insights across multiple files."""
-        insights = {
+        intent_dist: Counter[str] = Counter()
+        business_dist: Counter[str] = Counter()
+
+        insights: dict[str, Any] = {
             "files_analyzed": len(file_paths),
             "total_nodes": 0,
             "total_relationships": 0,
-            "intent_distribution": Counter(),
-            "business_pattern_distribution": Counter(),
+            "intent_distribution": intent_dist,
+            "business_pattern_distribution": business_dist,
             "mismatches_found": 0,
             "avg_confidence": 0.0,
             "complexity_overview": {},
         }
 
-        all_results = []
+        all_results: list[SemanticAnalysisResult] = []
 
         for file_path in file_paths:
             try:
@@ -1223,11 +1234,11 @@ class SemanticCodeAnalyzer:
 
                 # Update intent distribution
                 for node in result.semantic_nodes:
-                    insights["intent_distribution"][node.semantic_intent.value] += 1
+                    intent_dist[node.semantic_intent.value] += 1
 
                 # Update business pattern distribution
                 for pattern in result.business_logic_map.values():
-                    insights["business_pattern_distribution"][pattern.value] += 1
+                    business_dist[pattern.value] += 1
 
             except Exception:
                 logger.exception("Failed to analyze %s", file_path)

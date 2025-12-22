@@ -12,7 +12,8 @@ the Free Software Foundation, either version 3 of the License, or
 """
 
 import logging
-from typing import TYPE_CHECKING
+from types import ModuleType
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from intellicrack.dashboard.dashboard_manager import (
@@ -50,13 +51,12 @@ logger = logging.getLogger(__name__)
 
 __version__ = "1.0.0"
 
-# Lazy imports to prevent circular import issues
-_dashboard_manager = None
-_dashboard_widgets = None
-_real_time_dashboard = None
+_dashboard_manager: ModuleType | bool | None = None
+_dashboard_widgets: ModuleType | bool | None = None
+_real_time_dashboard: ModuleType | bool | None = None
 
 
-def _lazy_import_dashboard_manager() -> object:
+def _lazy_import_dashboard_manager() -> ModuleType | None:
     """Lazy import of dashboard manager module."""
     global _dashboard_manager
     if _dashboard_manager is None:
@@ -67,10 +67,12 @@ def _lazy_import_dashboard_manager() -> object:
         except ImportError as e:
             logger.warning("Dashboard manager not available: %s", e)
             _dashboard_manager = False
-    return _dashboard_manager if _dashboard_manager is not False else None
+    if isinstance(_dashboard_manager, ModuleType):
+        return _dashboard_manager
+    return None
 
 
-def _lazy_import_dashboard_widgets() -> object:
+def _lazy_import_dashboard_widgets() -> ModuleType | None:
     """Lazy import of dashboard widgets module."""
     global _dashboard_widgets
     if _dashboard_widgets is None:
@@ -81,10 +83,12 @@ def _lazy_import_dashboard_widgets() -> object:
         except ImportError as e:
             logger.warning("Dashboard widgets not available: %s", e)
             _dashboard_widgets = False
-    return _dashboard_widgets if _dashboard_widgets is not False else None
+    if isinstance(_dashboard_widgets, ModuleType):
+        return _dashboard_widgets
+    return None
 
 
-def _lazy_import_real_time_dashboard() -> object:
+def _lazy_import_real_time_dashboard() -> ModuleType | None:
     """Lazy import of real-time dashboard module."""
     global _real_time_dashboard
     if _real_time_dashboard is None:
@@ -95,13 +99,32 @@ def _lazy_import_real_time_dashboard() -> object:
         except ImportError as e:
             logger.warning("Real-time dashboard not available: %s", e)
             _real_time_dashboard = False
-    return _real_time_dashboard if _real_time_dashboard is not False else None
+    if isinstance(_real_time_dashboard, ModuleType):
+        return _real_time_dashboard
+    return None
 
 
-# Create properties for lazy loading
-dashboard_manager = property(lambda self: logger.debug("Accessing dashboard_manager on %s", self) or _lazy_import_dashboard_manager())
-dashboard_widgets = property(lambda self: logger.debug("Accessing dashboard_widgets on %s", self) or _lazy_import_dashboard_widgets())
-real_time_dashboard = property(lambda self: logger.debug("Accessing real_time_dashboard on %s", self) or _lazy_import_real_time_dashboard())
+def _get_dashboard_manager(self: Any) -> ModuleType | None:
+    """Property getter for dashboard_manager."""
+    logger.debug("Accessing dashboard_manager on %s", self)
+    return _lazy_import_dashboard_manager()
+
+
+def _get_dashboard_widgets(self: Any) -> ModuleType | None:
+    """Property getter for dashboard_widgets."""
+    logger.debug("Accessing dashboard_widgets on %s", self)
+    return _lazy_import_dashboard_widgets()
+
+
+def _get_real_time_dashboard(self: Any) -> ModuleType | None:
+    """Property getter for real_time_dashboard."""
+    logger.debug("Accessing real_time_dashboard on %s", self)
+    return _lazy_import_real_time_dashboard()
+
+
+dashboard_manager = property(_get_dashboard_manager)
+dashboard_widgets = property(_get_dashboard_widgets)
+real_time_dashboard = property(_get_real_time_dashboard)
 
 
 # For backwards compatibility, expose the classes and functions

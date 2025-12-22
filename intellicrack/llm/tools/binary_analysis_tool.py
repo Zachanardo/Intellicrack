@@ -7,9 +7,11 @@ Licensed under GNU General Public License v3.0
 """
 
 import hashlib
+import math
 import os
+import re
 import struct
-from typing import Any, Dict, List
+from typing import Any
 
 from ...utils.logger import get_logger
 
@@ -19,13 +21,13 @@ logger = get_logger(__name__)
 class BinaryAnalysisTool:
     """LLM tool for binary analysis"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize binary analysis tool"""
-        self.pe_analyzer = None
-        self.elf_analyzer = None
+        self.pe_analyzer: Any | None = None
+        self.elf_analyzer: Any | None = None
         self._init_analyzers()
 
-    def _init_analyzers(self):
+    def _init_analyzers(self) -> None:
         """Initialize binary analyzers"""
         try:
             from ...binary_analysis.pe_analyzer import PEAnalyzer
@@ -64,10 +66,10 @@ class BinaryAnalysisTool:
             },
         }
 
-    def execute(self, **kwargs) -> dict[str, Any]:
+    def execute(self, **kwargs: Any) -> dict[str, Any]:
         """Execute binary analysis"""
-        file_path = kwargs.get("file_path")
-        analysis_type = kwargs.get("analysis_type", "full")
+        file_path: Any = kwargs.get("file_path")
+        analysis_type: Any = kwargs.get("analysis_type", "full")
 
         if not file_path or not os.path.exists(file_path):
             return {"success": False, "error": f"File not found: {file_path}"}
@@ -104,7 +106,10 @@ class BinaryAnalysisTool:
 
     def _analyze_pe(self, file_path: str, analysis_type: str) -> dict[str, Any]:
         """Analyze PE file"""
-        pe_info = self.pe_analyzer.analyze(file_path)
+        if self.pe_analyzer is None:
+            return {"success": False, "error": "PE analyzer not available"}
+
+        pe_info: Any = self.pe_analyzer.analyze(file_path)
 
         if not pe_info:
             return {"success": False, "error": "Failed to analyze PE file"}
@@ -226,13 +231,9 @@ class BinaryAnalysisTool:
         if not data:
             return 0.0
 
-        # Calculate byte frequency
-        freq = {}
+        freq: dict[int, int] = {}
         for byte in data:
             freq[byte] = freq.get(byte, 0) + 1
-
-        # Calculate entropy
-        import math
 
         entropy = 0.0
         data_len = len(data)
@@ -244,20 +245,20 @@ class BinaryAnalysisTool:
 
         return round(entropy, 3)
 
-    def _format_imports(self, imports: dict[str, list]) -> dict[str, Any]:
+    def _format_imports(self, imports: dict[str, list[Any]]) -> dict[str, Any]:
         """Format import information"""
-        formatted = {}
+        formatted: dict[str, Any] = {}
         for dll, functions in imports.items():
             formatted[dll] = {
                 "function_count": len(functions),
-                "functions": functions[:20],  # Limit to first 20
+                "functions": functions[:20],
             }
             if len(functions) > 20:
                 formatted[dll]["truncated"] = True
                 formatted[dll]["total_functions"] = len(functions)
         return formatted
 
-    def _format_sections(self, sections: list[dict]) -> list[dict]:
+    def _format_sections(self, sections: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Format section information"""
         return [
             {
@@ -273,20 +274,16 @@ class BinaryAnalysisTool:
 
     def _extract_strings(self, file_path: str, min_length: int = 4) -> list[str]:
         """Extract printable strings from binary"""
-        strings = []
+        strings: list[str] = []
         with open(file_path, "rb") as f:
             data = f.read()
-
-        # Extract ASCII strings
-        import re
 
         ascii_pattern = rb"[\x20-\x7e]{" + str(min_length).encode() + rb",}"
         for match in re.finditer(ascii_pattern, data):
             string = match.group().decode("ascii", errors="ignore")
-            if string and len(string) <= 200:  # Limit string length
+            if string and len(string) <= 200:
                 strings.append(string)
 
-        # Extract UTF-16 strings (common in Windows binaries)
         utf16_pattern = rb"(?:[\x20-\x7e]\x00){" + str(min_length).encode() + rb",}"
         for match in re.finditer(utf16_pattern, data):
             try:
@@ -296,7 +293,6 @@ class BinaryAnalysisTool:
             except Exception as e:
                 logger.debug(f"Failed to decode UTF-16 string: {e}")
 
-        # Return unique strings, limited to first 100
         return list(set(strings))[:100]
 
 

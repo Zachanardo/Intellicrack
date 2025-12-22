@@ -12,18 +12,19 @@ Licensed under GNU General Public License v3.0
 
 import threading
 import time
+from typing import Any
 
 from intellicrack.core.monitoring.base_monitor import BaseMonitor, EventSeverity, EventSource, EventType, MonitorEvent, ProcessInfo
 
 
 try:
-    from scapy.all import IP, TCP, UDP, Raw, sniff
+    from scapy.all import IP, TCP, UDP, Raw, sniff  # type: ignore[attr-defined]
     from scapy.packet import Packet
 
     SCAPY_AVAILABLE = True
 except ImportError:
     SCAPY_AVAILABLE = False
-    Packet = object
+    Packet = Any  # type: ignore[assignment,misc]
 
 
 class NetworkMonitor(BaseMonitor):
@@ -36,7 +37,7 @@ class NetworkMonitor(BaseMonitor):
     This monitor is OPTIONAL for advanced packet analysis.
     """
 
-    def __init__(self, process_info: ProcessInfo | None = None, target_ports: list | None = None) -> None:
+    def __init__(self, process_info: ProcessInfo | None = None, target_ports: list[int] | None = None) -> None:
         """Initialize network monitor.
 
         Args:
@@ -45,9 +46,9 @@ class NetworkMonitor(BaseMonitor):
 
         """
         super().__init__("NetworkMonitor", process_info)
-        self.target_ports = target_ports or [80, 443, 8080, 8443]
+        self.target_ports: list[int] = target_ports or [80, 443, 8080, 8443]
         self._sniff_thread: threading.Thread | None = None
-        self._stop_sniffing = False
+        self._stop_sniffing: bool = False
 
         if not SCAPY_AVAILABLE:
             print("[NetworkMonitor] Scapy not available - packet capture disabled")
@@ -96,7 +97,7 @@ class NetworkMonitor(BaseMonitor):
         except Exception as e:
             self._handle_error(e)
 
-    def _process_packet(self, packet: Packet) -> None:
+    def _process_packet(self, packet: Any) -> None:
         """Process captured packet.
 
         Args:
@@ -106,24 +107,24 @@ class NetworkMonitor(BaseMonitor):
         if not packet.haslayer(IP):
             return
 
-        ip_layer = packet[IP]
-        src_ip = ip_layer.src
-        dst_ip = ip_layer.dst
+        ip_layer: Any = packet[IP]
+        src_ip: str = ip_layer.src
+        dst_ip: str = ip_layer.dst
 
         if packet.haslayer(TCP):
-            tcp_layer = packet[TCP]
-            src_port = tcp_layer.sport
-            dst_port = tcp_layer.dport
+            tcp_layer: Any = packet[TCP]
+            src_port: int = tcp_layer.sport
+            dst_port: int = tcp_layer.dport
 
             if packet.haslayer(Raw):
-                payload = packet[Raw].load
+                payload: bytes = packet[Raw].load
 
                 if any(keyword in payload.lower() for keyword in [b"license", b"serial", b"activation", b"key"]):
-                    severity = EventSeverity.CRITICAL
+                    severity: EventSeverity = EventSeverity.CRITICAL
                 else:
                     severity = EventSeverity.INFO
 
-                event = MonitorEvent(
+                event: MonitorEvent = MonitorEvent(
                     timestamp=time.time(),
                     source=EventSource.NETWORK,
                     event_type=EventType.SEND if src_port > 1024 else EventType.RECEIVE,
@@ -141,14 +142,14 @@ class NetworkMonitor(BaseMonitor):
                 self._emit_event(event)
 
         elif packet.haslayer(UDP):
-            udp_layer = packet[UDP]
+            udp_layer: Any = packet[UDP]
             src_port = udp_layer.sport
             dst_port = udp_layer.dport
 
             if packet.haslayer(Raw):
                 payload = packet[Raw].load
 
-                event = MonitorEvent(
+                udp_event: MonitorEvent = MonitorEvent(
                     timestamp=time.time(),
                     source=EventSource.NETWORK,
                     event_type=EventType.SEND,
@@ -162,4 +163,4 @@ class NetworkMonitor(BaseMonitor):
                     process_info=self.process_info,
                 )
 
-                self._emit_event(event)
+                self._emit_event(udp_event)

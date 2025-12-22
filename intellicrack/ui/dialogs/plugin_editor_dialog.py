@@ -16,6 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+import logging
 import os
 import sys
 
@@ -30,6 +31,7 @@ from intellicrack.handlers.pyqt6_handler import (
     QLabel,
     QLineEdit,
     QListWidget,
+    QListWidgetItem,
     QMessageBox,
     QProcess,
     QPushButton,
@@ -62,8 +64,9 @@ class PluginEditorDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.plugin_path = plugin_path
-        self.test_process = None
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.plugin_path: str | None = plugin_path
+        self.test_process: QProcess | None = None
         self.setWindowTitle("Plugin Editor")
         self.setMinimumSize(1000, 700)
         self.setup_ui()
@@ -81,8 +84,8 @@ class PluginEditorDialog(QDialog):
 
         # Editor tab
         self.editor = PluginEditor()
-        self.editor.saveRequested.connect(self.on_plugin_saved)
-        self.editor.validationComplete.connect(self.on_validation_complete)
+        self.editor.save_requested.connect(self.on_plugin_saved)
+        self.editor.validation_complete.connect(self.on_validation_complete)
         self.tab_widget.addTab(self.editor, " Editor")
 
         # Testing tab
@@ -120,9 +123,11 @@ class PluginEditorDialog(QDialog):
 
         # Dialog buttons
         buttons = QDialogButtonBox(
-            QDialogButtonBox.Save | QDialogButtonBox.Close,
+            QDialogButtonBox.StandardButton.Save | QDialogButtonBox.StandardButton.Close,
         )
-        buttons.button(QDialogButtonBox.Save).clicked.connect(self.save_plugin)
+        save_button = buttons.button(QDialogButtonBox.StandardButton.Save)
+        if save_button is not None:
+            save_button.clicked.connect(self.save_plugin)
         buttons.rejected.connect(self.reject)
         button_layout.addWidget(buttons)
 
@@ -190,7 +195,7 @@ class PluginEditorDialog(QDialog):
         layout = QVBoxLayout(self.docs_widget)
 
         # Create splitter
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # API Reference
         api_group = QGroupBox("API Reference")
@@ -224,7 +229,7 @@ class PluginEditorDialog(QDialog):
         if self.api_list.count() > 0:
             self.api_list.setCurrentRow(0)
 
-    def show_api_docs(self, current: object, previous: object) -> None:
+    def show_api_docs(self, current: QListWidgetItem | None, previous: QListWidgetItem | None) -> None:
         """Show API documentation for the selected API topic.
 
         Args:
@@ -233,11 +238,11 @@ class PluginEditorDialog(QDialog):
 
         """
         _ = previous
-        if not current:
+        if current is None:
             return
 
-        topic = current.text()
-        docs = self.get_api_documentation(topic)
+        topic: str = current.text()
+        docs: str = self.get_api_documentation(topic)
         self.docs_viewer.setHtml(docs)
 
     def get_api_documentation(self, topic: str) -> str:
@@ -250,7 +255,7 @@ class PluginEditorDialog(QDialog):
             HTML-formatted documentation string for the topic.
 
         """
-        docs = {
+        docs: dict[str, str] = {
             "Plugin Base Class": """
                 <h2>Plugin Base Class</h2>
                 <p>All plugins should inherit from the base plugin class or implement the required interface.</p>
@@ -448,16 +453,19 @@ Process.enumerateModules().forEach(function(module) {
         self.test_output.append("Starting plugin test...\n")
 
         # Prepare command
-        cmd = [sys.executable, "-u", self.editor.current_file, test_file]
+        cmd: list[str] = [sys.executable, "-u", self.editor.current_file, test_file]
 
         # Create process
-        self.test_process = QProcess(self)
-        self.test_process.readyReadStandardOutput.connect(self.handle_stdout)
-        self.test_process.readyReadStandardError.connect(self.handle_stderr)
-        self.test_process.finished.connect(self.test_finished)
+        process = QProcess(self)
+        process.readyReadStandardOutput.connect(self.handle_stdout)
+        process.readyReadStandardError.connect(self.handle_stderr)
+        process.finished.connect(self.test_finished)
 
         # Start process
-        self.test_process.start(cmd[0], cmd[1:])
+        process.start(cmd[0], cmd[1:])
+
+        # Store process reference
+        self.test_process = process
 
         # Update UI
         self.run_test_btn.setEnabled(False)
@@ -465,22 +473,22 @@ Process.enumerateModules().forEach(function(module) {
 
     def stop_test(self) -> None:
         """Stop running test."""
-        if self.test_process:
+        if self.test_process is not None:
             self.test_process.terminate()
-            QTimer.singleShot(2000, self.test_process.kill)  # Force kill after 2s
+            QTimer.singleShot(2000, self.test_process.kill)
 
     def handle_stdout(self) -> None:
         """Handle stdout from test process."""
-        if self.test_process:
+        if self.test_process is not None:
             data = self.test_process.readAllStandardOutput()
-            text = data.data().decode("utf-8", errors="replace")
+            text: str = data.data().decode("utf-8", errors="replace")
             self.test_output.append(text)
 
     def handle_stderr(self) -> None:
         """Handle stderr from test process."""
-        if self.test_process:
+        if self.test_process is not None:
             data = self.test_process.readAllStandardError()
-            text = data.data().decode("utf-8", errors="replace")
+            text: str = data.data().decode("utf-8", errors="replace")
             self.test_output.append(f"<span style='color: red;'>{text}</span>")
 
     def test_finished(self, exit_code: int, exit_status: object) -> None:

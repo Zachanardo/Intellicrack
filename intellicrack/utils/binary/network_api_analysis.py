@@ -95,8 +95,10 @@ def get_scapy_layers(scapy_module: object) -> tuple[object, object] | None:
 
     """
     try:
-        IP_LAYER = scapy_module.IP
-        TCP_LAYER = scapy_module.TCP
+        IP_LAYER = getattr(scapy_module, "IP", None)
+        TCP_LAYER = getattr(scapy_module, "TCP", None)
+        if IP_LAYER is None or TCP_LAYER is None:
+            raise AttributeError("Missing IP or TCP layer")
         return IP_LAYER, TCP_LAYER
     except AttributeError as e:
         logger.error("Attribute error in network_api_analysis: %s", e)
@@ -156,7 +158,7 @@ def summarize_network_capabilities(detected_apis: dict[str, list[str]]) -> dict[
         dict: Summary statistics
 
     """
-    summary = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
+    summary: dict[str, object] = {cat: len(apis) for cat, apis in detected_apis.items() if apis}
 
     summary["has_ssl"] = bool(detected_apis.get("ssl"))
     summary["has_network"] = bool(detected_apis.get("basic")) or bool(detected_apis.get("http"))

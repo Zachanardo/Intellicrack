@@ -26,7 +26,7 @@ from intellicrack.core.exceptions import ConfigurationError
 logger = logging.getLogger(__name__)
 
 
-def get_service_url(service_name: str, fallback: str = None) -> str:
+def get_service_url(service_name: str, fallback: str | None = None) -> str:
     """Get URL for a service from configuration.
 
     Args:
@@ -54,7 +54,8 @@ def get_service_url(service_name: str, fallback: str = None) -> str:
             service_name=service_name,
         ) from e
 
-    url = config.get(f"service_urls.{service_name}")
+    url_obj = config.get(f"service_urls.{service_name}")
+    url: str | None = str(url_obj) if url_obj is not None else None
     if not url:
         if fallback:
             url = fallback

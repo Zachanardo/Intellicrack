@@ -14,9 +14,9 @@ from PyQt6.QtWidgets import QGroupBox, QHBoxLayout, QLabel, QProgressBar, QPushB
 
 from intellicrack.handlers.pyqt6_handler import QFont
 
-from ...ai.background_loader import LoadingProgress, LoadingState, QueuedProgressCallback
-from ...ai.llm_backends import get_llm_manager
-from ...ai.llm_config_manager import LLMConfig, LLMProvider
+from ...ai.background_loader import QueuedProgressCallback
+from ...ai.llm_backends import LLMConfig, LLMProvider, get_llm_manager
+from ...ai.llm_types import LoadingProgress, LoadingState
 
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class ModelLoadingItemWidget(QWidget):
         # Model info
         info_layout = QHBoxLayout()
         self.name_label = QLabel(self.model_id)
-        self.name_label.setFont(QFont("Arial", 10, QFont.Bold))
+        self.name_label.setFont(QFont("Arial", 10, QFont.Weight.Bold))
         info_layout.addWidget(self.name_label)
 
         info_layout.addStretch()
@@ -135,7 +135,7 @@ class ModelLoadingProgressWidget(QWidget):
         self.llm_manager = get_llm_manager()
         self.progress_callback = QueuedProgressCallback()
         self.loading_items: dict[str, ModelLoadingItemWidget] = {}
-        self.update_timer = None
+        self.update_timer: QTimer | None = None
 
         self.init_ui()
         self.setup_callbacks()
@@ -146,11 +146,11 @@ class ModelLoadingProgressWidget(QWidget):
 
         # Title
         title = QLabel("Model Loading Progress")
-        title.setFont(QFont("Arial", 12, QFont.Bold))
+        title.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         layout.addWidget(title)
 
         # Splitter for tasks and details
-        splitter = QSplitter(Qt.Vertical)
+        splitter = QSplitter(Qt.Orientation.Vertical)
 
         # Loading tasks group
         tasks_group = QGroupBox("Active Loading Tasks")
@@ -159,7 +159,7 @@ class ModelLoadingProgressWidget(QWidget):
         # Scroll area for loading items
         self.tasks_container = QWidget()
         self.tasks_layout = QVBoxLayout()
-        self.tasks_layout.setAlignment(Qt.AlignTop)
+        self.tasks_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.tasks_container.setLayout(self.tasks_layout)
 
         tasks_layout.addWidget(self.tasks_container)
@@ -274,7 +274,7 @@ Active Workers: {stats.get("active_workers", 0)}
         test_config = LLMConfig(
             provider=LLMProvider.OLLAMA,
             model_name="llama2",
-            api_url="http://localhost:11434",
+            api_base="http://localhost:11434",
             max_tokens=2048,
             temperature=0.7,
         )
@@ -302,7 +302,7 @@ Active Workers: {stats.get("active_workers", 0)}
                 # Create progress update from task
                 progress = LoadingProgress(
                     model_id=task.model_id,
-                    model_name=task.config.model_name,
+                    model_name=task.config.model_name or "Unknown",
                     state=task.state,
                     progress=task.progress,
                     message=task.message,
@@ -316,8 +316,6 @@ Active Workers: {stats.get("active_workers", 0)}
 
     def cleanup(self) -> None:
         """Cleanup resources."""
-        if self.update_timer:
+        if self.update_timer is not None:
             self.update_timer.stop()
-
-        # Remove callback
-        self.llm_manager.remove_progress_callback(self.progress_callback)
+            self.llm_manager.remove_progress_callback(self.progress_callback)

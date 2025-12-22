@@ -970,7 +970,7 @@ class FridaStealth:
             logger.debug("Linux anti-debug bypass failed: %s", e, exc_info=True)
             return bypassed_count
 
-    def get_stealth_status(self) -> dict:
+    def get_stealth_status(self) -> dict[str, Any]:
         """Get current stealth technique status.
 
         Returns:

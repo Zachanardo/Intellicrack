@@ -4,10 +4,6 @@
         "allow": [
             "mcp__sequential-thinking__sequentialthinking",
             "mcp__brave-search__brave_web_search",
-            "Bash(cargo search:*)",
-            "Bash(pixi run ruff check --select ANN,D:*)",
-            "Bash(pixi run mypy --strict:*)",
-            "Bash(pixi run ruff check:*)",
             "mcp__serena__find_symbol",
             "mcp__serena__find_referencing_symbols",
             "mcp__serena__get_symbols_overview",
@@ -86,9 +82,11 @@
         "sequential-thinking",
         "context7",
         "e2b",
-        "MCPControl"
+        "MCPControl",
+        "puppeteer",
+        "zen"
     ],
-    "disabledMcpjsonServers": ["github", "puppeteer", "zen"],
+    "disabledMcpjsonServers": [],
     "hooks": {
         "PostToolUse": [
             {

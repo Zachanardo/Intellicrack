@@ -27,8 +27,9 @@ import struct
 import sys
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from ...utils.logger import get_logger
 
 
@@ -156,8 +157,8 @@ class CommercialLicenseAnalyzer:
             "bypass_strategies": {},
             "confidence": 0.0,
         }
-        detected_systems = cast(list[str], results["detected_systems"])
-        bypass_strategies = cast(dict[str, Any], results["bypass_strategies"])
+        detected_systems_list = validate_type(results["detected_systems"], list)
+        bypass_strategies_dict = validate_type(results["bypass_strategies"], dict)
 
         if not self.binary_path or not Path(self.binary_path).exists():
             logger.warning("Binary path invalid: %s", self.binary_path)
@@ -407,13 +408,13 @@ class CommercialLicenseAnalyzer:
             "hooks": [],
             "emulation_script": "",
         }
-        hooks = cast(list[Any], bypass["hooks"])
-        patches = cast(list[Any], bypass["patches"])
+        hooks = validate_type(bypass["hooks"], list)
+        patches = validate_type(bypass["patches"], list)
 
         # Analyze binary for FlexLM patterns
         binary_data: bytes
         if self.binary_path and hasattr(self, "_binary_data"):
-            binary_data = cast(bytes, self._binary_data)
+            binary_data = validate_type(self._binary_data, bytes)
         else:
             # Load binary for analysis
             try:
@@ -702,8 +703,8 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
             "virtual_device": {},
             "emulation_script": "",
         }
-        hooks_hasp = cast(list[Any], bypass["hooks"])
-        patches_hasp = cast(list[Any], bypass.get("patches", []))
+        hooks_hasp = validate_type(bypass["hooks"], list)
+        patches_hasp = validate_type(bypass.get("patches", []), list)
 
         # Load and analyze binary
         binary_data: bytes
@@ -1198,8 +1199,8 @@ console.log('[HASP] Patched at {patch["offset"]}');
             "patches": [],
             "emulation_script": "",
         }
-        hooks_cm = cast(list[Any], bypass["hooks"])
-        patches_cm = cast(list[Any], bypass["patches"])
+        hooks_cm = validate_type(bypass["hooks"], list)
+        patches_cm = validate_type(bypass["patches"], list)
 
         # Load and analyze binary
         binary_data: bytes
@@ -1385,7 +1386,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
 
         # Generate emulation scripts
         bypass["emulation_script"] = self._generate_codemeter_script()
-        virtual_container = cast(dict[Any, Any], bypass["virtual_container"])
+        virtual_container = validate_type(bypass["virtual_container"], dict)
         bypass["frida_script"] = self._generate_dynamic_cm_frida_script(hooks_cm, patches_cm, virtual_container)
 
         return bypass

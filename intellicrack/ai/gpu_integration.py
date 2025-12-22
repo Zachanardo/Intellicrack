@@ -21,26 +21,50 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
 import logging
-from typing import Any
+from typing import Any, Protocol
 
 
 logger = logging.getLogger(__name__)
 
+
+class GPUAutoLoaderProtocol(Protocol):
+    """Protocol for GPU autoloader interface."""
+
+    def get_memory_info(self) -> dict[str, object]:
+        """Get memory info."""
+        ...
+
+    def synchronize(self) -> None:
+        """Synchronize GPU operations."""
+        ...
+
+
+# Declare the gpu_autoloader_instance variable
+_gpu_autoloader_instance: GPUAutoLoaderProtocol
+
 # Import unified GPU system
 try:
-    from ..utils.gpu_autoloader import get_device, get_gpu_info, gpu_autoloader, optimize_for_gpu, to_device
+    from ..utils.gpu_autoloader import (
+        GPUAutoLoader,
+        get_device,
+        get_gpu_info,
+        gpu_autoloader,
+        optimize_for_gpu,
+        to_device,
+    )
 
     GPU_AUTOLOADER_AVAILABLE = True
+    _gpu_autoloader_instance = gpu_autoloader
 except ImportError:
     logger.warning("GPU autoloader not available, using fallback implementations")
     GPU_AUTOLOADER_AVAILABLE = False
 
     # Fallback implementations
-    def get_device() -> object:
+    def get_device() -> Any:
         """Get the compute device (CPU when GPU not available).
 
         Returns:
-            object: CPU device instance or "cpu" string if torch unavailable.
+            Any: CPU device instance or "cpu" string if torch unavailable.
 
         """
         from ..utils.torch_gil_safety import safe_torch_import
@@ -48,11 +72,11 @@ except ImportError:
         torch = safe_torch_import()
         return "cpu" if torch is None else torch.device("cpu")
 
-    def get_gpu_info() -> dict[str, Any]:
+    def get_gpu_info() -> dict[str, object]:
         """Get GPU information (fallback to CPU info).
 
         Returns:
-            dict[str, Any]: Device info indicating CPU-only mode.
+            dict[str, object]: Device info indicating CPU-only mode.
 
         """
         return {
@@ -63,26 +87,26 @@ except ImportError:
             "memory": {},
         }
 
-    def to_device(tensor_or_model: object) -> object:
+    def to_device(tensor_or_model: Any) -> Any:
         """Move tensor or model to device (no-op for CPU).
 
         Args:
             tensor_or_model: PyTorch tensor or model object.
 
         Returns:
-            object: Same tensor or model unchanged.
+            Any: Same tensor or model unchanged.
 
         """
         return tensor_or_model
 
-    def optimize_for_gpu(model: object) -> object:
+    def optimize_for_gpu(model: Any) -> Any:
         """Optimize model for GPU (no-op for CPU).
 
         Args:
             model: PyTorch model object.
 
         Returns:
-            object: Same model unchanged.
+            Any: Same model unchanged.
 
         """
         return model
@@ -90,7 +114,7 @@ except ImportError:
     class _FallbackGPUAutoloader:
         """Fallback GPU autoloader when real one is unavailable."""
 
-        def get_memory_info(self) -> dict[str, Any]:
+        def get_memory_info(self) -> dict[str, object]:
             """Get memory info (fallback returns empty dict)."""
             return {}
 
@@ -98,7 +122,7 @@ except ImportError:
             """Synchronize GPU operations (no-op for CPU)."""
             pass
 
-    gpu_autoloader = _FallbackGPUAutoloader()
+    _gpu_autoloader_instance = _FallbackGPUAutoloader()
 
 
 class GPUIntegration:
@@ -174,22 +198,29 @@ class GPUIntegration:
         """
         return to_device(tensor)
 
-    def get_memory_usage(self) -> dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, object]:
         """Get current GPU memory usage."""
-        return gpu_autoloader.get_memory_info() if GPU_AUTOLOADER_AVAILABLE else {}
+        return _gpu_autoloader_instance.get_memory_info()
 
     def synchronize(self) -> None:
         """Synchronize GPU operations."""
-        if GPU_AUTOLOADER_AVAILABLE:
-            gpu_autoloader.synchronize()
+        _gpu_autoloader_instance.synchronize()
 
     def is_available(self) -> bool:
         """Check if GPU acceleration is available."""
-        return self.gpu_info["available"]
+        available = self.gpu_info.get("available")
+        if isinstance(available, bool):
+            return available
+        return False
 
     def get_backend_name(self) -> str:
         """Get the backend name."""
-        return self.gpu_info.get("info", {}).get("backend", "Unknown")
+        info = self.gpu_info.get("info", {})
+        if isinstance(info, dict):
+            backend = info.get("backend", "Unknown")
+            if isinstance(backend, str):
+                return backend
+        return "Unknown"
 
 
 # Global instance

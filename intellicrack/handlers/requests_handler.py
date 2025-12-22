@@ -616,14 +616,14 @@ except ImportError as e:
             url = urllib.parse.urlunparse(parsed._replace(query=query_string))
 
         req_headers = _FallbackCaseInsensitiveDict()
-        if session:
+        if session and hasattr(session, "headers"):
             session_typed = cast("_FallbackSession", session)
             for k, v in session_typed.headers.items():
                 req_headers[k] = v
         for k, v in headers.items():
             req_headers[k] = v
 
-        if session:
+        if session and hasattr(session, "cookies"):
             session_typed = cast("_FallbackSession", session)
             if cookie_header := "; ".join(f"{k}={v}" for k, v in session_typed.cookies.items()):
                 req_headers["Cookie"] = cookie_header
@@ -646,10 +646,20 @@ except ImportError as e:
         if auth:
             import base64
 
-            auth_typed = cast("_FallbackHTTPBasicAuth", auth)
-            credentials = f"{auth_typed.username}:{auth_typed.password}"
-            encoded = base64.b64encode(credentials.encode()).decode()
-            req_headers["Authorization"] = f"Basic {encoded}"
+            username = ""
+            password = ""
+
+            if isinstance(auth, (tuple, list)) and len(auth) == 2:
+                username = str(auth[0])
+                password = str(auth[1])
+            elif hasattr(auth, "username") and hasattr(auth, "password"):
+                username = str(auth.username)
+                password = str(auth.password)
+
+            if username and password:
+                credentials = f"{username}:{password}"
+                encoded = base64.b64encode(credentials.encode()).decode()
+                req_headers["Authorization"] = f"Basic {encoded}"
 
         req = urllib.request.Request(url, data=body, headers=dict(req_headers), method=method)  # noqa: S310
 

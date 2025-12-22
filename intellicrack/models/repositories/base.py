@@ -25,7 +25,7 @@ import time
 from abc import abstractmethod
 from dataclasses import dataclass
 
-from intellicrack.handlers.requests_handler import requests
+from intellicrack.handlers.requests_handler import RequestError, requests
 
 from .interface import DownloadProgressCallback, ModelInfo, ModelRepositoryInterface
 
@@ -78,7 +78,9 @@ class CacheManager:
         if os.path.exists(self.index_file):
             try:
                 with open(self.index_file) as f:
-                    return json.load(f)
+                    loaded_data: object = json.load(f)
+                    if isinstance(loaded_data, dict):
+                        return loaded_data
             except (OSError, json.JSONDecodeError):
                 logger.warning("Failed to load cache index", exc_info=True)
 
@@ -112,7 +114,8 @@ class CacheManager:
             return None
 
         entry = self.cache_index[key]
-        expiry_time = entry.get("expiry_time", 0)
+        expiry_time_obj = entry.get("expiry_time", 0)
+        expiry_time = float(expiry_time_obj) if isinstance(expiry_time_obj, (int, float)) else 0.0
 
         # Check if the entry has expired
         if expiry_time < time.time():
@@ -126,7 +129,8 @@ class CacheManager:
 
         try:
             with open(cache_file) as f:
-                return json.load(f)
+                loaded_data: object = json.load(f)
+                return loaded_data
         except (OSError, json.JSONDecodeError):
             logger.warning("Failed to read cache file for %s", key, exc_info=True)
             self._remove_entry(key)
@@ -192,7 +196,12 @@ class CacheManager:
     def _cleanup_expired(self) -> None:
         """Remove expired cache entries."""
         current_time = time.time()
-        expired_keys = [key for key, entry in self.cache_index.items() if entry.get("expiry_time", 0) < current_time]
+        expired_keys: list[str] = []
+        for key, entry in self.cache_index.items():
+            expiry_time_obj = entry.get("expiry_time", 0)
+            expiry_time = float(expiry_time_obj) if isinstance(expiry_time_obj, (int, float)) else 0.0
+            if expiry_time < current_time:
+                expired_keys.append(key)
 
         for key in expired_keys:
             self._remove_entry(key)
@@ -207,7 +216,11 @@ class CacheManager:
             Current size in megabytes
 
         """
-        total_size = sum(entry.get("size", 0) for entry in self.cache_index.values())
+        total_size = 0
+        for entry in self.cache_index.values():
+            size_obj = entry.get("size", 0)
+            size = int(size_obj) if isinstance(size_obj, (int, float)) else 0
+            total_size += size
         return total_size / (1024 * 1024)  # Convert bytes to MB
 
     def _manage_cache_size(self) -> None:
@@ -216,9 +229,13 @@ class CacheManager:
             return
 
         # Sort entries by creation time (oldest first)
+        def get_created_time(item: tuple[str, dict[str, object]]) -> float:
+            created_time_obj = item[1].get("created_time", 0)
+            return float(created_time_obj) if isinstance(created_time_obj, (int, float)) else 0.0
+
         sorted_entries = sorted(
             self.cache_index.items(),
-            key=lambda x: x[1].get("created_time", 0),
+            key=get_created_time,
         )
 
         # Remove entries until we're under the limit
@@ -249,8 +266,8 @@ class RateLimiter:
 
         """
         self.config = config or RateLimitConfig()
-        self.minute_counters = {}  # Resource -> (count, timestamp)
-        self.day_counters = {}  # Resource -> (count, timestamp)
+        self.minute_counters: dict[str, tuple[int, float]] = {}
+        self.day_counters: dict[str, tuple[int, float]] = {}
 
     def check_limit(self, resource: str) -> tuple[bool, str]:
         """Check if a request is allowed for the given resource.
@@ -381,9 +398,15 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         # Initialize cache manager
         cache_params = cache_config or {}
-        cache_dir = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
-        ttl_seconds = cache_params.get("ttl", 3600)
-        max_size_mb = cache_params.get("max_size_mb", 100)
+        cache_dir_obj = cache_params.get("cache_dir", os.path.join(os.path.dirname(__file__), "..", "cache", repository_name))
+        cache_dir = str(cache_dir_obj) if isinstance(cache_dir_obj, (str, bytes)) else os.path.join(os.path.dirname(__file__), "..", "cache", repository_name)
+
+        ttl_obj = cache_params.get("ttl", 3600)
+        ttl_seconds = int(ttl_obj) if isinstance(ttl_obj, (int, float)) else 3600
+
+        max_size_obj = cache_params.get("max_size_mb", 100)
+        max_size_mb = int(max_size_obj) if isinstance(max_size_obj, (int, float)) else 100
+
         self.cache_manager = CacheManager(cache_dir, ttl_seconds, max_size_mb)
 
         # Create download directory
@@ -467,10 +490,14 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
         try:
             # Make the request
+            params_for_request = None
+            if params:
+                params_for_request = {k: str(v) if not isinstance(v, (str, bytes, int, float)) else v for k, v in params.items()}
+
             response = self.session.request(
                 method=method,
                 url=url,
-                params=params,
+                params=params_for_request,
                 json=data,
                 headers=request_headers,
                 timeout=self.timeout,
@@ -497,7 +524,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
             return True, response_data, ""
 
-        except requests.RequestError:
+        except RequestError:
             logger.exception("Request error", exc_info=True)
             return False, None, "Request error"
 
@@ -581,7 +608,7 @@ class APIRepositoryBase(ModelRepositoryInterface):
 
                 return True, "Download complete"
 
-        except requests.RequestError:
+        except RequestError:
             logger.exception("requests.RequestError in base", exc_info=True)
             if progress_callback:
                 progress_callback.on_complete(False, "Download failed")

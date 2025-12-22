@@ -57,12 +57,12 @@ class ConfigProfile:
         self.name = name
         self.description = description
         self.created_at = datetime.now()
-        self.last_used = None
-        self.settings = {}
-        self.analysis_options = []
+        self.last_used: datetime | None = None
+        self.settings: dict[str, Any] = {}
+        self.analysis_options: list[str] = []
         self.output_format = "json"
-        self.plugins_enabled = []
-        self.custom_scripts = []
+        self.plugins_enabled: list[str] = []
+        self.custom_scripts: list[str] = []
 
     def to_dict(self) -> dict[str, Any]:
         """Convert profile to dictionary."""
@@ -83,13 +83,24 @@ class ConfigProfile:
         """Create profile from dictionary."""
         profile = cls(data["name"], data.get("description", ""))
         profile.created_at = datetime.fromisoformat(data["created_at"])
-        if data.get("last_used"):
-            profile.last_used = datetime.fromisoformat(data["last_used"])
-        profile.settings = data.get("settings", {})
-        profile.analysis_options = data.get("analysis_options", [])
-        profile.output_format = data.get("output_format", "json")
-        profile.plugins_enabled = data.get("plugins_enabled", [])
-        profile.custom_scripts = data.get("custom_scripts", [])
+        last_used_value = data.get("last_used")
+        if last_used_value is not None and isinstance(last_used_value, str):
+            profile.last_used = datetime.fromisoformat(last_used_value)
+        settings = data.get("settings", {})
+        if isinstance(settings, dict):
+            profile.settings = settings
+        analysis_options = data.get("analysis_options", [])
+        if isinstance(analysis_options, list):
+            profile.analysis_options = analysis_options
+        output_format = data.get("output_format", "json")
+        if isinstance(output_format, str):
+            profile.output_format = output_format
+        plugins_enabled = data.get("plugins_enabled", [])
+        if isinstance(plugins_enabled, list):
+            profile.plugins_enabled = plugins_enabled
+        custom_scripts = data.get("custom_scripts", [])
+        if isinstance(custom_scripts, list):
+            profile.custom_scripts = custom_scripts
         return profile
 
 
@@ -128,18 +139,27 @@ class ProfileManager:
             logger.info("Migrating CLI profiles from %s to central config", self.profile_dir)
 
             # Get current profiles from central config
-            cli_config = self.central_config.get("cli_configuration", {})
-            current_profiles = cli_config.get("profiles", {})
+            cli_config_raw = self.central_config.get("cli_configuration", {})
+            if not isinstance(cli_config_raw, dict):
+                cli_config_raw = {}
+            cli_config: dict[str, Any] = cli_config_raw
+
+            current_profiles_raw = cli_config.get("profiles", {})
+            if not isinstance(current_profiles_raw, dict):
+                current_profiles_raw = {}
+            current_profiles: dict[str, Any] = current_profiles_raw
 
             # Load and migrate each profile file
             for profile_file in self.profile_dir.glob("*.json"):
                 try:
                     with open(profile_file) as f:
                         data = json.load(f)
-                        profile_name = data.get("name", profile_file.stem)
-                        # Store profile data in central config
-                        current_profiles[profile_name] = data
-                        logger.info("Migrated profile: %s", profile_name)
+                        if isinstance(data, dict):
+                            profile_name_raw = data.get("name", profile_file.stem)
+                            profile_name = profile_name_raw if isinstance(profile_name_raw, str) else profile_file.stem
+                            # Store profile data in central config
+                            current_profiles[profile_name] = data
+                            logger.info("Migrated profile: %s", profile_name)
                 except Exception as e:
                     logger.exception("Failed to migrate profile %s: %s", profile_file, e)
 
@@ -162,11 +182,18 @@ class ProfileManager:
 
     def _load_profiles(self) -> dict[str, ConfigProfile]:
         """Load all profiles from central config."""
-        profiles = {}
+        profiles: dict[str, ConfigProfile] = {}
 
         # Get profiles from central config
-        cli_config = self.central_config.get("cli_configuration", {})
-        profiles_data = cli_config.get("profiles", {})
+        cli_config_raw = self.central_config.get("cli_configuration", {})
+        if not isinstance(cli_config_raw, dict):
+            return profiles
+        cli_config: dict[str, Any] = cli_config_raw
+
+        profiles_data_raw = cli_config.get("profiles", {})
+        if not isinstance(profiles_data_raw, dict):
+            return profiles
+        profiles_data: dict[str, Any] = profiles_data_raw
 
         for profile_name, profile_data in profiles_data.items():
             try:
@@ -175,8 +202,9 @@ class ProfileManager:
                     # This is the default profile structure, not a user profile
                     continue
 
-                profile = ConfigProfile.from_dict(profile_data)
-                profiles[profile_name] = profile
+                if isinstance(profile_data, dict):
+                    profile = ConfigProfile.from_dict(profile_data)
+                    profiles[profile_name] = profile
             except Exception as e:
                 logger.exception("Error loading profile %s: %s", profile_name, e)
 
@@ -185,8 +213,15 @@ class ProfileManager:
     def save_profile(self, profile: ConfigProfile) -> None:
         """Save profile to central config."""
         # Get current CLI config
-        cli_config = self.central_config.get("cli_configuration", {})
-        profiles_data = cli_config.get("profiles", {})
+        cli_config_raw = self.central_config.get("cli_configuration", {})
+        if not isinstance(cli_config_raw, dict):
+            cli_config_raw = {}
+        cli_config: dict[str, Any] = cli_config_raw
+
+        profiles_data_raw = cli_config.get("profiles", {})
+        if not isinstance(profiles_data_raw, dict):
+            profiles_data_raw = {}
+        profiles_data: dict[str, Any] = profiles_data_raw
 
         # Update profile data
         profiles_data[profile.name] = profile.to_dict()
@@ -206,8 +241,15 @@ class ProfileManager:
             return False
 
         # Remove from central config
-        cli_config = self.central_config.get("cli_configuration", {})
-        profiles_data = cli_config.get("profiles", {})
+        cli_config_raw = self.central_config.get("cli_configuration", {})
+        if not isinstance(cli_config_raw, dict):
+            cli_config_raw = {}
+        cli_config: dict[str, Any] = cli_config_raw
+
+        profiles_data_raw = cli_config.get("profiles", {})
+        if not isinstance(profiles_data_raw, dict):
+            profiles_data_raw = {}
+        profiles_data: dict[str, Any] = profiles_data_raw
 
         if name in profiles_data:
             del profiles_data[name]
@@ -222,7 +264,7 @@ class ProfileManager:
     def get_profile(self, name: str) -> ConfigProfile | None:
         """Get a profile by name."""
         profile = self.profiles.get(name)
-        if profile:
+        if profile is not None:
             profile.last_used = datetime.now()
             self.save_profile(profile)  # Update last used time in central config
         return profile

@@ -915,7 +915,7 @@ class ExecutionTimePredictor:
                         stats.sort_stats("cumulative")
 
                         # Extract timing information
-                        total_time = stats.total_tt
+                        total_time = getattr(stats, 'total_tt', 0.0)
 
                         # Parse associated metadata
                         meta_file = profile_file.with_suffix(".json")
@@ -1116,9 +1116,9 @@ class VulnerabilityPredictor:
         """
         self.model = LinearRegressionModel("vulnerability_discovery")
         self.feature_extractor = FeatureExtractor()
-        self.vulnerability_patterns = []
-        self.pattern_weights = {}
-        self.discovery_history = []
+        self.vulnerability_patterns: list[dict[str, Any]] = []
+        self.pattern_weights: dict[str, float] = {}
+        self.discovery_history: list[dict[str, Any]] = []
         self._initialize_model()
 
         logger.info("Vulnerability predictor initialized")
@@ -1502,7 +1502,7 @@ class VulnerabilityPredictor:
             }
 
             result = self.predict_vulnerability_likelihood(file_context)
-            return result.confidence_score
+            return float(result.confidence_score)
 
         except Exception as e:
             logger.exception("Error getting confidence score for %s: %s", binary_path, e)
@@ -1519,10 +1519,10 @@ class PredictiveIntelligenceEngine:
         self.vulnerability_predictor = VulnerabilityPredictor()
 
         self.prediction_cache: dict[str, PredictionResult] = {}
-        self.prediction_history: deque = deque(maxlen=1000)
+        self.prediction_history: deque[PredictionResult] = deque(maxlen=1000)
 
         # Performance tracking
-        self.prediction_stats = {
+        self.prediction_stats: dict[str, int | defaultdict[str, list[float]]] = {
             "total_predictions": 0,
             "cache_hits": 0,
             "accuracy_tracking": defaultdict(list),
@@ -1539,11 +1539,15 @@ class PredictiveIntelligenceEngine:
         if cache_key in self.prediction_cache:
             cached_result = self.prediction_cache[cache_key]
             # Check if cache is still fresh (< 5 minutes)
-            if (datetime.now() - cached_result.timestamp).seconds < 300:
-                self.prediction_stats["cache_hits"] += 1
+            time_diff = datetime.now() - cached_result.timestamp
+            if time_diff.seconds < 300:
+                cache_hits = self.prediction_stats["cache_hits"]
+                if isinstance(cache_hits, int):
+                    self.prediction_stats["cache_hits"] = cache_hits + 1
                 return cached_result
 
         # Make new prediction
+        result: PredictionResult
         if prediction_type == PredictionType.SUCCESS_PROBABILITY:
             result = self.success_predictor.predict_success_probability(
                 context.get("operation_type", "unknown"),
@@ -1571,7 +1575,9 @@ class PredictiveIntelligenceEngine:
         # Cache and track
         self.prediction_cache[cache_key] = result
         self.prediction_history.append(result)
-        self.prediction_stats["total_predictions"] += 1
+        total_predictions = self.prediction_stats["total_predictions"]
+        if isinstance(total_predictions, int):
+            self.prediction_stats["total_predictions"] = total_predictions + 1
 
         return result
 
@@ -1597,7 +1603,9 @@ class PredictiveIntelligenceEngine:
         accuracy = max(0.0, 1.0 - error)
 
         # Track accuracy by prediction type
-        self.prediction_stats["accuracy_tracking"][prediction.prediction_type.value].append(accuracy)
+        accuracy_tracking = self.prediction_stats["accuracy_tracking"]
+        if isinstance(accuracy_tracking, defaultdict):
+            accuracy_tracking[prediction.prediction_type.value].append(accuracy)
 
         # Update model with actual result
         if prediction.prediction_type == PredictionType.SUCCESS_PROBABILITY:
@@ -1619,21 +1627,34 @@ class PredictiveIntelligenceEngine:
 
     def get_prediction_analytics(self) -> dict[str, Any]:
         """Get analytics about prediction performance."""
-        analytics = {
-            "total_predictions": self.prediction_stats["total_predictions"],
-            "cache_hit_rate": self.prediction_stats["cache_hits"] / max(1, self.prediction_stats["total_predictions"]),
+        total_predictions_val = self.prediction_stats["total_predictions"]
+        cache_hits_val = self.prediction_stats["cache_hits"]
+
+        total_predictions = 0
+        cache_hits = 0
+
+        if isinstance(total_predictions_val, int):
+            total_predictions = total_predictions_val
+        if isinstance(cache_hits_val, int):
+            cache_hits = cache_hits_val
+
+        analytics: dict[str, Any] = {
+            "total_predictions": total_predictions,
+            "cache_hit_rate": cache_hits / max(1, total_predictions),
             "recent_predictions": len(self.prediction_history),
             "accuracy_by_type": {},
         }
 
         # Calculate average accuracy by prediction type
-        for pred_type, accuracies in self.prediction_stats["accuracy_tracking"].items():
-            if accuracies:
-                analytics["accuracy_by_type"][pred_type] = {
-                    "avg_accuracy": sum(accuracies) / len(accuracies),
-                    "sample_count": len(accuracies),
-                    "recent_accuracy": sum(accuracies[-10:]) / min(10, len(accuracies)),
-                }
+        accuracy_tracking = self.prediction_stats["accuracy_tracking"]
+        if isinstance(accuracy_tracking, defaultdict):
+            for pred_type, accuracies in accuracy_tracking.items():
+                if accuracies and isinstance(accuracies, list):
+                    analytics["accuracy_by_type"][pred_type] = {
+                        "avg_accuracy": sum(accuracies) / len(accuracies),
+                        "sample_count": len(accuracies),
+                        "recent_accuracy": sum(accuracies[-10:]) / min(10, len(accuracies)),
+                    }
 
         return analytics
 
@@ -1674,14 +1695,14 @@ class PredictiveIntelligenceEngine:
 
     def _get_confidence_distribution(self) -> dict[str, int]:
         """Get distribution of confidence levels."""
-        distribution = defaultdict(int)
+        distribution: dict[str, int] = defaultdict(int)
         for prediction in self.prediction_history:
             distribution[prediction.confidence.value] += 1
         return dict(distribution)
 
     def _get_prediction_type_distribution(self) -> dict[str, int]:
         """Get distribution of prediction types."""
-        distribution = defaultdict(int)
+        distribution: dict[str, int] = defaultdict(int)
         for prediction in self.prediction_history:
             distribution[prediction.prediction_type.value] += 1
         return dict(distribution)

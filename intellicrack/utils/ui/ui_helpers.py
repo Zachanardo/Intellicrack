@@ -1,11 +1,12 @@
 """UI helper utilities for common interface operations."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from intellicrack.utils.logger import logger
 
 
 if TYPE_CHECKING:
+    from intellicrack.handlers.pyqt6_handler import QMessageBox as QMessageBoxType
     from intellicrack.handlers.pyqt6_handler import QWidget
 
 """
@@ -40,13 +41,12 @@ def check_binary_path_and_warn(app_instance: object) -> bool:
         bool: True if binary path exists, False if missing
 
     """
-    if not hasattr(app_instance, "binary_path") or not app_instance.binary_path:
+    if not hasattr(app_instance, "binary_path") or not getattr(app_instance, "binary_path", None):
         try:
             from intellicrack.handlers.pyqt6_handler import QFileDialog, QMessageBox
 
-            # Verify UI dialog components are available
-            _ = QFileDialog.__name__  # Used for file selection dialogs
-            QMessageBox.warning(app_instance, "No File Selected", "Please select a program first.")
+            _ = QFileDialog.__name__
+            QMessageBox.warning(cast(Any, app_instance), "No File Selected", "Please select a program first.")
         except ImportError as e:
             logger.error("Import error in ui_helpers: %s", e)
         return False
@@ -62,16 +62,17 @@ def emit_log_message(app_instance: object, message: str) -> None:
 
     """
     if hasattr(app_instance, "update_output"):
-        if hasattr(app_instance.update_output, "emit"):
+        update_output: Any = getattr(app_instance, "update_output")
+        if hasattr(update_output, "emit"):
             try:
                 from ..core.misc_utils import log_message
 
-                app_instance.update_output.emit(log_message(message))
+                update_output.emit(log_message(message))
             except ImportError as e:
                 logger.error("Import error in ui_helpers: %s", e)
-                app_instance.update_output.emit(message)
+                update_output.emit(message)
         else:
-            app_instance.update_output.emit(message)
+            update_output.emit(message)
 
 
 def show_file_dialog(parent: object, title: str, file_filter: str = "HTML Files (*.html);;All Files (*)") -> str:
@@ -89,7 +90,7 @@ def show_file_dialog(parent: object, title: str, file_filter: str = "HTML Files 
     try:
         from intellicrack.handlers.pyqt6_handler import QFileDialog
 
-        filename, _ = QFileDialog.getSaveFileName(parent, title, "", file_filter)
+        filename, _ = QFileDialog.getSaveFileName(cast(Any, parent), title, "", file_filter)
         return filename or ""
     except ImportError as e:
         logger.error("Import error in ui_helpers: %s", e)
@@ -111,15 +112,14 @@ def ask_yes_no_question(parent: object, title: str, question: str) -> bool:
     try:
         from intellicrack.handlers.pyqt6_handler import QMessageBox
 
-        return (
-            QMessageBox.question(
-                parent,
-                title,
-                question,
-                QMessageBox.Yes | QMessageBox.No,
-            )
-            == QMessageBox.Yes
+        qmb: Any = cast(Any, QMessageBox)
+        result: Any = qmb.question(
+            cast(Any, parent),
+            title,
+            question,
+            qmb.Yes | qmb.No,
         )
+        return bool(result == qmb.Yes)
     except ImportError as e:
         logger.error("Import error in ui_helpers: %s", e)
         return False
@@ -143,10 +143,8 @@ def generate_exploit_payload_common(payload_type: str, target_path: str = "targe
         import os
 
         if payload_type == "License Bypass":
-            # Generate license bypass patch bytes
-            # Common x86/x64 license bypass: mov eax, 1; ret
             bypass_patch = b"\xb8\x01\x00\x00\x00\xc3"
-            payload_result = {
+            payload_result: dict[str, str | bool | list[str]] = {
                 "method": "patch",
                 "payload_bytes": bypass_patch.hex(),
                 "description": "License bypass patch - always return success",
@@ -158,9 +156,7 @@ def generate_exploit_payload_common(payload_type: str, target_path: str = "targe
                 ],
             }
         elif payload_type == "Function Hijack":
-            # Generate function hijacking payload for license checks
-            # JMP to custom handler that returns success
-            hijack_payload = b"\xe9\x00\x00\x00\x00"  # JMP rel32
+            hijack_payload = b"\xe9\x00\x00\x00\x00"
             payload_result = {
                 "method": "function_hijacking",
                 "payload_bytes": hijack_payload.hex(),
@@ -173,8 +169,7 @@ def generate_exploit_payload_common(payload_type: str, target_path: str = "targe
                 ],
             }
         elif payload_type == "NOP Slide":
-            # Generate NOP slide to bypass checks
-            nop_slide = b"\x90" * 10  # 10 NOPs
+            nop_slide = b"\x90" * 10
             payload_result = {
                 "method": "nop_slide",
                 "payload_bytes": nop_slide.hex(),
@@ -189,13 +184,14 @@ def generate_exploit_payload_common(payload_type: str, target_path: str = "targe
         else:
             payload_result = {"error": f"Unknown payload type: {payload_type}"}
 
-        # Add target information if file exists
         if os.path.exists(target_path):
             payload_result["target"] = target_path
-            payload_result["target_exists"] = True
+            target_exists: bool = True
+            payload_result["target_exists"] = target_exists
         else:
             payload_result["target"] = target_path
-            payload_result["target_exists"] = False
+            target_exists = False
+            payload_result["target_exists"] = target_exists
 
         return payload_result
 
@@ -218,9 +214,10 @@ def generate_exploit_strategy_common(binary_path: str, vulnerability_type: str =
 
     """
     try:
-        from ..exploitation.exploitation import generate_exploit_strategy
+        from ..exploitation.exploitation import generate_bypass_script
 
-        return generate_exploit_strategy(binary_path, vulnerability_type)
+        result: dict[str, Any] = generate_bypass_script(binary_path, vulnerability_type)
+        return cast(dict[str, str | object], result)
     except (OSError, ValueError, RuntimeError) as e:
         logger.error("Error in ui_helpers: %s", e)
         return {"error": str(e)}

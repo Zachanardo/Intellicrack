@@ -66,9 +66,15 @@ class BaseSnapshotHandler(ABC):
         if not success:
             return {"error": error_msg}
 
+        if snapshot_data is None:
+            return {"error": "Snapshot data is None"}
+
         try:
             s1 = snapshot_data["s1"]
             s2 = snapshot_data["s2"]
+
+            if not isinstance(s1, dict) or not isinstance(s2, dict):
+                return {"error": "Invalid snapshot data format"}
 
             # Common base comparison structure
             base_comparison = {
@@ -108,7 +114,7 @@ class BaseSnapshotHandler(ABC):
 
         return time.time()
 
-    def list_snapshots(self) -> list:
+    def list_snapshots(self) -> list[str]:
         """Get list of available snapshot names."""
         return list(self.snapshots.keys())
 

@@ -32,7 +32,7 @@ from typing import Any
 
 import numpy as np
 
-from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer
+from intellicrack.core.processing.streaming_analysis_manager import ChunkContext, StreamingAnalysisManager, StreamingAnalyzer, StreamingProgress
 
 
 logger = logging.getLogger(__name__)
@@ -125,7 +125,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             chunk_data = context.data
             chunk_offset = context.offset
 
-            byte_counts = defaultdict(int)
+            byte_counts: defaultdict[int, int] = defaultdict(int)
             for byte in chunk_data:
                 byte_counts[byte] += 1
                 self.global_byte_counts[byte] += 1
@@ -147,7 +147,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             windows = []
             for offset in range(0, len(chunk_data) - self.window_size + 1, self.stride):
                 window_data = chunk_data[offset : offset + self.window_size]
-                window_byte_counts = defaultdict(int)
+                window_byte_counts: defaultdict[int, int] = defaultdict(int)
                 for byte in window_data:
                     window_byte_counts[byte] += 1
 
@@ -214,7 +214,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
         try:
             all_windows = []
             chunk_entropies = []
-            classifications = defaultdict(int)
+            classifications: defaultdict[str, int] = defaultdict(int)
             errors = []
 
             total_printable = 0
@@ -467,7 +467,7 @@ class StreamingEntropyAnalyzer(StreamingAnalyzer):
             List of recommendation strings for further investigation
 
         """
-        recommendations = []
+        recommendations: list[str] = []
 
         if results.get("is_encrypted"):
             recommendations.extend((
@@ -493,7 +493,7 @@ def analyze_entropy_streaming(
     binary_path: Path,
     window_size: int = 1024 * 1024,
     stride: int = 512 * 1024,
-    progress_callback: Callable[[int, int], None] | None = None,
+    progress_callback: Callable[[StreamingProgress], None] | None = None,
 ) -> dict[str, Any]:
     """Perform streaming entropy analysis on large binary.
 
@@ -506,7 +506,7 @@ def analyze_entropy_streaming(
         window_size: Size of sliding window for entropy calculation (default 1MB)
         stride: Step size between windows (default 512KB)
         progress_callback: Optional callback function for progress updates
-            taking (current: int, total: int) parameters
+            receiving StreamingProgress object with analysis metrics
 
     Returns:
         Complete entropy analysis results including global entropy, distribution,

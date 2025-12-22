@@ -32,6 +32,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+# HASH type removed - hashlib doesn't export it, use Any instead
+
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,7 @@ class ChunkContext:
     data: bytes
     overlap_before: bytes = b""
     overlap_after: bytes = b""
-    file_path: Path = None
+    file_path: Path | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -389,7 +391,10 @@ class StreamingAnalysisManager:
                 return None
 
             with open(checkpoint_path, encoding="utf-8") as f:
-                return json.load(f)
+                data = json.load(f)
+                if isinstance(data, dict):
+                    return data
+                return None
 
         except Exception as e:
             self.logger.exception("Failed to load checkpoint: %s", e)
@@ -414,7 +419,7 @@ class StreamingAnalysisManager:
             algorithms = ["sha256", "sha512", "sha3_256", "blake2b"]
 
         try:
-            hashers = {}
+            hashers: dict[str, Any] = {}
             for algo in algorithms:
                 if algo == "sha256":
                     hashers[algo] = hashlib.sha256()
@@ -471,7 +476,7 @@ class StreamingAnalysisManager:
 
         """
         try:
-            results = {pattern.hex(): [] for pattern in patterns}
+            results: dict[str, list[dict[str, Any]]] = {pattern.hex(): [] for pattern in patterns}
             overlap_size = max((len(p) for p in patterns), default=0)
 
             for context in self.read_chunks(file_path, overlap_size=overlap_size):
@@ -511,7 +516,7 @@ class StreamingAnalysisManager:
 
         except Exception as e:
             self.logger.exception("Pattern scanning failed: %s", e)
-            return {"error": str(e)}
+            return {}
 
     def analyze_section_streaming(
         self,
@@ -538,7 +543,7 @@ class StreamingAnalysisManager:
 
                 section_data = mm[offset : offset + size]
 
-                byte_counts = {}
+                byte_counts: dict[int, int] = {}
                 for byte in section_data:
                     byte_counts[byte] = byte_counts.get(byte, 0) + 1
 

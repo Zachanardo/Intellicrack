@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Callable, Protocol, runtime_checkable
 
 # Third-party imports
 from intellicrack.core.config_manager import get_config
@@ -46,6 +46,7 @@ from intellicrack.handlers.tkinter_handler import (
 
 
 if TYPE_CHECKING:
+    import frida.core
     from matplotlib.axes import Axes
     from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg as FigureCanvasType
     from matplotlib.figure import Figure as FigureType
@@ -2219,6 +2220,9 @@ class UIEnhancementModule:
         """Load UI configuration from universal config system."""
         try:
             cfg = get_config()
+            panel_weights_val = cfg.get("ui.enhancement.panel_weights", [1, 2, 1])
+            if not isinstance(panel_weights_val, list):
+                panel_weights_val = [1, 2, 1]
             data = {
                 "theme": cfg.get("ui.enhancement.theme", "dark"),
                 "font_family": cfg.get("ui.enhancement.font_family", "Consolas"),
@@ -2228,7 +2232,7 @@ class UIEnhancementModule:
                 "max_log_entries": cfg.get("ui.enhancement.max_log_entries", 10000),
                 "enable_animations": cfg.get("ui.enhancement.enable_animations", True),
                 "show_tooltips": cfg.get("ui.enhancement.show_tooltips", True),
-                "panel_weights": tuple(cfg.get("ui.enhancement.panel_weights", [1, 2, 1])),
+                "panel_weights": tuple(panel_weights_val),
             }
             return UIConfig.from_dict(data)
         except Exception as e:
@@ -2864,13 +2868,17 @@ if __name__ == "__main__":
 
                 script_obj = session.create_script(script)
 
-                def on_message(message: dict[str, Any], data: object) -> None:
-                    if message["type"] == "send":
-                        payload = message.get("payload", "")
+                def on_message(
+                    message: frida.core.ScriptPayloadMessage | frida.core.ScriptErrorMessage,
+                    data: bytes | None,
+                ) -> None:
+                    msg_dict = dict(message)
+                    if msg_dict["type"] == "send":
+                        payload = msg_dict.get("payload", "")
                         self.root.after(0, lambda: self.log_viewer.add_log("INFO", str(payload), "Frida"))
-                    elif message["type"] == "error":
-                        stack = message.get("stack", "")
-                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", stack, "Frida"))
+                    elif msg_dict["type"] == "error":
+                        stack = msg_dict.get("stack", "")
+                        self.root.after(0, lambda: self.log_viewer.add_log("ERROR", str(stack), "Frida"))
 
                 script_obj.on("message", on_message)
                 script_obj.load()

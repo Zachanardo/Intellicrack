@@ -17,36 +17,75 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from typing import Any
+
 from intellicrack.utils.logger import logger
 
 
-"""
-OpenCL Import Handler with Production-Ready Fallbacks
+class FallbackContext:
+    """Fallback OpenCL context."""
 
-This module provides a centralized abstraction layer for OpenCL imports.
-When OpenCL is not available, it provides fallback implementations.
-"""
 
-# OpenCL availability detection and import handling
+class FallbackDevice:
+    """Fallback OpenCL device."""
+
+
+class FallbackBuffer:
+    """Fallback OpenCL buffer."""
+
+
+class FallbackProgram:
+    """Fallback OpenCL program."""
+
+
+class FallbackQueue:
+    """Fallback OpenCL command queue."""
+
+
+class FallbackPlatform:
+    """Fallback OpenCL platform."""
+
+
+HAS_OPENCL = False
+OPENCL_AVAILABLE = False
+OPENCL_VERSION: str | None = None
+
 try:
-    import pyopencl as cl
+    import pyopencl as cl_module
+    from pyopencl import Buffer as OpenCLBuffer
+    from pyopencl import Context as OpenCLContext
+    from pyopencl import Device as OpenCLDevice
+    from pyopencl import Platform as OpenCLPlatform
+    from pyopencl import Program as OpenCLProgram
+    from pyopencl import create_some_context as opencl_create_some_context
+    from pyopencl import get_platforms as opencl_get_platforms
 
-    # Import basic classes
-    from pyopencl import Buffer, Context, Device, Platform, Program, create_some_context, get_platforms
-
-    # Try to import Queue - it may be CommandQueue in some versions
     try:
-        from pyopencl import Queue
+        from pyopencl import CommandQueue as OpenCLQueue
     except ImportError:
-        try:
-            from pyopencl import CommandQueue as Queue
-        except ImportError:
-            # Create fallback if neither exists
-            Queue = None
+        from pyopencl import Queue as OpenCLQueue  # type: ignore[attr-defined,no-redef]
 
     HAS_OPENCL = True
     OPENCL_AVAILABLE = True
-    OPENCL_VERSION = getattr(cl, "VERSION_TEXT", "unknown")
+    OPENCL_VERSION = getattr(cl_module, "VERSION_TEXT", "unknown")
+
+    cl: Any = cl_module
+    Context: type[Any] = OpenCLContext
+    Device: type[Any] = OpenCLDevice
+    Buffer: type[Any] = OpenCLBuffer
+    Program: type[Any] = OpenCLProgram
+    Queue: type[Any] = OpenCLQueue
+    Platform: type[Any] = OpenCLPlatform
+
+    def create_some_context(
+        interactive: bool | None = None, answers: list[str] | None = None
+    ) -> Any:
+        """Create OpenCL context with optional interactivity control."""
+        return opencl_create_some_context(interactive=interactive, answers=answers)
+
+    def get_platforms() -> list[Any]:
+        """Get available OpenCL platforms."""
+        return list(opencl_get_platforms())
 
 except ImportError as e:
     logger.error("OpenCL not available, using fallback implementations: %s", e)
@@ -54,26 +93,6 @@ except ImportError as e:
     OPENCL_AVAILABLE = False
     OPENCL_VERSION = None
 
-    # Fallback implementations
-    class FallbackContext:
-        """Fallback OpenCL context."""
-
-    class FallbackDevice:
-        """Fallback OpenCL device."""
-
-    class FallbackBuffer:
-        """Fallback OpenCL buffer."""
-
-    class FallbackProgram:
-        """Fallback OpenCL program."""
-
-    class FallbackQueue:
-        """Fallback OpenCL command queue."""
-
-    class FallbackPlatform:
-        """Fallback OpenCL platform."""
-
-    # Assign fallback objects
     cl = None
     Context = FallbackContext
     Device = FallbackDevice
@@ -82,16 +101,17 @@ except ImportError as e:
     Queue = FallbackQueue
     Platform = FallbackPlatform
 
-    def create_some_context() -> FallbackContext:
+    def create_some_context(
+        interactive: bool | None = None, answers: list[str] | None = None
+    ) -> Any:
         """Fallback context creation."""
         return FallbackContext()
 
-    def get_platforms() -> list:
+    def get_platforms() -> list[Any]:
         """Fallback platform enumeration."""
         return []
 
 
-# Export all OpenCL objects and availability flag
 __all__ = [
     "Buffer",
     "Context",

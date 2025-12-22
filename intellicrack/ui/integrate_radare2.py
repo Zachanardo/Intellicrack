@@ -124,17 +124,19 @@ def integrate_with_main_app() -> bool:
     """
     try:
         # Try to find the main app instance in various ways
-        main_app = None
+        main_app: object | None = None
 
         # Method 1: Check if running in QApplication context
         from intellicrack.handlers.pyqt6_handler import QApplication
 
         if app := QApplication.instance():
             # Look for IntellicrackApp in top-level widgets
-            for widget in app.topLevelWidgets():
-                if hasattr(widget, "__class__") and "IntellicrackApp" in str(type(widget)):
-                    main_app = widget
-                    break
+            if hasattr(app, "topLevelWidgets"):
+                widgets: list[object] = getattr(app, "topLevelWidgets", lambda: [])()
+                for widget in widgets:
+                    if hasattr(widget, "__class__") and "IntellicrackApp" in str(type(widget)):
+                        main_app = widget
+                        break
 
         # Method 2: Check global variables (if app stores itself globally)
         if not main_app:
@@ -189,7 +191,7 @@ def create_standalone_radare2_app() -> tuple[object, object] | tuple[None, None]
         return None, None
 
 
-def show_integration_status(app_instance: object | None = None) -> dict:
+def show_integration_status(app_instance: object | None = None) -> dict[str, object]:
     """Show the current integration status.
 
     Args:
@@ -202,7 +204,8 @@ def show_integration_status(app_instance: object | None = None) -> dict:
     try:
         from .comprehensive_integration import get_integration_status
 
-        status = get_integration_status()
+        base_status = get_integration_status()
+        status: dict[str, object] = dict(base_status)
 
         # Add app-specific status if provided
         if app_instance:

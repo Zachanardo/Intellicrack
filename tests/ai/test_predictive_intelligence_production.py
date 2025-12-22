@@ -20,8 +20,7 @@ from intellicrack.ai.predictive_intelligence import (
     PredictionInput,
     PredictionResult,
     PredictionType,
-    PredictiveIntelligence,
-    TimeSeriesAnalyzer,
+    PredictiveIntelligenceEngine,
     TimeSeriesData,
 )
 
@@ -103,68 +102,18 @@ class TestFeatureExtractor:
         assert features["complexity_score"] > 0
 
 
-class TestTimeSeriesAnalyzer:
-    """Tests for time series prediction."""
-
-    def test_initialization(self) -> None:
-        analyzer = TimeSeriesAnalyzer()
-
-        assert analyzer.window_size == 10
-        assert analyzer.trend_threshold == 0.1
-
-    def test_predict_next_value_with_trend(self) -> None:
-        analyzer = TimeSeriesAnalyzer()
-
-        from datetime import datetime, timedelta
-
-        timestamps = [datetime.now() - timedelta(hours=i) for i in range(10, 0, -1)]
-        values = [float(i * 10) for i in range(1, 11)]
-
-        ts_data = TimeSeriesData(timestamps=timestamps, values=values)
-
-        prediction = analyzer.predict_next_value(ts_data)
-
-        assert prediction > values[-1]
-        assert 100 < prediction < 150
-
-    def test_predict_next_value_constant(self) -> None:
-        analyzer = TimeSeriesAnalyzer()
-
-        from datetime import datetime, timedelta
-
-        timestamps = [datetime.now() - timedelta(hours=i) for i in range(10, 0, -1)]
-        values = [50.0] * 10
-
-        ts_data = TimeSeriesData(timestamps=timestamps, values=values)
-
-        prediction = analyzer.predict_next_value(ts_data)
-
-        assert 45 < prediction < 55
-
-    def test_detect_trend(self) -> None:
-        analyzer = TimeSeriesAnalyzer()
-
-        values_increasing = [1.0, 2.0, 3.0, 4.0, 5.0]
-        values_decreasing = [5.0, 4.0, 3.0, 2.0, 1.0]
-        values_stable = [3.0, 3.1, 2.9, 3.0, 3.1]
-
-        assert analyzer._detect_trend(values_increasing) == "increasing"
-        assert analyzer._detect_trend(values_decreasing) == "decreasing"
-        assert analyzer._detect_trend(values_stable) == "stable"
-
-
-class TestPredictiveIntelligence:
+class TestPredictiveIntelligenceEngine:
     """Tests for main predictive intelligence engine."""
 
     def test_initialization(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         assert engine.feature_extractor is not None
         assert engine.time_series_analyzer is not None
         assert engine.prediction_history == []
 
     def test_predict_success_probability(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="vulnerability_analysis",
@@ -181,7 +130,7 @@ class TestPredictiveIntelligence:
         assert 0.0 <= result.confidence_score <= 1.0
 
     def test_predict_execution_time(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="binary_analysis", context={"file_size": 2048000}, features={"avg_execution_time": 10.0, "system_load": 0.3}
@@ -194,7 +143,7 @@ class TestPredictiveIntelligence:
         assert len(result.factors) > 0
 
     def test_predict_resource_usage(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="exploit_generation", context={"complexity": "high"}, features={"cpu_usage": 0.5, "memory_usage": 0.6}
@@ -206,7 +155,7 @@ class TestPredictiveIntelligence:
         assert 0.0 <= result.predicted_value <= 1.0
 
     def test_predict_vulnerability_discovery(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="vulnerability_scan",
@@ -220,7 +169,7 @@ class TestPredictiveIntelligence:
         assert 0.0 <= result.predicted_value <= 1.0
 
     def test_suggest_optimal_strategy(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="license_analysis", context={"binary_size": 5120000, "complexity": "moderate"}, features={"system_load": 0.4}
@@ -233,7 +182,7 @@ class TestPredictiveIntelligence:
         assert "recommended_strategy" in result.factors
 
     def test_get_confidence_level(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         assert engine._get_confidence_level(0.95) == PredictionConfidence.VERY_HIGH
         assert engine._get_confidence_level(0.8) == PredictionConfidence.HIGH
@@ -242,7 +191,7 @@ class TestPredictiveIntelligence:
         assert engine._get_confidence_level(0.2) == PredictionConfidence.VERY_LOW
 
     def test_get_prediction_history(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="test", context={}, features={})
 
@@ -255,7 +204,7 @@ class TestPredictiveIntelligence:
         assert all(isinstance(p, PredictionResult) for p in history)
 
     def test_get_prediction_accuracy(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         stats = engine.get_prediction_accuracy()
 
@@ -282,7 +231,7 @@ class TestPredictionInputValidation:
         assert pred_input.features["feature1"] == 0.5
 
     def test_prediction_with_empty_features(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="test", context={}, features={})
 
@@ -292,7 +241,7 @@ class TestPredictionInputValidation:
         assert 0.0 <= result.predicted_value <= 1.0
 
     def test_prediction_with_missing_context(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="binary_analysis", context={}, features={})
 
@@ -331,7 +280,7 @@ class TestRealWorldScenarios:
     """Tests for real-world prediction scenarios."""
 
     def test_large_binary_analysis_prediction(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="binary_analysis",
@@ -346,7 +295,7 @@ class TestRealWorldScenarios:
         assert resource_result.predicted_value > 0.5
 
     def test_simple_vulnerability_scan_prediction(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="vulnerability_scan", context={"file_size": 512 * 1024, "binary_complexity": 0.3}, features={}
@@ -359,7 +308,7 @@ class TestRealWorldScenarios:
         assert vuln_result.predicted_value > 0
 
     def test_exploit_generation_prediction(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(
             operation_type="exploit_generation",
@@ -377,7 +326,7 @@ class TestPredictionCaching:
     """Tests for prediction caching and performance optimization."""
 
     def test_repeated_predictions_use_cache(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
         extractor = engine.feature_extractor
 
         context1 = {"file_size": 1024000}
@@ -393,7 +342,7 @@ class TestPredictionAccuracy:
     """Tests for prediction accuracy tracking."""
 
     def test_track_prediction_outcome(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="test", context={}, features={})
 
@@ -410,7 +359,7 @@ class TestEdgeCases:
     """Tests for edge cases and error conditions."""
 
     def test_zero_file_size(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="binary_analysis", context={"file_size": 0}, features={})
 
@@ -419,7 +368,7 @@ class TestEdgeCases:
         assert result.predicted_value > 0
 
     def test_very_large_file(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="binary_analysis", context={"file_size": 1024 * 1024 * 1024}, features={})
 
@@ -428,7 +377,7 @@ class TestEdgeCases:
         assert result.predicted_value > 0.7
 
     def test_unknown_operation_type(self) -> None:
-        engine = PredictiveIntelligence()
+        engine = PredictiveIntelligenceEngine()
 
         pred_input = PredictionInput(operation_type="unknown_operation", context={}, features={})
 

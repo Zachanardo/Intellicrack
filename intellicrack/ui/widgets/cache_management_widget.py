@@ -10,6 +10,7 @@ from typing import Any
 
 from intellicrack.handlers.pyqt6_handler import (
     QApplication,
+    QCloseEvent,
     QFont,
     QGroupBox,
     QHBoxLayout,
@@ -178,14 +179,15 @@ class CacheTopEntriesWidget(QWidget):
         self.table.setHorizontalHeaderLabels(["File", "Access Count", "Size (KB)", "Age (Hours)"])
 
         # Configure table
-        header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        table_header: QHeaderView | None = self.table.horizontalHeader()
+        if table_header is not None:
+            table_header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+            table_header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+            table_header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
+            table_header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
 
         self.table.setAlternatingRowColors(True)
-        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
 
         layout.addWidget(self.table)
         self.setLayout(layout)
@@ -247,7 +249,7 @@ class CacheManagementWidget(QWidget):
         layout.addWidget(title)
 
         # Create splitter for two-panel layout
-        splitter = QSplitter(Qt.Horizontal)
+        splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # Left panel - Stats and controls
         left_widget = QWidget()
@@ -370,7 +372,7 @@ class CacheManagementWidget(QWidget):
         and timestamp information to display in the details text widget.
 
         """
-        details = []
+        details: list[str] = []
 
         stats_data = stats.get("stats", {})
 
@@ -456,7 +458,7 @@ class CacheManagementWidget(QWidget):
             self.refresh_stats()
 
         except Exception as e:
-            self.logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
+            logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Cleanup Error",
@@ -479,7 +481,7 @@ class CacheManagementWidget(QWidget):
             )
 
         except Exception as e:
-            self.logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
+            logger.exception("Exception in cache_management_widget: %s", e, exc_info=True)
             QMessageBox.critical(
                 self,
                 "Save Error",
@@ -498,11 +500,11 @@ class CacheManagementWidget(QWidget):
             "Clear Cache",
             "Are you sure you want to clear all cache entries?\n"
             "This will remove all cached analysis results including AI coordination cache.",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
         )
 
-        if reply == QMessageBox.Yes:
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 # Clear protection analysis cache
                 self.engine.clear_cache()
@@ -537,7 +539,7 @@ class CacheManagementWidget(QWidget):
                     f"Failed to clear cache: {e}",
                 )
 
-    def closeEvent(self, event: object) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Clean up on close.
 
         Args:

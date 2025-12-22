@@ -10,11 +10,12 @@ import logging
 import random
 import struct
 import time
-from datetime import datetime
-from enum import IntEnum
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 
-import psutil
+from intellicrack.utils.type_safety import get_typed_item, validate_type
+
+try:
+    import psutil
 
 from intellicrack.utils.logger import log_all_methods
 
@@ -505,9 +506,9 @@ class LicenseAnalyzer:
                 continue
 
             for pattern_info in serial_patterns:
-                pattern_bytes = cast("bytes", pattern_info["bytes"])
-                pattern_name = cast("str", pattern_info["name"])
-                pattern_desc = cast("str", pattern_info["description"])
+                pattern_bytes = get_typed_item(pattern_info, "bytes", bytes)
+                pattern_name = get_typed_item(pattern_info, "name", str)
+                pattern_desc = get_typed_item(pattern_info, "description", str)
                 offset = 0
                 while True:
                     idx = memory.find(pattern_bytes, offset)
@@ -560,7 +561,7 @@ class LicenseAnalyzer:
                 context["has_string_op"] = True
                 break
 
-        score = sum([cast("bool", context["has_loop"]), cast("bool", context["has_comparison"]), cast("bool", context["has_string_op"])])
+        score = sum([get_typed_item(context, "has_loop", bool), get_typed_item(context, "has_comparison", bool), get_typed_item(context, "has_string_op", bool)])
         if score >= 2:
             context["confidence"] = "high"
         elif score == 1:
@@ -631,9 +632,9 @@ class LicenseAnalyzer:
                 continue
 
             for pattern_info in trial_patterns:
-                pattern_bytes = cast("bytes", pattern_info["bytes"])
-                pattern_name = cast("str", pattern_info["name"])
-                pattern_desc = cast("str", pattern_info["description"])
+                pattern_bytes = get_typed_item(pattern_info, "bytes", bytes)
+                pattern_name = get_typed_item(pattern_info, "name", str)
+                pattern_desc = get_typed_item(pattern_info, "description", str)
                 offset = 0
                 while True:
                     idx = memory.find(pattern_bytes, offset)
@@ -768,7 +769,7 @@ class LicenseAnalyzer:
             if opcode in after[:20]:
                 index = after.find(opcode)
                 jump_addr = address + index
-                jumps_list = cast("list[dict[str, Any]]", context["jumps"])
+                jumps_list = validate_type(context["jumps"], list)
                 jumps_list.append({"address": jump_addr, "type": jump_type, "opcode": opcode.hex()})
                 context["type"] = "conditional_check"
                 logger.debug("Detected conditional jump '%s' at 0x%X.", jump_type, jump_addr)
@@ -2479,7 +2480,7 @@ class LicenseAnalyzer:
                 if module_base <= address < module_end:
                     import os
 
-                    module_path = cast("str", module["path"])
+                    module_path = get_typed_item(module, "path", str)
                     return os.path.basename(module_path)
         except (KeyError, TypeError, ImportError) as e:
             logger.debug("Failed to get module name at address %#x: %s", address, e)

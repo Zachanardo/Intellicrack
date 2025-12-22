@@ -29,11 +29,8 @@ from collections import OrderedDict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, cast
-
-
-if TYPE_CHECKING:
-    from collections.abc import Callable
 
 from ..utils.logger import get_logger
 

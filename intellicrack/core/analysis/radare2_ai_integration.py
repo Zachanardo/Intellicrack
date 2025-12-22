@@ -302,7 +302,7 @@ class R2AIEngine:
             "anti_analysis_api_count": float(len(import_analysis.get("anti_analysis_apis", []))),
         }
 
-    def _extract_graph_features(self, r2: R2Session, functions: list[dict[str, Any]]) -> dict[str, float]:
+    def _extract_graph_features(self, r2: R2Session | Any, functions: list[dict[str, Any]]) -> dict[str, float]:
         """Extract control flow graph features."""
         total_blocks = 0
         total_edges = 0
@@ -339,7 +339,7 @@ class R2AIEngine:
             "edge_to_block_ratio": float(total_edges / max(1, total_blocks)),
         }
 
-    def _extract_entropy_features(self, r2: R2Session) -> dict[str, float]:
+    def _extract_entropy_features(self, r2: R2Session | Any) -> dict[str, float]:
         """Extract entropy and complexity features."""
         try:
             # Get sections information
@@ -490,7 +490,7 @@ class R2AIEngine:
             return {"error": "Insufficient functions for clustering analysis"}
 
         # Prepare feature matrix
-        feature_matrix = []
+        feature_matrix_list: list[list[float]] = []
         for func_features in function_features:
             feature_vector = [
                 func_features.get("size", 0),
@@ -499,9 +499,9 @@ class R2AIEngine:
                 func_features.get("has_license_keywords", 0),
                 func_features.get("has_crypto_keywords", 0),
             ]
-            feature_matrix.append(feature_vector)
+            feature_matrix_list.append(feature_vector)
 
-        feature_matrix = np.array(feature_matrix)
+        feature_matrix = np.array(feature_matrix_list)
 
         # Normalize features
         feature_matrix_scaled = self.scaler.fit_transform(feature_matrix)

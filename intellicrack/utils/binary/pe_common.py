@@ -105,7 +105,7 @@ def analyze_pe_import_security(pe_obj: object) -> dict[str, list[str]]:
         "file": ["CreateFile", "ReadFile", "WriteFile", "DeleteFile"],
     }
 
-    results = {category: [] for category in security_apis}
+    results: dict[str, list[str]] = {category: [] for category in security_apis}
     imports = extract_pe_imports(pe_obj)
 
     for func_name in imports:

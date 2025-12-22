@@ -124,10 +124,10 @@ class Radare2PatchEngine:
         """
         self.binary_path = binary_path
         self.write_mode = write_mode
-        self.r2 = None
-        self.architecture = None
-        self.bits = None
-        self.endian = None
+        self.r2: Any | None = None
+        self.architecture: str | None = None
+        self.bits: int | None = None
+        self.endian: str | None = None
         self.patch_sets: dict[str, PatchSet] = {}
         self._init_r2()
 
@@ -137,14 +137,19 @@ class Radare2PatchEngine:
             flags = ["-w"] if self.write_mode else []
             self.r2 = r2pipe.open(str(self.binary_path), flags=flags)
 
+            if self.r2 is None:
+                raise RuntimeError("Failed to open r2pipe connection")
+
             # Analyze binary
-            self.r2.cmd("aaa")  # Full analysis
+            self.r2.cmd("aaa")
 
             # Get architecture info
-            info = json.loads(self.r2.cmd("ij"))
-            self.architecture = info["bin"]["arch"]
-            self.bits = info["bin"]["bits"]
-            self.endian = info["bin"]["endian"]
+            info_str: str = self.r2.cmd("ij")
+            info: dict[str, Any] = json.loads(info_str)
+            bin_info: dict[str, Any] = info["bin"]
+            self.architecture = str(bin_info["arch"])
+            self.bits = int(bin_info["bits"])
+            self.endian = str(bin_info["endian"])
 
             logger.info("Initialized patch engine for %s %d-bit %s", self.architecture, self.bits, self.endian)
 
@@ -164,7 +169,8 @@ class Radare2PatchEngine:
 
         """
         # Get architecture-specific NOP
-        nop = self.NOP_INSTRUCTIONS.get(self.architecture, b"\x90")
+        arch: str = self.architecture if self.architecture is not None else "x86"
+        nop = self.NOP_INSTRUCTIONS.get(arch, b"\x90")
 
         nop_count, remainder = divmod(length, len(nop))
         # Create NOP sled
@@ -172,7 +178,7 @@ class Radare2PatchEngine:
 
         # Handle remainder with shorter NOPs if needed
         if remainder > 0:
-            if self.architecture in ["x86", "x86_64"]:
+            if arch in ["x86", "x86_64"]:
                 # Use multi-byte NOPs for x86/x64
                 patch_bytes += self._get_multibyte_nop(remainder)
             else:
@@ -220,8 +226,9 @@ class Radare2PatchEngine:
 
         """
         patch_bytes = b""
+        arch: str = self.architecture if self.architecture is not None else "x86"
 
-        if self.architecture in ["x86", "x86_64"]:
+        if arch in ["x86", "x86_64"]:
             # For near jumps, calculate 32-bit relative offset
             # Offset is from the end of the instruction
             instruction_size = 5  # 1 byte opcode + 4 byte offset
@@ -229,15 +236,15 @@ class Radare2PatchEngine:
 
             # Check if short jump is possible (-128 to 127)
             if -128 <= offset <= 127 and jump_type == "jmp":
-                opcode = self.JUMP_OPCODES[self.architecture]["jmp_short"]
+                opcode = self.JUMP_OPCODES[arch]["jmp_short"]
                 patch_bytes = opcode + struct.pack("<b", offset)
                 instruction_size = 2
             else:
                 # Use near jump
-                opcode = self.JUMP_OPCODES[self.architecture].get(jump_type, b"\xe9")
+                opcode = self.JUMP_OPCODES[arch].get(jump_type, b"\xe9")
                 patch_bytes = opcode + struct.pack("<i", offset)
 
-        elif self.architecture == "arm":
+        elif arch == "arm":
             # ARM branch instruction (B or BL)
             offset = (target - address - 8) // 4  # ARM PC is 8 bytes ahead
 
@@ -250,7 +257,7 @@ class Radare2PatchEngine:
 
             patch_bytes = struct.pack("<I", instruction)
 
-        elif self.architecture == "arm64":
+        elif arch == "arm64":
             # ARM64/AArch64 branch instruction
             offset = (target - address) // 4
 
@@ -283,7 +290,7 @@ class Radare2PatchEngine:
                 instruction = 0x14000000 | (offset & 0x03FFFFFF)
             patch_bytes = struct.pack("<I", instruction)
 
-        elif self.architecture == "mips":
+        elif arch == "mips":
             # JAL (Jump and Link)
             target_addr = (target & 0x0FFFFFFF) >> 2
             # MIPS jump instruction
@@ -295,7 +302,7 @@ class Radare2PatchEngine:
             # Add delay slot NOP
             patch_bytes = struct.pack(">II", instruction, 0x00000000)
 
-        elif self.architecture == "ppc":
+        elif arch == "ppc":
             # PowerPC branch instruction
             offset = target - address
 
@@ -310,14 +317,18 @@ class Radare2PatchEngine:
 
         else:
             # Default fallback - use generic branch encoding
-            logger.warning("Using generic branch encoding for %s", self.architecture)
+            logger.warning("Using generic branch encoding for %s", arch)
+
+            if self.r2 is None:
+                raise RuntimeError("r2pipe not initialized")
+
             # Try to use Radare2's assembler
             if jump_type == "call":
                 asm_cmd = f"pa bl 0x{target:x}"
             else:
                 asm_cmd = f"pa b 0x{target:x}"
 
-            assembled = self.r2.cmd(asm_cmd)
+            assembled: str = self.r2.cmd(asm_cmd)
             if assembled and "invalid" not in assembled.lower():
                 patch_bytes = bytes.fromhex(assembled.strip())
             else:
@@ -340,11 +351,12 @@ class Radare2PatchEngine:
         """Create an indirect jump for unknown architectures."""
         # Generic pattern: load address to register, jump to register
         # This is architecture-specific but provides a fallback
-        if self.bits == 64:
+        bits: int = self.bits if self.bits is not None else 32
+        if bits == 64:
             # 64-bit generic jump
-            return struct.pack("<BQ", 0xFF, target)  # Simplified - would need arch-specific encoding
+            return struct.pack("<BQ", 0xFF, target)
         # 32-bit generic jump
-        return struct.pack("<BI", 0xFF, target)  # Simplified - would need arch-specific encoding
+        return struct.pack("<BI", 0xFF, target)
 
     def redirect_call(self, address: int, new_function: int) -> PatchInstruction:
         """Redirect a function call to a different function.
@@ -371,9 +383,11 @@ class Radare2PatchEngine:
             List of patches to apply
 
         """
-        patches = []
+        patches: list[PatchInstruction] = []
+        arch: str = self.architecture if self.architecture is not None else "x86"
+        bits: int = self.bits if self.bits is not None else 32
 
-        if self.architecture in ["x86", "x86_64"]:
+        if arch in ["x86", "x86_64"]:
             # MOV EAX/RAX, value
             if value_size == 1:
                 # MOV AL, value
@@ -384,7 +398,7 @@ class Radare2PatchEngine:
             elif value_size == 4:
                 # MOV EAX, value
                 patch_bytes = b"\xb8" + struct.pack("<I", return_value & 0xFFFFFFFF)
-            elif value_size == 8 and self.bits == 64:
+            elif value_size == 8 and bits == 64:
                 # MOV RAX, value
                 patch_bytes = b"\x48\xb8" + struct.pack("<Q", return_value)
             else:
@@ -412,7 +426,7 @@ class Radare2PatchEngine:
                 nop_patch = self.create_nop_sled(function_address + len(patch_bytes), function_size - len(patch_bytes))
                 patches.append(nop_patch)
 
-        elif self.architecture == "arm":
+        elif arch == "arm":
             # ARM: MOV R0, value + BX LR
             if value_size <= 4:
                 # MOVW R0, lower16
@@ -438,7 +452,7 @@ class Radare2PatchEngine:
                 ),
             )
 
-        elif self.architecture == "arm64":
+        elif arch == "arm64":
             # ARM64: MOV X0/W0, value + RET
             if value_size <= 4:
                 # MOV W0, value (32-bit)
@@ -480,7 +494,7 @@ class Radare2PatchEngine:
                 ),
             )
 
-        elif self.architecture == "mips":
+        elif arch == "mips":
             # MIPS: LI V0, value + JR RA + NOP
             if value_size <= 4:
                 if return_value <= 0xFFFF:
@@ -507,7 +521,7 @@ class Radare2PatchEngine:
                 ),
             )
 
-        elif self.architecture == "ppc":
+        elif arch == "ppc":
             # PowerPC: LI R3, value + BLR
             if value_size <= 4:
                 if -32768 <= return_value <= 32767:
@@ -536,22 +550,25 @@ class Radare2PatchEngine:
 
         else:
             # Generic fallback using Radare2 assembler
-            logger.warning("Using generic return value patch for %s", self.architecture)
+            logger.warning("Using generic return value patch for %s", arch)
+
+            if self.r2 is None:
+                raise RuntimeError("r2pipe not initialized")
 
             # Try to assemble architecture-specific return sequence
-            asm_commands = []
+            asm_commands: list[str] = []
             if value_size <= 4:
-                asm_commands.append(f"mov r0, {return_value}")  # Generic register name
+                asm_commands.append(f"mov r0, {return_value}")
             else:
                 asm_commands.append(f"mov r0, {return_value & 0xFFFFFFFF}")
-                if self.bits == 64:
+                if bits == 64:
                     asm_commands.append(f"mov r1, {return_value >> 32}")
 
-            asm_commands.append("ret")  # Generic return
+            asm_commands.append("ret")
 
             patch_bytes = b""
             for cmd in asm_commands:
-                assembled = self.r2.cmd(f"pa {cmd}")
+                assembled: str = self.r2.cmd(f"pa {cmd}")
                 if assembled and "invalid" not in assembled.lower():
                     patch_bytes += bytes.fromhex(assembled.strip())
 
@@ -569,10 +586,10 @@ class Radare2PatchEngine:
             else:
                 # Last resort - write return value directly to return register location
                 # This is highly architecture-dependent but provides a fallback
-                if self.bits == 64:
-                    patch_bytes = struct.pack("<Q", return_value) + b"\xc3"  # value + RET
+                if bits == 64:
+                    patch_bytes = struct.pack("<Q", return_value) + b"\xc3"
                 else:
-                    patch_bytes = struct.pack("<I", return_value) + b"\xc3"  # value + RET
+                    patch_bytes = struct.pack("<I", return_value) + b"\xc3"
 
                 original_bytes = self._read_bytes(function_address, len(patch_bytes))
                 patches.append(
@@ -683,14 +700,15 @@ class Radare2PatchEngine:
             List of patches for the jump table
 
         """
-        patches = []
-        entry_size = 8 if self.bits == 64 else 4
+        patches: list[PatchInstruction] = []
+        bits: int = self.bits if self.bits is not None else 32
+        entry_size = 8 if bits == 64 else 4
 
         for i, entry in enumerate(entries):
             address = table_address + (i * entry_size)
             original_bytes = self._read_bytes(address, entry_size)
 
-            if self.bits == 64:
+            if bits == 64:
                 patch_bytes = struct.pack("<Q", entry)
             else:
                 patch_bytes = struct.pack("<I", entry)
@@ -718,8 +736,11 @@ class Radare2PatchEngine:
             PatchInstruction for the inline patch
 
         """
+        if self.r2 is None:
+            raise RuntimeError("r2pipe not initialized")
+
         # Assemble the code using Radare2
-        assembled = self.r2.cmd(f"pa {assembly_code}")
+        assembled: str = self.r2.cmd(f"pa {assembly_code}")
         if not assembled or "invalid" in assembled.lower():
             raise ValueError(f"Failed to assemble: {assembly_code}")
 
@@ -750,6 +771,10 @@ class Radare2PatchEngine:
         """
         if not self.write_mode:
             logger.exception("Cannot apply patch: not in write mode")
+            return False
+
+        if self.r2 is None:
+            logger.exception("Cannot apply patch: r2pipe not initialized")
             return False
 
         try:
@@ -806,6 +831,10 @@ class Radare2PatchEngine:
             logger.exception("Cannot revert patch: not in write mode")
             return False
 
+        if self.r2 is None:
+            logger.exception("Cannot revert patch: r2pipe not initialized")
+            return False
+
         try:
             # Write original bytes back
             hex_bytes = patch.original_bytes.hex()
@@ -829,11 +858,13 @@ class Radare2PatchEngine:
             Created PatchSet
 
         """
+        arch: str = self.architecture if self.architecture is not None else "unknown"
+
         patch_set = PatchSet(
             name=name,
             patches=patches,
             target_binary=self.binary_path,
-            architecture=self.architecture,
+            architecture=arch,
             checksum_original=self._calculate_checksum(),
         )
 
@@ -878,21 +909,33 @@ class Radare2PatchEngine:
 
     def _read_bytes(self, address: int, size: int) -> bytes:
         """Read bytes from the binary."""
-        result = self.r2.cmdj(f"pxj {size} @ {address}")
+        if self.r2 is None:
+            raise RuntimeError("r2pipe not initialized")
+
+        result: list[int] = self.r2.cmdj(f"pxj {size} @ {address}")
         return bytes(result)
 
     def _get_function_size(self, address: int) -> int:
         """Get the size of a function."""
-        result = self.r2.cmdj(f"afij @ {address}")
-        return result[0].get("size", 0) if result and len(result) > 0 else 0
+        if self.r2 is None:
+            raise RuntimeError("r2pipe not initialized")
+
+        result: list[dict[str, Any]] = self.r2.cmdj(f"afij @ {address}")
+        if result and len(result) > 0:
+            size_val: Any = result[0].get("size", 0)
+            return int(size_val) if isinstance(size_val, (int, float, str)) else 0
+        return 0
 
     def _calculate_checksum(self) -> str:
         """Calculate binary checksum."""
-        result = self.r2.cmd("ph sha256")
+        if self.r2 is None:
+            raise RuntimeError("r2pipe not initialized")
+
+        result: str = self.r2.cmd("ph sha256")
         return result.strip()
 
     def close(self) -> None:
         """Close Radare2 connection."""
-        if self.r2:
+        if self.r2 is not None:
             self.r2.quit()
             self.r2 = None

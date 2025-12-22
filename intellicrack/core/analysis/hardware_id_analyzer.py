@@ -11,6 +11,7 @@ import ctypes
 import ctypes.wintypes
 import hashlib
 import logging
+import math
 import re
 import struct
 from dataclasses import dataclass
@@ -663,7 +664,7 @@ class HardwareIDAnalyzer:
         for count in byte_counts:
             if count > 0:
                 freq = count / data_len
-                entropy -= freq * (freq.bit_length() - 1 if freq > 0 else 0)
+                entropy -= freq * math.log2(freq)
 
         return entropy
 
@@ -737,6 +738,7 @@ class HardwareIDAnalyzer:
                 return self._get_volume_serial()
             elif hwid_type == HWIDType.MACHINE_GUID:
                 return self._get_machine_guid()
+            return None
         except Exception as e:
             logger.exception("Failed to extract %s: %s", hwid_type.value, e)
             return None
@@ -744,7 +746,8 @@ class HardwareIDAnalyzer:
     def _get_cpu_id(self) -> str:
         """Get CPU ID from system."""
         for cpu in self.wmi_conn.Win32_Processor():
-            return cpu.ProcessorId
+            processor_id: str = str(cpu.ProcessorId) if cpu.ProcessorId else ""
+            return processor_id
         return ""
 
     def _get_disk_serial(self) -> str:
@@ -797,7 +800,8 @@ class HardwareIDAnalyzer:
 
         try:
             with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography") as key:
-                return winreg.QueryValueEx(key, "MachineGuid")[0]
+                value: str = str(winreg.QueryValueEx(key, "MachineGuid")[0])
+                return value
         except OSError:
             return ""
 

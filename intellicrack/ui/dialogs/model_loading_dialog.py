@@ -29,9 +29,8 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
-from ...ai.background_loader import LoadingState
-from ...ai.llm_backends import get_llm_manager
-from ...ai.llm_config_manager import LLMConfig, LLMProvider
+from ...ai.llm_backends import LLMConfig, LLMProvider, get_llm_manager
+from ...ai.llm_types import LoadingState
 from ..widgets.model_loading_progress_widget import ModelLoadingProgressWidget
 from .base_dialog import BaseDialog
 
@@ -51,17 +50,21 @@ class ModelLoadingDialog(BaseDialog):
         self.setMinimumSize(800, 600)
 
         self.llm_manager = get_llm_manager()
-        self.setup_content(self.content_widget.layout() or QVBoxLayout(self.content_widget))
+
+        existing_layout = self.content_widget.layout()
+        if isinstance(existing_layout, QVBoxLayout):
+            self.setup_content(existing_layout)
+        else:
+            new_layout = QVBoxLayout(self.content_widget)
+            self.setup_content(new_layout)
 
     def setup_content(self, layout: QVBoxLayout) -> None:
         """Set up the UI content."""
-        if layout is None:
-            layout = QVBoxLayout(self.content_widget)
 
         # Title
         title = QLabel("Background Model Loading Manager")
-        title.setFont(QFont("Arial", 14, QFont.Bold))
-        title.setAlignment(Qt.AlignCenter)
+        title.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
         # Tab widget
@@ -83,7 +86,7 @@ class ModelLoadingDialog(BaseDialog):
         layout.addWidget(tabs)
 
         # Dialog buttons
-        button_box = QDialogButtonBox(QDialogButtonBox.Close)
+        button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Close)
         button_box.rejected.connect(self.reject)
         layout.addWidget(button_box)
 
@@ -190,7 +193,7 @@ class ModelLoadingDialog(BaseDialog):
             config = LLMConfig(
                 provider=provider,
                 model_name=model_name,
-                api_url=api_url or None,
+                api_base=api_url if api_url else None,
                 max_tokens=2048,
                 temperature=0.7,
             )
@@ -251,8 +254,9 @@ class ModelLoadingDialog(BaseDialog):
         # Show notification
         QMessageBox.information(self, "Model Loaded", f"Model successfully loaded:\n{model_id}")
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle dialog close."""
-        # Cleanup progress widget
+        if event is None:
+            return
         self.progress_widget.cleanup()
         super().closeEvent(event)

@@ -97,10 +97,10 @@ class SecuROMBypass:
     def __init__(self) -> None:
         """Initialize SecuROM bypass system."""
         self.logger = logging.getLogger(__name__)
-        self._advapi32 = None
-        self._kernel32 = None
-        self._ntdll = None
-        self._ws2_32 = None
+        self._advapi32: ctypes.WinDLL | None = None
+        self._kernel32: ctypes.WinDLL | None = None
+        self._ntdll: ctypes.WinDLL | None = None
+        self._ws2_32: ctypes.WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
@@ -161,11 +161,11 @@ class SecuROMBypass:
             SecuROMRemovalResult with detailed removal information
 
         """
-        errors = []
-        drivers_removed = []
-        services_stopped = []
-        registry_cleaned = []
-        files_deleted = []
+        errors: list[str] = []
+        drivers_removed: list[str] = []
+        services_stopped: list[str] = []
+        registry_cleaned: list[str] = []
+        files_deleted: list[str] = []
 
         stopped_services = self._stop_all_services()
         services_stopped.extend(stopped_services)
@@ -201,7 +201,7 @@ class SecuROMBypass:
         if not self._advapi32:
             return []
 
-        stopped = []
+        stopped: list[str] = []
         SC_MANAGER_ALL_ACCESS = 0xF003F
         SERVICE_STOP = 0x0020
         SERVICE_CONTROL_STOP = 1
@@ -220,7 +220,7 @@ class SecuROMBypass:
         try:
             sc_manager = self._advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
             if not sc_manager:
-                return []
+                return stopped
 
             try:
                 for service_name in self.SERVICE_NAMES:
@@ -245,14 +245,14 @@ class SecuROMBypass:
         if not self._advapi32:
             return []
 
-        deleted = []
+        deleted: list[str] = []
         SC_MANAGER_ALL_ACCESS = 0xF003F
         DELETE = 0x00010000
 
         try:
             sc_manager = self._advapi32.OpenSCManagerW(None, None, SC_MANAGER_ALL_ACCESS)
             if not sc_manager:
-                return []
+                return deleted
 
             try:
                 for service_name in self.SERVICE_NAMES:
@@ -279,7 +279,7 @@ class SecuROMBypass:
             if self._delete_registry_key_recursive(root_key, subkey_path)
         ]
 
-    def _delete_registry_key_recursive(self, root_key: int, subkey_path: str) -> bool:
+    def _delete_registry_key_recursive(self, root_key: int | winreg.HKEYType, subkey_path: str) -> bool:
         """Recursively delete a registry key and all subkeys."""
         try:
             key = winreg.OpenKey(root_key, subkey_path, 0, winreg.KEY_ALL_ACCESS)

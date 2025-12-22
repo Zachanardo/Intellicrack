@@ -78,8 +78,8 @@ class SystemMonitorWorker(QObject):
         super().__init__()
         self.running = False
         self.update_interval = 1000  # ms
-        self.last_net_io = None
-        self.last_disk_io = None
+        self.last_net_io: Any = None
+        self.last_disk_io: Any = None
 
     def run(self) -> None:
         """Run the monitoring loop."""
@@ -127,11 +127,11 @@ class SystemMonitorWorker(QObject):
             except Exception as e:
                 logger.debug(f"Failed to get GPU metrics: {e}")
 
-        net_io = psutil.net_io_counters()
+        net_io: Any = psutil.net_io_counters()
         network_sent_mb = 0.0
         network_recv_mb = 0.0
 
-        if self.last_net_io:
+        if self.last_net_io is not None:
             sent_delta = (net_io.bytes_sent - self.last_net_io.bytes_sent) / (1024**2)
             recv_delta = (net_io.bytes_recv - self.last_net_io.bytes_recv) / (1024**2)
             network_sent_mb = max(sent_delta, 0.0)
@@ -139,11 +139,11 @@ class SystemMonitorWorker(QObject):
 
         self.last_net_io = net_io
 
-        disk_io = psutil.disk_io_counters()
+        disk_io: Any = psutil.disk_io_counters()
         disk_read_mb = 0.0
         disk_write_mb = 0.0
 
-        if self.last_disk_io:
+        if self.last_disk_io is not None:
             read_delta = (disk_io.read_bytes - self.last_disk_io.read_bytes) / (1024**2)
             write_delta = (disk_io.write_bytes - self.last_disk_io.write_bytes) / (1024**2)
             disk_read_mb = max(read_delta, 0.0)
@@ -189,7 +189,7 @@ class SystemMonitorWidget(QWidget):
         self.gpu_threshold = 90.0
 
         # Data storage
-        self.metrics_history = deque(maxlen=self.history_size)
+        self.metrics_history: deque[SystemMetrics] = deque(maxlen=self.history_size)
 
         # Worker thread
         self.monitor_thread = QThread()
@@ -315,7 +315,8 @@ class SystemMonitorWidget(QWidget):
                 "Status",
             ],
         )
-        self.process_table.horizontalHeader().setStretchLastSection(True)
+        if header := self.process_table.horizontalHeader():
+            header.setStretchLastSection(True)
         process_layout.addWidget(self.process_table)
 
         content_splitter.addWidget(process_group)
@@ -500,7 +501,7 @@ class SystemMonitorWidget(QWidget):
 
         return summary
 
-    def set_thresholds(self, cpu: float = None, memory: float = None, gpu: float = None) -> None:
+    def set_thresholds(self, cpu: float | None = None, memory: float | None = None, gpu: float | None = None) -> None:
         """Set alert thresholds."""
         if cpu is not None:
             self.cpu_threshold = cpu
@@ -536,7 +537,8 @@ class SystemMonitorWidget(QWidget):
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
 
-    def closeEvent(self, event: QCloseEvent) -> None:
+    def closeEvent(self, event: QCloseEvent | None) -> None:
         """Handle widget close event."""
         self.stop_monitoring()
-        event.accept()
+        if event is not None:
+            event.accept()

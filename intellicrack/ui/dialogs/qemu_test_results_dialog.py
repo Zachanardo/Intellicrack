@@ -43,8 +43,11 @@ from intellicrack.handlers.pyqt6_handler import (
     pyqtSignal,
 )
 
-from ...ai.qemu_manager import ExecutionResult, QEMUManager
+from ...ai.qemu_manager import QEMUManager
+from ...ai.qemu_manager import ExecutionResult as _ExecutionResult  # type: ignore[attr-defined]
 from ...utils.logger import get_logger
+
+ExecutionResult = _ExecutionResult
 
 
 """
@@ -95,7 +98,7 @@ class QEMUExecutionThread(QThread):
         self.script_content = script_content
         self.binary_path = binary_path
         self.script_type = script_type
-        self.start_time = None
+        self.start_time: float = 0.0
 
     def run(self) -> None:
         """Execute script in QEMU and capture real results."""
@@ -269,11 +272,14 @@ class QEMUExecutionThread(QThread):
                         self.script_content,
                         timeout=120,
                     )
+                    exit_code = exec_result.get("exit_code", -1) if isinstance(exec_result, dict) else -1
+                    stdout = exec_result.get("stdout", "") if isinstance(exec_result, dict) else ""
+                    stderr = exec_result.get("stderr", "") if isinstance(exec_result, dict) else ""
                     result = ExecutionResult(
-                        success=exec_result.get("exit_code", -1) == 0,
-                        output=exec_result.get("stdout", ""),
-                        error=exec_result.get("stderr", ""),
-                        exit_code=exec_result.get("exit_code", -1),
+                        success=exit_code == 0,
+                        output=stdout,
+                        error=stderr,
+                        exit_code=exit_code,
                         runtime_ms=0,
                     )
                 else:
@@ -437,7 +443,7 @@ class QEMUTestResultsDialog(QDialog):
 
         # Status label
         self.status_label = QLabel("Executing script in QEMU...")
-        self.status_label.setFont(QFont("Arial", 12, QFont.Bold))
+        self.status_label.setFont(QFont("Arial", 12, QFont.Weight.Bold))
         layout.addWidget(self.status_label)
 
         # Progress bar
@@ -504,22 +510,22 @@ class QEMUTestResultsDialog(QDialog):
         self.run_host_btn = QPushButton("Run on Host")
         self.run_host_btn.setEnabled(False)
         self.run_host_btn.clicked.connect(self.run_on_host)
-        button_box.addButton(self.run_host_btn, QDialogButtonBox.ActionRole)
+        button_box.addButton(self.run_host_btn, QDialogButtonBox.ButtonRole.ActionRole)
 
         # Modify Script button
         self.modify_btn = QPushButton("Modify Script")
         self.modify_btn.clicked.connect(self.modify_script)
-        button_box.addButton(self.modify_btn, QDialogButtonBox.ActionRole)
+        button_box.addButton(self.modify_btn, QDialogButtonBox.ButtonRole.ActionRole)
 
         # Export Results button
         self.export_btn = QPushButton("Export Results")
         self.export_btn.clicked.connect(self.export_results)
-        button_box.addButton(self.export_btn, QDialogButtonBox.ActionRole)
+        button_box.addButton(self.export_btn, QDialogButtonBox.ButtonRole.ActionRole)
 
         # Close button
         close_btn = QPushButton("Close")
         close_btn.clicked.connect(self.accept)
-        button_box.addButton(close_btn, QDialogButtonBox.RejectRole)
+        button_box.addButton(close_btn, QDialogButtonBox.ButtonRole.RejectRole)
 
         return button_box
 
@@ -553,7 +559,7 @@ class QEMUTestResultsDialog(QDialog):
         self.output_text.append(line)
         # Auto-scroll to bottom
         cursor = self.output_text.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         self.output_text.setTextCursor(cursor)
 
     def update_progress(self, value: int, message: str) -> None:
@@ -608,7 +614,7 @@ class QEMUTestResultsDialog(QDialog):
                 issues_item.addChild(error_item)
             for warning in results.warnings:
                 warning_item = QTreeWidgetItem(["Warning", warning])
-                warning_item.setForeground(1, Qt.darkYellow)
+                warning_item.setForeground(1, Qt.GlobalColor.darkYellow)
                 issues_item.addChild(warning_item)
             self.analysis_tree.addTopLevelItem(issues_item)
 

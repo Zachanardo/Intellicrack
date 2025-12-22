@@ -18,7 +18,7 @@ You should have received a copy of the GNU General Public License
 along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from intellicrack.handlers.pyqt6_handler import QMainWindow, QTabWidget, QWidget
 
@@ -133,7 +133,12 @@ class ComprehensiveR2Integration:
         try:
             self.logger.info("Integrating with IntellicrackApp")
 
-            # Use the comprehensive UI manager
+            # Verify it's a QWidget for type safety
+            if not isinstance(main_app, QWidget):
+                self.logger.error("main_app is not a QWidget instance")
+                return False
+
+            # Use the comprehensive UI manager (isinstance check narrows type)
             self.ui_manager = integrate_radare2_ui_comprehensive(main_app)
             if not self.ui_manager:
                 return False
@@ -169,7 +174,12 @@ class ComprehensiveR2Integration:
         try:
             self.logger.info("Integrating with QMainWindow")
 
-            # Create UI manager
+            # Verify it's a QWidget for type safety
+            if not isinstance(main_app, QWidget):
+                self.logger.error("main_app is not a QWidget instance")
+                return False
+
+            # Create UI manager (isinstance check narrows type)
             self.ui_manager = R2UIManager(main_app)
             if not self.ui_manager.integrate_with_application(main_app):
                 return False
@@ -204,19 +214,24 @@ class ComprehensiveR2Integration:
             enhanced_dashboard = EnhancedAnalysisDashboard(None)
 
             # Add tabs
-            if hasattr(main_app, "tab_widget") and main_app.tab_widget:
-                main_app.tab_widget.addTab(r2_widget, "Radare2 Analysis")
-                main_app.tab_widget.addTab(enhanced_dashboard, "Enhanced Analysis")
+            if hasattr(main_app, "tab_widget"):
+                tab_widget = getattr(main_app, "tab_widget", None)
+                if tab_widget and isinstance(tab_widget, QTabWidget):
+                    tab_widget.addTab(r2_widget, "Radare2 Analysis")
+                    tab_widget.addTab(enhanced_dashboard, "Enhanced Analysis")
 
-            # Store references
+            # Store references using setattr for dynamic attribute assignment
             if hasattr(main_app, "__dict__"):
-                main_app.r2_widget = r2_widget
-                main_app.enhanced_dashboard = enhanced_dashboard
+                setattr(main_app, "r2_widget", r2_widget)
+                setattr(main_app, "enhanced_dashboard", enhanced_dashboard)
 
-            # Create UI manager
-            self.ui_manager = R2UIManager(main_app)
+            # Create UI manager (use isinstance check for type narrowing)
+            if isinstance(main_app, QWidget):
+                self.ui_manager = R2UIManager(main_app)
+            else:
+                self.ui_manager = R2UIManager(None)
             if hasattr(main_app, "__dict__"):
-                main_app.r2_ui_manager = self.ui_manager
+                setattr(main_app, "r2_ui_manager", self.ui_manager)
 
             self.integration_status["ui_manager"] = True
             self.integration_status["main_app"] = True
@@ -242,7 +257,7 @@ class ComprehensiveR2Integration:
             # Create a tab widget if it doesn't exist
             if not hasattr(main_app, "tab_widget") and hasattr(main_app, "__dict__"):
                 tab_widget_obj = QTabWidget()
-                main_app.tab_widget = tab_widget_obj
+                setattr(main_app, "tab_widget", tab_widget_obj)
 
                 # Try to add to layout if it exists
                 if hasattr(main_app, "layout"):
@@ -271,12 +286,15 @@ class ComprehensiveR2Integration:
         try:
             self.logger.info("Using fallback integration method")
 
-            # Try to create minimal integration
-            self.ui_manager = R2UIManager(main_app)
+            # Try to create minimal integration (use isinstance check for type narrowing)
+            if isinstance(main_app, QWidget):
+                self.ui_manager = R2UIManager(main_app)
+            else:
+                self.ui_manager = R2UIManager(None)
 
             # Store reference in main app if possible
             if hasattr(main_app, "__dict__"):
-                main_app.r2_ui_manager = self.ui_manager
+                setattr(main_app, "r2_ui_manager", self.ui_manager)
 
             self.integration_status["ui_manager"] = True
 
@@ -538,14 +556,14 @@ class ComprehensiveR2Integration:
                         return self.ui_manager.start_analysis(analysis_type)
                     return False
 
-                main_app.start_radare2_analysis = start_r2_analysis
+                setattr(main_app, "start_radare2_analysis", start_r2_analysis)
 
                 # Add configuration method
                 def show_r2_config() -> None:
                     if self.ui_manager:
                         self.ui_manager.show_configuration()
 
-                main_app.show_radare2_configuration = show_r2_config
+                setattr(main_app, "show_radare2_configuration", show_r2_config)
 
                 self.logger.info("Fallback functionality added")
 

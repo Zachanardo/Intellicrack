@@ -34,6 +34,7 @@ from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import numpy as np
+    import numpy.typing as npt
 
 logger = logging.getLogger(__name__)
 
@@ -47,15 +48,15 @@ class HeadlessTrainingInterface:
 
     def __init__(self) -> None:
         """Initialize headless training interface."""
-        self.training_thread = None
+        self.training_thread: threading.Thread | None = None
         self.is_training = False
         self.is_paused = False
         self.current_epoch = 0
         self.total_epochs = 0
-        self.callbacks = {}
-        self.metrics = {}
-        self.metrics_history = []  # Track historical metrics for adaptive recovery
-        self.config_path = None
+        self.callbacks: dict[str, Callable[[Any], None] | None] = {}
+        self.metrics: dict[str, Any] = {}
+        self.metrics_history: list[dict[str, Any]] = []
+        self.config_path: str | None = None
 
         logger.info("Headless Training Interface initialized")
 
@@ -75,7 +76,7 @@ class HeadlessTrainingInterface:
         """
         try:
             with open(config_path, encoding="utf-8") as f:
-                config = json.load(f)
+                config: dict[str, Any] = json.load(f)
             self.config_path = config_path
             logger.info("Configuration loaded from %s", config_path)
             return config
@@ -144,8 +145,9 @@ class HeadlessTrainingInterface:
 
         self.is_paused = True
         logger.info("Training paused at epoch %d", self.current_epoch)
-        if self.callbacks.get("status"):
-            self.callbacks["status"](f"Training paused at epoch {self.current_epoch}")
+        status_callback = self.callbacks.get("status")
+        if status_callback is not None:
+            status_callback(f"Training paused at epoch {self.current_epoch}")
 
     def resume_training(self) -> None:
         """Resume paused training."""
@@ -155,8 +157,9 @@ class HeadlessTrainingInterface:
 
         self.is_paused = False
         logger.info("Training resumed from epoch %d", self.current_epoch)
-        if self.callbacks.get("status"):
-            self.callbacks["status"](f"Training resumed from epoch {self.current_epoch}")
+        status_callback = self.callbacks.get("status")
+        if status_callback is not None:
+            status_callback(f"Training resumed from epoch {self.current_epoch}")
 
     def stop_training(self) -> None:
         """Stop ongoing training."""
@@ -167,12 +170,13 @@ class HeadlessTrainingInterface:
         self.is_training = False
         self.is_paused = False
 
-        if self.training_thread and self.training_thread.is_alive():
+        if self.training_thread is not None and self.training_thread.is_alive():
             self.training_thread.join(timeout=5.0)
 
         logger.info("Training stopped at epoch %d", self.current_epoch)
-        if self.callbacks.get("status"):
-            self.callbacks["status"](f"Training stopped at epoch {self.current_epoch}")
+        status_callback = self.callbacks.get("status")
+        if status_callback is not None:
+            status_callback(f"Training stopped at epoch {self.current_epoch}")
 
     def get_training_status(self) -> dict[str, Any]:
         """Get current training status.
@@ -288,8 +292,9 @@ class HeadlessTrainingInterface:
     def _validate_dataset_path(self, dataset_path: str) -> None:
         if not dataset_path or not os.path.exists(dataset_path):
             logger.exception("Invalid dataset path: %s", dataset_path)
-            if self.callbacks.get("status"):
-                self.callbacks["status"]("Error: Invalid dataset path")
+            status_callback = self.callbacks.get("status")
+            if status_callback is not None:
+                status_callback("Error: Invalid dataset path")
             raise ValueError("Invalid dataset path")
 
     def _check_training_status(self) -> bool:
@@ -338,11 +343,13 @@ class HeadlessTrainingInterface:
         )
 
     def _invoke_callbacks(self, epoch: int, train_loss: float, train_acc: float, val_loss: float, val_acc: float) -> None:
-        if self.callbacks.get("progress"):
+        progress_callback = self.callbacks.get("progress")
+        if progress_callback is not None:
             progress = (epoch / self.total_epochs) * 100
-            self.callbacks["progress"](progress)
+            progress_callback(progress)
 
-        if self.callbacks.get("status"):
+        status_callback = self.callbacks.get("status")
+        if status_callback is not None:
             status = (
                 f"Epoch {epoch}/{self.total_epochs} - "
                 f"Loss: {train_loss:.4f} - "
@@ -350,21 +357,23 @@ class HeadlessTrainingInterface:
                 f"Val Loss: {val_loss:.4f} - "
                 f"Val Acc: {val_acc:.4f}"
             )
-            self.callbacks["status"](status)
+            status_callback(status)
 
     def _finalize_training(self, start_time: float, config: dict[str, Any]) -> None:
         total_time = time.time() - start_time
         if self.is_training:
             logger.info("Training completed in %.2f seconds", total_time)
-            if self.callbacks.get("status"):
-                self.callbacks["status"](f"Training completed - {total_time:.2f}s")
+            status_callback = self.callbacks.get("status")
+            if status_callback is not None:
+                status_callback(f"Training completed - {total_time:.2f}s")
             model_path = self._save_trained_model(config)
             logger.info("Model saved to: %s", model_path)
 
     def _handle_training_error(self, error: Exception) -> None:
         logger.exception("Training worker error: %s", error)
-        if self.callbacks.get("status"):
-            self.callbacks["status"](f"Training error: {error!s}")
+        status_callback = self.callbacks.get("status")
+        if status_callback is not None:
+            status_callback(f"Training error: {error!s}")
 
     def _execute_training_epoch(
         self,
@@ -456,7 +465,7 @@ class HeadlessTrainingInterface:
             # Adaptive error recovery using historical metrics
             return self._generate_recovery_metrics(epoch, model_config)
 
-    def _load_training_data(self, dataset_path: str, validation_split: float = 0.2) -> tuple[list, list]:
+    def _load_training_data(self, dataset_path: str, validation_split: float = 0.2) -> tuple[list[Any], list[Any]]:
         """Load training data from dataset path.
 
         Args:
@@ -502,7 +511,7 @@ class HeadlessTrainingInterface:
             logger.exception("Failed to load dataset from %s: %s", dataset_path, e)
             return [], []
 
-    def _generate_training_data(self, num_samples: int) -> list:
+    def _generate_training_data(self, num_samples: int) -> list[dict[str, Any]]:
         """Generate synthetic training data for testing and fallback scenarios.
 
         Args:
@@ -540,7 +549,7 @@ class HeadlessTrainingInterface:
 
     def _process_training_batch(
         self,
-        batch_data: list,
+        batch_data: list[Any],
         model_config: dict[str, Any],
         learning_rate: float,
         epoch: int,
@@ -589,7 +598,7 @@ class HeadlessTrainingInterface:
             logger.exception("Training batch processing failed: %s", e)
             return 1.0, 0, len(batch_data)
 
-    def _process_validation_batch(self, batch_data: list, model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
+    def _process_validation_batch(self, batch_data: list[Any], model_config: dict[str, Any], epoch: int) -> tuple[float, int, int]:
         """Process a validation batch (inference only, no gradient updates).
 
         Args:
@@ -744,7 +753,7 @@ class HeadlessTrainingInterface:
             val_acc = train_acc * 0.95
             return train_loss, train_acc, val_loss, val_acc
 
-    def _forward_pass(self, features: list, model_config: dict[str, Any], epoch: int, validation: bool = False) -> float:
+    def _forward_pass(self, features: list[Any], model_config: dict[str, Any], epoch: int, validation: bool = False) -> float:
         """Perform forward pass through the neural network model.
 
         Args:
@@ -884,19 +893,19 @@ class HeadlessTrainingInterface:
             self._momentum = {key: np.zeros_like(val) for key, val in self._weights.items()}
             self._momentum_beta = 0.9
 
-    def _relu(self, x: "np.ndarray") -> "np.ndarray":
+    def _relu(self, x: "npt.NDArray[Any]") -> "npt.NDArray[Any]":
         """ReLU activation function."""
         import numpy as np
 
-        return np.maximum(0, x)
+        return np.maximum(0, x)  # type: ignore[no-any-return]
 
-    def _sigmoid(self, x: "np.ndarray") -> "np.ndarray":
+    def _sigmoid(self, x: "npt.NDArray[Any]") -> "npt.NDArray[Any]":
         """Sigmoid activation function."""
         import numpy as np
 
         # Clip values to prevent overflow
         x_clipped = np.clip(x, -500, 500)
-        return 1.0 / (1.0 + np.exp(-x_clipped))
+        return 1.0 / (1.0 + np.exp(-x_clipped))  # type: ignore[no-any-return]
 
     def _save_trained_model(self, config: dict[str, Any]) -> str:
         """Save trained model to disk.

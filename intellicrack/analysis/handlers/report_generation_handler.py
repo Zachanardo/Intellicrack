@@ -36,6 +36,7 @@ if TYPE_CHECKING:
         QHBoxLayout as _QHBoxLayout,
         QPushButton as _QPushButton,
         QVBoxLayout as _QVBoxLayout,
+        QWidget as _QWidget,
     )
     QObject = _QObject
     QRunnable = _QRunnable
@@ -49,14 +50,17 @@ if TYPE_CHECKING:
     QHBoxLayout = _QHBoxLayout
     QPushButton = _QPushButton
     QVBoxLayout = _QVBoxLayout
+    QWidget = _QWidget
 else:
     try:
         from PyQt6.QtCore import QObject, QRunnable, QThreadPool, pyqtSignal
-        from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout
+        from PyQt6.QtWidgets import QCheckBox, QComboBox, QDialog, QFileDialog, QGroupBox, QHBoxLayout, QPushButton, QVBoxLayout, QWidget
 
         PYQT6_AVAILABLE = True
     except ImportError:
         PYQT6_AVAILABLE = False
+
+        QWidget = object
 
         class QObject:
             """Fallback QObject class when PyQt6 is not available."""
@@ -80,13 +84,41 @@ else:
             def start(self, runnable: "QRunnable") -> None:
                 """Start a runnable task."""
 
-        def pyqtSignal(*args: object, **kwargs: object) -> Callable[..., Any]:
+        class _SignalConnector:
+            """Production-ready signal connector that manages callbacks when PyQt6 is unavailable."""
+
+            def __init__(self) -> None:
+                self._callbacks: list[Callable[..., Any]] = []
+
+            def connect(self, callback: Callable[..., Any]) -> None:
+                """Connect a callback to this signal."""
+                if callback not in self._callbacks:
+                    self._callbacks.append(callback)
+
+            def disconnect(self, callback: Callable[..., Any] | None = None) -> None:
+                """Disconnect a callback or all callbacks from this signal."""
+                if callback is None:
+                    self._callbacks.clear()
+                elif callback in self._callbacks:
+                    self._callbacks.remove(callback)
+
+            def emit(self, *args: object, **kwargs: object) -> None:
+                """Emit the signal to all connected callbacks."""
+                for callback in self._callbacks[:]:
+                    try:
+                        callback(*args, **kwargs)
+                    except Exception:
+                        pass
+
+            def __call__(self, *args: object, **kwargs: object) -> None:
+                """Allow direct calling of the signal."""
+                self.emit(*args, **kwargs)
+
+        def pyqtSignal(*args: object, **kwargs: object) -> Callable[..., _SignalConnector]:
             """Fallback pyqtSignal function when PyQt6 is not available."""
-            def signal_decorator(*inner_args: object, **inner_kwargs: object) -> Callable[..., Any]:
-                def dummy_signal(*signal_args: object, **signal_kwargs: object) -> None:
-                    pass
-                return dummy_signal
-            return signal_decorator
+            def signal_property() -> _SignalConnector:
+                return _SignalConnector()
+            return signal_property
 
         class QCheckBox:
             """Fallback QCheckBox class when PyQt6 is not available."""
@@ -99,19 +131,38 @@ else:
 
         class QComboBox:
             """Fallback QComboBox class when PyQt6 is not available."""
-            currentTextChanged: Callable[..., Any]
 
             def __init__(self) -> None:
-                self.currentTextChanged = pyqtSignal()
+                self.currentTextChanged: _SignalConnector = _SignalConnector()
+                self._items: list[str] = []
+                self._current_index: int = 0
 
             def addItems(self, items: list[str]) -> None:
-                pass
+                """Add items to the combo box."""
+                self._items.extend(items)
 
             def currentText(self) -> str:
+                """Get the current text."""
+                if 0 <= self._current_index < len(self._items):
+                    return self._items[self._current_index]
                 return ""
 
-            def connect(self, slot: Callable[..., Any]) -> None:
-                pass
+            def setCurrentIndex(self, index: int) -> None:
+                """Set the current index."""
+                if 0 <= index < len(self._items):
+                    old_text = self.currentText()
+                    self._current_index = index
+                    new_text = self.currentText()
+                    if old_text != new_text:
+                        self.currentTextChanged.emit(new_text)
+
+            def setCurrentText(self, text: str) -> None:
+                """Set the current text."""
+                try:
+                    index = self._items.index(text)
+                    self.setCurrentIndex(index)
+                except ValueError:
+                    pass
 
         class QDialog:
             """Fallback QDialog class when PyQt6 is not available."""
@@ -158,13 +209,18 @@ else:
 
         class QPushButton:
             """Fallback QPushButton class when PyQt6 is not available."""
-            clicked: Callable[..., Any]
 
             def __init__(self, text: str = "") -> None:
-                self.clicked = pyqtSignal()
+                self.clicked: _SignalConnector = _SignalConnector()
+                self._text: str = text
 
-            def connect(self, slot: Callable[..., Any]) -> None:
-                pass
+            def setText(self, text: str) -> None:
+                """Set the button text."""
+                self._text = text
+
+            def text(self) -> str:
+                """Get the button text."""
+                return self._text
 
         class QVBoxLayout:
             """Fallback QVBoxLayout class when PyQt6 is not available."""
@@ -189,7 +245,7 @@ try:
 except ImportError:
     import logging
 
-    def get_logger(name: str) -> logging.Logger:
+    def get_logger(name: str | None = None) -> logging.Logger:
         """Create a logger instance with the given name.
 
         Args:
@@ -277,7 +333,7 @@ class ReportGeneratorWorker(QRunnable):
 class ReportOptionsDialog(QDialog):
     """Dialog for selecting report generation options."""
 
-    def __init__(self, parent: QObject | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None) -> None:
         """Initialize the report options dialog.
 
         Args:
@@ -405,7 +461,7 @@ class ReportGenerationHandler(QObject):
         self.current_result = result
         logger.info("Report generation handler received analysis for: %s", result.file_path)
 
-    def generate_report(self, parent_widget: QObject | None = None) -> None:
+    def generate_report(self, parent_widget: QWidget | None = None) -> None:
         """Show options dialog and generate report based on user selection."""
         if not self.current_result:
             self.report_error.emit("No analysis result available")
@@ -413,7 +469,8 @@ class ReportGenerationHandler(QObject):
 
         # Show options dialog
         dialog = ReportOptionsDialog(parent_widget)
-        if dialog.exec() != QDialog.Accepted:
+        dialog_result: int = dialog.exec()
+        if dialog_result != 1:
             return
 
         options = dialog.get_options()

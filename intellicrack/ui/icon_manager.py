@@ -10,6 +10,8 @@ Licensed under GNU General Public License v3.0
 import os
 from pathlib import Path
 
+from typing import Any
+
 from intellicrack.handlers.pyqt6_handler import QIcon
 
 
@@ -249,7 +251,7 @@ def get_icon_text(icon_name: str) -> str:
 
 
 def set_button_icon(
-    button: object,
+    button: Any,
     icon_name: str,
     add_text_prefix: bool = True,
 ) -> None:
@@ -264,10 +266,10 @@ def set_button_icon(
     manager: IconManager = get_icon_manager()
     icon: QIcon = manager.get_icon(icon_name)
 
-    if not icon.isNull():
+    if not icon.isNull() and hasattr(button, "setIcon"):
         button.setIcon(icon)
     elif add_text_prefix:
         if emoji := manager.get_icon_text(icon_name):
-            current_text: str = button.text()
-            if not current_text.startswith(emoji):
+            current_text: str = getattr(button, "text", lambda: "")()
+            if not current_text.startswith(emoji) and hasattr(button, "setText"):
                 button.setText(f"{emoji} {current_text}")

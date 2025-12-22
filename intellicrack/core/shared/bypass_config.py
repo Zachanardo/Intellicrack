@@ -31,7 +31,7 @@ class BypassConfig:
     """Centralized configuration for exploit mitigation bypasses."""
 
     # Standard bypass types with their descriptions
-    BYPASS_TYPES = {
+    BYPASS_TYPES: dict[str, dict[str, Any]] = {
         "aslr_bypass": {
             "description": "Address Space Layout Randomization bypass",
             "target_protection": "aslr_enabled",

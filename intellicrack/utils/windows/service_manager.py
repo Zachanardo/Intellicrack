@@ -118,7 +118,7 @@ class WindowsServiceManager:
     def __init__(self) -> None:
         """Initialize Windows service manager."""
         self.logger = logging.getLogger(__name__)
-        self._advapi32 = None
+        self._advapi32: ctypes.WinDLL | None = None
         self._setup_winapi()
 
     def _setup_winapi(self) -> None:
@@ -187,7 +187,7 @@ class WindowsServiceManager:
             ServiceInfo or None if service not found
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return None
 
         try:
@@ -273,7 +273,7 @@ class WindowsServiceManager:
             True if successful
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return False
 
         try:
@@ -321,7 +321,7 @@ class WindowsServiceManager:
             True if successful
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return False
 
         try:
@@ -361,7 +361,7 @@ class WindowsServiceManager:
             True if successful
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return False
 
         try:
@@ -401,7 +401,7 @@ class WindowsServiceManager:
             True if successful
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return False
 
         try:
@@ -441,7 +441,7 @@ class WindowsServiceManager:
             True if successful
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return False
 
         try:
@@ -481,7 +481,7 @@ class WindowsServiceManager:
             ServiceState or None if service not found
 
         """
-        if not self._advapi32:
+        if self._advapi32 is None:
             return None
 
         try:

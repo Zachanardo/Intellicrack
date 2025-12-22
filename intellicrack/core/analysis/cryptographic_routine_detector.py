@@ -1491,7 +1491,7 @@ class CryptographicRoutineDetector:
                 detection.data_flows = flow_nodes
                 self.data_flow_cache[detection.offset] = flow_nodes
 
-                register_usage = defaultdict(int)
+                register_usage: dict[str, int] = defaultdict(int)
                 for node in flow_nodes:
                     for reg in node.writes:
                         register_usage[reg] += 1
@@ -1740,7 +1740,8 @@ class CryptographicRoutineDetector:
         probs = counts / len(data)
         probs = probs[probs > 0]
 
-        return -np.sum(probs * np.log2(probs))
+        entropy_result = -np.sum(probs * np.log2(probs))
+        return float(entropy_result)
 
     def _is_lookup_table(self, data: bytes) -> bool:
         """Check if data appears to be a lookup table."""
@@ -1808,7 +1809,8 @@ class CryptographicRoutineDetector:
         offset = target - (pos + 4)
 
         try:
-            rel_offset = struct.unpack("<i", data[pos : pos + 4])[0]
+            rel_offset_tuple = struct.unpack("<i", data[pos : pos + 4])
+            rel_offset: int = rel_offset_tuple[0]
             return abs(rel_offset - offset) < 16
         except (struct.error, IndexError):
             return False
@@ -1823,36 +1825,43 @@ class CryptographicRoutineDetector:
             Dictionary containing usage analysis
 
         """
-        analysis = {
-            "algorithms": {},
+        algorithms_dict: dict[str, dict[str, Any]] = {}
+        key_sizes_set: set[int] = set()
+        modes_set: set[str] = set()
+
+        analysis: dict[str, Any] = {
+            "algorithms": algorithms_dict,
             "total_detections": len(detections),
             "unique_algorithms": len({d.algorithm for d in detections}),
             "hardware_accelerated": False,
             "custom_crypto": False,
             "obfuscated_crypto": False,
             "protection_likelihood": 0.0,
-            "key_sizes": set(),
-            "modes": set(),
+            "key_sizes": key_sizes_set,
+            "modes": modes_set,
         }
 
         for detection in detections:
             algo_name = detection.algorithm.name
-            if algo_name not in analysis["algorithms"]:
-                analysis["algorithms"][algo_name] = {
+            if algo_name not in algorithms_dict:
+                algorithms_dict[algo_name] = {
                     "count": 0,
                     "variants": [],
                     "confidence": 0.0,
                     "locations": [],
                 }
 
-            analysis["algorithms"][algo_name]["count"] += 1
-            if detection.variant not in analysis["algorithms"][algo_name]["variants"]:
-                analysis["algorithms"][algo_name]["variants"].append(detection.variant)
-            analysis["algorithms"][algo_name]["confidence"] = max(
-                analysis["algorithms"][algo_name]["confidence"],
-                detection.confidence,
-            )
-            analysis["algorithms"][algo_name]["locations"].append(detection.offset)
+            algo_info = algorithms_dict[algo_name]
+            algo_info["count"] = int(algo_info["count"]) + 1
+            variants_list = algo_info["variants"]
+            if isinstance(variants_list, list) and detection.variant not in variants_list:
+                variants_list.append(detection.variant)
+            confidence_val = algo_info["confidence"]
+            if isinstance(confidence_val, (int, float)):
+                algo_info["confidence"] = max(float(confidence_val), detection.confidence)
+            locations_list = algo_info["locations"]
+            if isinstance(locations_list, list):
+                locations_list.append(detection.offset)
 
             if detection.details.get("hardware", False):
                 analysis["hardware_accelerated"] = True
@@ -1864,18 +1873,22 @@ class CryptographicRoutineDetector:
                 analysis["obfuscated_crypto"] = True
 
             if detection.key_size:
-                analysis["key_sizes"].add(detection.key_size)
+                key_sizes_set.add(detection.key_size)
 
             if detection.mode:
-                analysis["modes"].add(detection.mode)
+                modes_set.add(detection.mode)
 
-        if analysis["obfuscated_crypto"]:
+        obfuscated_val = analysis["obfuscated_crypto"]
+        unique_algos_val = analysis["unique_algorithms"]
+        custom_val = analysis["custom_crypto"]
+
+        if isinstance(obfuscated_val, bool) and obfuscated_val:
             analysis["protection_likelihood"] = 0.95
-        elif analysis["unique_algorithms"] >= 2:
+        elif isinstance(unique_algos_val, int) and unique_algos_val >= 2:
             analysis["protection_likelihood"] = 0.85
-        elif analysis["custom_crypto"]:
+        elif isinstance(custom_val, bool) and custom_val:
             analysis["protection_likelihood"] = 0.9
-        elif analysis["unique_algorithms"] == 1:
+        elif isinstance(unique_algos_val, int) and unique_algos_val == 1:
             analysis["protection_likelihood"] = 0.6
 
         return analysis

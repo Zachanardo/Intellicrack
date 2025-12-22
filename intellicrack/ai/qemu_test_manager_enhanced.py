@@ -40,6 +40,15 @@ logger = get_logger(__name__)
 class EnhancedQEMUTestManager:
     """Enhanced QEMU manager with real data capture capabilities."""
 
+    def __init__(self, vm_ip: str = "localhost") -> None:
+        """Initialize the QEMU test manager.
+
+        Args:
+            vm_ip: IP address of the QEMU VM for SSH access.
+
+        """
+        self.vm_ip = vm_ip
+
     def test_frida_script_with_callback(
         self,
         snapshot_id: str,
@@ -243,9 +252,10 @@ Process.enumerateModules().forEach(module => {{{{
             import threading
 
             def stream_frida_output() -> None:
-                for line in iter(frida_process.stdout.readline, ""):
-                    if line:
-                        output_callback(f"[FRIDA] {line.strip()}")
+                if frida_process.stdout is not None:
+                    for line in iter(frida_process.stdout.readline, ""):
+                        if line:
+                            output_callback(f"[FRIDA] {line.strip()}")
 
             # Start Frida output streaming in separate thread
             frida_thread = threading.Thread(target=stream_frida_output)
@@ -253,9 +263,10 @@ Process.enumerateModules().forEach(module => {{{{
             frida_thread.start()
 
             # Stream QEMU output
-            for line in iter(process.stdout.readline, ""):
-                if line:
-                    output_callback(f"[QEMU] {line.strip()}")
+            if process.stdout is not None:
+                for line in iter(process.stdout.readline, ""):
+                    if line:
+                        output_callback(f"[QEMU] {line.strip()}")
 
             # Wait for both processes
             process.wait()
@@ -293,7 +304,7 @@ Process.enumerateModules().forEach(module => {{{{
 
         from intellicrack.handlers.pefile_handler import pefile
 
-        result = {
+        result: dict[str, Any] = {
             "platform": "unknown",
             "architecture": "unknown",
             "dependencies": [],
@@ -313,19 +324,23 @@ Process.enumerateModules().forEach(module => {{{{
             result["entry_point"] = hex(pe.OPTIONAL_HEADER.AddressOfEntryPoint)
 
             # Get real import data
-            for entry in pe.DIRECTORY_ENTRY_IMPORT:
-                dll_name = entry.dll.decode("utf-8")
-                result["dependencies"].append(dll_name)
+            dependencies = result["dependencies"]
+            if isinstance(dependencies, list):
+                for entry in pe.DIRECTORY_ENTRY_IMPORT:
+                    dll_name = entry.dll.decode("utf-8")
+                    dependencies.append(dll_name)
 
             # Get real section data
-            for section in pe.sections:
-                result["sections"].append(
-                    {
-                        "name": section.Name.decode("utf-8").strip("\x00"),
-                        "virtual_address": hex(section.VirtualAddress),
-                        "size": section.SizeOfRawData,
-                    },
-                )
+            sections = result["sections"]
+            if isinstance(sections, list):
+                for section in pe.sections:
+                    sections.append(
+                        {
+                            "name": section.Name.decode("utf-8").strip("\x00"),
+                            "virtual_address": hex(section.VirtualAddress),
+                            "size": section.SizeOfRawData,
+                        },
+                    )
 
         elif "ELF" in file_type:
             # Linux binary

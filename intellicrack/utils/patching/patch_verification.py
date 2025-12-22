@@ -538,6 +538,10 @@ def _process_deep_analysis_candidates(app: MainWindow) -> tuple[list[dict[str, A
     patches: list[dict[str, Any]] = []
     strategy_used = "None"
 
+    if not app.binary_path:
+        app.update_output.emit(log_message("[License Rewrite] Error: No binary path selected"))
+        return patches, strategy_used
+
     app.update_output.emit(log_message("[License Rewrite] Running deep license analysis to find candidates..."))
     from ...core.analysis.core_analysis import enhanced_deep_license_analysis
 
@@ -984,8 +988,6 @@ def _add_manual_review_suggestions(
             },
         )
 
-    # Log to analysis results
-    app.analyze_results.append(f"Manual review needed for potential license check at 0x{start_addr:X}")
 
 
 def _handle_no_patches_alternative(app: MainWindow, strategy_used: str) -> None:
@@ -1007,15 +1009,6 @@ def _handle_no_patches_alternative(app: MainWindow, strategy_used: str) -> None:
 
     for alt in alternatives:
         app.update_output.emit(log_message(f"[License Rewrite] RECOMMENDATION: {alt}"))
-
-    # Add to analysis results for reporting
-    if hasattr(app, "analyze_results"):
-        app.analyze_results.append("\n=== LICENSE FUNCTION ANALYSIS ===")
-        app.analyze_results.append("Deep analysis didn't identify suitable patches")
-        app.analyze_results.append("Recommended approaches:")
-        app.analyze_results.append("1. Use dynamic hooking (Frida) rather than static patching")
-        app.analyze_results.append("2. Request AI-assisted analysis for specific license checks")
-        app.analyze_results.append("3. Use dynamic tracing to identify license verification code paths")
 
 
 def _apply_ai_fallback_patching(app: MainWindow) -> list[dict[str, Any]]:
@@ -1039,7 +1032,7 @@ def _apply_ai_fallback_patching(app: MainWindow) -> list[dict[str, Any]]:
         _log_application_state(app)
 
         # Save current state
-        original_status = app.analyze_status.text() if hasattr(app, "analyze_status") else ""
+        original_status = app.analyze_status.text() if hasattr(app, "analyze_status") and hasattr(app.analyze_status, "text") else ""
         original_patches = getattr(app, "potential_patches", None)
 
         # Run the automated patch agent
@@ -1053,7 +1046,7 @@ def _apply_ai_fallback_patching(app: MainWindow) -> list[dict[str, Any]]:
             app.update_output.emit(log_message("[License Rewrite] Automated Patch Agent did not generate any patches"))
 
         # Restore original status
-        if hasattr(app, "analyze_status"):
+        if hasattr(app, "analyze_status") and hasattr(app.analyze_status, "setText"):
             app.analyze_status.setText(original_status)
 
     except Exception as e_agent:
@@ -1112,7 +1105,6 @@ def _process_ai_patches(app: MainWindow, original_patches: list[dict[str, Any]] 
         # Keep track of both sets if needed
         if new_patches_count == 0 and overlapping_patches > 0:
             app.update_output.emit(log_message("[License Rewrite] No new patches found, keeping original patches for reference"))
-            app.original_patches = original_patches
 
     app.update_output.emit(log_message(f"[License Rewrite] AI generated {len(patches)} potential patches"))
 
@@ -1120,7 +1112,7 @@ def _process_ai_patches(app: MainWindow, original_patches: list[dict[str, Any]] 
     if patches and len(patches) > 0:
         app.update_output.emit(log_message(f"[License Rewrite] First patch details: {patches[0]!s}"))
 
-    return cast("list[dict[str, Any]]", patches)
+    return patches
 
 
 def _apply_patches_and_finalize(app: MainWindow, patches: list[dict[str, Any]], strategy_used: str) -> None:
@@ -1150,7 +1142,8 @@ def _apply_patches_and_finalize(app: MainWindow, patches: list[dict[str, Any]], 
         app.update_output.emit(log_message("[License Rewrite] Try using the AI assistant or dynamic analysis tools for more options."))
 
     # Update status
-    app.analyze_status.setText("License function rewriting complete")
+    if hasattr(app, "analyze_status") and hasattr(app.analyze_status, "setText"):
+        app.analyze_status.setText("License function rewriting complete")
 
 
 def rewrite_license_functions_with_parsing(app: MainWindow) -> None:
@@ -1166,7 +1159,8 @@ def rewrite_license_functions_with_parsing(app: MainWindow) -> None:
         return
 
     app.update_output.emit(log_message("[License Rewrite] Starting license function rewriting analysis..."))
-    app.analyze_status.setText("Rewriting license functions...")
+    if hasattr(app, "analyze_status") and hasattr(app.analyze_status, "setText"):
+        app.analyze_status.setText("Rewriting license functions...")
 
     # Strategy 1: Deep License Analysis
     patches, strategy_used = _process_deep_analysis_candidates(app)

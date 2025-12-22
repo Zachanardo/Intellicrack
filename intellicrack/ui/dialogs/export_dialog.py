@@ -138,7 +138,7 @@ class ExportWorker(QThread):
 
             if hasattr(icp_data, "__dict__"):
                 # Convert analysis object to dict
-                icp_dict = {
+                icp_dict: dict[str, Any] = {
                     "is_protected": icp_data.is_protected if hasattr(icp_data, "is_protected") else False,
                     "file_type": icp_data.file_type if hasattr(icp_data, "file_type") else "Unknown",
                     "architecture": icp_data.architecture if hasattr(icp_data, "architecture") else "Unknown",
@@ -146,14 +146,16 @@ class ExportWorker(QThread):
                 }
 
                 if hasattr(icp_data, "all_detections"):
-                    for detection in icp_data.all_detections:
-                        det_dict = {
-                            "name": detection.name if hasattr(detection, "name") else "Unknown",
-                            "type": detection.type if hasattr(detection, "type") else "Unknown",
-                            "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
-                            "version": detection.version if hasattr(detection, "version") else "",
-                        }
-                        icp_dict["detections"].append(det_dict)
+                    detections_list = icp_dict["detections"]
+                    if isinstance(detections_list, list):
+                        for detection in icp_data.all_detections:
+                            det_dict = {
+                                "name": detection.name if hasattr(detection, "name") else "Unknown",
+                                "type": detection.type if hasattr(detection, "type") else "Unknown",
+                                "confidence": detection.confidence if hasattr(detection, "confidence") else 0.0,
+                                "version": detection.version if hasattr(detection, "version") else "",
+                            }
+                            detections_list.append(det_dict)
 
                 self._dict_to_xml(icp_elem, icp_dict)
 
@@ -234,9 +236,8 @@ class ExportWorker(QThread):
             from reportlab.lib.units import inch
             from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
         except ImportError as e:
-            self.logger.exception("Import error in export_dialog: %s", e)
+            logger.exception("Import error in export_dialog: %s", e)
             error_msg = "ReportLab is required for PDF export. Install with: pip install reportlab"
-            logger.exception(error_msg)
             raise ImportError(error_msg) from None
 
         self.progress_update.emit(30, "Building PDF report...")
@@ -467,8 +468,6 @@ class ExportDialog(BaseDialog):
 
     def setup_content(self, layout: QLayout) -> None:
         """Set up the user interface content."""
-        if layout is None:
-            layout = QVBoxLayout(self.content_widget)
 
         # Check if we have results to export
         if not self.analysis_results:
@@ -593,11 +592,13 @@ class ExportDialog(BaseDialog):
         data_layout = QVBoxLayout()
 
         self.include_file_info_cb = QCheckBox("Include file information")
-        self.include_file_info_cb.setChecked(self.export_prefs.get("include_file_info", True))
+        include_file_info_val = self.export_prefs.get("include_file_info", True)
+        self.include_file_info_cb.setChecked(bool(include_file_info_val))
         data_layout.addWidget(self.include_file_info_cb)
 
         self.include_detections_cb = QCheckBox("Include protection detections")
-        self.include_detections_cb.setChecked(self.export_prefs.get("include_detections", True))
+        include_detections_val = self.export_prefs.get("include_detections", True)
+        self.include_detections_cb.setChecked(bool(include_detections_val))
         data_layout.addWidget(self.include_detections_cb)
 
         self.include_metadata_cb = QCheckBox("Include analysis metadata")
@@ -612,11 +613,13 @@ class ExportDialog(BaseDialog):
         options_layout = QVBoxLayout()
 
         self.pretty_format_cb = QCheckBox("Pretty format output (where applicable)")
-        self.pretty_format_cb.setChecked(self.export_prefs.get("pretty_format", True))
+        pretty_format_val = self.export_prefs.get("pretty_format", True)
+        self.pretty_format_cb.setChecked(bool(pretty_format_val))
         options_layout.addWidget(self.pretty_format_cb)
 
         self.include_timestamp_cb = QCheckBox("Include timestamp in export")
-        self.include_timestamp_cb.setChecked(self.export_prefs.get("include_timestamp", True))
+        include_timestamp_val = self.export_prefs.get("include_timestamp", True)
+        self.include_timestamp_cb.setChecked(bool(include_timestamp_val))
         options_layout.addWidget(self.include_timestamp_cb)
 
         # Page format selection for PDF export
@@ -625,7 +628,8 @@ class ExportDialog(BaseDialog):
 
         self.page_format_combo = QComboBox()
         self.page_format_combo.addItems(["A4", "Letter"])
-        self.page_format_combo.setCurrentText(self.export_prefs.get("page_format", "A4"))
+        page_format_val = self.export_prefs.get("page_format", "A4")
+        self.page_format_combo.setCurrentText(str(page_format_val) if page_format_val is not None else "A4")
         self.page_format_combo.setToolTip(
             "Choose page size for PDF export:<br>A4: International standard (210x297mm)<br>Letter: US standard (8.5x11 inches)",
         )
@@ -640,7 +644,8 @@ class ExportDialog(BaseDialog):
 
         self.confidence_threshold_spin = QSpinBox()
         self.confidence_threshold_spin.setRange(0, 100)
-        self.confidence_threshold_spin.setValue(self.export_prefs.get("confidence_threshold", 50))
+        confidence_threshold_val = self.export_prefs.get("confidence_threshold", 50)
+        self.confidence_threshold_spin.setValue(int(confidence_threshold_val) if isinstance(confidence_threshold_val, (int, float)) else 50)
         self.confidence_threshold_spin.setSuffix("%")
         confidence_layout.addWidget(self.confidence_threshold_spin)
 

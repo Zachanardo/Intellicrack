@@ -21,7 +21,7 @@ import logging
 import platform
 import subprocess
 from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Callable
 
 
 """
@@ -40,9 +40,9 @@ class BaseDetector(ABC):
     def __init__(self) -> None:
         """Initialize the base detector with logging and detection methods registry."""
         self.logger = logging.getLogger("IntellicrackLogger.AntiAnalysis")
-        self.detection_methods = {}
+        self.detection_methods: dict[str, Callable[[], tuple[bool, float, Any]]] = {}
 
-    def run_detection_loop(self, aggressive: bool = False, aggressive_methods: list[str] = None) -> dict[str, Any]:
+    def run_detection_loop(self, aggressive: bool = False, aggressive_methods: list[str] | None = None) -> dict[str, Any]:
         """Run the detection loop for all configured methods.
 
         Args:
@@ -56,15 +56,15 @@ class BaseDetector(ABC):
         if aggressive_methods is None:
             aggressive_methods = []
 
-        results = {
+        results: dict[str, Any] = {
             "detections": {},
             "detection_count": 0,
             "total_confidence": 0,
             "average_confidence": 0,
         }
 
-        detection_count = 0
-        total_confidence = 0
+        detection_count: int = 0
+        total_confidence: float = 0.0
 
         for method_name, method_func in self.detection_methods.items():
             # Skip aggressive methods if not requested
@@ -118,21 +118,18 @@ class BaseDetector(ABC):
             else:
                 result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)  # nosec S607 - Legitimate subprocess usage for security research and binary analysis
             processes = result.stdout.lower()
-            # Also get individual process names
-            process_list = []
+            process_list: list[str] = []
             if platform.system() == "Windows":
-                # Parse tasklist output
-                lines = result.stdout.strip().split("\n")[3:]  # Skip header
+                lines: list[str] = result.stdout.strip().split("\n")[3:]
                 for line in lines:
                     if line.strip():
-                        process_name = line.split()[0].lower()
+                        process_name: str = line.split()[0].lower()
                         process_list.append(process_name)
             else:
-                # Parse ps output
-                lines = result.stdout.strip().split("\n")[1:]  # Skip header
+                lines = result.stdout.strip().split("\n")[1:]
                 for line in lines:
                     if line.strip():
-                        parts = line.split()
+                        parts: list[str] = line.split()
                         if len(parts) >= 11:
                             process_name = parts[10].lower()
                             process_list.append(process_name)
@@ -147,7 +144,7 @@ class BaseDetector(ABC):
         self,
         detections: dict[str, Any],
         strong_methods: list[str],
-        medium_methods: list[str] = None,
+        medium_methods: list[str] | None = None,
     ) -> int:
         """Calculate detection score based on method difficulty.
 
@@ -163,7 +160,7 @@ class BaseDetector(ABC):
         if medium_methods is None:
             medium_methods = []
 
-        score = 0
+        score: int = 0
         for method, result in detections.items():
             if isinstance(result, dict) and result.get("detected"):
                 if method in strong_methods:

@@ -139,9 +139,10 @@ class LoadingTask:
         self.message = message
 
         if self.callback:
+            model_name = self.config.model_name if self.config.model_name is not None else "Unknown"
             progress_info = LoadingProgress(
                 model_id=self.model_id,
-                model_name=self.config.model_name,
+                model_name=model_name,
                 state=self.state,
                 progress=self.progress,
                 message=message,
@@ -332,49 +333,60 @@ class BackgroundModelLoader:
         task.start_time = time.time()
 
         try:
-            # Check if task was cancelled
-            if task.cancelled:
-                return
-
-            # Stage 1: Initialize backend
-            task.update_progress(0.1, "Initializing backend...", LoadingState.INITIALIZING)
-
-            if task.cancelled:
-                return
-
-            backend = task.backend_class(task.config)
-
-            # Stage 2: Download/prepare model if needed
-            task.update_progress(0.3, "Preparing model...", LoadingState.DOWNLOADING)
-
-            if task.cancelled:
-                return
-
-            # Stage 3: Load model
-            task.update_progress(0.5, "Loading model...", LoadingState.LOADING)
-
-            if task.cancelled:
-                return
-
-            # Actually initialize the backend
-            success = backend.initialize()
-
-            if task.cancelled:
-                return
-
-            if success:
-                task.update_progress(1.0, "Model loaded successfully", LoadingState.COMPLETED)
-                task.mark_completed(True, backend)
-                logger.info("Successfully loaded model %s", task.model_id)
-            else:
-                task.mark_completed(False, error="Backend initialization failed")
-                logger.error("Failed to initialize backend for %s", task.model_id)
-
+            self._execute_load_stages(task)
         except Exception as e:
             if not task.cancelled:
                 error_msg = str(e)
                 task.mark_completed(False, error=error_msg)
                 logger.exception("Error loading model %s: %s", task.model_id, e)
+
+    def _execute_load_stages(self, task: LoadingTask) -> None:
+        """Execute all loading stages with cancellation checks."""
+        cancelled = task.cancelled
+        if cancelled:
+            return
+
+        task.update_progress(0.1, "Initializing backend...", LoadingState.INITIALIZING)
+
+        cancelled = task.cancelled
+        if cancelled:
+            return
+
+        backend: "LLMBackend" = task.backend_class(task.config)
+
+        cancelled = task.cancelled
+        if cancelled:
+            return
+
+        task.update_progress(0.3, "Preparing model...", LoadingState.DOWNLOADING)
+
+        cancelled = task.cancelled
+        if cancelled:
+            return
+
+        task.update_progress(0.5, "Loading model...", LoadingState.LOADING)
+
+        cancelled = task.cancelled
+        if cancelled:
+            return
+
+        success: bool = backend.initialize()
+
+        cancelled = task.cancelled
+        if cancelled:
+            return
+
+        self._finalize_load(task, success, backend)
+
+    def _finalize_load(self, task: LoadingTask, success: bool, backend: "LLMBackend") -> None:
+        """Finalize model loading after initialization."""
+        if success:
+            task.update_progress(1.0, "Model loaded successfully", LoadingState.COMPLETED)
+            task.mark_completed(True, backend)
+            logger.info("Successfully loaded model %s", task.model_id)
+        else:
+            task.mark_completed(False, error="Backend initialization failed")
+            logger.error("Failed to initialize backend for %s", task.model_id)
 
     def shutdown(self) -> None:
         """Shutdown the background loader."""

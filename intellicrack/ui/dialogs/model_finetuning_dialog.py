@@ -1255,7 +1255,7 @@ class TrainingThread(QThread):
             return
         model = self.model
         if not hasattr(model, "config"):
-            model.config = {}
+            setattr(model, "config", {})
 
         model_config = getattr(model, "config", {})
         if isinstance(model_config, dict):
@@ -1286,7 +1286,7 @@ class TrainingThread(QThread):
             "warmup_steps": getattr(self.config, "warmup_steps", 1000),
             "weight_decay": getattr(self.config, "weight_decay", 0.01),
         }
-        model.training_config = training_config
+        setattr(model, "training_config", training_config)
 
     def _estimate_parameter_count(self, hidden_size: int, num_layers: int, vocab_size: int) -> int:
         """Estimate the number of parameters in the model."""
@@ -1826,8 +1826,9 @@ class TrainingThread(QThread):
                 val_loss = 0.0
                 val_accuracy = 0.0
                 if val_loader:
-                    eval_fn = model_obj.eval
-                    eval_fn()
+                    eval_fn = getattr(model_obj, "eval", None)
+                    if eval_fn is not None and callable(eval_fn):
+                        eval_fn()
                     val_batches = 0
                     with torch.no_grad():
                         for val_x, val_y in val_loader:
@@ -3264,7 +3265,7 @@ class ModelFinetuningDialog(QDialog):
                 # Save in PyTorch format
                 use_torch_save = TORCH_AVAILABLE and "model_state_dict" in model_data
                 if use_torch_save and torch is not None:
-                    torch.save(model_data, save_path)  # type: ignore[unreachable]
+                    torch.save(model_data, save_path)
                 else:
                     # Fallback to pickle format
                     with open(save_path, "wb") as f:

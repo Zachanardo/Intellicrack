@@ -169,10 +169,10 @@ class AutodeskLicensingParser:
     def __init__(self) -> None:
         """Initialize the Autodesk licensing parser with tracking and server key setup."""
         self.logger = get_logger(__name__)
-        self.active_activations = {}  # Track active activations
-        self.entitlement_cache = {}  # Cache entitlement data
-        self.network_licenses = {}  # Track network license usage
-        self.subscription_data = {}  # Store subscription information
+        self.active_activations: dict[str, dict[str, Any]] = {}
+        self.entitlement_cache: dict[str, dict[str, Any]] = {}
+        self.network_licenses: dict[str, dict[str, int]] = {}
+        self.subscription_data: dict[str, dict[str, Any]] = {}
         self._initialize_server_keys()
 
     def _initialize_server_keys(self) -> None:
@@ -317,7 +317,7 @@ class AutodeskLicensingParser:
             return "borrowing"
 
         if action := data.get("action", data.get("request_type", data.get("operation", ""))):
-            return action.lower()
+            return str(action).lower()
 
         # Check for specific Autodesk API endpoints
         if "/api/auth/authenticate" in request_line_lower:
@@ -638,18 +638,16 @@ class AutodeskLicensingParser:
 
     def _handle_heartbeat(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle license heartbeat."""
-        # Extract heartbeat context from request
         product_key = request.product_key or "UNKNOWN"
-        license_method = request.license_data.get("license_method", "standalone")
-        session_id = request.activation_data.get("session_id", str(uuid.uuid4()))
+        license_method = request.request_data.get("license_method", "standalone")
+        session_id = request.request_data.get("session_id", str(uuid.uuid4()))
 
-        # Determine heartbeat interval based on license type
         if license_method == "network":
-            heartbeat_interval = 1800  # 30 minutes for network licenses
-        elif "subscription" in str(request.license_data.get("license_type", "")):
-            heartbeat_interval = 900  # 15 minutes for subscription
+            heartbeat_interval = 1800
+        elif "subscription" in str(request.request_data.get("license_type", "")):
+            heartbeat_interval = 900
         else:
-            heartbeat_interval = 3600  # 1 hour for standalone
+            heartbeat_interval = 3600
 
         return AutodeskResponse(
             status="success",
@@ -730,11 +728,10 @@ class AutodeskLicensingParser:
 
     def _handle_feature_usage(self, request: AutodeskRequest) -> AutodeskResponse:
         """Handle feature usage reporting."""
-        # Extract usage information from request
-        features_used = request.license_data.get("features_used", [])
-        session_duration = request.activation_data.get("session_duration", 0)
-        product_version = request.license_data.get("product_version", "2024")
-        user_id = request.activation_data.get("user_id", "anonymous")
+        features_used = request.request_data.get("features_used", [])
+        session_duration = request.request_data.get("session_duration", 0)
+        product_version = request.request_data.get("product_version", "2024")
+        user_id = request.request_data.get("user_id", "anonymous")
 
         # Process feature usage analytics
         usage_summary = {

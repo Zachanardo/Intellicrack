@@ -17,24 +17,51 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
+from __future__ import annotations
+
 import logging
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from .intellicrack_protection_core import (
+        DetectionResult as DetectionResultType,
+        IntellicrackProtectionCore as IntellicrackProtectionCoreType,
+        ProtectionAnalysis as ProtectionAnalysisType,
+        ProtectionType as ProtectionTypeType,
+    )
+    from .protection_detector import ProtectionDetector as ProtectionDetectorType
+    from .themida_analyzer import (
+        DevirtualizedCode as DevirtualizedCodeType,
+        ThemidaAnalysisResult as ThemidaAnalysisResultType,
+        ThemidaAnalyzer as ThemidaAnalyzerType,
+        ThemidaVersion as ThemidaVersionType,
+        VMArchitecture as VMArchitectureType,
+        VMContext as VMContextType,
+        VMHandler as VMHandlerType,
+    )
+    from .unified_protection_engine import (
+        UnifiedProtectionEngine as UnifiedProtectionEngineType,
+        UnifiedProtectionResult as UnifiedProtectionResultType,
+    )
 
 
 logger: logging.Logger = logging.getLogger(__name__)
 
-DetectionResult: object = None
-IntellicrackProtectionCore: object = None
-ProtectionAnalysis: object = None
-ProtectionType: object = None
-ProtectionDetector: object = None
-deep_analyze: object = None
-get_protection_detector: object = None
-quick_analyze: object = None
+DetectionResult: type[DetectionResultType] | None = None
+IntellicrackProtectionCore: type[IntellicrackProtectionCoreType] | None = None
+ProtectionAnalysis: type[ProtectionAnalysisType] | None = None
+ProtectionType: type[ProtectionTypeType] | None = None
+ProtectionDetector: type[ProtectionDetectorType] | None = None
+deep_analyze: Callable[[str, bool], Any] | None = None
+get_protection_detector: Callable[[], Any] | None = None
+quick_analyze: Callable[[str], Any] | None = None
 
-_lazy_imports: dict[str, dict[str, object]] = {}
+_lazy_imports: dict[str, dict[str, Any]] = {}
 
 
-def __getattr__(name: str) -> object:
+def __getattr__(name: str) -> Any:
     """Lazy load protection module components to prevent circular imports.
 
     Implements lazy loading for protection detection and analysis components
@@ -81,7 +108,8 @@ def __getattr__(name: str) -> object:
                     "ProtectionAnalysis": None,
                     "ProtectionType": None,
                 }
-        return _lazy_imports["core_module"].get(name)
+        result: Any = _lazy_imports["core_module"].get(name)
+        return result
 
     if name in {
         "ProtectionDetector",
@@ -112,31 +140,60 @@ def __getattr__(name: str) -> object:
                     "get_protection_detector": None,
                     "quick_analyze": None,
                 }
-        return _lazy_imports["detector_module"].get(name)
+        result = _lazy_imports["detector_module"].get(name)
+        return result
 
-    error_msg = f"module '{__name__}' has no attribute '{name}'"
+    error_msg: str = f"module '{__name__}' has no attribute '{name}'"
     logger.error(error_msg)
     raise AttributeError(error_msg)
 
 
+UnifiedProtectionEngine: type[UnifiedProtectionEngineType] | None
+UnifiedProtectionResult: type[UnifiedProtectionResultType] | None
+get_unified_engine: Callable[[], Any] | None
+
 try:
-    from .unified_protection_engine import UnifiedProtectionEngine, UnifiedProtectionResult, get_unified_engine
+    from .unified_protection_engine import (
+        UnifiedProtectionEngine as UPE,
+        UnifiedProtectionResult as UPR,
+        get_unified_engine as gue,
+    )
+
+    UnifiedProtectionEngine = UPE
+    UnifiedProtectionResult = UPR
+    get_unified_engine = gue
 except ImportError as e:
     logger.warning("Failed to import unified_protection_engine: %s", e)
     UnifiedProtectionEngine = None
     UnifiedProtectionResult = None
     get_unified_engine = None
 
+ThemidaAnalysisResult: type[ThemidaAnalysisResultType] | None
+ThemidaAnalyzer: type[ThemidaAnalyzerType] | None
+VMArchitecture: type[VMArchitectureType] | None
+ThemidaVersion: type[ThemidaVersionType] | None
+VMHandler: type[VMHandlerType] | None
+VMContext: type[VMContextType] | None
+DevirtualizedCode: type[DevirtualizedCodeType] | None
+
 try:
     from .themida_analyzer import (
-        DevirtualizedCode,
-        ThemidaAnalysisResult,
-        ThemidaAnalyzer,
-        ThemidaVersion,
-        VMArchitecture,
-        VMContext,
-        VMHandler,
+        DevirtualizedCode as DC,
+        ThemidaAnalysisResult as TAR,
+        ThemidaAnalyzer as TA,
+        ThemidaVersion as TV,
+        VMArchitecture as VMA,
+        VMContext as VMC,
+        VMHandler as VMH,
     )
+
+    ThemidaAnalysisResult = TAR
+    ThemidaAnalyzer = TA
+    VMArchitecture = VMA
+    ThemidaVersion = TV
+    VMHandler = VMH
+    VMContext = VMC
+    DevirtualizedCode = DC
 except ImportError as e:
     logger.warning("Failed to import themida_analyzer: %s", e)
     ThemidaAnalysisResult = None

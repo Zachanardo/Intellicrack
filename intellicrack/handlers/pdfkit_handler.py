@@ -504,10 +504,11 @@ except ImportError as e:
 
             with urllib.request.urlopen(url) as response:  # noqa: S310  # Legitimate URL content fetching for PDF generation in security research tool
                 html = response.read().decode("utf-8")
-            return from_string(html, output_path, options, toc, cover, configuration, cover_first)
+            result: bytes | bool = from_string(html, output_path, options, toc, cover, configuration, cover_first)
+            return result
         except Exception as e:
             logger.error("Failed to fetch URL %s: %s", url, e)
-            return from_string(
+            error_result: bytes | bool = from_string(
                 f"<h1>Error</h1><p>Failed to fetch URL: {url}</p>",
                 output_path,
                 options,
@@ -516,6 +517,7 @@ except ImportError as e:
                 configuration,
                 cover_first,
             )
+            return error_result
 
     def from_file(
         input: str,
@@ -548,10 +550,11 @@ except ImportError as e:
             # Read file content
             with open(input, encoding="utf-8") as f:
                 content = f.read()
-            return from_string(content, output_path, options, toc, cover, configuration, cover_first)
+            result: bytes | bool = from_string(content, output_path, options, toc, cover, configuration, cover_first)
+            return result
         except Exception as e:
             logger.error("Failed to read file %s: %s", input, e)
-            return from_string(
+            error_result: bytes | bool = from_string(
                 f"<h1>Error</h1><p>Failed to read file: {input}</p>",
                 output_path,
                 options,
@@ -560,6 +563,7 @@ except ImportError as e:
                 configuration,
                 cover_first,
             )
+            return error_result
 
     def configuration(**kwargs: str) -> PDFConfiguration:
         """Create configuration object.
@@ -648,7 +652,7 @@ except ImportError as e:
             """
             # Approximate centering
             offset = len(text) * self.font_size * 0.25
-            self.drawString(x - offset, y, text)
+            self.drawString(int(x - offset), y, text)
 
         def drawRightString(self, x: int, y: int, text: str) -> None:
             """Draw right-aligned string.
@@ -663,7 +667,7 @@ except ImportError as e:
             """
             # Approximate right alignment
             offset = len(text) * self.font_size * 0.5
-            self.drawString(x - offset, y, text)
+            self.drawString(int(x - offset), y, text)
 
         def line(self, x1: int, y1: int, x2: int, y2: int) -> None:
             """Draw line.
@@ -751,7 +755,10 @@ except ImportError as e:
                 all_content.append("\n".join(page_text))
 
             if not self.filename:
-                return pdf_gen.create_pdf("\n\n".join(all_content), False)
+                result = pdf_gen.create_pdf("\n\n".join(all_content), None)
+                if isinstance(result, bytes):
+                    return result
+                return None
             pdf_gen.create_pdf("\n\n".join(all_content), self.filename)
             return None
 
@@ -859,7 +866,8 @@ except ImportError as e:
             html += "</body></html>"
 
             # Generate PDF
-            return from_string(html, output_path)
+            result: bytes | bool = from_string(html, output_path)
+            return result
 
     # ReportLab-style template functionality
     class SimpleDocTemplate:
@@ -909,7 +917,8 @@ except ImportError as e:
 
             # Generate PDF
             html_content = "<br>".join(content)
-            return from_string(html_content, self.filename)
+            result: bytes | bool = from_string(html_content, self.filename)
+            return result
 
     class Paragraph:
         """Paragraph element for documents.
@@ -1064,7 +1073,8 @@ except ImportError as e:
         PDFOptions: type[PDFOptions] = PDFOptions
         PDFConfiguration: type[PDFConfiguration] = PDFConfiguration
 
-    pdfkit: FallbackPDFKit = FallbackPDFKit()
+    pdfkit_module: FallbackPDFKit = FallbackPDFKit()
+    pdfkit = pdfkit_module
 
 
 # Export all pdfkit objects and availability flag

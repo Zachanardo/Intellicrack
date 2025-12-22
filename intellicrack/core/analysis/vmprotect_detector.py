@@ -14,6 +14,7 @@ Licensed under GNU General Public License v3.0
 import struct
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 from intellicrack.utils.logger import get_logger
 
@@ -98,7 +99,7 @@ class VMProtectDetection:
     dispatcher_offset: int | None
     handler_table_offset: int | None
     confidence: float
-    technical_details: dict[str, any] = field(default_factory=dict)
+    technical_details: dict[str, Any] = field(default_factory=dict)
     bypass_recommendations: list[str] = field(default_factory=list)
 
 
@@ -254,9 +255,9 @@ class VMProtectDetector:
         except Exception:
             return "unknown"
 
-    def _analyze_sections(self, data: bytes) -> dict[str, any]:
+    def _analyze_sections(self, data: bytes) -> dict[str, Any]:
         """Analyze PE sections for VMProtect characteristics."""
-        analysis = {
+        analysis: dict[str, Any] = {
             "vmp_sections": [],
             "high_entropy_sections": [],
             "suspicious_characteristics": [],
@@ -420,7 +421,7 @@ class VMProtectDetector:
 
     def _extract_opcodes(self, data: bytes, offset: int, size: int, architecture: str) -> list[tuple[int, str]]:
         """Extract opcodes from handler."""
-        opcodes = []
+        opcodes: list[tuple[int, str]] = []
 
         if not CAPSTONE_AVAILABLE:
             return opcodes
@@ -510,7 +511,7 @@ class VMProtectDetector:
 
                     candidate_offset = self._scan_for_handler_table(section_data, architecture)
                     if candidate_offset is not None:
-                        return section.PointerToRawData + candidate_offset
+                        return int(section.PointerToRawData + candidate_offset)
 
             pe.close()
 
@@ -546,7 +547,7 @@ class VMProtectDetector:
 
     def _identify_virtualized_regions(self, data: bytes, handlers: list[VMHandler], architecture: str) -> list[VirtualizedRegion]:
         """Identify regions of virtualized code."""
-        regions = []
+        regions: list[VirtualizedRegion] = []
 
         if not handlers:
             return regions
@@ -605,7 +606,7 @@ class VMProtectDetector:
                     next_insns = list(cs.disasm(data[next_offset : next_offset + 10], next_offset))
 
                     if next_insns and next_insns[0].mnemonic == "popfd":
-                        return insn.address
+                        return int(insn.address)
 
         except Exception as e:
             logger.debug("Failed to find VM exit point: %s", e)
@@ -720,7 +721,7 @@ class VMProtectDetector:
 
         return VMProtectLevel.STANDARD if mutation_score > 0.4 or handler_complexity > 50 or region_count > 5 else VMProtectLevel.LITE
 
-    def _detect_version(self, data: bytes, section_analysis: dict) -> str:
+    def _detect_version(self, data: bytes, section_analysis: dict[str, Any]) -> str:
         """Detect VMProtect version."""
         vmp_sections = section_analysis.get("vmp_sections", [])
 
@@ -752,7 +753,7 @@ class VMProtectDetector:
 
         return "Unknown (likely 2.x or 3.x)"
 
-    def _analyze_control_flow(self, data: bytes, regions: list[VirtualizedRegion], architecture: str) -> dict[str, any]:
+    def _analyze_control_flow(self, data: bytes, regions: list[VirtualizedRegion], architecture: str) -> dict[str, Any]:
         """Analyze control flow within virtualized regions."""
         analysis = {
             "total_regions": len(regions),
@@ -795,7 +796,7 @@ class VMProtectDetector:
 
     def _generate_bypass_recommendations(self, detection: VMProtectDetection) -> list[str]:
         """Generate bypass recommendations based on detection results."""
-        recommendations = []
+        recommendations: list[str] = []
 
         if not detection.detected:
             return recommendations

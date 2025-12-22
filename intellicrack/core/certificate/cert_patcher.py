@@ -176,7 +176,7 @@ class CertificatePatcher:
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
         self.binary_path = binary_path_obj
-        self.binary: lief.Binary | None = None
+        self.binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary | None = None
         self.architecture: Architecture | None = None
 
         if LIEF_AVAILABLE:
@@ -194,19 +194,42 @@ class CertificatePatcher:
             return
 
         if isinstance(self.binary, lief.PE.Binary):
-            if self.binary.header.machine == lief.PE.MACHINE_TYPES.I386:
-                self.architecture = Architecture.X86
-            elif self.binary.header.machine == lief.PE.MACHINE_TYPES.AMD64:
-                self.architecture = Architecture.X64
+            if hasattr(lief.PE, 'MACHINE_TYPES'):
+                if self.binary.header.machine == lief.PE.MACHINE_TYPES.I386:
+                    self.architecture = Architecture.X86
+                elif self.binary.header.machine == lief.PE.MACHINE_TYPES.AMD64:
+                    self.architecture = Architecture.X64
+            else:
+                machine_type = self.binary.header.machine
+                if machine_type == 0x14c:
+                    self.architecture = Architecture.X86
+                elif machine_type == 0x8664:
+                    self.architecture = Architecture.X64
         elif isinstance(self.binary, lief.ELF.Binary):
-            if self.binary.header.machine_type == lief.ELF.ARCH.i386:
-                self.architecture = Architecture.X86
-            elif self.binary.header.machine_type == lief.ELF.ARCH.x86_64:
-                self.architecture = Architecture.X64
-            elif self.binary.header.machine_type == lief.ELF.ARCH.ARM:
-                self.architecture = Architecture.ARM32
-            elif self.binary.header.machine_type == lief.ELF.ARCH.AARCH64:
-                self.architecture = Architecture.ARM64
+            machine_type_value = self.binary.header.machine_type
+            if hasattr(lief.ELF.ARCH, 'i386'):
+                arch_i386 = getattr(lief.ELF.ARCH, 'i386', None)
+                arch_x86_64 = getattr(lief.ELF.ARCH, 'x86_64', None)
+                arch_arm = getattr(lief.ELF.ARCH, 'ARM', None)
+                arch_aarch64 = getattr(lief.ELF.ARCH, 'AARCH64', None)
+
+                if arch_i386 is not None and machine_type_value == arch_i386:
+                    self.architecture = Architecture.X86
+                elif arch_x86_64 is not None and machine_type_value == arch_x86_64:
+                    self.architecture = Architecture.X64
+                elif arch_arm is not None and machine_type_value == arch_arm:
+                    self.architecture = Architecture.ARM32
+                elif arch_aarch64 is not None and machine_type_value == arch_aarch64:
+                    self.architecture = Architecture.ARM64
+            else:
+                if machine_type_value == 3:
+                    self.architecture = Architecture.X86
+                elif machine_type_value == 62:
+                    self.architecture = Architecture.X64
+                elif machine_type_value == 40:
+                    self.architecture = Architecture.ARM32
+                elif machine_type_value == 183:
+                    self.architecture = Architecture.ARM64
 
     def patch_certificate_validation(
         self,
@@ -435,8 +458,12 @@ class CertificatePatcher:
             if not section:
                 return False
 
-            if not (section.characteristics & lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE):
-                return False
+            if hasattr(lief.PE, 'SECTION_CHARACTERISTICS'):
+                if not (section.characteristics & lief.PE.SECTION_CHARACTERISTICS.MEM_EXECUTE):
+                    return False
+            else:
+                if not (section.characteristics & 0x20000000):
+                    return False
 
         return True
 
@@ -465,7 +492,7 @@ class CertificatePatcher:
                         if offset + i < len(content):
                             content[offset + i] = byte
 
-                    section.content = list(content)
+                    section.content = memoryview(content)
                     return True
 
             elif isinstance(self.binary, lief.ELF.Binary):
@@ -478,7 +505,7 @@ class CertificatePatcher:
                             if offset + i < len(content):
                                 content[offset + i] = byte
 
-                        segment.content = list(content)
+                        segment.content = memoryview(content)
                         return True
 
         except Exception as e:
@@ -493,7 +520,11 @@ class CertificatePatcher:
             return
 
         output_path = self.binary_path.parent / f"{self.binary_path.name}.patched"
-        self.binary.write(str(output_path))
+
+        if isinstance(self.binary, (lief.PE.Binary, lief.ELF.Binary, lief.MachO.Binary)):
+            self.binary.write(str(output_path))
+        else:
+            raise RuntimeError(f"Unsupported binary type: {type(self.binary)}")
 
     def rollback_patches(self, patch_result: PatchResult) -> bool:
         """Rollback all patches.

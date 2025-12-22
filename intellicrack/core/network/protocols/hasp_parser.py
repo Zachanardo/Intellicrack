@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from datetime import UTC
 from enum import IntEnum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
@@ -795,7 +795,7 @@ class HASPSentinelParser:
 
     def _parse_additional_params(self, data: bytes) -> dict[str, Any]:
         """Parse additional HASP TLV parameters."""
-        params = {}
+        params: dict[str, Any] = {}
         try:
             offset = 0
             while offset < len(data) - 4 and offset + 4 <= len(data):
@@ -820,16 +820,16 @@ class HASPSentinelParser:
                         params["ip_address"] = ".".join(str(b) for b in param_data)
                 elif param_type == 0x0005:
                     if len(param_data) >= 4:
-                        params["address"] = struct.unpack("<I", param_data[:4])[0]
+                        params["address"] = int(struct.unpack("<I", param_data[:4])[0])
                 elif param_type == 0x0006:
                     if len(param_data) >= 4:
-                        params["length"] = struct.unpack("<I", param_data[:4])[0]
+                        params["length"] = int(struct.unpack("<I", param_data[:4])[0])
                 elif param_type == 0x0007:
-                    params["write_data"] = param_data
+                    params["write_data"] = bytes(param_data)
                 elif param_type == 0x0008:
-                    params["detach_duration"] = struct.unpack("<I", param_data[:4])[0] if len(param_data) >= 4 else 0
+                    params["detach_duration"] = int(struct.unpack("<I", param_data[:4])[0]) if len(param_data) >= 4 else 0
                 else:
-                    params[f"param_{param_type:04X}"] = param_data
+                    params[f"param_{param_type:04X}"] = bytes(param_data)
 
         except Exception as e:
             self.logger.debug("Error parsing additional params: %s", e)
@@ -846,7 +846,7 @@ class HASPSentinelParser:
             HASP response object
 
         """
-        command_handlers = {
+        command_handlers: dict[HASPCommandType, Callable[[HASPRequest], HASPResponse]] = {
             HASPCommandType.LOGIN: self._handle_login,
             HASPCommandType.LOGOUT: self._handle_logout,
             HASPCommandType.ENCRYPT: self._handle_encrypt,
@@ -869,8 +869,12 @@ class HASPSentinelParser:
             HASPCommandType.DATETIME: self._handle_datetime,
         }
 
-        handler = command_handlers.get(request.command, self._handle_unknown_command)
-        response = handler(request)
+        handler: Callable[[HASPRequest], HASPResponse]
+        if request.command in HASPCommandType._value2member_map_:
+            handler = command_handlers.get(HASPCommandType(request.command), self._handle_unknown_command)
+        else:
+            handler = self._handle_unknown_command
+        response: HASPResponse = handler(request)
 
         response.sequence_number = request.sequence_number + 1
 
@@ -1714,27 +1718,25 @@ class HASPPacketAnalyzer:
             Dictionary containing extracted license information
 
         """
-        license_info = {
-            "discovered_servers": [],
-            "discovered_features": [],
-            "vendor_codes": set(),
-            "session_ids": set(),
-            "encryption_types": set(),
-        }
+        discovered_servers: list[dict[str, Any]] = []
+        discovered_features: list[dict[str, int | str]] = []
+        vendor_codes: set[int] = set()
+        session_ids: set[int] = set()
+        encryption_types: set[int] = set()
 
         for packet in self.captured_packets:
             if packet.packet_type == "SERVER_READY":
                 if server_info := self._extract_server_info(packet.raw_data):
-                    license_info["discovered_servers"].append(server_info)
+                    discovered_servers.append(server_info)
 
             if packet.parsed_request:
                 req = packet.parsed_request
-                license_info["vendor_codes"].add(req.vendor_code)
-                license_info["session_ids"].add(req.session_id)
-                license_info["encryption_types"].add(req.encryption_type)
+                vendor_codes.add(req.vendor_code)
+                session_ids.add(req.session_id)
+                encryption_types.add(req.encryption_type)
 
-                if req.feature_id not in [f["feature_id"] for f in license_info["discovered_features"]]:
-                    license_info["discovered_features"].append(
+                if req.feature_id not in [f["feature_id"] for f in discovered_features]:
+                    discovered_features.append(
                         {
                             "feature_id": req.feature_id,
                             "vendor_code": req.vendor_code,
@@ -1742,9 +1744,13 @@ class HASPPacketAnalyzer:
                         },
                     )
 
-        license_info["vendor_codes"] = list(license_info["vendor_codes"])
-        license_info["session_ids"] = list(license_info["session_ids"])
-        license_info["encryption_types"] = list(license_info["encryption_types"])
+        license_info: dict[str, Any] = {
+            "discovered_servers": discovered_servers,
+            "discovered_features": discovered_features,
+            "vendor_codes": list(vendor_codes),
+            "session_ids": list(session_ids),
+            "encryption_types": list(encryption_types),
+        }
 
         return license_info
 
@@ -1800,18 +1806,13 @@ class HASPPacketAnalyzer:
             output_path: Path to save analysis JSON
 
         """
-        analysis = {
-            "total_packets": len(self.captured_packets),
-            "packet_types": {},
-            "license_info": self.extract_license_info_from_capture(),
-            "timeline": [],
-        }
-
         packet_type_counts: dict[str, int] = {}
+        timeline: list[dict[str, Any]] = []
+
         for packet in self.captured_packets:
             packet_type_counts[packet.packet_type] = packet_type_counts.get(packet.packet_type, 0) + 1
 
-            analysis["timeline"].append(
+            timeline.append(
                 {
                     "timestamp": packet.timestamp,
                     "source": f"{packet.source_ip}:{packet.source_port}",
@@ -1821,7 +1822,12 @@ class HASPPacketAnalyzer:
                 },
             )
 
-        analysis["packet_types"] = packet_type_counts
+        analysis: dict[str, Any] = {
+            "total_packets": len(self.captured_packets),
+            "packet_types": packet_type_counts,
+            "license_info": self.extract_license_info_from_capture(),
+            "timeline": timeline,
+        }
 
         with open(output_path, "w") as f:
             json.dump(analysis, f, indent=2)

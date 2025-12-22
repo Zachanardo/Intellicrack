@@ -17,6 +17,9 @@ from enum import Enum
 
 import frida
 
+from intellicrack.utils.log_message import MessageCategory, log_analysis, log_error, log_security
+from intellicrack.utils.logger import log_all_methods
+
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +51,7 @@ class ProtectionInfo:
     bypass_script: str | None = None
 
 
+@log_all_methods
 class FridaProtectionBypasser:
     """Automated protection detection and bypass using Frida."""
 
@@ -78,8 +82,8 @@ class FridaProtectionBypasser:
 
             logger.info("Attached to process: %s", self.process_name or self.pid)
             return True
-        except Exception as e:
-            logger.exception("Failed to attach: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Failed to attach to process")
             return False
 
     def detect_anti_debug(self) -> list[ProtectionInfo]:
@@ -275,28 +279,50 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message: object, data: object) -> None:
-            if message["type"] == "send":
-                payload = message["payload"]
-                if payload["type"] == "anti_debug":
-                    info = ProtectionInfo(
-                        type=ProtectionType.ANTI_DEBUG,
-                        location=payload["location"],
-                        confidence=0.95,
-                        details={"method": payload.get("method", "Unknown")},
-                        bypass_available=True,
-                        bypass_script=anti_debug_script,
-                    )
-                    detections.append(info)
+        def on_message(message: object, _data: object) -> None:
+            try:
+                if not isinstance(message, dict):
+                    return
+                if message.get("type") == "send":
+                    payload = message.get("payload")
+                    if not isinstance(payload, dict):
+                        return
+                    if payload.get("type") == "anti_debug":
+                        location_val = payload.get("location")
+                        method_val = payload.get("method", "Unknown")
+                        info = ProtectionInfo(
+                            type=ProtectionType.ANTI_DEBUG,
+                            location=str(location_val) if location_val is not None else "N/A",
+                            confidence=0.95,
+                            details={"method": method_val},
+                            bypass_available=True,
+                            bypass_script=anti_debug_script,
+                        )
+                        detections.append(info)
+                        log_security(
+                            f"Anti-debug detected: {method_val}",
+                            category=MessageCategory.SECURITY,
+                            context={"payload": payload},
+                        )
+            except (KeyError, TypeError, ValueError) as e:
+                log_error(
+                    "Error processing anti-debug detection message",
+                    category=MessageCategory.SECURITY,
+                    details={"error": str(e), "message": message},
+                    exception=e,
+                )
 
         try:
+            if self.session is None:
+                logger.error("Session is not initialized")
+                return detections
             script = self.session.create_script(anti_debug_script)
             script.on("message", on_message)
             script.load()
             time.sleep(2)  # Wait for detections
             script.unload()
-        except Exception as e:
-            logger.exception("Anti-debug detection failed: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Anti-debug detection failed")
 
         return detections
 
@@ -438,31 +464,51 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message: object, data: object) -> None:
-            if message["type"] == "send":
-                payload = message["payload"]
-                if payload["type"] == "cert_pinning":
-                    info = ProtectionInfo(
-                        type=ProtectionType.CERT_PINNING,
-                        location=payload.get("location", "N/A"),
-                        confidence=0.90,
-                        details={
-                            "method": payload.get("method", "Unknown"),
-                            "hostname": payload.get("hostname", "N/A"),
-                        },
-                        bypass_available=True,
-                        bypass_script=cert_pinning_script,
-                    )
-                    detections.append(info)
+        def on_message(message: object, _data: object) -> None:
+            try:
+                if not isinstance(message, dict):
+                    return
+                if message.get("type") == "send":
+                    payload = message.get("payload")
+                    if not isinstance(payload, dict):
+                        return
+                    if payload.get("type") == "cert_pinning":
+                        info = ProtectionInfo(
+                            type=ProtectionType.CERT_PINNING,
+                            location=str(payload.get("location", "N/A")),
+                            confidence=0.90,
+                            details={
+                                "method": payload.get("method", "Unknown"),
+                                "hostname": payload.get("hostname", "N/A"),
+                            },
+                            bypass_available=True,
+                            bypass_script=cert_pinning_script,
+                        )
+                        detections.append(info)
+                        log_security(
+                            f"Certificate pinning detected: {payload.get('method', 'Unknown')}",
+                            category=MessageCategory.SECURITY,
+                            context={"payload": payload},
+                        )
+            except (KeyError, TypeError, ValueError) as e:
+                log_error(
+                    "Error processing cert pinning detection message",
+                    category=MessageCategory.SECURITY,
+                    details={"error": str(e), "message": message},
+                    exception=e,
+                )
 
         try:
+            if self.session is None:
+                logger.error("Session is not initialized")
+                return detections
             script = self.session.create_script(cert_pinning_script)
             script.on("message", on_message)
             script.load()
             time.sleep(2)
             script.unload()
-        except Exception as e:
-            logger.exception("Certificate pinning detection failed: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Certificate pinning detection failed")
 
         return detections
 
@@ -622,32 +668,52 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message: object, data: object) -> None:
-            if message["type"] == "send":
-                payload = message["payload"]
-                if payload["type"] == "integrity_check":
-                    info = ProtectionInfo(
-                        type=ProtectionType.INTEGRITY_CHECK,
-                        location=payload.get("location", "N/A"),
-                        confidence=0.85,
-                        details={
-                            "method": payload.get("method", "Unknown"),
-                            "address": payload.get("address", "N/A"),
-                            "algorithm": payload.get("algorithm", "N/A"),
-                        },
-                        bypass_available=True,
-                        bypass_script=integrity_script,
-                    )
-                    detections.append(info)
+        def on_message(message: object, _data: object) -> None:
+            try:
+                if not isinstance(message, dict):
+                    return
+                if message.get("type") == "send":
+                    payload = message.get("payload")
+                    if not isinstance(payload, dict):
+                        return
+                    if payload.get("type") == "integrity_check":
+                        info = ProtectionInfo(
+                            type=ProtectionType.INTEGRITY_CHECK,
+                            location=str(payload.get("location", "N/A")),
+                            confidence=0.85,
+                            details={
+                                "method": payload.get("method", "Unknown"),
+                                "address": payload.get("address", "N/A"),
+                                "algorithm": payload.get("algorithm", "N/A"),
+                            },
+                            bypass_available=True,
+                            bypass_script=integrity_script,
+                        )
+                        detections.append(info)
+                        log_security(
+                            f"Integrity check detected: {payload.get('method', 'Unknown')}",
+                            category=MessageCategory.SECURITY,
+                            context={"payload": payload},
+                        )
+            except (KeyError, TypeError, ValueError) as e:
+                log_error(
+                    "Error processing integrity check detection message",
+                    category=MessageCategory.SECURITY,
+                    details={"error": str(e), "message": message},
+                    exception=e,
+                )
 
         try:
+            if self.session is None:
+                logger.error("Session is not initialized")
+                return detections
             script = self.session.create_script(integrity_script)
             script.on("message", on_message)
             script.load()
             time.sleep(2)
             script.unload()
-        except Exception as e:
-            logger.exception("Integrity check detection failed: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Integrity check detection failed")
 
         return detections
 
@@ -832,38 +898,59 @@ class FridaProtectionBypasser:
         });
         """
 
-        def on_message(message: object, data: object) -> None:
-            if message["type"] == "send":
-                payload = message["payload"]
-                if payload["type"] == "vm_detection":
-                    info = ProtectionInfo(
-                        type=ProtectionType.VM_DETECTION,
-                        location=payload.get("location", payload.get("address", "N/A")),
-                        confidence=0.88,
-                        details={
-                            "method": payload.get("method", "Unknown"),
-                            "key": payload.get("key", "N/A"),
-                            "path": payload.get("path", "N/A"),
-                        },
-                        bypass_available=True,
-                        bypass_script=vm_detection_script,
-                    )
-                    detections.append(info)
+        def on_message(message: object, _data: object) -> None:
+            try:
+                if not isinstance(message, dict):
+                    return
+                if message.get("type") == "send":
+                    payload = message.get("payload")
+                    if not isinstance(payload, dict):
+                        return
+                    if payload.get("type") == "vm_detection":
+                        location_val = payload.get("location", payload.get("address", "N/A"))
+                        info = ProtectionInfo(
+                            type=ProtectionType.VM_DETECTION,
+                            location=str(location_val),
+                            confidence=0.88,
+                            details={
+                                "method": payload.get("method", "Unknown"),
+                                "key": payload.get("key", "N/A"),
+                                "path": payload.get("path", "N/A"),
+                            },
+                            bypass_available=True,
+                            bypass_script=vm_detection_script,
+                        )
+                        detections.append(info)
+                        log_security(
+                            f"VM detection detected: {payload.get('method', 'Unknown')}",
+                            category=MessageCategory.SECURITY,
+                            context={"payload": payload},
+                        )
+            except (KeyError, TypeError, ValueError) as e:
+                log_error(
+                    "Error processing VM detection message",
+                    category=MessageCategory.SECURITY,
+                    details={"error": str(e), "message": message},
+                    exception=e,
+                )
 
         try:
+            if self.session is None:
+                logger.error("Session is not initialized")
+                return detections
             script = self.session.create_script(vm_detection_script)
             script.on("message", on_message)
             script.load()
             time.sleep(2)
             script.unload()
-        except Exception as e:
-            logger.exception("VM detection failed: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("VM detection failed")
 
         return detections
 
     def detect_packers(self) -> list[ProtectionInfo]:
         """Detect known packers and protectors."""
-        detections = []
+        detections: list[ProtectionInfo] = []
 
         # Signature-based packer detection
         packer_signatures = {
@@ -887,20 +974,59 @@ class FridaProtectionBypasser:
         }
 
         try:
-            # Get the main module
-            frida.get_local_device().enumerate_processes()[0]
+            if self.session is None:
+                logger.error("Session is not initialized")
+                return detections
 
-            # Read first 4KB of main module for signatures
-            module_base = self.session.get_module_by_name(self.process_name or "main").base_address
+            # Get the main module via Frida script
+            get_header_script = """
+            const mainModule = Process.enumerateModules()[0];
+            const headerData = mainModule.base.readByteArray(4096);
+            send({ type: 'header_data', data: Array.from(new Uint8Array(headerData)) });
+            """
 
-            header_data = self.session.read_bytes(module_base, 4096)
+            header_data = b""
+
+            def on_header_message(message: object, _data: object) -> None:
+                nonlocal header_data
+                try:
+                    if not isinstance(message, dict):
+                        return
+                    if message.get("type") == "send":
+                        payload = message.get("payload")
+                        if isinstance(payload, dict) and payload.get("type") == "header_data":
+                            data_arr = payload.get("data")
+                            if isinstance(data_arr, list):
+                                header_data = bytes(data_arr)
+                                log_analysis(
+                                    "Received module header data",
+                                    category=MessageCategory.ANALYSIS,
+                                    context={"data_length": len(header_data)},
+                                )
+                except (KeyError, TypeError, ValueError) as e:
+                    log_error(
+                        "Error processing header data message",
+                        category=MessageCategory.ANALYSIS,
+                        details={"error": str(e), "message": message},
+                        exception=e,
+                    )
+
+            temp_script = self.session.create_script(get_header_script)
+            temp_script.on("message", on_header_message)
+            temp_script.load()
+            time.sleep(0.5)
+            temp_script.unload()
+
+            if not header_data:
+                logger.warning("Could not read module header")
+                return detections
 
             for packer_name, signatures in packer_signatures.items():
                 for signature in signatures:
                     if signature in header_data:
                         info = ProtectionInfo(
                             type=ProtectionType.PACKER,
-                            location=f"Module header @ {hex(module_base)}",
+                            location="Module header",
                             confidence=0.92,
                             details={
                                 "packer": packer_name,
@@ -1008,24 +1134,41 @@ class FridaProtectionBypasser:
             }
             """
 
-            def on_message(message: object, data: object) -> None:
-                if message["type"] == "send":
-                    payload = message["payload"]
-                    if payload["type"] == "packer_heuristic":
-                        info = ProtectionInfo(
-                            type=ProtectionType.PACKER,
-                            location=payload.get("address", "N/A"),
-                            confidence=0.75,
-                            details={
-                                "method": payload.get("method", "Heuristic"),
-                                "section": payload.get("section", "N/A"),
-                                "entropy": payload.get("entropy", 0),
-                                "importCount": payload.get("importCount", "N/A"),
-                            },
-                            bypass_available=True,
-                            bypass_script=self._generate_generic_unpacking_script(),
-                        )
-                        detections.append(info)
+            def on_message(message: object, _data: object) -> None:
+                try:
+                    if not isinstance(message, dict):
+                        return
+                    if message.get("type") == "send":
+                        payload = message.get("payload")
+                        if not isinstance(payload, dict):
+                            return
+                        if payload.get("type") == "packer_heuristic":
+                            info = ProtectionInfo(
+                                type=ProtectionType.PACKER,
+                                location=str(payload.get("address", "N/A")),
+                                confidence=0.75,
+                                details={
+                                    "method": payload.get("method", "Heuristic"),
+                                    "section": payload.get("section", "N/A"),
+                                    "entropy": payload.get("entropy", 0),
+                                    "importCount": payload.get("importCount", "N/A"),
+                                },
+                                bypass_available=True,
+                                bypass_script=self._generate_generic_unpacking_script(),
+                            )
+                            detections.append(info)
+                            log_security(
+                                f"Packer heuristic detected: {payload.get('method', 'Heuristic')}",
+                                category=MessageCategory.SECURITY,
+                                context={"payload": payload},
+                            )
+                except (KeyError, TypeError, ValueError) as e:
+                    log_error(
+                        "Error processing packer heuristic message",
+                        category=MessageCategory.SECURITY,
+                        details={"error": str(e), "message": message},
+                        exception=e,
+                    )
 
             script = self.session.create_script(heuristic_script)
             script.on("message", on_message)
@@ -1033,8 +1176,8 @@ class FridaProtectionBypasser:
             time.sleep(2)
             script.unload()
 
-        except Exception as e:
-            logger.exception("Packer detection failed: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Packer detection failed")
 
         return detections
 
@@ -1412,6 +1555,10 @@ class FridaProtectionBypasser:
     def apply_all_bypasses(self) -> bool:
         """Apply all detected protection bypasses."""
         try:
+            if self.session is None:
+                logger.error("Session is not initialized")
+                return False
+
             all_scripts = []
 
             # Combine all bypass scripts
@@ -1427,11 +1574,33 @@ class FridaProtectionBypasser:
             combined_script = "\n\n".join(all_scripts)
             self.script = self.session.create_script(combined_script)
 
-            def on_message(message: object, data: object) -> None:
-                if message["type"] == "send":
-                    logger.info("Bypass result: %s", message["payload"])
-                elif message["type"] == "error":
-                    logger.exception("Bypass error: %s", message, exc_info=True)
+            def on_message(message: object, _data: object) -> None:
+                try:
+                    if not isinstance(message, dict):
+                        return
+                    if message.get("type") == "send":
+                        payload = message.get("payload")
+                        log_analysis(
+                            f"Bypass result: {payload}",
+                            category=MessageCategory.ANALYSIS,
+                            context={"payload": payload},
+                        )
+                        logger.info("Bypass result: %s", payload)
+                    elif message.get("type") == "error":
+                        error_msg = f"Bypass error: {message}"
+                        log_error(
+                            error_msg,
+                            category=MessageCategory.ANALYSIS,
+                            details={"message": message},
+                        )
+                        logger.error("Bypass error: %s", message)
+                except (KeyError, TypeError, ValueError) as e:
+                    log_error(
+                        "Error processing bypass message",
+                        category=MessageCategory.ANALYSIS,
+                        details={"error": str(e), "message": message},
+                        exception=e,
+                    )
 
             self.script.on("message", on_message)
             self.script.load()
@@ -1439,8 +1608,8 @@ class FridaProtectionBypasser:
             logger.info("Applied %s protection bypasses", len(all_scripts))
             return True
 
-        except Exception as e:
-            logger.exception("Failed to apply bypasses: %s", e, exc_info=True)
+        except Exception:
+            logger.exception("Failed to apply bypasses")
             return False
 
     def detect_all_protections(self) -> list[ProtectionInfo]:
@@ -1464,8 +1633,8 @@ class FridaProtectionBypasser:
                 detections = method()
                 all_detections.extend(detections)
                 logger.info("Found %s %s protections", len(detections), name)
-            except Exception as e:
-                logger.exception("Failed to detect %s: %s", name, e, exc_info=True)
+            except Exception:
+                logger.exception("Failed to detect %s", name)
 
         self.detected_protections = all_detections
         logger.info("Total protections detected: %s", len(all_detections))
@@ -1483,7 +1652,7 @@ class FridaProtectionBypasser:
             "",
         ]
         # Group by protection type
-        by_type = {}
+        by_type: dict[ProtectionType, list[ProtectionInfo]] = {}
         for protection in self.detected_protections:
             if protection.type not in by_type:
                 by_type[protection.type] = []
@@ -1514,14 +1683,12 @@ class FridaProtectionBypasser:
                 "4. Consider using automated unpacking for packed binaries",
             ))
         else:
-            report.extend(
-                (
-                    "No protections detected. The target may use:",
-                    "- Custom protection mechanisms",
-                    "- Obfuscation without standard patterns",
-                    "- Server-side license validation",
-                )
-            )
+            report.extend((
+                "No protections detected. The target may use:",
+                "- Custom protection mechanisms",
+                "- Obfuscation without standard patterns",
+                "- Server-side license validation",
+            ))
         return "\n".join(report)
 
 
@@ -1546,7 +1713,7 @@ def main() -> None:
 
     # Attach to process
     if not bypasser.attach():
-        logger.exception("Failed to attach to process")
+        logger.error("Failed to attach to process")
         return
 
     # Detect all protections
@@ -1558,7 +1725,7 @@ def main() -> None:
 
     # Save report if requested
     if args.report:
-        with open(args.report, "w") as f:
+        with open(args.report, "w", encoding="utf-8") as f:
             f.write(report)
         logger.info("Report saved to %s", args.report)
 

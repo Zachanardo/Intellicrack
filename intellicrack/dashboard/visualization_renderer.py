@@ -173,7 +173,7 @@ class VisualizationRenderer:
         }
 
         # Cache for rendered visualizations
-        self.render_cache = {}
+        self.render_cache: dict[str, dict[str, Any]] = {}
         self.cache_ttl = self.config.get("cache_ttl", 60)  # seconds
 
     def _load_chart_templates(self) -> dict[str, str]:
@@ -468,9 +468,14 @@ class VisualizationRenderer:
         # Check cache
         cache_key = f"graph_{hash(str(nodes))}{hash(str(edges))}{render_type}"
         if cache_key in self.render_cache:
-            cached = self.render_cache[cache_key]
-            if time.time() - cached["timestamp"] < self.cache_ttl:
-                return cached["data"]
+            cached_entry = self.render_cache[cache_key]
+            cached_timestamp = cached_entry.get("timestamp")
+            if cached_timestamp is not None and isinstance(cached_timestamp, (int, float)):
+                if time.time() - float(cached_timestamp) < self.cache_ttl:
+                    cached_data_raw = cached_entry.get("data")
+                    if cached_data_raw is not None and isinstance(cached_data_raw, dict):
+                        cached_data: dict[str, Any] = cached_data_raw
+                        return cached_data
 
         width, height = dimensions
 
@@ -518,7 +523,7 @@ class VisualizationRenderer:
 
     def render_heatmap(
         self,
-        data: np.ndarray,
+        data: np.ndarray[Any, Any],
         labels_x: list[str],
         labels_y: list[str],
         title: str = "Heatmap",
@@ -1118,7 +1123,7 @@ class VisualizationRenderer:
         # Format x-axis as time
         from matplotlib.dates import DateFormatter
 
-        ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))
+        ax.xaxis.set_major_formatter(DateFormatter("%H:%M:%S"))  # type: ignore[no-untyped-call]
 
         fig.tight_layout()
 

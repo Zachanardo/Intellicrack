@@ -60,7 +60,7 @@ class BinarySimilaritySearch:
             "sample_size": 0,
         }
 
-        self.load_database()
+        self.load_database(database_path)
 
     def _load_database(self) -> dict[str, Any]:
         """Load the binary database from file.
@@ -73,7 +73,8 @@ class BinarySimilaritySearch:
             return {"binaries": []}
         try:
             with open(self.database_path, encoding="utf-8") as f:
-                return json.load(f)
+                data: dict[str, Any] = json.load(f)
+                return data
         except (OSError, ValueError, RuntimeError) as e:
             self.logger.exception("Error loading binary database: %s", e)
             return {"binaries": []}
@@ -172,6 +173,7 @@ class BinarySimilaritySearch:
                     features["characteristics"] = getattr(pe.FILE_HEADER, "Characteristics", 0)
 
                     # Extract section information
+                    sections_list: list[dict[str, Any]] = features["sections"]  # type: ignore[assignment]
                     for section in pe.sections:
                         section_name = section.Name.decode("utf-8", "ignore").strip("\x00")
                         section_info = {
@@ -181,23 +183,25 @@ class BinarySimilaritySearch:
                             "raw_data_size": section.SizeOfRawData,
                             "entropy": calculate_entropy(section.get_data()),
                         }
-                        features["sections"].append(section_info)
+                        sections_list.append(section_info)
 
                     # Extract import information
+                    imports_list: list[str] = features["imports"]  # type: ignore[assignment]
                     if hasattr(pe, "DIRECTORY_ENTRY_IMPORT"):
                         for entry in pe.DIRECTORY_ENTRY_IMPORT:
                             dll_name = entry.dll.decode("utf-8", "ignore")
                             for imp in entry.imports:
                                 if imp.name:
                                     imp_name = imp.name.decode("utf-8", "ignore")
-                                    features["imports"].append(f"{dll_name}:{imp_name}")
+                                    imports_list.append(f"{dll_name}:{imp_name}")
 
                     # Extract export information
+                    exports_list: list[str] = features["exports"]  # type: ignore[assignment]
                     if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
                         for exp in pe.DIRECTORY_ENTRY_EXPORT.symbols:
                             if exp.name:
                                 exp_name = exp.name.decode("utf-8", "ignore")
-                                features["exports"].append(exp_name)
+                                exports_list.append(exp_name)
 
                     # Extract strings (basic implementation)
                     strings = self._extract_strings(data)
@@ -423,7 +427,7 @@ class BinarySimilaritySearch:
                 entropy_similarity = 0.0
 
             # Calculate weighted overall similarity
-            similarity = (
+            total_similarity: float = (
                 section_similarity * 0.30
                 + import_similarity * 0.25
                 + export_similarity * 0.15
@@ -432,7 +436,7 @@ class BinarySimilaritySearch:
                 + entropy_similarity * 0.05
             )
 
-            return min(1.0, max(0.0, similarity))
+            return min(1.0, max(0.0, total_similarity))
 
         except Exception as e:
             self.logger.exception("Error in basic similarity calculation: %s", e)
@@ -568,17 +572,17 @@ class BinarySimilaritySearch:
             sections2 = features2.get("sections", [])
 
             # Look for executable sections and their entropy patterns
-            exec_entropy1 = [s.get("entropy", 0) for s in sections1 if ".text" in s.get("name", "")]
-            exec_entropy2 = [s.get("entropy", 0) for s in sections2 if ".text" in s.get("name", "")]
+            exec_entropy1: list[float] = [s.get("entropy", 0) for s in sections1 if ".text" in s.get("name", "")]
+            exec_entropy2: list[float] = [s.get("entropy", 0) for s in sections2 if ".text" in s.get("name", "")]
 
             if not exec_entropy1 or not exec_entropy2:
                 return 0.0
 
             # Calculate entropy pattern similarity for code sections
-            avg_entropy1 = sum(exec_entropy1) / len(exec_entropy1)
-            avg_entropy2 = sum(exec_entropy2) / len(exec_entropy2)
+            avg_entropy1: float = sum(exec_entropy1) / len(exec_entropy1)
+            avg_entropy2: float = sum(exec_entropy2) / len(exec_entropy2)
 
-            entropy_diff = abs(avg_entropy1 - avg_entropy2)
+            entropy_diff: float = abs(avg_entropy1 - avg_entropy2)
             return max(0.0, 1.0 - entropy_diff / 8.0)
 
         except Exception as e:
@@ -593,8 +597,8 @@ class BinarySimilaritySearch:
             imports2 = features2.get("imports", [])
 
             # Group imports by DLL for pattern analysis
-            dll_patterns1 = {}
-            dll_patterns2 = {}
+            dll_patterns1: dict[str, list[str]] = {}
+            dll_patterns2: dict[str, list[str]] = {}
 
             for imp in imports1:
                 if ":" in imp:
@@ -796,8 +800,8 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Generate character n-grams (trigrams)
-            def generate_ngrams(text_list: list[str], n: int = 3) -> set:
-                ngrams = set()
+            def generate_ngrams(text_list: list[str], n: int = 3) -> set[str]:
+                ngrams: set[str] = set()
                 for text in text_list:
                     text = text.lower()
                     for i in range(len(text) - n + 1):
@@ -833,13 +837,13 @@ class BinarySimilaritySearch:
             entropies2 = [s.get("entropy", 0) for s in sections2]
 
             # Create entropy buckets for distribution comparison
-            def create_entropy_distribution(entropies: list) -> list[float | int]:
-                buckets = [0] * 8  # 8 entropy buckets (0-1, 1-2, ..., 7-8)
+            def create_entropy_distribution(entropies: list[float]) -> list[float]:
+                buckets: list[int] = [0] * 8  # 8 entropy buckets (0-1, 1-2, ..., 7-8)
                 for entropy in entropies:
                     bucket = min(7, int(entropy))
                     buckets[bucket] += 1
                 total = sum(buckets)
-                return [b / total for b in buckets] if total > 0 else buckets
+                return [float(b) / total for b in buckets] if total > 0 else [0.0] * 8
 
             dist1 = create_entropy_distribution(entropies1)
             dist2 = create_entropy_distribution(entropies2)
@@ -899,10 +903,10 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Calculate relative section sizes
-            def get_size_distribution(sections: list) -> list[float]:
+            def get_size_distribution(sections: list[dict[str, Any]]) -> list[float]:
                 sizes = [s.get("raw_data_size", 0) for s in sections]
                 total = sum(sizes)
-                return [s / total for s in sizes] if total > 0 else []
+                return [float(s) / total for s in sizes] if total > 0 else []
 
             dist1 = get_size_distribution(sections1)
             dist2 = get_size_distribution(sections2)
@@ -930,10 +934,10 @@ class BinarySimilaritySearch:
                 return 0.0
 
             # Simple LSH approximation using hash-based bucketing
-            def create_hash_signature(features: list, num_hashes: int = 32) -> list[int]:
+            def create_hash_signature(features: list[str], num_hashes: int = 32) -> list[int]:
                 import hashlib
 
-                signature = []
+                signature: list[int] = []
                 for i in range(num_hashes):
                     hash_val = 0
                     for feature in features:
@@ -996,14 +1000,14 @@ class BinarySimilaritySearch:
         """Calculate cosine similarity for feature vectors."""
         try:
             # Create feature vectors from various attributes
-            def create_feature_vector(features: dict) -> list[float | int]:
-                vector: list[float | int] = []
-                vector.append(features.get("file_size", 0) / 1000000)  # Normalize file size
-                vector.append(features.get("entropy", 0.0))
-                vector.append(len(features.get("sections", [])))
-                vector.append(len(features.get("imports", [])))
-                vector.append(len(features.get("exports", [])))
-                vector.append(len(features.get("strings", [])))
+            def create_feature_vector(features: dict[str, Any]) -> list[float]:
+                vector: list[float] = []
+                vector.append(float(features.get("file_size", 0)) / 1000000.0)  # Normalize file size
+                vector.append(float(features.get("entropy", 0.0)))
+                vector.append(float(len(features.get("sections", []))))
+                vector.append(float(len(features.get("imports", []))))
+                vector.append(float(len(features.get("exports", []))))
+                vector.append(float(len(features.get("strings", []))))
                 return vector
 
             vec1 = create_feature_vector(features1)
@@ -1061,32 +1065,45 @@ class BinarySimilaritySearch:
             Dictionary with database statistics
 
         """
-        stats = {
-            "total_binaries": len(self.database.get("binaries", [])),
+        binaries_list = self.database.get("binaries", [])
+        unique_imports_set: set[str] = set()
+        unique_exports_set: set[str] = set()
+
+        stats: dict[str, Any] = {
+            "total_binaries": len(binaries_list),
             "total_patterns": 0,
             "avg_file_size": 0,
-            "unique_imports": set(),
-            "unique_exports": set(),
+            "unique_imports": 0,
+            "unique_exports": 0,
         }
 
-        if stats["total_binaries"] > 0:
+        total_binaries = len(binaries_list)
+        if total_binaries > 0:
             total_size = 0
-            for binary in self.database["binaries"]:
+            for binary in binaries_list:
                 # Count patterns
-                stats["total_patterns"] += len(binary.get("cracking_patterns", []))
+                patterns = binary.get("cracking_patterns", [])
+                if isinstance(patterns, list):
+                    stats["total_patterns"] += len(patterns)
 
                 # Calculate average file size
                 file_size = binary.get("file_size", 0)
-                total_size += file_size
+                if isinstance(file_size, int):
+                    total_size += file_size
 
                 # Collect unique imports and exports
                 features = binary.get("features", {})
-                stats["unique_imports"].update(features.get("imports", []))
-                stats["unique_exports"].update(features.get("exports", []))
+                if isinstance(features, dict):
+                    imports = features.get("imports", [])
+                    exports = features.get("exports", [])
+                    if isinstance(imports, list):
+                        unique_imports_set.update(imports)
+                    if isinstance(exports, list):
+                        unique_exports_set.update(exports)
 
-            stats["avg_file_size"] = total_size // stats["total_binaries"]
-            stats["unique_imports"] = len(stats["unique_imports"])
-            stats["unique_exports"] = len(stats["unique_exports"])
+            stats["avg_file_size"] = total_size // total_binaries
+            stats["unique_imports"] = len(unique_imports_set)
+            stats["unique_exports"] = len(unique_exports_set)
 
         return stats
 

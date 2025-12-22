@@ -54,7 +54,7 @@ class FileMetadataWidget(QWidget):
 
         """
         super().__init__(parent)
-        self.current_file = None
+        self.current_file: str | None = None
         self.init_ui()
 
     def init_ui(self) -> None:
@@ -149,7 +149,7 @@ class FileMetadataWidget(QWidget):
 
         self.setLayout(layout)
 
-    def analyze_file(self, file_path: str) -> dict:
+    def analyze_file(self, file_path: str) -> dict[str, object]:
         """Analyze a file and update the display.
 
         Args:
@@ -228,28 +228,28 @@ class FileMetadataWidget(QWidget):
             timestamps_text += "<b>Created:</b><br>"
             timestamps_text += f"  Date: {created_time.toString('dddd, MMMM d, yyyy')}<br>"
             timestamps_text += f"  Time: {created_time.toString('h:mm:ss AP')}<br>"
-            timestamps_text += f"  ISO: {created_time.toString(Qt.ISODate)}<br>"
+            timestamps_text += f"  ISO: {created_time.toString(Qt.DateFormat.ISODate)}<br>"
             timestamps_text += f"  Unix: {created_time.toSecsSinceEpoch()}<br><br>"
 
         # Modified time
         timestamps_text += "<b>Last Modified:</b><br>"
         timestamps_text += f"  Date: {modified_time.toString('dddd, MMMM d, yyyy')}<br>"
         timestamps_text += f"  Time: {modified_time.toString('h:mm:ss AP')}<br>"
-        timestamps_text += f"  ISO: {modified_time.toString(Qt.ISODate)}<br>"
+        timestamps_text += f"  ISO: {modified_time.toString(Qt.DateFormat.ISODate)}<br>"
         timestamps_text += f"  Unix: {modified_time.toSecsSinceEpoch()}<br><br>"
 
         # Accessed time
         timestamps_text += "<b>Last Accessed:</b><br>"
         timestamps_text += f"  Date: {accessed_time.toString('dddd, MMMM d, yyyy')}<br>"
         timestamps_text += f"  Time: {accessed_time.toString('h:mm:ss AP')}<br>"
-        timestamps_text += f"  ISO: {accessed_time.toString(Qt.ISODate)}<br>"
+        timestamps_text += f"  ISO: {accessed_time.toString(Qt.DateFormat.ISODate)}<br>"
         timestamps_text += f"  Unix: {accessed_time.toSecsSinceEpoch()}<br><br>"
 
         # Time since last modification
         current_time = QDateTime.currentDateTime()
-        secs_since_modified = modified_time.secsTo(current_time)
-        days_since_modified = secs_since_modified // 86400
-        hours_since_modified = (secs_since_modified % 86400) // 3600
+        secs_since_modified: int = modified_time.secsTo(current_time)
+        days_since_modified: int = secs_since_modified // 86400
+        hours_since_modified: int = (secs_since_modified % 86400) // 3600
 
         timestamps_text += "<b>Time Since Last Modification:</b><br>"
         timestamps_text += f"  {days_since_modified} days, {hours_since_modified} hours<br>"
@@ -262,9 +262,9 @@ class FileMetadataWidget(QWidget):
             "name": file_info.fileName(),
             "size": file_info.size(),
             "size_formatted": self._format_size(file_info.size()),
-            "created": created_time.toString(Qt.ISODate) if created_time.isValid() else None,
-            "modified": modified_time.toString(Qt.ISODate),
-            "accessed": accessed_time.toString(Qt.ISODate),
+            "created": created_time.toString(Qt.DateFormat.ISODate) if created_time.isValid() else None,
+            "modified": modified_time.toString(Qt.DateFormat.ISODate),
+            "accessed": accessed_time.toString(Qt.DateFormat.ISODate),
             "created_unix": created_time.toSecsSinceEpoch() if created_time.isValid() else None,
             "modified_unix": modified_time.toSecsSinceEpoch(),
             "accessed_unix": accessed_time.toSecsSinceEpoch(),
@@ -287,7 +287,7 @@ class FileMetadataWidget(QWidget):
 
     def refresh_metadata(self) -> None:
         """Refresh the metadata for the current file."""
-        if self.current_file:
+        if self.current_file is not None:
             self.analyze_file(self.current_file)
 
     def clear(self) -> None:
@@ -318,11 +318,12 @@ class FileMetadataWidget(QWidget):
             Formatted size string
 
         """
+        size_float: float = float(size)
         for unit in ["B", "KB", "MB", "GB", "TB"]:
-            if size < 1024.0:
-                return f"{size:.2f} {unit}"
-            size /= 1024.0
-        return f"{size:.2f} PB"
+            if size_float < 1024.0:
+                return f"{size_float:.2f} {unit}"
+            size_float /= 1024.0
+        return f"{size_float:.2f} PB"
 
 
 class FileTimestampTracker:
@@ -330,9 +331,9 @@ class FileTimestampTracker:
 
     def __init__(self) -> None:
         """Initialize the timestamp tracker."""
-        self.tracked_files = {}
+        self.tracked_files: dict[str, dict[str, object]] = {}
 
-    def track_file(self, file_path: str) -> dict:
+    def track_file(self, file_path: str) -> dict[str, object]:
         """Start tracking a file's timestamps.
 
         Args:
@@ -358,7 +359,7 @@ class FileTimestampTracker:
         self.tracked_files[file_path] = timestamp_data
         return timestamp_data
 
-    def check_file(self, file_path: str) -> dict:
+    def check_file(self, file_path: str) -> dict[str, object]:
         """Check if a tracked file has changed.
 
         Args:
@@ -381,7 +382,7 @@ class FileTimestampTracker:
         current_accessed = file_info.lastRead()
         current_size = file_info.size()
 
-        check_data = {
+        check_data: dict[str, object] = {
             "timestamp": QDateTime.currentDateTime(),
             "modified_changed": current_modified != tracked["initial_modified"],
             "accessed_changed": current_accessed != tracked["initial_accessed"],
@@ -391,7 +392,9 @@ class FileTimestampTracker:
             "current_size": current_size,
         }
 
-        tracked["checks"].append(check_data)
+        checks_list = tracked["checks"]
+        if isinstance(checks_list, list):
+            checks_list.append(check_data)
 
         return {
             "file": file_path,
@@ -399,7 +402,7 @@ class FileTimestampTracker:
             "details": check_data,
         }
 
-    def get_file_history(self, file_path: str) -> dict:
+    def get_file_history(self, file_path: str) -> dict[str, object]:
         """Get the tracking history for a file.
 
         Args:

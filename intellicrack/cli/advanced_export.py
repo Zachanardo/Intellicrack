@@ -24,7 +24,7 @@ import json
 import logging
 import os
 from datetime import datetime
-from typing import Any, Protocol, TypedDict, Unpack
+from typing import Any, Protocol, TypedDict, Unpack, runtime_checkable
 
 
 try:
@@ -54,6 +54,22 @@ try:
     XLSX_AVAILABLE = True
 except ImportError:
     XLSX_AVAILABLE = False
+
+
+@runtime_checkable
+class WorkbookProtocol(Protocol):
+    """Protocol defining the interface for xlsxwriter Workbook objects."""
+
+    def add_worksheet(self, name: str = "") -> "WorksheetProtocol": ...
+    def add_format(self, properties: dict[str, Any] | None = None) -> object: ...
+    def close(self) -> None: ...
+
+
+@runtime_checkable
+class WorksheetProtocol(Protocol):
+    """Protocol defining the interface for xlsxwriter Worksheet objects."""
+
+    def write(self, row: int, col: int, data: Any, format_obj: object | None = None) -> int: ...
 
 
 class ExportOptions(TypedDict, total=False):
@@ -1151,7 +1167,7 @@ KEY FINDINGS
         header_format: object | None = None,
         cell_format: object | None = None,
         worksheet_name: str = "Summary",
-    ) -> object | None:
+    ) -> WorksheetProtocol | None:
         """Create summary sheet for Excel export.
 
         Args:
@@ -1165,14 +1181,12 @@ KEY FINDINGS
 
         """
         try:
-            if not hasattr(workbook, "add_worksheet"):
-                raise TypeError("Invalid workbook: missing add_worksheet method")
-            if not hasattr(workbook, "add_format"):
-                raise TypeError("Invalid workbook: missing add_format method")
+            if not isinstance(workbook, WorkbookProtocol):
+                raise TypeError("Invalid workbook: does not conform to WorkbookProtocol")
 
-            worksheet = workbook.add_worksheet(worksheet_name)
+            worksheet: WorksheetProtocol = workbook.add_worksheet(worksheet_name)
 
-            header_fmt = workbook.add_format(
+            header_fmt: object = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#D7E4BC",
@@ -1182,35 +1196,33 @@ KEY FINDINGS
 
             headers = ["Category", "Count", "Status", "Risk Level"]
             for col, header in enumerate(headers):
-                if hasattr(worksheet, "write"):
-                    worksheet.write(0, col, header, header_fmt)
+                worksheet.write(0, col, header, header_fmt)
 
             summary = self._generate_summary()
             row = 1
 
-            if hasattr(worksheet, "write"):
-                worksheet.write(row, 0, "Binary Analysis")
-                worksheet.write(row, 1, 1)
-                worksheet.write(row, 2, "Complete")
-                risk_assessment = summary.get("risk_assessment", {})
-                if isinstance(risk_assessment, dict):
-                    worksheet.write(row, 3, risk_assessment.get("level", "Unknown"))
-                else:
-                    worksheet.write(row, 3, "Unknown")
-                row += 1
+            worksheet.write(row, 0, "Binary Analysis", None)
+            worksheet.write(row, 1, 1, None)
+            worksheet.write(row, 2, "Complete", None)
+            risk_assessment = summary.get("risk_assessment", {})
+            if isinstance(risk_assessment, dict):
+                worksheet.write(row, 3, risk_assessment.get("level", "Unknown"), None)
+            else:
+                worksheet.write(row, 3, "Unknown", None)
+            row += 1
 
-                vuln_count = len(self.analysis_results.get("vulnerabilities", {}))
-                worksheet.write(row, 0, "Vulnerabilities")
-                worksheet.write(row, 1, vuln_count)
-                worksheet.write(row, 2, "Found" if vuln_count > 0 else "None")
-                worksheet.write(row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low")
-                row += 1
+            vuln_count = len(self.analysis_results.get("vulnerabilities", {}))
+            worksheet.write(row, 0, "Vulnerabilities", None)
+            worksheet.write(row, 1, vuln_count, None)
+            worksheet.write(row, 2, "Found" if vuln_count > 0 else "None", None)
+            worksheet.write(row, 3, "High" if vuln_count > 5 else "Medium" if vuln_count > 0 else "Low", None)
+            row += 1
 
-                protections = self.analysis_results.get("protections", [])
-                worksheet.write(row, 0, "Protections")
-                worksheet.write(row, 1, len(protections))
-                worksheet.write(row, 2, "Detected" if protections else "None")
-                worksheet.write(row, 3, "High" if len(protections) > 3 else "Medium" if protections else "Low")
+            protections = self.analysis_results.get("protections", [])
+            worksheet.write(row, 0, "Protections", None)
+            worksheet.write(row, 1, len(protections), None)
+            worksheet.write(row, 2, "Detected" if protections else "None", None)
+            worksheet.write(row, 3, "High" if len(protections) > 3 else "Medium" if protections else "Low", None)
 
             return worksheet
         except Exception as e:
@@ -1223,7 +1235,7 @@ KEY FINDINGS
         header_format: object | None = None,
         cell_format: object | None = None,
         worksheet_name: str = "Vulnerabilities",
-    ) -> object | None:
+    ) -> WorksheetProtocol | None:
         """Create vulnerabilities sheet for Excel export.
 
         Args:
@@ -1237,14 +1249,12 @@ KEY FINDINGS
 
         """
         try:
-            if not hasattr(workbook, "add_worksheet"):
-                raise TypeError("Invalid workbook: missing add_worksheet method")
-            if not hasattr(workbook, "add_format"):
-                raise TypeError("Invalid workbook: missing add_format method")
+            if not isinstance(workbook, WorkbookProtocol):
+                raise TypeError("Invalid workbook: does not conform to WorkbookProtocol")
 
-            worksheet = workbook.add_worksheet(worksheet_name)
+            worksheet: WorksheetProtocol = workbook.add_worksheet(worksheet_name)
 
-            header_fmt = workbook.add_format(
+            header_fmt: object = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#FFB3B3",
@@ -1254,20 +1264,19 @@ KEY FINDINGS
 
             headers = ["Type", "Severity", "Description", "Location", "Recommendation"]
             for col, header in enumerate(headers):
-                if hasattr(worksheet, "write"):
-                    worksheet.write(0, col, header, header_fmt)
+                worksheet.write(0, col, header, header_fmt)
 
             vulnerabilities = self.analysis_results.get("vulnerabilities", {})
             row = 1
 
-            if isinstance(vulnerabilities, dict) and hasattr(worksheet, "write"):
+            if isinstance(vulnerabilities, dict):
                 for vuln_type, vuln_data in vulnerabilities.items():
                     if isinstance(vuln_data, dict):
-                        worksheet.write(row, 0, vuln_type)
-                        worksheet.write(row, 1, vuln_data.get("severity", "Medium"))
-                        worksheet.write(row, 2, vuln_data.get("description", ""))
-                        worksheet.write(row, 3, vuln_data.get("location", ""))
-                        worksheet.write(row, 4, vuln_data.get("recommendation", ""))
+                        worksheet.write(row, 0, vuln_type, None)
+                        worksheet.write(row, 1, vuln_data.get("severity", "Medium"), None)
+                        worksheet.write(row, 2, vuln_data.get("description", ""), None)
+                        worksheet.write(row, 3, vuln_data.get("location", ""), None)
+                        worksheet.write(row, 4, vuln_data.get("recommendation", ""), None)
                         row += 1
 
             return worksheet
@@ -1281,7 +1290,7 @@ KEY FINDINGS
         header_format: object | None = None,
         cell_format: object | None = None,
         worksheet_name: str = "Strings",
-    ) -> object | None:
+    ) -> WorksheetProtocol | None:
         """Create strings sheet for Excel export.
 
         Args:
@@ -1295,14 +1304,12 @@ KEY FINDINGS
 
         """
         try:
-            if not hasattr(workbook, "add_worksheet"):
-                raise TypeError("Invalid workbook: missing add_worksheet method")
-            if not hasattr(workbook, "add_format"):
-                raise TypeError("Invalid workbook: missing add_format method")
+            if not isinstance(workbook, WorkbookProtocol):
+                raise TypeError("Invalid workbook: does not conform to WorkbookProtocol")
 
-            worksheet = workbook.add_worksheet(worksheet_name)
+            worksheet: WorksheetProtocol = workbook.add_worksheet(worksheet_name)
 
-            header_fmt = workbook.add_format(
+            header_fmt: object = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#B3D9FF",
@@ -1312,21 +1319,20 @@ KEY FINDINGS
 
             headers = ["String", "Address", "Section", "Type", "Length"]
             for col, header in enumerate(headers):
-                if hasattr(worksheet, "write"):
-                    worksheet.write(0, col, header, header_fmt)
+                worksheet.write(0, col, header, header_fmt)
 
             strings_data = self.analysis_results.get("strings", [])
-            if isinstance(strings_data, list) and hasattr(worksheet, "write"):
+            if isinstance(strings_data, list):
                 for row, string_item in enumerate(strings_data, start=1):
                     if isinstance(string_item, dict):
-                        worksheet.write(row, 0, string_item.get("value", ""))
-                        worksheet.write(row, 1, string_item.get("address", ""))
-                        worksheet.write(row, 2, string_item.get("section", ""))
-                        worksheet.write(row, 3, string_item.get("type", ""))
-                        worksheet.write(row, 4, string_item.get("length", 0))
+                        worksheet.write(row, 0, string_item.get("value", ""), None)
+                        worksheet.write(row, 1, string_item.get("address", ""), None)
+                        worksheet.write(row, 2, string_item.get("section", ""), None)
+                        worksheet.write(row, 3, string_item.get("type", ""), None)
+                        worksheet.write(row, 4, string_item.get("length", 0), None)
                     else:
-                        worksheet.write(row, 0, str(string_item))
-                        worksheet.write(row, 4, len(str(string_item)))
+                        worksheet.write(row, 0, str(string_item), None)
+                        worksheet.write(row, 4, len(str(string_item)), None)
             return worksheet
         except Exception as e:
             logger.exception("Failed to create strings sheet: %s", e)
@@ -1338,7 +1344,7 @@ KEY FINDINGS
         header_format: object | None = None,
         cell_format: object | None = None,
         worksheet_name: str = "Imports",
-    ) -> object | None:
+    ) -> WorksheetProtocol | None:
         """Create imports sheet for Excel export.
 
         Args:
@@ -1352,14 +1358,12 @@ KEY FINDINGS
 
         """
         try:
-            if not hasattr(workbook, "add_worksheet"):
-                raise TypeError("Invalid workbook: missing add_worksheet method")
-            if not hasattr(workbook, "add_format"):
-                raise TypeError("Invalid workbook: missing add_format method")
+            if not isinstance(workbook, WorkbookProtocol):
+                raise TypeError("Invalid workbook: does not conform to WorkbookProtocol")
 
-            worksheet = workbook.add_worksheet(worksheet_name)
+            worksheet: WorksheetProtocol = workbook.add_worksheet(worksheet_name)
 
-            header_fmt = workbook.add_format(
+            header_fmt: object = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#FFE6B3",
@@ -1369,27 +1373,26 @@ KEY FINDINGS
 
             headers = ["Library", "Function", "Address", "Ordinal"]
             for col, header in enumerate(headers):
-                if hasattr(worksheet, "write"):
-                    worksheet.write(0, col, header, header_fmt)
+                worksheet.write(0, col, header, header_fmt)
 
             imports_data = self.analysis_results.get("imports", {})
             row = 1
 
-            if isinstance(imports_data, dict) and hasattr(worksheet, "write"):
+            if isinstance(imports_data, dict):
                 for library, functions in imports_data.items():
                     if isinstance(functions, list):
                         for func in functions:
-                            worksheet.write(row, 0, library)
+                            worksheet.write(row, 0, library, None)
                             if isinstance(func, dict):
-                                worksheet.write(row, 1, func.get("name", ""))
-                                worksheet.write(row, 2, func.get("address", ""))
-                                worksheet.write(row, 3, func.get("ordinal", ""))
+                                worksheet.write(row, 1, func.get("name", ""), None)
+                                worksheet.write(row, 2, func.get("address", ""), None)
+                                worksheet.write(row, 3, func.get("ordinal", ""), None)
                             else:
-                                worksheet.write(row, 1, str(func))
+                                worksheet.write(row, 1, str(func), None)
                             row += 1
                     else:
-                        worksheet.write(row, 0, library)
-                        worksheet.write(row, 1, str(functions))
+                        worksheet.write(row, 0, library, None)
+                        worksheet.write(row, 1, str(functions), None)
                         row += 1
 
             return worksheet
@@ -1403,7 +1406,7 @@ KEY FINDINGS
         header_format: object | None = None,
         cell_format: object | None = None,
         worksheet_name: str = "Statistics",
-    ) -> object | None:
+    ) -> WorksheetProtocol | None:
         """Create statistics sheet for Excel export.
 
         Args:
@@ -1417,14 +1420,12 @@ KEY FINDINGS
 
         """
         try:
-            if not hasattr(workbook, "add_worksheet"):
-                raise TypeError("Invalid workbook: missing add_worksheet method")
-            if not hasattr(workbook, "add_format"):
-                raise TypeError("Invalid workbook: missing add_format method")
+            if not isinstance(workbook, WorkbookProtocol):
+                raise TypeError("Invalid workbook: does not conform to WorkbookProtocol")
 
-            worksheet = workbook.add_worksheet(worksheet_name)
+            worksheet: WorksheetProtocol = workbook.add_worksheet(worksheet_name)
 
-            header_fmt = workbook.add_format(
+            header_fmt: object = workbook.add_format(
                 {
                     "bold": True,
                     "bg_color": "#E6E6FA",
@@ -1434,26 +1435,24 @@ KEY FINDINGS
 
             headers = ["Metric", "Value", "Category", "Notes"]
             for col, header in enumerate(headers):
-                if hasattr(worksheet, "write"):
-                    worksheet.write(0, col, header, header_fmt)
+                worksheet.write(0, col, header, header_fmt)
 
             statistics = self._generate_statistics()
             row = 1
 
-            if hasattr(worksheet, "write"):
-                for category, stats in statistics.items():
-                    if isinstance(stats, dict):
-                        for metric, value in stats.items():
-                            worksheet.write(row, 0, metric)
-                            worksheet.write(row, 1, str(value))
-                            worksheet.write(row, 2, category)
-                            worksheet.write(row, 3, f"Part of {category} analysis")
-                            row += 1
-                    else:
-                        worksheet.write(row, 0, category)
-                        worksheet.write(row, 1, str(stats))
-                        worksheet.write(row, 2, "General")
+            for category, stats in statistics.items():
+                if isinstance(stats, dict):
+                    for metric, value in stats.items():
+                        worksheet.write(row, 0, metric, None)
+                        worksheet.write(row, 1, str(value), None)
+                        worksheet.write(row, 2, category, None)
+                        worksheet.write(row, 3, f"Part of {category} analysis", None)
                         row += 1
+                else:
+                    worksheet.write(row, 0, category, None)
+                    worksheet.write(row, 1, str(stats), None)
+                    worksheet.write(row, 2, "General", None)
+                    row += 1
 
             return worksheet
         except Exception as e:

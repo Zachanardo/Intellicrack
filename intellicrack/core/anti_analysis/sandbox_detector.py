@@ -32,6 +32,7 @@ from typing import Any, cast
 
 import psutil
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from .base_detector import BaseDetector
 
 
@@ -628,7 +629,7 @@ class SandboxDetector(BaseDetector):
                 self.logger.warning("System profile matches %s: %s/%s", sandbox_name, matches, checks)
                 self.detection_cache[f"profile_{sandbox_name}"] = True
 
-    def _check_hardware_indicators(self) -> dict[str, Any]:
+    def _check_hardware_indicators(self) -> tuple[bool, float, dict[str, Any]]:
         """Check hardware indicators for sandbox/VM detection."""
         indicators: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
@@ -654,8 +655,9 @@ class SandboxDetector(BaseDetector):
                     for pattern in vm_cpu_patterns:
                         if pattern in cpu_name:
                             indicators["detected"] = True
-                            indicators["confidence"] = cast("int", indicators["confidence"]) + 30
-                            cast("list[str]", indicators["details"]).append(f"VM CPU pattern: {pattern}")
+                            current_confidence = get_typed_item(indicators, "confidence", int)
+                            indicators["confidence"] = current_confidence + 30
+                            validate_type(indicators["details"], list).append(f"VM CPU pattern: {pattern}")
 
                 except Exception as e:
                     self.logger.debug("Error checking CPU info for VM patterns: %s", e)
@@ -666,8 +668,9 @@ class SandboxDetector(BaseDetector):
 
                         if "hypervisor" in cpu_info or "qemu" in cpu_info:
                             indicators["detected"] = True
-                            indicators["confidence"] = cast("int", indicators["confidence"]) + 30
-                            cast("list[str]", indicators["details"]).append("Hypervisor detected in cpuinfo")
+                            current_confidence = get_typed_item(indicators, "confidence", int)
+                            indicators["confidence"] = current_confidence + 30
+                            validate_type(indicators["details"], list).append("Hypervisor detected in cpuinfo")
                 except Exception as e:
                     self.logger.debug("Error reading /proc/cpuinfo for hypervisor detection: %s", e)
 
@@ -693,21 +696,26 @@ class SandboxDetector(BaseDetector):
             for prefix in vm_mac_prefixes:
                 if mac_str.lower().startswith(prefix.lower()):
                     indicators["detected"] = True
-                    indicators["confidence"] = cast("int", indicators["confidence"]) + 40
-                    cast("list[str]", indicators["details"]).append(f"VM MAC prefix: {prefix}")
+                    current_confidence = get_typed_item(indicators, "confidence", int)
+                    indicators["confidence"] = current_confidence + 40
+                    validate_type(indicators["details"], list).append(f"VM MAC prefix: {prefix}")
                     break
 
         except Exception as e:
             self.logger.debug("Hardware check error: %s", e)
 
-        return indicators
+        detected = bool(indicators.get("detected", False))
+        confidence = float(indicators.get("confidence", 0))
+        return detected, confidence, indicators
 
-    def _check_registry_indicators(self) -> dict[str, Any]:
+    def _check_registry_indicators(self) -> tuple[bool, float, dict[str, Any]]:
         """Check Windows registry for sandbox indicators."""
         indicators: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
         if platform.system() != "Windows":
-            return indicators
+            detected = bool(indicators.get("detected", False))
+            confidence = float(indicators.get("confidence", 0))
+            return detected, confidence, indicators
 
         try:
             import winreg
@@ -730,8 +738,9 @@ class SandboxDetector(BaseDetector):
                     key = winreg.OpenKey(hkey, path)
                     winreg.CloseKey(key)
                     indicators["detected"] = True
-                    indicators["confidence"] = cast("int", indicators["confidence"]) + 50
-                    cast("list[str]", indicators["details"]).append(f"Registry key found: {path}")
+                    current_confidence = get_typed_item(indicators, "confidence", int)
+                    indicators["confidence"] = current_confidence + 50
+                    validate_type(indicators["details"], list).append(f"Registry key found: {path}")
             # Check for sandbox-specific values
             try:
                 key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\SystemInformation")
@@ -748,8 +757,9 @@ class SandboxDetector(BaseDetector):
                 ]
                 if any(vm in value.lower() for vm in vm_manufacturers):
                     indicators["detected"] = True
-                    indicators["confidence"] = cast("int", indicators["confidence"]) + 40
-                    cast("list[str]", indicators["details"]).append(f"VM manufacturer: {value}")
+                    current_confidence = get_typed_item(indicators, "confidence", int)
+                    indicators["confidence"] = current_confidence + 40
+                    validate_type(indicators["details"], list).append(f"VM manufacturer: {value}")
 
             except Exception as e:
                 self.logger.debug("Error checking VM manufacturer in registry: %s", e)
@@ -757,9 +767,11 @@ class SandboxDetector(BaseDetector):
         except Exception as e:
             self.logger.debug("Registry check error: %s", e)
 
-        return indicators
+        detected = bool(indicators.get("detected", False))
+        confidence = float(indicators.get("confidence", 0))
+        return detected, confidence, indicators
 
-    def _check_virtualization_artifacts(self) -> dict[str, Any]:
+    def _check_virtualization_artifacts(self) -> tuple[bool, float, dict[str, Any]]:
         """Check for virtualization artifacts."""
         artifacts: dict[str, Any] = {"detected": False, "confidence": 0, "details": []}
 
@@ -789,8 +801,9 @@ class SandboxDetector(BaseDetector):
                 for driver in vm_drivers:
                     if driver in drivers:
                         artifacts["detected"] = True
-                        artifacts["confidence"] = cast("int", artifacts["confidence"]) + 30
-                        cast("list[str]", artifacts["details"]).append(f"VM driver: {driver}")
+                        current_confidence = get_typed_item(artifacts, "confidence", int)
+                        artifacts["confidence"] = current_confidence + 30
+                        validate_type(artifacts["details"], list).append(f"VM driver: {driver}")
 
             except Exception as e:
                 self.logger.debug("Error checking for VM drivers: %s", e)
@@ -814,8 +827,9 @@ class SandboxDetector(BaseDetector):
                     for module in vm_modules:
                         if module in modules:
                             artifacts["detected"] = True
-                            artifacts["confidence"] = cast("int", artifacts["confidence"]) + 30
-                            cast("list[str]", artifacts["details"]).append(f"VM module: {module}")
+                            current_confidence = get_typed_item(artifacts, "confidence", int)
+                            artifacts["confidence"] = current_confidence + 30
+                            validate_type(artifacts["details"], list).append(f"VM module: {module}")
 
             except Exception as e:
                 self.logger.debug("Error checking for VM modules: %s", e)
@@ -835,13 +849,16 @@ class SandboxDetector(BaseDetector):
                     for indicator in vm_indicators:
                         if indicator in dmi_info:
                             artifacts["detected"] = True
-                            artifacts["confidence"] = cast("int", artifacts["confidence"]) + 50
-                            cast("list[str]", artifacts["details"]).append(f"DMI indicator: {indicator}")
+                            current_confidence = get_typed_item(artifacts, "confidence", int)
+                            artifacts["confidence"] = current_confidence + 50
+                            validate_type(artifacts["details"], list).append(f"DMI indicator: {indicator}")
                             break
         except Exception as e:
             self.logger.debug("Error checking DMI/SMBIOS information: %s", e)
 
-        return artifacts
+        detected = bool(artifacts.get("detected", False))
+        confidence = float(artifacts.get("confidence", 0))
+        return detected, confidence, artifacts
 
     def detect_sandbox(self, aggressive: bool = False) -> dict[str, Any]:
         """Perform sandbox detection using multiple techniques.
@@ -874,10 +891,10 @@ class SandboxDetector(BaseDetector):
             if detection_results["detection_count"] > 0:
                 results["is_sandbox"] = True
                 results["confidence"] = min(1.0, detection_results["average_confidence"])
-                results["sandbox_type"] = self._identify_sandbox_type(cast("dict[str, Any]", results["detections"]))
+                results["sandbox_type"] = self._identify_sandbox_type(validate_type(results["detections"], dict))
 
             # Calculate evasion difficulty
-            results["evasion_difficulty"] = self._calculate_evasion_difficulty(cast("dict[str, Any]", results["detections"]))
+            results["evasion_difficulty"] = self._calculate_evasion_difficulty(validate_type(results["detections"], dict))
 
             self.logger.info("Sandbox detection complete: %s (confidence: %.2f)", results["is_sandbox"], results["confidence"])
             return results
@@ -907,7 +924,7 @@ class SandboxDetector(BaseDetector):
                 "analysis",
             ]
             if any(user in username for user in suspicious_users):
-                cast("list[str]", details["suspicious_env"]).append(f"username: {username}")
+                validate_type(details["suspicious_env"], list).append(f"username: {username}")
 
             # Check computer name
             computername: str = os.environ.get("COMPUTERNAME", socket.gethostname()).lower()
@@ -927,7 +944,7 @@ class SandboxDetector(BaseDetector):
                     "analysis",
                 ]
             if any(comp in computername for comp in suspicious_computers):
-                cast("list[str]", details["suspicious_env"]).append(f"computername: {computername}")
+                validate_type(details["suspicious_env"], list).append(f"computername: {computername}")
 
             # Check for sandbox-specific environment variables
             sandbox_env_vars = [
@@ -944,7 +961,7 @@ class SandboxDetector(BaseDetector):
 
             for var in sandbox_env_vars:
                 if var in os.environ:
-                    cast("list[str]", details["suspicious_env"]).append(f"env: {var}")
+                    validate_type(details["suspicious_env"], list).append(f"env: {var}")
 
             if details["suspicious_env"]:
                 confidence = min(0.9, len(details["suspicious_env"]) * 0.3)
@@ -1098,7 +1115,7 @@ class SandboxDetector(BaseDetector):
 
             limited_net: Any = self.behavioral_patterns["limited_network"]
             if connections < limited_net["min_connections"]:
-                cast("list[str]", details["network_anomalies"]).append(f"Few connections: {connections}")
+                validate_type(details["network_anomalies"], list).append(f"Few connections: {connections}")
 
             # Check for sandbox networks
             try:
@@ -1109,7 +1126,7 @@ class SandboxDetector(BaseDetector):
                     sigs_network: Any = sigs.get("network", [])
                     for network in sigs_network:
                         if self._ip_in_network(local_ip, network):
-                            cast("list[str]", details["network_anomalies"]).append(f"Sandbox network: {network} ({sandbox_type})")
+                            validate_type(details["network_anomalies"], list).append(f"Sandbox network: {network} ({sandbox_type})")
 
             except Exception as e:
                 self.logger.debug("Error checking network configuration: %s", e)
@@ -1128,7 +1145,7 @@ class SandboxDetector(BaseDetector):
                         self.logger.debug("DNS resolution failed for %s: %s", domain, e)
 
                 if resolved == 0:
-                    cast("list[str]", details["network_anomalies"]).append("No DNS resolution")
+                    validate_type(details["network_anomalies"], list).append("No DNS resolution")
 
             except Exception as e:
                 self.logger.debug("Error in DNS resolution test: %s", e)

@@ -29,17 +29,20 @@ import sys
 import traceback
 from pathlib import Path
 from types import TracebackType
-from typing import Any
+from typing import Any, cast
 
 
 logger = logging.getLogger(__name__)
 
+QMessageBox: type[Any] | None = None
+QApplication: type[Any] | None = None
+
 try:
-    from PyQt6.QtWidgets import QApplication, QMessageBox
+    from PyQt6.QtWidgets import QApplication as _QApplication, QMessageBox as _QMessageBox
+    QMessageBox = _QMessageBox
+    QApplication = _QApplication
 except ImportError as e:
     logger.exception("Import error in exception_utils: %s", e)
-    QMessageBox = None
-    QApplication = None
 
 # Security configuration for pickle
 PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-change-me").encode()
@@ -82,11 +85,13 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
-            return super().find_class(module, name)
+            result: type[object] = cast(type[object], super().find_class(module, name))
+            return result
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            return super().find_class(module, name)
+            result = cast(type[object], super().find_class(module, name))
+            return result
 
         # Deny everything else
         error_msg = f"Attempted to load unsafe class {module}.{name}"
@@ -189,8 +194,12 @@ def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseExce
         exc_traceback: Exception traceback object
 
     """
-    if not QMessageBox or not QApplication.instance():
+    if QMessageBox is None or QApplication is None:
         # No GUI available
+        return
+
+    if QApplication.instance() is None:
+        # No application instance
         return
 
     try:
@@ -198,11 +207,11 @@ def _display_exception_dialog(exc_type: type[BaseException], exc_value: BaseExce
         detailed_text = "".join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 
         msg_box = QMessageBox()
-        msg_box.setIcon(QMessageBox.Critical)
+        msg_box.setIcon(QMessageBox.Icon.Critical)
         msg_box.setWindowTitle("Intellicrack Error")
         msg_box.setText(error_text)
         msg_box.setDetailedText(detailed_text)
-        msg_box.setStandardButtons(QMessageBox.Ok)
+        msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
         msg_box.exec()
 
     except (OSError, ValueError, RuntimeError) as e:
@@ -267,7 +276,7 @@ def load_config(config_path: str = "config.json") -> dict[str, Any]:
     try:
         if os.path.exists(config_path):
             with open(config_path, encoding="utf-8") as f:
-                config = json.load(f)
+                config: dict[str, Any] = json.load(f)
             logger.info("Configuration loaded from %s", config_path)
             return config
         logger.warning("Configuration file not found: %s", config_path)
@@ -444,7 +453,7 @@ def load_ai_model(model_path: str) -> object | None:
             try:
                 import joblib
 
-                model = joblib.load(model_path)
+                model: object = joblib.load(model_path)
                 logger.info("Joblib model loaded: %s", model_path)
                 return model
             except ImportError:
@@ -461,9 +470,9 @@ def load_ai_model(model_path: str) -> object | None:
                     if stat_info.st_mode & 0o002:
                         logger.warning("Model file is world-writable - potential security risk")
 
-                model = secure_pickle_load(model_path)
+                loaded_model: object = secure_pickle_load(model_path)
                 logger.info("Pickle model loaded: %s", model_path)
-                return model
+                return loaded_model
             except (OSError, ValueError, RuntimeError) as e:
                 logger.exception("Failed to load pickle model: %s", e)
 
@@ -471,9 +480,9 @@ def load_ai_model(model_path: str) -> object | None:
             try:
                 import onnxruntime
 
-                model = onnxruntime.InferenceSession(model_path)
+                onnx_model: object = onnxruntime.InferenceSession(model_path)
                 logger.info("ONNX model loaded: %s", model_path)
-                return model
+                return onnx_model
             except ImportError:
                 logger.warning("onnxruntime not available for ONNX model loading")
 

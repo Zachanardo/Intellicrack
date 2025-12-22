@@ -21,7 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 import cmd
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, TYPE_CHECKING
 
 
 # Add parent directories to path
@@ -29,6 +29,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from intellicrack.utils.logger import get_logger
 from intellicrack.utils.runtime.runner_functions import run_comprehensive_analysis
+
+if TYPE_CHECKING:
+    from intellicrack.cli.ai_chat_interface import AITerminalChat
 
 
 logger = get_logger(__name__)
@@ -53,6 +56,7 @@ class IntellicrackShell(cmd.Cmd):
         super().__init__()
         self.current_file: Path | None = None
         self.analysis_results: dict[str, Any] | None = None
+        self.ai_chat: AITerminalChat | None = None
 
     def do_load(self, arg: str) -> None:
         """Load a binary file for analysis: load <filepath>."""
@@ -108,14 +112,14 @@ class IntellicrackShell(cmd.Cmd):
             return
 
         try:
-            from intellicrack.core.analysis.vulnerability_engine import run_vulnerability_scan
+            from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
             logger.info("Scanning %s for vulnerabilities...", self.current_file)
-            results = run_vulnerability_scan(str(self.current_file))
+            vulnerabilities = AdvancedVulnerabilityEngine.scan_binary(str(self.current_file))
 
-            if results and results.get("vulnerabilities"):
-                logger.info("Found %d vulnerabilities:", len(results["vulnerabilities"]))
-                for vuln in results["vulnerabilities"]:
+            if vulnerabilities:
+                logger.info("Found %d vulnerabilities:", len(vulnerabilities))
+                for vuln in vulnerabilities:
                     logger.info("  - %s: %s", vuln.get("type", "Unknown"), vuln.get("description", "No description"))
                     logger.info("    Severity: %s", vuln.get("severity", "Unknown"))
             else:
@@ -133,10 +137,10 @@ class IntellicrackShell(cmd.Cmd):
         try:
             min_length = int(arg) if arg else 4
 
-            from intellicrack.cli.analysis_cli import _extract_strings
+            from intellicrack.cli.analysis_cli import AnalysisCLI
 
             logger.info("Extracting strings (min length: %d)...", min_length)
-            if strings := _extract_strings(str(self.current_file), min_length):
+            if strings := AnalysisCLI._extract_strings(str(self.current_file), min_length):
                 logger.info("Found %d strings:", len(strings))
                 for s in strings[:50]:
                     logger.info("  %s", s)
@@ -280,12 +284,15 @@ class IntellicrackShell(cmd.Cmd):
             return
 
         try:
-            from intellicrack.cli.ai_chat_interface import AIChatInterface
+            from intellicrack.cli.ai_chat_interface import AITerminalChat
 
-            if not hasattr(self, "ai_chat"):
-                self.ai_chat = AIChatInterface()
+            if self.ai_chat is None:
+                self.ai_chat = AITerminalChat(
+                    binary_path=str(self.current_file) if self.current_file else None,
+                    analysis_results=self.analysis_results
+                )
 
-            response = self.ai_chat.ask(arg, context=self.analysis_results)
+            response = self.ai_chat._get_ai_response(arg)
             logger.info("AI: %s", response)
 
         except Exception as e:

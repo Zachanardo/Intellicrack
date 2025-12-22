@@ -136,7 +136,7 @@ class AdvancedDynamicAnalyzer:
                  detected license mechanisms, and injection status
 
         """
-        if not FRIDA_AVAILABLE:
+        if not FRIDA_AVAILABLE or frida is None:
             self.logger.exception("Frida not available for runtime analysis")
             return {"success": False, "error": "Frida not available"}
 
@@ -518,7 +518,7 @@ class AdvancedDynamicAnalyzer:
                     script.unload()
                 if session is not None:
                     session.detach()
-                if pid is not None:
+                if pid is not None and frida is not None:
                     frida.kill(pid)
             except Exception as cleanup_error:
                 self.logger.exception("Error during Frida cleanup: %s", cleanup_error)
@@ -535,7 +535,7 @@ class AdvancedDynamicAnalyzer:
                  network connections, and thread information
 
         """
-        if not PSUTIL_AVAILABLE:
+        if not PSUTIL_AVAILABLE or psutil is None:
             self.logger.exception("psutil not available for process behavior analysis")
             return {"success": False, "error": "psutil not available"}
 
@@ -619,6 +619,13 @@ class AdvancedDynamicAnalyzer:
 
     def _frida_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Perform memory scanning using Frida instrumentation."""
+        if frida is None:
+            return {
+                "status": "error",
+                "error": "Frida module not available",
+                "matches": [],
+            }
+
         try:
             # Get process to attach to
             process_name = target_process or Path(self.binary_path).name
@@ -768,6 +775,13 @@ class AdvancedDynamicAnalyzer:
     def _psutil_memory_scan(self, keywords: list[str], target_process: str | None = None) -> dict[str, Any]:
         """Perform real memory scanning using platform-specific memory reading."""
         import platform
+
+        if psutil is None:
+            return {
+                "status": "error",
+                "error": "psutil module not available",
+                "matches": [],
+            }
 
         try:
             process_name = target_process or Path(self.binary_path).name
@@ -1134,7 +1148,9 @@ print(matches)
                         if scan_result.stdout:
                             self.logger.debug("LLDB memory scan output: %s", scan_result.stdout)
             # Fallback to generic scanning
-            return self._generic_memory_scan(psutil.Process(pid), keywords)
+            if psutil is not None:
+                return self._generic_memory_scan(psutil.Process(pid), keywords)
+            return matches
 
         except Exception as e:
             self.logger.exception("macOS memory scan error: %s", e)
@@ -1144,9 +1160,12 @@ print(matches)
         """Scan memory using process information."""
         matches: list[dict[str, Any]] = []
 
+        if psutil is None:
+            return matches
+
         try:
             # Get process memory maps if available
-            memory_regions = []
+            memory_regions: list[dict[str, Any]] = []
 
             with contextlib.suppress(AttributeError, psutil.AccessDenied):
                 memory_maps = process.memory_maps()
@@ -1371,7 +1390,7 @@ def deep_runtime_monitoring(binary_path: str, timeout: int = 30000) -> list[str]
     logs = [f"Starting runtime monitoring of {binary_path} (timeout: {timeout}ms)"]
 
     try:
-        if not FRIDA_AVAILABLE:
+        if not FRIDA_AVAILABLE or frida is None:
             logs.append("Error: Frida not available for runtime monitoring")
             return logs
 

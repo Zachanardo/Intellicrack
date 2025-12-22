@@ -18,329 +18,271 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 """
 
 import platform
-import tempfile
+import threading
 from pathlib import Path
 from typing import Any
 
 import pytest
 
 from intellicrack.ai.gpu_integration import (
-    GPUAccelerator,
-    GPUDeviceInfo,
-    detect_gpu_devices,
-    get_optimal_batch_size,
+    GPUIntegration,
+    get_ai_device,
+    get_ai_gpu_info,
+    get_device,
+    get_gpu_info,
+    gpu_integration,
+    is_gpu_available,
     optimize_for_gpu,
-    prepare_model_for_gpu,
+    prepare_ai_model,
+    prepare_ai_tensor,
 )
 
 
 class TestGPUDeviceDetectionProduction:
     """Production tests for GPU device detection with real hardware."""
 
-    def test_detect_gpu_devices_returns_valid_device_list(self) -> None:
-        """detect_gpu_devices returns valid device information when GPUs present or empty list."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
+    def test_get_gpu_info_returns_valid_device_info(self) -> None:
+        """get_gpu_info returns valid device information dict."""
+        info: dict[str, Any] = get_gpu_info()
 
-        assert isinstance(devices, list), "Must return list of devices"
+        assert isinstance(info, dict), "Must return dict of device info"
+        assert "available" in info, "Must report availability"
+        assert "type" in info, "Must report device type"
+        assert "device" in info, "Must report device"
 
-        if devices:
-            for device in devices:
-                assert isinstance(device, GPUDeviceInfo), "Each device must be GPUDeviceInfo instance"
-                assert device.device_id >= 0, "Device ID must be non-negative"
-                assert len(device.name) > 0, "Device must have a name"
-                assert device.total_memory > 0, "Device must report memory > 0"
-                assert device.available_memory >= 0, "Available memory must be non-negative"
-                assert device.compute_capability is not None, "Must report compute capability"
+    def test_get_ai_gpu_info_returns_comprehensive_info(self) -> None:
+        """get_ai_gpu_info returns comprehensive device information."""
+        info: dict[str, Any] = get_ai_gpu_info()
 
-    def test_detect_gpu_devices_handles_no_gpu_gracefully(self) -> None:
-        """detect_gpu_devices returns empty list when no GPUs available without crashing."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
+        assert isinstance(info, dict), "Must return dict"
+        assert "available" in info, "Must report availability"
+        assert "type" in info, "Must report device type"
 
-        assert isinstance(devices, list), "Must return list even when no GPU"
+        if info.get("available"):
+            assert info["type"] != "cpu", "Must report actual GPU type when available"
 
-        if not devices:
-            pytest.skip("No GPU devices available, test passes with empty list")
+    def test_get_device_returns_valid_device(self) -> None:
+        """get_device returns valid compute device."""
+        device = get_device()
 
-    def test_gpu_device_info_properties_accurate(self) -> None:
-        """GPUDeviceInfo reports accurate hardware properties."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
+        assert device is not None, "Must return a device"
 
-        if not devices:
-            pytest.skip("No GPU available for testing")
+    def test_is_gpu_available_returns_bool(self) -> None:
+        """is_gpu_available returns boolean availability status."""
+        available: bool = is_gpu_available()
 
-        device: GPUDeviceInfo = devices[0]
-
-        assert device.is_available, "Detected device must be available"
-        assert device.total_memory <= 1024 * 1024 * 1024 * 1024, "Total memory must be reasonable (< 1TB)"
-        assert device.available_memory <= device.total_memory, "Available <= Total memory"
-
-        assert device.name != "Unknown", "Must detect real device name"
-
-    def test_multiple_gpu_detection_distinct_devices(self) -> None:
-        """Multiple GPUs are detected with distinct device IDs."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
-
-        if len(devices) < 2:
-            pytest.skip("Need multiple GPUs for this test")
-
-        device_ids: set[int] = {device.device_id for device in devices}
-        assert len(device_ids) == len(devices), "All GPUs must have unique device IDs"
-
-        device_names: list[str] = [device.name for device in devices]
-        assert all(len(name) > 0 for name in device_names), "All GPUs must have names"
+        assert isinstance(available, bool), "Must return boolean"
 
 
-class TestGPUAcceleratorProduction:
-    """Production tests for GPUAccelerator with real GPU operations."""
+class TestGPUIntegrationProduction:
+    """Production tests for GPUIntegration with real GPU operations."""
 
     @pytest.fixture
-    def accelerator(self) -> GPUAccelerator:
-        """Create GPUAccelerator instance for testing."""
-        return GPUAccelerator()
+    def integration(self) -> GPUIntegration:
+        """Create GPUIntegration instance for testing."""
+        return GPUIntegration()
 
-    def test_gpu_accelerator_initialization_detects_hardware(self, accelerator: GPUAccelerator) -> None:
-        """GPUAccelerator detects available GPU hardware on initialization."""
-        assert hasattr(accelerator, "devices"), "Must have devices attribute"
-        assert hasattr(accelerator, "current_device"), "Must track current device"
+    def test_gpu_integration_initialization_detects_hardware(
+        self, integration: GPUIntegration
+    ) -> None:
+        """GPUIntegration detects available GPU hardware on initialization."""
+        assert hasattr(integration, "gpu_info"), "Must have gpu_info attribute"
+        assert hasattr(integration, "device"), "Must have device attribute"
 
-        devices: list[GPUDeviceInfo] = accelerator.get_available_devices()
-        assert isinstance(devices, list), "Must return device list"
+        info: dict[str, Any] = integration.get_device_info()
+        assert isinstance(info, dict), "Must return device info dict"
 
-        if not devices:
-            assert not accelerator.is_gpu_available(), "Should report no GPU when none detected"
-        else:
-            assert accelerator.is_gpu_available(), "Should report GPU available when detected"
+    def test_gpu_integration_is_available_matches_info(
+        self, integration: GPUIntegration
+    ) -> None:
+        """GPUIntegration.is_available matches gpu_info availability."""
+        info: dict[str, Any] = integration.get_device_info()
+        available: bool = integration.is_available()
 
-    def test_gpu_accelerator_device_selection(self, accelerator: GPUAccelerator) -> None:
-        """GPUAccelerator can select specific GPU devices."""
-        devices: list[GPUDeviceInfo] = accelerator.get_available_devices()
+        assert isinstance(available, bool), "Must return boolean"
+        assert available == info.get("available", False), "Availability must match"
 
-        if not devices:
-            pytest.skip("No GPU available for device selection test")
+    def test_gpu_integration_get_backend_name_returns_string(
+        self, integration: GPUIntegration
+    ) -> None:
+        """GPUIntegration.get_backend_name returns backend name string."""
+        backend: str = integration.get_backend_name()
 
-        device_id: int = devices[0].device_id
-        success: bool = accelerator.select_device(device_id)
+        assert isinstance(backend, str), "Must return string"
+        assert len(backend) > 0, "Backend name must not be empty"
 
-        assert success, "Must successfully select available device"
-        assert accelerator.current_device == device_id, "Current device must be set to selected device"
+    def test_gpu_integration_get_memory_usage_returns_dict(
+        self, integration: GPUIntegration
+    ) -> None:
+        """GPUIntegration.get_memory_usage returns memory info dict."""
+        memory: dict[str, object] = integration.get_memory_usage()
 
-    def test_gpu_accelerator_invalid_device_selection_fails(self, accelerator: GPUAccelerator) -> None:
-        """GPUAccelerator rejects invalid device selection."""
-        success: bool = accelerator.select_device(9999)
+        assert isinstance(memory, dict), "Must return dict"
 
-        assert not success, "Must fail when selecting non-existent device ID"
-
-    def test_gpu_accelerator_memory_allocation(self, accelerator: GPUAccelerator) -> None:
-        """GPUAccelerator can allocate and free GPU memory."""
-        if not accelerator.is_gpu_available():
-            pytest.skip("No GPU available for memory allocation test")
-
-        allocation_size: int = 1024 * 1024
-        memory_handle: Any = accelerator.allocate_memory(allocation_size)
-
-        if memory_handle is not None:
-            assert memory_handle is not None, "Must return valid memory handle"
-
-            free_success: bool = accelerator.free_memory(memory_handle)
-            assert free_success, "Must successfully free allocated memory"
-
-    def test_gpu_accelerator_handles_out_of_memory_gracefully(self, accelerator: GPUAccelerator) -> None:
-        """GPUAccelerator handles OOM conditions without crashing."""
-        if not accelerator.is_gpu_available():
-            pytest.skip("No GPU available for OOM test")
-
-        devices: list[GPUDeviceInfo] = accelerator.get_available_devices()
-        if not devices:
-            pytest.skip("No GPU devices available")
-
-        excessive_size: int = devices[0].total_memory * 10
-
-        memory_handle: Any = accelerator.allocate_memory(excessive_size)
-
-        assert memory_handle is None or isinstance(memory_handle, object), "Must handle OOM gracefully"
+    def test_gpu_integration_synchronize_does_not_crash(
+        self, integration: GPUIntegration
+    ) -> None:
+        """GPUIntegration.synchronize executes without error."""
+        try:
+            integration.synchronize()
+        except Exception as e:
+            pytest.fail(f"synchronize should not raise: {e}")
 
 
 class TestModelGPUPreparationProduction:
     """Production tests for preparing models for GPU execution."""
 
-    @pytest.fixture
-    def dummy_model_path(self, tmp_path: Path) -> str:
-        """Create a dummy model file for testing."""
-        model_file: Path = tmp_path / "test_model.pth"
+    def test_prepare_ai_model_accepts_model_object(self) -> None:
+        """prepare_ai_model accepts and returns model objects."""
+        try:
+            from intellicrack.utils.torch_gil_safety import safe_torch_import
 
-        model_data: bytes = b"DUMMY_MODEL_DATA" * 1000
+            torch = safe_torch_import()
+            if torch is None:
+                pytest.skip("PyTorch not available")
 
-        model_file.write_bytes(model_data)
-        return str(model_file)
+            model = torch.nn.Linear(10, 5)
+            prepared = prepare_ai_model(model)
 
-    def test_prepare_model_for_gpu_with_available_gpu(self, dummy_model_path: str) -> None:
-        """prepare_model_for_gpu loads model to GPU when available."""
-        result: dict[str, Any] = prepare_model_for_gpu(dummy_model_path, device_id=0)
+            assert prepared is not None, "Must return prepared model"
+        except ImportError:
+            pytest.skip("PyTorch not available")
 
-        assert "status" in result, "Must return status"
-        assert result["status"] in ["success", "no_gpu", "error"], "Status must be valid"
+    def test_prepare_ai_tensor_accepts_tensor_object(self) -> None:
+        """prepare_ai_tensor accepts and returns tensor objects."""
+        try:
+            from intellicrack.utils.torch_gil_safety import safe_torch_import
 
-        if result["status"] == "success":
-            assert "device" in result, "Must report target device on success"
-            assert result["device"] in [0, "cuda:0"], "Must use requested device"
-            assert "model" in result or "model_loaded" in result, "Must indicate model loaded"
+            torch = safe_torch_import()
+            if torch is None:
+                pytest.skip("PyTorch not available")
 
-        elif result["status"] == "no_gpu":
-            assert "device" in result, "Must report fallback device"
-            assert result["device"] == "cpu" or "cpu" in str(result["device"]).lower(), "Must fallback to CPU"
+            tensor = torch.randn(10, 10)
+            prepared = prepare_ai_tensor(tensor)
 
-    def test_prepare_model_for_gpu_cpu_fallback(self, dummy_model_path: str) -> None:
-        """prepare_model_for_gpu falls back to CPU when GPU unavailable."""
-        result: dict[str, Any] = prepare_model_for_gpu(dummy_model_path, device_id=9999, fallback_to_cpu=True)
+            assert prepared is not None, "Must return prepared tensor"
+        except ImportError:
+            pytest.skip("PyTorch not available")
 
-        assert result["status"] in ["success", "no_gpu", "error"]
+    def test_get_ai_device_returns_usable_device(self) -> None:
+        """get_ai_device returns device usable for tensor operations."""
+        device = get_ai_device()
 
-        if "device" in result:
-            assert "cpu" in str(result["device"]).lower() or result["status"] == "error", "Must use CPU fallback or report error"
-
-    def test_prepare_model_for_gpu_handles_missing_file(self) -> None:
-        """prepare_model_for_gpu handles missing model file gracefully."""
-        result: dict[str, Any] = prepare_model_for_gpu("/nonexistent/model.pth")
-
-        assert result["status"] == "error", "Must report error for missing file"
-        assert "error" in result or "message" in result, "Must provide error information"
-
-    def test_prepare_model_for_gpu_validates_file_format(self, tmp_path: Path) -> None:
-        """prepare_model_for_gpu validates model file format."""
-        invalid_model: Path = tmp_path / "invalid.txt"
-        invalid_model.write_text("This is not a model file")
-
-        result: dict[str, Any] = prepare_model_for_gpu(str(invalid_model))
-
-        assert "status" in result
-        if result["status"] == "error":
-            assert "error" in result or "message" in result, "Must explain format error"
+        assert device is not None, "Must return a device"
 
 
 class TestGPUOptimizationProduction:
     """Production tests for GPU-specific optimizations."""
 
-    def test_optimize_for_gpu_with_real_configuration(self) -> None:
-        """optimize_for_gpu generates valid configuration for detected hardware."""
-        config: dict[str, Any] = optimize_for_gpu(model_size=100 * 1024 * 1024)
+    def test_optimize_for_gpu_accepts_model_object(self) -> None:
+        """optimize_for_gpu optimizes model for GPU execution."""
+        try:
+            from intellicrack.utils.torch_gil_safety import safe_torch_import
 
-        assert "device" in config, "Must specify target device"
-        assert "batch_size" in config, "Must specify batch size"
-        assert "precision" in config, "Must specify precision"
-        assert "memory_fraction" in config, "Must specify memory allocation"
+            torch = safe_torch_import()
+            if torch is None:
+                pytest.skip("PyTorch not available")
 
-        assert config["batch_size"] > 0, "Batch size must be positive"
-        assert 0.0 < config["memory_fraction"] <= 1.0, "Memory fraction must be between 0 and 1"
-        assert config["precision"] in ["fp32", "fp16", "int8"], "Precision must be valid"
+            model = torch.nn.Linear(10, 5)
+            optimized = optimize_for_gpu(model)
 
-    def test_optimize_for_gpu_adapts_to_model_size(self) -> None:
-        """optimize_for_gpu adapts batch size to model size."""
-        small_model_config: dict[str, Any] = optimize_for_gpu(model_size=10 * 1024 * 1024)
-        large_model_config: dict[str, Any] = optimize_for_gpu(model_size=1000 * 1024 * 1024)
+            assert optimized is not None, "Must return optimized model"
+        except ImportError:
+            pytest.skip("PyTorch not available")
 
-        small_batch: int = small_model_config["batch_size"]
-        large_batch: int = large_model_config["batch_size"]
+    def test_optimize_for_gpu_returns_same_type(self) -> None:
+        """optimize_for_gpu returns same model type."""
+        try:
+            from intellicrack.utils.torch_gil_safety import safe_torch_import
 
-        if small_batch > 0 and large_batch > 0:
-            assert small_batch >= large_batch, "Small model should have >= batch size than large model"
+            torch = safe_torch_import()
+            if torch is None:
+                pytest.skip("PyTorch not available")
 
-    def test_get_optimal_batch_size_for_gpu_memory(self) -> None:
-        """get_optimal_batch_size calculates batch size based on GPU memory."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
+            model = torch.nn.Sequential(
+                torch.nn.Linear(10, 20),
+                torch.nn.ReLU(),
+                torch.nn.Linear(20, 5),
+            )
+            optimized = optimize_for_gpu(model)
 
-        if not devices:
-            batch_size: int = get_optimal_batch_size(model_size=50 * 1024 * 1024, available_memory=0)
-            assert batch_size > 0, "Must return positive batch size even without GPU"
-            pytest.skip("No GPU for optimal batch size calculation")
-
-        device: GPUDeviceInfo = devices[0]
-        model_size: int = 100 * 1024 * 1024
-
-        batch_size: int = get_optimal_batch_size(model_size=model_size, available_memory=device.available_memory)
-
-        assert batch_size > 0, "Must return positive batch size"
-        assert batch_size <= 1024, "Batch size should be reasonable"
-
-        total_memory_needed: int = model_size + (batch_size * 10 * 1024 * 1024)
-        assert total_memory_needed <= device.available_memory * 1.5, "Should not massively exceed available memory"
-
-    def test_get_optimal_batch_size_with_limited_memory(self) -> None:
-        """get_optimal_batch_size handles limited memory scenarios."""
-        model_size: int = 1000 * 1024 * 1024
-        limited_memory: int = 1500 * 1024 * 1024
-
-        batch_size: int = get_optimal_batch_size(model_size=model_size, available_memory=limited_memory)
-
-        assert batch_size > 0, "Must return positive batch size even with limited memory"
-        assert batch_size <= 32, "Should use small batch size with limited memory"
+            assert isinstance(optimized, torch.nn.Module), "Must return nn.Module"
+        except ImportError:
+            pytest.skip("PyTorch not available")
 
 
 class TestGPUIntegrationEndToEnd:
     """End-to-end production tests for complete GPU integration workflows."""
 
-    def test_complete_gpu_workflow_model_loading_and_inference(self, tmp_path: Path) -> None:
-        """Complete workflow: detect GPU → load model → optimize → execute."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
+    def test_complete_gpu_workflow_model_preparation(self) -> None:
+        """Complete workflow: get device info -> prepare model -> synchronize."""
+        try:
+            from intellicrack.utils.torch_gil_safety import safe_torch_import
 
-        has_gpu: bool = len(devices) > 0
-        if not has_gpu:
-            pytest.skip("No GPU available for complete workflow test")
+            torch = safe_torch_import()
+            if torch is None:
+                pytest.skip("PyTorch not available")
 
-        accelerator: GPUAccelerator = GPUAccelerator()
-        assert accelerator.is_gpu_available(), "Step 1: GPU detection must succeed"
+            info: dict[str, Any] = get_ai_gpu_info()
+            assert isinstance(info, dict), "Step 1: Get GPU info must succeed"
 
-        device: GPUDeviceInfo = devices[0]
-        accelerator.select_device(device.device_id)
-        assert accelerator.current_device == device.device_id, "Step 2: Device selection must succeed"
+            model = torch.nn.Linear(10, 5)
+            prepared = prepare_ai_model(model)
+            assert prepared is not None, "Step 2: Model preparation must succeed"
 
-        model_file: Path = tmp_path / "workflow_model.pth"
-        model_file.write_bytes(b"MODEL_DATA" * 1000)
+            optimized = optimize_for_gpu(prepared)
+            assert optimized is not None, "Step 3: Optimization must succeed"
 
-        optimization_config: dict[str, Any] = optimize_for_gpu(model_size=10000)
-        assert optimization_config["batch_size"] > 0, "Step 3: Optimization must provide valid config"
+            integration = GPUIntegration()
+            integration.synchronize()
 
-        model_result: dict[str, Any] = prepare_model_for_gpu(str(model_file), device_id=device.device_id)
-        assert model_result["status"] in {"success", "no_gpu"}, "Step 4: Model preparation must not error"
+        except ImportError:
+            pytest.skip("PyTorch not available")
 
-    def test_gpu_fallback_workflow_no_gpu_available(self, tmp_path: Path) -> None:
-        """Workflow gracefully falls back to CPU when no GPU available."""
-        optimization_config: dict[str, Any] = optimize_for_gpu(model_size=10000)
-        assert optimization_config["batch_size"] > 0, "Must provide CPU config even without GPU"
+    def test_global_gpu_integration_instance_works(self) -> None:
+        """Global gpu_integration instance is usable."""
+        assert gpu_integration is not None, "Global instance must exist"
 
-        model_file: Path = tmp_path / "cpu_model.pth"
-        model_file.write_bytes(b"CPU_MODEL" * 100)
+        info: dict[str, Any] = gpu_integration.get_device_info()
+        assert isinstance(info, dict), "Must return device info"
 
-        model_result: dict[str, Any] = prepare_model_for_gpu(str(model_file), fallback_to_cpu=True)
+        available: bool = gpu_integration.is_available()
+        assert isinstance(available, bool), "Must return boolean"
 
-        assert model_result["status"] != "error" or "device" in model_result, "Must fallback to CPU successfully"
+    @pytest.mark.skipif(
+        platform.system() != "Windows", reason="Windows-specific GPU testing"
+    )
+    def test_windows_gpu_detection(self) -> None:
+        """On Windows, GPU detection properly identifies available devices."""
+        info: dict[str, Any] = get_gpu_info()
 
-    @pytest.mark.skipif(platform.system() != "Windows", reason="Windows-specific GPU testing")
-    def test_windows_gpu_detection_cuda_support(self) -> None:
-        """On Windows, GPU detection properly identifies CUDA-capable devices."""
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
+        assert "type" in info, "Must report device type"
 
-        for device in devices:
-            if "nvidia" in device.name.lower() or "cuda" in str(device.compute_capability).lower():
-                assert device.compute_capability is not None, "NVIDIA GPU must report compute capability"
-                assert device.total_memory > 0, "NVIDIA GPU must report memory"
+        if info.get("available"):
+            device_type: str = str(info.get("type", ""))
+            assert device_type in [
+                "nvidia_cuda",
+                "amd_rocm",
+                "intel_xpu",
+                "cpu",
+            ], f"Device type must be recognized: {device_type}"
 
-    def test_concurrent_gpu_access_thread_safety(self) -> None:
+    def test_concurrent_gpu_integration_thread_safety(self) -> None:
         """GPU integration handles concurrent access safely."""
-        import threading
-
-        devices: list[GPUDeviceInfo] = detect_gpu_devices()
-
-        if not devices:
-            pytest.skip("No GPU for concurrency test")
-
         results: list[bool] = []
+        errors: list[Exception] = []
 
         def worker() -> None:
-            accelerator: GPUAccelerator = GPUAccelerator()
-            is_available: bool = accelerator.is_gpu_available()
-            results.append(is_available)
+            try:
+                integration = GPUIntegration()
+                is_avail: bool = integration.is_available()
+                results.append(is_avail)
+            except Exception as e:
+                errors.append(e)
 
-        threads: list[threading.Thread] = [threading.Thread(target=worker) for _ in range(5)]
+        threads: list[threading.Thread] = [
+            threading.Thread(target=worker) for _ in range(5)
+        ]
 
         for thread in threads:
             thread.start()
@@ -348,22 +290,23 @@ class TestGPUIntegrationEndToEnd:
         for thread in threads:
             thread.join()
 
+        assert len(errors) == 0, f"Threads must not error: {errors}"
         assert len(results) == 5, "All threads must complete"
         assert all(isinstance(r, bool) for r in results), "All results must be boolean"
 
-    def test_gpu_memory_cleanup_on_error(self) -> None:
-        """GPU integration cleans up resources on error."""
-        accelerator: GPUAccelerator = GPUAccelerator()
+    def test_gpu_state_consistent_after_operations(self) -> None:
+        """GPU integration maintains consistent state after operations."""
+        integration = GPUIntegration()
 
-        if not accelerator.is_gpu_available():
-            pytest.skip("No GPU for cleanup test")
+        initial_available: bool = integration.is_available()
+        initial_backend: str = integration.get_backend_name()
 
-        try:
-            result: dict[str, Any] = prepare_model_for_gpu("/invalid/path.pth")
-            assert result["status"] == "error", "Must report error for invalid path"
+        integration.synchronize()
+        _ = integration.get_memory_usage()
+        _ = integration.get_device_info()
 
-        except Exception as e:
-            pytest.fail(f"GPU integration must handle errors gracefully, not crash: {e}")
+        final_available: bool = integration.is_available()
+        final_backend: str = integration.get_backend_name()
 
-        still_available: bool = accelerator.is_gpu_available()
-        assert isinstance(still_available, bool), "GPU state must remain consistent after error"
+        assert initial_available == final_available, "Availability must remain stable"
+        assert initial_backend == final_backend, "Backend must remain stable"

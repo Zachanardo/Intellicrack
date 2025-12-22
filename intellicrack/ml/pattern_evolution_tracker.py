@@ -81,7 +81,7 @@ PICKLE_SECURITY_KEY = os.environ.get("INTELLICRACK_PICKLE_KEY", "default-key-cha
 # Fallback implementations for missing libraries
 if not SKLEARN_AVAILABLE:
 
-    class DBSCAN:
+    class DBSCAN:  # type: ignore[no-redef]
         """Fallback DBSCAN clustering implementation."""
 
         def __init__(self, eps: float = 0.5, min_samples: int = 5) -> None:
@@ -94,7 +94,7 @@ if not SKLEARN_AVAILABLE:
             """
             self.eps = eps
             self.min_samples = min_samples
-            self.labels_ = None
+            self.labels_: np.ndarray | None = None
 
         def fit(self, X: np.ndarray) -> "DBSCAN":
             """Fit DBSCAN clustering model.
@@ -141,9 +141,11 @@ if not SKLEARN_AVAILABLE:
 
             """
             self.fit(X)
+            if self.labels_ is None:
+                raise RuntimeError("Labels not initialized after fit")
             return self.labels_
 
-    class KMeans:
+    class KMeans:  # type: ignore[no-redef]
         """Fallback K-Means clustering implementation."""
 
         def __init__(self, n_clusters: int = 8, random_state: int | None = None, n_init: int = 10) -> None:
@@ -158,7 +160,7 @@ if not SKLEARN_AVAILABLE:
             self.n_clusters = n_clusters
             self.random_state = random_state
             self.n_init = n_init
-            self.labels_ = None
+            self.labels_: np.ndarray | None = None
 
         def fit(self, X: np.ndarray) -> "KMeans":
             """Fit K-Means clustering model.
@@ -174,7 +176,7 @@ if not SKLEARN_AVAILABLE:
             self.labels_ = np.random.randint(0, self.n_clusters, n)
             return self
 
-    class AgglomerativeClustering:
+    class AgglomerativeClustering:  # type: ignore[no-redef]
         """Fallback agglomerative clustering implementation."""
 
         def __init__(
@@ -197,7 +199,7 @@ if not SKLEARN_AVAILABLE:
             self.distance_threshold = distance_threshold
             self.affinity = affinity
             self.linkage = linkage
-            self.labels_ = None
+            self.labels_: np.ndarray | None = None
 
         def fit_predict(self, X: np.ndarray) -> np.ndarray:
             """Fit model and return cluster labels.
@@ -216,13 +218,13 @@ if not SKLEARN_AVAILABLE:
                 self.labels_ = np.zeros(n, dtype=int)
             return self.labels_
 
-    class StandardScaler:
+    class StandardScaler:  # type: ignore[no-redef]
         """Fallback standard scaler implementation."""
 
         def __init__(self) -> None:
             """Initialize the StandardScaler with empty mean and std arrays."""
-            self.mean_ = None
-            self.std_ = None
+            self.mean_: np.ndarray | None = None
+            self.std_: np.ndarray | None = None
 
         def fit_transform(self, X: np.ndarray) -> np.ndarray:
             """Fit scaler and transform data.
@@ -265,9 +267,27 @@ if not SCIPY_AVAILABLE:
             Hamming distance between u and v.
 
         """
-        u_list: list[Any] = u if isinstance(u, list) else list(u)
-        v_list: list[Any] = v if isinstance(v, list) else list(v)
-        return sum(x != y for x, y in zip(u_list, v_list, strict=False)) / len(u_list)
+        if isinstance(u, list):
+            u_list: list[Any] = u
+        elif isinstance(u, np.ndarray):
+            u_list = list(u)
+        else:
+            try:
+                u_list = list(u)  # type: ignore[arg-type]
+            except TypeError:
+                u_list = []
+
+        if isinstance(v, list):
+            v_list: list[Any] = v
+        elif isinstance(v, np.ndarray):
+            v_list = list(v)
+        else:
+            try:
+                v_list = list(v)  # type: ignore[arg-type]
+            except TypeError:
+                v_list = []
+
+        return float(sum(x != y for x, y in zip(u_list, v_list, strict=False)) / len(u_list))
 
     def jaccard(u: list[float] | set[Any] | np.ndarray | object, v: list[float] | set[Any] | np.ndarray | object) -> float:
         """Jaccard distance fallback.
@@ -295,9 +315,12 @@ if not SCIPY_AVAILABLE:
             Cosine distance between u and v.
 
         """
-        dot_product: Any = np.dot(u, v)  # type: ignore[arg-type]
-        norm_u: Any = np.linalg.norm(u)  # type: ignore[arg-type]
-        norm_v: Any = np.linalg.norm(v)  # type: ignore[arg-type]
+        u_arr = np.asarray(u)
+        v_arr = np.asarray(v)
+
+        dot_product = float(np.dot(u_arr, v_arr))
+        norm_u = float(np.linalg.norm(u_arr))
+        norm_v = float(np.linalg.norm(v_arr))
         if norm_u == 0 or norm_v == 0:
             return 1.0
         return float(1.0 - dot_product / (norm_u * norm_v))
@@ -313,7 +336,7 @@ if not SCIPY_AVAILABLE:
             Entropy of the probability distribution.
 
         """
-        pk_arr: np.ndarray = np.asarray(pk)  # type: ignore[arg-type]
+        pk_arr = np.asarray(pk)
         pk_arr = pk_arr[pk_arr > 0]
         return 0.0 if len(pk_arr) == 0 else float(-np.sum(pk_arr * np.log(pk_arr) / np.log(base)))
 
@@ -321,7 +344,7 @@ if not SCIPY_AVAILABLE:
 class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
     """Restricted unpickler that only allows safe classes."""
 
-    def find_class(self, module: str, name: str) -> type[Any]:
+    def find_class(self, module: str, name: str) -> type[object]:
         """Override ``find_class`` to restrict allowed classes.
 
         Args:
@@ -354,13 +377,13 @@ class RestrictedUnpickler(pickle.Unpickler):  # noqa: S301
 
         # Allow model classes from our own modules
         if module.startswith("intellicrack."):
-            result: type[Any] = super().find_class(module, name)
-            return result
+            cls: type[object] = super().find_class(module, name)
+            return cls
 
         # Check if module is in allowed list
         if any(module.startswith(allowed) for allowed in ALLOWED_MODULES):
-            result: type[Any] = super().find_class(module, name)
-            return result
+            cls = super().find_class(module, name)
+            return cls
 
         # Deny everything else
         raise pickle.UnpicklingError(f"Attempted to load unsafe class {module}.{name}")
@@ -477,7 +500,7 @@ class PatternGene:
             metadata=self.metadata.copy(),
         )
 
-    def _apply_mutation(self, data: bytes | list[str] | str, mutation_type: MutationType, rate: float) -> Any:
+    def _apply_mutation(self, data: bytes | list[str] | str, mutation_type: MutationType, rate: float) -> bytes | list[str] | str:
         """Apply specific mutation to pattern data.
 
         Args:
@@ -494,13 +517,13 @@ class PatternGene:
                 return self._mutate_byte_sequence(data, mutation_type, rate)
         elif self.type == PatternType.API_SEQUENCE:
             if isinstance(data, list):
-                return self._mutate_api_sequence(data, mutation_type, rate)  # type: ignore[arg-type]
+                return self._mutate_api_sequence(data, mutation_type, rate)
         elif self.type == PatternType.STRING_PATTERN:
             if isinstance(data, str):
                 return self._mutate_string_pattern(data, mutation_type, rate)
         elif self.type == PatternType.OPCODE_SEQUENCE:
             if isinstance(data, list):
-                return self._mutate_opcode_sequence(data, mutation_type, rate)  # type: ignore[arg-type]
+                return self._mutate_opcode_sequence(data, mutation_type, rate)
         return data  # No mutation for unsupported types
 
     def _mutate_byte_sequence(self, data: bytes, mutation_type: MutationType, rate: float) -> bytes:
@@ -1212,10 +1235,11 @@ class PatternEvolutionTracker:
         patterns = []
 
         for _ in range(count):
+            pattern_data: Any
             if pattern_type == PatternType.BYTE_SEQUENCE:
                 # Random byte sequence
                 length = secrets.randbelow(29) + 4
-                data = bytes(secrets.randbelow(256) for _ in range(length))
+                pattern_data = bytes(secrets.randbelow(256) for _ in range(length))
 
             elif pattern_type == PatternType.API_SEQUENCE:
                 # Random API sequence
@@ -1231,8 +1255,7 @@ class PatternEvolutionTracker:
                     "MessageBoxA",
                 ]
                 length = secrets.randbelow(7) + 2
-                data_api: list[str] = [secrets.choice(api_pool) for _ in range(length)]
-                data = data_api
+                pattern_data = [secrets.choice(api_pool) for _ in range(length)]
 
             elif pattern_type == PatternType.STRING_PATTERN:
                 # Common license-related regex patterns
@@ -1248,8 +1271,7 @@ class PatternEvolutionTracker:
                     r"\d{1,2}/\d{1,2}/\d{4}",  # Date pattern
                     r"expire[ds]?",
                 ]
-                data_str: str = secrets.choice(patterns_pool)
-                data = data_str
+                pattern_data = secrets.choice(patterns_pool)
 
             elif pattern_type == PatternType.OPCODE_SEQUENCE:
                 # Random opcode sequence
@@ -1270,17 +1292,16 @@ class PatternEvolutionTracker:
                     "ret",
                 ]
                 length = secrets.randbelow(8) + 3
-                data_opcode: list[str] = [secrets.choice(opcode_pool) for _ in range(length)]
-                data = data_opcode
+                pattern_data = [secrets.choice(opcode_pool) for _ in range(length)]
 
             else:
                 # Default: empty data
-                data = b""
+                pattern_data = b""
 
             pattern = PatternGene(
                 id="",
                 type=pattern_type,
-                pattern_data=data,
+                pattern_data=pattern_data,
                 generation=0,
             )
 
@@ -1610,8 +1631,9 @@ class PatternEvolutionTracker:
                     patterns_matched_list: list[str] = results["patterns_matched"]  # type: ignore[assignment]
                     patterns_matched_list.append(pattern_id)
 
-        if detections_list_final := results["detections"]:
-            results["confidence"] = max(float(d["confidence"]) for d in detections_list_final)
+        detections_final: Any = results["detections"]
+        if detections_final and isinstance(detections_final, list):
+            results["confidence"] = max(float(d["confidence"]) for d in detections_final)
 
         # Update Q-learning agent
         self._update_q_learning(data, results)

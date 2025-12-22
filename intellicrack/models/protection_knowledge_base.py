@@ -22,6 +22,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Any
 
 
 logger = logging.getLogger(__name__)
@@ -1542,7 +1543,7 @@ class ProtectionKnowledgeBase:
         multiplier = skill_multipliers.get(skill_level, 1.5)
 
         # Get average time from techniques
-        total_hours = 0
+        total_hours = 0.0
         count = 0
 
         for technique in info.bypass_techniques:
@@ -1577,15 +1578,19 @@ class ProtectionKnowledgeBase:
 
     def export_knowledge_base(self, output_path: str) -> None:
         """Export knowledge base to JSON."""
-        data = {
-            "protection_schemes": {},
+        protection_schemes_dict: dict[str, dict[str, Any]] = {}
+
+        data: dict[str, Any] = {
+            "protection_schemes": protection_schemes_dict,
             "bypass_strategies": self.bypass_strategies,
             "analysis_workflows": self.analysis_workflows,
         }
 
         # Convert dataclasses to dicts
         for name, scheme in self.protection_schemes.items():
-            scheme_dict = {
+            bypass_techniques_list: list[dict[str, Any]] = []
+
+            scheme_dict: dict[str, Any] = {
                 "name": scheme.name,
                 "vendor": scheme.vendor,
                 "category": scheme.category.value,
@@ -1597,11 +1602,11 @@ class ProtectionKnowledgeBase:
                 "analysis_tips": scheme.analysis_tips,
                 "common_mistakes": scheme.common_mistakes,
                 "resources": scheme.resources,
-                "bypass_techniques": [],
+                "bypass_techniques": bypass_techniques_list,
             }
 
             for technique in scheme.bypass_techniques:
-                technique_dict = {
+                technique_dict: dict[str, Any] = {
                     "name": technique.name,
                     "description": technique.description,
                     "difficulty": technique.difficulty.value,
@@ -1611,9 +1616,9 @@ class ProtectionKnowledgeBase:
                     "risks": technique.risks,
                     "prerequisites": technique.prerequisites,
                 }
-                scheme_dict["bypass_techniques"].append(technique_dict)
+                bypass_techniques_list.append(technique_dict)
 
-            data["protection_schemes"][name] = scheme_dict
+            protection_schemes_dict[name] = scheme_dict
 
         with open(output_path, "w") as f:
             json.dump(data, f, indent=2)

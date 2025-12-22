@@ -172,7 +172,7 @@ class ExportAnalyzer:
         if magic == 0x010B:
             data_directory_offset: int = optional_header_offset + 96
         elif magic == 0x020B:
-            data_directory_offset: int = optional_header_offset + 112
+            data_directory_offset = optional_header_offset + 112
         else:
             return
 
@@ -272,7 +272,7 @@ class ExportAnalyzer:
                     continue
 
                 ordinal: int = ordinal_base + func_idx
-                name: str = name_to_ordinal.get(func_idx, "")
+                name = name_to_ordinal.get(func_idx, "")
 
                 is_forwarded: bool = False
                 forward_name: str | None = None

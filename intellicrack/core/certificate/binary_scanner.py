@@ -129,8 +129,8 @@ class BinaryScanner:
         if not self.binary_path.exists():
             raise FileNotFoundError(f"Binary not found: {binary_path}")
 
-        self.binary: lief.Binary | None = None
-        self.r2_handle = None
+        self.binary: lief.PE.Binary | lief.ELF.Binary | lief.MachO.Binary | lief.COFF.Binary | None = None
+        self.r2_handle: r2pipe.open_base.open | None = None
 
         if LIEF_AVAILABLE:
             try:
@@ -148,17 +148,25 @@ class BinaryScanner:
         if not self.binary:
             return []
 
-        imports = set()
+        imports: set[str] = set()
 
         if isinstance(self.binary, lief.PE.Binary):
             for lib in self.binary.imports:
-                imports.add(lib.name.lower())
+                lib_name = lib.name
+                if isinstance(lib_name, str):
+                    imports.add(lib_name.lower())
+                elif isinstance(lib_name, bytes):
+                    imports.add(lib_name.decode("utf-8", errors="ignore").lower())
         elif isinstance(self.binary, lief.ELF.Binary):
-            for lib in self.binary.libraries:
-                imports.add(lib.lower())
+            for lib_name in self.binary.libraries:
+                if isinstance(lib_name, str):
+                    imports.add(lib_name.lower())
+                elif isinstance(lib_name, bytes):
+                    imports.add(lib_name.decode("utf-8", errors="ignore").lower())
         elif isinstance(self.binary, lief.MachO.Binary):
-            for lib in self.binary.libraries:
-                imports.add(Path(lib).name.lower())
+            for dylib_cmd in self.binary.libraries:
+                lib_path = dylib_cmd.name
+                imports.add(Path(lib_path).name.lower())
 
         return list(imports)
 
@@ -271,12 +279,13 @@ class BinaryScanner:
         if self.r2_handle is None:
             try:
                 self.r2_handle = r2pipe.open(str(self.binary_path))
-                self.r2_handle.cmd("aaa")
+                if self.r2_handle is not None:
+                    self.r2_handle.cmd("aaa")
             except Exception as e:
                 logger.debug("Failed to initialize radare2: %s", e, exc_info=True)
                 return False
 
-        return True
+        return self.r2_handle is not None
 
     def find_api_calls(self, api_name: str) -> list[int]:
         """Find all calls to a specific API using radare2.
@@ -288,12 +297,12 @@ class BinaryScanner:
             List of addresses where the API is called
 
         """
-        if not self._init_radare2():
+        if not self._init_radare2() or self.r2_handle is None:
             return self._find_api_calls_lief(api_name)
 
         try:
             result = self.r2_handle.cmd(f"axt @ sym.imp.{api_name}")
-            addresses = []
+            addresses: list[int] = []
 
             for line in result.splitlines():
                 if match := re.search(r"0x([0-9a-fA-F]+)", line):
@@ -318,7 +327,7 @@ class BinaryScanner:
         if not self.binary:
             return []
 
-        addresses = []
+        addresses: list[int] = []
 
         if isinstance(self.binary, lief.PE.Binary):
             for imp in self.binary.imports:
@@ -335,7 +344,7 @@ class BinaryScanner:
             ContextInfo object with context information
 
         """
-        if not self._init_radare2():
+        if not self._init_radare2() or self.r2_handle is None:
             return ContextInfo(address)
 
         try:
@@ -346,7 +355,7 @@ class BinaryScanner:
             disasm = self.r2_handle.cmd("pdf @ $$ 20")
 
             xrefs_output = self.r2_handle.cmd(f"axt @ {hex(address)}")
-            xrefs = []
+            xrefs: list[int] = []
             for line in xrefs_output.splitlines():
                 if match := re.search(r"0x([0-9a-fA-F]+)", line):
                     xrefs.append(int(match[1], 16))
@@ -404,9 +413,10 @@ class BinaryScanner:
         if self.r2_handle:
             try:
                 self.r2_handle.quit()
+                self.r2_handle = None
             except Exception as e:
                 logger.debug("Failed to close radare2: %s", e, exc_info=True)
-            self.r2_handle = None
+                self.r2_handle = None
 
     def __enter__(self) -> "BinaryScanner":
         """Enter context manager.

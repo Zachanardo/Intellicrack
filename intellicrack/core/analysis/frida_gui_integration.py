@@ -179,56 +179,64 @@ class FridaScriptParameterWidget(QDialog):
 
     def _create_parameter_widget(self, name: str, default_value: object) -> QWidget:
         """Create appropriate widget based on parameter type."""
+        widget: QWidget
+
         if isinstance(default_value, bool):
-            widget = QCheckBox()
-            widget.setChecked(default_value)
+            checkbox_widget = QCheckBox()
+            checkbox_widget.setChecked(default_value)
+            widget = checkbox_widget
 
         elif isinstance(default_value, int):
-            widget = QSpinBox()
-            widget.setRange(-999999, 999999)
-            widget.setValue(default_value)
+            spinbox_widget = QSpinBox()
+            spinbox_widget.setRange(-999999, 999999)
+            spinbox_widget.setValue(default_value)
+            widget = spinbox_widget
 
         elif isinstance(default_value, float):
-            widget = QDoubleSpinBox()
-            widget.setRange(-999999.0, 999999.0)
-            widget.setValue(default_value)
-            widget.setDecimals(4)
+            doublespinbox_widget = QDoubleSpinBox()
+            doublespinbox_widget.setRange(-999999.0, 999999.0)
+            doublespinbox_widget.setValue(default_value)
+            doublespinbox_widget.setDecimals(4)
+            widget = doublespinbox_widget
 
         elif isinstance(default_value, list):
-            widget = QTextEdit()
-            widget.setPlainText(json.dumps(default_value, indent=2))
-            widget.setMaximumHeight(100)
+            text_widget = QTextEdit()
+            text_widget.setPlainText(json.dumps(default_value, indent=2))
+            text_widget.setMaximumHeight(100)
+            widget = text_widget
 
         elif isinstance(default_value, dict):
-            widget = QTextEdit()
-            widget.setPlainText(json.dumps(default_value, indent=2))
-            widget.setMaximumHeight(150)
+            dict_widget = QTextEdit()
+            dict_widget.setPlainText(json.dumps(default_value, indent=2))
+            dict_widget.setMaximumHeight(150)
+            widget = dict_widget
 
         elif default_value is None:
-            # Special handling for None values
-            widget = QLineEdit()
-            widget.setToolTip("Optional parameter - leave empty for None")
-            widget.setStyleSheet("QLineEdit { color: gray; }")
-            widget.setText("")
+            none_widget = QLineEdit()
+            none_widget.setToolTip("Optional parameter - leave empty for None")
+            none_widget.setStyleSheet("QLineEdit { color: gray; }")
+            none_widget.setText("")
+            widget = none_widget
 
-        else:  # String or other
-            widget = QLineEdit()
-            widget.setText(str(default_value))
+        else:
+            line_widget = QLineEdit()
+            line_widget.setText(str(default_value))
 
-            # Add validation for specific parameter types
             if "mac" in name.lower():
-                widget.setToolTip("MAC Address format: XX:XX:XX:XX:XX:XX")
-                if not widget.text():
-                    widget.setText("00:00:00:00:00:00")
+                line_widget.setToolTip("MAC Address format: XX:XX:XX:XX:XX:XX")
+                if not line_widget.text():
+                    line_widget.setText("00:00:00:00:00:00")
             elif "ip" in name.lower():
-                widget.setToolTip("IP Address format: X.X.X.X")
-                if not widget.text():
-                    widget.setText("127.0.0.1")
+                line_widget.setToolTip("IP Address format: X.X.X.X")
+                if not line_widget.text():
+                    line_widget.setText("127.0.0.1")
             elif "port" in name.lower():
                 port_widget = QSpinBox()
                 port_widget.setRange(1, 65535)
                 port_widget.setValue(int(default_value) if isinstance(default_value, (int, str)) and default_value else 80)
                 return port_widget
+
+            widget = line_widget
 
         return widget
 
@@ -348,7 +356,8 @@ class FridaScriptOutputWidget(QWidget):
 
     def close_tab(self, index: int) -> None:
         """Close output tab."""
-        if widget := self.tab_widget.widget(index):
+        widget = self.tab_widget.widget(index)
+        if widget is not None and isinstance(widget, ScriptOutputTab):
             session_id = widget.session_id
             if session_id in self.script_outputs:
                 del self.script_outputs[session_id]

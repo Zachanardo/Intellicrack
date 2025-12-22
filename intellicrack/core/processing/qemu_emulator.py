@@ -786,7 +786,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             regions2 = self._parse_memory_regions(mem_info2 or "")
 
             # Find changes
-            regions_changed = []
+            regions_changed: list[dict[str, Any]] = []
             new_mappings = [
                 {
                     "address": region.get("address", "0x0"),
@@ -2354,7 +2354,7 @@ class QEMUSystemEmulator(BaseSnapshotHandler):
             # Monitor file system changes around the binary execution
             file_changes = []
             network_activity: list[dict[str, Any]] = []
-            processes_created = []
+            processes_created: list[dict[str, Any]] = []
 
             # Check if the binary file exists and monitor its execution directory
             binary_dir = os.path.dirname(guest_path) if guest_path else "/tmp"  # noqa: S108

@@ -43,6 +43,7 @@ from rich.progress import (
     ProgressColumn,
     SpinnerColumn,
     Task,
+    TaskID,
     TaskProgressColumn,
     TextColumn,
     TimeElapsedColumn,
@@ -75,7 +76,7 @@ class AnalysisTask:
     start_time: datetime | None = None
     end_time: datetime | None = None
     error: str | None = None
-    subtasks: list["AnalysisTask"] = None
+    subtasks: list["AnalysisTask"] | None = None
 
     def __post_init__(self) -> None:
         """Initialize analysis task with empty subtasks list if not provided."""
@@ -101,9 +102,9 @@ class ProgressManager:
         """Initialize progress manager with console, task tracking, and threading support."""
         self.console = Console()
         self.tasks: dict[str, AnalysisTask] = {}
-        self.task_ids: dict[str, int] = {}  # Store task IDs for progress tracking
-        self.progress = None
-        self.live = None
+        self.task_ids: dict[str, TaskID] = {}  # Store task IDs for progress tracking
+        self.progress: Progress | None = None
+        self.live: Live | None = None
         self._lock = threading.Lock()
 
     def create_progress_display(self) -> Progress:
@@ -168,42 +169,39 @@ class ProgressManager:
     def update_progress(self, task_name: str, current: int, total: int, speed: float | None = None) -> None:
         """Update progress for a specific task."""
         with self._lock:
-            if task_name in self.tasks:
+            if task_name in self.tasks and self.progress is not None and task_name in self.task_ids:
                 task = self.tasks[task_name]
                 task.current_step = current
                 task.total_steps = total
 
-                # Find the progress task ID
-                for task_id, prog_task in enumerate(self.progress.tasks):
-                    if task_name in prog_task.description:
-                        self.progress.update(
-                            task_id,
-                            completed=current,
-                            total=total,
-                            speed=speed or 0,
-                        )
-                        break
+                # Use the stored task ID
+                task_id = self.task_ids[task_name]
+                self.progress.update(
+                    task_id,
+                    completed=current,
+                    total=total,
+                    speed=speed or 0,
+                )
 
     def complete_task(self, task_name: str, success: bool = True, error: str | None = None) -> None:
         """Mark a task as completed."""
         with self._lock:
-            if task_name in self.tasks:
+            if task_name in self.tasks and self.progress is not None and task_name in self.task_ids:
                 task = self.tasks[task_name]
                 task.status = "completed" if success else "failed"
                 task.end_time = datetime.now()
                 task.error = error
 
-                # Update progress display
-                for task_id, prog_task in enumerate(self.progress.tasks):
-                    if task_name in prog_task.description:
-                        if success:
-                            self.progress.update(task_id, completed=task.total_steps)
-                        else:
-                            # Show error in description
-                            self.progress.update(
-                                task_id,
-                                description=f"[red]FAIL {task_name} - {error or 'Failed'}",
-                            )
+                # Use the stored task ID
+                task_id = self.task_ids[task_name]
+                if success:
+                    self.progress.update(task_id, completed=task.total_steps)
+                else:
+                    # Show error in description
+                    self.progress.update(
+                        task_id,
+                        description=f"[red]FAIL {task_name} - {error or 'Failed'}",
+                    )
 
     def stop(self) -> None:
         """Stop the progress display."""

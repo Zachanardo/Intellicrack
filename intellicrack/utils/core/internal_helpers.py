@@ -91,7 +91,7 @@ if HAS_TENSORFLOW:
 
     os.environ["MKL_THREADING_LAYER"] = "GNU"
 
-    from intellicrack.handlers.tensorflow_handler import tensorflow as tf_import  # pylint: disable=import-error
+    from intellicrack.handlers.tensorflow_handler import tf as tf_import  # pylint: disable=import-error
 
     tf = tf_import
 else:
@@ -1306,7 +1306,7 @@ def _handle_write_memory(address: int, data: bytes) -> bool:
 
             result = process_vm_writev(pid, ctypes.byref(local_iov), 1, ctypes.byref(remote_iov), 1, 0)
 
-            return result == len(data)
+            return bool(result == len(data))
         except (ValueError, TypeError, AttributeError):
             return False
 
@@ -2525,7 +2525,7 @@ def _validate_gpu_memory(required_mb: int) -> bool:
     if HAS_TORCH and torch.cuda.is_available():
         try:
             available = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024
-            return available >= required_mb
+            return bool(available >= required_mb)
         except (RuntimeError, AttributeError) as e:
             logger.exception("Error in internal_helpers: %s", e)
 
@@ -2603,7 +2603,7 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
             elif model_path.endswith(".safetensors"):
                 # SafeTensors format
                 try:
-                    from safetensors import safe_open  # type: ignore
+                    from safetensors import safe_open
 
                     with safe_open(model_path, framework="np") as sf:  # type: ignore
                         for key in sf:
@@ -2704,17 +2704,20 @@ def _convert_to_gguf(model_path: str, output_path: str) -> bool:
 
             # Write actual tensor data
             tensor_offsets = []
-            for tensor_data in tensors.values():
+            for tensor_data_item in tensors.values():
                 tensor_offsets.append(f.tell())
 
                 # Convert to float32 if needed
-                if not isinstance(tensor_data, np.ndarray):
-                    tensor_data = np.array(tensor_data, dtype=np.float32)
-                elif tensor_data.dtype != np.float32:  # type: ignore
-                    tensor_data = tensor_data.astype(np.float32)
+                if not isinstance(tensor_data_item, np.ndarray):
+                    converted_tensor: object = np.array(tensor_data_item, dtype=np.float32)  # type: ignore[unreachable]
+                else:
+                    if hasattr(tensor_data_item, "dtype") and getattr(tensor_data_item, "dtype") != np.float32:
+                        converted_tensor = tensor_data_item.astype(np.float32)
+                    else:
+                        converted_tensor = tensor_data_item
 
                 # Write tensor data
-                f.write(tensor_data.tobytes())
+                f.write(converted_tensor.tobytes())
 
                 # Align for next tensor
                 current_pos = f.tell()

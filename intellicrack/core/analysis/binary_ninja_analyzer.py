@@ -261,7 +261,7 @@ class BinaryNinjaAnalyzer:
 
     def _analyze_single_function(self, func: Function) -> BNFunction:
         """Perform detailed analysis of a single function."""
-        xrefs_to = [ref.address for ref in self.bv.get_code_refs(func.start)]
+        xrefs_to = [ref.address for ref in self.bv.get_code_refs(func.start)] if self.bv is not None else []
         xrefs_from = []
         calls = []
         called_by = [ref.address for ref in func.callers]
@@ -299,13 +299,14 @@ class BinaryNinjaAnalyzer:
         for block in func.basic_blocks:
             for instr in block.disassembly_text:
                 instr_text = str(instr)
-                for string_ref in self.bv.strings:
-                    if hex(string_ref.start)[2:] in instr_text:
-                        strings_referenced.append(string_ref.value)
+                if self.bv is not None:
+                    for string_ref in self.bv.strings:
+                        if hex(string_ref.start)[2:] in instr_text:
+                            strings_referenced.append(string_ref.value)
 
-                for imp_name in [sym.short_name for sym in self.bv.symbols.values() if sym.type == bn.SymbolType.ImportedFunctionSymbol]:
-                    if imp_name in instr_text:
-                        api_calls.append(imp_name)
+                    for imp_name in [sym.short_name for sym in self.bv.symbols.values() if sym.type == bn.SymbolType.ImportedFunctionSymbol]:
+                        if imp_name in instr_text:
+                            api_calls.append(imp_name)
 
         return BNFunction(
             name=func.name,
@@ -330,7 +331,7 @@ class BinaryNinjaAnalyzer:
             hlil_code=hlil_code,
             is_thunk=func.is_thunk,
             is_imported=func.symbol.type == bn.SymbolType.ImportedFunctionSymbol if func.symbol else False,
-            is_exported=any(sym.address == func.start and sym.type == bn.SymbolType.FunctionSymbol for sym in self.bv.symbols.values()),
+            is_exported=any(sym.address == func.start and sym.type == bn.SymbolType.FunctionSymbol for sym in self.bv.symbols.values()) if self.bv is not None else False,
             comments=comments,
             strings_referenced=strings_referenced,
             api_calls=api_calls,
@@ -426,9 +427,9 @@ class BinaryNinjaAnalyzer:
         for func in self.bv.functions:
             for bb in func.basic_blocks:
                 dominates = [dom.start for dom in bb.dominance_frontier]
-                dominated_by = []
+                dominated_by: list[int] = []
 
-                immediate_dominator = None
+                immediate_dominator: int | None = None
                 if bb.immediate_dominator:
                     immediate_dominator = bb.immediate_dominator.start
 
@@ -600,8 +601,8 @@ class BinaryNinjaAnalyzer:
         if not func:
             raise ValueError(f"No function found at address 0x{function_address:x}")
 
-        nodes = []
-        edges = []
+        nodes: list[dict[str, Any]] = []
+        edges: list[dict[str, Any]] = []
 
         for bb in func.basic_blocks:
             instructions = [str(instr) for instr in bb.disassembly_text]

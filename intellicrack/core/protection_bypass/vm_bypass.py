@@ -731,7 +731,7 @@ class VMDetector:
     def __init__(self) -> None:
         """Initialize VM detector."""
         self.logger = logging.getLogger("IntellicrackLogger.VMDetector")
-        self.vm_indicators = []
+        self.vm_indicators: list[str] = []
 
     def _get_vm_driver_path(self, driver_name: str) -> str:
         """Get Windows VM driver path dynamically for detection."""
@@ -821,7 +821,7 @@ class VMDetector:
         # Store indicators in instance variable for later analysis
         self.vm_indicators = indicators.copy()
 
-        results = {
+        results: dict[str, str | list[str] | bool | float | None] = {
             "vm_type": None,
             "indicators": indicators,
             "is_vm": len(indicators) > 0,
@@ -863,10 +863,10 @@ class VMDetector:
             vm_type_lower = vm_type.lower()
 
             # VM-specific bypass strategies
-            bypass_techniques = []
-            registry_modifications = []
-            file_operations = []
-            environment_changes = []
+            bypass_techniques: list[str] = []
+            registry_modifications: list[str] = []
+            file_operations: list[str] = []
+            environment_changes: list[str] = []
 
             if "vmware" in vm_type_lower:
                 bypass_techniques.extend(
@@ -1196,7 +1196,10 @@ def detect_virtualization() -> bool:
     """
     detector = VMDetector()
     result = detector.detect()
-    return result["is_vm"]
+    is_vm_value = result.get("is_vm", False)
+    if isinstance(is_vm_value, bool):
+        return is_vm_value
+    return False
 
 
 def analyze_vm_protection(binary_path: str) -> dict[str, Any]:

@@ -8,6 +8,7 @@ Licensed under GNU General Public License v3.0
 """
 
 import os
+from typing import Any
 
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import (
@@ -25,6 +26,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QRadioButton,
     QVBoxLayout,
+    QWidget,
 )
 
 from ..utils.logger import get_logger
@@ -40,7 +42,7 @@ class ComparisonWorker(QThread):
     finished = pyqtSignal(list)  # differences list
     error = pyqtSignal(str)  # error message
 
-    def __init__(self, comparer: object, file1_path: str, file2_path: str) -> None:
+    def __init__(self, comparer: Any, file1_path: str, file2_path: str) -> None:
         """Initialize the worker.
 
         Args:
@@ -50,9 +52,9 @@ class ComparisonWorker(QThread):
 
         """
         super().__init__()
-        self.comparer = comparer
-        self.file1_path = file1_path
-        self.file2_path = file2_path
+        self.comparer: Any = comparer
+        self.file1_path: str = file1_path
+        self.file2_path: str = file2_path
 
     def run(self) -> None:
         """Run the comparison."""
@@ -73,7 +75,7 @@ class ComparisonWorker(QThread):
 class CompareDialog(QDialog):
     """Dialog for selecting and comparing two binary files."""
 
-    def __init__(self, parent: object | None = None, initial_file: str | None = None) -> None:
+    def __init__(self, parent: QWidget | None = None, initial_file: str | None = None) -> None:
         """Initialize the compare dialog.
 
         Args:
@@ -82,11 +84,11 @@ class CompareDialog(QDialog):
 
         """
         super().__init__(parent)
-        self.file1_path = initial_file or ""
-        self.file2_path = ""
-        self.comparison_mode = "visual"  # visual, byte, or structural
-        self.sync_scrolling = True
-        self.highlight_differences = True
+        self.file1_path: str = initial_file or ""
+        self.file2_path: str = ""
+        self.comparison_mode: str = "visual"
+        self.sync_scrolling: bool = True
+        self.highlight_differences: bool = True
 
         self.setup_ui()
 
@@ -96,19 +98,17 @@ class CompareDialog(QDialog):
         self.setModal(True)
         self.resize(700, 500)
 
-        layout = QVBoxLayout(self)
+        layout: QVBoxLayout = QVBoxLayout(self)
 
-        # File selection section
-        file_group = QGroupBox("Select Files to Compare")
-        file_layout = QVBoxLayout()
+        file_group: QGroupBox = QGroupBox("Select Files to Compare")
+        file_layout: QVBoxLayout = QVBoxLayout()
 
-        # File 1
-        file1_layout = QHBoxLayout()
-        file1_label = QLabel("File 1:")
+        file1_layout: QHBoxLayout = QHBoxLayout()
+        file1_label: QLabel = QLabel("File 1:")
         file1_label.setFixedWidth(60)
-        self.file1_edit = QLineEdit(self.file1_path)
+        self.file1_edit: QLineEdit = QLineEdit(self.file1_path)
         self.file1_edit.setReadOnly(True)
-        file1_button = QPushButton("Browse...")
+        file1_button: QPushButton = QPushButton("Browse...")
         file1_button.clicked.connect(lambda: self.browse_file(1))
 
         file1_layout.addWidget(file1_label)
@@ -116,21 +116,18 @@ class CompareDialog(QDialog):
         file1_layout.addWidget(file1_button)
         file_layout.addLayout(file1_layout)
 
-        # File 1 info
-        self.file1_info = QLabel("No file selected")
+        self.file1_info: QLabel = QLabel("No file selected")
         self.file1_info.setStyleSheet("color: gray; margin-left: 65px;")
         file_layout.addWidget(self.file1_info)
 
-        # Spacer
         file_layout.addSpacing(10)
 
-        # File 2
-        file2_layout = QHBoxLayout()
-        file2_label = QLabel("File 2:")
+        file2_layout: QHBoxLayout = QHBoxLayout()
+        file2_label: QLabel = QLabel("File 2:")
         file2_label.setFixedWidth(60)
-        self.file2_edit = QLineEdit(self.file2_path)
+        self.file2_edit: QLineEdit = QLineEdit(self.file2_path)
         self.file2_edit.setReadOnly(True)
-        file2_button = QPushButton("Browse...")
+        file2_button: QPushButton = QPushButton("Browse...")
         file2_button.clicked.connect(lambda: self.browse_file(2))
 
         file2_layout.addWidget(file2_label)
@@ -138,76 +135,69 @@ class CompareDialog(QDialog):
         file2_layout.addWidget(file2_button)
         file_layout.addLayout(file2_layout)
 
-        # File 2 info
-        self.file2_info = QLabel("No file selected")
+        self.file2_info: QLabel = QLabel("No file selected")
         self.file2_info.setStyleSheet("color: gray; margin-left: 65px;")
         file_layout.addWidget(self.file2_info)
 
         file_group.setLayout(file_layout)
         layout.addWidget(file_group)
 
-        # Comparison options
-        options_group = QGroupBox("Comparison Options")
-        options_layout = QVBoxLayout()
+        options_group: QGroupBox = QGroupBox("Comparison Options")
+        options_layout: QVBoxLayout = QVBoxLayout()
 
-        # Comparison mode
-        mode_label = QLabel("Comparison Mode:")
+        mode_label: QLabel = QLabel("Comparison Mode:")
         mode_label.setStyleSheet("font-weight: bold;")
         options_layout.addWidget(mode_label)
 
-        self.mode_group = QButtonGroup()
+        self.mode_group: QButtonGroup = QButtonGroup()
 
-        mode_visual = QRadioButton("Visual (Side-by-side hex view)")
+        mode_visual: QRadioButton = QRadioButton("Visual (Side-by-side hex view)")
         mode_visual.setChecked(True)
         mode_visual.toggled.connect(lambda checked: self.set_mode("visual") if checked else None)
         self.mode_group.addButton(mode_visual)
         options_layout.addWidget(mode_visual)
 
-        mode_byte = QRadioButton("Byte-by-byte (Detailed difference list)")
+        mode_byte: QRadioButton = QRadioButton("Byte-by-byte (Detailed difference list)")
         mode_byte.toggled.connect(lambda checked: self.set_mode("byte") if checked else None)
         self.mode_group.addButton(mode_byte)
         options_layout.addWidget(mode_byte)
 
-        mode_structural = QRadioButton("Structural (Block-level changes)")
+        mode_structural: QRadioButton = QRadioButton("Structural (Block-level changes)")
         mode_structural.toggled.connect(lambda checked: self.set_mode("structural") if checked else None)
         self.mode_group.addButton(mode_structural)
         options_layout.addWidget(mode_structural)
 
-        # View options
         options_layout.addSpacing(10)
-        view_label = QLabel("View Options:")
+        view_label: QLabel = QLabel("View Options:")
         view_label.setStyleSheet("font-weight: bold;")
         options_layout.addWidget(view_label)
 
-        self.sync_check = QCheckBox("Synchronize scrolling")
+        self.sync_check: QCheckBox = QCheckBox("Synchronize scrolling")
         self.sync_check.setChecked(self.sync_scrolling)
         self.sync_check.toggled.connect(self.toggle_sync_scrolling)
         options_layout.addWidget(self.sync_check)
 
-        self.highlight_check = QCheckBox("Highlight differences")
+        self.highlight_check: QCheckBox = QCheckBox("Highlight differences")
         self.highlight_check.setChecked(self.highlight_differences)
         self.highlight_check.toggled.connect(self.toggle_highlight)
         options_layout.addWidget(self.highlight_check)
 
-        self.ignore_case_check = QCheckBox("Ignore case in ASCII view")
+        self.ignore_case_check: QCheckBox = QCheckBox("Ignore case in ASCII view")
         options_layout.addWidget(self.ignore_case_check)
 
         options_group.setLayout(options_layout)
         layout.addWidget(options_group)
 
-        # Progress bar (hidden initially)
-        self.progress_bar = QProgressBar()
+        self.progress_bar: QProgressBar = QProgressBar()
         self.progress_bar.hide()
         layout.addWidget(self.progress_bar)
 
-        # Statistics label (hidden initially)
-        self.stats_label = QLabel()
+        self.stats_label: QLabel = QLabel()
         self.stats_label.setStyleSheet("color: blue; font-weight: bold;")
         self.stats_label.hide()
         layout.addWidget(self.stats_label)
 
-        # Button box
-        self.button_box = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+        self.button_box: QDialogButtonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
         layout.addWidget(self.button_box)
@@ -334,7 +324,7 @@ class CompareDialog(QDialog):
         if self.validate_selection():
             super().accept()
 
-    def get_settings(self) -> dict:
+    def get_settings(self) -> dict[str, Any]:
         """Get the comparison settings.
 
         Returns:
@@ -350,7 +340,7 @@ class CompareDialog(QDialog):
             "ignore_case": self.ignore_case_check.isChecked(),
         }
 
-    def show_quick_stats(self, differences: list) -> None:
+    def show_quick_stats(self, differences: list[Any]) -> None:
         """Show quick statistics about the comparison.
 
         Args:
@@ -361,12 +351,12 @@ class CompareDialog(QDialog):
             self.stats_label.setText("Files are identical")
             self.stats_label.setStyleSheet("color: green; font-weight: bold;")
         else:
-            modified = sum(str(d.diff_type) == "DifferenceType.MODIFIED" for d in differences)
-            inserted = sum(str(d.diff_type) == "DifferenceType.INSERTED" for d in differences)
-            deleted = sum(str(d.diff_type) == "DifferenceType.DELETED" for d in differences)
+            modified: int = sum(str(d.diff_type) == "DifferenceType.MODIFIED" for d in differences)
+            inserted: int = sum(str(d.diff_type) == "DifferenceType.INSERTED" for d in differences)
+            deleted: int = sum(str(d.diff_type) == "DifferenceType.DELETED" for d in differences)
 
-            stats_text = f"Found {len(differences)} difference blocks: "
-            parts = []
+            stats_text: str = f"Found {len(differences)} difference blocks: "
+            parts: list[str] = []
             if modified:
                 parts.append(f"{modified} modified")
             if inserted:

@@ -31,7 +31,7 @@ class EventAggregator:
             max_queue_size: Maximum events to hold in queue.
 
         """
-        self._event_queue: queue.Queue = queue.Queue(maxsize=max_queue_size)
+        self._event_queue: queue.Queue[MonitorEvent] = queue.Queue(maxsize=max_queue_size)
         self._running = False
         self._thread: threading.Thread | None = None
         self._callbacks: list[Callable[[MonitorEvent], None]] = []
@@ -44,7 +44,7 @@ class EventAggregator:
         self._dropped_events = 0
 
         self._rate_limiter = RateLimiter(max_events_per_second=100)
-        self._event_history: deque = deque(maxlen=1000)
+        self._event_history: deque[MonitorEvent] = deque(maxlen=1000)
 
         self._lock = threading.Lock()
 

@@ -64,7 +64,7 @@ class ToolsTab(BaseTab):
     plugin_loaded = pyqtSignal(str, bool)
     network_capture_started = pyqtSignal(str)
 
-    def __init__(self, shared_context: dict | None = None, parent: QWidget | None = None) -> None:
+    def __init__(self, shared_context: dict[str, object] | None = None, parent: QWidget | None = None) -> None:
         """Initialize tools tab with external tool integration and management.
 
         Args:
@@ -82,10 +82,12 @@ class ToolsTab(BaseTab):
         super().__init__(shared_context, parent)
 
         # Connect to app_context signals for binary loading
-        if self.app_context:
+        if self.app_context and hasattr(self.app_context, "binary_loaded"):
             self.app_context.binary_loaded.connect(self.on_binary_loaded)
+        if self.app_context and hasattr(self.app_context, "binary_unloaded"):
             self.app_context.binary_unloaded.connect(self.on_binary_unloaded)
 
+        if self.app_context and hasattr(self.app_context, "get_current_binary"):
             if current_binary := self.app_context.get_current_binary():
                 self.on_binary_loaded(current_binary)
 
@@ -111,7 +113,8 @@ class ToolsTab(BaseTab):
         splitter.setStretchFactor(1, 60)
 
         h_layout.addWidget(splitter)
-        layout.addWidget(h_container)
+        if layout is not None:
+            layout.addWidget(h_container)
         self.is_loaded = True
 
     def create_tools_panel(self) -> QWidget:
@@ -536,17 +539,19 @@ class ToolsTab(BaseTab):
             else:
                 self.windows_activation_status.setStyleSheet("font-weight: bold; color: orange;")
 
-            if hasattr(self.parent(), "append_output"):
-                self.parent().append_output(f"Windows Activation Status: {status_text}")
+            parent_widget = self.parent()
+            if parent_widget is not None and hasattr(parent_widget, "append_output"):
+                parent_widget.append_output(f"Windows Activation Status: {status_text}")
                 if "raw_output" in status:
-                    self.parent().append_output(status["raw_output"])
+                    parent_widget.append_output(status["raw_output"])
 
         except Exception as e:
             logger.error("Error checking Windows activation: %s", e, exc_info=True)
             self.windows_activation_status.setText("Status: Error checking")
             self.windows_activation_status.setStyleSheet("font-weight: bold; color: red;")
-            if hasattr(self.parent(), "append_output"):
-                self.parent().append_output(f"Error checking Windows activation: {e}")
+            parent_widget = self.parent()
+            if parent_widget is not None and hasattr(parent_widget, "append_output"):
+                parent_widget.append_output(f"Error checking Windows activation: {e}")
 
     def activate_windows_interactive(self) -> None:
         """Launch Windows activation in embedded terminal."""
@@ -565,8 +570,9 @@ class ToolsTab(BaseTab):
             self.windows_activation_status.setText("Status: Error launching")
             self.windows_activation_status.setStyleSheet("font-weight: bold; color: red;")
 
-            if hasattr(self.parent(), "append_output"):
-                self.parent().append_output(f"Error launching Windows activation: {e}")
+            parent_widget = self.parent()
+            if parent_widget is not None and hasattr(parent_widget, "append_output"):
+                parent_widget.append_output(f"Error launching Windows activation: {e}")
 
     def create_advanced_analysis_tab(self) -> QWidget:
         """Create advanced analysis tools tab with sophisticated backend integration.
@@ -764,7 +770,9 @@ class ToolsTab(BaseTab):
                 "Info",
             ],
         )
-        self.packets_table.horizontalHeader().setStretchLastSection(True)
+        header = self.packets_table.horizontalHeader()
+        if header is not None:
+            header.setStretchLastSection(True)
 
         # Plugin output
         self.plugin_output = QTextEdit()
@@ -779,7 +787,7 @@ class ToolsTab(BaseTab):
         layout.addWidget(self.results_tabs)
         return panel
 
-    def on_binary_loaded(self, binary_info: dict | None) -> None:
+    def on_binary_loaded(self, binary_info: dict[str, object] | None) -> None:
         """Handle binary loaded signal from app_context.
 
         Args:
@@ -787,8 +795,10 @@ class ToolsTab(BaseTab):
 
         """
         if isinstance(binary_info, dict):
-            self.current_binary = binary_info.get("name", "Unknown")
-            self.current_binary_path = binary_info.get("path")
+            name_val = binary_info.get("name", "Unknown")
+            self.current_binary = str(name_val) if name_val is not None else "Unknown"
+            path_val = binary_info.get("path")
+            self.current_binary_path = str(path_val) if isinstance(path_val, str) else None
 
             # Update file path in file operations if available
             if hasattr(self, "file_path_edit") and self.current_binary_path is not None:
@@ -1144,20 +1154,20 @@ class ToolsTab(BaseTab):
 
             # Calculate entropy
             byte_counts = Counter(data)
-            entropy = 0
+            entropy = 0.0
             for count in byte_counts.values():
                 probability = count / len(data)
                 entropy -= probability * math.log2(probability)
 
             # Analyze sections (simplified)
             chunk_size = len(data) // 10
-            section_entropies = []
+            section_entropies: list[float] = []
 
             for i in range(0, len(data), chunk_size):
                 chunk = data[i : i + chunk_size]
                 if len(chunk) > 0:
                     chunk_counts = Counter(chunk)
-                    chunk_entropy = 0
+                    chunk_entropy = 0.0
                     for count in chunk_counts.values():
                         probability = count / len(chunk)
                         chunk_entropy -= probability * math.log2(probability)
@@ -1964,7 +1974,7 @@ def get_plugin():
             if not FRIDA_AVAILABLE:
                 # Use comprehensive dependency feedback
                 status = dependency_feedback.get_dependency_status("frida")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives
                 alternatives = dependency_feedback.suggest_alternatives("frida", "dynamic analysis")
@@ -1994,7 +2004,7 @@ def get_plugin():
             return
 
         try:
-            from intellicrack.ui.symbolic_execution import SymbolicExecutionEngine
+            from intellicrack.core.analysis.symbolic_executor import SymbolicExecutionEngine
 
             self.tool_output.append(f"Starting symbolic execution on: {binary_path}")
             self.tool_output.append("=" * 50)
@@ -2044,22 +2054,6 @@ def get_plugin():
             self.tool_output.append("Memory forensics requires specialized memory analysis tools")
             self.tool_output.append("Use the memory analysis interface from the main analysis tab")
 
-            if memory_data := None:
-                self.tool_output.append("Memory Forensics Results:")
-                self.tool_output.append("-" * 30)
-
-                # Memory layout analysis
-                if "memory_layout" in memory_data:
-                    self.tool_output.append("Memory Layout:")
-                    for layout in memory_data["memory_layout"]:
-                        self.tool_output.append(f"  - {layout}")
-
-                # Memory artifacts
-                if "artifacts" in memory_data:
-                    self.tool_output.append("\nMemory Artifacts:")
-                    for artifact in memory_data["artifacts"][:20]:
-                        self.tool_output.append(f"  - {artifact}")
-
             self.log_message("Memory forensics analysis completed")
 
         except ImportError:
@@ -2104,14 +2098,14 @@ def get_plugin():
             return
 
         try:
-            from intellicrack.core.analysis.protection_scanner import EnhancedProtectionScanner
+            from intellicrack.core.protection_analyzer import ProtectionAnalyzer
 
-            scanner = EnhancedProtectionScanner()
+            scanner = ProtectionAnalyzer()
 
             self.tool_output.append(f"Starting protection scan on: {binary_path}")
             self.tool_output.append("=" * 50)
 
-            results_temp = scanner.scan_binary(binary_path)
+            results_temp = scanner.analyze(binary_path) if hasattr(scanner, "analyze") else None
             if results_temp and isinstance(results_temp, dict):
                 results = results_temp
                 self.tool_output.append("Protection Scanner Results:")
@@ -2120,31 +2114,39 @@ def get_plugin():
                 # Packing detection
                 if "packing" in results:
                     packing_info = results["packing"]
-                    self.tool_output.append(f"Packing Detected: {'Yes' if packing_info['is_packed'] else 'No'}")
-                    if packing_info.get("packer_type"):
-                        self.tool_output.append(f"Packer Type: {packing_info['packer_type']}")
+                    if isinstance(packing_info, dict):
+                        is_packed = packing_info.get("is_packed", False)
+                        self.tool_output.append(f"Packing Detected: {'Yes' if is_packed else 'No'}")
+                        if packer_type := packing_info.get("packer_type"):
+                            self.tool_output.append(f"Packer Type: {packer_type}")
 
                 # Anti-debugging
                 if "anti_debugging" in results:
                     anti_debug = results["anti_debugging"]
-                    if anti_debug["detected"]:
+                    if isinstance(anti_debug, dict) and anti_debug.get("detected"):
                         self.tool_output.append("\nAnti-Debugging Detected:")
-                        for technique in anti_debug["techniques"]:
-                            self.tool_output.append(f"  - {technique}")
+                        techniques = anti_debug.get("techniques", [])
+                        if isinstance(techniques, list):
+                            for technique in techniques:
+                                self.tool_output.append(f"  - {technique}")
 
                 # Obfuscation
                 if "obfuscation" in results:
                     obf_info = results["obfuscation"]
-                    self.tool_output.append(f"\nObfuscation Level: {obf_info.get('level', 'Unknown')}")
-                    if obf_info.get("techniques"):
-                        self.tool_output.append("Obfuscation Techniques:")
-                        for tech in obf_info["techniques"]:
-                            self.tool_output.append(f"  - {tech}")
+                    if isinstance(obf_info, dict):
+                        self.tool_output.append(f"\nObfuscation Level: {obf_info.get('level', 'Unknown')}")
+                        if obf_techniques := obf_info.get("techniques"):
+                            if isinstance(obf_techniques, list):
+                                self.tool_output.append("Obfuscation Techniques:")
+                                for tech in obf_techniques:
+                                    self.tool_output.append(f"  - {tech}")
 
                 # Commercial protections
                 if "commercial" in results:
-                    for protection in results["commercial"]:
-                        self.tool_output.append(f"\nCommercial Protection: {protection}")
+                    commercial = results["commercial"]
+                    if isinstance(commercial, list):
+                        for protection in commercial:
+                            self.tool_output.append(f"\nCommercial Protection: {protection}")
 
             self.log_message("Protection scanning completed")
 
@@ -2168,42 +2170,26 @@ def get_plugin():
             return
 
         try:
-            from intellicrack.core.analysis.radare2_vulnerability_engine import R2VulnerabilityEngine
-
-            engine = R2VulnerabilityEngine()
+            from intellicrack.core.analysis.vulnerability_engine import AdvancedVulnerabilityEngine
 
             self.tool_output.append(f"Starting vulnerability scan on: {binary_path}")
             self.tool_output.append("=" * 50)
 
-            results_temp = engine.scan_binary(binary_path)
-            if results_temp and isinstance(results_temp, dict):
-                results = results_temp
+            results_list = AdvancedVulnerabilityEngine.scan_binary(binary_path)
+            if results_list and isinstance(results_list, list):
                 self.tool_output.append("Vulnerability Engine Results:")
                 self.tool_output.append("-" * 30)
+                self.tool_output.append(f"Total Vulnerabilities Found: {len(results_list)}")
 
-                # Buffer overflow vulnerabilities
-                if buffer_overflows := results.get("buffer_overflows"):
-                    self.tool_output.append("Buffer Overflow Vulnerabilities:")
-                    for vuln in buffer_overflows:
-                        self.tool_output.append(f"  - {vuln}")
-
-                # Format string vulnerabilities
-                if format_strings := results.get("format_strings"):
-                    self.tool_output.append("\nFormat String Vulnerabilities:")
-                    for vuln in format_strings:
-                        self.tool_output.append(f"  - {vuln}")
-
-                # Integer overflow vulnerabilities
-                if integer_overflows := results.get("integer_overflows"):
-                    self.tool_output.append("\nInteger Overflow Vulnerabilities:")
-                    for vuln in integer_overflows:
-                        self.tool_output.append(f"  - {vuln}")
-
-                # Use-after-free vulnerabilities
-                if use_after_free := results.get("use_after_free"):
-                    self.tool_output.append("\nUse-After-Free Vulnerabilities:")
-                    for vuln in use_after_free:
-                        self.tool_output.append(f"  - {vuln}")
+                for vuln in results_list[:20]:
+                    if isinstance(vuln, dict):
+                        vuln_type = vuln.get("type", "Unknown")
+                        vuln_severity = vuln.get("severity", "Unknown")
+                        vuln_desc = vuln.get("description", "No description")
+                        self.tool_output.append(f"\n[{vuln_severity}] {vuln_type}")
+                        self.tool_output.append(f"  Description: {vuln_desc}")
+                        if location := vuln.get("location"):
+                            self.tool_output.append(f"  Location: {location}")
 
             self.log_message("Vulnerability detection completed")
 
@@ -2232,28 +2218,6 @@ def get_plugin():
             self.tool_output.append("Taint analysis requires symbolic execution engine")
             self.tool_output.append("Use the symbolic execution interface from the main analysis tab")
 
-            if results := None:
-                self.tool_output.append("Taint Analysis Results:")
-                self.tool_output.append("-" * 30)
-
-                # Taint sources
-                if "taint_sources" in results:
-                    self.tool_output.append("Taint Sources:")
-                    for source in results["taint_sources"]:
-                        self.tool_output.append(f"  - {source}")
-
-                # Taint sinks
-                if "taint_sinks" in results:
-                    self.tool_output.append("\nTaint Sinks:")
-                    for sink in results["taint_sinks"]:
-                        self.tool_output.append(f"  - {sink}")
-
-                # Data flow paths
-                if "data_flows" in results:
-                    self.tool_output.append("\nData Flow Paths:")
-                    for flow in results["data_flows"][:10]:
-                        self.tool_output.append(f"  - {flow}")
-
             self.log_message("Taint analysis completed")
 
         except ImportError:
@@ -2277,7 +2241,7 @@ def get_plugin():
             if not TENSORFLOW_AVAILABLE:
                 # Use comprehensive dependency feedback for AI/ML dependencies
                 status = dependency_feedback.get_dependency_status("tensorflow")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives for AI analysis
                 alternatives = dependency_feedback.suggest_alternatives("tensorflow", "AI script generation")
@@ -2417,7 +2381,7 @@ def get_plugin():
             if not CAPSTONE_AVAILABLE:
                 # Use comprehensive dependency feedback for disassembly dependency
                 status = dependency_feedback.get_dependency_status("capstone")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives for disassembly/ROP generation
                 alternatives = dependency_feedback.suggest_alternatives("capstone", "ROP chain generation")
@@ -2453,7 +2417,7 @@ def get_plugin():
             if not (PEFILE_AVAILABLE or LIEF_AVAILABLE):
                 # Use comprehensive dependency feedback for binary analysis
                 status = dependency_feedback.get_dependency_status("pefile")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives for binary analysis
                 alternatives = dependency_feedback.suggest_alternatives("pefile", "payload generation")
@@ -2488,7 +2452,7 @@ def get_plugin():
             if not CAPSTONE_AVAILABLE:
                 # Use comprehensive dependency feedback for disassembly
                 status = dependency_feedback.get_dependency_status("capstone")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives for shellcode generation
                 alternatives = dependency_feedback.suggest_alternatives("capstone", "shellcode generation")
@@ -2522,7 +2486,7 @@ def get_plugin():
             if not PSUTIL_AVAILABLE:
                 # Use comprehensive dependency feedback for system monitoring
                 status = dependency_feedback.get_dependency_status("psutil")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives for network analysis
                 alternatives = dependency_feedback.suggest_alternatives("psutil", "network traffic analysis")
@@ -2574,7 +2538,7 @@ def get_plugin():
             if not PSUTIL_AVAILABLE:
                 # Use comprehensive dependency feedback for network analysis
                 status = dependency_feedback.get_dependency_status("psutil")
-                self.output_console.append(status["message"])
+                self.output_console.append(str(status["message"]))
 
                 # Show alternatives for protocol analysis
                 alternatives = dependency_feedback.suggest_alternatives("psutil", "protocol fingerprinting")

@@ -91,7 +91,9 @@ class CPUMonitorWorker(QObject):
 
             # Sleep for update interval
             if self.running:
-                self.thread().msleep(self.update_interval)
+                thread = self.thread()
+                if thread is not None:
+                    thread.msleep(self.update_interval)
 
     def _collect_cpu_data(self) -> dict[str, Any]:
         """Collect comprehensive CPU data.
@@ -162,7 +164,8 @@ class CPUMonitorWorker(QObject):
 
                 c = wmi.WMI()
                 for processor in c.Win32_Processor():
-                    return processor.Name
+                    name: str = str(processor.Name)
+                    return name
             elif platform.system() == "Linux":
                 with open("/proc/cpuinfo") as f:
                     for line in f:
@@ -171,7 +174,8 @@ class CPUMonitorWorker(QObject):
             elif platform.system() == "Darwin":
                 import subprocess
 
-                return subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
+                result = subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"]).decode().strip()
+                return result
         except (subprocess.SubprocessError, OSError) as e:
             logger.debug("Failed to get CPU name: %s", e)
 
@@ -292,7 +296,9 @@ class CPUStatusWidget(QWidget):
         self.processes_table.setColumnCount(4)
         self.processes_table.setHorizontalHeaderLabels(["PID", "Name", "CPU %", "Memory %"])
         self.processes_table.setToolTip("Top CPU-consuming processes currently running on the system")
-        self.processes_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        header = self.processes_table.horizontalHeader()
+        if header is not None:
+            header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.processes_table.setMinimumHeight(150)
         self.processes_table.setMaximumHeight(250)
         processes_layout.addWidget(self.processes_table)

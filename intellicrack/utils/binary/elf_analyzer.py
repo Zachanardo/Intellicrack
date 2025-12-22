@@ -162,7 +162,7 @@ class ELFAnalyzer:
         if not self.header or not self.data:
             return []
 
-        sections = []
+        sections: list[dict[str, Any]] = []
         shoff = self.header["e_shoff"]
         shentsize = self.header["e_shentsize"]
         shnum = self.header["e_shnum"]
@@ -218,7 +218,7 @@ class ELFAnalyzer:
         if not self.header or not self.data:
             return []
 
-        segments = []
+        segments: list[dict[str, Any]] = []
         phoff = self.header["e_phoff"]
         phentsize = self.header["e_phentsize"]
         phnum = self.header["e_phnum"]
@@ -272,7 +272,7 @@ class ELFAnalyzer:
         if not self.sections:
             self.analyze_sections()
 
-        symbols = []
+        symbols: list[dict[str, Any]] = []
 
         for section in self.sections:
             # Symbol table sections (SHT_SYMTAB = 2, SHT_DYNSYM = 11)
@@ -395,7 +395,10 @@ class ELFAnalyzer:
             List of symbol names
 
         """
-        names = []
+        names: list[str] = []
+
+        if not self.data:
+            return names
 
         # Find string table sections
         string_tables = [s for s in self.sections if s["sh_type"] == 3]  # SHT_STRTAB = 3

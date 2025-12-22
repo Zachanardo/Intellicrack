@@ -34,6 +34,8 @@ from typing import Any, cast
 
 import msgpack
 
+from intellicrack.utils.type_safety import validate_type
+
 
 logger = logging.getLogger(__name__)
 
@@ -330,7 +332,7 @@ class ResultSerializer:
         version = struct.pack("H", 1)
 
         # Serialize data to msgpack first
-        data_bytes = cast("bytes", msgpack.packb(data, use_bin_type=True))
+        data_bytes = validate_type(msgpack.packb(data, use_bin_type=True), bytes)
         data_length = struct.pack("I", len(data_bytes))
 
         return header + version + data_length + data_bytes
@@ -356,13 +358,13 @@ class ResultSerializer:
         # Version-specific deserialization
         if version == 1:
             # Version 1: Basic msgpack
-            return cast("dict[str, Any]", msgpack.unpackb(data_bytes, raw=False))
+            return validate_type(msgpack.unpackb(data_bytes, raw=False), dict)
         elif version == 2:
             # Version 2: msgpack with strict_map_key
-            return cast("dict[str, Any]", msgpack.unpackb(data_bytes, raw=False, strict_map_key=False))
+            return validate_type(msgpack.unpackb(data_bytes, raw=False, strict_map_key=False), dict)
         else:
             # Version 3: msgpack with timestamp support
-            return cast("dict[str, Any]", msgpack.unpackb(data_bytes, raw=False, timestamp=3))
+            return validate_type(msgpack.unpackb(data_bytes, raw=False, timestamp=3), dict)
 
     def _encrypt_data(self, data: bytes) -> bytes:
         """Encrypt data using AES."""
@@ -374,7 +376,7 @@ class ResultSerializer:
         iv = get_random_bytes(16)
 
         # Create cipher
-        cipher = AES.new(cast("bytes", self.encryption_key), AES.MODE_CBC, iv)
+        cipher = AES.new(validate_type(self.encryption_key, bytes), AES.MODE_CBC, iv)
 
         # Encrypt
         encrypted = cipher.encrypt(pad(data, AES.block_size))
@@ -391,7 +393,7 @@ class ResultSerializer:
         encrypted = data[16:]
 
         # Create cipher
-        cipher = AES.new(cast("bytes", self.encryption_key), AES.MODE_CBC, iv)
+        cipher = AES.new(validate_type(self.encryption_key, bytes), AES.MODE_CBC, iv)
 
         return unpad(cipher.decrypt(encrypted), AES.block_size)
 
@@ -604,9 +606,9 @@ class ResultConverter:
             result_type = result.type.value
             source_tool = result.source_tool
 
-            summary_dict = cast("dict[str, Any]", export_data["summary"])
-            by_type_dict = cast("dict[str, int]", summary_dict["by_type"])
-            by_tool_dict = cast("dict[str, int]", summary_dict["by_tool"])
+            summary_dict = validate_type(export_data["summary"], dict)
+            by_type_dict = validate_type(summary_dict["by_type"], dict)
+            by_tool_dict = validate_type(summary_dict["by_tool"], dict)
 
             by_type_dict[result_type] = by_type_dict.get(result_type, 0) + 1
             by_tool_dict[source_tool] = by_tool_dict.get(source_tool, 0) + 1

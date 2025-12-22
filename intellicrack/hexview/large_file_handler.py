@@ -27,7 +27,7 @@ from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any
+from typing import IO, Any, cast
 
 # Import from common import checks
 from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
@@ -35,15 +35,33 @@ from ..utils.core.import_checks import PSUTIL_AVAILABLE, psutil
 
 logger = logging.getLogger(__name__)
 
+PYQT6_AVAILABLE = False
+QObjectBase: type
+QThreadBase: type
+QTimer: type
+pyqtSignal: Any
+
 try:
-    from PyQt6.QtCore import QObject, QThread, QTimer, pyqtSignal
+    from PyQt6.QtCore import QObject as QObjectBase
+    from PyQt6.QtCore import QThread as QThreadBase
+    from PyQt6.QtCore import QTimer, pyqtSignal
 
     PYQT6_AVAILABLE = True
 except ImportError as e:
     logger.exception("Import error in large_file_handler: %s", e)
     PYQT6_AVAILABLE = False
-    QObject = object
-    QThread = object
+
+    class QObjectBase:  # type: ignore[no-redef]
+        pass
+
+    class QThreadBase:  # type: ignore[no-redef]
+        pass
+
+    class QTimer:  # type: ignore[no-redef]
+        pass
+
+    def pyqtSignal(*args: Any, **kwargs: Any) -> Any:
+        return None
 
 __all__ = [
     "BackgroundLoader",
@@ -274,80 +292,128 @@ class MemoryMonitor:
                 time.sleep(5.0)  # Wait longer on error
 
 
-class BackgroundLoader(QThread if PYQT6_AVAILABLE else threading.Thread):
-    """Background thread for loading file data."""
+if PYQT6_AVAILABLE:
 
-    # Signals for _Qt integration
-    #: Signal emitted when loading progress updates (type: int)
-    progress_updated = pyqtSignal(int) if PYQT6_AVAILABLE else None
-    #: Signal emitted when a region is loaded (type: object)
-    region_loaded = pyqtSignal(object) if PYQT6_AVAILABLE else None
-    #: Signal emitted when an error occurs (type: str)
-    error_occurred = pyqtSignal(str) if PYQT6_AVAILABLE else None
+    class BackgroundLoader(QThreadBase):  # type: ignore[misc]
+        """Background thread for loading file data."""
 
-    def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig) -> None:
-        """Initialize the BackgroundLoader with file path, cache, and configuration."""
-        if PYQT6_AVAILABLE:
+        progress_updated = pyqtSignal(int)
+        region_loaded = pyqtSignal(object)
+        error_occurred = pyqtSignal(str)
+
+        def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig) -> None:
+            """Initialize the BackgroundLoader with file path, cache, and configuration."""
             super().__init__()
-        else:
+            self.file_path = file_path
+            self.cache = cache
+            self.config = config
+            self.load_queue: list[tuple[int, int]] = []
+            self.queue_lock = threading.Lock()
+            self.should_stop = False
+
+        def queue_load(self, offset: int, size: int) -> None:
+            """Queue a region for loading."""
+            with self.queue_lock:
+                request = (offset, size)
+                if request not in self.load_queue:
+                    self.load_queue.append(request)
+                    logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
+
+        def run(self) -> None:
+            """Run main loading loop."""
+            try:
+                with open(self.file_path, "rb") as file:
+                    while not self.should_stop:
+                        with self.queue_lock:
+                            if not self.load_queue:
+                                time.sleep(0.1)
+                                continue
+                            offset, size = self.load_queue.pop(0)
+
+                        try:
+                            file.seek(offset)
+                            if data := file.read(size):
+                                region = FileRegion(offset=offset, size=len(data), data=data)
+                                self.cache.add_region(region)
+
+                                if self.region_loaded:
+                                    self.region_loaded.emit(region)
+
+                                logger.debug("Background loaded: offset=0x%X, size=%d", offset, len(data))
+
+                        except (OSError, ValueError, RuntimeError) as e:
+                            logger.exception("Background load error: %s", e)
+                            if self.error_occurred:
+                                self.error_occurred.emit(str(e))
+
+                        time.sleep(0.01)
+
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.exception("Background loader thread error: %s", e)
+                if self.error_occurred:
+                    self.error_occurred.emit(str(e))
+
+        def stop(self) -> None:
+            """Stop the background loader."""
+            self.should_stop = True
+
+else:
+
+    class BackgroundLoader(threading.Thread):  # type: ignore[no-redef]
+        """Background thread for loading file data."""
+
+        progress_updated = None
+        region_loaded = None
+        error_occurred = None
+
+        def __init__(self, file_path: str, cache: FileCache, config: MemoryConfig) -> None:
+            """Initialize the BackgroundLoader with file path, cache, and configuration."""
             super().__init__(daemon=True)
+            self.file_path = file_path
+            self.cache = cache
+            self.config = config
+            self.load_queue: list[tuple[int, int]] = []
+            self.queue_lock = threading.Lock()
+            self.should_stop = False
 
-        self.file_path = file_path
-        self.cache = cache
-        self.config = config
-        self.load_queue: list[tuple[int, int]] = []
-        self.queue_lock = threading.Lock()
-        self.should_stop = False
+        def queue_load(self, offset: int, size: int) -> None:
+            """Queue a region for loading."""
+            with self.queue_lock:
+                request = (offset, size)
+                if request not in self.load_queue:
+                    self.load_queue.append(request)
+                    logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
 
-    def queue_load(self, offset: int, size: int) -> None:
-        """Queue a region for loading."""
-        with self.queue_lock:
-            # Avoid duplicate requests
-            request = (offset, size)
-            if request not in self.load_queue:
-                self.load_queue.append(request)
-                logger.debug("Queued load: offset=0x%s, size=%s", offset, size)
+        def run(self) -> None:
+            """Run main loading loop."""
+            try:
+                with open(self.file_path, "rb") as file:
+                    while not self.should_stop:
+                        with self.queue_lock:
+                            if not self.load_queue:
+                                time.sleep(0.1)
+                                continue
+                            offset, size = self.load_queue.pop(0)
 
-    def run(self) -> None:
-        """Run main loading loop."""
-        try:
-            with open(self.file_path, "rb") as file:
-                while not self.should_stop:
-                    # Get next load request
-                    with self.queue_lock:
-                        if not self.load_queue:
-                            time.sleep(0.1)
-                            continue
-                        offset, size = self.load_queue.pop(0)
+                        try:
+                            file.seek(offset)
+                            if data := file.read(size):
+                                region = FileRegion(offset=offset, size=len(data), data=data)
+                                self.cache.add_region(region)
 
-                    # Load the data
-                    try:
-                        file.seek(offset)
-                        if data := file.read(size):
-                            region = FileRegion(offset=offset, size=len(data), data=data)
-                            self.cache.add_region(region)
+                                logger.debug("Background loaded: offset=0x%X, size=%d", offset, len(data))
 
-                            if self.region_loaded:
-                                self.region_loaded.emit(region)
+                        except (OSError, ValueError, RuntimeError) as e:
+                            logger.exception("Background load error: %s", e)
 
-                            logger.debug("Background loaded: offset=0x%X, size=%d", offset, len(data))
+                        time.sleep(0.01)
 
-                    except (OSError, ValueError, RuntimeError) as e:
-                        logger.exception("Background load error: %s", e)
-                        if self.error_occurred:
-                            self.error_occurred.emit(str(e))
+            except (OSError, ValueError, RuntimeError) as e:
+                logger.exception("Background loader thread error: %s", e)
 
-                    # Small delay to avoid overwhelming the system
-                    time.sleep(0.01)
-
-        except (OSError, ValueError, RuntimeError) as e:
-            logger.exception("Background loader thread error: %s", e)
-            if self.error_occurred:
-                self.error_occurred.emit(str(e))
-
-    def stop(self) -> None:
-        """Stop the background loader."""
-        self.should_stop = True
+        def stop(self) -> None:
+            """Stop the background loader."""
+            self.should_stop = True
 
 
 class LargeFileHandler:
@@ -365,13 +431,29 @@ class LargeFileHandler:
 
         # Create MemoryConfig with values from configuration system
         if config is None:
+            max_memory_mb_raw = app_config.get("hex_viewer.performance.max_memory_mb", 500)
+            max_memory_mb = int(max_memory_mb_raw) if isinstance(max_memory_mb_raw, (int, float)) else 500
+
+            chunk_size_kb_raw = app_config.get("hex_viewer.performance.chunk_size_kb", 64)
+            chunk_size_kb = int(chunk_size_kb_raw) if isinstance(chunk_size_kb_raw, (int, float)) else 64
+            chunk_size_mb = max(1, chunk_size_kb // 1024)
+
+            cache_size_mb_raw = app_config.get("hex_viewer.performance.cache_size_mb", 100)
+            cache_size_mb = int(cache_size_mb_raw) if isinstance(cache_size_mb_raw, (int, float)) else 100
+
+            enable_compression_raw = app_config.get("hex_viewer.performance.compress_undo_data", True)
+            enable_compression = bool(enable_compression_raw) if isinstance(enable_compression_raw, bool) else True
+
+            prefetch_chunks_raw = app_config.get("hex_viewer.performance.prefetch_chunks", 3)
+            prefetch_chunks = int(prefetch_chunks_raw) if isinstance(prefetch_chunks_raw, (int, float)) else 3
+
             self.config = MemoryConfig(
-                max_memory_mb=app_config.get("hex_viewer.performance.max_memory_mb", 500),
-                chunk_size_mb=app_config.get("hex_viewer.performance.chunk_size_kb", 64) // 1024 or 1,  # Convert KB to MB
-                cache_size_mb=app_config.get("hex_viewer.performance.cache_size_mb", 100),
-                memory_threshold=0.8,  # Not in config, keeping default
-                enable_compression=app_config.get("hex_viewer.performance.compress_undo_data", True),
-                prefetch_chunks=app_config.get("hex_viewer.performance.prefetch_chunks", 3),
+                max_memory_mb=max_memory_mb,
+                chunk_size_mb=chunk_size_mb,
+                cache_size_mb=cache_size_mb,
+                memory_threshold=0.8,
+                enable_compression=enable_compression,
+                prefetch_chunks=prefetch_chunks,
             )
         else:
             self.config = config
@@ -388,7 +470,7 @@ class LargeFileHandler:
 
         # Memory mapped file (for medium-sized files)
         self.mmap_file: mmap.mmap | None = None
-        self.file_handle: object | None = None
+        self.file_handle: IO[bytes] | None = None
 
         # Performance tracking
         self.access_patterns: list[tuple[int, int, float]] = []  # offset, size, timestamp
@@ -435,10 +517,11 @@ class LargeFileHandler:
             self.memory_monitor.start_monitoring()
 
             # Setup periodic cleanup timer if PyQt6 is available
+            self.cleanup_timer: Any
             if PYQT6_AVAILABLE:
                 self.cleanup_timer = QTimer()
                 self.cleanup_timer.timeout.connect(self._periodic_cleanup)
-                self.cleanup_timer.start(30000)  # Every 30 seconds
+                self.cleanup_timer.start(30000)
             else:
                 self.cleanup_timer = None
 

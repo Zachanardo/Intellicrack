@@ -30,7 +30,7 @@ import traceback
 import types
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, CodeType
+from typing import Any, Callable
 
 
 class BreakpointType(Enum):
@@ -110,7 +110,7 @@ class PluginDebugger:
         self.watched_returns: list[str] = []
         self.exception_filters: list[type[BaseException]] = []
 
-        self._plugin_code: CodeType | None = None
+        self._plugin_code: types.CodeType | None = None
         self._plugin_path: str = ""
 
     def load_plugin(self, plugin_path: str) -> None:

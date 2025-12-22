@@ -21,6 +21,7 @@ along with Intellicrack.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from collections import Counter
+from collections.abc import Mapping, Sequence
 from typing import Any
 
 
@@ -81,7 +82,7 @@ class ASCIIChartGenerator:
 
     def generate_bar_chart(
         self,
-        data: dict[str, int | float],
+        data: Mapping[str, int | float],
         title: str = "Bar Chart",
         show_values: bool = True,
         color_coding: bool = True,
@@ -126,7 +127,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_histogram(self, values: list[int | float], bins: int = 10, title: str = "Histogram") -> str:
+    def generate_histogram(self, values: Sequence[int | float], bins: int = 10, title: str = "Histogram") -> str:
         """Generate histogram chart.
 
         Args:
@@ -164,7 +165,7 @@ class ASCIIChartGenerator:
         hist_data = dict(zip(bin_labels, bin_counts, strict=False))
         return self.generate_bar_chart(hist_data, title)
 
-    def generate_line_chart(self, data: dict[str, int | float], title: str = "Line Chart") -> str:
+    def generate_line_chart(self, data: Mapping[str, int | float], title: str = "Line Chart") -> str:
         """Generate simple line chart.
 
         Args:
@@ -260,7 +261,7 @@ class ASCIIChartGenerator:
             title: Chart title
 
         """
-        if not RICH_AVAILABLE:
+        if not RICH_AVAILABLE or self.console is None:
             logger.info("\n%s\n%s", title, "=" * len(title))
             logger.info("%s", chart_content)
             return
@@ -282,7 +283,7 @@ class ASCIIChartGenerator:
         self.console.print(Panel(centered_chart, border_style="cyan", title="Chart Data"))
         self.console.print()
 
-    def create_styled_legend(self, data: dict[str, int | float], title: str = "Legend") -> None:
+    def create_styled_legend(self, data: Mapping[str, int | float], title: str = "Legend") -> None:
         """Create a styled legend for chart data using rich Text formatting.
 
         Args:
@@ -290,7 +291,7 @@ class ASCIIChartGenerator:
             title: Legend title
 
         """
-        if not RICH_AVAILABLE:
+        if not RICH_AVAILABLE or self.console is None:
             logger.info("\n%s:", title)
             for label, value in data.items():
                 logger.info("  %s: %s", label, value)
@@ -318,7 +319,7 @@ class ASCIIChartGenerator:
             self.console.print(Align.center(entry))
         self.console.print()
 
-    def generate_pie_chart(self, data: dict[str, int | float], title: str = "Pie Chart") -> str:
+    def generate_pie_chart(self, data: Mapping[str, int | float], title: str = "Pie Chart") -> str:
         """Generate ASCII pie chart representation.
 
         Args:
@@ -356,7 +357,7 @@ class ASCIIChartGenerator:
 
         return "\n".join(lines)
 
-    def generate_scatter_plot(self, points: list[tuple[float, float]], title: str = "Scatter Plot") -> str:
+    def generate_scatter_plot(self, points: Sequence[tuple[float, float]], title: str = "Scatter Plot") -> str:
         """Generate scatter plot.
 
         Args:
@@ -438,7 +439,7 @@ class ASCIIChartGenerator:
         if isinstance(vuln_data, dict) and "vulnerabilities" in vuln_data:
             vulns = vuln_data["vulnerabilities"]
             if isinstance(vulns, list):
-                severity_counts = Counter()
+                severity_counts: Counter[str] = Counter()
                 for vuln in vulns:
                     if isinstance(vuln, dict):
                         severity = vuln.get("severity", "Unknown")
@@ -534,7 +535,7 @@ class ASCIIChartGenerator:
                 vuln_table.add_column("Count", style="yellow")
                 vuln_table.add_column("Percentage", style="green")
 
-                severity_counts = Counter()
+                severity_counts: Counter[str] = Counter()
                 for vuln in vulns:
                     if isinstance(vuln, dict):
                         severity = vuln.get("severity", "Unknown")
@@ -586,7 +587,7 @@ class ASCIIChartGenerator:
             for chart in charts:
                 self.console.print(chart)
 
-    def generate_vulnerability_trend_chart(self, vulnerability_data: list[dict[str, Any]]) -> str:
+    def generate_vulnerability_trend_chart(self, vulnerability_data: Sequence[dict[str, Any]]) -> str:
         """Generate trend chart for vulnerability analysis.
 
         Args:
@@ -600,7 +601,7 @@ class ASCIIChartGenerator:
             return "No vulnerability data available"
 
         # Group by severity
-        severity_counts = Counter()
+        severity_counts: Counter[str] = Counter()
         for vuln in vulnerability_data:
             if isinstance(vuln, dict):
                 severity = vuln.get("severity", "Unknown")

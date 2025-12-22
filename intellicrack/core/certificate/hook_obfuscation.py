@@ -367,14 +367,15 @@ class HookObfuscator:
                 MEM_RESERVE = 0x2000
                 PAGE_EXECUTE_READWRITE = 0x40
 
-                if addr := kernel32.VirtualAlloc(
+                addr = kernel32.VirtualAlloc(
                     None,
                     size,
                     MEM_COMMIT | MEM_RESERVE,
                     PAGE_EXECUTE_READWRITE,
-                ):
-                    logger.debug("Allocated trampoline space at %s", hex(addr))
-                    return addr
+                )
+                if addr:
+                    logger.debug("Allocated trampoline space at %s", hex(int(addr)))
+                    return int(addr)
 
             return 0
 
@@ -494,7 +495,7 @@ class HookObfuscator:
                 buffer = (ctypes.c_ubyte * len(data)).from_buffer_copy(data)
                 bytes_written = ctypes.c_size_t()
 
-                success = kernel32.WriteProcessMemory(
+                success_result = kernel32.WriteProcessMemory(
                     current_process,
                     ctypes.c_void_p(address),
                     ctypes.byref(buffer),
@@ -509,7 +510,7 @@ class HookObfuscator:
                     ctypes.byref(old_protect),
                 )
 
-                return success
+                return bool(success_result)
 
             return False
 
@@ -636,7 +637,7 @@ class HookObfuscator:
         self.integrity_monitor_active = False
         logger.info("Integrity monitor stopped")
 
-    def install_hwbp_hook(self, address: int, handler: Callable) -> bool:
+    def install_hwbp_hook(self, address: int, handler: Callable[[], None]) -> bool:
         """Install hardware breakpoint hook using debug registers.
 
         Uses DR0-DR3 debug registers to set hardware breakpoints.
@@ -725,7 +726,7 @@ class HookObfuscator:
         """
         logger.info("Scanning for code caves in module: %s", module)
 
-        caves = []
+        caves: list[int] = []
 
         try:
             if not hasattr(ctypes, "windll"):
@@ -847,7 +848,7 @@ class HookObfuscator:
             logger.debug("Single hook rotation failed: %s", e, exc_info=True)
             return False
 
-    def get_hook_status(self) -> dict:
+    def get_hook_status(self) -> dict[str, int | list[str] | bool]:
         """Get status of all installed hooks.
 
         Returns:

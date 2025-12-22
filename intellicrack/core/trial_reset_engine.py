@@ -12,7 +12,7 @@ from ctypes import wintypes
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import psutil
 
@@ -101,70 +101,74 @@ class TrialResetEngine:
         )
         return locations
 
-    def _initialize_detection_patterns(self) -> dict[str, Any]:
+    def _initialize_detection_patterns(self) -> dict[str, list[str] | list[bytes]]:
         """Initialize patterns for detecting trial data."""
-        patterns = {
-            "registry_values": [
-                "TrialDays",
-                "DaysLeft",
-                "InstallDate",
-                "FirstRun",
-                "LastRun",
-                "ExpireDate",
-                "TrialPeriod",
-                "Evaluation",
-                "LicenseType",
-                "ActivationDate",
-                "TrialCounter",
-                "UsageCount",
-                "RunCount",
-                "LaunchCount",
-                "StartCount",
-            ],
-            "file_patterns": [
-                "*.trial",
-                "*.lic",
-                "*.license",
-                "*.dat",
-                "*.db",
-                "*.sqlite",
-                "*.reg",
-                "*.key",
-                "*.activation",
-                "*.lock",
-                "trial.xml",
-                "license.xml",
-                "activation.xml",
-                "config.ini",
-            ],
-            "timestamp_files": [
-                "install.dat",
-                "first_run.dat",
-                "trial.dat",
-                ".trial_info",
-                "eval.bin",
-                "timestamp.db",
-            ],
-            "encrypted_markers": [
-                b"\x00TRIAL\x00",
-                b"\xde\xad\xbe\xef",
-                b"EVAL",
-                b"DEMO",
-                b"UNREGISTERED",
-            ],
+        registry_values: list[str] = [
+            "TrialDays",
+            "DaysLeft",
+            "InstallDate",
+            "FirstRun",
+            "LastRun",
+            "ExpireDate",
+            "TrialPeriod",
+            "Evaluation",
+            "LicenseType",
+            "ActivationDate",
+            "TrialCounter",
+            "UsageCount",
+            "RunCount",
+            "LaunchCount",
+            "StartCount",
+        ]
+        file_patterns: list[str] = [
+            "*.trial",
+            "*.lic",
+            "*.license",
+            "*.dat",
+            "*.db",
+            "*.sqlite",
+            "*.reg",
+            "*.key",
+            "*.activation",
+            "*.lock",
+            "trial.xml",
+            "license.xml",
+            "activation.xml",
+            "config.ini",
+        ]
+        timestamp_files: list[str] = [
+            "install.dat",
+            "first_run.dat",
+            "trial.dat",
+            ".trial_info",
+            "eval.bin",
+            "timestamp.db",
+        ]
+        encrypted_markers: list[bytes] = [
+            b"\x00TRIAL\x00",
+            b"\xde\xad\xbe\xef",
+            b"EVAL",
+            b"DEMO",
+            b"UNREGISTERED",
+        ]
+        patterns: dict[str, list[str] | list[bytes]] = {
+            "registry_values": registry_values,
+            "file_patterns": file_patterns,
+            "timestamp_files": timestamp_files,
+            "encrypted_markers": encrypted_markers,
         }
         logger.debug(
             "Initialized %s registry value, %s file, %s timestamp, and %s encrypted detection patterns.",
-            len(patterns["registry_values"]),
-            len(patterns["file_patterns"]),
-            len(patterns["timestamp_files"]),
-            len(patterns["encrypted_markers"]),
+            len(registry_values),
+            len(file_patterns),
+            len(timestamp_files),
+            len(encrypted_markers),
         )
         return patterns
 
-    def _initialize_reset_strategies(self) -> dict[str, Any]:
+    def _initialize_reset_strategies(self) -> dict[str, Callable[[TrialInfo], bool]]:
         """Initialize trial reset strategies."""
-        strategies = {
+        strategies: dict[str, Callable[[TrialInfo], bool]] = {
             "clean_uninstall": self._clean_uninstall_reset,
             "time_manipulation": self._time_manipulation_reset,
             "registry_clean": self._registry_clean_reset,
@@ -269,11 +273,13 @@ class TrialResetEngine:
                             value_name, _value_data, _value_type = winreg.EnumValue(key, i)
 
                             # Check if value name indicates trial
-                            for pattern in self.detection_patterns["registry_values"]:
-                                if pattern.lower() in value_name.lower():
-                                    found_keys.append(f"{key_path}\\{value_name}")
-                                    logger.debug("Found trial-related registry value: %s\\%s", key_path, value_name)
-                                    break
+                            registry_patterns = self.detection_patterns["registry_values"]
+                            if isinstance(registry_patterns, list):
+                                for pattern in registry_patterns:
+                                    if isinstance(pattern, str) and pattern.lower() in value_name.lower():
+                                        found_keys.append(f"{key_path}\\{value_name}")
+                                        logger.debug("Found trial-related registry value: %s\\%s", key_path, value_name)
+                                        break
 
                             i += 1
                         except OSError:
@@ -336,13 +342,16 @@ class TrialResetEngine:
 
             if os.path.exists(path):
                 # Scan directory for trial files
-                for pattern in self.detection_patterns["file_patterns"]:
-                    try:
-                        for file_path in Path(path).rglob(pattern):
-                            found_files.append(str(file_path))
-                            logger.debug("Found trial-related file: %s", file_path)
-                    except OSError as e:
-                        logger.warning("Failed to scan path %s with pattern %s: %s", path, pattern, e)
+                file_patterns = self.detection_patterns["file_patterns"]
+                if isinstance(file_patterns, list):
+                    for pattern in file_patterns:
+                        if isinstance(pattern, str):
+                            try:
+                                for file_path in Path(path).rglob(pattern):
+                                    found_files.append(str(file_path))
+                                    logger.debug("Found trial-related file: %s", file_path)
+                            except OSError as e:
+                                logger.warning("Failed to scan path %s with pattern %s: %s", path, pattern, e)
 
         # Scan for hidden files
         for template in self.common_trial_locations["hidden"]:
@@ -465,7 +474,7 @@ class TrialResetEngine:
                                         logger.debug("Found ADS via BackupRead: %s%s", base_path, stream_name)
                         finally:
                             kernel32.CloseHandle(file_handle)
-                except (OSError, ctypes.WinError) as backup_error:
+                except OSError as backup_error:
                     logger.debug("BackupRead failed for %s: %s", base_path, backup_error)
 
                 try:
@@ -604,11 +613,13 @@ class TrialResetEngine:
                             with open(file_path, "rb") as f:
                                 header = f.read(1024)
 
-                                for marker in self.detection_patterns["encrypted_markers"]:
-                                    if marker in header:
-                                        encrypted_files.append(file_path)
-                                        logger.debug("Found encrypted trial file: %s", file_path)
-                                        break
+                                encrypted_markers = self.detection_patterns["encrypted_markers"]
+                                if isinstance(encrypted_markers, list):
+                                    for marker in encrypted_markers:
+                                        if isinstance(marker, bytes) and marker in header:
+                                            encrypted_files.append(file_path)
+                                            logger.debug("Found encrypted trial file: %s", file_path)
+                                            break
                         except OSError as e:
                             logger.warning("Failed to read file %s: %s", file_path, e)
             except (ValueError, TypeError) as e:
@@ -775,7 +786,8 @@ class TrialResetEngine:
 
         # Apply reset strategy
         logger.debug("Applying reset strategy: %s", strategy)
-        success = self.reset_strategies[strategy](trial_info)
+        reset_func: Callable[[TrialInfo], bool] = self.reset_strategies[strategy]
+        success: bool = reset_func(trial_info)
         logger.debug("Trial reset for '%s' completed with strategy '%s'. Success: %s", trial_info.product_name, strategy, success)
         return success
 
@@ -1032,7 +1044,7 @@ class TrialResetEngine:
                     self._clear_directory_ads(dir_path, remove_ads_from_file, max_depth=1)
         logger.debug("Finished clearing alternate data streams.")
 
-    def _clear_directory_ads(self, directory: str, remove_func: object, max_depth: int = 5) -> None:
+    def _clear_directory_ads(self, directory: str, remove_func: Callable[[str], None], max_depth: int = 5) -> None:
         """Recursively clear alternate data streams from directory."""
         try:
             for root, dirs, files in os.walk(directory):
@@ -1152,7 +1164,7 @@ class TrialResetEngine:
             # Determine file type
             if file_path.endswith(".xml"):
                 # Reset XML trial file
-                content = '<?xml version="1.0"?>\n<trial><days>30</days><first_run>true</first_run></trial>'
+                content: str | bytes = '<?xml version="1.0"?>\n<trial><days>30</days><first_run>true</first_run></trial>'
             elif file_path.endswith(".json"):
                 # Reset JSON trial file
                 content = json.dumps({"trial_days": 30, "usage_count": 0, "first_run": True})
@@ -1288,15 +1300,16 @@ class TimeManipulator:
 
     def __init__(self) -> None:
         """Initialize the TimeManipulator with time tracking data structures."""
-        self.original_time = None
-        self.frozen_apps = {}  # Track frozen applications
+        self.original_time: datetime.datetime | None = None
+        self.frozen_apps: dict[str, dict[str, datetime.datetime | list[int] | bool]] = {}
 
     def reset_trial_time(self, trial_info: TrialInfo) -> bool:
         """Reset trial by manipulating time."""
         try:
             logger.debug("Attempting to reset trial time for product: %s", trial_info.product_name)
             # Save current time
-            self.original_time = datetime.datetime.now()
+            current_time = datetime.datetime.now()
+            self.original_time = current_time
             logger.debug("Original system time: %s", self.original_time)
 
             # Set time to before trial started
@@ -1310,8 +1323,9 @@ class TimeManipulator:
                 time.sleep(2)
 
                 # Restore time
-                self._set_system_time(self.original_time)
-                logger.debug("System time restored to original: %s", self.original_time)
+                if self.original_time is not None:
+                    self._set_system_time(self.original_time)
+                    logger.debug("System time restored to original: %s", self.original_time)
                 return True
         except OSError as e:
             logger.warning("Failed to reset trial time for product %s: %s", trial_info.product_name, e)
@@ -1356,7 +1370,7 @@ class TimeManipulator:
         # Find target process
         def find_process_by_name(name: str) -> list[int]:
             """Find process ID by name."""
-            processes = []
+            processes: list[int] = []
             logger.debug("Searching for process '%s' to freeze time.", name)
             # Create snapshot
             hSnapshot = kernel32.CreateToolhelp32Snapshot(0x00000002, 0)  # TH32CS_SNAPPROCESS
@@ -1707,8 +1721,6 @@ class TimeManipulator:
 
             finally:
                 kernel32.CloseHandle(hProcess)
-
-            return False
 
         # Find and hook all matching processes
         processes = find_process_by_name(process_name)

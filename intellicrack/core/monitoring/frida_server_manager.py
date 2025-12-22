@@ -43,7 +43,7 @@ class FridaServerManager:
         self.server_dir.mkdir(parents=True, exist_ok=True)
 
         self.frida_version = frida.__version__
-        self.server_process: subprocess.Popen | None = None
+        self.server_process: subprocess.Popen[bytes] | None = None
         self.server_port = 27042
 
         self._platform = platform.system().lower()
@@ -125,8 +125,13 @@ class FridaServerManager:
         """
         try:
             if self._platform == "windows":
-                return ctypes.windll.shell32.IsUserAnAdmin() != 0
-            return os.geteuid() == 0
+                result = ctypes.windll.shell32.IsUserAnAdmin()
+                return bool(result != 0)
+            geteuid = getattr(os, "geteuid", None)
+            if geteuid is not None:
+                uid_result = geteuid()
+                return bool(uid_result == 0)
+            return False
         except Exception:
             return False
 
@@ -282,7 +287,7 @@ class FridaServerManager:
             finally:
                 self.server_process = None
 
-    def get_status(self) -> dict:
+    def get_status(self) -> dict[str, bool | str]:
         """Get current frida-server status.
 
         Returns:

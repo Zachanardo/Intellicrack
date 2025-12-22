@@ -30,11 +30,11 @@ This module provides a unified interface for symbolic execution using:
 3. simconcolic (fallback)
 """
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 # Try to import symbolic execution engines in priority order
-SYMBOLIC_ENGINE = None
-SYMBOLIC_ENGINE_NAME = None
+SYMBOLIC_ENGINE: str | None = None
+SYMBOLIC_ENGINE_NAME: str | None = None
 
 # First try angr (cross-platform, recommended)
 try:
@@ -43,7 +43,7 @@ try:
 
     SYMBOLIC_ENGINE = "angr"
     SYMBOLIC_ENGINE_NAME = "angr"
-    ANGR_AVAILABLE = True
+    ANGR_AVAILABLE: bool = True
 except ImportError:
     ANGR_AVAILABLE = False
 
@@ -54,12 +54,12 @@ if not SYMBOLIC_ENGINE:
 
         SYMBOLIC_ENGINE = "simconcolic"
         SYMBOLIC_ENGINE_NAME = "simconcolic"
-        SIMCONCOLIC_AVAILABLE = True
+        SIMCONCOLIC_AVAILABLE: bool = True
     except ImportError:
         SIMCONCOLIC_AVAILABLE = False
 
 # Manticore is no longer supported (Windows-only focus)
-MANTICORE_AVAILABLE = False
+MANTICORE_AVAILABLE: bool = False
 
 
 class ConcolicExecutionEngine:
@@ -122,23 +122,23 @@ class ConcolicExecutionEngine:
             # Add symbolic variables for input if available
             if ANGR_AVAILABLE and claripy:
                 # Create symbolic input for stdin
-                sym_stdin_size = 0x100  # 256 bytes
+                sym_stdin_size: int = 0x100
                 sym_stdin = claripy.BVS("stdin", sym_stdin_size * 8)
                 state.posix.stdin.write(0, sym_stdin, sym_stdin_size)
                 state.posix.stdin.seek(0)
 
             # Create symbolic execution state manager for path exploration
             # This is angr's real symbolic execution engine that analyzes actual binary paths
-            exec_manager = project.factory.simgr(state)  # simgr is the official angr API name
+            exec_manager: Any = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
             # Set up find and avoid addresses
-            find_addrs = [target_address] if target_address else []
-            avoid_addrs = avoid_addresses or []
+            find_addrs: list[int] = [target_address] if target_address else []
+            avoid_addrs: list[int] = avoid_addresses or []
 
             # Perform symbolic execution path exploration
             exec_manager.explore(find=find_addrs, avoid=avoid_addrs, n=self.max_iterations)
 
-            results = {
+            results: dict[str, Any] = {
                 "success": True,
                 "engine": "angr",
                 "paths_explored": len(exec_manager.deadended) + len(exec_manager.active),
@@ -150,8 +150,9 @@ class ConcolicExecutionEngine:
             # Extract inputs that reach target
             for found_state in exec_manager.found:
                 if found_state.posix.stdin.load(0, found_state.posix.stdin.size):
-                    stdin_data = found_state.posix.dumps(0)
-                    results["inputs"].append(
+                    stdin_data: bytes = found_state.posix.dumps(0)
+                    inputs_list: list[dict[str, Any]] = results["inputs"]
+                    inputs_list.append(
                         {
                             "stdin": stdin_data.hex() if stdin_data else None,
                             "constraints": len(found_state.solver.constraints),
@@ -175,21 +176,40 @@ class ConcolicExecutionEngine:
 
         try:
             # Use the imported SimConcolic analyzer
-            analyzer = SimConcolic(self.binary_path)
+            analyzer: Any = SimConcolic(self.binary_path)
 
-            # Run basic analysis
-            results = analyzer.analyze(
-                target_address=target_address,
-                avoid_addresses=avoid_addresses,
-                max_iterations=self.max_iterations,
+            # Run basic analysis using the run method which is the primary API
+            states: list[Any] = analyzer.run(timeout=self.timeout, procs=1)
+
+            # Process exploration results from states
+            paths_explored: int = len(states)
+            target_reached: bool = any(
+                getattr(state, 'pc', None) == target_address for state in states
             )
+
+            # Extract inputs from states
+            inputs: list[dict[str, Any]] = []
+            for state in states:
+                if hasattr(state, 'input_symbols') and isinstance(state.input_symbols, dict):
+                    stdin_data: Any = state.input_symbols.get('stdin')
+                    if stdin_data:
+                        if isinstance(stdin_data, bytes):
+                            inputs.append({
+                                "stdin": stdin_data.hex(),
+                                "address": hex(getattr(state, 'pc', 0)),
+                            })
+                        elif isinstance(stdin_data, str):
+                            inputs.append({
+                                "stdin": stdin_data.encode().hex(),
+                                "address": hex(getattr(state, 'pc', 0)),
+                            })
 
             return {
                 "success": True,
                 "engine": "simconcolic",
-                "paths_explored": results.get("paths_explored", 0),
-                "target_reached": results.get("target_reached", False),
-                "inputs": results.get("inputs", []),
+                "paths_explored": paths_explored,
+                "target_reached": target_reached,
+                "inputs": inputs,
             }
         except Exception as e:
             return {
@@ -212,7 +232,7 @@ class ConcolicExecutionEngine:
             project = angr.Project(self.binary_path, auto_load_libs=False)
 
             # Common license check patterns
-            license_patterns = [
+            license_patterns: list[bytes] = [
                 b"Invalid license",
                 b"License expired",
                 b"Unregistered",
@@ -221,8 +241,8 @@ class ConcolicExecutionEngine:
 
             # Search for license check functions
             cfg = project.analyses.CFGFast()
-            license_addrs = []
-            string_refs = []
+            license_addrs: list[int] = []
+            string_refs: list[dict[str, Any]] = []
 
             # First, find string references to license patterns
             for pattern in license_patterns:
@@ -261,16 +281,16 @@ class ConcolicExecutionEngine:
             # Add symbolic license key for testing
             if ANGR_AVAILABLE and claripy:
                 # Create symbolic license key
-                license_key_size = 32  # 32 byte license key
+                license_key_size: int = 32
                 sym_license_key = claripy.BVS("license_key", license_key_size * 8)
                 # Store it in symbolic memory for the program to use
-                license_key_addr = 0x10000000  # Arbitrary address in mapped memory
-                state.memory.store(license_key_addr, sym_license_key)
+                license_key_addr: int = 0x10000000
+                state.memory.store(license_key_addr, sym_license_key)  # type: ignore[no-untyped-call]
 
-            exec_mgr = project.factory.simgr(state)  # Create symbolic execution manager
+            exec_mgr: Any = project.factory.simgr(state)  # type: ignore[no-untyped-call]
 
             # Explore avoiding license checks
-            exec_mgr.explore(avoid=license_addrs[:5])  # Limit to first 5
+            exec_mgr.explore(avoid=license_addrs[:5])
 
             if exec_mgr.found or exec_mgr.deadended:
                 return {

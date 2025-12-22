@@ -145,7 +145,8 @@ class ProtectionAwareScriptGenerator:
         # If no primary protection found, use first one
         if not primary_protection and protections_to_process:
             primary_protection = next(iter(protections_to_process.keys()))
-            highest_confidence = protections_to_process[primary_protection]["confidence"]
+            conf_value = protections_to_process[primary_protection]["confidence"]
+            highest_confidence = float(conf_value) if isinstance(conf_value, (int, float)) else 0.0
 
         # Get protection info from knowledge base
         protection_info = self.kb.get_protection_info(primary_protection) if primary_protection else None
@@ -186,7 +187,7 @@ class ProtectionAwareScriptGenerator:
         final_script = header + combined_script
 
         # Add AI-enhanced instructions
-        ai_prompt = self._generate_ai_prompt(result, primary_protection, highest_confidence, protection_info)
+        ai_prompt = self._generate_ai_prompt(result, primary_protection or "Unknown", highest_confidence, protection_info)
 
         # Generate approach description
         approach = f"Multi-layered analysis detected {len(protections_to_process)} protection(s). "
@@ -5237,7 +5238,7 @@ def enhance_ai_script_generation(ai_generator: object | None, binary_path: str) 
         # Fallback to our own AI script generator
         ai_gen = AIScriptGenerator()
         enhanced_script = ai_gen.generate_script(
-            prompt=result["ai_prompt"],
+            _prompt=result["ai_prompt"],
             base_script=result["script"],
             context={
                 "protection": result["protection_detected"],

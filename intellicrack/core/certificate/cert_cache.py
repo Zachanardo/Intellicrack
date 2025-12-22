@@ -126,6 +126,7 @@ logger = logging.getLogger(__name__)
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from intellicrack.core.certificate.cert_chain_generator import CertificateChain
 
@@ -159,7 +160,7 @@ class CertificateCache:
         if not self.metadata_file.exists():
             self._save_metadata({})
 
-    def _load_metadata(self) -> dict:
+    def _load_metadata(self) -> dict[str, dict[str, str]]:
         """Load cache metadata from disk.
 
         Returns:
@@ -168,11 +169,12 @@ class CertificateCache:
         """
         try:
             with open(self.metadata_file) as f:
-                return json.load(f)
+                data: dict[str, dict[str, str]] = json.load(f)
+                return data
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
-    def _save_metadata(self, metadata: dict) -> None:
+    def _save_metadata(self, metadata: dict[str, dict[str, str]]) -> None:
         """Save cache metadata to disk.
 
         Args:
@@ -235,9 +237,16 @@ class CertificateCache:
                 leaf_cert = self._load_cert(domain_dir / "leaf.pem")
                 intermediate_cert = self._load_cert(domain_dir / "intermediate.pem")
                 root_cert = self._load_cert(domain_dir / "root.pem")
-                leaf_key = self._load_private_key(domain_dir / "leaf_key.pem")
-                intermediate_key = self._load_private_key(domain_dir / "intermediate_key.pem")
-                root_key = self._load_private_key(domain_dir / "root_key.pem")
+                leaf_key_loaded = self._load_private_key(domain_dir / "leaf_key.pem")
+                intermediate_key_loaded = self._load_private_key(domain_dir / "intermediate_key.pem")
+                root_key_loaded = self._load_private_key(domain_dir / "root_key.pem")
+
+                if not isinstance(leaf_key_loaded, rsa.RSAPrivateKey):
+                    raise TypeError("Leaf key must be RSAPrivateKey")
+                if not isinstance(intermediate_key_loaded, rsa.RSAPrivateKey):
+                    raise TypeError("Intermediate key must be RSAPrivateKey")
+                if not isinstance(root_key_loaded, rsa.RSAPrivateKey):
+                    raise TypeError("Root key must be RSAPrivateKey")
 
                 entry["last_accessed"] = datetime.now().isoformat()
                 self._save_metadata(metadata)
@@ -246,9 +255,9 @@ class CertificateCache:
                     leaf_cert=leaf_cert,
                     intermediate_cert=intermediate_cert,
                     root_cert=root_cert,
-                    leaf_key=leaf_key,
-                    intermediate_key=intermediate_key,
-                    root_key=root_key,
+                    leaf_key=leaf_key_loaded,
+                    intermediate_key=intermediate_key_loaded,
+                    root_key=root_key_loaded,
                 )
 
             except Exception:
@@ -345,7 +354,7 @@ class CertificateCache:
             except Exception:
                 return False
 
-    def get_cache_stats(self) -> dict:
+    def get_cache_stats(self) -> dict[str, int | float]:
         """Get cache statistics.
 
         Returns:
@@ -430,7 +439,7 @@ class CertificateCache:
         with open(cert_path, "wb") as f:
             f.write(cert.public_bytes(serialization.Encoding.PEM))
 
-    def _load_private_key(self, key_path: Path) -> rsa.RSAPrivateKey:
+    def _load_private_key(self, key_path: Path) -> PrivateKeyTypes:
         """Load private key from PEM file.
 
         Args:
@@ -446,7 +455,7 @@ class CertificateCache:
                 password=None,
             )
 
-    def _save_private_key(self, key: rsa.RSAPrivateKey, key_path: Path) -> None:
+    def _save_private_key(self, key: PrivateKeyTypes, key_path: Path) -> None:
         """Save private key to PEM file.
 
         Args:

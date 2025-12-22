@@ -36,6 +36,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
+
+from .base_analyzer import BaseAnalyzer
+
 import psutil
 
 from ...utils.logger import get_logger
@@ -1431,7 +1435,7 @@ class BehavioralAnalyzer:
 
             logger.info("Detecting anti-analysis techniques")
             if process_id := self._get_target_process_id():
-                anti_analysis_results = cast(dict[str, Any], results["anti_analysis"])
+                anti_analysis_results = validate_type(results["anti_analysis"], dict)
                 anti_analysis_results["detections"] = self.anti_analysis.scan(process_id)
 
             results["behavioral_patterns"] = self._analyze_behavioral_patterns()
@@ -1442,7 +1446,7 @@ class BehavioralAnalyzer:
             results["process_activity"] = [e.to_dict() for e in self.events if e.event_type.startswith("process_")]
 
             end_time = time.time()
-            start_time_val = cast(float, results["start_time"])
+            start_time_val = get_typed_item(results, "start_time", float)
             results["end_time"] = end_time
             results["duration"] = end_time - start_time_val
 

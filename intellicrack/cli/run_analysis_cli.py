@@ -78,40 +78,31 @@ def run_basic_analysis(binary_path: Path, options: dict[str, Any]) -> dict[str, 
 
     """
     try:
-        # Import analysis components
         from intellicrack.core.analysis.analysis_orchestrator import AnalysisOrchestrator
-        from intellicrack.core.processing.memory_loader import MemoryLoader
+        from intellicrack.core.processing.memory_loader import run_memory_optimized_analysis
 
         logger.info("Starting analysis of: %s", binary_path)
 
-        # Initialize components
         orchestrator = AnalysisOrchestrator()
-        memory_loader = MemoryLoader()
 
-        # Load binary into memory
-        logger.info("Loading binary into memory...")
-        memory_data = memory_loader.load_binary(str(binary_path))
+        logger.info("Performing binary analysis...")
+        orchestration_result = orchestrator.analyze_binary(str(binary_path))
 
-        # Configure analysis based on options
-        analysis_config = {
-            "binary_path": str(binary_path),
-            "enable_entropy": options.get("entropy", True),
-            "enable_strings": options.get("strings", True),
-            "enable_sections": options.get("sections", True),
-            "enable_imports": options.get("imports", True),
-            "enable_exports": options.get("exports", True),
+        results: dict[str, Any] = {
+            "binary_path": orchestration_result.binary_path,
+            "success": orchestration_result.success,
+            "phases_completed": [phase.value for phase in orchestration_result.phases_completed],
+            "results": orchestration_result.results,
+            "errors": orchestration_result.errors,
+            "warnings": orchestration_result.warnings,
         }
 
-        # Perform analysis
-        logger.info("Performing binary analysis...")
-        results = orchestrator.analyze_binary(**analysis_config)
-
-        # Add memory analysis results
-        if memory_data:
-            from intellicrack.core.processing.memory_loader import run_memory_optimized_analysis
-
-            memory_analysis = run_memory_optimized_analysis(binary_path=str(binary_path), **options)
-            results["memory_analysis"] = memory_analysis
+        logger.info("Running memory-optimized analysis...")
+        memory_analysis = run_memory_optimized_analysis(
+            file_path=str(binary_path),
+            analysis_type="full",
+        )
+        results["memory_analysis"] = memory_analysis
 
         logger.info("Analysis completed successfully")
         return results

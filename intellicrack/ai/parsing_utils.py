@@ -51,7 +51,7 @@ class ResponseLineParser:
             Dictionary mapping section names to lists of content
 
         """
-        sections = {section: [] for section in section_keywords}
+        sections: dict[str, list[str]] = {section: [] for section in section_keywords}
         current_section = None
 
         lines = response.split("\n")
@@ -96,7 +96,7 @@ class ResponseLineParser:
             Dictionary mapping categories to lists of lines
 
         """
-        categories = {cat: [] for cat in category_keywords}
+        categories: dict[str, list[str]] = {cat: [] for cat in category_keywords}
         if default_category not in categories:
             categories[default_category] = []
 
@@ -120,7 +120,7 @@ class ResponseLineParser:
         return categories
 
     @staticmethod
-    def extract_structured_content(response: str, patterns: list[str], section_separators: list[str] | None = None) -> list[dict[str, str]]:
+    def extract_structured_content(response: str, patterns: list[str], section_separators: list[str] | None = None) -> list[dict[str, str | int | tuple[str | object, ...]]]:
         """Extract structured content using regex patterns.
 
         Args:
@@ -132,7 +132,7 @@ class ResponseLineParser:
             List of dictionaries containing matched content
 
         """
-        extracted = []
+        extracted: list[dict[str, str | int | tuple[str | object, ...]]] = []
         lines = response.split("\n")
         current_section = "content"
 
@@ -141,22 +141,20 @@ class ResponseLineParser:
             if not line:
                 continue
 
-            # Check for section separators
             if section_separators:
                 for separator in section_separators:
                     if re.match(separator, line, re.IGNORECASE):
                         current_section = line
                         continue
 
-            # Try to match patterns
             for i, pattern in enumerate(patterns):
                 if match := re.search(pattern, line, re.IGNORECASE):
-                    content = {
+                    content: dict[str, str | int | tuple[str | object, ...]] = {
                         "pattern_index": i,
                         "section": current_section,
                         "line": line,
                         "match": match.group(),
-                        "groups": match.groups() or [],
+                        "groups": match.groups() or (),
                     }
                     extracted.append(content)
 

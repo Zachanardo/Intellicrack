@@ -199,7 +199,7 @@ class R2BinaryDiff:
                     )
                     diffs.append(diff)
 
-                elif primary_func:
+                elif primary_func and secondary_func:
                     # Function exists in both - check for modifications
                     primary_size = primary_func.get("size", 0)
                     secondary_size = secondary_func.get("size", 0)
@@ -363,7 +363,7 @@ class R2BinaryDiff:
                     )
                     diffs.append(diff)
 
-                elif primary_str:
+                elif primary_str and secondary_str:
                     # String exists in both - check xrefs
                     primary_xrefs = self._get_string_xrefs(self.r2_primary, primary_str.get("vaddr", 0))
                     secondary_xrefs = self._get_string_xrefs(self.r2_secondary, secondary_str.get("vaddr", 0))
@@ -542,7 +542,7 @@ class R2BinaryDiff:
             primary_opcodes = [op.get("opcode", "") for op in primary_ops.get("ops", [])]
             secondary_opcodes = [op.get("opcode", "") for op in secondary_ops.get("ops", [])]
 
-            changes = sum(primary_opcodes[i] != secondary_opcodes[i] for i in range(min(len(primary_opcodes), len(secondary_opcodes))))
+            changes = int(sum(primary_opcodes[i] != secondary_opcodes[i] for i in range(min(len(primary_opcodes), len(secondary_opcodes)))))
             # Add difference in lengths
             changes += abs(len(primary_opcodes) - len(secondary_opcodes))
 
@@ -603,7 +603,7 @@ class R2BinaryDiff:
         # Compare jump targets
         if bb1.get("jump", 0) != bb2.get("jump", 0):
             return True
-        return bb1.get("fail", 0) != bb2.get("fail", 0)
+        return bool(bb1.get("fail", 0) != bb2.get("fail", 0))
 
     def _get_string_xrefs(self, r2_session: Any | None, address: int) -> list[int]:
         """Get cross-references to a string.

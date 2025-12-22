@@ -23,12 +23,17 @@ import pickle  # noqa: S403
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
+from numpy.typing import NDArray
 
 from intellicrack.core.ml.feature_extraction import BinaryFeatureExtractor
 from intellicrack.core.ml.protection_classifier import ProtectionClassifier
+
+if TYPE_CHECKING:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
 @dataclass
@@ -37,7 +42,7 @@ class TrainingSample:
 
     binary_path: Path
     protection_type: str
-    feature_vector: np.ndarray
+    feature_vector: NDArray[np.floating[Any]]
     timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     confidence: float = 1.0
     source: str = "manual"
@@ -234,7 +239,11 @@ class IncrementalLearner:
             "is_verified": sample.source in ["manual", "verified"],
         }
 
-        if self.classifier.model is not None:
+        if (
+            self.classifier.model is not None
+            and self.classifier.scaler is not None
+            and self.classifier.label_encoder is not None
+        ):
             try:
                 feature_vector = sample.feature_vector.reshape(1, -1)
                 scaled_features = self.classifier.scaler.transform(feature_vector)

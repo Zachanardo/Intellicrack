@@ -75,31 +75,44 @@ class GPUMonitorWorker(QObject):
             except Exception as e:
                 self.error_occurred.emit(str(e))
 
-            # Sleep for update interval
-            if self.running and self.thread():
-                self.thread().msleep(self.update_interval)
+            if self.running:
+                thread = self.thread()
+                if thread is not None:
+                    thread.msleep(self.update_interval)
 
     def _collect_gpu_data(self) -> dict[str, Any]:
         """Collect GPU data based on platform."""
-        gpu_data = {
+        gpu_data: dict[str, Any] = {
             "gpus": [],
             "platform": self.platform,
             "error": None,
         }
 
         if self.platform == "Windows":
-            if nvidia_data := self._get_nvidia_gpu_info():
-                gpu_data["gpus"].extend(nvidia_data)
+            nvidia_data = self._get_nvidia_gpu_info()
+            if nvidia_data:
+                gpus_list = gpu_data["gpus"]
+                if isinstance(gpus_list, list):
+                    gpus_list.extend(nvidia_data)
 
-            if intel_data := self._get_intel_arc_info():
-                gpu_data["gpus"].extend(intel_data)
+            intel_data = self._get_intel_arc_info()
+            if intel_data:
+                gpus_list = gpu_data["gpus"]
+                if isinstance(gpus_list, list):
+                    gpus_list.extend(intel_data)
 
-            if amd_data := self._get_amd_gpu_info():
-                gpu_data["gpus"].extend(amd_data)
+            amd_data = self._get_amd_gpu_info()
+            if amd_data:
+                gpus_list = gpu_data["gpus"]
+                if isinstance(gpus_list, list):
+                    gpus_list.extend(amd_data)
 
         elif self.platform == "Linux":
-            if nvidia_data := self._get_nvidia_gpu_info():
-                gpu_data["gpus"].extend(nvidia_data)
+            nvidia_data = self._get_nvidia_gpu_info()
+            if nvidia_data:
+                gpus_list = gpu_data["gpus"]
+                if isinstance(gpus_list, list):
+                    gpus_list.extend(nvidia_data)
 
         if not gpu_data["gpus"]:
             gpu_data["error"] = "No supported GPUs detected"
@@ -368,8 +381,8 @@ class GPUStatusWidget(QWidget):
         super().__init__(parent)
         self.setMinimumWidth(300)
         self.setMinimumHeight(500)
-        self.selected_gpu_index = 0  # Initialize selected GPU index
-        self.gpu_data = {"gpus": []}  # Initialize GPU data
+        self.selected_gpu_index = 0
+        self.gpu_data: dict[str, Any] = {"gpus": []}
         self.setup_ui()
         self.setup_monitoring()
         self.start_monitoring()
@@ -605,7 +618,7 @@ class GPUStatusWidget(QWidget):
 
     def update_capabilities(self, gpu: dict[str, Any]) -> None:
         """Update GPU capabilities display."""
-        caps_text = []
+        caps_text: list[str] = []
 
         if gpu["vendor"] == "NVIDIA":
             caps_text.extend((

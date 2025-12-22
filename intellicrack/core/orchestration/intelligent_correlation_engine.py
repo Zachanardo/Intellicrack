@@ -112,7 +112,7 @@ class IntelligentCorrelationEngine:
 
         # ML models for semantic analysis
         self.tfidf_vectorizer = TfidfVectorizer(max_features=1000)
-        self.function_embeddings = {}
+        self.function_embeddings: dict[str, Any] = {}
 
     def _load_license_patterns(self) -> dict[str, Any]:
         """Load known license check patterns."""
@@ -266,6 +266,9 @@ class IntelligentCorrelationEngine:
         if addr1 is None or addr2 is None:
             return False
 
+        if not isinstance(addr1, int) or not isinstance(addr2, int):
+            return False
+
         return abs(addr1 - addr2) <= self.address_proximity_threshold
 
     def _check_xref_correlation(self, func1: FunctionResult, func2: FunctionResult) -> bool:
@@ -303,8 +306,9 @@ class IntelligentCorrelationEngine:
         try:
             vec1 = self.tfidf_vectorizer.fit_transform([text1])
             vec2 = self.tfidf_vectorizer.transform([text2])
-            similarity = cosine_similarity(vec1, vec2)[0][0]
-            return similarity >= self.semantic_similarity_threshold
+            similarity_matrix = cosine_similarity(vec1, vec2)
+            similarity_value = float(similarity_matrix[0][0])
+            return bool(similarity_value >= self.semantic_similarity_threshold)
         except (ValueError, IndexError):
             return False
 
@@ -345,7 +349,7 @@ class IntelligentCorrelationEngine:
 
     def _create_xref_correlation(self, func1: FunctionResult, func2: FunctionResult) -> Correlation:
         """Create cross-reference correlation."""
-        evidence = {}
+        evidence: dict[str, Any] = {}
         confidence = 0.8
 
         if func2.address in func1.xrefs_from:
@@ -356,7 +360,8 @@ class IntelligentCorrelationEngine:
             confidence = 0.9
         else:
             common_calls = set(func1.xrefs_from) & set(func2.xrefs_from)
-            evidence["common_calls"] = list(common_calls)
+            common_calls_list: list[int] = list(common_calls)
+            evidence["common_calls"] = common_calls_list
             evidence["relationship"] = "shared_dependencies"
             confidence = 0.7
 
@@ -552,7 +557,7 @@ class IntelligentCorrelationEngine:
 
             self.clusters.append(cluster)
 
-    def _extract_feature_vector(self, result: BaseResult) -> np.ndarray | None:
+    def _extract_feature_vector(self, result: BaseResult) -> np.ndarray[Any, np.dtype[np.float64]] | None:
         """Extract numerical feature vector from result."""
         features = [result.confidence, result.timestamp]
 
@@ -651,35 +656,39 @@ class IntelligentCorrelationEngine:
 
     def generate_correlation_report(self) -> dict[str, Any]:
         """Generate comprehensive correlation report."""
-        report = {
+        correlation_types_dict: dict[str, int] = {}
+        graph_metrics_dict: dict[str, Any] = {}
+        patterns_detected_dict: dict[str, int] = {}
+
+        report: dict[str, Any] = {
             "timestamp": time.time(),
             "total_results": len(self.results),
             "total_correlations": len(self.correlations),
             "total_clusters": len(self.clusters),
-            "correlation_types": {},
+            "correlation_types": correlation_types_dict,
             "high_confidence_findings": self.get_high_confidence_findings(),
-            "graph_metrics": {},
-            "patterns_detected": {},
+            "graph_metrics": graph_metrics_dict,
+            "patterns_detected": patterns_detected_dict,
         }
 
         # Count correlation types
         for correlation in self.correlations:
             cor_type = correlation.type.value
-            report["correlation_types"][cor_type] = report["correlation_types"].get(cor_type, 0) + 1
+            correlation_types_dict[cor_type] = correlation_types_dict.get(cor_type, 0) + 1
 
         # Graph metrics
         if self.correlation_graph.number_of_nodes() > 0:
-            report["graph_metrics"] = {
+            graph_metrics_dict.update({
                 "nodes": self.correlation_graph.number_of_nodes(),
                 "edges": self.correlation_graph.number_of_edges(),
                 "density": nx.density(self.correlation_graph),
                 "components": nx.number_connected_components(self.correlation_graph),
-            }
+            })
 
         # Pattern detection summary
         for pattern_type in ["license", "crypto", "protection"]:
             if pattern_correlations := [c for c in self.correlations if pattern_type in c.type.value.lower()]:
-                report["patterns_detected"][pattern_type] = len(pattern_correlations)
+                patterns_detected_dict[pattern_type] = len(pattern_correlations)
 
         return report
 

@@ -151,7 +151,7 @@ def detect_file_type_hints(data: bytes, distribution: dict[int, int]) -> list[st
         List of file type hints
 
     """
-    hints = []
+    hints: list[str] = []
     size = len(data)
 
     if size == 0:
@@ -266,7 +266,7 @@ def find_patterns(data: bytes, min_length: int = 4, max_patterns: int = 10) -> l
     if not data or len(data) < min_length:
         return []
 
-    patterns = Counter()
+    patterns: Counter[bytes] = Counter()
     data_len = len(data)
 
     # Look for patterns of various lengths
@@ -336,7 +336,7 @@ class StatisticsCalculator:
 
     def __init__(self) -> None:
         """Initialize statistics calculator."""
-        self.progress_callback = None
+        self.progress_callback: Callable[[int, int], None] | None = None
 
     def set_progress_callback(self, callback: Callable[[int, int], None]) -> None:
         """Set callback for progress updates.

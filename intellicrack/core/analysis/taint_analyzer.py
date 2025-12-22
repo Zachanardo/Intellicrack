@@ -53,10 +53,10 @@ class AdvancedTaintTracker:
         self.cfg = cfg
         self.data_flow_graph = data_flow_graph
         self.register_state_map = register_state_map
-        self.taint_sources = {}
+        self.taint_sources: dict[int, dict[str, Any]] = {}
         self.taint_id_counter = 0
-        self.taint_propagation_map = {}
-        self.transformation_log = {}
+        self.taint_propagation_map: dict[int, list[dict[str, Any]]] = {}
+        self.transformation_log: dict[int, list[dict[str, Any]]] = {}
         self.logger = logging.getLogger("IntellicrackLogger.AdvancedTaintTracker")
 
     def add_taint_source(self, source_instr: dict[str, Any]) -> int:
@@ -379,20 +379,17 @@ class TaintAnalysisEngine:
                 # Propagate taint through the program
                 propagation_paths = taint_tracker.propagate_taint(source, sink_instructions)
 
-                # Record paths that reach sinks
                 for path in propagation_paths:
                     if path["reaches_sink"]:
-                        self.taint_propagation.append(
-                            {
-                                "source": source,
-                                "sink": path["sink"],
-                                "path": path["instructions"],
-                                "confidence": path["confidence"],
-                                "transformations": path["transformations"],
-                            },
-                        )
+                        path_entry: dict[str, Any] = {
+                            "source": source,
+                            "sink": path["sink"],
+                            "path": path["instructions"],
+                            "confidence": path["confidence"],
+                            "transformations": path["transformations"],
+                        }
+                        self.taint_propagation.append([path_entry])
 
-            # Perform inter-procedural analysis
             interprocedural_paths = self._analyze_interprocedural_taint(
                 taint_tracker,
                 source_instructions,
@@ -400,14 +397,18 @@ class TaintAnalysisEngine:
                 disassembly,
                 cfg,
             )
-            self.taint_propagation.extend(interprocedural_paths)
+            for inter_path in interprocedural_paths:
+                self.taint_propagation.append([inter_path])
 
             # Analyze results for license-related patterns
             license_checks, bypass_points = self._analyze_license_patterns()
 
-            # Identify critical validation points
+            flattened_paths: list[dict[str, Any]] = []
+            for path_group in self.taint_propagation:
+                flattened_paths.extend(path_group)
+
             critical_points = self._identify_critical_validation_points(
-                self.taint_propagation,
+                flattened_paths,
                 sink_instructions,
             )
 
@@ -440,7 +441,7 @@ class TaintAnalysisEngine:
             # Try using Capstone first
             from ...utils.core.import_patterns import CAPSTONE_AVAILABLE, CS_ARCH_X86, CS_MODE_32, CS_MODE_64, Cs
 
-            if CAPSTONE_AVAILABLE:
+            if CAPSTONE_AVAILABLE and self.binary_path:
                 with open(self.binary_path, "rb") as f:
                     binary_data = f.read()
 
@@ -477,14 +478,15 @@ class TaintAnalysisEngine:
         except ImportError:
             self.logger.debug("Capstone not available, trying alternative methods")
 
-        # Fallback: Try to use objdump if available
         from ...utils.analysis.binary_analysis import disassemble_with_objdump
 
-        if instructions := disassemble_with_objdump(
-            self.binary_path,
-            parse_func=self._parse_objdump_output,
-        ):
-            return instructions
+        if self.binary_path:
+            result = disassemble_with_objdump(
+                self.binary_path,
+                parse_func=self._parse_objdump_output,
+            )
+            if result:
+                return result
 
         # Final fallback: Basic analysis without full disassembly
         self.logger.warning("No disassembly engine available, using basic pattern analysis")
@@ -507,9 +509,12 @@ class TaintAnalysisEngine:
 
     def _perform_pattern_based_analysis(self) -> list[dict[str, Any]]:
         """Perform basic pattern-based analysis when disassembly is not available."""
-        instructions = []
+        instructions: list[dict[str, Any]] = []
 
         try:
+            if not self.binary_path:
+                return instructions
+
             with open(self.binary_path, "rb") as f:
                 data = f.read()
 
@@ -742,10 +747,10 @@ class TaintAnalysisEngine:
         could reach decision points.
         """
         paths = []
-        visited = set()
-        max_path_length = 50  # Prevent infinite loops
+        visited: set[int] = set()
+        max_path_length = 50
 
-        def dfs_path(current_addr: int, current_path: list[dict[str, Any]], tainted_registers: set) -> None:
+        def dfs_path(current_addr: int, current_path: list[dict[str, Any]], tainted_registers: set[str]) -> None:
             if len(current_path) >= max_path_length or current_addr in visited:
                 return
 
@@ -782,7 +787,7 @@ class TaintAnalysisEngine:
 
         return paths
 
-    def _analyze_license_patterns(self) -> tuple:
+    def _analyze_license_patterns(self) -> tuple[int, int]:
         """Analyze taint propagation paths for license-related patterns.
 
         Returns:
@@ -792,19 +797,26 @@ class TaintAnalysisEngine:
         license_checks = 0
         bypass_points = 0
 
-        for path in self.taint_propagation:
-            # Look for license validation patterns in the path
-            has_file_read = any(step.get("source_type") == "file_io" for step in path)
-            has_comparison = any(step.get("sink_type") == "comparison" for step in path)
-            has_conditional = any(step.get("sink_type") == "conditional" for step in path)
+        for path_group in self.taint_propagation:
+            for path_dict in path_group:
+                if not isinstance(path_dict, dict):
+                    continue
+                path_list = path_dict.get("path", [])
+                if not isinstance(path_list, list):
+                    continue
 
-            if has_file_read and has_comparison and has_conditional:
-                license_checks += 1
+                has_file_read = any(isinstance(step, dict) and step.get("source_type") == "file_io" for step in path_list)
+                has_comparison = any(isinstance(step, dict) and step.get("sink_type") == "comparison" for step in path_list)
+                has_conditional = any(isinstance(step, dict) and step.get("sink_type") == "conditional" for step in path_list)
 
-                # Potential bypass points are conditional jumps after comparisons
-                for i, step in enumerate(path):
-                    if step.get("sink_type") == "conditional" and i > 0 and path[i - 1].get("sink_type") == "comparison":
-                        bypass_points += 1
+                if has_file_read and has_comparison and has_conditional:
+                    license_checks += 1
+
+                    for i, step in enumerate(path_list):
+                        if isinstance(step, dict) and isinstance(path_list[i - 1] if i > 0 else None, dict):
+                            prev_step = path_list[i - 1]
+                            if step.get("sink_type") == "conditional" and prev_step.get("sink_type") == "comparison":
+                                bypass_points += 1
 
         return license_checks, bypass_points
 
@@ -965,7 +977,7 @@ class TaintAnalysisEngine:
 
     def _count_by_type(self, items: list[dict[str, Any]]) -> dict[str, int]:
         """Count items by type."""
-        counts = {}
+        counts: dict[str, int] = {}
         for item in items:
             item_type = item.get("type", "unknown")
             counts[item_type] = counts.get(item_type, 0) + 1
@@ -1421,16 +1433,17 @@ class TaintAnalysisEngine:
                     },
                 )
 
-        # Add default sinks if none specified
         if "sinks" not in kwargs:
             self._add_default_taint_sinks()
         else:
-            # Add custom sinks
-            for sink in kwargs["sinks"]:
-                sink_type = sink.get("type", "custom")
-                sink_loc = sink.get("location", "unknown")
-                sink_desc = sink.get("description", f"Custom sink: {sink_loc}")
-                self.add_taint_sink(sink_type, sink_loc, sink_desc)
+            sink_list = kwargs["sinks"]
+            if isinstance(sink_list, list):
+                for sink in sink_list:
+                    if isinstance(sink, dict):
+                        sink_type = sink.get("type", "custom")
+                        sink_loc = sink.get("location", "unknown")
+                        sink_desc = sink.get("description", f"Custom sink: {sink_loc}")
+                        self.add_taint_sink(sink_type, sink_loc, sink_desc)
 
         # Run the analysis
         if not self.run_analysis():
@@ -1447,60 +1460,64 @@ class TaintAnalysisEngine:
         taint_flows = []
         vulnerabilities = []
 
-        # Analyze taint propagation paths
-        for path in self.taint_propagation:
-            if not path:
+        for path_group in self.taint_propagation:
+            if not path_group:
                 continue
 
-            # Find source and sink in path
-            source_step = None
-            sink_step = None
+            for path_item in path_group:
+                if not isinstance(path_item, dict):
+                    continue
+                source_step = None
+                sink_step = None
 
-            for step in path:
-                if step.get("taint_status") == "source":
-                    source_step = step
-                elif step.get("taint_status") == "sink":
-                    sink_step = step
+                if "path" in path_item and isinstance(path_item["path"], list):
+                    for step in path_item["path"]:
+                        if isinstance(step, dict):
+                            if step.get("taint_status") == "source":
+                                source_step = step
+                            elif step.get("taint_status") == "sink":
+                                sink_step = step
 
-            if source_step and sink_step:
-                # Check if this path matches our requested sources
-                source_matches = False
-                for proc_source in processed_sources:
-                    if proc_source["type"] == "address":
-                        if source_step.get("address") == proc_source["value"]:
-                            source_matches = True
-                            break
-                    elif proc_source["type"] in ["function", "api"]:
-                        if proc_source["value"] in str(source_step.get("instruction", "")):
-                            source_matches = True
-                            break
+                if source_step and sink_step:
+                    source_matches = False
+                    for proc_source in processed_sources:
+                        if proc_source["type"] == "address":
+                            if source_step.get("address") == proc_source["value"]:
+                                source_matches = True
+                                break
+                        elif proc_source["type"] in ["function", "api"]:
+                            instr_str = str(source_step.get("instruction", ""))
+                            proc_value = str(proc_source["value"])
+                            if proc_value in instr_str:
+                                source_matches = True
+                                break
 
-                if source_matches:
-                    # Record sink reached
-                    sink_info = {
-                        "address": sink_step.get("address", 0),
-                        "instruction": sink_step.get("instruction", ""),
-                        "sink_type": sink_step.get("sink", {}).get("type", "unknown"),
-                        "confidence": self._calculate_path_confidence(path),
-                    }
+                    if source_matches:
+                        sink_info = {
+                            "address": sink_step.get("address", 0),
+                            "instruction": sink_step.get("instruction", ""),
+                            "sink_type": sink_step.get("sink", {}).get("type", "unknown"),
+                            "confidence": self._calculate_path_confidence([path_item]),
+                        }
 
-                    if sink_info not in sinks_reached:
-                        sinks_reached.append(sink_info)
+                        if sink_info not in sinks_reached:
+                            sinks_reached.append(sink_info)
 
-                    # Record taint flow
-                    taint_flows.append(
-                        {
-                            "source": {
-                                "address": source_step.get("address", 0),
-                                "instruction": source_step.get("instruction", ""),
-                                "type": source_step.get("source", {}).get("type", "unknown"),
-                            },
-                            "sink": sink_info,
-                            "path_length": len(path),
-                            "path": [step["address"] for step in path],
-                            "transformations": self._extract_transformations(path),
-                        },
-                    )
+                        path_list = path_item.get("path", [])
+                        if isinstance(path_list, list):
+                            taint_flows.append(
+                                {
+                                    "source": {
+                                        "address": source_step.get("address", 0),
+                                        "instruction": source_step.get("instruction", ""),
+                                        "type": source_step.get("source", {}).get("type", "unknown"),
+                                    },
+                                    "sink": sink_info,
+                                    "path_length": len(path_list),
+                                    "path": [step.get("address", 0) for step in path_list if isinstance(step, dict)],
+                                    "transformations": self._extract_transformations(path_list),
+                                },
+                            )
 
         # Identify vulnerabilities based on taint flows
         for flow in taint_flows:
@@ -1718,16 +1735,28 @@ def run_taint_analysis(app: object) -> None:
                 app.update_output.emit(f"log_message(- License checks found: {results['summary']['license_checks_found']})")
                 app.update_output.emit(f"log_message(- Potential bypass points: {results['summary']['potential_bypass_points']})")
 
-            # Add to analyze results
-            if not hasattr(app, "analyze_results"):
-                app.analyze_results = []
-
-            app.analyze_results.append("\n=== TAINT ANALYSIS RESULTS ===")
-            app.analyze_results.append(f"Total taint sources: {results['summary']['total_sources']}")
-            app.analyze_results.append(f"Total taint sinks: {results['summary']['total_sinks']}")
-            app.analyze_results.append(f"Total taint propagation paths: {results['summary']['total_paths']}")
-            app.analyze_results.append(f"License checks found: {results['summary']['license_checks_found']}")
-            app.analyze_results.append(f"Potential bypass points: {results['summary']['potential_bypass_points']}")
+            if hasattr(app, "analyze_results"):
+                analyze_results = getattr(app, "analyze_results", None)
+                if isinstance(analyze_results, list):
+                    analyze_results.append("\n=== TAINT ANALYSIS RESULTS ===")
+                    analyze_results.append(f"Total taint sources: {results['summary']['total_sources']}")
+                    analyze_results.append(f"Total taint sinks: {results['summary']['total_sinks']}")
+                    analyze_results.append(f"Total taint propagation paths: {results['summary']['total_paths']}")
+                    analyze_results.append(f"License checks found: {results['summary']['license_checks_found']}")
+                    analyze_results.append(f"Potential bypass points: {results['summary']['potential_bypass_points']}")
+            else:
+                setattr(
+                    app,
+                    "analyze_results",
+                    [
+                        "\n=== TAINT ANALYSIS RESULTS ===",
+                        f"Total taint sources: {results['summary']['total_sources']}",
+                        f"Total taint sinks: {results['summary']['total_sinks']}",
+                        f"Total taint propagation paths: {results['summary']['total_paths']}",
+                        f"License checks found: {results['summary']['license_checks_found']}",
+                        f"Potential bypass points: {results['summary']['potential_bypass_points']}",
+                    ],
+                )
 
             # Handle report generation if PyQt6 is available
             if PYQT6_AVAILABLE:
@@ -1741,8 +1770,10 @@ def run_taint_analysis(app: object) -> None:
                     if hasattr(app, "update_output"):
                         app.update_output.emit(f"log_message([Taint Analysis] Report saved to {report_path})")
 
-                    # Ask if user wants to open the report
-                    ask_open_report(app, report_path)
+                    from PyQt6.QtWidgets import QWidget
+
+                    if isinstance(app, QWidget):
+                        ask_open_report(app, report_path)
                 elif hasattr(app, "update_output"):
                     app.update_output.emit("log_message([Taint Analysis] Failed to generate report)")
         elif hasattr(app, "update_output"):
@@ -1750,8 +1781,7 @@ def run_taint_analysis(app: object) -> None:
     elif hasattr(app, "update_output"):
         app.update_output.emit("log_message([Taint Analysis] Failed to set binary)")
 
-    # Store the engine instance
-    app.taint_analysis_engine = engine
+    setattr(app, "taint_analysis_engine", engine)
 
 
 # Create alias for compatibility with tests

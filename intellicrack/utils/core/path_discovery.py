@@ -28,16 +28,30 @@ import os
 import shutil
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any, Protocol
 
 
 logger = logging.getLogger(__name__)
 
 
+class ConfigManager(Protocol):
+    """Protocol for config manager interface."""
+
+    def get(self, key: str) -> Any:
+        """Get config value."""
+        ...
+
+    def set(self, key: str, value: Any) -> None:
+        """Set config value."""
+        ...
+
+
 class PathDiscovery:
     """Dynamic path discovery system for tools and resources."""
 
-    def __init__(self, config_manager: object | None = None) -> None:
+    def __init__(self, config_manager: ConfigManager | None = None) -> None:
         """Initialize path discovery system.
 
         Args:
@@ -45,14 +59,14 @@ class PathDiscovery:
 
         """
         self.config_manager = config_manager
-        self.cache = {}
+        self.cache: dict[str, str] = {}
         self.platform = sys.platform
         self.is_windows = self.platform.startswith("win")
         self.is_linux = self.platform.startswith("linux")
         self.is_mac = self.platform.startswith("darwin")
 
         # Define tool specifications
-        self.tool_specs = {
+        self.tool_specs: dict[str, dict[str, Any]] = {
             "ghidra": {
                 "executables": {
                     "win32": ["ghidraRun.bat", "ghidra.bat"],
@@ -280,7 +294,7 @@ class PathDiscovery:
         }
 
         # System paths
-        self.system_paths = {
+        self.system_paths: dict[str, Callable[[], str | None]] = {
             "windows_system": self._get_windows_system_dir,
             "windows_system32": self._get_windows_system32_dir,
             "windows_drivers": self._get_windows_drivers_dir,
@@ -317,7 +331,7 @@ class PathDiscovery:
         # Check config first
         if self.config_manager:
             config_path = self.config_manager.get(f"{tool_name}_path")
-            if config_path and os.path.exists(config_path):
+            if isinstance(config_path, str) and os.path.exists(config_path):
                 self.cache[cache_key] = config_path
                 return config_path
 
@@ -328,28 +342,26 @@ class PathDiscovery:
             return self._generic_tool_search(tool_name, required_executables)
 
         # Try discovery strategies
-        strategies = [
+        strategies: list[tuple[Callable[[Any], str | None], Any]] = [
             (self._search_env_vars, spec.get("env_vars", [])),
             (self._search_path, required_executables or spec["executables"].get(self.platform, [])),
             (self._search_common_locations, spec),
-            (self._search_registry, tool_name) if self.is_windows else (None, None),
+            (self._search_registry, tool_name) if self.is_windows else (lambda _: None, None),
         ]
 
         for strategy, args in strategies:
-            if strategy is None:
-                continue
-
-            if path := strategy(args):
+            result = strategy(args)
+            if result:
                 # Validate if validator exists
                 validator = spec.get("validation")
-                if validator and not validator(path):
+                if validator is not None and callable(validator) and not validator(result):
                     continue
 
                 # Cache and return
-                self.cache[cache_key] = path
+                self.cache[cache_key] = result
                 if self.config_manager:
-                    self.config_manager.set(f"{tool_name}_path", path)
-                return path
+                    self.config_manager.set(f"{tool_name}_path", result)
+                return result
 
         return None
 
@@ -366,12 +378,16 @@ class PathDiscovery:
                 return path
 
         # Search common locations
-        search_dirs = []
+        search_dirs: list[str] = []
         if self.is_windows:
+            program_files = self.get_system_path("program_files")
+            program_files_x86 = self.get_system_path("program_files_x86")
+            if program_files:
+                search_dirs.append(os.path.join(program_files, tool_name))
+            if program_files_x86:
+                search_dirs.append(os.path.join(program_files_x86, tool_name))
             search_dirs.extend(
                 [
-                    os.path.join(self.get_system_path("program_files"), tool_name),
-                    os.path.join(self.get_system_path("program_files_x86"), tool_name),
                     f"C:\\{tool_name}",
                     f"C:\\Tools\\{tool_name}",
                 ],
@@ -421,15 +437,28 @@ class PathDiscovery:
                 return path
         return None
 
-    def _search_common_locations(self, spec: dict) -> str | None:
+    def _search_common_locations(self, spec: dict[str, Any]) -> str | None:
         """Search in common installation locations."""
-        search_paths = spec.get("search_paths", {}).get(self.platform, [])
-        executables = spec.get("executables", {}).get(self.platform, [])
+        search_paths_raw = spec.get("search_paths", {})
+        executables_raw = spec.get("executables", {})
+
+        if not isinstance(search_paths_raw, dict) or not isinstance(executables_raw, dict):
+            return None
+
+        search_paths = search_paths_raw.get(self.platform, [])
+        executables = executables_raw.get(self.platform, [])
+
+        if not isinstance(search_paths, list) or not isinstance(executables, list):
+            return None
 
         for directory in search_paths:
+            if not isinstance(directory, str):
+                continue
             directory = os.path.expanduser(directory)
             if os.path.exists(directory):
                 for exe in executables:
+                    if not isinstance(exe, str):
+                        continue
                     exe_path = os.path.join(directory, exe)
                     if os.path.isfile(exe_path):
                         return exe_path
@@ -468,22 +497,29 @@ class PathDiscovery:
                                 with winreg.OpenKey(key, subkey_name) as subkey:
                                     try:
                                         name = winreg.QueryValueEx(subkey, "DisplayName")[0]
-                                        if tool_name.lower() in name.lower():
-                                            install_location = winreg.QueryValueEx(subkey, "InstallLocation")[0]
-                                            if install_location and os.path.exists(install_location):
+                                        if isinstance(name, str) and tool_name.lower() in name.lower():
+                                            install_location_raw = winreg.QueryValueEx(subkey, "InstallLocation")[0]
+                                            if isinstance(install_location_raw, str) and os.path.exists(install_location_raw):
                                                 # Look for executable
                                                 spec = self.tool_specs.get(tool_name.lower(), {})
-                                                executables = spec.get("executables", {}).get("win32", [f"{tool_name}.exe"])
+                                                executables_dict = spec.get("executables", {})
+                                                default_executables = [f"{tool_name}.exe"]
+                                                if isinstance(executables_dict, dict):
+                                                    exe_list = executables_dict.get("win32", default_executables)
+                                                    executables = exe_list if isinstance(exe_list, list) else default_executables
+                                                else:
+                                                    executables = default_executables
 
                                                 for exe in executables:
-                                                    exe_path = os.path.join(install_location, exe)
-                                                    if os.path.isfile(exe_path):
-                                                        return exe_path
+                                                    if isinstance(exe, str):
+                                                        exe_path = os.path.join(install_location_raw, exe)
+                                                        if os.path.isfile(exe_path):
+                                                            return exe_path
 
-                                                    # Check bin subdirectory
-                                                    bin_path = os.path.join(install_location, "bin", exe)
-                                                    if os.path.isfile(bin_path):
-                                                        return bin_path
+                                                        # Check bin subdirectory
+                                                        bin_path = os.path.join(install_location_raw, "bin", exe)
+                                                        if os.path.isfile(bin_path):
+                                                            return bin_path
                                     except OSError as e:
                                         logger.exception("OS error in path_discovery: %s", e, exc_info=True)
                             except OSError as e:
@@ -675,14 +711,18 @@ class PathDiscovery:
         if not path:
             if parent_widget:
                 try:
-                    from PyQt6.QtWidgets import QFileDialog, QMessageBox
+                    from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
+
+                    if not isinstance(parent_widget, QWidget):
+                        logger.warning("parent_widget is not a QWidget instance")
+                        return None
 
                     msg = QMessageBox()
                     msg.setWindowTitle(f"{tool_name} Not Found")
                     msg.setText(f"Could not find {tool_name}. Would you like to browse for it?")
-                    msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+                    msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
-                    if msg.exec() == QMessageBox.Yes:
+                    if msg.exec() == QMessageBox.StandardButton.Yes:
                         file_filter = "Executable files (*.exe *.bat);;All files (*.*)" if self.is_windows else "All files (*)"
                         path, _ = QFileDialog.getOpenFileName(
                             parent_widget,
@@ -729,10 +769,10 @@ class PathDiscovery:
 
 
 # Global instance
-_path_discovery = None
+_path_discovery: PathDiscovery | None = None
 
 
-def get_path_discovery(config_manager: object | None = None) -> PathDiscovery:
+def get_path_discovery(config_manager: ConfigManager | None = None) -> PathDiscovery:
     """Get global PathDiscovery instance.
 
     Args:

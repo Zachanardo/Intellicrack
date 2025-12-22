@@ -30,7 +30,7 @@ import struct
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Callable
 
 
 logger = logging.getLogger(__name__)
@@ -62,11 +62,11 @@ class CloudLicenseResponseGenerator:
         self.encryption_keys = self.config.get("encryption_keys", {})
 
         self.active = False
-        self.intercepted_requests = []
-        self.generated_responses = []
+        self.intercepted_requests: list[dict[str, Any]] = []
+        self.generated_responses: list[dict[str, Any]] = []
         self.hooks_enabled = False
-        self.listener_threads = []
-        self.socket_hooks = {}
+        self.listener_threads: list[threading.Thread] = []
+        self.socket_hooks: dict[str, Any] = {}
 
         self._init_response_templates()
         self._init_protocol_handlers()
@@ -114,7 +114,7 @@ class CloudLicenseResponseGenerator:
         respective handler methods for processing license validation requests.
 
         """
-        self.protocol_handlers = {
+        self.protocol_handlers: dict[str, Callable[[dict[str, Any]], bytes]] = {
             "http": self._handle_http_request,
             "https": self._handle_https_request,
             "websocket": self._handle_websocket_request,
@@ -447,7 +447,7 @@ class CloudLicenseResponseGenerator:
         """
         template = self.response_templates.get(template_name, self.response_templates["valid_license"])
 
-        response = template.copy()
+        response: dict[str, Any] = template.copy()
 
         # Generate signature
         response["signature"] = self._generate_signature(response)

@@ -146,24 +146,39 @@ def main() -> int:
         from intellicrack.utils.core.plugin_paths import get_logs_dir
         from intellicrack.utils.logger import setup_logging
 
-        log_config = get_config().get("logging", {})
-        log_level = log_config.get("level", "INFO")
+        from typing import Any
 
-        log_file = None
-        if log_config.get("enable_file_logging", True):
+        config_data = get_config()
+        logging_config_obj: Any = config_data.get("logging", {})
+        log_config: dict[str, Any] = logging_config_obj if isinstance(logging_config_obj, dict) else {}
+
+        level_obj: Any = log_config.get("level", "INFO")
+        log_level: str = level_obj if isinstance(level_obj, str) else "INFO"
+
+        log_file: str | None = None
+        file_logging_obj: Any = log_config.get("enable_file_logging", True)
+        enable_file_logging: bool = file_logging_obj if isinstance(file_logging_obj, bool) else True
+        if enable_file_logging:
             log_dir = get_logs_dir()
             os.makedirs(log_dir, exist_ok=True)
             log_file = os.path.join(log_dir, "intellicrack.log")
 
         # Get console logging status from config, default to True if not specified
-        enable_console = log_config.get("enable_console_logging", True)
+        console_obj: Any = log_config.get("enable_console_logging", True)
+        enable_console: bool = console_obj if isinstance(console_obj, bool) else True
+
+        rotation_obj: Any = log_config.get("log_rotation", 5)
+        log_rotation: int = rotation_obj if isinstance(rotation_obj, int) else 5
+
+        size_obj: Any = log_config.get("max_log_size", 10 * 1024 * 1024)
+        max_log_size: int = size_obj if isinstance(size_obj, int) else 10 * 1024 * 1024
 
         setup_logging(
             level=log_level,
             log_file=log_file,
-            enable_rotation=log_config.get("log_rotation", 5) > 0,
-            max_bytes=log_config.get("max_log_size", 10 * 1024 * 1024),
-            backup_count=log_config.get("log_rotation", 5),
+            enable_rotation=log_rotation > 0,
+            max_bytes=max_log_size,
+            backup_count=log_rotation,
             enable_console=enable_console,
         )
 
@@ -200,14 +215,16 @@ def main() -> int:
         # Initialize security enforcement if available
         logger.debug("Attempting to initialize security enforcement...")
         try:
-            from intellicrack.core import security_enforcement
+            from intellicrack.core import security_enforcement as se_module
 
-            security_enforcement.initialize_security()
-            security_status = security_enforcement.get_security_status()
-            if security_status.get("initialized"):
-                logger.info("Security enforcement initialized successfully with status: %s.", security_status)
-            else:
-                logger.warning("Security enforcement initialized but reported not enabled. Status: %s", security_status)
+            if se_module is not None:
+                se_module.initialize_security()
+                security_status = se_module.get_security_status()
+                status_initialized: object = security_status.get("initialized") if isinstance(security_status, dict) else False
+                if status_initialized:
+                    logger.info("Security enforcement initialized successfully with status: %s.", security_status)
+                else:
+                    logger.warning("Security enforcement initialized but reported not enabled. Status: %s", security_status)
         except ImportError as e:
             logger.warning("Security enforcement not available: %s. Skipping security enforcement initialization.", e)
         except Exception as e:

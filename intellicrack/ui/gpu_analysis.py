@@ -19,10 +19,9 @@ along with this program.  If not, see https://www.gnu.org/licenses/.
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from intellicrack.handlers.pyqt6_handler import QDialog, QGridLayout, QGroupBox, QLabel, QProgressBar, Qt, QVBoxLayout
-from intellicrack.utils.log_message import log_error, log_info, log_warning
 
 
 class GpuAnalysis:
@@ -35,17 +34,19 @@ class GpuAnalysis:
 
     def __init__(self) -> None:
         """Initialize GPU analysis with existing infrastructure integration."""
-        self.logger = logging.getLogger(__name__)
-        self.gpu_available = False
-        self.framework_info = {}
-        self.device_info = {}
+        self.logger: logging.Logger = logging.getLogger(__name__)
+        self.gpu_available: bool = False
+        self.framework_info: dict[str, Any] = {}
+        self.device_info: dict[str, Any] = {}
 
         # Initialize GPU infrastructure
         self._initialize_gpu_support()
 
         # UI state tracking
-        self.progress_dialog = None
-        self.current_analysis = None
+        self.progress_dialog: QDialog | None = None
+        self.current_analysis: dict[str, Any] | None = None
+        self.progress_bar: QProgressBar | None = None
+        self.status_label: QLabel | None = None
 
     def _initialize_gpu_support(self) -> None:
         """Initialize GPU support using existing infrastructure."""
@@ -73,19 +74,34 @@ class GpuAnalysis:
                 self.logger.debug("Framework detection failed: %s", e)
 
             if self.gpu_available:
-                log_info(
+                from intellicrack.utils.log_message import MessageCategory, log_message
+
+                log_message(
                     f"GPU Analysis initialized with {self.accelerator.framework}",
-                    category="GPU",
+                    category=MessageCategory.PERFORMANCE,
                     context=self.device_info,
                 )
             else:
-                log_warning("GPU Analysis initialized in CPU fallback mode", category="GPU")
+                from intellicrack.utils.log_message import MessageCategory, log_message
+
+                log_message(
+                    "GPU Analysis initialized in CPU fallback mode",
+                    level="WARNING",
+                    category=MessageCategory.PERFORMANCE,
+                )
 
         except ImportError as e:
             self.logger.exception("Failed to initialize GPU infrastructure: %s", e)
             self.gpu_available = False
             self.framework_info = {"framework": "cpu", "error": str(e)}
-            log_error("GPU infrastructure initialization failed", category="GPU", exception=e)
+            from intellicrack.utils.log_message import MessageCategory, log_message
+
+            log_message(
+                "GPU infrastructure initialization failed",
+                level="ERROR",
+                category=MessageCategory.PERFORMANCE,
+                exception=e,
+            )
 
     def run_gpu_accelerated_analysis(self, app: object) -> None:
         """Run GPU-accelerated binary analysis with UI integration.
@@ -95,12 +111,21 @@ class GpuAnalysis:
 
         """
         try:
-            log_info("Starting GPU-accelerated binary analysis", category="GPU")
+            from intellicrack.utils.log_message import MessageCategory, log_message
+
+            log_message(
+                "Starting GPU-accelerated binary analysis",
+                category=MessageCategory.PERFORMANCE,
+            )
 
             # Get binary data from application
             binary_data = self._get_binary_data(app)
             if not binary_data:
-                log_error("No binary data available for GPU analysis", category="GPU")
+                log_message(
+                    "No binary data available for GPU analysis",
+                    level="ERROR",
+                    category=MessageCategory.PERFORMANCE,
+                )
                 if hasattr(app, "update_output"):
                     app.update_output.emit("[ERROR] No binary loaded for GPU analysis")
                 return
@@ -122,15 +147,22 @@ class GpuAnalysis:
             # Process and display results
             self._process_analysis_results(app, results)
 
-            log_info(
+            log_message(
                 "GPU-accelerated analysis completed successfully",
-                category="GPU",
+                category=MessageCategory.PERFORMANCE,
                 context={"framework": results.get("framework_used", "unknown")},
             )
 
         except Exception as e:
             self.logger.exception("GPU analysis failed: %s", e)
-            log_error("GPU-accelerated analysis failed", category="GPU", exception=e)
+            from intellicrack.utils.log_message import MessageCategory, log_message
+
+            log_message(
+                "GPU-accelerated analysis failed",
+                level="ERROR",
+                category=MessageCategory.PERFORMANCE,
+                exception=e,
+            )
 
             if hasattr(app, "update_output"):
                 app.update_output.emit(f"[ERROR] GPU analysis failed: {e}")
@@ -139,29 +171,47 @@ class GpuAnalysis:
             self._hide_progress_dialog()
 
     def _get_binary_data(self, app: object) -> bytes | None:
-        """Extract binary data from application state."""
+        """Extract binary data from application state.
+
+        Args:
+            app: Main application instance with binary data
+
+        Returns:
+            Binary data as bytes, or None if not available
+
+        """
         try:
             # Check various possible locations for binary data
-            if hasattr(app, "binary_data") and app.binary_data:
-                return app.binary_data
+            if hasattr(app, "binary_data"):
+                binary_data = getattr(app, "binary_data")
+                if binary_data and isinstance(binary_data, bytes):
+                    return cast(bytes, binary_data)
 
             # Try to get from current file
-            if hasattr(app, "current_file") and app.current_file:
-                file_path = Path(app.current_file)
-                if file_path.exists() and file_path.is_file():
-                    return file_path.read_bytes()
+            if hasattr(app, "current_file"):
+                current_file = getattr(app, "current_file")
+                if current_file:
+                    file_path = Path(current_file)
+                    if file_path.exists() and file_path.is_file():
+                        return file_path.read_bytes()
 
             # Try to get from loaded binary path
-            if hasattr(app, "loaded_binary_path") and app.loaded_binary_path:
-                file_path = Path(app.loaded_binary_path)
-                if file_path.exists() and file_path.is_file():
-                    return file_path.read_bytes()
+            if hasattr(app, "loaded_binary_path"):
+                loaded_binary_path = getattr(app, "loaded_binary_path")
+                if loaded_binary_path:
+                    file_path = Path(loaded_binary_path)
+                    if file_path.exists() and file_path.is_file():
+                        return file_path.read_bytes()
 
             # Check if there's a selected file in file browser
-            if hasattr(app, "file_browser") and hasattr(app.file_browser, "selected_file") and app.file_browser.selected_file:
-                file_path = Path(app.file_browser.selected_file)
-                if file_path.is_file():
-                    return file_path.read_bytes()
+            if hasattr(app, "file_browser"):
+                file_browser = getattr(app, "file_browser")
+                if hasattr(file_browser, "selected_file"):
+                    selected_file = getattr(file_browser, "selected_file")
+                    if selected_file:
+                        file_path = Path(selected_file)
+                        if file_path.is_file():
+                            return file_path.read_bytes()
 
             return None
 
@@ -170,18 +220,32 @@ class GpuAnalysis:
             return None
 
     def _show_progress_dialog(self, app: object) -> None:
-        """Show progress dialog for GPU analysis."""
+        """Show progress dialog for GPU analysis.
+
+        Args:
+            app: Main application instance
+
+        """
         try:
-            if not hasattr(app, "centralWidget") or not app.centralWidget():
+            if not hasattr(app, "centralWidget"):
                 return
 
-            self.progress_dialog = QDialog(app.centralWidget())
-            self.progress_dialog.setWindowTitle("GPU Analysis")
-            self.progress_dialog.setWindowFlags(Qt.WindowType.Tool)
-            self.progress_dialog.setModal(True)
-            self.progress_dialog.resize(400, 200)
+            central_widget = getattr(app, "centralWidget")
+            if not callable(central_widget):
+                return
 
-            layout = QVBoxLayout(self.progress_dialog)
+            parent_widget = central_widget()
+            if parent_widget is None:
+                return
+
+            dialog = QDialog(parent_widget)
+            self.progress_dialog = dialog
+            dialog.setWindowTitle("GPU Analysis")
+            dialog.setWindowFlags(Qt.WindowType.Tool)
+            dialog.setModal(True)
+            dialog.resize(400, 200)
+
+            layout = QVBoxLayout(dialog)
 
             # Info group
             info_group = QGroupBox("GPU Information")
@@ -202,47 +266,56 @@ class GpuAnalysis:
             progress_group = QGroupBox("Analysis Progress")
             progress_layout = QVBoxLayout(progress_group)
 
-            self.progress_bar = QProgressBar()
-            self.progress_bar.setRange(0, 0)  # Indeterminate
-            progress_layout.addWidget(self.progress_bar)
+            progress_bar = QProgressBar()
+            self.progress_bar = progress_bar
+            progress_bar.setRange(0, 0)
+            progress_layout.addWidget(progress_bar)
 
-            self.status_label = QLabel("Initializing GPU analysis...")
-            progress_layout.addWidget(self.status_label)
+            status_label = QLabel("Initializing GPU analysis...")
+            self.status_label = status_label
+            progress_layout.addWidget(status_label)
 
             layout.addWidget(progress_group)
 
-            # Show dialog
-            self.progress_dialog.show()
+            dialog.show()
 
         except Exception as e:
             self.logger.exception("Failed to show progress dialog: %s", e)
 
     def _hide_progress_dialog(self) -> None:
         """Hide progress dialog."""
-        try:
-            if self.progress_dialog:
+        if self.progress_dialog is not None:
+            try:
                 self.progress_dialog.close()
+            except Exception as e:
+                self.logger.exception("Failed to hide progress dialog: %s", e)
+            finally:
                 self.progress_dialog = None
-        except Exception as e:
-            self.logger.exception("Failed to hide progress dialog: %s", e)
 
     def _process_analysis_results(self, app: object, results: dict[str, Any]) -> None:
-        """Process and display GPU analysis results."""
+        """Process and display GPU analysis results.
+
+        Args:
+            app: Main application instance
+            results: Analysis results dictionary
+
+        """
         try:
             if not results:
                 return
 
             # Update progress dialog status
-            if hasattr(self, "status_label") and self.status_label:
+            if self.status_label is not None:
                 self.status_label.setText("Processing results...")
 
             # Display results summary
             if hasattr(app, "update_output"):
+                update_output = getattr(app, "update_output")
                 framework = results.get("framework_used", "cpu")
                 gpu_available = results.get("gpu_available", False)
 
-                app.update_output.emit(f"[GPU] Analysis completed using {framework}")
-                app.update_output.emit(f"[GPU] GPU acceleration: {'enabled' if gpu_available else 'disabled'}")
+                update_output.emit(f"[GPU] Analysis completed using {framework}")
+                update_output.emit(f"[GPU] GPU acceleration: {'enabled' if gpu_available else 'disabled'}")
 
                 # Display analysis results
                 analyses = results.get("analyses", {})
@@ -250,25 +323,30 @@ class GpuAnalysis:
                 # Pattern search results
                 if "pattern_search" in analyses:
                     pattern_results = analyses["pattern_search"]
-                    total_patterns = len(pattern_results)
-                    total_matches = sum(r.get("match_count", 0) for r in pattern_results)
-                    app.update_output.emit(f"[GPU] Pattern search: {total_matches} matches across {total_patterns} patterns")
+                    if isinstance(pattern_results, list):
+                        total_patterns = len(pattern_results)
+                        total_matches = sum(r.get("match_count", 0) for r in pattern_results if isinstance(r, dict))
+                        update_output.emit(f"[GPU] Pattern search: {total_matches} matches across {total_patterns} patterns")
 
                 # Entropy analysis results
                 if "entropy" in analyses:
                     entropy_data = analyses["entropy"]
-                    avg_entropy = entropy_data.get("average_entropy", 0.0)
-                    app.update_output.emit(f"[GPU] Entropy analysis: average {avg_entropy:.2f}")
+                    if isinstance(entropy_data, dict):
+                        avg_entropy = entropy_data.get("average_entropy", 0.0)
+                        if isinstance(avg_entropy, (int, float)):
+                            update_output.emit(f"[GPU] Entropy analysis: average {avg_entropy:.2f}")
 
                 # High entropy sections
                 if "high_entropy_sections" in analyses:
-                    if high_entropy := analyses["high_entropy_sections"]:
+                    high_entropy = analyses["high_entropy_sections"]
+                    if high_entropy and isinstance(high_entropy, list):
                         count = len(high_entropy)
-                        app.update_output.emit(f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)")
+                        update_output.emit(f"[GPU] Found {count} high-entropy sections (potentially encrypted/packed)")
 
-                if device_info := results.get("device_info"):
+                device_info = results.get("device_info")
+                if device_info and isinstance(device_info, dict):
                     device_name = device_info.get("name", "Unknown")
-                    app.update_output.emit(f"[GPU] Device: {device_name}")
+                    update_output.emit(f"[GPU] Device: {device_name}")
 
             # Store results for further processing
             self.current_analysis = results
@@ -276,7 +354,8 @@ class GpuAnalysis:
         except Exception as e:
             self.logger.exception("Failed to process analysis results: %s", e)
             if hasattr(app, "update_output"):
-                app.update_output.emit(f"[ERROR] Failed to process GPU analysis results: {e}")
+                update_output = getattr(app, "update_output")
+                update_output.emit(f"[ERROR] Failed to process GPU analysis results: {e}")
 
     def get_gpu_status(self) -> dict[str, Any]:
         """Get current GPU status and capabilities.
@@ -317,7 +396,12 @@ class GpuAnalysis:
             self._hide_progress_dialog()
             self.current_analysis = None
 
-            log_info("GPU Analysis cleanup completed", category="GPU")
+            from intellicrack.utils.log_message import MessageCategory, log_message
+
+            log_message(
+                "GPU Analysis cleanup completed",
+                category=MessageCategory.PERFORMANCE,
+            )
 
         except Exception as e:
             self.logger.exception("GPU analysis cleanup failed: %s", e)

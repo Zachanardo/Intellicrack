@@ -24,6 +24,7 @@ import os
 from intellicrack.handlers.pyqt6_handler import (
     QColor,
     QDragEnterEvent,
+    QDragLeaveEvent,
     QDropEvent,
     QFont,
     QLabel,
@@ -115,7 +116,8 @@ class DropZoneWidget(QWidget):
                     border-radius: 10px;
                 }
             """)
-            self.label.setText("Release to load files")
+            if self.label is not None:
+                self.label.setText("Release to load files")
         else:
             self.setStyleSheet("""
                 DropZoneWidget {
@@ -128,9 +130,10 @@ class DropZoneWidget(QWidget):
                     border-color: #999;
                 }
             """)
-            self.label.setText("Drop files here for analysis")
+            if self.label is not None:
+                self.label.setText("Drop files here for analysis")
 
-    def paintEvent(self, event: QPaintEvent) -> None:
+    def paintEvent(self, event: QPaintEvent | None) -> None:
         """Customize paint event to draw drag highlights.
 
         Draws a rounded rectangle highlight around the drop zone when
@@ -153,7 +156,7 @@ class DropZoneWidget(QWidget):
             painter.setPen(pen)
             painter.drawRoundedRect(self.rect().adjusted(5, 5, -5, -5), 10, 10)
 
-    def dragEnterEvent(self, event: QDragEnterEvent) -> None:
+    def dragEnterEvent(self, event: QDragEnterEvent | None) -> None:
         """Handle drag enter event for file validation.
 
         Accepts the drag event if at least one of the dragged items is a
@@ -163,9 +166,11 @@ class DropZoneWidget(QWidget):
             event: The drag enter event containing mime data about dragged items.
 
         """
-        if event.mimeData().hasUrls():
-            # Check if any files are supported
-            for url in event.mimeData().urls():
+        if event is None:
+            return
+        mime_data = event.mimeData()
+        if mime_data is not None and mime_data.hasUrls():
+            for url in mime_data.urls():
                 if url.isLocalFile() and self._is_supported_file(url.toLocalFile()):
                     event.acceptProposedAction()
                     self.is_dragging = True
@@ -173,7 +178,7 @@ class DropZoneWidget(QWidget):
                     return
         event.ignore()
 
-    def dragLeaveEvent(self, event: QDragEnterEvent) -> None:
+    def dragLeaveEvent(self, event: QDragLeaveEvent | None) -> None:
         """Handle drag leave event.
 
         Resets the dragging state and updates the visual styling when
@@ -186,7 +191,7 @@ class DropZoneWidget(QWidget):
         self.is_dragging = False
         self.update_style()
 
-    def dropEvent(self, event: QDropEvent) -> None:
+    def dropEvent(self, event: QDropEvent | None) -> None:
         """Handle file drop event.
 
         Processes dropped files, validates them against supported file types,
@@ -199,9 +204,12 @@ class DropZoneWidget(QWidget):
         self.is_dragging = False
         self.update_style()
 
-        if event.mimeData().hasUrls():
+        if event is None:
+            return
+        mime_data = event.mimeData()
+        if mime_data is not None and mime_data.hasUrls():
             file_paths: list[str] = []
-            for url in event.mimeData().urls():
+            for url in mime_data.urls():
                 if url.isLocalFile():
                     file_path = url.toLocalFile()
                     if self._is_supported_file(file_path):

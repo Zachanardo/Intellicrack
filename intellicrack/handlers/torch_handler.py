@@ -37,7 +37,7 @@ if TYPE_CHECKING:
 
     import torch as torch_types
 
-    TorchType = torch_types
+    TorchModule = types.ModuleType
     TensorType = type[torch_types.Tensor]
     CudaType = types.ModuleType
     DeviceType = type[torch_types.device]
@@ -55,16 +55,16 @@ if TYPE_CHECKING:
 HAS_TORCH: bool = False
 TORCH_AVAILABLE: bool = False
 TORCH_VERSION: str | None = None
-torch: TorchType | None = None
-Tensor: TensorType | None = None
-cuda: CudaType | None = None
-device: DeviceType | None = None
-dtype: DtypeType | None = None
-nn: NNType | None = None
-optim: OptimType | None = None
-save: SaveType | None = None
-load: LoadType | None = None
-tensor: TensorFuncType | None = None
+torch: Any = None
+Tensor: Any = None
+cuda: Any = None
+device: Any = None
+dtype: Any = None
+nn: Any = None
+optim: Any = None
+save: Any = None
+load: Any = None
+tensor: Any = None
 
 # Load environment variables from .env file
 # Users can customize GPU settings in the .env file
@@ -160,7 +160,13 @@ else:
 
         if success and modules:
             # Use the successfully imported modules WITHOUT re-importing
-            torch = modules["torch"]
+            torch_module = modules["torch"]
+            if not isinstance(torch_module, type(os)):
+                error_msg = "Invalid torch module type"
+                logger.error(error_msg)
+                raise TypeError(error_msg)
+
+            torch = torch_module
             Tensor = modules["Tensor"]
             cuda = modules["cuda"]
             device = modules["device"]
@@ -173,7 +179,10 @@ else:
 
             HAS_TORCH = True
             TORCH_AVAILABLE = True
-            TORCH_VERSION = torch.__version__
+            if hasattr(torch_module, "__version__"):
+                TORCH_VERSION = str(torch_module.__version__)
+            else:
+                TORCH_VERSION = "unknown"
             logger.info(f"PyTorch {TORCH_VERSION} imported successfully with universal GPU compatibility")
         else:
             error_msg = "PyTorch import failed"
@@ -322,13 +331,16 @@ if not HAS_TORCH:
     # Assign fallback objects
     torch = None
     Tensor = FallbackTensor
-    cuda = FallbackCuda()
+    cuda_fallback: Any = FallbackCuda()
+    cuda = cuda_fallback
     device = FallbackDevice
     dtype = None
-    nn = type("nn", (), {"Module": FallbackModule})()
-    optim = type("optim", (), {"Optimizer": FallbackOptimizer})()
+    nn_fallback: Any = type("nn", (), {"Module": FallbackModule})()
+    nn = nn_fallback
+    optim_fallback: Any = type("optim", (), {"Optimizer": FallbackOptimizer})()
+    optim = optim_fallback
 
-    def tensor(data: object, **kwargs: object) -> FallbackTensor:
+    def _create_tensor(data: object, **kwargs: object) -> FallbackTensor:
         """Create fallback tensor.
 
         Wraps data in a FallbackTensor object for API compatibility.
@@ -342,6 +354,9 @@ if not HAS_TORCH:
 
         """
         return FallbackTensor(data, **kwargs)
+
+    tensor_func: Any = _create_tensor
+    tensor = tensor_func
 
     def save(obj: object, path: str) -> None:
         """Fallback save function for PyTorch compatibility.

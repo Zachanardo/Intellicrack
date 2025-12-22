@@ -101,8 +101,10 @@ class BaseTab(QWidget):
         if layout := self.layout():
             while layout.count():
                 child = layout.takeAt(0)
-                if child.widget():
-                    child.widget().deleteLater()
+                if child is not None:
+                    widget = child.widget()
+                    if widget is not None:
+                        widget.deleteLater()
 
     def log_activity(self, message: str) -> None:
         """Log activity to shared context if available.
@@ -154,7 +156,9 @@ class BaseTab(QWidget):
             Task result or future if task manager is available, None otherwise.
 
         """
-        return self.task_manager.submit_task(task) if self.task_manager else None
+        if self.task_manager and hasattr(self.task_manager, "submit_task"):
+            return self.task_manager.submit_task(task)
+        return None
 
     def submit_callable(
         self,
@@ -175,7 +179,7 @@ class BaseTab(QWidget):
             Task result or future if task manager is available, None otherwise.
 
         """
-        if self.task_manager:
+        if self.task_manager and hasattr(self.task_manager, "submit_callable"):
             return self.task_manager.submit_callable(func, args, kwargs, description=description)
         return None
 
@@ -223,11 +227,11 @@ class BaseTab(QWidget):
                         with contextlib.suppress(Exception):
                             config_manager.unregister_callback(key, callback)
 
-            self._cleanup_timers = []
-            self._cleanup_threads = []
-            self._cleanup_connections = []
-            self._cleanup_file_handles = []
-            self._cleanup_callbacks = []
+            self._cleanup_timers: list[object] = []
+            self._cleanup_threads: list[object] = []
+            self._cleanup_connections: list[object] = []
+            self._cleanup_file_handles: list[object] = []
+            self._cleanup_callbacks: list[tuple[str, Callable[..., object]]] = []
 
         except Exception:
             logger.debug("Error during base tab cleanup", exc_info=True)
@@ -240,7 +244,7 @@ class BaseTab(QWidget):
 
         """
         if not hasattr(self, "_cleanup_timers"):
-            self._cleanup_timers: list[object] = []
+            self._cleanup_timers = []
         self._cleanup_timers.append(timer)
 
     def register_thread_for_cleanup(self, thread: object) -> None:
@@ -251,7 +255,7 @@ class BaseTab(QWidget):
 
         """
         if not hasattr(self, "_cleanup_threads"):
-            self._cleanup_threads: list[object] = []
+            self._cleanup_threads = []
         self._cleanup_threads.append(thread)
 
     def register_connection_for_cleanup(self, connection: object) -> None:
@@ -262,7 +266,7 @@ class BaseTab(QWidget):
 
         """
         if not hasattr(self, "_cleanup_connections"):
-            self._cleanup_connections: list[object] = []
+            self._cleanup_connections = []
         self._cleanup_connections.append(connection)
 
     def register_file_handle_for_cleanup(self, handle: object) -> None:
@@ -273,7 +277,7 @@ class BaseTab(QWidget):
 
         """
         if not hasattr(self, "_cleanup_file_handles"):
-            self._cleanup_file_handles: list[object] = []
+            self._cleanup_file_handles = []
         self._cleanup_file_handles.append(handle)
 
     def register_callback_for_cleanup(self, key: str, callback: Callable[..., object]) -> None:
@@ -285,5 +289,5 @@ class BaseTab(QWidget):
 
         """
         if not hasattr(self, "_cleanup_callbacks"):
-            self._cleanup_callbacks: list[tuple[str, Callable[..., object]]] = []
+            self._cleanup_callbacks = []
         self._cleanup_callbacks.append((key, callback))

@@ -23,6 +23,13 @@ from typing import Any
 
 from ..utils.logger import get_logger, log_all_methods
 
+HAS_PEFILE: bool
+HAS_ELFTOOLS: bool
+HAS_PYELFTOOLS: bool
+HAS_LIEF: bool
+ELFFile: Any
+lief: Any
+pefile: Any
 
 try:
     from intellicrack.handlers.pefile_handler import pefile
@@ -31,6 +38,7 @@ try:
 except ImportError:
     get_logger(__name__).warning("pefile not found, PE analysis will be disabled.")
     HAS_PEFILE = False
+    pefile = None
 
 try:
     from intellicrack.handlers.pyelftools_handler import HAS_PYELFTOOLS, ELFFile
@@ -303,7 +311,7 @@ class ProtectionAnalyzer:
 
     def _analyze_sections(self, file_path: Path, file_data: bytes) -> dict[str, Any]:
         """Analyze binary sections for suspicious characteristics."""
-        sections = []
+        sections: list[dict[str, Any]] = []
 
         if HAS_PEFILE and file_data[:2] == b"MZ":
             try:
@@ -389,7 +397,7 @@ class ProtectionAnalyzer:
         anti_analysis: dict[str, Any],
     ) -> list[str]:
         """Generate analysis recommendations based on findings."""
-        recommendations = []
+        recommendations: list[str] = []
 
         if detected_protections:
             prot_names = [p["name"] for p in detected_protections]

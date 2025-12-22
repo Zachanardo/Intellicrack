@@ -982,9 +982,9 @@ class CommercialProtectorsDatabase:
                             for i in range(min(num_sections, 16)):  # Limit to 16 sections for safety
                                 section_offset = section_table_offset + (i * 40)
                                 if section_offset + 40 <= len(file_data):
-                                    section_name = file_data[section_offset : section_offset + 8].rstrip(b"\x00")
+                                    section_name_bytes = file_data[section_offset : section_offset + 8].rstrip(b"\x00")
                                     for pattern_name, pattern_bytes in sig.section_patterns.items():
-                                        if pattern_name.encode() in section_name:
+                                        if pattern_name.encode() in section_name_bytes:
                                             matches += 1
                                             break
                                         # Check section data
@@ -1085,13 +1085,13 @@ class CommercialProtectorsDatabase:
                     # Analyze jump target
                     if pattern == b"\xe9" and pos + 5 < len(file_data):
                         # E9 rel32 - relative jump
-                        offset = struct.unpack("<I", file_data[pos + 1 : pos + 5])[0]
-                        target = pos + 5 + offset
+                        offset_value: int = struct.unpack("<I", file_data[pos + 1 : pos + 5])[0]
+                        target: int = pos + 5 + offset_value
                         if 0 < target < len(file_data):
                             # Check if target looks like OEP
                             for oep_pat in oep_patterns:
                                 if file_data[target : target + len(oep_pat)] == oep_pat:
-                                    return target
+                                    return int(target)
                     pos += 1
 
         # Generic search for common OEP patterns

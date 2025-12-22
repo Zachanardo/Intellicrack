@@ -24,6 +24,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, cast
 
+from intellicrack.utils.type_safety import get_typed_item, validate_type
 from ...utils.logger import get_logger
 from .radare2_ai_integration import R2AIEngine
 from .radare2_binary_diff import R2BinaryDiff
@@ -180,7 +181,7 @@ class EnhancedR2Integration:
 
         if parallel_types := [t for t in analysis_types if t in parallel_safe]:
             parallel_results = self._run_parallel_analysis(parallel_types)
-            components_dict = cast(dict[str, Any], results["components"])
+            components_dict = validate_type(results["components"], dict)
             components_dict.update(parallel_results)
 
         # Run sequential analyses
@@ -188,11 +189,11 @@ class EnhancedR2Integration:
         for analysis_type in sequential_types:
             try:
                 if component_result := self._run_single_analysis(analysis_type):
-                    components_dict = cast(dict[str, Any], results["components"])
+                    components_dict = validate_type(results["components"], dict)
                     components_dict[analysis_type] = component_result
             except Exception as e:
                 self.logger.exception("Failed to run %s analysis: %s", analysis_type, e)
-                errors_list = cast(list[dict[str, Any]], results["errors"])
+                errors_list = validate_type(results["errors"], list)
                 errors_list.append(
                     {
                         "component": analysis_type,
@@ -203,7 +204,7 @@ class EnhancedR2Integration:
 
         # Add performance metrics
         results["performance"] = self.get_performance_stats()
-        metadata_dict = cast(dict[str, Any], results["metadata"])
+        metadata_dict = validate_type(results["metadata"], dict)
         metadata_dict["analysis_end"] = time.time()
         metadata_dict["total_duration"] = metadata_dict["analysis_end"] - metadata_dict["analysis_start"]
 
@@ -456,10 +457,10 @@ class EnhancedR2Integration:
             stats = self.performance_stats.copy()
 
             # Calculate averages and rates
-            analysis_times = cast(dict[str, Any], stats["analysis_times"])
+            analysis_times = validate_type(stats["analysis_times"], dict)
             for analysis_type, data in analysis_times.items():
-                data_dict = cast(dict[str, Any], data)
-                times_list = cast(list[float], data_dict["times"])
+                data_dict = validate_type(data, dict)
+                times_list = validate_type(data_dict["times"], list)
                 if times_list:
                     data_dict["avg_time"] = sum(times_list) / len(times_list)
                     data_dict["max_time"] = max(times_list)
@@ -468,8 +469,8 @@ class EnhancedR2Integration:
                     data_dict["analysis_type"] = analysis_type
                     data_dict["total_time"] = sum(times_list)
 
-                successes = cast(int, data_dict["successes"])
-                failures = cast(int, data_dict["failures"])
+                successes = get_typed_item(data_dict, "successes", int)
+                failures = get_typed_item(data_dict, "failures", int)
                 total_attempts = successes + failures
                 if total_attempts > 0:
                     data_dict["success_rate"] = successes / total_attempts
@@ -486,8 +487,8 @@ class EnhancedR2Integration:
         stats = self.get_performance_stats()
 
         # Adjust cache TTL based on hit rate
-        cache_hits = cast(int, stats["cache_hits"])
-        cache_misses = cast(int, stats["cache_misses"])
+        cache_hits = get_typed_item(stats, "cache_hits", int)
+        cache_misses = get_typed_item(stats, "cache_misses", int)
         total_cache_requests = cache_hits + cache_misses
         if total_cache_requests > 0:
             hit_rate = cache_hits / total_cache_requests
@@ -532,27 +533,27 @@ class EnhancedR2Integration:
         }
 
         # Calculate cache hit rate
-        cache_hits = cast(int, stats["cache_hits"])
-        cache_misses = cast(int, stats["cache_misses"])
+        cache_hits = get_typed_item(stats, "cache_hits", int)
+        cache_misses = get_typed_item(stats, "cache_misses", int)
         total_requests = cache_hits + cache_misses
         if total_requests > 0:
-            cache_health = cast(dict[str, Any], health["cache_health"])
+            cache_health = validate_type(health["cache_health"], dict)
             cache_health["hit_rate"] = cache_hits / total_requests
 
         # Calculate recovery rate
-        errors_handled = cast(int, stats["errors_handled"])
-        recoveries = cast(int, stats["recoveries_successful"])
+        errors_handled = get_typed_item(stats, "errors_handled", int)
+        recoveries = get_typed_item(stats, "recoveries_successful", int)
         if errors_handled > 0:
-            error_health = cast(dict[str, Any], health["error_health"])
+            error_health = validate_type(health["error_health"], dict)
             error_health["recovery_rate"] = recoveries / errors_handled
 
         # Determine overall health
-        components_available = cast(int, health["components_available"])
-        total_components = cast(int, health["total_components"])
-        error_health_dict = cast(dict[str, Any], health["error_health"])
-        cache_health_dict = cast(dict[str, Any], health["cache_health"])
-        recovery_rate = cast(float, error_health_dict["recovery_rate"])
-        hit_rate = cast(float, cache_health_dict["hit_rate"])
+        components_available = get_typed_item(health, "components_available", int)
+        total_components = get_typed_item(health, "total_components", int)
+        error_health_dict = validate_type(health["error_health"], dict)
+        cache_health_dict = validate_type(health["cache_health"], dict)
+        recovery_rate = get_typed_item(error_health_dict, "recovery_rate", float)
+        hit_rate = get_typed_item(cache_health_dict, "hit_rate", float)
 
         if not health["r2pipe_available"] or components_available < total_components * 0.5:
             health["overall_health"] = "critical"
@@ -832,15 +833,15 @@ class EnhancedR2Integration:
 
             if graph_type == "cfg":
                 function_name_arg = kwargs.get("function_name", "main")
-                function_name = cast(str, function_name_arg)
+                function_name = validate_type(function_name_arg, str)
                 graph_data = graph_gen.generate_control_flow_graph(function_name)
             elif graph_type == "call":
                 max_depth_arg = kwargs.get("max_depth", 3)
-                max_depth = cast(int, max_depth_arg)
+                max_depth = validate_type(max_depth_arg, int)
                 graph_data = graph_gen.generate_call_graph(max_depth)
             elif graph_type == "xref":
                 address_arg = kwargs.get("address", 0)
-                address = cast(int, address_arg)
+                address = validate_type(address_arg, int)
                 graph_data = graph_gen.generate_xref_graph(address)
             elif graph_type == "import":
                 graph_data = graph_gen.generate_import_dependency_graph()
@@ -850,10 +851,10 @@ class EnhancedR2Integration:
 
             output_path = kwargs.get("output_path")
             layout_arg = kwargs.get("layout", "spring")
-            layout = cast(str, layout_arg)
+            layout = validate_type(layout_arg, str)
 
             result = graph_gen.visualize_graph(graph_data, output_path, layout)
-            return cast(bool, result)
+            return validate_type(result, bool)
 
         except Exception as e:
             self.logger.exception("Failed to visualize graph: %s", e)

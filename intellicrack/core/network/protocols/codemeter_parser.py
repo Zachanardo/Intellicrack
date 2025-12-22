@@ -116,14 +116,14 @@ class CodeMeterProtocolParser:
     def __init__(self) -> None:
         """Initialize the CodeMeter protocol parser with session tracking and container info."""
         self.logger = get_logger(__name__)
-        self.active_sessions = {}  # Track active sessions
+        self.active_sessions: dict[str, dict[str, Any]] = {}
         self.container_info = self._generate_container_info()
-        self.license_receipts = {}  # Store license receipts
+        self.license_receipts: dict[str, dict[str, Any]] = {}
         self._load_default_products()
 
     def _load_default_products(self) -> None:
         """Load default CodeMeter products."""
-        self.products = {
+        self.products: dict[tuple[int, int], dict[str, Any]] = {
             # Common firm codes and products
             (500001, 1): {  # Sample CAD software
                 "name": "CAD_PROFESSIONAL",
@@ -336,7 +336,7 @@ class CodeMeterProtocolParser:
 
     def _parse_additional_data(self, data: bytes) -> dict[str, Any]:
         """Parse additional CodeMeter data fields."""
-        additional = {}
+        additional: dict[str, Any] = {}
         try:
             offset = 0
             while offset < len(data) - 4:
@@ -443,6 +443,9 @@ class CodeMeterProtocolParser:
             "access_count": 0,
         }
 
+        features: int = product["features"]
+        max_users: int = product["max_users"]
+
         return CodeMeterResponse(
             status=0x00000000,  # CM_GCM_OK
             request_id=request.request_id,
@@ -450,8 +453,8 @@ class CodeMeterProtocolParser:
             product_code=request.product_code,
             license_info={
                 "session_id": session_hash,
-                "features_granted": product["features"] & request.feature_map,
-                "access_mode": "exclusive" if product["max_users"] == 1 else "shared",
+                "features_granted": features & request.feature_map,
+                "access_mode": "exclusive" if max_users == 1 else "shared",
             },
             response_data=hashlib.sha256(session_id.encode()).digest()[:16],
             container_info=self.container_info,

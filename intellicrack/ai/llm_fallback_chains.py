@@ -174,7 +174,7 @@ class FallbackChain:
 
         return FailureType.UNKNOWN
 
-    def _update_health_stats(self, model_id: str, success: bool, response_time: float = 0.0, error: Exception = None) -> None:
+    def _update_health_stats(self, model_id: str, success: bool, response_time: float = 0.0, error: Exception | None = None) -> None:
         """Update health statistics for a model."""
         with self.lock:
             health = self.health_stats[model_id]
@@ -246,7 +246,7 @@ class FallbackChain:
 
         return available_models
 
-    async def chat_async(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
+    async def chat_async(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse | None:
         """Async version of chat with fallback logic."""
         ordered_models = self._get_ordered_models()
 
@@ -308,7 +308,7 @@ class FallbackChain:
         logger.error("All models failed in chain %s. Last error: %s", self.chain_id, last_error)
         return None
 
-    def chat(self, messages: list[LLMMessage], tools: list[dict] | None = None) -> LLMResponse | None:
+    def chat(self, messages: list[LLMMessage], tools: list[dict[str, Any]] | None = None) -> LLMResponse | None:
         """Chat with fallback logic synchronously."""
         try:
             # Run async version in event loop
@@ -325,7 +325,7 @@ class FallbackChain:
     def get_health_report(self) -> dict[str, Any]:
         """Get a comprehensive health report for the chain."""
         with self.lock:
-            report = {
+            report: dict[str, Any] = {
                 "chain_id": self.chain_id,
                 "total_models": len(self.model_configs),
                 "available_models": len([h for h in self.health_stats.values() if h.should_retry()]),
@@ -333,7 +333,7 @@ class FallbackChain:
             }
 
             for model_id, health in self.health_stats.items():
-                model_report = {
+                model_report: dict[str, Any] = {
                     "success_count": health.success_count,
                     "failure_count": health.failure_count,
                     "success_rate_24h": health.get_success_rate(24),
@@ -344,7 +344,9 @@ class FallbackChain:
                     "last_failure": health.last_failure.isoformat() if health.last_failure else None,
                     "recent_failure_count": len(health.recent_failures),
                 }
-                report["models"][model_id] = model_report
+                models_dict = report["models"]
+                assert isinstance(models_dict, dict)
+                models_dict[model_id] = model_report
 
             return report
 
@@ -366,19 +368,30 @@ class FallbackManager:
 
     def __init__(self) -> None:
         """Initialize the fallback manager."""
-        self.chains = {}
-        self.default_chain_id = None
+        self.chains: dict[str, FallbackChain] = {}
+        self.default_chain_id: str | None = None
         self.lock = threading.RLock()
 
         logger.info("FallbackManager initialized")
 
-    def create_chain(self, chain_id: str, model_configs: list[tuple[str, LLMConfig]], **kwargs: object) -> FallbackChain:
+    def create_chain(
+        self,
+        chain_id: str,
+        model_configs: list[tuple[str, LLMConfig]],
+        max_retries: int = 3,
+        retry_delay: float = 1.0,
+        circuit_failure_threshold: int = 5,
+        enable_adaptive_ordering: bool = True,
+    ) -> FallbackChain:
         """Create a new fallback chain.
 
         Args:
             chain_id: Unique identifier for the chain
             model_configs: List of (model_id, config) tuples
-            **kwargs: Additional arguments for FallbackChain
+            max_retries: Maximum retries per model
+            retry_delay: Base delay between retries (with exponential backoff)
+            circuit_failure_threshold: Failures needed to open circuit breaker
+            enable_adaptive_ordering: Whether to reorder based on performance
 
         Returns:
             Created FallbackChain instance
@@ -388,7 +401,14 @@ class FallbackManager:
             if chain_id in self.chains:
                 raise ValueError(f"Chain {chain_id} already exists")
 
-            chain = FallbackChain(chain_id, model_configs, **kwargs)
+            chain = FallbackChain(
+                chain_id,
+                model_configs,
+                max_retries=max_retries,
+                retry_delay=retry_delay,
+                circuit_failure_threshold=circuit_failure_threshold,
+                enable_adaptive_ordering=enable_adaptive_ordering,
+            )
             self.chains[chain_id] = chain
 
             # Set as default if it's the first chain
@@ -414,7 +434,7 @@ class FallbackManager:
         self,
         messages: list[LLMMessage],
         chain_id: str | None = None,
-        tools: list[dict] | None = None,
+        tools: list[dict[str, Any]] | None = None,
     ) -> LLMResponse | None:
         """Chat using a specific chain or the default chain.
 
@@ -444,7 +464,7 @@ class FallbackManager:
         self,
         messages: list[LLMMessage],
         chain_id: str | None = None,
-        tools: list[dict] | None = None,
+        tools: list[dict[str, Any]] | None = None,
     ) -> LLMResponse | None:
         """Async chat using fallback chains."""
         target_chain_id = chain_id or self.default_chain_id
@@ -466,14 +486,16 @@ class FallbackManager:
 
     def get_global_health_report(self) -> dict[str, Any]:
         """Get health report for all chains."""
-        report = {
+        report: dict[str, Any] = {
             "total_chains": len(self.chains),
             "default_chain": self.default_chain_id,
             "chains": {},
         }
 
         for chain_id, chain in self.chains.items():
-            report["chains"][chain_id] = chain.get_health_report()
+            chains_dict = report["chains"]
+            assert isinstance(chains_dict, dict)
+            chains_dict[chain_id] = chain.get_health_report()
 
         return report
 
@@ -511,7 +533,7 @@ class FallbackManager:
 
         """
         chain_id = config["chain_id"]
-        model_configs = []
+        model_configs: list[tuple[str, LLMConfig]] = []
 
         # Convert model configurations
         for model_config in config["models"]:
@@ -535,25 +557,35 @@ class FallbackManager:
             model_configs.append((model_id, llm_config))
 
         # Extract chain settings
-        chain_settings = {
-            "max_retries": config.get("max_retries", 3),
-            "retry_delay": config.get("retry_delay", 1.0),
-            "circuit_failure_threshold": config.get("circuit_failure_threshold", 5),
-            "enable_adaptive_ordering": config.get("enable_adaptive_ordering", True),
-        }
+        max_retries = config.get("max_retries", 3)
+        retry_delay = config.get("retry_delay", 1.0)
+        circuit_failure_threshold = config.get("circuit_failure_threshold", 5)
+        enable_adaptive_ordering = config.get("enable_adaptive_ordering", True)
 
-        return self.create_chain(chain_id, model_configs, **chain_settings)
+        assert isinstance(max_retries, int)
+        assert isinstance(retry_delay, (int, float))
+        assert isinstance(circuit_failure_threshold, int)
+        assert isinstance(enable_adaptive_ordering, bool)
+
+        return self.create_chain(
+            chain_id,
+            model_configs,
+            max_retries=max_retries,
+            retry_delay=float(retry_delay),
+            circuit_failure_threshold=circuit_failure_threshold,
+            enable_adaptive_ordering=enable_adaptive_ordering,
+        )
 
     def export_configuration(self) -> dict[str, Any]:
         """Export all chains configuration to a dictionary."""
-        config = {
+        config: dict[str, Any] = {
             "version": "1.0",
             "default_chain": self.default_chain_id,
             "chains": {},
         }
 
         for chain_id, chain in self.chains.items():
-            chain_config = {
+            chain_config: dict[str, Any] = {
                 "chain_id": chain_id,
                 "max_retries": chain.max_retries,
                 "retry_delay": chain.retry_delay,
@@ -563,7 +595,7 @@ class FallbackManager:
             }
 
             for model_id, llm_config in chain.model_configs:
-                model_config = {
+                model_config: dict[str, Any] = {
                     "model_id": model_id,
                     "provider": llm_config.provider.value,
                     "model_name": llm_config.model_name,
@@ -576,9 +608,13 @@ class FallbackManager:
                     "tools_enabled": llm_config.tools_enabled,
                     "custom_params": llm_config.custom_params,
                 }
-                chain_config["models"].append(model_config)
+                models_list = chain_config["models"]
+                assert isinstance(models_list, list)
+                models_list.append(model_config)
 
-            config["chains"][chain_id] = chain_config
+            chains_dict = config["chains"]
+            assert isinstance(chains_dict, dict)
+            chains_dict[chain_id] = chain_config
 
         return config
 

@@ -63,7 +63,7 @@ class EnhancedCLIRunner:
         """Initialize enhanced CLI runner with console, progress management, and logging."""
         self.console = Console()
         self.progress_manager = ProgressManager()
-        self.results = {}
+        self.results: dict[str, Any] = {}
         self.logger = logging.getLogger(__name__)
 
     def run_with_progress(self, binary_path: str, operations: list[str]) -> dict[str, Any]:
@@ -121,7 +121,7 @@ class EnhancedCLIRunner:
             ("Finalizing", 100),
         ]
 
-        results = {}
+        results: dict[str, Any] = {}
 
         for step_name, progress in steps:
             # Perform actual analysis work based on step
@@ -156,8 +156,10 @@ class EnhancedCLIRunner:
                     import os
 
                     stat_info = Path(binary_path).stat()
-                    results["file_size"] = stat_info.st_size
-                    results["last_modified"] = stat_info.st_mtime
+                    file_size: int = stat_info.st_size
+                    last_modified: float = stat_info.st_mtime
+                    results["file_size"] = file_size
+                    results["last_modified"] = last_modified
                 except Exception:
                     logger.exception("Error getting file stats for %s", binary_path)
                     results["file_size"] = 0
@@ -177,7 +179,10 @@ class EnhancedCLIRunner:
                     results.update(analysis_results)
                 except Exception as e:
                     logger.exception("Comprehensive analysis failed for %s: %s", binary_path, e)
-                    results.setdefault("errors", []).append(str(e))
+                    if "errors" not in results:
+                        results["errors"] = []
+                    if isinstance(results["errors"], list):
+                        results["errors"].append(str(e))
 
         return results
 
@@ -283,7 +288,7 @@ class EnhancedCLIRunner:
 
     def _run_dynamic_analysis(self, binary_path: str) -> dict[str, Any]:
         """Run dynamic analysis with real behavioral monitoring."""
-        results = {
+        results: dict[str, Any] = {
             "behavior": [],
             "syscalls": [],
             "network": [],
@@ -306,7 +311,8 @@ class EnhancedCLIRunner:
                 try:
                     connections = psutil.net_connections()
                     active_connections = [c for c in connections if c.status == "ESTABLISHED"]
-                    results["network"] = [f"Connection to {c.raddr}" for c in active_connections[:3]]
+                    network_list: list[str] = [f"Connection to {c.raddr}" for c in active_connections[:3]]
+                    results["network"] = network_list
                 except Exception:
                     logger.debug("Network monitoring unavailable")
                     results["network"] = ["network_monitoring_unavailable"]
@@ -317,11 +323,12 @@ class EnhancedCLIRunner:
                     with open(binary_path, "rb") as f:
                         header = f.read(64)
                         if header.startswith(b"MZ"):
-                            results["binary_type"] = "PE executable"
+                            binary_type: str = "PE executable"
                         elif header.startswith(b"\x7fELF"):
-                            results["binary_type"] = "ELF executable"
+                            binary_type = "ELF executable"
                         else:
-                            results["binary_type"] = "Unknown format"
+                            binary_type = "Unknown format"
+                        results["binary_type"] = binary_type
                 except Exception as e:
                     logger.exception("Error loading binary %s: %s", binary_path, e)
                     results["load_error"] = str(e)
@@ -329,17 +336,20 @@ class EnhancedCLIRunner:
             elif step_name == "Monitoring system calls":
                 try:
                     current_processes = psutil.pids()
-                    results["baseline_processes"] = len(current_processes)
-                    results["syscalls"] = ["GetCurrentProcess", "VirtualAlloc", "CreateThread"]
+                    baseline_processes: int = len(current_processes)
+                    syscalls_list: list[str] = ["GetCurrentProcess", "VirtualAlloc", "CreateThread"]
+                    results["baseline_processes"] = baseline_processes
+                    results["syscalls"] = syscalls_list
                 except Exception:
                     logger.debug("System call monitoring unavailable")
                     results["syscalls"] = ["monitoring_unavailable"]
 
             elif step_name == "Setting up sandbox environment":
-                results["system_info"] = {
+                system_info: dict[str, Any] = {
                     "cpu_count": psutil.cpu_count(),
                     "memory_total": psutil.virtual_memory().total,
                 }
+                results["system_info"] = system_info
 
             elif step_name == "Tracking file operations":
                 # Monitor file system for changes
@@ -350,7 +360,8 @@ class EnhancedCLIRunner:
                     temp_dir = os.path.expandvars(r"%TEMP%")
                     if os.path.exists(temp_dir):
                         temp_files = os.listdir(temp_dir)[:5]  # Sample temp files
-                    results["files_accessed"] = temp_files or ["temp_file_monitoring"]
+                    files_list: list[str] = temp_files or ["temp_file_monitoring"]
+                    results["files_accessed"] = files_list
                 except Exception:
                     logger.debug("File monitoring unavailable")
                     results["files_accessed"] = ["file_monitoring_unavailable"]
@@ -363,10 +374,10 @@ class EnhancedCLIRunner:
             )
 
         # Final behavioral summary
-        behavior_summary = "Dynamic analysis completed"
+        behavior_summary: str = "Dynamic analysis completed"
         if results.get("load_error"):
             behavior_summary = f"Analysis limited: {results['load_error']}"
-        elif results["binary_type"] != "Unknown format":
+        elif isinstance(results.get("binary_type"), str) and results["binary_type"] != "Unknown format":
             behavior_summary = f"Analyzed {results['binary_type']} successfully"
 
         results["behavior"] = behavior_summary
@@ -493,7 +504,7 @@ class EnhancedCLIRunner:
 
             self.console.print(panel)
 
-    def _format_static_results(self, result: dict) -> str:
+    def _format_static_results(self, result: dict[str, Any]) -> str:
         """Format static analysis results."""
         lines = []
         if "file_type" in result:
@@ -507,7 +518,7 @@ class EnhancedCLIRunner:
 
         return "\n".join(lines) if lines else "No static analysis data"
 
-    def _format_vulnerability_results(self, result: dict) -> str:
+    def _format_vulnerability_results(self, result: dict[str, Any]) -> str:
         """Format vulnerability scan results."""
         vulns = result.get("vulnerabilities", [])
         if not vulns:
@@ -520,7 +531,7 @@ class EnhancedCLIRunner:
 
         return "\n".join(lines)
 
-    def _format_protection_results(self, result: dict) -> str:
+    def _format_protection_results(self, result: dict[str, Any]) -> str:
         """Format protection detection results."""
         protections = result.get("protections", {})
         if not protections:
@@ -530,7 +541,7 @@ class EnhancedCLIRunner:
         lines.extend(f"   {protection}: {details}" for protection, details in protections.items() if details)
         return "\n".join(lines)
 
-    def _format_generic_results(self, result: dict) -> str:
+    def _format_generic_results(self, result: dict[str, Any]) -> str:
         """Format generic results."""
         lines = []
         for key, value in result.items():

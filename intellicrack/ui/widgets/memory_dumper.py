@@ -515,6 +515,10 @@ class MemoryDumperWidget(QWidget):
             self.output_log.append("No regions selected")
             return
 
+        if self.current_process is None:
+            self.output_log.append("No process attached")
+            return
+
         output_dir = QFileDialog.getExistingDirectory(self, "Select Output Directory")
         if not output_dir:
             return
@@ -539,6 +543,10 @@ class MemoryDumperWidget(QWidget):
         """Dump all memory regions."""
         if self.regions_table.rowCount() == 0:
             self.output_log.append("No regions to dump")
+            return
+
+        if self.current_process is None:
+            self.output_log.append("No process attached")
             return
 
         # Select all rows
@@ -638,8 +646,15 @@ class MemoryDumpThread(QThread):
 
         for i, row in enumerate(self.rows):
             # Get region info
-            addr_text = self.table.item(row, 0).text()
-            size_text = self.table.item(row, 1).text()
+            addr_item = self.table.item(row, 0)
+            size_item = self.table.item(row, 1)
+
+            if addr_item is None or size_item is None:
+                self.log.emit(f"Failed to read region info at row {row}")
+                continue
+
+            addr_text = addr_item.text()
+            size_text = size_item.text()
 
             addr = int(addr_text, 16)
             size = int(size_text.replace(",", "").replace(" bytes", ""))

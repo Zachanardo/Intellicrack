@@ -49,7 +49,7 @@ def find_all_pattern_offsets(data: bytes, pattern: bytes) -> list[int]:
     return offsets
 
 
-def analyze_binary_for_strings(binary_path: str, search_strings: list) -> dict[str, Any]:
+def analyze_binary_for_strings(binary_path: str, search_strings: list[str]) -> dict[str, Any]:
     """Analyze a binary file for specific strings.
 
     Args:
@@ -60,7 +60,7 @@ def analyze_binary_for_strings(binary_path: str, search_strings: list) -> dict[s
         Dictionary with analysis results
 
     """
-    results = {
+    results: dict[str, Any] = {
         "strings_found": [],
         "confidence": 0.0,
         "error": None,
