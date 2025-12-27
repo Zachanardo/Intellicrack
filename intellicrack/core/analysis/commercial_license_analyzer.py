@@ -43,7 +43,13 @@ class ProtocolFingerprinterProtocol(Protocol):
     def fingerprint_packet(
         self, packet: bytes, context: dict[str, Any] | None = None
     ) -> dict[str, Any] | None:
-        """Fingerprint a packet to identify its protocol."""
+        """Fingerprint a packet to identify its protocol.
+
+        Args:
+            packet: Binary packet data to analyze for protocol identification.
+            context: Optional context dictionary for protocol detection.
+
+        """
         ...
 
 
@@ -51,7 +57,12 @@ class DongleEmulatorProtocol(Protocol):
     """Protocol for dongle emulator with get_dongle_config method."""
 
     def get_dongle_config(self, dongle_type: str) -> dict[str, Any]:
-        """Get configuration for specified dongle type."""
+        """Get configuration for specified dongle type.
+
+        Args:
+            dongle_type: Type of dongle to retrieve configuration for (e.g., 'HASP', 'CodeMeter').
+
+        """
         ...
 
 
@@ -123,7 +134,7 @@ class CommercialLicenseAnalyzer:
         """Lazy load FlexLMProtocolParser.
 
         Returns:
-            FlexLMProtocolParser instance for analyzing FlexLM license protocols.
+            object: FlexLMProtocolParser instance for analyzing FlexLM license protocols.
 
         """
         if self._flexlm_parser is None:
@@ -136,7 +147,7 @@ class CommercialLicenseAnalyzer:
         """Lazy load HardwareDongleEmulator.
 
         Returns:
-            HardwareDongleEmulator instance for emulating hardware protection dongles.
+            object: HardwareDongleEmulator instance for emulating hardware protection dongles.
 
         """
         if self._dongle_emulator is None:
@@ -149,7 +160,7 @@ class CommercialLicenseAnalyzer:
         """Lazy load ProtocolFingerprinter.
 
         Returns:
-            ProtocolFingerprinter instance for identifying commercial license protocols.
+            object: ProtocolFingerprinter instance for identifying commercial license protocols.
 
         """
         if self._protocol_fingerprinter is None:
@@ -161,10 +172,10 @@ class CommercialLicenseAnalyzer:
         """Analyze binary for commercial license protections.
 
         Args:
-            binary_path: Optional path to binary (uses self.binary_path if not provided)
+            binary_path: Optional path to binary (uses self.binary_path if not provided).
 
         Returns:
-            Analysis results including detected systems and bypass strategies
+            dict[str, Any]: Analysis results including detected systems and bypass strategies.
 
         """
         if binary_path:
@@ -212,14 +223,19 @@ class CommercialLicenseAnalyzer:
         return results
 
     def analyze(self) -> dict[str, Any]:
-        """Analyze with API compatibility for tests."""
+        """Analyze with API compatibility for tests.
+
+        Returns:
+            dict[str, Any]: Analysis results from binary analysis.
+
+        """
         return self.analyze_binary(self.binary_path)
 
     def _detect_flexlm(self) -> bool:
         """Detect FlexLM license system in binary.
 
         Returns:
-            True if FlexLM detected
+            bool: True if FlexLM detected.
 
         """
         flexlm_indicators = [
@@ -273,7 +289,7 @@ class CommercialLicenseAnalyzer:
         """Detect HASP dongle protection in binary.
 
         Returns:
-            True if HASP detected
+            bool: True if HASP detected.
 
         """
         hasp_indicators = [
@@ -324,7 +340,7 @@ class CommercialLicenseAnalyzer:
         """Detect CodeMeter protection in binary.
 
         Returns:
-            True if CodeMeter detected
+            bool: True if CodeMeter detected.
 
         """
         codemeter_indicators = [
@@ -376,7 +392,7 @@ class CommercialLicenseAnalyzer:
         """Analyze network protocols for license communication.
 
         Returns:
-            Network protocol analysis results
+            dict[str, Any]: Network protocol analysis results.
 
         """
         analysis: dict[str, Any] = {"servers": [], "features": {}, "protocols": []}
@@ -414,7 +430,7 @@ class CommercialLicenseAnalyzer:
         """Generate FlexLM bypass strategy based on binary analysis.
 
         Returns:
-            Dynamically generated FlexLM bypass configuration
+            dict[str, Any]: Dynamically generated FlexLM bypass configuration.
 
         """
         import re
@@ -568,7 +584,15 @@ class CommercialLicenseAnalyzer:
         return bypass
 
     def _detect_flexlm_version(self, binary_data: bytes) -> str:
-        """Detect FlexLM version from binary."""
+        """Detect FlexLM version from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            str: Detected FlexLM version string.
+
+        """
         version_patterns = {
             b"FLEXnet Licensing v11": "11.x",
             b"FLEXlm v10": "10.x",
@@ -582,7 +606,15 @@ class CommercialLicenseAnalyzer:
         )
 
     def _extract_vendor_daemon(self, binary_data: bytes) -> str:
-        """Extract vendor daemon name from binary."""
+        """Extract vendor daemon name from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            str: Extracted vendor daemon name.
+
+        """
         # Look for vendor daemon patterns
         daemon_pattern = rb"([a-zA-Z0-9_]+)d\.exe|([a-zA-Z0-9_]+)d\x00"
         if match := re.search(daemon_pattern, binary_data):
@@ -590,7 +622,15 @@ class CommercialLicenseAnalyzer:
         return "vendor"
 
     def _pattern_to_regex(self, pattern: bytes) -> bytes:
-        """Convert assembly pattern to regex."""
+        """Convert assembly pattern to regex.
+
+        Args:
+            pattern: Assembly pattern with wildcard dots.
+
+        Returns:
+            bytes: Regex pattern for matching.
+
+        """
         result = b""
         i = 0
         while i < len(pattern):
@@ -599,7 +639,16 @@ class CommercialLicenseAnalyzer:
         return result
 
     def _extract_feature_id(self, binary_data: bytes, offset: int) -> int:
-        """Extract feature ID from checkout call."""
+        """Extract feature ID from checkout call.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset in binary where checkout is called.
+
+        Returns:
+            int: Extracted feature ID or 0 if not found.
+
+        """
         # Look for feature ID pushed before call
         if offset >= 20:
             # Check for push immediate before call
@@ -612,20 +661,46 @@ class CommercialLicenseAnalyzer:
         return 0
 
     def _generate_checkout_hook(self, feature_id: int, version: str) -> bytes:
-        """Generate checkout hook based on feature and version."""
+        """Generate checkout hook based on feature and version.
+
+        Args:
+            feature_id: Feature ID for checkout.
+            version: FlexLM version string.
+
+        Returns:
+            bytes: Machine code bytes for hook.
+
+        """
         if "11" in version:
             # FlexLM 11.x - return LM_OK (0)
             return b"\x31\xc0\xc3"  # xor eax,eax; ret
         return b"\xb8\x01\x00\x00\x00\xc3" if "10" in version else b"\x31\xc0\xc3"
 
     def _generate_init_hook(self, version: str) -> bytes:
-        """Generate init hook based on version."""
+        """Generate init hook based on version.
+
+        Args:
+            version: FlexLM version string.
+
+        Returns:
+            bytes: Machine code bytes for init hook.
+
+        """
         if self._detect_architecture() == "x64":
             return b"\x48\x31\xc0\x48\xff\xc0\xc3"  # xor rax,rax; inc rax; ret
         return b"\x31\xc0\x40\xc3"  # xor eax,eax; inc eax; ret
 
     def _detect_crypto_type(self, binary_data: bytes, offset: int) -> str:
-        """Detect encryption type used."""
+        """Detect encryption type used.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset of crypto call.
+
+        Returns:
+            str: Detected crypto type (TEA, MD5, or XOR).
+
+        """
         # Look for crypto constants near the call
         search_range = binary_data[max(0, offset - 1000) : offset + 1000]
 
@@ -634,7 +709,15 @@ class CommercialLicenseAnalyzer:
         return "MD5" if b"\x52\x09\x6a\xd5" in search_range else "XOR"
 
     def _generate_crypto_hook(self, crypto_type: str) -> bytes:
-        """Generate crypto bypass based on type."""
+        """Generate crypto bypass based on type.
+
+        Args:
+            crypto_type: Type of crypto (AES, DES, XOR, etc).
+
+        Returns:
+            bytes: Machine code bytes for crypto bypass.
+
+        """
         if self._detect_architecture() == "x64":
             # mov rax,rsi; ret (return input as-is)
             return b"\x48\x89\xf0\xc3"
@@ -642,7 +725,12 @@ class CommercialLicenseAnalyzer:
         return b"\x8b\x44\x24\x04\xc3"
 
     def _detect_architecture(self) -> str:
-        """Detect binary architecture."""
+        """Detect binary architecture.
+
+        Returns:
+            str: Detected architecture ('x86' or 'x64').
+
+        """
         if hasattr(self, "_binary_data") and self._binary_data and self._binary_data[:2] == b"MZ":
             pe_offset = struct.unpack("<I", self._binary_data[0x3C:0x40])[0]
             if pe_offset < len(self._binary_data) - 6:
@@ -652,7 +740,16 @@ class CommercialLicenseAnalyzer:
         return "x86"
 
     def _is_license_check_context(self, binary_data: bytes, offset: int) -> bool:
-        """Verify if pattern is in license check context."""
+        """Verify if pattern is in license check context.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset to check context around.
+
+        Returns:
+            bool: True if in license check context.
+
+        """
         # Look for license-related strings nearby
         context = binary_data[max(0, offset - 200) : offset + 200]
         license_indicators = [
@@ -669,13 +766,30 @@ class CommercialLicenseAnalyzer:
         return any(indicator in context for indicator in license_indicators)
 
     def _extract_flexlm_features(self, binary_data: bytes) -> list[str]:
-        """Extract FlexLM features from binary."""
+        """Extract FlexLM features from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            list[str]: List of extracted FlexLM features.
+
+        """
         # Look for FEATURE lines
         feature_pattern = rb"FEATURE\s+(\w+)\s+\w+\s+[\d.]+\s+"
         return [match.group(1).decode("latin-1", errors="ignore") for match in re.finditer(feature_pattern, binary_data)]
 
     def _generate_dynamic_flexlm_frida_script(self, hooks: list[Any], patches: list[Any]) -> str:
-        """Generate Frida script for dynamic hooking."""
+        """Generate Frida script for dynamic hooking.
+
+        Args:
+            hooks: List of hooks to generate in script.
+            patches: List of patches to generate in script.
+
+        Returns:
+            str: Generated Frida JavaScript code.
+
+        """
         script = "// Dynamic FlexLM bypass script\n"
 
         # Add hooks
@@ -706,7 +820,7 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         """Generate HASP bypass strategy based on binary analysis.
 
         Returns:
-            Dynamically generated HASP bypass configuration
+            dict[str, Any]: Dynamically generated HASP bypass configuration.
 
         """
         import re
@@ -896,7 +1010,15 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return bypass
 
     def _detect_hasp_version(self, binary_data: bytes) -> str:
-        """Detect HASP version from binary."""
+        """Detect HASP version from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            str: Detected HASP version string.
+
+        """
         version_patterns = {
             b"HASP HL": "HASP HL",
             b"HASP SL": "HASP SL",
@@ -911,7 +1033,15 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         )
 
     def _detect_hasp_dongle_type(self, binary_data: bytes) -> str:
-        """Detect HASP dongle type."""
+        """Detect HASP dongle type.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            str: Detected HASP dongle type.
+
+        """
         if b"HASP HL Pro" in binary_data:
             return "HASP HL Pro"
         if b"HASP HL Max" in binary_data:
@@ -919,7 +1049,15 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return "HASP SL" if b"HASP SL" in binary_data else "HASP HL"
 
     def _extract_hasp_ids(self, binary_data: bytes) -> tuple[int, int]:
-        """Extract vendor and product IDs from binary."""
+        """Extract vendor and product IDs from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            tuple[int, int]: Vendor ID and product ID.
+
+        """
         vendor_id = 0x0529  # Default Aladdin vendor ID
         product_id = 0x0001
 
@@ -936,7 +1074,16 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return vendor_id, product_id
 
     def _extract_vendor_code(self, binary_data: bytes, offset: int) -> int:
-        """Extract vendor code from login call."""
+        """Extract vendor code from login call.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset of login call.
+
+        Returns:
+            int: Extracted vendor code or default.
+
+        """
         # Look for vendor code pushed or loaded before call
         if offset >= 20:
             search_area = binary_data[max(0, offset - 50) : offset]
@@ -953,14 +1100,28 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return 0x12345678  # Default vendor code
 
     def _generate_hasp_login_hook(self, vendor_code: int, version: str) -> bytes:
-        """Generate login hook based on vendor code and version."""
+        """Generate login hook based on vendor code and version.
+
+        Args:
+            vendor_code: HASP vendor code.
+            version: HASP version string.
+
+        Returns:
+            bytes: Machine code for login hook.
+
+        """
         # Return HASP_STATUS_OK (0)
         if self._detect_architecture() == "x64":
             return b"\x48\x31\xc0\xc3"  # xor rax,rax; ret
         return b"\x31\xc0\xc3"  # xor eax,eax; ret
 
     def _generate_hasp_encrypt_patch(self) -> bytes:
-        """Generate dynamic encryption patch."""
+        """Generate dynamic encryption patch.
+
+        Returns:
+            bytes: Machine code for encryption bypass.
+
+        """
         if self._detect_architecture() == "x64":
             # AES-128 ECB mode encryption bypass implementation
             return bytes(
@@ -1022,12 +1183,22 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         )
 
     def _generate_hasp_decrypt_patch(self) -> bytes:
-        """Generate dynamic decryption patch."""
+        """Generate dynamic decryption patch.
+
+        Returns:
+            bytes: Machine code for decryption bypass.
+
+        """
         # Same as encrypt for XOR
         return self._generate_hasp_encrypt_patch()
 
     def _generate_hasp_info_response(self) -> bytes:
-        """Generate dynamic info response."""
+        """Generate dynamic info response.
+
+        Returns:
+            bytes: Machine code for info response hook.
+
+        """
         # Return success with valid info structure
         if self._detect_architecture() == "x64":
             return bytes(
@@ -1097,7 +1268,16 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         )
 
     def _is_hasp_check_context(self, binary_data: bytes, offset: int) -> bool:
-        """Verify if pattern is in HASP check context."""
+        """Verify if pattern is in HASP check context.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset to check context around.
+
+        Returns:
+            bool: True if in HASP check context.
+
+        """
         context = binary_data[max(0, offset - 200) : offset + 200]
         hasp_indicators = [
             b"hasp",
@@ -1113,7 +1293,15 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return any(indicator in context for indicator in hasp_indicators)
 
     def _extract_hasp_features(self, binary_data: bytes) -> list[int]:
-        """Extract HASP features from binary."""
+        """Extract HASP features from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            list[int]: List of extracted HASP feature IDs.
+
+        """
         features = []
 
         # Look for feature IDs
@@ -1135,7 +1323,15 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return list(set(features))  # Remove duplicates
 
     def _generate_hasp_serial(self, binary_data: bytes) -> str:
-        """Generate HASP serial based on binary analysis."""
+        """Generate HASP serial based on binary analysis.
+
+        Args:
+            binary_data: Binary data to fingerprint.
+
+        Returns:
+            str: Generated HASP serial number.
+
+        """
         import hashlib
 
         # Generate serial from binary hash
@@ -1145,7 +1341,15 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return f"HASP-{serial[:4]}-{serial[4:8]}-{serial[8:12]}-{serial[12:16]}"
 
     def _detect_hasp_memory_size(self, binary_data: bytes) -> int:
-        """Detect HASP memory size from binary."""
+        """Detect HASP memory size from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            int: Detected memory size in bytes.
+
+        """
         # Look for memory size references
         sizes = [112, 496, 4096, 65536]  # Common HASP memory sizes
 
@@ -1157,7 +1361,16 @@ console.log('[FlexLM] Patched at {patch["offset"]}');
         return 4096  # Default
 
     def _generate_dynamic_hasp_frida_script(self, hooks: list[Any], patches: list[Any]) -> str:
-        """Generate Frida script for dynamic HASP hooking."""
+        """Generate Frida script for dynamic HASP hooking.
+
+        Args:
+            hooks: List of hooks to generate in script.
+            patches: List of patches to generate in script.
+
+        Returns:
+            str: Generated Frida JavaScript code.
+
+        """
         script = (
             "// Dynamic HASP bypass script\n// Generated based on binary analysis\n\n"
             """
@@ -1200,7 +1413,7 @@ console.log('[HASP] Patched at {patch["offset"]}');
         """Generate CodeMeter bypass strategy based on binary analysis.
 
         Returns:
-            Dynamically generated CodeMeter bypass configuration
+            dict[str, Any]: Dynamically generated CodeMeter bypass configuration.
 
         """
         import re
@@ -1408,7 +1621,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return bypass
 
     def _detect_codemeter_version(self, binary_data: bytes) -> str:
-        """Detect CodeMeter version from binary."""
+        """Detect CodeMeter version from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            str: Detected CodeMeter version string.
+
+        """
         version_patterns = {
             b"CodeMeter Runtime 7": "7.x",
             b"CodeMeter Runtime 6": "6.x",
@@ -1430,7 +1651,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return "7.x"  # Default to latest
 
     def _detect_cm_container_type(self, binary_data: bytes) -> str:
-        """Detect CodeMeter container type."""
+        """Detect CodeMeter container type.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            str: Detected CodeMeter container type.
+
+        """
         if b"CmDongle" in binary_data:
             return "CmDongle"
         if b"CmActLicense" in binary_data:
@@ -1440,7 +1669,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return "CmStick/M" if b"CmStick/M" in binary_data else "CmStick"
 
     def _extract_cm_codes(self, binary_data: bytes) -> tuple[int, int]:
-        """Extract firm code and product code from binary."""
+        """Extract firm code and product code from binary.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            tuple[int, int]: Firm code and product code.
+
+        """
         firm_code = 100000  # Default
         product_code = 1
 
@@ -1469,7 +1706,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return firm_code, product_code
 
     def _extract_cm_access_flags(self, binary_data: bytes, offset: int) -> int:
-        """Extract access flags from CmAccess call."""
+        """Extract access flags from CmAccess call.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset of CmAccess call.
+
+        Returns:
+            int: Extracted access flags or default.
+
+        """
         flags = 0
 
         # Look for flags pushed before call
@@ -1485,7 +1731,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return flags or 0x00000001  # Default: local access
 
     def _generate_cm_access_hook(self, flags: int, version: str) -> bytes:
-        """Generate CmAccess hook based on flags and version."""
+        """Generate CmAccess hook based on flags and version.
+
+        Args:
+            flags: Access flags value.
+            version: CodeMeter version string.
+
+        Returns:
+            bytes: Machine code for CmAccess hook.
+
+        """
         # Return CM_OK (0) and set handle
         if self._detect_architecture() == "x64":
             return bytes(
@@ -1542,7 +1797,12 @@ console.log('[HASP] Patched at {patch["offset"]}');
         )
 
     def _generate_codemeter_license_info(self) -> bytes:
-        """Generate dynamic CodeMeter license info response."""
+        """Generate dynamic CodeMeter license info response.
+
+        Returns:
+            bytes: Machine code for license info response.
+
+        """
         if self._detect_architecture() == "x64":
             # Fill license info structure
             return bytes(
@@ -1641,7 +1901,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         )
 
     def _generate_cm_info_response(self, version: str) -> bytes:
-        """Generate CodeMeter info response based on version."""
+        """Generate CodeMeter info response based on version.
+
+        Args:
+            version: CodeMeter version string.
+
+        Returns:
+            bytes: Machine code for info response.
+
+        """
         # Return success with version-specific info
         info_value = 0x07000000 if "7" in version or "6" not in version else 0x06000000
         if self._detect_architecture() == "x64":
@@ -1658,7 +1926,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
         ])
 
     def _detect_cm_crypto_mode(self, binary_data: bytes, offset: int) -> str:
-        """Detect CodeMeter crypto mode."""
+        """Detect CodeMeter crypto mode.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset of crypto call.
+
+        Returns:
+            str: Detected crypto mode (AES, 3DES, or DES).
+
+        """
         context = binary_data[max(0, offset - 500) : offset + 500]
 
         if b"CmCryptAes" in context or b"AES" in context:
@@ -1668,7 +1945,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return "DES" if b"CmCryptDes" in context or b"DES" in context else "AES"
 
     def _generate_cm_crypto_hook(self, mode: str) -> bytes:
-        """Generate crypto hook based on mode."""
+        """Generate crypto hook based on mode.
+
+        Args:
+            mode: Crypto mode (AES, 3DES, or DES).
+
+        Returns:
+            bytes: Machine code for crypto hook.
+
+        """
         # Advanced polymorphic crypto bypass using AES-NI instructions
         if self._detect_architecture() == "x64":
             return bytes(
@@ -1737,7 +2022,12 @@ console.log('[HASP] Patched at {patch["offset"]}');
         )
 
     def _generate_cm_secure_data_hook(self) -> bytes:
-        """Generate secure data response hook."""
+        """Generate secure data response hook.
+
+        Returns:
+            bytes: Machine code for secure data hook.
+
+        """
         # Return success with data
         if self._detect_architecture() == "x64":
             return bytes(
@@ -1806,7 +2096,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
         )
 
     def _is_cm_check_context(self, binary_data: bytes, offset: int) -> bool:
-        """Verify if pattern is in CodeMeter check context."""
+        """Verify if pattern is in CodeMeter check context.
+
+        Args:
+            binary_data: Binary data to analyze.
+            offset: Offset to check context around.
+
+        Returns:
+            bool: True if in CodeMeter check context.
+
+        """
         context = binary_data[max(0, offset - 200) : offset + 200]
         cm_indicators = [
             b"CmAccess",
@@ -1823,7 +2122,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return any(indicator in context for indicator in cm_indicators)
 
     def _extract_cm_features(self, binary_data: bytes) -> tuple[list[int], list[int]]:
-        """Extract CodeMeter features and product items."""
+        """Extract CodeMeter features and product items.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            tuple[list[int], list[int]]: Features and product items lists.
+
+        """
         features: list[int] = []
         product_items: list[int] = []
 
@@ -1848,7 +2155,16 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return list(set(features)), list(set(product_items))
 
     def _generate_cm_serial(self, firm_code: int, product_code: int) -> str:
-        """Generate CodeMeter serial based on codes."""
+        """Generate CodeMeter serial based on codes.
+
+        Args:
+            firm_code: CodeMeter firm code.
+            product_code: CodeMeter product code.
+
+        Returns:
+            str: Generated CodeMeter serial number.
+
+        """
         import hashlib
 
         # Generate serial from firm and product codes
@@ -1859,7 +2175,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return f"CM-{serial[:4]}-{serial[4:8]}-{serial[8:12]}-{serial[12:16]}"
 
     def _extract_cm_box_mask(self, binary_data: bytes) -> int:
-        """Extract CodeMeter box mask."""
+        """Extract CodeMeter box mask.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            int: Extracted box mask or default.
+
+        """
         # Look for box mask patterns
         mask_pattern = rb'BoxMask["\s]*[:=]\s*0x([0-9a-fA-F]+)'
         if match := re.search(mask_pattern, binary_data):
@@ -1868,7 +2192,15 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return 0xFFFFFFFF  # Default: all boxes
 
     def _extract_cm_unit_counter(self, binary_data: bytes) -> int:
-        """Extract CodeMeter unit counter value."""
+        """Extract CodeMeter unit counter value.
+
+        Args:
+            binary_data: Binary data to analyze.
+
+        Returns:
+            int: Extracted unit counter or default.
+
+        """
         # Look for unit counter patterns
         counter_pattern = rb'UnitCounter["\s]*[:=]\s*(\d+)'
         if match := re.search(counter_pattern, binary_data):
@@ -1877,7 +2209,17 @@ console.log('[HASP] Patched at {patch["offset"]}');
         return 0x7FFFFFFF  # Default: max units
 
     def _generate_dynamic_cm_frida_script(self, hooks: list[Any], patches: list[Any], container: dict[Any, Any]) -> str:
-        """Generate Frida script for dynamic CodeMeter hooking."""
+        """Generate Frida script for dynamic CodeMeter hooking.
+
+        Args:
+            hooks: List of hooks to generate in script.
+            patches: List of patches to generate in script.
+            container: Virtual container configuration.
+
+        Returns:
+            str: Generated Frida JavaScript code.
+
+        """
         script = "// Dynamic CodeMeter bypass script\n"
         script += f"// Container: {container['type']}\n"
         script += f"// Firm Code: {container['firm_code']}\n"
@@ -2224,7 +2566,7 @@ try {{
         """Generate x86-64 assembly patch for HASP encryption (v2).
 
         Returns:
-            Binary patch bytes for XOR encryption with dynamic key
+            bytes: Binary patch bytes for XOR encryption with dynamic key.
 
         """
         import hashlib
@@ -2289,7 +2631,7 @@ try {{
         """Generate Frida script for FlexLM bypass.
 
         Returns:
-            Frida script as string
+            str: Frida script as string.
 
         """
         import hashlib
@@ -2600,7 +2942,7 @@ console.log("[FlexLM] Server: " + flexlm_context.server_name + ":" + flexlm_cont
         """Generate Frida script for HASP bypass with dynamic handle generation.
 
         Returns:
-            Frida script as string
+            str: Frida script as string.
 
         """
         return """
@@ -2790,7 +3132,7 @@ console.log("[HASP] Dongle emulation active with dynamic handle: 0x" + dynamic_h
         """Generate Frida script for CodeMeter bypass with dynamic handle generation.
 
         Returns:
-            Frida script as string
+            str: Frida script as string.
 
         """
         return """
@@ -3034,10 +3376,10 @@ console.log("[CodeMeter] Box Serial: 0x" + session_data.box_serial.toString(16))
         """Calculate confidence score for analysis results.
 
         Args:
-            results: Analysis results
+            results: Analysis results.
 
         Returns:
-            Confidence score between 0.0 and 1.0
+            float: Confidence score between 0.0 and 1.0.
 
         """
         confidence = 0.0
@@ -3060,10 +3402,10 @@ console.log("[CodeMeter] Box Serial: 0x" + session_data.box_serial.toString(16))
         """Generate detailed bypass report.
 
         Args:
-            analysis: Analysis results
+            analysis: Analysis results.
 
         Returns:
-            Formatted report string
+            str: Formatted report string.
 
         """
         report = "=" * 60 + "\n"

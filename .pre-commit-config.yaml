@@ -20,6 +20,14 @@ repos:
             always_run: true
             stages: [pre-commit]
 
+          - id: generate-structure-files
+            name: Generate Intellicrack Structure Files (HTA/TXT)
+            entry: bash -c 'pixi run python scripts/generate_tree.py && git add IntellicrackStructure.hta IntellicrackStructure.txt'
+            language: system
+            pass_filenames: false
+            always_run: true
+            stages: [pre-commit]
+
           - id: rust-fmt
             name: Rust code formatting (cargo fmt)
             entry: cargo fmt --manifest-path intellicrack-launcher/Cargo.toml -- --check

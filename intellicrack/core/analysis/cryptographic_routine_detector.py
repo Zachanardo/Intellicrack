@@ -845,7 +845,12 @@ class CryptographicRoutineDetector:
         return self.detections
 
     def _detect_crypto_constants(self, data: bytes, base_addr: int) -> None:
-        """Detect cryptographic constants throughout the binary."""
+        """Detect cryptographic constants throughout the binary.
+
+        Args:
+            data: Binary data to scan for constants.
+            base_addr: Base address offset for detected constants.
+        """
         constant_patterns = {
             "AES_SBOX": (self.AES_SBOX, CryptoAlgorithm.AES),
             "AES_INV_SBOX": (self.AES_INV_SBOX, CryptoAlgorithm.AES),
@@ -917,7 +922,12 @@ class CryptographicRoutineDetector:
                 self.constant_cache[t_bytes] = crypto_const
 
     def _detect_aes_sbox(self, data: bytes, base_addr: int) -> None:
-        """Detect AES S-box tables with fuzzy matching for obfuscated implementations."""
+        """Detect AES S-box tables with fuzzy matching for obfuscated implementations.
+
+        Args:
+            data: Binary data to scan for AES S-boxes.
+            base_addr: Base address offset for detections.
+        """
         for i in range(len(data) - 256):
             fwd_confidence = self._calculate_sbox_confidence(data[i : i + 256], self.AES_SBOX)
             if fwd_confidence > 0.85:
@@ -960,7 +970,12 @@ class CryptographicRoutineDetector:
                 logger.debug("AES inverse S-box detected at 0x%08x (confidence: %.2f%%)", base_addr + i, inv_confidence * 100)
 
     def _detect_des_sboxes(self, data: bytes, base_addr: int) -> None:
-        """Detect DES S-boxes with support for various packing formats."""
+        """Detect DES S-boxes with support for various packing formats.
+
+        Args:
+            data: Binary data to scan for DES S-boxes.
+            base_addr: Base address offset for detections.
+        """
         for i in range(len(data) - 512):
             sbox_matches = 0
             sbox_positions = []
@@ -992,7 +1007,12 @@ class CryptographicRoutineDetector:
                 logger.debug("DES S-boxes detected at 0x%08x (%d/8 S-boxes)", base_addr + i, sbox_matches)
 
     def _detect_blowfish_constants(self, data: bytes, base_addr: int) -> None:
-        """Detect Blowfish Pi-based subkey initialization."""
+        """Detect Blowfish Pi-based subkey initialization.
+
+        Args:
+            data: Binary data to scan for Blowfish constants.
+            base_addr: Base address offset for detections.
+        """
         idx = data.find(self.BLOWFISH_PI_SUBKEYS)
         if idx != -1:
             detection = CryptoDetection(
@@ -1021,7 +1041,12 @@ class CryptographicRoutineDetector:
                 break
 
     def _detect_twofish_constants(self, data: bytes, base_addr: int) -> None:
-        """Detect Twofish Q tables."""
+        """Detect Twofish Q tables.
+
+        Args:
+            data: Binary data to scan for Twofish tables.
+            base_addr: Base address offset for detections.
+        """
         for table_idx, q_table in enumerate(self.TWOFISH_Q_TABLES):
             q_bytes = bytes(q_table)
             idx = data.find(q_bytes)
@@ -1038,7 +1063,12 @@ class CryptographicRoutineDetector:
                 logger.debug("Twofish Q%d table detected at 0x%08x", table_idx, base_addr + idx)
 
     def _detect_hash_constants(self, data: bytes, base_addr: int) -> None:
-        """Detect hash algorithm initialization vectors and constants."""
+        """Detect hash algorithm initialization vectors and constants.
+
+        Args:
+            data: Binary data to scan for hash constants.
+            base_addr: Base address offset for detections.
+        """
         sha256_k_count_be = 0
         sha256_k_count_le = 0
         for i in range(len(self.SHA256_K)):
@@ -1121,7 +1151,12 @@ class CryptographicRoutineDetector:
             logger.debug("MD5 constants detected (%d found)", md5_t_count)
 
     def _detect_rc4_init(self, data: bytes, base_addr: int) -> None:
-        """Detect RC4 initialization pattern with KSA detection."""
+        """Detect RC4 initialization pattern with KSA detection.
+
+        Args:
+            data: Binary data to scan for RC4 patterns.
+            base_addr: Base address offset for detections.
+        """
         pattern = bytes(range(256))
         for i in range(len(data) - 256):
             if self._fuzzy_match(data[i : i + 256], pattern, threshold=0.9) and self._check_rc4_ksa_pattern(data, i):
@@ -1140,7 +1175,12 @@ class CryptographicRoutineDetector:
                 logger.debug("RC4 state array detected at 0x%08x", base_addr + i)
 
     def _detect_rsa_montgomery(self, data: bytes, base_addr: int) -> None:
-        """Detect RSA Montgomery multiplication patterns and public exponents."""
+        """Detect RSA Montgomery multiplication patterns and public exponents.
+
+        Args:
+            data: Binary data to scan for RSA patterns.
+            base_addr: Base address offset for detections.
+        """
         well_known_exponents = {b"\x01\x00\x01\x00": 65537, b"\x03\x00\x00\x00": 3}
 
         for i in range(len(data) - 8):
@@ -1180,7 +1220,12 @@ class CryptographicRoutineDetector:
                 self.detections.append(detection)
 
     def _detect_ecc_operations(self, data: bytes, base_addr: int) -> None:
-        """Detect elliptic curve cryptography operations and curve parameters."""
+        """Detect elliptic curve cryptography operations and curve parameters.
+
+        Args:
+            data: Binary data to scan for ECC patterns.
+            base_addr: Base address offset for detections.
+        """
         for curve_name, prime in self.ECC_FIELD_PRIMES.items():
             idx = data.find(prime)
             if idx != -1:
@@ -1198,7 +1243,12 @@ class CryptographicRoutineDetector:
         self._detect_ecc_point_ops(data, base_addr)
 
     def _detect_chacha20(self, data: bytes, base_addr: int) -> None:
-        """Detect ChaCha20 stream cipher constant."""
+        """Detect ChaCha20 stream cipher constant.
+
+        Args:
+            data: Binary data to scan for ChaCha20 patterns.
+            base_addr: Base address offset for detections.
+        """
         idx = data.find(self.CHACHA20_CONSTANT)
         if idx != -1:
             detection = CryptoDetection(
@@ -1217,7 +1267,12 @@ class CryptographicRoutineDetector:
                 detection.details["quarter_round_detected"] = True
 
     def _detect_aes_ni_instructions(self, data: bytes, base_addr: int) -> None:
-        """Detect AES-NI instruction usage."""
+        """Detect AES-NI instruction usage.
+
+        Args:
+            data: Binary data to scan for AES-NI instructions.
+            base_addr: Base address offset for detections.
+        """
         aesni_opcodes = {
             b"\x66\x0f\x38\xdc": "AESENC",
             b"\x66\x0f\x38\xdd": "AESENCLAST",
@@ -1248,7 +1303,12 @@ class CryptographicRoutineDetector:
                 idx += len(opcode)
 
     def _detect_sha_instructions(self, data: bytes, base_addr: int) -> None:
-        """Detect SHA instruction extensions."""
+        """Detect SHA instruction extensions.
+
+        Args:
+            data: Binary data to scan for SHA instructions.
+            base_addr: Base address offset for detections.
+        """
         sha_opcodes = {
             b"\x0f\x38\xc8": ("SHA1NEXTE", CryptoAlgorithm.SHA1),
             b"\x0f\x38\xc9": ("SHA1MSG1", CryptoAlgorithm.SHA1),
@@ -1278,7 +1338,12 @@ class CryptographicRoutineDetector:
                 idx += len(opcode)
 
     def _detect_custom_crypto(self, data: bytes, base_addr: int) -> None:
-        """Detect custom or unknown cryptographic implementations using entropy and structural analysis."""
+        """Detect custom or unknown cryptographic implementations using entropy and structural analysis.
+
+        Args:
+            data: Binary data to scan for custom crypto implementations.
+            base_addr: Base address offset for detections.
+        """
         window_size = 256
         for i in range(0, len(data) - window_size, 64):
             window = data[i : i + window_size]
@@ -1304,7 +1369,12 @@ class CryptographicRoutineDetector:
         self._detect_lfsr_cipher(data, base_addr)
 
     def _detect_feistel_structure(self, data: bytes, base_addr: int) -> None:
-        """Detect Feistel network structures through instruction pattern analysis."""
+        """Detect Feistel network structures through instruction pattern analysis.
+
+        Args:
+            data: Binary data to scan for Feistel structures.
+            base_addr: Base address offset for detections.
+        """
         try:
             md = self.md_64 if len(data) > 0x100000 else self.md_32
 
@@ -1343,7 +1413,12 @@ class CryptographicRoutineDetector:
             logger.debug("Error in Feistel detection: %s", e, exc_info=True)
 
     def _detect_substitution_permutation(self, data: bytes, base_addr: int) -> None:
-        """Detect substitution-permutation network patterns."""
+        """Detect substitution-permutation network patterns.
+
+        Args:
+            data: Binary data to scan for SP-network patterns.
+            base_addr: Base address offset for detections.
+        """
         for i in range(0, len(data) - 2048, 512):
             if self._has_sp_network_pattern(data[i : i + 2048]):
                 detection = CryptoDetection(
@@ -1358,7 +1433,12 @@ class CryptographicRoutineDetector:
                 logger.debug("SP-network detected at 0x%08x", base_addr + i)
 
     def _detect_ecc_point_ops(self, data: bytes, base_addr: int) -> None:
-        """Detect ECC point addition and doubling operations."""
+        """Detect ECC point addition and doubling operations.
+
+        Args:
+            data: Binary data to scan for ECC point operations.
+            base_addr: Base address offset for detections.
+        """
         try:
             md = self.md_64 if len(data) > 0x100000 else self.md_32
 
@@ -1400,7 +1480,12 @@ class CryptographicRoutineDetector:
             logger.debug("Error in ECC detection: %s", e, exc_info=True)
 
     def _detect_xor_crypto(self, data: bytes, base_addr: int) -> None:
-        """Detect XOR-based encryption patterns."""
+        """Detect XOR-based encryption patterns.
+
+        Args:
+            data: Binary data to scan for XOR-based ciphers.
+            base_addr: Base address offset for detections.
+        """
         try:
             md = self.md_64 if len(data) > 0x100000 else self.md_32
 
@@ -1434,7 +1519,12 @@ class CryptographicRoutineDetector:
             logger.debug("Error in XOR detection: %s", e, exc_info=True)
 
     def _detect_lfsr_cipher(self, data: bytes, base_addr: int) -> None:
-        """Detect Linear Feedback Shift Register based ciphers."""
+        """Detect Linear Feedback Shift Register based ciphers.
+
+        Args:
+            data: Binary data to scan for LFSR-based ciphers.
+            base_addr: Base address offset for detections.
+        """
         try:
             md = self.md_64 if len(data) > 0x100000 else self.md_32
 
@@ -1472,7 +1562,12 @@ class CryptographicRoutineDetector:
             logger.debug("Error in LFSR detection: %s", e, exc_info=True)
 
     def _perform_data_flow_analysis(self, data: bytes, base_addr: int) -> None:
-        """Perform data flow analysis on detected crypto routines to track value propagation."""
+        """Perform data flow analysis on detected crypto routines to track value propagation.
+
+        Args:
+            data: Binary data containing detected crypto routines.
+            base_addr: Base address offset for analysis.
+        """
         for detection in self.detections:
             if detection.algorithm in [
                 CryptoAlgorithm.CUSTOM,
@@ -1501,7 +1596,15 @@ class CryptographicRoutineDetector:
                     detection.details["data_flow_complexity"] = len(flow_nodes)
 
     def _analyze_data_flow_region(self, data: bytes, base_addr: int) -> list[DataFlowNode]:
-        """Analyze data flow in a specific region of code."""
+        """Analyze data flow in a specific region of code.
+
+        Args:
+            data: Binary data region to analyze.
+            base_addr: Base address for the data region.
+
+        Returns:
+            list[DataFlowNode]: Data flow nodes extracted from the region.
+        """
         flow_nodes = []
 
         try:
@@ -1552,7 +1655,11 @@ class CryptographicRoutineDetector:
                 self._fingerprint_hash(detections)
 
     def _fingerprint_aes(self, detections: list[CryptoDetection]) -> None:
-        """Fingerprint AES implementation details."""
+        """Fingerprint AES implementation details.
+
+        Args:
+            detections: List of AES detections to fingerprint.
+        """
         has_sbox = any("S-box" in d.variant for d in detections)
         has_aesni = any("AES-NI" in d.variant for d in detections)
         has_rcon = any(c.constant_type == "AES_RCON" for d in detections for c in d.constants)
@@ -1569,7 +1676,11 @@ class CryptographicRoutineDetector:
                 detection.details["implementation"] = "obfuscated"
 
     def _fingerprint_rsa(self, detections: list[CryptoDetection]) -> None:
-        """Fingerprint RSA implementation details."""
+        """Fingerprint RSA implementation details.
+
+        Args:
+            detections: List of RSA detections to fingerprint.
+        """
         has_montgomery = any("Montgomery" in d.variant for d in detections)
 
         for detection in detections:
@@ -1578,7 +1689,11 @@ class CryptographicRoutineDetector:
                 detection.confidence = min(1.0, detection.confidence + 0.05)
 
     def _fingerprint_ecc(self, detections: list[CryptoDetection]) -> None:
-        """Fingerprint ECC implementation details."""
+        """Fingerprint ECC implementation details.
+
+        Args:
+            detections: List of ECC detections to fingerprint.
+        """
         curve_detections = [d for d in detections if "Field Prime" in d.variant]
 
         for detection in detections:
@@ -1586,7 +1701,11 @@ class CryptographicRoutineDetector:
                 detection.details["curves_present"] = [d.details.get("curve") for d in curve_detections]
 
     def _fingerprint_hash(self, detections: list[CryptoDetection]) -> None:
-        """Fingerprint hash algorithm implementation details."""
+        """Fingerprint hash algorithm implementation details.
+
+        Args:
+            detections: List of hash algorithm detections to fingerprint.
+        """
         for detection in detections:
             if detection.details.get("hardware", False):
                 detection.mode = "Hardware-accelerated"
@@ -1594,7 +1713,12 @@ class CryptographicRoutineDetector:
                 detection.mode = "Software"
 
     def _enhance_with_radare2(self, binary_path: str, base_addr: int) -> None:
-        """Enhance detections using radare2 analysis."""
+        """Enhance detections using radare2 analysis.
+
+        Args:
+            binary_path: Path to the binary file to analyze.
+            base_addr: Base address offset for analysis.
+        """
         try:
             r2 = r2pipe.open(binary_path)
             r2.cmd("aaa")
@@ -1616,12 +1740,28 @@ class CryptographicRoutineDetector:
             logger.warning("Could not enhance with radare2: %s", e, exc_info=True)
 
     def _check_sbox_pattern(self, data: bytes, reference: bytes) -> bool:
-        """Check if data matches an S-box pattern."""
+        """Check if data matches an S-box pattern.
+
+        Args:
+            data: Byte data to check against reference.
+            reference: Reference S-box pattern to match against.
+
+        Returns:
+            bool: True if data matches S-box pattern, False otherwise.
+        """
         matches = sum(data[i] == reference[i] for i in range(min(len(data), len(reference))))
         return matches >= len(reference) * 0.85
 
     def _calculate_sbox_confidence(self, data: bytes, reference: bytes) -> float:
-        """Calculate confidence score for S-box match with position weighting."""
+        """Calculate confidence score for S-box match with position weighting.
+
+        Args:
+            data: Byte data to analyze.
+            reference: Reference S-box pattern.
+
+        Returns:
+            float: Confidence score between 0.0 and 1.0.
+        """
         if len(data) != len(reference):
             return 0.0
 
@@ -1635,7 +1775,14 @@ class CryptographicRoutineDetector:
         return (base_confidence * 0.7) + (hamming_factor * 0.3)
 
     def _pack_des_sbox(self, sbox: list[list[int]]) -> bytes:
-        """Pack DES S-box into byte format."""
+        """Pack DES S-box into byte format.
+
+        Args:
+            sbox: DES S-box structure to pack.
+
+        Returns:
+            bytes: Packed S-box as bytes.
+        """
         packed = bytearray()
         for row in sbox:
             for val in row:
@@ -1643,14 +1790,30 @@ class CryptographicRoutineDetector:
         return bytes(packed)
 
     def _fuzzy_match(self, data: bytes, pattern: bytes, threshold: float = 0.8) -> bool:
-        """Fuzzy matching for byte patterns with length tolerance."""
+        """Fuzzy matching for byte patterns with length tolerance.
+
+        Args:
+            data: Byte data to match.
+            pattern: Pattern to match against.
+            threshold: Minimum match ratio required (default 0.8).
+
+        Returns:
+            bool: True if fuzzy match succeeds, False otherwise.
+        """
         if len(data) != len(pattern):
             return False
         matches = sum(data[i] == pattern[i] for i in range(len(data)))
         return (matches / len(pattern)) >= threshold
 
     def _detect_blowfish_sbox_pattern(self, data: bytes) -> bool:
-        """Detect Blowfish S-box structure (4 S-boxes of 256 entries each)."""
+        """Detect Blowfish S-box structure (4 S-boxes of 256 entries each).
+
+        Args:
+            data: Byte data to check for Blowfish S-box patterns.
+
+        Returns:
+            bool: True if Blowfish S-box pattern detected, False otherwise.
+        """
         if len(data) < 1024:
             return False
 
@@ -1663,7 +1826,15 @@ class CryptographicRoutineDetector:
         return all(e > 7.0 for e in entropy_per_quarter)
 
     def _check_rc4_ksa_pattern(self, data: bytes, offset: int) -> bool:
-        """Check for RC4 Key Scheduling Algorithm pattern nearby."""
+        """Check for RC4 Key Scheduling Algorithm pattern nearby.
+
+        Args:
+            data: Binary data to search.
+            offset: Offset to search around.
+
+        Returns:
+            bool: True if RC4 KSA pattern found, False otherwise.
+        """
         search_range = min(1024, len(data) - offset)
         window = data[offset : offset + search_range]
 
@@ -1673,7 +1844,15 @@ class CryptographicRoutineDetector:
         return swap_count >= 2
 
     def _check_rc4_prga_pattern(self, data: bytes, offset: int) -> bool:
-        """Check for RC4 Pseudo-Random Generation Algorithm pattern."""
+        """Check for RC4 Pseudo-Random Generation Algorithm pattern.
+
+        Args:
+            data: Binary data to search.
+            offset: Offset to search around.
+
+        Returns:
+            bool: True if RC4 PRGA pattern found, False otherwise.
+        """
         search_start = max(0, offset - 512)
         search_end = min(len(data), offset + 1024)
         window = data[search_start:search_end]
@@ -1687,7 +1866,15 @@ class CryptographicRoutineDetector:
         return has_add and has_xor
 
     def _check_modular_ops_nearby(self, data: bytes, offset: int) -> bool:
-        """Check for modular arithmetic operations near offset."""
+        """Check for modular arithmetic operations near offset.
+
+        Args:
+            data: Binary data to search.
+            offset: Offset to search around.
+
+        Returns:
+            bool: True if modular ops pattern found, False otherwise.
+        """
         search_start = max(0, offset - 512)
         search_end = min(len(data), offset + 512)
         window = data[search_start:search_end]
@@ -1696,7 +1883,15 @@ class CryptographicRoutineDetector:
         return any(indicator in window for indicator in mod_indicators)
 
     def _estimate_rsa_key_size(self, data: bytes, offset: int) -> int | None:
-        """Estimate RSA key size from nearby modulus."""
+        """Estimate RSA key size from nearby modulus.
+
+        Args:
+            data: Binary data to search.
+            offset: Offset to search around.
+
+        Returns:
+            int | None: Estimated RSA key size in bits, or None if not found.
+        """
         search_start = max(0, offset - 2048)
         search_end = min(len(data), offset + 2048)
         window = data[search_start:search_end]
@@ -1709,7 +1904,14 @@ class CryptographicRoutineDetector:
         return None
 
     def _detect_montgomery_mul_code(self, data: bytes) -> bool:
-        """Detect Montgomery multiplication code patterns."""
+        """Detect Montgomery multiplication code patterns.
+
+        Args:
+            data: Binary data to search.
+
+        Returns:
+            bool: True if Montgomery multiplication patterns found, False otherwise.
+        """
         montgomery_patterns = [
             b"\x48\x0f\xaf",
             b"\x48\xf7",
@@ -1720,7 +1922,15 @@ class CryptographicRoutineDetector:
         return pattern_count >= 2
 
     def _detect_chacha20_quarter_round(self, data: bytes, offset: int) -> bool:
-        """Detect ChaCha20 quarter round function pattern."""
+        """Detect ChaCha20 quarter round function pattern.
+
+        Args:
+            data: Binary data to search.
+            offset: Offset to search around.
+
+        Returns:
+            bool: True if ChaCha20 quarter round pattern found, False otherwise.
+        """
         search_start = max(0, offset - 1024)
         search_end = min(len(data), offset + 1024)
         window = data[search_start:search_end]
@@ -1732,7 +1942,14 @@ class CryptographicRoutineDetector:
         return add_count >= 4 and xor_count >= 4 and rol_count >= 4
 
     def _calculate_entropy(self, data: bytes) -> float:
-        """Calculate Shannon entropy of data."""
+        """Calculate Shannon entropy of data.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            float: Shannon entropy value (0.0 to 8.0).
+        """
         if not data:
             return 0.0
 
@@ -1744,7 +1961,14 @@ class CryptographicRoutineDetector:
         return float(entropy_result)
 
     def _is_lookup_table(self, data: bytes) -> bool:
-        """Check if data appears to be a lookup table."""
+        """Check if data appears to be a lookup table.
+
+        Args:
+            data: Binary data to check.
+
+        Returns:
+            bool: True if data looks like a lookup table, False otherwise.
+        """
         unique_values = len(set(data))
         uniqueness_ratio = unique_values / len(data)
         byte_aligned = all(0 <= b <= 255 for b in data)
@@ -1752,7 +1976,15 @@ class CryptographicRoutineDetector:
         return uniqueness_ratio > 0.6 and byte_aligned
 
     def _has_crypto_access_pattern(self, data: bytes, table_offset: int) -> bool:
-        """Check if table is accessed in crypto-like patterns."""
+        """Check if table is accessed in crypto-like patterns.
+
+        Args:
+            data: Binary data to search.
+            table_offset: Offset of the table to check for references.
+
+        Returns:
+            bool: True if crypto-like access patterns found, False otherwise.
+        """
         search_start = max(0, table_offset - 4096)
         search_end = min(len(data), table_offset + 4096)
 
@@ -1762,7 +1994,14 @@ class CryptographicRoutineDetector:
         return references >= 2
 
     def _has_sp_network_pattern(self, data: bytes) -> bool:
-        """Check for substitution-permutation network patterns."""
+        """Check for substitution-permutation network patterns.
+
+        Args:
+            data: Binary data to analyze.
+
+        Returns:
+            bool: True if SP-network pattern detected, False otherwise.
+        """
         try:
             md = self.md_64 if len(data) > 0x100000 else self.md_32
 
@@ -1789,7 +2028,13 @@ class CryptographicRoutineDetector:
         return False
 
     def _find_crypto_references(self, data: bytes, table_offset: int, detection: CryptoDetection) -> None:
-        """Find code and data references to crypto tables."""
+        """Find code and data references to crypto tables.
+
+        Args:
+            data: Binary data to search for references.
+            table_offset: Offset of the crypto table.
+            detection: Detection object to populate with references.
+        """
         offset_le = struct.pack("<I", table_offset)
         offset_be = struct.pack(">I", table_offset)
 
@@ -1802,7 +2047,16 @@ class CryptographicRoutineDetector:
                 detection.code_refs.append(i)
 
     def _is_relative_reference(self, data: bytes, pos: int, target: int) -> bool:
-        """Check if position contains a relative reference to target."""
+        """Check if position contains a relative reference to target.
+
+        Args:
+            data: Binary data containing the reference.
+            pos: Position to check.
+            target: Target offset to check against.
+
+        Returns:
+            bool: True if relative reference found, False otherwise.
+        """
         if pos + 4 > len(data):
             return False
 
@@ -1819,11 +2073,10 @@ class CryptographicRoutineDetector:
         """Analyze how detected crypto is being used in the binary.
 
         Args:
-            detections: List of crypto detections to analyze
+            detections: List of crypto detections to analyze.
 
         Returns:
-            Dictionary containing usage analysis
-
+            dict[str, Any]: Dictionary containing usage analysis with algorithm counts, confidence levels, and protection indicators.
         """
         algorithms_dict: dict[str, dict[str, Any]] = {}
         key_sizes_set: set[int] = set()
@@ -1897,11 +2150,10 @@ class CryptographicRoutineDetector:
         """Generate YARA rules from crypto detections.
 
         Args:
-            detections: List of crypto detections
+            detections: List of crypto detections.
 
         Returns:
-            YARA rules as string
-
+            str: YARA rules as formatted string.
         """
         rules = []
 
@@ -1948,7 +2200,11 @@ class CryptographicRoutineDetector:
 
 
 def main() -> None:
-    """Demonstrate crypto detection capabilities with example usage."""
+    """Demonstrate crypto detection capabilities with example usage.
+
+    Loads a binary file, performs cryptographic routine detection, analyzes the
+    results, and exports YARA rules for identified crypto implementations.
+    """
     import sys
 
     if len(sys.argv) < 2:

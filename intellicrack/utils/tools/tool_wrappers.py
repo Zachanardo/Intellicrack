@@ -29,9 +29,9 @@ import traceback
 from types import ModuleType
 from typing import Any
 
-capstone: ModuleType | None
-frida: ModuleType | None
-pefile: ModuleType | None
+capstone: ModuleType | None = None
+frida: ModuleType | None = None
+pefile: ModuleType | None = None
 
 try:
     capstone = importlib.import_module("capstone")
@@ -48,25 +48,31 @@ try:
 except ImportError:
     pefile = None
 
-logger = logging.getLogger(__name__)
+logger: logging.Logger = logging.getLogger(__name__)
 
 
 def log_message(message: str) -> str:
-    """Helper function to format log messages with timestamp."""
+    """Format log messages with timestamp.
+
+    Args:
+        message: The message text to format with a timestamp prefix.
+
+    Returns:
+        str: The formatted message with timestamp.
+
+    """
     return f"[{time.strftime('%H:%M:%S')}] {message}"
 
 
 def wrapper_find_file(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_find_file.
-    Searches for files based on filename.
+    """Search for files based on filename.
 
-    Parameters
-    ----------
-        filename (str, optional): The filename to search for
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'filename' key to search for.
 
-    Returns
-    -------
-        dict: Result with status and path if found
+    Returns:
+        dict: Result with status and path if found.
 
     """
     logger.debug("Entered wrapper_find_file with parameters: %s", parameters)
@@ -99,16 +105,14 @@ def wrapper_find_file(app_instance: Any, parameters: dict[str, Any]) -> dict[str
 
 
 def wrapper_load_binary(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_load_binary.
-    Loads a binary file for analysis.
+    """Load a binary file for analysis.
 
-    Parameters
-    ----------
-        path (str): Path to the binary file
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'path' key for binary file location.
 
-    Returns
-    -------
-        dict: Binary information from app_instance.binary_info
+    Returns:
+        dict: Binary information from app_instance.binary_info.
 
     """
     logger.debug("Entered wrapper_load_binary with parameters: %s", parameters)
@@ -143,11 +147,14 @@ def wrapper_load_binary(app_instance: Any, parameters: dict[str, Any]) -> dict[s
 
 
 def wrapper_list_relevant_files(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_list_relevant_files.
-    Lists files relevant to the current binary.
+    """List files relevant to the current binary.
+
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: List of relevant files
+        dict: List of relevant files.
 
     """
     try:
@@ -188,18 +195,15 @@ def wrapper_list_relevant_files(app_instance: Any, parameters: dict[str, Any]) -
 
 
 def wrapper_read_file_chunk(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_read_file_chunk.
-    Reads a chunk of data from a file.
+    """Read a chunk of data from a file.
 
-    Parameters
-    ----------
-        path (str): Path to the file
-        offset (int, optional): Starting offset (default: 0)
-        size (int, optional): Number of bytes to read (default: 1024)
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'path' (required), 'offset' (optional, default 0),
+            and 'size' (optional, default 1024).
 
-    Returns
-    -------
-        dict: File chunk data
+    Returns:
+        dict: File chunk data with status, data, size, and offset.
 
     """
     logger.debug("Entered wrapper_read_file_chunk with parameters: %s", parameters)
@@ -235,16 +239,14 @@ def wrapper_read_file_chunk(app_instance: Any, parameters: dict[str, Any]) -> di
 
 
 def wrapper_get_file_metadata(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_get_file_metadata.
-    Gets metadata information about a file.
+    """Get metadata information about a file.
 
-    Parameters
-    ----------
-        path (str): Path to the file
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'path' key for the file.
 
-    Returns
-    -------
-        dict: File metadata
+    Returns:
+        dict: File metadata including size, timestamps, and attributes.
 
     """
     logger.debug("Entered wrapper_get_file_metadata with parameters: %s", parameters)
@@ -285,11 +287,14 @@ def wrapper_get_file_metadata(app_instance: Any, parameters: dict[str, Any]) -> 
 
 
 def wrapper_run_static_analysis(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_run_static_analysis.
-    Runs static analysis on the loaded binary.
+    """Run static analysis on the loaded binary.
+
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: Static analysis results
+        dict: Static analysis results.
 
     """
     logger.debug(f"Running static analysis with parameters: {parameters}")
@@ -315,11 +320,14 @@ def wrapper_run_static_analysis(app_instance: Any, parameters: dict[str, Any]) -
 
 
 def wrapper_deep_license_analysis(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_deep_license_analysis.
-    Runs deep license analysis on the loaded binary.
+    """Run deep license analysis on the loaded binary.
+
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: License analysis results
+        dict: License analysis results.
 
     """
     logger.debug(f"Running deep license analysis with parameters: {parameters}")
@@ -341,11 +349,14 @@ def wrapper_deep_license_analysis(app_instance: Any, parameters: dict[str, Any])
 
 
 def wrapper_detect_protections(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_detect_protections.
-    Detects protections in the loaded binary.
+    """Detect protections in the loaded binary.
+
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary of parameters (unused in current implementation).
 
     Returns:
-        dict: Protection detection results
+        dict: Protection detection results.
 
     """
     logger.debug(f"Detecting protections with parameters: {parameters}")
@@ -374,17 +385,15 @@ def wrapper_detect_protections(app_instance: Any, parameters: dict[str, Any]) ->
 
 
 def wrapper_disassemble_address(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_disassemble_address.
-    Disassembles instructions at a given address.
+    """Disassemble instructions at a given address.
 
-    Parameters
-    ----------
-        address (int): Address to disassemble
-        num_instructions (int, optional): Number of instructions to disassemble
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'address' (required) and 'num_instructions'
+            (optional, default 10).
 
-    Returns
-    -------
-        dict: Disassembly listing
+    Returns:
+        dict: Disassembly listing with status and instructions.
 
     """
     logger.debug("Entering wrapper_disassemble_address with parameters: %s", parameters)
@@ -488,16 +497,14 @@ def wrapper_disassemble_address(app_instance: Any, parameters: dict[str, Any]) -
 
 
 def wrapper_get_cfg(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_get_cfg.
-    Gets control flow graph for a function.
+    """Get control flow graph for a function.
 
-    Parameters
-    ----------
-        function_address (int, optional): Address of function to analyze
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing optional 'function_address' key.
 
-    Returns
-    -------
-        dict: Control flow graph data
+    Returns:
+        dict: Control flow graph data.
 
     """
     logger.debug("Entered wrapper_get_cfg with parameters: %s", parameters)
@@ -535,11 +542,14 @@ def wrapper_get_cfg(app_instance: Any, parameters: dict[str, Any]) -> dict[str, 
 
 
 def wrapper_launch_target(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_launch_target.
-    Launches the target process for dynamic analysis.
+    """Launch the target process for dynamic analysis.
+
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing optional 'args' and 'suspended' keys.
 
     Returns:
-        dict: Launch status and process information
+        dict: Launch status and process information.
 
     """
     logger.debug(f"Launching target with parameters: {parameters}")
@@ -663,16 +673,14 @@ def wrapper_launch_target(app_instance: Any, parameters: dict[str, Any]) -> dict
 
 
 def wrapper_attach_target(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_attach_target.
-    Attaches to a running target process.
+    """Attach to a running target process.
 
-    Parameters
-    ----------
-        process_id (int): PID of process to attach to
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'process_id' key.
 
-    Returns
-    -------
-        dict: Attach status
+    Returns:
+        dict: Attach status.
 
     """
     logger.debug("Entered wrapper_attach_target with parameters: %s", parameters)
@@ -747,17 +755,15 @@ def wrapper_attach_target(app_instance: Any, parameters: dict[str, Any]) -> dict
 
 
 def wrapper_run_frida_script(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_run_frida_script.
-    Runs a Frida script on the target process.
+    """Run a Frida script on the target process.
 
-    Parameters
-    ----------
-        script_path (str): Path to Frida script file
-        process_id (int, optional): Target process ID
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'script_path' (required) and optional
+            'process_id' and 'process_name' keys.
 
-    Returns
-    -------
-        dict: Script execution results
+    Returns:
+        dict: Script execution results.
 
     """
     logger.debug("Entered wrapper_run_frida_script with parameters: %s", parameters)
@@ -834,6 +840,13 @@ def wrapper_run_frida_script(app_instance: Any, parameters: dict[str, Any]) -> d
             output_messages: list[str] = []
 
             def on_message(message: Any, data: Any) -> None:
+                """Handle Frida script messages.
+
+                Args:
+                    message: Message from Frida script (dict or other type).
+                    data: Additional data payload.
+
+                """
                 if isinstance(message, dict):
                     if message.get("type") == "send":
                         output_messages.append(str(message.get("payload", "")))
@@ -875,11 +888,14 @@ def wrapper_run_frida_script(app_instance: Any, parameters: dict[str, Any]) -> d
 
 
 def wrapper_detach(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_detach.
-    Detaches from the target process.
+    """Detach from the target process.
+
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing optional 'process_id' key.
 
     Returns:
-        dict: Detach status
+        dict: Detach status.
 
     """
     logger.debug(f"Detaching with parameters: {parameters}")
@@ -959,16 +975,14 @@ def wrapper_detach(app_instance: Any, parameters: dict[str, Any]) -> dict[str, A
 
 
 def wrapper_propose_patch(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_propose_patch.
-    Proposes patches based on analysis results.
+    """Propose patches based on analysis results.
 
-    Parameters
-    ----------
-        analysis_results (dict, optional): Analysis results to base patches on
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing optional 'analysis_results' key.
 
-    Returns
-    -------
-        dict: Proposed patches
+    Returns:
+        dict: Proposed patches with analysis methods and confidence scores.
 
     """
     logger.debug(f"Proposing patches with parameters: {parameters}")
@@ -1049,7 +1063,15 @@ def wrapper_propose_patch(app_instance: Any, parameters: dict[str, Any]) -> dict
 
 
 def _analyze_static_patterns(binary_path: str) -> list[dict[str, Any]]:
-    """Analyze binary for common crackable patterns."""
+    """Analyze binary for common crackable patterns.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        list: List of patch proposals based on identified patterns.
+
+    """
     patches = []
 
     try:
@@ -1118,7 +1140,15 @@ def _analyze_static_patterns(binary_path: str) -> list[dict[str, Any]]:
 
 
 def _analyze_license_strings(binary_path: str) -> list[dict[str, Any]]:
-    """Analyze strings for license-related patches."""
+    """Analyze strings for license-related patches.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        list: List of patch proposals based on identified license strings.
+
+    """
     patches = []
 
     try:
@@ -1173,7 +1203,15 @@ def _analyze_license_strings(binary_path: str) -> list[dict[str, Any]]:
 
 
 def _analyze_imports(binary_path: str) -> list[dict[str, Any]]:
-    """Analyze import table for hookable functions."""
+    """Analyze import table for hookable functions.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        list: List of import-based patch proposals.
+
+    """
     patches = []
 
     try:
@@ -1185,7 +1223,15 @@ def _analyze_imports(binary_path: str) -> list[dict[str, Any]]:
 
 
 def _try_pefile_import_analysis(binary_path: str) -> list[dict[str, Any]]:
-    """Try PE import analysis using pefile."""
+    """Try PE import analysis using pefile.
+
+    Args:
+        binary_path: Path to the PE binary file to analyze.
+
+    Returns:
+        list: List of import patches or empty list if analysis fails.
+
+    """
     patches = []
 
     try:
@@ -1217,13 +1263,32 @@ def _try_pefile_import_analysis(binary_path: str) -> list[dict[str, Any]]:
 
 
 def _extract_import_patches(pe: Any, detected_apis: dict[str, list[str]]) -> list[dict[str, Any]]:
-    """Extract import patches from PE analysis."""
+    """Extract import patches from PE analysis.
+
+    Args:
+        pe: PE object loaded with pefile.
+        detected_apis: Dictionary mapping API categories to function names.
+
+    Returns:
+        list: List of import hook patch proposals.
+
+    """
     patches = []
 
     from ..binary.pe_common import iterate_pe_imports_with_dll
 
     def check_import_patch(dll_name: str, func_name: str, imp: Any) -> dict[str, Any] | None:
-        # Check if this function was detected
+        """Check if import should be patched.
+
+        Args:
+            dll_name: DLL name containing the function.
+            func_name: Function name to check.
+            imp: Import object with address information.
+
+        Returns:
+            dict: Patch proposal if function is in detected APIs, None otherwise.
+
+        """
         for _, funcs in detected_apis.items():
             if func_name in funcs:
                 return {
@@ -1249,7 +1314,15 @@ def _extract_import_patches(pe: Any, detected_apis: dict[str, list[str]]) -> lis
 
 
 def _analyze_disassembly(binary_path: str) -> list[dict[str, Any]]:
-    """Analyze disassembly for patchable instructions."""
+    """Analyze disassembly for patchable instructions.
+
+    Args:
+        binary_path: Path to the binary file to analyze.
+
+    Returns:
+        list: List of instruction-based patch proposals.
+
+    """
     patches = []
 
     try:
@@ -1307,7 +1380,15 @@ def _analyze_disassembly(binary_path: str) -> list[dict[str, Any]]:
 
 
 def _convert_vulnerabilities_to_patches(vulnerabilities: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Convert vulnerability findings to patch proposals."""
+    """Convert vulnerability findings to patch proposals.
+
+    Args:
+        vulnerabilities: List of vulnerability findings from analysis.
+
+    Returns:
+        list: List of patch proposals based on vulnerabilities.
+
+    """
     return [
         {
             "type": "vulnerability_fix",
@@ -1325,7 +1406,15 @@ def _convert_vulnerabilities_to_patches(vulnerabilities: list[dict[str, Any]]) -
 
 
 def _deduplicate_and_rank_patches(patches: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Remove duplicates and rank patches by effectiveness."""
+    """Remove duplicates and rank patches by effectiveness.
+
+    Args:
+        patches: List of patch proposals that may contain duplicates.
+
+    Returns:
+        list: Deduplicated and ranked list of patches.
+
+    """
     # Simple deduplication by address
     seen_addresses = set()
     unique_patches = []
@@ -1340,7 +1429,15 @@ def _deduplicate_and_rank_patches(patches: list[dict[str, Any]]) -> list[dict[st
 
 
 def _calculate_patch_confidence(patch: dict[str, Any]) -> float:
-    """Calculate confidence score for a patch."""
+    """Calculate confidence score for a patch.
+
+    Args:
+        patch: Patch proposal dictionary with analysis method and type.
+
+    Returns:
+        float: Confidence score between 0.0 and 1.0.
+
+    """
     confidence = 0.5  # Base confidence
 
     # Boost confidence based on analysis method
@@ -1362,14 +1459,31 @@ def _calculate_patch_confidence(patch: dict[str, Any]) -> float:
 
 
 def _assess_patch_risk(patch: dict[str, Any]) -> int:
-    """Assess risk level (1=low, 2=medium, 3=high)."""
+    """Assess risk level for a patch.
+
+    Args:
+        patch: Patch proposal dictionary with type information.
+
+    Returns:
+        int: Risk level (1=low, 2=medium, 3=high).
+
+    """
     if patch.get("type") in ["string_modification", "conditional_bypass"]:
         return 1  # Low risk
     return 2 if patch.get("type") in ["return_modification", "test_bypass"] else 3
 
 
 def _assess_compatibility(patch: dict[str, Any], binary_path: str) -> str:
-    """Assess patch compatibility."""
+    """Assess patch compatibility.
+
+    Args:
+        patch: Patch proposal dictionary with type information.
+        binary_path: Path to the binary being patched.
+
+    Returns:
+        str: Compatibility level (high, medium, or low).
+
+    """
     logger.debug(f"Assessing patch compatibility for binary: {binary_path}")
     # Simple compatibility assessment
     if patch.get("type") in ["conditional_bypass", "string_modification"]:
@@ -1381,7 +1495,15 @@ def _assess_compatibility(patch: dict[str, Any], binary_path: str) -> str:
 
 
 def _get_binary_info(binary_path: str) -> dict[str, Any]:
-    """Get basic binary information."""
+    """Get basic binary information.
+
+    Args:
+        binary_path: Path to the binary file.
+
+    Returns:
+        dict: Binary information including size, format, and modification time.
+
+    """
     try:
         stat = os.stat(binary_path)
 
@@ -1400,7 +1522,15 @@ def _get_binary_info(binary_path: str) -> dict[str, Any]:
 
 
 def _generate_fallback_patches(binary_path: str) -> dict[str, Any]:
-    """Generate basic fallback patches when advanced analysis fails."""
+    """Generate basic fallback patches when advanced analysis fails.
+
+    Args:
+        binary_path: Path to the binary file.
+
+    Returns:
+        dict: Fallback patch proposals and analysis results.
+
+    """
     patches = [
         {
             "id": 1,
@@ -1451,17 +1581,14 @@ def _generate_fallback_patches(binary_path: str) -> dict[str, Any]:
 
 
 def wrapper_get_proposed_patches(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_get_proposed_patches.
-    Gets the list of currently proposed patches.
+    """Get the list of currently proposed patches.
 
-    Parameters
-    ----------
-        filter_type (str, optional): Filter patches by type ('license', 'bypass', 'all')
-        include_metadata (bool, optional): Include detailed metadata in results
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing optional 'filter_type' and 'include_metadata' keys.
 
-    Returns
-    -------
-        dict: List of proposed patches
+    Returns:
+        dict: List of proposed patches with filtering and metadata options.
 
     """
     try:
@@ -1503,16 +1630,14 @@ def wrapper_get_proposed_patches(app_instance: Any, parameters: dict[str, Any]) 
 
 
 def wrapper_apply_confirmed_patch(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_apply_confirmed_patch.
-    Applies a confirmed patch to the binary.
+    """Apply a confirmed patch to the binary.
 
-    Parameters
-    ----------
-        patch_id (int): ID of patch to apply
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing 'patch_id' key.
 
-    Returns
-    -------
-        dict: Patch application results
+    Returns:
+        dict: Patch application results including backup path on success.
 
     """
     logger.debug("Entered wrapper_apply_confirmed_patch with parameters: %s", parameters)
@@ -1615,16 +1740,14 @@ def wrapper_apply_confirmed_patch(app_instance: Any, parameters: dict[str, Any])
 
 
 def wrapper_generate_launcher_script(app_instance: Any, parameters: dict[str, Any]) -> dict[str, Any]:
-    """Wrap for tool_generate_launcher_script.
-    Generates a launcher script for the patched binary.
+    """Generate a launcher script for the patched binary.
 
-    Parameters
-    ----------
-        output_path (str, optional): Path for launcher script
+    Args:
+        app_instance: The main application instance.
+        parameters: Dictionary containing optional 'output_path' key (default: launcher.bat).
 
-    Returns
-    -------
-        dict: Launcher script generation results
+    Returns:
+        dict: Launcher script generation results.
 
     """
     logger.debug("Entered wrapper_generate_launcher_script with parameters: %s", parameters)
@@ -1662,12 +1785,12 @@ def dispatch_tool(app_instance: Any, tool_name: str, parameters: dict[str, Any])
     """Central dispatcher for tool wrapper functions.
 
     Args:
-        app_instance: The main application instance
-        tool_name: Name of the tool to execute
-        parameters: Parameters to pass to the tool
+        app_instance: The main application instance.
+        tool_name: Name of the tool to execute.
+        parameters: Parameters to pass to the tool.
 
     Returns:
-        dict: Tool execution results
+        dict: Tool execution results.
 
     """
     logger.info("Dispatching tool: %s with parameters: %s", tool_name, parameters)
@@ -1705,7 +1828,15 @@ def dispatch_tool(app_instance: Any, tool_name: str, parameters: dict[str, Any])
 
 
 def run_external_tool(args: list[str]) -> str:
-    """Run an external tool with the given arguments."""
+    """Run an external tool with the given arguments.
+
+    Args:
+        args: Command line arguments including tool name and parameters.
+
+    Returns:
+        str: Combined stdout, stderr, and exit code output.
+
+    """
     import subprocess
 
     logger.info(f"Running external tool: {' '.join(args)}")
@@ -1745,11 +1876,11 @@ def wrapper_deep_runtime_monitoring(app_instance: Any, parameters: dict[str, Any
     """Wrap for deep runtime monitoring functionality.
 
     Args:
-        app_instance: Application instance
-        parameters: Dict containing 'binary_path' and optional 'timeout'
+        app_instance: Application instance.
+        parameters: Dict containing 'binary_path' and optional 'timeout'.
 
     Returns:
-        Dict with monitoring results
+        dict: Monitoring results with logs and status.
 
     """
     try:
@@ -1825,25 +1956,19 @@ def run_ghidra_headless(
     """Run comprehensive Ghidra headless analysis on a binary.
 
     Args:
-        binary_path: Path to the binary to analyze
-        script_path: Optional path to Ghidra script to run post-analysis
-        output_dir: Directory for Ghidra project (default: binary_dir/ghidra_analysis)
-        project_name: Name for Ghidra project (default: analysis_{basename})
-        options: Additional analysis options:
-            - timeout: Analysis timeout in seconds (default: 600)
-            - analyzers: List of specific analyzers to run
-            - processor: Target processor (auto-detected if not specified)
-            - loader: Specific loader to use
-            - language: Language specification
-            - save_results: Whether to save analysis results (default: True)
-            - export_format: Export format (xml, json, csv, etc.)
-            - export_selection: What to export (functions, symbols, strings, etc.)
-            - log_level: Logging level (INFO, DEBUG, ERROR)
-            - max_ram: Maximum RAM usage for analysis
-            - script_params: Parameters to pass to post-analysis script
+        binary_path: Path to the binary to analyze.
+        script_path: Optional path to Ghidra script to run post-analysis.
+        output_dir: Directory for Ghidra project (default: binary_dir/ghidra_analysis).
+        project_name: Name for Ghidra project (default: analysis_{basename}).
+        options: Additional analysis options with keys: timeout (seconds, default 600),
+            analyzers (list), processor (auto-detected), loader, language, save_results
+            (bool, default True), export_format (xml, json, csv), export_selection
+            (functions, symbols, strings), log_level (INFO, DEBUG, ERROR), max_ram
+            (default 2G), script_params (dict).
 
     Returns:
-        Comprehensive analysis results including symbols, functions, strings, etc.
+        dict: Comprehensive analysis results including symbols, functions, strings,
+            cross-references, entry points, imports, exports, segments, and analysis time.
 
     """
     import shutil
@@ -2079,7 +2204,18 @@ def run_ghidra_headless(
 
 
 def _create_comprehensive_analysis_script(output_dir: str, export_format: str, export_selection: list[str], params: dict[str, Any]) -> str:
-    """Create a comprehensive Ghidra analysis script."""
+    """Create a comprehensive Ghidra analysis script.
+
+    Args:
+        output_dir: Directory where analysis script and results will be saved.
+        export_format: Format for exporting analysis results (xml, json, csv, etc.).
+        export_selection: List of items to export (functions, symbols, strings, etc.).
+        params: Additional parameters to pass to the script.
+
+    Returns:
+        str: Path to the created analysis script file.
+
+    """
     logger.debug(f"Creating analysis script with format: {export_format}, selection: {export_selection}, params: {list(params.keys())}")
     script_content = (
         """
@@ -2323,7 +2459,16 @@ println("Analysis complete. Results exported.")
 
 
 def _parse_ghidra_output(results: dict[str, Any], output: str) -> dict[str, Any]:
-    """Parse Ghidra analysis output for key information."""
+    """Parse Ghidra analysis output for key information.
+
+    Args:
+        results: Existing results dictionary to update with parsed information.
+        output: Ghidra stdout output to parse.
+
+    Returns:
+        dict: Updated results dictionary with parsed analysis data.
+
+    """
     lines = output.split("\n")
 
     for line in lines:
@@ -2358,7 +2503,17 @@ def _parse_ghidra_output(results: dict[str, Any], output: str) -> dict[str, Any]
 
 
 def _load_analysis_exports(results: dict[str, Any], output_dir: str, export_format: str) -> dict[str, Any]:
-    """Load exported analysis results from files."""
+    """Load exported analysis results from files.
+
+    Args:
+        results: Existing results dictionary to update with loaded data.
+        output_dir: Directory containing exported analysis files.
+        export_format: Format of exported files (json, xml, etc.).
+
+    Returns:
+        dict: Updated results dictionary with loaded analysis data.
+
+    """
     logger.debug(f"Loading analysis exports from {output_dir} with format: {export_format}")
     export_files = [
         "functions.json",

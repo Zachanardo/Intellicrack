@@ -115,7 +115,11 @@ class FileTreeWidget(QTreeWidget):
         }
 
     def set_root_directory(self, root_path: str) -> None:
-        """Set the root directory for the file tree."""
+        """Set the root directory for the file tree.
+
+        Args:
+            root_path: Path to the root directory to display in the tree.
+        """
         self.current_root = Path(root_path)
         self.clear()
 
@@ -139,7 +143,12 @@ class FileTreeWidget(QTreeWidget):
         self._add_directory_items(root_item, self.current_root)
 
     def _add_directory_items(self, parent_item: QTreeWidgetItem, directory: Path) -> None:
-        """Recursively add directory items."""
+        """Recursively add directory items.
+
+        Args:
+            parent_item: Parent tree widget item to add subdirectories to.
+            directory: Directory path to process.
+        """
         try:
             # Sort items: directories first, then files
             items = sorted(directory.iterdir(), key=lambda x: (x.is_file(), x.name.lower()))
@@ -213,7 +222,11 @@ class FileTreeWidget(QTreeWidget):
         return expanded
 
     def restore_expanded_items(self, expanded_paths: list[str]) -> None:
-        """Restore expanded state of items."""
+        """Restore expanded state of items.
+
+        Args:
+            expanded_paths: List of paths that should be in expanded state.
+        """
 
         def traverse(item: QTreeWidgetItem) -> None:
             path = item.data(0, Qt.ItemDataRole.UserRole)
@@ -231,14 +244,24 @@ class FileTreeWidget(QTreeWidget):
                 traverse(top_item)
 
     def on_item_clicked(self, item: QTreeWidgetItem, column: int) -> None:
-        """Handle item click."""
+        """Handle item click.
+
+        Args:
+            item: The tree widget item that was clicked.
+            column: The column index of the clicked item.
+        """
         logger.debug("Item clicked in column %s", column)
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if path and Path(str(path)).is_file():
             self.file_selected.emit(str(path))
 
     def on_item_double_clicked(self, item: QTreeWidgetItem, column: int) -> None:
-        """Handle item double click."""
+        """Handle item double click.
+
+        Args:
+            item: The tree widget item that was double-clicked.
+            column: The column index of the double-clicked item.
+        """
         logger.debug("Item double-clicked in column %s", column)
         path = item.data(0, Qt.ItemDataRole.UserRole)
         if path and Path(str(path)).is_file():
@@ -270,7 +293,11 @@ class CodeEditor(QPlainTextEdit):
         self.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
 
     def load_file(self, file_path: str) -> None:
-        """Load a file into the editor."""
+        """Load a file into the editor.
+
+        Args:
+            file_path: Path to the file to load.
+        """
         try:
             with open(file_path, encoding="utf-8") as f:
                 content = f.read()
@@ -289,7 +316,14 @@ class CodeEditor(QPlainTextEdit):
             QMessageBox.warning(self, "Error", f"Failed to load file:\n{e}")
 
     def save_file(self, file_path: str | None = None) -> bool:
-        """Save the current content to file."""
+        """Save the current content to file.
+
+        Args:
+            file_path: Path where to save the file. If None, uses current file path.
+
+        Returns:
+            bool: True if save was successful, False otherwise.
+        """
         if file_path is None:
             file_path = self.current_file
 
@@ -311,7 +345,11 @@ class CodeEditor(QPlainTextEdit):
             return False
 
     def set_syntax_highlighting(self, file_path: str) -> None:
-        """Set syntax highlighting based on file extension."""
+        """Set syntax highlighting based on file extension.
+
+        Args:
+            file_path: Path to the file to determine syntax highlighting for.
+        """
         if self.syntax_highlighter:
             self.syntax_highlighter.setParent(None)
             self.syntax_highlighter = None
@@ -331,12 +369,20 @@ class CodeEditor(QPlainTextEdit):
             self.content_changed.emit(self.current_file)
 
     def get_current_selection(self) -> str:
-        """Get currently selected text."""
+        """Get currently selected text.
+
+        Returns:
+            str: The selected text in the editor.
+        """
         cursor = self.textCursor()
         return cursor.selectedText()
 
     def insert_text_at_cursor(self, text: str) -> None:
-        """Insert text at current cursor position."""
+        """Insert text at current cursor position.
+
+        Args:
+            text: The text to insert at the cursor position.
+        """
         cursor = self.textCursor()
         cursor.insertText(text)
         self.setTextCursor(cursor)
@@ -357,7 +403,7 @@ class CodeEditor(QPlainTextEdit):
         """Get the current editor content.
 
         Returns:
-            The full text content of the editor.
+            str: The full text content of the editor.
         """
         return self.toPlainText()
 
@@ -444,12 +490,21 @@ class ChatWidget(QWidget):
             self.message_input.clear()
 
     def send_quick_message(self, message: str) -> None:
-        """Send a predefined quick message."""
+        """Send a predefined quick message.
+
+        Args:
+            message: The quick message to send.
+        """
         self.add_message("User", message)
         self.message_sent.emit(message)
 
     def add_message(self, sender: str, message: str) -> None:
-        """Add a message to the chat history."""
+        """Add a message to the chat history.
+
+        Args:
+            sender: The name of the message sender.
+            message: The message content to add.
+        """
         self.conversation_history.append({"sender": sender, "message": message})
 
         # Format message for display
@@ -562,7 +617,11 @@ class ChatWidget(QWidget):
             self.refresh_models_btn.setText("🔄")
 
     def _show_no_models_message(self) -> None:
-        """Display message when no models are configured."""
+        """Display message when no models are configured.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
             "<h4 style='color: #ff6b6b;'>WARNING No AI Models Configured</h4>"
@@ -593,7 +652,11 @@ class ChatWidget(QWidget):
         )
 
     def _show_error_message(self, error: str) -> None:
-        """Display error message."""
+        """Display error message.
+
+        Args:
+            error: The error message to display.
+        """
         self.chat_history.setHtml(
             "<div style='padding: 10px;'>"
             "<h4 style='color: #dc3545;'>FAIL Configuration Error</h4>"
@@ -670,11 +733,18 @@ class AICodingAssistantWidget(QWidget):
         self.setup_status_bar(layout)
 
     def setup_menu_bar(self, layout: QVBoxLayout) -> None:
-        """Set up the menu bar."""
-        # Simplified menu bar for widget - full implementation when needed
+        """Set up the menu bar.
+
+        Args:
+            layout: The main vertical layout to add the menu bar to.
+        """
 
     def create_file_panel(self) -> QWidget:
-        """Create the left file navigation panel with license research project support."""
+        """Create the left file navigation panel with license research project support.
+
+        Returns:
+            QWidget: A frame containing the file tree widget for project navigation.
+        """
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(300)
@@ -713,7 +783,11 @@ class AICodingAssistantWidget(QWidget):
         return panel
 
     def create_editor_panel(self) -> QWidget:
-        """Create the center code editor panel with license bypass development tools."""
+        """Create the center code editor panel with license bypass development tools.
+
+        Returns:
+            QWidget: A frame containing tabs for editing license bypass code.
+        """
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
 
@@ -763,7 +837,11 @@ class AICodingAssistantWidget(QWidget):
         return panel
 
     def create_ai_panel(self) -> QWidget:
-        """Create the right AI assistant panel with license bypass research capabilities."""
+        """Create the right AI assistant panel with license bypass research capabilities.
+
+        Returns:
+            QWidget: A frame containing the AI assistant chat and bypass generation tools.
+        """
         panel = QFrame()
         panel.setFrameStyle(QFrame.Shape.StyledPanel)
         panel.setMaximumWidth(400)
@@ -846,23 +924,27 @@ class AICodingAssistantWidget(QWidget):
         return panel
 
     def setup_status_bar(self, layout: QVBoxLayout) -> None:
-        """Set up the status bar."""
-        # Simplified status bar for widget
+        """Set up the status bar.
+
+        Args:
+            layout: The main vertical layout to add the status bar to.
+        """
 
     def setup_connections(self) -> None:
         """Set up signal connections."""
-        # Simplified connections for widget
 
     def setup_shortcuts(self) -> None:
         """Set up keyboard shortcuts."""
-        # Simplified shortcuts for widget
 
     def load_initial_project(self) -> None:
         """Load initial project state."""
-        # Simplified initial loading for widget
 
     def on_file_selected_for_analysis(self, file_path: str) -> None:
-        """Handle file selection for license protection analysis."""
+        """Handle file selection for license protection analysis.
+
+        Args:
+            file_path: Path to the file selected for analysis.
+        """
         try:
             if Path(file_path).suffix.lower() in [".exe", ".dll", ".so", ".dylib"]:
                 # Binary file selected - update license analysis context
@@ -900,7 +982,14 @@ class AICodingAssistantWidget(QWidget):
             logger.exception("Error creating research file: %s", e)
 
     def get_research_file_template(self, file_ext: str) -> str:
-        """Get template content for license research files."""
+        """Get template content for license research files.
+
+        Args:
+            file_ext: File extension to determine which template to return.
+
+        Returns:
+            str: Template content for the specified file type.
+        """
         templates = {
             ".py": '''#!/usr/bin/env python3
 """License Protection Analysis Script
@@ -1031,7 +1120,11 @@ class LicenseAnalyzer:
         return protection_info
 
     def generate_bypass(self) -> str:
-        """Generate license bypass code."""
+        """Generate license bypass code.
+
+        Returns:
+            str: Generated bypass code as a string.
+        """
         if not self.protection_info:
             self.analyze_protection()
 
@@ -1628,7 +1721,11 @@ def validate_license_key(key: str) -> bool:
         return templates.get(file_ext, "# License research file\n# Add your analysis and bypass code here\n")
 
     def load_target_binary(self) -> None:
-        """Load a target binary for license analysis."""
+        """Load a target binary for license analysis.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             file_path, _ = QFileDialog.getOpenFileName(
                 self,
@@ -1646,7 +1743,14 @@ def validate_license_key(key: str) -> bool:
             logger.exception("Error loading target binary: %s", e)
 
     def open_file_in_research_editor(self, file_path: str) -> None:
-        """Open a file in the research editor tabs."""
+        """Open a file in the research editor tabs.
+
+        Args:
+            file_path: Path to the file to open in the editor.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             # Check if file is already open
             if hasattr(self, "editor_tabs"):
@@ -1670,7 +1774,14 @@ def validate_license_key(key: str) -> bool:
             logger.exception("Error opening file in research editor: %s", e)
 
     def close_research_tab(self, index: int) -> None:
-        """Close a research editor tab."""
+        """Close a research editor tab.
+
+        Args:
+            index: The index of the tab to close.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             if hasattr(self, "editor_tabs") and self.editor_tabs.count() > index:
                 self.editor_tabs.removeTab(index)
@@ -1726,7 +1837,15 @@ def validate_license_key(key: str) -> bool:
                 self.chat_widget.add_message("System", f"Script execution failed: {e}")
 
     def _execute_python_bypass_script(self, script_content: str, script_path: str) -> None:
-        """Execute Python-based bypass script."""
+        """Execute Python-based bypass script.
+
+        Args:
+            script_content: The Python script code to execute.
+            script_path: Path where the script is located.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         import subprocess
         import tempfile
 
@@ -1762,7 +1881,15 @@ def validate_license_key(key: str) -> bool:
             self.chat_widget.add_message("System", f"ERROR Execution error: {e}")
 
     def _execute_frida_bypass_script(self, script_content: str, script_path: str) -> None:
-        """Execute Frida-based bypass script."""
+        """Execute Frida-based bypass script.
+
+        Args:
+            script_content: The Frida JavaScript code to execute.
+            script_path: Path where the script is located.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             # Check if frida is available
             import frida
@@ -1807,7 +1934,14 @@ def validate_license_key(key: str) -> bool:
             self.chat_widget.add_message("System", f"ERROR Frida script execution failed: {e}")
 
     def _execute_keygen_script(self, script_content: str) -> None:
-        """Execute keygen template script."""
+        """Execute keygen template script.
+
+        Args:
+            script_content: The keygen template code to execute.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             # Parse keygen template to extract configuration
             lines = script_content.split("\n")
@@ -1849,7 +1983,15 @@ def validate_license_key(key: str) -> bool:
             self.chat_widget.add_message("System", f"ERROR Keygen execution failed: {e}")
 
     def _generate_key_from_template(self, config: dict[str, Any], user_info: str) -> str:
-        """Generate key using template configuration."""
+        """Generate key using template configuration.
+
+        Args:
+            config: Configuration dictionary with algorithm and pattern details.
+            user_info: User information to include in key generation.
+
+        Returns:
+            str: Generated license key.
+        """
         import hashlib
         import secrets
 
@@ -1863,21 +2005,41 @@ def validate_license_key(key: str) -> bool:
         return f"{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}-{secrets.randbelow(9000) + 1000:04X}"
 
     def _validate_key_from_template(self, config: dict[str, Any], key: str) -> bool:
-        """Validate key using template pattern."""
+        """Validate key using template pattern.
+
+        Args:
+            config: Configuration dictionary with validation pattern.
+            key: License key to validate.
+
+        Returns:
+            bool: True if key matches the validation pattern, False otherwise.
+        """
         import re
 
         pattern = config.get("VALIDATION_PATTERN", r"^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$")
         return bool(re.match(pattern, key))
 
     def _on_frida_message(self, message: dict[str, Any], data: bytes | None) -> None:
-        """Handle Frida script messages."""
+        """Handle Frida script messages.
+
+        Args:
+            message: Message dictionary from Frida script.
+            data: Optional binary data payload from Frida.
+
+        Note:
+            This method is used as a callback for Frida script messages.
+        """
         if message.get("type") == "send":
             payload = message.get("payload", {})
             if hasattr(self, "chat_widget"):
                 self.chat_widget.add_message("Frida", f"📱 {payload}")
 
     def analyze_license_protection(self) -> None:
-        """Analyze the current binary for license protection."""
+        """Analyze the current binary for license protection.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             logger.info("Analyzing license protection mechanisms...")
             if hasattr(self, "chat_widget"):
@@ -2029,7 +2191,11 @@ def validate_license_key(key: str) -> bool:
                 self.chat_widget.add_message("System", f"ERROR Analysis failed: {e}")
 
     def generate_keygen_template(self) -> None:
-        """Generate a keygen template for the current target."""
+        """Generate a keygen template for the current target.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             logger.info("Generating keygen template...")
             if hasattr(self, "chat_widget"):
@@ -2286,7 +2452,11 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("AI", f"ERROR Template generation failed: {e}")
 
     def generate_hwid_spoof(self) -> None:
-        """Generate hardware ID spoofing code."""
+        """Generate hardware ID spoofing code.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             logger.info("Generating hardware ID spoofing code...")
             if hasattr(self, "chat_widget"):
@@ -2737,7 +2907,11 @@ console.log("[+] All HWID hooks installed");
                 self.chat_widget.add_message("AI", f"ERROR HWID spoofing generation failed: {e}")
 
     def open_patch_assistant(self) -> None:
-        """Open the binary patch assistant."""
+        """Open the binary patch assistant.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             logger.info("Opening binary patch assistant...")
             if hasattr(self, "chat_widget"):
@@ -3173,7 +3347,14 @@ if __name__ == "__main__":
                 self.chat_widget.add_message("System", f"ERROR Patch assistant failed: {e}")
 
     def handle_license_ai_message(self, message: str) -> None:
-        """Handle AI messages specifically for license research."""
+        """Handle AI messages specifically for license research.
+
+        Args:
+            message: The user message to process for license research.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             logger.info("Processing license research AI message: %s", message)
             if hasattr(self, "chat_widget"):
@@ -3243,7 +3424,17 @@ This research is for strengthening software protection mechanisms."""
                 self.chat_widget.add_message("AI", error_response)
 
     def _format_license_research_response(self, response: str) -> str:
-        """Format AI response for license research context."""
+        """Format AI response for license research context.
+
+        Args:
+            response: The AI response to format.
+
+        Returns:
+            str: Formatted response with license research context.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             # Add license research formatting and context
             formatted = f"🔬 License Protection Research Analysis:\n\n{response}\n\n"
@@ -3255,7 +3446,17 @@ This research is for strengthening software protection mechanisms."""
             return f"License Research Response:\n{response}"
 
     def _generate_license_research_fallback(self, message: str) -> str:
-        """Generate fallback response for license research when AI is unavailable."""
+        """Generate fallback response for license research when AI is unavailable.
+
+        Args:
+            message: The user message to generate fallback response for.
+
+        Returns:
+            str: Fallback response text for license research.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             # Analyze the message to provide relevant fallback
             message_lower = message.lower()
@@ -3644,7 +3845,11 @@ WARNING️  All research should be conducted on your own software in controlled 
         return "\n".join(bypass_code)
 
     def ai_generate_license_bypass(self) -> None:
-        """Generate license bypass code using AI."""
+        """Generate license bypass code using AI.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             if not self.ai_tools or not self.llm_enabled:
                 if hasattr(self, "chat_widget"):
@@ -3778,7 +3983,18 @@ Please generate a comprehensive, production-ready bypass script with all necessa
                 self.chat_widget.add_message("AI", f"ERROR License bypass generation failed: {e}")
 
     def _enhance_ai_bypass_response(self, ai_response: str, bypass_type: str) -> str:
-        """Enhance AI-generated bypass response with additional context and safety warnings."""
+        """Enhance AI-generated bypass response with additional context and safety warnings.
+
+        Args:
+            ai_response: The AI-generated bypass code response.
+            bypass_type: The type of bypass being generated.
+
+        Returns:
+            str: Enhanced bypass code with headers, imports, and safety warnings.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             # Create comprehensive header
             header = f'''"""
@@ -3845,7 +4061,15 @@ WARNING️  Use for authorized security research only WARNING️
 '''
 
     def _create_editor_tab(self, filename: str, content: str) -> None:
-        """Create a new editor tab with the specified content."""
+        """Create a new editor tab with the specified content.
+
+        Args:
+            filename: Name of the file to display in the tab.
+            content: Content to display in the editor.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             if hasattr(self, "editor_tabs") and self.editor_tabs:
                 # Create new tab
@@ -3865,7 +4089,14 @@ WARNING️  Use for authorized security research only WARNING️
             logger.exception("Failed to create editor tab %s: %s", filename, e)
 
     def send_quick_license_message(self, message: str) -> None:
-        """Send a quick license research message to AI."""
+        """Send a quick license research message to AI.
+
+        Args:
+            message: The message to send for license research.
+
+        Note:
+            This method catches all exceptions internally and does not re-raise them.
+        """
         try:
             logger.info("Sending quick license message: %s", message)
             if hasattr(self, "chat_widget"):

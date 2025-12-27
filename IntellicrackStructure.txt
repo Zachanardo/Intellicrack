@@ -1,7 +1,7 @@
 INTELLICRACK PROJECT FILE TREE STRUCTURE
 ========================================
 
-Generated: Tue, Dec 02, 2025 10:29:48 PM
+Generated: Sat, Dec 27, 2025 02:42:04 PM
 Directory: D:\Intellicrack\intellicrack
 
 This document provides a simple text-based tree structure of the Intellicrack project.
@@ -10,31 +10,50 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ----------------------------------------
 
 ├── __pycache__/
+│   ├── config.cpython-312.pyc
+│   ├── config.cpython-314.pyc
 │   └── main.cpython-312.pyc
 ├── ai/
 │   ├── __pycache__/
 │   │   ├── ai_script_generator.cpython-312.pyc
-│   │   ├── code_analysis_tools.cpython-312.pyc
+│   │   ├── background_loader.cpython-314.pyc
 │   │   ├── coordination_layer.cpython-312.pyc
 │   │   ├── enhanced_training_interface.cpython-312.pyc
+│   │   ├── gpu_integration.cpython-312.pyc
 │   │   ├── headless_training_interface.cpython-312.pyc
 │   │   ├── integration_manager.cpython-312.pyc
+│   │   ├── intelligent_code_modifier.cpython-312.pyc
 │   │   ├── interactive_assistant.cpython-312.pyc
 │   │   ├── lazy_model_loader.cpython-312.pyc
 │   │   ├── learning_engine.cpython-312.pyc
-│   │   ├── llm_backends.cpython-312.pyc
+│   │   ├── llm_config_as_code.cpython-312.pyc
+│   │   ├── llm_config_manager.cpython-314.pyc
 │   │   ├── llm_fallback_chains.cpython-312.pyc
+│   │   ├── local_gguf_server.cpython-314.pyc
+│   │   ├── lora_adapter_manager.cpython-312.pyc
 │   │   ├── model_batch_tester.cpython-312.pyc
-│   │   ├── model_manager_module.cpython-312.pyc
+│   │   ├── model_cache_manager.cpython-312.pyc
+│   │   ├── model_comparison.cpython-312.pyc
+│   │   ├── model_download_manager.cpython-312.pyc
+│   │   ├── model_format_converter.cpython-312.pyc
 │   │   ├── model_performance_monitor.cpython-312.pyc
+│   │   ├── model_sharding.cpython-312.pyc
 │   │   ├── multi_agent_system.cpython-312.pyc
 │   │   ├── orchestrator.cpython-312.pyc
+│   │   ├── parsing_utils.cpython-312.pyc
+│   │   ├── pattern_library.cpython-312.pyc
+│   │   ├── performance_monitor.cpython-312.pyc
+│   │   ├── performance_monitor_simple.cpython-312.pyc
+│   │   ├── predictive_intelligence.cpython-312.pyc
+│   │   ├── protection_aware_script_gen.cpython-312.pyc
 │   │   ├── qemu_manager.cpython-312.pyc
+│   │   ├── qemu_test_manager_enhanced.cpython-312.pyc
+│   │   ├── quantization_manager.cpython-312.pyc
 │   │   ├── realtime_adaptation_engine.cpython-312.pyc
 │   │   ├── script_editor.cpython-312.pyc
-│   │   ├── script_generation_agent.cpython-312.pyc
 │   │   ├── semantic_code_analyzer.cpython-312.pyc
-│   │   └── visualization_analytics.cpython-312.pyc
+│   │   ├── visualization_analytics.cpython-312.pyc
+│   │   └── vulnerability_research_integration.cpython-314.pyc
 │   ├── __init__.py
 │   ├── ai_file_tools.py
 │   ├── ai_script_generator.py
@@ -52,7 +71,6 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── interactive_assistant.py
 │   ├── lazy_model_loader.py
 │   ├── learning_engine.py
-│   ├── learning_engine_simple.py
 │   ├── llm_backends.py
 │   ├── llm_config_as_code.py
 │   ├── llm_config_manager.py
@@ -93,10 +111,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── vulnerability_research_integration.py
 │   └── vulnerability_research_integration_helper.py
 ├── analysis/
+│   ├── __pycache__/
+│   │   ├── analysis_result_orchestrator.cpython-312.pyc
+│   │   └── protection_workflow.cpython-312.pyc
 │   ├── handlers/
 │   │   ├── __pycache__/
 │   │   │   ├── llm_handler.cpython-312.pyc
-│   │   │   └── report_generation_handler.cpython-312.pyc
+│   │   │   ├── report_generation_handler.cpython-312.pyc
+│   │   │   └── script_generation_handler.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── llm_handler.py
 │   │   ├── report_generation_handler.py
@@ -243,12 +265,21 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── system-search.png
 ├── cli/
 │   ├── __pycache__/
-│   │   ├── __init__.cpython-312.pyc
 │   │   ├── advanced_export.cpython-312.pyc
 │   │   ├── ai_chat_interface.cpython-312.pyc
-│   │   ├── cli.cpython-312.pyc
+│   │   ├── ai_integration.cpython-312.pyc
+│   │   ├── ai_wrapper.cpython-312.pyc
+│   │   ├── ascii_charts.cpython-312.pyc
+│   │   ├── config_manager.cpython-312.pyc
+│   │   ├── config_profiles.cpython-312.pyc
 │   │   ├── enhanced_runner.cpython-312.pyc
-│   │   └── interactive_mode.cpython-312.pyc
+│   │   ├── hex_viewer_cli.cpython-312.pyc
+│   │   ├── interactive_mode.cpython-312.pyc
+│   │   ├── pipeline.cpython-312.pyc
+│   │   ├── progress_manager.cpython-312.pyc
+│   │   ├── project_manager.cpython-312.pyc
+│   │   ├── terminal_dashboard.cpython-312.pyc
+│   │   └── tutorial_system.cpython-312.pyc
 │   ├── __init__.py
 │   ├── advanced_export.py
 │   ├── ai_chat_interface.py
@@ -273,19 +304,97 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── tutorial_system.py
 ├── core/
 │   ├── __pycache__/
-│   │   └── terminal_manager.cpython-312.pyc
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── adobe_injector_integration.cpython-312.pyc
+│   │   ├── ai_model_manager.cpython-312.pyc
+│   │   ├── app_context.cpython-312.pyc
+│   │   ├── binary_analyzer.cpython-312.pyc
+│   │   ├── config_manager.cpython-312.pyc
+│   │   ├── config_migration_handler.cpython-312.pyc
+│   │   ├── debugging_engine.cpython-312.pyc
+│   │   ├── frida_bypass_wizard.cpython-314.pyc
+│   │   ├── frida_manager.cpython-312.pyc
+│   │   ├── frida_manager.cpython-314.pyc
+│   │   ├── gpu_acceleration.cpython-312.pyc
+│   │   ├── license_validation_bypass.cpython-312.pyc
+│   │   ├── offline_activation_emulator.cpython-312.pyc
+│   │   ├── process_manipulation.cpython-312.pyc
+│   │   ├── protection_analyzer.cpython-312.pyc
+│   │   ├── security_enforcement.cpython-312.pyc
+│   │   ├── serial_generator.cpython-312.pyc
+│   │   ├── startup_checks.cpython-312.pyc
+│   │   ├── subscription_validation_bypass.cpython-312.pyc
+│   │   ├── task_manager.cpython-312.pyc
+│   │   ├── terminal_manager.cpython-312.pyc
+│   │   └── trial_reset_engine.cpython-312.pyc
 │   ├── analysis/
 │   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── analysis_orchestrator.cpython-312.pyc
+│   │   │   ├── angr_enhancements.cpython-312.pyc
+│   │   │   ├── arxan_analyzer.cpython-312.pyc
+│   │   │   ├── automated_patch_agent.cpython-312.pyc
+│   │   │   ├── behavioral_analysis.cpython-312.pyc
+│   │   │   ├── binary_analyzer.cpython-312.pyc
+│   │   │   ├── binary_ninja_analyzer.cpython-312.pyc
+│   │   │   ├── binary_pattern_detector.cpython-312.pyc
+│   │   │   ├── binary_similarity_search.cpython-312.pyc
+│   │   │   ├── commercial_license_analyzer.cpython-312.pyc
+│   │   │   ├── concolic_executor_fixed.cpython-312.pyc
+│   │   │   ├── concolic_obfuscation_handler.cpython-312.pyc
+│   │   │   ├── control_flow_deobfuscation.cpython-312.pyc
+│   │   │   ├── cross_tool_orchestrator.cpython-312.pyc
 │   │   │   ├── cryptographic_routine_detector.cpython-312.pyc
+│   │   │   ├── dynamic_analyzer.cpython-312.pyc
+│   │   │   ├── dynamic_instrumentation.cpython-312.pyc
+│   │   │   ├── frida_advanced_hooks.cpython-312.pyc
 │   │   │   ├── frida_analyzer.cpython-312.pyc
+│   │   │   ├── frida_gui_integration.cpython-312.pyc
 │   │   │   ├── frida_protection_bypass.cpython-312.pyc
+│   │   │   ├── ghidra_advanced_analyzer.cpython-312.pyc
+│   │   │   ├── ghidra_analyzer.cpython-312.pyc
 │   │   │   ├── ghidra_binary_integration.cpython-312.pyc
+│   │   │   ├── ghidra_project_manager.cpython-312.pyc
 │   │   │   ├── ghidra_script_runner.cpython-312.pyc
+│   │   │   ├── incremental_analyzer.cpython-312.pyc
+│   │   │   ├── incremental_manager.cpython-312.pyc
 │   │   │   ├── memory_forensics_engine.cpython-312.pyc
+│   │   │   ├── opaque_predicate_analyzer.cpython-312.pyc
+│   │   │   ├── polymorphic_analyzer.cpython-312.pyc
+│   │   │   ├── protection_scanner.cpython-312.pyc
+│   │   │   ├── radare2_advanced_patcher.cpython-312.pyc
+│   │   │   ├── radare2_ai_integration.cpython-312.pyc
+│   │   │   ├── radare2_binary_diff.cpython-312.pyc
+│   │   │   ├── radare2_bypass_generator.cpython-312.pyc
+│   │   │   ├── radare2_bypass_generator.cpython-314.pyc
+│   │   │   ├── radare2_emulator.cpython-312.pyc
+│   │   │   ├── radare2_enhanced_integration.cpython-312.pyc
+│   │   │   ├── radare2_error_handler.cpython-312.pyc
+│   │   │   ├── radare2_esil.cpython-312.pyc
+│   │   │   ├── radare2_graph_view.cpython-312.pyc
+│   │   │   ├── radare2_imports.cpython-312.pyc
+│   │   │   ├── radare2_json_standardizer.cpython-312.pyc
+│   │   │   ├── radare2_patch_engine.cpython-312.pyc
+│   │   │   ├── radare2_performance_optimizer.cpython-312.pyc
+│   │   │   ├── radare2_realtime_analyzer.cpython-312.pyc
 │   │   │   ├── radare2_scripting.cpython-312.pyc
+│   │   │   ├── radare2_session_helpers.cpython-312.pyc
 │   │   │   ├── radare2_session_manager.cpython-312.pyc
+│   │   │   ├── radare2_signature_detector.cpython-312.pyc
+│   │   │   ├── radare2_strings.cpython-312.pyc
+│   │   │   ├── radare2_vulnerability_engine.cpython-312.pyc
+│   │   │   ├── rop_generator.cpython-312.pyc
+│   │   │   ├── simconcolic.cpython-312.pyc
+│   │   │   ├── stalker_manager.cpython-312.pyc
+│   │   │   ├── streaming_crypto_detector.cpython-312.pyc
 │   │   │   ├── streaming_entropy_analyzer.cpython-312.pyc
-│   │   │   └── vulnerability_engine.cpython-312.pyc
+│   │   │   ├── streaming_yara_scanner.cpython-312.pyc
+│   │   │   ├── symbolic_devirtualizer.cpython-312.pyc
+│   │   │   ├── taint_analyzer.cpython-312.pyc
+│   │   │   ├── vmprotect_detector.cpython-312.pyc
+│   │   │   ├── vulnerability_engine.cpython-312.pyc
+│   │   │   ├── yara_pattern_engine.cpython-312.pyc
+│   │   │   └── yara_scanner.cpython-312.pyc
 │   │   ├── yara_rules/
 │   │   │   ├── concurrent_0.yar
 │   │   │   ├── concurrent_1.yar
@@ -307,18 +416,23 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   │   ├── concurrent_7.yar
 │   │   │   ├── concurrent_8.yar
 │   │   │   ├── concurrent_9.yar
+│   │   │   ├── custom_hex.yar
+│   │   │   ├── custom_license.yar
 │   │   │   ├── custom_signature.yar
+│   │   │   ├── custom_test.yar
 │   │   │   ├── offset_track.yar
 │   │   │   ├── string_offset.yar
 │   │   │   └── test_custom.yar
 │   │   ├── .intellicrack_scan_cache.json
 │   │   ├── __init__.py
+│   │   ├── activation_analyzer.py
 │   │   ├── analysis_orchestrator.py
 │   │   ├── angr_enhancements.py
 │   │   ├── arxan_analyzer.py
 │   │   ├── automated_patch_agent.py
 │   │   ├── behavioral_analysis.py
 │   │   ├── binary_analyzer.py
+│   │   ├── binary_ninja_analyzer.py
 │   │   ├── binary_pattern_detector.py
 │   │   ├── binary_similarity_search.py
 │   │   ├── cfg_explorer.py
@@ -333,18 +447,23 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── dynamic_analyzer.py
 │   │   ├── dynamic_instrumentation.py
 │   │   ├── entropy_analyzer.py
+│   │   ├── export_analyzer.py
+│   │   ├── fingerprint_engine.py
 │   │   ├── firmware_analyzer.py
 │   │   ├── frida_advanced_hooks.py
 │   │   ├── frida_analyzer.py
 │   │   ├── frida_gui_integration.py
 │   │   ├── frida_protection_bypass.py
 │   │   ├── frida_script_manager.py
+│   │   ├── function_renaming.py
 │   │   ├── ghidra_advanced_analyzer.py
 │   │   ├── ghidra_analyzer.py
 │   │   ├── ghidra_binary_integration.py
 │   │   ├── ghidra_output_parser.py
 │   │   ├── ghidra_project_manager.py
+│   │   ├── ghidra_results.py
 │   │   ├── ghidra_script_runner.py
+│   │   ├── hardware_id_analyzer.py
 │   │   ├── incremental_analyzer.py
 │   │   ├── incremental_manager.py
 │   │   ├── memory_forensics_engine.py
@@ -357,6 +476,7 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_ai_integration.py
 │   │   ├── radare2_binary_diff.py
 │   │   ├── radare2_bypass_generator.py
+│   │   ├── radare2_bypass_generator.py.backup
 │   │   ├── radare2_decompiler.py
 │   │   ├── radare2_emulator.py
 │   │   ├── radare2_enhanced_integration.py
@@ -397,7 +517,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── yara_scanner.py
 │   ├── anti_analysis/
 │   │   ├── __pycache__/
-│   │   │   └── advanced_debugger_bypass.cpython-312.pyc
+│   │   │   ├── advanced_debugger_bypass.cpython-312.pyc
+│   │   │   ├── api_obfuscation.cpython-312.pyc
+│   │   │   ├── base_detector.cpython-312.pyc
+│   │   │   ├── debugger_bypass.cpython-312.pyc
+│   │   │   ├── debugger_detector.cpython-312.pyc
+│   │   │   ├── sandbox_detector.cpython-312.pyc
+│   │   │   └── timing_attacks.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── advanced_debugger_bypass.py
 │   │   ├── api_obfuscation.py
@@ -409,16 +535,17 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── vm_detector.py
 │   ├── certificate/
 │   │   ├── __pycache__/
-│   │   │   └── cert_cache.cpython-312.pyc
-│   │   ├── frida_scripts/
-│   │   │   ├── __init__.py
-│   │   │   ├── android_pinning.js
-│   │   │   ├── cryptoapi_bypass.js
-│   │   │   ├── ios_pinning.js
-│   │   │   ├── openssl_bypass.js
-│   │   │   ├── schannel_bypass.js
-│   │   │   ├── universal_ssl_bypass.js
-│   │   │   └── winhttp_bypass.js
+│   │   │   ├── apk_analyzer.cpython-312.pyc
+│   │   │   ├── binary_scanner.cpython-312.pyc
+│   │   │   ├── bypass_orchestrator.cpython-312.pyc
+│   │   │   ├── cert_cache.cpython-312.pyc
+│   │   │   ├── cert_patcher.cpython-312.pyc
+│   │   │   ├── detection_report.cpython-312.pyc
+│   │   │   ├── frida_cert_hooks.cpython-312.pyc
+│   │   │   ├── hook_obfuscation.cpython-312.pyc
+│   │   │   ├── multilayer_bypass.cpython-312.pyc
+│   │   │   ├── patch_generators.cpython-312.pyc
+│   │   │   └── pinning_detector.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── api_signatures.py
 │   │   ├── apk_analyzer.py
@@ -445,7 +572,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── script_execution_manager.py
 │   ├── exploitation/
 │   │   ├── __pycache__/
-│   │   │   └── keygen_generator.cpython-312.pyc
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── crypto_key_extractor.cpython-312.pyc
+│   │   │   ├── keygen_generator.cpython-312.pyc
+│   │   │   └── license_bypass_code_generator.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── automated_unpacker.py
 │   │   ├── bypass_engine.py
@@ -453,18 +583,27 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── keygen_generator.py
 │   │   └── license_bypass_code_generator.py
 │   ├── integration/
+│   │   ├── __pycache__/
+│   │   │   ├── intelligent_correlation.cpython-312.pyc
+│   │   │   └── real_tool_communication.cpython-312.pyc
 │   │   ├── intelligent_correlation.py
 │   │   └── real_tool_communication.py
 │   ├── license/
+│   │   ├── __pycache__/
+│   │   │   └── keygen.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── keygen.py
 │   │   └── README.md
 │   ├── logging/
+│   │   ├── __pycache__/
+│   │   │   └── audit_logger.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   └── audit_logger.py
 │   ├── ml/
 │   │   ├── __pycache__/
-│   │   │   └── feature_extraction.cpython-312.pyc
+│   │   │   ├── feature_extraction.cpython-312.pyc
+│   │   │   ├── incremental_learner.cpython-312.pyc
+│   │   │   └── protection_classifier.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── feature_extraction.py
 │   │   ├── incremental_learner.py
@@ -473,20 +612,33 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── README.md
 │   │   └── sample_database.py
 │   ├── monitoring/
+│   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── file_monitor.cpython-312.pyc
+│   │   │   ├── frida_server_manager.cpython-312.pyc
+│   │   │   ├── monitoring_session.cpython-312.pyc
+│   │   │   └── network_monitor.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── api_monitor.py
 │   │   ├── base_monitor.py
 │   │   ├── event_aggregator.py
 │   │   ├── file_monitor.py
 │   │   ├── frida_server_manager.py
+│   │   ├── frida_types.py
 │   │   ├── memory_monitor.py
 │   │   ├── monitoring_session.py
 │   │   ├── network_monitor.py
 │   │   └── registry_monitor.py
 │   ├── network/
 │   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-312.pyc
 │   │   │   ├── cloud_license_hooker.cpython-312.pyc
-│   │   │   └── ssl_interceptor.cpython-312.pyc
+│   │   │   ├── dynamic_response_generator.cpython-312.pyc
+│   │   │   ├── generic_protocol_handler.cpython-312.pyc
+│   │   │   ├── license_protocol_handler.cpython-312.pyc
+│   │   │   ├── protocol_fingerprinter.cpython-312.pyc
+│   │   │   ├── traffic_analyzer.cpython-312.pyc
+│   │   │   └── traffic_interception_engine.cpython-312.pyc
 │   │   ├── certs/
 │   │   │   ├── README.md
 │   │   │   ├── server.crt
@@ -494,6 +646,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── protocols/
 │   │   │   ├── __pycache__/
 │   │   │   │   ├── autodesk_parser.cpython-312.pyc
+│   │   │   │   ├── codemeter_parser.cpython-314.pyc
+│   │   │   │   ├── flexlm_parser.cpython-312.pyc
 │   │   │   │   └── hasp_parser.cpython-312.pyc
 │   │   │   ├── __init__.py
 │   │   │   ├── autodesk_parser.py
@@ -512,6 +666,9 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── traffic_analyzer.py
 │   │   └── traffic_interception_engine.py
 │   ├── orchestration/
+│   │   ├── __pycache__/
+│   │   │   ├── intelligent_correlation_engine.cpython-312.pyc
+│   │   │   └── tool_communication_bridge.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── intelligent_correlation_engine.py
 │   │   ├── result_serialization_protocol.py
@@ -519,6 +676,8 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── patching/
 │   │   ├── __pycache__/
 │   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── license_check_remover.cpython-312.pyc
+│   │   │   ├── memory_patcher.cpython-312.pyc
 │   │   │   └── windows_activator.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── base_patcher.py
@@ -528,9 +687,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── windows_activator.py
 │   ├── processing/
 │   │   ├── __pycache__/
+│   │   │   ├── base_snapshot_handler.cpython-312.pyc
 │   │   │   ├── distributed_manager.cpython-312.pyc
 │   │   │   ├── emulator_manager.cpython-312.pyc
-│   │   │   └── gpu_accelerator.cpython-312.pyc
+│   │   │   ├── gpu_accelerator.cpython-312.pyc
+│   │   │   ├── memory_optimizer.cpython-312.pyc
+│   │   │   ├── parallel_processing_manager.cpython-312.pyc
+│   │   │   ├── qemu_emulator.cpython-312.pyc
+│   │   │   └── qiling_emulator.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── base_snapshot_handler.py
 │   │   ├── distributed_manager.py
@@ -545,7 +709,18 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── vm_workflow_manager.py
 │   ├── protection_bypass/
 │   │   ├── __pycache__/
-│   │   │   └── arxan_bypass.cpython-312.pyc
+│   │   │   ├── arxan_bypass.cpython-312.pyc
+│   │   │   ├── cloud_license_analyzer.cpython-312.pyc
+│   │   │   ├── dongle_emulator.cpython-312.pyc
+│   │   │   ├── hardware_id_spoofer.cpython-312.pyc
+│   │   │   ├── hardware_token.cpython-312.pyc
+│   │   │   ├── integrity_check_defeat.cpython-312.pyc
+│   │   │   ├── securom_bypass.cpython-312.pyc
+│   │   │   ├── starforce_bypass.cpython-312.pyc
+│   │   │   ├── tpm_bypass.cpython-312.pyc
+│   │   │   ├── tpm_secure_enclave_bypass.cpython-312.pyc
+│   │   │   ├── tpm_secure_enclave_bypass.cpython-314.pyc
+│   │   │   └── vm_bypass.cpython-312.pyc
 │   │   ├── drivers/
 │   │   ├── hooks/
 │   │   │   ├── yubikey_hook.dll
@@ -566,15 +741,25 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── tpm_secure_enclave_bypass.py
 │   │   └── vm_bypass.py
 │   ├── protection_detection/
+│   │   ├── __pycache__/
+│   │   │   ├── arxan_detector.cpython-312.pyc
+│   │   │   ├── asprotect_detector.cpython-312.pyc
+│   │   │   └── starforce_detector.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── arxan_detector.py
+│   │   ├── asprotect_detector.py
 │   │   ├── securom_detector.py
 │   │   └── starforce_detector.py
 │   ├── reporting/
+│   │   ├── __pycache__/
+│   │   │   └── report_generator.cpython-312.pyc
+│   │   ├── templates/
 │   │   ├── __init__.py
 │   │   ├── pdf_generator.py
 │   │   └── report_generator.py
 │   ├── resources/
+│   │   ├── __pycache__/
+│   │   │   └── resource_manager.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   └── resource_manager.py
 │   ├── security/
@@ -585,7 +770,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── result_types.py
 │   │   └── result_utils.py
 │   ├── vulnerability_research/
+│   │   ├── __pycache__/
+│   │   │   ├── binary_differ.cpython-312.pyc
+│   │   │   ├── patch_analyzer.cpython-312.pyc
+│   │   │   ├── research_manager.cpython-312.pyc
+│   │   │   └── vulnerability_analyzer.cpython-312.pyc
 │   │   ├── exploit_developer/
+│   │   │   ├── __pycache__/
+│   │   │   │   └── __init__.cpython-312.pyc
 │   │   │   └── __init__.py
 │   │   ├── __init__.py
 │   │   ├── base_analyzer.py
@@ -630,6 +822,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── tool_discovery.py
 │   └── trial_reset_engine.py
 ├── dashboard/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── dashboard_integration.cpython-312.pyc
+│   │   ├── dashboard_manager.cpython-312.pyc
+│   │   ├── dashboard_widgets.cpython-312.pyc
+│   │   ├── visualization_renderer.cpython-312.pyc
+│   │   └── websocket_stream.cpython-312.pyc
 │   ├── static/
 │   │   └── js/
 │   │       └── graph_visualization.js
@@ -644,13 +843,28 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 ├── data/
 │   ├── cache/
 │   │   └── ghidra_scripts_cache.json
+│   ├── certificates/
+│   │   ├── ca.crt
+│   │   ├── ca.key
+│   │   └── README.md
 │   ├── database/
-│   │   └── pattern_evolution.db
+│   │   ├── intellicrack_success_rates.db
+│   │   ├── license_server.db
+│   │   ├── pattern_evolution.db
+│   │   └── protection_signatures.db
 │   ├── output/
 │   ├── plugin_cache/
 │   ├── signatures/
+│   │   ├── protocol_signatures.json
 │   │   ├── README.md
 │   │   └── sample_signatures.sg
+│   ├── training_samples/
+│   │   ├── VMProtect/
+│   │   │   ├── 4ba3efd3a532ec4dfcb53e65e4aedec1306bf70ad8a6d749c98b20db4941579f.exe
+│   │   │   ├── 821a614d2cdabb91b98139b6024531d02c58f16bd5c56b08b09528cbaf538701.exe
+│   │   │   ├── 84b484fd3636f2ca3e468d2821d97aacde8a143a2724a3ae65f48a33ca2fd258.exe
+│   │   │   └── 86e3dc03abddad06edeae2545419bd2847175c7f9235dab997a82e55d0423984.exe
+│   │   └── index.json
 │   ├── yara_rules/
 │   │   ├── antidebug.yar
 │   │   ├── compilers.yar
@@ -658,13 +872,27 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── packers.yar
 │   │   └── protections.yar
 │   ├── __init__.py
-│   ├── protocol_signatures.json
 │   ├── README.md
 │   └── signature_templates.py
 ├── handlers/
 │   ├── __pycache__/
-│   │   └── opencl_handler.cpython-312.pyc
+│   │   ├── capstone_handler.cpython-312.pyc
+│   │   ├── cryptography_handler.cpython-312.pyc
+│   │   ├── frida_handler.cpython-312.pyc
+│   │   ├── keystone_handler.cpython-312.pyc
+│   │   ├── lief_handler.cpython-312.pyc
+│   │   ├── opencl_handler.cpython-312.pyc
+│   │   ├── pdfkit_handler.cpython-312.pyc
+│   │   ├── psutil_handler.cpython-312.pyc
+│   │   ├── pyelftools_handler.cpython-312.pyc
+│   │   ├── pyqt6_handler.cpython-312.pyc
+│   │   ├── requests_handler.cpython-312.pyc
+│   │   ├── sqlite3_handler.cpython-312.pyc
+│   │   ├── tensorflow_handler.cpython-312.pyc
+│   │   ├── tkinter_handler.cpython-314.pyc
+│   │   └── torch_handler.cpython-312.pyc
 │   ├── __init__.py
+│   ├── _pyelftools_fallback.py
 │   ├── aiohttp_handler.py
 │   ├── capstone_handler.py
 │   ├── cryptography_handler.py
@@ -689,14 +917,22 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── wmi_handler.py
 ├── hexview/
 │   ├── __pycache__/
+│   │   ├── __init__.cpython-312.pyc
 │   │   ├── ai_bridge.cpython-312.pyc
+│   │   ├── api.cpython-312.pyc
+│   │   ├── checksums.cpython-312.pyc
+│   │   ├── compare_dialog.cpython-312.pyc
+│   │   ├── data_inspector.cpython-312.pyc
 │   │   ├── export_dialog.cpython-312.pyc
+│   │   ├── file_compare.cpython-312.pyc
 │   │   ├── file_handler.cpython-312.pyc
-│   │   ├── hex_renderer.cpython-312.pyc
-│   │   ├── hex_widget.cpython-312.pyc
+│   │   ├── hex_dialog.cpython-312.pyc
 │   │   ├── integration.cpython-312.pyc
+│   │   ├── intellicrack_hex_protection_integration.cpython-312.pyc
 │   │   ├── large_file_handler.cpython-312.pyc
+│   │   ├── performance_monitor.cpython-312.pyc
 │   │   ├── print_dialog.cpython-312.pyc
+│   │   ├── statistics.cpython-312.pyc
 │   │   └── statistics_dialog.cpython-312.pyc
 │   ├── __init__.py
 │   ├── advanced_search.py
@@ -728,8 +964,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │       └── .gitkeep
 │   └── tools/
 │       ├── __pycache__/
+│       │   ├── __init__.cpython-312.pyc
 │       │   ├── binary_analysis_tool.cpython-312.pyc
 │       │   ├── intellicrack_protection_analysis_tool.cpython-312.pyc
+│       │   ├── memory_forensics_tool.cpython-312.pyc
 │       │   └── yara_pattern_analysis_tool.cpython-312.pyc
 │       ├── __init__.py
 │       ├── binary_analysis_tool.py
@@ -739,13 +977,24 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │       ├── script_generation_tool.py
 │       └── yara_pattern_analysis_tool.py
 ├── ml/
+│   ├── __pycache__/
+│   │   ├── binary_feature_extractor.cpython-312.pyc
+│   │   ├── license_protection_neural_network.cpython-312.pyc
+│   │   └── pattern_evolution_tracker.cpython-312.pyc
+│   ├── pretrained/
+│   │   └── license_cnn_weights.pth
 │   ├── __init__.py
 │   ├── binary_feature_extractor.py
 │   ├── license_protection_neural_network.py
+│   ├── license_protection_neural_network.py.backup
 │   └── pattern_evolution_tracker.py
 ├── models/
 │   ├── __pycache__/
 │   │   └── model_manager.cpython-312.pyc
+│   ├── cache/
+│   │   └── test/
+│   ├── downloads/
+│   │   └── test/
 │   ├── protection_classifier/
 │   │   ├── encoder.pkl
 │   │   ├── metadata.json
@@ -755,6 +1004,12 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── training_results.json
 │   ├── radare2/
 │   ├── repositories/
+│   │   ├── __pycache__/
+│   │   │   ├── anthropic_repository.cpython-312.pyc
+│   │   │   ├── base.cpython-312.pyc
+│   │   │   ├── google_repository.cpython-312.pyc
+│   │   │   ├── openai_repository.cpython-312.pyc
+│   │   │   └── openrouter_repository.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── anthropic_repository.py
 │   │   ├── base.py
@@ -771,16 +1026,28 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── protection_knowledge_base.py
 ├── plugins/
 │   ├── __pycache__/
-│   │   └── __init__.cpython-312.pyc
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── plugin_system.cpython-312.pyc
+│   │   └── remote_executor.cpython-312.pyc
 │   ├── custom_modules/
 │   │   ├── __pycache__/
+│   │   │   ├── anti_anti_debug_suite.cpython-312.pyc
+│   │   │   ├── cloud_license_interceptor.cpython-312.pyc
+│   │   │   ├── hardware_dongle_emulator.cpython-312.pyc
+│   │   │   ├── hardware_dongle_emulator.cpython-314.pyc
+│   │   │   ├── intellicrack_core_engine.cpython-312.pyc
+│   │   │   ├── license_server_emulator.cpython-312.pyc
 │   │   │   ├── network_analysis_plugin.cpython-312.pyc
+│   │   │   ├── performance_optimizer.cpython-312.pyc
+│   │   │   ├── success_rate_analyzer.cpython-314.pyc
+│   │   │   ├── ui_enhancement_module.cpython-312.pyc
 │   │   │   └── vm_protection_unwrapper.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── anti_anti_debug_suite.py
 │   │   ├── binary_patcher_plugin.py
 │   │   ├── cloud_license_interceptor.py
 │   │   ├── hardware_dongle_emulator.py
+│   │   ├── hardware_dongle_emulator.py.bak
 │   │   ├── intellicrack_core_engine.py
 │   │   ├── license_server_emulator.py
 │   │   ├── license_server_emulator.py.bak
@@ -799,10 +1066,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── remote_executor.py
 ├── protection/
 │   ├── __pycache__/
+│   │   ├── __init__.cpython-312.pyc
 │   │   ├── analysis_cache.cpython-312.pyc
 │   │   ├── commercial_protectors_database.cpython-312.pyc
-│   │   ├── denuvo_ticket_analyzer.cpython-312.pyc
-│   │   ├── icp_backend.cpython-312.pyc
+│   │   ├── denuvo_analyzer.cpython-312.pyc
 │   │   ├── intellicrack_protection_advanced.cpython-312.pyc
 │   │   ├── intellicrack_protection_core.cpython-312.pyc
 │   │   ├── protection_detector.cpython-312.pyc
@@ -821,16 +1088,25 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── themida_analyzer.py
 │   └── unified_protection_engine.py
 ├── scripts/
+│   ├── ai_generated/
+│   │   ├── ai_frida_test_deploy_123_20251227_075901.js
+│   │   └── ai_frida_test_deploy_123_20251227_075901.js.meta.json
 │   ├── frida/
 │   │   ├── .idea/
+│   │   │   ├── inspectionProfiles/
+│   │   │   │   └── Project_Default.xml
 │   │   │   ├── .gitignore
 │   │   │   ├── frida.iml
 │   │   │   ├── modules.xml
 │   │   │   ├── vcs.xml
 │   │   │   └── workspace.xml
+│   │   ├── .qodo/
+│   │   │   ├── agents/
+│   │   │   └── workflows/
 │   │   ├── ai_scripts/
 │   │   │   └── ai_3d72c547_20250817_041722.js
 │   │   ├── advanced_anti_debug_bypass.js
+│   │   ├── android_pinning.js
 │   │   ├── anti_debugger.js
 │   │   ├── arxan_bypass.js
 │   │   ├── behavioral_pattern_analyzer.js
@@ -843,12 +1119,15 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── certificate_pinning_bypass.js
 │   │   ├── cloud_licensing_bypass.js
 │   │   ├── code_integrity_bypass.js
+│   │   ├── cryptoapi_bypass.js
 │   │   ├── dotnet_bypass_suite.js
 │   │   ├── drm_bypass.js
 │   │   ├── dynamic_script_generator.js
+│   │   ├── enhanced_hardware_spoofer.js
 │   │   ├── hook_effectiveness_monitor.js
 │   │   ├── http3_quic_interceptor.js
 │   │   ├── hwid_spoofer.js
+│   │   ├── ios_pinning.js
 │   │   ├── kernel_bridge.js
 │   │   ├── kernel_mode_bypass.js
 │   │   ├── keygen_generator.js
@@ -858,10 +1137,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── modular_hook_library.js
 │   │   ├── ntp_blocker.js
 │   │   ├── obfuscation_detector.js
+│   │   ├── openssl_bypass.js
+│   │   ├── qodana.yaml
 │   │   ├── quantum_crypto_handler.js
 │   │   ├── README.md
 │   │   ├── realtime_protection_detector.js
 │   │   ├── registry_monitor.js
+│   │   ├── schannel_bypass.js
 │   │   ├── stalker_tracer.js
 │   │   ├── telemetry_blocker.js
 │   │   ├── test_binary_patcher.js
@@ -870,17 +1152,29 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── tpm_command_interceptor.js
 │   │   ├── tpm_emulator.js
 │   │   ├── tpm_pcr_manipulator.js
+│   │   ├── universal_ssl_bypass.js
 │   │   ├── universal_unpacker.js
 │   │   ├── virtualization_bypass.js
 │   │   ├── wasm_protection_bypass.js
-│   │   └── websocket_interceptor.js
+│   │   ├── websocket_interceptor.js
+│   │   └── winhttp_bypass.js
 │   ├── ghidra/
 │   │   ├── .idea/
+│   │   │   ├── codeStyles/
+│   │   │   │   └── codeStyleConfig.xml
+│   │   │   ├── inspectionProfiles/
+│   │   │   │   └── Project_Default.xml
 │   │   │   ├── .gitignore
+│   │   │   ├── checkstyle-idea.xml
 │   │   │   ├── misc.xml
 │   │   │   ├── modules.xml
 │   │   │   ├── vcs.xml
 │   │   │   └── workspace.xml
+│   │   ├── .qodo/
+│   │   │   ├── agents/
+│   │   │   └── workflows/
+│   │   ├── __pycache__/
+│   │   │   └── anti_analysis_detector.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── AdvancedAnalysis.java
 │   │   ├── anti_analysis_detector.py
@@ -903,20 +1197,24 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── TODO.md
 │   │   └── TODO.xml
 │   ├── radare2/
+│   │   ├── __pycache__/
+│   │   │   ├── radare2_keygen_assistant.cpython-312.pyc
+│   │   │   └── radare2_license_analyzer.cpython-312.pyc
 │   │   ├── radare2_keygen_assistant.py
 │   │   └── radare2_license_analyzer.py
 │   ├── setup/
 │   │   └── __init__.py
+│   ├── versions/
 │   ├── Windows_Patch/
-│   │   └── WindowsActivator.cmd
 │   ├── __init__.py
 │   ├── README.md
 │   └── run_analysis_cli.py
-├── ssl_certificates/
-│   ├── ca.crt
-│   ├── ca.key
-│   └── README.md
 ├── tools/
+│   ├── __pycache__/
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── plugin_ci_cd.cpython-312.pyc
+│   │   ├── plugin_test_generator.cpython-312.pyc
+│   │   └── train_classifier.cpython-312.pyc
 │   ├── __init__.py
 │   ├── classify_protection.py
 │   ├── deobfuscate_cfg.py
@@ -926,19 +1224,65 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── plugin_test_generator.py
 │   ├── protection_analyzer_tool.py
 │   └── train_classifier.py
+├── types/
+│   ├── __init__.py
+│   ├── analysis.py
+│   └── ui.py
 ├── ui/
 │   ├── __pycache__/
-│   │   ├── main_window.cpython-312.pyc
+│   │   ├── __init__.cpython-312.pyc
+│   │   ├── cfg_explorer_inner.cpython-312.pyc
+│   │   ├── comprehensive_integration.cpython-312.pyc
+│   │   ├── config_manager.cpython-312.pyc
+│   │   ├── emulator_ui_enhancements.cpython-312.pyc
+│   │   ├── enhanced_ui_integration.cpython-312.pyc
+│   │   ├── exploitation_handlers.cpython-312.pyc
+│   │   ├── gpu_analysis.cpython-312.pyc
+│   │   ├── icon_manager.cpython-312.pyc
+│   │   ├── integrate_radare2.cpython-312.pyc
+│   │   ├── main_app.cpython-312.pyc
+│   │   ├── protection_detection_handlers.cpython-312.pyc
 │   │   ├── radare2_integration_ui.cpython-312.pyc
-│   │   └── radare2_ui_manager.cpython-312.pyc
+│   │   ├── radare2_ui_manager.cpython-312.pyc
+│   │   ├── shared_ui_layouts.cpython-312.pyc
+│   │   ├── symbolic_execution.cpython-312.pyc
+│   │   ├── traffic_analyzer.cpython-312.pyc
+│   │   ├── ui_manager.cpython-312.pyc
+│   │   ├── ui_manager.cpython-314.pyc
+│   │   └── window_sizing.cpython-312.pyc
 │   ├── dialogs/
 │   │   ├── __pycache__/
-│   │   │   ├── model_finetuning_dialog.cpython-312.pyc
+│   │   │   ├── ai_coding_assistant_dialog.cpython-312.pyc
+│   │   │   ├── base_dialog.cpython-312.pyc
+│   │   │   ├── ci_cd_dialog.cpython-312.pyc
+│   │   │   ├── code_modification_dialog.cpython-312.pyc
+│   │   │   ├── common_imports.cpython-312.pyc
+│   │   │   ├── event_handler_utils.cpython-312.pyc
+│   │   │   ├── export_dialog.cpython-312.pyc
+│   │   │   ├── frida_bypass_wizard_dialog.cpython-312.pyc
+│   │   │   ├── ghidra_script_selector.cpython-312.pyc
+│   │   │   ├── guided_workflow_wizard.cpython-312.pyc
+│   │   │   ├── hardware_spoofer_dialog.cpython-312.pyc
+│   │   │   ├── help_documentation_widget.cpython-312.pyc
+│   │   │   ├── model_loading_dialog.cpython-312.pyc
+│   │   │   ├── model_manager_dialog.cpython-312.pyc
+│   │   │   ├── nodejs_setup_dialog.cpython-312.pyc
+│   │   │   ├── offline_activation_dialog.cpython-312.pyc
 │   │   │   ├── plugin_creation_wizard.cpython-312.pyc
 │   │   │   ├── plugin_dialog_base.cpython-312.pyc
 │   │   │   ├── plugin_editor_dialog.cpython-312.pyc
-│   │   │   ├── program_selector_dialog.cpython-312.pyc
+│   │   │   ├── plugin_manager_dialog.cpython-312.pyc
+│   │   │   ├── preferences_dialog.cpython-312.pyc
+│   │   │   ├── qemu_test_dialog.cpython-312.pyc
+│   │   │   ├── qemu_test_results_dialog.cpython-312.pyc
+│   │   │   ├── report_manager_dialog.cpython-312.pyc
+│   │   │   ├── serial_generator_dialog.cpython-312.pyc
+│   │   │   ├── signature_editor_dialog.cpython-312.pyc
+│   │   │   ├── similarity_search_dialog.cpython-312.pyc
 │   │   │   ├── smart_program_selector_dialog.cpython-312.pyc
+│   │   │   ├── test_generator_dialog.cpython-312.pyc
+│   │   │   ├── trial_reset_dialog.cpython-312.pyc
+│   │   │   ├── visual_patch_editor.cpython-312.pyc
 │   │   │   └── vm_manager_dialog.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── ai_coding_assistant_dialog.py
@@ -993,9 +1337,19 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── light_theme.qss
 │   ├── tabs/
 │   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-312.pyc
+│   │   │   ├── adobe_injector_tab.cpython-312.pyc
+│   │   │   ├── adobe_injector_tab.cpython-314.pyc
+│   │   │   ├── ai_assistant_tab.cpython-312.pyc
 │   │   │   ├── base_tab.cpython-312.pyc
 │   │   │   ├── dashboard_tab.cpython-312.pyc
-│   │   │   └── terminal_tab.cpython-312.pyc
+│   │   │   ├── exploitation_tab.cpython-312.pyc
+│   │   │   ├── exploitation_tab.cpython-314.pyc
+│   │   │   ├── project_workspace_tab.cpython-312.pyc
+│   │   │   ├── settings_tab.cpython-314.pyc
+│   │   │   ├── terminal_tab.cpython-312.pyc
+│   │   │   ├── tools_tab.cpython-312.pyc
+│   │   │   └── workspace_tab.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── adobe_injector_tab.py
 │   │   ├── ai_assistant_tab.py
@@ -1010,12 +1364,32 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── workspace_tab.py
 │   ├── widgets/
 │   │   ├── __pycache__/
+│   │   │   ├── __init__.cpython-314.pyc
 │   │   │   ├── ai_assistant_widget.cpython-312.pyc
+│   │   │   ├── batch_analysis_widget.cpython-312.pyc
+│   │   │   ├── cache_management_widget.cpython-312.pyc
 │   │   │   ├── console_widget.cpython-312.pyc
+│   │   │   ├── cpu_status_widget.cpython-312.pyc
+│   │   │   ├── drop_zone_widget.cpython-312.pyc
+│   │   │   ├── embedded_terminal_widget.cpython-312.pyc
 │   │   │   ├── entropy_graph_widget.cpython-312.pyc
+│   │   │   ├── file_metadata_widget.cpython-312.pyc
 │   │   │   ├── gpu_status_widget.cpython-312.pyc
+│   │   │   ├── hex_viewer.cpython-312.pyc
 │   │   │   ├── hex_viewer_widget.cpython-312.pyc
-│   │   │   └── intellicrack_advanced_protection_widget.cpython-312.pyc
+│   │   │   ├── intellicrack_advanced_protection_widget.cpython-312.pyc
+│   │   │   ├── intellicrack_protection_widget.cpython-312.pyc
+│   │   │   ├── memory_dumper.cpython-312.pyc
+│   │   │   ├── model_loading_progress_widget.cpython-312.pyc
+│   │   │   ├── pe_file_model.cpython-312.pyc
+│   │   │   ├── pe_structure_model.cpython-312.pyc
+│   │   │   ├── plugin_editor.cpython-312.pyc
+│   │   │   ├── string_extraction_widget.cpython-312.pyc
+│   │   │   ├── structure_visualizer.cpython-312.pyc
+│   │   │   ├── system_monitor_widget.cpython-312.pyc
+│   │   │   ├── unified_protection_widget.cpython-312.pyc
+│   │   │   ├── widget_factory.cpython-312.pyc
+│   │   │   └── widget_factory.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── ai_assistant_widget.py
 │   │   ├── batch_analysis_widget.py
@@ -1077,13 +1451,31 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   └── window_sizing.py
 ├── utils/
 │   ├── __pycache__/
+│   │   ├── api_client.cpython-312.pyc
+│   │   ├── config_cleanup.cpython-312.pyc
 │   │   ├── dependencies.cpython-312.pyc
 │   │   ├── dependency_fallbacks.cpython-312.pyc
+│   │   ├── deprecation_warnings.cpython-312.pyc
+│   │   ├── env_file_manager.cpython-312.pyc
+│   │   ├── font_manager.cpython-312.pyc
+│   │   ├── gpu_autoloader.cpython-312.pyc
 │   │   ├── gpu_benchmark.cpython-312.pyc
+│   │   ├── http_utils.cpython-312.pyc
+│   │   ├── json_utils.cpython-312.pyc
+│   │   ├── logger.cpython-314.pyc
+│   │   ├── protection_utils.cpython-312.pyc
 │   │   ├── report_generator.cpython-312.pyc
+│   │   ├── secrets_manager.cpython-312.pyc
 │   │   ├── security_mitigations.cpython-312.pyc
+│   │   ├── service_health_checker.cpython-312.pyc
+│   │   ├── service_utils.cpython-312.pyc
 │   │   └── subprocess_security.cpython-312.pyc
 │   ├── analysis/
+│   │   ├── __pycache__/
+│   │   │   ├── analysis_exporter.cpython-312.pyc
+│   │   │   ├── analysis_stats.cpython-312.pyc
+│   │   │   ├── entropy_utils.cpython-312.pyc
+│   │   │   └── security_analysis.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── analysis_exporter.py
 │   │   ├── analysis_stats.py
@@ -1092,6 +1484,12 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pattern_search.py
 │   │   └── security_analysis.py
 │   ├── binary/
+│   │   ├── __pycache__/
+│   │   │   ├── binary_utils.cpython-312.pyc
+│   │   │   ├── certificate_extractor.cpython-312.pyc
+│   │   │   ├── elf_analyzer.cpython-312.pyc
+│   │   │   ├── network_api_analysis.cpython-312.pyc
+│   │   │   └── pe_analysis_common.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── binary_io.py
 │   │   ├── binary_utils.py
@@ -1102,6 +1500,15 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── pe_analysis_common.py
 │   │   └── pe_common.py
 │   ├── core/
+│   │   ├── __pycache__/
+│   │   │   ├── core_utilities.cpython-312.pyc
+│   │   │   ├── dependency_feedback.cpython-312.pyc
+│   │   │   ├── exception_utils.cpython-312.pyc
+│   │   │   ├── final_utilities.cpython-314.pyc
+│   │   │   ├── import_checks.cpython-312.pyc
+│   │   │   ├── import_patterns.cpython-312.pyc
+│   │   │   ├── internal_helpers.cpython-312.pyc
+│   │   │   └── path_discovery.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── core_utilities.py
 │   │   ├── dependency_feedback.py
@@ -1117,26 +1524,38 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── string_utils.py
 │   │   └── type_validation.py
 │   ├── exploitation/
+│   │   ├── __pycache__/
+│   │   │   └── patch_engine.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── exploitation.py
 │   │   ├── logger.py
 │   │   ├── patch_engine.py
 │   │   └── payload_result_handler.py
 │   ├── patching/
+│   │   ├── __pycache__/
+│   │   │   ├── patch_verification.cpython-312.pyc
+│   │   │   └── patch_verification.cpython-314.pyc
 │   │   ├── __init__.py
 │   │   ├── patch_generator.py
 │   │   ├── patch_utils.py
 │   │   └── patch_verification.py
 │   ├── protection/
+│   │   ├── __pycache__/
+│   │   │   └── certificate_utils.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── certificate_common.py
 │   │   ├── certificate_utils.py
 │   │   └── protection_helpers.py
 │   ├── reporting/
+│   │   ├── __pycache__/
+│   │   │   └── report_common.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── html_templates.py
 │   │   └── report_common.py
 │   ├── runtime/
+│   │   ├── __pycache__/
+│   │   │   ├── performance_optimizer.cpython-314.pyc
+│   │   │   └── runner_functions.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── additional_runners.py
 │   │   ├── distributed_processing.py
@@ -1144,7 +1563,14 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   └── runner_functions.py
 │   ├── system/
 │   │   ├── __pycache__/
-│   │   │   └── program_discovery.cpython-312.pyc
+│   │   │   ├── file_resolution.cpython-312.pyc
+│   │   │   ├── process_common.cpython-312.pyc
+│   │   │   ├── process_utils.cpython-312.pyc
+│   │   │   ├── program_discovery.cpython-312.pyc
+│   │   │   ├── subprocess_utils.cpython-312.pyc
+│   │   │   ├── system_utils.cpython-312.pyc
+│   │   │   ├── windows_common.cpython-312.pyc
+│   │   │   └── windows_structures.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── driver_utils.py
 │   │   ├── file_resolution.py
@@ -1161,6 +1587,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── windows_common.py
 │   │   └── windows_structures.py
 │   ├── tools/
+│   │   ├── __pycache__/
+│   │   │   ├── pcapy_compat.cpython-312.pyc
+│   │   │   ├── radare2_utils.cpython-314.pyc
+│   │   │   └── tool_wrappers.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── ghidra_script_manager.py
 │   │   ├── ghidra_utils.py
@@ -1168,6 +1598,11 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── radare2_utils.py
 │   │   └── tool_wrappers.py
 │   ├── ui/
+│   │   ├── __pycache__/
+│   │   │   ├── ui_button_common.cpython-312.pyc
+│   │   │   ├── ui_common.cpython-312.pyc
+│   │   │   ├── ui_helpers.cpython-312.pyc
+│   │   │   └── ui_setup_functions.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   ├── ui_button_common.py
 │   │   ├── ui_common.py
@@ -1175,9 +1610,13 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   │   ├── ui_setup_functions.py
 │   │   └── ui_utils.py
 │   ├── validation/
+│   │   ├── __pycache__/
+│   │   │   └── import_validator.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   └── import_validator.py
 │   ├── windows/
+│   │   ├── __pycache__/
+│   │   │   └── service_manager.cpython-312.pyc
 │   │   ├── __init__.py
 │   │   └── service_manager.py
 │   ├── __init__.py
@@ -1209,11 +1648,10 @@ For an interactive HTML version with clickable links, see IntellicrackStructure.
 │   ├── severity_levels.py
 │   ├── subprocess_security.py
 │   ├── torch_gil_safety.py
+│   ├── type_safety.py
 │   └── url_validation.py
-├── .intellicrack_scan_cache.json
 ├── __init__.py
 ├── __main__.py
-├── Claude.md
 ├── config.py
 ├── main.py
 └── README.md

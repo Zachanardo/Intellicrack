@@ -282,7 +282,11 @@ class HASPCrypto:
         self._initialize_default_keys()
 
     def _initialize_default_keys(self) -> None:
-        """Initialize default cryptographic keys."""
+        """Initialize default cryptographic keys.
+
+        Sets up default AES-256 and RSA-2048 keys for emulation.
+
+        """
         default_aes_key = hashlib.sha256(b"HASP_DEFAULT_AES256_KEY").digest()
         self.aes_keys[0] = default_aes_key
 
@@ -785,7 +789,7 @@ class HASPSentinelParser:
             data: Raw HASP request packet
 
         Returns:
-            Parsed HASPRequest object or None if invalid
+            HASPRequest | None: Parsed request object or None if invalid
 
         """
         self.logger.debug("Starting HASP request parsing, data length: %d", len(data))
@@ -961,7 +965,7 @@ class HASPSentinelParser:
             request: Parsed HASP request
 
         Returns:
-            HASP response object
+            HASPResponse: HASP response object
 
         """
         command_handlers: dict[HASPCommandType, Callable[[HASPRequest], HASPResponse]] = {
@@ -1379,7 +1383,15 @@ class HASPSentinelParser:
         )
 
     def _handle_get_rtc(self, request: HASPRequest) -> HASPResponse:
-        """Handle real-time clock read request."""
+        """Handle real-time clock read request.
+
+        Args:
+            request: RTC read request
+
+        Returns:
+            HASPResponse: Current time response
+
+        """
         current_time = int(time.time())
 
         return HASPResponse(
@@ -1397,7 +1409,15 @@ class HASPSentinelParser:
         )
 
     def _handle_set_rtc(self, request: HASPRequest) -> HASPResponse:
-        """Handle real-time clock set request."""
+        """Handle real-time clock set request.
+
+        Args:
+            request: RTC set request
+
+        Returns:
+            HASPResponse: Set confirmation response
+
+        """
         return HASPResponse(
             status=HASPStatusCode.STATUS_OK,
             session_id=request.session_id,
@@ -1409,7 +1429,15 @@ class HASPSentinelParser:
         )
 
     def _handle_get_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle get HASP dongle info request."""
+        """Handle get HASP dongle info request.
+
+        Args:
+            request: Get info request
+
+        Returns:
+            HASPResponse: Hardware information response
+
+        """
         return HASPResponse(
             status=HASPStatusCode.STATUS_OK,
             session_id=request.session_id,
@@ -1427,7 +1455,15 @@ class HASPSentinelParser:
         )
 
     def _handle_get_session_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle get session info request."""
+        """Handle get session info request.
+
+        Args:
+            request: Get session info request
+
+        Returns:
+            HASPResponse: Session information response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1454,7 +1490,15 @@ class HASPSentinelParser:
         )
 
     def _handle_get_feature_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle get feature info request."""
+        """Handle get feature info request.
+
+        Args:
+            request: Get feature info request
+
+        Returns:
+            HASPResponse: Feature information response
+
+        """
         if request.feature_id not in self.features:
             return self._create_error_response(request, HASPStatusCode.FEATURE_NOT_FOUND)
 
@@ -1491,7 +1535,15 @@ class HASPSentinelParser:
         )
 
     def _handle_feature_logout(self, request: HASPRequest) -> HASPResponse:
-        """Handle feature logout request."""
+        """Handle feature logout request.
+
+        Args:
+            request: Feature logout request
+
+        Returns:
+            HASPResponse: Logout confirmation response
+
+        """
         if request.session_id in self.active_sessions:
             session = self.active_sessions[request.session_id]
             session.feature_id = 0
@@ -1508,7 +1560,15 @@ class HASPSentinelParser:
         )
 
     def _handle_heartbeat(self, request: HASPRequest) -> HASPResponse:
-        """Handle heartbeat keepalive request."""
+        """Handle heartbeat keepalive request.
+
+        Args:
+            request: Heartbeat request
+
+        Returns:
+            HASPResponse: Heartbeat acknowledgment response
+
+        """
         if request.session_id in self.active_sessions:
             session = self.active_sessions[request.session_id]
             session.last_heartbeat = time.time()
@@ -1532,7 +1592,15 @@ class HASPSentinelParser:
         )
 
     def _handle_transfer_data(self, request: HASPRequest) -> HASPResponse:
-        """Handle data transfer request (for large payloads)."""
+        """Handle data transfer request (for large payloads).
+
+        Args:
+            request: Data transfer request
+
+        Returns:
+            HASPResponse: Transfer confirmation response
+
+        """
         if request.session_id not in self.active_sessions:
             return self._create_error_response(request, HASPStatusCode.NOT_LOGGED_IN)
 
@@ -1547,7 +1615,15 @@ class HASPSentinelParser:
         )
 
     def _handle_get_hardware_info(self, request: HASPRequest) -> HASPResponse:
-        """Handle hardware info request."""
+        """Handle hardware info request.
+
+        Args:
+            request: Hardware info request
+
+        Returns:
+            HASPResponse: Hardware information response
+
+        """
         return HASPResponse(
             status=HASPStatusCode.STATUS_OK,
             session_id=request.session_id,
@@ -1559,7 +1635,15 @@ class HASPSentinelParser:
         )
 
     def _handle_datetime(self, request: HASPRequest) -> HASPResponse:
-        """Handle datetime request."""
+        """Handle datetime request.
+
+        Args:
+            request: Datetime request
+
+        Returns:
+            HASPResponse: Datetime information response
+
+        """
         current_time = int(time.time())
 
         return HASPResponse(
@@ -1577,7 +1661,15 @@ class HASPSentinelParser:
         )
 
     def _handle_unknown_command(self, request: HASPRequest) -> HASPResponse:
-        """Handle unknown command."""
+        """Handle unknown command.
+
+        Args:
+            request: Request with unknown command
+
+        Returns:
+            HASPResponse: Error response
+
+        """
         self.logger.warning("Unknown HASP command: 0x%02X", request.command)
         return self._create_error_response(request, HASPStatusCode.INV_SPEC)
 
@@ -1586,7 +1678,16 @@ class HASPSentinelParser:
         request: HASPRequest,
         status: HASPStatusCode,
     ) -> HASPResponse:
-        """Create error response."""
+        """Create error response.
+
+        Args:
+            request: Original request
+            status: Error status code
+
+        Returns:
+            HASPResponse: Error response
+
+        """
         return HASPResponse(
             status=status,
             session_id=request.session_id,
@@ -1598,7 +1699,15 @@ class HASPSentinelParser:
         )
 
     def _is_feature_expired(self, feature: HASPFeature) -> bool:
-        """Check if feature is expired."""
+        """Check if feature is expired.
+
+        Args:
+            feature: HASP feature to check
+
+        Returns:
+            bool: True if feature is expired, False otherwise
+
+        """
         if feature.expiry == "permanent":
             return False
 
@@ -1611,7 +1720,15 @@ class HASPSentinelParser:
             return False
 
     def _calculate_expiry_info(self, feature: HASPFeature) -> dict[str, Any]:
-        """Calculate expiry information for feature."""
+        """Calculate expiry information for feature.
+
+        Args:
+            feature: HASP feature for expiry calculation
+
+        Returns:
+            dict[str, Any]: Expiry information
+
+        """
         if feature.expiry == "permanent":
             return {
                 "expiry_date": "permanent",
@@ -1804,7 +1921,16 @@ class HASPPacketAnalyzer:
         return packets
 
     def _parse_pcap_packet(self, timestamp: float, buf: bytes) -> HASPPacketCapture | None:
-        """Parse individual packet from PCAP."""
+        """Parse individual packet from PCAP.
+
+        Args:
+            timestamp: Packet timestamp
+            buf: Raw packet buffer
+
+        Returns:
+            HASPPacketCapture: Parsed packet or None if invalid
+
+        """
         try:
             import dpkt
         except ImportError:
@@ -1863,11 +1989,29 @@ class HASPPacketAnalyzer:
             return None
 
     def _ip_to_str(self, ip_bytes: bytes) -> str:
-        """Convert IP address bytes to string."""
+        """Convert IP address bytes to string.
+
+        Args:
+            ip_bytes: IP address as bytes
+
+        Returns:
+            str: Dotted decimal IP address
+
+        """
         return ".".join(str(b) for b in ip_bytes)
 
     def _is_hasp_packet(self, payload: bytes, sport: int, dport: int) -> bool:
-        """Determine if packet is HASP-related."""
+        """Determine if packet is HASP-related.
+
+        Args:
+            payload: Packet payload
+            sport: Source port
+            dport: Destination port
+
+        Returns:
+            bool: True if packet is HASP-related, False otherwise
+
+        """
         if sport in {1947, 475} or dport in {1947, 475}:
             return True
 
@@ -1885,7 +2029,15 @@ class HASPPacketAnalyzer:
         return False
 
     def _identify_packet_type(self, payload: bytes) -> str:
-        """Identify HASP packet type from payload."""
+        """Identify HASP packet type from payload.
+
+        Args:
+            payload: Raw packet payload
+
+        Returns:
+            str: Packet type name
+
+        """
         if HASPNetworkProtocol.DISCOVERY_MAGIC in payload:
             return "DISCOVERY"
 
@@ -1921,7 +2073,7 @@ class HASPPacketAnalyzer:
         """Extract license information from captured packets.
 
         Returns:
-            Dictionary containing extracted license information
+            dict[str, Any]: License information with servers, features, and encryption types
 
         """
         discovered_servers: list[dict[str, Any]] = []
@@ -1961,7 +2113,15 @@ class HASPPacketAnalyzer:
         return license_info
 
     def _extract_server_info(self, payload: bytes) -> dict[str, Any] | None:
-        """Extract server information from SERVER_READY packet."""
+        """Extract server information from SERVER_READY packet.
+
+        Args:
+            payload: SERVER_READY packet payload
+
+        Returns:
+            dict[str, Any]: Server information or None if invalid
+
+        """
         try:
             server_info = {}
             text = payload.decode("utf-8", errors="ignore")
@@ -1987,7 +2147,7 @@ class HASPPacketAnalyzer:
             request_packet: Captured HASP request packet
 
         Returns:
-            Spoofed response packet bytes
+            bytes: Spoofed response packet
 
         """
         if not request_packet.parsed_request:
@@ -2051,7 +2211,12 @@ class HASPUSBEmulator:
         self.device_info = self._generate_usb_device_info()
 
     def _generate_usb_device_info(self) -> dict[str, Any]:
-        """Generate realistic USB device information."""
+        """Generate realistic USB device information.
+
+        Returns:
+            dict[str, Any]: USB device information
+
+        """
         return {
             "vendor_id": HASPUSBProtocol.USB_VENDOR_ID,
             "product_id": HASPUSBProtocol.USB_PRODUCT_IDS[0],
@@ -2107,7 +2272,16 @@ class HASPUSBEmulator:
         return b"\x00" * 64
 
     def _handle_usb_read_memory(self, address: int, length: int) -> bytes:
-        """Handle USB memory read."""
+        """Handle USB memory read.
+
+        Args:
+            address: Memory address to read from
+            length: Number of bytes to read
+
+        Returns:
+            bytes: Memory contents
+
+        """
         feature_id = 100
 
         if feature_id in self.parser.memory_storage:
@@ -2118,7 +2292,17 @@ class HASPUSBEmulator:
         return b"\x00" * min(length, 64)
 
     def _handle_usb_write_memory(self, address: int, length: int, data: bytes) -> bytes:
-        """Handle USB memory write."""
+        """Handle USB memory write.
+
+        Args:
+            address: Memory address to write to
+            length: Number of bytes to write
+            data: Data to write
+
+        Returns:
+            bytes: Number of bytes written
+
+        """
         feature_id = 100
 
         if feature_id in self.parser.memory_storage:
@@ -2130,17 +2314,38 @@ class HASPUSBEmulator:
         return struct.pack("<I", 0)
 
     def _handle_usb_encrypt(self, data: bytes) -> bytes:
-        """Handle USB encryption."""
+        """Handle USB encryption.
+
+        Args:
+            data: Data to encrypt
+
+        Returns:
+            bytes: Encrypted data (max 64 bytes)
+
+        """
         encrypted = self.parser.crypto.hasp4_encrypt(data, 0x12345678)
         return encrypted[:64] if len(encrypted) > 64 else encrypted
 
     def _handle_usb_decrypt(self, data: bytes) -> bytes:
-        """Handle USB decryption."""
+        """Handle USB decryption.
+
+        Args:
+            data: Data to decrypt
+
+        Returns:
+            bytes: Decrypted data (max 64 bytes)
+
+        """
         decrypted = self.parser.crypto.hasp4_decrypt(data, 0x12345678)
         return decrypted[:64] if len(decrypted) > 64 else decrypted
 
     def _handle_usb_get_info(self) -> bytes:
-        """Handle USB get info request."""
+        """Handle USB get info request.
+
+        Returns:
+            bytes: Device information packed as 4 unsigned ints
+
+        """
         return struct.pack(
             "<IIII",
             self.device_info["vendor_id"],
@@ -2150,7 +2355,12 @@ class HASPUSBEmulator:
         )
 
     def _handle_usb_get_rtc(self) -> bytes:
-        """Handle USB RTC read."""
+        """Handle USB RTC read.
+
+        Returns:
+            bytes: Current time as 32-bit unsigned int
+
+        """
         current_time = int(time.time())
         return struct.pack("<I", current_time)
 
@@ -2218,7 +2428,7 @@ class HASPServerEmulator:
         """Generate HASP server discovery response.
 
         Returns:
-            Discovery response packet bytes
+            bytes: Discovery response packet
 
         """
         response = HASPNetworkProtocol.SERVER_READY_MAGIC
@@ -2237,7 +2447,7 @@ class HASPServerEmulator:
             client_data: Client request packet
 
         Returns:
-            Response packet bytes
+            bytes: Response packet
 
         """
         if HASPNetworkProtocol.DISCOVERY_MAGIC in client_data:
@@ -2252,7 +2462,12 @@ class HASPServerEmulator:
         return self.parser.serialize_response(response)
 
     def start_server(self) -> None:
-        """Start HASP license server (blocking)."""
+        """Start HASP license server (blocking).
+
+        Starts UDP and TCP listeners for license requests. This is a blocking call
+        that runs until stop_server() is called.
+
+        """
         import socket
         import threading
 
@@ -2287,7 +2502,12 @@ class HASPServerEmulator:
             tcp_socket.close()
 
     def _handle_udp(self, sock: socket.socket) -> None:
-        """Handle UDP discovery packets."""
+        """Handle UDP discovery packets.
+
+        Args:
+            sock: UDP socket
+
+        """
         while self.running:
             try:
                 data, addr = sock.recvfrom(4096)
@@ -2302,7 +2522,12 @@ class HASPServerEmulator:
                     self.logger.exception("UDP handler error: %s", e)
 
     def _handle_tcp(self, sock: socket.socket) -> None:
-        """Handle TCP license requests."""
+        """Handle TCP license requests.
+
+        Args:
+            sock: TCP socket
+
+        """
         while self.running:
             try:
                 client_sock, addr = sock.accept()
@@ -2319,6 +2544,10 @@ class HASPServerEmulator:
                     self.logger.exception("TCP handler error: %s", e)
 
     def stop_server(self) -> None:
-        """Stop HASP license server."""
+        """Stop HASP license server.
+
+        Signals the server to stop accepting new connections and shuts down.
+
+        """
         self.running = False
         self.logger.info("HASP server stopped")

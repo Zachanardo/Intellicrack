@@ -112,7 +112,10 @@ class AnalysisEvent:
     error_details: str = ""
 
     def __post_init__(self) -> None:
-        """Initialize analysis event with generated ID if not provided."""
+        """Initialize analysis event with generated ID if not provided.
+
+        Auto-generates a unique event ID if one is not already provided.
+        """
         if not self.event_id:
             self.event_id = self.generate_event_id()
 
@@ -188,7 +191,12 @@ class BayesianAnalyzer:
     """Bayesian analysis for success rates."""
 
     def __init__(self, prior_alpha: float = 1.0, prior_beta: float = 1.0) -> None:
-        """Initialize Bayesian analyzer with Beta distribution prior parameters."""
+        """Initialize Bayesian analyzer with Beta distribution prior parameters.
+
+        Args:
+            prior_alpha: Alpha parameter for Beta prior (default 1.0).
+            prior_beta: Beta parameter for Beta prior (default 1.0).
+        """
         self.prior_alpha = prior_alpha
         self.prior_beta = prior_beta
 
@@ -259,7 +267,10 @@ class SurvivalAnalyzer:
     """Kaplan-Meier survival analysis for bypass longevity."""
 
     def __init__(self) -> None:
-        """Initialize survival analyzer for Kaplan-Meier analysis."""
+        """Initialize survival analyzer for Kaplan-Meier analysis.
+
+        Sets up empty survival data list for tracking bypass longevity.
+        """
         self.survival_data: list[tuple[float, bool]] = []
 
     def add_observation(self, duration: float, censored: bool = False) -> None:
@@ -332,7 +343,10 @@ class TimeSeriesAnalyzer:
     """Time series analysis and forecasting."""
 
     def __init__(self) -> None:
-        """Initialize time series analyzer with component history tracking."""
+        """Initialize time series analyzer with component history tracking.
+
+        Sets up empty history for tracking time series data per component.
+        """
         self.history: defaultdict[str, list[tuple[float, float]]] = defaultdict(list)
 
     def add_data_point(self, component: str, timestamp: float, value: float) -> None:
@@ -645,13 +659,20 @@ class EventTracker:
     """Event tracking and database management."""
 
     def __init__(self, db_path: str = "") -> None:
-        """Initialize event tracker with SQLite database and threading support."""
+        """Initialize event tracker with SQLite database and threading support.
+
+        Args:
+            db_path: Path to SQLite database (optional, uses default if empty).
+        """
         self.db_path = db_path or str(SUCCESS_RATES_DB)
         self.lock = threading.Lock()
         self.initialize_database()
 
     def initialize_database(self) -> None:
-        """Initialize SQLite database schema."""
+        """Initialize SQLite database schema.
+
+        Creates tables for events, success rate cache, and trend cache with appropriate indices.
+        """
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
 
@@ -829,7 +850,11 @@ class MLPredictor:
     """Machine learning-based success rate predictor."""
 
     def __init__(self) -> None:
-        """Initialize machine learning predictor with ensemble models and feature scaling."""
+        """Initialize machine learning predictor with ensemble models and feature scaling.
+
+        Sets up three regression models (Random Forest, Gradient Boosting, Bayesian Ridge),
+        feature scaler, and tracking variables.
+        """
         self.models = {
             "random_forest": RandomForestRegressor(n_estimators=100, random_state=42),
             "gradient_boosting": GradientBoostingRegressor(n_estimators=100, random_state=42),
@@ -981,7 +1006,11 @@ class ReportGenerator:
     """Statistical report generation."""
 
     def __init__(self, output_dir: str = "reports") -> None:
-        """Initialize report generator with configurable output directory."""
+        """Initialize report generator with configurable output directory.
+
+        Args:
+            output_dir: Output directory for generated reports (default "reports").
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
 
@@ -1217,7 +1246,11 @@ class SuccessRateAnalyzer:
     """Run success rate analysis engine."""
 
     def __init__(self, db_path: str = "") -> None:
-        """Initialize comprehensive success rate analyzer with all statistical components."""
+        """Initialize comprehensive success rate analyzer with all statistical components.
+
+        Args:
+            db_path: Path to SQLite database (optional, uses default if empty).
+        """
         self.event_tracker = EventTracker(db_path or str(SUCCESS_RATES_DB))
         self.bayesian_analyzer = BayesianAnalyzer()
         self.survival_analyzer = SurvivalAnalyzer()
@@ -1312,7 +1345,16 @@ class SuccessRateAnalyzer:
         protection_category: ProtectionCategory | None = None,
         time_window: int | None = None,
     ) -> StatisticalResult:
-        """Get success rate with confidence interval."""
+        """Get success rate with confidence interval.
+
+        Args:
+            component: Component name filter (optional).
+            protection_category: Protection category filter (optional).
+            time_window: Time window in seconds (optional).
+
+        Returns:
+            StatisticalResult: Success rate with confidence interval.
+        """
         cache_key = f"success_rate_{component}_{protection_category}_{time_window}"
 
         if cache_key in self.cache and self.cache_expiry.get(cache_key, 0) > time.time():
@@ -1352,7 +1394,15 @@ class SuccessRateAnalyzer:
     def get_bayesian_success_rate(
         self, component: str | None = None, protection_category: ProtectionCategory | None = None
     ) -> dict[str, Any]:
-        """Get Bayesian success rate analysis."""
+        """Get Bayesian success rate analysis.
+
+        Args:
+            component: Component name filter (optional).
+            protection_category: Protection category filter (optional).
+
+        Returns:
+            dict[str, Any]: Bayesian analysis including posterior mean, credible interval, and probabilities.
+        """
         success_count, total_count = self.event_tracker.get_success_counts(component, protection_category)
         failure_count = total_count - success_count
 
@@ -1376,7 +1426,16 @@ class SuccessRateAnalyzer:
     def compare_success_rates(
         self, component1: str, component2: str, protection_category: ProtectionCategory | None = None
     ) -> dict[str, Any]:
-        """Compare success rates between components."""
+        """Compare success rates between components.
+
+        Args:
+            component1: First component name.
+            component2: Second component name.
+            protection_category: Protection category filter (optional).
+
+        Returns:
+            dict[str, Any]: Comparison results including success rates, statistical test results, and significance.
+        """
         success1, total1 = self.event_tracker.get_success_counts(component1, protection_category)
         success2, total2 = self.event_tracker.get_success_counts(component2, protection_category)
 
@@ -1408,7 +1467,15 @@ class SuccessRateAnalyzer:
         }
 
     def get_trend_analysis(self, component: str, protection_category: ProtectionCategory | None = None) -> TrendAnalysis:
-        """Get trend analysis for component."""
+        """Get trend analysis for component.
+
+        Args:
+            component: Component name to analyze.
+            protection_category: Protection category filter (optional).
+
+        Returns:
+            TrendAnalysis: Trend analysis results including direction, strength, and forecasts.
+        """
         trend_data = self.time_series_analyzer.detect_trend(component)
         forecasts, intervals = self.time_series_analyzer.forecast_arima(component)
         seasonal_data = self.time_series_analyzer.seasonal_decomposition(component)
@@ -1424,7 +1491,11 @@ class SuccessRateAnalyzer:
         )
 
     def get_component_statistics(self) -> dict[str, dict[str, Any]]:
-        """Get statistics for all components."""
+        """Get statistics for all components.
+
+        Returns:
+            dict[str, dict[str, Any]]: Statistics for each component.
+        """
         # Get all unique components
         all_events = self.event_tracker.get_events()
         components = {event.component for event in all_events}
@@ -1445,7 +1516,11 @@ class SuccessRateAnalyzer:
         return stats
 
     def get_category_statistics(self) -> dict[str, dict[str, Any]]:
-        """Get statistics for all protection categories."""
+        """Get statistics for all protection categories.
+
+        Returns:
+            dict[str, dict[str, Any]]: Statistics for each protection category.
+        """
         stats = {}
         for category in ProtectionCategory:
             success_rate_result = self.get_success_rate(protection_category=category)
@@ -1460,7 +1535,11 @@ class SuccessRateAnalyzer:
         return stats
 
     def generate_performance_dashboard(self) -> dict[str, Any]:
-        """Generate real-time performance dashboard data."""
+        """Generate real-time performance dashboard data.
+
+        Returns:
+            dict[str, Any]: Performance metrics and analysis for dashboard display.
+        """
         current_time = time.time()
 
         # Recent performance (last 24 hours)
@@ -1513,11 +1592,26 @@ class SuccessRateAnalyzer:
         }
 
     def generate_comprehensive_report(self) -> str:
-        """Generate comprehensive analysis report."""
+        """Generate comprehensive analysis report.
+
+        Returns:
+            str: Path to the generated report.
+        """
         return self.report_generator.generate_comprehensive_report(self)
 
     def export_data(self, format: str = "json", include_raw_events: bool = False) -> str:
-        """Export analysis data."""
+        """Export analysis data.
+
+        Args:
+            format: Export format ("json" or "csv", default "json").
+            include_raw_events: Whether to include raw event data (default False).
+
+        Returns:
+            str: Path to the exported data file.
+
+        Raises:
+            ValueError: If unsupported export format is specified.
+        """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         if format == "json":
@@ -1589,7 +1683,7 @@ class SuccessRateAnalyzer:
         raise ValueError(f"Unsupported export format: {format}")
 
     def shutdown(self) -> None:
-        """Shutdown analyzer."""
+        """Shutdown analyzer and stop background tasks."""
         self.is_running = False
 
 
@@ -1601,7 +1695,14 @@ R = TypeVar("R")
 
 
 def get_success_rate_analyzer(db_path: str | None = None) -> SuccessRateAnalyzer:
-    """Get global success rate analyzer instance."""
+    """Get global success rate analyzer instance.
+
+    Args:
+        db_path: Path to the SQLite database (optional, uses default if not provided).
+
+    Returns:
+        SuccessRateAnalyzer: The global analyzer instance.
+    """
     global _global_analyzer
 
     if _global_analyzer is None:
@@ -1610,12 +1711,19 @@ def get_success_rate_analyzer(db_path: str | None = None) -> SuccessRateAnalyzer
     return _global_analyzer
 
 
-# Decorator for automatic success tracking
 def track_success(
     event_type: EventType, protection_category: ProtectionCategory, component: str | None = None
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    """Create decorator for automatic success/failure tracking."""
+    """Create decorator for automatic success/failure tracking.
 
+    Args:
+        event_type: Type of event to track.
+        protection_category: Protection category for the tracked function.
+        component: Component name (default uses function name).
+
+    Returns:
+        Callable: Decorator function for automatic tracking.
+    """
     def decorator(func: Callable[P, R]) -> Callable[P, R]:
         def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
             analyzer = get_success_rate_analyzer()
@@ -1677,8 +1785,11 @@ if __name__ == "__main__":
 
     # Hook into real component events for live tracking
     def register_component_hooks() -> dict[str, Callable[..., bool]]:
-        """Register success tracking hooks with Intellicrack components."""
+        """Register success tracking hooks with Intellicrack components.
 
+        Returns:
+            dict[str, Callable[..., bool]]: Dictionary of hooked component functions.
+        """
         # Track protection detection events
         @track_success(EventType.PROTECTION_DETECTION, ProtectionCategory.SERIAL_KEY, "protection_detector")
         def detect_serial_protection(binary_path: str) -> bool:
@@ -1783,4 +1894,16 @@ if __name__ == "__main__":
     logger.info("  Overall success rate (24h): %.3f", dashboard["overall_metrics"]["overall_success_rate_24h"])
 
     # Generate report
-    logg
+    logger.info("Generating comprehensive report...")
+    report_path = analyzer.generate_comprehensive_report()
+    logger.info("Report saved to: %s", report_path)
+
+    # Export data
+    json_file = analyzer.export_data("json")
+    csv_file = analyzer.export_data("csv")
+    logger.info("Data exported to: %s, %s", json_file, csv_file)
+
+    logger.info("Success rate analysis demonstration completed!")
+
+    # Cleanup
+    analyzer.shutdown()

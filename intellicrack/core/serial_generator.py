@@ -918,7 +918,15 @@ class SerialNumberGenerator:
         return serial
 
     def _calculate_mod97(self, data: str) -> str:
-        """Calculate mod97 checksum."""
+        """Calculate mod97 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: mod97 checksum as zero-padded two-digit string.
+
+        """
         # Convert to numeric string
         numeric = "".join(c if c.isdigit() else str(ord(c) - ord("A") + 10) for c in data)
         num = int(f"{numeric}00")
@@ -926,7 +934,15 @@ class SerialNumberGenerator:
         return str(checksum).zfill(2)
 
     def _generate_polynomial_serial(self, length: int = 16) -> str:
-        """Generate serial using polynomial-based algorithm."""
+        """Generate serial using polynomial-based algorithm.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number generated using polynomial LFSR.
+
+        """
         # Use a polynomial over GF(2^8)
         poly = 0x11D  # x^8 + x^4 + x^3 + x^2 + 1
 
@@ -945,7 +961,15 @@ class SerialNumberGenerator:
         return final_serial
 
     def _generate_ecc_serial(self, length: int = 16) -> str:
-        """Generate serial using elliptic curve operations."""
+        """Generate serial using elliptic curve operations.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number generated using elliptic curve operations.
+
+        """
         # Simplified ECC-based generation
         # Use curve parameters
         p = 2**255 - 19  # Curve25519
@@ -965,7 +989,15 @@ class SerialNumberGenerator:
         return serial
 
     def _generate_rsa_serial(self, length: int = 16) -> str:
-        """Generate serial using RSA-like operations."""
+        """Generate serial using RSA-like operations.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number generated using RSA operations.
+
+        """
         # Small RSA-like parameters for serial generation
         p = 61
         q = 53
@@ -990,7 +1022,15 @@ class SerialNumberGenerator:
         return serial
 
     def _generate_hash_chain_serial(self, length: int = 16) -> str:
-        """Generate serial using hash chain."""
+        """Generate serial using hash chain.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number generated using SHA256 hash chain.
+
+        """
         # Note: Using random module for generating serials, not cryptographic purposes
         seed = random.randbytes(16)  # noqa: S311
         hash_value = hashlib.sha256(seed).digest()
@@ -1012,7 +1052,15 @@ class SerialNumberGenerator:
         return final_serial
 
     def _generate_feistel_serial(self, length: int = 16) -> str:
-        """Generate serial using Feistel network."""
+        """Generate serial using Feistel network.
+
+        Args:
+            length: Desired length of generated serial (default 16).
+
+        Returns:
+            str: Serial number generated using Feistel cipher operations.
+
+        """
 
         def feistel_round(left: int, right: int, key: int) -> tuple[int, int]:
             """Perform a single Feistel network round.
@@ -1056,7 +1104,15 @@ class SerialNumberGenerator:
         return final_serial
 
     def _calculate_crc16(self, data: str) -> str:
-        """Calculate CRC16 checksum."""
+        """Calculate CRC16 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: CRC16 checksum as hexadecimal string.
+
+        """
         crc = 0xFFFF
         for char in data:
             crc ^= ord(char)
@@ -1068,7 +1124,15 @@ class SerialNumberGenerator:
         return format(crc, "04X")
 
     def _calculate_fletcher16(self, data: str) -> str:
-        """Calculate Fletcher-16 checksum."""
+        """Calculate Fletcher-16 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: Fletcher-16 checksum as hexadecimal string.
+
+        """
         sum1 = sum2 = 0
         for char in data:
             sum1 = (sum1 + ord(char)) % 255
@@ -1076,7 +1140,15 @@ class SerialNumberGenerator:
         return format((sum2 << 8) | sum1, "04X")
 
     def _calculate_fletcher32(self, data: str) -> str:
-        """Calculate Fletcher-32 checksum."""
+        """Calculate Fletcher-32 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: Fletcher-32 checksum as hexadecimal string.
+
+        """
         sum1 = sum2 = 0
         for char in data:
             sum1 = (sum1 + ord(char)) % 65535
@@ -1084,14 +1156,30 @@ class SerialNumberGenerator:
         return format((sum2 << 16) | sum1, "08X")
 
     def _calculate_adler32(self, data: str) -> str:
-        """Calculate Adler-32 checksum."""
+        """Calculate Adler-32 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: Adler-32 checksum as hexadecimal string.
+
+        """
         import zlib
 
         adler = zlib.adler32(data.encode()) & 0xFFFFFFFF
         return format(adler, "08X")
 
     def _calculate_mod11(self, data: str) -> str:
-        """Calculate mod11 checksum."""
+        """Calculate mod11 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: mod11 checksum digit(s) as a string.
+
+        """
         weights = [2, 3, 4, 5, 6, 7, 8, 9, 10]
         total = sum(int(char) * weights[i % len(weights)] for i, char in enumerate(data) if char.isdigit())
         remainder = total % 11
@@ -1100,7 +1188,15 @@ class SerialNumberGenerator:
         return "X" if remainder == 1 else str(11 - remainder)
 
     def _calculate_mod37(self, data: str) -> str:
-        """Calculate mod37 checksum."""
+        """Calculate mod37 checksum.
+
+        Args:
+            data: String data to calculate checksum for.
+
+        Returns:
+            str: mod37 checksum as a single digit or letter.
+
+        """
         # Map alphanumeric to 0-36
         value = 0
         for char in data:
@@ -1144,7 +1240,17 @@ class SerialNumberGenerator:
         )
 
     def batch_generate(self, constraints: SerialConstraints, count: int, unique: bool = True) -> list[GeneratedSerial]:
-        """Generate multiple serial numbers."""
+        """Generate multiple serial numbers.
+
+        Args:
+            constraints: SerialConstraints object specifying generation parameters.
+            count: Number of serials to generate.
+            unique: If True, ensures all generated serials are unique (default True).
+
+        Returns:
+            list[GeneratedSerial]: List of generated serial numbers with metadata.
+
+        """
         serials = []
         generated_set = set()
 
@@ -1162,7 +1268,16 @@ class SerialNumberGenerator:
         return serials
 
     def reverse_engineer_algorithm(self, valid_serials: list[str], invalid_serials: list[str] | None = None) -> dict[str, Any]:
-        """Reverse engineer the serial generation algorithm."""
+        """Reverse engineer the serial generation algorithm.
+
+        Args:
+            valid_serials: List of known valid serial numbers.
+            invalid_serials: Optional list of known invalid serial numbers for validation.
+
+        Returns:
+            dict[str, Any]: Comprehensive algorithm analysis including format, checksum, patterns, false positive rate, and sample generated serials.
+
+        """
         analysis = self.analyze_serial_algorithm(valid_serials)
         logger.debug("Reverse engineering initial analysis: %s", analysis)
 
@@ -1194,7 +1309,19 @@ class SerialNumberGenerator:
         features: list[str] | None = None,
         expiration: int | None = None,
     ) -> GeneratedSerial:
-        """Generate RSA-signed serial number with cryptographic validation."""
+        """Generate RSA-signed serial number with cryptographic validation.
+
+        Args:
+            private_key: RSA private key for signing.
+            product_id: Product identifier to encode in serial.
+            user_name: User name to encode in serial.
+            features: Optional list of licensed features.
+            expiration: Optional expiration timestamp (unix epoch).
+
+        Returns:
+            GeneratedSerial: RSA-signed serial with base32 encoding and high confidence.
+
+        """
         license_data = {
             "product_id": product_id,
             "user": user_name,
@@ -1228,7 +1355,17 @@ class SerialNumberGenerator:
         )
 
     def generate_ecc_signed(self, private_key: ec.EllipticCurvePrivateKey, product_id: str, machine_code: str) -> GeneratedSerial:
-        """Generate ECC-signed serial number with elliptic curve cryptography."""
+        """Generate ECC-signed serial number with elliptic curve cryptography.
+
+        Args:
+            private_key: Elliptic curve private key for signing.
+            product_id: Product identifier to encode in serial.
+            machine_code: Machine/hardware identifier for binding.
+
+        Returns:
+            GeneratedSerial: ECC-signed serial with base32 encoding and high confidence.
+
+        """
         data = f"{product_id}:{machine_code}:{int(time.time())}"
         data_bytes = data.encode()
 
@@ -1251,7 +1388,17 @@ class SerialNumberGenerator:
         )
 
     def generate_time_based(self, secret_key: bytes, validity_days: int = 30, product_id: str | None = None) -> GeneratedSerial:
-        """Generate time-based serial number using TOTP-like algorithm."""
+        """Generate time-based serial number using TOTP-like algorithm.
+
+        Args:
+            secret_key: Secret key for HMAC-SHA256 generation.
+            validity_days: Number of days the serial is valid (default 30).
+            product_id: Optional product identifier to include in serial.
+
+        Returns:
+            GeneratedSerial: Time-based serial with expiration and HMAC validation.
+
+        """
         time_counter = int(time.time()) // 86400  # Daily counter
         expiration = int(time.time()) + (validity_days * 86400)
 
@@ -1290,7 +1437,16 @@ class SerialNumberGenerator:
         )
 
     def generate_feature_encoded(self, base_serial: str, features: list[str]) -> GeneratedSerial:
-        """Generate serial with encoded feature flags."""
+        """Generate serial with encoded feature flags.
+
+        Args:
+            base_serial: Base serial number to extend with feature flags.
+            features: List of feature names to encode (pro, enterprise, unlimited, support, updates, api, export, multiuser).
+
+        Returns:
+            GeneratedSerial: Serial with embedded feature flags and CRC16 validation.
+
+        """
         feature_flags = {
             "pro": 0x01,
             "enterprise": 0x02,
@@ -1330,7 +1486,16 @@ class SerialNumberGenerator:
         )
 
     def generate_mathematical(self, seed: int, algorithm: str = "quadratic") -> GeneratedSerial:
-        """Generate serial using mathematical relationships."""
+        """Generate serial using mathematical relationships.
+
+        Args:
+            seed: Seed value for mathematical generation.
+            algorithm: Algorithm type - 'fibonacci', 'mersenne', 'quadratic', or hash-based (default 'quadratic').
+
+        Returns:
+            GeneratedSerial: Serial generated using mathematical function with CRC32 validation.
+
+        """
         result_int: int
         if algorithm == "fibonacci":
             f1, f2 = seed, seed + 1
@@ -1367,7 +1532,16 @@ class SerialNumberGenerator:
         )
 
     def generate_blackbox(self, input_data: bytes, rounds: int = 1000) -> GeneratedSerial:
-        """Generate serial using blackbox algorithm for unknown protection schemes."""
+        """Generate serial using blackbox algorithm for unknown protection schemes.
+
+        Args:
+            input_data: Binary input data to process through blackbox algorithm.
+            rounds: Number of cipher rounds (default 1000).
+
+        Returns:
+            GeneratedSerial: Serial generated using substitution-permutation-diffusion network.
+
+        """
         state = bytearray(input_data)
 
         for round_num in range(rounds):
@@ -1401,7 +1575,16 @@ class SerialNumberGenerator:
         )
 
     def brute_force_checksum(self, partial_serial: str, checksum_length: int = 4) -> list[str]:
-        """Brute force missing checksum digits for incomplete serials."""
+        """Brute force missing checksum digits for incomplete serials.
+
+        Args:
+            partial_serial: Serial number with missing checksum digits.
+            checksum_length: Number of checksum digits to brute force (default 4).
+
+        Returns:
+            list[str]: List of candidate serial numbers that pass known checksum algorithms.
+
+        """
         logger.debug("Starting brute-force checksum for partial serial: '%s' with checksum length: %s", partial_serial, checksum_length)
         candidates = []
         charset = "0123456789ABCDEF"
@@ -1428,7 +1611,16 @@ class SerialNumberGenerator:
         return candidates
 
     def _test_single_serial(self, serial: str, algorithm: str) -> bool:
-        """Test if a serial matches an algorithm."""
+        """Test if a serial matches an algorithm.
+
+        Args:
+            serial: Serial number to test.
+            algorithm: Algorithm name to test against (luhn, verhoeff, crc32, etc).
+
+        Returns:
+            bool: True if the serial validates with the given algorithm, False otherwise.
+
+        """
         if algorithm == "luhn":
             return self._verify_luhn(serial)
         if algorithm == "verhoeff":
