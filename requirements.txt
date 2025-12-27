@@ -429,7 +429,7 @@ sniffio==1.3.1
 snowballstemmer==3.0.1
 sortedcontainers==2.4.0
 soupsieve==2.8.1
-sourcery==1.40.0
+sourcery==1.41.1
 sphinx==8.2.3
 sphinx_autobuild==2025.8.25
 sphinx_autodoc_typehints==3.5.2
